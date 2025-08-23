@@ -11,7 +11,7 @@ export class PaperPrinter {
     private currentPrintableLabel: string = 'Printable';
     private currentColorMode: 'theme' | 'print' = 'theme';
     private currentThemeChoice: string = 'editor';
-    private availableThemes: Array<{ id: string; label: string; source: 'shiki' | 'vscode' }> = [];
+    private themePickerList: Array<{ id: string; label: string; source: 'shiki' | 'vscode' }> = [];
     private currentFontSizeMode: 'editor' | 9 | 10 | 12 | 14 | 18 | 24 = 'editor';
 
     constructor(app: App) {
@@ -148,7 +148,7 @@ export class PaperPrinter {
         const editorThemeLabel = this.app.vscodeapis.getActiveThemeLabel();
         const editorTypo = this.app.vscodeapis.getEditorTypography();
         // Get all light themes suitable for printing with editor theme at top
-        this.availableThemes = this.app.stylize.getThemes('light|bright|day', 'top');
+        this.themePickerList = this.app.stylize.getThemes('light|bright|day', 'top');
 
         const sizeItems = [
             { id: 'editor', label: `Editor (${editorTypo.fontSize}px)` },
@@ -162,7 +162,7 @@ export class PaperPrinter {
         const textSizesMarkup = sizeItems.map(s => `<div class="item" data-action="text-size-${s.id}" data-label="${s.label}">${s.label}</div>`).join('\n          ');
 
         const doc = this.app.os.readExtensionYaml<{ toolbar_html: string }>('src/PaperPrinter.yaml');
-        const themesMarkup = this.availableThemes.map((t) => {
+        const themesMarkup = this.themePickerList.map((t) => {
             const id = t.id;
             const label = t.label;
             return `<div class="item" data-action="theme-${id}" data-label="${label}">${label}</div>`;
@@ -234,7 +234,7 @@ export class PaperPrinter {
     }
 
     private resolveThemeChoice(id: string): unknown {
-        const found = this.availableThemes.find(t => t.id === id);
+        const found = this.themePickerList.find(t => t.id === id);
         if (!found) return 'github-light';
         if (found.source === 'shiki') return found.id;
         // vscode theme: load JSON by scanning contributions
