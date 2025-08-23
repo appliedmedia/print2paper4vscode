@@ -98,6 +98,39 @@ export class Stylize {
         return page;
     }
 
+    // Get combined themes for display (Shiki + VSCode) with optional current editor theme
+    getThemes(filter?: string, addCurrentEditor: 'top' | 'bottom' | 'none' = 'none'): Array<{ id: string; label: string; source: 'shiki' | 'vscode' }> {
+        // Get Shiki themes
+        const shikiThemes = this.getShikiThemes(filter);
+        
+        // Get VSCode themes
+        const vscodeThemes = this.app.vscodeapis.getVSCodeThemes(filter);
+        
+        // Combine themes: Shiki first (more reliable for printing), then VSCode
+        let combinedThemes = [
+            ...shikiThemes,
+            ...vscodeThemes
+        ];
+        
+        // Add current editor theme if requested
+        if (addCurrentEditor !== 'none') {
+            const editorThemeLabel = this.app.vscodeapis.getActiveThemeLabel();
+            const editorTheme = { 
+                id: 'editor', 
+                label: `Editor (${editorThemeLabel})`, 
+                source: 'vscode' as const 
+            };
+            
+            if (addCurrentEditor === 'top') {
+                combinedThemes = [editorTheme, ...combinedThemes];
+            } else if (addCurrentEditor === 'bottom') {
+                combinedThemes = [...combinedThemes, editorTheme];
+            }
+        }
+        
+        return combinedThemes;
+    }
+
     // Get Shiki themes with optional filter
     getShikiThemes(filter?: string): Array<{ id: string; label: string; source: 'shiki' }> {
         if (!filter) {
