@@ -73,28 +73,28 @@ toolbar_html: |
   <div id="p2p4vs-toolbar">
     <div class="p2p4vs-menubar">
     <div class="p2p4vs-grip" id="p2p4vs-grip" title="Click and hold to drag left and right"></div>
-    <div class="p2p4vs-group" id="grp-menuPrint">
-      <button class="p2p4vs-btn p2p4vs-dd-btn" id="btn-menuPrint" data-kind="print" data-target="dd-menuPrint" data-group="grp-menuPrint" title="Print">🖨</button>
-      <div class="p2p4vs-dd" id="dd-menuPrint">
-        {{MENU_PICKER_LIST}}
+    <div class="p2p4vs-group" id="menuPrint">
+      <button class="p2p4vs-btn p2p4vs-dd-btn" id="menuPrint-btn" data-kind="print" data-target="menuPrint-picker" data-group="menuPrint" title="Print">🖨</button>
+      <div class="p2p4vs-dd" id="menuPrint-picker">
+        {{menuPrint-pickerList}}
       </div>
     </div>
-    <div class="p2p4vs-group" id="grp-menuThemes">
-      <button class="p2p4vs-btn p2p4vs-dd-btn" id="btn-menuThemes" data-kind="theme" data-target="dd-menuThemes" data-group="grp-menuThemes" title="Theme">🎨</button>
-      <div class="p2p4vs-dd" id="dd-menuThemes">
-        {{THEME_PICKER_LIST}}
+    <div class="p2p4vs-group" id="menuThemes">
+      <button class="p2p4vs-btn p2p4vs-dd-btn" id="menuThemes-btn" data-kind="theme" data-target="menuThemes-picker" data-group="menuThemes" title="Theme">🎨</button>
+      <div class="p2p4vs-dd" id="menuThemes-picker">
+        {{menuThemes-pickerList}}
       </div>
     </div>
-    <div class="p2p4vs-group" id="grp-menuText">
-      <button class="p2p4vs-btn p2p4vs-dd-btn" id="btn-menuText" data-kind="text" data-target="dd-menuText" data-group="grp-menuText" title="Text" style="font-size:20px">Tt</button>
-      <div class="p2p4vs-dd" id="dd-menuText">
-        {{TEXT_PICKER_LIST}}
+    <div class="p2p4vs-group" id="menuText">
+      <button class="p2p4vs-btn p2p4vs-dd-btn" id="menuText-btn" data-kind="text" data-target="menuText-picker" data-group="menuText" title="Text" style="font-size:20px">Tt</button>
+      <div class="p2p4vs-dd" id="menuText-picker">
+        {{menuText-pickerList}}
       </div>
     </div>
-    <div class="p2p4vs-group" id="grp-menuHistory">
-      <button class="p2p4vs-btn p2p4vs-dd-btn" id="btn-menuHistory" data-kind="history" data-target="dd-menuHistory" data-group="grp-menuHistory" title="History">📄</button>
-      <div class="p2p4vs-dd" id="dd-menuHistory">
-        {{HISTORY_PICKER_LIST}}
+    <div class="p2p4vs-group" id="menuHistory">
+      <button class="p2p4vs-btn p2p4vs-dd-btn" id="menuHistory-btn" data-kind="history" data-target="menuHistory-picker" data-group="menuHistory" title="History">📄</button>
+      <div class="p2p4vs-dd" id="menuHistory-picker">
+        {{menuHistory-pickerList}}
       </div>
     </div>
     </div>
@@ -103,12 +103,12 @@ toolbar_html: |
     const vscode = acquireVsCodeApi();
     const toolbar = document.getElementById('p2p4vs-toolbar');
     const drag = document.getElementById('p2p4vs-grip');
-    const ddMenuPrint = document.getElementById('dd-menuPrint');
-    const ddMenuThemes = document.getElementById('dd-menuThemes');
-    const ddMenuText = document.getElementById('dd-menuText');
-    const ddMenuHistory = document.getElementById('dd-menuHistory');
+    const menuPrintPicker = document.getElementById('menuPrint-picker');
+    const menuThemesPicker = document.getElementById('menuThemes-picker');
+    const menuTextPicker = document.getElementById('menuText-picker');
+    const menuHistoryPicker = document.getElementById('menuHistory-picker');
 
-    function hideAll(){ ddMenuPrint.style.display='none'; ddMenuThemes.style.display='none'; ddMenuText.style.display='none'; ddMenuHistory.style.display='none'; }
+    function hideAll(){ menuPrintPicker.style.display='none'; menuThemesPicker.style.display='none'; menuTextPicker.style.display='none'; menuHistoryPicker.style.display='none'; }
 
     // Restore toolbar left position
     (function(){
@@ -161,10 +161,10 @@ toolbar_html: |
         const targetId = btn.getAttribute('data-target');
         const groupId = btn.getAttribute('data-group');
         const kind = btn.getAttribute('data-kind');
-        const dd = document.getElementById(targetId);
-        const grp = document.getElementById(groupId);
-        const shown = dd.style.display==='block'; hideAll(); dd.style.display = shown?'none':'block';
-        const r = grp.getBoundingClientRect(); dd.style.top = (r.height+4)+'px'; dd.style.left = '0px';
+        const picker = document.getElementById(targetId);
+        const group = document.getElementById(groupId);
+        const shown = picker.style.display==='block'; hideAll(); picker.style.display = shown?'none':'block';
+        const r = group.getBoundingClientRect(); picker.style.top = (r.height+4)+'px'; picker.style.left = '0px';
         if(kind==='theme') updateMenu('theme','{{THEME_INIT}}');
         if(kind==='text') updateMenu('text','{{SIZE_INIT}}');
       });
@@ -184,8 +184,8 @@ toolbar_html: |
     document.addEventListener('click', ()=> hideAll());
 
     function updateMenu(kind, state){
-      const dd = kind==='theme' ? ddMenuThemes : ddMenuText;
-      dd.querySelectorAll('.item[data-action]').forEach(el=>{
+      const picker = kind==='theme' ? menuThemesPicker : menuTextPicker;
+      picker.querySelectorAll('.item[data-action]').forEach(el=>{
         const a = el.getAttribute('data-action');
         const isActive = kind==='theme' ? (a==='theme-'+state) : (a==='text-size-'+state);
         el.classList.toggle('active', isActive);

@@ -156,7 +156,7 @@ export class PaperPrinter {
             { id: 'direct', label: 'Print', action: 'data-print="direct"' },
             { id: 'save', label: 'Save as PDF', action: 'data-print="save"' }
         ];
-        const menuPickerList = menuItems.map(item => `<div class="item" ${item.action}>${item.label}</div>`).join('\n          ');
+        const menuPrintPickerList = menuItems.map(item => `<div class="item" ${item.action}>${item.label}</div>`).join('\n          ');
 
         const sizeItems = [
             { id: 'editor', label: `Editor (${editorTypo.fontSize}px)` },
@@ -167,15 +167,15 @@ export class PaperPrinter {
             { id: '18', label: '18 px' },
             { id: '24', label: '24 px' },
         ];
-        const textPickerList = sizeItems.map(s => `<div class="item" data-action="text-size-${s.id}" data-label="${s.label}">${s.label}</div>`).join('\n          ');
+        const menuTextPickerList = sizeItems.map(s => `<div class="item" data-action="text-size-${s.id}" data-label="${s.label}">${s.label}</div>`).join('\n          ');
 
         const doc = this.app.os.readExtensionYaml<{ toolbar_html: string }>('src/PaperPrinter.yaml');
-        const themePickerList = this.themePickerList.map((t) => {
+        const menuThemesPickerList = this.themePickerList.map((t) => {
             const id = t.id;
             const label = t.label;
             return `<div class="item" data-action="theme-${id}" data-label="${label}">${label}</div>`;
         }).join('\n          ');
-        const historyPickerList = this.app.history.getEntries()
+        const menuHistoryPickerList = this.app.history.getEntries()
             .map((p) => {
                 const base = this.app.os.pathBasename(p);
                 return `<div class="item" data-history="${p}" title="${p}">${base}</div>`;
@@ -186,11 +186,11 @@ export class PaperPrinter {
             COLOR_INIT: this.currentColorMode,
             THEME_INIT: this.currentThemeChoice,
             SIZE_INIT: String(this.currentFontSizeMode),
-            MENU_PICKER_LIST: menuPickerList,
-            THEME_PICKER_LIST: themePickerList,
-            TEXT_PICKER_LIST: textPickerList,
+            'menuPrint-pickerList': menuPickerList,
+            'menuThemes-pickerList': themePickerList,
+            'menuText-pickerList': textPickerList,
             EDITOR_PX: String(editorTypo.fontSize),
-            HISTORY_PICKER_LIST: historyPickerList
+            'menuHistory-pickerList': historyPickerList
         });
         return html.replace('</body>', `${toolbar}</body>`);
     }
