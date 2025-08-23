@@ -242,7 +242,7 @@ export class VSCodeAPIs {
     }
 
     // Simple function to get VSCode themes with optional filter
-    getVSThemes(filter?: string): Array<{ id: string; label: string; source: 'vscode' }> {
+    getVSCodeThemes(filter?: string): Array<{ id: string; label: string; source: 'vscode' }> {
         try {
             // Get all extensions that contribute themes
             const themeExtensions = vscode.extensions.all.filter(ext => 

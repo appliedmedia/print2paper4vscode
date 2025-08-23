@@ -151,7 +151,7 @@ export class PaperPrinter {
         const shikiLightThemes = this.app.stylize.getShikiThemes('light|bright|day');
         
         // Load VSCode light themes
-        const vscodeLightThemes = this.app.vscodeapis.getVSThemes('light|bright|day');
+        const vscodeLightThemes = this.app.vscodeapis.getVSCodeThemes('light|bright|day');
         
         this.availableThemes = [
             { id: 'editor', label: `Editor (${editorThemeLabel})`, source: 'vscode' as const },
