@@ -3,7 +3,10 @@ import { getSingletonHighlighter } from 'shiki';
 
 export class Stylize {
     private app: App;
+    private shikiStyler: any;
+    private vscodeThemeStyler: any;
     private availableShikiThemes: string[] = [];
+    private loadedLanguages: Set<string> = new Set();
 
     constructor(app: App) {
         this.app = app;
@@ -40,8 +43,8 @@ export class Stylize {
             // For VSCode themes, we need to know what languages are already loaded
             const currentLanguages = Array.from(this.loadedLanguages);
             
-            this.vscodeThemeStyler = await createHighlighter({
-                theme,
+            this.vscodeThemeStyler = await getSingletonHighlighter({
+                themes: [theme],
                 langs: currentLanguages
             });
         }
@@ -54,6 +57,17 @@ export class Stylize {
         opts?: { fontSize?: number; lineHeight?: number; title?: string }
     ): Promise<string> {
         const lang = languageId;
+        
+        // Initialize Shiki styler if not already done
+        if (!this.shikiStyler) {
+            const lightThemes = this.getShikiThemes('light|bright|day');
+            const initialTheme = lightThemes.length > 0 ? lightThemes[0].id : 'github-light';
+            
+            this.shikiStyler = await getSingletonHighlighter({
+                themes: [initialTheme],
+                langs: []
+            });
+        }
         
         // Validate and load the specific language we need
         await this.ensureLanguage(lang);
@@ -120,8 +134,8 @@ export class Stylize {
     async validateLanguageSupport(languageId: string): Promise<boolean> {
         try {
             // Try to create a minimal highlighter with just this language
-            const testHighlighter = await createHighlighter({
-                theme: 'github-light',
+            const testHighlighter = await getSingletonHighlighter({
+                themes: ['github-light'],
                 langs: [languageId]
             });
             

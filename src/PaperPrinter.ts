@@ -247,17 +247,9 @@ export class PaperPrinter {
         if (!found) return 'github-light';
         if (found.source === 'shiki') return found.id;
         // vscode theme: load JSON by scanning contributions
-        const contribution = this.app.vscodeapis.getThemes().find((c: { label: string; path: string }) => (c.label || '').toLowerCase() === found.label.toLowerCase());
-        if (contribution) {
-            const json = this.app.os.readJsonFile<Record<string, unknown>>(contribution.path);
-            if (json) {
-                const colors = (json as { colors?: Record<string, unknown> }).colors || {};
-                if (!Object.prototype.hasOwnProperty.call(colors, 'editor.background')) {
-                    (json as { colors: Record<string, unknown> }).colors = { ...colors, 'editor.background': '#ffffff' };
-                }
-                return json;
-            }
-        }
+        // For now, return the theme ID as a fallback since we don't have path information
+        // TODO: Implement proper VSCode theme JSON loading when needed
+        return found.id;
         return 'github-light';
     }
 
