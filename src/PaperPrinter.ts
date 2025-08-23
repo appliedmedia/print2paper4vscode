@@ -147,16 +147,10 @@ export class PaperPrinter {
         // Recompute available themes at render time
         const editorThemeLabel = this.app.vscodeapis.getActiveThemeLabel();
         const editorTypo = this.app.vscodeapis.getEditorTypography();
-        // Load Shiki themes - only light ones for printing
-        const shikiLightThemes = this.app.stylize.getShikiThemes('light|bright|day');
-        
-        // Load VSCode light themes
-        const vscodeLightThemes = this.app.vscodeapis.getVSCodeThemes('light|bright|day');
-        
+        // Get all light themes suitable for printing
         this.availableThemes = [
             { id: 'editor', label: `Editor (${editorThemeLabel})`, source: 'vscode' as const },
-            ...shikiLightThemes,
-            ...vscodeLightThemes
+            ...this.getPrintableThemes()
         ];
 
         const sizeItems = [
