@@ -76,25 +76,25 @@ toolbar_html: |
     <div class="p2p4vs-group" id="menuPrint">
       <button class="p2p4vs-btn p2p4vs-dd-btn" id="menuPrint-btn" data-kind="print" data-target="menuPrint-picker" data-group="menuPrint" title="Print">🖨</button>
       <div class="p2p4vs-dd" id="menuPrint-picker">
-        {{menuPrint-pickerList}}
+        {{PRINT_PICKER_LIST}}
       </div>
     </div>
     <div class="p2p4vs-group" id="menuThemes">
       <button class="p2p4vs-btn p2p4vs-dd-btn" id="menuThemes-btn" data-kind="theme" data-target="menuThemes-picker" data-group="menuThemes" title="Theme">🎨</button>
       <div class="p2p4vs-dd" id="menuThemes-picker">
-        {{menuThemes-pickerList}}
+        {{THEMES_PICKER_LIST}}
       </div>
     </div>
     <div class="p2p4vs-group" id="menuText">
       <button class="p2p4vs-btn p2p4vs-dd-btn" id="menuText-btn" data-kind="text" data-target="menuText-picker" data-group="menuText" title="Text" style="font-size:20px">Tt</button>
       <div class="p2p4vs-dd" id="menuText-picker">
-        {{menuText-pickerList}}
+        {{TEXT_PICKER_LIST}}
       </div>
     </div>
     <div class="p2p4vs-group" id="menuHistory">
       <button class="p2p4vs-btn p2p4vs-dd-btn" id="menuHistory-btn" data-kind="history" data-target="menuHistory-picker" data-group="menuHistory" title="History">📄</button>
       <div class="p2p4vs-dd" id="menuHistory-picker">
-        {{menuHistory-pickerList}}
+        {{HISTORY_PICKER_LIST}}
       </div>
     </div>
     </div>

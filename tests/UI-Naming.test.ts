@@ -12,42 +12,42 @@ describe('UI Naming Standardization', () => {
 
     it('should have standardized menu group IDs', () => {
         // Check that all menu groups use the standardized naming
-        assert.ok(yamlContent.includes('id="grp-menuPrint"'), 'Should have grp-menuPrint');
-        assert.ok(yamlContent.includes('id="grp-menuThemes"'), 'Should have grp-menuThemes');
-        assert.ok(yamlContent.includes('id="grp-menuText"'), 'Should have grp-menuText');
-        assert.ok(yamlContent.includes('id="grp-menuHistory"'), 'Should have grp-menuHistory');
+        assert.ok(yamlContent.includes('id="menuPrint"'), 'Should have menuPrint');
+        assert.ok(yamlContent.includes('id="menuThemes"'), 'Should have menuThemes');
+        assert.ok(yamlContent.includes('id="menuText"'), 'Should have menuText');
+        assert.ok(yamlContent.includes('id="menuHistory"'), 'Should have menuHistory');
     });
 
     it('should have standardized button IDs', () => {
         // Check that all buttons use the standardized naming
-        assert.ok(yamlContent.includes('id="btn-menuPrint"'), 'Should have btn-menuPrint');
-        assert.ok(yamlContent.includes('id="btn-menuThemes"'), 'Should have btn-menuThemes');
-        assert.ok(yamlContent.includes('id="btn-menuText"'), 'Should have btn-menuText');
-        assert.ok(yamlContent.includes('id="btn-menuHistory"'), 'Should have btn-menuHistory');
+        assert.ok(yamlContent.includes('id="menuPrint-btn"'), 'Should have menuPrint-btn');
+        assert.ok(yamlContent.includes('id="menuThemes-btn"'), 'Should have menuThemes-btn');
+        assert.ok(yamlContent.includes('id="menuText-btn"'), 'Should have menuText-btn');
+        assert.ok(yamlContent.includes('id="menuHistory-btn"'), 'Should have menuHistory-btn');
     });
 
-    it('should have standardized dropdown IDs', () => {
-        // Check that all dropdowns use the standardized naming
-        assert.ok(yamlContent.includes('id="dd-menuPrint"'), 'Should have dd-menuPrint');
-        assert.ok(yamlContent.includes('id="dd-menuThemes"'), 'Should have dd-menuThemes');
-        assert.ok(yamlContent.includes('id="dd-menuText"'), 'Should have dd-menuText');
-        assert.ok(yamlContent.includes('id="dd-menuHistory"'), 'Should have dd-menuHistory');
+    it('should have standardized picker IDs', () => {
+        // Check that all pickers use the standardized naming
+        assert.ok(yamlContent.includes('id="menuPrint-picker"'), 'Should have menuPrint-picker');
+        assert.ok(yamlContent.includes('id="menuThemes-picker"'), 'Should have menuThemes-picker');
+        assert.ok(yamlContent.includes('id="menuText-picker"'), 'Should have menuText-picker');
+        assert.ok(yamlContent.includes('id="menuHistory-picker"'), 'Should have menuHistory-picker');
     });
 
     it('should have standardized template variables', () => {
         // Check that template variables use the standardized naming
-        assert.ok(yamlContent.includes('{{MENU_PICKER_LIST}}'), 'Should have MENU_PICKER_LIST');
-        assert.ok(yamlContent.includes('{{THEME_PICKER_LIST}}'), 'Should have THEME_PICKER_LIST');
+        assert.ok(yamlContent.includes('{{PRINT_PICKER_LIST}}'), 'Should have PRINT_PICKER_LIST');
+        assert.ok(yamlContent.includes('{{THEMES_PICKER_LIST}}'), 'Should have THEMES_PICKER_LIST');
         assert.ok(yamlContent.includes('{{TEXT_PICKER_LIST}}'), 'Should have TEXT_PICKER_LIST');
         assert.ok(yamlContent.includes('{{HISTORY_PICKER_LIST}}'), 'Should have HISTORY_PICKER_LIST');
     });
 
     it('should have standardized JavaScript variable references', () => {
         // Check that JavaScript variables use the standardized naming
-        assert.ok(yamlContent.includes('ddMenuPrint'), 'Should reference ddMenuPrint');
-        assert.ok(yamlContent.includes('ddMenuThemes'), 'Should reference ddMenuThemes');
-        assert.ok(yamlContent.includes('ddMenuText'), 'Should reference ddMenuText');
-        assert.ok(yamlContent.includes('ddMenuHistory'), 'Should reference ddMenuHistory');
+        assert.ok(yamlContent.includes('menuPrintPicker'), 'Should reference menuPrintPicker');
+        assert.ok(yamlContent.includes('menuThemesPicker'), 'Should reference menuThemesPicker');
+        assert.ok(yamlContent.includes('menuTextPicker'), 'Should reference menuTextPicker');
+        assert.ok(yamlContent.includes('menuHistoryPicker'), 'Should reference menuHistoryPicker');
     });
 
     it('should not contain old naming conventions', () => {

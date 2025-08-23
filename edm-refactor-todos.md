@@ -66,14 +66,15 @@ Convert this VSCode extension from CommonJS to EDM (ES Modules) and upgrade from
 - [x] Search and replace `highlighter` → `styler` in variable names
 - [x] Keep Shiki API method names unchanged internally
 
-## Phase 3.1: UI Naming Standardization (100% complete)
-- [x] Standardize menu group IDs: `grp-print` → `grp-menuPrint`, `grp-theme` → `grp-menuThemes`, `grp-text` → `grp-menuText`, `grp-history` → `grp-menuHistory`
-- [x] Standardize button IDs: `btn-print` → `btn-menuPrint`, `btn-theme` → `btn-menuThemes`, `btn-text` → `btn-menuText`, `btn-history` → `btn-menuHistory`
-- [x] Standardize dropdown IDs: `dd-print` → `dd-menuPrint`, `dd-theme` → `dd-menuThemes`, `dd-text` → `dd-menuText`, `dd-history` → `dd-menuHistory`
-- [x] Standardize template variables: Add `{{MENU_PICKER_LIST}}`, `{{THEMES}}` → `{{THEME_PICKER_LIST}}`, `{{TEXT_SIZES}}` → `{{TEXT_PICKER_LIST}}`, `{{HISTORY_ITEMS}}` → `{{HISTORY_PICKER_LIST}}`
-- [x] Standardize JavaScript variables: `ddPrint` → `ddMenuPrint`, `ddTheme` → `ddMenuThemes`, `ddText` → `ddMenuText`, `ddHistory` → `ddMenuHistory`
-- [x] Standardize TypeScript variables: Add `menuPickerList`, `themesMarkup` → `themePickerList`, `textSizesMarkup` → `textPickerList`, `historyItems` → `historyPickerList`
-- [x] Convert hardcoded print menu items to dynamic `menuPickerList` generation
+## Phase 3.1: UI Naming Standardization & Generic Picker System (100% complete)
+- [x] Standardize menu group IDs: `grp-*` → `menuPrint`, `menuThemes`, `menuText`, `menuHistory`
+- [x] Standardize button IDs: `btn-*` → `menuPrint-btn`, `menuThemes-btn`, `menuText-btn`, `menuHistory-btn`
+- [x] Standardize picker IDs: `dd-*` → `menuPrint-picker`, `menuThemes-picker`, `menuText-picker`, `menuHistory-picker`
+- [x] Standardize template variables: `{{PRINT_PICKER_LIST}}`, `{{THEMES_PICKER_LIST}}`, `{{TEXT_PICKER_LIST}}`, `{{HISTORY_PICKER_LIST}}`
+- [x] Standardize JavaScript variables: `menuPrintPicker`, `menuThemesPicker`, `menuTextPicker`, `menuHistoryPicker`
+- [x] **Generic Picker System**: Create reusable `generatePickerList()` function for maximum code reuse
+- [x] Convert all hardcoded menu items to use the generic picker list generator
+- [x] Consistent attribute handling across all picker types
 
 ## Phase 4: Testing and Validation
 

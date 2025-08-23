@@ -150,47 +150,61 @@ export class PaperPrinter {
         // Get all light themes suitable for printing with editor theme at top
         this.themePickerList = this.app.stylize.getThemes('light|bright|day', 'top');
 
-        // Generate print menu items
-        const menuItems = [
-            { id: 'preview', label: 'Print with Preview', action: 'data-print="preview"' },
-            { id: 'direct', label: 'Print', action: 'data-print="direct"' },
-            { id: 'save', label: 'Save as PDF', action: 'data-print="save"' }
-        ];
-        const menuPrintPickerList = menuItems.map(item => `<div class="item" ${item.action}>${item.label}</div>`).join('\n          ');
+        // Generic picker list generator
+        const generatePickerList = (items: Array<{id: string, label: string, attributes?: Record<string, string>}>) => {
+            return items.map(item => {
+                const attrs = item.attributes ? Object.entries(item.attributes).map(([k, v]) => `${k}="${v}"`).join(' ') : '';
+                return `<div class="item" ${attrs}>${item.label}</div>`;
+            }).join('\n          ');
+        };
 
-        const sizeItems = [
-            { id: 'editor', label: `Editor (${editorTypo.fontSize}px)` },
-            { id: '9', label: '9 px' },
-            { id: '10', label: '10 px' },
-            { id: '12', label: '12 px' },
-            { id: '14', label: '14 px' },
-            { id: '18', label: '18 px' },
-            { id: '24', label: '24 px' },
-        ];
-        const menuTextPickerList = sizeItems.map(s => `<div class="item" data-action="text-size-${s.id}" data-label="${s.label}">${s.label}</div>`).join('\n          ');
+        // Generate all picker lists using the generic function
+        const printPickerList = generatePickerList([
+            { id: 'preview', label: 'Print with Preview', attributes: { 'data-print': 'preview' } },
+            { id: 'direct', label: 'Print', attributes: { 'data-print': 'direct' } },
+            { id: 'save', label: 'Save as PDF', attributes: { 'data-print': 'save' } }
+        ]);
+
+        const textPickerList = generatePickerList([
+            { id: 'editor', label: `Editor (${editorTypo.fontSize}px)`, attributes: { 'data-action': 'text-size-editor', 'data-label': `Editor (${editorTypo.fontSize}px)` } },
+            { id: '9', label: '9 px', attributes: { 'data-action': 'text-size-9', 'data-label': '9 px' } },
+            { id: '10', label: '10 px', attributes: { 'data-action': 'text-size-10', 'data-label': '10 px' } },
+            { id: '12', label: '12 px', attributes: { 'data-action': 'text-size-12', 'data-label': '12 px' } },
+            { id: '14', label: '14 px', attributes: { 'data-action': 'text-size-14', 'data-label': '14 px' } },
+            { id: '18', label: '18 px', attributes: { 'data-action': 'text-size-18', 'data-label': '18 px' } },
+            { id: '24', label: '24 px', attributes: { 'data-action': 'text-size-24', 'data-label': '24 px' } }
+        ]);
+
+        const themesPickerList = generatePickerList(
+            this.themePickerList.map(t => ({
+                id: t.id,
+                label: t.label,
+                attributes: { 'data-action': `theme-${t.id}`, 'data-label': t.label }
+            }))
+        );
+
+        const historyPickerList = generatePickerList(
+            this.app.history.getEntries().map(p => {
+                const base = this.app.os.pathBasename(p);
+                return {
+                    id: base,
+                    label: base,
+                    attributes: { 'data-history': p, 'title': p }
+                };
+            })
+        );
 
         const doc = this.app.os.readExtensionYaml<{ toolbar_html: string }>('src/PaperPrinter.yaml');
-        const menuThemesPickerList = this.themePickerList.map((t) => {
-            const id = t.id;
-            const label = t.label;
-            return `<div class="item" data-action="theme-${id}" data-label="${label}">${label}</div>`;
-        }).join('\n          ');
-        const menuHistoryPickerList = this.app.history.getEntries()
-            .map((p) => {
-                const base = this.app.os.pathBasename(p);
-                return `<div class="item" data-history="${p}" title="${p}">${base}</div>`;
-            })
-            .join('\n          ');
 
         const toolbar = this.app.os.renderTemplate(doc.toolbar_html, {
             COLOR_INIT: this.currentColorMode,
             THEME_INIT: this.currentThemeChoice,
             SIZE_INIT: String(this.currentFontSizeMode),
-            'menuPrint-pickerList': menuPickerList,
-            'menuThemes-pickerList': themePickerList,
-            'menuText-pickerList': textPickerList,
+            PRINT_PICKER_LIST: printPickerList,
+            THEMES_PICKER_LIST: themesPickerList,
+            TEXT_PICKER_LIST: textPickerList,
             EDITOR_PX: String(editorTypo.fontSize),
-            'menuHistory-pickerList': historyPickerList
+            HISTORY_PICKER_LIST: historyPickerList
         });
         return html.replace('</body>', `${toolbar}</body>`);
     }

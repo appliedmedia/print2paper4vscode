@@ -29,12 +29,15 @@ describe('PaperPrinter Variable Naming Standardization', () => {
         assert.ok(tsContent.includes('TEXT_PICKER_LIST: textPickerList'), 'Should pass TEXT_PICKER_LIST to template');
     });
 
-    it('should use standardized variable names for menu picker list', () => {
-        // Check that the variable is named correctly
-        assert.ok(tsContent.includes('const menuPickerList ='), 'Should declare menuPickerList');
+    it('should use generic picker list generator', () => {
+        // Check that the generic function exists
+        assert.ok(tsContent.includes('const generatePickerList ='), 'Should have generatePickerList function');
         
-        // Check that template rendering uses correct variable name
-        assert.ok(tsContent.includes('MENU_PICKER_LIST: menuPickerList'), 'Should pass MENU_PICKER_LIST to template');
+        // Check that it's used for all picker lists
+        assert.ok(tsContent.includes('const printPickerList = generatePickerList('), 'Should use generatePickerList for print');
+        assert.ok(tsContent.includes('const textPickerList = generatePickerList('), 'Should use generatePickerList for text');
+        assert.ok(tsContent.includes('const themesPickerList = generatePickerList('), 'Should use generatePickerList for themes');
+        assert.ok(tsContent.includes('const historyPickerList = generatePickerList('), 'Should use generatePickerList for history');
     });
 
     it('should use standardized variable names for history picker list', () => {
@@ -64,8 +67,8 @@ describe('PaperPrinter Variable Naming Standardization', () => {
     it('should have consistent template variable mapping', () => {
         // Check that all template variables are properly mapped
         const templateVars = [
-            'MENU_PICKER_LIST: menuPickerList',
-            'THEME_PICKER_LIST: themePickerList',
+            'PRINT_PICKER_LIST: printPickerList',
+            'THEMES_PICKER_LIST: themesPickerList',
             'TEXT_PICKER_LIST: textPickerList', 
             'HISTORY_PICKER_LIST: historyPickerList'
         ];
