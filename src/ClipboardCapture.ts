@@ -3,7 +3,7 @@ import { promisify } from 'util';
 import * as rtf2html from '@iarna/rtf-to-html';
 
 import * as vscode from 'vscode';
-import type { App } from './App';
+import type { App } from './App.js';
 
 const execAsync = promisify(exec);
 

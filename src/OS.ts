@@ -3,7 +3,7 @@ import * as path from 'path';
 import { exec as cpExec, execSync as cpExecSync } from 'child_process';
 import { promisify } from 'util';
 import { parse as yamlParse } from 'yaml';
-import type { App } from './App';
+import type { App } from './App.js';
 
 export abstract class OS {
 	protected app?: App;

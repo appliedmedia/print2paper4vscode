@@ -1,7 +1,7 @@
 {
     "compilerOptions": {
         "module": "ESNext",
-        "moduleResolution": "bundler",
+        "moduleResolution": "node16",
         "target": "ES2022",
         "outDir": "out",
         "lib": ["ES2022", "DOM"],
@@ -9,7 +9,6 @@
         "rootDir": "src",
         "strict": true,
         "skipLibCheck": true,
-        "allowImportingTsExtensions": true,
         "resolveJsonModule": true
     },
     "exclude": ["node_modules", ".vscode-test"]

@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import type { App } from './App';
+import type { App } from './App.js';
 
 export class VSCodeAPIs {
     private app: App;
@@ -231,9 +231,9 @@ export class VSCodeAPIs {
            this.app.ui.debugOut('ERROR:getActiveThemeShikiTheme: No active theme found', 'warn', 'VSCodeAPIs', err);
         }
 
-        // Final fallback: return a simple string based on light/dark kind
-        const kind = vscode.window.activeColorTheme.kind;
-        return kind === vscode.ColorThemeKind.Light ? 'github-light' : 'github-dark';
+        // Final fallback: use the first available light theme from Stylize
+        const lightThemes = this.app.stylize.filterThemes('light|bright|day');
+        return lightThemes.length > 0 ? lightThemes[0].id : 'github-light';
     }
 
     // Return the active theme as either a Shiki theme name string or a VS Code theme JSON object
@@ -241,17 +241,43 @@ export class VSCodeAPIs {
         return this.getActiveThemeShikiTheme();
     }
 
-    getThemes(): Array<{ label: string; path: string; uiTheme?: string }> {
-        const results: Array<{ label: string; path: string; uiTheme?: string }> = [];
-        for (const ext of vscode.extensions.all) {
-            const contrib = (ext.packageJSON?.contributes?.themes || []) as Array<{ label?: string; path?: string; uiTheme?: string; id?: string }>;
-            for (const t of contrib) {
-                const label = t.label || t.id || 'Unknown Theme';
-                const abs = this.app.os.pathJoin(ext.extensionPath, t.path || '');
-                results.push({ label, path: abs, uiTheme: t.uiTheme });
+    // Simple function to get VSCode themes with optional filter
+    getVSThemes(filter?: string): Array<{ id: string; label: string; source: 'vscode' }> {
+        try {
+            // Get all extensions that contribute themes
+            const themeExtensions = vscode.extensions.all.filter(ext => 
+                ext.packageJSON?.contributes?.themes && 
+                Array.isArray(ext.packageJSON.contributes.themes)
+            );
+
+            // Extract all themes from all extensions
+            const allThemes = themeExtensions.flatMap(ext => {
+                const extThemes = ext.packageJSON.contributes.themes;
+                return extThemes.map((theme: any) => ({
+                    id: theme.id || theme.name || `theme-${ext.id}`,
+                    label: theme.label || theme.name || theme.id || `Theme from ${ext.id}`,
+                    source: 'vscode' as const,
+                    extension: ext.id,
+                    theme: theme // Keep the full theme object for Shiki
+                }));
+            }).filter(theme => theme.id && theme.label);
+
+            // Remove duplicates
+            const uniqueThemes = allThemes.filter((theme, index, self) => 
+                index === self.findIndex(t => t.id === theme.id)
+            );
+
+            // Apply filter if provided
+            if (filter) {
+                const filterRegex = new RegExp(filter, 'i');
+                return uniqueThemes.filter(theme => filterRegex.test(theme.label));
             }
+
+            return uniqueThemes;
+        } catch (err) {
+            this.app.ui.debugOut('ERROR:getVSThemes: Failed to get themes', 'warn', 'VSCodeAPIs', err);
+            return [];
         }
-        return results;
     }
 
     // loadThemeJson removed; use OS.readJsonFile and handle include/merge at a higher layer

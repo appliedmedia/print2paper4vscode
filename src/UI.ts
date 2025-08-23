@@ -1,5 +1,5 @@
-import type { App } from './App';
-import { OS } from './OS';
+import type { App } from './App.js';
+import { OS } from './OS.js';
 
 export class UI {
     private app: App;

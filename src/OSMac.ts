@@ -1,4 +1,4 @@
-import { OS } from './OS';
+import { OS } from './OS.js';
  
 
 export class OSMac extends OS {

@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
-import { ClipboardCapture } from './ClipboardCapture';
-import type { App } from './App';
+import { ClipboardCapture } from './ClipboardCapture.js';
+import type { App } from './App.js';
 
 export class PaperPrinter {
     private app: App;
@@ -63,7 +63,7 @@ export class PaperPrinter {
                 printableLabel = start === end ? `Line ${start} of ${info.name}` : `Lines ${start}-${end} of ${info.name}`;
             }
             this.currentPrintableLabel = printableLabel;
-            const htmlContent = await this.app.stylize.highlightToHtml(info.text, info.languageId, theme, { title: this.currentPrintableLabel });
+            const htmlContent = await this.app.stylize.styleToHtml(info.text, info.languageId, theme, { title: this.currentPrintableLabel });
             await this.openPrintPrepAndPrompt(htmlContent, printableLabel);
             
         } catch (error) {
@@ -147,20 +147,17 @@ export class PaperPrinter {
         // Recompute available themes at render time
         const editorThemeLabel = this.app.vscodeapis.getActiveThemeLabel();
         const editorTypo = this.app.vscodeapis.getEditorTypography();
-        const baseThemes = [
+        // Load Shiki themes - only light ones for printing
+        const shikiLightThemes = this.app.stylize.filterThemes('light|bright|day');
+        
+        // Load VSCode light themes
+        const vscodeLightThemes = this.app.vscodeapis.getVSThemes('light|bright|day');
+        
+        this.availableThemes = [
             { id: 'editor', label: `Editor (${editorThemeLabel})`, source: 'vscode' as const },
-            { id: 'github-light', label: 'Github-light', source: 'shiki' as const }
+            ...shikiLightThemes,
+            ...vscodeLightThemes
         ];
-        const contributed = this.app.vscodeapis.getThemes();
-        const vsLight = contributed
-            .filter(t => String(t.uiTheme || '').toLowerCase() === 'vs')
-            .map((theme) => {
-                const id = theme.label;
-                const label = theme.label;
-                const source = 'vscode' as const;
-                return { id, label, source };
-            });
-        this.availableThemes = [...baseThemes, ...vsLight];
 
         const sizeItems = [
             { id: 'editor', label: `Editor (${editorTypo.fontSize}px)` },
@@ -209,7 +206,7 @@ export class PaperPrinter {
             }
             const sizePx = this.computeFontSizePx();
             const lhPx = this.computeLineHeightPx(sizePx);
-            const html = await this.app.stylize.highlightToHtml(this.lastRawCode, this.lastLanguageId, themeToUse, { fontSize: sizePx, lineHeight: lhPx, title: this.currentPrintableLabel });
+                            const html = await this.app.stylize.styleToHtml(this.lastRawCode, this.lastLanguageId, themeToUse, { fontSize: sizePx, lineHeight: lhPx, title: this.currentPrintableLabel });
             return html;
         }
         // Fallback for captured HTML from preview tabs

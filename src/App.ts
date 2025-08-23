@@ -1,12 +1,12 @@
 import * as vscode from 'vscode';
-import { VSCodeAPIs } from './VSCodeAPIs';
-import { UI } from './UI';
-import { PDF } from './PDF';
-import { PaperPrinter } from './PaperPrinter';
-import { Stylize } from './Stylize';
-import { TabInspector } from './TabInspector';
-import { OS } from './OS';
-import { History } from './History';
+import { VSCodeAPIs } from './VSCodeAPIs.js';
+import { UI } from './UI.js';
+import { PDF } from './PDF.js';
+import { PaperPrinter } from './PaperPrinter.js';
+import { Stylize } from './Stylize.js';
+import { TabInspector } from './TabInspector.js';
+import { OS } from './OS.js';
+import { History } from './History.js';
 
 export class App {
     vscodeapis: VSCodeAPIs;

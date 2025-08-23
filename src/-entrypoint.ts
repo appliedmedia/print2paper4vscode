@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { App } from './App';
+import { App } from './App.js';
 
 let app: App;
 
