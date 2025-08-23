@@ -1,0 +1,143 @@
+javascript:
+  description: JavaScript sample with various syntax elements
+  content: |
+    // JavaScript sample code for testing
+
+    function calculateSum(a, b) {
+        // Add two numbers together
+        const result = a + b;
+        
+        if (result > 100) {
+            console.log('Large sum detected!');
+            return result * 0.9; // Apply discount
+        }
+        
+        return result;
+    }
+
+    class Calculator {
+        constructor() {
+            this.history = [];
+        }
+        
+        add(x, y) {
+            const result = x + y;
+            this.history.push(`${x} + ${y} = ${result}`);
+            return result;
+        }
+        
+        getHistory() {
+            return this.history;
+        }
+    }
+
+    // Test the calculator
+    const calc = new Calculator();
+    const sum1 = calc.add(5, 3);
+    const sum2 = calc.add(50, 60);
+    console.log('Results:', sum1, sum2);
+    console.log('History:', calc.getHistory());
+
+python:
+  description: Python sample with different syntax patterns
+  content: |
+    # Python sample code for testing
+
+    def fibonacci(n):
+        """Calculate the nth Fibonacci number"""
+        if n <= 1:
+            return n
+        return fibonacci(n-1) + fibonacci(n-2)
+
+    class DataProcessor:
+        def __init__(self, data):
+            self.data = data
+            self.processed = False
+        
+        def process(self):
+            if not self.processed:
+                self.data = [x * 2 for x in self.data if x > 0]
+                self.processed = True
+            return self.data
+
+    # Test the processor
+    processor = DataProcessor([1, -2, 3, 4, -5])
+    result = processor.process()
+    print(f"Processed data: {result}")
+    print(f"Fibonacci(10): {fibonacci(10)}")
+
+typescript:
+  description: TypeScript sample with type annotations
+  content: |
+    // TypeScript sample code for testing
+
+    interface User {
+        id: number;
+        name: string;
+        email: string;
+        isActive: boolean;
+    }
+
+    class UserManager {
+        private users: User[] = [];
+        
+        addUser(user: User): void {
+            if (this.users.find(u => u.id === user.id)) {
+                throw new Error('User ID already exists');
+            }
+            this.users.push(user);
+        }
+        
+        getUserById(id: number): User | undefined {
+            return this.users.find(u => u.id === id);
+        }
+        
+        getActiveUsers(): User[] {
+            return this.users.filter(u => u.isActive);
+        }
+    }
+
+    // Test the user manager
+    const manager = new UserManager();
+    manager.addUser({
+        id: 1,
+        name: 'John Doe',
+        email: 'john@example.com',
+        isActive: true
+    });
+
+    const user = manager.getUserById(1);
+    console.log('Found user:', user);
+    console.log('Active users:', manager.getActiveUsers().length);
+
+html:
+  description: HTML sample with mixed content
+  content: |
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Sample HTML</title>
+        <style>
+            body { font-family: Arial, sans-serif; }
+            .highlight { background-color: yellow; }
+        </style>
+    </head>
+    <body>
+        <h1>Sample HTML Document</h1>
+        <p>This is a <span class="highlight">sample HTML file</span> for testing.</p>
+        
+        <ul>
+            <li>First item</li>
+            <li>Second item</li>
+            <li>Third item</li>
+        </ul>
+        
+        <div class="code-block">
+            <pre><code>function hello() {
+        console.log('Hello, World!');
+    }</code></pre>
+        </div>
+    </body>
+    </html>

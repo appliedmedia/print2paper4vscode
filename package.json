@@ -1,0 +1,73 @@
+{
+  "name": "print2paper4vscode",
+  "displayName": "Print2Paper4VSCode",
+  "description": "Print selections or current tabs, including preview tabs",
+  "version": "0.0.1",
+  "engines": {
+    "vscode": "^1.60.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "main": "./out/-entrypoint.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "p2p4vs.print2paper",
+        "title": "Print2Paper",
+        "category": "Print"
+      },
+      {
+        "command": "p2p4vs.capturePreview",
+        "title": "Capture Preview Content",
+        "category": "Print"
+      }
+    ],
+    "menus": {
+      "editor/context": [
+        {
+          "command": "p2p4vs.print2paper",
+          "group": "navigation"
+        }
+      ]
+    },
+    "keybindings": [
+      {
+        "command": "p2p4vs.print2paper",
+        "key": "alt+p",
+        "mac": "alt+p"
+      }
+    ]
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "rm -rf out && tsc -p ./",
+    "lint": "eslint --config ./eslint.config.mjs src/**/*.ts",
+    "lint:fix": "eslint --config ./eslint.config.mjs src/**/*.ts --fix",
+    "lint:md": "markdownlint *.md tests/**/*.md",
+    "lint:md:fix": "markdownlint *.md tests/**/*.md --fix",
+    "format": "prettier --write src/**/*.ts **/*.md",
+    "format:check": "prettier --check src/**/*.ts **/*.md"
+  },
+  "devDependencies": {
+    "@types/node": "latest",
+    "@types/vscode": "latest",
+    "@typescript-eslint/eslint-plugin": "latest",
+    "@typescript-eslint/parser": "latest",
+    "eslint": "latest",
+    "markdownlint-cli": "latest",
+    "prettier": "latest",
+    "typescript": "latest"
+  },
+  "dependencies": {
+    "@iarna/rtf-to-html": "^1.1.0",
+    "rtf-parser": "latest",
+    "shiki": "0.14.7",
+    "vscode-oniguruma": "^2.0.1",
+    "vscode-textmate": "^9.2.0",
+    "yaml": "latest"
+  }
+}

@@ -1,0 +1,198 @@
+toolbar_html: |
+  <style>
+    #p2p4vs-toolbar {
+      position: fixed;
+      top: 12px;
+      left: 8px;
+      z-index: 9999;
+      display: inline-flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 0;
+      background: transparent;
+      font: 12px -apple-system, Segoe UI, Arial, sans-serif;
+    }
+    .p2p4vs-menubar {
+      position: relative;
+      display: inline-flex;
+      gap: 4px;
+      background: rgba(210,210,210,.95);
+      border: 1px solid #bbb;
+      border-radius: 10px;
+      padding: 14px 3px 3px 3px; /* top padding reserves space for grip */
+      box-shadow: 0 4px 12px rgba(0,0,0,.15);
+    }
+    .p2p4vs-grip {
+      position: absolute;
+      top: 2px;
+      left: 0;
+      right: 0;
+      height: 12px;
+      border-top-left-radius: 10px;
+      border-top-right-radius: 10px;
+      cursor: ew-resize;
+      z-index: 10;
+      background:
+        radial-gradient(circle at 3px 3px, rgba(120,120,120,.6) 1px, transparent 1px) 0 0 / 6px 6px,
+        radial-gradient(circle at 0px 3px, rgba(120,120,120,.6) 1px, transparent 1px) 3px 0 / 6px 6px;
+    }
+    #p2p4vs-toolbar.dragging { user-select: none; }
+    .p2p4vs-btn {
+      border: 1px solid #d0d0d0;
+      background: #f7f7f7;
+      color: #333;
+      border-radius: 6px;
+      cursor: pointer;
+      width: 32px;
+      height: 32px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      line-height: 1;
+      font-size: 18px;
+      padding: 0;
+    }
+    .p2p4vs-btn:hover { background: #e9e9e9; }
+    .p2p4vs-dd {
+      position: absolute;
+      background: #222;
+      color: #fff;
+      border-radius: 6px;
+      box-shadow: 0 6px 18px rgba(0,0,0,.3);
+      padding: 4px 0;
+      display: none;
+      min-width: 220px;
+    }
+    .p2p4vs-dd .item { padding: 6px 10px; cursor: pointer; white-space: nowrap; }
+    .p2p4vs-dd .item:hover, .p2p4vs-dd .item.active { background: #444; }
+    /* Fixed gutter for checkmark so items don't shift width */
+    .p2p4vs-dd .item::before { content: "\00A0"; display: inline-block; width: 1em; margin-right: 6px; }
+    .p2p4vs-dd .item.active::before { content: "✓"; }
+    .p2p4vs-group { position: relative; }
+  </style>
+  <div id="p2p4vs-toolbar">
+    <div class="p2p4vs-menubar">
+    <div class="p2p4vs-grip" id="p2p4vs-grip" title="Click and hold to drag left and right"></div>
+    <div class="p2p4vs-group" id="grp-print">
+      <button class="p2p4vs-btn p2p4vs-dd-btn" id="btn-print" data-kind="print" data-target="dd-print" data-group="grp-print" title="Print">🖨</button>
+      <div class="p2p4vs-dd" id="dd-print">
+        <div class="item" data-print="preview">Print with Preview</div>
+        <div class="item" data-print="direct">Print</div>
+        <div class="item" data-print="save">Save as PDF</div>
+      </div>
+    </div>
+    <div class="p2p4vs-group" id="grp-theme">
+      <button class="p2p4vs-btn p2p4vs-dd-btn" id="btn-theme" data-kind="theme" data-target="dd-theme" data-group="grp-theme" title="Theme">🎨</button>
+      <div class="p2p4vs-dd" id="dd-theme">
+        {{THEMES}}
+      </div>
+    </div>
+    <div class="p2p4vs-group" id="grp-text">
+      <button class="p2p4vs-btn p2p4vs-dd-btn" id="btn-text" data-kind="text" data-target="dd-text" data-group="grp-text" title="Text" style="font-size:20px">Tt</button>
+      <div class="p2p4vs-dd" id="dd-text">
+        {{TEXT_SIZES}}
+      </div>
+    </div>
+    <div class="p2p4vs-group" id="grp-history">
+      <button class="p2p4vs-btn p2p4vs-dd-btn" id="btn-history" data-kind="history" data-target="dd-history" data-group="grp-history" title="History">📄</button>
+      <div class="p2p4vs-dd" id="dd-history">
+        {{HISTORY_ITEMS}}
+      </div>
+    </div>
+    </div>
+  </div>
+  <script>
+    const vscode = acquireVsCodeApi();
+    const toolbar = document.getElementById('p2p4vs-toolbar');
+    const drag = document.getElementById('p2p4vs-grip');
+    const ddPrint = document.getElementById('dd-print');
+    const ddTheme = document.getElementById('dd-theme');
+    const ddText = document.getElementById('dd-text');
+    const ddHistory = document.getElementById('dd-history');
+
+    function hideAll(){ ddPrint.style.display='none'; ddTheme.style.display='none'; ddText.style.display='none'; ddHistory.style.display='none'; }
+
+    // Restore toolbar left position
+    (function(){
+      try {
+        const state = vscode.getState() || {};
+        if (typeof state.toolbarLeft === 'number') {
+          const maxLeft = Math.max(8, window.innerWidth - toolbar.offsetWidth - 8);
+          const clamped = Math.min(Math.max(8, state.toolbarLeft), maxLeft);
+          toolbar.style.left = clamped + 'px';
+        }
+      } catch {}
+    })();
+    window.addEventListener('resize', ()=>{
+      const left = parseFloat(getComputedStyle(toolbar).left || '8');
+      const maxLeft = Math.max(8, window.innerWidth - toolbar.offsetWidth - 8);
+      toolbar.style.left = Math.min(left, maxLeft) + 'px';
+    });
+    let dragging = false; let startX = 0; let startLeft = 0;
+    drag.addEventListener('mousedown', (e)=>{
+      dragging = true; startX = e.clientX; startLeft = parseFloat(getComputedStyle(toolbar).left || '8'); e.preventDefault();
+      toolbar.classList.add('dragging');
+    });
+    document.addEventListener('mousemove', (e)=>{
+      if (!dragging) return; if (e.buttons === 0) { endDrag(); return; }
+      const dx = e.clientX - startX;
+      const maxLeft = Math.max(8, window.innerWidth - toolbar.offsetWidth - 8);
+      const newLeft = Math.min(Math.max(8, startLeft + dx), maxLeft);
+      toolbar.style.left = newLeft + 'px';
+    });
+    function endDrag(){
+      if (!dragging) return; dragging = false; toolbar.classList.remove('dragging');
+      // clamp to bounds; if out of window, pin to closest side
+      const left = parseFloat(getComputedStyle(toolbar).left || '8');
+      const maxLeft = Math.max(8, window.innerWidth - toolbar.offsetWidth - 8);
+      let pinned = left;
+      if (left < 8) pinned = 8;
+      if (left > maxLeft) pinned = maxLeft;
+      toolbar.style.left = pinned + 'px';
+      try { vscode.setState({ ...(vscode.getState()||{}), toolbarLeft: pinned }); } catch {}
+    }
+    document.addEventListener('mouseup', endDrag);
+    window.addEventListener('mouseleave', endDrag);
+    document.addEventListener('pointerup', endDrag);
+    document.addEventListener('pointercancel', endDrag);
+    window.addEventListener('blur', endDrag);
+
+    document.querySelectorAll('.p2p4vs-dd-btn').forEach(btn=>{
+      btn.addEventListener('click', (e)=>{
+        e.stopPropagation();
+        const targetId = btn.getAttribute('data-target');
+        const groupId = btn.getAttribute('data-group');
+        const kind = btn.getAttribute('data-kind');
+        const dd = document.getElementById(targetId);
+        const grp = document.getElementById(groupId);
+        const shown = dd.style.display==='block'; hideAll(); dd.style.display = shown?'none':'block';
+        const r = grp.getBoundingClientRect(); dd.style.top = (r.height+4)+'px'; dd.style.left = '0px';
+        if(kind==='theme') updateMenu('theme','{{THEME_INIT}}');
+        if(kind==='text') updateMenu('text','{{SIZE_INIT}}');
+      });
+    });
+
+    document.addEventListener('click', (e)=>{
+      const t = e.target && typeof e.target.closest==='function' ? e.target.closest('.p2p4vs-dd .item') : null;
+      if(!t) return;
+      hideAll();
+      const p = t.getAttribute('data-print');
+      const a = t.getAttribute('data-action');
+      if (p){ vscode.postMessage({ type:'print', value:p}); return; }
+      if (a){ vscode.postMessage({ type:'menu', value:a}); }
+      const h = t.getAttribute('data-history');
+      if (h){ vscode.postMessage({ type:'history_open', value:h}); }
+    });
+    document.addEventListener('click', ()=> hideAll());
+
+    function updateMenu(kind, state){
+      const dd = kind==='theme' ? ddTheme : ddText;
+      dd.querySelectorAll('.item[data-action]').forEach(el=>{
+        const a = el.getAttribute('data-action');
+        const isActive = kind==='theme' ? (a==='theme-'+state) : (a==='text-size-'+state);
+        el.classList.toggle('active', isActive);
+        // Do not mutate text; CSS ::before renders checkmark gutter
+      });
+    }
+  </script>
+

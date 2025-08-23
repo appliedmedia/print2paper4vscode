@@ -1,0 +1,22 @@
+stylize_html: |
+  <!DOCTYPE html>
+  <html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="color-scheme" content="light dark">
+    <style>
+      body { margin: 24px; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace; }
+      /* Collapse whitespace between .line nodes, preserve spaces within each line */
+      pre { white-space: pre; word-wrap: normal; margin: 0; }
+      code { font-size: {{FONTSIZE_PX}}px; display:block; margin:0; white-space: normal; }
+      pre.shiki code { line-height: {{LINEHEIGHT_PX}}px; }
+      pre.shiki .line { display: block; line-height: {{LINEHEIGHT_PX}}px; min-height: {{LINEHEIGHT_PX}}px; margin: 0; padding: 0; white-space: pre; }
+    </style>
+    <title>{{VAR_TITLE}}</title>
+  </head>
+  <body>
+  {{CODE}}
+  </body>
+  </html>
+
+
