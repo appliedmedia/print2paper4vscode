@@ -1,6 +1,6 @@
 import { describe, it, beforeEach, afterEach } from 'node:test';
 import assert from 'node:assert';
-import { Stylize } from '../Stylize.js';
+import { Stylize } from '../src/Stylize.js';
 
 describe('Stylize', () => {
     let stylize: Stylize;
