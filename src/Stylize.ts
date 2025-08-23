@@ -1,21 +1,13 @@
-import type { App } from './App';
-
-type ShikiHighlighterLike = {
-    getTheme?: () => string;
-    loadTheme?: (theme: unknown) => Promise<void>;
-    setTheme?: (theme: unknown) => void;
-    codeToHtml: (code: string, options: { lang: string; theme?: unknown }) => string;
-};
-
-type ShikiModuleLike = {
-    getHighlighter: (options: { theme: unknown }) => Promise<ShikiHighlighterLike>;
-};
-
-let shikiMod: ShikiModuleLike | undefined;
+import type { App } from './App.js';
+import { getHighlighter, type Theme, type Lang, type Highlighter } from 'shiki';
+import { all as allThemes } from 'shiki/langs';
 
 export class Stylize {
     private app: App;
-    private highlighter: ShikiHighlighterLike | undefined;
+    private shikiStyler: Highlighter | undefined;
+    private vscodeThemeStyler: Highlighter | undefined;
+    private availableShikiThemes: Theme[] = [];
+    private loadedLanguages: Set<Lang> = new Set();
 
     constructor(app: App) {
         this.app = app;
