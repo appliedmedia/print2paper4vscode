@@ -73,30 +73,30 @@ toolbar_html: |
   <div id="p2p4vs-toolbar">
     <div class="p2p4vs-menubar">
     <div class="p2p4vs-grip" id="p2p4vs-grip" title="Click and hold to drag left and right"></div>
-    <div class="p2p4vs-group" id="grp-print">
-      <button class="p2p4vs-btn p2p4vs-dd-btn" id="btn-print" data-kind="print" data-target="dd-print" data-group="grp-print" title="Print">🖨</button>
-      <div class="p2p4vs-dd" id="dd-print">
+    <div class="p2p4vs-group" id="grp-menuPrint">
+      <button class="p2p4vs-btn p2p4vs-dd-btn" id="btn-menuPrint" data-kind="print" data-target="dd-menuPrint" data-group="grp-menuPrint" title="Print">🖨</button>
+      <div class="p2p4vs-dd" id="dd-menuPrint">
         <div class="item" data-print="preview">Print with Preview</div>
         <div class="item" data-print="direct">Print</div>
         <div class="item" data-print="save">Save as PDF</div>
       </div>
     </div>
-    <div class="p2p4vs-group" id="grp-theme">
-      <button class="p2p4vs-btn p2p4vs-dd-btn" id="btn-theme" data-kind="theme" data-target="dd-theme" data-group="grp-theme" title="Theme">🎨</button>
-      <div class="p2p4vs-dd" id="dd-theme">
-        {{THEMES}}
+    <div class="p2p4vs-group" id="grp-menuThemes">
+      <button class="p2p4vs-btn p2p4vs-dd-btn" id="btn-menuThemes" data-kind="theme" data-target="dd-menuThemes" data-group="grp-menuThemes" title="Theme">🎨</button>
+      <div class="p2p4vs-dd" id="dd-menuThemes">
+        {{THEME_PICKER_LIST}}
       </div>
     </div>
-    <div class="p2p4vs-group" id="grp-text">
-      <button class="p2p4vs-btn p2p4vs-dd-btn" id="btn-text" data-kind="text" data-target="dd-text" data-group="grp-text" title="Text" style="font-size:20px">Tt</button>
-      <div class="p2p4vs-dd" id="dd-text">
-        {{TEXT_SIZES}}
+    <div class="p2p4vs-group" id="grp-menuText">
+      <button class="p2p4vs-btn p2p4vs-dd-btn" id="btn-menuText" data-kind="text" data-target="dd-menuText" data-group="grp-menuText" title="Text" style="font-size:20px">Tt</button>
+      <div class="p2p4vs-dd" id="dd-menuText">
+        {{TEXT_PICKER_LIST}}
       </div>
     </div>
-    <div class="p2p4vs-group" id="grp-history">
-      <button class="p2p4vs-btn p2p4vs-dd-btn" id="btn-history" data-kind="history" data-target="dd-history" data-group="grp-history" title="History">📄</button>
-      <div class="p2p4vs-dd" id="dd-history">
-        {{HISTORY_ITEMS}}
+    <div class="p2p4vs-group" id="grp-menuHistory">
+      <button class="p2p4vs-btn p2p4vs-dd-btn" id="btn-menuHistory" data-kind="history" data-target="dd-menuHistory" data-group="grp-menuHistory" title="History">📄</button>
+      <div class="p2p4vs-dd" id="dd-menuHistory">
+        {{HISTORY_PICKER_LIST}}
       </div>
     </div>
     </div>
@@ -105,12 +105,12 @@ toolbar_html: |
     const vscode = acquireVsCodeApi();
     const toolbar = document.getElementById('p2p4vs-toolbar');
     const drag = document.getElementById('p2p4vs-grip');
-    const ddPrint = document.getElementById('dd-print');
-    const ddTheme = document.getElementById('dd-theme');
-    const ddText = document.getElementById('dd-text');
-    const ddHistory = document.getElementById('dd-history');
+    const ddMenuPrint = document.getElementById('dd-menuPrint');
+    const ddMenuThemes = document.getElementById('dd-menuThemes');
+    const ddMenuText = document.getElementById('dd-menuText');
+    const ddMenuHistory = document.getElementById('dd-menuHistory');
 
-    function hideAll(){ ddPrint.style.display='none'; ddTheme.style.display='none'; ddText.style.display='none'; ddHistory.style.display='none'; }
+    function hideAll(){ ddMenuPrint.style.display='none'; ddMenuThemes.style.display='none'; ddMenuText.style.display='none'; ddMenuHistory.style.display='none'; }
 
     // Restore toolbar left position
     (function(){
@@ -186,7 +186,7 @@ toolbar_html: |
     document.addEventListener('click', ()=> hideAll());
 
     function updateMenu(kind, state){
-      const dd = kind==='theme' ? ddTheme : ddText;
+      const dd = kind==='theme' ? ddMenuThemes : ddMenuText;
       dd.querySelectorAll('.item[data-action]').forEach(el=>{
         const a = el.getAttribute('data-action');
         const isActive = kind==='theme' ? (a==='theme-'+state) : (a==='text-size-'+state);

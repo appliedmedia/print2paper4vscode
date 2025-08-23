@@ -159,15 +159,15 @@ export class PaperPrinter {
             { id: '18', label: '18 px' },
             { id: '24', label: '24 px' },
         ];
-        const textSizesMarkup = sizeItems.map(s => `<div class="item" data-action="text-size-${s.id}" data-label="${s.label}">${s.label}</div>`).join('\n          ');
+        const textPickerList = sizeItems.map(s => `<div class="item" data-action="text-size-${s.id}" data-label="${s.label}">${s.label}</div>`).join('\n          ');
 
         const doc = this.app.os.readExtensionYaml<{ toolbar_html: string }>('src/PaperPrinter.yaml');
-        const themesMarkup = this.themePickerList.map((t) => {
+        const themePickerList = this.themePickerList.map((t) => {
             const id = t.id;
             const label = t.label;
             return `<div class="item" data-action="theme-${id}" data-label="${label}">${label}</div>`;
         }).join('\n          ');
-        const historyItems = this.app.history.getEntries()
+        const historyPickerList = this.app.history.getEntries()
             .map((p) => {
                 const base = this.app.os.pathBasename(p);
                 return `<div class="item" data-history="${p}" title="${p}">${base}</div>`;
@@ -178,10 +178,10 @@ export class PaperPrinter {
             COLOR_INIT: this.currentColorMode,
             THEME_INIT: this.currentThemeChoice,
             SIZE_INIT: String(this.currentFontSizeMode),
-            THEMES: themesMarkup,
-            TEXT_SIZES: textSizesMarkup,
+            THEME_PICKER_LIST: themePickerList,
+            TEXT_PICKER_LIST: textPickerList,
             EDITOR_PX: String(editorTypo.fontSize),
-            HISTORY_ITEMS: historyItems
+            HISTORY_PICKER_LIST: historyPickerList
         });
         return html.replace('</body>', `${toolbar}</body>`);
     }
