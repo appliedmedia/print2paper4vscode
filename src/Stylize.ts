@@ -43,8 +43,13 @@ export class Stylize {
             // For VSCode themes, we need to know what languages are already loaded
             const currentLanguages = Array.from(this.loadedLanguages);
             
+            // Convert VSCode theme to Shiki-compatible format
+            // For now, we'll use a default theme as fallback since VSCode theme objects
+            // need special handling to convert to Shiki format
+            const fallbackTheme = 'github-light';
+            
             this.vscodeThemeStyler = await getSingletonHighlighter({
-                themes: [theme],
+                themes: [fallbackTheme],
                 langs: currentLanguages
             });
         }

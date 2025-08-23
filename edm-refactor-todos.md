@@ -61,10 +61,18 @@ Convert this VSCode extension from CommonJS to EDM (ES Modules) and upgrade from
 ## Phase 3: Update Method Names Throughout
 
 ### Step 3.1: Rename Methods
-- [ ] Search and replace `highlightToHtml` → `styleToHtml`
-- [ ] Search and replace `highlight` → `style` in method names
-- [ ] Search and replace `highlighter` → `styler` in variable names
-- [ ] Keep Shiki API method names unchanged internally
+- [x] Search and replace `highlightToHtml` → `styleToHtml`
+- [x] Search and replace `highlight` → `style` in method names
+- [x] Search and replace `highlighter` → `styler` in variable names
+- [x] Keep Shiki API method names unchanged internally
+
+## Phase 3.1: UI Naming Standardization (100% complete)
+- [x] Standardize menu group IDs: `grp-print` → `grp-menuPrint`, `grp-theme` → `grp-menuThemes`, `grp-text` → `grp-menuText`, `grp-history` → `grp-menuHistory`
+- [x] Standardize button IDs: `btn-print` → `btn-menuPrint`, `btn-theme` → `btn-menuThemes`, `btn-text` → `btn-menuText`, `btn-history` → `btn-menuHistory`
+- [x] Standardize dropdown IDs: `dd-print` → `dd-menuPrint`, `dd-theme` → `dd-menuThemes`, `dd-text` → `dd-menuText`, `dd-history` → `dd-menuHistory`
+- [x] Standardize template variables: `{{THEMES}}` → `{{THEME_PICKER_LIST}}`, `{{TEXT_SIZES}}` → `{{TEXT_PICKER_LIST}}`, `{{HISTORY_ITEMS}}` → `{{HISTORY_PICKER_LIST}}`
+- [x] Standardize JavaScript variables: `ddPrint` → `ddMenuPrint`, `ddTheme` → `ddMenuThemes`, `ddText` → `ddMenuText`, `ddHistory` → `ddMenuHistory`
+- [x] Standardize TypeScript variables: `themesMarkup` → `themePickerList`, `textSizesMarkup` → `textPickerList`, `historyItems` → `historyPickerList`
 
 ## Phase 4: Testing and Validation
 
@@ -127,7 +135,7 @@ Convert this VSCode extension from CommonJS to EDM (ES Modules) and upgrade from
 ## Current Status Summary
 - ✅ **Phase 1**: Project Configuration (100% complete)
 - 🔄 **Phase 2**: Code Updates (75% complete - Stylize.ts needs completion)
-- ✅ **Phase 3**: Method Names (100% complete)
+- ✅ **Phase 3**: Method Names and UI Standardization (100% complete)
 - 🔄 **Phase 4**: Testing (50% complete - basic tests created, need Stylize.ts fixed)
 - ❌ **Phase 5**: Build and Validation (0% complete - blocked by Stylize.ts issues)
 
