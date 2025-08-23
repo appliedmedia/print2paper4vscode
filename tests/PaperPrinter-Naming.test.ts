@@ -29,6 +29,14 @@ describe('PaperPrinter Variable Naming Standardization', () => {
         assert.ok(tsContent.includes('TEXT_PICKER_LIST: textPickerList'), 'Should pass TEXT_PICKER_LIST to template');
     });
 
+    it('should use standardized variable names for menu picker list', () => {
+        // Check that the variable is named correctly
+        assert.ok(tsContent.includes('const menuPickerList ='), 'Should declare menuPickerList');
+        
+        // Check that template rendering uses correct variable name
+        assert.ok(tsContent.includes('MENU_PICKER_LIST: menuPickerList'), 'Should pass MENU_PICKER_LIST to template');
+    });
+
     it('should use standardized variable names for history picker list', () => {
         // Check that the variable is named correctly
         assert.ok(tsContent.includes('const historyPickerList ='), 'Should declare historyPickerList');
@@ -56,6 +64,7 @@ describe('PaperPrinter Variable Naming Standardization', () => {
     it('should have consistent template variable mapping', () => {
         // Check that all template variables are properly mapped
         const templateVars = [
+            'MENU_PICKER_LIST: menuPickerList',
             'THEME_PICKER_LIST: themePickerList',
             'TEXT_PICKER_LIST: textPickerList', 
             'HISTORY_PICKER_LIST: historyPickerList'

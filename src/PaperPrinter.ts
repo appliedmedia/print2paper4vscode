@@ -150,6 +150,14 @@ export class PaperPrinter {
         // Get all light themes suitable for printing with editor theme at top
         this.themePickerList = this.app.stylize.getThemes('light|bright|day', 'top');
 
+        // Generate print menu items
+        const menuItems = [
+            { id: 'preview', label: 'Print with Preview', action: 'data-print="preview"' },
+            { id: 'direct', label: 'Print', action: 'data-print="direct"' },
+            { id: 'save', label: 'Save as PDF', action: 'data-print="save"' }
+        ];
+        const menuPickerList = menuItems.map(item => `<div class="item" ${item.action}>${item.label}</div>`).join('\n          ');
+
         const sizeItems = [
             { id: 'editor', label: `Editor (${editorTypo.fontSize}px)` },
             { id: '9', label: '9 px' },
@@ -178,6 +186,7 @@ export class PaperPrinter {
             COLOR_INIT: this.currentColorMode,
             THEME_INIT: this.currentThemeChoice,
             SIZE_INIT: String(this.currentFontSizeMode),
+            MENU_PICKER_LIST: menuPickerList,
             THEME_PICKER_LIST: themePickerList,
             TEXT_PICKER_LIST: textPickerList,
             EDITOR_PX: String(editorTypo.fontSize),

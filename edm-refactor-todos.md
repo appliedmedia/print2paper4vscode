@@ -70,9 +70,10 @@ Convert this VSCode extension from CommonJS to EDM (ES Modules) and upgrade from
 - [x] Standardize menu group IDs: `grp-print` → `grp-menuPrint`, `grp-theme` → `grp-menuThemes`, `grp-text` → `grp-menuText`, `grp-history` → `grp-menuHistory`
 - [x] Standardize button IDs: `btn-print` → `btn-menuPrint`, `btn-theme` → `btn-menuThemes`, `btn-text` → `btn-menuText`, `btn-history` → `btn-menuHistory`
 - [x] Standardize dropdown IDs: `dd-print` → `dd-menuPrint`, `dd-theme` → `dd-menuThemes`, `dd-text` → `dd-menuText`, `dd-history` → `dd-menuHistory`
-- [x] Standardize template variables: `{{THEMES}}` → `{{THEME_PICKER_LIST}}`, `{{TEXT_SIZES}}` → `{{TEXT_PICKER_LIST}}`, `{{HISTORY_ITEMS}}` → `{{HISTORY_PICKER_LIST}}`
+- [x] Standardize template variables: Add `{{MENU_PICKER_LIST}}`, `{{THEMES}}` → `{{THEME_PICKER_LIST}}`, `{{TEXT_SIZES}}` → `{{TEXT_PICKER_LIST}}`, `{{HISTORY_ITEMS}}` → `{{HISTORY_PICKER_LIST}}`
 - [x] Standardize JavaScript variables: `ddPrint` → `ddMenuPrint`, `ddTheme` → `ddMenuThemes`, `ddText` → `ddMenuText`, `ddHistory` → `ddMenuHistory`
-- [x] Standardize TypeScript variables: `themesMarkup` → `themePickerList`, `textSizesMarkup` → `textPickerList`, `historyItems` → `historyPickerList`
+- [x] Standardize TypeScript variables: Add `menuPickerList`, `themesMarkup` → `themePickerList`, `textSizesMarkup` → `textPickerList`, `historyItems` → `historyPickerList`
+- [x] Convert hardcoded print menu items to dynamic `menuPickerList` generation
 
 ## Phase 4: Testing and Validation
 

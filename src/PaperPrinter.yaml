@@ -76,9 +76,7 @@ toolbar_html: |
     <div class="p2p4vs-group" id="grp-menuPrint">
       <button class="p2p4vs-btn p2p4vs-dd-btn" id="btn-menuPrint" data-kind="print" data-target="dd-menuPrint" data-group="grp-menuPrint" title="Print">🖨</button>
       <div class="p2p4vs-dd" id="dd-menuPrint">
-        <div class="item" data-print="preview">Print with Preview</div>
-        <div class="item" data-print="direct">Print</div>
-        <div class="item" data-print="save">Save as PDF</div>
+        {{MENU_PICKER_LIST}}
       </div>
     </div>
     <div class="p2p4vs-group" id="grp-menuThemes">

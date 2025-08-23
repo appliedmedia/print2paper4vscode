@@ -36,6 +36,7 @@ describe('UI Naming Standardization', () => {
 
     it('should have standardized template variables', () => {
         // Check that template variables use the standardized naming
+        assert.ok(yamlContent.includes('{{MENU_PICKER_LIST}}'), 'Should have MENU_PICKER_LIST');
         assert.ok(yamlContent.includes('{{THEME_PICKER_LIST}}'), 'Should have THEME_PICKER_LIST');
         assert.ok(yamlContent.includes('{{TEXT_PICKER_LIST}}'), 'Should have TEXT_PICKER_LIST');
         assert.ok(yamlContent.includes('{{HISTORY_PICKER_LIST}}'), 'Should have HISTORY_PICKER_LIST');
