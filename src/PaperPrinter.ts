@@ -150,7 +150,7 @@ export class PaperPrinter {
         // Get all light themes suitable for printing
         this.availableThemes = [
             { id: 'editor', label: `Editor (${editorThemeLabel})`, source: 'vscode' as const },
-            ...this.getPrintableThemes()
+            ...this.getDisplayThemeList()
         ];
 
         const sizeItems = [
@@ -234,6 +234,20 @@ export class PaperPrinter {
         const editorTypo = this.app.vscodeapis.getEditorTypography();
         if (this.currentFontSizeMode === 'editor') return editorTypo.lineHeight;
         return Math.round(fontSize * 1.35);
+    }
+
+    private getDisplayThemeList(): Array<{ id: string; label: string; source: 'shiki' | 'vscode' }> {
+        // Get light themes from Shiki (good for consistent printing)
+        const shikiLightThemes = this.app.stylize.getShikiThemes('light|bright|day');
+        
+        // Get light themes from VSCode (user's installed themes)
+        const vscodeLightThemes = this.app.vscodeapis.getVSCodeThemes('light|bright|day');
+        
+        // Combine them with business logic: Shiki themes first (more reliable for printing)
+        return [
+            ...shikiLightThemes,
+            ...vscodeLightThemes
+        ];
     }
 
     private resolveThemeChoice(id: string): unknown {
