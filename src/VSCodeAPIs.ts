@@ -232,7 +232,7 @@ export class VSCodeAPIs {
         }
 
         // Final fallback: use the first available light theme from Stylize
-        const lightThemes = this.app.stylize.filterThemes('light|bright|day');
+        const lightThemes = this.app.stylize.getShikiThemes('light|bright|day');
         return lightThemes.length > 0 ? lightThemes[0].id : 'github-light';
     }
 

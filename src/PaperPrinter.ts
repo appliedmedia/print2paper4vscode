@@ -148,7 +148,7 @@ export class PaperPrinter {
         const editorThemeLabel = this.app.vscodeapis.getActiveThemeLabel();
         const editorTypo = this.app.vscodeapis.getEditorTypography();
         // Load Shiki themes - only light ones for printing
-        const shikiLightThemes = this.app.stylize.filterThemes('light|bright|day');
+        const shikiLightThemes = this.app.stylize.getShikiThemes('light|bright|day');
         
         // Load VSCode light themes
         const vscodeLightThemes = this.app.vscodeapis.getVSThemes('light|bright|day');

@@ -1,12 +1,9 @@
 import type { App } from './App.js';
-import { createHighlighter, type Highlighter } from 'shiki';
+import { getSingletonHighlighter } from 'shiki';
 
 export class Stylize {
     private app: App;
-    private shikiStyler: Highlighter | undefined;
-    private vscodeThemeStyler: Highlighter | undefined;
     private availableShikiThemes: string[] = [];
-    private loadedLanguages: Set<string> = new Set();
 
     constructor(app: App) {
         this.app = app;
@@ -15,15 +12,6 @@ export class Stylize {
     async init(): Promise<void> {
         // Dynamically get all available themes from Shiki
         this.availableShikiThemes = Object.keys(require('shiki').bundledThemes);
-        
-        // Initialize with first available light theme and no languages (will load as needed)
-        const lightThemes = this.filterThemes('light|bright|day');
-        const initialTheme = lightThemes.length > 0 ? lightThemes[0].id : 'github-light';
-        
-        this.shikiStyler = await createHighlighter({
-            theme: initialTheme,
-            langs: [] // Start with no languages
-        });
     }
 
     async done(): Promise<void> { 
@@ -47,12 +35,12 @@ export class Stylize {
         }
     }
 
-    private async ensureVSCodeTheme(theme: Theme): Promise<void> {
+    private async ensureVSCodeTheme(theme: unknown): Promise<void> {
         if (!this.vscodeThemeStyler || this.vscodeThemeStyler.getTheme() !== theme) {
             // For VSCode themes, we need to know what languages are already loaded
             const currentLanguages = Array.from(this.loadedLanguages);
             
-            this.vscodeThemeStyler = await getHighlighter({
+            this.vscodeThemeStyler = await createHighlighter({
                 theme,
                 langs: currentLanguages
             });
@@ -62,10 +50,10 @@ export class Stylize {
     async styleToHtml(
         code: string,
         languageId: string,
-        themeInput: string | Theme,
+        themeInput: string | unknown,
         opts?: { fontSize?: number; lineHeight?: number; title?: string }
     ): Promise<string> {
-        const lang = languageId as Lang;
+        const lang = languageId;
         
         // Validate and load the specific language we need
         await this.ensureLanguage(lang);
@@ -96,44 +84,45 @@ export class Stylize {
         return page;
     }
 
-    // Return ALL available Shiki themes
-    getAvailableShikiThemes(): Theme[] {
-        return this.availableShikiThemes;
-    }
-
-    // Generic theme filtering using regex on filter string
-    filterThemes(filterString: string): Array<{ id: string; label: string; source: 'shiki' }> {
-        const filterRegex = new RegExp(filterString, 'i');
+    // Get Shiki themes with optional filter
+    getShikiThemes(filter?: string): Array<{ id: string; label: string; source: 'shiki' }> {
+        if (!filter) {
+            // Return all themes
+            return this.availableShikiThemes.map(theme => ({
+                id: theme,
+                label: theme,
+                source: 'shiki' as const
+            }));
+        }
         
+        // Apply filter using regex
+        const filterRegex = new RegExp(filter, 'i');
         return this.availableShikiThemes
-            .filter(theme => {
-                if (!theme.name) return false;
-                return filterRegex.test(theme.name);
-            })
+            .filter(theme => filterRegex.test(theme))
             .map(theme => ({
-                id: theme.name!,
-                label: theme.name!,
+                id: theme,
+                label: theme,
                 source: 'shiki' as const
             }));
     }
 
     // Get currently loaded languages
-    getLoadedLanguages(): Lang[] {
+    getLoadedLanguages(): string[] {
         return Array.from(this.loadedLanguages);
     }
 
     // Check if a specific language is currently loaded
     isLanguageLoaded(languageId: string): boolean {
-        return this.loadedLanguages.has(languageId as Lang);
+        return this.loadedLanguages.has(languageId);
     }
 
     // Validate if a language is supported by Shiki (without loading it)
     async validateLanguageSupport(languageId: string): Promise<boolean> {
         try {
             // Try to create a minimal highlighter with just this language
-            const testHighlighter = await getHighlighter({
+            const testHighlighter = await createHighlighter({
                 theme: 'github-light',
-                langs: [languageId as Lang]
+                langs: [languageId]
             });
             
             // If we get here, the language is supported
