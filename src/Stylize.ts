@@ -31,13 +31,20 @@ export class Stylize {
     }
 
     private async ensureLanguage(lang: string): Promise<void> {
-        if (!this.shikiStyler) throw new Error('Shiki styler not initialized');
-        
         // Check if language is already loaded
         if (!this.loadedLanguages.has(lang)) {
             try {
-                // Load the specific language
-                await this.shikiStyler.loadLanguage(lang);
+                // In Shiki v3, we need to create a new highlighter with the additional language
+                // Get current languages and add the new one
+                const currentLanguages = Array.from(this.loadedLanguages);
+                const newLanguages = [...currentLanguages, lang];
+                
+                // Recreate the highlighter with the new language
+                this.shikiStyler = await getSingletonHighlighter({
+                    themes: this.shikiStyler ? [this.shikiStyler.getTheme()] : ['github-light'],
+                    langs: newLanguages
+                });
+                
                 this.loadedLanguages.add(lang);
             } catch (error) {
                 throw new Error(`Failed to load language '${lang}': ${error instanceof Error ? error.message : String(error)}`);
@@ -50,9 +57,10 @@ export class Stylize {
             // For VSCode themes, we need to know what languages are already loaded
             const currentLanguages = Array.from(this.loadedLanguages);
             
-            // Convert VSCode theme to Shiki-compatible format
-            // For now, we'll use a default theme as fallback since VSCode theme objects
-            // need special handling to convert to Shiki format
+            // TODO: Implement proper VSCode theme object conversion to Shiki format
+            // For now, we'll use a default theme as fallback
+            // The proper implementation would parse the VSCode theme JSON and convert
+            // color tokens to Shiki's expected format
             const fallbackTheme = 'github-light';
             
             this.vscodeThemeStyler = await getSingletonHighlighter({
@@ -77,12 +85,13 @@ export class Stylize {
             
             this.shikiStyler = await getSingletonHighlighter({
                 themes: [initialTheme],
-                langs: []
+                langs: [lang] // Start with the language we need
             });
+            this.loadedLanguages.add(lang);
+        } else {
+            // Ensure the specific language is loaded
+            await this.ensureLanguage(lang);
         }
-        
-        // Validate and load the specific language we need
-        await this.ensureLanguage(lang);
         
         let html: string;
 
