@@ -176,6 +176,19 @@ export class VSCodeAPIs {
     }
 
     /**
+     * Opens a file by path
+     */
+    async openFile(filePath: string): Promise<void> {
+        try {
+            const documentUri = vscode.Uri.file(filePath);
+            const document = await vscode.workspace.openTextDocument(documentUri);
+            await vscode.window.showTextDocument(document);
+        } catch (error) {
+            this.app.ui.debugOut(`Failed to open file: ${filePath}`, 'error', 'VSCodeAPIs', error);
+        }
+    }
+
+    /**
      * Create and show a Webview panel with provided HTML
      */
     createWebviewPanel(title: string, htmlContent: string): vscode.WebviewPanel {

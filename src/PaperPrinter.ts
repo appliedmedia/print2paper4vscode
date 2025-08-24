@@ -14,6 +14,12 @@ export class PaperPrinter {
     private themePickerList: Array<{ id: string; label: string; source: 'shiki' | 'vscode' }> = [];
     private currentFontSizeMode: 'editor' | 9 | 10 | 12 | 14 | 18 | 24 = 'editor';
 
+    // UIMenu system methods - follow naming convention
+    private generatePickerList_Print!: () => string;
+    private generatePickerList_Text!: () => string;
+    private generatePickerList_Themes!: () => string;
+    private generatePickerList_History!: () => string;
+
     constructor(app: App) {
         this.app = app;
         this.clipboardCapture = new ClipboardCapture(app);
@@ -158,14 +164,14 @@ export class PaperPrinter {
             }).join('\n          ');
         };
 
-        // Generate all picker lists using the generic function
-        const printPickerList = generatePickerList([
+        // Required methods for UIMenu system - follow naming convention
+        this.generatePickerList_Print = () => generatePickerList([
             { id: 'preview', label: 'Print with Preview', attributes: { 'data-print': 'preview' } },
             { id: 'direct', label: 'Print', attributes: { 'data-print': 'direct' } },
             { id: 'save', label: 'Save as PDF', attributes: { 'data-print': 'save' } }
         ]);
 
-        const textPickerList = generatePickerList([
+        this.generatePickerList_Text = () => generatePickerList([
             { id: 'editor', label: `Editor (${editorTypo.fontSize}px)`, attributes: { 'data-action': 'text-size-editor', 'data-label': `Editor (${editorTypo.fontSize}px)` } },
             { id: '9', label: '9 px', attributes: { 'data-action': 'text-size-9', 'data-label': '9 px' } },
             { id: '10', label: '10 px', attributes: { 'data-action': 'text-size-10', 'data-label': '10 px' } },
@@ -175,7 +181,7 @@ export class PaperPrinter {
             { id: '24', label: '24 px', attributes: { 'data-action': 'text-size-24', 'data-label': '24 px' } }
         ]);
 
-        const themesPickerList = generatePickerList(
+        this.generatePickerList_Themes = () => generatePickerList(
             this.themePickerList.map(t => ({
                 id: t.id,
                 label: t.label,
@@ -183,7 +189,7 @@ export class PaperPrinter {
             }))
         );
 
-        const historyPickerList = generatePickerList(
+        this.generatePickerList_History = () => generatePickerList(
             this.app.history.getEntries().map(p => {
                 const base = this.app.os.pathBasename(p);
                 return {
@@ -194,19 +200,67 @@ export class PaperPrinter {
             })
         );
 
-        const doc = this.app.os.readExtensionYaml<{ toolbar_html: string }>('src/PaperPrinter.yaml');
 
+
+
+
+
+
+        const doc = this.app.os.readExtensionYaml<{ toolbar_html: string }>('src/PaperPrinter.yaml');
+        const templateMappings = this.app.uimenu.getTemplateVariableMappings();
+        
         const toolbar = this.app.templateDictReplace(doc.toolbar_html, {
             COLOR_INIT: this.currentColorMode,
             THEME_INIT: this.currentThemeChoice,
             SIZE_INIT: String(this.currentFontSizeMode),
-            PRINT_PICKER_LIST: printPickerList,
-            THEMES_PICKER_LIST: themesPickerList,
-            TEXT_PICKER_LIST: textPickerList,
             EDITOR_PX: String(editorTypo.fontSize),
-            HISTORY_PICKER_LIST: historyPickerList
+            ...templateMappings
         });
         return html.replace('</body>', `${toolbar}</body>`);
+    }
+
+    // Required pick handler methods for UIMenu system - follow naming convention
+    private handlePick_Print(selectedId: string): void {
+        // Handle print menu selection
+        switch (selectedId) {
+            case 'preview':
+                // Handle print preview
+                break;
+            case 'direct':
+                // Handle direct print
+                break;
+            case 'save':
+                // Handle save as PDF
+                break;
+        }
+    }
+
+    private handlePick_Text(selectedId: string): void {
+        // Handle text size selection
+        if (selectedId === 'editor') {
+            this.currentFontSizeMode = 'editor';
+        } else {
+            const size = parseInt(selectedId);
+            if (!isNaN(size)) {
+                this.currentFontSizeMode = size as 9 | 10 | 12 | 14 | 18 | 24;
+            }
+        }
+    }
+
+    private handlePick_Themes(selectedId: string): void {
+        // Handle theme selection
+        this.currentThemeChoice = selectedId;
+    }
+
+    private handlePick_History(selectedId: string): void {
+        // Handle history selection
+        const historyEntry = this.app.history.getEntries().find(p => 
+            this.app.os.pathBasename(p) === selectedId
+        );
+        if (historyEntry) {
+            // Open the history entry
+            this.app.vscodeapis.openFile(historyEntry);
+        }
     }
 
     private async applyRenderModes(htmlBase: string): Promise<string> {

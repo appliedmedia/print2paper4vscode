@@ -8,10 +8,15 @@ export interface UIMenuItem {
 
 export class UIMenu {
     constructor(
-        private id: string,
-        private icon: string,
-        private title: string
+        private _id: string,
+        private _icon: string,
+        private _title: string
     ) {}
+
+    // Getters for private properties
+    get id(): string { return this._id; }
+    get icon(): string { return this._icon; }
+    get title(): string { return this._title; }
 
     // Get the picker element ID for JavaScript
     getPickerId(): string {

@@ -10,42 +10,39 @@ describe('PaperPrinter Variable Naming Standardization', () => {
     const tsPath = join(process.cwd(), 'src', 'PaperPrinter.ts');
     tsContent = readFileSync(tsPath, 'utf-8');
 
-    it('should use standardized variable names for theme picker list', () => {
+    it('should use UIMenu system for theme picker list', () => {
         // Check that the property is named correctly
         assert.ok(tsContent.includes('private themePickerList:'), 'Should have themePickerList property');
         
         // Check that the variable is named correctly
         assert.ok(tsContent.includes('this.themePickerList ='), 'Should assign to themePickerList');
         
-        // Check that template rendering uses correct variable name
-        assert.ok(tsContent.includes('THEMES_PICKER_LIST: themesPickerList'), 'Should pass THEMES_PICKER_LIST to template');
+        // Check that it uses UIMenu system
+        assert.ok(tsContent.includes('this.app.uimenu.getTemplateVariableMappings()'), 'Should use UIMenu system');
     });
 
-    it('should use standardized variable names for text picker list', () => {
-        // Check that the variable is named correctly
-        assert.ok(tsContent.includes('const textPickerList ='), 'Should declare textPickerList');
+    it('should use UIMenu system for text picker list', () => {
+        // Check that it uses UIMenu system
+        assert.ok(tsContent.includes('this.app.uimenu.getTemplateVariableMappings()'), 'Should use UIMenu system');
         
-        // Check that template rendering uses correct variable name
-        assert.ok(tsContent.includes('TEXT_PICKER_LIST: textPickerList'), 'Should pass TEXT_PICKER_LIST to template');
+        // Check that the method exists
+        assert.ok(tsContent.includes('private generatePickerList_Text!'), 'Should have generatePickerList_Text method');
     });
 
-    it('should use generic picker list generator', () => {
-        // Check that the generic function exists
-        assert.ok(tsContent.includes('const generatePickerList ='), 'Should have generatePickerList function');
-        
-        // Check that it's used for all picker lists
-        assert.ok(tsContent.includes('const printPickerList = generatePickerList('), 'Should use generatePickerList for print');
-        assert.ok(tsContent.includes('const textPickerList = generatePickerList('), 'Should use generatePickerList for text');
-        assert.ok(tsContent.includes('const themesPickerList = generatePickerList('), 'Should use generatePickerList for themes');
-        assert.ok(tsContent.includes('const historyPickerList = generatePickerList('), 'Should use generatePickerList for history');
+    it('should use UIMenu system with proper method naming', () => {
+        // Check that the UIMenu methods exist
+        assert.ok(tsContent.includes('private generatePickerList_Print!'), 'Should have generatePickerList_Print method');
+        assert.ok(tsContent.includes('private generatePickerList_Text!'), 'Should have generatePickerList_Text method');
+        assert.ok(tsContent.includes('private generatePickerList_Themes!'), 'Should have generatePickerList_Themes method');
+        assert.ok(tsContent.includes('private generatePickerList_History!'), 'Should have generatePickerList_History method');
     });
 
-    it('should use standardized variable names for history picker list', () => {
-        // Check that the variable is named correctly
-        assert.ok(tsContent.includes('const historyPickerList ='), 'Should declare historyPickerList');
+    it('should use UIMenu system for history picker list', () => {
+        // Check that it uses UIMenu system
+        assert.ok(tsContent.includes('this.app.uimenu.getTemplateVariableMappings()'), 'Should use UIMenu system');
         
-        // Check that template rendering uses correct variable name
-        assert.ok(tsContent.includes('HISTORY_PICKER_LIST: historyPickerList'), 'Should pass HISTORY_PICKER_LIST to template');
+        // Check that the method exists
+        assert.ok(tsContent.includes('private generatePickerList_History!'), 'Should have generatePickerList_History method');
     });
 
     it('should not contain old variable naming conventions', () => {
@@ -64,17 +61,9 @@ describe('PaperPrinter Variable Naming Standardization', () => {
         assert.ok(tsContent.includes("'light|bright|day', 'top'"), 'Should pass correct filter and position');
     });
 
-    it('should have consistent template variable mapping', () => {
-        // Check that all template variables are properly mapped
-        const templateVars = [
-            'PRINT_PICKER_LIST: printPickerList',
-            'THEMES_PICKER_LIST: themesPickerList',
-            'TEXT_PICKER_LIST: textPickerList', 
-            'HISTORY_PICKER_LIST: historyPickerList'
-        ];
-        
-        templateVars.forEach(varMapping => {
-            assert.ok(tsContent.includes(varMapping), `Should have template mapping: ${varMapping}`);
-        });
+    it('should use UIMenu template variable mappings', () => {
+        // Check that it uses UIMenu system for template mappings
+        assert.ok(tsContent.includes('this.app.uimenu.getTemplateVariableMappings()'), 'Should use UIMenu system');
+        assert.ok(tsContent.includes('...templateMappings'), 'Should spread template mappings');
     });
 });
