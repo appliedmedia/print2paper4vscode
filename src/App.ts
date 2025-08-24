@@ -7,6 +7,7 @@ import { Stylize } from './Stylize.js';
 import { TabInspector } from './TabInspector.js';
 import { OS } from './OS.js';
 import { History } from './History.js';
+import { UIMenuManager } from './UIMenuManager.js';
 
 export class App {
     vscodeapis: VSCodeAPIs;
@@ -17,6 +18,7 @@ export class App {
     tabinspector: TabInspector;
     os: OS;
     history: History;
+    uimenu: UIMenuManager;
 
     constructor(context: vscode.ExtensionContext) {
         // Create components - VSCodeAPIs gets context directly
@@ -29,6 +31,7 @@ export class App {
         this.os = OS.create(this);
         const HISTORY_SIZE = 20;
         this.history = new History(this, HISTORY_SIZE);
+        this.uimenu = new UIMenuManager(this);
     }
 
     init(): void {
@@ -41,6 +44,7 @@ export class App {
         this.paperprinter.init();
         this.stylize.init();
         this.tabinspector.init();
+        this.uimenu.validateRequiredMethods(); // Validate menu methods exist
         
         this.ui.debugOut('App initialized successfully', 'info', 'App');
     }
@@ -54,6 +58,7 @@ export class App {
         this.stylize.done();
         this.os.done();
         this.history.done();
+        this.uimenu = undefined as any;
         this.ui.done();
         
         this.ui.debugOut('App cleanup completed', 'info', 'App');
