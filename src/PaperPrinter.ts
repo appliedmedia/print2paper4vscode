@@ -196,7 +196,7 @@ export class PaperPrinter {
 
         const doc = this.app.os.readExtensionYaml<{ toolbar_html: string }>('src/PaperPrinter.yaml');
 
-        const toolbar = this.app.os.renderTemplate(doc.toolbar_html, {
+        const toolbar = this.app.templateDictReplace(doc.toolbar_html, {
             COLOR_INIT: this.currentColorMode,
             THEME_INIT: this.currentThemeChoice,
             SIZE_INIT: String(this.currentFontSizeMode),

@@ -58,4 +58,17 @@ export class App {
         
         this.ui.debugOut('App cleanup completed', 'info', 'App');
     }
+
+    /**
+     * Generic template replacement function
+     * Replaces all {{key}} placeholders in source text with values from dictionary
+     * @param source - The source text containing {{key}} placeholders
+     * @param dictionary - Key-value pairs for replacement
+     * @returns The source text with all placeholders replaced
+     */
+    templateDictReplace(source: string, dictionary: Record<string, string>): string {
+        return source.replace(/\{\{(\w+)\}\}/g, (match, key) => {
+            return dictionary[key] || match; // Return original if key not found
+        });
+    }
 }

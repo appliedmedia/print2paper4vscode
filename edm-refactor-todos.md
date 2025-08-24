@@ -76,6 +76,13 @@ Convert this VSCode extension from CommonJS to EDM (ES Modules) and upgrade from
 - [x] Convert all hardcoded menu items to use the generic picker list generator
 - [x] Consistent attribute handling across all picker types
 
+## Phase 3.2: Centralized Template System (100% complete)
+- [x] **Centralized Template Replacement**: Add `templateDictReplace()` method to App class
+- [x] **Remove Duplicate Code**: Remove `renderTemplate()` from OS.ts (no longer needed)
+- [x] **Update All Usage**: Convert PaperPrinter.ts and Stylize.ts to use centralized method
+- [x] **Test Coverage**: Create comprehensive tests for templateDictReplace functionality
+- [x] **Consistent API**: All template rendering now goes through App.templateDictReplace()
+
 ## Phase 4: Testing and Validation
 
 ### Step 4.1: Create Test Suite 🔄 (IN PROGRESS)

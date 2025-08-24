@@ -109,14 +109,7 @@ export abstract class OS {
 		}
 	}
 
-	renderTemplate(template: string, vars: Record<string, string>): string {
-		let out = template;
-		for (const [key, value] of Object.entries(vars)) {
-			const re = new RegExp(`\\{\\{${key}\\}\\}`, 'g');
-			out = out.replace(re, value);
-		}
-		return out;
-	}
+
 
 	readExtensionYaml<T = unknown>(relativePath: string): T {
 		if (!this.extensionRoot) throw new Error('OS.extensionRoot not set');

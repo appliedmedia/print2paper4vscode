@@ -6,10 +6,11 @@
         "outDir": "out",
         "lib": ["ES2022", "DOM"],
         "sourceMap": true,
-        "rootDir": "src",
+
         "strict": true,
         "skipLibCheck": true,
         "resolveJsonModule": true
     },
-    "exclude": ["node_modules", ".vscode-test", "tests"]
+    "include": ["src/**/*", "tests/**/*"],
+    "exclude": ["node_modules", ".vscode-test"]
 }

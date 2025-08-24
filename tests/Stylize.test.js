@@ -11,7 +11,7 @@ describe('Stylize', () => {
             },
             os: {
                 readExtensionYaml: () => ({ stylize_html: '<pre>{{CODE}}</pre>' }),
-                renderTemplate: (template, vars) => template.replace(/\{\{(\w+)\}\}/g, (_, key) => vars[key] || '')
+                templateDictReplace: (source, dictionary) => source.replace(/\{\{(\w+)\}\}/g, (match, key) => dictionary[key] || match)
             }
         };
         stylize = new Stylize(mockApp);

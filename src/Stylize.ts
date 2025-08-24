@@ -14,7 +14,14 @@ export class Stylize {
 
     async init(): Promise<void> {
         // Dynamically get all available themes from Shiki
-        this.availableShikiThemes = Object.keys(require('shiki').bundledThemes);
+        try {
+            const shiki = await import('shiki');
+            this.availableShikiThemes = Object.keys(shiki.bundledThemes);
+        } catch (error) {
+            // Fallback to empty array if Shiki is not available
+            this.availableShikiThemes = [];
+            this.app.ui.debugOut('Failed to load Shiki themes', 'warn', 'Stylize', error);
+        }
     }
 
     async done(): Promise<void> { 
@@ -94,7 +101,7 @@ export class Stylize {
         const fontSize = typeof opts?.fontSize === 'number' ? opts.fontSize : editorTypo.fontSize;
         const lineHeight = typeof opts?.lineHeight === 'number' ? opts.lineHeight : editorTypo.lineHeight;
         const tpl = this.app.os.readExtensionYaml<{ stylize_html: string }>('src/Stylize.yaml');
-        const page = this.app.os.renderTemplate(tpl.stylize_html, {
+        const page = this.app.templateDictReplace(tpl.stylize_html, {
             FONTSIZE_PX: String(fontSize),
             LINEHEIGHT_PX: String(lineHeight),
             CODE: html,

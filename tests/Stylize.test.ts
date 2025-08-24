@@ -1,27 +1,36 @@
-import { describe, it, beforeEach, afterEach } from 'node:test';
-import assert from 'node:assert';
+import { describe, it } from 'node:test';
+import * as assert from 'node:assert';
 import { Stylize } from '../src/Stylize.js';
 
 describe('Stylize', () => {
     let stylize: Stylize;
     let mockApp: any;
 
-    beforeEach(() => {
-        mockApp = {
-            vscodeapis: {
-                getEditorTypography: () => ({ fontSize: 14, lineHeight: 20 })
-            },
-            os: {
-                readExtensionYaml: () => ({ stylize_html: '<pre>{{CODE}}</pre>' }),
-                renderTemplate: (template: string, vars: any) => template.replace(/\{\{(\w+)\}\}/g, (_, key) => vars[key] || '')
+    // Mock app for testing
+    mockApp = {
+        vscodeapis: {
+            getEditorTypography: () => ({ fontSize: 14, lineHeight: 20 }),
+            getActiveThemeLabel: () => 'Editor Theme', // Added for getThemes
+            getVSCodeThemes: (filter?: string) => { // Mock for getVSCodeThemes
+                const allVSThemes = [ // Mock data for VSCode themes
+                    { id: 'vs-light', label: 'VS Light', source: 'vscode' as const },
+                    { id: 'vs-dark', label: 'VS Dark', source: 'vscode' as const },
+                    { id: 'another-light', label: 'Another Light Theme', source: 'vscode' as const },
+                ];
+                
+                if (filter) {
+                    const filterRegex = new RegExp(filter, 'i');
+                    return allVSThemes.filter(theme => filterRegex.test(theme.label));
+                }
+                return allVSThemes;
             }
-        };
-        stylize = new Stylize(mockApp);
-    });
-
-    afterEach(async () => {
-        await stylize.done();
-    });
+        },
+        os: {
+            readExtensionYaml: () => ({ stylize_html: '<pre>{{CODE}}</pre>' }),
+            templateDictReplace: (source: string, dictionary: Record<string, string>) => source.replace(/\{\{(\w+)\}\}/g, (match, key) => dictionary[key] || match)
+        }
+    };
+    stylize = new Stylize(mockApp);
 
     it('should initialize with available Shiki themes', async () => {
         await stylize.init();
