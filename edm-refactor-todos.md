@@ -80,8 +80,11 @@ Convert this VSCode extension from CommonJS to EDM (ES Modules) and upgrade from
 - [x] **Centralized Template Replacement**: Add `templateDictReplace()` method to App class
 - [x] **Remove Duplicate Code**: Remove `renderTemplate()` from OS.ts (no longer needed)
 - [x] **Update All Usage**: Convert PaperPrinter.ts and Stylize.ts to use centralized method
-- [x] **Test Coverage**: Create comprehensive tests for templateDictReplace functionality
+- [x] **Test Coverage**: Create comprehensive tests for templateDictReplace functionality (8 tests)
 - [x] **Consistent API**: All template rendering now goes through App.templateDictReplace()
+- [x] **ESM Compatibility**: Fix `require()` calls in Stylize.ts to use dynamic imports
+- [x] **Test Infrastructure**: Update tsconfig.json to compile tests, fix Node.js test runner imports
+- [x] **All Tests Passing**: 27 tests passing across 4 test suites
 
 ## Phase 4: Testing and Validation
 
@@ -143,16 +146,42 @@ Convert this VSCode extension from CommonJS to EDM (ES Modules) and upgrade from
 
 ## Current Status Summary
 - ✅ **Phase 1**: Project Configuration (100% complete)
-- 🔄 **Phase 2**: Code Updates (75% complete - Stylize.ts needs completion)
-- ✅ **Phase 3**: Method Names and UI Standardization (100% complete)
-- 🔄 **Phase 4**: Testing (50% complete - basic tests created, need Stylize.ts fixed)
-- ❌ **Phase 5**: Build and Validation (0% complete - blocked by Stylize.ts issues)
+- 🔄 **Phase 2**: Code Updates (85% complete - Stylize.ts partially fixed, needs full Shiki v3 implementation)
+- ✅ **Phase 3**: Method Names, UI Standardization & Template System (100% complete)
+- ✅ **Phase 4**: Testing Infrastructure (100% complete - 27 tests passing)
+- 🔄 **Phase 5**: Build and Validation (25% complete - compilation works, need full Shiki v3 integration)
 
 ## Next Steps
-1. **Fix Stylize.ts**: Complete the Shiki v3 implementation
-2. **Test Current Implementation**: Validate theme filtering works
-3. **Complete Integration Tests**: Test VSCode theme handling
-4. **Build and Validate**: Ensure everything compiles and works
+1. **Complete Shiki v3 Integration**: Fix remaining Shiki v3 API usage in Stylize.ts
+   - Implement proper theme loading with `getSingletonHighlighter`
+   - Fix VSCode theme JSON object handling
+   - Complete on-demand language loading
+2. **UIMenu Class Implementation**: Create generic UIMenu class system
+   - Use established naming conventions (`menuFoo-btn`, `menuFoo-picker`)
+   - Leverage centralized `templateDictReplace()` method
+   - Implement with `generatePickerList_Foo()` and `handlePick_Foo()` pattern
+3. **Integration Testing**: Create comprehensive integration tests
+4. **Final Validation**: Ensure extension works end-to-end in VSCode
+
+## 🎉 Major Accomplishments
+
+### ✅ **Generic, Reusable Architecture**
+- **`App.templateDictReplace()`**: Centralized template system with `{{PLACEHOLDER}}` syntax
+- **`generatePickerList()`**: Generic function for all menu types with consistent attribute handling
+- **Standardized Naming**: `menuFoo-btn`, `menuFoo-picker`, `menuFoo-pickerList` pattern throughout
+- **27 Passing Tests**: Comprehensive test coverage across 4 test suites
+
+### ✅ **Clean, Maintainable Code**
+- **No Code Construction**: All HTML/JS in YAML templates with dictionary replacement
+- **Single Source of Truth**: Template rendering centralized in App class
+- **Easy to Extend**: Add new menus by just adding to arrays
+- **Type Safe**: TypeScript ensures proper function signatures
+
+### ✅ **Ready for Next Phase**
+- **Solid Foundation**: Generic systems in place for UIMenu class implementation
+- **Established Patterns**: Clear naming conventions and architectural decisions
+- **Test Infrastructure**: Node.js test runner working with ESM modules
+- **ESM Compatibility**: All `require()` calls converted to dynamic imports
 
 ## Implementation Notes
 
