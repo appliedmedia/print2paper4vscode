@@ -47,7 +47,7 @@ export class History {
 
     async open(filePath: string): Promise<void> {
         if (!filePath) return;
-        await this.app.os.fileOpen(filePath);
+        await this.app.os.fileOpenInDefaultApp(filePath);
     }
 
     private pruneAndDeleteOverflow(): void {

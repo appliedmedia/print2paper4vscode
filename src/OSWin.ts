@@ -1,7 +1,7 @@
 import { OS } from './OS.js';    
 
 export class OSWin extends OS {
-	async fileOpen(path: string): Promise<void> {
+	async fileOpenInDefaultApp(path: string): Promise<void> {
 		await this.execAsync(`start "" "${path}"`);
 	}
 
@@ -29,7 +29,7 @@ export class OSWin extends OS {
 
 	async fileOpenPrintDialog(pdfPath: string): Promise<void> {
 		// Best effort: open the PDF and rely on user; Windows programmatic print dialogs vary
-		await this.fileOpen(pdfPath);
+		await this.fileOpenInDefaultApp(pdfPath);
 	}
 }
 

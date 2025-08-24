@@ -2,7 +2,7 @@ import { OS } from './OS.js';
  
 
 export class OSMac extends OS {
-	async fileOpen(path: string): Promise<void> {
+	async fileOpenInDefaultApp(path: string): Promise<void> {
 		await this.execAsync(`open "${path}"`);
 	}
 

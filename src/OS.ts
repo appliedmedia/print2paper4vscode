@@ -33,7 +33,7 @@ export abstract class OS {
 		const { OSMac } = require('./OSMac'); return new OSMac(app);
 	}
 
-	abstract fileOpen(path: string): Promise<void>;
+	abstract fileOpenInDefaultApp(path: string): Promise<void>;
 	abstract fileReveal(path: string): Promise<void>;
 	abstract filePrint(path: string): Promise<void>;
 	abstract getDownloadsDirectory(): string;
