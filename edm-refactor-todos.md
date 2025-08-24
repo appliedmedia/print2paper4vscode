@@ -191,8 +191,22 @@ Convert this VSCode extension from CommonJS to EDM (ES Modules) and upgrade from
 - **Theme Discovery**: Dynamic theme loading from Shiki bundled themes
 - **VSCode Theme Support**: Framework in place for VSCode theme objects
 - **Performance**: Efficient language and theme management
+- **No Fallbacks**: Proper error handling when features aren't implemented
 
 ## Implementation Notes
+
+### ✅ **Fallbacks Removed - Proper Error Handling**
+- **Shiki Theme Loading**: No more fallback to empty array - fails if Shiki is corrupted
+- **VSCode Theme Objects**: No more fallback to github-light - fails if conversion not implemented
+- **Theme Resolution**: No more fallback to github-light - fails if theme not found
+- **Active Theme Detection**: No more fallback to first light theme - fails if theme not found
+- **Error Testing**: Added tests to verify error handling works correctly
+
+**Benefits of removing fallbacks:**
+- **Visibility**: We can see exactly what's broken and needs fixing
+- **Reliability**: No silent failures that mask real problems
+- **Development**: Forces us to implement features properly instead of working around them
+- **User Experience**: Better error messages that explain what went wrong
 
 ### Shiki v3 Key Changes
 - `getHighlighter()` now takes `langs: []` for on-demand loading

@@ -312,13 +312,14 @@ export class PaperPrinter {
 
     private resolveThemeChoice(id: string): unknown {
         const found = this.themePickerList.find(t => t.id === id);
-        if (!found) return 'github-light';
+        if (!found) {
+            throw new Error(`Theme '${id}' not found in theme picker list`);
+        }
         if (found.source === 'shiki') return found.id;
-        // vscode theme: load JSON by scanning contributions
-        // For now, return the theme ID as a fallback since we don't have path information
-        // TODO: Implement proper VSCode theme JSON loading when needed
-        return found.id;
-        return 'github-light';
+        
+        // VSCode theme: load JSON by scanning contributions
+        // This feature requires proper VSCode theme JSON loading implementation
+        throw new Error(`VSCode theme '${id}' requires proper theme JSON loading implementation`);
     }
 
     // Removed CSS hacks; rely on theme overrides

@@ -206,8 +206,9 @@ export class VSCodeAPIs {
      * Resolve the active VS Code theme JSON
      */
     getActiveThemeShikiTheme(): unknown {
+        const configured = (vscode.workspace.getConfiguration('workbench').get<string>('colorTheme') || '').toLowerCase();
+        
         try {
-            const configured = (vscode.workspace.getConfiguration('workbench').get<string>('colorTheme') || '').toLowerCase();
 
             // Search all extensions that contribute themes; pick the configured one
             for (const ext of vscode.extensions.all) {
@@ -244,9 +245,8 @@ export class VSCodeAPIs {
            this.app.ui.debugOut('ERROR:getActiveThemeShikiTheme: No active theme found', 'warn', 'VSCodeAPIs', err);
         }
 
-        // Final fallback: use the first available light theme from Stylize
-        const lightThemes = this.app.stylize.getShikiThemes('light|bright|day');
-        return lightThemes.length > 0 ? lightThemes[0].id : 'github-light';
+        // No fallback - if we can't find the active theme, fail properly
+        throw new Error(`Could not resolve active theme '${configured}' - no matching theme found in extensions`);
     }
 
     // Return the active theme as either a Shiki theme name string or a VS Code theme JSON object

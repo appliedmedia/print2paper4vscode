@@ -14,13 +14,11 @@ export class Stylize {
 
     async init(): Promise<void> {
         // Dynamically get all available themes from Shiki
-        try {
-            const shiki = await import('shiki');
-            this.availableShikiThemes = Object.keys(shiki.bundledThemes);
-        } catch (error) {
-            // Fallback to empty array if Shiki is not available
-            this.availableShikiThemes = [];
-            this.app.ui.debugOut('Failed to load Shiki themes', 'warn', 'Stylize', error);
+        const shiki = await import('shiki');
+        this.availableShikiThemes = Object.keys(shiki.bundledThemes);
+        
+        if (this.availableShikiThemes.length === 0) {
+            throw new Error('No Shiki themes available - Shiki installation may be corrupted');
         }
     }
 
@@ -57,16 +55,9 @@ export class Stylize {
             // For VSCode themes, we need to know what languages are already loaded
             const currentLanguages = Array.from(this.loadedLanguages);
             
-            // TODO: Implement proper VSCode theme object conversion to Shiki format
-            // For now, we'll use a default theme as fallback
-            // The proper implementation would parse the VSCode theme JSON and convert
-            // color tokens to Shiki's expected format
-            const fallbackTheme = 'github-light';
-            
-            this.vscodeThemeStyler = await getSingletonHighlighter({
-                themes: [fallbackTheme],
-                langs: currentLanguages
-            });
+            // VSCode theme object conversion to Shiki format is not yet implemented
+            // This is a critical feature that needs proper implementation
+            throw new Error('VSCode theme object conversion to Shiki format is not implemented. This feature requires parsing VSCode theme JSON and converting color tokens to Shiki format.');
         }
     }
 
@@ -81,10 +72,12 @@ export class Stylize {
         // Initialize Shiki styler if not already done
         if (!this.shikiStyler) {
             const lightThemes = this.getShikiThemes('light|bright|day');
-            const initialTheme = lightThemes.length > 0 ? lightThemes[0].id : 'github-light';
+            if (lightThemes.length === 0) {
+                throw new Error('No light themes available for initialization');
+            }
             
             this.shikiStyler = await getSingletonHighlighter({
-                themes: [initialTheme],
+                themes: [lightThemes[0].id],
                 langs: [lang] // Start with the language we need
             });
             this.loadedLanguages.add(lang);
