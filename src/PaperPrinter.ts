@@ -259,7 +259,7 @@ export class PaperPrinter {
         );
         if (historyEntry) {
             // Open the history entry
-            this.app.vscodeapis.openFile(historyEntry);
+            this.app.vscodeapis.openInVSCode(historyEntry);
         }
     }
 

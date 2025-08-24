@@ -176,15 +176,15 @@ export class VSCodeAPIs {
     }
 
     /**
-     * Opens a file by path
+     * Opens a file by path in VSCode
      */
-    async openFile(filePath: string): Promise<void> {
+    async openInVSCode(filePath: string): Promise<void> {
         try {
             const documentUri = vscode.Uri.file(filePath);
             const document = await vscode.workspace.openTextDocument(documentUri);
             await vscode.window.showTextDocument(document);
         } catch (error) {
-            this.app.ui.debugOut(`Failed to open file: ${filePath}`, 'error', 'VSCodeAPIs', error);
+            this.app.ui.debugOut(`Failed to open file in VSCode: ${filePath}`, 'error', 'VSCodeAPIs', error);
         }
     }
 
