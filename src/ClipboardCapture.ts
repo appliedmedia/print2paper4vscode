@@ -8,8 +8,8 @@ import type { App } from './App';
 const execAsync = promisify(exec);
 
 export class ClipboardCapture {
-  private app?: App;
-  constructor(app?: App) {
+  private app: App;
+  constructor(app: App) {
     this.app = app;
   }
 
@@ -143,29 +143,22 @@ export class ClipboardCapture {
    * Converts content to HTML (handles both RTF and plain text)
    */
   async convertToHTML(content: string): Promise<string> {
-    try {
-      // Detailed logging occurs at higher layers via UI
-
-      // Check if content is RTF format
-      if (content.trim().startsWith('{\\rtf1') || content.includes('\\rtf1')) {
-        // Use @iarna/rtf-to-html library
-        return new Promise((resolve, reject) => {
-          rtf2html.fromString(content, (err: Error | null, result: string) => {
-            if (err) {
-              reject(err);
-            } else {
-              resolve(result);
-            }
-          });
+    // Check if content is RTF format
+    if (content.trim().startsWith('{\\rtf1') || content.includes('\\rtf1')) {
+      // Use @iarna/rtf-to-html library
+      return new Promise((resolve, reject) => {
+        rtf2html.fromString(content, (err: Error | null, result: string) => {
+          if (err) {
+            reject(err);
+          } else {
+            resolve(result);
+          }
         });
-      } else {
-        // Convert plain text to HTML
-        const htmlContent = this.convertPlainTextToHTML(content);
-        return htmlContent;
-      }
-    } catch (error) {
-      // Error propagated to caller for UI reporting
-      throw error;
+      });
+    } else {
+      // Convert plain text to HTML
+      const htmlContent = this.convertPlainTextToHTML(content);
+      return htmlContent;
     }
   }
 
@@ -181,26 +174,11 @@ export class ClipboardCapture {
       .map(line => `<p>${line}</p>`)
       .join('\n');
 
-    const yaml = this.app.os?.readExtensionYaml<{ clipboard_plain_text_html: string }>(
+    // OS has to be valid or we cannot operate correctly. Please fail if OS.create doesn't return a valid pointer.
+    const yaml = this.app.os.readExtensionYaml<{ clipboard_plain_text_html: string }>(
       'src/ClipboardCapture.yaml'
     );
-    if (!yaml) {
-      // Fallback to hardcoded HTML if YAML reading fails
-      return `
-<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="utf-8">
-    <style>
-        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; margin: 20px; line-height: 1.6; }
-        p { margin: 0.5em 0; }
-    </style>
-</head>
-<body>
-    ${paragraphs}
-</body>
-</html>`;
-    }
+
     return this.app.templateDictReplace(yaml.clipboard_plain_text_html, {
       PARAGRAPHS: paragraphs,
     });
@@ -210,20 +188,15 @@ export class ClipboardCapture {
    * Main method to capture and convert content
    */
   async captureAndConvert(): Promise<string | null> {
-    try {
-      // Capture content from active tab using VS Code editor check
-      const rtfContent = await this.captureWithEditorCheck();
-      if (!rtfContent) {
-        return null;
-      }
-
-      // Convert content to HTML
-      const htmlContent = await this.convertToHTML(rtfContent);
-
-      return htmlContent;
-    } catch (error) {
-      // Error propagated to caller for UI reporting
+    // Capture content from active tab using VS Code editor check
+    const rtfContent = await this.captureWithEditorCheck();
+    if (!rtfContent) {
       return null;
     }
+
+    // Convert content to HTML
+    const htmlContent = await this.convertToHTML(rtfContent);
+
+    return htmlContent;
   }
 }

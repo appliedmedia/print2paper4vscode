@@ -1,6 +1,7 @@
 import { ClipboardCapture } from './ClipboardCapture';
 import type { App } from './App';
 import type { WebviewMessage } from './UI';
+import type { UIMenuItem } from './types/UIMenuItem';
 
 export class PaperPrinter {
   private app: App;
@@ -9,7 +10,7 @@ export class PaperPrinter {
   private lastRawCode: string | null = null;
   private lastLanguageId: string | null = null;
   private currentPrintableLabel: string = 'Printable';
-  private currentColorMode: 'theme' | 'print' = 'theme';
+
   private currentThemeChoice: string = 'editor';
 
   private currentFontSizeMode: 'editor' | 9 | 10 | 12 | 14 | 18 | 24 = 'editor';
@@ -21,14 +22,6 @@ export class PaperPrinter {
 
   init(): void {
     this.clipboardCapture.init();
-
-    // Register message handlers with UI system
-    this.app.ui.registerMessageHandler('dragEnd', this.handleDragEnd.bind(this));
-    this.app.ui.registerMessageHandler('menu', this.handleMenu.bind(this));
-    this.app.ui.registerMessageHandler('menuItemSelected', this.handleMenuItemSelected.bind(this));
-    this.app.ui.registerMessageHandler('print', this.handlePrintMessage.bind(this));
-
-    // Note: theme list recomputed on toolbar render to ensure VS Code extensions are loaded
     this.app.ui.debugOut('PaperPrinter initialized', 'info', 'PaperPrinter');
   }
 
@@ -46,23 +39,6 @@ export class PaperPrinter {
     }
   }
 
-  private async handleMenu(msg: WebviewMessage): Promise<void> {
-    if (typeof msg.value === 'string' && msg.value.startsWith('theme-')) {
-      const id = String(msg.value).substring('theme-'.length);
-      this.currentColorMode = 'theme';
-      this.currentThemeChoice = id;
-    } else if (msg.value === 'colors-theme') this.currentColorMode = 'theme';
-    else if (msg.value === 'colors-print') this.currentColorMode = 'print';
-    else if (typeof msg.value === 'string' && msg.value.startsWith('text-size-')) {
-      const sz = String(msg.value).substring('text-size-'.length);
-      this.currentFontSizeMode =
-        sz === 'editor' ? 'editor' : (Number(sz) as 9 | 10 | 12 | 14 | 18 | 24);
-    }
-    if (!this.lastPrintPrepHtml) return;
-    // TODO: Update webview HTML - need access to panel
-    this.app.ui.debugOut('Menu selection processed', 'info', 'PaperPrinter');
-  }
-
   private async handleMenuItemSelected(msg: WebviewMessage): Promise<void> {
     // Handle menu item selections from the new generic UI system
     const { targetId, parentId, x, y } = msg;
@@ -72,25 +48,13 @@ export class PaperPrinter {
       'PaperPrinter'
     );
 
-    // Route to appropriate handler based on parentId
-    if (parentId === 'print') {
-      if (!this.lastPrintPrepHtml) return;
-      const updated = await this.applyRenderModes(this.lastPrintPrepHtml);
-      if (targetId === 'preview')
-        await this.app.pdf.printWithPreview(updated, this.currentPrintableLabel || 'Print Output');
-      else if (targetId === 'direct')
-        await this.app.pdf.printDirectly(updated, this.currentPrintableLabel || 'Print Output');
-      else if (targetId === 'save')
-        await this.app.pdf.saveAsPDF(updated, this.currentPrintableLabel || 'Print Output');
-      // TODO: Re-render webview - need access to panel
-    } else if (parentId === 'theme') {
-      // Handle theme menu selections
-      this.app.ui.debugOut(`Theme menu selection: ${targetId}`, 'info', 'PaperPrinter');
-      // TODO: Implement theme handling
-    } else if (parentId === 'text') {
-      // Handle text menu selections
-      this.app.ui.debugOut(`Text menu selection: ${targetId}`, 'info', 'PaperPrinter');
-      // TODO: Implement text handling
+    // Get the menu and call its selection handler directly
+    if (parentId && targetId) {
+      const menu = this.app.uimenumgr.getMenu(parentId);
+      if (menu) {
+        // Call the menu's selection handler - it knows how to dispatch to the right method
+        await (menu as any)._selectionHandler(targetId);
+      }
     }
   }
 
@@ -160,6 +124,11 @@ export class PaperPrinter {
   private async openPrintPrepAndPrompt(htmlContent: string, tabName: string): Promise<void> {
     this.lastPrintPrepHtml = htmlContent;
     this.currentPrintableLabel = tabName;
+
+    // Create menus and register message handlers when we actually need them
+    this.createMenus();
+    this.registerMessageHandlers();
+
     const initial = await this.applyRenderModes(htmlContent);
     this.app.ui.createWebviewPanel(
       `Printable: ${tabName}`,
@@ -168,18 +137,14 @@ export class PaperPrinter {
   }
 
   private async applyRenderModes(htmlBase: string): Promise<string> {
-    // Prefer regenerating with theme overrides if we have raw code; otherwise fallback to CSS overlays
+    // If we have raw code, regenerate with theme overrides
     if (this.lastRawCode && this.lastLanguageId) {
-      let themeToUse: unknown | string;
-      if (this.currentColorMode === 'print') {
-        themeToUse =
-          this.currentThemeChoice === 'editor' ? 'github-light' : this.currentThemeChoice;
-      } else {
-        themeToUse =
-          this.currentThemeChoice === 'editor'
-            ? this.app.vscodeapis.getActiveTheme()
-            : this.currentThemeChoice;
-      }
+      // Use whatever theme is chosen - user's choice, their ink
+      const themeToUse =
+        this.currentThemeChoice === 'editor'
+          ? this.app.vscodeapis.getActiveTheme()
+          : this.currentThemeChoice;
+
       const sizePx = this.computeFontSizePx();
       const lhPx = this.computeLineHeightPx(sizePx);
       const html = await this.app.stylize.styleToHtml(
@@ -190,29 +155,8 @@ export class PaperPrinter {
       );
       return html;
     }
-    // Fallback for captured HTML from preview tabs
-    let html = htmlBase;
-    if (this.currentColorMode === 'print') {
-      const css = [
-        'body{background:#ffffff !important}',
-        '.shiki{background:#ffffff !important}',
-        `pre{white-space:pre; word-wrap:normal; margin:0}`,
-        `pre.shiki code{white-space:normal; font-size:${this.computeFontSizePx()}px}`,
-        `.shiki .line{background:transparent !important; display:block; margin:0; padding:0; white-space:pre}`,
-        '.shiki span{background:transparent !important}',
-      ].join('\n');
-      const injectCss = (source: string, cssStr: string): string => {
-        if (/<style>[\s\S]*?<\/style>/.test(source)) {
-          return source.replace(
-            /<style>([\s\S]*?)<\/style>/,
-            (m, inner) => `<style>${inner}\n${cssStr}</style>`
-          );
-        }
-        return source.replace(/<\/head>/, `<style>${cssStr}</style></head>`);
-      };
-      html = injectCss(html, css);
-    }
-    return html;
+    // For captured HTML from preview tabs, just return as-is
+    return htmlBase;
   }
 
   private computeFontSizePx(): number {
@@ -225,6 +169,113 @@ export class PaperPrinter {
     const editorTypo = this.app.vscodeapis.getEditorTypography();
     if (this.currentFontSizeMode === 'editor') return editorTypo.lineHeight;
     return Math.round(fontSize * 1.35);
+  }
+
+  // Create menus when needed for the webview
+  private createMenus(): void {
+    const menuConfigs = [
+      {
+        id: 'print',
+        icon: '🖨',
+        title: 'Print',
+        buildList: this.printBuildList.bind(this),
+        selectionHandler: this.handleSelection_Print.bind(this),
+      },
+      {
+        id: 'theme',
+        icon: '🎨',
+        title: 'Theme',
+        buildList: this.themesBuildList.bind(this),
+        selectionHandler: this.handleSelection_Theme.bind(this),
+      },
+      {
+        id: 'text',
+        icon: 'Tt',
+        title: 'Text',
+        buildList: this.textBuildList.bind(this),
+        selectionHandler: this.handleSelection_Text.bind(this),
+      },
+    ];
+
+    menuConfigs.forEach(config => {
+      const menu = this.app.uimenumgr.createMenu(
+        config.id,
+        config.icon,
+        config.title,
+        config.buildList,
+        config.selectionHandler
+      );
+      this.app.uimenumgr.addMenu(menu);
+    });
+  }
+
+  // Register message handlers when needed for the webview
+  private registerMessageHandlers(): void {
+    const messageHandlers = [
+      { type: 'dragEnd', handler: this.handleDragEnd.bind(this) },
+      { type: 'menuItemSelected', handler: this.handleMenuItemSelected.bind(this) },
+      { type: 'print', handler: this.handlePrintMessage.bind(this) },
+    ];
+
+    messageHandlers.forEach(({ type, handler }) => {
+      this.app.ui.registerMessageHandler(type, handler);
+    });
+  }
+
+  // Build list methods for each menu type
+  private printBuildList(): UIMenuItem[] {
+    return [
+      { id: 'preview', label: 'Print with Preview' },
+      { id: 'direct', label: 'Print' },
+      { id: 'save', label: 'Save as PDF' },
+    ];
+  }
+
+  private themesBuildList(): UIMenuItem[] {
+    return [
+      { id: 'editor', label: 'Editor Theme' },
+      ...this.app.stylize.getThemes().map(theme => ({
+        id: theme.id,
+        label: theme.label,
+      })),
+    ];
+  }
+
+  private textBuildList(): UIMenuItem[] {
+    const editorTypo = this.app.vscodeapis.getEditorTypography();
+    return [
+      { id: 'editor', label: `Editor (${editorTypo.fontSize}px)` },
+      { id: '9', label: '9 px' },
+      { id: '10', label: '10 px' },
+      { id: '12', label: '12 px' },
+      { id: '14', label: '14 px' },
+      { id: '18', label: '18 px' },
+      { id: '24', label: '24 px' },
+    ];
+  }
+
+  // Selection handler methods for each menu type
+  private async handleSelection_Print(selectedId: string): Promise<void> {
+    if (!this.lastPrintPrepHtml) return;
+    const updated = await this.applyRenderModes(this.lastPrintPrepHtml);
+    if (selectedId === 'preview')
+      await this.app.pdf.printWithPreview(updated, this.currentPrintableLabel || 'Print Output');
+    else if (selectedId === 'direct')
+      await this.app.pdf.printDirectly(updated, this.currentPrintableLabel || 'Print Output');
+    else if (selectedId === 'save')
+      await this.app.pdf.saveAsPDF(updated, this.currentPrintableLabel || 'Print Output');
+    // TODO: Re-render webview - need access to panel
+  }
+
+  private async handleSelection_Theme(selectedId: string): Promise<void> {
+    this.app.ui.debugOut(`Theme menu selection: ${selectedId}`, 'info', 'PaperPrinter');
+    this.currentThemeChoice = selectedId;
+    // TODO: Re-render webview with new theme - need access to panel
+  }
+
+  private async handleSelection_Text(selectedId: string): Promise<void> {
+    this.app.ui.debugOut(`Text menu selection: ${selectedId}`, 'info', 'PaperPrinter');
+    // TODO: Implement text handling
   }
 
   // Removed CSS hacks; rely on theme overrides

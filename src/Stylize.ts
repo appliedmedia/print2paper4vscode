@@ -29,8 +29,11 @@ export class Stylize {
         const newLanguages = [...currentLanguages, lang];
 
         // Recreate the highlighter with the new language
+        if (!this.styler) {
+          throw new Error('Styler not initialized - cannot recreate highlighter');
+        }
         this.styler = await createHighlighter({
-          themes: this.styler ? [this.styler.getTheme('default')] : ['github-light'],
+          themes: [this.styler.getTheme('default')],
           langs: newLanguages,
         });
 
@@ -185,21 +188,5 @@ export class Stylize {
   // Check if a specific language is currently loaded
   isLanguageLoaded(languageId: string): boolean {
     return this.loadedLanguages.has(languageId);
-  }
-
-  // Validate if a language is supported by Shiki (without loading it)
-  async validateLanguageSupport(languageId: string): Promise<boolean> {
-    try {
-      // Try to create a minimal highlighter with just this language
-      await createHighlighter({
-        themes: ['github-light'],
-        langs: [languageId],
-      });
-
-      // If we get here, the language is supported
-      return true;
-    } catch {
-      return false;
-    }
   }
 }
