@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import type { App } from './App.js';
+import type { App } from './App';
 
 export type TabCategory = 'editor-nonmd' | 'editor-md' | 'preview';
 

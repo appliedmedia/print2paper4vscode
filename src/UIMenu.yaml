@@ -1,0 +1,124 @@
+ui_menu_html: |
+  <div class="p2p4vsc-menu" id="{{MENU_ID}}">
+    <button class="p2p4vsc-menu-btn" 
+            title="{{TITLE}}">{{ICON}}</button>
+    <div class="p2p4vsc-menu-items" id="{{MENU_ID}}-items">
+      {{MENU_ITEMS}}
+    </div>
+  </div>
+
+ui_menu_generic_handlers: |
+  // Generic handlers for all menus - just pass events to extension
+  document.addEventListener('click', (e) => {
+    // Send minimal selection data to extension
+    vscode.postMessage({ 
+      type: 'menuItemSelected', 
+      targetId: e.target.id,
+      parentId: e.target.closest('.p2p4vsc-menu')?.getAttribute('id'),
+      x: e.clientX,
+      y: e.clientY
+    });
+  });
+
+ui_drag_handlers: |
+  // Drag state tracking
+  let isDragging = false;
+  let dragStartX = 0;
+  let dragStartLeft = 0;
+  let currentToolbarLeft = 8;
+
+ui_css_injection: |
+  // CSS injection utilities for dynamic styling
+  function injectCSS(source: string, css: string): string {
+    if (/<style>[\s\S]*?<\/style>/.test(source)) {
+      return source.replace(
+        /<style>([\s\S]*?)<\/style>/,
+        (m, inner) => `<style>${inner}\n${css}</style>`
+      );
+    }
+    return source.replace(/<\/head>/, `<style>${css}</style></head>`);
+  }
+
+  function applyBackgroundMode(html: string, mode: 'keep' | 'white' | 'invert'): string {
+    if (mode === 'keep') return html;
+    
+    if (mode === 'white') {
+      const css = [
+        'body{background:#ffffff !important;color:#000 !important}',
+        '.shiki{background:#ffffff !important}',
+        '.shiki .line{display:block;background:#ffffff !important}',
+        '.shiki span{background:transparent !important}',
+      ].join('\n');
+      return injectCSS(html, css);
+    }
+    
+    // invert: invert only text (code glyphs), keep background as-is
+    let out = injectCSS(
+      html,
+      [
+        '.invert-text pre.shiki code{filter: invert(100%) hue-rotate(180deg)}',
+        '.invert-text pre.shiki span{background:transparent !important}',
+        '.invert-text pre.shiki .line{background:transparent !important; display:block}',
+      ].join('\n')
+    );
+    out = out.replace('<body>', '<body><div class="invert-text">');
+    out = out.replace('</body>', '</div></body>');
+    return out;
+  }
+
+  // Drag event handlers
+  document.addEventListener('mousedown', (e) => {
+    if (e.target.matches('.p2p4vsc-toolbar-grip')) {
+      e.preventDefault();
+      isDragging = true;
+      dragStartX = e.clientX;
+      dragStartLeft = currentToolbarLeft;
+      document.body.style.cursor = 'grabbing';
+      
+      // Notify extension that drag started
+      vscode.postMessage({ 
+        type: 'dragStart', 
+        clientX: e.clientX, 
+        startLeft: currentToolbarLeft 
+      });
+    }
+  });
+
+  document.addEventListener('mousemove', (e) => {
+    if (isDragging) {
+      e.preventDefault();
+      const dx = e.clientX - dragStartX;
+      const maxLeft = Math.max(8, window.innerWidth - 200 - 8);
+      const newLeft = Math.min(Math.min(8, dragStartLeft + dx), maxLeft);
+      currentToolbarLeft = newLeft;
+      
+      // Update toolbar position
+      const toolbar = document.querySelector('.p2p4vsc-toolbar');
+      if (toolbar) {
+        toolbar.style.left = newLeft + 'px';
+      }
+    }
+  });
+
+  document.addEventListener('mouseup', (e) => {
+    if (isDragging) {
+      isDragging = false;
+      document.body.style.cursor = '';
+      
+      // Notify extension that drag ended
+      vscode.postMessage({ 
+        type: 'dragEnd', 
+        clientX: e.clientX 
+      });
+    }
+  });
+
+  // Prevent text selection during drag
+  document.addEventListener('selectstart', (e) => {
+    if (isDragging) {
+      e.preventDefault();
+    }
+  });
+
+ui_menu_item: |
+  <div class="p2p4vsc-menu-item" id="{{ITEM_ID}}">{{ITEM_LABEL}}</div>

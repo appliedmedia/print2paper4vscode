@@ -1,4 +1,4 @@
-import type { App } from './App.js';
+import type { App } from './App';
 
 export class History {
     private app: App;

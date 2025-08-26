@@ -1,19 +1,19 @@
 import * as vscode from 'vscode';
-import { App } from './App.js';
+import { App } from './App';
 
 let app: App;
 
 export function activate(context: vscode.ExtensionContext) {
-    app = new App(context);
+  try {
+    app = new App(context, vscode);
     app.init();
-    app.ui.debugOut('Print extension is now active!', 'info', 'entrypoint');
+  } catch (error) {
+    console.error('Failed to activate extension:', error);
+  }
 }
-
 export function deactivate() {
-    // Cleanup handled by App class
-    if (app) {
-        app.done();
-    }
+  if (app) {
+    app.done();
+  }
+  console.log('Print extension is now deactivated!');
 }
-
-

@@ -1,6 +1,6 @@
 toolbar_html: |
   <style>
-    #p2p4vs-toolbar {
+    #p2p4vsc-toolbar {
       position: fixed;
       top: 12px;
       left: 8px;
@@ -12,7 +12,7 @@ toolbar_html: |
       background: transparent;
       font: 12px -apple-system, Segoe UI, Arial, sans-serif;
     }
-    .p2p4vs-menubar {
+    .p2p4vsc-toolbar-menubar {
       position: relative;
       display: inline-flex;
       gap: 4px;
@@ -22,7 +22,7 @@ toolbar_html: |
       padding: 14px 3px 3px 3px; /* top padding reserves space for grip */
       box-shadow: 0 4px 12px rgba(0,0,0,.15);
     }
-    .p2p4vs-grip {
+    .p2p4vsc-toolbar-grip {
       position: absolute;
       top: 2px;
       left: 0;
@@ -36,8 +36,8 @@ toolbar_html: |
         radial-gradient(circle at 3px 3px, rgba(120,120,120,.6) 1px, transparent 1px) 0 0 / 6px 6px,
         radial-gradient(circle at 0px 3px, rgba(120,120,120,.6) 1px, transparent 1px) 3px 0 / 6px 6px;
     }
-    #p2p4vs-toolbar.dragging { user-select: none; }
-    .p2p4vs-btn {
+    #p2p4vsc-toolbar.dragging { user-select: none; }
+    .p2p4vsc-btn {
       border: 1px solid #d0d0d0;
       background: #f7f7f7;
       color: #333;
@@ -52,8 +52,8 @@ toolbar_html: |
       font-size: 18px;
       padding: 0;
     }
-    .p2p4vs-btn:hover { background: #e9e9e9; }
-    .p2p4vs-dd {
+    .p2p4vsc-btn:hover { background: #e9e9e9; }
+    .p2p4vsc-menu {
       position: absolute;
       background: #222;
       color: #fff;
@@ -63,52 +63,23 @@ toolbar_html: |
       display: none;
       min-width: 220px;
     }
-    .p2p4vs-dd .item { padding: 6px 10px; cursor: pointer; white-space: nowrap; }
-    .p2p4vs-dd .item:hover, .p2p4vs-dd .item.active { background: #444; }
+    .p2p4vsc-menu .item { padding: 6px 10px; cursor: pointer; white-space: nowrap; }
+    .p2p4vsc-menu .item:hover, .p2p4vsc-menu .item.active { background: #444; }
     /* Fixed gutter for checkmark so items don't shift width */
-    .p2p4vs-dd .item::before { content: "\00A0"; display: inline-block; width: 1em; margin-right: 6px; }
-    .p2p4vs-dd .item.active::before { content: "✓"; }
-    .p2p4vs-group { position: relative; }
+    .p2p4vsc-menu .item::before { content: "\\00A0"; display: inline-block; width: 1em; margin-right: 6px; }
+    .p2p4vsc-menu .item.active::before { content: "✓"; }
+    .p2p4vsc-group { position: relative; }
   </style>
-  <div id="p2p4vs-toolbar">
-    <div class="p2p4vs-menubar">
-    <div class="p2p4vs-grip" id="p2p4vs-grip" title="Click and hold to drag left and right"></div>
-    <div class="p2p4vs-group" id="menuPrint">
-      <button class="p2p4vs-btn p2p4vs-dd-btn" id="menuPrint-btn" data-kind="print" data-target="menuPrint-picker" data-group="menuPrint" title="Print">🖨</button>
-      <div class="p2p4vs-dd" id="menuPrint-picker">
-        {{PRINT_PICKER_LIST}}
-      </div>
-    </div>
-    <div class="p2p4vs-group" id="menuThemes">
-      <button class="p2p4vs-btn p2p4vs-dd-btn" id="menuThemes-btn" data-kind="theme" data-target="menuThemes-picker" data-group="menuThemes" title="Theme">🎨</button>
-      <div class="p2p4vs-dd" id="menuThemes-picker">
-        {{THEMES_PICKER_LIST}}
-      </div>
-    </div>
-    <div class="p2p4vs-group" id="menuText">
-      <button class="p2p4vs-btn p2p4vs-dd-btn" id="menuText-btn" data-kind="text" data-target="menuText-picker" data-group="menuText" title="Text" style="font-size:20px">Tt</button>
-      <div class="p2p4vs-dd" id="menuText-picker">
-        {{TEXT_PICKER_LIST}}
-      </div>
-    </div>
-    <div class="p2p4vs-group" id="menuHistory">
-      <button class="p2p4vs-btn p2p4vs-dd-btn" id="menuHistory-btn" data-kind="history" data-target="menuHistory-picker" data-group="menuHistory" title="History">📄</button>
-      <div class="p2p4vs-dd" id="menuHistory-picker">
-        {{HISTORY_PICKER_LIST}}
-      </div>
-    </div>
+  <div id="p2p4vsc-toolbar">
+    <div class="p2p4vsc-toolbar-grip" id="p2p4vsc-toolbar-grip" title="Click and hold to drag left and right"></div>
+    <div class="p2p4vsc-toolbar-menubar">
+      {{UIMENU_HTML}}
     </div>
   </div>
   <script>
     const vscode = acquireVsCodeApi();
-    const toolbar = document.getElementById('p2p4vs-toolbar');
-    const drag = document.getElementById('p2p4vs-grip');
-    const menuPrintPicker = document.getElementById('menuPrint-picker');
-    const menuThemesPicker = document.getElementById('menuThemes-picker');
-    const menuTextPicker = document.getElementById('menuText-picker');
-    const menuHistoryPicker = document.getElementById('menuHistory-picker');
-
-    function hideAll(){ menuPrintPicker.style.display='none'; menuThemesPicker.style.display='none'; menuTextPicker.style.display='none'; menuHistoryPicker.style.display='none'; }
+    const toolbar = document.getElementById('p2p4vsc-toolbar');
+    const drag = document.getElementById('p2p4vsc-toolbar-grip');
 
     // Restore toolbar left position
     (function(){
@@ -121,76 +92,31 @@ toolbar_html: |
         }
       } catch {}
     })();
+    
     window.addEventListener('resize', ()=>{
       const left = parseFloat(getComputedStyle(toolbar).left || '8');
       const maxLeft = Math.max(8, window.innerWidth - toolbar.offsetWidth - 8);
       toolbar.style.left = Math.min(left, maxLeft) + 'px';
     });
-    let dragging = false; let startX = 0; let startLeft = 0;
+    
+    // Send drag start to extension
     drag.addEventListener('mousedown', (e)=>{
-      dragging = true; startX = e.clientX; startLeft = parseFloat(getComputedStyle(toolbar).left || '8'); e.preventDefault();
-      toolbar.classList.add('dragging');
+      e.preventDefault();
+      vscode.postMessage({ type: 'dragStart', clientX: e.clientX });
     });
-    document.addEventListener('mousemove', (e)=>{
-      if (!dragging) return; if (e.buttons === 0) { endDrag(); return; }
-      const dx = e.clientX - startX;
-      const maxLeft = Math.max(8, window.innerWidth - toolbar.offsetWidth - 8);
-      const newLeft = Math.min(Math.max(8, startLeft + dx), maxLeft);
-      toolbar.style.left = newLeft + 'px';
-    });
-    function endDrag(){
-      if (!dragging) return; dragging = false; toolbar.classList.remove('dragging');
-      // clamp to bounds; if out of window, pin to closest side
-      const left = parseFloat(getComputedStyle(toolbar).left || '8');
-      const maxLeft = Math.max(8, window.innerWidth - toolbar.offsetWidth - 8);
-      let pinned = left;
-      if (left < 8) pinned = 8;
-      if (left > maxLeft) pinned = maxLeft;
-      toolbar.style.left = pinned + 'px';
-      try { vscode.setState({ ...(vscode.getState()||{}), toolbarLeft: pinned }); } catch {}
-    }
-    document.addEventListener('mouseup', endDrag);
-    window.addEventListener('mouseleave', endDrag);
-    document.addEventListener('pointerup', endDrag);
-    document.addEventListener('pointercancel', endDrag);
-    window.addEventListener('blur', endDrag);
-
-    document.querySelectorAll('.p2p4vs-dd-btn').forEach(btn=>{
-      btn.addEventListener('click', (e)=>{
-        e.stopPropagation();
-        const targetId = btn.getAttribute('data-target');
-        const groupId = btn.getAttribute('data-group');
-        const kind = btn.getAttribute('data-kind');
-        const picker = document.getElementById(targetId);
-        const group = document.getElementById(groupId);
-        const shown = picker.style.display==='block'; hideAll(); picker.style.display = shown?'none':'block';
-        const r = group.getBoundingClientRect(); picker.style.top = (r.height+4)+'px'; picker.style.left = '0px';
-        if(kind==='theme') updateMenu('theme','{{THEME_INIT}}');
-        if(kind==='text') updateMenu('text','{{SIZE_INIT}}');
-      });
+    
+    // Listen for drag state updates from extension
+    vscode.onDidReceiveMessage(msg => {
+      if (msg.type === 'dragState') {
+        if (msg.dragging) {
+          toolbar.classList.add('dragging');
+        } else {
+          toolbar.classList.remove('dragging');
+        }
+      } else if (msg.type === 'updatePosition') {
+        toolbar.style.left = msg.left + 'px';
+      }
     });
 
-    document.addEventListener('click', (e)=>{
-      const t = e.target && typeof e.target.closest==='function' ? e.target.closest('.p2p4vs-dd .item') : null;
-      if(!t) return;
-      hideAll();
-      const p = t.getAttribute('data-print');
-      const a = t.getAttribute('data-action');
-      if (p){ vscode.postMessage({ type:'print', value:p}); return; }
-      if (a){ vscode.postMessage({ type:'menu', value:a}); }
-      const h = t.getAttribute('data-history');
-      if (h){ vscode.postMessage({ type:'history_open', value:h}); }
-    });
-    document.addEventListener('click', ()=> hideAll());
-
-    function updateMenu(kind, state){
-      const picker = kind==='theme' ? menuThemesPicker : menuTextPicker;
-      picker.querySelectorAll('.item[data-action]').forEach(el=>{
-        const a = el.getAttribute('data-action');
-        const isActive = kind==='theme' ? (a==='theme-'+state) : (a==='text-size-'+state);
-        el.classList.toggle('active', isActive);
-        // Do not mutate text; CSS ::before renders checkmark gutter
-      });
-    }
+    {{UIMENU_JS}}
   </script>
-

@@ -4,48 +4,51 @@
   "description": "Print selections or current tabs, including preview tabs",
   "version": "0.0.1",
   "engines": {
-    "vscode": "^1.103.0"
+    "vscode": "^1.60.0"
   },
+  "publisher": "acoven",
   "categories": [
     "Other"
   ],
   "activationEvents": [
     "onStartupFinished"
   ],
-  "type": "module",
   "main": "./out/-entrypoint.js",
   "contributes": {
     "commands": [
       {
-        "command": "p2p4vs.print2paper",
+        "command": "p2p4vsc.print2paper",
         "title": "Print2Paper",
         "category": "Print"
       },
       {
-        "command": "p2p4vs.capturePreview",
-        "title": "Capture Preview Content",
+        "command": "p2p4vsc.api2ts",
+        "title": "Generate VS Code API Stubs",
         "category": "Print"
       }
     ],
     "menus": {
       "editor/context": [
         {
-          "command": "p2p4vs.print2paper",
+          "command": "p2p4vsc.print2paper",
           "group": "navigation"
         }
       ]
     },
     "keybindings": [
       {
-        "command": "p2p4vs.print2paper",
+        "command": "p2p4vsc.print2paper",
         "key": "alt+p",
         "mac": "alt+p"
       }
     ]
   },
   "scripts": {
-    "vscode:prepublish": "npm run compile",
+    "vscode:prepublish": "npm run compile:deploy",
     "compile": "rm -rf out && tsc -p ./",
+    "compile:deploy": "rm -rf out-deploy && tsc -p ./tsconfig.deploy.json",
+    "generate-stubs": "node build/vscode2ts.js",
+    "generate-stubs:custom": "node build/vscode2ts.js --outputfile",
     "lint": "eslint --config ./eslint.config.mjs src/**/*.ts",
     "lint:fix": "eslint --config ./eslint.config.mjs src/**/*.ts --fix",
     "lint:md": "markdownlint *.md tests/**/*.md",
@@ -58,7 +61,7 @@
   },
   "devDependencies": {
     "@types/node": "latest",
-    "@types/vscode": "^1.103.0",
+    "@types/vscode": "^1.60.0",
     "@typescript-eslint/eslint-plugin": "latest",
     "@typescript-eslint/parser": "latest",
     "eslint": "latest",

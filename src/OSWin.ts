@@ -1,4 +1,4 @@
-import { OS } from './OS.js';    
+import { OS } from './OS';    
 
 export class OSWin extends OS {
 	async fileOpenInDefaultApp(path: string): Promise<void> {

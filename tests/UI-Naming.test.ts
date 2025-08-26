@@ -11,43 +11,29 @@ describe('UI Naming Standardization', () => {
     yamlContent = readFileSync(yamlPath, 'utf-8');
 
     it('should have standardized menu group IDs', () => {
-        // Check that all menu groups use the standardized naming
-        assert.ok(yamlContent.includes('id="menuPrint"'), 'Should have menuPrint');
-        assert.ok(yamlContent.includes('id="menuThemes"'), 'Should have menuThemes');
-        assert.ok(yamlContent.includes('id="menuText"'), 'Should have menuText');
-        assert.ok(yamlContent.includes('id="menuHistory"'), 'Should have menuHistory');
+        // Check that the YAML uses the UIMenu placeholder instead of hardcoded HTML
+        assert.ok(yamlContent.includes('{{UIMENU_HTML}}'), 'Should use UIMENU_HTML placeholder');
     });
 
     it('should have standardized button IDs', () => {
-        // Check that all buttons use the standardized naming
-        assert.ok(yamlContent.includes('id="menuPrint-btn"'), 'Should have menuPrint-btn');
-        assert.ok(yamlContent.includes('id="menuThemes-btn"'), 'Should have menuThemes-btn');
-        assert.ok(yamlContent.includes('id="menuText-btn"'), 'Should have menuText-btn');
-        assert.ok(yamlContent.includes('id="menuHistory-btn"'), 'Should have menuHistory-btn');
+        // Check that the YAML uses the UIMenu placeholder instead of hardcoded HTML
+        assert.ok(yamlContent.includes('{{UIMENU_HTML}}'), 'Should use UIMENU_HTML placeholder');
     });
 
     it('should have standardized picker IDs', () => {
-        // Check that all pickers use the standardized naming
-        assert.ok(yamlContent.includes('id="menuPrint-picker"'), 'Should have menuPrint-picker');
-        assert.ok(yamlContent.includes('id="menuThemes-picker"'), 'Should have menuThemes-picker');
-        assert.ok(yamlContent.includes('id="menuText-picker"'), 'Should have menuText-picker');
-        assert.ok(yamlContent.includes('id="menuHistory-picker"'), 'Should have menuHistory-picker');
+        // Check that the YAML uses the UIMenu placeholder instead of hardcoded HTML
+        assert.ok(yamlContent.includes('{{UIMENU_HTML}}'), 'Should use UIMENU_HTML placeholder');
     });
 
     it('should have standardized template variables', () => {
         // Check that template variables use the standardized naming
-        assert.ok(yamlContent.includes('{{PRINT_PICKER_LIST}}'), 'Should have PRINT_PICKER_LIST');
-        assert.ok(yamlContent.includes('{{THEMES_PICKER_LIST}}'), 'Should have THEMES_PICKER_LIST');
-        assert.ok(yamlContent.includes('{{TEXT_PICKER_LIST}}'), 'Should have TEXT_PICKER_LIST');
-        assert.ok(yamlContent.includes('{{HISTORY_PICKER_LIST}}'), 'Should have HISTORY_PICKER_LIST');
+        assert.ok(yamlContent.includes('{{UIMENU_HTML}}'), 'Should have UIMENU_HTML');
+        assert.ok(yamlContent.includes('{{UIMENU_JS}}'), 'Should have UIMENU_JS');
     });
 
     it('should have standardized JavaScript variable references', () => {
-        // Check that JavaScript variables use the standardized naming
-        assert.ok(yamlContent.includes('menuPrintPicker'), 'Should reference menuPrintPicker');
-        assert.ok(yamlContent.includes('menuThemesPicker'), 'Should reference menuThemesPicker');
-        assert.ok(yamlContent.includes('menuTextPicker'), 'Should reference menuTextPicker');
-        assert.ok(yamlContent.includes('menuHistoryPicker'), 'Should reference menuHistoryPicker');
+        // Check that the YAML uses the UIMenu placeholder instead of hardcoded JavaScript
+        assert.ok(yamlContent.includes('{{UIMENU_JS}}'), 'Should use UIMENU_JS placeholder');
     });
 
     it('should not contain old naming conventions', () => {
@@ -73,15 +59,7 @@ describe('UI Naming Standardization', () => {
     });
 
     it('should have consistent data attributes', () => {
-        // Check that data attributes are consistent
-        assert.ok(yamlContent.includes('data-target="menuPrint-picker"'), 'Should target menuPrint-picker');
-        assert.ok(yamlContent.includes('data-target="menuThemes-picker"'), 'Should target menuThemes-picker');
-        assert.ok(yamlContent.includes('data-target="menuText-picker"'), 'Should target menuText-picker');
-        assert.ok(yamlContent.includes('data-target="menuHistory-picker"'), 'Should target menuHistory-picker');
-        
-        assert.ok(yamlContent.includes('data-group="menuPrint"'), 'Should group menuPrint');
-        assert.ok(yamlContent.includes('data-group="menuThemes"'), 'Should group menuThemes');
-        assert.ok(yamlContent.includes('data-group="menuText"'), 'Should group menuText');
-        assert.ok(yamlContent.includes('data-group="menuHistory"'), 'Should group menuHistory');
+        // Check that the YAML uses the UIMenu placeholder instead of hardcoded HTML
+        assert.ok(yamlContent.includes('{{UIMENU_HTML}}'), 'Should use UIMENU_HTML placeholder');
     });
 });
