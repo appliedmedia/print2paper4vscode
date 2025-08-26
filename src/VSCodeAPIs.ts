@@ -452,7 +452,7 @@ export class VSCodeAPIs {
   }
 
   /**
-   * Get the active VS Code theme JSON object
+   * Get the active VS Code theme JSON object for Shiki
    */
   getVSCodeThemeJSON(): Record<string, unknown> {
     const configured = this.vscode.workspace.getConfiguration('workbench').get('colorTheme');
@@ -476,27 +476,6 @@ export class VSCodeAPIs {
             const loaded = this.app.os.readJsonFile<Record<string, unknown>>(absPath);
             if (loaded) return loaded;
           }
-        }
-      }
-
-      // Fallback for default themes shipped in theme-defaults
-      const themeDefaults =
-        this.vscode.extensions.getExtension('vscode.theme-defaults') ||
-        this.vscode.extensions.getExtension('ms-vscode.theme-defaults');
-      if (themeDefaults) {
-        const base = this.app.os.pathJoin(themeDefaults.extensionPath, 'themes');
-
-        const map: Record<string, string> = {
-          'default dark modern': 'dark_modern.json',
-          'default light modern': 'light_modern.json',
-          'default dark+': 'dark_plus.json',
-          'default light+': 'light_plus.json',
-        };
-        const file = map[themeName];
-        if (file) {
-          const abs = this.app.os.pathJoin(base, file);
-          const loaded = this.app.os.readJsonFile<Record<string, unknown>>(abs);
-          if (loaded) return loaded;
         }
       }
     } catch (err) {

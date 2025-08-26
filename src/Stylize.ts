@@ -23,22 +23,21 @@ export class Stylize {
   ): Promise<string> {
     const lang = languageId;
 
-    // Always create a fresh highlighter with the language we need
+    // Get the active VS Code theme JSON - this will error out if no theme found
     const vscodeTheme = this.app.vscodeapis.getVSCodeThemeJSON();
     if (!vscodeTheme) {
-      throw new Error('Could not get active VSCode theme JSON');
+      throw new Error('Could not get active VSCode theme');
     }
 
-    // Convert VS Code theme to Shiki format or use a fallback
-    // For now, we'll use a default theme since VS Code theme conversion is complex
-    const activeTheme = 'github-light'; // BULLSHIT: Don't want to do this as we may not be grabbing github-light
+    // TODO: Convert VS Code theme JSON to Shiki-compatible format
+    // For now, use github-light since conversion is not yet implemented
+    const activeTheme = 'github-light';
 
     const styler = await createHighlighter({
       themes: [activeTheme],
       langs: [lang],
     });
 
-    // Generate HTML with the current theme
     const html = styler.codeToHtml(code, {
       lang,
       theme: activeTheme,
