@@ -94,7 +94,6 @@ export class PaperPrinter {
 
       this.lastRawCode = info.text;
       this.lastLanguageId = info.languageId;
-      const theme = this.app.vscodeapis.getActiveTheme();
       const selection = this.app.vscodeapis.getActiveTextEditor()?.selection;
       let printableLabel = info.name;
       if (selection && !selection.isEmpty) {
@@ -104,14 +103,9 @@ export class PaperPrinter {
           start === end ? `Line ${start} of ${info.name}` : `Lines ${start}-${end} of ${info.name}`;
       }
       this.currentPrintableLabel = printableLabel;
-      const htmlContent = await this.app.stylize.styleToHtml(
-        info.text,
-        info.languageId,
-        theme as string | Record<string, unknown>,
-        {
-          title: this.currentPrintableLabel,
-        }
-      );
+      const htmlContent = await this.app.stylize.styleToHtml(info.text, info.languageId, {
+        title: this.currentPrintableLabel,
+      });
       await this.openPrintPrepAndPrompt(htmlContent, printableLabel);
     } catch (error) {
       this.app.ui.debugOut('Error handling print', 'error', 'PaperPrinter', error);
@@ -130,29 +124,20 @@ export class PaperPrinter {
     this.registerMessageHandlers();
 
     const initial = await this.applyRenderModes(htmlContent);
-    this.app.ui.createWebviewPanel(
-      `Printable: ${tabName}`,
-      this.app.ui.addToolbar(initial, this.app)
-    );
+
+    this.app.ui.createWebviewPanel(`Printable: ${tabName}`, this.app.ui.addToolbar(initial));
   }
 
   private async applyRenderModes(htmlBase: string): Promise<string> {
     // If we have raw code, regenerate with theme overrides
     if (this.lastRawCode && this.lastLanguageId) {
-      // Use whatever theme is chosen - user's choice, their ink
-      const themeToUse =
-        this.currentThemeChoice === 'editor'
-          ? this.app.vscodeapis.getActiveTheme()
-          : this.currentThemeChoice;
-
       const sizePx = this.computeFontSizePx();
       const lhPx = this.computeLineHeightPx(sizePx);
-      const html = await this.app.stylize.styleToHtml(
-        this.lastRawCode,
-        this.lastLanguageId,
-        themeToUse as string | Record<string, unknown>,
-        { fontSize: sizePx, lineHeight: lhPx, title: this.currentPrintableLabel }
-      );
+      const html = await this.app.stylize.styleToHtml(this.lastRawCode, this.lastLanguageId, {
+        fontSize: sizePx,
+        lineHeight: lhPx,
+        title: this.currentPrintableLabel,
+      });
       return html;
     }
     // For captured HTML from preview tabs, just return as-is

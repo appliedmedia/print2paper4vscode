@@ -3,20 +3,16 @@ import { UIMenu } from './UIMenu';
 import type { UIMenuItem } from './types/UIMenuItem';
 
 export class UIMenuMgr {
+  private app: App;
   private menus: UIMenu[] = [];
 
-  constructor(private app: App) {
-    this.initializeMenus();
+  constructor(app: App) {
+    this.app = app;
+    // No initialization needed - menus are created on-demand by PaperPrinter
   }
 
   init(): void {
-    // Validate that all required methods exist on PaperPrinter
-    const validation = this.validateRequiredMethods();
-    if (!validation.valid) {
-      throw new Error(
-        `UIMenuMgr validation failed. Missing methods: ${validation.missing.join(', ')}`
-      );
-    }
+    // No initialization needed - menus are created on-demand by PaperPrinter
   }
 
   done(): void {
@@ -32,11 +28,6 @@ export class UIMenuMgr {
     selectionHandler: (selectedId: string) => Promise<void>
   ): UIMenu {
     return new UIMenu(id, icon, title, this.app, listBuilder, selectionHandler);
-  }
-
-  private initializeMenus(): void {
-    // Menus are now created by PaperPrinter based on business needs
-    // This method is called by PaperPrinter.init() after creating menus
   }
 
   // Get all menus
@@ -116,12 +107,6 @@ export class UIMenuMgr {
     });
 
     return mappings;
-  }
-
-  // Validate that all required methods exist on PaperPrinter
-  validateRequiredMethods(): { valid: boolean; missing: string[] } {
-    // No validation needed with new generic system
-    return { valid: true, missing: [] };
   }
 
   // Get menu configuration for debugging

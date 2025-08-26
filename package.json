@@ -13,7 +13,7 @@
   "activationEvents": [
     "onStartupFinished"
   ],
-  "main": "./out/-entrypoint.js",
+  "main": "./out/src/-entrypoint.js",
   "contributes": {
     "commands": [
       {

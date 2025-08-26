@@ -5,18 +5,21 @@ import { UIMenu } from '../src/UIMenu.js';
 
 // Mock App class for testing
 class MockApp {
-  paperprinter: any;
+  os: any;
+  templateDictReplace: any;
 
   constructor() {
-    this.paperprinter = {
-      generatePickerList_MenuPrint: () => '<div>Print options</div>',
-      generatePickerList_MenuThemes: () => '<div>Theme options</div>',
-      generatePickerList_MenuText: () => '<div>Text options</div>',
-      generatePickerList_MenuHistory: () => '<div>History options</div>',
-      handlePick_MenuPrint: (id: string) => `print-${id}`,
-      handlePick_MenuThemes: (id: string) => `theme-${id}`,
-      handlePick_MenuText: (id: string) => `text-${id}`,
-      handlePick_MenuHistory: (id: string) => `history-${id}`,
+    this.os = {
+      readExtensionYaml: () => ({
+        ui_menu_html: '<div>{{MENU_ID}} {{BUTTON_ID}} {{TITLE}} {{ICON}} {{MENU_ITEMS}}</div>',
+        ui_menu_item: '<div id="{{ITEM_ID}}">{{ITEM_LABEL}}</div>',
+        ui_menu_generic_handlers: '// Generic handlers',
+      }),
+    };
+    this.templateDictReplace = (template: string, dict: Record<string, string>) => {
+      return Object.entries(dict).reduce((result, [key, value]) => {
+        return result.replace(new RegExp(`{{${key}}}`, 'g'), value);
+      }, template);
     };
   }
 }
@@ -25,39 +28,66 @@ describe('UIMenuMgr', () => {
   let menuMgr: UIMenuMgr;
   let mockApp: MockApp;
 
-  // Create mock app and menu manager for testing
+  // Create fresh mock app and menu manager for each test
   mockApp = new MockApp();
   menuMgr = new UIMenuMgr(mockApp as any);
 
   describe('Constructor and Initialization', () => {
-    it('should create menu manager with correct menus', () => {
+    it('should create empty menu manager initially', () => {
       const menus = menuMgr.getAllMenus();
+      assert.strictEqual(menus.length, 0, 'Should start with no menus');
+    });
+  });
 
-      assert.strictEqual(menus.length, 3, 'Should have 3 menus');
+  describe('Menu Creation and Management', () => {
+    it('should create and add menus correctly', () => {
+      // Clear any existing menus
+      (menuMgr as any).menus = [];
 
-      const menuIds = menus.map(m => m.id);
-      assert.ok(menuIds.includes('menuPrint'), 'Should have print menu');
-      assert.ok(menuIds.includes('menuThemes'), 'Should have themes menu');
-      assert.ok(menuIds.includes('menuText'), 'Should have text menu');
+      const mockListBuilder = () => [{ id: 'test', label: 'Test Item' }];
+      const mockSelectionHandler = async (id: string) => {};
+
+      const menu = menuMgr.createMenu(
+        'testMenu',
+        '🔧',
+        'Test Menu',
+        mockListBuilder,
+        mockSelectionHandler
+      );
+      menuMgr.addMenu(menu);
+
+      const menus = menuMgr.getAllMenus();
+      assert.strictEqual(menus.length, 1, 'Should have 1 menu after adding');
+      assert.strictEqual(menus[0].id, 'testMenu', 'Should have correct menu ID');
     });
 
-    it('should create menus with correct properties', () => {
-      const printMenu = menuMgr.getMenu('menuPrint');
-      assert.ok(printMenu, 'Should find print menu');
-      assert.strictEqual(printMenu?.icon, '🖨', 'Should have correct icon');
-      assert.strictEqual(printMenu?.title, 'Print', 'Should have correct title');
+    it('should create multiple menus correctly', () => {
+      // Clear any existing menus
+      (menuMgr as any).menus = [];
 
-      const themeMenu = menuMgr.getMenu('menuThemes');
-      assert.ok(themeMenu, 'Should find theme menu');
-      assert.strictEqual(themeMenu?.icon, '🎨', 'Should have correct icon');
-      assert.strictEqual(themeMenu?.title, 'Theme', 'Should have correct title');
-    });
+      const mockListBuilder = () => [{ id: 'test', label: 'Test Item' }];
+      const mockSelectionHandler = async (id: string) => {};
 
-    it('should handle menu creation with different types', () => {
-      const textMenu = menuMgr.getMenu('menuText');
-      assert.ok(textMenu, 'Should find text menu');
-      assert.strictEqual(textMenu?.icon, 'Tt', 'Should have text icon');
-      assert.strictEqual(textMenu?.title, 'Text', 'Should have text title');
+      const menu1 = menuMgr.createMenu(
+        'menu1',
+        '🔧',
+        'Menu 1',
+        mockListBuilder,
+        mockSelectionHandler
+      );
+      const menu2 = menuMgr.createMenu(
+        'menu2',
+        '🎨',
+        'Menu 2',
+        mockListBuilder,
+        mockSelectionHandler
+      );
+
+      menuMgr.addMenu(menu1);
+      menuMgr.addMenu(menu2);
+
+      const menus = menuMgr.getAllMenus();
+      assert.strictEqual(menus.length, 2, 'Should have 2 menus total');
     });
   });
 
@@ -65,17 +95,27 @@ describe('UIMenuMgr', () => {
     it('should get all menus', () => {
       const menus = menuMgr.getAllMenus();
       assert.ok(Array.isArray(menus), 'Should return array');
-      assert.strictEqual(menus.length, 3, 'Should return all menus');
     });
 
     it('should get specific menu by ID', () => {
-      const printMenu = menuMgr.getMenu('menuPrint');
-      assert.ok(printMenu, 'Should find print menu');
-      assert.strictEqual(printMenu?.id, 'menuPrint', 'Should have correct ID');
+      // Clear any existing menus
+      (menuMgr as any).menus = [];
 
-      const themeMenu = menuMgr.getMenu('menuThemes');
-      assert.ok(themeMenu, 'Should find theme menu');
-      assert.strictEqual(themeMenu?.id, 'menuThemes', 'Should have correct ID');
+      const mockListBuilder = () => [{ id: 'test', label: 'Test Item' }];
+      const mockSelectionHandler = async (id: string) => {};
+
+      const testMenu = menuMgr.createMenu(
+        'testMenu',
+        '🔧',
+        'Test Menu',
+        mockListBuilder,
+        mockSelectionHandler
+      );
+      menuMgr.addMenu(testMenu);
+
+      const foundMenu = menuMgr.getMenu('testMenu');
+      assert.ok(foundMenu, 'Should find test menu');
+      assert.strictEqual(foundMenu?.id, 'testMenu', 'Should have correct ID');
     });
 
     it('should return undefined for non-existent menu', () => {
@@ -84,324 +124,188 @@ describe('UIMenuMgr', () => {
     });
 
     it('should handle case-sensitive menu IDs', () => {
-      const printMenu = menuMgr.getMenu('MenuPrint');
-      assert.strictEqual(printMenu, undefined, 'Should be case-sensitive');
+      const testMenu = menuMgr.getMenu('TestMenu');
+      assert.strictEqual(testMenu, undefined, 'Should be case-sensitive');
     });
   });
 
   describe('HTML Generation', () => {
     it('should generate HTML for all menus', () => {
+      // Clear any existing menus
+      (menuMgr as any).menus = [];
+
+      const mockListBuilder = () => [{ id: 'test', label: 'Test Item' }];
+      const mockSelectionHandler = async (id: string) => {};
+
+      const menu1 = menuMgr.createMenu(
+        'menu1',
+        '🔧',
+        'Menu 1',
+        mockListBuilder,
+        mockSelectionHandler
+      );
+      const menu2 = menuMgr.createMenu(
+        'menu2',
+        '🎨',
+        'Menu 2',
+        mockListBuilder,
+        mockSelectionHandler
+      );
+
+      menuMgr.addMenu(menu1);
+      menuMgr.addMenu(menu2);
+
       const html = menuMgr.generateAllHTML();
 
-      assert.ok(html.includes('id="menuPrint"'), 'Should include print menu HTML');
-      assert.ok(html.includes('id="menuThemes"'), 'Should include themes menu HTML');
-      assert.ok(html.includes('id="menuText"'), 'Should include text menu HTML');
+      assert.ok(html.includes('menu1'), 'Should include menu1 HTML');
+      assert.ok(html.includes('menu2'), 'Should include menu2 HTML');
     });
 
-    it('should include picker content in HTML', () => {
+    it('should handle empty menu list', () => {
+      // Clear any menus that might have been added in previous tests
+      (menuMgr as any).menus = [];
       const html = menuMgr.generateAllHTML();
-
-      assert.ok(html.includes('<div>Print options</div>'), 'Should include print picker content');
-      assert.ok(html.includes('<div>Theme options</div>'), 'Should include theme picker content');
-      assert.ok(html.includes('<div>Text options</div>'), 'Should include text picker content');
-    });
-
-    it('should generate valid HTML structure', () => {
-      const html = menuMgr.generateAllHTML();
-
-      // Check for basic HTML structure
-      assert.ok(html.includes('<div'), 'Should contain div elements');
-      assert.ok(html.includes('<button'), 'Should contain button elements');
-      assert.ok(html.includes('class="p2p4vsc-group"'), 'Should have correct group class');
-      assert.ok(html.includes('class="p2p4vsc-btn"'), 'Should have correct button class');
-    });
-
-    it('should separate menus with newlines', () => {
-      const html = menuMgr.generateAllHTML();
-      const menuCount = (html.match(/class="p2p4vsc-group"/g) || []).length;
-      assert.strictEqual(menuCount, 3, 'Should have 3 menu groups');
+      assert.strictEqual(html, '', 'Should return empty string for no menus');
     });
   });
 
   describe('JavaScript Generation', () => {
-    it('should generate JavaScript for all menus', () => {
+    it('should generate generic JavaScript handlers', () => {
       const js = menuMgr.generateAllJavaScript();
-
-      assert.ok(js.includes('menuPrintPicker'), 'Should include print picker variable');
-      assert.ok(js.includes('menuThemesPicker'), 'Should include themes picker variable');
-      assert.ok(js.includes('menuTextPicker'), 'Should include text picker variable');
-    });
-
-    it('should include event listeners for all menus', () => {
-      const js = menuMgr.generateAllJavaScript();
-
-      assert.ok(js.includes("addEventListener('click'"), 'Should include click listeners');
-      assert.ok(js.includes("getElementById('menuPrint-btn')"), 'Should reference print button');
-      assert.ok(js.includes("getElementById('menuThemes-btn')"), 'Should reference themes button');
-    });
-
-    it('should include correct method calls', () => {
-      const js = menuMgr.generateAllJavaScript();
-
-      assert.ok(js.includes('handlePick_MenuPrint'), 'Should reference print handler');
-      assert.ok(js.includes('handlePick_MenuThemes'), 'Should reference themes handler');
-      assert.ok(js.includes('handlePick_MenuText'), 'Should reference text handler');
-    });
-
-    it('should separate JavaScript blocks with newlines', () => {
-      const js = menuMgr.generateAllJavaScript();
-      const blocks = js.split('\n\n').filter(block => block.trim().length > 0);
-      assert.strictEqual(blocks.length, 3, 'Should have 3 JavaScript blocks');
-    });
-  });
-
-  describe('Picker List Generation', () => {
-    it('should generate picker list for each menu', () => {
-      const printList = (menuMgr as any).generatePickerListForMenu('menuPrint');
-      const themeList = (menuMgr as any).generatePickerListForMenu('menuThemes');
-
-      assert.strictEqual(
-        printList,
-        '<div>Print options</div>',
-        'Should generate print picker list'
-      );
-      assert.strictEqual(
-        themeList,
-        '<div>Theme options</div>',
-        'Should generate theme picker list'
-      );
-    });
-
-    it('should throw error for non-existent menu', () => {
-      assert.throws(() => {
-        (menuMgr as any).generatePickerListForMenu('nonExistent');
-      }, /No picker list generator found for menu: nonExistent/);
-    });
-
-    it('should call correct method on PaperPrinter', () => {
-      const printList = (menuMgr as any).generatePickerListForMenu('menuPrint');
-      assert.strictEqual(
-        printList,
-        '<div>Print options</div>',
-        'Should call generatePickerList_MenuPrint'
-      );
+      assert.ok(js.includes('// Generic handlers'), 'Should include generic handlers');
     });
   });
 
   describe('Template Variable Mappings', () => {
     it('should generate correct template variable mappings', () => {
-      const mappings = menuMgr.getTemplateVariableMappings();
+      // Clear any existing menus
+      (menuMgr as any).menus = [];
 
-      // Check for the new UIMenu placeholders
-      assert.ok(mappings.UIMENU_HTML, 'Should have UIMENU_HTML mapping');
-      assert.ok(mappings.UIMENU_JS, 'Should have UIMENU_JS mapping');
+      const mockListBuilder = () => [{ id: 'test', label: 'Test Item' }];
+      const mockSelectionHandler = async (id: string) => {};
 
-      // Check for individual menu mappings
-      assert.ok(mappings.MENUPRINT_PICKER_LIST, 'Should have print picker list mapping');
-      assert.ok(mappings.MENUTHEMES_PICKER_LIST, 'Should have themes picker list mapping');
-      assert.ok(mappings.MENUTEXT_PICKER_LIST, 'Should have text picker list mapping');
-    });
-
-    it('should map template variables to picker content', () => {
-      const mappings = menuMgr.getTemplateVariableMappings();
-
-      assert.strictEqual(
-        mappings.PRINT_PICKER_LIST,
-        '<div>Print options</div>',
-        'Should map print content'
+      const testMenu = menuMgr.createMenu(
+        'testMenu',
+        '🔧',
+        'Test Menu',
+        mockListBuilder,
+        mockSelectionHandler
       );
-      assert.strictEqual(
-        mappings.TEXT_PICKER_LIST,
-        '<div>Text options</div>',
-        'Should map text content'
-      );
-    });
+      menuMgr.addMenu(testMenu);
 
-    it('should return object with correct structure', () => {
       const mappings = menuMgr.getTemplateVariableMappings();
 
-      assert.ok(typeof mappings === 'object', 'Should return an object');
-      assert.strictEqual(Object.keys(mappings).length, 5, 'Should have 5 mappings');
-    });
-  });
-
-  describe('Method Validation', () => {
-    it('should validate that all required methods exist', () => {
-      const validation = menuMgr.validateRequiredMethods();
-
-      assert.strictEqual(validation.valid, true, 'Should be valid');
-      assert.strictEqual(validation.missing.length, 0, 'Should have no missing methods');
+      assert.ok('UIMENU_HTML' in mappings, 'Should have UIMENU_HTML mapping');
+      assert.ok('UIMENU_JS' in mappings, 'Should have UIMENU_JS mapping');
+      assert.ok('TESTMENU_MENU_ITEMS' in mappings, 'Should have menu-specific mapping');
     });
 
-    it('should detect missing picker methods', () => {
-      // Create app with missing method
-      const incompleteApp = {
-        paperprinter: {
-          generatePickerList_MenuPrint: () => '<div>Print options</div>',
-          // Missing other methods
-          handlePick_MenuPrint: (id: string) => `print-${id}`,
-          handlePick_MenuThemes: (id: string) => `theme-${id}`,
-          handlePick_MenuText: (id: string) => `text-${id}`,
-        },
-      };
+    it('should handle multiple menus in mappings', () => {
+      // Clear any existing menus
+      (menuMgr as any).menus = [];
 
-      const incompleteMenuMgr = new UIMenuMgr(incompleteApp as any);
-      const validation = incompleteMenuMgr.validateRequiredMethods();
+      const mockListBuilder = () => [{ id: 'test', label: 'Test Item' }];
+      const mockSelectionHandler = async (id: string) => {};
 
-      assert.strictEqual(validation.valid, false, 'Should be invalid');
-      assert.ok(validation.missing.length > 0, 'Should have missing methods');
-    });
+      const menu1 = menuMgr.createMenu(
+        'menu1',
+        '🔧',
+        'Menu 1',
+        mockListBuilder,
+        mockSelectionHandler
+      );
+      const menu2 = menuMgr.createMenu(
+        'menu2',
+        '🎨',
+        'Menu 2',
+        mockListBuilder,
+        mockSelectionHandler
+      );
 
-    it('should detect missing handler methods', () => {
-      // Create app with missing handler
-      const incompleteApp = {
-        paperprinter: {
-          generatePickerList_MenuPrint: () => '<div>Print options</div>',
-          generatePickerList_MenuThemes: () => '<div>Theme options</div>',
-          generatePickerList_MenuText: () => '<div>Text options</div>',
-          // Missing handler methods
-        },
-      };
+      menuMgr.addMenu(menu1);
+      menuMgr.addMenu(menu2);
 
-      const incompleteMenuMgr = new UIMenuMgr(incompleteApp as any);
-      const validation = incompleteMenuMgr.validateRequiredMethods();
+      const mappings = menuMgr.getTemplateVariableMappings();
 
-      assert.strictEqual(validation.valid, false, 'Should be invalid');
-      assert.ok(validation.missing.length > 0, 'Should have missing methods');
+      assert.ok('MENU1_MENU_ITEMS' in mappings, 'Should have menu1 mapping');
+      assert.ok('MENU2_MENU_ITEMS' in mappings, 'Should have menu2 mapping');
     });
   });
 
   describe('Menu Configuration', () => {
-    it('should return menu configuration for debugging', () => {
+    it('should return correct menu configuration', () => {
+      // Clear any existing menus
+      (menuMgr as any).menus = [];
+
+      const mockListBuilder = () => [{ id: 'test', label: 'Test Item' }];
+      const mockSelectionHandler = async (id: string) => {};
+
+      const testMenu = menuMgr.createMenu(
+        'testMenu',
+        '🔧',
+        'Test Menu',
+        mockListBuilder,
+        mockSelectionHandler
+      );
+      menuMgr.addMenu(testMenu);
+
       const config = menuMgr.getMenuConfiguration();
 
-      assert.strictEqual(config.length, 3, 'Should have 3 menu configurations');
-
-      const printConfig = config.find(c => c.id === 'menuPrint');
-      assert.ok(printConfig, 'Should have print menu config');
-      assert.strictEqual(printConfig?.icon, '🖨', 'Should have correct icon');
-      assert.strictEqual(printConfig?.title, 'Print', 'Should have correct title');
+      assert.strictEqual(config.length, 1, 'Should have 1 menu configuration');
+      assert.strictEqual(config[0].id, 'testMenu', 'Should have correct ID');
+      assert.strictEqual(config[0].icon, '🔧', 'Should have correct icon');
+      assert.strictEqual(config[0].title, 'Test Menu', 'Should have correct title');
       assert.strictEqual(
-        printConfig?.pickerMethod,
-        'generatePickerList_MenuPrint',
-        'Should have correct picker method'
-      );
-      assert.strictEqual(
-        printConfig?.handlerMethod,
-        'handlePick_MenuPrint',
-        'Should have correct handler method'
-      );
-      assert.strictEqual(
-        printConfig?.templateVariable,
-        'MENUPRINT_PICKER_LIST',
+        config[0].templateVariable,
+        'TESTMENU_MENU_ITEMS',
         'Should have correct template variable'
       );
-    });
-
-    it('should have consistent configuration structure', () => {
-      const config = menuMgr.getMenuConfiguration();
-
-      config.forEach(menuConfig => {
-        assert.ok('id' in menuConfig, 'Should have id property');
-        assert.ok('icon' in menuConfig, 'Should have icon property');
-        assert.ok('title' in menuConfig, 'Should have title property');
-        assert.ok('pickerMethod' in menuConfig, 'Should have pickerMethod property');
-        assert.ok('handlerMethod' in menuConfig, 'Should have handlerMethod property');
-        assert.ok('templateVariable' in menuConfig, 'Should have templateVariable property');
-      });
-    });
-  });
-
-  describe('Integration with UIMenu', () => {
-    it('should use UIMenu instances correctly', () => {
-      const menus = menuMgr.getAllMenus();
-
-      menus.forEach(menu => {
-        assert.ok(menu instanceof UIMenu, 'Should be UIMenu instance');
-        assert.ok(typeof menu.id === 'string', 'Should have string ID');
-        assert.ok(typeof menu.icon === 'string', 'Should have string icon');
-        assert.ok(typeof menu.title === 'string', 'Should have string title');
-      });
-    });
-
-    it('should generate consistent HTML and JavaScript', () => {
-      const html = menuMgr.generateAllHTML();
-      const js = menuMgr.generateAllJavaScript();
-
-      // HTML should reference the same IDs that JavaScript uses
-      const htmlIds = html
-        .match(/id="([^"]+)"/g)
-        ?.map(id => id.replace('id="', '').replace('"', ''));
-      const jsIds = js
-        .match(/getElementById\('([^']+)'\)/g)
-        ?.map(ref => ref.replace("getElementById('", '').replace("')", ''));
-
-      assert.ok(htmlIds, 'HTML should have IDs');
-      assert.ok(jsIds, 'JavaScript should reference IDs');
-
-      // All JavaScript-referenced IDs should exist in HTML
-      jsIds?.forEach(jsId => {
-        assert.ok(
-          htmlIds?.includes(jsId),
-          `JavaScript references ID '${jsId}' that should exist in HTML`
-        );
-      });
-    });
-  });
-
-  describe('Error Handling', () => {
-    it('should handle missing PaperPrinter methods gracefully', () => {
-      const incompleteApp = {
-        paperprinter: {},
-      };
-
-      const incompleteMenuMgr = new UIMenuMgr(incompleteApp as any);
-
-      assert.throws(() => {
-        incompleteMenuMgr.generateAllHTML();
-      }, /No picker list generator found for menu/);
-    });
-
-    it('should handle PaperPrinter with null methods', () => {
-      const nullApp = {
-        paperprinter: {
-          generatePickerList_MenuPrint: null,
-          generatePickerList_MenuThemes: null,
-          generatePickerList_MenuText: null,
-        },
-      };
-
-      const nullMenuMgr = new UIMenuMgr(nullApp as any);
-
-      assert.throws(() => {
-        nullMenuMgr.generateAllHTML();
-      }, /Method .* not found on PaperPrinter/);
     });
   });
 
   describe('Edge Cases', () => {
-    it('should handle empty menu list', () => {
-      // This would require modifying the class, but we can test the behavior
-      const html = menuMgr.generateAllHTML();
-      assert.ok(html.length > 0, 'Should generate HTML even with minimal content');
-    });
+    it('should handle very long menu ID', () => {
+      // Clear any existing menus
+      (menuMgr as any).menus = [];
 
-    it('should handle very long menu IDs', () => {
       const longId = 'a'.repeat(100);
-      const longMenu = new UIMenu(longId, '🔧', 'Long Menu');
+      const mockListBuilder = () => [{ id: 'test', label: 'Test Item' }];
+      const mockSelectionHandler = async (id: string) => {};
 
-      // Test that the manager can handle long IDs
-      assert.strictEqual(longMenu.getPickerId(), `${longId}-picker`);
-      assert.strictEqual(longMenu.getButtonId(), `${longId}-btn`);
+      const longMenu = menuMgr.createMenu(
+        longId,
+        '🔧',
+        'Long Menu',
+        mockListBuilder,
+        mockSelectionHandler
+      );
+      menuMgr.addMenu(longMenu);
+
+      const foundMenu = menuMgr.getMenu(longId);
+      assert.ok(foundMenu, 'Should find long menu');
+      assert.strictEqual(foundMenu?.id, longId, 'Should have correct long ID');
     });
 
-    it('should handle special characters in menu IDs', () => {
-      const specialId = 'menu_$#@!';
-      const specialMenu = new UIMenu(specialId, '🔧', 'Special Menu');
+    it('should handle special characters in menu ID', () => {
+      // Clear any existing menus
+      (menuMgr as any).menus = [];
 
-      // Test that the manager can handle special characters
-      assert.strictEqual(specialMenu.getPickerId(), `${specialId}-picker`);
-      assert.strictEqual(specialMenu.getButtonId(), `${specialId}-btn`);
+      const specialId = 'menu_$#@!';
+      const mockListBuilder = () => [{ id: 'test', label: 'Test Item' }];
+      const mockSelectionHandler = async (id: string) => {};
+
+      const specialMenu = menuMgr.createMenu(
+        specialId,
+        '🔧',
+        'Special Menu',
+        mockListBuilder,
+        mockSelectionHandler
+      );
+      menuMgr.addMenu(specialMenu);
+
+      const foundMenu = menuMgr.getMenu(specialId);
+      assert.ok(foundMenu, 'Should find special menu');
+      assert.strictEqual(foundMenu?.id, specialId, 'Should have correct special ID');
     });
   });
 });

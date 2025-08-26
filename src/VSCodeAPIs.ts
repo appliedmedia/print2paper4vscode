@@ -452,12 +452,14 @@ export class VSCodeAPIs {
   }
 
   /**
-   * Resolve the active VS Code theme JSON
+   * Get the active VS Code theme JSON object
    */
-  getActiveThemeShikiTheme(): unknown {
-    const configured = (this.vscode.workspace.getConfiguration('workbench').get('colorTheme') || '')
-      .toString()
-      .toLowerCase();
+  getVSCodeThemeJSON(): Record<string, unknown> {
+    const configured = this.vscode.workspace.getConfiguration('workbench').get('colorTheme');
+    if (!configured) {
+      throw new Error('Could not get active VS Code theme configuration');
+    }
+    const themeName = configured.toString().toLowerCase();
 
     try {
       // Search all extensions that contribute themes; pick the configured one
@@ -483,14 +485,14 @@ export class VSCodeAPIs {
         this.vscode.extensions.getExtension('ms-vscode.theme-defaults');
       if (themeDefaults) {
         const base = this.app.os.pathJoin(themeDefaults.extensionPath, 'themes');
-        const name = configured;
+
         const map: Record<string, string> = {
           'default dark modern': 'dark_modern.json',
           'default light modern': 'light_modern.json',
           'default dark+': 'dark_plus.json',
           'default light+': 'light_plus.json',
         };
-        const file = map[name];
+        const file = map[themeName];
         if (file) {
           const abs = this.app.os.pathJoin(base, file);
           const loaded = this.app.os.readJsonFile<Record<string, unknown>>(abs);
@@ -499,7 +501,7 @@ export class VSCodeAPIs {
       }
     } catch (err) {
       this.app.ui.debugOut(
-        'ERROR:getActiveThemeShikiTheme: No active theme found',
+        'ERROR:getVSCodeThemeJSON: Failed to load theme JSON',
         'warn',
         'VSCodeAPIs',
         err
@@ -508,13 +510,17 @@ export class VSCodeAPIs {
 
     // No fallback - if we can't find the active theme, fail properly
     throw new Error(
-      `Could not resolve active theme '${configured}' - no matching theme found in extensions`
+      `Could not resolve active theme '${themeName}' - no matching theme found in extensions`
     );
   }
 
-  // Return the active theme as either a Shiki theme name string or a VS Code theme JSON object
-  getActiveTheme(): unknown {
-    return this.getActiveThemeShikiTheme();
+  // Get the active theme name/label for display purposes
+  getActiveTheme(): string {
+    const configured = this.vscode.workspace.getConfiguration('workbench').get('colorTheme');
+    if (!configured) {
+      throw new Error('Could not get active VS Code theme configuration');
+    }
+    return configured.toString();
   }
 
   // Simple function to get VSCode themes with optional filter

@@ -1,0 +1,150 @@
+# UI templates for the Print2Paper extension
+
+toolbar_html: |
+  <style>
+    #p2p4vsc-toolbar {
+      position: fixed;
+      top: 12px;
+      left: 8px;
+      z-index: 9999;
+      display: inline-flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 0;
+      background: transparent;
+      font: 12px -apple-system, Segoe UI, Arial, sans-serif;
+    }
+    .p2p4vsc-toolbar-menubar {
+      position: relative;
+      display: inline-flex;
+      gap: 4px;
+      background: rgba(210,210,210,.95);
+      border: 1px solid #bbb;
+      border-radius: 10px;
+      padding: 14px 3px 3px 3px; /* top padding reserves space for grip */
+      box-shadow: 0 4px 12px rgba(0,0,0,.15);
+    }
+    .p2p4vsc-toolbar-grip {
+      position: absolute;
+      top: 2px;
+      left: 0;
+      right: 0;
+      height: 12px;
+      border-top-left-radius: 10px;
+      border-top-right-radius: 10px;
+      cursor: ew-resize;
+      z-index: 10;
+      background:
+        radial-gradient(circle at 3px 3px, rgba(120,120,120,.6) 1px, transparent 1px) 0 0 / 6px 6px,
+        radial-gradient(circle at 0px 3px, rgba(120,120,120,.6) 1px, transparent 1px) 3px 0 / 6px 6px;
+    }
+    #p2p4vsc-toolbar.dragging { user-select: none; }
+    .p2p4vsc-btn {
+      border: 1px solid #d0d0d0;
+      background: #f7f7f7;
+      color: #333;
+      border-radius: 6px;
+      cursor: pointer;
+      width: 32px;
+      height: 32px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      line-height: 1;
+      font-size: 18px;
+      padding: 0;
+    }
+    .p2p4vsc-btn:hover { background: #e9e9e9; }
+    .p2p4vsc-menu {
+      position: absolute;
+      background: #222;
+      color: #fff;
+      border-radius: 6px;
+      box-shadow: 0 6px 18px rgba(0,0,0,.3);
+      padding: 4px 0;
+      display: none;
+      min-width: 220px;
+    }
+    .p2p4vsc-menu .item { padding: 6px 10px; cursor: pointer; white-space: nowrap; }
+    .p2p4vsc-menu .item:hover, .p2p4vsc-menu .item.active { background: #444; }
+    /* Fixed gutter for checkmark so items don't shift width */
+    .p2p4vsc-menu .item::before { content: "\\00A0"; display: inline-block; width: 1em; margin-right: 6px; }
+    .p2p4vsc-menu .item.active::before { content: "✓"; }
+    .p2p4vsc-group { position: relative; }
+  </style>
+  <div id="p2p4vsc-toolbar">
+    <div class="p2p4vsc-toolbar-grip" id="p2p4vsc-toolbar-grip" title="Click and hold to drag left and right"></div>
+    <div class="p2p4vsc-toolbar-menubar">
+      {{UIMENU_HTML}}
+    </div>
+  </div>
+  <script>
+    const vscode = acquireVsCodeApi();
+    const toolbar = document.getElementById('p2p4vsc-toolbar');
+    const drag = document.getElementById('p2p4vsc-toolbar-grip');
+
+    // Drag state tracking
+    let isDragging = false;
+    let dragStartX = 0;
+    let dragStartLeft = 0;
+
+    // Restore toolbar left position
+    (function(){
+      try {
+        const state = vscode.getState() || {};
+        if (typeof state.toolbarLeft === 'number') {
+          const maxLeft = Math.max(8, window.innerWidth - toolbar.offsetWidth - 8);
+          const clamped = Math.min(Math.max(8, state.toolbarLeft), maxLeft);
+          toolbar.style.left = clamped + 'px';
+        }
+      } catch {}
+    })();
+    
+    window.addEventListener('resize', ()=>{
+      const left = parseFloat(getComputedStyle(toolbar).left || '8');
+      const maxLeft = Math.max(8, window.innerWidth - toolbar.offsetWidth - 8);
+      toolbar.style.left = Math.min(left, maxLeft) + 'px';
+    });
+    
+    // Drag event handlers
+    drag.addEventListener('mousedown', (e)=>{
+      e.preventDefault();
+      isDragging = true;
+      dragStartX = e.clientX;
+      dragStartLeft = parseFloat(getComputedStyle(toolbar).left || '8');
+      document.body.style.cursor = 'grabbing';
+    });
+    
+    document.addEventListener('mousemove', (e)=>{
+      if (isDragging) {
+        e.preventDefault();
+        const dx = e.clientX - dragStartX;
+        const maxLeft = Math.max(8, window.innerWidth - toolbar.offsetWidth - 8);
+        const newLeft = Math.min(Math.max(8, dragStartLeft + dx), maxLeft);
+        toolbar.style.left = newLeft + 'px';
+      }
+    });
+    
+    document.addEventListener('mouseup', (e)=>{
+      if (isDragging) {
+        isDragging = false;
+        document.body.style.cursor = '';
+        
+        // Save position to VS Code state
+        try {
+          const left = parseFloat(getComputedStyle(toolbar).left || '8');
+          vscode.setState({ toolbarLeft: left });
+        } catch {}
+        
+        // Post simple dragEnd message with final position
+        const rect = toolbar.getBoundingClientRect();
+        vscode.postMessage({ 
+          type: 'dragEnd', 
+          clientX: rect.left,
+          clientY: rect.top
+        });
+      }
+    });
+
+    {{UIMENU_JS}}
+  </script>

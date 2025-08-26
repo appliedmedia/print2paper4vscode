@@ -3,105 +3,46 @@ import { createHighlighter, bundledThemes } from 'shiki';
 
 export class Stylize {
   private app: App;
-  private styler: Awaited<ReturnType<typeof createHighlighter>> | undefined;
-  private loadedLanguages: Set<string> = new Set();
 
   constructor(app: App) {
     this.app = app;
   }
 
   async init(): Promise<void> {
-    // Basic setup - themes will be loaded on-demand in getThemes()
+    // No initialization needed - we create fresh highlighters as needed
   }
 
   async done(): Promise<void> {
-    this.styler = undefined;
-    this.loadedLanguages.clear();
-  }
-
-  private async ensureLanguage(lang: string): Promise<void> {
-    // Check if language is already loaded
-    if (!this.loadedLanguages.has(lang)) {
-      try {
-        // In Shiki v3, we need to create a new highlighter with the additional language
-        // Get current languages and add the new one
-        const currentLanguages = Array.from(this.loadedLanguages);
-        const newLanguages = [...currentLanguages, lang];
-
-        // Recreate the highlighter with the new language
-        if (!this.styler) {
-          throw new Error('Styler not initialized - cannot recreate highlighter');
-        }
-        this.styler = await createHighlighter({
-          themes: [this.styler.getTheme('default')],
-          langs: newLanguages,
-        });
-
-        this.loadedLanguages.add(lang);
-      } catch (error) {
-        throw new Error(
-          `Failed to load language '${lang}': ${error instanceof Error ? error.message : String(error)}`
-        );
-      }
-    }
-  }
-
-  private async ensureVSCodeTheme(theme: unknown): Promise<void> {
-    if (!this.styler || this.styler.getTheme('default') !== theme) {
-      // For VSCode themes, we need to know what languages are already loaded
-      // const currentLanguages = Array.from(this.loadedLanguages);
-
-      // VSCode theme object conversion to Shiki format is not yet implemented
-      // This is a critical feature that needs proper implementation
-      throw new Error(
-        'VSCode theme object conversion to Shiki format is not implemented. This feature requires parsing VSCode theme JSON and converting color tokens to Shiki format.'
-      );
-    }
+    // No cleanup needed - we don't store persistent state
   }
 
   async styleToHtml(
     code: string,
     languageId: string,
-    themeInput: string | Record<string, unknown>,
     opts?: { fontSize?: number; lineHeight?: number; title?: string }
   ): Promise<string> {
     const lang = languageId;
 
-    // Initialize styler if not already done
-    if (!this.styler) {
-      const lightThemes = this.getShikiThemes('light|bright|day');
-      if (lightThemes.length === 0) {
-        throw new Error('No light themes available for initialization');
-      }
-
-      this.styler = await createHighlighter({
-        themes: [lightThemes[0].id],
-        langs: [lang], // Start with the language we need
-      });
-      this.loadedLanguages.add(lang);
-    } else {
-      // Ensure the specific language is loaded
-      await this.ensureLanguage(lang);
+    // Always create a fresh highlighter with the language we need
+    const vscodeTheme = this.app.vscodeapis.getVSCodeThemeJSON();
+    if (!vscodeTheme) {
+      throw new Error('Could not get active VSCode theme JSON');
     }
 
-    let html: string;
+    // Convert VS Code theme to Shiki format or use a fallback
+    // For now, we'll use a default theme since VS Code theme conversion is complex
+    const activeTheme = 'github-light'; // BULLSHIT: Don't want to do this as we may not be grabbing github-light
 
-    if (typeof themeInput === 'string') {
-      // String theme - use Shiki built-in theme
-      if (!this.styler) throw new Error('Styler not initialized');
-      html = this.styler.codeToHtml(code, {
-        lang,
-        themes: { [themeInput]: themeInput },
-      });
-    } else {
-      // VSCode theme object - create styler with custom theme
-      await this.ensureVSCodeTheme(themeInput);
-      if (!this.styler) throw new Error('Styler not initialized');
-      html = this.styler.codeToHtml(code, {
-        lang,
-        themes: { 'vscode-custom': 'vscode-custom' },
-      });
-    }
+    const styler = await createHighlighter({
+      themes: [activeTheme],
+      langs: [lang],
+    });
+
+    // Generate HTML with the current theme
+    const html = styler.codeToHtml(code, {
+      lang,
+      theme: activeTheme,
+    });
 
     const editorTypo = this.app.vscodeapis.getEditorTypography();
     const fontSize = typeof opts?.fontSize === 'number' ? opts.fontSize : editorTypo.fontSize;
@@ -178,15 +119,5 @@ export class Stylize {
         label: theme,
         source: 'shiki' as const,
       }));
-  }
-
-  // Get currently loaded languages
-  getLoadedLanguages(): string[] {
-    return Array.from(this.loadedLanguages);
-  }
-
-  // Check if a specific language is currently loaded
-  isLanguageLoaded(languageId: string): boolean {
-    return this.loadedLanguages.has(languageId);
   }
 }

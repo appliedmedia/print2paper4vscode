@@ -70,49 +70,21 @@ export class UI {
   }
 
   // Add toolbar to HTML content
-  addToolbar(html: string, app: App): string {
-    // Recompute available themes at render time
-    const editorTypo = app.vscodeapis.getEditorTypography();
-    // Get all light themes suitable for printing with editor theme at top
-    const themeList = app.stylize.getThemes('light|bright|day', 'top');
+  addToolbar(html: string): string {
+    // Read the UI.yaml template for the toolbar
+    const toolbarYaml = this.app.os.readExtensionYaml<{ toolbar_html: string }>('src/UI.yaml');
 
-    // Generate menu HTML using YAML templates
-    const yaml = app.os.readExtensionYaml<{ ui_menu_item: string }>('src/UIMenu.yaml');
+    // Replace template variables using UIMenuMgr - UI doesn't know what these represent
+    const toolbar = this.app.templateDictReplace(toolbarYaml.toolbar_html, {
+      UIMENU_HTML: this.app.uimenumgr.generateTemplateWithUIMenuHTML(),
+      UIMENU_JS: this.app.uimenumgr.generateTemplateWithUIMenuJS(),
+      MENUPRINT_PICKER_LIST: '', // These will be handled by UIMENU_HTML
+      MENUTHEMES_PICKER_LIST: '', // These will be handled by UIMENU_HTML
+      MENUTEXT_PICKER_LIST: '', // These will be handled by UIMENU_HTML
+    });
 
-    const generateMenuItems = (items: Array<{ id: string; label: string }>) => {
-      return items
-        .map(item =>
-          app.templateDictReplace(yaml.ui_menu_item, {
-            ITEM_ID: item.id,
-            ITEM_LABEL: item.label,
-          })
-        )
-        .join('\n          ');
-    };
-
-    const printMenuItems = generateMenuItems([
-      { id: 'preview', label: 'Print with Preview' },
-      { id: 'direct', label: 'Print' },
-      { id: 'save', label: 'Save as PDF' },
-    ]);
-
-    const textMenuItems = generateMenuItems([
-      { id: 'editor', label: `Editor (${editorTypo.fontSize}px)` },
-      { id: '9', label: '9 px' },
-      { id: '10', label: '10 px' },
-      { id: '12', label: '12 px' },
-      { id: '14', label: '14 px' },
-      { id: '18', label: '18 px' },
-      { id: '24', label: '24 px' },
-    ]);
-
-    const themeMenuItems = generateMenuItems(
-      themeList.map(theme => ({ id: theme.id, label: theme.label }))
-    );
-
-    // TODO: Generate the complete toolbar HTML using YAML templates
-    // For now, return the content with a placeholder
-    return html;
+    // Inject toolbar before closing body tag
+    return html.replace('</body>', `${toolbar}</body>`);
   }
 
   // Set up webview message handling for a panel
