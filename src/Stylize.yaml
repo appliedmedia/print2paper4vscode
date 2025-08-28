@@ -5,6 +5,9 @@ stylize_html: |
       <meta charset="utf-8">
       <meta name="color-scheme" content="light dark">
       <style>
+        /* Dynamic CSS variables for theme switching */
+        {{CSS_VARIABLES}}
+        
         body { 
           margin: 24px;
           font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace; 
