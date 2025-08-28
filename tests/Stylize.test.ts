@@ -129,11 +129,15 @@ describe('Stylize', () => {
     themes.forEach(theme => {
       assert.ok(theme.id, 'Theme should have ID');
       assert.ok(theme.displayName, 'Theme should have displayName');
-      assert.strictEqual(
+      // ID should be the internal identifier, displayName should be human-readable
+      assert.notStrictEqual(
         theme.id,
         theme.displayName,
-        'ID and displayName should be the same for Shiki themes'
+        'ID and displayName should be different for Shiki themes (ID is internal, displayName is human-readable)'
       );
+      // ID should be lowercase with hyphens, displayName should be properly formatted
+      assert.ok(theme.id.includes('-'), 'Theme ID should contain hyphens');
+      assert.ok(theme.displayName.includes(' '), 'Theme displayName should contain spaces');
     });
   });
 
