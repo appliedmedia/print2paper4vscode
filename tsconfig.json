@@ -14,5 +14,6 @@
     "skipLibCheck": true
   },
   "include": ["src/**/*.ts", "tests/**/*.ts"],
+  "rootDir": "src",
   "exclude": ["node_modules", ".vscode-test"]
 }

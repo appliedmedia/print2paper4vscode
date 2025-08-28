@@ -55,7 +55,7 @@ export class UIMenuMgr {
           .map(item =>
             this.app.templateDictReplace(yaml.ui_menu_item, {
               ITEM_ID: item.id,
-              ITEM_LABEL: item.label,
+              ITEM_LABEL: item.displayName,
             })
           )
           .join('\n');
@@ -99,7 +99,7 @@ export class UIMenuMgr {
         .map(item =>
           this.app.templateDictReplace(yaml.ui_menu_item, {
             ITEM_ID: item.id,
-            ITEM_LABEL: item.label,
+            ITEM_LABEL: item.displayName,
           })
         )
         .join('\n');

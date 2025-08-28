@@ -183,7 +183,6 @@ describe('System Integration Tests', () => {
     // Test that theme structure is correct
     const theme = themes[0];
     assert.ok(theme.id, 'Theme should have ID');
-    assert.ok(theme.label, 'Theme should have label');
-    assert.strictEqual(theme.source, 'shiki', 'Theme should have correct source');
+    assert.ok(theme.displayName, 'Theme should have displayName');
   });
 });

@@ -1,5 +1,5 @@
 export interface UIMenuItem {
   id: string;
-  label: string;
+  displayName: string;
   attributes?: Record<string, string>;
 }

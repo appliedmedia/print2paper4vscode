@@ -103,11 +103,18 @@ export abstract class OS {
     return yamlParse(content) as T;
   }
 
-  readJsonFile<T = unknown>(absPath: string): T | undefined {
+  readJsonFile<T = unknown>(absPath: string, filter?: string): T | undefined {
     try {
       if (!fs.existsSync(absPath)) return undefined;
       const text = fs.readFileSync(absPath, 'utf8');
-      return JSON.parse(text) as T;
+      const parsed = JSON.parse(text) as T;
+
+      // If filter is provided, return only that specific key
+      if (filter && typeof parsed === 'object' && parsed !== null) {
+        return (parsed as Record<string, unknown>)[filter] as T;
+      }
+
+      return parsed;
     } catch {
       return undefined;
     }

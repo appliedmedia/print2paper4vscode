@@ -81,7 +81,7 @@ export class VSCodeAPIs {
   init(): void {
     // Register VS Code commands
     const printCommand = this.vscode.commands.registerCommand('p2p4vsc.print2paper', () => {
-      this.app.paperprinter.handlePrint();
+      this.app.paperprinter.handleFirstPrintCommand();
     });
 
     const api2tsCommand = this.vscode.commands.registerCommand('p2p4vsc.api2ts', () => {
@@ -99,177 +99,174 @@ export class VSCodeAPIs {
     this.app.ui.debugOut('VSCodeAPIs cleanup completed', 'info', 'VSCodeAPIs');
   }
 
+  generateAPIStubs(): void {
+    // Generate TypeScript stubs for VS Code API
+    const stubContent = `// Auto-generated VS Code API stubs
+export namespace vscode {
+  export namespace commands {
+    export function registerCommand(command: string, callback: (...args: any[]) => any): any;
+  }
+  export namespace window {
+    export const activeTextEditor: any;
+    export namespace tabGroups {
+      export const activeTabGroup: any;
+    }
+    export function showInformationMessage(message: string): void;
+    export function showWarningMessage(message: string): void;
+    export function showErrorMessage(message: string): void;
+    export function setStatusBarMessage(text: string, timeoutMs?: number): any;
+    export function createWebviewPanel(viewType: string, title: string, column: number, options: any): any;
+    export function showTextDocument(document: any, options?: any): Promise<void>;
+    export const ViewColumn: any;
+  }
+  export namespace workspace {
+    export function getConfiguration(section: string): any;
+    export function openTextDocument(uri: any): Promise<any>;
+    export function applyEdit(edit: any): Promise<boolean>;
+  }
+  export namespace Uri {
+    export function parse(value: string): any;
+    export function file(path: string): any;
+  }
+  export const Position: any;
+  export const WorkspaceEdit: any;
+  export namespace extensions {
+    export const all: any[];
+    export function getExtension(id: string): any;
+  }
+}`;
+
+    this.app.os.fileWrite('vscodeapis_stubs.ts', stubContent);
+    this.app.ui.debugOut('VS Code API stubs generated', 'info', 'VSCodeAPIs');
+  }
+
+  getGlobalStoragePath(): string {
+    return this.context.globalStorageUri.fsPath;
+  }
+
+  getEditorTypography(): { fontSize: number; lineHeight: number } {
+    const editorCfg = this.vscode.workspace.getConfiguration('editor');
+    const fontSize = Math.max(10, Number(editorCfg.get('fontSize') || 12));
+    const cfgLineHeight = Number(editorCfg.get('lineHeight') || 0);
+    // VS Code uses 0 to mean "compute from font metrics". Approximate with 1.35x font size.
+    const lineHeight = cfgLineHeight > 0 ? cfgLineHeight : Math.round(fontSize * 1.35);
+    return { fontSize, lineHeight };
+  }
+
   /**
-   * Generate VS Code API TypeScript stubs to temp file
+   * Creates a new document with content
    */
-  private async generateAPIStubs(): Promise<void> {
+  async createDocument(content: string, uri?: any): Promise<any> {
+    const documentUri = uri || this.vscode.Uri.parse('untitled:untitled');
+    const document = await this.vscode.workspace.openTextDocument(documentUri);
+
+    // Set the content
+    const edit = new this.vscode.WorkspaceEdit();
+    edit.insert(documentUri, new this.vscode.Position(0, 0), content);
+    await this.vscode.workspace.applyEdit(edit);
+
+    return document;
+  }
+
+  /**
+   * Shows a document in a new tab
+   */
+  async showDocument(document: any, preview: boolean = false): Promise<void> {
+    await this.vscode.window.showTextDocument(document, { preview });
+  }
+
+  /**
+   * Opens a file by path in VSCode
+   */
+  async openInVSCode(filePath: string): Promise<void> {
     try {
-      const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
-      const tempFileName = `${timestamp}_vscodeapi_stubs.ts`;
-      const tempDir = this.getTempDirectory();
-      const tempFilePath = this.app.os.pathJoin(tempDir, tempFileName);
-
-      this.app.ui.debugOut(`Generating API stubs to: ${tempFilePath}`, 'info', 'VSCodeAPIs');
-
-      // Generate the stubs content
-      const stubsContent = this.generateStubsContent();
-
-      // Write to temp file
-      const fs = await import('fs');
-      fs.writeFileSync(tempFilePath, stubsContent, 'utf8');
-
-      // Show success message with file path
-      this.vscode.window.showInformationMessage(`VS Code API stubs generated: ${tempFilePath}`);
+      const documentUri = this.vscode.Uri.file(filePath);
+      const document = await this.vscode.workspace.openTextDocument(documentUri);
+      await this.vscode.window.showTextDocument(document);
     } catch (error) {
-      this.app.ui.debugOut(`Failed to generate API stubs: ${error}`, 'error', 'VSCodeAPIs');
-      this.vscode.window.showErrorMessage(`Failed to generate API stubs: ${error}`);
+      this.app.ui.debugOut(
+        `Failed to open file in VSCode: ${filePath}`,
+        'error',
+        'VSCodeAPIs',
+        error
+      );
     }
   }
 
   /**
-   * Generate the actual stubs content
+   * Create and show a Webview panel with provided HTML
    */
-  private generateStubsContent(): string {
-    let output = '';
-
-    // Header
-    output += `// Auto-generated VS Code API TypeScript stubs\n`;
-    output += `// Generated on: ${new Date().toISOString()}\n`;
-    output += `// Source: vscode module introspection\n\n`;
-
-    // Main VSCodeAPI interface - dynamically generated from actual vscode object
-    output += `export interface VSCodeAPI {\n`;
-
-    // Walk the actual vscode object and generate properties
-    const vscodeKeys = Object.getOwnPropertyNames(this.vscode);
-    for (const key of vscodeKeys) {
-      try {
-        const value = (this.vscode as any)[key];
-        const type = this.getTypeOf(value);
-        output += `  ${key}: ${type};\n`;
-      } catch (error) {
-        output += `  ${key}: unknown; // Error getting type: ${error}\n`;
-      }
-    }
-    output += `}\n\n`;
-
-    // Generate interfaces for all top-level objects in vscode
-    for (const key of vscodeKeys) {
-      try {
-        const value = (this.vscode as any)[key];
-        if (typeof value === 'object' && value !== null) {
-          const interfaceName = key.charAt(0).toUpperCase() + key.slice(1);
-          output += this.generateInterface(value, interfaceName, 0) + '\n\n';
-        }
-      } catch (error) {
-        this.app.ui.debugOut(`Failed to get type for ${key}: ${error}`, 'error', 'VSCodeAPIs'); // Skip if we can't process this key
-      }
-    }
-
-    return output;
+  createWebviewPanel(title: string, htmlContent: string): any {
+    const panel = this.vscode.window.createWebviewPanel(
+      'p2p4vsc.printprep',
+      title,
+      this.vscode.window.ViewColumn.Active,
+      { enableScripts: true, retainContextWhenHidden: true }
+    );
+    panel.webview.html = htmlContent;
+    return panel;
   }
 
   /**
-   * Generate TypeScript interface for an object
+   * Get all VS Code extensions that contribute themes
+   * @returns Array of theme extension data with id, displayName, and extensionPath
    */
-  private generateInterface(
-    obj: any,
-    name: string,
-    depth: number = 0,
-    visited: Set<any> = new Set()
-  ): string {
-    const MAX_DEPTH = 5;
-    const MAX_PROPERTIES = 100;
+  getVSCodeExtensionsThemes(): Array<{ id: string; displayName: string; extensionPath: string }> {
+    const themeExtensions = this.vscode.extensions.all.filter(
+      ext =>
+        ext.packageJSON?.contributes?.themes && Array.isArray(ext.packageJSON.contributes.themes)
+    );
 
-    if (depth > MAX_DEPTH || visited.has(obj)) {
-      return `export interface ${name} {\n  // Circular reference or max depth reached\n}`;
-    }
-
-    visited.add(obj);
-
-    try {
-      const properties = Object.getOwnPropertyNames(obj);
-      const methods = Object.getOwnPropertyNames(Object.getPrototypeOf(obj) || {});
-      const allProps = [...new Set([...properties, ...methods])];
-
-      if (allProps.length === 0) {
-        return `export interface ${name} {\n  // Empty interface\n}`;
-      }
-
-      // Limit properties to prevent massive interfaces
-      const limitedProps = allProps.slice(0, MAX_PROPERTIES);
-
-      const interfaceBody = limitedProps
-        .filter(prop => {
-          // Skip internal properties
-          return !prop.startsWith('_') && !prop.startsWith('__') && prop !== 'constructor';
-        })
-        .map(prop => {
-          try {
-            const value = obj[prop];
-            const type = this.getTypeOf(value);
-            return `  ${prop}: ${type};`;
-          } catch {
-            return `  ${prop}: any;`;
-          }
-        })
-        .join('\n');
-
-      return `export interface ${name} {\n${interfaceBody}\n}`;
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : String(error);
-      return `export interface ${name} {\n  // Error generating interface: ${errorMessage}\n}`;
-    } finally {
-      visited.delete(obj);
-    }
+    return themeExtensions.map(ext => ({
+      id: ext.id,
+      displayName: (ext.packageJSON as any).displayName || ext.id,
+      extensionPath: ext.extensionPath,
+    }));
   }
 
   /**
-   * Get the type of a value as a string
+   * Get VS Code theme JSON data for a specific theme
+   * @param themeId - The theme ID to retrieve
+   * @param keys - Optional array of specific keys to extract from the theme
+   * @returns Theme data or undefined if not found
    */
-  private getTypeOf(value: unknown): string {
-    if (value === null) return 'null';
-    if (value === undefined) return 'undefined';
+  getVSCodeThemeJson(themeId: string, keys?: string[]): Record<string, unknown> | undefined {
+    // Find the extension that contributes this theme
+    const themeExtension = this.vscode.extensions.all.find(ext =>
+      ext.packageJSON?.contributes?.themes?.some((theme: any) => theme.id === themeId)
+    );
 
-    const type = typeof value;
-
-    if (type === 'function') {
-      // Try to determine if it's a constructor
-      try {
-        const func = value as { prototype?: { constructor?: unknown } };
-        if (func.prototype && func.prototype.constructor === func) {
-          return 'new (...args: unknown[]) => unknown';
-        }
-      } catch {
-        // Ignore prototype access errors
-      }
-      return '(...args: unknown[]) => unknown';
+    if (!themeExtension) {
+      return undefined;
     }
 
-    if (type === 'object') {
-      if (Array.isArray(value)) {
-        // Try to determine array element type
-        if (value.length > 0) {
-          const firstElementType = this.getTypeOf(value[0]);
-          return `${firstElementType}[]`;
-        }
-        return 'unknown[]';
-      }
-      if (value instanceof Date) return 'Date';
-      if (value instanceof RegExp) return 'RegExp';
-
-      // For objects, try to determine if it's a specific type
-      if (value && typeof value === 'object') {
-        const constructorName = value.constructor?.name;
-        if (constructorName && constructorName !== 'Object') {
-          return constructorName;
-        }
-      }
-
-      return 'Record<string, unknown>';
+    const theme = themeExtension.packageJSON.contributes.themes.find((t: any) => t.id === themeId);
+    if (!theme) {
+      return undefined;
     }
 
-    return type;
+    // If specific keys requested, filter the theme data
+    if (keys && keys.length > 0) {
+      const filteredTheme: Record<string, unknown> = {};
+      keys.forEach(key => {
+        if ((theme as Record<string, unknown>)[key] !== undefined) {
+          filteredTheme[key] = (theme as Record<string, unknown>)[key];
+        }
+      });
+      return filteredTheme;
+    }
+
+    return theme;
+  }
+
+  /**
+   * Get the ID of the currently active VS Code theme
+   * @returns The active theme ID
+   */
+  getActiveThemeId(): string {
+    return String(
+      this.vscode.workspace.getConfiguration('workbench').get('colorTheme') || 'Default Dark+'
+    );
   }
 
   /**
@@ -297,8 +294,6 @@ export class VSCodeAPIs {
     const editor = this.vscode.window.activeTextEditor;
     return editor ? editor.document.languageId : 'plaintext';
   }
-
-  // Removed legacy string mapping; we now pass VS Code theme JSONs directly
 
   /**
    * Gets the active tab name
@@ -376,172 +371,4 @@ export class VSCodeAPIs {
   getTempDirectory(): string {
     return this.app.os.pathJoin(this.context.globalStorageUri.fsPath, 'temp');
   }
-
-  getGlobalStoragePath(): string {
-    return this.context.globalStorageUri.fsPath;
-  }
-
-  getActiveThemeLabel(): string {
-    const configured = (this.vscode.workspace.getConfiguration('workbench').get('colorTheme') || '')
-      .toString()
-      .trim();
-    return configured || 'Editor Theme';
-  }
-
-  getEditorTypography(): { fontSize: number; lineHeight: number } {
-    const editorCfg = this.vscode.workspace.getConfiguration('editor');
-    const fontSize = Math.max(10, Number(editorCfg.get('fontSize') || 12));
-    const cfgLineHeight = Number(editorCfg.get('lineHeight') || 0);
-    // VS Code uses 0 to mean "compute from font metrics". Approximate with 1.35x font size.
-    const lineHeight = cfgLineHeight > 0 ? cfgLineHeight : Math.round(fontSize * 1.35);
-    return { fontSize, lineHeight };
-  }
-
-  /**
-   * Creates a new document with content
-   */
-  async createDocument(content: string, uri?: any): Promise<any> {
-    const documentUri = uri || this.vscode.Uri.parse('untitled:untitled');
-    const document = await this.vscode.workspace.openTextDocument(documentUri);
-
-    // Set the content
-    const edit = new this.vscode.WorkspaceEdit();
-    edit.insert(documentUri, new this.vscode.Position(0, 0), content);
-    await this.vscode.workspace.applyEdit(edit);
-
-    return document;
-  }
-
-  /**
-   * Shows a document in a new tab
-   */
-  async showDocument(document: any, preview: boolean = false): Promise<void> {
-    await this.vscode.window.showTextDocument(document, { preview });
-  }
-
-  /**
-   * Opens a file by path in VSCode
-   */
-  async openInVSCode(filePath: string): Promise<void> {
-    try {
-      const documentUri = this.vscode.Uri.file(filePath);
-      const document = await this.vscode.workspace.openTextDocument(documentUri);
-      await this.vscode.window.showTextDocument(document);
-    } catch (error) {
-      this.app.ui.debugOut(
-        `Failed to open file in VSCode: ${filePath}`,
-        'error',
-        'VSCodeAPIs',
-        error
-      );
-    }
-  }
-
-  /**
-   * Create and show a Webview panel with provided HTML
-   */
-  createWebviewPanel(title: string, htmlContent: string): any {
-    const panel = this.vscode.window.createWebviewPanel(
-      'p2p4vsc.printprep',
-      title,
-      this.vscode.window.ViewColumn.Active,
-      { enableScripts: true, retainContextWhenHidden: true }
-    );
-    panel.webview.html = htmlContent;
-    return panel;
-  }
-
-  /**
-   * Get the active VS Code theme JSON object for Shiki
-   */
-  getVSCodeThemeJSON(): Record<string, unknown> {
-    const configured = this.vscode.workspace.getConfiguration('workbench').get('colorTheme');
-    if (!configured) {
-      throw new Error('Could not get active VS Code theme configuration');
-    }
-    const themeName = configured.toString().toLowerCase();
-
-    try {
-      // Search all extensions that contribute themes; pick the configured one
-      for (const ext of this.vscode.extensions.all) {
-        const contrib = (ext.packageJSON?.contributes?.themes || []) as Array<{
-          label?: string;
-          path?: string;
-          id?: string;
-        }>;
-        for (const themeEntry of contrib) {
-          const label = (themeEntry.label || themeEntry.id || '').toLowerCase();
-          if (label && configured && label === configured) {
-            const absPath = this.app.os.pathJoin(ext.extensionPath, themeEntry.path || '');
-            const loaded = this.app.os.readJsonFile<Record<string, unknown>>(absPath);
-            if (loaded) return loaded;
-          }
-        }
-      }
-    } catch (err) {
-      this.app.ui.debugOut(
-        'ERROR:getVSCodeThemeJSON: Failed to load theme JSON',
-        'warn',
-        'VSCodeAPIs',
-        err
-      );
-    }
-
-    // No fallback - if we can't find the active theme, fail properly
-    throw new Error(
-      `Could not resolve active theme '${themeName}' - no matching theme found in extensions`
-    );
-  }
-
-  // Get the active theme name/label for display purposes
-  getActiveTheme(): string {
-    const configured = this.vscode.workspace.getConfiguration('workbench').get('colorTheme');
-    if (!configured) {
-      throw new Error('Could not get active VS Code theme configuration');
-    }
-    return configured.toString();
-  }
-
-  // Simple function to get VSCode themes with optional filter
-  getVSCodeThemes(filter?: string): Array<{ id: string; label: string; source: 'vscode' }> {
-    try {
-      // Get all extensions that contribute themes
-      const themeExtensions = this.vscode.extensions.all.filter(
-        ext =>
-          ext.packageJSON?.contributes?.themes && Array.isArray(ext.packageJSON.contributes.themes)
-      );
-
-      // Extract all themes from all extensions
-      const allThemes = themeExtensions
-        .flatMap(ext => {
-          const extThemes = ext.packageJSON.contributes.themes;
-          return extThemes.map((theme: any) => ({
-            id: theme.id || theme.name || `theme-${ext.id}`,
-            label: theme.label || theme.name || theme.id || `Theme from ${ext.id}`,
-            source: 'vscode' as const,
-            extension: ext.id,
-            theme: theme, // Keep the full theme object for Shiki
-          }));
-        })
-        .filter(theme => theme.id && theme.label);
-
-      // Remove duplicates
-      const uniqueThemes = allThemes.filter(
-        (theme, index, self) => index === self.findIndex(t => t.id === theme.id)
-      );
-
-      // Apply filter if provided
-      if (filter) {
-        const filterRegex = new RegExp(filter, 'i');
-        return uniqueThemes.filter(theme => filterRegex.test(theme.label));
-      }
-
-      return uniqueThemes;
-    } catch (err) {
-      this.app.ui.debugOut('ERROR:getVSThemes: Failed to get themes', 'warn', 'VSCodeAPIs', err);
-      return [];
-    }
-  }
-
-  // loadThemeJson removed; use OS.readJsonFile and handle include/merge at a higher layer
 }

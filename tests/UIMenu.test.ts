@@ -18,7 +18,7 @@ const mockApp = {
 } as any;
 
 // Mock list builder and selection handler
-const mockListBuilder = () => [{ id: 'test', label: 'Test Item' }];
+const mockListBuilder = () => [{ id: 'test', displayName: 'Test Item' }];
 const mockSelectionHandler = async (id: string) => {};
 
 describe('UIMenu', () => {
@@ -131,7 +131,7 @@ describe('UIMenu', () => {
       const items = menu.getMenuItems();
       assert.strictEqual(items.length, 1);
       assert.strictEqual(items[0].id, 'test');
-      assert.strictEqual(items[0].label, 'Test Item');
+      assert.strictEqual(items[0].displayName, 'Test Item');
     });
   });
 

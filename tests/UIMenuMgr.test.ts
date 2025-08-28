@@ -44,7 +44,7 @@ describe('UIMenuMgr', () => {
       // Clear any existing menus
       (menuMgr as any).menus = [];
 
-      const mockListBuilder = () => [{ id: 'test', label: 'Test Item' }];
+      const mockListBuilder = () => [{ id: 'test', displayName: 'Test Item' }];
       const mockSelectionHandler = async (id: string) => {};
 
       const menu = menuMgr.createMenu(
@@ -65,7 +65,7 @@ describe('UIMenuMgr', () => {
       // Clear any existing menus
       (menuMgr as any).menus = [];
 
-      const mockListBuilder = () => [{ id: 'test', label: 'Test Item' }];
+      const mockListBuilder = () => [{ id: 'test', displayName: 'Test Item' }];
       const mockSelectionHandler = async (id: string) => {};
 
       const menu1 = menuMgr.createMenu(
@@ -101,7 +101,7 @@ describe('UIMenuMgr', () => {
       // Clear any existing menus
       (menuMgr as any).menus = [];
 
-      const mockListBuilder = () => [{ id: 'test', label: 'Test Item' }];
+      const mockListBuilder = () => [{ id: 'test', displayName: 'Test Item' }];
       const mockSelectionHandler = async (id: string) => {};
 
       const testMenu = menuMgr.createMenu(
@@ -134,7 +134,7 @@ describe('UIMenuMgr', () => {
       // Clear any existing menus
       (menuMgr as any).menus = [];
 
-      const mockListBuilder = () => [{ id: 'test', label: 'Test Item' }];
+      const mockListBuilder = () => [{ id: 'test', displayName: 'Test Item' }];
       const mockSelectionHandler = async (id: string) => {};
 
       const menu1 = menuMgr.createMenu(
@@ -181,7 +181,7 @@ describe('UIMenuMgr', () => {
       // Clear any existing menus
       (menuMgr as any).menus = [];
 
-      const mockListBuilder = () => [{ id: 'test', label: 'Test Item' }];
+      const mockListBuilder = () => [{ id: 'test', displayName: 'Test Item' }];
       const mockSelectionHandler = async (id: string) => {};
 
       const testMenu = menuMgr.createMenu(
@@ -204,7 +204,7 @@ describe('UIMenuMgr', () => {
       // Clear any existing menus
       (menuMgr as any).menus = [];
 
-      const mockListBuilder = () => [{ id: 'test', label: 'Test Item' }];
+      const mockListBuilder = () => [{ id: 'test', displayName: 'Test Item' }];
       const mockSelectionHandler = async (id: string) => {};
 
       const menu1 = menuMgr.createMenu(
@@ -237,7 +237,7 @@ describe('UIMenuMgr', () => {
       // Clear any existing menus
       (menuMgr as any).menus = [];
 
-      const mockListBuilder = () => [{ id: 'test', label: 'Test Item' }];
+      const mockListBuilder = () => [{ id: 'test', displayName: 'Test Item' }];
       const mockSelectionHandler = async (id: string) => {};
 
       const testMenu = menuMgr.createMenu(
@@ -269,7 +269,7 @@ describe('UIMenuMgr', () => {
       (menuMgr as any).menus = [];
 
       const longId = 'a'.repeat(100);
-      const mockListBuilder = () => [{ id: 'test', label: 'Test Item' }];
+      const mockListBuilder = () => [{ id: 'test', displayName: 'Test Item' }];
       const mockSelectionHandler = async (id: string) => {};
 
       const longMenu = menuMgr.createMenu(
@@ -291,7 +291,7 @@ describe('UIMenuMgr', () => {
       (menuMgr as any).menus = [];
 
       const specialId = 'menu_$#@!';
-      const mockListBuilder = () => [{ id: 'test', label: 'Test Item' }];
+      const mockListBuilder = () => [{ id: 'test', displayName: 'Test Item' }];
       const mockSelectionHandler = async (id: string) => {};
 
       const specialMenu = menuMgr.createMenu(

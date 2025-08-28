@@ -9,7 +9,7 @@ export class PaperPrinter {
   private lastPrintPrepHtml: string | null = null;
   private lastRawCode: string | null = null;
   private lastLanguageId: string | null = null;
-  private currentPrintableLabel: string = 'Printable';
+  private printTitle: string = 'Printable';
 
   private currentThemeChoice: string = 'editor';
 
@@ -62,18 +62,18 @@ export class PaperPrinter {
     if (!this.lastPrintPrepHtml) return;
     const updated = await this.applyRenderModes(this.lastPrintPrepHtml);
     if (msg.value === 'preview')
-      await this.app.pdf.printWithPreview(updated, this.currentPrintableLabel || 'Print Output');
+      await this.app.pdf.printWithPreview(updated, this.printTitle || 'Print Output');
     else if (msg.value === 'direct')
-      await this.app.pdf.printDirectly(updated, this.currentPrintableLabel || 'Print Output');
+      await this.app.pdf.printDirectly(updated, this.printTitle || 'Print Output');
     else if (msg.value === 'save')
-      await this.app.pdf.saveAsPDF(updated, this.currentPrintableLabel || 'Print Output');
+      await this.app.pdf.saveAsPDF(updated, this.printTitle || 'Print Output');
     // TODO: Re-render webview - need access to panel
   }
 
   /**
    * Handles print command - automatically detects selection vs document
    */
-  async handlePrint(): Promise<void> {
+  async handleFirstPrintCommand(): Promise<void> {
     try {
       const category = this.app.tabinspector.detectActiveTabCategory();
       if (category === 'preview') {
@@ -102,9 +102,9 @@ export class PaperPrinter {
         printableLabel =
           start === end ? `Line ${start} of ${info.name}` : `Lines ${start}-${end} of ${info.name}`;
       }
-      this.currentPrintableLabel = printableLabel;
+      this.printTitle = printableLabel;
       const htmlContent = await this.app.stylize.styleToHtml(info.text, info.languageId, {
-        title: this.currentPrintableLabel,
+        title: this.printTitle,
       });
       await this.openPrintPrepAndPrompt(htmlContent, printableLabel);
     } catch (error) {
@@ -117,7 +117,7 @@ export class PaperPrinter {
 
   private async openPrintPrepAndPrompt(htmlContent: string, tabName: string): Promise<void> {
     this.lastPrintPrepHtml = htmlContent;
-    this.currentPrintableLabel = tabName;
+    this.printTitle = tabName;
 
     // Create menus and register message handlers when we actually need them
     this.createMenus();
@@ -136,7 +136,7 @@ export class PaperPrinter {
       const html = await this.app.stylize.styleToHtml(this.lastRawCode, this.lastLanguageId, {
         fontSize: sizePx,
         lineHeight: lhPx,
-        title: this.currentPrintableLabel,
+        title: this.printTitle,
       });
       return html;
     }
@@ -163,21 +163,21 @@ export class PaperPrinter {
         id: 'print',
         icon: '🖨',
         title: 'Print',
-        buildList: this.printBuildList.bind(this),
+        menuItems: this.menuItems_Print.bind(this),
         selectionHandler: this.handleSelection_Print.bind(this),
       },
       {
         id: 'theme',
         icon: '🎨',
         title: 'Theme',
-        buildList: this.themesBuildList.bind(this),
+        menuItems: this.menuItems_Theme.bind(this),
         selectionHandler: this.handleSelection_Theme.bind(this),
       },
       {
         id: 'text',
         icon: 'Tt',
         title: 'Text',
-        buildList: this.textBuildList.bind(this),
+        menuItems: this.menuItems_Text.bind(this),
         selectionHandler: this.handleSelection_Text.bind(this),
       },
     ];
@@ -187,7 +187,7 @@ export class PaperPrinter {
         config.id,
         config.icon,
         config.title,
-        config.buildList,
+        config.menuItems,
         config.selectionHandler
       );
       this.app.uimenumgr.addMenu(menu);
@@ -208,35 +208,47 @@ export class PaperPrinter {
   }
 
   // Build list methods for each menu type
-  private printBuildList(): UIMenuItem[] {
+  private menuItems_Print(): UIMenuItem[] {
     return [
-      { id: 'preview', label: 'Print with Preview' },
-      { id: 'direct', label: 'Print' },
-      { id: 'save', label: 'Save as PDF' },
+      { id: 'preview', displayName: 'Print with Preview' },
+      { id: 'direct', displayName: 'Print' },
+      { id: 'save', displayName: 'Save as PDF' },
     ];
   }
 
-  private themesBuildList(): UIMenuItem[] {
-    return [
-      { id: 'editor', label: 'Editor Theme' },
-      ...this.app.stylize.getThemes().map(theme => ({
-        id: theme.id,
-        label: theme.label,
-      })),
-    ];
+  private menuItems_Theme(): UIMenuItem[] {
+    return this.app.stylize.getThemes().map(theme => ({
+      id: theme.id,
+      displayName: theme.displayName,
+    }));
   }
 
-  private textBuildList(): UIMenuItem[] {
+  private menuItems_Text(): UIMenuItem[] {
     const editorTypo = this.app.vscodeapis.getEditorTypography();
-    return [
-      { id: 'editor', label: `Editor (${editorTypo.fontSize}px)` },
-      { id: '9', label: '9 px' },
-      { id: '10', label: '10 px' },
-      { id: '12', label: '12 px' },
-      { id: '14', label: '14 px' },
-      { id: '18', label: '18 px' },
-      { id: '24', label: '24 px' },
+    const editorSize = editorTypo.fontSize;
+
+    // Create base size options
+    const sizeOptions = [
+      { id: '9', displayName: '9px' },
+      { id: '10', displayName: '10px' },
+      { id: '12', displayName: '12px' },
+      { id: '14', displayName: '14px' },
+      { id: '18', displayName: '18px' },
+      { id: '24', displayName: '24px' },
     ];
+
+    // Check if editor size already exists in the list
+    const existingEditorOption = sizeOptions.find(option => option.id === String(editorSize));
+
+    if (existingEditorOption) {
+      // Editor size already exists - just add 📝 to its displayName
+      existingEditorOption.displayName = `${existingEditorOption.displayName} 📝`;
+    } else {
+      // Editor size not in list - add it at the top with 📝 suffix
+      sizeOptions.unshift({ id: String(editorSize), displayName: `${editorSize}px 📝` });
+    }
+
+    return sizeOptions;
   }
 
   // Selection handler methods for each menu type
@@ -244,11 +256,11 @@ export class PaperPrinter {
     if (!this.lastPrintPrepHtml) return;
     const updated = await this.applyRenderModes(this.lastPrintPrepHtml);
     if (selectedId === 'preview')
-      await this.app.pdf.printWithPreview(updated, this.currentPrintableLabel || 'Print Output');
+      await this.app.pdf.printWithPreview(updated, this.printTitle || 'Print Output');
     else if (selectedId === 'direct')
-      await this.app.pdf.printDirectly(updated, this.currentPrintableLabel || 'Print Output');
+      await this.app.pdf.printDirectly(updated, this.printTitle || 'Print Output');
     else if (selectedId === 'save')
-      await this.app.pdf.saveAsPDF(updated, this.currentPrintableLabel || 'Print Output');
+      await this.app.pdf.saveAsPDF(updated, this.printTitle || 'Print Output');
     // TODO: Re-render webview - need access to panel
   }
 
