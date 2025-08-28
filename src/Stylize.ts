@@ -39,45 +39,7 @@ export class Stylize {
     this.app.ui.debugOut('Stylize cleanup completed', 'info', 'Stylize');
   }
 
-  // Generate CSS variables for dynamic theme switching
-  private generateCSSVariables(theme: any): string {
-    if (!theme || !theme.colors || !theme.tokenColors) {
-      return '';
-    }
 
-    let css = ':root {\n';
-    
-    // Add background and foreground colors
-    if (theme.colors['editor.background']) {
-      css += `  --shiki-background: ${theme.colors['editor.background']};\n`;
-    }
-    if (theme.colors['editor.foreground']) {
-      css += `  --shiki-foreground: ${theme.colors['editor.foreground']};\n`;
-    }
-
-    // Add token colors
-    theme.tokenColors.forEach((tokenColor: any, index: number) => {
-      if (tokenColor.settings.foreground) {
-        const scope = tokenColor.scope[0] || `token-${index}`;
-        const cssVarName = `--shiki-token-${scope.replace(/[^a-zA-Z0-9]/g, '-')}`;
-        css += `  ${cssVarName}: ${tokenColor.settings.foreground};\n`;
-      }
-    });
-
-    css += '}';
-    return css;
-  }
-
-  // Switch themes dynamically by updating CSS variables
-  // This allows theme switching without regenerating HTML
-  switchTheme(themeId: string): string {
-    const themeData = this.getThemes().find(theme => theme.id === themeId);
-    if (!themeData || !themeData.colors || !themeData.tokenColors) {
-      throw new Error(`Theme '${themeId}' not found or invalid`);
-    }
-
-    return this.generateCSSVariables(themeData);
-  }
 
   // Convert VS Code theme JSON to Shiki-compatible CSS variables format
   private convertVSCodeThemeToShiki(vscodeTheme: Record<string, unknown>): any {
@@ -197,20 +159,11 @@ export class Stylize {
       }
     }
 
-    // Generate HTML using the singleton highlighter with CSS variables theme
+    // Generate HTML using the singleton highlighter
     const html = this.highlighter.codeToHtml(code, {
       lang,
       theme: selectedTheme,
     });
-
-    // Generate CSS variables for dynamic theme switching
-    let cssVariables = '';
-    if (opts?.theme) {
-      const themeData = this.getThemes().find(theme => theme.id === opts.theme);
-      if (themeData && themeData.colors && themeData.tokenColors) {
-        cssVariables = this.generateCSSVariables(themeData);
-      }
-    }
 
     const editorTypo = this.app.vscodeapis.getEditorTypography();
     const fontSize = typeof opts?.fontSize === 'number' ? opts.fontSize : editorTypo.fontSize;
@@ -221,7 +174,6 @@ export class Stylize {
       FONTSIZE_PX: String(fontSize),
       LINEHEIGHT_PX: String(lineHeight),
       CODE: html,
-      CSS_VARIABLES: cssVariables,
       VAR_TITLE:
         typeof opts?.title === 'string' && opts.title.length > 0 ? opts.title : 'Printable',
     });
