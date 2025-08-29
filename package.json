@@ -20,11 +20,6 @@
         "command": "p2p4vsc.print2paper",
         "title": "Print2Paper",
         "category": "Print"
-      },
-      {
-        "command": "p2p4vsc.api2ts",
-        "title": "Generate VS Code API Stubs",
-        "category": "Print"
       }
     ],
     "menus": {
@@ -47,8 +42,6 @@
     "vscode:prepublish": "npm run compile:deploy",
     "compile": "rm -rf out && tsc -p ./",
     "compile:deploy": "rm -rf out-deploy && tsc -p ./tsconfig.deploy.json",
-    "generate-stubs": "node build/vscode2ts.js",
-    "generate-stubs:custom": "node build/vscode2ts.js --outputfile",
     "lint": "eslint --config ./eslint.config.mjs src/**/*.ts",
     "lint:fix": "eslint --config ./eslint.config.mjs src/**/*.ts --fix",
     "lint:md": "markdownlint *.md tests/**/*.md",

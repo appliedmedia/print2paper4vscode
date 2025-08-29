@@ -84,12 +84,7 @@ export class VSCodeAPIs {
       this.app.paperprinter.handleFirstPrintCommand();
     });
 
-    const api2tsCommand = this.vscode.commands.registerCommand('p2p4vsc.api2ts', () => {
-      this.generateAPIStubs();
-    });
-
     this.context.subscriptions.push(printCommand);
-    this.context.subscriptions.push(api2tsCommand);
 
     this.app.ui.debugOut('VSCodeAPIs initialized', 'info', 'VSCodeAPIs');
   }
@@ -97,47 +92,6 @@ export class VSCodeAPIs {
   done(): void {
     // nothing needed here yet
     this.app.ui.debugOut('VSCodeAPIs cleanup completed', 'info', 'VSCodeAPIs');
-  }
-
-  generateAPIStubs(): void {
-    // Generate TypeScript stubs for VS Code API
-    const stubContent = `// Auto-generated VS Code API stubs
-export namespace vscode {
-  export namespace commands {
-    export function registerCommand(command: string, callback: (...args: any[]) => any): any;
-  }
-  export namespace window {
-    export const activeTextEditor: any;
-    export namespace tabGroups {
-      export const activeTabGroup: any;
-    }
-    export function showInformationMessage(message: string): void;
-    export function showWarningMessage(message: string): void;
-    export function showErrorMessage(message: string): void;
-    export function setStatusBarMessage(text: string, timeoutMs?: number): any;
-    export function createWebviewPanel(viewType: string, title: string, column: number, options: any): any;
-    export function showTextDocument(document: any, options?: any): Promise<void>;
-    export const ViewColumn: any;
-  }
-  export namespace workspace {
-    export function getConfiguration(section: string): any;
-    export function openTextDocument(uri: any): Promise<any>;
-    export function applyEdit(edit: any): Promise<boolean>;
-  }
-  export namespace Uri {
-    export function parse(value: string): any;
-    export function file(path: string): any;
-  }
-  export const Position: any;
-  export const WorkspaceEdit: any;
-  export namespace extensions {
-    export const all: any[];
-    export function getExtension(id: string): any;
-  }
-}`;
-
-    this.app.os.fileWrite('vscodeapis_stubs.ts', stubContent);
-    this.app.ui.debugOut('VS Code API stubs generated', 'info', 'VSCodeAPIs');
   }
 
   getGlobalStoragePath(): string {
@@ -200,7 +154,7 @@ export namespace vscode {
     const panel = this.vscode.window.createWebviewPanel(
       'p2p4vsc.printprep',
       title,
-      this.vscode.window.ViewColumn.Active,
+      this.vscode.window.ViewColumn?.Active || 1, // Use Active if available, fallback to 1
       { enableScripts: true, retainContextWhenHidden: true }
     );
     panel.webview.html = htmlContent;
