@@ -2,8 +2,7 @@
 
 ## Markdown Formatting Standards
 
-**IMPORTANT:** All Markdown files in this project SHALL use asterisks (`*`) for list bullets, NOT dashes (`-`).
-The linter is configured accordingly.
+_No specific bullet point formatting requirements._
 
 ## Project Overview
 
