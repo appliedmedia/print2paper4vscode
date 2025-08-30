@@ -3,6 +3,7 @@ class Diagnostics {
         this.className = className;
         this.debugOverride = debugOverride;
         this.currentMethod = null;
+        this.methodStartTime = null;
     }
 
     /**
@@ -13,6 +14,7 @@ class Diagnostics {
     in(methodName, debugOverride = false) {
         this.currentMethod = methodName;
         this.currentMethodDebug = debugOverride !== undefined ? debugOverride : this.debugOverride;
+        this.methodStartTime = performance.now();
         
         if (this.currentMethodDebug) {
             console.log(this.formatMessage(`Entering method: ${methodName}`));
@@ -30,10 +32,34 @@ class Diagnostics {
     }
 
     /**
+     * Mark method completion and output timing information
+     * @param {any} message - Optional completion message
+     */
+    done(message = null) {
+        if (this.currentMethodDebug && this.methodStartTime !== null) {
+            const duration = performance.now() - this.methodStartTime;
+            let timeDisplay;
+            
+            if (duration >= 60000) { // 60 seconds or more
+                timeDisplay = (duration / 60000).toFixed(2) + ' minutes';
+            } else {
+                timeDisplay = (duration / 1000).toFixed(2) + ' seconds';
+            }
+            
+            const completionMsg = message ? ` - ${message}` : '';
+            console.log(this.formatMessage(`Method completed in ${timeDisplay}${completionMsg}`));
+        }
+        
+        // Reset method context
+        this.currentMethod = null;
+        this.methodStartTime = null;
+    }
+
+    /**
      * Output a message regardless of debug settings
      * @param {any} message - The message to output
      */
-    force(message) {
+    print(message) {
         console.log(this.formatMessage(message));
     }
 
