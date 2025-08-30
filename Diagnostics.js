@@ -1,4 +1,6 @@
 class Diagnostics {
+    static separator = " > ";
+    
     constructor(className, debugOverride = false) {
         this.className = className;
         this.debugOverride = debugOverride;
@@ -7,18 +9,22 @@ class Diagnostics {
     }
 
     /**
-     * Enter a method - sets the current method context
+     * Enter a method - returns a new Diagnostics instance for the method
      * @param {string} methodName - The name of the method being entered
      * @param {boolean} debugOverride - Optional debug override for this method
+     * @returns {Diagnostics} - New Diagnostics instance for the method
      */
     in(methodName, debugOverride = false) {
-        this.currentMethod = methodName;
-        this.currentMethodDebug = debugOverride !== undefined ? debugOverride : this.debugOverride;
-        this.methodStartTime = performance.now();
+        const methodClassName = this.className + Diagnostics.separator + methodName;
+        const methodDx = new Diagnostics(methodClassName, debugOverride !== undefined ? debugOverride : this.debugOverride);
         
-        if (this.currentMethodDebug) {
-            console.log(this.formatMessage(`Entering method: ${methodName}`));
+        if (methodDx.debugOverride) {
+            methodDx.currentMethod = methodName;
+            methodDx.methodStartTime = performance.now();
+            console.log(methodDx.formatMessage(`Entering method: ${methodName}`));
         }
+        
+        return methodDx;
     }
 
     /**
@@ -26,7 +32,7 @@ class Diagnostics {
      * @param {any} message - The message to output
      */
     out(message) {
-        if (this.currentMethodDebug) {
+        if (this.debugOverride) {
             console.log(this.formatMessage(message));
         }
     }
@@ -36,7 +42,7 @@ class Diagnostics {
      * @param {any} message - Optional completion message
      */
     done(message = null) {
-        if (this.currentMethodDebug && this.methodStartTime !== null) {
+        if (this.debugOverride && this.methodStartTime !== null) {
             const duration = performance.now() - this.methodStartTime;
             let timeDisplay;
             
