@@ -1,6 +1,6 @@
 import type { App } from './App';
 import { UIMenu } from './UIMenu';
-import type { UIMenuItem } from './types/UIMenuItem';
+import type { UIMenuItem } from './types/UI_t';
 
 export class UIMenuMgr {
   private app: App;
@@ -25,7 +25,7 @@ export class UIMenuMgr {
     icon: string,
     title: string,
     listBuilder: () => UIMenuItem[],
-    selectionHandler: (selectedId: string) => Promise<void>
+    selectionHandler: (selectedId: string) => Promise<string>
   ): UIMenu {
     return new UIMenu(id, icon, title, this.app, listBuilder, selectionHandler);
   }
@@ -46,27 +46,38 @@ export class UIMenuMgr {
   }
 
   // Generate all HTML at once
-  getAllUIMenuHTML(): string {
+  async getAllUIMenuHTML(): Promise<string> {
     this.app.ui.debugOut(
       `Generating HTML for ${this.getAllMenus().length} menus`,
       'info',
       'UIMenuMgr'
     );
 
-    const result = this.getAllMenus()
-      .map(menu => {
-        this.app.ui.debugOut(`Generating HTML for menu: ${menu.id}`, 'info', 'UIMenuMgr');
-        const menuHTML = menu.getHTML();
+    const menuPromises = this.getAllMenus().map(async menu => {
+      this.app.ui.debugOut(`Generating HTML for menu: ${menu.id}`, 'info', 'UIMenuMgr');
+      try {
+        const menuHTML = await menu.getHTML();
         this.app.ui.debugOut(
           `Generated HTML for menu ${menu.id}: ${menuHTML.substring(0, 100)}...`,
           'info',
           'UIMenuMgr'
         );
         return menuHTML;
-      })
-      .join('\n');
+      } catch (error) {
+        this.app.ui.debugOut(
+          `ERROR generating HTML for menu ${menu.id}: ${error}`,
+          'error',
+          'UIMenuMgr'
+        );
+        return `<!-- ERROR generating menu ${menu.id}: ${error} -->`;
+      }
+    });
+
+    const menuResults = await Promise.all(menuPromises);
+    const result = menuResults.join('\n');
 
     this.app.ui.debugOut(`Total generated HTML length: ${result.length}`, 'info', 'UIMenuMgr');
+    this.app.ui.debugOut(`Final HTML preview: ${result.substring(0, 200)}...`, 'info', 'UIMenuMgr');
     return result;
   }
 
@@ -80,11 +91,11 @@ export class UIMenuMgr {
   }
 
   // Get all template variable mappings
-  getTemplateVariableMappings(): Record<string, string> {
+  async getTemplateVariableMappings(): Promise<Record<string, string>> {
     const mappings: Record<string, string> = {};
 
     // Add the new UIMenu placeholders
-    mappings['UIMENU_HTML'] = this.getAllUIMenuHTML();
+    mappings['UIMENU_HTML'] = await this.getAllUIMenuHTML();
     mappings['UIMENU_JS'] = this.getAllUIMenuJS();
 
     // Keep the old individual menu mappings for backward compatibility

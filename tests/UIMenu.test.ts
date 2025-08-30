@@ -1,7 +1,7 @@
 import { describe, it } from 'node:test';
 import * as assert from 'node:assert';
 import { UIMenu } from '../src/UIMenu.js';
-import type { UIMenuItem } from '../src/types/UIMenuItem.js';
+import type { UIMenuItem } from '../src/types/UI_t.js';
 
 // Mock App for testing
 const mockApp = {
@@ -19,7 +19,7 @@ const mockApp = {
 
 // Mock list builder and selection handler
 const mockListBuilder = () => [{ id: 'test', displayName: 'Test Item' }];
-const mockSelectionHandler = async (id: string) => {};
+const mockSelectionHandler = async (id: string): Promise<string> => Promise.resolve('');
 
 describe('UIMenu', () => {
   let menu: UIMenu;

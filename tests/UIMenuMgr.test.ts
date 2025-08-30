@@ -45,7 +45,7 @@ describe('UIMenuMgr', () => {
       (menuMgr as any).menus = [];
 
       const mockListBuilder = () => [{ id: 'test', displayName: 'Test Item' }];
-      const mockSelectionHandler = async (id: string) => {};
+      const mockSelectionHandler = async (id: string): Promise<string> => Promise.resolve('');
 
       const menu = menuMgr.createMenu(
         'testMenu',
@@ -66,7 +66,7 @@ describe('UIMenuMgr', () => {
       (menuMgr as any).menus = [];
 
       const mockListBuilder = () => [{ id: 'test', displayName: 'Test Item' }];
-      const mockSelectionHandler = async (id: string) => {};
+      const mockSelectionHandler = async (id: string): Promise<string> => Promise.resolve('');
 
       const menu1 = menuMgr.createMenu(
         'menu1',
@@ -102,7 +102,7 @@ describe('UIMenuMgr', () => {
       (menuMgr as any).menus = [];
 
       const mockListBuilder = () => [{ id: 'test', displayName: 'Test Item' }];
-      const mockSelectionHandler = async (id: string) => {};
+      const mockSelectionHandler = async (id: string): Promise<string> => Promise.resolve('');
 
       const testMenu = menuMgr.createMenu(
         'testMenu',
@@ -130,12 +130,12 @@ describe('UIMenuMgr', () => {
   });
 
   describe('HTML Generation', () => {
-    it('should generate HTML for all menus', () => {
+    it('should generate HTML for all menus', async () => {
       // Clear any existing menus
       (menuMgr as any).menus = [];
 
       const mockListBuilder = () => [{ id: 'test', displayName: 'Test Item' }];
-      const mockSelectionHandler = async (id: string) => {};
+      const mockSelectionHandler = async (id: string): Promise<string> => Promise.resolve('');
 
       const menu1 = menuMgr.createMenu(
         'menu1',
@@ -155,16 +155,16 @@ describe('UIMenuMgr', () => {
       menuMgr.addMenu(menu1);
       menuMgr.addMenu(menu2);
 
-      const html = menuMgr.getAllUIMenuHTML();
+      const html = await menuMgr.getAllUIMenuHTML();
 
       assert.ok(html.includes('menu1'), 'Should include menu1 HTML');
       assert.ok(html.includes('menu2'), 'Should include menu2 HTML');
     });
 
-    it('should handle empty menu list', () => {
+    it('should handle empty menu list', async () => {
       // Clear any menus that might have been added in previous tests
       (menuMgr as any).menus = [];
-      const html = menuMgr.getAllUIMenuHTML();
+      const html = await menuMgr.getAllUIMenuHTML();
       assert.strictEqual(html, '', 'Should return empty string for no menus');
     });
   });
@@ -177,12 +177,12 @@ describe('UIMenuMgr', () => {
   });
 
   describe('Template Variable Mappings', () => {
-    it('should generate correct template variable mappings', () => {
+    it('should generate correct template variable mappings', async () => {
       // Clear any existing menus
       (menuMgr as any).menus = [];
 
       const mockListBuilder = () => [{ id: 'test', displayName: 'Test Item' }];
-      const mockSelectionHandler = async (id: string) => {};
+      const mockSelectionHandler = async (id: string): Promise<string> => Promise.resolve('');
 
       const testMenu = menuMgr.createMenu(
         'testMenu',
@@ -193,19 +193,19 @@ describe('UIMenuMgr', () => {
       );
       menuMgr.addMenu(testMenu);
 
-      const mappings = menuMgr.getTemplateVariableMappings();
+      const mappings = await menuMgr.getTemplateVariableMappings();
 
       assert.ok('UIMENU_HTML' in mappings, 'Should have UIMENU_HTML mapping');
       assert.ok('UIMENU_JS' in mappings, 'Should have UIMENU_JS mapping');
       assert.ok('TESTMENU_MENU_ITEMS' in mappings, 'Should have menu-specific mapping');
     });
 
-    it('should handle multiple menus in mappings', () => {
+    it('should handle multiple menus in mappings', async () => {
       // Clear any existing menus
       (menuMgr as any).menus = [];
 
       const mockListBuilder = () => [{ id: 'test', displayName: 'Test Item' }];
-      const mockSelectionHandler = async (id: string) => {};
+      const mockSelectionHandler = async (id: string): Promise<string> => Promise.resolve('');
 
       const menu1 = menuMgr.createMenu(
         'menu1',
@@ -225,7 +225,7 @@ describe('UIMenuMgr', () => {
       menuMgr.addMenu(menu1);
       menuMgr.addMenu(menu2);
 
-      const mappings = menuMgr.getTemplateVariableMappings();
+      const mappings = await menuMgr.getTemplateVariableMappings();
 
       assert.ok('MENU1_MENU_ITEMS' in mappings, 'Should have menu1 mapping');
       assert.ok('MENU2_MENU_ITEMS' in mappings, 'Should have menu2 mapping');
@@ -238,7 +238,7 @@ describe('UIMenuMgr', () => {
       (menuMgr as any).menus = [];
 
       const mockListBuilder = () => [{ id: 'test', displayName: 'Test Item' }];
-      const mockSelectionHandler = async (id: string) => {};
+      const mockSelectionHandler = async (id: string): Promise<string> => Promise.resolve('');
 
       const testMenu = menuMgr.createMenu(
         'testMenu',
@@ -270,7 +270,7 @@ describe('UIMenuMgr', () => {
 
       const longId = 'a'.repeat(100);
       const mockListBuilder = () => [{ id: 'test', displayName: 'Test Item' }];
-      const mockSelectionHandler = async (id: string) => {};
+      const mockSelectionHandler = async (id: string): Promise<string> => Promise.resolve('');
 
       const longMenu = menuMgr.createMenu(
         longId,
@@ -292,7 +292,7 @@ describe('UIMenuMgr', () => {
 
       const specialId = 'menu_$#@!';
       const mockListBuilder = () => [{ id: 'test', displayName: 'Test Item' }];
-      const mockSelectionHandler = async (id: string) => {};
+      const mockSelectionHandler = async (id: string): Promise<string> => Promise.resolve('');
 
       const specialMenu = menuMgr.createMenu(
         specialId,

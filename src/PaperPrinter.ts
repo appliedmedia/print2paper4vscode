@@ -1,7 +1,7 @@
 import { ClipboardCapture } from './ClipboardCapture';
 import type { App } from './App';
-import type { WebviewMessage } from './UI';
-import type { UIMenuItem } from './types/UIMenuItem';
+import type { WebviewMessage } from './types/UI_t';
+import type { UIMenuItem } from './types/UI_t';
 
 export class PaperPrinter {
   private app: App;
@@ -125,7 +125,7 @@ export class PaperPrinter {
 
     const initial = await this.applyRenderModes(htmlContent);
 
-    this.app.ui.createWebviewPanel(`Printable: ${tabName}`, this.app.ui.addToolbar(initial));
+    this.app.ui.createWebviewPanel(`Printable: ${tabName}`, await this.app.ui.addToolbar(initial));
   }
 
   private async applyRenderModes(htmlBase: string): Promise<string> {
@@ -269,8 +269,11 @@ export class PaperPrinter {
   }
 
   // Selection handler methods for each menu type
-  private async handleSelection_Print(selectedId: string): Promise<void> {
-    if (!this.lastPrintPrepHtml) return;
+  private async handleSelection_Print(selectedId: string): Promise<string> {
+    if (selectedId === '0') {
+      return ''; // Print menu has no default selection
+    }
+    if (!this.lastPrintPrepHtml) return '';
     const updated = await this.applyRenderModes(this.lastPrintPrepHtml);
     if (selectedId === 'preview')
       await this.app.pdf.printWithPreview(updated, this.printTitle || 'Print Output');
@@ -279,17 +282,27 @@ export class PaperPrinter {
     else if (selectedId === 'save')
       await this.app.pdf.saveAsPDF(updated, this.printTitle || 'Print Output');
     // TODO: Re-render webview - need access to panel
+    return ''; // action handled
   }
 
-  private async handleSelection_Theme(selectedId: string): Promise<void> {
+  private async handleSelection_Theme(selectedId: string): Promise<string> {
+    if (selectedId === '0') {
+      return this.currentThemeChoice || this.app.stylize.getThemes()[0]?.id || '';
+    }
     this.app.ui.debugOut(`Theme menu selection: ${selectedId}`, 'info', 'PaperPrinter');
     this.currentThemeChoice = selectedId;
     // TODO: Re-render webview with new theme - need access to panel
+    return ''; // selection handled
   }
 
-  private async handleSelection_Text(selectedId: string): Promise<void> {
+  private async handleSelection_Text(selectedId: string): Promise<string> {
+    if (selectedId === '0') {
+      const editorTypo = this.app.vscodeapis.getEditorTypography();
+      return String(editorTypo.fontSize);
+    }
     this.app.ui.debugOut(`Text menu selection: ${selectedId}`, 'info', 'PaperPrinter');
     // TODO: Implement text handling
+    return ''; // selection handled
   }
 
   // Removed CSS hacks; rely on theme overrides

@@ -1,14 +1,15 @@
 import type { App } from './App';
-import type { ExtensionContext } from 'vscode';
 import type {
   Disposable,
+  ExtensionContext,
   TextEditor,
   TextDocument,
   Uri,
-  // WebviewPanel,
+  WebviewPanel,
   // Position,
   // WorkspaceEdit,
 } from 'vscode';
+import type { WebviewMessage } from './types/UI_t';
 
 // Create a minimal type that includes only the VS Code API methods we actually use
 // COMMENTED OUT: Fallback type in case the official vscode types don't work
@@ -153,7 +154,7 @@ export class VSCodeAPIs {
   /**
    * Create and show a Webview panel with provided HTML
    */
-  createWebviewPanel(title: string, htmlContent: string): import('vscode').WebviewPanel {
+  createWebviewPanel(title: string, htmlContent: string): WebviewPanel {
     const panel = this.vscode.window.createWebviewPanel(
       'p2p4vsc.printprep',
       title,
@@ -162,6 +163,15 @@ export class VSCodeAPIs {
     );
     panel.webview.html = htmlContent;
     return panel;
+  }
+
+  /**
+   * Set up message handling for an existing webview panel
+   */
+  setupMessageHandling(panel: WebviewPanel): void {
+    panel.webview.onDidReceiveMessage(async (msg: WebviewMessage) => {
+      await this.app.ui.handleWebviewMessage(msg);
+    });
   }
 
   /**

@@ -122,4 +122,8 @@ ui_drag_handlers: |
   });
 
 ui_menu_item: |
-  <div class="p2p4vsc-menu-item" id="{{ITEM_ID}}">{{ITEM_LABEL}}</div>
+  <div class="p2p4vsc-menu-item {{ITEM_CLASSES}}" id="{{ITEM_ID}}">
+    <span class="item-prefix">{{ITEM_PREFIX}}</span>
+    {{ITEM_LABEL}}
+    <span class="item-suffix">{{ITEM_SUFFIX}}</span>
+  </div>

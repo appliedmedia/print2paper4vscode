@@ -1,5 +1,5 @@
 import type { App } from './App';
-import type { UIMenuItem } from './types/UIMenuItem';
+import type { UIMenuItem } from './types/UI_t';
 
 export class UIMenu {
   constructor(
@@ -8,7 +8,7 @@ export class UIMenu {
     private _title: string,
     private _app: App,
     private _listBuilder: () => UIMenuItem[],
-    private _selectionHandler: (id: string) => Promise<void>
+    private _selectionHandler: (id: string) => Promise<string>
   ) {}
 
   // Getters for private properties
@@ -43,7 +43,7 @@ export class UIMenu {
   }
 
   // Generate the complete HTML for this menu using YAML template
-  getHTML(): string {
+  async getHTML(): Promise<string> {
     this._app.ui.debugOut(`UIMenu.getHTML called for ${this.id}`, 'info', 'UIMenu');
     this._app.ui.debugOut(`Icon: "${this.icon}", Title: "${this.title}"`, 'info', 'UIMenu');
 
@@ -62,15 +62,32 @@ export class UIMenu {
       throw error;
     }
 
-    // Generate menu items HTML
+    // Generate menu items HTML with dynamic checkmarks and edit icons
     const menuItems = this.getMenuItems();
+
+    // Get the default selection to determine which item should be checked
+    let defaultSelection = '';
+    try {
+      defaultSelection = await this._selectionHandler('0');
+    } catch (error) {
+      this._app.ui.debugOut(`Error getting default selection: ${error}`, 'error', 'UIMenu');
+    }
+
     const menuItemsHtml = menuItems
-      .map(item =>
-        this._app.templateDictReplace(yaml.ui_menu_item, {
+      .map(item => {
+        const isDefault = item.id === defaultSelection;
+        const itemClasses = isDefault ? 'default-item' : '';
+        const itemPrefix = isDefault ? '✓' : ' ';
+        const itemSuffix = isDefault ? '✏️' : '';
+
+        return this._app.templateDictReplace(yaml.ui_menu_item, {
           ITEM_ID: item.id,
           ITEM_LABEL: item.displayName,
-        })
-      )
+          ITEM_CLASSES: itemClasses,
+          ITEM_PREFIX: itemPrefix,
+          ITEM_SUFFIX: itemSuffix,
+        });
+      })
       .join('\n');
 
     // Generate complete menu HTML using the template
