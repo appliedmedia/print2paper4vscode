@@ -7,6 +7,7 @@ import { UIMenu } from '../src/UIMenu.js';
 class MockApp {
   os: any;
   templateDictReplace: any;
+  ui: any;
 
   constructor() {
     this.os = {
@@ -20,6 +21,11 @@ class MockApp {
       return Object.entries(dict).reduce((result, [key, value]) => {
         return result.replace(new RegExp(`{{${key}}}`, 'g'), value);
       }, template);
+    };
+    this.ui = {
+      debugOut: (message: string, level?: string, source?: string) => {
+        // Mock debug output - just ignore it for tests
+      },
     };
   }
 }
