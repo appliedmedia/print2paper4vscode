@@ -10,14 +10,52 @@ ui_menu_html: |
 ui_menu_generic_handlers: |
   // Generic handlers for all menus - just pass events to extension
   document.addEventListener('click', (e) => {
-    // Send minimal selection data to extension
-    vscode.postMessage({ 
-      type: 'menuItemSelected', 
-      targetId: e.target.id,
-      parentId: e.target.closest('.p2p4vsc-menu')?.getAttribute('id'),
-      x: e.clientX,
-      y: e.clientY
-    });
+    // Handle menu button clicks to show/hide dropdowns
+    if (e.target.matches('.p2p4vsc-menu-btn')) {
+      e.preventDefault();
+      const menu = e.target.closest('.p2p4vsc-menu');
+      const menuItems = menu.querySelector('.p2p4vsc-menu-items');
+      
+      // Close all other menus first
+      document.querySelectorAll('.p2p4vsc-menu-items').forEach(items => {
+        if (items !== menuItems) {
+          items.style.display = 'none';
+        }
+      });
+      
+      // Toggle this menu
+      if (menuItems.style.display === 'block') {
+        menuItems.style.display = 'none';
+      } else {
+        menuItems.style.display = 'block';
+      }
+      return;
+    }
+    
+    // Handle menu item clicks
+    if (e.target.matches('.p2p4vsc-menu-item')) {
+      // Send minimal selection data to extension
+      vscode.postMessage({ 
+        type: 'menuItemSelected', 
+        targetId: e.target.id,
+        parentId: e.target.closest('.p2p4vsc-menu')?.getAttribute('id'),
+        x: e.clientX,
+        y: e.clientY
+      });
+      
+      // Close the menu after selection
+      const menu = e.target.closest('.p2p4vsc-menu');
+      const menuItems = menu.querySelector('.p2p4vsc-menu-items');
+      menuItems.style.display = 'none';
+      return;
+    }
+    
+    // Close all menus when clicking outside
+    if (!e.target.closest('.p2p4vsc-menu')) {
+      document.querySelectorAll('.p2p4vsc-menu-items').forEach(items => {
+        items.style.display = 'none';
+      });
+    }
   });
 
 ui_drag_handlers: |

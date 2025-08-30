@@ -175,7 +175,7 @@ export class PaperPrinter {
       },
       {
         id: 'text',
-        icon: 'Tt',
+        icon: '📝',
         title: 'Text',
         menuItems: this.menuItems_Text.bind(this),
         selectionHandler: this.handleSelection_Text.bind(this),
