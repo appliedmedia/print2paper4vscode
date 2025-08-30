@@ -1,0 +1,14 @@
+{
+  "agentCanUpdateSnapshot": true,
+  "github": {
+    "cli": true
+  },
+  "eslint": {
+    "enabled": true,
+    "configFile": "./eslint.config.mjs"
+  },
+  "prettier": {
+    "enabled": true,
+    "configFile": "./.prettierrc"
+  }
+}

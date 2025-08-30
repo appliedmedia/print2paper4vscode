@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/* global console, process */
 // eslint-disable
 
 /**
@@ -17,8 +18,8 @@
  * Usage: node build/convertVSCodeTsForExport.js
  */
 
-const fs = require('fs');
-const path = require('path');
+import fs from 'fs';
+import path from 'path';
 
 console.log('🔧 VS Code TypeScript Definitions Converter');
 console.log('==========================================\n');
