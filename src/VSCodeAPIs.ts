@@ -1,19 +1,21 @@
 import type { App } from './App';
+import type { ExtensionContext } from 'vscode';
 import type {
-  ExtensionContext,
+  Disposable,
   TextEditor,
   TextDocument,
-  WebviewPanel,
   Uri,
-  Position,
-  WorkspaceEdit,
-  Disposable,
+  // WebviewPanel,
+  // Position,
+  // WorkspaceEdit,
 } from 'vscode';
 
 // Create a minimal type that includes only the VS Code API methods we actually use
+// COMMENTED OUT: Fallback type in case the official vscode types don't work
+/*
 type vscode_t = {
   commands: {
-    registerCommand: (command: string, callback: (...args: any[]) => any) => Disposable;
+    registerCommand: (command: string, callback: (...args: unknown[]) => unknown) => Disposable;
   };
   window: {
     activeTextEditor: TextEditor | undefined;
@@ -66,13 +68,14 @@ type vscode_t = {
     getExtension: (id: string) => any;
   };
 };
+*/
 
 export class VSCodeAPIs {
   private app: App;
-  private vscode: vscode_t; // Use our custom type
+  private vscode: typeof import('vscode'); // Use official VS Code types
   private context: ExtensionContext; // Properly typed context
 
-  constructor(app: App, vscode: vscode_t, context: ExtensionContext) {
+  constructor(app: App, vscode: typeof import('vscode'), context: ExtensionContext) {
     this.app = app;
     this.vscode = vscode;
     this.context = context;
@@ -110,7 +113,7 @@ export class VSCodeAPIs {
   /**
    * Creates a new document with content
    */
-  async createDocument(content: string, uri?: any): Promise<any> {
+  async createDocument(content: string, uri?: Uri): Promise<TextDocument> {
     const documentUri = uri || this.vscode.Uri.parse('untitled:untitled');
     const document = await this.vscode.workspace.openTextDocument(documentUri);
 
@@ -125,7 +128,7 @@ export class VSCodeAPIs {
   /**
    * Shows a document in a new tab
    */
-  async showDocument(document: any, preview: boolean = false): Promise<void> {
+  async showDocument(document: TextDocument, preview: boolean = false): Promise<void> {
     await this.vscode.window.showTextDocument(document, { preview });
   }
 
@@ -150,11 +153,11 @@ export class VSCodeAPIs {
   /**
    * Create and show a Webview panel with provided HTML
    */
-  createWebviewPanel(title: string, htmlContent: string): any {
+  createWebviewPanel(title: string, htmlContent: string): import('vscode').WebviewPanel {
     const panel = this.vscode.window.createWebviewPanel(
       'p2p4vsc.printprep',
       title,
-      this.vscode.window.ViewColumn?.Active || 1, // Use Active if available, fallback to 1
+      this.vscode.ViewColumn.Active, // Use the correct ViewColumn from vscode namespace
       { enableScripts: true, retainContextWhenHidden: true }
     );
     panel.webview.html = htmlContent;
@@ -173,7 +176,7 @@ export class VSCodeAPIs {
 
     return themeExtensions.map(ext => ({
       id: ext.id,
-      displayName: (ext.packageJSON as any).displayName || ext.id,
+      displayName: (ext.packageJSON as { displayName?: string }).displayName || ext.id,
       extensionPath: ext.extensionPath,
     }));
   }
@@ -187,14 +190,16 @@ export class VSCodeAPIs {
   getVSCodeThemeJson(themeId: string, keys?: string[]): Record<string, unknown> | undefined {
     // Find the extension that contributes this theme
     const themeExtension = this.vscode.extensions.all.find(ext =>
-      ext.packageJSON?.contributes?.themes?.some((theme: any) => theme.id === themeId)
+      ext.packageJSON?.contributes?.themes?.some((theme: { id: string }) => theme.id === themeId)
     );
 
     if (!themeExtension) {
       return undefined;
     }
 
-    const theme = themeExtension.packageJSON.contributes.themes.find((t: any) => t.id === themeId);
+    const theme = themeExtension.packageJSON.contributes.themes.find(
+      (t: { id: string }) => t.id === themeId
+    );
     if (!theme) {
       return undefined;
     }
@@ -226,14 +231,14 @@ export class VSCodeAPIs {
   /**
    * Gets the active text editor
    */
-  getActiveTextEditor(): any | undefined {
+  getActiveTextEditor(): TextEditor | undefined {
     return this.vscode.window.activeTextEditor;
   }
 
   /**
    * Returns the selected text or entire document text for the active editor
    */
-  getSelectionOrDocumentText(editor: any): string {
+  getSelectionOrDocumentText(editor: TextEditor): string {
     const selection = editor.selection;
     if (selection && !selection.isEmpty) {
       return editor.document.getText(selection);
@@ -270,7 +275,7 @@ export class VSCodeAPIs {
   /**
    * Gets descriptive name from document
    */
-  getDescriptiveName(document: any): string {
+  getDescriptiveName(document: TextDocument): string {
     const uri = document.uri.toString();
     if (uri.startsWith('untitled:')) {
       const tabName = uri.replace('untitled:', '');
@@ -305,7 +310,7 @@ export class VSCodeAPIs {
   /**
    * Sets status bar message
    */
-  setStatusBarMessage(text: string, timeoutMs?: number): any {
+  setStatusBarMessage(text: string, timeoutMs?: number): Disposable {
     if (timeoutMs && timeoutMs > 0) {
       return this.vscode.window.setStatusBarMessage(text, timeoutMs);
     }
