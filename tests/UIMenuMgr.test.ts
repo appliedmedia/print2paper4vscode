@@ -155,7 +155,7 @@ describe('UIMenuMgr', () => {
       menuMgr.addMenu(menu1);
       menuMgr.addMenu(menu2);
 
-      const html = menuMgr.generateAllHTML();
+      const html = menuMgr.getAllUIMenuHTML();
 
       assert.ok(html.includes('menu1'), 'Should include menu1 HTML');
       assert.ok(html.includes('menu2'), 'Should include menu2 HTML');
@@ -164,14 +164,14 @@ describe('UIMenuMgr', () => {
     it('should handle empty menu list', () => {
       // Clear any menus that might have been added in previous tests
       (menuMgr as any).menus = [];
-      const html = menuMgr.generateAllHTML();
+      const html = menuMgr.getAllUIMenuHTML();
       assert.strictEqual(html, '', 'Should return empty string for no menus');
     });
   });
 
   describe('JavaScript Generation', () => {
     it('should generate generic JavaScript handlers', () => {
-      const js = menuMgr.generateAllJavaScript();
+      const js = menuMgr.getAllUIMenuJS();
       assert.ok(js.includes('// Generic handlers'), 'Should include generic handlers');
     });
   });

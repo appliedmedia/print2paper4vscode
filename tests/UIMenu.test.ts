@@ -96,26 +96,13 @@ describe('UIMenu', () => {
   });
 
   describe('HTML Generation', () => {
-    it('should generate correct HTML structure', () => {
-      const menuItems = '<div class="item">Test Item</div>';
-      const html = menu.generateHTML(menuItems);
-
-      assert.ok(html.includes('testMenu'), 'Should have correct menu ID');
-      assert.ok(html.includes('testMenu-btn'), 'Should have correct button ID');
-      assert.ok(html.includes('Test Menu'), 'Should have correct title');
-      assert.ok(html.includes('🔧'), 'Should include icon');
-      assert.ok(html.includes(menuItems), 'Should include menu items content');
+    it('should provide correct template variable names', () => {
+      assert.strictEqual(menu.getTemplateVariableName(), 'TESTMENU_MENU_ITEMS');
     });
 
-    it('should handle empty menu items', () => {
-      const html = menu.generateHTML('');
-      assert.ok(html.includes('testMenu'), 'Should have menu ID even with empty content');
-    });
-
-    it('should handle HTML in menu items', () => {
-      const menuItems = '<div class="item" data-value="test">Test</div><span>More content</span>';
-      const html = menu.generateHTML(menuItems);
-      assert.ok(html.includes(menuItems), 'Should preserve HTML in menu items');
+    it('should provide correct menu and button IDs', () => {
+      assert.strictEqual(menu.getId_Menu(), 'testMenu');
+      assert.strictEqual(menu.getId_Button(), 'testMenu-btn');
     });
   });
 

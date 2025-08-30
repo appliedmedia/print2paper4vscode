@@ -76,11 +76,8 @@ export class UI {
 
     // Replace template variables using UIMenuMgr - UI doesn't know what these represent
     const toolbar = this.app.templateDictReplace(toolbarYaml.toolbar_html, {
-      UIMENU_HTML: this.app.uimenumgr.generateTemplateWithUIMenuHTML(),
-      UIMENU_JS: this.app.uimenumgr.generateTemplateWithUIMenuJS(),
-      MENUPRINT_PICKER_LIST: '', // These will be handled by UIMENU_HTML
-      MENUTHEMES_PICKER_LIST: '', // These will be handled by UIMENU_HTML
-      MENUTEXT_PICKER_LIST: '', // These will be handled by UIMENU_HTML
+      UIMENU_HTML: this.app.uimenumgr.getAllUIMenuHTML(),
+      UIMENU_JS: this.app.uimenumgr.getAllUIMenuJS(),
     });
 
     // Inject toolbar before closing body tag

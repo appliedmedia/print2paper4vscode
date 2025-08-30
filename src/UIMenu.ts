@@ -43,15 +43,51 @@ export class UIMenu {
   }
 
   // Generate the complete HTML for this menu using YAML template
-  generateHTML(menuItems: string): string {
-    const yaml = this._app.os.readExtensionYaml<{ ui_menu_html: string }>('src/UIMenu.yaml');
-    return this._app.templateDictReplace(yaml.ui_menu_html, {
+  getHTML(): string {
+    this._app.ui.debugOut(`UIMenu.getHTML called for ${this.id}`, 'info', 'UIMenu');
+    this._app.ui.debugOut(`Icon: "${this.icon}", Title: "${this.title}"`, 'info', 'UIMenu');
+
+    let yaml: { ui_menu_html: string; ui_menu_item: string };
+    try {
+      yaml = this._app.os.readExtensionYaml<{ ui_menu_html: string; ui_menu_item: string }>(
+        'src/UIMenu.yaml'
+      );
+      this._app.ui.debugOut(
+        `YAML loaded, ui_menu_html length: ${yaml.ui_menu_html.length}`,
+        'info',
+        'UIMenu'
+      );
+    } catch (error) {
+      this._app.ui.debugOut(`ERROR reading YAML: ${error}`, 'error', 'UIMenu');
+      throw error;
+    }
+
+    // Generate menu items HTML
+    const menuItems = this.getMenuItems();
+    const menuItemsHtml = menuItems
+      .map(item =>
+        this._app.templateDictReplace(yaml.ui_menu_item, {
+          ITEM_ID: item.id,
+          ITEM_LABEL: item.displayName,
+        })
+      )
+      .join('\n');
+
+    // Generate complete menu HTML using the template
+    const result = this._app.templateDictReplace(yaml.ui_menu_html, {
       MENU_ID: this.getId_Menu(),
       BUTTON_ID: this.getId_Button(),
       TITLE: this.title,
       ICON: this.icon,
-      MENU_ITEMS: menuItems,
+      MENU_ITEMS: menuItemsHtml,
     });
+
+    this._app.ui.debugOut(
+      `Generated HTML for ${this.id}: ${result.substring(0, 100)}...`,
+      'info',
+      'UIMenu'
+    );
+    return result;
   }
 
   // Generate JavaScript for this menu using YAML template

@@ -183,6 +183,11 @@ export class PaperPrinter {
     ];
 
     menuConfigs.forEach(config => {
+      this.app.ui.debugOut(
+        `Creating menu: ${config.id} with icon: ${config.icon}`,
+        'info',
+        'PaperPrinter'
+      );
       const menu = this.app.uimenumgr.createMenu(
         config.id,
         config.icon,
@@ -191,6 +196,18 @@ export class PaperPrinter {
         config.selectionHandler
       );
       this.app.uimenumgr.addMenu(menu);
+      this.app.ui.debugOut(`Added menu: ${config.id}`, 'info', 'PaperPrinter');
+    });
+
+    // Debug: show what menus were created
+    const allMenus = this.app.uimenumgr.getAllMenus();
+    this.app.ui.debugOut(`Total menus created: ${allMenus.length}`, 'info', 'PaperPrinter');
+    allMenus.forEach(menu => {
+      this.app.ui.debugOut(
+        `Menu: ${menu.id}, Icon: ${menu.icon}, Title: ${menu.title}`,
+        'info',
+        'PaperPrinter'
+      );
     });
   }
 
