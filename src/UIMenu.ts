@@ -85,7 +85,7 @@ export class UIMenu {
         const itemPrefix = isDefault ? '✓' : ' ';
         const itemSuffix = isDefault ? '📝' : '';
 
-                return this._app.templateDictReplace(yaml.ui_menu_item, {
+        return this._app.templateDictReplace(yaml.ui_menu_item, {
           ITEM_ID: item.id,
           ITEM_LABEL: item.displayName,
           ITEM_CLASSES: itemClasses,

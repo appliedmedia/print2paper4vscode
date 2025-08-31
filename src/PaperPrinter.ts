@@ -248,12 +248,10 @@ export class PaperPrinter {
     const currentEditorTheme = this.app.vscodeapis.getActiveThemeId();
 
     return themes.map(theme => {
-      const isCurrentEditorTheme = theme.id === currentEditorTheme;
-      const displayName = isCurrentEditorTheme ? `${theme.displayName} 📝` : theme.displayName;
-
+      // No need to add 📝 here, UIMenu.ts will handle it based on default selection
       return {
         id: theme.id,
-        displayName: displayName,
+        displayName: theme.displayName,
       };
     });
   }
@@ -276,11 +274,11 @@ export class PaperPrinter {
     const existingEditorOption = sizeOptions.find(option => option.id === String(editorSize));
 
     if (existingEditorOption) {
-      // Editor size already exists - just add 📝 to its displayName
-      existingEditorOption.displayName = `${existingEditorOption.displayName} 📝`;
+      // Editor size already exists - no need to add 📝 here, UIMenu.ts will handle it
+      // existingEditorOption.displayName stays as is
     } else {
-      // Editor size not in list - add it at the top with 📝 suffix
-      sizeOptions.unshift({ id: String(editorSize), displayName: `${editorSize}px 📝` });
+      // Editor size not in list - add it at the top without 📝 suffix
+      sizeOptions.unshift({ id: String(editorSize), displayName: `${editorSize}px` });
     }
 
     return sizeOptions;

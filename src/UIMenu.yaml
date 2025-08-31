@@ -86,7 +86,7 @@ ui_drag_handlers: |
   });
 
   document.addEventListener('mousemove', (e) => {
-    if (isDragging) {
+    if (isDragging && e.buttons > 0) { // Check if mouse button is actually down
       e.preventDefault();
       const dx = e.clientX - dragStartX;
       const maxLeft = Math.max(8, window.innerWidth - 200 - 8);
@@ -98,6 +98,10 @@ ui_drag_handlers: |
       if (toolbar) {
         toolbar.style.left = newLeft + 'px';
       }
+    } else if (isDragging && e.buttons === 0) {
+      // Mouse button released but we're still in dragging state - clean up
+      isDragging = false;
+      document.body.style.cursor = '';
     }
   });
 
