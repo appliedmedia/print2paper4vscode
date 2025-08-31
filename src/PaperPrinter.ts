@@ -163,7 +163,7 @@ export class PaperPrinter {
     if (this.app.uimenumgr.getAllMenus().length > 0) {
       return;
     }
-    
+
     const menuConfigs = [
       {
         id: 'print',
@@ -220,7 +220,7 @@ export class PaperPrinter {
   // Register message handlers when needed for the webview
   private registerMessageHandlers(): void {
     if (this.handlersRegistered) return;
-    
+
     const messageHandlers = [
       { type: 'dragEnd', handler: this.handleDragEnd.bind(this) },
       { type: 'menuItemSelected', handler: this.handleMenuItemSelected.bind(this) },
@@ -230,7 +230,7 @@ export class PaperPrinter {
     messageHandlers.forEach(({ type, handler }) => {
       this.app.ui.registerMessageHandler(type, handler);
     });
-    
+
     this.handlersRegistered = true;
   }
 
@@ -246,16 +246,22 @@ export class PaperPrinter {
   private menuItems_Theme(): UIMenuItem[] {
     const themes = this.app.stylize.getThemes();
     const currentEditorTheme = this.app.vscodeapis.getActiveThemeId();
-    
-    return themes.map(theme => {
-      const isCurrentEditorTheme = theme.id === currentEditorTheme;
-      const displayName = isCurrentEditorTheme ? `${theme.displayName} 📝` : theme.displayName;
-      
-      return {
-        id: theme.id,
-        displayName: displayName,
-      };
-    });
+
+    // Check if editor theme already exists in the list
+    const existingEditorTheme = themes.find(theme => theme.id === currentEditorTheme);
+
+    if (existingEditorTheme) {
+      // Editor theme already exists - just add 📝 to its displayName
+      existingEditorTheme.displayName = `${existingEditorTheme.displayName} 📝`;
+    } else {
+      // Editor theme not in list - add it at the top with 📝 suffix
+      themes.unshift({ 
+        id: currentEditorTheme, 
+        displayName: `${currentEditorTheme} 📝` 
+      });
+    }
+
+    return themes;
   }
 
   private menuItems_Text(): UIMenuItem[] {
