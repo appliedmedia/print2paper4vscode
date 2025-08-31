@@ -47,18 +47,21 @@ export class Diagnostics {
     /**
      * Output a debug message
      * @param message - The message to output
+     * @returns this for method chaining
      */
-    out(message: any): void {
+    out(message: any): this {
         if (this.debugOverride) {
             console.log(this.formatMessage(message));
         }
+        return this;
     }
 
     /**
      * Mark method completion and output timing information
      * @param message - Optional completion message
+     * @returns this for method chaining
      */
-    done(message?: any): void {
+    done(message?: any): this {
         if (this.debugOverride && this.methodStartTime !== null) {
             const duration = performance.now() - this.methodStartTime;
             let timeDisplay: string;
@@ -76,14 +79,18 @@ export class Diagnostics {
         // Reset method context
         this.currentMethod = null;
         this.methodStartTime = null;
+        
+        return this;
     }
 
     /**
      * Output a message regardless of debug settings
      * @param message - The message to output
+     * @returns this for method chaining
      */
-    print(message: any): void {
+    print(message: any): this {
         console.log(this.formatMessage(message));
+        return this;
     }
 
     /**
@@ -101,11 +108,12 @@ export class Diagnostics {
     /**
      * Get or set debug mode for this instance
      * @param enabled - Optional: set debug mode if provided
-     * @returns Current debug state for this instance
+     * @returns Current debug state for this instance, or this for method chaining when setting
      */
-    debugOn(enabled?: boolean): boolean {
+    debugOn(enabled?: boolean): boolean | this {
         if (enabled !== undefined) {
             this.debugOverride = enabled;
+            return this;
         }
         return this.debugOverride;
     }

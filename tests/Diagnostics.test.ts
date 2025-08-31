@@ -216,4 +216,46 @@ describe('Diagnostics Class', () => {
             assert.notStrictEqual(method1, method2);
         });
     });
+
+    describe('Method chaining', () => {
+        it('should support method chaining for fluent API', () => {
+            resetDebugState();
+            const dx = new Diagnostics('TestClass', true);
+            const methodDx = dx.sub('chainedMethod');
+            
+            // Test chaining out() methods
+            const result1 = methodDx.out('First message').out('Second message');
+            assert.strictEqual(result1, methodDx);
+            
+            // Test chaining print() methods
+            const result2 = methodDx.print('Always show 1').print('Always show 2');
+            assert.strictEqual(result2, methodDx);
+            
+            // Test chaining debugOn() setter
+            const result3 = methodDx.debugOn(false);
+            assert.strictEqual(result3, methodDx);
+            
+            // Test chaining done() method
+            const result4 = methodDx.done('Chaining test completed');
+            assert.strictEqual(result4, methodDx);
+        });
+
+        it('should maintain method context during chaining', () => {
+            resetDebugState();
+            const dx = new Diagnostics('TestClass', true);
+            const methodDx = dx.sub('chainedMethod');
+            
+            // Chain multiple operations
+            methodDx
+                .out('Starting chained operations')
+                .out('Processing step 1')
+                .out('Processing step 2')
+                .print('Important status update')
+                .out('Processing step 3')
+                .done('All chained operations completed');
+            
+            // Verify the method context was properly tracked
+            assert.strictEqual(methodDx.getCurrentMethod(), null); // Should be reset after done()
+        });
+    });
 });
