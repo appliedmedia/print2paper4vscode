@@ -32,7 +32,7 @@ export class UIMenuMgr {
 
   // Get all menus
   getAllMenus(): UIMenu[] {
-    return this.menus;
+    return [...this.menus];
   }
 
   // Get a specific menu by ID
@@ -107,6 +107,9 @@ export class UIMenuMgr {
           this.app.templateDictReplace(yaml.ui_menu_item, {
             ITEM_ID: item.id,
             ITEM_LABEL: item.displayName,
+            ITEM_CLASSES: '',
+            ITEM_PREFIX: '',
+            ITEM_SUFFIX: '',
           })
         )
         .join('\n');

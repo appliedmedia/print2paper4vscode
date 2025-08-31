@@ -250,7 +250,7 @@ export class VSCodeAPIs {
    */
   getSelectionOrDocumentText(editor: TextEditor): string {
     const selection = editor.selection;
-    if (selection && !selection.isEmpty) {
+    if (!selection.isEmpty) {
       return editor.document.getText(selection);
     }
     return editor.document.getText();

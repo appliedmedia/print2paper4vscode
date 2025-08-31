@@ -6,6 +6,7 @@ import type { UIMenuItem } from './types/UI_t';
 export class PaperPrinter {
   private app: App;
   private clipboardCapture: ClipboardCapture;
+  private handlersRegistered = false;
   private lastPrintPrepHtml: string | null = null;
   private lastRawCode: string | null = null;
   private lastLanguageId: string | null = null;
@@ -52,8 +53,8 @@ export class PaperPrinter {
     if (parentId && targetId) {
       const menu = this.app.uimenumgr.getMenu(parentId);
       if (menu) {
-        // Call the menu's selection handler - it knows how to dispatch to the right method
-        await (menu as any)._selectionHandler(targetId);
+        // Dispatch selection via public API
+        await menu.dispatchSelection(targetId);
       }
     }
   }
@@ -158,6 +159,11 @@ export class PaperPrinter {
 
   // Create menus when needed for the webview
   private createMenus(): void {
+    // Avoid duplicates across multiple openings
+    if (this.app.uimenumgr.getAllMenus().length > 0) {
+      return;
+    }
+    
     const menuConfigs = [
       {
         id: 'print',
@@ -213,6 +219,8 @@ export class PaperPrinter {
 
   // Register message handlers when needed for the webview
   private registerMessageHandlers(): void {
+    if (this.handlersRegistered) return;
+    
     const messageHandlers = [
       { type: 'dragEnd', handler: this.handleDragEnd.bind(this) },
       { type: 'menuItemSelected', handler: this.handleMenuItemSelected.bind(this) },
@@ -222,6 +230,8 @@ export class PaperPrinter {
     messageHandlers.forEach(({ type, handler }) => {
       this.app.ui.registerMessageHandler(type, handler);
     });
+    
+    this.handlersRegistered = true;
   }
 
   // Build list methods for each menu type

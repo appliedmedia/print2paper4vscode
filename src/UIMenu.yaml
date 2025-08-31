@@ -1,6 +1,6 @@
 ui_menu_html: |
   <div class="p2p4vsc-menu" id="{{MENU_ID}}">
-    <button class="p2p4vsc-menu-btn" 
+    <button class="p2p4vsc-menu-btn"
             title="{{TITLE}}">{{ICON}}</button>
     <div class="p2p4vsc-menu-items" id="{{MENU_ID}}-items">
       {{MENU_ITEMS}}
@@ -15,14 +15,14 @@ ui_menu_generic_handlers: |
       e.preventDefault();
       const menu = e.target.closest('.p2p4vsc-menu');
       const menuItems = menu.querySelector('.p2p4vsc-menu-items');
-      
+
       // Close all other menus first
       document.querySelectorAll('.p2p4vsc-menu-items').forEach(items => {
         if (items !== menuItems) {
           items.style.display = 'none';
         }
       });
-      
+
       // Toggle this menu
       if (menuItems.style.display === 'block') {
         menuItems.style.display = 'none';
@@ -31,25 +31,25 @@ ui_menu_generic_handlers: |
       }
       return;
     }
-    
+
     // Handle menu item clicks
     if (e.target.matches('.p2p4vsc-menu-item')) {
       // Send minimal selection data to extension
-      vscode.postMessage({ 
-        type: 'menuItemSelected', 
+      vscode.postMessage({
+        type: 'menuItemSelected',
         targetId: e.target.id,
         parentId: e.target.closest('.p2p4vsc-menu')?.getAttribute('id'),
         x: e.clientX,
         y: e.clientY
       });
-      
+
       // Close the menu after selection
       const menu = e.target.closest('.p2p4vsc-menu');
       const menuItems = menu.querySelector('.p2p4vsc-menu-items');
       menuItems.style.display = 'none';
       return;
     }
-    
+
     // Close all menus when clicking outside
     if (!e.target.closest('.p2p4vsc-menu')) {
       document.querySelectorAll('.p2p4vsc-menu-items').forEach(items => {
@@ -75,12 +75,12 @@ ui_drag_handlers: |
       dragStartX = e.clientX;
       dragStartLeft = currentToolbarLeft;
       document.body.style.cursor = 'grabbing';
-      
+
       // Notify extension that drag started
-      vscode.postMessage({ 
-        type: 'dragStart', 
-        clientX: e.clientX, 
-        startLeft: currentToolbarLeft 
+      vscode.postMessage({
+        type: 'dragStart',
+        clientX: e.clientX,
+        startLeft: currentToolbarLeft
       });
     }
   });
@@ -90,9 +90,9 @@ ui_drag_handlers: |
       e.preventDefault();
       const dx = e.clientX - dragStartX;
       const maxLeft = Math.max(8, window.innerWidth - 200 - 8);
-      const newLeft = Math.min(Math.min(8, dragStartLeft + dx), maxLeft);
+      const newLeft = Math.max(8, Math.min(dragStartLeft + dx, maxLeft));
       currentToolbarLeft = newLeft;
-      
+
       // Update toolbar position
       const toolbar = document.querySelector('.p2p4vsc-toolbar');
       if (toolbar) {
@@ -105,11 +105,11 @@ ui_drag_handlers: |
     if (isDragging) {
       isDragging = false;
       document.body.style.cursor = '';
-      
+
       // Notify extension that drag ended
-      vscode.postMessage({ 
-        type: 'dragEnd', 
-        clientX: e.clientX 
+      vscode.postMessage({
+        type: 'dragEnd',
+        clientX: e.clientX
       });
     }
   });

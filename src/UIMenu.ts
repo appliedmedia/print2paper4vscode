@@ -42,6 +42,11 @@ export class UIMenu {
     return this._listBuilder();
   }
 
+  // Dispatch a selection to this menu's handler
+  async dispatchSelection(id: string): Promise<string> {
+    return this._selectionHandler(id);
+  }
+
   // Generate the complete HTML for this menu using YAML template
   async getHTML(): Promise<string> {
     this._app.ui.debugOut(`UIMenu.getHTML called for ${this.id}`, 'info', 'UIMenu');

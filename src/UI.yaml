@@ -72,13 +72,13 @@ toolbar_html: |
       left: 0;
       z-index: 1000;
     }
-    .p2p4vsc-menu-item { 
-      padding: 6px 10px; 
-      cursor: pointer; 
-      white-space: nowrap; 
+    .p2p4vsc-menu-item {
+      padding: 6px 10px;
+      cursor: pointer;
+      white-space: nowrap;
     }
-    .p2p4vsc-menu-item:hover, .p2p4vsc-menu-item.active { 
-      background: #444; 
+    .p2p4vsc-menu-item:hover, .p2p4vsc-menu-item.active {
+      background: #444;
     }
     /* Item prefix (checkmark) and suffix (edit icon) */
     .p2p4vsc-menu-item .item-prefix {
@@ -91,8 +91,8 @@ toolbar_html: |
       margin-left: 6px;
       opacity: 0.7;
     }
-    .p2p4vsc-menu-item.active::before { 
-      content: "✓"; 
+    .p2p4vsc-menu-item.active::before {
+      content: "✓";
     }
     .p2p4vsc-group { position: relative; }
   </style>
@@ -123,13 +123,13 @@ toolbar_html: |
         }
       } catch {}
     })();
-    
+
     window.addEventListener('resize', ()=>{
       const left = parseFloat(getComputedStyle(toolbar).left || '8');
       const maxLeft = Math.max(8, window.innerWidth - toolbar.offsetWidth - 8);
       toolbar.style.left = Math.min(left, maxLeft) + 'px';
     });
-    
+
     // Drag event handlers
     drag.addEventListener('mousedown', (e)=>{
       e.preventDefault();
@@ -138,7 +138,7 @@ toolbar_html: |
       dragStartLeft = parseFloat(getComputedStyle(toolbar).left || '8');
       document.body.style.cursor = 'grabbing';
     });
-    
+
     document.addEventListener('mousemove', (e)=>{
       if (isDragging) {
         e.preventDefault();
@@ -148,22 +148,22 @@ toolbar_html: |
         toolbar.style.left = newLeft + 'px';
       }
     });
-    
+
     document.addEventListener('mouseup', (e)=>{
       if (isDragging) {
         isDragging = false;
         document.body.style.cursor = '';
-        
+
         // Save position to VS Code state
         try {
           const left = parseFloat(getComputedStyle(toolbar).left || '8');
           vscode.setState({ toolbarLeft: left });
         } catch {}
-        
+
         // Post simple dragEnd message with final position
         const rect = toolbar.getBoundingClientRect();
-        vscode.postMessage({ 
-          type: 'dragEnd', 
+        vscode.postMessage({
+          type: 'dragEnd',
           clientX: rect.left,
           clientY: rect.top
         });
