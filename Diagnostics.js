@@ -9,14 +9,14 @@ class Diagnostics {
     }
 
     /**
-     * Enter a method - returns a new Diagnostics instance for the method
+     * Create a sub-context Diagnostics instance for a method
      * @param {string} methodName - The name of the method being entered
-     * @param {boolean} debugOverride - Optional debug override for this method
+     * @param {boolean|null|undefined} debugOverride - Optional debug override (undefined/null inherit parent's debug status)
      * @returns {Diagnostics} - New Diagnostics instance for the method
      */
-    in(methodName, debugOverride = false) {
+    sub(methodName, debugOverride = undefined) {
         const methodClassName = this.className + Diagnostics.separator + methodName;
-        const methodDx = new Diagnostics(methodClassName, debugOverride !== undefined ? debugOverride : this.debugOverride);
+        const methodDx = new Diagnostics(methodClassName, debugOverride !== undefined && debugOverride !== null ? debugOverride : this.debugOverride);
         
         if (methodDx.debugOverride) {
             methodDx.currentMethod = methodName;
