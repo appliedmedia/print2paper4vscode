@@ -6,7 +6,7 @@ export interface UIMenuItem {
 
 // Webview message types - defines the contract between frontend UI and backend
 export type WebviewMessage = {
-  type: 'dragStart' | 'dragMove' | 'dragEnd' | 'menu' | 'print' | 'menuItemSelected';
+  type: 'dragEnd' | 'menu' | 'print' | 'menuItemSelected';
   clientX?: number;
   startLeft?: number;
   value?: string;

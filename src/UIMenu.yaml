@@ -75,13 +75,6 @@ ui_drag_handlers: |
       dragStartX = e.clientX;
       dragStartLeft = currentToolbarLeft;
       document.body.style.cursor = 'grabbing';
-
-      // Notify extension that drag started
-      vscode.postMessage({
-        type: 'dragStart',
-        clientX: e.clientX,
-        startLeft: currentToolbarLeft
-      });
     }
   });
 
@@ -124,21 +117,6 @@ ui_drag_handlers: |
       });
     }
   });
-
-  // Global mouseup listener to catch mouseup events outside the window
-  window.addEventListener('mouseup', (e) => {
-    if (isDragging) {
-      isDragging = false;
-      document.body.style.cursor = '';
-      
-      // Notify extension that drag ended
-      vscode.postMessage({
-        type: 'dragEnd',
-        clientX: e.clientX
-      });
-    }
-  });
-
 
 
   // Prevent text selection during drag
