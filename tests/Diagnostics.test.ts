@@ -113,7 +113,7 @@ describe('Diagnostics', () => {
     console.log = originalLog;
 
     // Should contain missing key
-    assert.ok(logOutput.includes('missingKey missing!'));
+    assert.ok(logOutput.includes('❌ missing: "missingKey"'));
     assert.ok(logOutput.includes('TestClass > testMethod'));
   });
 

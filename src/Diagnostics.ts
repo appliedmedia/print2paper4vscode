@@ -11,7 +11,9 @@ export class Diagnostics {
   private _displayName: string = '';
 
   get name(): string {
-    return (this._displayName ||= [this.name_lineage, this._name].join(Diagnostics.separator));
+    return (this._displayName ||= this.name_lineage
+      ? `${this.name_lineage}${Diagnostics.separator}${this._name}`
+      : this._name);
   }
 
   set name(value: string) {
@@ -21,20 +23,19 @@ export class Diagnostics {
 
   private parent: Diagnostics | null = null;
   private startTime: number | null = null;
-  private _debugOn: boolean;
+  private _debugOn: boolean | undefined;
 
   constructor(name: string, debugOn?: boolean, parent?: Diagnostics | null) {
     this._name = name;
     this.parent = parent || null;
-    this.startTime = null;
-    this._debugOn = Diagnostics._debugOn;
+    this.startTime = Date.now();
 
     // Build name lineage by crawling up parent tree
     this.name_lineage = this.buildNameLineage();
 
-    this.debugOn(debugOn); // handles undefined
+    // Set debug state before calling out()
+    this.debugOn(debugOn);
 
-    this.startTime = Date.now();
     this.out(`🚀 Entering method: ${this.name}`);
   }
 
@@ -64,8 +65,8 @@ export class Diagnostics {
     }
 
     if (missingKeys.length > 0) {
-      const missingKeysString = `"${missingKeys.join(`", "`)}"`;
-      this.out(`❌ missing: ${missingKeysString}`);
+      const missingKeysString = `"${missingKeys.join('", "')}"`;
+      this.print(`❌ missing: ${missingKeysString}`);
     }
 
     return missingKeys.length === 0;
@@ -148,14 +149,18 @@ export class Diagnostics {
    * @returns Current debug state for this instance
    */
   debugOn(enabled?: boolean): boolean {
-    let debugOn = this._debugOn;
     if (enabled !== undefined) {
       this._debugOn = enabled;
-      debugOn = enabled;
-    } else if (debugOn === undefined) {
-      debugOn = this.buildDebugOnLineage();
+      return enabled;
     }
-    return debugOn;
+
+    // If we have an explicit value, use it
+    if (this._debugOn !== undefined) {
+      return this._debugOn;
+    }
+
+    // Otherwise, inherit from parent or use global default
+    return this.buildDebugOnLineage();
   }
 
   /**
@@ -180,9 +185,22 @@ export class Diagnostics {
     let current: Diagnostics | null = this.parent;
 
     while (current !== null) {
-      const diag = current as unknown as Record<string, unknown>;
-      const currentValue = diag[fieldName] as T;
-      values.unshift(currentValue);
+      // Access the private field through appropriate methods
+      let currentValue: T;
+      if (fieldName === '_name') {
+        currentValue = current.name as T;
+      } else if (fieldName === '_debugOn') {
+        currentValue = current.debugOn() as T;
+      } else {
+        const diag = current as unknown as Record<string, unknown>;
+        currentValue = diag[fieldName] as T;
+      }
+
+      const currentValueAsString = currentValue?.toString() || '';
+      const currentValueStringLength = currentValueAsString.length;
+      if (currentValueStringLength) {
+        values.unshift(currentValue);
+      }
       current = current.parent;
     }
 
