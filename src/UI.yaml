@@ -94,6 +94,11 @@ toolbar_html: |
     .p2p4vsc-menu-item.active::before {
       content: "✓";
     }
+    /* Hide prefix/suffix when empty to remove gutter */
+    .p2p4vsc-menu-item .item-prefix:empty,
+    .p2p4vsc-menu-item .item-suffix:empty {
+      display: none;
+    }
     .p2p4vsc-group { position: relative; }
   </style>
   <div id="p2p4vsc-toolbar">

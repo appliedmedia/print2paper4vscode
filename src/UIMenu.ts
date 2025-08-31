@@ -84,7 +84,7 @@ export class UIMenu {
         const itemClasses = isDefault ? 'default-item' : '';
 
         // Only show gutter if there's a default selection (not empty string)
-        const showGutter = defaultSelection !== '';
+        const showGutter = !!defaultSelection;
         const itemPrefix = showGutter ? (isDefault ? '✓' : ' ') : '';
         const itemSuffix = showGutter ? (isDefault ? '📝' : '') : '';
 

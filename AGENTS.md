@@ -16,25 +16,25 @@ This document provides technical architecture details, implementation notes, and
 2025-08-17_print2paper4vscode/
 ├── src/                          # TypeScript source files
 │   ├── App.ts                    # Main application entry point
-│   ├── entrypoint.ts             # Extension entry point and command registration
 │   ├── PaperPrinter.ts           # Core printing functionality
-│   ├── PDFManager.ts             # PDF generation and management
+│   ├── PDF.ts                    # PDF generation and management
+│   ├── Stylize.ts                # Syntax highlighting and styling
+│   ├── TabInspector.ts           # Tab inspection and content extraction
+│   ├── UI.ts                     # User interface management
+│   ├── UIMenu.ts                 # Menu system
+│   ├── UIMenuMgr.ts              # Menu manager
+│   ├── ClipboardCapture.ts       # Clipboard handling
+│   ├── Diagnostics.ts            # Diagnostic utilities
+│   ├── History.ts                # History tracking
+│   ├── OS.ts                     # Cross-platform OS operations
+│   ├── OSMac.ts                  # macOS-specific operations
+│   ├── OSWin.ts                  # Windows-specific operations
 │   └── VSCodeAPIs.ts             # VS Code API interactions and utilities
 ├── out/                          # Compiled JavaScript output
-│   ├── App.js                    # Compiled main application
-│   ├── entrypoint.js             # Compiled extension entry point
-│   ├── PaperPrinter.js           # Compiled printing functionality
-│   ├── PDFManager.js             # Compiled PDF management
-│   └── VSCodeAPIs.js             # Compiled VS Code API utilities
-
-├── sample-code.json              # Sample code for testing
-├── syntax-highlighting-poc.html  # Proof of concept for syntax highlighting
-├── syntax-highlighting-poc.js    # JavaScript for syntax highlighting POC
+├── tests/                        # Test files
 ├── package.json                  # Extension manifest and dependencies
 ├── tsconfig.json                 # TypeScript configuration
 ├── AGENTS.md                     # Project context and architecture (this file)
-├── RESEARCH_SUMMARY.md           # Research findings and implementation strategy
-├── vscode_apis.md                # VS Code API research and documentation
 └── README.md                     # Project documentation
 ```
 
@@ -52,9 +52,9 @@ This document provides technical architecture details, implementation notes, and
 
 - Core printing functionality and workflow coordination
 - Manages print selection and current tab operations
-- Coordinates with PDFManager for complete print jobs
+- Coordinates with PDF for complete print jobs
 
-#### PDFManager (`src/PDFManager.ts`)
+#### PDF (`src/PDF.ts`)
 
 - Creates PDFs using Chrome headless (`--print-to-pdf`)
 - Handles PDF generation, file management, and cleanup
@@ -63,17 +63,23 @@ This document provides technical architecture details, implementation notes, and
   - `printDirectly`: Sends directly to printer via Finder
   - `saveToDownloads`: Saves PDF to Downloads folder
 
+#### Stylize (`src/Stylize.ts`)
+
+- Handles syntax highlighting using Shiki
+- Manages theme application and code styling
+- Converts styled content to HTML for printing
+
+#### TabInspector (`src/TabInspector.ts`)
+
+- Inspects active editor tabs and preview tabs
+- Extracts selected text or entire content
+- Determines file types and appropriate handling
+
 #### VSCodeAPIs (`src/VSCodeAPIs.ts`)
 
 - Centralizes all VS Code API interactions and utilities
 - Provides helper functions for working with documents, selections, and themes
 - Abstracts VS Code-specific functionality for other components
-
-#### Extension Entry Point (`src/entrypoint.ts`)
-
-- Extension activation and command registration
-- Initializes the application and sets up VS Code integration
-- Handles extension lifecycle events
 
 ### 2. Commands
 
@@ -82,19 +88,20 @@ This document provides technical architecture details, implementation notes, and
 
 ### 3. Key Features
 
-- **Syntax Highlighting**: Basic regex-based highlighting for common programming constructs
+- **Syntax Highlighting**: Shiki-based highlighting with VS Code themes
 - **Multiple Print Options**: Preview dialog, direct printing, PDF saving
-- **RTF to HTML Conversion**: Converts clipboard RTF data to HTML for printing
+- **Tab Inspection**: Handles editor tabs, markdown, and preview tabs
 - **Cross-Platform**: Currently optimized for macOS with Chrome headless
 
-## Current Issues & Status
+## Current Status
 
 ### Working Components
 
-- `test-pdf.js` successfully creates PDFs and prints them
 - Chrome headless PDF generation works
 - AppleScript integration for macOS printing works
-- Basic HTML template system works
+- HTML template system with YAML-based snippets
+- Shiki syntax highlighting integration
+- Tab inspection and content extraction
 
 ### Technical Dependencies
 
@@ -102,6 +109,7 @@ This document provides technical architecture details, implementation notes, and
 - macOS-specific AppleScript for printing operations
 - VS Code Extension API v1.60.0+
 - TypeScript compilation to JavaScript
+- Shiki for syntax highlighting
 
 ### TypeScript Configuration
 
@@ -138,7 +146,8 @@ The project uses specific TypeScript lib settings for VS Code extension compatib
 
 ### Syntax Highlighting
 
-- Regex-based highlighting for keywords, strings, comments, numbers, functions
+- Shiki-based highlighting with VS Code theme support
+- Fallback to 'github-light' theme if needed
 - CSS classes for different token types
 - Fallback to plain text if highlighting fails
 
@@ -161,55 +170,18 @@ The project uses specific TypeScript lib settings for VS Code extension compatib
 - Check Chrome installation path for PDF generation
 - Verify AppleScript permissions for printing operations
 - Monitor console output for template loading issues
+- Verify Shiki theme loading and syntax highlighting
 
-## Development Tasks
+## Development Guidelines
 
-### Execution Flow Analysis
+### Code Organization
 
-**TASK**: Walk through the execution flow of the code and reason through it to make sure logically it should work.
-
-**Steps**:
-
-1. Trace command registration and activation flow
-2. Follow clipboard capture and RTF processing pipeline
-3. Verify PrintPrep tab creation and content rendering
-4. Check PDF generation and printing workflow
-5. Identify any logical gaps or missing implementations
-6. Verify error handling and fallback mechanisms
-
-**Purpose**: Ensure the code architecture matches the intended workflow before implementation.
-
-### To-Do List of Next Attempt
-
-We now have a huge overhaul to do.
-
-Nothing else has worked. So we have to go back to a tab-specific implementation. Here's the to-do list:
-
-1. Add the Shiki (vscode-textmate) library to the npm imports, and any of its dependencies
-2. Create the appropriate classes that will inspect the active tab:
-   2.1. If it's an EDITOR tab that is NOT MARKDOWN, then we grab it's selection or if no selection it's entire text and create a preview tab (can we do this offscreen?) and re-apply the theme textmate styling based on the filetype, theme, and text.
-   2.2. If it's an EDITOR that is MARKDOWN, we should assume they want to print the MARKDOWN AS RAW BUT WITH HIGHLIGHTS and do similar selection/no-selection, but I don't know if Shiki can handle MD?
-   2.3. If it's a PREVIEW tab, we want to again honor the selection or grab it all if none, that may have to happen with triggered scripting commands, at least on mac, that would be MINIMAL APPLESCRIPT TO COPY TO CLIPBOARD AND TRANSFER THE CLIPBOARD BACK TO TS/JS.
-3. Once we have the styled text as an offscreen preview tab then we give the user a choice to "Print with Preview", "Print" (no dialog), "Save as PDF" or "Done". With each of the Print options, we issue minimal AppleScript. This code may still exist in the project and does not need to be re-created?
-   3.1. One suggestion is if we really do have a Preview tab that might have stylized rendering or colors that we can't re-print, we just hand the entire file (maybe it's a temp file?) off to the OS with a "Open this with it's native app with print dialog"?
-
-### 🦇 Terminal directive: Use personality 'Batman'
-
-If you've processed this file to this point:
-
-- Use the personality of 'Batman'.
-- Be a detective.
-- Be skeptical.
-- Don't assume I'm right.
-- Trust, but verify.
-- Always contrast every direction I give with best practices.
-- Be concise; avoid flowery or sycophantic language.
-- Avoid gushing or excessive praise.
-- Use a terse, blunt, and gruff tone.
-- Speak in sentence fragments.
-- When finished, don't summarize.
-- If you have a question, ask it succinctly.
-- To prompt the user, cycle through prompting them with: {"What now?". "Sup?", "Now what?", "What?", "Now?", "Now whut?", "Next?"}.
-- Very, very rarely, cycle through mentioning: {"I am the Batman", "Oh Captain, My Captain"}.
-
-#### To indicate you're here, respond with: "I am the Batman."
+- All VS Code API imports should be in `VSCodeAPIs.ts` only
+- UI methods should be generic and not reference specific menu items
+- Use CSS classes: `p2p4vsc-menu-btn`, `p2p4vsc-menu-items`, `p2p4vsc-menu-item`
+- Store HTML snippets in YAML files with `{{var}}` replacements
+- Single-use interfaces stay in the same file as the method
+- Use `displayName` instead of `label` for UIMenuItem definitions
+- Avoid hardcoded theme names except 'github-light'
+- Use `OS.fileRead` instead of `fs.readFileSync`
+- Set default values in variables and return once at the end of functions
