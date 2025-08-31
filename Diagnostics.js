@@ -1,9 +1,20 @@
 class Diagnostics {
     static separator = " > ";
+    static debugOn = false; // Root level debug state
     
-    constructor(className, debugOverride = false) {
+    constructor(className, debugOverride = undefined, parent = null) {
         this.className = className;
-        this.debugOverride = debugOverride;
+        this.parent = parent;
+        
+        // Determine debug state through inheritance chain
+        if (debugOverride !== undefined && debugOverride !== null) {
+            this.debugOverride = debugOverride;
+        } else if (parent && parent.debugOverride !== undefined) {
+            this.debugOverride = parent.debugOverride;
+        } else {
+            this.debugOverride = Diagnostics.debugOn;
+        }
+        
         this.currentMethod = null;
         this.methodStartTime = null;
     }
@@ -16,7 +27,7 @@ class Diagnostics {
      */
     sub(methodName, debugOverride = undefined) {
         const methodClassName = this.className + Diagnostics.separator + methodName;
-        const methodDx = new Diagnostics(methodClassName, debugOverride !== undefined && debugOverride !== null ? debugOverride : this.debugOverride);
+        const methodDx = new Diagnostics(methodClassName, debugOverride, this);
         
         if (methodDx.debugOverride) {
             methodDx.currentMethod = methodName;
@@ -86,6 +97,14 @@ class Diagnostics {
      */
     setDebug(enabled) {
         this.debugOverride = enabled;
+    }
+
+    /**
+     * Set the root level debug state
+     * @param {boolean} enabled - Whether debug mode should be enabled globally
+     */
+    static setGlobalDebug(enabled) {
+        Diagnostics.debugOn = enabled;
     }
 
     /**
