@@ -82,11 +82,11 @@ export class UIMenu {
       .map(item => {
         const isDefault = item.id === defaultSelection;
         const itemClasses = isDefault ? 'default-item' : '';
-        
+
         // Only show gutter if there's a default selection (not empty string)
         const showGutter = defaultSelection !== '';
-        const itemPrefix = showGutter ? (isDefault ? '✓' : ' ') : '';
-        const itemSuffix = showGutter ? (isDefault ? '📝' : '') : '';
+        const itemPrefix = showGutter ? (isDefault ? '<span class="item-prefix">✓</span>' : '<span class="item-prefix"> </span>') : '';
+        const itemSuffix = showGutter ? (isDefault ? '<span class="item-suffix">📝</span>' : '') : '';
 
         return this._app.templateDictReplace(yaml.ui_menu_item, {
           ITEM_ID: item.id,

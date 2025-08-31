@@ -86,22 +86,29 @@ ui_drag_handlers: |
   });
 
   document.addEventListener('mousemove', (e) => {
-    if (isDragging && e.buttons > 0) { // Check if mouse button is actually down
-      e.preventDefault();
-      const dx = e.clientX - dragStartX;
-      const maxLeft = Math.max(8, window.innerWidth - 200 - 8);
-      const newLeft = Math.max(8, Math.min(dragStartLeft + dx, maxLeft));
-      currentToolbarLeft = newLeft;
+    if (isDragging) {
+      if (e.buttons > 0) { // Mouse button is still down - continue dragging
+        e.preventDefault();
+        const dx = e.clientX - dragStartX;
+        const maxLeft = Math.max(8, window.innerWidth - 200 - 8);
+        const newLeft = Math.max(8, Math.min(dragStartLeft + dx, maxLeft));
+        currentToolbarLeft = newLeft;
 
-      // Update toolbar position
-      const toolbar = document.querySelector('.p2p4vsc-toolbar');
-      if (toolbar) {
-        toolbar.style.left = newLeft + 'px';
+        // Update toolbar position
+        const toolbar = document.querySelector('.p2p4vsc-toolbar');
+        if (toolbar) {
+          toolbar.style.left = newLeft + 'px';
+        }
+      } else { // Mouse button released - stop dragging
+        isDragging = false;
+        document.body.style.cursor = '';
+        
+        // Notify extension that drag ended
+        vscode.postMessage({
+          type: 'dragEnd',
+          clientX: e.clientX
+        });
       }
-    } else if (isDragging && e.buttons === 0) {
-      // Mouse button released but we're still in dragging state - clean up
-      isDragging = false;
-      document.body.style.cursor = '';
     }
   });
 
@@ -118,6 +125,8 @@ ui_drag_handlers: |
     }
   });
 
+
+
   // Prevent text selection during drag
   document.addEventListener('selectstart', (e) => {
     if (isDragging) {
@@ -127,7 +136,7 @@ ui_drag_handlers: |
 
 ui_menu_item: |
   <div class="p2p4vsc-menu-item {{ITEM_CLASSES}}" id="{{ITEM_ID}}">
-    <span class="item-prefix">{{ITEM_PREFIX}}</span>
+    {{ITEM_PREFIX}}
     {{ITEM_LABEL}}
-    <span class="item-suffix">{{ITEM_SUFFIX}}</span>
+    {{ITEM_SUFFIX}}
   </div>
