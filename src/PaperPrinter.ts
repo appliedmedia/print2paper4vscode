@@ -244,10 +244,18 @@ export class PaperPrinter {
   }
 
   private menuItems_Theme(): UIMenuItem[] {
-    return this.app.stylize.getThemes().map(theme => ({
-      id: theme.id,
-      displayName: theme.displayName,
-    }));
+    const themes = this.app.stylize.getThemes();
+    const currentEditorTheme = this.app.vscodeapis.getActiveThemeId();
+    
+    return themes.map(theme => {
+      const isCurrentEditorTheme = theme.id === currentEditorTheme;
+      const displayName = isCurrentEditorTheme ? `${theme.displayName} 📝` : theme.displayName;
+      
+      return {
+        id: theme.id,
+        displayName: displayName,
+      };
+    });
   }
 
   private menuItems_Text(): UIMenuItem[] {
