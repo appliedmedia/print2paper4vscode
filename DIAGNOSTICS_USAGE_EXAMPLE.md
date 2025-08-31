@@ -1,11 +1,13 @@
 # Diagnostics.require() Usage Examples
 
 ## Overview
+
 This document demonstrates how the `Diagnostics.require()` method will be used throughout the refactored codebase to validate named parameters.
 
 ## Basic Usage Pattern
 
 ### Before (Traditional Parameters)
+
 ```typescript
 function createDocument(content: string, uri?: Uri): Promise<TextDocument> {
   if (!content) {
@@ -20,6 +22,7 @@ createDocument(someUri, "some content"); // WRONG ORDER!
 ```
 
 ### After (Named Parameters + Diagnostics)
+
 ```typescript
 interface CreateDocumentArgs {
   content: string;
@@ -44,6 +47,7 @@ createDocument({ uri: someUri, content: "some content" }); // Same result!
 ## Real-World Examples
 
 ### 1. App Constructor
+
 ```typescript
 interface AppConstructorArgs {
   context: ExtensionContext;
@@ -64,6 +68,7 @@ new App({ context, vscode });
 ```
 
 ### 2. PDF Print Methods
+
 ```typescript
 interface PrintWithPreviewArgs {
   renderedHtmlContent: string;
@@ -87,6 +92,7 @@ await pdf.printWithPreview({
 ```
 
 ### 3. UI Debug Methods
+
 ```typescript
 interface DebugOutArgs {
   message: unknown;
