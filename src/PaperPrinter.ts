@@ -303,7 +303,9 @@ export class PaperPrinter {
 
   private async handleSelection_Theme(selectedId: string): Promise<string> {
     if (selectedId === '0') {
-      return this.currentThemeChoice || this.app.stylize.getThemes()[0]?.id || '';
+      // Return the current editor theme ID as the default
+      const currentEditorTheme = this.app.vscodeapis.getActiveThemeId();
+      return currentEditorTheme || this.app.stylize.getThemes()[0]?.id || '';
     }
     this.app.ui.debugOut(`Theme menu selection: ${selectedId}`, 'info', 'PaperPrinter');
     this.currentThemeChoice = selectedId;

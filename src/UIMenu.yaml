@@ -125,6 +125,20 @@ ui_drag_handlers: |
     }
   });
 
+  // Global mouseup listener to catch mouseup events outside the window
+  window.addEventListener('mouseup', (e) => {
+    if (isDragging) {
+      isDragging = false;
+      document.body.style.cursor = '';
+      
+      // Notify extension that drag ended
+      vscode.postMessage({
+        type: 'dragEnd',
+        clientX: e.clientX
+      });
+    }
+  });
+
 
 
   // Prevent text selection during drag
@@ -136,7 +150,7 @@ ui_drag_handlers: |
 
 ui_menu_item: |
   <div class="p2p4vsc-menu-item {{ITEM_CLASSES}}" id="{{ITEM_ID}}">
-    {{ITEM_PREFIX}}
+    <span class="item-prefix">{{ITEM_PREFIX}}</span>
     {{ITEM_LABEL}}
-    {{ITEM_SUFFIX}}
+    <span class="item-suffix">{{ITEM_SUFFIX}}</span>
   </div>

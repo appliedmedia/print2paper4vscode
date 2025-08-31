@@ -23,7 +23,7 @@ export class App {
   constructor(context: ExtensionContext, vscode: any) {
     // Create Diagnostics instance first
     this.dx = new Diagnostics('App');
-    
+
     // Create components - VSCodeAPIs first, then UI, then others in alphabetical order
     this.vscodeapis = new VSCodeAPIs(this, vscode, context);
     this.ui = new UI(this);
@@ -72,7 +72,7 @@ export class App {
    */
   templateDictReplace(source: string, dictionary: Record<string, string>): string {
     return source.replace(/\{\{(\w+)\}\}/g, (match, key) => {
-      return dictionary.hasOwnProperty(key) ? dictionary[key] : match; // Return value even if empty string
+      return key in dictionary ? dictionary[key] : match; // Return value even if empty string
     });
   }
 }

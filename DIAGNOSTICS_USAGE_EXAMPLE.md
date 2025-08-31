@@ -17,8 +17,8 @@ function createDocument(content: string, uri?: Uri): Promise<TextDocument> {
 }
 
 // Usage - prone to parameter order errors
-createDocument("some content", someUri);
-createDocument(someUri, "some content"); // WRONG ORDER!
+createDocument('some content', someUri);
+createDocument(someUri, 'some content'); // WRONG ORDER!
 ```
 
 ### After (Named Parameters + Diagnostics)
@@ -31,17 +31,17 @@ interface CreateDocumentArgs {
 
 function createDocument(args: CreateDocumentArgs): Promise<TextDocument> {
   // Validate required arguments
-  if (!this.dx.sub("createDocument").require(args, ["content"])) {
+  if (!this.dx.sub('createDocument').require(args, ['content'])) {
     return; // Early exit if validation fails
   }
-  
+
   const { content, uri } = args;
   // ... implementation with confidence that content exists
 }
 
 // Usage - no parameter order issues
-createDocument({ content: "some content", uri: someUri });
-createDocument({ uri: someUri, content: "some content" }); // Same result!
+createDocument({ content: 'some content', uri: someUri });
+createDocument({ uri: someUri, content: 'some content' }); // Same result!
 ```
 
 ## Real-World Examples
@@ -58,7 +58,7 @@ constructor(args: AppConstructorArgs) {
   if (!this.dx.sub("constructor").require(args, ["context", "vscode"])) {
     throw new Error("App constructor requires context and vscode");
   }
-  
+
   const { context, vscode } = args;
   // ... implementation
 }
@@ -79,15 +79,15 @@ async printWithPreview(args: PrintWithPreviewArgs): Promise<void> {
   if (!this.dx.sub("printWithPreview").require(args, ["renderedHtmlContent"])) {
     return;
   }
-  
+
   const { renderedHtmlContent, descriptiveName } = args;
   // ... implementation
 }
 
 // Usage
-await pdf.printWithPreview({ 
-  renderedHtmlContent: html, 
-  descriptiveName: "My Document" 
+await pdf.printWithPreview({
+  renderedHtmlContent: html,
+  descriptiveName: "My Document"
 });
 ```
 
@@ -105,39 +105,44 @@ debugOut(args: DebugOutArgs): void {
   if (!this.dx.sub("debugOut").require(args, ["message"])) {
     return;
   }
-  
+
   const { message, level = 'info', context, data } = args;
   // ... implementation
 }
 
 // Usage
-ui.debugOut({ 
-  message: "Operation completed", 
-  level: "info", 
-  context: "PDF" 
+ui.debugOut({
+  message: "Operation completed",
+  level: "info",
+  context: "PDF"
 });
 ```
 
 ## Benefits of This Approach
 
 ### 1. **Parameter Order Safety**
+
 - No more `foo(param2, param1)` mistakes
 - All parameters are explicitly named
 
 ### 2. **Runtime Validation**
+
 - `require()` catches missing parameters at runtime
 - Clear error messages: `"createDocument: content missing!"`
 - Automatic method name detection for debugging
 
 ### 3. **Easy to Extend**
+
 - Add new optional parameters without breaking existing code
 - Existing calls continue to work unchanged
 
 ### 4. **Self-Documenting**
+
 - `createDocument({ content: "foo", uri: "bar" })` is clear
 - No need to look up parameter order in documentation
 
 ### 5. **Consistent Pattern**
+
 - Every method follows the same `args` + `require()` pattern
 - Easy to teach new developers
 
@@ -146,13 +151,13 @@ ui.debugOut({
 ```typescript
 function someMethod(args: SomeMethodArgs): ReturnType {
   // 1. Validate required arguments
-  if (!this.dx.sub("someMethod").require(args, ["requiredParam"])) {
+  if (!this.dx.sub('someMethod').require(args, ['requiredParam'])) {
     return; // Early exit - validation failed
   }
-  
+
   // 2. Extract parameters with confidence
   const { requiredParam, optionalParam } = args;
-  
+
   // 3. Proceed with implementation
   // ... method logic
 }

@@ -85,16 +85,24 @@ export class UIMenu {
 
         // Only show gutter if there's a default selection (not empty string)
         const showGutter = defaultSelection !== '';
-        const itemPrefix = showGutter ? (isDefault ? '<span class="item-prefix">✓</span>' : '<span class="item-prefix"> </span>') : '';
-        const itemSuffix = showGutter ? (isDefault ? '<span class="item-suffix">📝</span>' : '') : '';
+        const itemPrefix = showGutter ? (isDefault ? '✓' : ' ') : '';
+        const itemSuffix = showGutter ? (isDefault ? '📝' : '') : '';
 
-        return this._app.templateDictReplace(yaml.ui_menu_item, {
+        const replacementDict = {
           ITEM_ID: item.id,
           ITEM_LABEL: item.displayName,
           ITEM_CLASSES: itemClasses,
           ITEM_PREFIX: itemPrefix,
           ITEM_SUFFIX: itemSuffix,
-        });
+        };
+
+        this._app.ui.debugOut(
+          `Menu item ${item.id}: prefix="${itemPrefix}", suffix="${itemSuffix}", showGutter=${showGutter}`,
+          'info',
+          'UIMenu'
+        );
+
+        return this._app.templateDictReplace(yaml.ui_menu_item, replacementDict);
       })
       .join('\n');
 
@@ -109,6 +117,13 @@ export class UIMenu {
 
     this._app.ui.debugOut(
       `Generated HTML for ${this.id}: ${result.substring(0, 100)}...`,
+      'info',
+      'UIMenu'
+    );
+
+    // Debug: show the actual menu items HTML
+    this._app.ui.debugOut(
+      `Menu items HTML for ${this.id}: ${menuItemsHtml.substring(0, 200)}...`,
       'info',
       'UIMenu'
     );
