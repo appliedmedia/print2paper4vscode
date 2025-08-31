@@ -1,19 +1,21 @@
 import { Diagnostics } from '../src/Diagnostics';
-import { describe, it, beforeEach } from 'node:test';
-import assert from 'node:assert';
+import { describe, it } from 'node:test';
+import * as assert from 'node:assert';
 
 describe('Diagnostics Class', () => {
-    beforeEach(() => {
-        // Reset global debug state before each test
+    // Reset global debug state before each test
+    const resetDebugState = () => {
         Diagnostics.debugOn(false);
-    });
+    };
 
     describe('Basic functionality and global debug state', () => {
         it('should have default global debug state as false', () => {
+            resetDebugState();
             assert.strictEqual(Diagnostics.debugOn(), false);
         });
 
         it('should set and get global debug state', () => {
+            resetDebugState();
             Diagnostics.debugOn(true);
             assert.strictEqual(Diagnostics.debugOn(), true);
         });
@@ -21,17 +23,20 @@ describe('Diagnostics Class', () => {
 
     describe('Instance creation and inheritance', () => {
         it('should create instance with correct className', () => {
+            resetDebugState();
             const dx = new Diagnostics('TestClass');
             assert.strictEqual(dx.getClassName(), 'TestClass');
         });
 
         it('should inherit debug state from global when not specified', () => {
+            resetDebugState();
             Diagnostics.debugOn(true);
             const dx = new Diagnostics('TestClass');
             assert.strictEqual(dx.debugOn(), true);
         });
 
         it('should override debug state when explicitly provided', () => {
+            resetDebugState();
             Diagnostics.debugOn(true);
             const dx = new Diagnostics('TestClass', false);
             assert.strictEqual(dx.debugOn(), false);
@@ -40,18 +45,21 @@ describe('Diagnostics Class', () => {
 
     describe('Sub-context creation and inheritance', () => {
         it('should create sub-context with correct className', () => {
+            resetDebugState();
             const dx = new Diagnostics('TestClass');
             const methodDx = dx.sub('testMethod');
             assert.strictEqual(methodDx.getClassName(), 'TestClass > testMethod');
         });
 
         it('should inherit debug state from parent in sub-context', () => {
+            resetDebugState();
             const dx = new Diagnostics('TestClass', true);
             const methodDx = dx.sub('testMethod');
             assert.strictEqual(methodDx.debugOn(), true);
         });
 
         it('should override debug state in sub-context when specified', () => {
+            resetDebugState();
             const dx = new Diagnostics('TestClass', true);
             const methodDx = dx.sub('testMethod', false);
             assert.strictEqual(methodDx.debugOn(), false);
@@ -60,12 +68,14 @@ describe('Diagnostics Class', () => {
 
     describe('Null/undefined handling in sub-contexts', () => {
         it('should inherit from parent when debugOverride is null', () => {
+            resetDebugState();
             const dx = new Diagnostics('TestClass', true);
             const methodDx = dx.sub('testMethod', null);
             assert.strictEqual(methodDx.debugOn(), true);
         });
 
         it('should inherit from parent when debugOverride is undefined', () => {
+            resetDebugState();
             const dx = new Diagnostics('TestClass', true);
             const methodDx = dx.sub('testMethod', undefined);
             assert.strictEqual(methodDx.debugOn(), true);
@@ -74,6 +84,7 @@ describe('Diagnostics Class', () => {
 
     describe('Debug state management', () => {
         it('should allow changing debug state at runtime', () => {
+            resetDebugState();
             const dx = new Diagnostics('TestClass', false);
             assert.strictEqual(dx.debugOn(), false);
             
@@ -82,6 +93,7 @@ describe('Diagnostics Class', () => {
         });
 
         it('should maintain separate debug states for different instances', () => {
+            resetDebugState();
             const dx1 = new Diagnostics('TestClass1', true);
             const dx2 = new Diagnostics('TestClass2', false);
             
@@ -92,12 +104,14 @@ describe('Diagnostics Class', () => {
 
     describe('Method context tracking', () => {
         it('should track current method in sub-context', () => {
+            resetDebugState();
             const dx = new Diagnostics('TestClass', true);
             const methodDx = dx.sub('testMethod');
             assert.strictEqual(methodDx.getCurrentMethod(), 'testMethod');
         });
 
         it('should reset method context after done() is called', () => {
+            resetDebugState();
             const dx = new Diagnostics('TestClass', true);
             const methodDx = dx.sub('testMethod');
             methodDx.done();
@@ -113,28 +127,31 @@ describe('Diagnostics Class', () => {
 
     describe('Complex inheritance chain', () => {
         it('should handle multiple levels of sub-contexts', () => {
+            resetDebugState();
             const dx = new Diagnostics('TestClass', true);
             const level1 = dx.sub('level1');
             const level2 = level1.sub('level2');
             const level3 = level2.sub('level3');
 
-            expect(level1.getClassName()).toBe('TestClass > level1');
-            expect(level2.getClassName()).toBe('TestClass > level1 > level2');
-            expect(level3.getClassName()).toBe('TestClass > level1 > level2 > level3');
+            assert.strictEqual(level1.getClassName(), 'TestClass > level1');
+            assert.strictEqual(level2.getClassName(), 'TestClass > level1 > level2');
+            assert.strictEqual(level3.getClassName(), 'TestClass > level1 > level2 > level3');
         });
 
         it('should maintain debug inheritance through multiple levels', () => {
+            resetDebugState();
             const dx = new Diagnostics('TestClass', true);
             const level1 = dx.sub('level1');
             const level2 = level1.sub('level2');
             const level3 = level2.sub('level3');
 
-            expect(level3.debugOn()).toBe(true);
+            assert.strictEqual(level3.debugOn(), true);
         });
     });
 
     describe('Timing functionality', () => {
         it('should track timing from sub() to done()', () => {
+            resetDebugState();
             const dx = new Diagnostics('TestClass', true);
             const methodDx = dx.sub('testMethod');
             
@@ -154,6 +171,7 @@ describe('Diagnostics Class', () => {
 
     describe('Output methods', () => {
         it('should respect debug state for out() method', () => {
+            resetDebugState();
             const dx = new Diagnostics('TestClass', false);
             const methodDx = dx.sub('testMethod');
             
@@ -163,12 +181,13 @@ describe('Diagnostics Class', () => {
             console.log = (...args: any[]) => logs.push(args.join(' '));
             
             methodDx.out('This should not show');
-            expect(logs).toHaveLength(0);
+            assert.strictEqual(logs.length, 0);
             
             console.log = originalLog;
         });
 
         it('should always output for print() method regardless of debug state', () => {
+            resetDebugState();
             const dx = new Diagnostics('TestClass', false);
             const methodDx = dx.sub('testMethod');
             
@@ -178,8 +197,8 @@ describe('Diagnostics Class', () => {
             console.log = (...args: any[]) => logs.push(args.join(' '));
             
             methodDx.print('This should always show');
-            expect(logs).toHaveLength(1);
-            expect(logs[0]).toContain('This should always show');
+            assert.strictEqual(logs.length, 1);
+            assert(logs[0].includes('This should always show'));
             
             console.log = originalLog;
         });
@@ -187,13 +206,14 @@ describe('Diagnostics Class', () => {
 
     describe('Async method isolation', () => {
         it('should maintain separate contexts for concurrent methods', () => {
+            resetDebugState();
             const dx = new Diagnostics('TestClass', true);
             const method1 = dx.sub('method1');
             const method2 = dx.sub('method2');
 
-            expect(method1.getClassName()).toBe('TestClass > method1');
-            expect(method2.getClassName()).toBe('TestClass > method2');
-            expect(method1).not.toBe(method2);
+            assert.strictEqual(method1.getClassName(), 'TestClass > method1');
+            assert.strictEqual(method2.getClassName(), 'TestClass > method2');
+            assert.notStrictEqual(method1, method2);
         });
     });
 });
