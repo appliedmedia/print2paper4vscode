@@ -1,6 +1,6 @@
 class Diagnostics {
     static separator = " > ";
-    static debugOn = false; // Root level debug state
+    static globalDebugOn = false; // Root level debug state
     
     constructor(className, debugOverride = undefined, parent = null) {
         this.className = className;
@@ -12,7 +12,7 @@ class Diagnostics {
         } else if (parent && parent.debugOverride !== undefined) {
             this.debugOverride = parent.debugOverride;
         } else {
-            this.debugOverride = Diagnostics.debugOn;
+            this.debugOverride = Diagnostics.globalDebugOn;
         }
         
         this.currentMethod = null;
@@ -87,7 +87,8 @@ class Diagnostics {
      */
     formatMessage(message) {
         const timestamp = new Date().toISOString();
-        const methodContext = this.currentMethod ? ` > ${this.currentMethod}` : '';
+        // Only add method context if it's not already part of the className
+        const methodContext = this.currentMethod && !this.className.includes(this.currentMethod) ? ` > ${this.currentMethod}` : '';
         return `[${timestamp}] ${this.className}${methodContext} > ${message}`;
     }
 
@@ -110,9 +111,9 @@ class Diagnostics {
      */
     static debugOn(enabled) {
         if (enabled !== undefined) {
-            Diagnostics.debugOn = enabled;
+            Diagnostics.globalDebugOn = enabled;
         }
-        return Diagnostics.debugOn;
+        return Diagnostics.globalDebugOn;
     }
 
 
