@@ -72,7 +72,7 @@ export class App {
    */
   templateDictReplace(source: string, dictionary: Record<string, string>): string {
     return source.replace(/\{\{(\w+)\}\}/g, (match, key) => {
-      return dictionary[key] || match; // Return original if key not found
+      return dictionary.hasOwnProperty(key) ? dictionary[key] : match; // Return value even if empty string
     });
   }
 }
