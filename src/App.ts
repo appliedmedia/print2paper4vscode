@@ -6,6 +6,7 @@ import { Stylize } from './Stylize';
 import { TabInspector } from './TabInspector';
 import { OS } from './OS';
 import { UIMenuMgr } from './UIMenuMgr';
+import { Diagnostics } from './Diagnostics';
 import type { ExtensionContext } from 'vscode';
 
 export class App {
@@ -17,8 +18,12 @@ export class App {
   tabinspector: TabInspector;
   os: OS;
   uimenumgr: UIMenuMgr;
+  dx: Diagnostics;
 
   constructor(context: ExtensionContext, vscode: any) {
+    // Create Diagnostics instance first
+    this.dx = new Diagnostics('App');
+    
     // Create components - VSCodeAPIs first, then UI, then others in alphabetical order
     this.vscodeapis = new VSCodeAPIs(this, vscode, context);
     this.ui = new UI(this);
