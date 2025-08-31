@@ -92,28 +92,30 @@ class Diagnostics {
     }
 
     /**
-     * Set debug mode for the entire class instance
-     * @param {boolean} enabled - Whether debug mode should be enabled
+     * Get or set debug mode for this instance
+     * @param {boolean} enabled - Optional: set debug mode if provided
+     * @returns {boolean} - Current debug state for this instance
      */
-    setDebug(enabled) {
-        this.debugOverride = enabled;
-    }
-
-    /**
-     * Set the root level debug state
-     * @param {boolean} enabled - Whether debug mode should be enabled globally
-     */
-    static setGlobalDebug(enabled) {
-        Diagnostics.debugOn = enabled;
-    }
-
-    /**
-     * Get current debug state
-     * @returns {boolean} - Current debug state
-     */
-    isDebugEnabled() {
+    debugOn(enabled) {
+        if (enabled !== undefined) {
+            this.debugOverride = enabled;
+        }
         return this.debugOverride;
     }
+
+    /**
+     * Get or set the root level debug state
+     * @param {boolean} enabled - Optional: set global debug mode if provided
+     * @returns {boolean} - Current global debug state
+     */
+    static debugOn(enabled) {
+        if (enabled !== undefined) {
+            Diagnostics.debugOn = enabled;
+        }
+        return Diagnostics.debugOn;
+    }
+
+
 
     /**
      * Get current method context
