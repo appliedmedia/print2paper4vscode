@@ -39,8 +39,6 @@ export class Stylize {
     this.app.ui.debugOut('Stylize cleanup completed', 'info', 'Stylize');
   }
 
-
-
   // Convert VS Code theme JSON to Shiki-compatible CSS variables format
   private convertVSCodeThemeToShiki(vscodeTheme: Record<string, unknown>): any {
     try {
@@ -112,6 +110,11 @@ export class Stylize {
     languageId: string,
     opts?: { fontSize?: number; lineHeight?: number; title?: string; theme?: string }
   ): Promise<string> {
+    this.app.ui.debugOut(
+      `THEMECHECK: styleToHtml called with theme: '${opts?.theme || 'undefined'}'`,
+      'info',
+      'Stylize'
+    );
     const lang = languageId;
 
     // Ensure highlighter is initialized
@@ -122,7 +125,29 @@ export class Stylize {
 
     if (opts?.theme) {
       // Use specified theme - look it up from our unified theme list
-      const themeData = this.getThemes().find(theme => theme.id === opts.theme);
+      this.app.ui.debugOut(`THEMECHECK: Looking for theme: '${opts.theme}'`, 'info', 'Stylize');
+
+      const allThemes = this.getThemes();
+      this.app.ui.debugOut(
+        `THEMECHECK: Available themes in styleToHtml: ${allThemes.map(t => t.id).join(', ')}`,
+        'info',
+        'Stylize'
+      );
+
+      const themeData = allThemes.find(theme => theme.id === opts.theme);
+      this.app.ui.debugOut(
+        `THEMECHECK: Theme lookup result: ${themeData ? 'FOUND' : 'NOT FOUND'}`,
+        'info',
+        'Stylize'
+      );
+
+      if (themeData) {
+        this.app.ui.debugOut(
+          `THEMECHECK: Found theme: id='${themeData.id}', displayName='${themeData.displayName}', hasColors=${!!themeData.colors}, hasTokenColors=${!!themeData.tokenColors}`,
+          'info',
+          'Stylize'
+        );
+      }
 
       if (!themeData) {
         throw new Error(`Theme '${opts.theme}' not found in available themes`);
@@ -130,40 +155,129 @@ export class Stylize {
 
       if (themeData.colors && themeData.tokenColors) {
         // VS Code theme - convert and use
+        this.app.ui.debugOut(
+          `THEMECHECK: Converting VS Code theme: ${themeData.id}`,
+          'info',
+          'Stylize'
+        );
+        this.app.ui.debugOut(
+          `THEMECHECK: Colors count: ${Object.keys(themeData.colors).length}, TokenColors count: ${themeData.tokenColors.length}`,
+          'info',
+          'Stylize'
+        );
+
         const shikiTheme = this.convertVSCodeThemeToShiki({
           name: themeData.id,
           colors: themeData.colors,
           tokenColors: themeData.tokenColors,
         });
+
+        this.app.ui.debugOut(
+          `THEMECHECK: convertVSCodeThemeToShiki result: ${JSON.stringify(shikiTheme)}`,
+          'info',
+          'Stylize'
+        );
+
         selectedTheme = shikiTheme?.name || 'github-light';
+        this.app.ui.debugOut(
+          `THEMECHECK: Final selectedTheme: ${selectedTheme}`,
+          'info',
+          'Stylize'
+        );
       } else {
         // Shiki theme - use directly
+        this.app.ui.debugOut(
+          `THEMECHECK: No colors/tokenColors, using theme ID directly: ${themeData.id}`,
+          'info',
+          'Stylize'
+        );
         selectedTheme = themeData.id;
+        this.app.ui.debugOut(
+          `THEMECHECK: Using Shiki theme directly: ${selectedTheme}`,
+          'info',
+          'Stylize'
+        );
       }
     } else {
       // Use current VS Code theme - get it from our unified theme list
+      this.app.ui.debugOut(
+        `THEMECHECK: No theme specified, using current VS Code theme`,
+        'info',
+        'Stylize'
+      );
       const activeThemeId = this.app.vscodeapis.getActiveThemeId();
-      const themeData = this.getThemes().find(theme => theme.id === activeThemeId);
+      this.app.ui.debugOut(`THEMECHECK: Active theme ID: '${activeThemeId}'`, 'info', 'Stylize');
+
+      const allThemes = this.getThemes();
+      this.app.ui.debugOut(
+        `THEMECHECK: All themes in else branch: ${allThemes.map(t => t.id).join(', ')}`,
+        'info',
+        'Stylize'
+      );
+
+      const themeData = allThemes.find(theme => theme.id === activeThemeId);
+      this.app.ui.debugOut(
+        `THEMECHECK: Found active theme data: ${themeData ? 'YES' : 'NO'}`,
+        'info',
+        'Stylize'
+      );
+
+      if (themeData) {
+        this.app.ui.debugOut(
+          `THEMECHECK: Active theme details: id='${themeData.id}', displayName='${themeData.displayName}', hasColors=${!!themeData.colors}, hasTokenColors=${!!themeData.tokenColors}`,
+          'info',
+          'Stylize'
+        );
+      }
 
       if (themeData && themeData.colors && themeData.tokenColors) {
         // VS Code theme - convert and use
+        this.app.ui.debugOut(
+          `THEMECHECK: Converting active VS Code theme: ${themeData.id}`,
+          'info',
+          'Stylize'
+        );
         const shikiTheme = this.convertVSCodeThemeToShiki({
           name: themeData.id,
           colors: themeData.colors,
           tokenColors: themeData.tokenColors,
         });
         selectedTheme = shikiTheme?.name || 'github-light';
+        this.app.ui.debugOut(
+          `THEMECHECK: Active theme converted to: ${selectedTheme}`,
+          'info',
+          'Stylize'
+        );
       } else {
         // Fallback to github-light
+        this.app.ui.debugOut(
+          `THEMECHECK: No active theme data, falling back to github-light`,
+          'info',
+          'Stylize'
+        );
         selectedTheme = 'github-light';
       }
     }
+
+    this.app.ui.debugOut(
+      `THEMECHECK: About to call highlighter with theme: '${selectedTheme}'`,
+      'info',
+      'Stylize'
+    );
+
+    this.app.ui.debugOut(
+      `THEMECHECK: Highlighter call parameters - lang: '${lang}', theme: '${selectedTheme}', code length: ${code.length}`,
+      'info',
+      'Stylize'
+    );
 
     // Generate HTML using the singleton highlighter
     const html = this.highlighter.codeToHtml(code, {
       lang,
       theme: selectedTheme,
     });
+
+    this.app.ui.debugOut(`THEMECHECK: Highlighter call completed successfully`, 'info', 'Stylize');
 
     const editorTypo = this.app.vscodeapis.getEditorTypography();
     const fontSize = typeof opts?.fontSize === 'number' ? opts.fontSize : editorTypo.fontSize;
@@ -195,28 +309,33 @@ export class Stylize {
     colors?: Record<string, string>;
     tokenColors?: TokenColor[];
   }> {
-    // Return cached themes if available
-    if (Stylize.themesCache !== null) {
-      let cachedThemes = [...Stylize.themesCache];
+    // Build themes cache if not available
+    if (Stylize.themesCache === null) {
+      this.app.ui.debugOut('THEMECHECK: Rebuilding themes cache', 'info', 'Stylize');
+      const shikiThemes = this.getShikiThemes(USE_ALL_LIGHT_SHIKI_THEMES);
+      const vscodeThemes = this.getVSCodeThemes(USE_ALL_LIGHT_VSCODE_THEMES);
 
-      // Apply filter if provided
-      if (filter) {
-        const filterRegex = new RegExp(filter, 'i');
-        cachedThemes = cachedThemes.filter(theme => filterRegex.test(theme.displayName));
-      }
-
-      return cachedThemes;
+      // Combine themes: Shiki first (more reliable for printing), then VSCode
+      Stylize.themesCache = [...shikiThemes, ...vscodeThemes];
+      this.app.ui.debugOut(
+        `THEMECHECK: Cache built with ${Stylize.themesCache.length} themes: ${Stylize.themesCache.map(t => t.id).join(', ')}`,
+        'info',
+        'Stylize'
+      );
+    } else {
+      this.app.ui.debugOut('THEMECHECK: Using existing themes cache', 'info', 'Stylize');
     }
 
-    // Build themes cache
-    const shikiThemes = this.getShikiThemes(USE_ALL_LIGHT_SHIKI_THEMES);
-    const vscodeThemes = this.getVSCodeThemes(USE_ALL_LIGHT_VSCODE_THEMES);
+    // Get themes from cache
+    let themes = [...Stylize.themesCache];
 
-    // Combine themes: Shiki first (more reliable for printing), then VSCode
-    Stylize.themesCache = [...shikiThemes, ...vscodeThemes];
+    // Apply filter if provided
+    if (filter) {
+      const filterRegex = new RegExp(filter, 'i');
+      themes = themes.filter(theme => filterRegex.test(theme.displayName));
+    }
 
-    // Recursive call to use the cache
-    return this.getThemes(filter);
+    return themes;
   }
 
   // Get Shiki themes with optional filter
@@ -306,20 +425,30 @@ export class Stylize {
       }
 
       // Add current editor theme at the top with 📝 indicator
-      const activeThemeName = this.app.vscodeapis.getActiveThemeId();
-      const activeTheme = themes.find(t => t.id === activeThemeName);
+      const activeThemeID = this.app.vscodeapis.getActiveThemeId();
+      const activeTheme = themes.find(t => t.id === activeThemeID);
+
       if (activeTheme) {
         activeTheme.displayName = `${activeTheme.displayName} 📝`;
       } else {
         // If editor theme not in list, add it at the top
-        const editorThemeData = this.app.vscodeapis.getVSCodeThemeJson(activeThemeName);
+        const editorThemeData = this.app.vscodeapis.getVSCodeThemeJson(activeThemeID);
+
         if (editorThemeData) {
+          this.app.ui.debugOut(
+            `THEMECHECK: Adding editor theme to themes list: ${activeThemeID}`,
+            'info',
+            'Stylize'
+          );
           themes.unshift({
-            id: activeThemeName,
-            displayName: `${activeThemeName} 📝`,
+            id: activeThemeID,
+            displayName: `${activeThemeID} 📝`,
             colors: editorThemeData.colors as Record<string, string> | undefined,
             tokenColors: editorThemeData.tokenColors as TokenColor[] | undefined,
           });
+
+          // Clear the themes cache so the new theme is included
+          Stylize.themesCache = null;
         }
       }
 

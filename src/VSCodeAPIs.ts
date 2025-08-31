@@ -11,66 +11,6 @@ import type {
 } from 'vscode';
 import type { WebviewMessage } from './types/UI_t';
 
-// Create a minimal type that includes only the VS Code API methods we actually use
-// COMMENTED OUT: Fallback type in case the official vscode types don't work
-/*
-type vscode_t = {
-  commands: {
-    registerCommand: (command: string, callback: (...args: unknown[]) => unknown) => Disposable;
-  };
-  window: {
-    activeTextEditor: TextEditor | undefined;
-    tabGroups: {
-      activeTabGroup:
-        | {
-            activeTab: { label: string } | undefined;
-          }
-        | undefined;
-    };
-    showInformationMessage: (message: string) => void;
-    showWarningMessage: (message: string) => void;
-    showErrorMessage: (message: string) => void;
-    setStatusBarMessage: (text: string, timeoutMs?: number) => Disposable;
-    createWebviewPanel: (
-      viewType: string,
-      title: string,
-      column: number,
-      options: { enableScripts: boolean; retainContextWhenHidden: boolean }
-    ) => WebviewPanel;
-    showTextDocument: (document: TextDocument, options?: { preview: boolean }) => Promise<void>;
-    ViewColumn: { Active: number };
-  };
-  workspace: {
-    getConfiguration: (section: string) => {
-      get: (key: string) => string | number | undefined;
-    };
-    openTextDocument: (uri: Uri) => Promise<TextDocument>;
-    applyEdit: (edit: WorkspaceEdit) => Promise<boolean>;
-  };
-  Uri: {
-    parse: (value: string) => Uri;
-    file: (path: string) => Uri;
-  };
-  Position: new (line: number, character: number) => Position;
-  WorkspaceEdit: new () => WorkspaceEdit;
-  extensions: {
-    all: Array<{
-      id: string;
-      packageJSON: {
-        contributes: {
-          themes: Array<{
-            label: string;
-            id: string;
-          }>;
-        };
-      };
-      extensionPath: string;
-    }>;
-    getExtension: (id: string) => any;
-  };
-};
-*/
-
 export class VSCodeAPIs {
   private app: App;
   private vscode: typeof import('vscode'); // Use official VS Code types
@@ -100,6 +40,20 @@ export class VSCodeAPIs {
 
   getGlobalStoragePath(): string {
     return this.context.globalStorageUri.fsPath;
+  }
+
+  /**
+   * Update global state value
+   */
+  updateGlobalState(key: string, value: any): void {
+    this.context.globalState.update(key, value);
+  }
+
+  /**
+   * Get global state value
+   */
+  getGlobalState<T>(key: string, defaultValue?: T): T | undefined {
+    return this.context.globalState.get(key, defaultValue);
   }
 
   getEditorTypography(): { fontSize: number; lineHeight: number } {
@@ -162,6 +116,16 @@ export class VSCodeAPIs {
       { enableScripts: true, retainContextWhenHidden: true }
     );
     panel.webview.html = htmlContent;
+
+    // Restore toolbar position if saved
+    const savedPosition = this.getGlobalState('toolbarLeft');
+    if (savedPosition !== undefined) {
+      panel.webview.postMessage({
+        type: 'restorePosition',
+        left: savedPosition,
+      });
+    }
+
     return panel;
   }
 
@@ -199,19 +163,58 @@ export class VSCodeAPIs {
    */
   getVSCodeThemeJson(themeId: string, keys?: string[]): Record<string, unknown> | undefined {
     // Find the extension that contributes this theme
-    const themeExtension = this.vscode.extensions.all.find(ext =>
-      ext.packageJSON?.contributes?.themes?.some((theme: { id: string }) => theme.id === themeId)
-    );
+    // themeId might be a display name, so check multiple properties
+    const themeExtension = this.vscode.extensions.all.find(ext => {
+      if (ext.packageJSON?.contributes?.themes) {
+        const found = ext.packageJSON.contributes.themes.some(
+          (theme: { id: string; label?: string; uiTheme?: string }) => {
+            const matches = theme.id === themeId || theme.label === themeId;
+            return matches;
+          }
+        );
+        return found;
+      }
+      return false;
+    });
 
     if (!themeExtension) {
       return undefined;
     }
 
     const theme = themeExtension.packageJSON.contributes.themes.find(
-      (t: { id: string }) => t.id === themeId
+      (t: { id: string; label?: string; uiTheme?: string }) =>
+        t.id === themeId || t.label === themeId
     );
     if (!theme) {
       return undefined;
+    }
+
+    // Load the actual theme file content if path is available
+    if (theme.path && typeof theme.path === 'string') {
+      try {
+        const themePath = this.app.os.pathJoin(themeExtension.extensionPath, theme.path);
+        const themeContent = this.app.os.readJsonFile<Record<string, unknown>>(themePath);
+
+        if (themeContent) {
+          // Merge the theme metadata with the loaded content
+          const fullTheme = { ...theme, ...themeContent };
+
+          // If specific keys requested, filter the theme data
+          if (keys && keys.length > 0) {
+            const filteredTheme: Record<string, unknown> = {};
+            keys.forEach(key => {
+              if ((fullTheme as Record<string, unknown>)[key] !== undefined) {
+                filteredTheme[key] = (fullTheme as Record<string, unknown>)[key];
+              }
+            });
+            return filteredTheme;
+          }
+
+          return fullTheme;
+        }
+      } catch (err) {
+        this.app.ui.debugOut(`ERROR: Failed to load theme file: ${err}`, 'warn', 'VSCodeAPIs');
+      }
     }
 
     // If specific keys requested, filter the theme data

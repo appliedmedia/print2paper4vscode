@@ -5,7 +5,7 @@ toolbar_html: |
     #p2p4vsc-toolbar {
       position: fixed;
       top: 12px;
-      left: 8px;
+      left: {{TOOLBAR_LEFT}}px;
       z-index: 9999;
       display: inline-flex;
       flex-direction: column;
@@ -117,23 +117,35 @@ toolbar_html: |
     let dragStartX = 0;
     let dragStartLeft = 0;
 
-    // Restore toolbar left position
-    (function(){
-      try {
-        const state = vscode.getState() || {};
-        if (typeof state.toolbarLeft === 'number') {
-          const maxLeft = Math.max(8, window.innerWidth - toolbar.offsetWidth - 8);
-          const clamped = Math.min(Math.max(8, state.toolbarLeft), maxLeft);
-          toolbar.style.left = clamped + 'px';
-        }
-      } catch {}
-    })();
+
 
     window.addEventListener('resize', ()=>{
       const left = parseFloat(getComputedStyle(toolbar).left || '8');
       const maxLeft = Math.max(8, window.innerWidth - toolbar.offsetWidth - 8);
       toolbar.style.left = Math.min(left, maxLeft) + 'px';
     });
+
+    // Helper function to end dragging and notify extension
+    function postDragEnd() {
+      isDragging = false;
+      document.body.style.cursor = '';
+      
+      // Save position to extension's global state
+      const left = parseFloat(getComputedStyle(toolbar).left || '8');
+      
+      // Notify extension that drag ended
+      vscode.postMessage({
+        type: 'dragEnd',
+        left
+      });
+    }
+
+    // Helper function to end dragging if currently dragging
+    function endIfDragging(/* e */) {
+      if (isDragging) {
+        postDragEnd();
+      }
+    }
 
     // Drag event handlers
     drag.addEventListener('mousedown', (e)=>{
@@ -146,33 +158,20 @@ toolbar_html: |
 
     document.addEventListener('mousemove', (e)=>{
       if (isDragging) {
-        e.preventDefault();
-        const dx = e.clientX - dragStartX;
-        const maxLeft = Math.max(8, window.innerWidth - toolbar.offsetWidth - 8);
-        const newLeft = Math.min(Math.max(8, dragStartLeft + dx), maxLeft);
-        toolbar.style.left = newLeft + 'px';
+        if (e.buttons > 0) { // Mouse button is still down - continue dragging
+          e.preventDefault();
+          const dx = e.clientX - dragStartX;
+          const maxLeft = Math.max(8, window.innerWidth - toolbar.offsetWidth - 8);
+          const newLeft = Math.min(Math.max(8, dragStartLeft + dx), maxLeft);
+          toolbar.style.left = newLeft + 'px';
+        } else { // Mouse button released - stop dragging
+          postDragEnd();
+        }
       }
     });
 
-    document.addEventListener('mouseup', (e)=>{
-      if (isDragging) {
-        isDragging = false;
-        document.body.style.cursor = '';
-
-        // Save position to VS Code state
-        try {
-          const left = parseFloat(getComputedStyle(toolbar).left || '8');
-          vscode.setState({ toolbarLeft: left });
-        } catch {}
-
-        // Post simple dragEnd message with final position
-        const rect = toolbar.getBoundingClientRect();
-        vscode.postMessage({
-          type: 'dragEnd',
-          clientX: rect.left,
-          clientY: rect.top
-        });
-      }
+    ['mouseup', 'mouseleave'].forEach(eventType => {
+      document.addEventListener(eventType, endIfDragging);
     });
 
     {{UIMENU_JS}}

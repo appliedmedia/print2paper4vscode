@@ -68,9 +68,13 @@ export class UI {
     this.app.ui.debugOut(`UIMenu HTML preview: ${uimenuHtml.substring(0, 200)}...`, 'info', 'UI');
     this.app.ui.debugOut(`UIMenu JS length: ${uimenuJs.length}`, 'info', 'UI');
 
+    // Get saved toolbar position
+    const toolbarLeft = this.app.vscodeapis.getGlobalState<number>('toolbarLeft');
+
     const toolbar = this.app.templateDictReplace(toolbarYaml.toolbar_html, {
       UIMENU_HTML: uimenuHtml,
       UIMENU_JS: uimenuJs,
+      TOOLBAR_LEFT: toolbarLeft !== undefined ? String(toolbarLeft) : 'undefined',
     });
 
     this.app.ui.debugOut(`Final toolbar HTML length: ${toolbar.length}`, 'info', 'UI');

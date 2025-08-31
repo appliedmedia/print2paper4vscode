@@ -8,6 +8,7 @@ export interface UIMenuItem {
 export type WebviewMessage = {
   type: 'dragEnd' | 'menu' | 'print' | 'menuItemSelected';
   clientX?: number;
+  left?: number;
   startLeft?: number;
   value?: string;
   targetId?: string;

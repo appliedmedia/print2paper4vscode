@@ -34,9 +34,14 @@ export class PaperPrinter {
   // Message handler methods
   private async handleDragEnd(msg: WebviewMessage): Promise<void> {
     // Save final position when drag ends
-    if (msg.clientX !== undefined) {
-      // TODO: Save position to VS Code storage
-      this.app.ui.debugOut(`Drag ended at position: ${msg.clientX}`, 'info', 'PaperPrinter');
+    if (msg.left !== undefined) {
+      try {
+        // Save position to VS Code global state
+        this.app.vscodeapis.updateGlobalState('toolbarLeft', msg.left);
+        this.app.ui.debugOut(`Drag ended at position: ${msg.left}`, 'info', 'PaperPrinter');
+      } catch (error) {
+        this.app.ui.debugOut(`Failed to save toolbar position: ${error}`, 'error', 'PaperPrinter');
+      }
     }
   }
 
@@ -104,8 +109,14 @@ export class PaperPrinter {
           start === end ? `Line ${start} of ${info.name}` : `Lines ${start}-${end} of ${info.name}`;
       }
       this.printTitle = printableLabel;
+      this.app.ui.debugOut(
+        `THEMECHECK: Printing with theme: '${this.currentThemeChoice}'`,
+        'info',
+        'PaperPrinter'
+      );
       const htmlContent = await this.app.stylize.styleToHtml(info.text, info.languageId, {
         title: this.printTitle,
+        theme: this.currentThemeChoice,
       });
       await this.openPrintPrepAndPrompt(htmlContent, printableLabel);
     } catch (error) {
@@ -134,10 +145,16 @@ export class PaperPrinter {
     if (this.lastRawCode && this.lastLanguageId) {
       const sizePx = this.computeFontSizePx();
       const lhPx = this.computeLineHeightPx(sizePx);
+      this.app.ui.debugOut(
+        `THEMECHECK: applyRenderModes with theme: '${this.currentThemeChoice}'`,
+        'info',
+        'PaperPrinter'
+      );
       const html = await this.app.stylize.styleToHtml(this.lastRawCode, this.lastLanguageId, {
         fontSize: sizePx,
         lineHeight: lhPx,
         title: this.printTitle,
+        theme: this.currentThemeChoice,
       });
       return html;
     }
@@ -245,7 +262,6 @@ export class PaperPrinter {
 
   private menuItems_Theme(): UIMenuItem[] {
     const themes = this.app.stylize.getThemes();
-    const currentEditorTheme = this.app.vscodeapis.getActiveThemeId();
 
     return themes.map(theme => {
       // No need to add 📝 here, UIMenu.ts will handle it based on default selection
@@ -302,13 +318,36 @@ export class PaperPrinter {
   }
 
   private async handleSelection_Theme(selectedId: string): Promise<string> {
+    this.app.ui.debugOut(
+      `THEMECHECK: handleSelection_Theme called with selectedId: '${selectedId}'`,
+      'info',
+      'PaperPrinter'
+    );
+
     if (selectedId === '0') {
       // Return the current editor theme ID as the default
       const currentEditorTheme = this.app.vscodeapis.getActiveThemeId();
-      return currentEditorTheme || this.app.stylize.getThemes()[0]?.id || '';
+      const availableThemes = this.app.stylize.getThemes();
+      const fallbackTheme = availableThemes[0]?.id || '';
+      const result = currentEditorTheme || fallbackTheme;
+
+      this.app.ui.debugOut(
+        `THEMECHECK: Theme default selection - selectedId: '${selectedId}', currentEditorTheme: '${currentEditorTheme}', availableThemes: [${availableThemes.map(t => t.id).join(', ')}], fallbackTheme: '${fallbackTheme}', returning: '${result}'`,
+        'info',
+        'PaperPrinter'
+      );
+
+      return result;
     }
-    this.app.ui.debugOut(`Theme menu selection: ${selectedId}`, 'info', 'PaperPrinter');
+
+    this.app.ui.debugOut(`THEMECHECK: Theme menu selection: ${selectedId}`, 'info', 'PaperPrinter');
     this.currentThemeChoice = selectedId;
+    this.app.ui.debugOut(
+      `THEMECHECK: currentThemeChoice set to: '${this.currentThemeChoice}'`,
+      'info',
+      'PaperPrinter'
+    );
+
     // TODO: Re-render webview with new theme - need access to panel
     return ''; // selection handled
   }
