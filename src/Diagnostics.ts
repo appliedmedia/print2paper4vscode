@@ -3,21 +3,31 @@ type MessageRef = string | object;
 
 export class Diagnostics {
   static separator = ' > ';
+
   private static _debugOn = false; // Root level debug state
 
-  private name: string;
-  private name_lineage: string;
-  private parent: Diagnostics | null;
-  private startTime: number | null;
+  private _name: string = '';
+  private name_lineage: string = '';
+  private _displayName: string = '';
+
+  get name(): string {
+    return (this._displayName ||= [this.name_lineage, this._name].join(Diagnostics.separator));
+  }
+
+  set name(value: string) {
+    this._name = value;
+    this._displayName = ''; // Invalidate cache
+  }
+
+  private parent: Diagnostics | null = null;
+  private startTime: number | null = null;
   private _debugOn: boolean;
-  private debugOverride: boolean | null;
 
   constructor(name: string, debugOn?: boolean, parent?: Diagnostics | null) {
-    this.name = name;
+    this._name = name;
     this.parent = parent || null;
     this.startTime = null;
     this._debugOn = Diagnostics._debugOn;
-    this.debugOverride = null;
 
     // Build name lineage by crawling up parent tree
     this.name_lineage = this.buildNameLineage();
@@ -35,8 +45,7 @@ export class Diagnostics {
    * @returns New Diagnostics instance for the method
    */
   sub(name: string, debugOn?: boolean): Diagnostics {
-    const subName = this.name + Diagnostics.separator + name;
-    const dx = new Diagnostics(subName, debugOn, this);
+    const dx = new Diagnostics(name, debugOn, this);
     return dx;
   }
 
@@ -47,19 +56,19 @@ export class Diagnostics {
    * @returns true if all required arguments are present, false otherwise
    */
   require(args: Record<string, unknown>, requiredKeys: string[]): boolean {
-    this.out(`Validating ${requiredKeys.length} required arguments`);
-
+    let missingKeys = [];
     for (const key of requiredKeys) {
       if (!(key in args) || args[key] === undefined) {
-        const name = this.name.split(Diagnostics.separator).pop() || 'unknown';
-        const errorMsg = `${name}: ${key} missing!`;
-        this.out(`❌ ${errorMsg}`);
-        return false;
+        missingKeys.push(key);
       }
     }
 
-    this.out(`✅ All ${requiredKeys.length} required arguments present`);
-    return true;
+    if (missingKeys.length > 0) {
+      const missingKeysString = `"${missingKeys.join(`", "`)}"`;
+      this.out(`❌ missing: ${missingKeysString}`);
+    }
+
+    return missingKeys.length === 0;
   }
 
   /**
@@ -128,8 +137,9 @@ export class Diagnostics {
     const timestamp = `${year}-${month}-${day} ${displayHours}:${minutes}:${seconds}.${milliseconds}${ampm}`;
 
     // Show full context: lineage > current name > message
-    const displayName = [this.name_lineage, this.name].join(Diagnostics.separator);
-    return `[${timestamp}] ${displayName} > ${message}`;
+    const formattedMessage =
+      typeof message === 'string' ? message : JSON.stringify(message, null, 2);
+    return `[${timestamp}] ${this.name} > ${formattedMessage}`;
   }
 
   /**
@@ -138,9 +148,8 @@ export class Diagnostics {
    * @returns Current debug state for this instance
    */
   debugOn(enabled?: boolean): boolean {
-    let debugOn: boolean = this._debugOn;
+    let debugOn = this._debugOn;
     if (enabled !== undefined) {
-      this.debugOverride = enabled;
       this._debugOn = enabled;
       debugOn = enabled;
     } else if (debugOn === undefined) {
@@ -171,7 +180,8 @@ export class Diagnostics {
     let current: Diagnostics | null = this.parent;
 
     while (current !== null) {
-      const currentValue = (current as Diagnostics)[fieldName];
+      const diag = current as unknown as Record<string, unknown>;
+      const currentValue = diag[fieldName] as T;
       values.unshift(currentValue);
       current = current.parent;
     }
@@ -184,7 +194,7 @@ export class Diagnostics {
    * @returns The lineage string (e.g., "App > PaperPrinter")
    */
   private buildNameLineage(): string {
-    const lineage = this.crawlUp<string>('name');
+    const lineage = this.crawlUp<string>('_name');
     return lineage.join(Diagnostics.separator);
   }
 
