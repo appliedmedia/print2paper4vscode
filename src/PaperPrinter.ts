@@ -247,21 +247,15 @@ export class PaperPrinter {
     const themes = this.app.stylize.getThemes();
     const currentEditorTheme = this.app.vscodeapis.getActiveThemeId();
 
-    // Check if editor theme already exists in the list
-    const existingEditorTheme = themes.find(theme => theme.id === currentEditorTheme);
+    return themes.map(theme => {
+      const isCurrentEditorTheme = theme.id === currentEditorTheme;
+      const displayName = isCurrentEditorTheme ? `${theme.displayName} 📝` : theme.displayName;
 
-    if (existingEditorTheme) {
-      // Editor theme already exists - just add 📝 to its displayName
-      existingEditorTheme.displayName = `${existingEditorTheme.displayName} 📝`;
-    } else {
-      // Editor theme not in list - add it at the top with 📝 suffix
-      themes.unshift({ 
-        id: currentEditorTheme, 
-        displayName: `${currentEditorTheme} 📝` 
-      });
-    }
-
-    return themes;
+      return {
+        id: theme.id,
+        displayName: displayName,
+      };
+    });
   }
 
   private menuItems_Text(): UIMenuItem[] {
