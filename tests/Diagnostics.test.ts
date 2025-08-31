@@ -24,17 +24,17 @@ describe('Diagnostics', () => {
   test('should validate required arguments correctly', () => {
     const dx = new Diagnostics('TestClass');
     const methodDx = dx.sub('testMethod');
-    
+
     // Test with valid args
     const validArgs = { content: 'test', uri: 'file://test' };
     const validResult = methodDx.require(validArgs, ['content']);
     assert.strictEqual(validResult, true);
-    
+
     // Test with missing required arg
     const invalidArgs = { content: 'test' };
     const invalidResult = methodDx.require(invalidArgs, ['content', 'uri']);
     assert.strictEqual(invalidResult, false);
-    
+
     // Test with undefined arg
     const undefinedArgs = { content: 'test', uri: undefined };
     const undefinedResult = methodDx.require(undefinedArgs, ['content', 'uri']);
@@ -44,7 +44,7 @@ describe('Diagnostics', () => {
   test('should handle empty required keys array', () => {
     const dx = new Diagnostics('TestClass');
     const methodDx = dx.sub('testMethod');
-    
+
     const args = { content: 'test' };
     const result = methodDx.require(args, []);
     assert.strictEqual(result, true);
@@ -53,7 +53,7 @@ describe('Diagnostics', () => {
   test('should handle args with null values', () => {
     const dx = new Diagnostics('TestClass');
     const methodDx = dx.sub('testMethod');
-    
+
     const args = { content: null, uri: 'test' };
     // null should be considered present (not undefined)
     const result = methodDx.require(args, ['content', 'uri']);
@@ -63,7 +63,7 @@ describe('Diagnostics', () => {
   test('should handle args with empty string values', () => {
     const dx = new Diagnostics('TestClass');
     const methodDx = dx.sub('testMethod');
-    
+
     const args = { content: '', uri: 'test' };
     // Empty string should be considered present
     const result = methodDx.require(args, ['content', 'uri']);
@@ -73,7 +73,7 @@ describe('Diagnostics', () => {
   test('should handle args with zero values', () => {
     const dx = new Diagnostics('TestClass');
     const methodDx = dx.sub('testMethod');
-    
+
     const args = { count: 0, uri: 'test' };
     // Zero should be considered present
     const result = methodDx.require(args, ['count', 'uri']);
@@ -83,7 +83,7 @@ describe('Diagnostics', () => {
   test('should handle args with false values', () => {
     const dx = new Diagnostics('TestClass');
     const methodDx = dx.sub('testMethod');
-    
+
     const args = { enabled: false, uri: 'test' };
     // False should be considered present
     const result = methodDx.require(args, ['enabled', 'uri']);
@@ -93,29 +93,35 @@ describe('Diagnostics', () => {
   test('should format error messages correctly', () => {
     const dx = new Diagnostics('TestClass');
     const methodDx = dx.sub('testMethod');
-    
+
     const args = { content: 'test' };
-    // Capture console.error output to verify message format
-    const originalError = console.error;
-    let errorOutput = '';
-    console.error = (msg: string) => { errorOutput = msg; };
-    
+
+    // Enable debug mode to see the output
+    methodDx.debugOn(true);
+
+    // Capture console.log output to verify message format
+    const originalLog = console.log;
+    let logOutput = '';
+    console.log = (msg: string) => {
+      logOutput += msg + '\n';
+    };
+
     methodDx.require(args, ['content', 'missingKey']);
-    
-    // Restore console.error
-    console.error = originalError;
-    
+
+    // Restore console.log
+    console.log = originalLog;
+
     // Should contain method name and missing key
-    assert.ok(errorOutput.includes('testMethod: missingKey missing!'));
-    assert.ok(errorOutput.includes('TestClass > testMethod'));
+    assert.ok(logOutput.includes('testMethod: missingKey missing!'));
+    assert.ok(logOutput.includes('TestClass > testMethod'));
   });
 
   test('should handle debug state inheritance', () => {
     const parentDx = new Diagnostics('ParentClass', true);
     const childDx = parentDx.sub('childMethod');
-    
+
     assert.strictEqual(childDx.debugOn(), true);
-    
+
     const grandchildDx = childDx.sub('grandchildMethod');
     assert.strictEqual(grandchildDx.debugOn(), true);
   });
@@ -123,22 +129,22 @@ describe('Diagnostics', () => {
   test('should handle debug state override', () => {
     const parentDx = new Diagnostics('ParentClass', true);
     const childDx = parentDx.sub('childMethod', false);
-    
+
     assert.strictEqual(childDx.debugOn(), false);
     assert.strictEqual(parentDx.debugOn(), true);
   });
 
   test('should handle global debug state', () => {
     // Set global debug state
-    Diagnostics.debugOn(true);
-    assert.strictEqual(Diagnostics.debugOn(), true);
-    
+    Diagnostics.setGlobalDebug(true);
+    assert.strictEqual(Diagnostics.debugOn, true);
+
     // Create instance without explicit debug state
     const dx = new Diagnostics('TestClass');
     assert.strictEqual(dx.debugOn(), true);
-    
+
     // Reset global debug state
-    Diagnostics.debugOn(false);
-    assert.strictEqual(Diagnostics.debugOn(), false);
+    Diagnostics.setGlobalDebug(false);
+    assert.strictEqual(Diagnostics.debugOn, false);
   });
 });
