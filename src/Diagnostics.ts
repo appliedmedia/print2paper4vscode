@@ -1,28 +1,29 @@
 export class Diagnostics {
   static separator = ' > ';
-  static globalDebugOn = false; // Root level debug state
+  private static _debugOn = false; // Root level debug state
 
-  private className: string;
+  private name: string;
   private parent: Diagnostics | null;
-  private debugOverride: boolean;
-  private currentMethod: string | null;
-  private methodStartTime: number | null;
+  private startTime: number | null;
+  private _debugOn: boolean;
+  private debugOverride: boolean | null;
 
-  constructor(className: string, debugOverride?: boolean | null, parent?: Diagnostics | null) {
-    this.className = className;
+  constructor(name: string, debugOverride?: boolean | null, parent?: Diagnostics | null) {
+    this.name = name;
     this.parent = parent || null;
+    this.startTime = null;
 
     // Determine debug state through inheritance chain
     if (debugOverride !== undefined && debugOverride !== null) {
       this.debugOverride = debugOverride;
-    } else if (parent && parent.debugOverride !== undefined) {
+      this._debugOn = debugOverride;
+    } else if (parent && parent.debugOverride !== null) {
       this.debugOverride = parent.debugOverride;
+      this._debugOn = parent.debugOverride;
     } else {
-      this.debugOverride = Diagnostics.globalDebugOn;
+      this.debugOverride = null;
+      this._debugOn = Diagnostics._debugOn;
     }
-
-    this.currentMethod = null;
-    this.methodStartTime = null;
   }
 
   /**
@@ -32,15 +33,12 @@ export class Diagnostics {
    * @returns New Diagnostics instance for the method
    */
   sub(methodName: string, debugOverride?: boolean | null): Diagnostics {
-    const methodClassName = this.className + Diagnostics.separator + methodName;
-    const methodDx = new Diagnostics(methodClassName, debugOverride, this);
+    const subName = this.name + Diagnostics.separator + methodName;
+    const methodDx = new Diagnostics(subName, debugOverride, this);
 
-    // Always set the current method for the sub-context
-    methodDx.currentMethod = methodName;
-
-    if (methodDx.debugOverride) {
-      methodDx.methodStartTime = Date.now();
-      console.log(methodDx.formatMessage(`Entering method: ${methodName}`));
+    if (methodDx._debugOn) {
+      methodDx.startTime = Date.now();
+      methodDx.out(`🚀 Entering method: ${methodName}`);
     }
 
     return methodDx;
@@ -53,14 +51,18 @@ export class Diagnostics {
    * @returns true if all required arguments are present, false otherwise
    */
   require(args: Record<string, unknown>, requiredKeys: string[]): boolean {
+    this.out(`Validating ${requiredKeys.length} required arguments`);
+
     for (const key of requiredKeys) {
       if (!(key in args) || args[key] === undefined) {
-        const methodName = this.getCurrentMethod() || 'unknown';
+        const methodName = this.getMethodName() || 'unknown';
         const errorMsg = `${methodName}: ${key} missing!`;
-        console.error(this.formatMessage(errorMsg));
+        this.out(`❌ ${errorMsg}`);
         return false;
       }
     }
+
+    this.out(`✅ All ${requiredKeys.length} required arguments present`);
     return true;
   }
 
@@ -70,7 +72,7 @@ export class Diagnostics {
    * @returns this for method chaining
    */
   out(message: any): this {
-    if (this.debugOverride) {
+    if (this._debugOn) {
       console.log(this.formatMessage(message));
     }
     return this;
@@ -82,8 +84,8 @@ export class Diagnostics {
    * @returns this for method chaining
    */
   done(message?: any): this {
-    if (this.debugOverride && this.methodStartTime !== null) {
-      const duration = Date.now() - this.methodStartTime;
+    if (this._debugOn && this.startTime !== null) {
+      const duration = Date.now() - this.startTime;
       let timeDisplay: string;
 
       if (duration >= 60000) {
@@ -94,12 +96,11 @@ export class Diagnostics {
       }
 
       const completionMsg = message ? ` - ${message}` : '';
-      console.log(this.formatMessage(`Method completed in ${timeDisplay}${completionMsg}`));
+      this.out(`🏁 Method completed in ${timeDisplay}${completionMsg}`);
     }
 
     // Reset method context
-    this.currentMethod = null;
-    this.methodStartTime = null;
+    this.startTime = null;
 
     return this;
   }
@@ -121,12 +122,7 @@ export class Diagnostics {
    */
   private formatMessage(message: any): string {
     const timestamp = new Date().toISOString();
-    // Only add method context if it's not already part of the className
-    const methodContext =
-      this.currentMethod && !this.className.includes(this.currentMethod)
-        ? ` > ${this.currentMethod}`
-        : '';
-    return `[${timestamp}] ${this.className}${methodContext} > ${message}`;
+    return `[${timestamp}] ${this.name} > ${message}`;
   }
 
   /**
@@ -137,9 +133,10 @@ export class Diagnostics {
   debugOn(enabled?: boolean): boolean | this {
     if (enabled !== undefined) {
       this.debugOverride = enabled;
+      this._debugOn = enabled;
       return this;
     }
-    return this.debugOverride;
+    return this._debugOn;
   }
 
   /**
@@ -149,17 +146,19 @@ export class Diagnostics {
    */
   static debugOn(enabled?: boolean): boolean {
     if (enabled !== undefined) {
-      Diagnostics.globalDebugOn = enabled;
+      Diagnostics._debugOn = enabled;
     }
-    return Diagnostics.globalDebugOn;
+    return Diagnostics._debugOn;
   }
 
   /**
-   * Get current method context
-   * @returns Current method name or null if not in a method
+   * Get the method name from the current context
+   * @returns The method name or null if not in a method
    */
-  getCurrentMethod(): string | null {
-    return this.currentMethod;
+  getMethodName(): string | null {
+    // Extract method name from the name (everything after the last separator)
+    const parts = this.name.split(Diagnostics.separator);
+    return parts.length > 1 ? parts[parts.length - 1] : null;
   }
 
   /**
@@ -167,6 +166,7 @@ export class Diagnostics {
    * @returns The class name
    */
   getClassName(): string {
-    return this.className;
+    // Return the first part of the name (before any separators)
+    return this.name.split(Diagnostics.separator)[0];
   }
 }
