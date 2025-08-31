@@ -85,15 +85,12 @@ export class UIMenu {
         const itemPrefix = isDefault ? '✓' : ' ';
         const itemSuffix = isDefault ? '📝' : '';
 
-        // Only add suffix if there's content
-        const suffixHtml = itemSuffix ? `<span class="item-suffix">${itemSuffix}</span>` : '';
-        
-        return this._app.templateDictReplace(yaml.ui_menu_item, {
+                return this._app.templateDictReplace(yaml.ui_menu_item, {
           ITEM_ID: item.id,
           ITEM_LABEL: item.displayName,
           ITEM_CLASSES: itemClasses,
           ITEM_PREFIX: itemPrefix,
-          ITEM_SUFFIX: suffixHtml,
+          ITEM_SUFFIX: itemSuffix,
         });
       })
       .join('\n');
