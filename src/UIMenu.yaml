@@ -65,6 +65,18 @@ ui_drag_handlers: |
   let dragStartLeft = 0;
   let currentToolbarLeft = 8;
 
+  // Helper function to end dragging and notify extension
+  function postDragEnd(clientX) {
+    isDragging = false;
+    document.body.style.cursor = '';
+    
+    // Notify extension that drag ended
+    vscode.postMessage({
+      type: 'dragEnd',
+      clientX: clientX
+    });
+  }
+
 
 
   // Drag event handlers
@@ -93,28 +105,14 @@ ui_drag_handlers: |
           toolbar.style.left = newLeft + 'px';
         }
       } else { // Mouse button released - stop dragging
-        isDragging = false;
-        document.body.style.cursor = '';
-        
-        // Notify extension that drag ended
-        vscode.postMessage({
-          type: 'dragEnd',
-          clientX: e.clientX
-        });
+        postDragEnd(e.clientX);
       }
     }
   });
 
   document.addEventListener('mouseup', (e) => {
     if (isDragging) {
-      isDragging = false;
-      document.body.style.cursor = '';
-
-      // Notify extension that drag ended
-      vscode.postMessage({
-        type: 'dragEnd',
-        clientX: e.clientX
-      });
+      postDragEnd(e.clientX);
     }
   });
 
@@ -123,6 +121,13 @@ ui_drag_handlers: |
   document.addEventListener('selectstart', (e) => {
     if (isDragging) {
       e.preventDefault();
+    }
+  });
+
+  // Force stop dragging when mouse re-enters window without button pressed
+  window.addEventListener('mouseenter', (e) => {
+    if (isDragging && e.buttons === 0) {
+      postDragEnd(e.clientX);
     }
   });
 
