@@ -12,7 +12,7 @@ export class PaperPrinter {
   private lastLanguageId: string | null = null;
   private printTitle: string = 'Printable';
 
-  private currentThemeChoice: string = 'editor';
+  private currentThemeChoice: string | undefined;
 
   private currentFontSizeMode: 'editor' | 9 | 10 | 12 | 14 | 18 | 24 = 'editor';
 
@@ -109,6 +109,17 @@ export class PaperPrinter {
           start === end ? `Line ${start} of ${info.name}` : `Lines ${start}-${end} of ${info.name}`;
       }
       this.printTitle = printableLabel;
+
+      // Initialize theme choice if not set yet
+      if (!this.currentThemeChoice) {
+        this.currentThemeChoice = this.app.vscodeapis.getActiveThemeId();
+        this.app.ui.debugOut(
+          `THEMECHECK: Initialized currentThemeChoice to: '${this.currentThemeChoice}'`,
+          'info',
+          'PaperPrinter'
+        );
+      }
+
       this.app.ui.debugOut(
         `THEMECHECK: Printing with theme: '${this.currentThemeChoice}'`,
         'info',
