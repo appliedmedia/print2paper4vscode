@@ -27,14 +27,11 @@ export abstract class OS {
   }
 
   static create(app: App): OS {
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    if (process.platform === 'win32') {
-      const { OSWin } = require('./OSWin');
+    if (process?.platform === 'win32') {
       return new OSWin(app);
+    } else {
+      return new OSMac(app);
     }
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const { OSMac } = require('./OSMac');
-    return new OSMac(app);
   }
 
   abstract fileOpenInDefaultApp(path: string): Promise<void>;
@@ -75,6 +72,10 @@ export abstract class OS {
     return fs.existsSync(targetPath);
   }
 
+  fileRead(filePath: string): string {
+    return fs.readFileSync(filePath, 'utf8');
+  }
+
   sanitizeFileName(name: string): string {
     // Remove invalid chars cross-platform and constrain length
     const cleaned = name
@@ -91,22 +92,29 @@ export abstract class OS {
     const y = ts.getFullYear();
     const m = String(ts.getMonth() + 1).padStart(2, '0');
     const d = String(ts.getDate()).padStart(2, '0');
-    const hh = String(ts.getHours()).padStart(2, '0');
+    const hh = ts.getHours();
     const mm = String(ts.getMinutes()).padStart(2, '0');
     const ss = String(ts.getSeconds()).padStart(2, '0');
-    return `${y}-${m}-${d}_${hh}${mm}${ss}`;
+    const ms = String(ts.getMilliseconds()).padStart(3, '0');
+    const ampm = hh < 12 ? 'am' : 'pm';
+
+    // Convert to 12-hour format
+    const hour12 = hh === 0 ? 12 : hh > 12 ? hh - 12 : hh;
+    const hourStr = String(hour12).padStart(2, '0');
+
+    return `${y}-${m}-${d}_${hourStr}${mm}${ss}.${ms}${ampm}`;
   }
 
   // YAML utilities
   readYamlFile<T = unknown>(absPath: string): T {
-    const content = fs.readFileSync(absPath, 'utf8');
+    const content = this.fileRead(absPath);
     return yamlParse(content) as T;
   }
 
   readJsonFile<T = unknown>(absPath: string, filter?: string): T | undefined {
     try {
       if (!fs.existsSync(absPath)) return undefined;
-      const text = fs.readFileSync(absPath, 'utf8');
+      const text = this.fileRead(absPath);
       const parsed = JSON.parse(text) as T;
 
       // If filter is provided, return only that specific key
@@ -191,3 +199,7 @@ export abstract class OS {
     }
   }
 }
+
+// Import platform-specific classes at the end to avoid circular dependency
+import { OSMac } from './OSMac';
+import { OSWin } from './OSWin';

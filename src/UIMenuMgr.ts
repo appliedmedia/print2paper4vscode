@@ -1,6 +1,6 @@
 import type { App } from './App';
 import { UIMenu } from './UIMenu';
-import type { UIMenuItem } from './types/UIMenuItem';
+import type { UIMenuItem } from './types/UI_t';
 
 export class UIMenuMgr {
   private app: App;
@@ -25,19 +25,19 @@ export class UIMenuMgr {
     icon: string,
     title: string,
     listBuilder: () => UIMenuItem[],
-    selectionHandler: (selectedId: string) => Promise<void>
+    selectionHandler: (selectedId: string) => Promise<string>
   ): UIMenu {
     return new UIMenu(id, icon, title, this.app, listBuilder, selectionHandler);
   }
 
   // Get all menus
   getAllMenus(): UIMenu[] {
-    return this.menus;
+    return [...this.menus];
   }
 
   // Get a specific menu by ID
   getMenu(id: string): UIMenu | undefined {
-    return this.menus.find(menu => menu.id === id);
+    return this.getAllMenus().find(menu => menu.id === id);
   }
 
   // Add a menu to the list (called by PaperPrinter)
@@ -46,26 +46,43 @@ export class UIMenuMgr {
   }
 
   // Generate all HTML at once
-  generateAllHTML(): string {
-    return this.menus
-      .map(menu => {
-        const menuItems = menu.getMenuItems();
-        const yaml = this.app.os.readExtensionYaml<{ ui_menu_item: string }>('src/UIMenu.yaml');
-        const html = menuItems
-          .map(item =>
-            this.app.templateDictReplace(yaml.ui_menu_item, {
-              ITEM_ID: item.id,
-              ITEM_LABEL: item.displayName,
-            })
-          )
-          .join('\n');
-        return menu.generateHTML(html);
-      })
-      .join('\n');
+  async getAllUIMenuHTML(): Promise<string> {
+    this.app.ui.debugOut(
+      `Generating HTML for ${this.getAllMenus().length} menus`,
+      'info',
+      'UIMenuMgr'
+    );
+
+    const menuPromises = this.getAllMenus().map(async menu => {
+      this.app.ui.debugOut(`Generating HTML for menu: ${menu.id}`, 'info', 'UIMenuMgr');
+      try {
+        const menuHTML = await menu.getHTML();
+        this.app.ui.debugOut(
+          `Generated HTML for menu ${menu.id}: ${menuHTML.substring(0, 100)}...`,
+          'info',
+          'UIMenuMgr'
+        );
+        return menuHTML;
+      } catch (error) {
+        this.app.ui.debugOut(
+          `ERROR generating HTML for menu ${menu.id}: ${error}`,
+          'error',
+          'UIMenuMgr'
+        );
+        return `<!-- ERROR generating menu ${menu.id}: ${error} -->`;
+      }
+    });
+
+    const menuResults = await Promise.all(menuPromises);
+    const result = menuResults.join('\n');
+
+    this.app.ui.debugOut(`Total generated HTML length: ${result.length}`, 'info', 'UIMenuMgr');
+    this.app.ui.debugOut(`Final HTML preview: ${result.substring(0, 200)}...`, 'info', 'UIMenuMgr');
+    return result;
   }
 
   // Generate all JavaScript at once
-  generateAllJavaScript(): string {
+  getAllUIMenuJS(): string {
     // All menus share the same generic handlers
     const yaml = this.app.os.readExtensionYaml<{ ui_menu_generic_handlers: string }>(
       'src/UIMenu.yaml'
@@ -73,26 +90,16 @@ export class UIMenuMgr {
     return yaml.ui_menu_generic_handlers;
   }
 
-  // Generate template with UIMENU_HTML placeholder
-  generateTemplateWithUIMenuHTML(): string {
-    return this.generateAllHTML();
-  }
-
-  // Generate template with UIMENU_JS placeholder
-  generateTemplateWithUIMenuJS(): string {
-    return this.generateAllJavaScript();
-  }
-
   // Get all template variable mappings
-  getTemplateVariableMappings(): Record<string, string> {
+  async getTemplateVariableMappings(): Promise<Record<string, string>> {
     const mappings: Record<string, string> = {};
 
     // Add the new UIMenu placeholders
-    mappings['UIMENU_HTML'] = this.generateTemplateWithUIMenuHTML();
-    mappings['UIMENU_JS'] = this.generateTemplateWithUIMenuJS();
+    mappings['UIMENU_HTML'] = await this.getAllUIMenuHTML();
+    mappings['UIMENU_JS'] = this.getAllUIMenuJS();
 
     // Keep the old individual menu mappings for backward compatibility
-    this.menus.forEach(menu => {
+    this.getAllMenus().forEach(menu => {
       const menuItems = menu.getMenuItems();
       const yaml = this.app.os.readExtensionYaml<{ ui_menu_item: string }>('src/UIMenu.yaml');
       const html = menuItems
@@ -100,6 +107,9 @@ export class UIMenuMgr {
           this.app.templateDictReplace(yaml.ui_menu_item, {
             ITEM_ID: item.id,
             ITEM_LABEL: item.displayName,
+            ITEM_CLASSES: '',
+            ITEM_PREFIX: '',
+            ITEM_SUFFIX: '',
           })
         )
         .join('\n');
@@ -116,7 +126,7 @@ export class UIMenuMgr {
     title: string;
     templateVariable: string;
   }> {
-    return this.menus.map(menu => ({
+    return this.getAllMenus().map(menu => ({
       id: menu.id,
       icon: menu.icon,
       title: menu.title,

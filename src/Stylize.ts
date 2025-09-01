@@ -24,12 +24,37 @@ export class Stylize {
   }
 
   private async validateHighlighter(languageId: string): Promise<void> {
+    this.app.ui.debugOut(
+      `THEMECHECK: validateHighlighter called with languageId: '${languageId}'`,
+      'info',
+      'Stylize'
+    );
+
     if (!this.highlighter) {
+      this.app.ui.debugOut(`THEMECHECK: No highlighter, creating new one`, 'info', 'Stylize');
       const themes = this.getThemes();
-      this.highlighter = await getSingletonHighlighter({
-        themes: themes.map(theme => theme.id),
-        langs: [languageId],
-      });
+      this.app.ui.debugOut(
+        `THEMECHECK: Themes for highlighter: ${themes.map(theme => theme.id).join(', ')}`,
+        'info',
+        'Stylize'
+      );
+
+      try {
+        this.highlighter = await getSingletonHighlighter({
+          themes: themes.map(theme => theme.id),
+          langs: [languageId],
+        });
+        this.app.ui.debugOut(`THEMECHECK: Highlighter created successfully`, 'info', 'Stylize');
+      } catch (error) {
+        this.app.ui.debugOut(
+          `THEMECHECK: Error creating highlighter: ${error}`,
+          'error',
+          'Stylize'
+        );
+        throw error;
+      }
+    } else {
+      this.app.ui.debugOut(`THEMECHECK: Using existing highlighter`, 'info', 'Stylize');
     }
   }
 
@@ -38,8 +63,6 @@ export class Stylize {
     Stylize.themesCache = null;
     this.app.ui.debugOut('Stylize cleanup completed', 'info', 'Stylize');
   }
-
-
 
   // Convert VS Code theme JSON to Shiki-compatible CSS variables format
   private convertVSCodeThemeToShiki(vscodeTheme: Record<string, unknown>): any {
@@ -114,15 +137,13 @@ export class Stylize {
   ): Promise<string> {
     const lang = languageId;
 
-    // Ensure highlighter is initialized
-    await this.validateHighlighter(lang);
-
-    // Determine which theme to use
+    // Determine which theme to use FIRST
     let selectedTheme: string;
 
     if (opts?.theme) {
       // Use specified theme - look it up from our unified theme list
-      const themeData = this.getThemes().find(theme => theme.id === opts.theme);
+      const allThemes = this.getThemes();
+      const themeData = allThemes.find(theme => theme.id === opts.theme);
 
       if (!themeData) {
         throw new Error(`Theme '${opts.theme}' not found in available themes`);
@@ -159,11 +180,38 @@ export class Stylize {
       }
     }
 
+    // Ensure highlighter is initialized AFTER theme processing
+    this.app.ui.debugOut(
+      `THEMECHECK: About to call validateHighlighter with lang: '${lang}'`,
+      'info',
+      'Stylize'
+    );
+    await this.validateHighlighter(lang);
+    this.app.ui.debugOut(
+      `THEMECHECK: validateHighlighter completed successfully`,
+      'info',
+      'Stylize'
+    );
+
+    this.app.ui.debugOut(
+      `THEMECHECK: About to call highlighter with theme: '${selectedTheme}'`,
+      'info',
+      'Stylize'
+    );
+
+    this.app.ui.debugOut(
+      `THEMECHECK: Highlighter call parameters - lang: '${lang}', theme: '${selectedTheme}', code length: ${code.length}`,
+      'info',
+      'Stylize'
+    );
+
     // Generate HTML using the singleton highlighter
     const html = this.highlighter.codeToHtml(code, {
       lang,
       theme: selectedTheme,
     });
+
+    this.app.ui.debugOut(`THEMECHECK: Highlighter call completed successfully`, 'info', 'Stylize');
 
     const editorTypo = this.app.vscodeapis.getEditorTypography();
     const fontSize = typeof opts?.fontSize === 'number' ? opts.fontSize : editorTypo.fontSize;
@@ -195,28 +243,50 @@ export class Stylize {
     colors?: Record<string, string>;
     tokenColors?: TokenColor[];
   }> {
-    // Return cached themes if available
-    if (Stylize.themesCache !== null) {
-      let cachedThemes = [...Stylize.themesCache];
+    // Build themes cache if not available
+    if (Stylize.themesCache === null) {
+      this.app.ui.debugOut('THEMECHECK: Rebuilding themes cache', 'info', 'Stylize');
+      const shikiThemes = this.getShikiThemes(USE_ALL_LIGHT_SHIKI_THEMES);
+      const vscodeThemes = this.getVSCodeThemes(USE_ALL_LIGHT_VSCODE_THEMES);
 
-      // Apply filter if provided
-      if (filter) {
-        const filterRegex = new RegExp(filter, 'i');
-        cachedThemes = cachedThemes.filter(theme => filterRegex.test(theme.displayName));
-      }
-
-      return cachedThemes;
+      // Combine themes: Shiki first (more reliable for printing), then VSCode
+      Stylize.themesCache = [...shikiThemes, ...vscodeThemes];
+      this.app.ui.debugOut(
+        `THEMECHECK: Cache built with ${Stylize.themesCache.length} themes: ${Stylize.themesCache.map(t => t.id).join(', ')}`,
+        'info',
+        'Stylize'
+      );
+      this.app.ui.debugOut('THEMECHECK: About to return from getThemes()', 'info', 'Stylize');
+    } else {
+      this.app.ui.debugOut('THEMECHECK: Using existing themes cache', 'info', 'Stylize');
+      this.app.ui.debugOut('THEMECHECK: About to return from getThemes()', 'info', 'Stylize');
     }
 
-    // Build themes cache
-    const shikiThemes = this.getShikiThemes(USE_ALL_LIGHT_SHIKI_THEMES);
-    const vscodeThemes = this.getVSCodeThemes(USE_ALL_LIGHT_VSCODE_THEMES);
+    // Get themes from cache
+    let themes = [...Stylize.themesCache];
+    this.app.ui.debugOut(
+      `THEMECHECK: getThemes() - themes array created with ${themes.length} items`,
+      'info',
+      'Stylize'
+    );
 
-    // Combine themes: Shiki first (more reliable for printing), then VSCode
-    Stylize.themesCache = [...shikiThemes, ...vscodeThemes];
+    // Apply filter if provided
+    if (filter) {
+      const filterRegex = new RegExp(filter, 'i');
+      themes = themes.filter(theme => filterRegex.test(theme.displayName));
+      this.app.ui.debugOut(
+        `THEMECHECK: getThemes() - filter applied, ${themes.length} themes remaining`,
+        'info',
+        'Stylize'
+      );
+    }
 
-    // Recursive call to use the cache
-    return this.getThemes(filter);
+    this.app.ui.debugOut(
+      `THEMECHECK: getThemes() - returning themes: ${themes.map(t => t.id).join(', ')}`,
+      'info',
+      'Stylize'
+    );
+    return themes;
   }
 
   // Get Shiki themes with optional filter
@@ -306,20 +376,30 @@ export class Stylize {
       }
 
       // Add current editor theme at the top with 📝 indicator
-      const activeThemeName = this.app.vscodeapis.getActiveThemeId();
-      const activeTheme = themes.find(t => t.id === activeThemeName);
+      const activeThemeID = this.app.vscodeapis.getActiveThemeId();
+      const activeTheme = themes.find(t => t.id === activeThemeID);
+
       if (activeTheme) {
         activeTheme.displayName = `${activeTheme.displayName} 📝`;
       } else {
         // If editor theme not in list, add it at the top
-        const editorThemeData = this.app.vscodeapis.getVSCodeThemeJson(activeThemeName);
+        const editorThemeData = this.app.vscodeapis.getVSCodeThemeJson(activeThemeID);
+
         if (editorThemeData) {
+          this.app.ui.debugOut(
+            `THEMECHECK: Adding editor theme to themes list: ${activeThemeID}`,
+            'info',
+            'Stylize'
+          );
           themes.unshift({
-            id: activeThemeName,
-            displayName: `${activeThemeName} 📝`,
+            id: activeThemeID,
+            displayName: `${activeThemeID} 📝`,
             colors: editorThemeData.colors as Record<string, string> | undefined,
             tokenColors: editorThemeData.tokenColors as TokenColor[] | undefined,
           });
+
+          // Clear the themes cache so the new theme is included
+          Stylize.themesCache = null;
         }
       }
 
