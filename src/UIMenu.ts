@@ -1,5 +1,5 @@
 import type { App } from './App';
-import type { UIMenuItem } from './types/UIMenuItem';
+import type { UIMenuItem } from './types/UI_t';
 
 export class UIMenu {
   constructor(
@@ -8,7 +8,7 @@ export class UIMenu {
     private _title: string,
     private _app: App,
     private _listBuilder: () => UIMenuItem[],
-    private _selectionHandler: (id: string) => Promise<void>
+    private _selectionHandler: (id: string) => Promise<string>
   ) {}
 
   // Getters for private properties
@@ -42,16 +42,92 @@ export class UIMenu {
     return this._listBuilder();
   }
 
+  // Dispatch a selection to this menu's handler
+  async dispatchSelection(id: string): Promise<string> {
+    return this._selectionHandler(id);
+  }
+
   // Generate the complete HTML for this menu using YAML template
-  generateHTML(menuItems: string): string {
-    const yaml = this._app.os.readExtensionYaml<{ ui_menu_html: string }>('src/UIMenu.yaml');
-    return this._app.templateDictReplace(yaml.ui_menu_html, {
+  async getHTML(): Promise<string> {
+    this._app.ui.debugOut(`UIMenu.getHTML called for ${this.id}`, 'info', 'UIMenu');
+    this._app.ui.debugOut(`Icon: "${this.icon}", Title: "${this.title}"`, 'info', 'UIMenu');
+
+    let yaml: { ui_menu_html: string; ui_menu_item: string };
+    try {
+      yaml = this._app.os.readExtensionYaml<{ ui_menu_html: string; ui_menu_item: string }>(
+        'src/UIMenu.yaml'
+      );
+      this._app.ui.debugOut(
+        `YAML loaded, ui_menu_html length: ${yaml.ui_menu_html.length}`,
+        'info',
+        'UIMenu'
+      );
+    } catch (error) {
+      this._app.ui.debugOut(`ERROR reading YAML: ${error}`, 'error', 'UIMenu');
+      throw error;
+    }
+
+    // Generate menu items HTML with dynamic checkmarks and edit icons
+    const menuItems = this.getMenuItems();
+
+    // Get the default selection to determine which item should be checked
+    let defaultSelection = '';
+    try {
+      defaultSelection = await this._selectionHandler('0');
+    } catch (error) {
+      this._app.ui.debugOut(`Error getting default selection: ${error}`, 'error', 'UIMenu');
+    }
+
+    const menuItemsHtml = menuItems
+      .map(item => {
+        const isDefault = item.id === defaultSelection;
+        const itemClasses = isDefault ? 'default-item' : '';
+
+        // Only show gutter if there's a default selection (not empty string)
+        const showGutter = !!defaultSelection;
+        const itemPrefix = showGutter ? (isDefault ? '✓' : ' ') : '';
+        const itemSuffix = showGutter ? (isDefault ? '📝' : '') : '';
+
+        const replacementDict = {
+          ITEM_ID: item.id,
+          ITEM_LABEL: item.displayName,
+          ITEM_CLASSES: itemClasses,
+          ITEM_PREFIX: itemPrefix,
+          ITEM_SUFFIX: itemSuffix,
+        };
+
+        this._app.ui.debugOut(
+          `Menu item ${item.id}: prefix="${itemPrefix}", suffix="${itemSuffix}", showGutter=${showGutter}`,
+          'info',
+          'UIMenu'
+        );
+
+        return this._app.templateDictReplace(yaml.ui_menu_item, replacementDict);
+      })
+      .join('\n');
+
+    // Generate complete menu HTML using the template
+    const result = this._app.templateDictReplace(yaml.ui_menu_html, {
       MENU_ID: this.getId_Menu(),
       BUTTON_ID: this.getId_Button(),
       TITLE: this.title,
       ICON: this.icon,
-      MENU_ITEMS: menuItems,
+      MENU_ITEMS: menuItemsHtml,
     });
+
+    this._app.ui.debugOut(
+      `Generated HTML for ${this.id}: ${result.substring(0, 100)}...`,
+      'info',
+      'UIMenu'
+    );
+
+    // Debug: show the actual menu items HTML
+    this._app.ui.debugOut(
+      `Menu items HTML for ${this.id}: ${menuItemsHtml.substring(0, 200)}...`,
+      'info',
+      'UIMenu'
+    );
+    return result;
   }
 
   // Generate JavaScript for this menu using YAML template

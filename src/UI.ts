@@ -1,19 +1,5 @@
 import type { App } from './App';
-
-// Webview message types - defines the contract between frontend UI and backend
-export type WebviewMessage = {
-  type: 'dragStart' | 'dragMove' | 'dragEnd' | 'menu' | 'print' | 'menuItemSelected';
-  clientX?: number;
-  startLeft?: number;
-  value?: string;
-  targetId?: string;
-  parentId?: string;
-  x?: number;
-  y?: number;
-};
-
-// Message handler callback type
-export type MessageHandler = (msg: WebviewMessage) => Promise<void> | void;
+import type { WebviewMessage, MessageHandler } from './types/UI_t';
 
 export class UI {
   private app: App;
@@ -63,35 +49,43 @@ export class UI {
   }
 
   // Create a webview panel with message handling set up
-  createWebviewPanel(title: string, html: string): any {
+  createWebviewPanel(title: string, html: string): unknown {
     const panel = this.app.vscodeapis.createWebviewPanel(title, html);
-    this.setupWebviewMessageHandling(panel);
+    this.app.vscodeapis.setupMessageHandling(panel);
     return panel;
   }
 
   // Add toolbar to HTML content
-  addToolbar(html: string): string {
+  async addToolbar(html: string): Promise<string> {
     // Read the UI.yaml template for the toolbar
     const toolbarYaml = this.app.os.readExtensionYaml<{ toolbar_html: string }>('src/UI.yaml');
 
     // Replace template variables using UIMenuMgr - UI doesn't know what these represent
+    const uimenuHtml = await this.app.uimenumgr.getAllUIMenuHTML();
+    const uimenuJs = this.app.uimenumgr.getAllUIMenuJS();
+
+    this.app.ui.debugOut(`UIMenu HTML length: ${uimenuHtml.length}`, 'info', 'UI');
+    this.app.ui.debugOut(`UIMenu HTML preview: ${uimenuHtml.substring(0, 200)}...`, 'info', 'UI');
+    this.app.ui.debugOut(`UIMenu JS length: ${uimenuJs.length}`, 'info', 'UI');
+
+    // Get saved toolbar position
+    const toolbarLeft = this.app.vscodeapis.getGlobalState<number>('toolbarLeft');
+
     const toolbar = this.app.templateDictReplace(toolbarYaml.toolbar_html, {
-      UIMENU_HTML: this.app.uimenumgr.generateTemplateWithUIMenuHTML(),
-      UIMENU_JS: this.app.uimenumgr.generateTemplateWithUIMenuJS(),
-      MENUPRINT_PICKER_LIST: '', // These will be handled by UIMENU_HTML
-      MENUTHEMES_PICKER_LIST: '', // These will be handled by UIMENU_HTML
-      MENUTEXT_PICKER_LIST: '', // These will be handled by UIMENU_HTML
+      UIMENU_HTML: uimenuHtml,
+      UIMENU_JS: uimenuJs,
+      TOOLBAR_LEFT: toolbarLeft !== undefined ? String(toolbarLeft) : 'undefined',
     });
+
+    this.app.ui.debugOut(`Final toolbar HTML length: ${toolbar.length}`, 'info', 'UI');
+    this.app.ui.debugOut(
+      `Final toolbar HTML preview: ${toolbar.substring(0, 300)}...`,
+      'info',
+      'UI'
+    );
 
     // Inject toolbar before closing body tag
     return html.replace('</body>', `${toolbar}</body>`);
-  }
-
-  // Set up webview message handling for a panel
-  setupWebviewMessageHandling(panel: any): void {
-    panel.webview.onDidReceiveMessage(async (msg: WebviewMessage) => {
-      await this.handleWebviewMessage(msg);
-    });
   }
 
   showInformationMessage(message: string): void {

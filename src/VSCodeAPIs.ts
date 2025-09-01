@@ -1,78 +1,22 @@
 import type { App } from './App';
 import type {
+  Disposable,
   ExtensionContext,
   TextEditor,
   TextDocument,
-  WebviewPanel,
   Uri,
-  Position,
-  WorkspaceEdit,
-  Disposable,
+  WebviewPanel,
+  // Position,
+  // WorkspaceEdit,
 } from 'vscode';
-
-// Create a minimal type that includes only the VS Code API methods we actually use
-type vscode_t = {
-  commands: {
-    registerCommand: (command: string, callback: (...args: any[]) => any) => Disposable;
-  };
-  window: {
-    activeTextEditor: TextEditor | undefined;
-    tabGroups: {
-      activeTabGroup:
-        | {
-            activeTab: { label: string } | undefined;
-          }
-        | undefined;
-    };
-    showInformationMessage: (message: string) => void;
-    showWarningMessage: (message: string) => void;
-    showErrorMessage: (message: string) => void;
-    setStatusBarMessage: (text: string, timeoutMs?: number) => Disposable;
-    createWebviewPanel: (
-      viewType: string,
-      title: string,
-      column: number,
-      options: { enableScripts: boolean; retainContextWhenHidden: boolean }
-    ) => WebviewPanel;
-    showTextDocument: (document: TextDocument, options?: { preview: boolean }) => Promise<void>;
-    ViewColumn: { Active: number };
-  };
-  workspace: {
-    getConfiguration: (section: string) => {
-      get: (key: string) => string | number | undefined;
-    };
-    openTextDocument: (uri: Uri) => Promise<TextDocument>;
-    applyEdit: (edit: WorkspaceEdit) => Promise<boolean>;
-  };
-  Uri: {
-    parse: (value: string) => Uri;
-    file: (path: string) => Uri;
-  };
-  Position: new (line: number, character: number) => Position;
-  WorkspaceEdit: new () => WorkspaceEdit;
-  extensions: {
-    all: Array<{
-      id: string;
-      packageJSON: {
-        contributes: {
-          themes: Array<{
-            label: string;
-            id: string;
-          }>;
-        };
-      };
-      extensionPath: string;
-    }>;
-    getExtension: (id: string) => any;
-  };
-};
+import type { WebviewMessage } from './types/UI_t';
 
 export class VSCodeAPIs {
   private app: App;
-  private vscode: vscode_t; // Use our custom type
+  private vscode: typeof import('vscode'); // Use official VS Code types
   private context: ExtensionContext; // Properly typed context
 
-  constructor(app: App, vscode: vscode_t, context: ExtensionContext) {
+  constructor(app: App, vscode: typeof import('vscode'), context: ExtensionContext) {
     this.app = app;
     this.vscode = vscode;
     this.context = context;
@@ -84,12 +28,7 @@ export class VSCodeAPIs {
       this.app.paperprinter.handleFirstPrintCommand();
     });
 
-    const api2tsCommand = this.vscode.commands.registerCommand('p2p4vsc.api2ts', () => {
-      this.generateAPIStubs();
-    });
-
     this.context.subscriptions.push(printCommand);
-    this.context.subscriptions.push(api2tsCommand);
 
     this.app.ui.debugOut('VSCodeAPIs initialized', 'info', 'VSCodeAPIs');
   }
@@ -99,49 +38,22 @@ export class VSCodeAPIs {
     this.app.ui.debugOut('VSCodeAPIs cleanup completed', 'info', 'VSCodeAPIs');
   }
 
-  generateAPIStubs(): void {
-    // Generate TypeScript stubs for VS Code API
-    const stubContent = `// Auto-generated VS Code API stubs
-export namespace vscode {
-  export namespace commands {
-    export function registerCommand(command: string, callback: (...args: any[]) => any): any;
-  }
-  export namespace window {
-    export const activeTextEditor: any;
-    export namespace tabGroups {
-      export const activeTabGroup: any;
-    }
-    export function showInformationMessage(message: string): void;
-    export function showWarningMessage(message: string): void;
-    export function showErrorMessage(message: string): void;
-    export function setStatusBarMessage(text: string, timeoutMs?: number): any;
-    export function createWebviewPanel(viewType: string, title: string, column: number, options: any): any;
-    export function showTextDocument(document: any, options?: any): Promise<void>;
-    export const ViewColumn: any;
-  }
-  export namespace workspace {
-    export function getConfiguration(section: string): any;
-    export function openTextDocument(uri: any): Promise<any>;
-    export function applyEdit(edit: any): Promise<boolean>;
-  }
-  export namespace Uri {
-    export function parse(value: string): any;
-    export function file(path: string): any;
-  }
-  export const Position: any;
-  export const WorkspaceEdit: any;
-  export namespace extensions {
-    export const all: any[];
-    export function getExtension(id: string): any;
-  }
-}`;
-
-    this.app.os.fileWrite('vscodeapis_stubs.ts', stubContent);
-    this.app.ui.debugOut('VS Code API stubs generated', 'info', 'VSCodeAPIs');
-  }
-
   getGlobalStoragePath(): string {
     return this.context.globalStorageUri.fsPath;
+  }
+
+  /**
+   * Update global state value
+   */
+  updateGlobalState(key: string, value: any): void {
+    this.context.globalState.update(key, value);
+  }
+
+  /**
+   * Get global state value
+   */
+  getGlobalState<T>(key: string, defaultValue?: T): T | undefined {
+    return this.context.globalState.get(key, defaultValue);
   }
 
   getEditorTypography(): { fontSize: number; lineHeight: number } {
@@ -156,7 +68,7 @@ export namespace vscode {
   /**
    * Creates a new document with content
    */
-  async createDocument(content: string, uri?: any): Promise<any> {
+  async createDocument(content: string, uri?: Uri): Promise<TextDocument> {
     const documentUri = uri || this.vscode.Uri.parse('untitled:untitled');
     const document = await this.vscode.workspace.openTextDocument(documentUri);
 
@@ -171,7 +83,7 @@ export namespace vscode {
   /**
    * Shows a document in a new tab
    */
-  async showDocument(document: any, preview: boolean = false): Promise<void> {
+  async showDocument(document: TextDocument, preview: boolean = false): Promise<void> {
     await this.vscode.window.showTextDocument(document, { preview });
   }
 
@@ -196,15 +108,34 @@ export namespace vscode {
   /**
    * Create and show a Webview panel with provided HTML
    */
-  createWebviewPanel(title: string, htmlContent: string): any {
+  createWebviewPanel(title: string, htmlContent: string): WebviewPanel {
     const panel = this.vscode.window.createWebviewPanel(
       'p2p4vsc.printprep',
       title,
-      this.vscode.window.ViewColumn.Active,
+      this.vscode.ViewColumn.Active, // Use the correct ViewColumn from vscode namespace
       { enableScripts: true, retainContextWhenHidden: true }
     );
     panel.webview.html = htmlContent;
+
+    // Restore toolbar position if saved
+    const savedPosition = this.getGlobalState('toolbarLeft');
+    if (savedPosition !== undefined) {
+      panel.webview.postMessage({
+        type: 'restorePosition',
+        left: savedPosition,
+      });
+    }
+
     return panel;
+  }
+
+  /**
+   * Set up message handling for an existing webview panel
+   */
+  setupMessageHandling(panel: WebviewPanel): void {
+    panel.webview.onDidReceiveMessage(async (msg: WebviewMessage) => {
+      await this.app.ui.handleWebviewMessage(msg);
+    });
   }
 
   /**
@@ -219,7 +150,7 @@ export namespace vscode {
 
     return themeExtensions.map(ext => ({
       id: ext.id,
-      displayName: (ext.packageJSON as any).displayName || ext.id,
+      displayName: (ext.packageJSON as { displayName?: string }).displayName || ext.id,
       extensionPath: ext.extensionPath,
     }));
   }
@@ -232,17 +163,58 @@ export namespace vscode {
    */
   getVSCodeThemeJson(themeId: string, keys?: string[]): Record<string, unknown> | undefined {
     // Find the extension that contributes this theme
-    const themeExtension = this.vscode.extensions.all.find(ext =>
-      ext.packageJSON?.contributes?.themes?.some((theme: any) => theme.id === themeId)
-    );
+    // themeId might be a display name, so check multiple properties
+    const themeExtension = this.vscode.extensions.all.find(ext => {
+      if (ext.packageJSON?.contributes?.themes) {
+        const found = ext.packageJSON.contributes.themes.some(
+          (theme: { id: string; label?: string; uiTheme?: string }) => {
+            const matches = theme.id === themeId || theme.label === themeId;
+            return matches;
+          }
+        );
+        return found;
+      }
+      return false;
+    });
 
     if (!themeExtension) {
       return undefined;
     }
 
-    const theme = themeExtension.packageJSON.contributes.themes.find((t: any) => t.id === themeId);
+    const theme = themeExtension.packageJSON.contributes.themes.find(
+      (t: { id: string; label?: string; uiTheme?: string }) =>
+        t.id === themeId || t.label === themeId
+    );
     if (!theme) {
       return undefined;
+    }
+
+    // Load the actual theme file content if path is available
+    if (theme.path && typeof theme.path === 'string') {
+      try {
+        const themePath = this.app.os.pathJoin(themeExtension.extensionPath, theme.path);
+        const themeContent = this.app.os.readJsonFile<Record<string, unknown>>(themePath);
+
+        if (themeContent) {
+          // Merge the theme metadata with the loaded content
+          const fullTheme = { ...theme, ...themeContent };
+
+          // If specific keys requested, filter the theme data
+          if (keys && keys.length > 0) {
+            const filteredTheme: Record<string, unknown> = {};
+            keys.forEach(key => {
+              if ((fullTheme as Record<string, unknown>)[key] !== undefined) {
+                filteredTheme[key] = (fullTheme as Record<string, unknown>)[key];
+              }
+            });
+            return filteredTheme;
+          }
+
+          return fullTheme;
+        }
+      } catch (err) {
+        this.app.ui.debugOut(`ERROR: Failed to load theme file: ${err}`, 'warn', 'VSCodeAPIs');
+      }
     }
 
     // If specific keys requested, filter the theme data
@@ -272,16 +244,16 @@ export namespace vscode {
   /**
    * Gets the active text editor
    */
-  getActiveTextEditor(): any | undefined {
+  getActiveTextEditor(): TextEditor | undefined {
     return this.vscode.window.activeTextEditor;
   }
 
   /**
    * Returns the selected text or entire document text for the active editor
    */
-  getSelectionOrDocumentText(editor: any): string {
+  getSelectionOrDocumentText(editor: TextEditor): string {
     const selection = editor.selection;
-    if (selection && !selection.isEmpty) {
+    if (!selection.isEmpty) {
       return editor.document.getText(selection);
     }
     return editor.document.getText();
@@ -316,7 +288,7 @@ export namespace vscode {
   /**
    * Gets descriptive name from document
    */
-  getDescriptiveName(document: any): string {
+  getDescriptiveName(document: TextDocument): string {
     const uri = document.uri.toString();
     if (uri.startsWith('untitled:')) {
       const tabName = uri.replace('untitled:', '');
@@ -351,7 +323,7 @@ export namespace vscode {
   /**
    * Sets status bar message
    */
-  setStatusBarMessage(text: string, timeoutMs?: number): any {
+  setStatusBarMessage(text: string, timeoutMs?: number): Disposable {
     if (timeoutMs && timeoutMs > 0) {
       return this.vscode.window.setStatusBarMessage(text, timeoutMs);
     }

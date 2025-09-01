@@ -1,17 +1,18 @@
 import { ClipboardCapture } from './ClipboardCapture';
 import type { App } from './App';
-import type { WebviewMessage } from './UI';
-import type { UIMenuItem } from './types/UIMenuItem';
+import type { WebviewMessage } from './types/UI_t';
+import type { UIMenuItem } from './types/UI_t';
 
 export class PaperPrinter {
   private app: App;
   private clipboardCapture: ClipboardCapture;
+  private handlersRegistered = false;
   private lastPrintPrepHtml: string | null = null;
   private lastRawCode: string | null = null;
   private lastLanguageId: string | null = null;
   private printTitle: string = 'Printable';
 
-  private currentThemeChoice: string = 'editor';
+  private currentThemeChoice: string | undefined;
 
   private currentFontSizeMode: 'editor' | 9 | 10 | 12 | 14 | 18 | 24 = 'editor';
 
@@ -33,9 +34,14 @@ export class PaperPrinter {
   // Message handler methods
   private async handleDragEnd(msg: WebviewMessage): Promise<void> {
     // Save final position when drag ends
-    if (msg.clientX !== undefined) {
-      // TODO: Save position to VS Code storage
-      this.app.ui.debugOut(`Drag ended at position: ${msg.clientX}`, 'info', 'PaperPrinter');
+    if (msg.left !== undefined) {
+      try {
+        // Save position to VS Code global state
+        this.app.vscodeapis.updateGlobalState('toolbarLeft', msg.left);
+        this.app.ui.debugOut(`Drag ended at position: ${msg.left}`, 'info', 'PaperPrinter');
+      } catch (error) {
+        this.app.ui.debugOut(`Failed to save toolbar position: ${error}`, 'error', 'PaperPrinter');
+      }
     }
   }
 
@@ -52,8 +58,8 @@ export class PaperPrinter {
     if (parentId && targetId) {
       const menu = this.app.uimenumgr.getMenu(parentId);
       if (menu) {
-        // Call the menu's selection handler - it knows how to dispatch to the right method
-        await (menu as any)._selectionHandler(targetId);
+        // Dispatch selection via public API
+        await menu.dispatchSelection(targetId);
       }
     }
   }
@@ -103,8 +109,25 @@ export class PaperPrinter {
           start === end ? `Line ${start} of ${info.name}` : `Lines ${start}-${end} of ${info.name}`;
       }
       this.printTitle = printableLabel;
+
+      // Initialize theme choice if not set yet
+      if (!this.currentThemeChoice) {
+        this.currentThemeChoice = this.app.vscodeapis.getActiveThemeId();
+        this.app.ui.debugOut(
+          `THEMECHECK: Initialized currentThemeChoice to: '${this.currentThemeChoice}'`,
+          'info',
+          'PaperPrinter'
+        );
+      }
+
+      this.app.ui.debugOut(
+        `THEMECHECK: Printing with theme: '${this.currentThemeChoice}'`,
+        'info',
+        'PaperPrinter'
+      );
       const htmlContent = await this.app.stylize.styleToHtml(info.text, info.languageId, {
         title: this.printTitle,
+        theme: this.currentThemeChoice,
       });
       await this.openPrintPrepAndPrompt(htmlContent, printableLabel);
     } catch (error) {
@@ -125,7 +148,7 @@ export class PaperPrinter {
 
     const initial = await this.applyRenderModes(htmlContent);
 
-    this.app.ui.createWebviewPanel(`Printable: ${tabName}`, this.app.ui.addToolbar(initial));
+    this.app.ui.createWebviewPanel(`Printable: ${tabName}`, await this.app.ui.addToolbar(initial));
   }
 
   private async applyRenderModes(htmlBase: string): Promise<string> {
@@ -133,10 +156,16 @@ export class PaperPrinter {
     if (this.lastRawCode && this.lastLanguageId) {
       const sizePx = this.computeFontSizePx();
       const lhPx = this.computeLineHeightPx(sizePx);
+      this.app.ui.debugOut(
+        `THEMECHECK: applyRenderModes with theme: '${this.currentThemeChoice}'`,
+        'info',
+        'PaperPrinter'
+      );
       const html = await this.app.stylize.styleToHtml(this.lastRawCode, this.lastLanguageId, {
         fontSize: sizePx,
         lineHeight: lhPx,
         title: this.printTitle,
+        theme: this.currentThemeChoice,
       });
       return html;
     }
@@ -158,6 +187,11 @@ export class PaperPrinter {
 
   // Create menus when needed for the webview
   private createMenus(): void {
+    // Avoid duplicates across multiple openings
+    if (this.app.uimenumgr.getAllMenus().length > 0) {
+      return;
+    }
+
     const menuConfigs = [
       {
         id: 'print',
@@ -175,7 +209,7 @@ export class PaperPrinter {
       },
       {
         id: 'text',
-        icon: 'Tt',
+        icon: '📝',
         title: 'Text',
         menuItems: this.menuItems_Text.bind(this),
         selectionHandler: this.handleSelection_Text.bind(this),
@@ -183,6 +217,11 @@ export class PaperPrinter {
     ];
 
     menuConfigs.forEach(config => {
+      this.app.ui.debugOut(
+        `Creating menu: ${config.id} with icon: ${config.icon}`,
+        'info',
+        'PaperPrinter'
+      );
       const menu = this.app.uimenumgr.createMenu(
         config.id,
         config.icon,
@@ -191,11 +230,25 @@ export class PaperPrinter {
         config.selectionHandler
       );
       this.app.uimenumgr.addMenu(menu);
+      this.app.ui.debugOut(`Added menu: ${config.id}`, 'info', 'PaperPrinter');
+    });
+
+    // Debug: show what menus were created
+    const allMenus = this.app.uimenumgr.getAllMenus();
+    this.app.ui.debugOut(`Total menus created: ${allMenus.length}`, 'info', 'PaperPrinter');
+    allMenus.forEach(menu => {
+      this.app.ui.debugOut(
+        `Menu: ${menu.id}, Icon: ${menu.icon}, Title: ${menu.title}`,
+        'info',
+        'PaperPrinter'
+      );
     });
   }
 
   // Register message handlers when needed for the webview
   private registerMessageHandlers(): void {
+    if (this.handlersRegistered) return;
+
     const messageHandlers = [
       { type: 'dragEnd', handler: this.handleDragEnd.bind(this) },
       { type: 'menuItemSelected', handler: this.handleMenuItemSelected.bind(this) },
@@ -205,6 +258,8 @@ export class PaperPrinter {
     messageHandlers.forEach(({ type, handler }) => {
       this.app.ui.registerMessageHandler(type, handler);
     });
+
+    this.handlersRegistered = true;
   }
 
   // Build list methods for each menu type
@@ -217,10 +272,15 @@ export class PaperPrinter {
   }
 
   private menuItems_Theme(): UIMenuItem[] {
-    return this.app.stylize.getThemes().map(theme => ({
-      id: theme.id,
-      displayName: theme.displayName,
-    }));
+    const themes = this.app.stylize.getThemes();
+
+    return themes.map(theme => {
+      // No need to add 📝 here, UIMenu.ts will handle it based on default selection
+      return {
+        id: theme.id,
+        displayName: theme.displayName,
+      };
+    });
   }
 
   private menuItems_Text(): UIMenuItem[] {
@@ -241,19 +301,22 @@ export class PaperPrinter {
     const existingEditorOption = sizeOptions.find(option => option.id === String(editorSize));
 
     if (existingEditorOption) {
-      // Editor size already exists - just add 📝 to its displayName
-      existingEditorOption.displayName = `${existingEditorOption.displayName} 📝`;
+      // Editor size already exists - no need to add 📝 here, UIMenu.ts will handle it
+      // existingEditorOption.displayName stays as is
     } else {
-      // Editor size not in list - add it at the top with 📝 suffix
-      sizeOptions.unshift({ id: String(editorSize), displayName: `${editorSize}px 📝` });
+      // Editor size not in list - add it at the top without 📝 suffix
+      sizeOptions.unshift({ id: String(editorSize), displayName: `${editorSize}px` });
     }
 
     return sizeOptions;
   }
 
   // Selection handler methods for each menu type
-  private async handleSelection_Print(selectedId: string): Promise<void> {
-    if (!this.lastPrintPrepHtml) return;
+  private async handleSelection_Print(selectedId: string): Promise<string> {
+    if (selectedId === '0') {
+      return ''; // Print menu has no default selection
+    }
+    if (!this.lastPrintPrepHtml) return '';
     const updated = await this.applyRenderModes(this.lastPrintPrepHtml);
     if (selectedId === 'preview')
       await this.app.pdf.printWithPreview(updated, this.printTitle || 'Print Output');
@@ -262,17 +325,52 @@ export class PaperPrinter {
     else if (selectedId === 'save')
       await this.app.pdf.saveAsPDF(updated, this.printTitle || 'Print Output');
     // TODO: Re-render webview - need access to panel
+    return ''; // action handled
   }
 
-  private async handleSelection_Theme(selectedId: string): Promise<void> {
-    this.app.ui.debugOut(`Theme menu selection: ${selectedId}`, 'info', 'PaperPrinter');
+  private async handleSelection_Theme(selectedId: string): Promise<string> {
+    this.app.ui.debugOut(
+      `THEMECHECK: handleSelection_Theme called with selectedId: '${selectedId}'`,
+      'info',
+      'PaperPrinter'
+    );
+
+    if (selectedId === '0') {
+      // Return the current editor theme ID as the default
+      const currentEditorTheme = this.app.vscodeapis.getActiveThemeId();
+      const availableThemes = this.app.stylize.getThemes();
+      const fallbackTheme = availableThemes[0]?.id || '';
+      const result = currentEditorTheme || fallbackTheme;
+
+      this.app.ui.debugOut(
+        `THEMECHECK: Theme default selection - selectedId: '${selectedId}', currentEditorTheme: '${currentEditorTheme}', availableThemes: [${availableThemes.map(t => t.id).join(', ')}], fallbackTheme: '${fallbackTheme}', returning: '${result}'`,
+        'info',
+        'PaperPrinter'
+      );
+
+      return result;
+    }
+
+    this.app.ui.debugOut(`THEMECHECK: Theme menu selection: ${selectedId}`, 'info', 'PaperPrinter');
     this.currentThemeChoice = selectedId;
+    this.app.ui.debugOut(
+      `THEMECHECK: currentThemeChoice set to: '${this.currentThemeChoice}'`,
+      'info',
+      'PaperPrinter'
+    );
+
     // TODO: Re-render webview with new theme - need access to panel
+    return ''; // selection handled
   }
 
-  private async handleSelection_Text(selectedId: string): Promise<void> {
+  private async handleSelection_Text(selectedId: string): Promise<string> {
+    if (selectedId === '0') {
+      const editorTypo = this.app.vscodeapis.getEditorTypography();
+      return String(editorTypo.fontSize);
+    }
     this.app.ui.debugOut(`Text menu selection: ${selectedId}`, 'info', 'PaperPrinter');
     // TODO: Implement text handling
+    return ''; // selection handled
   }
 
   // Removed CSS hacks; rely on theme overrides
