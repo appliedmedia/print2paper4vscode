@@ -1,16 +1,19 @@
 import type { App } from './App';
+import { Diagnostics } from './Diagnostics';
 
 export class History {
     private app: App;
     private maxSize: number;
     private entries: string[] = [];
     private storePath: string;
+    private dx: Diagnostics;
 
     constructor(app: App, maxSize: number) {
         this.app = app;
         this.maxSize = Math.max(1, maxSize);
         const root = this.app.vscodeapis.getGlobalStoragePath();
         this.storePath = this.app.os.pathJoin(root, 'history.json');
+        this.dx = new Diagnostics('History');
     }
 
     init(): void {
@@ -29,6 +32,7 @@ export class History {
     done(): void {
         // persist on shutdown
         this.save();
+        this.dx.done();
     }
 
     add(filePath: string): void {

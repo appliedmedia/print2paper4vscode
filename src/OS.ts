@@ -4,18 +4,23 @@ import { exec as cpExec, execSync as cpExecSync } from 'child_process';
 import { promisify } from 'util';
 import { parse as yamlParse } from 'yaml';
 import type { App } from './App';
+import { Diagnostics } from './Diagnostics';
 
 export abstract class OS {
   protected app?: App;
   protected extensionRoot?: string;
+  protected dx?: Diagnostics;
   constructor(app?: App) {
     this.app = app;
     this.extensionRoot = app ? app.vscodeapis.getExtensionPath() : undefined;
+    this.dx = app ? new Diagnostics('OS') : undefined;
   }
 
   init(): void {}
 
-  done(): void {}
+  done(): void {
+    this.dx?.done();
+  }
 
   protected execAsync(cmd: string): Promise<{ stdout: string; stderr: string }> {
     const execP = promisify(cpExec);
@@ -155,49 +160,7 @@ export abstract class OS {
     return path.basename(p);
   }
 
-  // Unified logging sink
-  debugOut(
-    message: unknown,
-    level: 'debug' | 'info' | 'warn' | 'error' = 'info',
-    context?: string,
-    data?: unknown
-  ): void {
-    OS.debugOut(message, level, context, data);
-  }
 
-  static debugOut(
-    message: unknown,
-    level: 'debug' | 'info' | 'warn' | 'error' = 'info',
-    context?: string,
-    data?: unknown
-  ): void {
-    const ts = new Date().toISOString();
-    const ctx = context ? `[${context}] ` : '';
-    const base = typeof message === 'string' ? message : JSON.stringify(message);
-    const extra =
-      data === undefined
-        ? ''
-        : ` | ${
-            typeof data === 'string'
-              ? data
-              : (() => {
-                  try {
-                    return JSON.stringify(data);
-                  } catch {
-                    return String(data);
-                  }
-                })()
-          }`;
-    const line = `${ts} ${level.toUpperCase()} ${ctx}${base}${extra}`;
-    if (level === 'error') console.error(line);
-    else if (level === 'warn') console.warn(line);
-    else if (level === 'debug') {
-      if (console.debug) console.debug(line);
-      else console.log(line);
-    } else {
-      console.log(line);
-    }
-  }
 }
 
 // Import platform-specific classes at the end to avoid circular dependency

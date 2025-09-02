@@ -1,16 +1,18 @@
 import type { App } from './App';
+import { Diagnostics } from './Diagnostics';
 
 export class PDF {
   private app: App;
   private tempPdfs: string[] = [];
+  private dx: Diagnostics;
 
   constructor(app: App) {
     this.app = app;
+    this.dx = new Diagnostics('PDF');
   }
 
   init(): void {
     this.tempPdfs = [];
-    this.app.ui.debugOut('PDF initialized', 'info', 'PDF');
   }
 
   done(): void {
@@ -23,7 +25,7 @@ export class PDF {
       }
     }
     this.tempPdfs = [];
-    this.app.ui.debugOut('PDF cleanup completed', 'info', 'PDF');
+    this.dx.done();
   }
 
   async printWithPreview(renderedHtmlContent: string, descriptiveName?: string): Promise<void> {
@@ -35,9 +37,9 @@ export class PDF {
       await this.htmlToPdf(tempHtmlPath, outputPdfPath);
       this.trackTempPdf(outputPdfPath);
       await this.app.os.fileOpenPrintDialog(outputPdfPath);
-      this.app.ui.debugOut('Opened PDF in Preview app', 'info', 'PDF');
+      this.dx.out('Opened PDF in Preview app');
     } catch (error) {
-      this.app.ui.debugOut('Error in print with preview', 'error', 'PDF', error);
+      this.dx.out('Error in print with preview': ${error});
       throw error;
     }
   }
@@ -52,9 +54,9 @@ export class PDF {
       this.trackTempPdf(outputPdfPath);
       // Minimal AppleScript via Finder print
       await this.app.os.filePrint(outputPdfPath);
-      this.app.ui.debugOut('Sent PDF to printer via Finder', 'info', 'PDF');
+      this.dx.out('Sent PDF to printer via Finder');
     } catch (error) {
-      this.app.ui.debugOut('Error in print directly', 'error', 'PDF', error);
+      this.dx.out('Error in print directly': ${error});
       throw error;
     }
   }
@@ -72,9 +74,9 @@ export class PDF {
       const targetPath = this.app.os.pathJoin(downloads, this.app.os.pathBasename(outputPdfPath));
       this.app.os.fileCopy(outputPdfPath, targetPath);
       await this.app.os.fileReveal(targetPath);
-      this.app.ui.debugOut(`Saved PDF to ${targetPath}`, 'info', 'PDF');
+      this.dx.out(`Saved PDF to ${targetPath}`);
     } catch (error) {
-      this.app.ui.debugOut('Error in save as PDF', 'error', 'PDF', error);
+      this.dx.out('Error in save as PDF': ${error});
       throw error;
     }
   }

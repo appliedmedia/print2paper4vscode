@@ -1,13 +1,16 @@
 import type { App } from './App';
 import { UIMenu } from './UIMenu';
 import type { UIMenuItem } from './types/UI_t';
+import { Diagnostics } from './Diagnostics';
 
 export class UIMenuMgr {
   private app: App;
   private menus: UIMenu[] = [];
+  private dx: Diagnostics;
 
   constructor(app: App) {
     this.app = app;
+    this.dx = new Diagnostics('UIMenuMgr');
     // No initialization needed - menus are created on-demand by PaperPrinter
   }
 
@@ -18,6 +21,7 @@ export class UIMenuMgr {
   done(): void {
     // Cleanup any resources if needed
     this.menus = [];
+    this.dx.done();
   }
 
   createMenu(
@@ -47,24 +51,24 @@ export class UIMenuMgr {
 
   // Generate all HTML at once
   async getAllUIMenuHTML(): Promise<string> {
-    this.app.ui.debugOut(
+    this.dx.out(
       `Generating HTML for ${this.getAllMenus().length} menus`,
       'info',
       'UIMenuMgr'
     );
 
     const menuPromises = this.getAllMenus().map(async menu => {
-      this.app.ui.debugOut(`Generating HTML for menu: ${menu.id}`, 'info', 'UIMenuMgr');
+      this.dx.out(`Generating HTML for menu: ${menu.id}`);
       try {
         const menuHTML = await menu.getHTML();
-        this.app.ui.debugOut(
+        this.dx.out(
           `Generated HTML for menu ${menu.id}: ${menuHTML.substring(0, 100)}...`,
           'info',
           'UIMenuMgr'
         );
         return menuHTML;
       } catch (error) {
-        this.app.ui.debugOut(
+        this.dx.out(
           `ERROR generating HTML for menu ${menu.id}: ${error}`,
           'error',
           'UIMenuMgr'
@@ -76,8 +80,8 @@ export class UIMenuMgr {
     const menuResults = await Promise.all(menuPromises);
     const result = menuResults.join('\n');
 
-    this.app.ui.debugOut(`Total generated HTML length: ${result.length}`, 'info', 'UIMenuMgr');
-    this.app.ui.debugOut(`Final HTML preview: ${result.substring(0, 200)}...`, 'info', 'UIMenuMgr');
+    this.dx.out(`Total generated HTML length: ${result.length}`);
+    this.dx.out(`Final HTML preview: ${result.substring(0, 200)}...`);
     return result;
   }
 
