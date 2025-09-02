@@ -1,7 +1,14 @@
 import { OS } from './OS';
- 
+import { Diagnostics } from './Diagnostics';
+import type { App } from './App';
 
 export class OSMac extends OS {
+  private dx: Diagnostics;
+
+  constructor(app?: App) {
+    super(app);
+    this.dx = new Diagnostics('OSMac');
+  }
 	async fileOpenInDefaultApp(path: string): Promise<void> {
 		await this.execAsync(`open "${path}"`);
 	}

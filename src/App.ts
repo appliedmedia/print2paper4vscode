@@ -45,8 +45,6 @@ export class App {
     this.stylize.init();
     this.tabinspector.init();
     this.uimenumgr.init();
-
-    this.ui.debugOut('App initialized successfully', 'info', 'App');
   }
 
   done(): void {
@@ -60,7 +58,7 @@ export class App {
     this.uimenumgr.done();
     this.ui.done();
 
-    this.ui.debugOut('App cleanup completed', 'info', 'App');
+    this.dx.done();
   }
 
   /**

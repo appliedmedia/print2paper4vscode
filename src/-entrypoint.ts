@@ -7,7 +7,7 @@ export function activate(context: vscode.ExtensionContext) {
   try {
     app = new App(context, vscode);
     app.init();
-    app.ui.debugOut('Print2Paper4VSCode extension is now active!', 'info', 'entrypoint');
+    app.dx.out('Print2Paper4VSCode extension is now active!');
   } catch (error) {
     console.error('Failed to activate extension:', error);
   }

@@ -1,18 +1,23 @@
 import * as vscode from 'vscode';
 import type { App } from './App';
+import { Diagnostics } from './Diagnostics';
 
 export type TabCategory = 'editor-nonmd' | 'editor-md' | 'preview';
 
 export class TabInspector {
     private app: App;
+    private dx: Diagnostics;
 
     constructor(app: App) {
         this.app = app;
+        this.dx = new Diagnostics('TabInspector');
     }
 
     init(): void {}
 
-    done(): void {}
+    done(): void {
+        this.dx.done();
+    }
 
     detectActiveTabCategory(): TabCategory {
         const editor = this.app.vscodeapis.getActiveTextEditor();

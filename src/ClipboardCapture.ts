@@ -4,18 +4,23 @@ import * as rtf2html from '@iarna/rtf-to-html';
 
 import * as vscode from 'vscode';
 import type { App } from './App';
+import { Diagnostics } from './Diagnostics';
 
 const execAsync = promisify(exec);
 
 export class ClipboardCapture {
   private app: App;
+  private dx: Diagnostics;
   constructor(app: App) {
     this.app = app;
+    this.dx = new Diagnostics('ClipboardCapture');
   }
 
   init(): void {}
 
-  done(): void {}
+  done(): void {
+    this.dx.done();
+  }
 
   /**
    * Captures content from the active tab using minimal AppleScript
@@ -42,7 +47,7 @@ export class ClipboardCapture {
       return content;
     } catch (error) {
       if (this.app)
-        this.app.ui.debugOut('Error capturing from active tab', 'error', 'ClipboardCapture', error);
+        this.dx.out('Error capturing from active tab': ${error});
       return null;
     }
   }
@@ -74,7 +79,7 @@ export class ClipboardCapture {
       return await this.getClipboardContent();
     } catch (error) {
       if (this.app)
-        this.app.ui.debugOut('Error in captureWithEditorCheck', 'error', 'ClipboardCapture', error);
+        this.dx.out('Error in captureWithEditorCheck': ${error});
       return null;
     }
   }

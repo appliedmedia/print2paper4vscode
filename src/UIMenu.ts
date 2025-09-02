@@ -1,7 +1,10 @@
 import type { App } from './App';
 import type { UIMenuItem } from './types/UI_t';
+import { Diagnostics } from './Diagnostics';
 
 export class UIMenu {
+  private dx: Diagnostics;
+
   constructor(
     private _id: string,
     private _icon: string,
@@ -9,7 +12,9 @@ export class UIMenu {
     private _app: App,
     private _listBuilder: () => UIMenuItem[],
     private _selectionHandler: (id: string) => Promise<string>
-  ) {}
+  ) {
+    this.dx = new Diagnostics('UIMenu');
+  }
 
   // Getters for private properties
   get id(): string {
@@ -49,21 +54,21 @@ export class UIMenu {
 
   // Generate the complete HTML for this menu using YAML template
   async getHTML(): Promise<string> {
-    this._app.ui.debugOut(`UIMenu.getHTML called for ${this.id}`, 'info', 'UIMenu');
-    this._app.ui.debugOut(`Icon: "${this.icon}", Title: "${this.title}"`, 'info', 'UIMenu');
+    this.dx.out(`UIMenu.getHTML called for ${this.id}`);
+    this.dx.out(`Icon: "${this.icon}", Title: "${this.title}"`);
 
     let yaml: { ui_menu_html: string; ui_menu_item: string };
     try {
       yaml = this._app.os.readExtensionYaml<{ ui_menu_html: string; ui_menu_item: string }>(
         'src/UIMenu.yaml'
       );
-      this._app.ui.debugOut(
+      this.dx.out(
         `YAML loaded, ui_menu_html length: ${yaml.ui_menu_html.length}`,
         'info',
         'UIMenu'
       );
     } catch (error) {
-      this._app.ui.debugOut(`ERROR reading YAML: ${error}`, 'error', 'UIMenu');
+      this.dx.out(`ERROR reading YAML: ${error}`);
       throw error;
     }
 
@@ -75,7 +80,7 @@ export class UIMenu {
     try {
       defaultSelection = await this._selectionHandler('0');
     } catch (error) {
-      this._app.ui.debugOut(`Error getting default selection: ${error}`, 'error', 'UIMenu');
+      this.dx.out(`Error getting default selection: ${error}`);
     }
 
     const menuItemsHtml = menuItems
@@ -96,7 +101,7 @@ export class UIMenu {
           ITEM_SUFFIX: itemSuffix,
         };
 
-        this._app.ui.debugOut(
+        this.dx.out(
           `Menu item ${item.id}: prefix="${itemPrefix}", suffix="${itemSuffix}", showGutter=${showGutter}`,
           'info',
           'UIMenu'
@@ -115,14 +120,14 @@ export class UIMenu {
       MENU_ITEMS: menuItemsHtml,
     });
 
-    this._app.ui.debugOut(
+    this.dx.out(
       `Generated HTML for ${this.id}: ${result.substring(0, 100)}...`,
       'info',
       'UIMenu'
     );
 
     // Debug: show the actual menu items HTML
-    this._app.ui.debugOut(
+    this.dx.out(
       `Menu items HTML for ${this.id}: ${menuItemsHtml.substring(0, 200)}...`,
       'info',
       'UIMenu'
@@ -135,5 +140,9 @@ export class UIMenu {
     // All menus share the same generic handlers - no need to generate specific JS
     // The generic handlers are provided by UIMenuMgr.generateAllJavaScript()
     return '';
+  }
+
+  done(): void {
+    this.dx.done();
   }
 }

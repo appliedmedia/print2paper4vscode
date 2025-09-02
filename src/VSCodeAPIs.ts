@@ -10,16 +10,19 @@ import type {
   // WorkspaceEdit,
 } from 'vscode';
 import type { WebviewMessage } from './types/UI_t';
+import { Diagnostics } from './Diagnostics';
 
 export class VSCodeAPIs {
   private app: App;
   private vscode: typeof import('vscode'); // Use official VS Code types
   private context: ExtensionContext; // Properly typed context
+  private dx: Diagnostics;
 
   constructor(app: App, vscode: typeof import('vscode'), context: ExtensionContext) {
     this.app = app;
     this.vscode = vscode;
     this.context = context;
+    this.dx = new Diagnostics('VSCodeAPIs');
   }
 
   init(): void {
@@ -29,13 +32,11 @@ export class VSCodeAPIs {
     });
 
     this.context.subscriptions.push(printCommand);
-
-    this.app.ui.debugOut('VSCodeAPIs initialized', 'info', 'VSCodeAPIs');
   }
 
   done(): void {
     // nothing needed here yet
-    this.app.ui.debugOut('VSCodeAPIs cleanup completed', 'info', 'VSCodeAPIs');
+    this.dx.done();
   }
 
   getGlobalStoragePath(): string {
@@ -96,12 +97,7 @@ export class VSCodeAPIs {
       const document = await this.vscode.workspace.openTextDocument(documentUri);
       await this.vscode.window.showTextDocument(document);
     } catch (error) {
-      this.app.ui.debugOut(
-        `Failed to open file in VSCode: ${filePath}`,
-        'error',
-        'VSCodeAPIs',
-        error
-      );
+      this.dx.out(`Failed to open file in VSCode: ${filePath} - ${error}`);
     }
   }
 
@@ -213,7 +209,7 @@ export class VSCodeAPIs {
           return fullTheme;
         }
       } catch (err) {
-        this.app.ui.debugOut(`ERROR: Failed to load theme file: ${err}`, 'warn', 'VSCodeAPIs');
+        this.dx.out(`ERROR: Failed to load theme file: ${err}`);
       }
     }
 

@@ -1,17 +1,22 @@
 import type { App } from './App';
 import type { WebviewMessage, MessageHandler } from './types/UI_t';
+import { Diagnostics } from './Diagnostics';
 
 export class UI {
   private app: App;
   private messageHandlers: Map<string, MessageHandler[]> = new Map();
+  private dx: Diagnostics;
 
   constructor(app: App) {
     this.app = app;
+    this.dx = new Diagnostics('UI');
   }
 
   init(): void {}
 
-  done(): void {}
+  done(): void {
+    this.dx.done();
+  }
 
   // Register a message handler for a specific message type
   registerMessageHandler(messageType: string, handler: MessageHandler): void {
@@ -42,7 +47,7 @@ export class UI {
         try {
           await handler(msg);
         } catch (error) {
-          this.debugOut(`Error in message handler for ${msg.type}: ${error}`, 'error', 'UI');
+          this.dx.out(`Error in message handler for ${msg.type}: ${error}`);
         }
       }
     }
@@ -64,9 +69,7 @@ export class UI {
     const uimenuHtml = await this.app.uimenumgr.getAllUIMenuHTML();
     const uimenuJs = this.app.uimenumgr.getAllUIMenuJS();
 
-    this.app.ui.debugOut(`UIMenu HTML length: ${uimenuHtml.length}`, 'info', 'UI');
-    this.app.ui.debugOut(`UIMenu HTML preview: ${uimenuHtml.substring(0, 200)}...`, 'info', 'UI');
-    this.app.ui.debugOut(`UIMenu JS length: ${uimenuJs.length}`, 'info', 'UI');
+
 
     // Get saved toolbar position
     const toolbarLeft = this.app.vscodeapis.getGlobalState<number>('toolbarLeft');
@@ -77,12 +80,7 @@ export class UI {
       TOOLBAR_LEFT: toolbarLeft !== undefined ? String(toolbarLeft) : 'undefined',
     });
 
-    this.app.ui.debugOut(`Final toolbar HTML length: ${toolbar.length}`, 'info', 'UI');
-    this.app.ui.debugOut(
-      `Final toolbar HTML preview: ${toolbar.substring(0, 300)}...`,
-      'info',
-      'UI'
-    );
+
 
     // Inject toolbar before closing body tag
     return html.replace('</body>', `${toolbar}</body>`);
@@ -104,14 +102,7 @@ export class UI {
     return this.app.vscodeapis.setStatusBarMessage(text, timeoutMs);
   }
 
-  debugOut(
-    message: unknown,
-    level: 'debug' | 'info' | 'warn' | 'error' = 'info',
-    context?: string,
-    data?: unknown
-  ): void {
-    this.app.os.debugOut(message, level, context, data);
-  }
+
 
   static debugOut(
     message: unknown,
