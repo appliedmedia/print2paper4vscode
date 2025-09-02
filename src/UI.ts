@@ -39,6 +39,9 @@ export class UI {
 
   // Central message handling - routes messages to registered handlers
   async handleWebviewMessage(msg: WebviewMessage): Promise<void> {
+    const dx = this.dx.sub('handleWebviewMessage');
+    dx.require({ msg }, ['msg']);
+    
     if (!msg || !msg.type) return;
 
     const handlers = this.messageHandlers.get(msg.type);
@@ -47,10 +50,11 @@ export class UI {
         try {
           await handler(msg);
         } catch (error) {
-          this.dx.out(`Error in message handler for ${msg.type}: ${error}`);
+          dx.out(`Error in message handler for ${msg.type}: ${error}`);
         }
       }
     }
+    dx.done();
   }
 
   // Create a webview panel with message handling set up

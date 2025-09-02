@@ -41,6 +41,10 @@ export class OSMac extends OS {
 		const osa = `osascript -e 'tell application "Preview" to open POSIX file "${pdfPath}"' -e 'tell application "Preview" to activate' -e 'tell application "System Events" to keystroke "p" using command down'`;
 		await this.execAsync(osa);
 	}
+
+	done(): void {
+		this.dx.done();
+	}
 }
 
 

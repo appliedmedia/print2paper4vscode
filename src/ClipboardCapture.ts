@@ -26,6 +26,8 @@ export class ClipboardCapture {
    * Captures content from the active tab using minimal AppleScript
    */
   async captureFromActiveTab(): Promise<string | null> {
+    const dx = this.dx.sub('captureFromActiveTab');
+    
     try {
       // First try to copy current selection
       await this.copyToClipboard();
@@ -47,8 +49,10 @@ export class ClipboardCapture {
       return content;
     } catch (error) {
       if (this.app)
-        this.dx.out('Error capturing from active tab': ${error});
+        dx.out(`Error capturing from active tab: ${error}`);
       return null;
+    } finally {
+      dx.done();
     }
   }
 

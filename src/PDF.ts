@@ -29,6 +29,9 @@ export class PDF {
   }
 
   async printWithPreview(renderedHtmlContent: string, descriptiveName?: string): Promise<void> {
+    const dx = this.dx.sub('printWithPreview');
+    dx.require({ renderedHtmlContent }, ['renderedHtmlContent']);
+    
     try {
       const { tempHtmlPath, outputPdfPath } = this.preparePaths(
         renderedHtmlContent,
@@ -37,11 +40,12 @@ export class PDF {
       await this.htmlToPdf(tempHtmlPath, outputPdfPath);
       this.trackTempPdf(outputPdfPath);
       await this.app.os.fileOpenPrintDialog(outputPdfPath);
-      this.dx.out('Opened PDF in Preview app');
+      dx.out('Opened PDF in Preview app');
     } catch (error) {
-      this.dx.out('Error in print with preview': ${error});
+      dx.out(`Error in print with preview: ${error}`);
       throw error;
     }
+    dx.done();
   }
 
   async printDirectly(renderedHtmlContent: string, descriptiveName?: string): Promise<void> {

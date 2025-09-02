@@ -27,38 +27,30 @@ export class Stylize {
   }
 
   private async validateHighlighter(languageId: string): Promise<void> {
-    this.dx.out(
-      `THEMECHECK: validateHighlighter called with languageId: '${languageId}'`,
-      'info',
-      'Stylize'
-    );
+    const dx = this.dx.sub('validateHighlighter');
+    dx.require({ languageId }, ['languageId']);
+    
+    dx.out(`THEMECHECK: validateHighlighter called with languageId: '${languageId}'`);
 
     if (!this.highlighter) {
-      this.dx.out(`THEMECHECK: No highlighter, creating new one`);
+      dx.out(`THEMECHECK: No highlighter, creating new one`);
       const themes = this.getThemes();
-      this.dx.out(
-        `THEMECHECK: Themes for highlighter: ${themes.map(theme => theme.id).join(', ')}`,
-        'info',
-        'Stylize'
-      );
+      dx.out(`THEMECHECK: Themes for highlighter: ${themes.map(theme => theme.id).join(', ')}`);
 
       try {
         this.highlighter = await getSingletonHighlighter({
           themes: themes.map(theme => theme.id),
           langs: [languageId],
         });
-        this.dx.out(`THEMECHECK: Highlighter created successfully`);
+        dx.out(`THEMECHECK: Highlighter created successfully`);
       } catch (error) {
-        this.dx.out(
-          `THEMECHECK: Error creating highlighter: ${error}`,
-          'error',
-          'Stylize'
-        );
+        dx.out(`THEMECHECK: Error creating highlighter: ${error}`);
         throw error;
       }
     } else {
-      this.dx.out(`THEMECHECK: Using existing highlighter`);
+      dx.out(`THEMECHECK: Using existing highlighter`);
     }
+    dx.done();
   }
 
   async done(): Promise<void> {
