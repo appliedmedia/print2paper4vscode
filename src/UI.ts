@@ -106,7 +106,9 @@ export class UI {
     return this.app.vscodeapis.setStatusBarMessage(text, timeoutMs);
   }
 
-
+  out(message: string): void {
+    console.log(message);
+  }
 
   static debugOut(
     message: unknown,
