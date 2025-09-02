@@ -82,7 +82,7 @@ export class Diagnostics {
       const formattedMessage = this.messageHeader(message);
       // Import UI dynamically to avoid circular dependency
       const { UI } = require('./UI');
-      UI.debugOut(formattedMessage, 'info', this._name);
+      UI.out(formattedMessage);
     }
     return this;
   }
@@ -120,7 +120,7 @@ export class Diagnostics {
     const formattedMessage = this.messageHeader(message);
     // Import UI dynamically to avoid circular dependency
     const { UI } = require('./UI');
-    UI.debugOut(formattedMessage, 'info', this._name);
+    UI.out(formattedMessage);
     return this;
   }
 

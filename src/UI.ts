@@ -110,29 +110,7 @@ export class UI {
     console.log(message);
   }
 
-  static debugOut(
-    message: unknown,
-    level: 'debug' | 'info' | 'warn' | 'error' = 'info',
-    context?: string,
-    data?: unknown
-  ): void {
-    const ts = new Date().toISOString();
-    const ctx = context ? `[${context}] ` : '';
-    const formatData = (data: unknown): string => {
-      try {
-        return typeof data === 'string' ? data : JSON.stringify(data);
-      } catch {
-        return String(data);
-      }
-    };
-    const base = formatData(message);
-    const extra = data === undefined ? '' : ` | ${formatData(data)}`;
-    const line = `${ts} ${level.toUpperCase()} ${ctx}${base}${extra}`;
-    if (level === 'error') console.error(line);
-    else if (level === 'warn') console.warn(line);
-    else if (level === 'debug') {
-      if (console.debug) console.debug(line);
-      else console.log(line);
-    } else console.log(line);
+  static out(message: string): void {
+    console.log(message);
   }
 }
