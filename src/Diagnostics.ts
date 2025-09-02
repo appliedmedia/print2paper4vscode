@@ -1,11 +1,6 @@
 // Type definition for messages that can be sent to out/print
 type MessageRef = string | object;
 
-// UI interface for console output
-interface UIOutput {
-  out(message: string): void;
-}
-
 export class Diagnostics {
   static separator = ' > ';
 
@@ -14,7 +9,6 @@ export class Diagnostics {
   private _name: string = '';
   private name_lineage: string = '';
   private _displayName: string = '';
-  private ui: UIOutput | null = null;
 
   get name(): string {
     return (this._displayName ||= this.name_lineage
@@ -31,11 +25,10 @@ export class Diagnostics {
   private startTime: number | null = null;
   private _debugOn: boolean | undefined;
 
-  constructor(name: string, debugOn?: boolean, parent?: Diagnostics | null, ui?: UIOutput) {
+  constructor(name: string, debugOn?: boolean, parent?: Diagnostics | null) {
     this._name = name;
     this.parent = parent || null;
     this.startTime = Date.now();
-    this.ui = ui || null;
 
     // Build name lineage by crawling up parent tree
     this.name_lineage = this.buildNameLineage();
@@ -53,7 +46,7 @@ export class Diagnostics {
    * @returns New Diagnostics instance for the method
    */
   sub(name: string, debugOn?: boolean): Diagnostics {
-    const dx = new Diagnostics(name, debugOn, this, this.ui);
+    const dx = new Diagnostics(name, debugOn, this);
     return dx;
   }
 
@@ -87,11 +80,9 @@ export class Diagnostics {
   out(message: MessageRef): this {
     if (this._debugOn) {
       const formattedMessage = this.messageHeader(message);
-      if (this.ui) {
-        this.ui.out(formattedMessage);
-      } else {
-        console.log(formattedMessage);
-      }
+      // Import UI dynamically to avoid circular dependency
+      const { UI } = require('./UI');
+      UI.debugOut(formattedMessage, 'info', this._name);
     }
     return this;
   }
@@ -127,11 +118,9 @@ export class Diagnostics {
    */
   print(message: MessageRef): this {
     const formattedMessage = this.messageHeader(message);
-    if (this.ui) {
-      this.ui.out(formattedMessage);
-    } else {
-      console.log(formattedMessage);
-    }
+    // Import UI dynamically to avoid circular dependency
+    const { UI } = require('./UI');
+    UI.debugOut(formattedMessage, 'info', this._name);
     return this;
   }
 
