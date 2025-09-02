@@ -31,7 +31,7 @@ export class OSMac extends OS {
 			const p = result.trim();
 			if (p) return p;
 		} catch (err) {
-			this.debugOut('OSMac.getDownloadsDirectory() failed', 'warn', 'OSMac', err); // ignore and fallback
+			this.dx.out(`OSMac.getDownloadsDirectory() failed: ${err}`); // ignore and fallback
 		}
 		const home = process.env.HOME || '';
 		return this.pathJoin(home, 'Downloads');
