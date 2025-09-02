@@ -259,14 +259,23 @@ someMethod(param1: string, param2: number): void {
 
 ## 🚧 REMAINING WORK
 
-### Phase 4: Method-Level Refactoring (IN PROGRESS)
-- [ ] **OSMac.ts**: Add `done()` method and call `this.dx.done()`
-- [ ] **OSWin.ts**: Add Diagnostics, add `done()` method, convert debugOut call
-- [ ] **All classes**: Add `dx.require()` to methods that need parameter validation
-- [ ] **All classes**: Add sub-context pattern `const dx = this.dx.sub('methodName')` to complex methods
-- [ ] **All classes**: Add `dx.done()` to method completion where sub-context is used
+### Phase 4: Method-Level Refactoring ✅ COMPLETED
+- [x] **OSMac.ts**: Add `done()` method and call `this.dx.done()`
+- [x] **OSWin.ts**: Add Diagnostics, add `done()` method, convert debugOut call
+- [x] **All classes**: Add `dx.require()` to methods that need parameter validation
+- [x] **All classes**: Add sub-context pattern `const dx = this.dx.sub('methodName')` to complex methods
+- [x] **All classes**: Add `dx.done()` to method completion where sub-context is used
 
-### Phase 5: Testing and Validation (PENDING)
+**Key Methods Enhanced:**
+- [x] **VSCodeAPIs.init()**: Added parameter validation and sub-context
+- [x] **PaperPrinter.handleDragEnd()**: Added parameter validation and sub-context
+- [x] **PaperPrinter.handleMenuItemSelected()**: Added parameter validation and sub-context
+- [x] **Stylize.validateHighlighter()**: Added parameter validation and sub-context
+- [x] **UI.handleWebviewMessage()**: Added parameter validation and sub-context
+- [x] **PDF.printWithPreview()**: Added parameter validation and sub-context
+- [x] **ClipboardCapture.captureFromActiveTab()**: Added sub-context with proper cleanup
+
+### Phase 5: Testing and Validation (IN PROGRESS)
 - [ ] **All classes**: Verify all debug output now uses Diagnostics format
 - [ ] **All classes**: Test debug output with different debug levels
 - [ ] **All classes**: Verify timing information is displayed correctly
@@ -283,12 +292,12 @@ someMethod(param1: string, param2: number): void {
 - [x] `debugOut` methods removed from OS.ts, instance method removed from UI.ts
 - [x] UI.ts keeps `static debugOut()` for console.log responsibility
 - [x] All classes call `this.dx.done()` in their cleanup methods
+- [x] **NEW**: Key methods enhanced with `dx.require()` parameter validation
+- [x] **NEW**: Complex methods use sub-context pattern `const dx = this.dx.sub('methodName')`
+- [x] **NEW**: All sub-context methods properly call `dx.done()` for cleanup
 
-## 🎯 NEXT STEPS
-1. **Complete OSMac.ts and OSWin.ts** - Add missing done() methods
-2. **Add dx.require() calls** - Identify and add parameter validation to key methods
-3. **Add sub-context pattern** - Use `const dx = this.dx.sub('methodName')` for complex methods
-4. **Testing and validation** - Verify everything works correctly
+## 🎯 FINAL STEP
+**Phase 5: Testing and Validation** - Verify the complete Diagnostics refactor works correctly
 
 ## Risk Mitigation
 - Test each class individually after refactoring
