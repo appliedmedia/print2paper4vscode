@@ -3,7 +3,7 @@ import { Diagnostics } from './Diagnostics';
 import type { App } from './App';
 
 export class OSWin extends OS {
-  private dx: Diagnostics;
+  protected dx: Diagnostics;
 
   constructor(app?: App) {
     super(app);

@@ -115,11 +115,8 @@ export class Stylize {
         tokenColors,
       } as any);
     } catch (error) {
-      this.dx.out(
-        'ERROR:convertVSCodeThemeToShiki: Failed to convert theme',
-        'warn',
-        'Stylize',
-        error
+      this.dx.print(
+        `ERROR:convertVSCodeThemeToShiki: Failed to convert theme: ${String(error)}`
       );
       return null;
     }
@@ -177,27 +174,19 @@ export class Stylize {
 
     // Ensure highlighter is initialized AFTER theme processing
     this.dx.out(
-      `THEMECHECK: About to call validateHighlighter with lang: '${lang}'`,
-      'info',
-      'Stylize'
+      `THEMECHECK: About to call validateHighlighter with lang: '${lang}'`
     );
     await this.validateHighlighter(lang);
     this.dx.out(
-      `THEMECHECK: validateHighlighter completed successfully`,
-      'info',
-      'Stylize'
+      `THEMECHECK: validateHighlighter completed successfully`
     );
 
     this.dx.out(
-      `THEMECHECK: About to call highlighter with theme: '${selectedTheme}'`,
-      'info',
-      'Stylize'
+      `THEMECHECK: About to call highlighter with theme: '${selectedTheme}'`
     );
 
     this.dx.out(
-      `THEMECHECK: Highlighter call parameters - lang: '${lang}', theme: '${selectedTheme}', code length: ${code.length}`,
-      'info',
-      'Stylize'
+      `THEMECHECK: Highlighter call parameters - lang: '${lang}', theme: '${selectedTheme}', code length: ${code.length}`
     );
 
     // Generate HTML using the singleton highlighter
@@ -247,9 +236,7 @@ export class Stylize {
       // Combine themes: Shiki first (more reliable for printing), then VSCode
       Stylize.themesCache = [...shikiThemes, ...vscodeThemes];
       this.dx.out(
-        `THEMECHECK: Cache built with ${Stylize.themesCache.length} themes: ${Stylize.themesCache.map(t => t.id).join(', ')}`,
-        'info',
-        'Stylize'
+        `THEMECHECK: Cache built with ${Stylize.themesCache.length} themes: ${Stylize.themesCache.map(t => t.id).join(', ')}`
       );
       this.dx.out('THEMECHECK: About to return from getThemes()');
     } else {
@@ -260,9 +247,7 @@ export class Stylize {
     // Get themes from cache
     let themes = [...Stylize.themesCache];
     this.dx.out(
-      `THEMECHECK: getThemes() - themes array created with ${themes.length} items`,
-      'info',
-      'Stylize'
+      `THEMECHECK: getThemes() - themes array created with ${themes.length} items`
     );
 
     // Apply filter if provided
@@ -270,16 +255,12 @@ export class Stylize {
       const filterRegex = new RegExp(filter, 'i');
       themes = themes.filter(theme => filterRegex.test(theme.displayName));
       this.dx.out(
-        `THEMECHECK: getThemes() - filter applied, ${themes.length} themes remaining`,
-        'info',
-        'Stylize'
+        `THEMECHECK: getThemes() - filter applied, ${themes.length} themes remaining`
       );
     }
 
     this.dx.out(
-      `THEMECHECK: getThemes() - returning themes: ${themes.map(t => t.id).join(', ')}`,
-      'info',
-      'Stylize'
+      `THEMECHECK: getThemes() - returning themes: ${themes.map(t => t.id).join(', ')}`
     );
     return themes;
   }
@@ -382,9 +363,7 @@ export class Stylize {
 
         if (editorThemeData) {
           this.dx.out(
-            `THEMECHECK: Adding editor theme to themes list: ${activeThemeID}`,
-            'info',
-            'Stylize'
+            `THEMECHECK: Adding editor theme to themes list: ${activeThemeID}`
           );
           themes.unshift({
             id: activeThemeID,
@@ -400,7 +379,7 @@ export class Stylize {
 
       return themes;
     } catch (err) {
-      this.dx.out('ERROR:getVSCodeThemes: Failed to get themes': ${err});
+      this.dx.print(`ERROR:getVSCodeThemes: Failed to get themes: ${String(err)}`);
       return [];
     }
   }

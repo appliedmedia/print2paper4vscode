@@ -8,6 +8,7 @@ class MockApp {
   os: any;
   templateDictReplace: any;
   ui: any;
+  dx: any;
 
   constructor() {
     this.os = {
@@ -27,6 +28,7 @@ class MockApp {
         // Mock debug output - just ignore it for tests
       },
     };
+    this.dx = { create: (name: string) => ({ out: () => {}, print: () => {}, done: () => {}, sub: (name: string) => ({ out: () => {}, print: () => {}, done: () => {}, require: () => true }) }) };
   }
 }
 
