@@ -9,7 +9,7 @@ export class UI {
 
   constructor(app: App) {
     this.app = app;
-    this.dx = new Diagnostics('UI');
+    this.dx = app.dx.create('UI');
   }
 
   init(): void {}

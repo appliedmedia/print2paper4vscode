@@ -21,7 +21,7 @@ export class PaperPrinter {
   constructor(app: App) {
     this.app = app;
     this.clipboardCapture = new ClipboardCapture(app);
-    this.dx = new Diagnostics('PaperPrinter');
+    this.dx = app.dx.create('PaperPrinter');
   }
 
   init(): void {

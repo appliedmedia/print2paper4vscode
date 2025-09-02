@@ -7,7 +7,7 @@ export class OSWin extends OS {
 
   constructor(app?: App) {
     super(app);
-    this.dx = new Diagnostics('OSWin');
+    this.dx = app ? app.dx.create('OSWin') : new Diagnostics('OSWin');
   }
 	async fileOpenInDefaultApp(path: string): Promise<void> {
 		await this.execAsync(`start "" "${path}"`);

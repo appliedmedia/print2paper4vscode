@@ -19,7 +19,7 @@ export class Stylize {
 
   constructor(app: App) {
     this.app = app;
-    this.dx = new Diagnostics('Stylize');
+    this.dx = app.dx.create('Stylize');
   }
 
   async init(): Promise<void> {
