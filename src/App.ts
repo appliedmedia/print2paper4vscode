@@ -21,12 +21,12 @@ export class App {
   dx: Diagnostics;
 
   constructor(context: ExtensionContext, vscode: any) {
-    // Create components first, then Diagnostics with UI reference
+    // Create Diagnostics instance first
+    this.dx = new Diagnostics('App');
+
+    // Create components - VSCodeAPIs first, then UI, then others in alphabetical order
     this.vscodeapis = new VSCodeAPIs(this, vscode, context);
     this.ui = new UI(this);
-    this.dx = new Diagnostics('App', undefined, undefined, this.ui);
-
-    // Create remaining components
     this.os = OS.create(this);
     this.pdf = new PDF(this);
     this.paperprinter = new PaperPrinter(this);
