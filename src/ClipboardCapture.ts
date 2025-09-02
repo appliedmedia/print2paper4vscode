@@ -2,7 +2,6 @@ import { exec } from 'child_process';
 import { promisify } from 'util';
 import * as rtf2html from '@iarna/rtf-to-html';
 
-import * as vscode from 'vscode';
 import type { App } from './App';
 import { Diagnostics } from './Diagnostics';
 
@@ -13,7 +12,7 @@ export class ClipboardCapture {
   private dx: Diagnostics;
   constructor(app: App) {
     this.app = app;
-    this.dx = new Diagnostics('ClipboardCapture');
+    this.dx = app.dx.create('ClipboardCapture');
   }
 
   init(): void {}
@@ -61,17 +60,15 @@ export class ClipboardCapture {
    */
   async captureWithEditorCheck(): Promise<string | null> {
     try {
-      // Get active editor from VS Code
-      const editor = vscode.window.activeTextEditor;
+      // Get active editor from VS Code via VSCodeAPIs
+      const editor = this.app.vscodeapis.getActiveTextEditor();
       if (!editor) {
         // No active text editor (preview tab, etc.) - fall back to AppleScript
         return await this.captureFromActiveTab();
       }
 
-      const selection = editor.selection;
-
-      // If there's a real selection, just copy it
-      if (!selection.isEmpty) {
+      // Check if there's a real selection via VSCodeAPIs
+      if (this.app.vscodeapis.hasActiveSelection()) {
         await this.copyToClipboard();
         await new Promise<void>(resolve => setTimeout(resolve, 200));
         return await this.getClipboardContent();

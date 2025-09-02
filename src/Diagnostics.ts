@@ -51,6 +51,17 @@ export class Diagnostics {
   }
 
   /**
+   * Create a new independent Diagnostics instance (not a sub-context)
+   * @param name - The name of the new Diagnostics instance
+   * @param debugOn - Optional debug override (undefined uses global debug state)
+   * @returns New independent Diagnostics instance
+   */
+  create(name: string, debugOn?: boolean): Diagnostics {
+    const dx = new Diagnostics(name, debugOn, null);
+    return dx;
+  }
+
+  /**
    * Validate that required arguments are present in the args object
    * @param args - The arguments object to validate
    * @param requiredKeys - Array of required argument key names

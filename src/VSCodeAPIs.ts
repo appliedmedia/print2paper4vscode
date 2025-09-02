@@ -22,7 +22,7 @@ export class VSCodeAPIs {
     this.app = app;
     this.vscode = vscode;
     this.context = context;
-    this.dx = new Diagnostics('VSCodeAPIs');
+    this.dx = app.dx.create('VSCodeAPIs');
   }
 
   init(): void {
@@ -265,6 +265,14 @@ export class VSCodeAPIs {
   getActiveLanguageId(): string {
     const editor = this.vscode.window.activeTextEditor;
     return editor ? editor.document.languageId : 'plaintext';
+  }
+
+  /**
+   * Checks if the active editor has a non-empty selection
+   */
+  hasActiveSelection(): boolean {
+    const editor = this.vscode.window.activeTextEditor;
+    return editor ? !editor.selection.isEmpty : false;
   }
 
   /**

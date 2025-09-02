@@ -8,7 +8,7 @@ export class PDF {
 
   constructor(app: App) {
     this.app = app;
-    this.dx = new Diagnostics('PDF');
+    this.dx = app.dx.create('PDF');
   }
 
   init(): void {
