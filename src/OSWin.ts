@@ -1,6 +1,14 @@
-import { OS } from './OS';    
+import { OS } from './OS';
+import { Diagnostics } from './Diagnostics';
+import type { App } from './App';
 
 export class OSWin extends OS {
+  private dx: Diagnostics;
+
+  constructor(app?: App) {
+    super(app);
+    this.dx = new Diagnostics('OSWin');
+  }
 	async fileOpenInDefaultApp(path: string): Promise<void> {
 		await this.execAsync(`start "" "${path}"`);
 	}
@@ -21,7 +29,7 @@ export class OSWin extends OS {
 			const p = result.trim();
 			if (p) return p;
 		} catch (err) {
-			this.debugOut('OSWin.getDownloadsDirectory() failed', 'warn', 'OSWin', err); // ignore and fallback
+			this.dx.out(`OSWin.getDownloadsDirectory() failed: ${err}`); // ignore and fallback
 		}
 		const home = process.env.USERPROFILE || '';
 		return this.pathJoin(home, 'Downloads');
@@ -30,6 +38,10 @@ export class OSWin extends OS {
 	async fileOpenPrintDialog(pdfPath: string): Promise<void> {
 		// Best effort: open the PDF and rely on user; Windows programmatic print dialogs vary
 		await this.fileOpenInDefaultApp(pdfPath);
+	}
+
+	done(): void {
+		this.dx.done();
 	}
 }
 

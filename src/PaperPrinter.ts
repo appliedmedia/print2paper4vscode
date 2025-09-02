@@ -35,22 +35,29 @@ export class PaperPrinter {
 
   // Message handler methods
   private async handleDragEnd(msg: WebviewMessage): Promise<void> {
+    const dx = this.dx.sub('handleDragEnd');
+    dx.require({ msg }, ['msg']);
+    
     // Save final position when drag ends
     if (msg.left !== undefined) {
       try {
         // Save position to VS Code global state
         this.app.vscodeapis.updateGlobalState('toolbarLeft', msg.left);
-        this.dx.out(`Drag ended at position: ${msg.left}`);
+        dx.out(`Drag ended at position: ${msg.left}`);
       } catch (error) {
-        this.dx.out(`Failed to save toolbar position: ${error}`);
+        dx.out(`Failed to save toolbar position: ${error}`);
       }
     }
+    dx.done();
   }
 
   private async handleMenuItemSelected(msg: WebviewMessage): Promise<void> {
+    const dx = this.dx.sub('handleMenuItemSelected');
+    dx.require({ msg }, ['msg']);
+    
     // Handle menu item selections from the new generic UI system
     const { targetId, parentId, x, y } = msg;
-    this.dx.out(`Menu item selected: ${targetId} in menu ${parentId} at (${x}, ${y})`);
+    dx.out(`Menu item selected: ${targetId} in menu ${parentId} at (${x}, ${y})`);
 
     // Get the menu and call its selection handler directly
     if (parentId && targetId) {
@@ -60,6 +67,7 @@ export class PaperPrinter {
         await menu.dispatchSelection(targetId);
       }
     }
+    dx.done();
   }
 
   private async handlePrintMessage(msg: WebviewMessage): Promise<void> {
