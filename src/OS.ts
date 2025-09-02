@@ -13,7 +13,7 @@ export abstract class OS {
   constructor(app?: App) {
     this.app = app;
     this.extensionRoot = app ? app.vscodeapis.getExtensionPath() : undefined;
-    this.dx = app ? new Diagnostics('OS') : undefined;
+    this.dx = app ? app.dx.create('OS') : undefined;
   }
 
   init(): void {}

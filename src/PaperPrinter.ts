@@ -120,16 +120,12 @@ export class PaperPrinter {
       if (!this.currentThemeChoice) {
         this.currentThemeChoice = this.app.vscodeapis.getActiveThemeId();
         this.dx.out(
-          `THEMECHECK: Initialized currentThemeChoice to: '${this.currentThemeChoice}'`,
-          'info',
-          'PaperPrinter'
+          `THEMECHECK: Initialized currentThemeChoice to: '${this.currentThemeChoice}'`
         );
       }
 
       this.dx.out(
-        `THEMECHECK: Printing with theme: '${this.currentThemeChoice}'`,
-        'info',
-        'PaperPrinter'
+        `THEMECHECK: Printing with theme: '${this.currentThemeChoice}'`
       );
       const htmlContent = await this.app.stylize.styleToHtml(info.text, info.languageId, {
         title: this.printTitle,
@@ -163,9 +159,7 @@ export class PaperPrinter {
       const sizePx = this.computeFontSizePx();
       const lhPx = this.computeLineHeightPx(sizePx);
       this.dx.out(
-        `THEMECHECK: applyRenderModes with theme: '${this.currentThemeChoice}'`,
-        'info',
-        'PaperPrinter'
+        `THEMECHECK: applyRenderModes with theme: '${this.currentThemeChoice}'`
       );
       const html = await this.app.stylize.styleToHtml(this.lastRawCode, this.lastLanguageId, {
         fontSize: sizePx,
@@ -224,9 +218,7 @@ export class PaperPrinter {
 
     menuConfigs.forEach(config => {
       this.dx.out(
-        `Creating menu: ${config.id} with icon: ${config.icon}`,
-        'info',
-        'PaperPrinter'
+        `Creating menu: ${config.id} with icon: ${config.icon}`
       );
       const menu = this.app.uimenumgr.createMenu(
         config.id,
@@ -332,9 +324,7 @@ export class PaperPrinter {
 
   private async handleSelection_Theme(selectedId: string): Promise<string> {
     this.dx.out(
-      `THEMECHECK: handleSelection_Theme called with selectedId: '${selectedId}'`,
-      'info',
-      'PaperPrinter'
+      `THEMECHECK: handleSelection_Theme called with selectedId: '${selectedId}'`
     );
 
     if (selectedId === '0') {
@@ -345,9 +335,7 @@ export class PaperPrinter {
       const result = currentEditorTheme || fallbackTheme;
 
       this.dx.out(
-        `THEMECHECK: Theme default selection - selectedId: '${selectedId}', currentEditorTheme: '${currentEditorTheme}', availableThemes: [${availableThemes.map(t => t.id).join(', ')}], fallbackTheme: '${fallbackTheme}', returning: '${result}'`,
-        'info',
-        'PaperPrinter'
+        `THEMECHECK: Theme default selection - selectedId: '${selectedId}', currentEditorTheme: '${currentEditorTheme}', availableThemes: [${availableThemes.map(t => t.id).join(', ')}], fallbackTheme: '${fallbackTheme}', returning: '${result}'`
       );
 
       return result;

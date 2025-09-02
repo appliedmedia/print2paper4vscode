@@ -60,6 +60,7 @@ describe('System Integration Tests', () => {
       ui: { debugOut: () => {} },
       vscodeapis: { getEditorTypography: () => ({ fontSize: 14, lineHeight: 20 }) },
       os: { readExtensionYaml: () => ({ stylize_html: '<div>{{CODE}}</div>' }) },
+      dx: { create: (name: string) => ({ out: () => {}, print: () => {}, done: () => {}, sub: (name: string) => ({ out: () => {}, print: () => {}, done: () => {}, require: () => true }) }) },
     } as any;
 
     const stylize = new Stylize(mockApp);
@@ -167,6 +168,7 @@ describe('System Integration Tests', () => {
       templateDictReplace: (source: string, dict: Record<string, string>) => {
         return source.replace(/\{\{(\w+)\}\}/g, (match, key) => dict[key] || match);
       },
+      dx: { create: (name: string) => ({ out: () => {}, print: () => {}, done: () => {}, sub: (name: string) => ({ out: () => {}, print: () => {}, done: () => {}, require: () => true }) }) },
     } as any;
 
     const stylize = new Stylize(mockApp);

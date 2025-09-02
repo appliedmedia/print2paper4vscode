@@ -10,7 +10,7 @@ export class TabInspector {
 
     constructor(app: App) {
         this.app = app;
-        this.dx = new Diagnostics('TabInspector');
+        this.dx = app.dx.create('TabInspector');
     }
 
     init(): void {}

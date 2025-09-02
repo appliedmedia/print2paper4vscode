@@ -80,7 +80,7 @@ export class ClipboardCapture {
       return await this.getClipboardContent();
     } catch (error) {
       if (this.app)
-        this.dx.out('Error in captureWithEditorCheck': ${error});
+        this.dx.print(`Error in captureWithEditorCheck: ${String(error)}`);
       return null;
     }
   }

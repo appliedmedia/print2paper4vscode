@@ -10,7 +10,7 @@ export class UIMenuMgr {
 
   constructor(app: App) {
     this.app = app;
-    this.dx = new Diagnostics('UIMenuMgr');
+    this.dx = app.dx.create('UIMenuMgr');
     // No initialization needed - menus are created on-demand by PaperPrinter
   }
 
@@ -52,9 +52,7 @@ export class UIMenuMgr {
   // Generate all HTML at once
   async getAllUIMenuHTML(): Promise<string> {
     this.dx.out(
-      `Generating HTML for ${this.getAllMenus().length} menus`,
-      'info',
-      'UIMenuMgr'
+      `Generating HTML for ${this.getAllMenus().length} menus`
     );
 
     const menuPromises = this.getAllMenus().map(async menu => {
@@ -62,16 +60,12 @@ export class UIMenuMgr {
       try {
         const menuHTML = await menu.getHTML();
         this.dx.out(
-          `Generated HTML for menu ${menu.id}: ${menuHTML.substring(0, 100)}...`,
-          'info',
-          'UIMenuMgr'
+          `Generated HTML for menu ${menu.id}: ${menuHTML.substring(0, 100)}...`
         );
         return menuHTML;
       } catch (error) {
-        this.dx.out(
-          `ERROR generating HTML for menu ${menu.id}: ${error}`,
-          'error',
-          'UIMenuMgr'
+        this.dx.print(
+          `ERROR generating HTML for menu ${menu.id}: ${String(error)}`
         );
         return `<!-- ERROR generating menu ${menu.id}: ${error} -->`;
       }

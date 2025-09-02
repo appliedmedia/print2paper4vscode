@@ -15,6 +15,7 @@ const mockApp = {
       return result.replace(new RegExp(`{{${key}}}`, 'g'), value);
     }, template);
   },
+  dx: { create: (name: string) => ({ out: () => {}, print: () => {}, done: () => {}, sub: (name: string) => ({ out: () => {}, print: () => {}, done: () => {}, require: () => true }) }) },
 } as any;
 
 // Mock list builder and selection handler

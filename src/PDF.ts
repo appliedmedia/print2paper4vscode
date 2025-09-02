@@ -60,7 +60,7 @@ export class PDF {
       await this.app.os.filePrint(outputPdfPath);
       this.dx.out('Sent PDF to printer via Finder');
     } catch (error) {
-      this.dx.out('Error in print directly': ${error});
+      this.dx.print(`Error in print directly: ${String(error)}`);
       throw error;
     }
   }
@@ -80,7 +80,7 @@ export class PDF {
       await this.app.os.fileReveal(targetPath);
       this.dx.out(`Saved PDF to ${targetPath}`);
     } catch (error) {
-      this.dx.out('Error in save as PDF': ${error});
+      this.dx.print(`Error in save as PDF: ${String(error)}`);
       throw error;
     }
   }

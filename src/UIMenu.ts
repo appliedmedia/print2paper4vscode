@@ -13,7 +13,7 @@ export class UIMenu {
     private _listBuilder: () => UIMenuItem[],
     private _selectionHandler: (id: string) => Promise<string>
   ) {
-    this.dx = new Diagnostics('UIMenu');
+    this.dx = this._app.dx.create('UIMenu');
   }
 
   // Getters for private properties
@@ -63,9 +63,7 @@ export class UIMenu {
         'src/UIMenu.yaml'
       );
       this.dx.out(
-        `YAML loaded, ui_menu_html length: ${yaml.ui_menu_html.length}`,
-        'info',
-        'UIMenu'
+        `YAML loaded, ui_menu_html length: ${yaml.ui_menu_html.length}`
       );
     } catch (error) {
       this.dx.out(`ERROR reading YAML: ${error}`);
@@ -102,9 +100,7 @@ export class UIMenu {
         };
 
         this.dx.out(
-          `Menu item ${item.id}: prefix="${itemPrefix}", suffix="${itemSuffix}", showGutter=${showGutter}`,
-          'info',
-          'UIMenu'
+          `Menu item ${item.id}: prefix="${itemPrefix}", suffix="${itemSuffix}", showGutter=${showGutter}`
         );
 
         return this._app.templateDictReplace(yaml.ui_menu_item, replacementDict);
@@ -121,16 +117,12 @@ export class UIMenu {
     });
 
     this.dx.out(
-      `Generated HTML for ${this.id}: ${result.substring(0, 100)}...`,
-      'info',
-      'UIMenu'
+      `Generated HTML for ${this.id}: ${result.substring(0, 100)}...`
     );
 
     // Debug: show the actual menu items HTML
     this.dx.out(
-      `Menu items HTML for ${this.id}: ${menuItemsHtml.substring(0, 200)}...`,
-      'info',
-      'UIMenu'
+      `Menu items HTML for ${this.id}: ${menuItemsHtml.substring(0, 200)}...`
     );
     return result;
   }
