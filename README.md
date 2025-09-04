@@ -63,7 +63,7 @@ The extension follows this workflow:
 
 ### Prerequisites
 
-* **Node.js**: Required for crPDF PDF generation (works on all platforms)
+* **Node.js**: Required for PDF generation using Puppeteer (works on all platforms)
 * **macOS**: Currently optimized for macOS with AppleScript integration
 * **VS Code**: Version 1.60.0 or higher
 
@@ -77,7 +77,7 @@ The extension follows this workflow:
 
 * **Content Capture**: AppleScript for clipboard operations
 * **RTF Processing**: Converts Rich Text Format to HTML
-* **PDF Generation**: Uses crPDF with modern Chromium rendering engine
+* **PDF Generation**: Uses Puppeteer with modern Chromium rendering engine
 * **Print Integration**: AppleScript integration for macOS printing operations
 * **Tab Management**: Creates dedicated PrintPrep tabs for print preview
 
@@ -85,7 +85,7 @@ The extension follows this workflow:
 
 ### Working Components
 
-* crPDF PDF generation works
+* Puppeteer PDF generation works
 * AppleScript integration for macOS printing works
 * Basic tab creation and management works
 
@@ -93,7 +93,7 @@ The extension follows this workflow:
 
 * **Missing RTF Processing**: RTF to HTML conversion not yet implemented
 * **Template System**: Current template approach may be unnecessary
-* **Platform Support**: crPDF works on all platforms with Node.js
+* **Platform Support**: Puppeteer works on all platforms with Node.js
 * **Build Process**: Extension may not be properly compiled/built
 
 ## Development
@@ -117,7 +117,7 @@ The extension includes a working test script (`test-pdf.js`) that demonstrates t
 
 ## Debugging Notes
 
-* Check Node.js installation for crPDF PDF generation
+* Check Node.js installation for Puppeteer PDF generation
 * Verify AppleScript permissions for printing operations
 * Test RTF to HTML conversion functionality
 * Test PDF generation with `test-pdf.js` first

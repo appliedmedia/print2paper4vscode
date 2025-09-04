@@ -45,10 +45,10 @@ export abstract class OS {
   abstract getDownloadsDirectory(): string;
   abstract fileOpenPrintDialog(path: string): Promise<void>;
 
-  // Execute crPDF with provided parameters. Platform-specific implementations can override.
+  // Execute PDF generation using direct Puppeteer approach. Platform-specific implementations can override.
   async execCrPDF(inputPath: string, outputPath: string, options: string = ''): Promise<void> {
-    const crpdf = 'npx crpdf';
-    const cmd = `${crpdf} "${inputPath}" "${outputPath}" ${options}`.trim();
+    const pdfGenerator = 'node src/PDFGenerator.js';
+    const cmd = `${pdfGenerator} "${inputPath}" "${outputPath}" ${options}`.trim();
     await this.execAsync(cmd);
   }
 
