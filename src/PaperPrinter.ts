@@ -75,9 +75,9 @@ export class PaperPrinter {
     if (!this.lastPrintPrepHtml) return;
     const updated = await this.applyRenderModes(this.lastPrintPrepHtml);
     if (msg.value === 'preview')
-      await this.app.pdf.printWithPreview(updated, this.printTitle || 'Print Output');
+      await this.app.pdf.printWithPreview(this.lastPdfDocument, this.printTitle || 'Print Output');
     else if (msg.value === 'direct')
-      await this.app.pdf.printDirectly(updated, this.printTitle || 'Print Output');
+      await this.app.pdf.printDirectly(this.lastPdfDocument, this.printTitle || 'Print Output');
     else if (msg.value === 'save')
       await this.app.pdf.saveAsPDF(this.lastPdfDocument, this.printTitle || 'Print Output');
     // TODO: Re-render webview - need access to panel
@@ -318,9 +318,9 @@ export class PaperPrinter {
     if (!this.lastPrintPrepHtml) return '';
     const updated = await this.applyRenderModes(this.lastPrintPrepHtml);
     if (selectedId === 'preview')
-      await this.app.pdf.printWithPreview(updated, this.printTitle || 'Print Output');
+      await this.app.pdf.printWithPreview(this.lastPdfDocument, this.printTitle || 'Print Output');
     else if (selectedId === 'direct')
-      await this.app.pdf.printDirectly(updated, this.printTitle || 'Print Output');
+      await this.app.pdf.printDirectly(this.lastPdfDocument, this.printTitle || 'Print Output');
     else if (selectedId === 'save')
       await this.app.pdf.saveAsPDF(this.lastPdfDocument, this.printTitle || 'Print Output');
     // TODO: Re-render webview - need access to panel

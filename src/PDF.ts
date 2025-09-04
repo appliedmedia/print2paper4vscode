@@ -29,18 +29,27 @@ export class PDF {
     this.dx.done();
   }
 
-  async printWithPreview(renderedHtmlContent: string, descriptiveName?: string): Promise<void> {
+  async printWithPreview(pdfDoc: any, descriptiveName?: string): Promise<void> {
     const dx = this.dx.sub('printWithPreview');
-    dx.require({ renderedHtmlContent }, ['renderedHtmlContent']);
+    dx.require({ pdfDoc }, ['pdfDoc']);
     
     try {
-      const { tempHtmlPath, outputPdfPath } = this.preparePaths(
-        renderedHtmlContent,
-        descriptiveName
-      );
-      await this.htmlToPdf(tempHtmlPath, outputPdfPath);
-      this.trackTempPdf(outputPdfPath);
-      await this.app.os.fileOpenPrintDialog(outputPdfPath);
+      // Generate filename with timestamp
+      const timestamp = this.app.os.dateAsYYYYMMDDHHMMSS();
+      const safeName = this.app.os.sanitizeFileName(descriptiveName || 'print_output');
+      const filename = `${timestamp}_${safeName}.pdf`;
+      
+      // Save PDF to temp directory
+      const tempDir = this.app.vscodeapis.getTempDirectory();
+      this.app.os.ensureDir(tempDir);
+      const tempPdfPath = this.app.os.pathJoin(tempDir, filename);
+      
+      // Write PDF document to temp file
+      const pdfBuffer = pdfDoc.output('arraybuffer');
+      this.app.os.fileWrite(tempPdfPath, Buffer.from(pdfBuffer));
+      
+      this.trackTempPdf(tempPdfPath);
+      await this.app.os.fileOpenPrintDialog(tempPdfPath);
       dx.out('Opened PDF in Preview app');
     } catch (error) {
       dx.out(`Error in print with preview: ${error}`);
@@ -49,17 +58,26 @@ export class PDF {
     dx.done();
   }
 
-  async printDirectly(renderedHtmlContent: string, descriptiveName?: string): Promise<void> {
+  async printDirectly(pdfDoc: any, descriptiveName?: string): Promise<void> {
     try {
-      const { tempHtmlPath, outputPdfPath } = this.preparePaths(
-        renderedHtmlContent,
-        descriptiveName
-      );
-      await this.htmlToPdf(tempHtmlPath, outputPdfPath);
-      this.trackTempPdf(outputPdfPath);
-      // Minimal AppleScript via Finder print
-      await this.app.os.filePrint(outputPdfPath);
-      this.dx.out('Sent PDF to printer via Finder');
+      // Generate filename with timestamp
+      const timestamp = this.app.os.dateAsYYYYMMDDHHMMSS();
+      const safeName = this.app.os.sanitizeFileName(descriptiveName || 'print_output');
+      const filename = `${timestamp}_${safeName}.pdf`;
+      
+      // Save PDF to temp directory
+      const tempDir = this.app.vscodeapis.getTempDirectory();
+      this.app.os.ensureDir(tempDir);
+      const tempPdfPath = this.app.os.pathJoin(tempDir, filename);
+      
+      // Write PDF document to temp file
+      const pdfBuffer = pdfDoc.output('arraybuffer');
+      this.app.os.fileWrite(tempPdfPath, Buffer.from(pdfBuffer));
+      
+      this.trackTempPdf(tempPdfPath);
+      // Send PDF to printer
+      await this.app.os.filePrint(tempPdfPath);
+      this.dx.out('Sent PDF to printer');
     } catch (error) {
       this.dx.print(`Error in print directly: ${String(error)}`);
       throw error;
