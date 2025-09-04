@@ -206,14 +206,14 @@ export class Stylize {
     const themeData = this.getThemes().find(theme => theme.id === selectedTheme);
     const fontFamily = this.getFontFamilyFromTheme(themeData);
     
-    // Generate PDF from tokens
-    const pdfPath = await this.app.pdf.generatePdfFromTokens(tokenResult.tokens, fontFamily, fontSize, lineHeight, opts?.title);
+    // Generate HTML directly from tokens
+    const html = this.generateHtmlFromTokens(tokenResult.tokens, fontSize, lineHeight);
     
-    // Return webview HTML that displays the PDF
+    // Create the final page HTML
     const title = typeof opts?.title === 'string' && opts.title.length > 0 ? opts.title : 'Printable';
-    const webviewHtml = this.app.pdf.displayPdfToVSCodeWebView_deprecated(pdfPath, title);
+    const page = this.createHtmlPage(html, fontSize, lineHeight, title);
     
-    return webviewHtml;
+    return page;
   }
 
   // Static cache for themes
@@ -437,8 +437,12 @@ export class Stylize {
       // Generate PDF using PDF class
       const pdfPath = await this.app.pdf.generatePdfFromTokens(tokens, fontFamily, fontSize, lineHeight, opts?.title);
       
-      dx.out(`PDF generated successfully: ${pdfPath}`);
-      return pdfPath;
+      // Return webview HTML that displays the PDF
+      const title = typeof opts?.title === 'string' && opts.title.length > 0 ? opts.title : 'Printable';
+      const webviewHtml = this.app.pdf.displayPdfToVSCodeWebView_deprecated(pdfPath, title);
+      
+      dx.out(`PDF webview generated successfully: ${pdfPath}`);
+      return webviewHtml;
       
     } catch (error) {
       dx.out(`Error generating PDF: ${error}`);
