@@ -73,21 +73,13 @@ export class PDF {
       const safeName = this.app.os.sanitizeFileName(descriptiveName || 'print_output');
       const defaultFilename = `${timestamp}_${safeName}.pdf`;
       
-      // Ask user for filename using VS Code's save dialog
-      const fileUri = await this.app.vscodeapis.showSaveDialog({
-        defaultUri: this.app.vscodeapis.uriFromPath(this.app.os.pathJoin(this.app.os.getDownloadsDirectory(), defaultFilename)),
-        filters: {
-          'PDF Files': ['pdf']
-        },
-        title: 'Save PDF As...'
-      });
+      // Ask user for save location using UI method
+      const targetPath = await this.app.ui.chooseSaveLocation(defaultFilename);
       
-      if (!fileUri) {
+      if (!targetPath) {
         this.dx.out('Save cancelled by user');
         return;
       }
-      
-      const targetPath = this.app.vscodeapis.uriToPath(fileUri);
       
       // Ensure directory exists
       const targetDir = this.app.os.pathDirname(targetPath);

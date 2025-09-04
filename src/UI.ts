@@ -64,6 +64,43 @@ export class UI {
     return panel;
   }
 
+  // Choose save location for files
+  async chooseSaveLocation(defaultFilename: string): Promise<string | null> {
+    const dx = this.dx.sub('chooseSaveLocation');
+    dx.require({ defaultFilename }, ['defaultFilename']);
+    
+    try {
+      // Create default URI in Downloads directory
+      const downloadsDir = this.app.os.getDownloadsDirectory();
+      const defaultPath = this.app.os.pathJoin(downloadsDir, defaultFilename);
+      const defaultUri = this.app.vscodeapis.uriFromPath(defaultPath);
+      
+      // Show save dialog
+      const fileUri = await this.app.vscodeapis.showSaveDialog({
+        defaultUri: defaultUri,
+        filters: {
+          'PDF Files': ['pdf']
+        },
+        title: 'Save PDF As...'
+      });
+      
+      if (!fileUri) {
+        dx.out('Save cancelled by user');
+        return null;
+      }
+      
+      const targetPath = this.app.vscodeapis.uriToPath(fileUri);
+      dx.out(`User chose save location: ${targetPath}`);
+      return targetPath;
+      
+    } catch (error) {
+      dx.out(`Error choosing save location: ${error}`);
+      throw error;
+    } finally {
+      dx.done();
+    }
+  }
+
   // Add toolbar to HTML content
   async addToolbar(html: string): Promise<string> {
     // Read the UI.yaml template for the toolbar
