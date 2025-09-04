@@ -1,6 +1,7 @@
 import type { App } from './App';
 import { Diagnostics } from './Diagnostics';
-import { jsPDF } from 'jspdf';
+import jsPDF from 'jspdf';
+import type { IThemedToken } from 'shiki';
 
 export class PDF {
   private app: App;
@@ -29,7 +30,7 @@ export class PDF {
     this.dx.done();
   }
 
-  async printWithPreview(pdfDoc: any, descriptiveName?: string): Promise<void> {
+  async printWithPreview(pdfDoc: jsPDF, descriptiveName?: string): Promise<void> {
     const dx = this.dx.sub('printWithPreview');
     dx.require({ pdfDoc }, ['pdfDoc']);
     
@@ -45,8 +46,8 @@ export class PDF {
       const tempPdfPath = this.app.os.pathJoin(tempDir, filename);
       
       // Write PDF document to temp file
-      const pdfBuffer = pdfDoc.output('arraybuffer');
-      this.app.os.fileWrite(tempPdfPath, Buffer.from(pdfBuffer));
+      const pdfBuffer = pdfDoc.output('arraybuffer') as ArrayBuffer;
+      this.app.os.fileWrite(tempPdfPath, Buffer.from(new Uint8Array(pdfBuffer)));
       
       this.trackTempPdf(tempPdfPath);
       await this.app.os.fileOpenPrintDialog(tempPdfPath);
@@ -58,7 +59,7 @@ export class PDF {
     dx.done();
   }
 
-  async printDirectly(pdfDoc: any, descriptiveName?: string): Promise<void> {
+  async printDirectly(pdfDoc: jsPDF, descriptiveName?: string): Promise<void> {
     try {
       // Generate filename with timestamp
       const timestamp = this.app.os.dateAsYYYYMMDDHHMMSS();
@@ -71,8 +72,8 @@ export class PDF {
       const tempPdfPath = this.app.os.pathJoin(tempDir, filename);
       
       // Write PDF document to temp file
-      const pdfBuffer = pdfDoc.output('arraybuffer');
-      this.app.os.fileWrite(tempPdfPath, Buffer.from(pdfBuffer));
+      const pdfBuffer = pdfDoc.output('arraybuffer') as ArrayBuffer;
+      this.app.os.fileWrite(tempPdfPath, Buffer.from(new Uint8Array(pdfBuffer)));
       
       this.trackTempPdf(tempPdfPath);
       // Send PDF to printer
@@ -84,7 +85,7 @@ export class PDF {
     }
   }
 
-  async saveAsPDF(pdfDoc: any, descriptiveName?: string): Promise<void> {
+  async saveAsPDF(pdfDoc: jsPDF, descriptiveName?: string): Promise<void> {
     try {
       // Generate default filename with timestamp
       const timestamp = this.app.os.dateAsYYYYMMDDHHMMSS();
@@ -104,8 +105,8 @@ export class PDF {
       this.app.os.ensureDir(targetDir);
       
       // Save PDF document directly to chosen location
-      const pdfBuffer = pdfDoc.output('arraybuffer');
-      this.app.os.fileWrite(targetPath, Buffer.from(pdfBuffer));
+      const pdfBuffer = pdfDoc.output('arraybuffer') as ArrayBuffer;
+      this.app.os.fileWrite(targetPath, Buffer.from(new Uint8Array(pdfBuffer)));
       
       // Track file for cleanup (optional)
       this.trackTempPdf(targetPath);
@@ -142,12 +143,12 @@ export class PDF {
 
   // NEW: Generate PDF directly from Shiki tokens
   async generatePdfFromTokens(
-    tokens: any[][],
+    tokens: IThemedToken[][],
     fontFamily: string,
     fontSize: number,
     lineHeight: number,
     title?: string
-  ): Promise<any> {
+  ): Promise<jsPDF> {
     const dx = this.dx.sub('generatePdfFromTokens');
     dx.require({ tokens, fontFamily, fontSize, lineHeight }, ['tokens', 'fontFamily', 'fontSize', 'lineHeight']);
     
@@ -183,7 +184,7 @@ export class PDF {
           const rgb = this.hexToRgb(color);
           
           // Set color and draw text
-          doc.setTextColor(rgb.r, rgb.g, rgb.b);
+          doc.setTextColor(color);
           doc.text(text, x, y);
           
           // Advance x position
@@ -207,7 +208,7 @@ export class PDF {
   }
 
   // NEW: Convert PDF document to HTML
-  pdfToHTML(pdfDoc: any, title: string): string {
+  pdfToHTML(pdfDoc: jsPDF, title: string): string {
     const dx = this.dx.sub('pdfToHTML');
     dx.require({ pdfDoc, title }, ['pdfDoc', 'title']);
     

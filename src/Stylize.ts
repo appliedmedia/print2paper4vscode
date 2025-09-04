@@ -1,6 +1,7 @@
 import type { App } from './App';
 import { getSingletonHighlighter, createCssVariablesTheme, bundledThemesInfo } from 'shiki';
 import { Diagnostics } from './Diagnostics';
+import jsPDF from 'jspdf';
 
 // Type definitions
 type TokenColor = {
@@ -393,7 +394,7 @@ export class Stylize {
     code: string,
     languageId: string,
     opts?: { fontSize?: number; lineHeight?: number; title?: string; theme?: string }
-  ): Promise<string> {
+  ): Promise<jsPDF> {
     const dx = this.dx.sub('styleToPdf');
     dx.require({ code, languageId }, ['code', 'languageId']);
     

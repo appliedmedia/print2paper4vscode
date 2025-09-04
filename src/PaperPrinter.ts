@@ -3,12 +3,13 @@ import type { App } from './App';
 import type { WebviewMessage } from './types/UI_t';
 import type { UIMenuItem } from './types/UI_t';
 import { Diagnostics } from './Diagnostics';
+import jsPDF from 'jspdf';
 
 export class PaperPrinter {
   private app: App;
   private clipboardCapture: ClipboardCapture;
   private handlersRegistered = false;
-      private pdfRendered: any = null; // In-memory PDF document
+      private pdfRendered: jsPDF | null = null; // In-memory PDF document
   private lastRawCode: string | null = null;
   private lastLanguageId: string | null = null;
   private printTitle: string = 'Printable';
@@ -89,12 +90,9 @@ export class PaperPrinter {
     try {
       const category = this.app.tabinspector.detectActiveTabCategory();
       if (category === 'preview') {
-        const captured = await this.app.tabinspector.capturePreviewHtml();
-        if (!captured) {
-          this.app.ui.showErrorMessage('Failed to capture content from preview tab');
-          return;
-        }
-        await this.openPrintPrepAndPrompt(captured.html, captured.name);
+        // TODO: Handle preview tab capture - need to extract raw code from HTML
+        // or implement HTML-to-PDF conversion for preview tabs
+        this.app.ui.showErrorMessage('Printing from preview tabs is not yet supported with the new PDF architecture');
         return;
       }
 
@@ -140,7 +138,7 @@ export class PaperPrinter {
     }
   }
 
-  private async openPrintPrepAndPrompt(pdfDoc: any, tabName: string): Promise<void> {
+  private async openPrintPrepAndPrompt(pdfDoc: jsPDF, tabName: string): Promise<void> {
         this.pdfRendered = pdfDoc; // Store in-memory PDF document
     this.printTitle = tabName;
 
@@ -153,7 +151,7 @@ export class PaperPrinter {
     this.app.ui.htmlToWebViewPanel(`Printable: ${tabName}`, await this.app.ui.addToolbar(initial));
   }
 
-  private async applyRenderModes(pdfDoc: any): Promise<string> {
+  private async applyRenderModes(pdfDoc: jsPDF): Promise<string> {
     // If we have raw code, regenerate with theme overrides
     if (this.lastRawCode && this.lastLanguageId) {
       const sizePx = this.computeFontSizePx();
