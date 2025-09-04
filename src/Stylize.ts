@@ -412,29 +412,14 @@ export class Stylize {
       // Ensure highlighter is initialized
       await this.validateHighlighter(languageId);
 
-      // Get tokens from Shiki - try different method names
-      let tokens;
-      try {
-        // Try the most common method name
-        tokens = this.highlighter.codeToThemedTokens(code, {
-          lang: languageId,
-          theme: selectedTheme,
-        });
-      } catch (error) {
-        // Fallback: try to get tokens using codeToHtml and parse them
-        const html = this.highlighter.codeToHtml(code, {
-          lang: languageId,
-          theme: selectedTheme,
-        });
-        
-        // For now, create a simple token structure from the HTML
-        // This is a temporary workaround until we figure out the correct API
-        const lines = code.split('\n');
-        tokens = lines.map(line => [{
-          content: line,
-          color: '#000000'
-        }]);
-      }
+      // Get tokens from Shiki using the correct method
+      const tokenResult = this.highlighter.codeToTokens(code, {
+        lang: languageId,
+        theme: selectedTheme,
+      });
+      
+      // Extract the tokens array from the result
+      const tokens = tokenResult.tokens;
 
       // Get font info from theme
       const themeData = this.getThemes().find(theme => theme.id === selectedTheme);
