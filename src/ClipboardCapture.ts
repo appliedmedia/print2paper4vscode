@@ -1,6 +1,5 @@
 import { exec } from 'child_process';
 import { promisify } from 'util';
-import * as rtf2html from '@iarna/rtf-to-html';
 
 import type { App } from './App';
 import { Diagnostics } from './Diagnostics';
@@ -116,28 +115,11 @@ export class ClipboardCapture {
   }
 
   /**
-   * Gets content from clipboard
+   * Gets content from clipboard (plain text only)
    */
   private async getClipboardContent(): Promise<string | null> {
     try {
-      // Try to get RTF format using AppleScript
-      try {
-        const appleScript = `
-                    tell application "System Events"
-                        set the clipboard to (the clipboard as «class RTF »)
-                    end tell
-                    return (the clipboard as «class RTF »)
-                `;
-        const { stdout: rtfContent } = await execAsync(`osascript -e '${appleScript}'`);
-        if (rtfContent && rtfContent.trim().startsWith('{\\rtf1')) {
-          // Logging delegated to UI at caller
-          return rtfContent;
-        }
-      } catch {
-        // Swallow; will fallback to plain text
-      }
-
-      // Fall back to plain text
+      // Get plain text from clipboard
       const { stdout } = await execAsync('pbpaste');
       return stdout || null;
     } catch {
@@ -146,26 +128,12 @@ export class ClipboardCapture {
   }
 
   /**
-   * Converts content to HTML (handles both RTF and plain text)
+   * Converts plain text content to HTML
    */
   async convertToHTML(content: string): Promise<string> {
-    // Check if content is RTF format
-    if (content.trim().startsWith('{\\rtf1') || content.includes('\\rtf1')) {
-      // Use @iarna/rtf-to-html library
-      return new Promise((resolve, reject) => {
-        rtf2html.fromString(content, (err: Error | null, result: string) => {
-          if (err) {
-            reject(err);
-          } else {
-            resolve(result);
-          }
-        });
-      });
-    } else {
-      // Convert plain text to HTML
-      const htmlContent = this.convertPlainTextToHTML(content);
-      return htmlContent;
-    }
+    // Convert plain text to HTML
+    const htmlContent = this.convertPlainTextToHTML(content);
+    return htmlContent;
   }
 
   /**

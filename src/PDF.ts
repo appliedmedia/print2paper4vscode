@@ -1,6 +1,5 @@
 import type { App } from './App';
 import { Diagnostics } from './Diagnostics';
-import * as puppeteer from 'puppeteer';
 
 export class PDF {
   private app: App;
@@ -109,33 +108,17 @@ export class PDF {
     const dx = this.dx.sub('htmlToPdf');
     dx.require({ inputHtmlPath, outputPdfPath }, ['inputHtmlPath', 'outputPdfPath']);
     
-    let browser;
     try {
-      // Get platform-specific Puppeteer configuration
-      const launchOptions = this.app.os.getPuppeteerLaunchOptions();
-      
-      browser = await puppeteer.launch(launchOptions);
-      const page = await browser.newPage();
-      
-      // Load the HTML file
-      const htmlContent = this.app.os.fileRead(inputHtmlPath);
-      await page.setContent(htmlContent, { waitUntil: 'networkidle0' });
-
-      // Generate PDF with platform-specific options
-      const pdfOptions = this.app.os.getPuppeteerPdfOptions();
-      pdfOptions.path = outputPdfPath;
-      
-      await page.pdf(pdfOptions);
-      dx.out(`PDF generated successfully: ${outputPdfPath}`);
+      // For now, this method is deprecated in favor of direct PDF generation
+      // This will be removed once we fully migrate to jsPDF approach
+      dx.out(`DEPRECATED: htmlToPdf method called. Use styleToPdf instead.`);
+      throw new Error('htmlToPdf is deprecated. Use styleToPdf for direct PDF generation.');
       
     } catch (error) {
       dx.out(`Error generating PDF: ${error}`);
       throw error;
     } finally {
-      if (browser) {
-        await browser.close();
-      }
+      dx.done();
     }
-    dx.done();
   }
 }
