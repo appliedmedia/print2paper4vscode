@@ -73,6 +73,10 @@ export abstract class OS {
     }
   }
 
+  pathDirname(filePath: string): string {
+    return path.dirname(filePath);
+  }
+
   exists(targetPath: string): boolean {
     return fs.existsSync(targetPath);
   }

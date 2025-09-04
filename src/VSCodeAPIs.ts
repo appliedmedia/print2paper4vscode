@@ -352,4 +352,29 @@ export class VSCodeAPIs {
   getTempDirectory(): string {
     return this.app.os.pathJoin(this.context.globalStorageUri.fsPath, 'temp');
   }
+
+  /**
+   * Show save dialog to user
+   */
+  async showSaveDialog(options: {
+    defaultUri?: Uri;
+    filters?: { [name: string]: string[] };
+    title?: string;
+  }): Promise<Uri | undefined> {
+    return await this.vscode.window.showSaveDialog(options);
+  }
+
+  /**
+   * Convert file path to URI
+   */
+  uriFromPath(filePath: string): Uri {
+    return this.vscode.Uri.file(filePath);
+  }
+
+  /**
+   * Convert URI to file path
+   */
+  uriToPath(uri: Uri): string {
+    return uri.fsPath;
+  }
 }

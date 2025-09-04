@@ -82,20 +82,36 @@ export class PDF {
   // NEW: Save in-memory PDF document to file
   async savePdfDocument(pdfDoc: any, descriptiveName?: string): Promise<void> {
     try {
-      const downloads = this.app.os.getDownloadsDirectory();
-      this.app.os.ensureDir(downloads);
-      
-      // Generate filename with timestamp
+      // Generate default filename with timestamp
       const timestamp = this.app.os.dateAsYYYYMMDDHHMMSS();
       const safeName = this.app.os.sanitizeFileName(descriptiveName || 'print_output');
-      const filename = `${timestamp}_${safeName}.pdf`;
-      const targetPath = this.app.os.pathJoin(downloads, filename);
+      const defaultFilename = `${timestamp}_${safeName}.pdf`;
       
-      // Save PDF document to file
+      // Ask user for filename using VS Code's save dialog
+      const fileUri = await this.app.vscodeapis.showSaveDialog({
+        defaultUri: this.app.vscodeapis.uriFromPath(this.app.os.pathJoin(this.app.os.getDownloadsDirectory(), defaultFilename)),
+        filters: {
+          'PDF Files': ['pdf']
+        },
+        title: 'Save PDF As...'
+      });
+      
+      if (!fileUri) {
+        this.dx.out('Save cancelled by user');
+        return;
+      }
+      
+      const targetPath = this.app.vscodeapis.uriToPath(fileUri);
+      
+      // Ensure directory exists
+      const targetDir = this.app.os.pathDirname(targetPath);
+      this.app.os.ensureDir(targetDir);
+      
+      // Save PDF document directly to chosen location
       const pdfBuffer = pdfDoc.output('arraybuffer');
       this.app.os.fileWrite(targetPath, Buffer.from(pdfBuffer));
       
-      // Track temp file for cleanup
+      // Track file for cleanup (optional)
       this.trackTempPdf(targetPath);
       
       // Reveal file in file explorer
