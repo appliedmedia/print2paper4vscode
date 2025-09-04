@@ -34,6 +34,8 @@ export abstract class OS {
   static create(app: App): OS {
     if (process?.platform === 'win32') {
       return new OSWin(app);
+    } else if (process?.platform === 'linux') {
+      return new OSLinux(app);
     } else {
       return new OSMac(app);
     }
@@ -164,3 +166,4 @@ export abstract class OS {
 // Import platform-specific classes at the end to avoid circular dependency
 import { OSMac } from './OSMac';
 import { OSWin } from './OSWin';
+import { OSLinux } from './OSLinux';
