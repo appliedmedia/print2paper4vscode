@@ -127,11 +127,11 @@ export class PaperPrinter {
       this.dx.out(
         `THEMECHECK: Printing with theme: '${this.currentThemeChoice}'`
       );
-      const htmlContent = await this.app.stylize.styleToPdf(info.text, info.languageId, {
+      const pdfDoc = await this.app.stylize.styleToPdf(info.text, info.languageId, {
         title: this.printTitle,
         theme: this.currentThemeChoice,
       });
-      await this.openPrintPrepAndPrompt(htmlContent, printableLabel);
+      await this.openPrintPrepAndPrompt(pdfDoc, printableLabel);
     } catch (error) {
       this.dx.out(`Error handling print: ${error}`);
       this.app.ui.showErrorMessage(
@@ -140,20 +140,20 @@ export class PaperPrinter {
     }
   }
 
-  private async openPrintPrepAndPrompt(htmlContent: string, tabName: string): Promise<void> {
-    this.lastPrintPrepHtml = htmlContent;
+  private async openPrintPrepAndPrompt(pdfDoc: any, tabName: string): Promise<void> {
+    this.lastPrintPrepHtml = pdfDoc;
     this.printTitle = tabName;
 
     // Create menus and register message handlers when we actually need them
     this.createMenus();
     this.registerMessageHandlers();
 
-    const initial = await this.applyRenderModes(htmlContent);
+    const initial = await this.applyRenderModes(pdfDoc);
 
     this.app.ui.createWebviewPanel(`Printable: ${tabName}`, await this.app.ui.addToolbar(initial));
   }
 
-  private async applyRenderModes(htmlBase: string): Promise<string> {
+  private async applyRenderModes(pdfDoc: any): Promise<string> {
     // If we have raw code, regenerate with theme overrides
     if (this.lastRawCode && this.lastLanguageId) {
       const sizePx = this.computeFontSizePx();
@@ -161,16 +161,17 @@ export class PaperPrinter {
       this.dx.out(
         `THEMECHECK: applyRenderModes with theme: '${this.currentThemeChoice}'`
       );
-      const html = await this.app.stylize.styleToPdf(this.lastRawCode, this.lastLanguageId, {
+      const newPdfDoc = await this.app.stylize.styleToPdf(this.lastRawCode, this.lastLanguageId, {
         fontSize: sizePx,
         lineHeight: lhPx,
         title: this.printTitle,
         theme: this.currentThemeChoice,
       });
-      return html;
+      // Convert PDF to HTML
+      return this.app.pdf.pdfToHTML(newPdfDoc, this.printTitle);
     }
-    // For captured HTML from preview tabs, just return as-is
-    return htmlBase;
+    // For existing PDF document, convert to HTML
+    return this.app.pdf.pdfToHTML(pdfDoc, this.printTitle);
   }
 
   private computeFontSizePx(): number {

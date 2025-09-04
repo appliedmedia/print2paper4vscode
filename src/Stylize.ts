@@ -434,15 +434,11 @@ export class Stylize {
       const fontSize = typeof opts?.fontSize === 'number' ? opts.fontSize : editorTypo.fontSize;
       const lineHeight = typeof opts?.lineHeight === 'number' ? opts.lineHeight : editorTypo.lineHeight;
 
-      // Generate PDF using PDF class
-      const pdfPath = await this.app.pdf.generatePdfFromTokens(tokens, fontFamily, fontSize, lineHeight, opts?.title);
+      // Generate PDF using PDF class and return PDF document pointer
+      const pdfDoc = await this.app.pdf.generatePdfFromTokens(tokens, fontFamily, fontSize, lineHeight, opts?.title);
       
-      // Return webview HTML that displays the PDF
-      const title = typeof opts?.title === 'string' && opts.title.length > 0 ? opts.title : 'Printable';
-      const webviewHtml = this.app.pdf.displayPdfToVSCodeWebView_deprecated(pdfPath, title);
-      
-      dx.out(`PDF webview generated successfully: ${pdfPath}`);
-      return webviewHtml;
+      dx.out(`PDF document generated successfully`);
+      return pdfDoc;
       
     } catch (error) {
       dx.out(`Error generating PDF: ${error}`);
