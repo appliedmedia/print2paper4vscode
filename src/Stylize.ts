@@ -122,7 +122,7 @@ export class Stylize {
     }
   }
 
-  async styleToHtml_deprecated(
+  async styleToHtml(
     code: string,
     languageId: string,
     opts?: { fontSize?: number; lineHeight?: number; title?: string; theme?: string }
@@ -202,14 +202,18 @@ export class Stylize {
     const lineHeight =
       typeof opts?.lineHeight === 'number' ? opts.lineHeight : editorTypo.lineHeight;
     
-    // Generate HTML directly from tokens
-    const html = this.generateHtmlFromTokens(tokenResult.tokens, fontSize, lineHeight);
+    // Get font info from theme
+    const themeData = this.getThemes().find(theme => theme.id === selectedTheme);
+    const fontFamily = this.getFontFamilyFromTheme(themeData);
     
-    // Create the final page HTML
+    // Generate PDF from tokens
+    const pdfPath = await this.app.pdf.generatePdfFromTokens(tokenResult.tokens, fontFamily, fontSize, lineHeight, opts?.title);
+    
+    // Return webview HTML that displays the PDF
     const title = typeof opts?.title === 'string' && opts.title.length > 0 ? opts.title : 'Printable';
-    const page = this.createHtmlPage(html, fontSize, lineHeight, title);
+    const webviewHtml = this.app.pdf.displayPdfToVSCodeWebView_deprecated(pdfPath, title);
     
-    return page;
+    return webviewHtml;
   }
 
   // Static cache for themes
