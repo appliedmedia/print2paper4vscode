@@ -8,7 +8,7 @@ export class PaperPrinter {
   private app: App;
   private clipboardCapture: ClipboardCapture;
   private handlersRegistered = false;
-  private currentPdfDocument: any = null; // In-memory PDF document
+      private pdfRendered: any = null; // In-memory PDF document
   private lastRawCode: string | null = null;
   private lastLanguageId: string | null = null;
   private printTitle: string = 'Printable';
@@ -71,14 +71,14 @@ export class PaperPrinter {
   }
 
   private async handlePrintMessage(msg: WebviewMessage): Promise<void> {
-    if (!this.currentPdfDocument) return;
-    const updated = await this.applyRenderModes(this.currentPdfDocument);
+    if (!this.pdfRendered) return;
+    const updated = await this.applyRenderModes(this.pdfRendered);
     if (msg.value === 'preview')
-      await this.app.pdf.printWithPreview(this.currentPdfDocument, this.printTitle || 'Print Output');
+      await this.app.pdf.printWithPreview(this.pdfRendered, this.printTitle || 'Print Output');
     else if (msg.value === 'direct')
-      await this.app.pdf.printDirectly(this.currentPdfDocument, this.printTitle || 'Print Output');
+      await this.app.pdf.printDirectly(this.pdfRendered, this.printTitle || 'Print Output');
     else if (msg.value === 'save')
-      await this.app.pdf.saveAsPDF(this.currentPdfDocument, this.printTitle || 'Print Output');
+      await this.app.pdf.saveAsPDF(this.pdfRendered, this.printTitle || 'Print Output');
     // TODO: Re-render webview - need access to panel
   }
 
@@ -141,7 +141,7 @@ export class PaperPrinter {
   }
 
   private async openPrintPrepAndPrompt(pdfDoc: any, tabName: string): Promise<void> {
-    this.currentPdfDocument = pdfDoc; // Store in-memory PDF document
+        this.pdfRendered = pdfDoc; // Store in-memory PDF document
     this.printTitle = tabName;
 
     // Create menus and register message handlers when we actually need them
@@ -168,7 +168,7 @@ export class PaperPrinter {
         theme: this.currentThemeChoice,
       });
       // Store the new PDF document
-      this.currentPdfDocument = newPdfDoc;
+      this.pdfRendered = newPdfDoc;
       // Convert PDF to HTML
       return this.app.pdf.pdfToHTML(newPdfDoc, this.printTitle);
     }
@@ -313,14 +313,14 @@ export class PaperPrinter {
     if (selectedId === '0') {
       return ''; // Print menu has no default selection
     }
-    if (!this.currentPdfDocument) return '';
-    const updated = await this.applyRenderModes(this.currentPdfDocument);
+    if (!this.pdfRendered) return '';
+    const updated = await this.applyRenderModes(this.pdfRendered);
     if (selectedId === 'preview')
-      await this.app.pdf.printWithPreview(this.currentPdfDocument, this.printTitle || 'Print Output');
+      await this.app.pdf.printWithPreview(this.pdfRendered, this.printTitle || 'Print Output');
     else if (selectedId === 'direct')
-      await this.app.pdf.printDirectly(this.currentPdfDocument, this.printTitle || 'Print Output');
+      await this.app.pdf.printDirectly(this.pdfRendered, this.printTitle || 'Print Output');
     else if (selectedId === 'save')
-      await this.app.pdf.saveAsPDF(this.currentPdfDocument, this.printTitle || 'Print Output');
+      await this.app.pdf.saveAsPDF(this.pdfRendered, this.printTitle || 'Print Output');
     // TODO: Re-render webview - need access to panel
     return ''; // action handled
   }
