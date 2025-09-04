@@ -1,6 +1,7 @@
 import type { App } from './App';
 import { getSingletonHighlighter, createCssVariablesTheme, bundledThemesInfo } from 'shiki';
 import { Diagnostics } from './Diagnostics';
+import { jsPDF } from 'jspdf';
 
 // Type definitions
 type TokenColor = {
@@ -382,5 +383,199 @@ export class Stylize {
       this.dx.print(`ERROR:getVSCodeThemes: Failed to get themes: ${String(err)}`);
       return [];
     }
+  }
+
+  // NEW: Generate PDF directly from code using theme font and user size
+  async styleToPdf(
+    code: string,
+    languageId: string,
+    opts?: { fontSize?: number; lineHeight?: number; title?: string; theme?: string }
+  ): Promise<string> {
+    const dx = this.dx.sub('styleToPdf');
+    dx.require({ code, languageId }, ['code', 'languageId']);
+    
+    try {
+      // Get theme (same logic as styleToHtml)
+      let selectedTheme: string;
+      if (opts?.theme) {
+        const allThemes = this.getThemes();
+        const themeData = allThemes.find(theme => theme.id === opts.theme);
+        if (!themeData) {
+          throw new Error(`Theme '${opts.theme}' not found in available themes`);
+        }
+        selectedTheme = themeData.id;
+      } else {
+        const activeThemeId = this.app.vscodeapis.getActiveThemeId();
+        const themeData = this.getThemes().find(theme => theme.id === activeThemeId);
+        selectedTheme = themeData?.id || 'github-light';
+      }
+
+      // Ensure highlighter is initialized
+      await this.validateHighlighter(languageId);
+
+      // Get tokens from Shiki
+      const tokens = this.highlighter.codeToThemedTokens(code, {
+        lang: languageId,
+        theme: selectedTheme,
+      });
+
+      // Get font info from theme
+      const themeData = this.getThemes().find(theme => theme.id === selectedTheme);
+      const fontFamily = this.getFontFamilyFromTheme(themeData);
+      
+      // Get user-specified size or editor default
+      const editorTypo = this.app.vscodeapis.getEditorTypography();
+      const fontSize = typeof opts?.fontSize === 'number' ? opts.fontSize : editorTypo.fontSize;
+      const lineHeight = typeof opts?.lineHeight === 'number' ? opts.lineHeight : editorTypo.lineHeight;
+
+      // Generate PDF
+      const pdfPath = await this.generatePdfFromTokens(tokens, fontFamily, fontSize, lineHeight, opts?.title);
+      
+      dx.out(`PDF generated successfully: ${pdfPath}`);
+      return pdfPath;
+      
+    } catch (error) {
+      dx.out(`Error generating PDF: ${error}`);
+      throw error;
+    } finally {
+      dx.done();
+    }
+  }
+
+  // NEW: Display PDF in VS Code web view
+  displayPdfToVSCodeWebView(pdfPath: string, title: string): string {
+    const dx = this.dx.sub('displayPdfToVSCodeWebView');
+    dx.require({ pdfPath, title }, ['pdfPath', 'title']);
+    
+    try {
+      const webViewHtml = `
+<!DOCTYPE html>
+<html>
+<head>
+  <title>${title}</title>
+  <style>
+    body { 
+      margin: 0; 
+      padding: 0; 
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    }
+    #pdf-viewer { 
+      width: 100%; 
+      height: 100vh; 
+      border: none;
+    }
+    .pdf-container {
+      position: relative;
+      width: 100%;
+      height: 100vh;
+    }
+  </style>
+</head>
+<body>
+  <div class="pdf-container">
+    <iframe id="pdf-viewer" src="${pdfPath}"></iframe>
+  </div>
+</body>
+</html>`;
+      
+      dx.out(`Web view HTML generated for PDF: ${pdfPath}`);
+      return webViewHtml;
+      
+    } catch (error) {
+      dx.out(`Error generating web view: ${error}`);
+      throw error;
+    } finally {
+      dx.done();
+    }
+  }
+
+  // Helper: Generate PDF from Shiki tokens
+  private async generatePdfFromTokens(
+    tokens: any[][],
+    fontFamily: string,
+    fontSize: number,
+    lineHeight: number,
+    title?: string
+  ): Promise<string> {
+    const dx = this.dx.sub('generatePdfFromTokens');
+    
+    try {
+      // Initialize PDF
+      const doc = new jsPDF();
+      
+      // Set font
+      doc.setFont(fontFamily, 'normal');
+      doc.setFontSize(fontSize);
+      
+      // Add title if provided
+      if (title) {
+        doc.setFontSize(fontSize + 2);
+        doc.text(title, 20, 20);
+        doc.setFontSize(fontSize);
+      }
+      
+      let y = title ? 40 : 20;
+      const margin = 20;
+      
+      // Process each line of tokens
+      for (const line of tokens) {
+        let x = margin;
+        
+        // Process each token in the line
+        for (const token of line) {
+          const text = token.content;
+          if (!text) continue;
+          
+          // Get token color
+          const color = token.color || '#000000';
+          const rgb = this.hexToRgb(color);
+          
+          // Set color and draw text
+          doc.setTextColor(rgb.r, rgb.g, rgb.b);
+          doc.text(text, x, y);
+          
+          // Advance x position
+          x += doc.getTextWidth(text);
+        }
+        
+        y += lineHeight;
+      }
+      
+      // Save PDF to temp directory
+      const tempDir = this.app.vscodeapis.getTempDirectory();
+      this.app.os.ensureDir(tempDir);
+      const timestamp = this.app.os.dateAsYYYYMMDDHHMMSS();
+      const pdfPath = this.app.os.pathJoin(tempDir, `${timestamp}_${title || 'code'}.pdf`);
+      
+      doc.save(pdfPath);
+      dx.out(`PDF saved to: ${pdfPath}`);
+      
+      return pdfPath;
+      
+    } catch (error) {
+      dx.out(`Error in generatePdfFromTokens: ${error}`);
+      throw error;
+    } finally {
+      dx.done();
+    }
+  }
+
+  // Helper: Get font family from theme
+  private getFontFamilyFromTheme(themeData: any): string {
+    if (!themeData?.colors) return 'courier';
+    
+    // Try to get font from theme colors or use editor font
+    const editorTypo = this.app.vscodeapis.getEditorTypography();
+    return editorTypo.fontFamily || 'courier';
+  }
+
+  // Helper: Convert hex color to RGB
+  private hexToRgb(hex: string): { r: number; g: number; b: number } {
+    const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+    return result ? {
+      r: parseInt(result[1], 16),
+      g: parseInt(result[2], 16),
+      b: parseInt(result[3], 16)
+    } : { r: 0, g: 0, b: 0 };
   }
 }
