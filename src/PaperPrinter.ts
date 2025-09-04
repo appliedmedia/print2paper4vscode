@@ -8,7 +8,8 @@ export class PaperPrinter {
   private app: App;
   private clipboardCapture: ClipboardCapture;
   private handlersRegistered = false;
-  private lastPrintPrepHtml: string | null = null;
+  private lastPrintPrepHtml: any = null; // Now stores PDF document
+  private lastPdfDocument: any = null; // Store the actual PDF document for saving
   private lastRawCode: string | null = null;
   private lastLanguageId: string | null = null;
   private printTitle: string = 'Printable';
@@ -78,7 +79,7 @@ export class PaperPrinter {
     else if (msg.value === 'direct')
       await this.app.pdf.printDirectly(updated, this.printTitle || 'Print Output');
     else if (msg.value === 'save')
-      await this.app.pdf.saveAsPDF(updated, this.printTitle || 'Print Output');
+      await this.app.pdf.savePdfDocument(this.lastPdfDocument, this.printTitle || 'Print Output');
     // TODO: Re-render webview - need access to panel
   }
 
@@ -142,6 +143,7 @@ export class PaperPrinter {
 
   private async openPrintPrepAndPrompt(pdfDoc: any, tabName: string): Promise<void> {
     this.lastPrintPrepHtml = pdfDoc;
+    this.lastPdfDocument = pdfDoc; // Store PDF document for saving
     this.printTitle = tabName;
 
     // Create menus and register message handlers when we actually need them
@@ -167,6 +169,8 @@ export class PaperPrinter {
         title: this.printTitle,
         theme: this.currentThemeChoice,
       });
+      // Store the new PDF document for saving
+      this.lastPdfDocument = newPdfDoc;
       // Convert PDF to HTML
       return this.app.pdf.pdfToHTML(newPdfDoc, this.printTitle);
     }
@@ -318,7 +322,7 @@ export class PaperPrinter {
     else if (selectedId === 'direct')
       await this.app.pdf.printDirectly(updated, this.printTitle || 'Print Output');
     else if (selectedId === 'save')
-      await this.app.pdf.saveAsPDF(updated, this.printTitle || 'Print Output');
+      await this.app.pdf.savePdfDocument(this.lastPdfDocument, this.printTitle || 'Print Output');
     // TODO: Re-render webview - need access to panel
     return ''; // action handled
   }

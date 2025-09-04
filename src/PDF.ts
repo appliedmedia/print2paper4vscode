@@ -66,22 +66,45 @@ export class PDF {
     }
   }
 
-  async saveAsPDF(renderedHtmlContent: string, descriptiveName?: string): Promise<void> {
+  async saveAsPDF(htmlContent: string, descriptiveName?: string): Promise<void> {
     try {
-      const { tempHtmlPath, outputPdfPath } = this.preparePaths(
-        renderedHtmlContent,
-        descriptiveName
-      );
-      await this.htmlToPdf(tempHtmlPath, outputPdfPath);
-      this.trackTempPdf(outputPdfPath);
-      const downloads = this.app.os.getDownloadsDirectory();
-      this.app.os.ensureDir(downloads);
-      const targetPath = this.app.os.pathJoin(downloads, this.app.os.pathBasename(outputPdfPath));
-      this.app.os.fileCopy(outputPdfPath, targetPath);
-      await this.app.os.fileReveal(targetPath);
-      this.dx.out(`Saved PDF to ${targetPath}`);
+      // For now, this method is deprecated in favor of savePdfDocument
+      // This will be removed once we fully migrate to PDF document approach
+      this.dx.out(`DEPRECATED: saveAsPDF method called. Use savePdfDocument instead.`);
+      throw new Error('saveAsPDF is deprecated. Use savePdfDocument for in-memory PDF documents.');
+      
     } catch (error) {
       this.dx.print(`Error in save as PDF: ${String(error)}`);
+      throw error;
+    }
+  }
+
+  // NEW: Save in-memory PDF document to file
+  async savePdfDocument(pdfDoc: any, descriptiveName?: string): Promise<void> {
+    try {
+      const downloads = this.app.os.getDownloadsDirectory();
+      this.app.os.ensureDir(downloads);
+      
+      // Generate filename with timestamp
+      const timestamp = this.app.os.dateAsYYYYMMDDHHMMSS();
+      const safeName = this.app.os.sanitizeFileName(descriptiveName || 'print_output');
+      const filename = `${timestamp}_${safeName}.pdf`;
+      const targetPath = this.app.os.pathJoin(downloads, filename);
+      
+      // Save PDF document to file
+      const pdfBuffer = pdfDoc.output('arraybuffer');
+      this.app.os.fileWrite(targetPath, Buffer.from(pdfBuffer));
+      
+      // Track temp file for cleanup
+      this.trackTempPdf(targetPath);
+      
+      // Reveal file in file explorer
+      await this.app.os.fileReveal(targetPath);
+      
+      this.dx.out(`Saved PDF document to ${targetPath}`);
+      
+    } catch (error) {
+      this.dx.print(`Error saving PDF document: ${String(error)}`);
       throw error;
     }
   }
