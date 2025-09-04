@@ -58,7 +58,7 @@ export class UI {
   }
 
   // Create a webview panel with message handling set up
-  createWebviewPanel(title: string, html: string): unknown {
+  htmlToWebViewPanel(title: string, html: string): unknown {
     const panel = this.app.vscodeapis.createWebviewPanel(title, html);
     this.app.vscodeapis.setupMessageHandling(panel);
     return panel;
