@@ -54,6 +54,7 @@
   },
   "devDependencies": {
     "@types/node": "latest",
+    "@types/puppeteer": "^5.4.7",
     "@types/vscode": "^1.60.0",
     "@typescript-eslint/eslint-plugin": "latest",
     "@typescript-eslint/parser": "latest",
@@ -64,8 +65,7 @@
   },
   "dependencies": {
     "@iarna/rtf-to-html": "^1.1.0",
-    "crpdf": "^0.1.1",
-    "puppeteer-core": "^24.18.0",
+    "puppeteer": "^22.0.0",
     "rtf-parser": "latest",
     "shiki": "^3.11.0",
     "yaml": "latest"

@@ -44,13 +44,11 @@ export abstract class OS {
   abstract filePrint(path: string): Promise<void>;
   abstract getDownloadsDirectory(): string;
   abstract fileOpenPrintDialog(path: string): Promise<void>;
+  
+  // Puppeteer configuration methods
+  abstract getPuppeteerLaunchOptions(): any;
+  abstract getPuppeteerPdfOptions(): any;
 
-  // Execute PDF generation using direct Puppeteer approach. Platform-specific implementations can override.
-  async execCrPDF(inputPath: string, outputPath: string, options: string = ''): Promise<void> {
-    const pdfGenerator = 'node src/PDFGenerator.js';
-    const cmd = `${pdfGenerator} "${inputPath}" "${outputPath}" ${options}`.trim();
-    await this.execAsync(cmd);
-  }
 
   // Common filesystem helpers consolidated here
   ensureDir(dirPath: string): void {

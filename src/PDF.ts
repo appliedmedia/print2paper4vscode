@@ -1,5 +1,6 @@
 import type { App } from './App';
 import { Diagnostics } from './Diagnostics';
+import * as puppeteer from 'puppeteer';
 
 export class PDF {
   private app: App;
@@ -105,7 +106,36 @@ export class PDF {
   }
 
   private async htmlToPdf(inputHtmlPath: string, outputPdfPath: string): Promise<void> {
-    const options = '--no-background';
-    await this.app.os.execCrPDF(inputHtmlPath, outputPdfPath, options);
+    const dx = this.dx.sub('htmlToPdf');
+    dx.require({ inputHtmlPath, outputPdfPath }, ['inputHtmlPath', 'outputPdfPath']);
+    
+    let browser;
+    try {
+      // Get platform-specific Puppeteer configuration
+      const launchOptions = this.app.os.getPuppeteerLaunchOptions();
+      
+      browser = await puppeteer.launch(launchOptions);
+      const page = await browser.newPage();
+      
+      // Load the HTML file
+      const htmlContent = this.app.os.fileRead(inputHtmlPath);
+      await page.setContent(htmlContent, { waitUntil: 'networkidle0' });
+
+      // Generate PDF with platform-specific options
+      const pdfOptions = this.app.os.getPuppeteerPdfOptions();
+      pdfOptions.path = outputPdfPath;
+      
+      await page.pdf(pdfOptions);
+      dx.out(`PDF generated successfully: ${outputPdfPath}`);
+      
+    } catch (error) {
+      dx.out(`Error generating PDF: ${error}`);
+      throw error;
+    } finally {
+      if (browser) {
+        await browser.close();
+      }
+    }
+    dx.done();
   }
 }
