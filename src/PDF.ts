@@ -66,21 +66,7 @@ export class PDF {
     }
   }
 
-  async saveAsPDF(htmlContent: string, descriptiveName?: string): Promise<void> {
-    try {
-      // For now, this method is deprecated in favor of savePdfDocument
-      // This will be removed once we fully migrate to PDF document approach
-      this.dx.out(`DEPRECATED: saveAsPDF method called. Use savePdfDocument instead.`);
-      throw new Error('saveAsPDF is deprecated. Use savePdfDocument for in-memory PDF documents.');
-      
-    } catch (error) {
-      this.dx.print(`Error in save as PDF: ${String(error)}`);
-      throw error;
-    }
-  }
-
-  // NEW: Save in-memory PDF document to file
-  async savePdfDocument(pdfDoc: any, descriptiveName?: string): Promise<void> {
+  async saveAsPDF(pdfDoc: any, descriptiveName?: string): Promise<void> {
     try {
       // Generate default filename with timestamp
       const timestamp = this.app.os.dateAsYYYYMMDDHHMMSS();

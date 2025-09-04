@@ -79,7 +79,7 @@ export class PaperPrinter {
     else if (msg.value === 'direct')
       await this.app.pdf.printDirectly(updated, this.printTitle || 'Print Output');
     else if (msg.value === 'save')
-      await this.app.pdf.savePdfDocument(this.lastPdfDocument, this.printTitle || 'Print Output');
+      await this.app.pdf.saveAsPDF(this.lastPdfDocument, this.printTitle || 'Print Output');
     // TODO: Re-render webview - need access to panel
   }
 
@@ -322,7 +322,7 @@ export class PaperPrinter {
     else if (selectedId === 'direct')
       await this.app.pdf.printDirectly(updated, this.printTitle || 'Print Output');
     else if (selectedId === 'save')
-      await this.app.pdf.savePdfDocument(this.lastPdfDocument, this.printTitle || 'Print Output');
+      await this.app.pdf.saveAsPDF(this.lastPdfDocument, this.printTitle || 'Print Output');
     // TODO: Re-render webview - need access to panel
     return ''; // action handled
   }
