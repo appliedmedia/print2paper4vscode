@@ -189,8 +189,8 @@ export class Stylize {
       `THEMECHECK: Highlighter call parameters - lang: '${lang}', theme: '${selectedTheme}', code length: ${code.length}`
     );
 
-    // Generate HTML using the singleton highlighter
-    const html = this.highlighter.codeToHtml(code, {
+    // Get tokens directly and generate HTML ourselves
+    const tokenResult = this.highlighter.codeToTokens(code, {
       lang,
       theme: selectedTheme,
     });
@@ -201,14 +201,14 @@ export class Stylize {
     const fontSize = typeof opts?.fontSize === 'number' ? opts.fontSize : editorTypo.fontSize;
     const lineHeight =
       typeof opts?.lineHeight === 'number' ? opts.lineHeight : editorTypo.lineHeight;
-    const tpl = this.app.os.readExtensionYaml<{ stylize_html: string }>('src/Stylize.yaml');
-    const page = this.app.templateDictReplace(tpl.stylize_html, {
-      FONTSIZE_PX: String(fontSize),
-      LINEHEIGHT_PX: String(lineHeight),
-      CODE: html,
-      VAR_TITLE:
-        typeof opts?.title === 'string' && opts.title.length > 0 ? opts.title : 'Printable',
-    });
+    
+    // Generate HTML directly from tokens
+    const html = this.generateHtmlFromTokens(tokenResult.tokens, fontSize, lineHeight);
+    
+    // Create the final page HTML
+    const title = typeof opts?.title === 'string' && opts.title.length > 0 ? opts.title : 'Printable';
+    const page = this.createHtmlPage(html, fontSize, lineHeight, title);
+    
     return page;
   }
 
@@ -447,6 +447,85 @@ export class Stylize {
   // NEW: Display PDF in VS Code web view
   displayPdfToVSCodeWebView(pdfPath: string, title: string): string {
     return this.app.pdf.displayPdfToVSCodeWebView(pdfPath, title);
+  }
+
+  // Helper: Generate HTML directly from tokens
+  private generateHtmlFromTokens(tokens: any[][], fontSize: number, lineHeight: number): string {
+    let html = '<pre style="font-size: ' + fontSize + 'px; line-height: ' + lineHeight + 'px; margin: 0; white-space: pre;">';
+    
+    for (const line of tokens) {
+      html += '<div class="line" style="line-height: ' + lineHeight + 'px; min-height: ' + lineHeight + 'px; margin: 0; padding: 0; white-space: pre;">';
+      
+      for (const token of line) {
+        const text = token.content;
+        if (!text) continue;
+        
+        const color = token.color || '#000000';
+        const fontStyle = token.fontStyle || 0;
+        
+        // Apply font styles (bold, italic)
+        let style = `color: ${color};`;
+        if (fontStyle & 1) style += ' font-weight: bold;';
+        if (fontStyle & 2) style += ' font-style: italic;';
+        
+        html += `<span style="${style}">${this.escapeHtml(text)}</span>`;
+      }
+      
+      html += '</div>';
+    }
+    
+    html += '</pre>';
+    return html;
+  }
+  
+  // Helper: Create the final HTML page
+  private createHtmlPage(codeHtml: string, fontSize: number, lineHeight: number, title: string): string {
+    return `<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="color-scheme" content="light dark">
+    <style>
+      body { 
+        margin: 24px;
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace; 
+      }
+      pre { 
+        white-space: pre; 
+        word-wrap: normal; 
+        margin: 0; 
+      }
+      code { 
+        font-size: ${fontSize}px; 
+        display: block; 
+        margin: 0; 
+        white-space: normal; 
+      }
+      .line { 
+        display: block; 
+        line-height: ${lineHeight}px; 
+        min-height: ${lineHeight}px; 
+        margin: 0; 
+        padding: 0; 
+        white-space: pre; 
+      }
+    </style>
+    <title>${title}</title>
+  </head>
+  <body>
+    ${codeHtml}
+  </body>
+</html>`;
+  }
+  
+  // Helper: Escape HTML characters
+  private escapeHtml(text: string): string {
+    return text
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
   }
 
   // Helper: Get font family from theme
