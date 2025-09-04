@@ -1,0 +1,164 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Test PDF with Menu</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.10.377/pdf.min.js"></script>
+  <style>
+    body { 
+      margin: 0; 
+      padding: 0; 
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #f5f5f5;
+    }
+    
+    .menu-bar {
+      background: #2d2d30;
+      color: #cccccc;
+      padding: 8px 16px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      border-bottom: 1px solid #3e3e42;
+    }
+    
+    .menu-item {
+      padding: 4px 8px;
+      cursor: pointer;
+      border-radius: 3px;
+      transition: background-color 0.2s;
+    }
+    
+    .menu-item:hover {
+      background-color: #3e3e42;
+    }
+    
+    .pdf-container {
+      position: relative;
+      width: 100%;
+      height: calc(100vh - 41px);
+      overflow: auto;
+      background: white;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      padding: 20px;
+    }
+    
+    #pdf-canvas {
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+      border: 1px solid #ddd;
+    }
+    
+    .loading {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 200px;
+      color: #666;
+      font-size: 16px;
+    }
+    
+    .error {
+      color: #d73a49;
+      text-align: center;
+      padding: 20px;
+    }
+  </style>
+</head>
+<body>
+  <div class="menu-bar">
+    <div class="menu-item" onclick="printPdf()">🖨️ Print</div>
+    <div class="menu-item" onclick="downloadPdf()">💾 Save</div>
+    <div class="menu-item" onclick="refreshPdf()">🔄 Refresh</div>
+    <div style="margin-left: auto; font-size: 14px;">Test PDF with Menu</div>
+  </div>
+  
+  <div class="pdf-container">
+    <div id="loading" class="loading">Loading PDF...</div>
+    <canvas id="pdf-canvas" style="display: none;"></canvas>
+    <div id="error" class="error" style="display: none;"></div>
+  </div>
+
+  <script>
+    let pdfDoc = null;
+    let pageNum = 1;
+    let pageRendering = false;
+    let pageNumPending = null;
+    let scale = 1.5;
+    let canvas = document.getElementById('pdf-canvas');
+    let ctx = canvas.getContext('2d');
+    
+    function renderPage(num) {
+      pageRendering = true;
+      pdfDoc.getPage(num).then(function(page) {
+        let viewport = page.getViewport({scale: scale});
+        canvas.height = viewport.height;
+        canvas.width = viewport.width;
+        
+        let renderContext = {
+          canvasContext: ctx,
+          viewport: viewport
+        };
+        
+        let renderTask = page.render(renderContext);
+        
+        renderTask.promise.then(function() {
+          pageRendering = false;
+          if (pageNumPending !== null) {
+            renderPage(pageNumPending);
+            pageNumPending = null;
+          }
+        });
+      });
+    }
+    
+    function queueRenderPage(num) {
+      if (pageRendering) {
+        pageNumPending = num;
+      } else {
+        renderPage(num);
+      }
+    }
+    
+    function loadPdf() {
+      const loading = document.getElementById('loading');
+      const canvas = document.getElementById('pdf-canvas');
+      const error = document.getElementById('error');
+      
+      pdfjsLib.getDocument('/tmp/test.pdf').promise.then(function(pdfDoc_) {
+        pdfDoc = pdfDoc_;
+        loading.style.display = 'none';
+        canvas.style.display = 'block';
+        renderPage(pageNum);
+      }).catch(function(err) {
+        loading.style.display = 'none';
+        error.style.display = 'block';
+        error.textContent = 'Error loading PDF: ' + err.message;
+      });
+    }
+    
+    function printPdf() {
+      if (pdfDoc) {
+        window.print();
+      }
+    }
+    
+    function downloadPdf() {
+      if (pdfDoc) {
+        const link = document.createElement('a');
+        link.href = '/tmp/test.pdf';
+        link.download = 'Test PDF with Menu.pdf';
+        link.click();
+      }
+    }
+    
+    function refreshPdf() {
+      loadPdf();
+    }
+    
+    // Load PDF when page loads
+    loadPdf();
+  </script>
+</body>
+</html>

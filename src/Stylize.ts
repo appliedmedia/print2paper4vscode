@@ -122,7 +122,7 @@ export class Stylize {
     }
   }
 
-  async styleToHtml(
+  async styleToHtml_deprecated(
     code: string,
     languageId: string,
     opts?: { fontSize?: number; lineHeight?: number; title?: string; theme?: string }
@@ -446,7 +446,7 @@ export class Stylize {
 
   // NEW: Display PDF in VS Code web view
   displayPdfToVSCodeWebView(pdfPath: string, title: string): string {
-    return this.app.pdf.displayPdfToVSCodeWebView(pdfPath, title);
+    return this.app.pdf.displayPdfToVSCodeWebView_deprecated(pdfPath, title);
   }
 
   // Helper: Generate HTML directly from tokens

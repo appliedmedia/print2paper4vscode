@@ -127,7 +127,7 @@ export class PaperPrinter {
       this.dx.out(
         `THEMECHECK: Printing with theme: '${this.currentThemeChoice}'`
       );
-      const htmlContent = await this.app.stylize.styleToHtml(info.text, info.languageId, {
+      const htmlContent = await this.app.stylize.styleToHtml_deprecated(info.text, info.languageId, {
         title: this.printTitle,
         theme: this.currentThemeChoice,
       });
@@ -161,7 +161,7 @@ export class PaperPrinter {
       this.dx.out(
         `THEMECHECK: applyRenderModes with theme: '${this.currentThemeChoice}'`
       );
-      const html = await this.app.stylize.styleToHtml(this.lastRawCode, this.lastLanguageId, {
+      const html = await this.app.stylize.styleToHtml_deprecated(this.lastRawCode, this.lastLanguageId, {
         fontSize: sizePx,
         lineHeight: lhPx,
         title: this.printTitle,

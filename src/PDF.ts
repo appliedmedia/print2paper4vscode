@@ -178,7 +178,7 @@ export class PDF {
   }
 
   // NEW: Display PDF in VS Code web view with canvas rendering
-  displayPdfToVSCodeWebView(pdfPath: string, title: string): string {
+  displayPdfToVSCodeWebView_deprecated(pdfPath: string, title: string): string {
     const dx = this.dx.sub('displayPdfToVSCodeWebView');
     dx.require({ pdfPath, title }, ['pdfPath', 'title']);
     
