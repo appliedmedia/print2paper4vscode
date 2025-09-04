@@ -45,10 +45,10 @@ export abstract class OS {
   abstract getDownloadsDirectory(): string;
   abstract fileOpenPrintDialog(path: string): Promise<void>;
 
-  // Execute Chrome with provided parameters (macOS default path). Platform-specific fallbacks can override.
-  async execChrome(params: string): Promise<void> {
-    const chrome = '/Applications/Google\\ Chrome.app/Contents/MacOS/Google\\ Chrome';
-    const cmd = `${chrome} ${params}`;
+  // Execute crPDF with provided parameters. Platform-specific implementations can override.
+  async execCrPDF(inputPath: string, outputPath: string, options: string = ''): Promise<void> {
+    const crpdf = 'npx crpdf';
+    const cmd = `${crpdf} "${inputPath}" "${outputPath}" ${options}`.trim();
     await this.execAsync(cmd);
   }
 

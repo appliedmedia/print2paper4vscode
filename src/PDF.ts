@@ -105,7 +105,7 @@ export class PDF {
   }
 
   private async htmlToPdf(inputHtmlPath: string, outputPdfPath: string): Promise<void> {
-    const params = `--headless --disable-gpu --print-to-pdf="${outputPdfPath}" --print-to-pdf-no-header "${inputHtmlPath}"`;
-    await this.app.os.execChrome(params);
+    const options = '--no-background';
+    await this.app.os.execCrPDF(inputHtmlPath, outputPdfPath, options);
   }
 }
