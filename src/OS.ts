@@ -47,9 +47,6 @@ export abstract class OS {
   abstract getDownloadsDirectory(): string;
   abstract fileOpenPrintDialog(path: string): Promise<void>;
   
-  // Puppeteer configuration methods
-  abstract getPuppeteerLaunchOptions(): any;
-  abstract getPuppeteerPdfOptions(): any;
 
 
   // Common filesystem helpers consolidated here

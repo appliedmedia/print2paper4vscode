@@ -3,10 +3,7 @@ import type { App } from './App';
 import type { WebviewMessage } from './types/UI_t';
 import type { UIMenuItem } from './types/UI_t';
 import { Diagnostics } from './Diagnostics';
-<<<<<<< HEAD
 import jsPDF from 'jspdf';
-=======
->>>>>>> origin/main
 
 export class PaperPrinter {
   private app: App;

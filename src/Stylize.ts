@@ -1,10 +1,7 @@
 import type { App } from './App';
 import { getSingletonHighlighter, createCssVariablesTheme, bundledThemesInfo } from 'shiki';
 import { Diagnostics } from './Diagnostics';
-<<<<<<< HEAD
 import jsPDF from 'jspdf';
-=======
->>>>>>> origin/main
 
 // Type definitions
 type TokenColor = {
@@ -452,10 +449,6 @@ export class Stylize {
     }
   }
 
-  // NEW: Display PDF in VS Code web view
-  displayPdfToVSCodeWebView(pdfPath: string, title: string): string {
-    return this.app.pdf.displayPdfToVSCodeWebView_deprecated(pdfPath, title);
-  }
 
   // Helper: Generate HTML directly from tokens
   private generateHtmlFromTokens(tokens: any[][], fontSize: number, lineHeight: number): string {

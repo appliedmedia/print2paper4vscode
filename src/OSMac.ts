@@ -42,34 +42,6 @@ export class OSMac extends OS {
 		await this.execAsync(osa);
 	}
 
-<<<<<<< HEAD
-	getPuppeteerLaunchOptions(): any {
-		return {
-			headless: true,
-			args: [
-				'--disable-gpu',
-				'--disable-background-timer-throttling',
-				'--disable-backgrounding-occluded-windows',
-				'--disable-renderer-backgrounding'
-			]
-		};
-	}
-
-	getPuppeteerPdfOptions(): any {
-		return {
-			format: 'A4',
-			printBackground: false,
-			margin: {
-				top: '10mm',
-				right: '10mm',
-				bottom: '10mm',
-				left: '10mm'
-			}
-		};
-	}
-
-=======
->>>>>>> origin/main
 	done(): void {
 		this.dx.done();
 	}
