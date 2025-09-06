@@ -40,6 +40,21 @@ describe('Stylize PDF Integration', () => {
           return themes[themeId] || null;
         },
       },
+      pdf: {
+        generatePdfFromTokens: async (
+          _tokens: any,
+          _fontFamily: string,
+          _fontSize: number,
+          _lineHeight: number,
+          _title?: string
+        ) => ({
+          getNumberOfPages: () => 1,
+          getPageWidth: () => 595.28,
+          getPageHeight: () => 841.89,
+          output: (type: string) =>
+            type === 'arraybuffer' ? new ArrayBuffer(256) : 'mock',
+        }),
+      },
     };
 
     stylize = new Stylize(mockApp);
@@ -180,7 +195,6 @@ describe('Stylize PDF Integration', () => {
       const title = 'Test Document';
       const fontSize = 14;
       const lineHeight = 20;
-      const fontFamily = 'Consolas, monospace';
 
       const html = stylize['createHtmlPage'](codeHtml, fontSize, lineHeight, title);
 
@@ -200,6 +214,12 @@ describe('Stylize PDF Integration', () => {
       const fontFamilies = ['Arial', 'Times New Roman', 'Courier New', 'Fira Code'];
 
       for (const fontFamily of fontFamilies) {
+        // Swap editor typography to simulate each font preference
+        mockApp.vscodeapis.getEditorTypography = () => ({
+          fontSize: 14,
+          lineHeight: 20,
+          fontFamily,
+        });
         const html = stylize['createHtmlPage'](codeHtml, 14, 20, 'Test');
         assert.ok(html.includes(`font-family: ${fontFamily}`), `Should use ${fontFamily} font`);
       }

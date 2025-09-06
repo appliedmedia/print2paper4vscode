@@ -49,6 +49,42 @@ export class TabInspector {
             return null;
         }
     }
+
+    async inspectTab(): Promise<{ code: string; language: string; fileName: string; filePath: string }> {
+        try {
+            const editor = this.app.vscodeapis.getActiveTextEditor();
+            if (!editor) {
+                return { code: '', language: 'plaintext', fileName: '', filePath: '' };
+            }
+
+            const code = this.app.vscodeapis.getSelectionOrDocumentText(editor);
+            const language = editor.document.languageId || 'plaintext';
+            const fileName = this.app.vscodeapis.getDescriptiveName(editor.document);
+            const filePath = editor.document.uri.fsPath;
+
+            return { code, language, fileName, filePath };
+        } catch (error) {
+            this.dx.out(`Error inspecting tab: ${error}`);
+            return { code: '', language: 'plaintext', fileName: '', filePath: '' };
+        }
+    }
+
+    async inspectVisibleEditors(): Promise<{ code: string; language: string; fileName: string; filePath: string }[]> {
+        try {
+            const editors = this.app.vscodeapis.getVisibleTextEditors();
+            return editors.map(editor => {
+                const code = this.app.vscodeapis.getSelectionOrDocumentText(editor);
+                const language = editor.document.languageId || 'plaintext';
+                const fileName = this.app.vscodeapis.getDescriptiveName(editor.document);
+                const filePath = editor.document.uri.fsPath;
+
+                return { code, language, fileName, filePath };
+            });
+        } catch (error) {
+            this.dx.out(`Error inspecting visible editors: ${error}`);
+            return [];
+        }
+    }
 }
 
 

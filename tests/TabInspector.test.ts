@@ -1,6 +1,6 @@
 import { describe, it, before } from 'node:test';
 import * as assert from 'node:assert';
-import { TabInspector } from '../src/TabInspector.js';
+import { TabInspector } from '../out/TabInspector.js';
 
 describe('TabInspector Functionality', () => {
   let tabInspector: TabInspector;
@@ -171,12 +171,10 @@ describe('TabInspector Functionality', () => {
         throw new Error('VS Code API error');
       };
 
-      try {
-        await tabInspector.inspectTab();
-        assert.fail('Should throw error on VS Code API failure');
-      } catch (error) {
-        assert.ok(error, 'Should handle VS Code API errors');
-      }
+      const result = await tabInspector.inspectTab();
+      assert.ok(result, 'Should return a result even on error');
+      assert.strictEqual(result.code, '', 'Should return empty code on error');
+      assert.strictEqual(result.language, 'plaintext', 'Should default to plaintext on error');
     });
 
     it('should handle missing document properties', async () => {

@@ -88,10 +88,7 @@ describe('Simple PDF Test', () => {
     
     const pdfDoc = await pdf.generatePdfFromTokens(mockTokens, 'Test', 14, 20, 'Arial');
     
-    // These should not throw errors
-    await pdf.printWithPreview(pdfDoc, 'Test Document');
-    await pdf.printDirectly(pdfDoc, 'Test Document');
-    
-    assert.ok(true, 'Print operations should complete without errors');
+    await assert.doesNotReject(() => pdf.printWithPreview(pdfDoc, 'Test Document'));
+    await assert.doesNotReject(() => pdf.printDirectly(pdfDoc, 'Test Document'));
   });
 });
