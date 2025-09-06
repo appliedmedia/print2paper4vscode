@@ -1,7 +1,10 @@
 import type { App } from './App';
 import { getSingletonHighlighter, createCssVariablesTheme, bundledThemesInfo } from 'shiki';
 import { Diagnostics } from './Diagnostics';
+<<<<<<< HEAD
 import jsPDF from 'jspdf';
+=======
+>>>>>>> origin/main
 
 // Type definitions
 type TokenColor = {

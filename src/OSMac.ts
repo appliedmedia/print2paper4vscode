@@ -42,6 +42,7 @@ export class OSMac extends OS {
 		await this.execAsync(osa);
 	}
 
+<<<<<<< HEAD
 	getPuppeteerLaunchOptions(): any {
 		return {
 			headless: true,
@@ -67,6 +68,8 @@ export class OSMac extends OS {
 		};
 	}
 
+=======
+>>>>>>> origin/main
 	done(): void {
 		this.dx.done();
 	}

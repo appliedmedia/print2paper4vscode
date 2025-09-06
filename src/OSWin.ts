@@ -40,6 +40,7 @@ export class OSWin extends OS {
 		await this.fileOpenInDefaultApp(pdfPath);
 	}
 
+<<<<<<< HEAD
 	getPuppeteerLaunchOptions(): any {
 		return {
 			headless: true,
@@ -65,6 +66,8 @@ export class OSWin extends OS {
 		};
 	}
 
+=======
+>>>>>>> origin/main
 	done(): void {
 		this.dx.done();
 	}
