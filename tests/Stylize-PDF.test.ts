@@ -26,7 +26,7 @@ describe('Stylize PDF Integration', () => {
           { id: 'vs-extension', displayName: 'VS Extension', extensionPath: '/path/to/vs' },
         ],
         getVSCodeThemeJson: (themeId: string) => {
-          const themes = {
+          const themes: { [key: string]: any } = {
             'vs-light': {
               id: 'vs-light',
               label: 'VS Light',
@@ -71,7 +71,7 @@ describe('Stylize PDF Integration', () => {
   return fibonacci(n - 1) + fibonacci(n - 2);
 }`;
       
-      const pdfDoc = await stylize.styleToPdf(code, 'javascript', 'github-light');
+      const pdfDoc = await stylize.styleToPdf(code, 'javascript', { theme: 'github-light' });
 
       assert.ok(pdfDoc, 'PDF document should be created');
       assert.ok(pdfDoc.getNumberOfPages() > 0, 'Should have pages for multi-line code');
@@ -79,7 +79,7 @@ describe('Stylize PDF Integration', () => {
 
     it('should use theme colors for syntax highlighting', async () => {
       const code = 'const message = "Hello, World!";';
-      const pdfDoc = await stylize.styleToPdf(code, 'javascript', 'github-light');
+      const pdfDoc = await stylize.styleToPdf(code, 'javascript', { theme: 'github-light' });
 
       assert.ok(pdfDoc, 'PDF document should be created with theme colors');
     });
@@ -94,7 +94,7 @@ describe('Stylize PDF Integration', () => {
         fontFamily: 'Fira Code, monospace'
       });
 
-      const pdfDoc = await stylize.styleToPdf(code, 'javascript', 'github-light');
+      const pdfDoc = await stylize.styleToPdf(code, 'javascript', { theme: 'github-light' });
 
       assert.ok(pdfDoc, 'PDF document should be created with custom typography');
     });
@@ -108,7 +108,7 @@ describe('Stylize PDF Integration', () => {
       ];
 
       for (const testCase of testCases) {
-        const pdfDoc = await stylize.styleToPdf(testCase.code, testCase.language, 'github-light');
+        const pdfDoc = await stylize.styleToPdf(testCase.code, testCase.language, { theme: 'github-light' });
         assert.ok(pdfDoc, `PDF should be created for ${testCase.language}`);
       }
     });
@@ -118,7 +118,7 @@ describe('Stylize PDF Integration', () => {
       const themes = ['github-light', 'github-dark', 'vs-light', 'vs-dark'];
 
       for (const theme of themes) {
-        const pdfDoc = await stylize.styleToPdf(code, 'javascript', theme);
+        const pdfDoc = await stylize.styleToPdf(code, 'javascript', { theme });
         assert.ok(pdfDoc, `PDF should be created with ${theme} theme`);
       }
     });
@@ -182,7 +182,7 @@ describe('Stylize PDF Integration', () => {
       const lineHeight = 20;
       const fontFamily = 'Consolas, monospace';
 
-      const html = stylize['createHtmlPage'](codeHtml, title, fontSize, lineHeight, fontFamily);
+      const html = stylize['createHtmlPage'](codeHtml, fontSize, lineHeight, title);
 
       assert.ok(html.includes('<!DOCTYPE html>'), 'Should contain DOCTYPE');
       assert.ok(html.includes('<html'), 'Should contain html tag');
@@ -200,7 +200,7 @@ describe('Stylize PDF Integration', () => {
       const fontFamilies = ['Arial', 'Times New Roman', 'Courier New', 'Fira Code'];
 
       for (const fontFamily of fontFamilies) {
-        const html = stylize['createHtmlPage'](codeHtml, 'Test', 14, 20, fontFamily);
+        const html = stylize['createHtmlPage'](codeHtml, 14, 20, 'Test');
         assert.ok(html.includes(`font-family: ${fontFamily}`), `Should use ${fontFamily} font`);
       }
     });
@@ -209,7 +209,7 @@ describe('Stylize PDF Integration', () => {
   describe('getFontFamilyFromTheme', () => {
     it('should get font family from theme or editor settings', () => {
       // Test with editor settings
-      const fontFamily1 = stylize['getFontFamilyFromTheme']();
+      const fontFamily1 = stylize['getFontFamilyFromTheme'](null);
       assert.strictEqual(fontFamily1, 'Consolas, monospace', 'Should use editor font family');
 
       // Test with theme override
@@ -222,7 +222,7 @@ describe('Stylize PDF Integration', () => {
         }
       });
 
-      const fontFamily2 = stylize['getFontFamilyFromTheme']();
+      const fontFamily2 = stylize['getFontFamilyFromTheme'](mockApp.vscodeapis.getVSCodeThemeJson('custom-theme'));
       assert.strictEqual(fontFamily2, 'Fira Code, monospace', 'Should use theme font family');
     });
 
@@ -234,7 +234,7 @@ describe('Stylize PDF Integration', () => {
         // No fonts property
       });
 
-      const fontFamily = stylize['getFontFamilyFromTheme']();
+      const fontFamily = stylize['getFontFamilyFromTheme'](mockApp.vscodeapis.getVSCodeThemeJson('no-font-theme'));
       assert.strictEqual(fontFamily, 'Consolas, monospace', 'Should fallback to editor settings');
     });
   });

@@ -1,4 +1,4 @@
-import { describe, it, before } from 'node:test';
+import { describe, it, beforeEach } from 'node:test';
 import * as assert from 'node:assert';
 import { PDF } from '../src/PDF.js';
 import type { IThemedToken } from 'shiki';
@@ -7,7 +7,7 @@ describe('PDF Generation and Display', () => {
   let pdf: PDF;
   let mockApp: any;
 
-  before(() => {
+  beforeEach(() => {
     // Mock app for testing
     mockApp = {
       dx: {
