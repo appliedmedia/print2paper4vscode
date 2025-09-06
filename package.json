@@ -54,7 +54,6 @@
   },
   "devDependencies": {
     "@types/node": "latest",
-    "@types/puppeteer": "^5.4.7",
     "@types/vscode": "^1.60.0",
     "@typescript-eslint/eslint-plugin": "latest",
     "@typescript-eslint/parser": "latest",

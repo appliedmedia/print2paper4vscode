@@ -32,36 +32,6 @@ export class OSLinux extends OS {
     await this.fileOpenInDefaultApp(pdfPath);
   }
 
-  getPuppeteerLaunchOptions(): any {
-    return {
-      headless: true,
-      args: [
-        '--no-sandbox',
-        '--disable-setuid-sandbox',
-        '--disable-dev-shm-usage',
-        '--disable-accelerated-2d-canvas',
-        '--no-first-run',
-        '--no-zygote',
-        '--disable-gpu',
-        '--disable-background-timer-throttling',
-        '--disable-backgrounding-occluded-windows',
-        '--disable-renderer-backgrounding'
-      ]
-    };
-  }
-
-  getPuppeteerPdfOptions(): any {
-    return {
-      format: 'A4',
-      printBackground: false,
-      margin: {
-        top: '10mm',
-        right: '10mm',
-        bottom: '10mm',
-        left: '10mm'
-      }
-    };
-  }
 
   done(): void {
     this.dx.done();
