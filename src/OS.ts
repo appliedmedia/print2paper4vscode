@@ -1,5 +1,6 @@
 import * as fs from 'fs';
 import * as path from 'path';
+import { homedir } from 'os';
 import { exec as cpExec, execSync as cpExecSync } from 'child_process';
 import { promisify } from 'util';
 import { parse as yamlParse } from 'yaml';
@@ -32,8 +33,15 @@ export abstract class OS {
   }
 
   static create(app: App): OS {
+    // Using process.platform instead of os.platform() for robustness:
+    // - process.platform is available immediately on Node.js startup
+    // - os.platform() requires module loading and can throw errors
+    // - process.platform is more commonly used in Node.js ecosystem
+    // - Both return identical values, but process.platform is more reliable
     if (process?.platform === 'win32') {
       return new OSWin(app);
+    } else if (process?.platform === 'linux') {
+      return new OSLinux(app);
     } else {
       return new OSMac(app);
     }
@@ -42,14 +50,11 @@ export abstract class OS {
   abstract fileOpenInDefaultApp(path: string): Promise<void>;
   abstract fileReveal(path: string): Promise<void>;
   abstract filePrint(path: string): Promise<void>;
-  abstract getDownloadsDirectory(): string;
   abstract fileOpenPrintDialog(path: string): Promise<void>;
 
-  // Execute Chrome with provided parameters (macOS default path). Platform-specific fallbacks can override.
-  async execChrome(params: string): Promise<void> {
-    const chrome = '/Applications/Google\\ Chrome.app/Contents/MacOS/Google\\ Chrome';
-    const cmd = `${chrome} ${params}`;
-    await this.execAsync(cmd);
+  // Platform-agnostic home directory
+  getDir_Home(): string {
+    return homedir();
   }
 
   // Common filesystem helpers consolidated here
@@ -71,6 +76,10 @@ export abstract class OS {
     } catch {
       // ignore
     }
+  }
+
+  pathDirname(filePath: string): string {
+    return path.dirname(filePath);
   }
 
   exists(targetPath: string): boolean {
@@ -166,3 +175,4 @@ export abstract class OS {
 // Import platform-specific classes at the end to avoid circular dependency
 import { OSMac } from './OSMac';
 import { OSWin } from './OSWin';
+import { OSLinux } from './OSLinux';

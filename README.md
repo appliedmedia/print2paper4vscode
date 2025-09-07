@@ -63,7 +63,7 @@ The extension follows this workflow:
 
 ### Prerequisites
 
-* **Chrome/Chromium**: Required for PDF generation (currently hardcoded for macOS)
+* **Node.js**: Required for PDF generation using jsPDF (works on all platforms)
 * **macOS**: Currently optimized for macOS with AppleScript integration
 * **VS Code**: Version 1.60.0 or higher
 
@@ -77,7 +77,7 @@ The extension follows this workflow:
 
 * **Content Capture**: AppleScript for clipboard operations
 * **RTF Processing**: Converts Rich Text Format to HTML
-* **PDF Generation**: Uses Chrome headless with `--print-to-pdf` flag
+* **PDF Generation**: Uses jsPDF with vector-based rendering engine
 * **Print Integration**: AppleScript integration for macOS printing operations
 * **Tab Management**: Creates dedicated PrintPrep tabs for print preview
 
@@ -85,7 +85,7 @@ The extension follows this workflow:
 
 ### Working Components
 
-* Chrome headless PDF generation works
+* jsPDF vector PDF generation works
 * AppleScript integration for macOS printing works
 * Basic tab creation and management works
 
@@ -93,7 +93,7 @@ The extension follows this workflow:
 
 * **Missing RTF Processing**: RTF to HTML conversion not yet implemented
 * **Template System**: Current template approach may be unnecessary
-* **Chrome Path**: Hardcoded for macOS only
+* **Platform Support**: jsPDF works on all platforms with Node.js
 * **Build Process**: Extension may not be properly compiled/built
 
 ## Development
@@ -117,7 +117,7 @@ The extension includes a working test script (`test-pdf.js`) that demonstrates t
 
 ## Debugging Notes
 
-* Check Chrome installation path for PDF generation
+* Check Node.js installation for jsPDF PDF generation
 * Verify AppleScript permissions for printing operations
 * Test RTF to HTML conversion functionality
 * Test PDF generation with `test-pdf.js` first

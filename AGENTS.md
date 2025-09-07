@@ -8,7 +8,7 @@ _No specific bullet point formatting requirements._
 
 **READ README.md FIRST** for complete project overview and user-facing documentation.
 
-This document provides technical architecture details, implementation notes, and development context for the Print2Paper4VSCode VS Code extension. The extension enables printing of code selections, entire tabs, and preview content directly from the editor using Chrome headless PDF generation with multiple printing options.
+This document provides technical architecture details, implementation notes, and development context for the Print2Paper4VSCode VS Code extension. The extension enables printing of code selections, entire tabs, and preview content directly from the editor using jsPDF (vector-based) PDF generation with multiple printing options.
 
 ## Project Structure
 
@@ -56,7 +56,7 @@ This document provides technical architecture details, implementation notes, and
 
 #### PDF (`src/PDF.ts`)
 
-- Creates PDFs using Chrome headless (`--print-to-pdf`)
+- Creates PDFs using jsPDF (vector-based rendering)
 - Handles PDF generation, file management, and cleanup
 - Provides multiple output options:
   - `printWithPreview`: Opens in Preview app with print dialog
@@ -91,13 +91,13 @@ This document provides technical architecture details, implementation notes, and
 - **Syntax Highlighting**: Shiki-based highlighting with VS Code themes
 - **Multiple Print Options**: Preview dialog, direct printing, PDF saving
 - **Tab Inspection**: Handles editor tabs, markdown, and preview tabs
-- **Cross-Platform**: Currently optimized for macOS with Chrome headless
+- **Cross-Platform**: Works on all platforms with Node.js and jsPDF
 
 ## Current Status
 
 ### Working Components
 
-- Chrome headless PDF generation works
+- jsPDF vector PDF generation works
 - AppleScript integration for macOS printing works
 - HTML template system with YAML-based snippets
 - Shiki syntax highlighting integration
@@ -105,7 +105,7 @@ This document provides technical architecture details, implementation notes, and
 
 ### Technical Dependencies
 
-- Chrome/Chromium browser for headless PDF generation
+- Node.js runtime for jsPDF PDF generation
 - macOS-specific AppleScript for printing operations
 - VS Code Extension API v1.60.0+
 - TypeScript compilation to JavaScript
@@ -140,8 +140,12 @@ The project uses specific TypeScript lib settings for VS Code extension compatib
 ### PDF Generation
 
 ```typescript
-// Chrome headless command
-`/Applications/Google\\ Chrome.app/Contents/MacOS/Google\\ Chrome --headless --disable-gpu --print-to-pdf="${tempPDFPath}" --print-to-pdf-no-header file://${tempHTMLPath}`;
+// jsPDF vector PDF generation (conceptual)
+// Tokens -> layout -> jsPDF text/draw -> save
+// See src/PDF.ts for token-to-PDF pipeline.
+
+// Ensure jsPDF installed and available in the extension bundle
+// No external browser or separate node script is required.
 ```
 
 ### Syntax Highlighting
@@ -167,7 +171,7 @@ The project uses specific TypeScript lib settings for VS Code extension compatib
 
 ## Debugging Notes
 
-- Check Chrome installation path for PDF generation
+- Check Node.js installation for jsPDF PDF generation
 - Verify AppleScript permissions for printing operations
 - Monitor console output for template loading issues
 - Verify Shiki theme loading and syntax highlighting

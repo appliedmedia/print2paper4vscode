@@ -58,10 +58,47 @@ export class UI {
   }
 
   // Create a webview panel with message handling set up
-  createWebviewPanel(title: string, html: string): unknown {
+  htmlToWebViewPanel(title: string, html: string): unknown {
     const panel = this.app.vscodeapis.createWebviewPanel(title, html);
     this.app.vscodeapis.setupMessageHandling(panel);
     return panel;
+  }
+
+  // Choose save location for files
+  async chooseSaveLocation(defaultFilename: string): Promise<string | null> {
+    const dx = this.dx.sub('chooseSaveLocation');
+    dx.require({ defaultFilename }, ['defaultFilename']);
+    
+    try {
+      // Create default URI in home directory
+      const homeDir = this.app.os.getDir_Home();
+      const defaultPath = this.app.os.pathJoin(homeDir, defaultFilename);
+      const defaultUri = this.app.vscodeapis.uriFromPath(defaultPath);
+      
+      // Show save dialog
+      const fileUri = await this.app.vscodeapis.showSaveDialog({
+        defaultUri: defaultUri,
+        filters: {
+          'PDF Files': ['pdf']
+        },
+        title: 'Save PDF As...'
+      });
+      
+      if (!fileUri) {
+        dx.out('Save cancelled by user');
+        return null;
+      }
+      
+      const targetPath = this.app.vscodeapis.uriToPath(fileUri);
+      dx.out(`User chose save location: ${targetPath}`);
+      return targetPath;
+      
+    } catch (error) {
+      dx.out(`Error choosing save location: ${error}`);
+      throw error;
+    } finally {
+      dx.done();
+    }
   }
 
   // Add toolbar to HTML content

@@ -3,12 +3,13 @@ import type { App } from './App';
 import type { WebviewMessage } from './types/UI_t';
 import type { UIMenuItem } from './types/UI_t';
 import { Diagnostics } from './Diagnostics';
+import jsPDF from 'jspdf';
 
 export class PaperPrinter {
   private app: App;
   private clipboardCapture: ClipboardCapture;
   private handlersRegistered = false;
-  private lastPrintPrepHtml: string | null = null;
+      private pdfRendered: jsPDF | null = null; // In-memory PDF document
   private lastRawCode: string | null = null;
   private lastLanguageId: string | null = null;
   private printTitle: string = 'Printable';
@@ -71,14 +72,14 @@ export class PaperPrinter {
   }
 
   private async handlePrintMessage(msg: WebviewMessage): Promise<void> {
-    if (!this.lastPrintPrepHtml) return;
-    const updated = await this.applyRenderModes(this.lastPrintPrepHtml);
+    if (!this.pdfRendered) return;
+    const updated = await this.applyRenderModes(this.pdfRendered);
     if (msg.value === 'preview')
-      await this.app.pdf.printWithPreview(updated, this.printTitle || 'Print Output');
+      await this.app.pdf.printWithPreview(this.pdfRendered, this.printTitle || 'Print Output');
     else if (msg.value === 'direct')
-      await this.app.pdf.printDirectly(updated, this.printTitle || 'Print Output');
+      await this.app.pdf.printDirectly(this.pdfRendered, this.printTitle || 'Print Output');
     else if (msg.value === 'save')
-      await this.app.pdf.saveAsPDF(updated, this.printTitle || 'Print Output');
+      await this.app.pdf.saveAsPDF(this.pdfRendered, this.printTitle || 'Print Output');
     // TODO: Re-render webview - need access to panel
   }
 
@@ -89,12 +90,9 @@ export class PaperPrinter {
     try {
       const category = this.app.tabinspector.detectActiveTabCategory();
       if (category === 'preview') {
-        const captured = await this.app.tabinspector.capturePreviewHtml();
-        if (!captured) {
-          this.app.ui.showErrorMessage('Failed to capture content from preview tab');
-          return;
-        }
-        await this.openPrintPrepAndPrompt(captured.html, captured.name);
+        // TODO: Handle preview tab capture - need to extract raw code from HTML
+        // or implement HTML-to-PDF conversion for preview tabs
+        this.app.ui.showErrorMessage('Printing from preview tabs is not yet supported with the new PDF architecture');
         return;
       }
 
@@ -127,11 +125,11 @@ export class PaperPrinter {
       this.dx.out(
         `THEMECHECK: Printing with theme: '${this.currentThemeChoice}'`
       );
-      const htmlContent = await this.app.stylize.styleToHtml(info.text, info.languageId, {
+      const pdfDoc = await this.app.stylize.styleToPdf(info.text, info.languageId, {
         title: this.printTitle,
         theme: this.currentThemeChoice,
       });
-      await this.openPrintPrepAndPrompt(htmlContent, printableLabel);
+      await this.openPrintPrepAndPrompt(pdfDoc, printableLabel);
     } catch (error) {
       this.dx.out(`Error handling print: ${error}`);
       this.app.ui.showErrorMessage(
@@ -140,20 +138,20 @@ export class PaperPrinter {
     }
   }
 
-  private async openPrintPrepAndPrompt(htmlContent: string, tabName: string): Promise<void> {
-    this.lastPrintPrepHtml = htmlContent;
+  private async openPrintPrepAndPrompt(pdfDoc: jsPDF, tabName: string): Promise<void> {
+        this.pdfRendered = pdfDoc; // Store in-memory PDF document
     this.printTitle = tabName;
 
     // Create menus and register message handlers when we actually need them
     this.createMenus();
     this.registerMessageHandlers();
 
-    const initial = await this.applyRenderModes(htmlContent);
+    const initial = await this.applyRenderModes(pdfDoc);
 
-    this.app.ui.createWebviewPanel(`Printable: ${tabName}`, await this.app.ui.addToolbar(initial));
+    this.app.ui.htmlToWebViewPanel(`Printable: ${tabName}`, await this.app.ui.addToolbar(initial));
   }
 
-  private async applyRenderModes(htmlBase: string): Promise<string> {
+  private async applyRenderModes(pdfDoc: jsPDF): Promise<string> {
     // If we have raw code, regenerate with theme overrides
     if (this.lastRawCode && this.lastLanguageId) {
       const sizePx = this.computeFontSizePx();
@@ -161,16 +159,19 @@ export class PaperPrinter {
       this.dx.out(
         `THEMECHECK: applyRenderModes with theme: '${this.currentThemeChoice}'`
       );
-      const html = await this.app.stylize.styleToHtml(this.lastRawCode, this.lastLanguageId, {
+      const newPdfDoc = await this.app.stylize.styleToPdf(this.lastRawCode, this.lastLanguageId, {
         fontSize: sizePx,
         lineHeight: lhPx,
         title: this.printTitle,
         theme: this.currentThemeChoice,
       });
-      return html;
+      // Store the new PDF document
+      this.pdfRendered = newPdfDoc;
+      // Convert PDF to HTML
+      return this.app.pdf.pdfToHTML(newPdfDoc, this.printTitle);
     }
-    // For captured HTML from preview tabs, just return as-is
-    return htmlBase;
+    // For existing PDF document, convert to HTML
+    return this.app.pdf.pdfToHTML(pdfDoc, this.printTitle);
   }
 
   private computeFontSizePx(): number {
@@ -310,14 +311,14 @@ export class PaperPrinter {
     if (selectedId === '0') {
       return ''; // Print menu has no default selection
     }
-    if (!this.lastPrintPrepHtml) return '';
-    const updated = await this.applyRenderModes(this.lastPrintPrepHtml);
+    if (!this.pdfRendered) return '';
+    const updated = await this.applyRenderModes(this.pdfRendered);
     if (selectedId === 'preview')
-      await this.app.pdf.printWithPreview(updated, this.printTitle || 'Print Output');
+      await this.app.pdf.printWithPreview(this.pdfRendered, this.printTitle || 'Print Output');
     else if (selectedId === 'direct')
-      await this.app.pdf.printDirectly(updated, this.printTitle || 'Print Output');
+      await this.app.pdf.printDirectly(this.pdfRendered, this.printTitle || 'Print Output');
     else if (selectedId === 'save')
-      await this.app.pdf.saveAsPDF(updated, this.printTitle || 'Print Output');
+      await this.app.pdf.saveAsPDF(this.pdfRendered, this.printTitle || 'Print Output');
     // TODO: Re-render webview - need access to panel
     return ''; // action handled
   }
