@@ -140,8 +140,12 @@ The project uses specific TypeScript lib settings for VS Code extension compatib
 ### PDF Generation
 
 ```typescript
-// jsPDF vector PDF generation
-`node src/PDFGenerator.js "${tempHTMLPath}" "${tempPDFPath}"`;
+// jsPDF vector PDF generation (conceptual)
+// Tokens -> layout -> jsPDF text/draw -> save
+// See src/PDF.ts for token-to-PDF pipeline.
+
+// Ensure jsPDF installed and available in the extension bundle
+// No external browser or separate node script is required.
 ```
 
 ### Syntax Highlighting
