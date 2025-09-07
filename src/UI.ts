@@ -70,9 +70,9 @@ export class UI {
     dx.require({ defaultFilename }, ['defaultFilename']);
     
     try {
-      // Create default URI in Downloads directory
-      const downloadsDir = this.app.os.getDownloadsDirectory();
-      const defaultPath = this.app.os.pathJoin(downloadsDir, defaultFilename);
+      // Create default URI in home directory
+      const homeDir = this.app.os.getHomeDir();
+      const defaultPath = this.app.os.pathJoin(homeDir, defaultFilename);
       const defaultUri = this.app.vscodeapis.uriFromPath(defaultPath);
       
       // Show save dialog

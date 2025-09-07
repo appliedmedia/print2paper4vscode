@@ -54,20 +54,20 @@ describe('OSMac Platform Implementation', () => {
   });
 
   describe('Directory Operations', () => {
-    it('should get downloads directory', () => {
-      const downloadsDir = osMac.getDownloadsDirectory();
+    it('should get home directory', () => {
+      const homeDir = osMac.getHomeDir();
       
-      assert.strictEqual(typeof downloadsDir, 'string', 'Should return string path');
-      assert.ok(downloadsDir.length > 0, 'Should return non-empty path');
-      assert.ok(downloadsDir.includes('Downloads'), 'Should contain Downloads in path');
+      assert.strictEqual(typeof homeDir, 'string', 'Should return string path');
+      assert.ok(homeDir.length > 0, 'Should return non-empty path');
+      assert.ok(homeDir.includes('Users') || homeDir.includes('home'), 'Should contain Users or home in path');
     });
 
     it('should use AppleScript to get downloads directory', () => {
       // Test that the method attempts to use AppleScript
-      const downloadsDir = osMac.getDownloadsDirectory();
+      const homeDir = osMac.getHomeDir();
       
       // Should either succeed with AppleScript or fallback to HOME/Downloads
-      assert.ok(downloadsDir.includes('Downloads'), 'Should contain Downloads in path');
+      assert.ok(homeDir.includes('Users') || homeDir.includes('home'), 'Should contain Users or home in path');
     });
 
     it('should fallback to HOME/Downloads when AppleScript fails', () => {
@@ -76,11 +76,11 @@ describe('OSMac Platform Implementation', () => {
       osMac['execSync'] = () => {
         throw new Error('AppleScript failed');
       };
-
-      const downloadsDir = osMac.getDownloadsDirectory();
+      
+      const homeDir = osMac.getHomeDir();
       
       // Should fallback to HOME/Downloads
-      assert.ok(downloadsDir.includes('Downloads'), 'Should fallback to Downloads');
+      assert.ok(homeDir.includes('Users') || homeDir.includes('home'), 'Should fallback to home directory');
       
       // Restore original method
       osMac['execSync'] = originalExecSync;
@@ -185,7 +185,7 @@ describe('OSMac Platform Implementation', () => {
         'fileOpenInDefaultApp',
         'fileReveal',
         'filePrint',
-        'getDownloadsDirectory', 
+        'getHomeDir', 
         'fileOpenPrintDialog'
       ];
 

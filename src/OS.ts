@@ -1,5 +1,6 @@
 import * as fs from 'fs';
 import * as path from 'path';
+import * as os from 'os';
 import { exec as cpExec, execSync as cpExecSync } from 'child_process';
 import { promisify } from 'util';
 import { parse as yamlParse } from 'yaml';
@@ -44,10 +45,12 @@ export abstract class OS {
   abstract fileOpenInDefaultApp(path: string): Promise<void>;
   abstract fileReveal(path: string): Promise<void>;
   abstract filePrint(path: string): Promise<void>;
-  abstract getDownloadsDirectory(): string;
   abstract fileOpenPrintDialog(path: string): Promise<void>;
-  
 
+  // Platform-agnostic home directory
+  getHomeDir(): string {
+    return os.homedir();
+  }
 
   // Common filesystem helpers consolidated here
   ensureDir(dirPath: string): void {

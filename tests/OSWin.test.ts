@@ -54,19 +54,19 @@ describe('OSWin Platform Implementation', () => {
   });
 
   describe('Directory Operations', () => {
-    it('should get downloads directory', () => {
-      const downloadsDir = osWin.getDownloadsDirectory();
+    it('should get home directory', () => {
+      const homeDir = osWin.getHomeDir();
       
-      assert.strictEqual(typeof downloadsDir, 'string', 'Should return string path');
-      assert.ok(downloadsDir.length > 0, 'Should return non-empty path');
-      assert.ok(downloadsDir.includes('Downloads'), 'Should contain Downloads in path');
+      assert.strictEqual(typeof homeDir, 'string', 'Should return string path');
+      assert.ok(homeDir.length > 0, 'Should return non-empty path');
+      assert.ok(homeDir.includes('Users') || homeDir.includes('home'), 'Should contain Users or home in path');
     });
 
     it('should use Windows environment variables', () => {
-      const downloadsDir = osWin.getDownloadsDirectory();
+      const homeDir = osWin.getHomeDir();
       
       // Should use USERPROFILE or similar Windows environment variable
-      assert.ok(downloadsDir.length > 0, 'Should return valid path');
+      assert.ok(homeDir.length > 0, 'Should return valid path');
     });
 
     it('should handle missing environment variables', () => {
@@ -74,10 +74,10 @@ describe('OSWin Platform Implementation', () => {
       const originalUserProfile = process.env.USERPROFILE;
       delete process.env.USERPROFILE;
       
-      const downloadsDir = osWin.getDownloadsDirectory();
+      const homeDir = osWin.getHomeDir();
       
       // Should still return a valid path
-      assert.strictEqual(typeof downloadsDir, 'string', 'Should return string even without USERPROFILE');
+      assert.strictEqual(typeof homeDir, 'string', 'Should return string even without USERPROFILE');
       
       // Restore USERPROFILE
       if (originalUserProfile) {
@@ -185,7 +185,7 @@ describe('OSWin Platform Implementation', () => {
         'fileOpenInDefaultApp',
         'fileReveal',
         'filePrint',
-        'getDownloadsDirectory',
+        'getHomeDir',
         'fileOpenPrintDialog'
       ];
 

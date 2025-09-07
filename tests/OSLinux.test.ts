@@ -54,12 +54,12 @@ describe('OSLinux Platform Implementation', () => {
   });
 
   describe('Directory Operations', () => {
-    it('should get downloads directory', () => {
-      const downloadsDir = osLinux.getDownloadsDirectory();
+    it('should get home directory', () => {
+      const homeDir = osLinux.getHomeDir();
       
-      assert.strictEqual(typeof downloadsDir, 'string', 'Should return string path');
-      assert.ok(downloadsDir.length > 0, 'Should return non-empty path');
-      assert.ok(downloadsDir.includes('Downloads'), 'Should contain Downloads in path');
+      assert.strictEqual(typeof homeDir, 'string', 'Should return string path');
+      assert.ok(homeDir.length > 0, 'Should return non-empty path');
+      assert.ok(homeDir.includes('home') || homeDir.includes('Users'), 'Should contain home or Users in path');
     });
 
     it('should handle downloads directory fallback', () => {
@@ -67,9 +67,9 @@ describe('OSLinux Platform Implementation', () => {
       const originalHome = process.env.HOME;
       delete process.env.HOME;
       
-      const downloadsDir = osLinux.getDownloadsDirectory();
+      const homeDir = osLinux.getHomeDir();
       
-      assert.strictEqual(typeof downloadsDir, 'string', 'Should return string even without HOME');
+      assert.strictEqual(typeof homeDir, 'string', 'Should return string even without HOME');
       
       // Restore HOME
       if (originalHome) {
@@ -143,7 +143,7 @@ describe('OSLinux Platform Implementation', () => {
         'fileOpenInDefaultApp',
         'fileReveal',
         'filePrint', 
-        'getDownloadsDirectory',
+        'getHomeDir',
         'fileOpenPrintDialog'
       ];
 

@@ -188,7 +188,7 @@ describe('OS Abstraction Layer', () => {
         'fileOpenInDefaultApp',
         'fileReveal', 
         'filePrint',
-        'getDownloadsDirectory',
+        'getHomeDir',
         'fileOpenPrintDialog'
       ];
 

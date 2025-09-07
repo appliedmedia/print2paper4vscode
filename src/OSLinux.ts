@@ -22,10 +22,6 @@ export class OSLinux extends OS {
     await this.execAsync(`lp "${path}"`);
   }
 
-  getDownloadsDirectory(): string {
-    const home = process.env.HOME || '';
-    return this.pathJoin(home, 'Downloads');
-  }
 
   async fileOpenPrintDialog(pdfPath: string): Promise<void> {
     // Open PDF in default application (user can print from there)
