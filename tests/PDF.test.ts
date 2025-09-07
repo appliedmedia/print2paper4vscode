@@ -17,7 +17,7 @@ describe('PDF Generation and Display', () => {
         }),
       },
       os: {
-        getTempDirectory: () => '/tmp',
+        getDir_Temp: () => '/tmp',
         fileWrite: (path: string, content: Buffer) => {
           console.log(`Mock: Writing ${content.length} bytes to ${path}`);
         },

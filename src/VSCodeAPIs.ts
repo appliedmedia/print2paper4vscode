@@ -349,7 +349,7 @@ export class VSCodeAPIs {
   /**
    * Gets temp directory for the extension
    */
-  getTempDirectory(): string {
+  getDir_Temp(): string {
     return this.app.os.pathJoin(this.context.globalStorageUri.fsPath, 'temp');
   }
 

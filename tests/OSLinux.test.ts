@@ -55,7 +55,7 @@ describe('OSLinux Platform Implementation', () => {
 
   describe('Directory Operations', () => {
     it('should get home directory', () => {
-      const homeDir = osLinux.getHomeDir();
+      const homeDir = osLinux.getDir_Home();
       
       assert.strictEqual(typeof homeDir, 'string', 'Should return string path');
       assert.ok(homeDir.length > 0, 'Should return non-empty path');
@@ -67,7 +67,7 @@ describe('OSLinux Platform Implementation', () => {
       const originalHome = process.env.HOME;
       delete process.env.HOME;
       
-      const homeDir = osLinux.getHomeDir();
+      const homeDir = osLinux.getDir_Home();
       
       assert.strictEqual(typeof homeDir, 'string', 'Should return string even without HOME');
       
@@ -143,7 +143,7 @@ describe('OSLinux Platform Implementation', () => {
         'fileOpenInDefaultApp',
         'fileReveal',
         'filePrint', 
-        'getHomeDir',
+        'getDir_Home',
         'fileOpenPrintDialog'
       ];
 

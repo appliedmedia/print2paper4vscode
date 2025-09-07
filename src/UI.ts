@@ -71,7 +71,7 @@ export class UI {
     
     try {
       // Create default URI in home directory
-      const homeDir = this.app.os.getHomeDir();
+      const homeDir = this.app.os.getDir_Home();
       const defaultPath = this.app.os.pathJoin(homeDir, defaultFilename);
       const defaultUri = this.app.vscodeapis.uriFromPath(defaultPath);
       

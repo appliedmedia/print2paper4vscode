@@ -41,7 +41,7 @@ export class PDF {
       const filename = `${timestamp}_${safeName}.pdf`;
       
       // Save PDF to temp directory
-      const tempDir = this.app.vscodeapis.getTempDirectory();
+      const tempDir = this.app.vscodeapis.getDir_Temp();
       this.app.os.ensureDir(tempDir);
       const tempPdfPath = this.app.os.pathJoin(tempDir, filename);
       
@@ -67,7 +67,7 @@ export class PDF {
       const filename = `${timestamp}_${safeName}.pdf`;
       
       // Save PDF to temp directory
-      const tempDir = this.app.vscodeapis.getTempDirectory();
+      const tempDir = this.app.vscodeapis.getDir_Temp();
       this.app.os.ensureDir(tempDir);
       const tempPdfPath = this.app.os.pathJoin(tempDir, filename);
       

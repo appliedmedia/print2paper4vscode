@@ -1,6 +1,6 @@
 import * as fs from 'fs';
 import * as path from 'path';
-import * as os from 'os';
+import { homedir } from 'os';
 import { exec as cpExec, execSync as cpExecSync } from 'child_process';
 import { promisify } from 'util';
 import { parse as yamlParse } from 'yaml';
@@ -33,6 +33,11 @@ export abstract class OS {
   }
 
   static create(app: App): OS {
+    // Using process.platform instead of os.platform() for robustness:
+    // - process.platform is available immediately on Node.js startup
+    // - os.platform() requires module loading and can throw errors
+    // - process.platform is more commonly used in Node.js ecosystem
+    // - Both return identical values, but process.platform is more reliable
     if (process?.platform === 'win32') {
       return new OSWin(app);
     } else if (process?.platform === 'linux') {
@@ -48,8 +53,8 @@ export abstract class OS {
   abstract fileOpenPrintDialog(path: string): Promise<void>;
 
   // Platform-agnostic home directory
-  getHomeDir(): string {
-    return os.homedir();
+  getDir_Home(): string {
+    return homedir();
   }
 
   // Common filesystem helpers consolidated here

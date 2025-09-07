@@ -55,7 +55,7 @@ describe('OSMac Platform Implementation', () => {
 
   describe('Directory Operations', () => {
     it('should get home directory', () => {
-      const homeDir = osMac.getHomeDir();
+      const homeDir = osMac.getDir_Home();
       
       assert.strictEqual(typeof homeDir, 'string', 'Should return string path');
       assert.ok(homeDir.length > 0, 'Should return non-empty path');
@@ -64,7 +64,7 @@ describe('OSMac Platform Implementation', () => {
 
     it('should use AppleScript to get downloads directory', () => {
       // Test that the method attempts to use AppleScript
-      const homeDir = osMac.getHomeDir();
+      const homeDir = osMac.getDir_Home();
       
       // Should either succeed with AppleScript or fallback to HOME/Downloads
       assert.ok(homeDir.includes('Users') || homeDir.includes('home'), 'Should contain Users or home in path');
@@ -77,7 +77,7 @@ describe('OSMac Platform Implementation', () => {
         throw new Error('AppleScript failed');
       };
       
-      const homeDir = osMac.getHomeDir();
+      const homeDir = osMac.getDir_Home();
       
       // Should fallback to HOME/Downloads
       assert.ok(homeDir.includes('Users') || homeDir.includes('home'), 'Should fallback to home directory');
@@ -185,7 +185,7 @@ describe('OSMac Platform Implementation', () => {
         'fileOpenInDefaultApp',
         'fileReveal',
         'filePrint',
-        'getHomeDir', 
+        'getDir_Home', 
         'fileOpenPrintDialog'
       ];
 

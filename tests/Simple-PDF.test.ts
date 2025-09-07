@@ -16,7 +16,7 @@ describe('Simple PDF Test', () => {
         }),
       },
       os: {
-        getTempDirectory: () => '/tmp',
+        getDir_Temp: () => '/tmp',
         fileWrite: (path: string, content: Buffer) => {
           console.log(`Mock: Writing ${content.length} bytes to ${path}`);
         },

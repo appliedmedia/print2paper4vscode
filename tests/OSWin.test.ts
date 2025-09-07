@@ -55,7 +55,7 @@ describe('OSWin Platform Implementation', () => {
 
   describe('Directory Operations', () => {
     it('should get home directory', () => {
-      const homeDir = osWin.getHomeDir();
+      const homeDir = osWin.getDir_Home();
       
       assert.strictEqual(typeof homeDir, 'string', 'Should return string path');
       assert.ok(homeDir.length > 0, 'Should return non-empty path');
@@ -63,7 +63,7 @@ describe('OSWin Platform Implementation', () => {
     });
 
     it('should use Windows environment variables', () => {
-      const homeDir = osWin.getHomeDir();
+      const homeDir = osWin.getDir_Home();
       
       // Should use USERPROFILE or similar Windows environment variable
       assert.ok(homeDir.length > 0, 'Should return valid path');
@@ -74,7 +74,7 @@ describe('OSWin Platform Implementation', () => {
       const originalUserProfile = process.env.USERPROFILE;
       delete process.env.USERPROFILE;
       
-      const homeDir = osWin.getHomeDir();
+      const homeDir = osWin.getDir_Home();
       
       // Should still return a valid path
       assert.strictEqual(typeof homeDir, 'string', 'Should return string even without USERPROFILE');
@@ -185,7 +185,7 @@ describe('OSWin Platform Implementation', () => {
         'fileOpenInDefaultApp',
         'fileReveal',
         'filePrint',
-        'getHomeDir',
+        'getDir_Home',
         'fileOpenPrintDialog'
       ];
 
