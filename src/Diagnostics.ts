@@ -1,6 +1,8 @@
 // Type definition for messages that can be sent to out/print
 type MessageRef = string | object;
 
+import { UI } from './UI';
+
 export class Diagnostics {
   static separator = ' > ';
 
@@ -91,8 +93,6 @@ export class Diagnostics {
   out(message: MessageRef): this {
     if (this._debugOn) {
       const formattedMessage = this.messageHeader(message);
-      // Import UI dynamically to avoid circular dependency
-      const { UI } = require('./UI');
       UI.out(formattedMessage);
     }
     return this;
@@ -129,8 +129,6 @@ export class Diagnostics {
    */
   print(message: MessageRef): this {
     const formattedMessage = this.messageHeader(message);
-    // Import UI dynamically to avoid circular dependency
-    const { UI } = require('./UI');
     UI.out(formattedMessage);
     return this;
   }
