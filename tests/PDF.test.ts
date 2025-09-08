@@ -1,7 +1,7 @@
 import { describe, it, beforeEach } from 'node:test';
 import * as assert from 'node:assert';
 import { PDF } from '../src/PDF.js';
-import type { IThemedToken } from 'shiki';
+import type { ThemedToken } from 'shiki';
 
 describe('PDF Generation and Display', () => {
   let pdf: PDF;
@@ -34,7 +34,7 @@ describe('PDF Generation and Display', () => {
 
   describe('generatePdfFromTokens', () => {
     it('should generate PDF from Shiki tokens', async () => {
-      const mockTokens: IThemedToken[][] = [
+      const mockTokens: ThemedToken[][] = [
         [
           { content: 'function', color: '#0000ff', fontStyle: 1 },
           { content: ' ', color: '#000000', fontStyle: 0 },
@@ -64,7 +64,7 @@ describe('PDF Generation and Display', () => {
     });
 
     it('should handle tokens with missing color information', async () => {
-      const mockTokens: IThemedToken[][] = [
+      const mockTokens: ThemedToken[][] = [
         [
           { content: 'test', color: undefined, fontStyle: 0 },
           { content: ' ', color: undefined, fontStyle: 0 },
@@ -80,7 +80,7 @@ describe('PDF Generation and Display', () => {
 
   describe('pdfToHTML', () => {
     it('should convert PDF to HTML with canvas', async () => {
-      const mockTokens: IThemedToken[][] = [
+      const mockTokens: ThemedToken[][] = [
         [{ content: 'test', color: '#000000', fontStyle: 0 }],
       ];
       
@@ -96,7 +96,7 @@ describe('PDF Generation and Display', () => {
 
   describe('saveAsPDF', () => {
     it('should save PDF to chosen location', async () => {
-      const mockTokens: IThemedToken[][] = [
+      const mockTokens: ThemedToken[][] = [
         [{ content: 'test', color: '#000000', fontStyle: 0 }],
       ];
       
@@ -114,7 +114,7 @@ describe('PDF Generation and Display', () => {
     });
 
     it('should handle save cancellation', async () => {
-      const mockTokens: IThemedToken[][] = [
+      const mockTokens: ThemedToken[][] = [
         [{ content: 'test', color: '#000000', fontStyle: 0 }],
       ];
       
@@ -131,7 +131,7 @@ describe('PDF Generation and Display', () => {
 
   describe('printWithPreview', () => {
     it('should create temp file and open print dialog', async () => {
-      const mockTokens: IThemedToken[][] = [
+      const mockTokens: ThemedToken[][] = [
         [{ content: 'test', color: '#000000', fontStyle: 0 }],
       ];
       
@@ -152,7 +152,7 @@ describe('PDF Generation and Display', () => {
 
   describe('printDirectly', () => {
     it('should create temp file and print directly', async () => {
-      const mockTokens: IThemedToken[][] = [
+      const mockTokens: ThemedToken[][] = [
         [{ content: 'test', color: '#000000', fontStyle: 0 }],
       ];
       

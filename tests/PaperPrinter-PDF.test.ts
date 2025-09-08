@@ -1,7 +1,7 @@
 import { describe, it, before } from 'node:test';
 import * as assert from 'node:assert';
 import { PaperPrinter } from '../src/PaperPrinter.js';
-import type { IThemedToken } from 'shiki';
+import type { ThemedToken } from 'shiki';
 
 describe('PaperPrinter PDF Integration', () => {
   let paperPrinter: PaperPrinter;

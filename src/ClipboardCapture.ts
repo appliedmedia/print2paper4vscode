@@ -173,4 +173,11 @@ export class ClipboardCapture {
 
     return htmlContent;
   }
+
+  /**
+   * Alias for captureAndConvert for backward compatibility
+   */
+  async capture(): Promise<string | null> {
+    return this.captureAndConvert();
+  }
 }

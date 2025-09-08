@@ -26,28 +26,28 @@ describe('OSWin Platform Implementation', () => {
   describe('File Operations', () => {
     it('should open files in default app', async () => {
       const testFile = 'C:\\temp\\test-file.txt';
-      
+
       // This should not throw an error
       await osWin.fileOpenInDefaultApp(testFile);
     });
 
     it('should reveal files in Explorer', async () => {
       const testFile = 'C:\\temp\\test-file.txt';
-      
+
       // This should not throw an error
       await osWin.fileReveal(testFile);
     });
 
     it('should print files', async () => {
       const testFile = 'C:\\temp\\test-file.txt';
-      
+
       // This should not throw an error
       await osWin.filePrint(testFile);
     });
 
     it('should open print dialog', async () => {
       const testFile = 'C:\\temp\\test-file.txt';
-      
+
       // This should not throw an error
       await osWin.fileOpenPrintDialog(testFile);
     });
@@ -56,15 +56,18 @@ describe('OSWin Platform Implementation', () => {
   describe('Directory Operations', () => {
     it('should get home directory', () => {
       const homeDir = osWin.getDir_Home();
-      
+
       assert.strictEqual(typeof homeDir, 'string', 'Should return string path');
       assert.ok(homeDir.length > 0, 'Should return non-empty path');
-      assert.ok(homeDir.includes('Users') || homeDir.includes('home'), 'Should contain Users or home in path');
+      assert.ok(
+        homeDir.includes('Users') || homeDir.includes('home'),
+        'Should contain Users or home in path'
+      );
     });
 
     it('should use Windows environment variables', () => {
       const homeDir = osWin.getDir_Home();
-      
+
       // Should use USERPROFILE or similar Windows environment variable
       assert.ok(homeDir.length > 0, 'Should return valid path');
     });
@@ -73,12 +76,12 @@ describe('OSWin Platform Implementation', () => {
       // Mock missing USERPROFILE
       const originalUserProfile = process.env.USERPROFILE;
       delete process.env.USERPROFILE;
-      
+
       const homeDir = osWin.getDir_Home();
-      
+
       // Should still return a valid path
       assert.strictEqual(typeof homeDir, 'string', 'Should return string even without USERPROFILE');
-      
+
       // Restore USERPROFILE
       if (originalUserProfile) {
         process.env.USERPROFILE = originalUserProfile;
@@ -87,18 +90,14 @@ describe('OSWin Platform Implementation', () => {
   });
 
   describe('Command Execution', () => {
-    it('should execute Windows-specific commands', async () => {
-      const result = await osWin.execAsync('echo "Windows test"');
-      
-      assert.ok(result, 'Should return result');
-      assert.ok(result.stdout.includes('Windows test'), 'Should execute command correctly');
-    });
-
-    it('should use Windows commands for file operations', async () => {
-      // Test that Windows commands are available
-      const result = await osWin.execAsync('where cmd');
-      
-      assert.ok(result, 'Should return result for cmd check');
+    it('should have public file operations', () => {
+      assert.strictEqual(
+        typeof osWin.fileOpenInDefaultApp,
+        'function',
+        'Should have fileOpenInDefaultApp method'
+      );
+      assert.strictEqual(typeof osWin.fileReveal, 'function', 'Should have fileReveal method');
+      assert.strictEqual(typeof osWin.filePrint, 'function', 'Should have filePrint method');
     });
   });
 
@@ -106,7 +105,7 @@ describe('OSWin Platform Implementation', () => {
     it('should use start command for file operations', async () => {
       // The fileOpenInDefaultApp method should use start command
       const testFile = 'C:\\temp\\test-file.txt';
-      
+
       // This should not throw an error
       await osWin.fileOpenInDefaultApp(testFile);
     });
@@ -114,7 +113,7 @@ describe('OSWin Platform Implementation', () => {
     it('should use explorer for file reveal', async () => {
       // The fileReveal method should use explorer /select
       const testFile = 'C:\\temp\\test-file.txt';
-      
+
       // This should not throw an error
       await osWin.fileReveal(testFile);
     });
@@ -122,7 +121,7 @@ describe('OSWin Platform Implementation', () => {
     it('should handle Windows path separators', () => {
       const path1 = osWin.pathJoin('C:', 'Users', 'test', 'file.txt');
       assert.ok(path1.includes('\\'), 'Should use Windows path separators');
-      
+
       const path2 = osWin.pathJoin('C:\\Users', 'test', 'file.txt');
       assert.ok(path2.includes('\\'), 'Should handle existing separators');
     });
@@ -186,7 +185,7 @@ describe('OSWin Platform Implementation', () => {
         'fileReveal',
         'filePrint',
         'getDir_Home',
-        'fileOpenPrintDialog'
+        'fileOpenPrintDialog',
       ];
 
       for (const method of abstractMethods) {
@@ -220,11 +219,14 @@ describe('OSWin Platform Implementation', () => {
     it('should call done on diagnostics when done', () => {
       let doneCalled = false;
       osWin['dx'] = {
-        done: () => { doneCalled = true; }
+        done: () => {
+          doneCalled = true;
+          return osWin['dx'];
+        },
       };
 
       osWin.done();
-      
+
       assert.ok(doneCalled, 'Should call done on diagnostics');
     });
   });

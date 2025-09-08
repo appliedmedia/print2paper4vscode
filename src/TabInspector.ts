@@ -42,7 +42,7 @@ export class TabInspector {
     async capturePreviewHtml(): Promise<{ html: string; name: string } | null> {
         try {
             // Reuse existing capture path which returns HTML via ClipboardCapture
-            const html = await this.app.paperprinter['clipboardCapture'].captureAndConvert();
+            const html = await this.app.paperPrinter['clipboardCapture'].captureAndConvert();
             const name = this.app.vscodeapis.getActiveTabName();
             return html ? { html, name } : null;
         } catch {
@@ -71,15 +71,15 @@ export class TabInspector {
 
     async inspectVisibleEditors(): Promise<{ code: string; language: string; fileName: string; filePath: string }[]> {
         try {
-            const editors = this.app.vscodeapis.getVisibleTextEditors();
-            return editors.map(editor => {
-                const code = this.app.vscodeapis.getSelectionOrDocumentText(editor);
-                const language = editor.document.languageId || 'plaintext';
-                const fileName = this.app.vscodeapis.getDescriptiveName(editor.document);
-                const filePath = editor.document.uri.fsPath;
-
-                return { code, language, fileName, filePath };
-            });
+            // For now, just return the active editor since getVisibleTextEditors is not implemented
+            const activeEditor = this.app.vscodeapis.getActiveTextEditor();
+            if (!activeEditor) return [];
+            
+            const code = this.app.vscodeapis.getSelectionOrDocumentText(activeEditor);
+            const language = activeEditor.document.languageId || 'plaintext';
+            const fileName = this.app.vscodeapis.getDescriptiveName(activeEditor.document);
+            const filePath = activeEditor.document.uri.fsPath;
+            return [{ code, language, fileName, filePath }];
         } catch (error) {
             this.dx.out(`Error inspecting visible editors: ${error}`);
             return [];

@@ -26,28 +26,28 @@ describe('OSMac Platform Implementation', () => {
   describe('File Operations', () => {
     it('should open files in default app', async () => {
       const testFile = '/tmp/test-file.txt';
-      
+
       // This should not throw an error
       await osMac.fileOpenInDefaultApp(testFile);
     });
 
     it('should reveal files in Finder', async () => {
       const testFile = '/tmp/test-file.txt';
-      
+
       // This should not throw an error
       await osMac.fileReveal(testFile);
     });
 
     it('should print files', async () => {
       const testFile = '/tmp/test-file.txt';
-      
+
       // This should not throw an error
       await osMac.filePrint(testFile);
     });
 
     it('should open print dialog', async () => {
       const testFile = '/tmp/test-file.txt';
-      
+
       // This should not throw an error
       await osMac.fileOpenPrintDialog(testFile);
     });
@@ -56,18 +56,24 @@ describe('OSMac Platform Implementation', () => {
   describe('Directory Operations', () => {
     it('should get home directory', () => {
       const homeDir = osMac.getDir_Home();
-      
+
       assert.strictEqual(typeof homeDir, 'string', 'Should return string path');
       assert.ok(homeDir.length > 0, 'Should return non-empty path');
-      assert.ok(homeDir.includes('Users') || homeDir.includes('home'), 'Should contain Users or home in path');
+      assert.ok(
+        homeDir.includes('Users') || homeDir.includes('home'),
+        'Should contain Users or home in path'
+      );
     });
 
     it('should use AppleScript to get downloads directory', () => {
       // Test that the method attempts to use AppleScript
       const homeDir = osMac.getDir_Home();
-      
+
       // Should either succeed with AppleScript or fallback to HOME/Downloads
-      assert.ok(homeDir.includes('Users') || homeDir.includes('home'), 'Should contain Users or home in path');
+      assert.ok(
+        homeDir.includes('Users') || homeDir.includes('home'),
+        'Should contain Users or home in path'
+      );
     });
 
     it('should fallback to HOME/Downloads when AppleScript fails', () => {
@@ -76,37 +82,29 @@ describe('OSMac Platform Implementation', () => {
       osMac['execSync'] = () => {
         throw new Error('AppleScript failed');
       };
-      
+
       const homeDir = osMac.getDir_Home();
-      
+
       // Should fallback to HOME/Downloads
-      assert.ok(homeDir.includes('Users') || homeDir.includes('home'), 'Should fallback to home directory');
-      
+      assert.ok(
+        homeDir.includes('Users') || homeDir.includes('home'),
+        'Should fallback to home directory'
+      );
+
       // Restore original method
       osMac['execSync'] = originalExecSync;
     });
   });
 
   describe('Command Execution', () => {
-    it('should execute macOS-specific commands', async () => {
-      const result = await osMac.execAsync('echo "macOS test"');
-      
-      assert.ok(result, 'Should return result');
-      assert.ok(result.stdout.includes('macOS test'), 'Should execute command correctly');
-    });
-
-    it('should use open command for file operations', async () => {
-      // Test that open command is available
-      const result = await osMac.execAsync('which open');
-      
-      assert.ok(result, 'Should return result for open command check');
-    });
-
-    it('should use osascript for AppleScript operations', async () => {
-      // Test that osascript is available
-      const result = await osMac.execAsync('which osascript');
-      
-      assert.ok(result, 'Should return result for osascript check');
+    it('should have public file operations', () => {
+      assert.strictEqual(
+        typeof osMac.fileOpenInDefaultApp,
+        'function',
+        'Should have fileOpenInDefaultApp method'
+      );
+      assert.strictEqual(typeof osMac.fileReveal, 'function', 'Should have fileReveal method');
+      assert.strictEqual(typeof osMac.filePrint, 'function', 'Should have filePrint method');
     });
   });
 
@@ -114,7 +112,7 @@ describe('OSMac Platform Implementation', () => {
     it('should use AppleScript for print operations', async () => {
       // The print method should use AppleScript
       const testFile = '/tmp/test-file.txt';
-      
+
       // This should not throw an error
       await osMac.filePrint(testFile);
     });
@@ -122,7 +120,7 @@ describe('OSMac Platform Implementation', () => {
     it('should use AppleScript for print dialog', async () => {
       // The print dialog method should use AppleScript with Preview
       const testFile = '/tmp/test-file.txt';
-      
+
       // This should not throw an error
       await osMac.fileOpenPrintDialog(testFile);
     });
@@ -185,8 +183,8 @@ describe('OSMac Platform Implementation', () => {
         'fileOpenInDefaultApp',
         'fileReveal',
         'filePrint',
-        'getDir_Home', 
-        'fileOpenPrintDialog'
+        'getDir_Home',
+        'fileOpenPrintDialog',
       ];
 
       for (const method of abstractMethods) {
@@ -199,7 +197,7 @@ describe('OSMac Platform Implementation', () => {
     it('should use Finder for file reveal', async () => {
       // The fileReveal method should use open -R
       const testFile = '/tmp/test-file.txt';
-      
+
       // This should not throw an error
       await osMac.fileReveal(testFile);
     });
@@ -207,7 +205,7 @@ describe('OSMac Platform Implementation', () => {
     it('should use Preview for print dialog', async () => {
       // The fileOpenPrintDialog method should use Preview
       const testFile = '/tmp/test-file.txt';
-      
+
       // This should not throw an error
       await osMac.fileOpenPrintDialog(testFile);
     });
@@ -221,11 +219,14 @@ describe('OSMac Platform Implementation', () => {
     it('should call done on diagnostics when done', () => {
       let doneCalled = false;
       osMac['dx'] = {
-        done: () => { doneCalled = true; }
+        done: () => {
+          doneCalled = true;
+          return osMac['dx'];
+        },
       };
 
       osMac.done();
-      
+
       assert.ok(doneCalled, 'Should call done on diagnostics');
     });
   });

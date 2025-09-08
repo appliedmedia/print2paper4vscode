@@ -88,7 +88,7 @@ export class PaperPrinter {
    */
   async handleFirstPrintCommand(): Promise<void> {
     try {
-      const category = this.app.tabinspector.detectActiveTabCategory();
+      const category = this.app.tabInspector.detectActiveTabCategory();
       if (category === 'preview') {
         // TODO: Handle preview tab capture - need to extract raw code from HTML
         // or implement HTML-to-PDF conversion for preview tabs
@@ -96,7 +96,7 @@ export class PaperPrinter {
         return;
       }
 
-      const info = this.app.tabinspector.getEditorSelectionOrAll();
+      const info = this.app.tabInspector.getEditorSelectionOrAll();
       if (!info) {
         this.app.ui.showErrorMessage('No active editor found');
         return;

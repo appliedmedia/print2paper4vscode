@@ -1,7 +1,7 @@
 import type { App } from './App';
 import { Diagnostics } from './Diagnostics';
 import jsPDF from 'jspdf';
-import type { IThemedToken } from 'shiki';
+import type { ThemedToken } from 'shiki';
 
 export class PDF {
   private app: App;
@@ -129,7 +129,7 @@ export class PDF {
 
   // NEW: Generate PDF directly from Shiki tokens
   async generatePdfFromTokens(
-    tokens: IThemedToken[][],
+    tokens: ThemedToken[][],
     fontFamily: string,
     fontSize: number,
     lineHeight: number,

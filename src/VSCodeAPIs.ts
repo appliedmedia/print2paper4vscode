@@ -31,7 +31,7 @@ export class VSCodeAPIs {
     
     // Register VS Code commands
     const printCommand = this.vscode.commands.registerCommand('p2p4vsc.print2paper', () => {
-      this.app.paperprinter.handleFirstPrintCommand();
+      this.app.paperPrinter.handleFirstPrintCommand();
     });
 
     this.context.subscriptions.push(printCommand);

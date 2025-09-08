@@ -13,9 +13,9 @@ export class App {
   vscodeapis: VSCodeAPIs;
   ui: UI;
   pdf: PDF;
-  paperprinter: PaperPrinter;
+  paperPrinter: PaperPrinter;
   stylize: Stylize;
-  tabinspector: TabInspector;
+  tabInspector: TabInspector;
   os: OS;
   uimenumgr: UIMenuMgr;
   dx: Diagnostics;
@@ -29,9 +29,9 @@ export class App {
     this.ui = new UI(this);
     this.os = OS.create(this);
     this.pdf = new PDF(this);
-    this.paperprinter = new PaperPrinter(this);
+    this.paperPrinter = new PaperPrinter(this);
     this.stylize = new Stylize(this);
-    this.tabinspector = new TabInspector(this);
+    this.tabInspector = new TabInspector(this);
     this.uimenumgr = new UIMenuMgr(this);
   }
 
@@ -41,18 +41,18 @@ export class App {
     this.ui.init();
     this.os.init();
     this.pdf.init();
-    this.paperprinter.init();
+    this.paperPrinter.init();
     this.stylize.init();
-    this.tabinspector.init();
+    this.tabInspector.init();
     this.uimenumgr.init();
   }
 
   done(): void {
     // Cleanup all components
     this.vscodeapis.done();
-    this.tabinspector.done();
+    this.tabInspector.done();
     this.pdf.done();
-    this.paperprinter.done();
+    this.paperPrinter.done();
     this.stylize.done();
     this.os.done();
     this.uimenumgr.done();

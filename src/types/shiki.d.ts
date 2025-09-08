@@ -1,12 +1,12 @@
 declare module 'shiki' {
-  export interface IThemedToken {
+  export interface ThemedToken {
     content: string;
     color?: string;
     fontStyle?: number;
     modifiers?: string[];
   }
 
-  export interface IThemedTokenWithVariants {
+  export interface ThemedTokenWithVariants {
     content: string;
     color?: string;
     fontStyle?: number;
@@ -20,7 +20,7 @@ declare module 'shiki' {
   }
 
   export interface TokenResult {
-    tokens: IThemedToken[][];
+    tokens: ThemedToken[][];
     theme: string;
     lang: string;
   }
@@ -34,7 +34,7 @@ declare module 'shiki' {
     codeToThemedTokens(code: string, options?: {
       lang?: string;
       theme?: string;
-    }): IThemedToken[][];
+    }): ThemedToken[][];
   }
 
   // Export the functions that are being imported

@@ -30,7 +30,7 @@ export class Stylize {
   private async validateHighlighter(languageId: string): Promise<void> {
     const dx = this.dx.sub('validateHighlighter');
     dx.require({ languageId }, ['languageId']);
-    
+
     dx.out(`THEMECHECK: validateHighlighter called with languageId: '${languageId}'`);
 
     if (!this.highlighter) {
@@ -116,9 +116,7 @@ export class Stylize {
         tokenColors,
       } as any);
     } catch (error) {
-      this.dx.print(
-        `ERROR:convertVSCodeThemeToShiki: Failed to convert theme: ${String(error)}`
-      );
+      this.dx.print(`ERROR:convertVSCodeThemeToShiki: Failed to convert theme: ${String(error)}`);
       return null;
     }
   }
@@ -174,17 +172,11 @@ export class Stylize {
     }
 
     // Ensure highlighter is initialized AFTER theme processing
-    this.dx.out(
-      `THEMECHECK: About to call validateHighlighter with lang: '${lang}'`
-    );
+    this.dx.out(`THEMECHECK: About to call validateHighlighter with lang: '${lang}'`);
     await this.validateHighlighter(lang);
-    this.dx.out(
-      `THEMECHECK: validateHighlighter completed successfully`
-    );
+    this.dx.out(`THEMECHECK: validateHighlighter completed successfully`);
 
-    this.dx.out(
-      `THEMECHECK: About to call highlighter with theme: '${selectedTheme}'`
-    );
+    this.dx.out(`THEMECHECK: About to call highlighter with theme: '${selectedTheme}'`);
 
     this.dx.out(
       `THEMECHECK: Highlighter call parameters - lang: '${lang}', theme: '${selectedTheme}', code length: ${code.length}`
@@ -199,21 +191,22 @@ export class Stylize {
     this.dx.out(`THEMECHECK: Highlighter call completed successfully`);
 
     const editorTypo = this.app.vscodeapis.getEditorTypography();
-    const fontSize = typeof opts?.fontSize === 'number' ? opts.fontSize : editorTypo.fontSize;
+    const fontSize = typeof opts?.fontSize === 'number' ? opts.fontSize : editorTypo.fontSize; // <- Instead of this shit all over the place, we should guarantee opts.fontSize is always at least the editor's fontSize.
     const lineHeight =
-      typeof opts?.lineHeight === 'number' ? opts.lineHeight : editorTypo.lineHeight;
-    
+      typeof opts?.lineHeight === 'number' ? opts.lineHeight : editorTypo.lineHeight; // <- Same here, can't we just initialize opts with fontSize, lineHeight, etc?
+
     // Get font info from theme
-    const themeData = this.getThemes().find(theme => theme.id === selectedTheme);
-    const fontFamily = this.getFontFamilyFromTheme(themeData);
-    
+    // const themeData = this.getThemes().find(theme => theme.id === selectedTheme);
+    // const fontFamily = this.getFontFamilyFromTheme(themeData);
+
     // Generate HTML directly from tokens
     const html = this.generateHtmlFromTokens(tokenResult.tokens, fontSize, lineHeight);
-    
+
     // Create the final page HTML
-    const title = typeof opts?.title === 'string' && opts.title.length > 0 ? opts.title : 'Printable';
+    const title =
+      typeof opts?.title === 'string' && opts.title.length > 0 ? opts.title : 'Printable';
     const page = this.createHtmlPage(html, fontSize, lineHeight, title);
-    
+
     return page;
   }
 
@@ -251,22 +244,16 @@ export class Stylize {
 
     // Get themes from cache
     let themes = [...Stylize.themesCache];
-    this.dx.out(
-      `THEMECHECK: getThemes() - themes array created with ${themes.length} items`
-    );
+    this.dx.out(`THEMECHECK: getThemes() - themes array created with ${themes.length} items`);
 
     // Apply filter if provided
     if (filter) {
       const filterRegex = new RegExp(filter, 'i');
       themes = themes.filter(theme => filterRegex.test(theme.displayName));
-      this.dx.out(
-        `THEMECHECK: getThemes() - filter applied, ${themes.length} themes remaining`
-      );
+      this.dx.out(`THEMECHECK: getThemes() - filter applied, ${themes.length} themes remaining`);
     }
 
-    this.dx.out(
-      `THEMECHECK: getThemes() - returning themes: ${themes.map(t => t.id).join(', ')}`
-    );
+    this.dx.out(`THEMECHECK: getThemes() - returning themes: ${themes.map(t => t.id).join(', ')}`);
     return themes;
   }
 
@@ -367,9 +354,7 @@ export class Stylize {
         const editorThemeData = this.app.vscodeapis.getVSCodeThemeJson(activeThemeID);
 
         if (editorThemeData) {
-          this.dx.out(
-            `THEMECHECK: Adding editor theme to themes list: ${activeThemeID}`
-          );
+          this.dx.out(`THEMECHECK: Adding editor theme to themes list: ${activeThemeID}`);
           themes.unshift({
             id: activeThemeID,
             displayName: `${activeThemeID} 📝`,
@@ -397,7 +382,7 @@ export class Stylize {
   ): Promise<jsPDF> {
     const dx = this.dx.sub('styleToPdf');
     dx.require({ code, languageId }, ['code', 'languageId']);
-    
+
     try {
       // Get theme (same logic as styleToHtml)
       let selectedTheme: string;
@@ -422,25 +407,31 @@ export class Stylize {
         lang: languageId,
         theme: selectedTheme,
       });
-      
+
       // Extract the tokens array from the result
       const tokens = tokenResult.tokens;
 
       // Get font info from theme
       const themeData = this.getThemes().find(theme => theme.id === selectedTheme);
       const fontFamily = this.getFontFamilyFromTheme(themeData);
-      
+
       // Get user-specified size or editor default
       const editorTypo = this.app.vscodeapis.getEditorTypography();
       const fontSize = typeof opts?.fontSize === 'number' ? opts.fontSize : editorTypo.fontSize;
-      const lineHeight = typeof opts?.lineHeight === 'number' ? opts.lineHeight : editorTypo.lineHeight;
+      const lineHeight =
+        typeof opts?.lineHeight === 'number' ? opts.lineHeight : editorTypo.lineHeight;
 
       // Generate PDF using PDF class and return PDF document pointer
-      const pdfDoc = await this.app.pdf.generatePdfFromTokens(tokens, fontFamily, fontSize, lineHeight, opts?.title);
-      
+      const pdfDoc = await this.app.pdf.generatePdfFromTokens(
+        tokens,
+        fontFamily,
+        fontSize,
+        lineHeight,
+        opts?.title
+      );
+
       dx.out(`PDF document generated successfully`);
       return pdfDoc;
-      
     } catch (error) {
       dx.out(`Error generating PDF: ${error}`);
       throw error;
@@ -449,38 +440,52 @@ export class Stylize {
     }
   }
 
-
   // Helper: Generate HTML directly from tokens
   private generateHtmlFromTokens(tokens: any[][], fontSize: number, lineHeight: number): string {
-    let html = '<pre style="font-size: ' + fontSize + 'px; line-height: ' + lineHeight + 'px; margin: 0; white-space: pre;">';
-    
+    let html =
+      '<pre style="font-size: ' +
+      fontSize +
+      'px; line-height: ' +
+      lineHeight +
+      'px; margin: 0; white-space: pre;">';
+
     for (const line of tokens) {
-      html += '<div class="line" style="line-height: ' + lineHeight + 'px; min-height: ' + lineHeight + 'px; margin: 0; padding: 0; white-space: pre;">';
-      
+      html +=
+        '<div class="line" style="line-height: ' +
+        lineHeight +
+        'px; min-height: ' +
+        lineHeight +
+        'px; margin: 0; padding: 0; white-space: pre;">';
+
       for (const token of line) {
         const text = token.content;
         if (!text) continue;
-        
+
         const color = token.color || '#000000';
         const fontStyle = token.fontStyle || 0;
-        
+
         // Apply font styles (bold, italic)
         let style = `color: ${color};`;
         if (fontStyle & 1) style += ' font-weight: bold;';
         if (fontStyle & 2) style += ' font-style: italic;';
-        
+
         html += `<span style="${style}">${this.escapeHtml(text)}</span>`;
       }
-      
+
       html += '</div>';
     }
-    
+
     html += '</pre>';
     return html;
   }
-  
+
   // Helper: Create the final HTML page
-  private createHtmlPage(codeHtml: string, fontSize: number, lineHeight: number, title: string): string {
+  private createHtmlPage(
+    codeHtml: string,
+    fontSize: number,
+    lineHeight: number,
+    title: string
+  ): string {
     return `<!DOCTYPE html>
 <html>
   <head>
@@ -518,7 +523,7 @@ export class Stylize {
   </body>
 </html>`;
   }
-  
+
   // Helper: Escape HTML characters
   private escapeHtml(text: string): string {
     return text
@@ -529,10 +534,10 @@ export class Stylize {
       .replace(/'/g, '&#39;');
   }
 
-  // Helper: Get font family from theme
+  // Helper: Get font family from theme <- WTF is going on here? This isn't returning the fontFamily from the theme at all.
   private getFontFamilyFromTheme(themeData: any): string {
     if (!themeData?.colors) return 'courier';
-    
+
     // Try to get font from theme colors or use editor font
     const editorTypo = this.app.vscodeapis.getEditorTypography();
     return editorTypo.fontFamily || 'courier';

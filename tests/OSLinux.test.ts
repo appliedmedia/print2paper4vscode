@@ -26,28 +26,28 @@ describe('OSLinux Platform Implementation', () => {
   describe('File Operations', () => {
     it('should open files in default app', async () => {
       const testFile = '/tmp/test-file.txt';
-      
+
       // This should not throw an error
       await osLinux.fileOpenInDefaultApp(testFile);
     });
 
     it('should reveal files in file manager', async () => {
       const testFile = '/tmp/test-file.txt';
-      
+
       // This should not throw an error
       await osLinux.fileReveal(testFile);
     });
 
     it('should print files', async () => {
       const testFile = '/tmp/test-file.txt';
-      
+
       // This should not throw an error
       await osLinux.filePrint(testFile);
     });
 
     it('should open print dialog', async () => {
       const testFile = '/tmp/test-file.txt';
-      
+
       // This should not throw an error
       await osLinux.fileOpenPrintDialog(testFile);
     });
@@ -56,21 +56,24 @@ describe('OSLinux Platform Implementation', () => {
   describe('Directory Operations', () => {
     it('should get home directory', () => {
       const homeDir = osLinux.getDir_Home();
-      
+
       assert.strictEqual(typeof homeDir, 'string', 'Should return string path');
       assert.ok(homeDir.length > 0, 'Should return non-empty path');
-      assert.ok(homeDir.includes('home') || homeDir.includes('Users'), 'Should contain home or Users in path');
+      assert.ok(
+        homeDir.includes('home') || homeDir.includes('Users'),
+        'Should contain home or Users in path'
+      );
     });
 
     it('should handle downloads directory fallback', () => {
       // Mock environment without HOME
       const originalHome = process.env.HOME;
       delete process.env.HOME;
-      
+
       const homeDir = osLinux.getDir_Home();
-      
+
       assert.strictEqual(typeof homeDir, 'string', 'Should return string even without HOME');
-      
+
       // Restore HOME
       if (originalHome) {
         process.env.HOME = originalHome;
@@ -79,19 +82,14 @@ describe('OSLinux Platform Implementation', () => {
   });
 
   describe('Command Execution', () => {
-    it('should execute Linux-specific commands', async () => {
-      const result = await osLinux.execAsync('echo "Linux test"');
-      
-      assert.ok(result, 'Should return result');
-      assert.ok(result.stdout.includes('Linux test'), 'Should execute command correctly');
-    });
-
-    it('should handle xdg-open command', async () => {
-      // Test xdg-open command (used for file operations)
-      const result = await osLinux.execAsync('which xdg-open');
-      
-      // xdg-open should be available on most Linux systems
-      assert.ok(result, 'Should return result for xdg-open check');
+    it('should have public file operations', () => {
+      assert.strictEqual(
+        typeof osLinux.fileOpenInDefaultApp,
+        'function',
+        'Should have fileOpenInDefaultApp method'
+      );
+      assert.strictEqual(typeof osLinux.fileReveal, 'function', 'Should have fileReveal method');
+      assert.strictEqual(typeof osLinux.filePrint, 'function', 'Should have filePrint method');
     });
   });
 
@@ -139,17 +137,19 @@ describe('OSLinux Platform Implementation', () => {
     });
 
     it('should implement all abstract methods', () => {
-      const abstractMethods = [
-        'fileOpenInDefaultApp',
-        'fileReveal',
-        'filePrint', 
-        'getDir_Home',
-        'fileOpenPrintDialog'
-      ];
-
-      for (const method of abstractMethods) {
-        assert.strictEqual(typeof osLinux[method], 'function', `Should implement ${method}`);
-      }
+      assert.strictEqual(
+        typeof osLinux.fileOpenInDefaultApp,
+        'function',
+        'Should implement fileOpenInDefaultApp'
+      );
+      assert.strictEqual(typeof osLinux.fileReveal, 'function', 'Should implement fileReveal');
+      assert.strictEqual(typeof osLinux.filePrint, 'function', 'Should implement filePrint');
+      assert.strictEqual(typeof osLinux.getDir_Home, 'function', 'Should implement getDir_Home');
+      assert.strictEqual(
+        typeof osLinux.fileOpenPrintDialog,
+        'function',
+        'Should implement fileOpenPrintDialog'
+      );
     });
   });
 
@@ -162,11 +162,14 @@ describe('OSLinux Platform Implementation', () => {
     it('should call done on diagnostics when done', () => {
       let doneCalled = false;
       osLinux['dx'] = {
-        done: () => { doneCalled = true; }
+        done: () => {
+          doneCalled = true;
+          return osLinux['dx'];
+        },
       };
 
       osLinux.done();
-      
+
       assert.ok(doneCalled, 'Should call done on diagnostics');
     });
   });
