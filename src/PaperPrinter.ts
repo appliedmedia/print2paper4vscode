@@ -73,7 +73,7 @@ export class PaperPrinter {
 
   private async handlePrintMessage(msg: WebviewMessage): Promise<void> {
     if (!this.pdfRendered) return;
-    const updated = await this.applyRenderModes(this.pdfRendered);
+    await this.updateRenderModes(this.pdfRendered);
     if (msg.value === 'preview')
       await this.app.pdf.printWithPreview(this.pdfRendered, this.printTitle || 'Print Output');
     else if (msg.value === 'direct')
@@ -88,7 +88,7 @@ export class PaperPrinter {
    */
   async handleFirstPrintCommand(): Promise<void> {
     try {
-      const category = this.app.tabInspector.detectActiveTabCategory();
+      const category = this.app.tabinspector.detectActiveTabCategory();
       if (category === 'preview') {
         // TODO: Handle preview tab capture - need to extract raw code from HTML
         // or implement HTML-to-PDF conversion for preview tabs
@@ -96,7 +96,7 @@ export class PaperPrinter {
         return;
       }
 
-      const info = this.app.tabInspector.getEditorSelectionOrAll();
+      const info = this.app.tabinspector.getEditorSelectionOrAll();
       if (!info) {
         this.app.ui.showErrorMessage('No active editor found');
         return;
@@ -149,6 +149,26 @@ export class PaperPrinter {
     const initial = await this.applyRenderModes(pdfDoc);
 
     this.app.ui.htmlToWebViewPanel(`Printable: ${tabName}`, await this.app.ui.addToolbar(initial));
+  }
+
+  private async updateRenderModes(pdfDoc: jsPDF): Promise<void> {
+    // If we have raw code, regenerate with theme overrides
+    if (this.lastRawCode && this.lastLanguageId) {
+      const sizePx = this.computeFontSizePx();
+      const lhPx = this.computeLineHeightPx(sizePx);
+      this.dx.out(
+        `THEMECHECK: updateRenderModes with theme: '${this.currentThemeChoice}'`
+      );
+      const newPdfDoc = await this.app.stylize.styleToPdf(this.lastRawCode, this.lastLanguageId, {
+        fontSize: sizePx,
+        lineHeight: lhPx,
+        title: this.printTitle,
+        theme: this.currentThemeChoice,
+      });
+      // Store the new PDF document
+      this.pdfRendered = newPdfDoc;
+    }
+    // For existing PDF document, no additional processing needed
   }
 
   private async applyRenderModes(pdfDoc: jsPDF): Promise<string> {
@@ -312,7 +332,7 @@ export class PaperPrinter {
       return ''; // Print menu has no default selection
     }
     if (!this.pdfRendered) return '';
-    const updated = await this.applyRenderModes(this.pdfRendered);
+    await this.updateRenderModes(this.pdfRendered);
     if (selectedId === 'preview')
       await this.app.pdf.printWithPreview(this.pdfRendered, this.printTitle || 'Print Output');
     else if (selectedId === 'direct')
