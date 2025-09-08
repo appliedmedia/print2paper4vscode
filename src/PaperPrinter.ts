@@ -9,7 +9,7 @@ export class PaperPrinter {
   private app: App;
   private clipboardCapture: ClipboardCapture;
   private handlersRegistered = false;
-      private pdfRendered: jsPDF | null = null; // In-memory PDF document
+  private pdfRendered: jsPDF | null = null; // In-memory PDF document
   private lastRawCode: string | null = null;
   private lastLanguageId: string | null = null;
   private printTitle: string = 'Printable';
@@ -38,7 +38,7 @@ export class PaperPrinter {
   private async handleDragEnd(msg: WebviewMessage): Promise<void> {
     const dx = this.dx.sub('handleDragEnd');
     dx.require({ msg }, ['msg']);
-    
+
     // Save final position when drag ends
     if (msg.left !== undefined) {
       try {
@@ -55,7 +55,7 @@ export class PaperPrinter {
   private async handleMenuItemSelected(msg: WebviewMessage): Promise<void> {
     const dx = this.dx.sub('handleMenuItemSelected');
     dx.require({ msg }, ['msg']);
-    
+
     // Handle menu item selections from the new generic UI system
     const { targetId, parentId, x, y } = msg;
     dx.out(`Menu item selected: ${targetId} in menu ${parentId} at (${x}, ${y})`);
@@ -73,7 +73,7 @@ export class PaperPrinter {
 
   private async handlePrintMessage(msg: WebviewMessage): Promise<void> {
     if (!this.pdfRendered) return;
-    await this.updateRenderModes(this.pdfRendered);
+    void await this.applyRenderModes(this.pdfRendered);
     if (msg.value === 'preview')
       await this.app.pdf.printWithPreview(this.pdfRendered, this.printTitle || 'Print Output');
     else if (msg.value === 'direct')
@@ -92,7 +92,9 @@ export class PaperPrinter {
       if (category === 'preview') {
         // TODO: Handle preview tab capture - need to extract raw code from HTML
         // or implement HTML-to-PDF conversion for preview tabs
-        this.app.ui.showErrorMessage('Printing from preview tabs is not yet supported with the new PDF architecture');
+        this.app.ui.showErrorMessage(
+          'Printing from preview tabs is not yet supported with the new PDF architecture'
+        );
         return;
       }
 
@@ -117,14 +119,10 @@ export class PaperPrinter {
       // Initialize theme choice if not set yet
       if (!this.currentThemeChoice) {
         this.currentThemeChoice = this.app.vscodeapis.getActiveThemeId();
-        this.dx.out(
-          `THEMECHECK: Initialized currentThemeChoice to: '${this.currentThemeChoice}'`
-        );
+        this.dx.out(`THEMECHECK: Initialized currentThemeChoice to: '${this.currentThemeChoice}'`);
       }
 
-      this.dx.out(
-        `THEMECHECK: Printing with theme: '${this.currentThemeChoice}'`
-      );
+      this.dx.out(`THEMECHECK: Printing with theme: '${this.currentThemeChoice}'`);
       const pdfDoc = await this.app.stylize.styleToPdf(info.text, info.languageId, {
         title: this.printTitle,
         theme: this.currentThemeChoice,
@@ -139,7 +137,7 @@ export class PaperPrinter {
   }
 
   private async openPrintPrepAndPrompt(pdfDoc: jsPDF, tabName: string): Promise<void> {
-        this.pdfRendered = pdfDoc; // Store in-memory PDF document
+    this.pdfRendered = pdfDoc; // Store in-memory PDF document
     this.printTitle = tabName;
 
     // Create menus and register message handlers when we actually need them
@@ -151,34 +149,12 @@ export class PaperPrinter {
     this.app.ui.htmlToWebViewPanel(`Printable: ${tabName}`, await this.app.ui.addToolbar(initial));
   }
 
-  private async updateRenderModes(pdfDoc: jsPDF): Promise<void> {
-    // If we have raw code, regenerate with theme overrides
-    if (this.lastRawCode && this.lastLanguageId) {
-      const sizePx = this.computeFontSizePx();
-      const lhPx = this.computeLineHeightPx(sizePx);
-      this.dx.out(
-        `THEMECHECK: updateRenderModes with theme: '${this.currentThemeChoice}'`
-      );
-      const newPdfDoc = await this.app.stylize.styleToPdf(this.lastRawCode, this.lastLanguageId, {
-        fontSize: sizePx,
-        lineHeight: lhPx,
-        title: this.printTitle,
-        theme: this.currentThemeChoice,
-      });
-      // Store the new PDF document
-      this.pdfRendered = newPdfDoc;
-    }
-    // For existing PDF document, no additional processing needed
-  }
-
   private async applyRenderModes(pdfDoc: jsPDF): Promise<string> {
     // If we have raw code, regenerate with theme overrides
     if (this.lastRawCode && this.lastLanguageId) {
       const sizePx = this.computeFontSizePx();
       const lhPx = this.computeLineHeightPx(sizePx);
-      this.dx.out(
-        `THEMECHECK: applyRenderModes with theme: '${this.currentThemeChoice}'`
-      );
+      this.dx.out(`THEMECHECK: applyRenderModes with theme: '${this.currentThemeChoice}'`);
       const newPdfDoc = await this.app.stylize.styleToPdf(this.lastRawCode, this.lastLanguageId, {
         fontSize: sizePx,
         lineHeight: lhPx,
@@ -238,9 +214,7 @@ export class PaperPrinter {
     ];
 
     menuConfigs.forEach(config => {
-      this.dx.out(
-        `Creating menu: ${config.id} with icon: ${config.icon}`
-      );
+      this.dx.out(`Creating menu: ${config.id} with icon: ${config.icon}`);
       const menu = this.app.uimenumgr.createMenu(
         config.id,
         config.icon,
@@ -332,7 +306,7 @@ export class PaperPrinter {
       return ''; // Print menu has no default selection
     }
     if (!this.pdfRendered) return '';
-    await this.updateRenderModes(this.pdfRendered);
+    void await this.applyRenderModes(this.pdfRendered);
     if (selectedId === 'preview')
       await this.app.pdf.printWithPreview(this.pdfRendered, this.printTitle || 'Print Output');
     else if (selectedId === 'direct')
@@ -344,9 +318,7 @@ export class PaperPrinter {
   }
 
   private async handleSelection_Theme(selectedId: string): Promise<string> {
-    this.dx.out(
-      `THEMECHECK: handleSelection_Theme called with selectedId: '${selectedId}'`
-    );
+    this.dx.out(`THEMECHECK: handleSelection_Theme called with selectedId: '${selectedId}'`);
 
     if (selectedId === '0') {
       // Return the current editor theme ID as the default
