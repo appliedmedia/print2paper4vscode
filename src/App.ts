@@ -13,14 +13,14 @@ export class App {
   vscodeapis: VSCodeAPIs;
   ui: UI;
   pdf: PDF;
-  paperPrinter: PaperPrinter;
+  paperprinter: PaperPrinter;
   stylize: Stylize;
-  tabInspector: TabInspector;
+  tabinspector: TabInspector;
   os: OS;
   uimenumgr: UIMenuMgr;
   dx: Diagnostics;
 
-  constructor(context: ExtensionContext, vscode: any) {
+  constructor(context: ExtensionContext, vscode: typeof import('vscode')) {
     // Create Diagnostics instance first
     this.dx = new Diagnostics('App');
 
@@ -29,9 +29,9 @@ export class App {
     this.ui = new UI(this);
     this.os = OS.create(this);
     this.pdf = new PDF(this);
-    this.paperPrinter = new PaperPrinter(this);
+    this.paperprinter = new PaperPrinter(this);
     this.stylize = new Stylize(this);
-    this.tabInspector = new TabInspector(this);
+    this.tabinspector = new TabInspector(this);
     this.uimenumgr = new UIMenuMgr(this);
   }
 
@@ -41,18 +41,18 @@ export class App {
     this.ui.init();
     this.os.init();
     this.pdf.init();
-    this.paperPrinter.init();
+    this.paperprinter.init();
     this.stylize.init();
-    this.tabInspector.init();
+    this.tabinspector.init();
     this.uimenumgr.init();
   }
 
   done(): void {
     // Cleanup all components
     this.vscodeapis.done();
-    this.tabInspector.done();
+    this.tabinspector.done();
     this.pdf.done();
-    this.paperPrinter.done();
+    this.paperprinter.done();
     this.stylize.done();
     this.os.done();
     this.uimenumgr.done();

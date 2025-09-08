@@ -31,7 +31,7 @@ export class VSCodeAPIs {
     
     // Register VS Code commands
     const printCommand = this.vscode.commands.registerCommand('p2p4vsc.print2paper', () => {
-      this.app.paperPrinter.handleFirstPrintCommand();
+      this.app.paperprinter.handleFirstPrintCommand();
     });
 
     this.context.subscriptions.push(printCommand);
@@ -50,7 +50,7 @@ export class VSCodeAPIs {
   /**
    * Update global state value
    */
-  updateGlobalState(key: string, value: any): void {
+  updateGlobalState(key: string, value: unknown): void {
     this.context.globalState.update(key, value);
   }
 

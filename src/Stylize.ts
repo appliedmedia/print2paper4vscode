@@ -1,5 +1,5 @@
 import type { App } from './App';
-import { getSingletonHighlighter, createCssVariablesTheme, bundledThemesInfo } from 'shiki';
+import { getSingletonHighlighter, createCssVariablesTheme, bundledThemesInfo, type ThemedToken, type Highlighter } from 'shiki';
 import { Diagnostics } from './Diagnostics';
 import jsPDF from 'jspdf';
 
@@ -13,9 +13,37 @@ type TokenColor = {
 const USE_ALL_LIGHT_SHIKI_THEMES = 'light|bright|day';
 const USE_ALL_LIGHT_VSCODE_THEMES = 'light|bright|day';
 
+// Type definitions for Shiki highlighter and theme data
+type LanguageId = string; // We accept any string as language ID, even if Shiki expects specific types
+
+interface VSCodeTokenColor {
+  scope: string | string[];
+  settings: {
+    foreground?: string;
+    background?: string;
+    fontStyle?: string;
+  };
+}
+
+interface VSCodeTheme {
+  name?: string;
+  colors?: Record<string, string>;
+  tokenColors?: VSCodeTokenColor[];
+}
+
+// Use a more flexible theme type for our conversion
+interface ShikiTheme {
+  name?: string;
+  colors?: Record<string, string>;
+  tokenColors?: Array<{
+    scope?: string | string[];
+    settings?: { foreground?: string; background?: string };
+  }>;
+}
+
 export class Stylize {
   private app: App;
-  private highlighter: any = null;
+  private highlighter: Highlighter | null = null;
   private dx: Diagnostics;
 
   constructor(app: App) {
@@ -61,7 +89,7 @@ export class Stylize {
   }
 
   // Convert VS Code theme JSON to Shiki-compatible CSS variables format
-  private convertVSCodeThemeToShiki(vscodeTheme: Record<string, unknown>): any {
+  private convertVSCodeThemeToShiki(vscodeTheme: VSCodeTheme): ShikiTheme {
     try {
       // Extract basic theme info
       const name = (vscodeTheme.name as string) || 'vscode-theme';
@@ -79,14 +107,14 @@ export class Stylize {
 
       // Extract token colors
       const tokenColors: Array<{
-        scope: string[];
+        scope: string | string[];
         settings: { foreground?: string; background?: string };
       }> = [];
       if (vscodeTheme.tokenColors && Array.isArray(vscodeTheme.tokenColors)) {
-        const vscodeTokenColors = vscodeTheme.tokenColors as Array<any>;
+        const vscodeTokenColors = vscodeTheme.tokenColors as VSCodeTokenColor[];
         for (const tokenColor of vscodeTokenColors) {
           if (tokenColor.scope && tokenColor.settings) {
-            const scope = Array.isArray(tokenColor.scope) ? tokenColor.scope : [tokenColor.scope];
+            const scope = tokenColor.scope;
             const settings: { foreground?: string; background?: string } = {};
 
             if (
@@ -114,16 +142,19 @@ export class Stylize {
         name,
         colors,
         tokenColors,
-      } as any);
+      } as ShikiTheme);
     } catch (error) {
       this.dx.print(`ERROR:convertVSCodeThemeToShiki: Failed to convert theme: ${String(error)}`);
-      return null;
+      // Return a default theme instead of null
+      return createCssVariablesTheme({
+        name: 'fallback-theme',
+      });
     }
   }
 
   async styleToHtml(
     code: string,
-    languageId: string,
+    languageId: LanguageId,
     opts?: { fontSize?: number; lineHeight?: number; title?: string; theme?: string }
   ): Promise<string> {
     const lang = languageId;
@@ -183,8 +214,9 @@ export class Stylize {
     );
 
     // Get tokens directly and generate HTML ourselves
-    const tokenResult = this.highlighter.codeToTokens(code, {
-      lang,
+    const tokenResult = this.highlighter?.codeToTokens(code, {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      lang: lang as any, // Shiki expects specific language types, but we accept any string
       theme: selectedTheme,
     });
 
@@ -200,7 +232,7 @@ export class Stylize {
     // const fontFamily = this.getFontFamilyFromTheme(themeData);
 
     // Generate HTML directly from tokens
-    const html = this.generateHtmlFromTokens(tokenResult.tokens, fontSize, lineHeight);
+    const html = this.generateHtmlFromTokens(tokenResult?.tokens || [], fontSize, lineHeight);
 
     // Create the final page HTML
     const title =
@@ -377,7 +409,7 @@ export class Stylize {
   // NEW: Generate PDF directly from code using theme font and user size
   async styleToPdf(
     code: string,
-    languageId: string,
+    languageId: LanguageId,
     opts?: { fontSize?: number; lineHeight?: number; title?: string; theme?: string }
   ): Promise<jsPDF> {
     const dx = this.dx.sub('styleToPdf');
@@ -403,17 +435,18 @@ export class Stylize {
       await this.validateHighlighter(languageId);
 
       // Get tokens from Shiki using the correct method
-      const tokenResult = this.highlighter.codeToTokens(code, {
-        lang: languageId,
+      const tokenResult = this.highlighter?.codeToTokens(code, {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        lang: languageId as any, // Shiki expects specific language types, but we accept any string
         theme: selectedTheme,
       });
 
       // Extract the tokens array from the result
-      const tokens = tokenResult.tokens;
+      const tokens = tokenResult?.tokens || [];
 
       // Get font info from theme
       const themeData = this.getThemes().find(theme => theme.id === selectedTheme);
-      const fontFamily = this.getFontFamilyFromTheme(themeData);
+      const fontFamily = themeData ? this.getFontFamilyFromTheme(themeData) : 'courier';
 
       // Get user-specified size or editor default
       const editorTypo = this.app.vscodeapis.getEditorTypography();
@@ -441,7 +474,7 @@ export class Stylize {
   }
 
   // Helper: Generate HTML directly from tokens
-  private generateHtmlFromTokens(tokens: any[][], fontSize: number, lineHeight: number): string {
+  private generateHtmlFromTokens(tokens: ThemedToken[][], fontSize: number, lineHeight: number): string {
     let html =
       '<pre style="font-size: ' +
       fontSize +
@@ -535,7 +568,7 @@ export class Stylize {
   }
 
   // Helper: Get font family from theme <- WTF is going on here? This isn't returning the fontFamily from the theme at all.
-  private getFontFamilyFromTheme(themeData: any): string {
+  private getFontFamilyFromTheme(themeData: ShikiTheme): string {
     if (!themeData?.colors) return 'courier';
 
     // Try to get font from theme colors or use editor font
