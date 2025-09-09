@@ -1,12 +1,13 @@
-import { describe, it, before } from 'node:test';
+import { describe, it } from 'node:test';
 import * as assert from 'node:assert';
-import { TabInspector } from '../out/TabInspector.js';
+import { TabInspector } from '../src/TabInspector.js';
 
 describe('TabInspector Functionality', () => {
   let tabInspector: TabInspector;
   let mockApp: any;
 
-  before(() => {
+  // Setup before each test
+  const setup = () => {
     // Mock app for testing
     mockApp = {
       dx: {
@@ -40,7 +41,7 @@ describe('TabInspector Functionality', () => {
     };
 
     tabInspector = new TabInspector(mockApp);
-  });
+  };
 
   describe('Initialization', () => {
     it('should initialize with app reference', () => {
