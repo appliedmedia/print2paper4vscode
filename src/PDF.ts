@@ -126,6 +126,57 @@ export class PDF {
     this.tempPdfs.push(p);
   }
 
+  // Map font family to jsPDF built-in fonts
+  private mapFontFamilyToJsPDF(fontFamily: string, doc: jsPDF): string {
+    const dx = this.dx.sub('mapFontFamilyToJsPDF');
+
+    // Get available fonts from jsPDF
+    const availableFonts = doc.getFontList();
+    const jsPdfFonts = Object.keys(availableFonts);
+    dx.out(`Available fonts: ${jsPdfFonts.join(', ')}`);
+
+    // Step 1: Lowercase our list
+    const ourFontsLower = fontFamily.toLowerCase();
+
+    // Step 2: Remove everything that isn't a-z, space, or comma
+    const ourFontsClean = ourFontsLower.replace(/[^a-z\s,]/g, '');
+
+    // Step 3: Split it at commas first, then spaces
+    const ourFontList = ourFontsClean
+      .split(/\s*,\s*/)
+      .flatMap(font => font.split(/\s+/).filter(f => f.length > 0));
+
+    // Step 4: Lowercase jsPDF font list
+    const jsPdfFontsLower = jsPdfFonts.map(font => font.toLowerCase());
+
+    // Step 5: Remove everything that isn't a-z or space from jsPDF fonts
+    const jsPdfFontsClean = jsPdfFontsLower.map(font => font.replace(/[^a-z\s]/g, ''));
+
+    // Step 6: Walk our list and see if any of jsPDFs font list items start with the entire item of our list
+    for (const ourFont of ourFontList) {
+      for (let i = 0; i < jsPdfFontsClean.length; i++) {
+        if (jsPdfFontsClean[i].startsWith(ourFont)) {
+          dx.out(`Found match: ${ourFont} -> ${jsPdfFonts[i]}`);
+          return jsPdfFonts[i];
+        }
+      }
+    }
+
+    // Step 7: Walk jsPDFs font list and if any of our items start with the entire item of jsPDFs list
+    for (let i = 0; i < jsPdfFontsClean.length; i++) {
+      for (const ourFont of ourFontList) {
+        if (ourFont.startsWith(jsPdfFontsClean[i])) {
+          dx.out(`Found reverse match: ${ourFont} -> ${jsPdfFonts[i]}`);
+          return jsPdfFonts[i];
+        }
+      }
+    }
+
+    // Step 8: Use Courier
+    dx.out(`No match found, using Courier for: ${fontFamily}`);
+    return 'Courier';
+  }
+
   // NEW: Generate PDF directly from Shiki tokens
   async generatePdfFromTokens(
     tokens: ThemedToken[][],
@@ -146,8 +197,12 @@ export class PDF {
       // Initialize PDF
       const doc = new jsPDF();
 
+      // Map font family to jsPDF supported fonts
+      const jsPdfFont = this.mapFontFamilyToJsPDF(fontFamily, doc);
+      dx.out(`Mapped font '${fontFamily}' to jsPDF font '${jsPdfFont}'`);
+
       // Set font
-      doc.setFont(fontFamily, 'normal');
+      doc.setFont(jsPdfFont, 'normal');
       doc.setFontSize(fontSize);
 
       // Add title if provided
