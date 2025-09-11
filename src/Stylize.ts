@@ -230,12 +230,23 @@ export class Stylize {
 
           // Clear the themes cache so the new theme is included
           Stylize.themesCache = null;
+        } else {
+          // Built-in theme not found in extensions - add a placeholder entry
+          this.dx.out(
+            `WARNING: Built-in theme '${activeThemeID}' not found in extensions, adding placeholder`
+          );
+          themes.unshift({
+            id: activeThemeID,
+            displayName: `${activeThemeID} 📝 (built-in)`,
+            colors: undefined,
+            tokenColors: undefined,
+          });
         }
       }
 
       return themes;
     } catch (err) {
-      this.dx.print(`ERROR:getVSCodeThemes: Failed to get themes: ${String(err)}`);
+      this.dx.out(`ERROR:getVSCodeThemes: Failed to get themes: ${String(err)}`);
       return [];
     }
   }
@@ -260,6 +271,11 @@ export class Stylize {
 
     private resolveSpecifiedTheme(themeId: string): string {
       const allThemes = this.app.stylize.getThemes();
+      this.dx.out(
+        `Resolving specified theme '${themeId}' from ${allThemes.length} available themes`
+      );
+      this.dx.out(`Available theme IDs: ${allThemes.map(t => t.id).join(', ')}`);
+
       const themeData = allThemes.find(
         (theme: {
           id: string;
@@ -270,9 +286,15 @@ export class Stylize {
 
       if (!themeData) {
         // Theme not found - fallback to active editor theme
-        this.dx.print(`WARNING: Theme '${themeId}' not found, falling back to active editor theme`);
+        this.app.ui.showErrorMessage(
+          `Theme '${themeId}' not found. Using active editor theme instead.`
+        );
         return this.resolveActiveTheme();
       }
+
+      this.dx.out(
+        `Found theme data for '${themeId}': colors=${!!themeData.colors}, tokenColors=${!!themeData.tokenColors}`
+      );
 
       if (themeData.colors && themeData.tokenColors) {
         // VS Code theme - convert and use
@@ -282,14 +304,20 @@ export class Stylize {
           tokenColors: themeData.tokenColors,
         });
         return shikiTheme?.name || this.getFallbackTheme();
-      } else {
-        // Shiki theme - use directly
+      } else if (themeData.id) {
+        // Shiki theme or built-in theme without data - use directly
         return themeData.id;
+      } else {
+        // No theme data at all - fallback
+        this.dx.out(`WARNING: Theme '${themeId}' has no usable data, falling back to active theme`);
+        return this.resolveActiveTheme();
       }
     }
 
     private resolveActiveTheme(): string {
       const activeThemeId = this.app.vscodeapis.getActiveThemeId();
+      this.dx.out(`Resolving active theme '${activeThemeId}'`);
+
       const themeData = this.app.stylize
         .getThemes()
         .find(
@@ -300,6 +328,10 @@ export class Stylize {
           }) => theme.id === activeThemeId
         );
 
+      this.dx.out(
+        `Active theme found: ${!!themeData}, colors=${!!themeData?.colors}, tokenColors=${!!themeData?.tokenColors}`
+      );
+
       if (themeData && themeData.colors && themeData.tokenColors) {
         // VS Code theme - convert and use
         const shikiTheme = this.convertVSCodeThemeToShiki({
@@ -308,13 +340,13 @@ export class Stylize {
           tokenColors: themeData.tokenColors,
         });
         return shikiTheme?.name || this.getFallbackTheme();
-      } else if (themeData) {
-        // Shiki theme - use directly
+      } else if (themeData && themeData.id) {
+        // Shiki theme or built-in theme without data - use directly
         return themeData.id;
       } else {
         // Active theme not found - fallback to first available theme
-        this.dx.print(
-          `WARNING: Active theme '${activeThemeId}' not found, falling back to first available theme`
+        this.app.ui.showErrorMessage(
+          `Active theme '${activeThemeId}' not found. Using first available theme instead.`
         );
         return this.getFallbackTheme();
       }
@@ -322,9 +354,14 @@ export class Stylize {
 
     private getFallbackTheme(): string {
       const themes = this.app.stylize.getThemes();
+      this.dx.out(`Getting fallback theme from ${themes.length} available themes`);
       if (themes.length === 0) {
+        this.app.ui.showErrorMessage(
+          'No themes available - cannot generate PDF. Please check your theme configuration.'
+        );
         throw new Error('No themes available - cannot generate PDF');
       }
+      this.dx.out(`Using fallback theme: ${themes[0].id}`);
       return themes[0].id;
     }
 
@@ -442,7 +479,7 @@ export class Stylize {
           tokenColors,
         } as ShikiTheme);
       } catch (error) {
-        this.dx.print(`ERROR:convertVSCodeThemeToShiki: Failed to convert theme: ${String(error)}`);
+        this.dx.out(`ERROR:convertVSCodeThemeToShiki: Failed to convert theme: ${String(error)}`);
         // Return a default theme instead of null
         return createCssVariablesTheme({
           name: 'fallback-theme',

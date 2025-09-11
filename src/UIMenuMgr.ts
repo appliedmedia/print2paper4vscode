@@ -51,22 +51,16 @@ export class UIMenuMgr {
 
   // Generate all HTML at once
   async getAllUIMenuHTML(): Promise<string> {
-    this.dx.out(
-      `Generating HTML for ${this.getAllMenus().length} menus`
-    );
+    this.dx.out(`Generating HTML for ${this.getAllMenus().length} menus`);
 
     const menuPromises = this.getAllMenus().map(async menu => {
       this.dx.out(`Generating HTML for menu: ${menu.id}`);
       try {
         const menuHTML = await menu.getHTML();
-        this.dx.out(
-          `Generated HTML for menu ${menu.id}: ${menuHTML.substring(0, 100)}...`
-        );
+        this.dx.out(`Generated HTML for menu ${menu.id}: ${menuHTML.substring(0, 100)}...`);
         return menuHTML;
       } catch (error) {
-        this.dx.print(
-          `ERROR generating HTML for menu ${menu.id}: ${String(error)}`
-        );
+        this.dx.out(`ERROR generating HTML for menu ${menu.id}: ${String(error)}`);
         return `<!-- ERROR generating menu ${menu.id}: ${error} -->`;
       }
     });

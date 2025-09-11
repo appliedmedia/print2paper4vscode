@@ -25,7 +25,7 @@ export class ClipboardCapture {
    */
   async captureFromActiveTab(): Promise<string | null> {
     const dx = this.dx.sub('captureFromActiveTab');
-    
+
     try {
       // First try to copy current selection
       await this.copyToClipboard();
@@ -46,8 +46,7 @@ export class ClipboardCapture {
 
       return content;
     } catch (error) {
-      if (this.app)
-        dx.out(`Error capturing from active tab: ${error}`);
+      if (this.app) dx.out(`Error capturing from active tab: ${error}`);
       return null;
     } finally {
       dx.done();
@@ -78,8 +77,7 @@ export class ClipboardCapture {
       await new Promise<void>(resolve => setTimeout(resolve, 200));
       return await this.getClipboardContent();
     } catch (error) {
-      if (this.app)
-        this.dx.print(`Error in captureWithEditorCheck: ${String(error)}`);
+      if (this.app) this.dx.out(`Error in captureWithEditorCheck: ${String(error)}`);
       return null;
     }
   }
