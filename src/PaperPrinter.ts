@@ -119,10 +119,7 @@ export class PaperPrinter {
       // Initialize theme choice if not set yet
       if (!this.currentThemeChoice) {
         this.currentThemeChoice = this.app.vscodeapis.getActiveThemeId();
-        this.dx.out(`THEMECHECK: Initialized currentThemeChoice to: '${this.currentThemeChoice}'`);
       }
-
-      this.dx.out(`THEMECHECK: Printing with theme: '${this.currentThemeChoice}'`);
       const pdfDoc = await this.app.stylize.styleToPdf(info.text, info.languageId, {
         title: this.printTitle,
         theme: this.currentThemeChoice,
@@ -154,7 +151,6 @@ export class PaperPrinter {
     if (this.lastRawCode && this.lastLanguageId) {
       const sizePx = this.computeFontSizePx();
       const lhPx = this.computeLineHeightPx(sizePx);
-      this.dx.out(`THEMECHECK: applyRenderModes with theme: '${this.currentThemeChoice}'`);
       const newPdfDoc = await this.app.stylize.styleToPdf(this.lastRawCode, this.lastLanguageId, {
         fontSize: sizePx,
         lineHeight: lhPx,
@@ -318,8 +314,6 @@ export class PaperPrinter {
   }
 
   private async handleSelection_Theme(selectedId: string): Promise<string> {
-    this.dx.out(`THEMECHECK: handleSelection_Theme called with selectedId: '${selectedId}'`);
-
     if (selectedId === '0') {
       // Return the current editor theme ID as the default
       const currentEditorTheme = this.app.vscodeapis.getActiveThemeId();
@@ -327,16 +321,10 @@ export class PaperPrinter {
       const fallbackTheme = availableThemes[0]?.id || '';
       const result = currentEditorTheme || fallbackTheme;
 
-      this.dx.out(
-        `THEMECHECK: Theme default selection - selectedId: '${selectedId}', currentEditorTheme: '${currentEditorTheme}', availableThemes: [${availableThemes.map(t => t.id).join(', ')}], fallbackTheme: '${fallbackTheme}', returning: '${result}'`
-      );
-
       return result;
     }
 
-    this.dx.out(`THEMECHECK: Theme menu selection: ${selectedId}`);
     this.currentThemeChoice = selectedId;
-    this.dx.out(`THEMECHECK: currentThemeChoice set to: '${this.currentThemeChoice}'`);
 
     // TODO: Re-render webview with new theme - need access to panel
     return ''; // selection handled

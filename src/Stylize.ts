@@ -68,25 +68,16 @@ export class Stylize {
     const dx = this.dx.sub('validateHighlighter');
     dx.require({ languageId }, ['languageId']);
 
-    dx.out(`THEMECHECK: validateHighlighter called with languageId: '${languageId}'`);
-
     if (!this.highlighter) {
-      dx.out(`THEMECHECK: No highlighter, creating new one`);
       const themes = this.getThemes();
-      dx.out(`THEMECHECK: Themes for highlighter: ${themes.map(theme => theme.id).join(', ')}`);
 
-      try {
-        this.highlighter = await getSingletonHighlighter({
-          themes: themes.map(theme => theme.id),
-          langs: [languageId],
-        });
-        dx.out(`THEMECHECK: Highlighter created successfully`);
-      } catch (error) {
-        dx.out(`THEMECHECK: Error creating highlighter: ${error}`);
-        throw error;
-      }
-    } else {
-      dx.out(`THEMECHECK: Using existing highlighter`);
+      // Only use Shiki themes for the main highlighter
+      const shikiThemes = themes.filter(theme => !theme.colors || !theme.tokenColors);
+
+      this.highlighter = await getSingletonHighlighter({
+        themes: shikiThemes.map(theme => theme.id),
+        langs: [languageId],
+      });
     }
     dx.done();
   }
@@ -95,160 +86,6 @@ export class Stylize {
     // Clear themes cache
     Stylize.themesCache = null;
     this.dx.done();
-  }
-
-  // Convert VS Code theme JSON to Shiki-compatible CSS variables format
-  private convertVSCodeThemeToShiki(vscodeTheme: VSCodeTheme): ShikiTheme {
-    try {
-      // Extract basic theme info
-      const name = (vscodeTheme.name as string) || 'vscode-theme';
-
-      // Extract colors
-      const colors: Record<string, string> = {};
-      if (vscodeTheme.colors && typeof vscodeTheme.colors === 'object') {
-        const vscodeColors = vscodeTheme.colors as Record<string, string>;
-        for (const [key, value] of Object.entries(vscodeColors)) {
-          if (typeof value === 'string') {
-            colors[key] = value;
-          }
-        }
-      }
-
-      // Extract token colors
-      const tokenColors: Array<{
-        scope: string | string[];
-        settings: { foreground?: string; background?: string };
-      }> = [];
-      if (vscodeTheme.tokenColors && Array.isArray(vscodeTheme.tokenColors)) {
-        const vscodeTokenColors = vscodeTheme.tokenColors as VSCodeTokenColor[];
-        for (const tokenColor of vscodeTokenColors) {
-          if (tokenColor.scope && tokenColor.settings) {
-            const scope = tokenColor.scope;
-            const settings: { foreground?: string; background?: string } = {};
-
-            if (
-              tokenColor.settings.foreground &&
-              typeof tokenColor.settings.foreground === 'string'
-            ) {
-              settings.foreground = tokenColor.settings.foreground;
-            }
-            if (
-              tokenColor.settings.background &&
-              typeof tokenColor.settings.background === 'string'
-            ) {
-              settings.background = tokenColor.settings.background;
-            }
-
-            if (Object.keys(settings).length > 0) {
-              tokenColors.push({ scope, settings });
-            }
-          }
-        }
-      }
-
-      // Create CSS variables theme for dynamic switching
-      return createCssVariablesTheme({
-        name,
-        colors,
-        tokenColors,
-      } as ShikiTheme);
-    } catch (error) {
-      this.dx.print(`ERROR:convertVSCodeThemeToShiki: Failed to convert theme: ${String(error)}`);
-      // Return a default theme instead of null
-      return createCssVariablesTheme({
-        name: 'fallback-theme',
-      });
-    }
-  }
-
-  async styleToHtml(
-    code: string,
-    languageId: LanguageId,
-    opts?: { fontSize?: number; lineHeight?: number; title?: string; theme?: string }
-  ): Promise<string> {
-    const lang = languageId;
-
-    // Determine which theme to use FIRST
-    let selectedTheme: string;
-
-    if (opts?.theme) {
-      // Use specified theme - look it up from our unified theme list
-      const allThemes = this.getThemes();
-      const themeData = allThemes.find(theme => theme.id === opts.theme);
-
-      if (!themeData) {
-        throw new Error(`Theme '${opts.theme}' not found in available themes`);
-      }
-
-      if (themeData.colors && themeData.tokenColors) {
-        // VS Code theme - convert and use
-        const shikiTheme = this.convertVSCodeThemeToShiki({
-          name: themeData.id,
-          colors: themeData.colors,
-          tokenColors: themeData.tokenColors,
-        });
-        selectedTheme = shikiTheme?.name || 'github-light';
-      } else {
-        // Shiki theme - use directly
-        selectedTheme = themeData.id;
-      }
-    } else {
-      // Use current VS Code theme - get it from our unified theme list
-      const activeThemeId = this.app.vscodeapis.getActiveThemeId();
-      const themeData = this.getThemes().find(theme => theme.id === activeThemeId);
-
-      if (themeData && themeData.colors && themeData.tokenColors) {
-        // VS Code theme - convert and use
-        const shikiTheme = this.convertVSCodeThemeToShiki({
-          name: themeData.id,
-          colors: themeData.colors,
-          tokenColors: themeData.tokenColors,
-        });
-        selectedTheme = shikiTheme?.name || 'github-light';
-      } else {
-        // Fallback to github-light
-        selectedTheme = 'github-light';
-      }
-    }
-
-    // Ensure highlighter is initialized AFTER theme processing
-    this.dx.out(`THEMECHECK: About to call validateHighlighter with lang: '${lang}'`);
-    await this.validateHighlighter(lang);
-    this.dx.out(`THEMECHECK: validateHighlighter completed successfully`);
-
-    this.dx.out(`THEMECHECK: About to call highlighter with theme: '${selectedTheme}'`);
-
-    this.dx.out(
-      `THEMECHECK: Highlighter call parameters - lang: '${lang}', theme: '${selectedTheme}', code length: ${code.length}`
-    );
-
-    // Get tokens directly and generate HTML ourselves
-    const tokenResult = this.highlighter?.codeToTokens(code, {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      lang: lang as any, // Shiki expects specific language types, but we accept any string
-      theme: selectedTheme,
-    });
-
-    this.dx.out(`THEMECHECK: Highlighter call completed successfully`);
-
-    const editorTypo = this.app.vscodeapis.getEditorTypography();
-    const fontSize = typeof opts?.fontSize === 'number' ? opts.fontSize : editorTypo.fontSize; // <- Instead of this shit all over the place, we should guarantee opts.fontSize is always at least the editor's fontSize.
-    const lineHeight =
-      typeof opts?.lineHeight === 'number' ? opts.lineHeight : editorTypo.lineHeight; // <- Same here, can't we just initialize opts with fontSize, lineHeight, etc?
-
-    // Get font info from theme
-    // const themeData = this.getThemes().find(theme => theme.id === selectedTheme);
-    // const fontFamily = this.getFontFamilyFromTheme(themeData);
-
-    // Generate HTML directly from tokens
-    const html = this.generateHtmlFromTokens(tokenResult?.tokens || [], fontSize, lineHeight);
-
-    // Create the final page HTML
-    const title =
-      typeof opts?.title === 'string' && opts.title.length > 0 ? opts.title : 'Printable';
-    const page = this.createHtmlPage(html, fontSize, lineHeight, title);
-
-    return page;
   }
 
   // Static cache for themes
@@ -268,33 +105,22 @@ export class Stylize {
   }> {
     // Build themes cache if not available
     if (Stylize.themesCache === null) {
-      this.dx.out('THEMECHECK: Rebuilding themes cache');
       const shikiThemes = this.getShikiThemes(USE_ALL_LIGHT_SHIKI_THEMES);
       const vscodeThemes = this.getVSCodeThemes(USE_ALL_LIGHT_VSCODE_THEMES);
 
       // Combine themes: Shiki first (more reliable for printing), then VSCode
       Stylize.themesCache = [...shikiThemes, ...vscodeThemes];
-      this.dx.out(
-        `THEMECHECK: Cache built with ${Stylize.themesCache.length} themes: ${Stylize.themesCache.map(t => t.id).join(', ')}`
-      );
-      this.dx.out('THEMECHECK: About to return from getThemes()');
-    } else {
-      this.dx.out('THEMECHECK: Using existing themes cache');
-      this.dx.out('THEMECHECK: About to return from getThemes()');
     }
 
     // Get themes from cache
     let themes = [...Stylize.themesCache];
-    this.dx.out(`THEMECHECK: getThemes() - themes array created with ${themes.length} items`);
 
     // Apply filter if provided
     if (filter) {
       const filterRegex = new RegExp(filter, 'i');
       themes = themes.filter(theme => filterRegex.test(theme.displayName));
-      this.dx.out(`THEMECHECK: getThemes() - filter applied, ${themes.length} themes remaining`);
     }
 
-    this.dx.out(`THEMECHECK: getThemes() - returning themes: ${themes.map(t => t.id).join(', ')}`);
     return themes;
   }
 
@@ -395,7 +221,6 @@ export class Stylize {
         const editorThemeData = this.app.vscodeapis.getVSCodeThemeJson(activeThemeID);
 
         if (editorThemeData) {
-          this.dx.out(`THEMECHECK: Adding editor theme to themes list: ${activeThemeID}`);
           themes.unshift({
             id: activeThemeID,
             displayName: `${activeThemeID} 📝`,
@@ -415,71 +240,250 @@ export class Stylize {
     }
   }
 
+  // Internal converter class for styleToPdf logic
+  private Converter_StyleToPdf = class {
+    private app: App;
+    private dx: Diagnostics;
+
+    constructor(app: App) {
+      this.app = app;
+      this.dx = app.stylize.dx.sub('Converter_StyleToPdf');
+    }
+
+    private determineTheme(opts?: { theme?: string }): string {
+      if (opts?.theme) {
+        return this.resolveSpecifiedTheme(opts.theme);
+      } else {
+        return this.resolveActiveTheme();
+      }
+    }
+
+    private resolveSpecifiedTheme(themeId: string): string {
+      const allThemes = this.app.stylize.getThemes();
+      const themeData = allThemes.find(
+        (theme: {
+          id: string;
+          colors?: Record<string, string>;
+          tokenColors?: VSCodeTokenColor[];
+        }) => theme.id === themeId
+      );
+
+      if (!themeData) {
+        // Theme not found - fallback to active editor theme
+        this.dx.print(`WARNING: Theme '${themeId}' not found, falling back to active editor theme`);
+        return this.resolveActiveTheme();
+      }
+
+      if (themeData.colors && themeData.tokenColors) {
+        // VS Code theme - convert and use
+        const shikiTheme = this.convertVSCodeThemeToShiki({
+          name: themeData.id,
+          colors: themeData.colors,
+          tokenColors: themeData.tokenColors,
+        });
+        return shikiTheme?.name || this.getFallbackTheme();
+      } else {
+        // Shiki theme - use directly
+        return themeData.id;
+      }
+    }
+
+    private resolveActiveTheme(): string {
+      const activeThemeId = this.app.vscodeapis.getActiveThemeId();
+      const themeData = this.app.stylize
+        .getThemes()
+        .find(
+          (theme: {
+            id: string;
+            colors?: Record<string, string>;
+            tokenColors?: VSCodeTokenColor[];
+          }) => theme.id === activeThemeId
+        );
+
+      if (themeData && themeData.colors && themeData.tokenColors) {
+        // VS Code theme - convert and use
+        const shikiTheme = this.convertVSCodeThemeToShiki({
+          name: themeData.id,
+          colors: themeData.colors,
+          tokenColors: themeData.tokenColors,
+        });
+        return shikiTheme?.name || this.getFallbackTheme();
+      } else if (themeData) {
+        // Shiki theme - use directly
+        return themeData.id;
+      } else {
+        // Active theme not found - fallback to first available theme
+        this.dx.print(
+          `WARNING: Active theme '${activeThemeId}' not found, falling back to first available theme`
+        );
+        return this.getFallbackTheme();
+      }
+    }
+
+    private getFallbackTheme(): string {
+      const themes = this.app.stylize.getThemes();
+      if (themes.length === 0) {
+        throw new Error('No themes available - cannot generate PDF');
+      }
+      return themes[0].id;
+    }
+
+    private async ensureHighlighterReady(languageId: LanguageId): Promise<void> {
+      await this.app.stylize.validateHighlighter(languageId);
+    }
+
+    private tokenizeCode(
+      code: string,
+      languageId: LanguageId,
+      selectedTheme: string
+    ): ThemedToken[][] {
+      const tokenResult = this.app.stylize.highlighter?.codeToTokens(code, {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        lang: languageId as any,
+        theme: selectedTheme,
+      });
+      return tokenResult?.tokens || [];
+    }
+
+    private extractFontInfo(
+      selectedTheme: string,
+      opts?: { fontSize?: number; lineHeight?: number }
+    ): {
+      fontFamily: string;
+      fontSize: number;
+      lineHeight: number;
+    } {
+      const themeData = this.app.stylize
+        .getThemes()
+        .find(
+          (theme: {
+            id: string;
+            colors?: Record<string, string>;
+            tokenColors?: VSCodeTokenColor[];
+          }) => theme.id === selectedTheme
+        );
+      const fontFamily = themeData ? this.app.stylize.getFontFamilyFromTheme(themeData) : 'courier';
+
+      const editorTypo = this.app.vscodeapis.getEditorTypography();
+      const fontSize = typeof opts?.fontSize === 'number' ? opts.fontSize : editorTypo.fontSize;
+      const lineHeight =
+        typeof opts?.lineHeight === 'number' ? opts.lineHeight : editorTypo.lineHeight;
+
+      return { fontFamily, fontSize, lineHeight };
+    }
+
+    private async generatePdfDocument(
+      tokens: ThemedToken[][],
+      fontInfo: { fontFamily: string; fontSize: number; lineHeight: number },
+      title?: string
+    ): Promise<jsPDF> {
+      return await this.app.pdf.generatePdfFromTokens(
+        tokens,
+        fontInfo.fontFamily,
+        fontInfo.fontSize,
+        fontInfo.lineHeight,
+        title
+      );
+    }
+
+    // Convert VS Code theme JSON to Shiki-compatible CSS variables format
+    private convertVSCodeThemeToShiki(vscodeTheme: VSCodeTheme): ShikiTheme {
+      try {
+        // Extract basic theme info
+        const name = (vscodeTheme.name as string) || 'vscode-theme';
+
+        // Extract colors
+        const colors: Record<string, string> = {};
+        if (vscodeTheme.colors && typeof vscodeTheme.colors === 'object') {
+          const vscodeColors = vscodeTheme.colors as Record<string, string>;
+          for (const [key, value] of Object.entries(vscodeColors)) {
+            if (typeof value === 'string') {
+              colors[key] = value;
+            }
+          }
+        }
+
+        // Extract token colors
+        const tokenColors: Array<{
+          scope: string | string[];
+          settings: { foreground?: string; background?: string };
+        }> = [];
+        if (vscodeTheme.tokenColors && Array.isArray(vscodeTheme.tokenColors)) {
+          const vscodeTokenColors = vscodeTheme.tokenColors as VSCodeTokenColor[];
+          for (const tokenColor of vscodeTokenColors) {
+            if (tokenColor.scope && tokenColor.settings) {
+              const scope = tokenColor.scope;
+              const settings: { foreground?: string; background?: string } = {};
+
+              if (
+                tokenColor.settings.foreground &&
+                typeof tokenColor.settings.foreground === 'string'
+              ) {
+                settings.foreground = tokenColor.settings.foreground;
+              }
+              if (
+                tokenColor.settings.background &&
+                typeof tokenColor.settings.background === 'string'
+              ) {
+                settings.background = tokenColor.settings.background;
+              }
+
+              if (Object.keys(settings).length > 0) {
+                tokenColors.push({ scope, settings });
+              }
+            }
+          }
+        }
+
+        // Create CSS variables theme for dynamic switching
+        return createCssVariablesTheme({
+          name,
+          colors,
+          tokenColors,
+        } as ShikiTheme);
+      } catch (error) {
+        this.dx.print(`ERROR:convertVSCodeThemeToShiki: Failed to convert theme: ${String(error)}`);
+        // Return a default theme instead of null
+        return createCssVariablesTheme({
+          name: 'fallback-theme',
+        });
+      }
+    }
+
+    async convert(
+      code: string,
+      languageId: LanguageId,
+      opts?: { fontSize?: number; lineHeight?: number; title?: string; theme?: string }
+    ): Promise<jsPDF> {
+      const dx = this.dx.sub('Converter_StyleToPdf');
+      dx.require({ code, languageId }, ['code', 'languageId']);
+
+      try {
+        const selectedTheme = this.determineTheme(opts);
+        await this.ensureHighlighterReady(languageId);
+        const tokens = this.tokenizeCode(code, languageId, selectedTheme);
+        const fontInfo = this.extractFontInfo(selectedTheme, opts);
+        const pdfDoc = await this.generatePdfDocument(tokens, fontInfo, opts?.title);
+
+        dx.out(`PDF document generated successfully`);
+        return pdfDoc;
+      } catch (error) {
+        dx.out(`Error generating PDF: ${error}`);
+        throw error;
+      } finally {
+        dx.done();
+      }
+    }
+  };
+
   // NEW: Generate PDF directly from code using theme font and user size
   async styleToPdf(
     code: string,
     languageId: LanguageId,
     opts?: { fontSize?: number; lineHeight?: number; title?: string; theme?: string }
   ): Promise<jsPDF> {
-    const dx = this.dx.sub('styleToPdf');
-    dx.require({ code, languageId }, ['code', 'languageId']);
-
-    try {
-      // Get theme (same logic as styleToHtml)
-      let selectedTheme: string;
-      if (opts?.theme) {
-        const allThemes = this.getThemes();
-        const themeData = allThemes.find(theme => theme.id === opts.theme);
-        if (!themeData) {
-          throw new Error(`Theme '${opts.theme}' not found in available themes`);
-        }
-        selectedTheme = themeData.id;
-      } else {
-        const activeThemeId = this.app.vscodeapis.getActiveThemeId();
-        const themeData = this.getThemes().find(theme => theme.id === activeThemeId);
-        selectedTheme = themeData?.id || 'github-light';
-      }
-
-      // Ensure highlighter is initialized
-      await this.validateHighlighter(languageId);
-
-      // Get tokens from Shiki using the correct method
-      const tokenResult = this.highlighter?.codeToTokens(code, {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        lang: languageId as any, // Shiki expects specific language types, but we accept any string
-        theme: selectedTheme,
-      });
-
-      // Extract the tokens array from the result
-      const tokens = tokenResult?.tokens || [];
-
-      // Get font info from theme
-      const themeData = this.getThemes().find(theme => theme.id === selectedTheme);
-      const fontFamily = themeData ? this.getFontFamilyFromTheme(themeData) : 'courier';
-
-      // Get user-specified size or editor default
-      const editorTypo = this.app.vscodeapis.getEditorTypography();
-      const fontSize = typeof opts?.fontSize === 'number' ? opts.fontSize : editorTypo.fontSize;
-      const lineHeight =
-        typeof opts?.lineHeight === 'number' ? opts.lineHeight : editorTypo.lineHeight;
-
-      // Generate PDF using PDF class and return PDF document pointer
-      const pdfDoc = await this.app.pdf.generatePdfFromTokens(
-        tokens,
-        fontFamily,
-        fontSize,
-        lineHeight,
-        opts?.title
-      );
-
-      dx.out(`PDF document generated successfully`);
-      return pdfDoc;
-    } catch (error) {
-      dx.out(`Error generating PDF: ${error}`);
-      throw error;
-    } finally {
-      dx.done();
-    }
+    const converter = new this.Converter_StyleToPdf(this.app);
+    return converter.convert(code, languageId, opts);
   }
 
   // Helper: Generate HTML directly from tokens
