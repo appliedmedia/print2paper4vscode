@@ -8,7 +8,7 @@ import {
 } from 'shiki';
 import { Diagnostics } from './Diagnostics';
 import jsPDF from 'jspdf';
-import type { Theme, ThemeData } from './types/theme_t';
+import type { Theme, ThemeData, TokenColor } from './types/theme_t';
 
 // Module-level constants for theme filtering
 const USE_ALL_LIGHT_SHIKI_THEMES = 'light|bright|day';
@@ -17,11 +17,10 @@ const USE_ALL_LIGHT_VSCODE_THEMES = 'light|bright|day';
 // Type definitions for Shiki highlighter and theme data
 type LanguageId = string; // We accept any string as language ID, even if Shiki expects specific types
 
-
 interface VSCodeTheme {
   name?: string;
   colors?: Record<string, string>;
-  tokenColors?: any[];
+  tokenColors?: TokenColor[];
 }
 
 export class Stylize {
@@ -161,7 +160,7 @@ export class Stylize {
               const shikiTheme = this.convertVSCodeThemeToShiki({
                 name: theme.id,
                 colors: theme.colors as Record<string, string>,
-                tokenColors: theme.tokenColors as any[],
+                tokenColors: theme.tokenColors as TokenColor[],
               });
               themes.push({
                 id: theme.id,
@@ -192,7 +191,7 @@ export class Stylize {
             const shikiTheme = this.convertVSCodeThemeToShiki({
               name: activeThemeID,
               colors: editorThemeData.colors as Record<string, string>,
-              tokenColors: editorThemeData.tokenColors as any[],
+              tokenColors: editorThemeData.tokenColors as TokenColor[],
             });
             themes.unshift({
               id: activeThemeID,
@@ -538,7 +537,7 @@ export class Stylize {
         settings: { foreground?: string; background?: string };
       }> = [];
       if (vscodeTheme.tokenColors && Array.isArray(vscodeTheme.tokenColors)) {
-        const vscodeTokenColors = vscodeTheme.tokenColors as any[];
+        const vscodeTokenColors = vscodeTheme.tokenColors as TokenColor[];
         for (const tokenColor of vscodeTokenColors) {
           if (tokenColor.scope && tokenColor.settings) {
             const scope = tokenColor.scope;

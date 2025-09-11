@@ -6,13 +6,19 @@ export interface Theme {
 }
 
 // Theme data object structure
+export interface TokenColor {
+  scope: string | string[];
+  settings: {
+    foreground?: string;
+    background?: string;
+    fontStyle?: string;
+  };
+}
+
 export interface ThemeData {
   name?: string;
   colors?: Record<string, string>;
-  tokenColors?: Array<{
-    scope: string | string[];
-    settings: { foreground?: string; background?: string };
-  }>;
+  tokenColors?: TokenColor[];
   fonts?: {
     editor?: string;
   };
