@@ -28,7 +28,7 @@ export class VSCodeAPIs {
   init(): void {
     const dx = this.dx.sub('init');
     dx.require({ vscode: this.vscode, context: this.context }, ['vscode', 'context']);
-    
+
     // Register VS Code commands
     const printCommand = this.vscode.commands.registerCommand('p2p4vsc.print2paper', () => {
       this.app.paperprinter.handleFirstPrintCommand();

@@ -1,5 +1,11 @@
 import type { App } from './App';
-import { getSingletonHighlighter, createCssVariablesTheme, bundledThemesInfo, type ThemedToken, type Highlighter } from 'shiki';
+import {
+  getSingletonHighlighter,
+  createCssVariablesTheme,
+  bundledThemesInfo,
+  type ThemedToken,
+  type Highlighter,
+} from 'shiki';
 import { Diagnostics } from './Diagnostics';
 import jsPDF from 'jspdf';
 
@@ -39,6 +45,9 @@ interface ShikiTheme {
     scope?: string | string[];
     settings?: { foreground?: string; background?: string };
   }>;
+  fonts?: {
+    editor?: string;
+  };
 }
 
 export class Stylize {
@@ -474,7 +483,11 @@ export class Stylize {
   }
 
   // Helper: Generate HTML directly from tokens
-  private generateHtmlFromTokens(tokens: ThemedToken[][], fontSize: number, lineHeight: number): string {
+  private generateHtmlFromTokens(
+    tokens: ThemedToken[][],
+    fontSize: number,
+    lineHeight: number
+  ): string {
     let html =
       '<pre style="font-size: ' +
       fontSize +
@@ -567,12 +580,20 @@ export class Stylize {
       .replace(/'/g, '&#39;');
   }
 
-  // Helper: Get font family from theme <- WTF is going on here? This isn't returning the fontFamily from the theme at all.
+  // Helper: Get font family from theme
   private getFontFamilyFromTheme(themeData: ShikiTheme): string {
-    if (!themeData?.colors) return 'courier';
+    // Priority 1: If theme has a font family, return that
+    if (themeData?.fonts?.editor) {
+      return themeData.fonts.editor;
+    }
 
-    // Try to get font from theme colors or use editor font
+    // Priority 2: Return the current editor's font family
     const editorTypo = this.app.vscodeapis.getEditorTypography();
-    return editorTypo.fontFamily || 'courier';
+    if (editorTypo.fontFamily) {
+      return editorTypo.fontFamily;
+    }
+
+    // Priority 3: Fallback to courier
+    return 'courier';
   }
 }

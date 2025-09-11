@@ -73,7 +73,7 @@ export class PaperPrinter {
 
   private async handlePrintMessage(msg: WebviewMessage): Promise<void> {
     if (!this.pdfRendered) return;
-    void await this.applyRenderModes(this.pdfRendered);
+    void (await this.applyRenderModes(this.pdfRendered));
     if (msg.value === 'preview')
       await this.app.pdf.printWithPreview(this.pdfRendered, this.printTitle || 'Print Output');
     else if (msg.value === 'direct')
@@ -306,7 +306,7 @@ export class PaperPrinter {
       return ''; // Print menu has no default selection
     }
     if (!this.pdfRendered) return '';
-    void await this.applyRenderModes(this.pdfRendered);
+    void (await this.applyRenderModes(this.pdfRendered));
     if (selectedId === 'preview')
       await this.app.pdf.printWithPreview(this.pdfRendered, this.printTitle || 'Print Output');
     else if (selectedId === 'direct')

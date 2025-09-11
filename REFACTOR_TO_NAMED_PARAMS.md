@@ -221,7 +221,7 @@ Refactor all methods with two or more parameters to use named parameter objects 
 
 ## File Structure After Refactoring
 
-```
+```text
 src/
 ├── types/
 │   ├── Common_t.ts          # Shared parameter interfaces
