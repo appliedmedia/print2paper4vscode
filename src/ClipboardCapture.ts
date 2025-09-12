@@ -146,13 +146,14 @@ export class ClipboardCapture {
       .map(line => `<p>${line}</p>`)
       .join('\n');
 
-    // OS has to be valid or we cannot operate correctly. Please fail if OS.create doesn't return a valid pointer.
+    // Load YAML template
     const yaml = this.app.os.readExtensionYaml<{ clipboard_plain_text_html: string }>(
       'src/ClipboardCapture.yaml'
     );
 
     return this.app.templateDictReplace(yaml.clipboard_plain_text_html, {
       PARAGRAPHS: paragraphs,
+      CSS_PATH: 'src/css/clipboard.css',
     });
   }
 

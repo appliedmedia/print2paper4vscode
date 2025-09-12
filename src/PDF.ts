@@ -257,117 +257,19 @@ export class PDF {
 
     try {
       // Generate a data URL from the PDF document
-      const pdfDataUrl = pdfDoc.output('datauristring');
+      const pdfDataUrl = pdfDoc.output('datauristring') as string;
 
-      const html = `
-<!DOCTYPE html>
-<html>
-<head>
-  <title>${title}</title>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.10.377/pdf.min.js"></script>
-  <style>
-    body { 
-      margin: 0; 
-      padding: 0; 
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      background: #f5f5f5;
-    }
-    
-    .pdf-container {
-      position: relative;
-      width: 100%;
-      height: 100vh;
-      overflow: auto;
-      background: white;
-      display: flex;
-      justify-content: center;
-      align-items: flex-start;
-      padding: 20px;
-    }
-    
-    #pdf-canvas {
-      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-      border: 1px solid #ddd;
-    }
-    
-    .loading {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 200px;
-      color: #666;
-      font-size: 16px;
-    }
-    
-    .error {
-      color: #d73a49;
-      text-align: center;
-      padding: 20px;
-    }
-  </style>
-</head>
-<body>
-  <div class="pdf-container">
-    <div id="loading" class="loading">Loading PDF...</div>
-    <canvas id="pdf-canvas" style="display: none;"></canvas>
-    <div id="error" class="error" style="display: none;"></div>
-  </div>
+      // Load HTML template
+      const htmlTemplate = this.app.os.fileRead('src/webview/pdf_embed.html');
 
-  <script>
-    let pdfDoc = null;
-    let pageNum = 1;
-    let pageRendering = false;
-    let pageNumPending = null;
-    let scale = 1.5;
-    let canvas = document.getElementById('pdf-canvas');
-    let ctx = canvas.getContext('2d');
-    
-    function renderPage(num) {
-      pageRendering = true;
-      pdfDoc.getPage(num).then(function(page) {
-        let viewport = page.getViewport({scale: scale});
-        canvas.height = viewport.height;
-        canvas.width = viewport.width;
-        
-        let renderContext = {
-          canvasContext: ctx,
-          viewport: viewport
-        };
-        
-        let renderTask = page.render(renderContext);
-        
-        renderTask.promise.then(function() {
-          pageRendering = false;
-          if (pageNumPending !== null) {
-            renderPage(pageNumPending);
-            pageNumPending = null;
-          }
-        });
+      // Generate HTML using template
+      const html = this.app.templateDictReplace(htmlTemplate, {
+        TITLE: title,
+        PDF_DATA_URL: pdfDataUrl,
+        PDF_JS_PATH: 'src/lib/pdf.min.js',
+        CSS_PATH: 'src/webview/pdf_embed.css',
+        JS_PATH: 'src/webview/pdf_embed.js',
       });
-    }
-    
-    function loadPdf() {
-      const loading = document.getElementById('loading');
-      const canvas = document.getElementById('pdf-canvas');
-      const error = document.getElementById('error');
-      
-      pdfjsLib.getDocument('${pdfDataUrl}').promise.then(function(pdfDoc_) {
-        pdfDoc = pdfDoc_;
-        loading.style.display = 'none';
-        canvas.style.display = 'block';
-        renderPage(pageNum);
-      }).catch(function(err) {
-        loading.style.display = 'none';
-        error.style.display = 'block';
-        error.textContent = 'Error loading PDF: ' + err.message;
-      });
-    }
-    
-    // Load PDF when page loads
-    loadPdf();
-  </script>
-</body>
-</html>`;
 
       dx.out(`HTML generated for PDF document`);
       return html;

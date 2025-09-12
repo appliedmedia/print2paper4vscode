@@ -127,15 +127,13 @@ export class Stylize {
 
       for (const ext of themeExtensions) {
         // Get theme data for this extension
-        const themeData = this.app.vscodeapis.getVSCodeThemeJson(ext.id);
-        if (!themeData) continue;
+        const themeJson = this.app.vscodeapis.getVSCodeThemeJson(ext.id);
+        if (!themeJson) continue;
 
         // Process each theme in the extension
-        const extensionThemes = Array.isArray(themeData) ? themeData : [themeData];
-        for (const theme of extensionThemes) {
+        const themes = Array.isArray(themeJson) ? themeJson : [themeJson];
+        for (const theme of themes) {
           if (!theme.id) continue;
-
-          // No need to filter here anymore - extensions are already filtered
 
           // Resolve display name from NLS if available
           let displayName = theme.id;
@@ -159,7 +157,7 @@ export class Stylize {
           // Convert VS Code theme to Shiki theme
           if (theme.colors && theme.tokenColors) {
             try {
-              const shikiTheme = this.convertVSCodeThemeToShiki({
+              const themeData = this.convertVSCodeThemeToShiki({
                 name: theme.id,
                 colors: theme.colors as Record<string, string>,
                 tokenColors: theme.tokenColors as TokenColor[],
@@ -167,7 +165,7 @@ export class Stylize {
               themes.push({
                 id: theme.id,
                 displayName,
-                themeData: shikiTheme,
+                themeData,
               });
             } catch (error) {
               this.dx.out(`Failed to convert theme ${theme.id}: ${error} - skipping`);
@@ -178,33 +176,38 @@ export class Stylize {
         }
       }
 
-      // Add current editor theme at the top with 📝 indicator
-      const activeThemeID = this.app.vscodeapis.getActiveThemeId();
-      const activeTheme = themes.find(t => t.id === activeThemeID);
+      // Move current editor theme to the top
+      const id = this.app.vscodeapis.getActiveThemeId();
+      const theme = themes.find(t => t.id === id);
 
-      if (activeTheme) {
-        activeTheme.displayName = `${activeTheme.displayName} 📝`;
+      if (theme) {
+        // Move active theme to the top
+        const index = themes.indexOf(theme);
+        if (index > 0) {
+          themes.splice(index, 1);
+          themes.unshift(theme);
+        }
       } else {
         // If editor theme not in list, add it at the top
-        const editorThemeData = this.app.vscodeapis.getVSCodeThemeJson(activeThemeID);
+        const themeJson = this.app.vscodeapis.getVSCodeThemeJson(id);
 
-        if (editorThemeData && editorThemeData.colors && editorThemeData.tokenColors) {
+        if (themeJson && themeJson.colors && themeJson.tokenColors) {
           try {
-            const shikiTheme = this.convertVSCodeThemeToShiki({
-              name: activeThemeID,
-              colors: editorThemeData.colors as Record<string, string>,
-              tokenColors: editorThemeData.tokenColors as TokenColor[],
+            const themeData = this.convertVSCodeThemeToShiki({
+              name: id,
+              colors: themeJson.colors as Record<string, string>,
+              tokenColors: themeJson.tokenColors as TokenColor[],
             });
             themes.unshift({
-              id: activeThemeID,
-              displayName: `${activeThemeID} 📝`,
-              themeData: shikiTheme,
+              id,
+              displayName: id,
+              themeData,
             });
           } catch (error) {
-            this.dx.out(`Failed to convert active theme ${activeThemeID}: ${error} - skipping`);
+            this.dx.out(`Failed to convert active theme ${id}: ${error} - skipping`);
           }
         } else {
-          this.dx.out(`Active theme ${activeThemeID} has no colors/tokenColors data - skipping`);
+          this.dx.out(`Active theme ${id} has no colors/tokenColors data - skipping`);
         }
       }
 
@@ -407,41 +410,50 @@ export class Stylize {
     fontSize: number,
     lineHeight: number
   ): string {
-    let html =
-      '<pre style="font-size: ' +
-      fontSize +
-      'px; line-height: ' +
-      lineHeight +
-      'px; margin: 0; white-space: pre;">';
+    // Load YAML templates
+    const yaml = this.app.os.readExtensionYaml<{
+      stylize_token_pre: string;
+      stylize_token_line: string;
+      stylize_token_span: string;
+    }>('src/Stylize.yaml');
 
-    for (const line of tokens) {
-      html +=
-        '<div class="line" style="line-height: ' +
-        lineHeight +
-        'px; min-height: ' +
-        lineHeight +
-        'px; margin: 0; padding: 0; white-space: pre;">';
+    // Generate lines
+    const lines = tokens
+      .map(line => {
+        // Generate tokens for this line
+        const tokenSpans = line
+          .map(token => {
+            const text = token.content;
+            if (!text) return '';
 
-      for (const token of line) {
-        const text = token.content;
-        if (!text) continue;
+            const color = token.color || '#000000';
+            const fontStyle = token.fontStyle || 0;
 
-        const color = token.color || '#000000';
-        const fontStyle = token.fontStyle || 0;
+            // Apply font styles (bold, italic)
+            let style = `color: ${color};`;
+            if (fontStyle & 1) style += ' font-weight: bold;';
+            if (fontStyle & 2) style += ' font-style: italic;';
 
-        // Apply font styles (bold, italic)
-        let style = `color: ${color};`;
-        if (fontStyle & 1) style += ' font-weight: bold;';
-        if (fontStyle & 2) style += ' font-style: italic;';
+            return this.app.templateDictReplace(yaml.stylize_token_span, {
+              STYLE: style,
+              TEXT: this.escapeHtml(text),
+            });
+          })
+          .join('');
 
-        html += `<span style="${style}">${this.escapeHtml(text)}</span>`;
-      }
+        return this.app.templateDictReplace(yaml.stylize_token_line, {
+          LINEHEIGHT: lineHeight.toString(),
+          TOKENS: tokenSpans,
+        });
+      })
+      .join('');
 
-      html += '</div>';
-    }
-
-    html += '</pre>';
-    return html;
+    // Generate final pre element
+    return this.app.templateDictReplace(yaml.stylize_token_pre, {
+      FONTSIZE: fontSize.toString(),
+      LINEHEIGHT: lineHeight.toString(),
+      LINES: lines,
+    });
   }
 
   // Helper: Create the final HTML page
