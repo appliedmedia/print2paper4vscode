@@ -86,12 +86,10 @@ export class ClipboardCapture {
    * Copies current selection to clipboard
    */
   private async copyToClipboard(): Promise<void> {
-    const appleScript = `
-            tell application "System Events"
-                keystroke "c" using command down
-                delay 0.1
-            end tell
-        `;
+    const yaml = this.app.os.readExtensionYaml<{ apple_script_copy: string }>(
+      'src/ClipboardCapture.yaml'
+    );
+    const appleScript = yaml.apple_script_copy;
     await execAsync(`osascript -e '${appleScript}'`);
   }
 
@@ -99,16 +97,10 @@ export class ClipboardCapture {
    * Selects all, copies to clipboard, then deselects
    */
   private async selectAllCopyDeselect(): Promise<void> {
-    const appleScript = `
-            tell application "System Events"
-                keystroke "a" using command down
-                delay 0.1
-                keystroke "c" using command down
-                delay 0.1
-                keystroke "a" using {command down, shift down}
-
-            end tell
-        `;
+    const yaml = this.app.os.readExtensionYaml<{ apple_script_select_all_copy_deselect: string }>(
+      'src/ClipboardCapture.yaml'
+    );
+    const appleScript = yaml.apple_script_select_all_copy_deselect;
     await execAsync(`osascript -e '${appleScript}'`);
   }
 

@@ -1,0 +1,9 @@
+# AppleScript templates for macOS operations
+
+apple_script_print_via_finder: |
+  tell application "Finder" to print POSIX file "{{FILE_PATH}}"
+
+apple_script_open_preview_print_dialog: |
+  tell application "Preview" to open POSIX file "{{FILE_PATH}}"
+  tell application "Preview" to activate
+  tell application "System Events" to keystroke "p" using command down
