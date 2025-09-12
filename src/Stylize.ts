@@ -1,7 +1,6 @@
 import type { App } from './App';
 import {
   getSingletonHighlighter,
-  createCssVariablesTheme,
   bundledThemesInfo,
   type ThemedToken,
   type Highlighter,
@@ -21,6 +20,9 @@ interface VSCodeTheme {
   name?: string;
   colors?: Record<string, string>;
   tokenColors?: TokenColor[];
+  fonts?: {
+    editor?: string;
+  };
 }
 
 export class Stylize {
@@ -45,7 +47,7 @@ export class Stylize {
       const themes = this.getThemes();
       dx.out(`Creating highlighter with ${themes.length} themes`);
 
-      // Extract themes for highlighter (IDs for pure Shiki, objects for converted VS Code)
+      // Extract themes for highlighter (IDs for pure Shiki, ThemeData for VS Code)
       const themesForHighlighter: (string | ThemeData)[] = themes.map(
         theme => theme.themeData || theme.id
       );
@@ -499,19 +501,8 @@ export class Stylize {
 
   // Helper: Get font family from theme
   private getFontFamilyFromTheme(themeData: Theme): string {
-    // Priority 1: If theme has a converted Shiki theme with font family, return that
-    if (themeData.themeData && themeData.themeData.fonts?.editor) {
-      return themeData.themeData.fonts.editor;
-    }
-
-    // Priority 2: Return the current editor's font family
-    const editorTypo = this.app.vscodeapis.getEditorTypography();
-    if (editorTypo.fontFamily) {
-      return editorTypo.fontFamily;
-    }
-
-    // Priority 3: Fallback to courier
-    return 'courier';
+    const et = this.app.vscodeapis.getEditorTypography();
+    return themeData?.themeData?.fonts?.editor || et?.fontFamily || 'courier';
   }
 
   // Convert VS Code theme JSON to Shiki-compatible CSS variables format
@@ -563,18 +554,25 @@ export class Stylize {
         }
       }
 
-      // Create CSS variables theme for dynamic switching
-      return createCssVariablesTheme({
+      // Create proper Shiki theme format
+      return {
         name,
+        type: 'light', // Assume light for now, could be determined from theme
         colors,
         tokenColors,
-      } as ThemeData);
+        fonts: {
+          editor: vscodeTheme.fonts?.editor,
+        },
+      } as ThemeData;
     } catch (error) {
       this.dx.out(`ERROR:convertVSCodeThemeToShiki: Failed to convert theme: ${String(error)}`);
       // Return a default theme instead of null
-      return createCssVariablesTheme({
+      return {
         name: 'fallback-theme',
-      });
+        type: 'light',
+        colors: {},
+        tokenColors: [],
+      } as ThemeData;
     }
   }
 }

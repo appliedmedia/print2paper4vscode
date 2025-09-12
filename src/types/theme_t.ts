@@ -15,10 +15,19 @@ export interface TokenColor {
   };
 }
 
+// Shiki theme format - exactly what Shiki expects
 export interface ThemeData {
-  name?: string;
-  colors?: Record<string, string>;
-  tokenColors?: TokenColor[];
+  name: string;
+  type: 'light' | 'dark';
+  colors: Record<string, string>;
+  tokenColors: Array<{
+    scope: string | string[];
+    settings: {
+      foreground?: string;
+      background?: string;
+      fontStyle?: string;
+    };
+  }>;
   fonts?: {
     editor?: string;
   };
