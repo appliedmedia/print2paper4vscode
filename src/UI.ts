@@ -41,7 +41,7 @@ export class UI {
   async handleWebviewMessage(msg: WebviewMessage): Promise<void> {
     const dx = this.dx.sub('handleWebviewMessage');
     dx.require({ msg }, ['msg']);
-    
+
     if (!msg || !msg.type) return;
 
     const handlers = this.messageHandlers.get(msg.type);
@@ -58,9 +58,45 @@ export class UI {
   }
 
   // Create a webview panel with message handling set up
-  htmlToWebViewPanel(title: string, html: string): unknown {
+  htmlToWebViewPanel(title: string, html: string): any {
     const panel = this.app.vscodeapis.createWebviewPanel(title, html);
     this.app.vscodeapis.setupMessageHandling(panel);
+    return panel;
+  }
+
+  // Create a webview panel with webview URI conversion
+  async htmlToWebViewPanelWithURIs(title: string, html: string): Promise<any> {
+    // Create panel first
+    const panel = this.app.vscodeapis.createWebviewPanel(title, '');
+    this.app.vscodeapis.setupMessageHandling(panel);
+
+    // Convert relative src paths to webview URIs
+    const htmlWithURIs = this.app.os.htmlSrcPathToURI(html, panel);
+
+    // Update panel with converted HTML
+    panel.webview.html = htmlWithURIs;
+
+    return panel;
+  }
+
+  // Create a webview panel and update HTML with webview URIs
+  async createWebviewWithURIs(title: string, pdfDoc: any, tabName: string): Promise<any> {
+    // First create the panel
+    const panel = this.app.vscodeapis.createWebviewPanel(title, '');
+    this.app.vscodeapis.setupMessageHandling(panel);
+
+    // Generate PDF embed HTML
+    const pdfHtml = this.app.pdf.pdfToHTML(pdfDoc, `Printable: ${tabName}`);
+
+    // Convert file paths to webview URIs in the HTML
+    const htmlWithURIs = this.app.os.htmlSrcPathToURI(pdfHtml, panel);
+
+    // Add toolbar to the HTML
+    const htmlWithToolbar = await this.addToolbar(htmlWithURIs);
+
+    // Update the panel with the final HTML
+    panel.webview.html = htmlWithToolbar;
+
     return panel;
   }
 
@@ -68,31 +104,30 @@ export class UI {
   async chooseSaveLocation(defaultFilename: string): Promise<string | null> {
     const dx = this.dx.sub('chooseSaveLocation');
     dx.require({ defaultFilename }, ['defaultFilename']);
-    
+
     try {
       // Create default URI in home directory
       const homeDir = this.app.os.getDir_Home();
       const defaultPath = this.app.os.pathJoin(homeDir, defaultFilename);
       const defaultUri = this.app.vscodeapis.uriFromPath(defaultPath);
-      
+
       // Show save dialog
       const fileUri = await this.app.vscodeapis.showSaveDialog({
         defaultUri: defaultUri,
         filters: {
-          'PDF Files': ['pdf']
+          'PDF Files': ['pdf'],
         },
-        title: 'Save PDF As...'
+        title: 'Save PDF As...',
       });
-      
+
       if (!fileUri) {
         dx.out('Save cancelled by user');
         return null;
       }
-      
+
       const targetPath = this.app.vscodeapis.uriToPath(fileUri);
       dx.out(`User chose save location: ${targetPath}`);
       return targetPath;
-      
     } catch (error) {
       dx.out(`Error choosing save location: ${error}`);
       throw error;
@@ -110,8 +145,6 @@ export class UI {
     const uimenuHtml = await this.app.uimenumgr.getAllUIMenuHTML();
     const uimenuJs = this.app.uimenumgr.getAllUIMenuJS();
 
-
-
     // Get saved toolbar position
     const toolbarLeft = this.app.vscodeapis.getGlobalState<number>('toolbarLeft');
 
@@ -121,10 +154,17 @@ export class UI {
       TOOLBAR_LEFT: toolbarLeft !== undefined ? String(toolbarLeft) : 'undefined',
     });
 
-
-
     // Inject toolbar before closing body tag
     return html.replace('</body>', `${toolbar}</body>`);
+  }
+
+  // Add toolbar to HTML content with webview URI conversion
+  async addToolbarWithURIs(html: string, webviewPanel: any): Promise<string> {
+    // First convert file paths to webview URIs
+    const htmlWithURIs = this.app.os.htmlSrcPathToURI(html, webviewPanel);
+
+    // Then add toolbar
+    return await this.addToolbar(htmlWithURIs);
   }
 
   showInformationMessage(message: string): void {

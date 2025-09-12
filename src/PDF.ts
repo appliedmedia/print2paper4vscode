@@ -259,22 +259,28 @@ export class PDF {
       // Generate a data URL from the PDF document
       const pdfDataUrl = pdfDoc.output('datauristring') as string;
 
-      // Load all external resources and embed them inline
-      const htmlTemplate = this.app.os.fileRead('src/webview/pdf_embed.html');
-      const cssContent = this.app.os.fileRead('src/webview/pdf_embed.css');
-      const jsContent = this.app.os.fileRead('src/webview/pdf_embed.js');
+      // Load YAML templates and PDF.js library
+      const pdfTemplates = this.app.os.readYamlFile<{
+        pdf_viewer_html: string;
+        pdf_css: string;
+        pdf_viewer: string;
+      }>('src/PDF.yaml');
+
+      const uiTemplates = this.app.os.readYamlFile<{
+        base_css: string;
+      }>('src/UI.yaml');
+
       const pdfJsContent = this.app.os.fileRead('src/lib/pdf.min.js');
 
       // Generate HTML using template with embedded resources
-      const html = this.app.templateDictReplace(htmlTemplate, {
+      const html = this.app.templateDictReplace(pdfTemplates.pdf_viewer_html, {
         TITLE: title,
         PDF_DATA_URL: pdfDataUrl,
-        PDF_JS_PATH: '', // Not needed since we're embedding
-        CSS_PATH: '', // Not needed since we're embedding
-        JS_PATH: '', // Not needed since we're embedding
-        EMBEDDED_CSS: cssContent,
-        EMBEDDED_JS: jsContent,
-        EMBEDDED_PDF_JS: pdfJsContent,
+        PDF_CSS: this.app.templateDictReplace(pdfTemplates.pdf_css, {
+          BASE_CSS: uiTemplates.base_css,
+        }),
+        PDFJS_LIBRARY: pdfJsContent,
+        PDF_VIEWER: pdfTemplates.pdf_viewer,
       });
 
       dx.out(`HTML generated for PDF document with embedded resources`);

@@ -98,14 +98,21 @@ export class ClipboardCapture {
       .map(line => `<p>${line}</p>`)
       .join('\n');
 
-    // Load YAML template
-    const yaml = this.app.os.readExtensionYaml<{ clipboard_plain_text_html: string }>(
-      'src/ClipboardCapture.yaml'
-    );
+    // Load YAML templates
+    const clipboardYaml = this.app.os.readExtensionYaml<{
+      clipboard_plain_text_html: string;
+      clipboard_css: string;
+    }>('src/ClipboardCapture.yaml');
 
-    return this.app.templateDictReplace(yaml.clipboard_plain_text_html, {
+    const uiYaml = this.app.os.readExtensionYaml<{
+      base_css: string;
+    }>('src/UI.yaml');
+
+    return this.app.templateDictReplace(clipboardYaml.clipboard_plain_text_html, {
       PARAGRAPHS: paragraphs,
-      CSS_PATH: 'src/css/clipboard.css',
+      CLIPBOARD_CSS: this.app.templateDictReplace(clipboardYaml.clipboard_css, {
+        BASE_CSS: uiYaml.base_css,
+      }),
     });
   }
 

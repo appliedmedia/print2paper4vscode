@@ -142,8 +142,8 @@ export class PaperPrinter {
     this.registerMessageHandlers();
 
     const initial = await this.applyRenderModes(pdfDoc);
-
-    this.app.ui.htmlToWebViewPanel(`Printable: ${tabName}`, await this.app.ui.addToolbar(initial));
+    const htmlWithToolbar = await this.app.ui.addToolbar(initial);
+    await this.app.ui.htmlToWebViewPanelWithURIs(`Printable: ${tabName}`, htmlWithToolbar);
   }
 
   private async applyRenderModes(pdfDoc: jsPDF): Promise<string> {

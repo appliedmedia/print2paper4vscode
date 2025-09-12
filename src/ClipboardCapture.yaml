@@ -3,9 +3,25 @@ clipboard_plain_text_html: |
   <html>
   <head>
       <meta charset="utf-8">
-      <link rel="stylesheet" href="{{CSS_PATH}}">
+      <style>
+        {{CLIPBOARD_CSS}}
+      </style>
   </head>
   <body>
       {{PARAGRAPHS}}
   </body>
   </html>
+
+clipboard_css: |
+  {{BASE_CSS}}
+
+  /* Clipboard-specific styles */
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    margin: 20px;
+    line-height: 1.6;
+  }
+
+  p {
+    margin: 0.5em 0;
+  }

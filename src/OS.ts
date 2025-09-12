@@ -51,7 +51,7 @@ export abstract class OS {
   abstract fileReveal(path: string): Promise<void>;
   abstract filePrint(path: string): Promise<void>;
   abstract fileOpenPrintDialog(path: string): Promise<void>;
-  
+
   // Clipboard operations - platform specific
   abstract copyToClipboard(): Promise<void>;
   abstract selectAllCopyDeselect(): Promise<void>;
@@ -93,6 +93,30 @@ export abstract class OS {
 
   fileRead(filePath: string): string {
     return fs.readFileSync(filePath, 'utf8');
+  }
+
+  // Convert relative src attributes in HTML to webview URIs
+  htmlSrcPathToURI(html: string, webviewPanel: any): string {
+    if (!this.extensionRoot || !webviewPanel?.webview) return html;
+
+    // Find all src attributes that are relative paths (not starting with http, https, or data:)
+    return html.replace(/src="([^"]+)"/g, (match, srcPath) => {
+      // Skip absolute URLs and data URLs
+      if (
+        srcPath.startsWith('http') ||
+        srcPath.startsWith('data:') ||
+        srcPath.startsWith('vscode-webview:')
+      ) {
+        return match;
+      }
+
+      // Convert relative path to webview URI
+      const fullPath = this.pathJoin(this.extensionRoot!, srcPath);
+      const uri = this.app?.vscodeapis.uriFromPath(fullPath);
+      const webviewUri = webviewPanel.webview.asWebviewUri(uri).toString();
+
+      return `src="${webviewUri}"`;
+    });
   }
 
   sanitizeFileName(name: string): string {
@@ -173,8 +197,6 @@ export abstract class OS {
   pathBasename(p: string): string {
     return path.basename(p);
   }
-
-
 }
 
 // Import platform-specific classes at the end to avoid circular dependency
