@@ -89,7 +89,9 @@ export class UI {
     const pdfHtml = this.app.pdf.pdfToHTML(pdfDoc, `Printable: ${tabName}`);
 
     // Convert file paths to webview URIs in the HTML
+    this.dx.out('UI.ts: About to call htmlSrcPathToURI');
     const htmlWithURIs = this.app.os.htmlSrcPathToURI(pdfHtml, panel);
+    this.dx.out('UI.ts: htmlSrcPathToURI completed');
 
     // Add toolbar to the HTML
     const htmlWithToolbar = await this.addToolbar(htmlWithURIs);

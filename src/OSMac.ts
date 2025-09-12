@@ -5,9 +5,9 @@ import type { App } from './App';
 export class OSMac extends OS {
   protected dx: Diagnostics;
 
-  constructor(app?: App) {
+  constructor(app: App) {
     super(app);
-    this.dx = app ? app.dx.create('OSMac') : new Diagnostics('OSMac');
+    this.dx = app.dx.create('OSMac');
   }
 
   // Centralized AppleScript execution helper

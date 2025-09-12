@@ -5,9 +5,9 @@ import type { App } from './App';
 export class OSWin extends OS {
   protected dx: Diagnostics;
 
-  constructor(app?: App) {
+  constructor(app: App) {
     super(app);
-    this.dx = app ? app.dx.create('OSWin') : new Diagnostics('OSWin');
+    this.dx = app.dx.create('OSWin');
   }
   async fileOpenInDefaultApp(path: string): Promise<void> {
     await this.execAsync(`start "" "${path}"`);

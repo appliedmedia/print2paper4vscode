@@ -226,7 +226,7 @@ export class Stylize {
 
     constructor(app: App) {
       this.app = app;
-      this.dx = app.stylize.dx.sub('Converter_StyleToPdf', true /* debugOn */);
+      this.dx = app.stylize.dx.sub('Converter_StyleToPdf');
     }
 
     private determineTheme(opts?: { theme?: string }): string {

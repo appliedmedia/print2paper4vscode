@@ -258,6 +258,7 @@ export class PDF {
     try {
       // Generate a data URL from the PDF document
       const pdfDataUrl = pdfDoc.output('datauristring') as string;
+      dx.out(`PDF data URL generated: ${pdfDataUrl.substring(0, 50)}...`);
 
       // Load YAML templates and PDF.js library
       const pdfTemplates = this.app.os.fileRead<{
@@ -271,6 +272,10 @@ export class PDF {
       }>('src/UI.yaml');
 
       const pdfJsContent = this.app.os.fileRead('src/lib/pdf.min.js');
+
+      dx.out(
+        `PDF.js library loaded: ${pdfJsContent ? `${pdfJsContent.length} characters` : 'failed'}`
+      );
 
       if (!pdfTemplates || !uiTemplates || !pdfJsContent) {
         throw new Error('Failed to load required templates or PDF.js library');

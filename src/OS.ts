@@ -11,13 +11,13 @@ import { Diagnostics } from './Diagnostics';
 export type fileRead_t = <T = string>(path: string, key?: string) => T | undefined;
 
 export abstract class OS {
-  protected app?: App;
+  protected app: App;
   protected extensionRoot?: string;
-  protected dx?: Diagnostics;
-  constructor(app?: App) {
+  protected dx: Diagnostics;
+  constructor(app: App) {
     this.app = app;
-    this.extensionRoot = app ? app.vscodeapis.getExtensionPath() : undefined;
-    this.dx = app ? app.dx.create('OS') : undefined;
+    this.extensionRoot = app.vscodeapis.getExtensionPath();
+    this.dx = app.dx.create('OS');
   }
 
   init(): void {}
@@ -139,28 +139,48 @@ export abstract class OS {
     }
   };
 
-  // Convert relative src attributes in HTML to webview URIs
+  // Convert relative src attributes and as_uri patterns in HTML to webview URIs
   htmlSrcPathToURI(html: string, webviewPanel: any): string {
     if (!this.extensionRoot || !webviewPanel?.webview) return html;
 
-    // Find all src attributes that are relative paths (not starting with http, https, or data:)
-    return html.replace(/src="([^"]+)"/g, (match, srcPath) => {
+    const dx = this.dx.sub('htmlSrcPathToURI');
+
+    // Helper function to convert a path to webview URI
+    const convertPathToURI = (path: string): string => {
       // Skip absolute URLs and data URLs
       if (
-        srcPath.startsWith('http') ||
-        srcPath.startsWith('data:') ||
-        srcPath.startsWith('vscode-webview:')
+        path.startsWith('http') ||
+        path.startsWith('data:') ||
+        path.startsWith('vscode-webview:')
       ) {
-        return match;
+        return path;
       }
 
       // Convert relative path to webview URI
-      const fullPath = this.pathJoin(this.extensionRoot!, srcPath);
+      const fullPath = this.pathJoin(this.extensionRoot!, path);
       const uri = this.app?.vscodeapis.uriFromPath(fullPath);
       const webviewUri = webviewPanel.webview.asWebviewUri(uri).toString();
+      return webviewUri;
+    };
 
-      return `src="${webviewUri}"`;
+    // Convert src attributes (case-insensitive) - only match HTML src attributes, not JS assignments
+    let result = html.replace(
+      /<[^>]*\s+\bsrc\b\s*=\s*["']([^"']+)["'][^>]*>/gi,
+      (match, srcPath) => {
+        const webviewUri = convertPathToURI(srcPath);
+        return match.replace(srcPath, webviewUri);
+      }
+    );
+
+    // Convert as_uri patterns (case-insensitive)
+    const replaceRegex = new RegExp('\\{\\{as_uri:([^}]+)\\}\\}', 'gi');
+    result = result.replace(replaceRegex, (match, path) => {
+      const webviewUri = convertPathToURI(path.trim());
+      return webviewUri;
     });
+
+    dx.done();
+    return result;
   }
 
   sanitizeFileName(name: string): string {

@@ -43,48 +43,20 @@ pdf_css: |
   }
 
 pdf_viewer: |
-  // PDF Viewer TypeScript
-  // Browser environment globals
-  declare const pdfjsLib: any;
-  declare const document: Document;
-  declare const window: Window;
+  // PDF Viewer JavaScript
+  // Browser environment globals are available automatically
 
-  // PDF document type
-  interface PDFDocument {
-    numPages: number;
-    getPage(pageNumber: number): Promise<PDFPage>;
-  }
+  let pdfDoc = null;
+  let pageNum = 1;
+  let pageRendering = false;
+  let pageNumPending = null;
+  const scale = 1.5;
+  const canvas = document.getElementById('pdf-canvas');
+  const ctx = canvas.getContext('2d');
 
-  interface PDFPage {
-    getViewport(options: { scale: number }): PDFViewport;
-    render(context: PDFRenderContext): PDFRenderTask;
-  }
-
-  interface PDFViewport {
-    height: number;
-    width: number;
-  }
-
-  interface PDFRenderContext {
-    canvasContext: CanvasRenderingContext2D;
-    viewport: PDFViewport;
-  }
-
-  interface PDFRenderTask {
-    promise: Promise<void>;
-  }
-
-  let pdfDoc: PDFDocument | null = null;
-  let pageNum: number = 1;
-  let pageRendering: boolean = false;
-  let pageNumPending: number | null = null;
-  const scale: number = 1.5;
-  const canvas = document.getElementById('pdf-canvas') as HTMLCanvasElement;
-  const ctx = canvas.getContext('2d') as CanvasRenderingContext2D;
-
-  function renderPage(num: number): void {
+  function renderPage(num) {
     pageRendering = true;
-    pdfDoc!.getPage(num).then(function (page) {
+    pdfDoc.getPage(num).then(function (page) {
       const viewport = page.getViewport({ scale: scale });
       canvas.height = viewport.height;
       canvas.width = viewport.width;
@@ -105,7 +77,7 @@ pdf_viewer: |
     });
   }
 
-  function queueRenderPage(num: number): void {
+  function queueRenderPage(num) {
     if (pageRendering) {
       pageNumPending = num;
     } else {
@@ -114,8 +86,7 @@ pdf_viewer: |
   }
 
   // Navigation functions (currently unused but available for future features)
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  function onPrevPage(): void {
+  function onPrevPage() {
     if (pageNum <= 1) {
       return;
     }
@@ -123,32 +94,50 @@ pdf_viewer: |
     queueRenderPage(pageNum);
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  function onNextPage(): void {
-    if (pageNum >= pdfDoc!.numPages) {
+  function onNextPage() {
+    if (pageNum >= pdfDoc.numPages) {
       return;
     }
     pageNum++;
     queueRenderPage(pageNum);
   }
 
-  function onDocumentLoadSuccess(pdf: PDFDocument): void {
+  function onDocumentLoadSuccess(pdf) {
     pdfDoc = pdf;
-    document.getElementById('loading')!.style.display = 'none';
-    document.getElementById('pdf-canvas')!.style.display = 'block';
+    document.getElementById('loading').style.display = 'none';
+    document.getElementById('pdf-canvas').style.display = 'block';
     renderPage(pageNum);
   }
 
-  function onDocumentLoadError(error: Error): void {
-    document.getElementById('loading')!.style.display = 'none';
-    document.getElementById('error')!.style.display = 'block';
-    (document.getElementById('error') as HTMLElement).textContent =
+  function onDocumentLoadError(error) {
+    document.getElementById('loading').style.display = 'none';
+    document.getElementById('error').style.display = 'block';
+    document.getElementById('error').textContent =
       'Error loading PDF: ' + error.message;
   }
 
   // Initialize PDF viewer when page loads
-  function initPdfViewer(pdfDataUrl: string): void {
-    pdfjsLib.getDocument(pdfDataUrl).promise.then(onDocumentLoadSuccess, onDocumentLoadError);
+  function initPdfViewer(pdfDataUrl) {
+    if (typeof pdfjsLib === 'undefined') {
+      onDocumentLoadError(new Error('PDF.js library not loaded'));
+      return;
+    }
+    
+    if (!pdfDataUrl) {
+      onDocumentLoadError(new Error('No PDF data URL provided'));
+      return;
+    }
+    
+    // Set worker source to use local file
+    pdfjsLib.GlobalWorkerOptions.workerSrc = '{{as_uri:src/lib/pdf.worker.min.js}}';
+    
+    const loadingTask = pdfjsLib.getDocument({
+      url: pdfDataUrl,
+      disableAutoFetch: true,
+      disableStream: true
+    });
+    
+    loadingTask.promise.then(onDocumentLoadSuccess, onDocumentLoadError);
   }
 
   // Make initPdfViewer available globally

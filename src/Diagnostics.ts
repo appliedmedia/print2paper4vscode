@@ -42,7 +42,7 @@ export class Diagnostics {
   }
 
   /**
-   * Create a sub-context Diagnostics instance for a method
+   * New sub-context Diagnostics instance for a method
    * @param name - The name of the method being entered
    * @param debugOn - Optional debug override (undefined inherit parent's debug status)
    * @returns New Diagnostics instance for the method

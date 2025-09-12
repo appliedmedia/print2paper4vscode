@@ -5,9 +5,9 @@ import type { App } from './App';
 export class OSLinux extends OS {
   protected dx: Diagnostics;
 
-  constructor(app?: App) {
+  constructor(app: App) {
     super(app);
-    this.dx = app ? app.dx.create('OSLinux') : new Diagnostics('OSLinux');
+    this.dx = app.dx.create('OSLinux');
   }
 
   async fileOpenInDefaultApp(path: string): Promise<void> {
