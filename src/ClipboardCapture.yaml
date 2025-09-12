@@ -9,19 +9,3 @@ clipboard_plain_text_html: |
       {{PARAGRAPHS}}
   </body>
   </html>
-
-# AppleScript templates for clipboard operations
-apple_script_copy: |
-  tell application "System Events"
-      keystroke "c" using command down
-      delay 0.1
-  end tell
-
-apple_script_select_all_copy_deselect: |
-  tell application "System Events"
-      keystroke "a" using command down
-      delay 0.1
-      keystroke "c" using command down
-      delay 0.1
-      keystroke "a" using {command down, shift down}
-  end tell

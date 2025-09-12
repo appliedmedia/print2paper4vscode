@@ -1,5 +1,6 @@
 # AppleScript templates for macOS operations
 
+# File operations
 apple_script_print_via_finder: |
   tell application "Finder" to print POSIX file "{{FILE_PATH}}"
 
@@ -7,3 +8,19 @@ apple_script_open_preview_print_dialog: |
   tell application "Preview" to open POSIX file "{{FILE_PATH}}"
   tell application "Preview" to activate
   tell application "System Events" to keystroke "p" using command down
+
+# Clipboard operations
+apple_script_copy: |
+  tell application "System Events"
+      keystroke "c" using command down
+      delay 0.1
+  end tell
+
+apple_script_select_all_copy_deselect: |
+  tell application "System Events"
+      keystroke "a" using command down
+      delay 0.1
+      keystroke "c" using command down
+      delay 0.1
+      keystroke "a" using {command down, shift down}
+  end tell

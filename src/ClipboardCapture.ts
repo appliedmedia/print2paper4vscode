@@ -77,7 +77,6 @@ export class ClipboardCapture {
     }
   }
 
-
   /**
    * Converts plain text content to HTML
    */

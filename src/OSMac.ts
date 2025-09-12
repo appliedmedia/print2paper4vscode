@@ -38,7 +38,7 @@ export class OSMac extends OS {
 
 	async copyToClipboard(): Promise<void> {
 		const yaml = this.app?.os.readExtensionYaml<{ apple_script_copy: string }>(
-			'src/ClipboardCapture.yaml'
+			'src/OSMac.yaml'
 		);
 		const appleScript = yaml?.apple_script_copy || 'tell application "System Events"\n    keystroke "c" using command down\n    delay 0.1\nend tell';
 		const osa = `osascript -e '${this.app?.templateDictReplace(appleScript, {}) || appleScript}'`;
@@ -47,7 +47,7 @@ export class OSMac extends OS {
 
 	async selectAllCopyDeselect(): Promise<void> {
 		const yaml = this.app?.os.readExtensionYaml<{ apple_script_select_all_copy_deselect: string }>(
-			'src/ClipboardCapture.yaml'
+			'src/OSMac.yaml'
 		);
 		const appleScript = yaml?.apple_script_select_all_copy_deselect || 'tell application "System Events"\n    keystroke "a" using command down\n    delay 0.1\n    keystroke "c" using command down\n    delay 0.1\n    keystroke "a" using {command down, shift down}\nend tell';
 		const osa = `osascript -e '${this.app?.templateDictReplace(appleScript, {}) || appleScript}'`;
