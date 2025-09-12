@@ -449,6 +449,7 @@ export class Stylize {
 
         return this.app.templateDictReplace(yaml.stylize_token_line, {
           LINEHEIGHT: lineHeight.toString(),
+          LINEHEIGHT_PX: lineHeight.toString(),
           TOKENS: tokenSpans,
         });
       })
@@ -457,7 +458,9 @@ export class Stylize {
     // Generate final pre element
     return this.app.templateDictReplace(yaml.stylize_token_pre, {
       FONTSIZE: fontSize.toString(),
+      FONTSIZE_PX: fontSize.toString(),
       LINEHEIGHT: lineHeight.toString(),
+      LINEHEIGHT_PX: lineHeight.toString(),
       LINES: lines,
     });
   }
@@ -525,9 +528,15 @@ export class Stylize {
 
   // Convert VS Code theme JSON to Shiki-compatible CSS variables format
   private convertVSCodeThemeToShiki(vscodeTheme: VSCodeTheme): ThemeData {
+    // Derive theme type early so both success and error paths agree
+    const derivedType: 'light' | 'dark' = ((vscodeTheme as unknown as { type?: string })?.type ===
+    'dark'
+      ? 'dark'
+      : 'light');
+
     try {
       // Extract basic theme info
-      const name = (vscodeTheme.name as string) || 'vscode-theme';
+      const name = (vscodeTheme.name as string) || 'github-light';
 
       // Extract colors
       const colors: Record<string, string> = {};
@@ -575,7 +584,7 @@ export class Stylize {
       // Create proper Shiki theme format
       return {
         name,
-        type: 'light', // Assume light for now, could be determined from theme
+        type: derivedType, // Prefer provided type; default to light
         colors,
         tokenColors,
         fonts: {
@@ -586,8 +595,8 @@ export class Stylize {
       this.dx.out(`ERROR:convertVSCodeThemeToShiki: Failed to convert theme: ${String(error)}`);
       // Return a default theme instead of null
       return {
-        name: 'fallback-theme',
-        type: 'light',
+        name: (vscodeTheme.name as string) || 'github-light',
+        type: derivedType,
         colors: {},
         tokenColors: [],
       } as ThemeData;

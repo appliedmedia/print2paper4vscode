@@ -1,4 +1,3 @@
-import * as vscode from 'vscode';
 import type { App } from './App';
 import { Diagnostics } from './Diagnostics';
 
@@ -42,7 +41,7 @@ export class TabInspector {
   async capturePreviewHtml(): Promise<{ html: string; name: string } | null> {
     try {
       // Reuse existing capture path which returns HTML via ClipboardCapture
-      const html = await this.app.paperprinter['clipboardCapture'].captureAndConvert();
+      const html = await this.app.paperprinter.capturePreviewHtml();
       const name = this.app.vscodeapis.getActiveTabName();
       return html ? { html, name } : null;
     } catch {

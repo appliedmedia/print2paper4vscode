@@ -135,9 +135,7 @@ describe('VSCodeAPIs Wrapper', () => {
 
   vscodeAPIs = new VSCodeAPIs(mockApp, mockVSCode, mockContext);
 
-  // Add array methods to extensions.all
-  mockVSCode.extensions.all.filter = Array.prototype.filter;
-  mockVSCode.extensions.all.find = Array.prototype.find;
+  // Ensure extensions.all behaves as a normal array (already literal array)
 
   describe('Initialization', () => {
     it('should initialize with context and VS Code API', () => {
@@ -311,8 +309,8 @@ describe('VSCodeAPIs Wrapper', () => {
       const themeJson = vscodeAPIs.getVSCodeThemeJson(themeId);
 
       // The method should return the theme object when found in extensions
-      assert.ok(themeJson, 'Should return theme object when found');
-      assert.strictEqual(themeJson.id, 'vs-light', 'Should return correct theme ID');
+      assert.ok(themeJson && typeof themeJson === 'object', 'Should return theme object when found');
+      assert.strictEqual((themeJson as any).id, 'vs-light', 'Should return correct theme ID');
     });
   });
 

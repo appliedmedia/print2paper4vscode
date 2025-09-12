@@ -34,6 +34,11 @@ export class PaperPrinter {
     this.dx.done();
   }
 
+  // Public façade to decouple TabInspector from internal fields
+  async capturePreviewHtml(): Promise<string | null> {
+    return this.clipboardCapture.captureAndConvert();
+  }
+
   // Message handler methods
   private async handleDragEnd(msg: WebviewMessage): Promise<void> {
     const dx = this.dx.sub('handleDragEnd');
