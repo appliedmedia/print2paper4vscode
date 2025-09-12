@@ -2,8 +2,12 @@
 <html>
 <head>
   <title>{{TITLE}}</title>
-  <link rel="stylesheet" href="{{CSS_PATH}}">
-  <script src="{{PDF_JS_PATH}}"></script>
+  <style>
+    {{EMBEDDED_CSS}}
+  </style>
+  <script>
+    {{EMBEDDED_PDF_JS}}
+  </script>
 </head>
 <body>
   <div class="pdf-container">
@@ -11,7 +15,9 @@
     <canvas id="pdf-canvas" style="display: none;"></canvas>
     <div id="error" class="error" style="display: none;"></div>
   </div>
-  <script src="{{JS_PATH}}"></script>
+  <script>
+    {{EMBEDDED_JS}}
+  </script>
   <script>
     // Initialize PDF viewer with the data URL
     initPdfViewer('{{PDF_DATA_URL}}');

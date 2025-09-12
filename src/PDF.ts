@@ -259,19 +259,25 @@ export class PDF {
       // Generate a data URL from the PDF document
       const pdfDataUrl = pdfDoc.output('datauristring') as string;
 
-      // Load HTML template
+      // Load all external resources and embed them inline
       const htmlTemplate = this.app.os.fileRead('src/webview/pdf_embed.html');
+      const cssContent = this.app.os.fileRead('src/webview/pdf_embed.css');
+      const jsContent = this.app.os.fileRead('src/webview/pdf_embed.js');
+      const pdfJsContent = this.app.os.fileRead('src/lib/pdf.min.js');
 
-      // Generate HTML using template
+      // Generate HTML using template with embedded resources
       const html = this.app.templateDictReplace(htmlTemplate, {
         TITLE: title,
         PDF_DATA_URL: pdfDataUrl,
-        PDF_JS_PATH: 'src/lib/pdf.min.js',
-        CSS_PATH: 'src/webview/pdf_embed.css',
-        JS_PATH: 'src/webview/pdf_embed.js',
+        PDF_JS_PATH: '', // Not needed since we're embedding
+        CSS_PATH: '', // Not needed since we're embedding
+        JS_PATH: '', // Not needed since we're embedding
+        EMBEDDED_CSS: cssContent,
+        EMBEDDED_JS: jsContent,
+        EMBEDDED_PDF_JS: pdfJsContent,
       });
 
-      dx.out(`HTML generated for PDF document`);
+      dx.out(`HTML generated for PDF document with embedded resources`);
       return html;
     } catch (error) {
       this.app.ui.showErrorMessage(`Failed to generate PDF preview: ${String(error)}`);
