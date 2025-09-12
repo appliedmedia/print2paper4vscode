@@ -22,10 +22,9 @@ export class OSLinux extends OS {
     await this.execAsync(`lp "${path}"`);
   }
 
-
-  async fileOpenPrintDialog(pdfPath: string): Promise<void> {
+  async fileOpenPrintDialog(path: string): Promise<void> {
     // Open PDF in default application (user can print from there)
-    await this.fileOpenInDefaultApp(pdfPath);
+    await this.fileOpenInDefaultApp(path);
   }
 
   async copyToClipboard(): Promise<void> {

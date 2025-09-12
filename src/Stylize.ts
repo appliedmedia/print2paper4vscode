@@ -1,4 +1,5 @@
 import type { App } from './App';
+import type { fileRead_t } from './OS';
 import {
   getSingletonHighlighter,
   bundledThemesInfo,
@@ -139,7 +140,7 @@ export class Stylize {
           let displayName = theme.id;
           try {
             const nlsPath = this.app.os.pathJoin(ext.extensionPath, 'package.nls.json');
-            const nlsData = this.app.os.readJsonFile<Record<string, string>>(nlsPath);
+            const nlsData = this.app.os.fileRead<Record<string, string>>(nlsPath);
             if (
               nlsData &&
               theme.label &&
@@ -411,11 +412,16 @@ export class Stylize {
     lineHeight: number
   ): string {
     // Load YAML templates
-    const yaml = this.app.os.readExtensionYaml<{
+    const fileRead: fileRead_t = this.app.os.fileRead;
+    const yaml = fileRead<{
       stylize_token_pre: string;
       stylize_token_line: string;
       stylize_token_span: string;
     }>('src/Stylize.yaml');
+
+    if (!yaml) {
+      throw new Error('Failed to load Stylize template');
+    }
 
     // Generate lines
     const lines = tokens

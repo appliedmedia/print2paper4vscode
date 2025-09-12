@@ -76,10 +76,8 @@ export class UIMenuMgr {
   // Generate all JavaScript at once
   getAllUIMenuJS(): string {
     // All menus share the same generic handlers
-    const yaml = this.app.os.readExtensionYaml<{ ui_menu_generic_handlers: string }>(
-      'src/UIMenu.yaml'
-    );
-    return yaml.ui_menu_generic_handlers;
+    const yaml = this.app.os.fileRead<{ ui_menu_generic_handlers: string }>('src/UIMenu.yaml');
+    return yaml?.ui_menu_generic_handlers ?? '';
   }
 
   // Get all template variable mappings
@@ -93,10 +91,10 @@ export class UIMenuMgr {
     // Keep the old individual menu mappings for backward compatibility
     this.getAllMenus().forEach(menu => {
       const menuItems = menu.getMenuItems();
-      const yaml = this.app.os.readExtensionYaml<{ ui_menu_item: string }>('src/UIMenu.yaml');
+      const yaml = this.app.os.fileRead<{ ui_menu_item: string }>('src/UIMenu.yaml');
       const html = menuItems
         .map(item =>
-          this.app.templateDictReplace(yaml.ui_menu_item, {
+          this.app.templateDictReplace(yaml?.ui_menu_item ?? '', {
             ITEM_ID: item.id,
             ITEM_LABEL: item.displayName,
             ITEM_CLASSES: '',

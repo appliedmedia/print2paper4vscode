@@ -99,14 +99,18 @@ export class ClipboardCapture {
       .join('\n');
 
     // Load YAML templates
-    const clipboardYaml = this.app.os.readExtensionYaml<{
+    const clipboardYaml = this.app.os.fileRead<{
       clipboard_plain_text_html: string;
       clipboard_css: string;
     }>('src/ClipboardCapture.yaml');
 
-    const uiYaml = this.app.os.readExtensionYaml<{
+    const uiYaml = this.app.os.fileRead<{
       base_css: string;
     }>('src/UI.yaml');
+
+    if (!clipboardYaml || !uiYaml) {
+      throw new Error('Failed to load required templates');
+    }
 
     return this.app.templateDictReplace(clipboardYaml.clipboard_plain_text_html, {
       PARAGRAPHS: paragraphs,

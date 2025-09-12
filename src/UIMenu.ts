@@ -59,12 +59,13 @@ export class UIMenu {
 
     let yaml: { ui_menu_html: string; ui_menu_item: string };
     try {
-      yaml = this._app.os.readExtensionYaml<{ ui_menu_html: string; ui_menu_item: string }>(
-        'src/UIMenu.yaml'
-      );
-      this.dx.out(
-        `YAML loaded, ui_menu_html length: ${yaml.ui_menu_html.length}`
-      );
+      const yamlResult = this._app.os.fileRead<{
+        ui_menu_html: string;
+        ui_menu_item: string;
+      }>('src/UIMenu.yaml');
+      if (!yamlResult) throw new Error('Failed to load UIMenu template');
+      yaml = yamlResult;
+      this.dx.out(`YAML loaded, ui_menu_html length: ${yaml.ui_menu_html.length}`);
     } catch (error) {
       this.dx.out(`ERROR reading YAML: ${error}`);
       throw error;
@@ -116,14 +117,10 @@ export class UIMenu {
       MENU_ITEMS: menuItemsHtml,
     });
 
-    this.dx.out(
-      `Generated HTML for ${this.id}: ${result.substring(0, 100)}...`
-    );
+    this.dx.out(`Generated HTML for ${this.id}: ${result.substring(0, 100)}...`);
 
     // Debug: show the actual menu items HTML
-    this.dx.out(
-      `Menu items HTML for ${this.id}: ${menuItemsHtml.substring(0, 200)}...`
-    );
+    this.dx.out(`Menu items HTML for ${this.id}: ${menuItemsHtml.substring(0, 200)}...`);
     return result;
   }
 

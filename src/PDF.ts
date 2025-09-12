@@ -260,17 +260,21 @@ export class PDF {
       const pdfDataUrl = pdfDoc.output('datauristring') as string;
 
       // Load YAML templates and PDF.js library
-      const pdfTemplates = this.app.os.readYamlFile<{
+      const pdfTemplates = this.app.os.fileRead<{
         pdf_viewer_html: string;
         pdf_css: string;
         pdf_viewer: string;
       }>('src/PDF.yaml');
 
-      const uiTemplates = this.app.os.readYamlFile<{
+      const uiTemplates = this.app.os.fileRead<{
         base_css: string;
       }>('src/UI.yaml');
 
       const pdfJsContent = this.app.os.fileRead('src/lib/pdf.min.js');
+
+      if (!pdfTemplates || !uiTemplates || !pdfJsContent) {
+        throw new Error('Failed to load required templates or PDF.js library');
+      }
 
       // Generate HTML using template with embedded resources
       const html = this.app.templateDictReplace(pdfTemplates.pdf_viewer_html, {
