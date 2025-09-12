@@ -39,3 +39,12 @@ stylize_html: |
       {{CODE}}
     </body>
   </html>
+
+stylize_token_pre: |
+  <pre style="font-size: {{FONTSIZE}}px; line-height: {{LINEHEIGHT}}px; margin: 0; white-space: pre;">{{LINES}}</pre>
+
+stylize_token_line: |
+  <div class="line" style="line-height: {{LINEHEIGHT}}px; min-height: {{LINEHEIGHT}}px; margin: 0; padding: 0; white-space: pre;">{{TOKENS}}</div>
+
+stylize_token_span: |
+  <span style="{{STYLE}}">{{TEXT}}</span>

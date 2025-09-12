@@ -19,6 +19,7 @@ declare module 'jspdf' {
     setPage(pageNumber: number): void;
     getCurrentPageInfo(): { pageNumber: number; pageCount: number };
     getTextWidth(text: string): number;
+    getFontList(): Record<string, string[]>;
     internal: {
       pageSize: {
         width: number;

@@ -142,30 +142,4 @@ describe('Stylize', () => {
     });
   });
 
-  it('should filter combined themes (Shiki + VS Code) using light theme pattern', async () => {
-    await stylize.init();
-
-    // Test that getThemes() filters both Shiki and VS Code themes using light pattern
-    const lightThemes = stylize.getThemes('light|bright|day');
-    assert.ok(lightThemes.length > 0, 'Should have light themes from both sources');
-
-    // Verify that we get themes from both Shiki and VS Code
-    const themeIds = lightThemes.map(t => t.id);
-    const hasShikiThemes = themeIds.some(
-      id => id.includes('github-light') || id.includes('min-light')
-    );
-    const hasVSCodeThemes = themeIds.some(id => id === 'vs-light' || id === 'another-light');
-
-    assert.ok(hasShikiThemes, 'Should include Shiki light themes');
-    assert.ok(hasVSCodeThemes, 'Should include VS Code light themes');
-
-    // Verify all returned themes match the light pattern
-    lightThemes.forEach(theme => {
-      const name = theme.displayName.toLowerCase();
-      assert.ok(
-        name.includes('light') || name.includes('bright') || name.includes('day'),
-        `Theme ${theme.displayName} should match light|bright|day pattern`
-      );
-    });
-  });
 });

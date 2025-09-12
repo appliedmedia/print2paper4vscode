@@ -1,10 +1,5 @@
-import { exec } from 'child_process';
-import { promisify } from 'util';
-
 import type { App } from './App';
 import { Diagnostics } from './Diagnostics';
-
-const execAsync = promisify(exec);
 
 export class ClipboardCapture {
   private app: App;
@@ -21,33 +16,32 @@ export class ClipboardCapture {
   }
 
   /**
-   * Captures content from the active tab using minimal AppleScript
+   * Captures content from the active tab using OS-specific clipboard operations
    */
   async captureFromActiveTab(): Promise<string | null> {
     const dx = this.dx.sub('captureFromActiveTab');
-    
+
     try {
       // First try to copy current selection
-      await this.copyToClipboard();
+      await this.app.os.copyToClipboard();
 
       // Wait for clipboard to update
       await new Promise<void>(resolve => setTimeout(resolve, 200));
 
       // Check clipboard content
-      let content = await this.getClipboardContent();
+      let content = await this.app.os.getClipboardContent();
 
       // If clipboard is empty, try select-all then copy
       // But don't overwrite if user actually selected something
       if (!content || content.trim() === '') {
-        await this.selectAllCopyDeselect();
+        await this.app.os.selectAllCopyDeselect();
         await new Promise<void>(resolve => setTimeout(resolve, 200));
-        content = await this.getClipboardContent();
+        content = await this.app.os.getClipboardContent();
       }
 
       return content;
     } catch (error) {
-      if (this.app)
-        dx.out(`Error capturing from active tab: ${error}`);
+      if (this.app) dx.out(`Error capturing from active tab: ${error}`);
       return null;
     } finally {
       dx.done();
@@ -62,67 +56,23 @@ export class ClipboardCapture {
       // Get active editor from VS Code via VSCodeAPIs
       const editor = this.app.vscodeapis.getActiveTextEditor();
       if (!editor) {
-        // No active text editor (preview tab, etc.) - fall back to AppleScript
+        // No active text editor (preview tab, etc.) - fall back to OS clipboard operations
         return await this.captureFromActiveTab();
       }
 
       // Check if there's a real selection via VSCodeAPIs
       if (this.app.vscodeapis.hasActiveSelection()) {
-        await this.copyToClipboard();
+        await this.app.os.copyToClipboard();
         await new Promise<void>(resolve => setTimeout(resolve, 200));
-        return await this.getClipboardContent();
+        return await this.app.os.getClipboardContent();
       }
 
       // No selection, do select-all then copy
-      await this.selectAllCopyDeselect();
+      await this.app.os.selectAllCopyDeselect();
       await new Promise<void>(resolve => setTimeout(resolve, 200));
-      return await this.getClipboardContent();
+      return await this.app.os.getClipboardContent();
     } catch (error) {
-      if (this.app)
-        this.dx.print(`Error in captureWithEditorCheck: ${String(error)}`);
-      return null;
-    }
-  }
-
-  /**
-   * Copies current selection to clipboard
-   */
-  private async copyToClipboard(): Promise<void> {
-    const appleScript = `
-            tell application "System Events"
-                keystroke "c" using command down
-                delay 0.1
-            end tell
-        `;
-    await execAsync(`osascript -e '${appleScript}'`);
-  }
-
-  /**
-   * Selects all, copies to clipboard, then deselects
-   */
-  private async selectAllCopyDeselect(): Promise<void> {
-    const appleScript = `
-            tell application "System Events"
-                keystroke "a" using command down
-                delay 0.1
-                keystroke "c" using command down
-                delay 0.1
-                keystroke "a" using {command down, shift down}
-
-            end tell
-        `;
-    await execAsync(`osascript -e '${appleScript}'`);
-  }
-
-  /**
-   * Gets content from clipboard (plain text only)
-   */
-  private async getClipboardContent(): Promise<string | null> {
-    try {
-      // Get plain text from clipboard
-      const { stdout } = await execAsync('pbpaste');
-      return stdout || null;
-    } catch {
+      if (this.app) this.dx.out(`Error in captureWithEditorCheck: ${String(error)}`);
       return null;
     }
   }
@@ -148,13 +98,25 @@ export class ClipboardCapture {
       .map(line => `<p>${line}</p>`)
       .join('\n');
 
-    // OS has to be valid or we cannot operate correctly. Please fail if OS.create doesn't return a valid pointer.
-    const yaml = this.app.os.readExtensionYaml<{ clipboard_plain_text_html: string }>(
-      'src/ClipboardCapture.yaml'
-    );
+    // Load YAML templates
+    const clipboardYaml = this.app.os.fileRead<{
+      clipboard_plain_text_html: string;
+      clipboard_css: string;
+    }>('src/ClipboardCapture.yaml');
 
-    return this.app.templateDictReplace(yaml.clipboard_plain_text_html, {
+    const uiYaml = this.app.os.fileRead<{
+      base_css: string;
+    }>('src/UI.yaml');
+
+    if (!clipboardYaml || !uiYaml) {
+      throw new Error('Failed to load required templates');
+    }
+
+    return this.app.templateDictReplace(clipboardYaml.clipboard_plain_text_html, {
       PARAGRAPHS: paragraphs,
+      CLIPBOARD_CSS: this.app.templateDictReplace(clipboardYaml.clipboard_css, {
+        BASE_CSS: uiYaml.base_css,
+      }),
     });
   }
 
@@ -172,5 +134,12 @@ export class ClipboardCapture {
     const htmlContent = await this.convertToHTML(rtfContent);
 
     return htmlContent;
+  }
+
+  /**
+   * Alias for captureAndConvert for backward compatibility
+   */
+  async capture(): Promise<string | null> {
+    return this.captureAndConvert();
   }
 }

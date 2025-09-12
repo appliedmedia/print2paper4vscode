@@ -28,7 +28,7 @@ export class VSCodeAPIs {
   init(): void {
     const dx = this.dx.sub('init');
     dx.require({ vscode: this.vscode, context: this.context }, ['vscode', 'context']);
-    
+
     // Register VS Code commands
     const printCommand = this.vscode.commands.registerCommand('p2p4vsc.print2paper', () => {
       this.app.paperprinter.handleFirstPrintCommand();
@@ -50,7 +50,7 @@ export class VSCodeAPIs {
   /**
    * Update global state value
    */
-  updateGlobalState(key: string, value: any): void {
+  updateGlobalState(key: string, value: unknown): void {
     this.context.globalState.update(key, value);
   }
 
@@ -194,7 +194,7 @@ export class VSCodeAPIs {
     if (theme.path && typeof theme.path === 'string') {
       try {
         const themePath = this.app.os.pathJoin(themeExtension.extensionPath, theme.path);
-        const themeContent = this.app.os.readJsonFile<Record<string, unknown>>(themePath);
+        const themeContent = this.app.os.fileRead<Record<string, unknown>>(themePath);
 
         if (themeContent) {
           // Merge the theme metadata with the loaded content

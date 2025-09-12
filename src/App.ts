@@ -9,6 +9,17 @@ import { UIMenuMgr } from './UIMenuMgr';
 import { Diagnostics } from './Diagnostics';
 import type { ExtensionContext } from 'vscode';
 
+type components_t = {
+  vscodeapis: VSCodeAPIs;
+  ui: UI;
+  os: OS;
+  pdf: PDF;
+  paperprinter: PaperPrinter;
+  stylize: Stylize;
+  tabinspector: TabInspector;
+  uimenumgr: UIMenuMgr;
+};
+
 export class App {
   vscodeapis: VSCodeAPIs;
   ui: UI;
@@ -20,7 +31,18 @@ export class App {
   uimenumgr: UIMenuMgr;
   dx: Diagnostics;
 
-  constructor(context: ExtensionContext, vscode: any) {
+  private readonly componentOrder: (keyof components_t)[] = [
+    'vscodeapis',
+    'ui',
+    'os',
+    'pdf',
+    'paperprinter',
+    'stylize',
+    'tabinspector',
+    'uimenumgr',
+  ];
+
+  constructor(context: ExtensionContext, vscode: typeof import('vscode')) {
     // Create Diagnostics instance first
     this.dx = new Diagnostics('App');
 
@@ -36,27 +58,17 @@ export class App {
   }
 
   init(): void {
-    // Initialize all components - VSCodeAPIs first, then UI, then others in alphabetical order
-    this.vscodeapis.init();
-    this.ui.init();
-    this.os.init();
-    this.pdf.init();
-    this.paperprinter.init();
-    this.stylize.init();
-    this.tabinspector.init();
-    this.uimenumgr.init();
+    // Initialize all components in dependency order
+    for (const component of this.componentOrder) {
+      (this as components_t)[component].init();
+    }
   }
 
   done(): void {
-    // Cleanup all components
-    this.vscodeapis.done();
-    this.tabinspector.done();
-    this.pdf.done();
-    this.paperprinter.done();
-    this.stylize.done();
-    this.os.done();
-    this.uimenumgr.done();
-    this.ui.done();
+    // Cleanup all components in reverse order
+    for (const component of [...this.componentOrder].reverse()) {
+      (this as components_t)[component].done();
+    }
 
     this.dx.done();
   }

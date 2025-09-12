@@ -12,7 +12,7 @@ class MockApp {
 
   constructor() {
     this.os = {
-      readExtensionYaml: () => ({
+      fileRead: () => ({
         ui_menu_html: '<div>{{MENU_ID}} {{BUTTON_ID}} {{TITLE}} {{ICON}} {{MENU_ITEMS}}</div>',
         ui_menu_item: '<div id="{{ITEM_ID}}">{{ITEM_LABEL}}</div>',
         ui_menu_generic_handlers: '// Generic handlers',
@@ -28,7 +28,19 @@ class MockApp {
         // Mock debug output - just ignore it for tests
       },
     };
-    this.dx = { create: (name: string) => ({ out: () => {}, print: () => {}, done: () => {}, sub: (name: string) => ({ out: () => {}, print: () => {}, done: () => {}, require: () => true }) }) };
+    this.dx = {
+      create: (name: string) => ({
+        out: () => {},
+        print: () => {},
+        done: () => {},
+        sub: (name: string) => ({
+          out: () => {},
+          print: () => {},
+          done: () => {},
+          require: () => true,
+        }),
+      }),
+    };
   }
 }
 

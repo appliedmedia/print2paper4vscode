@@ -1,0 +1,144 @@
+pdf_viewer_html: |
+  <!DOCTYPE html>
+  <html>
+  <head>
+    <title>{{TITLE}}</title>
+    <style>
+      {{PDF_CSS}}
+    </style>
+  </head>
+  <body>
+    <div class="pdf-container">
+      <div id="loading" class="loading">Loading PDF...</div>
+      <canvas id="pdf-canvas" style="display: none;"></canvas>
+      <div id="error" class="error" style="display: none;"></div>
+    </div>
+    <script>
+      {{PDFJS_LIBRARY}}
+      {{PDF_VIEWER}}
+      // Initialize PDF viewer with the data URL
+      initPdfViewer('{{PDF_DATA_URL}}');
+    </script>
+  </body>
+  </html>
+
+pdf_css: |
+  {{BASE_CSS}}
+
+  .pdf-container {
+    position: relative;
+    width: 100%;
+    height: 100vh;
+    overflow: auto;
+    background: white;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    padding: 20px;
+  }
+
+  #pdf-canvas {
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    border: 1px solid #ddd;
+  }
+
+pdf_viewer: |
+  // PDF Viewer JavaScript
+  // Browser environment globals are available automatically
+
+  let pdfDoc = null;
+  let pageNum = 1;
+  let pageRendering = false;
+  let pageNumPending = null;
+  const scale = 1.5;
+  const canvas = document.getElementById('pdf-canvas');
+  const ctx = canvas.getContext('2d');
+
+  function renderPage(num) {
+    pageRendering = true;
+    pdfDoc.getPage(num).then(function (page) {
+      const viewport = page.getViewport({ scale: scale });
+      canvas.height = viewport.height;
+      canvas.width = viewport.width;
+
+      const renderContext = {
+        canvasContext: ctx,
+        viewport: viewport,
+      };
+      const renderTask = page.render(renderContext);
+
+      renderTask.promise.then(function () {
+        pageRendering = false;
+        if (pageNumPending !== null) {
+          renderPage(pageNumPending);
+          pageNumPending = null;
+        }
+      });
+    });
+  }
+
+  function queueRenderPage(num) {
+    if (pageRendering) {
+      pageNumPending = num;
+    } else {
+      renderPage(num);
+    }
+  }
+
+  // Navigation functions (currently unused but available for future features)
+  function onPrevPage() {
+    if (pageNum <= 1) {
+      return;
+    }
+    pageNum--;
+    queueRenderPage(pageNum);
+  }
+
+  function onNextPage() {
+    if (pageNum >= pdfDoc.numPages) {
+      return;
+    }
+    pageNum++;
+    queueRenderPage(pageNum);
+  }
+
+  function onDocumentLoadSuccess(pdf) {
+    pdfDoc = pdf;
+    document.getElementById('loading').style.display = 'none';
+    document.getElementById('pdf-canvas').style.display = 'block';
+    renderPage(pageNum);
+  }
+
+  function onDocumentLoadError(error) {
+    document.getElementById('loading').style.display = 'none';
+    document.getElementById('error').style.display = 'block';
+    document.getElementById('error').textContent =
+      'Error loading PDF: ' + error.message;
+  }
+
+  // Initialize PDF viewer when page loads
+  function initPdfViewer(pdfDataUrl) {
+    if (typeof pdfjsLib === 'undefined') {
+      onDocumentLoadError(new Error('PDF.js library not loaded'));
+      return;
+    }
+    
+    if (!pdfDataUrl) {
+      onDocumentLoadError(new Error('No PDF data URL provided'));
+      return;
+    }
+    
+    // Set worker source to use local file
+    pdfjsLib.GlobalWorkerOptions.workerSrc = '{{as_uri:src/lib/pdf.worker.min.js}}';
+    
+    const loadingTask = pdfjsLib.getDocument({
+      url: pdfDataUrl,
+      disableAutoFetch: true,
+      disableStream: true
+    });
+    
+    loadingTask.promise.then(onDocumentLoadSuccess, onDocumentLoadError);
+  }
+
+  // Make initPdfViewer available globally
+  window.initPdfViewer = initPdfViewer;

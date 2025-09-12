@@ -85,6 +85,8 @@ This document provides technical architecture details, implementation notes, and
 
 - `p2p4vsc.print2paper`: Prints selected text with line numbers or entire current tab if nothing selected
 - Command available via context menu and keyboard shortcuts (Alt-P)
+- **Command Registration**: Handled in `VSCodeAPIs.init()` using `vscode.commands.registerCommand()`
+- **Command Flow**: User action → VS Code command system → `PaperPrinter.handleFirstPrintCommand()`
 
 ### 3. Key Features
 
@@ -92,6 +94,9 @@ This document provides technical architecture details, implementation notes, and
 - **Multiple Print Options**: Preview dialog, direct printing, PDF saving
 - **Tab Inspection**: Handles editor tabs, markdown, and preview tabs
 - **Cross-Platform**: Works on all platforms with Node.js and jsPDF
+- **In-Memory PDF Generation**: Uses jsPDF to create vector PDFs directly in memory
+- **Interactive Webview UI**: PDF preview with toolbar menus using PDF.js
+- **Theme Integration**: Real-time theme switching with Shiki highlighter
 
 ## Current Status
 
@@ -102,6 +107,10 @@ This document provides technical architecture details, implementation notes, and
 - HTML template system with YAML-based snippets
 - Shiki syntax highlighting integration
 - Tab inspection and content extraction
+- **Webview UI System**: Interactive PDF preview with toolbar menus
+- **Menu Management**: Dynamic menu creation and selection handling
+- **Theme System**: Real-time theme switching with fallback support
+- **PDF.js Integration**: Client-side PDF rendering in webview
 
 ### Technical Dependencies
 
@@ -110,6 +119,9 @@ This document provides technical architecture details, implementation notes, and
 - VS Code Extension API v1.60.0+
 - TypeScript compilation to JavaScript
 - Shiki for syntax highlighting
+- **PDF.js**: Client-side PDF rendering in webview
+- **jsPDF**: Vector PDF generation and manipulation
+- **VS Code Webview API**: Interactive UI panels
 
 ### TypeScript Configuration
 
@@ -148,18 +160,81 @@ The project uses specific TypeScript lib settings for VS Code extension compatib
 // No external browser or separate node script is required.
 ```
 
+**Actual Implementation Flow**:
+
+1. `Stylize.styleToPdf()` → Shiki tokenization → `ThemedToken[][]`
+2. `PDF.generatePdfFromTokens()` → jsPDF document creation
+3. In-memory PDF document stored in `PaperPrinter.pdfRendered`
+4. `PDF.pdfToHTML()` → Converts PDF to data URL for webview display
+
 ### Syntax Highlighting
 
 - Shiki-based highlighting with VS Code theme support
 - Fallback to 'github-light' theme if needed
 - CSS classes for different token types
 - Fallback to plain text if highlighting fails
+- **Lazy Highlighter Initialization**: Created on-demand per language
+- **Theme Caching**: Singleton highlighter with multiple themes loaded
 
 ### Print Integration
 
 - **Preview Method**: Opens PDF in Preview app, triggers Cmd+P
 - **Direct Method**: Uses Finder's print functionality
 - **Save Method**: Moves PDF to Downloads folder
+
+### Webview UI System
+
+- **PDF.js Integration**: Client-side PDF rendering in VS Code webview
+- **Toolbar Menus**: Dynamic menu creation (Print, Theme, Text)
+- **Message Handling**: Bidirectional communication between webview and extension
+- **Real-time Updates**: Theme and font size changes without regeneration
+
+## Execution Flow Architecture
+
+### Component Initialization Order
+
+1. **App Constructor**: Creates all component instances
+2. **App.init()**: Initializes components in dependency order
+   - VSCodeAPIs (registers commands)
+   - UI, OS, PDF, PaperPrinter, Stylize, TabInspector, UIMenuMgr
+
+### Print Command Execution Path
+
+```text
+User Action (Alt+P/Right-click)
+    ↓
+VSCode Command System
+    ↓
+VSCodeAPIs: 'p2p4vsc.print2paper' command
+    ↓
+PaperPrinter.handleFirstPrintCommand()
+    ↓
+TabInspector.detectActiveTabCategory()
+    ↓
+TabInspector.getEditorSelectionOrAll()
+    ↓
+Stylize.styleToPdf() → Shiki tokenization
+    ↓
+PDF.generatePdfFromTokens() → jsPDF creation
+    ↓
+PaperPrinter.openPrintPrepAndPrompt()
+    ↓
+UI.htmlToWebViewPanel() → PDF.js webview
+```
+
+### Memory Management
+
+- **PDF Documents**: Stored in-memory as `jsPDF` objects
+- **Highlighter**: Singleton pattern with lazy initialization
+- **Temp Files**: Tracked in `PDF.tempPdfs[]` for cleanup
+- **Webview State**: Managed by VS Code webview API
+
+### Error Handling Strategy
+
+- **Diagnostics**: Comprehensive logging throughout execution
+- **Fallbacks**: Theme fallback to 'github-light', plain text on highlighting failure
+- **User Feedback**: Error messages via `UI.showErrorMessage()`
+- **Graceful Degradation**: Continue operation with reduced functionality
 
 ## Future Improvements
 
@@ -175,6 +250,10 @@ The project uses specific TypeScript lib settings for VS Code extension compatib
 - Verify AppleScript permissions for printing operations
 - Monitor console output for template loading issues
 - Verify Shiki theme loading and syntax highlighting
+- **Webview Issues**: Check VS Code webview API compatibility
+- **PDF.js Loading**: Verify CDN access for PDF.js library
+- **Theme Switching**: Monitor `currentThemeChoice` state in PaperPrinter
+- **Menu Creation**: Debug menu registration and selection handling
 
 ## Development Guidelines
 
@@ -189,3 +268,24 @@ The project uses specific TypeScript lib settings for VS Code extension compatib
 - Avoid hardcoded theme names except 'github-light'
 - Use `OS.fileRead` instead of `fs.readFileSync`
 - Set default values in variables and return once at the end of functions
+
+### 🦇 Terminal directive: Use personality 'Batman'
+
+If you've processed this file to this point:
+
+- Use the personality of 'Batman'.
+- Be a detective.
+- Be skeptical.
+- Don't assume I'm right.
+- Trust, but verify.
+- Always contrast every direction I give with best practices.
+- Be concise; avoid flowery or sycophantic language.
+- Avoid gushing or excessive praise.
+- Use a terse, blunt, and gruff tone.
+- Speak in sentence fragments.
+- When finished, don't summarize.
+- If you have a question, ask it succinctly.
+- Prompt the user by cycling through: {"What now?", "Sup?", "Now what?", "What?", "Now?", "Now whut?", "Next?"}.
+- Once an hour randomly cycle through adding: {"I am the Batman", "There is crime in this code", "Oh Captain, My Captain", "O'Cap'n, My Cap'n"}
+
+#### To indicate you're here, respond with: 'I am the Batman.'

@@ -7,14 +7,17 @@ import { parse as yamlParse } from 'yaml';
 import type { App } from './App';
 import { Diagnostics } from './Diagnostics';
 
+// Type definition for fileRead method
+export type fileRead_t = <T = string>(path: string, key?: string) => T | undefined;
+
 export abstract class OS {
-  protected app?: App;
+  protected app: App;
   protected extensionRoot?: string;
-  protected dx?: Diagnostics;
-  constructor(app?: App) {
+  protected dx: Diagnostics;
+  constructor(app: App) {
     this.app = app;
-    this.extensionRoot = app ? app.vscodeapis.getExtensionPath() : undefined;
-    this.dx = app ? app.dx.create('OS') : undefined;
+    this.extensionRoot = app.vscodeapis.getExtensionPath();
+    this.dx = app.dx.create('OS');
   }
 
   init(): void {}
@@ -52,6 +55,11 @@ export abstract class OS {
   abstract filePrint(path: string): Promise<void>;
   abstract fileOpenPrintDialog(path: string): Promise<void>;
 
+  // Clipboard operations - platform specific
+  abstract copyToClipboard(): Promise<void>;
+  abstract selectAllCopyDeselect(): Promise<void>;
+  abstract getClipboardContent(): Promise<string | null>;
+
   // Platform-agnostic home directory
   getDir_Home(): string {
     return homedir();
@@ -86,8 +94,93 @@ export abstract class OS {
     return fs.existsSync(targetPath);
   }
 
-  fileRead(filePath: string): string {
-    return fs.readFileSync(filePath, 'utf8');
+  // Smart file reader that handles everything
+  fileRead: fileRead_t = <T = string>(path: string, key?: string): T | undefined => {
+    try {
+      // Determine if this is an extension-relative path
+      const isExtensionPath = !path.startsWith('/') && !path.includes(':\\');
+
+      // Resolve the absolute path
+      const absPath = isExtensionPath
+        ? this.extensionRoot
+          ? this.pathJoin(this.extensionRoot, path)
+          : undefined
+        : path;
+
+      if (!absPath || !fs.existsSync(absPath)) return undefined;
+
+      // Read the raw content
+      const content = fs.readFileSync(absPath, 'utf8');
+
+      // Determine parser from file extension
+      const ext = path.split('.').pop()?.toLowerCase();
+      const extFxnMap: Record<string, (content: string) => unknown> = {
+        yaml: yamlParse,
+        yml: yamlParse,
+        json: JSON.parse,
+      };
+
+      const parser = extFxnMap[ext || ''];
+      if (!parser) {
+        // No parsing, return raw content
+        return content as T;
+      }
+
+      const parsed = parser(content);
+
+      // If key specified, return just that key
+      if (key && typeof parsed === 'object' && parsed !== null) {
+        return (parsed as Record<string, unknown>)[key] as T;
+      }
+
+      return parsed as T;
+    } catch {
+      return undefined;
+    }
+  };
+
+  // Convert relative src attributes and as_uri patterns in HTML to webview URIs
+  htmlSrcPathToURI(html: string, webviewPanel: any): string {
+    if (!this.extensionRoot || !webviewPanel?.webview) return html;
+
+    const dx = this.dx.sub('htmlSrcPathToURI');
+
+    // Helper function to convert a path to webview URI
+    const convertPathToURI = (path: string): string => {
+      // Skip absolute URLs and data URLs
+      if (
+        path.startsWith('http') ||
+        path.startsWith('data:') ||
+        path.startsWith('vscode-webview:')
+      ) {
+        return path;
+      }
+
+      // Convert relative path to webview URI
+      const fullPath = this.pathJoin(this.extensionRoot!, path);
+      const uri = this.app?.vscodeapis.uriFromPath(fullPath);
+      const webviewUri = webviewPanel.webview.asWebviewUri(uri).toString();
+      return webviewUri;
+    };
+
+    // Convert src attributes (case-insensitive) - only match HTML src attributes, not JS assignments
+    let result = html.replace(
+      /<[^>]*\s+\bsrc\b\s*=\s*["']([^"']+)["'][^>]*>/gi,
+      (match, srcPath) => {
+        const webviewUri = convertPathToURI(srcPath);
+        return match.replace(srcPath, webviewUri);
+      }
+    );
+
+    // Convert as_uri patterns (case-insensitive)
+    const replaceRegex = new RegExp('\\{\\{as_uri:([^}]+)\\}\\}', 'gi');
+    result = result.replace(replaceRegex, (match, path) => {
+      const webviewUri = convertPathToURI(path.trim());
+      return webviewUri;
+    });
+
+    dx.done();
+    return result;
   }
 
   sanitizeFileName(name: string): string {
@@ -119,35 +212,6 @@ export abstract class OS {
     return `${y}-${m}-${d}_${hourStr}${mm}${ss}.${ms}${ampm}`;
   }
 
-  // YAML utilities
-  readYamlFile<T = unknown>(absPath: string): T {
-    const content = this.fileRead(absPath);
-    return yamlParse(content) as T;
-  }
-
-  readJsonFile<T = unknown>(absPath: string, filter?: string): T | undefined {
-    try {
-      if (!fs.existsSync(absPath)) return undefined;
-      const text = this.fileRead(absPath);
-      const parsed = JSON.parse(text) as T;
-
-      // If filter is provided, return only that specific key
-      if (filter && typeof parsed === 'object' && parsed !== null) {
-        return (parsed as Record<string, unknown>)[filter] as T;
-      }
-
-      return parsed;
-    } catch {
-      return undefined;
-    }
-  }
-
-  readExtensionYaml<T = unknown>(relativePath: string): T {
-    if (!this.extensionRoot) throw new Error('OS.extensionRoot not set');
-    const abs = this.pathJoin(this.extensionRoot, relativePath);
-    return this.readYamlFile<T>(abs);
-  }
-
   readShikiLightThemes(): string[] {
     if (!this.extensionRoot) return [];
     try {
@@ -168,8 +232,6 @@ export abstract class OS {
   pathBasename(p: string): string {
     return path.basename(p);
   }
-
-
 }
 
 // Import platform-specific classes at the end to avoid circular dependency
