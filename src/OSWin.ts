@@ -27,6 +27,21 @@ export class OSWin extends OS {
 		await this.fileOpenInDefaultApp(pdfPath);
 	}
 
+	async copyToClipboard(): Promise<void> {
+		// Windows clipboard copy - would need Windows-specific implementation
+		throw new Error('copyToClipboard not implemented for Windows');
+	}
+
+	async selectAllCopyDeselect(): Promise<void> {
+		// Windows select all, copy, deselect - would need Windows-specific implementation
+		throw new Error('selectAllCopyDeselect not implemented for Windows');
+	}
+
+	async getClipboardContent(): Promise<string | null> {
+		// Windows clipboard content - would need Windows-specific implementation
+		throw new Error('getClipboardContent not implemented for Windows');
+	}
+
 	done(): void {
 		this.dx.done();
 	}

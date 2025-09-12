@@ -51,6 +51,11 @@ export abstract class OS {
   abstract fileReveal(path: string): Promise<void>;
   abstract filePrint(path: string): Promise<void>;
   abstract fileOpenPrintDialog(path: string): Promise<void>;
+  
+  // Clipboard operations - platform specific
+  abstract copyToClipboard(): Promise<void>;
+  abstract selectAllCopyDeselect(): Promise<void>;
+  abstract getClipboardContent(): Promise<string | null>;
 
   // Platform-agnostic home directory
   getDir_Home(): string {

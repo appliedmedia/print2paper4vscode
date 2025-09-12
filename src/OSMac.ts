@@ -36,6 +36,34 @@ export class OSMac extends OS {
 		await this.execAsync(osa);
 	}
 
+	async copyToClipboard(): Promise<void> {
+		const yaml = this.app?.os.readExtensionYaml<{ apple_script_copy: string }>(
+			'src/ClipboardCapture.yaml'
+		);
+		const appleScript = yaml?.apple_script_copy || 'tell application "System Events"\n    keystroke "c" using command down\n    delay 0.1\nend tell';
+		const osa = `osascript -e '${this.app?.templateDictReplace(appleScript, {}) || appleScript}'`;
+		await this.execAsync(osa);
+	}
+
+	async selectAllCopyDeselect(): Promise<void> {
+		const yaml = this.app?.os.readExtensionYaml<{ apple_script_select_all_copy_deselect: string }>(
+			'src/ClipboardCapture.yaml'
+		);
+		const appleScript = yaml?.apple_script_select_all_copy_deselect || 'tell application "System Events"\n    keystroke "a" using command down\n    delay 0.1\n    keystroke "c" using command down\n    delay 0.1\n    keystroke "a" using {command down, shift down}\nend tell';
+		const osa = `osascript -e '${this.app?.templateDictReplace(appleScript, {}) || appleScript}'`;
+		await this.execAsync(osa);
+	}
+
+	async getClipboardContent(): Promise<string | null> {
+		try {
+			// Get plain text from clipboard using pbpaste (macOS)
+			const { stdout } = await this.execAsync('pbpaste');
+			return stdout || null;
+		} catch {
+			return null;
+		}
+	}
+
 	done(): void {
 		this.dx.done();
 	}

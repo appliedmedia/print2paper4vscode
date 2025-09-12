@@ -28,6 +28,20 @@ export class OSLinux extends OS {
     await this.fileOpenInDefaultApp(pdfPath);
   }
 
+  async copyToClipboard(): Promise<void> {
+    // Linux clipboard copy - would need Linux-specific implementation
+    throw new Error('copyToClipboard not implemented for Linux');
+  }
+
+  async selectAllCopyDeselect(): Promise<void> {
+    // Linux select all, copy, deselect - would need Linux-specific implementation
+    throw new Error('selectAllCopyDeselect not implemented for Linux');
+  }
+
+  async getClipboardContent(): Promise<string | null> {
+    // Linux clipboard content - would need Linux-specific implementation
+    throw new Error('getClipboardContent not implemented for Linux');
+  }
 
   done(): void {
     this.dx.done();
