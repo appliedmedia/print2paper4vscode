@@ -204,6 +204,7 @@ export class PDF {
       // Set font
       doc.setFont(jsPdfFont, 'normal');
       doc.setFontSize(fontSize);
+      dx.out(`Using font: ${jsPdfFont}, size: ${fontSize}, line spacing: ${fontSize * 0.4}`);
 
       // Add title if provided
       if (title) {
@@ -229,13 +230,13 @@ export class PDF {
 
           // Set color and draw text
           doc.setTextColor(color);
-          doc.text(text, x, y);
+          doc.text(text, x, y, { lineHeightFactor: 1.0 });
 
           // Advance x position
           x += doc.getTextWidth(text);
         }
 
-        y += lineHeight;
+        y += fontSize * 0.4; // Tight line spacing
       }
 
       // Return PDF document pointer (in-memory)

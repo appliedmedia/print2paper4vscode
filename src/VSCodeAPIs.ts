@@ -66,8 +66,8 @@ export class VSCodeAPIs {
     const fontSize = Math.max(10, Number(editorCfg.get('fontSize') || 12));
     const cfgLineHeight = Number(editorCfg.get('lineHeight') || 0);
     const fontFamily = String(editorCfg.get('fontFamily') || 'Consolas, "Courier New", monospace');
-    // VS Code uses 0 to mean "compute from font metrics". Approximate with 1.35x font size.
-    const lineHeight = cfgLineHeight > 0 ? cfgLineHeight : Math.round(fontSize * 1.35);
+    // VS Code uses 0 to mean "compute from font metrics". Use balanced spacing for code printing.
+    const lineHeight = cfgLineHeight > 0 ? cfgLineHeight : Math.round(fontSize * 1.2);
     return { fontSize, lineHeight, fontFamily };
   }
 

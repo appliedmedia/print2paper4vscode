@@ -180,7 +180,7 @@ export class PaperPrinter {
   private computeLineHeightPx(fontSize: number): number {
     const editorTypo = this.app.vscodeapis.getEditorTypography();
     if (this.currentFontSizeMode === 'editor') return editorTypo.lineHeight;
-    return Math.round(fontSize * 1.35);
+    return Math.round(fontSize * 1.2); // Balanced line spacing for code printing
   }
 
   // Create menus when needed for the webview
