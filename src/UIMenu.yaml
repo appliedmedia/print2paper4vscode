@@ -34,6 +34,7 @@ ui_menu_generic_handlers: |
 
     // Handle menu item clicks
     if (e.target.matches('.p2p4vsc-menu-item')) {
+      console.log('Menu item clicked:', e.target.id, 'in menu:', e.target.closest('.p2p4vsc-menu')?.getAttribute('id'));
       const menu = e.target.closest('.p2p4vsc-menu');
       
       // Remove active class from all items in this menu
@@ -43,14 +44,16 @@ ui_menu_generic_handlers: |
       // Add active class to clicked item
       e.target.classList.add('active');
 
+      console.log('About to send message to extension...');
       // Send minimal selection data to extension
-      vscode.postMessage({
+      window.vscode.postMessage({
         type: 'menuItemSelected',
         targetId: e.target.id,
         parentId: e.target.closest('.p2p4vsc-menu')?.getAttribute('id'),
         x: e.clientX,
         y: e.clientY
       });
+      console.log('Message sent to extension');
 
       // Close the menu after selection
       const menuItemsContainer = menu.querySelector('.p2p4vsc-menu-items');

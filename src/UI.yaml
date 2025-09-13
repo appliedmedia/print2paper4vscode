@@ -149,7 +149,7 @@ toolbar_css: |
   .p2p4vsc-group { position: relative; }
 
 toolbar_js: |
-  const vscode = acquireVsCodeApi();
+  window.vscode = acquireVsCodeApi();
   const toolbar = document.getElementById('p2p4vsc-toolbar');
   const drag = document.getElementById('p2p4vsc-toolbar-grip');
 

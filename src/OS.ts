@@ -5,6 +5,7 @@ import { exec as cpExec, execSync as cpExecSync } from 'child_process';
 import { promisify } from 'util';
 import { parse as yamlParse } from 'yaml';
 import type { App } from './App';
+import type { WebviewPanelId } from './VSCodeAPIs';
 import { Diagnostics } from './Diagnostics';
 
 // Type definition for fileRead method
@@ -140,8 +141,11 @@ export abstract class OS {
   };
 
   // Convert relative src attributes and as_uri patterns in HTML to webview URIs
-  htmlSrcPathToURI(html: string, webviewPanel: any): string {
-    if (!this.extensionRoot || !webviewPanel?.webview) return html;
+  htmlSrcPathToURI(html: string, webviewPanelId: WebviewPanelId): string {
+    if (!this.extensionRoot) return html;
+
+    const webviewPanel = this.app.vscodeapis.getPanelForUriConversion(webviewPanelId);
+    if (!webviewPanel?.webview) return html;
 
     const dx = this.dx.sub('htmlSrcPathToURI');
 

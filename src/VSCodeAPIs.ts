@@ -12,10 +12,14 @@ import type {
 import type { WebviewMessage } from './types/UI_t';
 import { Diagnostics } from './Diagnostics';
 
+// Opaque ID type for webview panels
+export type WebviewPanelId = string & { readonly __brand: 'WebviewPanelId' };
+
 export class VSCodeAPIs {
   private app: App;
   private vscode: typeof import('vscode'); // Use official VS Code types
   private context: ExtensionContext; // Properly typed context
+  private panels = new Map<WebviewPanelId, WebviewPanel>(); // Panel mapping
   private dx: Diagnostics;
 
   constructor(app: App, vscode: typeof import('vscode'), context: ExtensionContext) {
@@ -107,16 +111,40 @@ export class VSCodeAPIs {
   }
 
   /**
+   * Generate a unique panel ID from title
+   */
+  private generatePanelId(title: string): WebviewPanelId {
+    let baseId = title.toLowerCase().replace(/\s+/g, '_') as WebviewPanelId;
+
+    if (this.panels.has(baseId)) {
+      const dt = this.app.os.dateAsYYYYMMDDHHMMSS();
+      baseId = `${baseId}_${dt}` as WebviewPanelId;
+    }
+
+    return baseId;
+  }
+
+  /**
    * Create and show a Webview panel with provided HTML
    */
-  createWebviewPanel(title: string, htmlContent: string): WebviewPanel {
+  createWebviewPanel(title: string, htmlContent: string): WebviewPanelId {
     const panel = this.vscode.window.createWebviewPanel(
       'p2p4vsc.printprep',
       title,
       this.vscode.ViewColumn.Active, // Use the correct ViewColumn from vscode namespace
-      { enableScripts: true, retainContextWhenHidden: true }
+      {
+        enableScripts: true,
+        retainContextWhenHidden: true,
+      }
     );
     panel.webview.html = htmlContent;
+
+    // Generate unique ID and store panel
+    const id = this.generatePanelId(title);
+    this.panels.set(id, panel);
+
+    // Set up message handling
+    this.setupMessageHandling(panel);
 
     // Restore toolbar position if saved
     const savedPosition = this.getGlobalState('toolbarLeft');
@@ -127,7 +155,83 @@ export class VSCodeAPIs {
       });
     }
 
-    return panel;
+    return id;
+  }
+
+  /**
+   * Update panel title
+   */
+  setPanelTitle(id: WebviewPanelId, title: string): void {
+    const panel = this.panels.get(id);
+    if (panel) panel.title = title;
+  }
+
+  /**
+   * Update panel HTML content
+   */
+  updatePanelHtml(id: WebviewPanelId, html: string): void {
+    const panel = this.panels.get(id);
+    if (panel) panel.webview.html = html;
+  }
+
+  /**
+   * Post message to panel
+   */
+  postMessageToPanel(id: WebviewPanelId, message: any): void {
+    const panel = this.panels.get(id);
+    if (panel) panel.webview.postMessage(message);
+  }
+
+  /**
+   * Get panel for URI conversion (internal use)
+   */
+  getPanelForUriConversion(id: WebviewPanelId): WebviewPanel | undefined {
+    return this.panels.get(id);
+  }
+
+  /**
+   * Get or create webview panel with URI conversion
+   */
+  async getOrCreateWebviewPanel(
+    title: string,
+    html: string,
+    existingPanelId?: WebviewPanelId
+  ): Promise<WebviewPanelId> {
+    this.dx.out(
+      `getOrCreateWebviewPanel: existingPanelId=${existingPanelId}, panels.size=${this.panels.size}`
+    );
+
+    // Check if we have an existing panel to reuse
+    if (existingPanelId) {
+      const panel = this.panels.get(existingPanelId);
+      if (panel) {
+        try {
+          // Try to access a property to check if panel is still valid
+          const _ = panel.title;
+          // Panel is still valid, reuse it
+          this.dx.out(`Reusing existing panel: ${existingPanelId}`);
+          panel.title = title;
+          const htmlWithURIs = this.app.os.htmlSrcPathToURI(html, existingPanelId);
+          panel.webview.html = htmlWithURIs;
+          return existingPanelId;
+        } catch {
+          // Panel is disposed, remove from map
+          this.dx.out(`Panel disposed, removing from map: ${existingPanelId}`);
+          this.panels.delete(existingPanelId);
+        }
+      } else {
+        this.dx.out(`Panel not found in map: ${existingPanelId}`);
+      }
+    } else {
+      this.dx.out(`No existingPanelId provided`);
+    }
+
+    // Create new panel
+    this.dx.out(`Creating new panel for title: ${title}`);
+    const id = this.createWebviewPanel(title, '');
+    const htmlWithURIs = this.app.os.htmlSrcPathToURI(html, id);
+    this.updatePanelHtml(id, htmlWithURIs);
+    return id;
   }
 
   /**

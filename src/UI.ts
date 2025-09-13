@@ -1,12 +1,13 @@
 import type { App } from './App';
 import type { WebviewMessage, MessageHandler } from './types/UI_t';
+import type { WebviewPanelId } from './VSCodeAPIs';
 import { Diagnostics } from './Diagnostics';
 
 export class UI {
   private app: App;
   private messageHandlers: Map<string, MessageHandler[]> = new Map();
   private dx: Diagnostics;
-  private currentWebviewPanel: any = null; // Reference to current webview panel
+  private currentPanelId: WebviewPanelId | null = null; // Store the current panel ID for updates
 
   constructor(app: App) {
     this.app = app;
@@ -40,13 +41,21 @@ export class UI {
 
   // Central message handling - routes messages to registered handlers
   async handleWebviewMessage(msg: WebviewMessage): Promise<void> {
-    const dx = this.dx.sub('handleWebviewMessage');
+    const dx = this.dx.sub('handleWebviewMessage', true);
     dx.require({ msg }, ['msg']);
+    dx.out(
+      `Received message: type=${msg.type}, targetId=${msg.targetId}, parentId=${msg.parentId}`
+    );
 
-    if (!msg || !msg.type) return;
+    if (!msg || !msg.type) {
+      dx.out('Invalid message: missing type');
+      dx.done();
+      return;
+    }
 
     const handlers = this.messageHandlers.get(msg.type);
     if (handlers) {
+      dx.out(`Found ${handlers.length} handlers for type ${msg.type}`);
       for (const handler of handlers) {
         try {
           await handler(msg);
@@ -54,55 +63,20 @@ export class UI {
           dx.out(`Error in message handler for ${msg.type}: ${error}`);
         }
       }
+    } else {
+      dx.out(`No handlers found for type ${msg.type}`);
     }
     dx.done();
   }
 
-  // Create a webview panel with message handling set up
-  htmlToWebViewPanel(title: string, html: string): any {
-    const panel = this.app.vscodeapis.createWebviewPanel(title, html);
-    this.app.vscodeapis.setupMessageHandling(panel);
-    return panel;
-  }
-
   // Create a webview panel with webview URI conversion
-  async htmlToWebViewPanelWithURIs(title: string, html: string): Promise<any> {
-    // Create panel first
-    const panel = this.app.vscodeapis.createWebviewPanel(title, '');
-    this.app.vscodeapis.setupMessageHandling(panel);
-
-    // Convert relative src paths to webview URIs
-    const htmlWithURIs = this.app.os.htmlSrcPathToURI(html, panel);
-
-    // Update panel with converted HTML
-    panel.webview.html = htmlWithURIs;
-
-    // Store reference to current panel
-    this.currentWebviewPanel = panel;
-    return panel;
-  }
-
-  // Create a webview panel and update HTML with webview URIs
-  async createWebviewWithURIs(title: string, pdfDoc: any, tabName: string): Promise<any> {
-    // First create the panel
-    const panel = this.app.vscodeapis.createWebviewPanel(title, '');
-    this.app.vscodeapis.setupMessageHandling(panel);
-
-    // Generate PDF embed HTML
-    const pdfHtml = this.app.pdf.embedPDFinHTML(pdfDoc, `Printable: ${tabName}`);
-
-    // Convert file paths to webview URIs in the HTML
-    this.dx.out('UI.ts: About to call htmlSrcPathToURI');
-    const htmlWithURIs = this.app.os.htmlSrcPathToURI(pdfHtml, panel);
-    this.dx.out('UI.ts: htmlSrcPathToURI completed');
-
-    // Add toolbar to the HTML
-    const htmlWithToolbar = await this.addToolbar(htmlWithURIs);
-
-    // Update the panel with the final HTML
-    panel.webview.html = htmlWithToolbar;
-
-    return panel;
+  async htmlToPanel(title: string, html: string): Promise<WebviewPanelId> {
+    this.currentPanelId = await this.app.vscodeapis.getOrCreateWebviewPanel(
+      title,
+      html,
+      this.currentPanelId || undefined
+    );
+    return this.currentPanelId;
   }
 
   // Choose save location for files
@@ -171,9 +145,9 @@ export class UI {
   }
 
   // Add toolbar to HTML content with webview URI conversion
-  async addToolbarWithURIs(html: string, webviewPanel: any): Promise<string> {
+  async addToolbarWithURIs(html: string, webviewPanelId: WebviewPanelId): Promise<string> {
     // First convert file paths to webview URIs
-    const htmlWithURIs = this.app.os.htmlSrcPathToURI(html, webviewPanel);
+    const htmlWithURIs = this.app.os.htmlSrcPathToURI(html, webviewPanelId);
 
     // Then add toolbar
     return await this.addToolbar(htmlWithURIs);
@@ -197,26 +171,30 @@ export class UI {
 
   // Update the current webview panel with new HTML content
   async updateWebviewPanel(html: string): Promise<void> {
-    if (this.currentWebviewPanel) {
-      const htmlWithURIs = this.app.os.htmlSrcPathToURI(html, this.currentWebviewPanel);
-      const htmlWithToolbar = await this.addToolbar(htmlWithURIs);
-      this.currentWebviewPanel.webview.html = htmlWithToolbar;
+    if (this.currentPanelId) {
+      const htmlWithToolbar = await this.addToolbar(html);
+      this.app.vscodeapis.updatePanelHtml(this.currentPanelId, htmlWithToolbar);
     }
   }
 
-  async updatePdfContentOnly(html: string): Promise<void> {
-    if (this.currentWebviewPanel) {
-      // Extract just the PDF data URL from the HTML
-      const pdfDataUrlMatch = html.match(/initPdfViewer\('([^']+)'\)/);
-      if (pdfDataUrlMatch) {
-        const pdfDataUrl = pdfDataUrlMatch[1];
-        // Send message to webview to update PDF content only
-        this.currentWebviewPanel.webview.postMessage({
-          type: 'updatePdf',
-          pdfDataUrl: pdfDataUrl,
-        });
-      }
+  async updatePdfContentOnly(pdfDoc: any): Promise<void> {
+    const dx = this.dx.sub('updatePdfContentOnly', true);
+    dx.out(`currentPanelId = ${this.currentPanelId}`);
+
+    if (this.currentPanelId && pdfDoc) {
+      // Generate PDF data URL directly from the jsPDF document
+      const pdfDataUrl = pdfDoc.output('datauristring') as string;
+      dx.out(`sending message with pdfDataUrl = ${pdfDataUrl.substring(0, 50)}...`);
+
+      // Send message to webview to update PDF content only
+      this.app.vscodeapis.postMessageToPanel(this.currentPanelId, {
+        type: 'updatePdf',
+        pdfDataUrl: pdfDataUrl,
+      });
+    } else {
+      dx.out('no currentPanelId or pdfDoc');
     }
+    dx.done();
   }
 
   out(message: string): void {

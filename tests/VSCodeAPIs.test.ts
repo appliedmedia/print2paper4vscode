@@ -170,33 +170,32 @@ describe('VSCodeAPIs Wrapper', () => {
 
   describe('WebView Panel Management', () => {
     it('should create webview panel', () => {
-      const panel = vscodeAPIs.createWebviewPanel('Test Panel', '<html><body>Test</body></html>');
+      const panelId = vscodeAPIs.createWebviewPanel('Test Panel', '<html><body>Test</body></html>');
 
-      assert.ok(panel, 'Should create webview panel');
-      assert.ok(panel.webview, 'Should have webview property');
-      assert.ok(panel.onDidDispose, 'Should have onDidDispose method');
-      assert.ok(panel.reveal, 'Should have reveal method');
+      assert.ok(panelId, 'Should create webview panel ID');
+      assert.strictEqual(typeof panelId, 'string', 'Should return string ID');
     });
 
     it('should handle webview panel options', () => {
-      const options = { preserveFocus: true, viewColumn: 2 };
-      const panel = vscodeAPIs.createWebviewPanel(
+      const panelId = vscodeAPIs.createWebviewPanel(
         'Test Panel',
         '<html><body>Test with options</body></html>'
       );
 
-      assert.ok(panel, 'Should create panel with options');
+      assert.ok(panelId, 'Should create panel with options');
+      assert.strictEqual(typeof panelId, 'string', 'Should return string ID');
     });
 
     it('should handle different view types', () => {
       const viewTypes = ['test-view', 'custom-view', 'print-preview'];
 
       for (const viewType of viewTypes) {
-        const panel = vscodeAPIs.createWebviewPanel(
+        const panelId = vscodeAPIs.createWebviewPanel(
           'Test Panel',
           `<html><body>Test ${viewType}</body></html>`
         );
-        assert.ok(panel, `Should create panel for view type: ${viewType}`);
+        assert.ok(panelId, `Should create panel for view type: ${viewType}`);
+        assert.strictEqual(typeof panelId, 'string', 'Should return string ID');
       }
     });
   });
@@ -309,7 +308,10 @@ describe('VSCodeAPIs Wrapper', () => {
       const themeJson = vscodeAPIs.getVSCodeThemeJson(themeId);
 
       // The method should return the theme object when found in extensions
-      assert.ok(themeJson && typeof themeJson === 'object', 'Should return theme object when found');
+      assert.ok(
+        themeJson && typeof themeJson === 'object',
+        'Should return theme object when found'
+      );
       assert.strictEqual((themeJson as any).id, 'vs-light', 'Should return correct theme ID');
     });
   });

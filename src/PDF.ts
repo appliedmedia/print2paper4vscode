@@ -177,6 +177,25 @@ export class PDF {
     return 'Courier';
   }
 
+  /**
+   * Normalize color for jsPDF compatibility
+   * Removes alpha channel and ensures proper hex format
+   */
+  private normalizeColorForJsPDF(color: string): string {
+    // Remove alpha channel if present (e.g., #FFFFFF5C -> #FFFFFF)
+    if (color.length === 9 && color.startsWith('#')) {
+      return color.substring(0, 7);
+    }
+
+    // Ensure it's a valid hex color
+    if (color.startsWith('#') && (color.length === 4 || color.length === 7)) {
+      return color;
+    }
+
+    // Default to black if invalid
+    return '#000000';
+  }
+
   // NEW: Generate PDF directly from Shiki tokens
   async generatePdfFromTokens(
     tokens: ThemedToken[][],
@@ -194,8 +213,12 @@ export class PDF {
     ]);
 
     try {
-      // Initialize PDF
-      const doc = new jsPDF();
+      // Initialize PDF with a very tall page for continuous scrolling
+      const doc = new jsPDF({
+        orientation: 'portrait',
+        unit: 'mm',
+        format: [210, 10000], // Very tall page (A4 width, 10m height)
+      });
 
       // Map font family to jsPDF supported fonts
       const jsPdfFont = this.mapFontFamilyToJsPDF(fontFamily, doc);
@@ -225,12 +248,13 @@ export class PDF {
           const text = token.content;
           if (!text) continue;
 
-          // Get token color
+          // Get token color and normalize it for jsPDF
           const color = token.color || '#000000';
+          const normalizedColor = this.normalizeColorForJsPDF(color);
 
           // Set color and draw text
-          doc.setTextColor(color);
-          doc.text(text, x, y, { lineHeightFactor: 1.0 });
+          doc.setTextColor(normalizedColor);
+          doc.text(text, x, y);
 
           // Advance x position
           x += doc.getTextWidth(text);
@@ -240,7 +264,7 @@ export class PDF {
       }
 
       // Return PDF document pointer (in-memory)
-      dx.out(`PDF document created in memory`);
+      dx.out(`PDF document created in memory with continuous scrolling`);
 
       return doc;
     } catch (error) {
@@ -251,7 +275,7 @@ export class PDF {
     }
   }
 
-  // NEW: Convert PDF document to HTML
+  // Convert PDF document to HTML with scrollable PDF view
   embedPDFinHTML(pdfDoc: jsPDF, title: string): string {
     const dx = this.dx.sub('embedPDFinHTML');
     dx.require({ pdfDoc, title }, ['pdfDoc', 'title']);
@@ -263,9 +287,9 @@ export class PDF {
 
       // Load YAML templates and PDF.js library
       const pdfTemplates = this.app.os.fileRead<{
-        pdf_viewer_html: string;
+        pdf_html: string;
         pdf_css: string;
-        pdf_viewer: string;
+        pdf_js: string;
       }>('src/PDF.yaml');
 
       const uiTemplates = this.app.os.fileRead<{
@@ -283,14 +307,14 @@ export class PDF {
       }
 
       // Generate HTML using template with embedded resources
-      const html = this.app.templateDictReplace(pdfTemplates.pdf_viewer_html, {
+      const html = this.app.templateDictReplace(pdfTemplates.pdf_html, {
         TITLE: title,
         PDF_DATA_URL: pdfDataUrl,
         PDF_CSS: this.app.templateDictReplace(pdfTemplates.pdf_css, {
           BASE_CSS: uiTemplates.base_css,
         }),
         PDFJS_LIBRARY: pdfJsContent,
-        PDF_VIEWER: pdfTemplates.pdf_viewer,
+        PDF_JS: pdfTemplates.pdf_js,
       });
 
       dx.out(`HTML generated for PDF document with embedded resources`);

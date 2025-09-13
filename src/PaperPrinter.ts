@@ -58,7 +58,7 @@ export class PaperPrinter {
   }
 
   private async handleMenuItemSelected(msg: WebviewMessage): Promise<void> {
-    const dx = this.dx.sub('handleMenuItemSelected');
+    const dx = this.dx.sub('handleMenuItemSelected', true);
     dx.require({ msg }, ['msg']);
 
     // Handle menu item selections from the new generic UI system
@@ -69,9 +69,14 @@ export class PaperPrinter {
     if (parentId && targetId) {
       const menu = this.app.uimenumgr.getMenu(parentId);
       if (menu) {
+        dx.out(`Found menu: ${menu.id}, dispatching selection: ${targetId}`);
         // Dispatch selection via public API
         await menu.dispatchSelection(targetId);
+      } else {
+        dx.out(`No menu found for parentId: ${parentId}`);
       }
+    } else {
+      dx.out(`Missing parentId or targetId: parentId=${parentId}, targetId=${targetId}`);
     }
     dx.done();
   }
@@ -148,7 +153,7 @@ export class PaperPrinter {
 
     const initial = await this.applyRenderModes(pdfDoc);
     const htmlWithToolbar = await this.app.ui.addToolbar(initial);
-    await this.app.ui.htmlToWebViewPanelWithURIs(`Printable: ${tabName}`, htmlWithToolbar);
+    await this.app.ui.htmlToPanel(`Printable: ${tabName}`, htmlWithToolbar);
   }
 
   private async applyRenderModes(pdfDoc: jsPDF): Promise<string> {
@@ -270,8 +275,10 @@ export class PaperPrinter {
   }
 
   private menuItems_Text(): UIMenuItem[] {
+    const dx = this.dx.sub('menuItems_Text', true);
     const editorTypo = this.app.vscodeapis.getEditorTypography();
     const editorSize = editorTypo.fontSize;
+    dx.out(`editorSize = ${editorSize}`);
 
     // Create base size options
     const sizeOptions = [
@@ -288,13 +295,19 @@ export class PaperPrinter {
     const existingEditorOption = sizeOptions.find(option => option.id === String(editorSize));
 
     if (existingEditorOption) {
+      dx.out(`Editor size ${editorSize} already exists in list`);
       // Editor size already exists - no need to add 📝 here, UIMenu.ts will handle it
       // existingEditorOption.displayName stays as is
     } else {
+      dx.out(`Editor size ${editorSize} not in list, adding it`);
       // Editor size not in list - add it at the top without 📝 suffix
       sizeOptions.unshift({ id: String(editorSize), displayName: `${editorSize}px` });
     }
 
+    dx.out(
+      `Generated ${sizeOptions.length} menu items: ${sizeOptions.map(item => item.id).join(', ')}`
+    );
+    dx.done();
     return sizeOptions;
   }
 
@@ -316,43 +329,71 @@ export class PaperPrinter {
   }
 
   private async handleSelection_Theme(selectedId: string): Promise<string> {
+    const dx = this.dx.sub('handleSelection_Theme', true);
+    dx.out(`selectedId = ${selectedId}`);
+
     if (selectedId === '0') {
       // Return the current editor theme ID as the default
       const currentEditorTheme = this.app.vscodeapis.getActiveThemeId();
       const availableThemes = this.app.stylize.getThemes();
       const fallbackTheme = availableThemes[0]?.id || '';
       const result = currentEditorTheme || fallbackTheme;
-
+      dx.out(`returning editor theme: ${result}`);
+      dx.done();
       return result;
     }
 
+    dx.out(`updating theme to ${selectedId}`);
     this.currentThemeChoice = selectedId;
 
-    // TODO: Re-render webview with new theme - need access to panel
-    return ''; // selection handled
+    // Regenerate PDF and update only the PDF content
+    if (this.pdfRendered) {
+      dx.out(`regenerating PDF with new theme`);
+      await this.applyRenderModes(this.pdfRendered);
+      dx.out(`calling updatePdfContentOnly with pdfRendered`);
+      await this.app.ui.updatePdfContentOnly(this.pdfRendered);
+    } else {
+      dx.out(`no pdfRendered available`);
+    }
+
+    dx.done();
+    return selectedId; // Return the selected theme for checkmark
   }
 
   private async handleSelection_Text(selectedId: string): Promise<string> {
+    const dx = this.dx.sub('handleSelection_Text', true);
+    dx.out(`selectedId = ${selectedId}`);
+
     if (selectedId === '0') {
       // Return the actual editor font size for default selection
       const editorTypo = this.app.vscodeapis.getEditorTypography();
-      return String(editorTypo.fontSize);
+      const editorSize = String(editorTypo.fontSize);
+      dx.out(`returning editor size: ${editorSize}`);
+      dx.done();
+      return editorSize;
     }
 
     // Update font size mode
     const fontSize = parseInt(selectedId, 10);
     if (!isNaN(fontSize)) {
+      dx.out(`updating fontSize to ${fontSize}`);
       this.currentFontSizeMode = fontSize as 8 | 9 | 10 | 12 | 14 | 18 | 24;
 
       // Regenerate PDF and update only the PDF content
       if (this.pdfRendered) {
-        const newHtml = await this.applyRenderModes(this.pdfRendered);
-        await this.app.ui.updatePdfContentOnly(newHtml);
+        dx.out(`regenerating PDF with new font size`);
+        await this.applyRenderModes(this.pdfRendered);
+        dx.out(`calling updatePdfContentOnly with pdfRendered`);
+        await this.app.ui.updatePdfContentOnly(this.pdfRendered);
+      } else {
+        dx.out(`no pdfRendered available`);
       }
 
+      dx.done();
       return selectedId; // Return the selected size for checkmark
     }
 
+    dx.done();
     return ''; // selection handled
   }
 
