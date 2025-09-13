@@ -252,8 +252,8 @@ export class PDF {
   }
 
   // NEW: Convert PDF document to HTML
-  pdfToHTML(pdfDoc: jsPDF, title: string): string {
-    const dx = this.dx.sub('pdfToHTML');
+  embedPDFinHTML(pdfDoc: jsPDF, title: string): string {
+    const dx = this.dx.sub('embedPDFinHTML');
     dx.require({ pdfDoc, title }, ['pdfDoc', 'title']);
 
     try {

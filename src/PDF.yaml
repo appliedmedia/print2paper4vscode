@@ -142,3 +142,10 @@ pdf_viewer: |
 
   // Make initPdfViewer available globally
   window.initPdfViewer = initPdfViewer;
+
+  // Listen for PDF update messages
+  window.addEventListener('message', (event) => {
+    if (event.data.type === 'updatePdf') {
+      initPdfViewer(event.data.pdfDataUrl);
+    }
+  });

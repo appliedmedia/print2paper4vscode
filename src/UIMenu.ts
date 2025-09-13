@@ -85,12 +85,12 @@ export class UIMenu {
     const menuItemsHtml = menuItems
       .map(item => {
         const isDefault = item.id === defaultSelection;
-        const itemClasses = isDefault ? 'default-item' : '';
+        const itemClasses = isDefault ? 'default-item active' : '';
 
         // Only show gutter if there's a default selection (not empty string)
         const showGutter = !!defaultSelection;
-        const itemPrefix = showGutter ? (isDefault ? '✓' : ' ') : '';
-        const itemSuffix = showGutter ? (isDefault ? '📝' : '') : '';
+        const itemPrefix = showGutter ? ' ' : '';
+        const itemSuffix = showGutter ? ' ' : '';
 
         const replacementDict = {
           ITEM_ID: item.id,

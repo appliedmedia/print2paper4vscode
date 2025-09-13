@@ -34,6 +34,15 @@ ui_menu_generic_handlers: |
 
     // Handle menu item clicks
     if (e.target.matches('.p2p4vsc-menu-item')) {
+      const menu = e.target.closest('.p2p4vsc-menu');
+      
+      // Remove active class from all items in this menu
+      const menuItems = menu.querySelectorAll('.p2p4vsc-menu-item');
+      menuItems.forEach(item => item.classList.remove('active'));
+      
+      // Add active class to clicked item
+      e.target.classList.add('active');
+
       // Send minimal selection data to extension
       vscode.postMessage({
         type: 'menuItemSelected',
@@ -44,9 +53,8 @@ ui_menu_generic_handlers: |
       });
 
       // Close the menu after selection
-      const menu = e.target.closest('.p2p4vsc-menu');
-      const menuItems = menu.querySelector('.p2p4vsc-menu-items');
-      menuItems.style.display = 'none';
+      const menuItemsContainer = menu.querySelector('.p2p4vsc-menu-items');
+      menuItemsContainer.style.display = 'none';
       return;
     }
 

@@ -6,6 +6,7 @@ export class UI {
   private app: App;
   private messageHandlers: Map<string, MessageHandler[]> = new Map();
   private dx: Diagnostics;
+  private currentWebviewPanel: any = null; // Reference to current webview panel
 
   constructor(app: App) {
     this.app = app;
@@ -76,6 +77,8 @@ export class UI {
     // Update panel with converted HTML
     panel.webview.html = htmlWithURIs;
 
+    // Store reference to current panel
+    this.currentWebviewPanel = panel;
     return panel;
   }
 
@@ -86,7 +89,7 @@ export class UI {
     this.app.vscodeapis.setupMessageHandling(panel);
 
     // Generate PDF embed HTML
-    const pdfHtml = this.app.pdf.pdfToHTML(pdfDoc, `Printable: ${tabName}`);
+    const pdfHtml = this.app.pdf.embedPDFinHTML(pdfDoc, `Printable: ${tabName}`);
 
     // Convert file paths to webview URIs in the HTML
     this.dx.out('UI.ts: About to call htmlSrcPathToURI');
@@ -141,7 +144,11 @@ export class UI {
   // Add toolbar to HTML content
   async addToolbar(html: string): Promise<string> {
     // Read the UI.yaml template for the toolbar
-    const toolbarYaml = this.app.os.fileRead<{ toolbar_html: string }>('src/UI.yaml');
+    const toolbarYaml = this.app.os.fileRead<{
+      toolbar_css: string;
+      toolbar_js: string;
+      toolbar_html: string;
+    }>('src/UI.yaml');
     if (!toolbarYaml) throw new Error('Failed to load toolbar template');
 
     // Replace template variables using UIMenuMgr - UI doesn't know what these represent
@@ -152,6 +159,8 @@ export class UI {
     const toolbarLeft = this.app.vscodeapis.getGlobalState<number>('toolbarLeft');
 
     const toolbar = this.app.templateDictReplace(toolbarYaml.toolbar_html, {
+      TOOLBAR_CSS: toolbarYaml.toolbar_css,
+      TOOLBAR_JS: toolbarYaml.toolbar_js,
       UIMENU_HTML: uimenuHtml,
       UIMENU_JS: uimenuJs,
       TOOLBAR_LEFT: toolbarLeft !== undefined ? String(toolbarLeft) : 'undefined',
@@ -184,6 +193,30 @@ export class UI {
 
   setStatusBarMessage(text: string, timeoutMs?: number): unknown {
     return this.app.vscodeapis.setStatusBarMessage(text, timeoutMs);
+  }
+
+  // Update the current webview panel with new HTML content
+  async updateWebviewPanel(html: string): Promise<void> {
+    if (this.currentWebviewPanel) {
+      const htmlWithURIs = this.app.os.htmlSrcPathToURI(html, this.currentWebviewPanel);
+      const htmlWithToolbar = await this.addToolbar(htmlWithURIs);
+      this.currentWebviewPanel.webview.html = htmlWithToolbar;
+    }
+  }
+
+  async updatePdfContentOnly(html: string): Promise<void> {
+    if (this.currentWebviewPanel) {
+      // Extract just the PDF data URL from the HTML
+      const pdfDataUrlMatch = html.match(/initPdfViewer\('([^']+)'\)/);
+      if (pdfDataUrlMatch) {
+        const pdfDataUrl = pdfDataUrlMatch[1];
+        // Send message to webview to update PDF content only
+        this.currentWebviewPanel.webview.postMessage({
+          type: 'updatePdf',
+          pdfDataUrl: pdfDataUrl,
+        });
+      }
+    }
   }
 
   out(message: string): void {

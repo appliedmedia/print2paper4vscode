@@ -17,7 +17,7 @@ export class PaperPrinter {
 
   private currentThemeChoice: string | undefined;
 
-  private currentFontSizeMode: 'editor' | 9 | 10 | 12 | 14 | 18 | 24 = 'editor';
+  private currentFontSizeMode: 8 | 9 | 10 | 12 | 14 | 18 | 24 = 12; // Default to 12px
 
   constructor(app: App) {
     this.app = app;
@@ -165,22 +165,18 @@ export class PaperPrinter {
       // Store the new PDF document
       this.pdfRendered = newPdfDoc;
       // Convert PDF to HTML
-      return this.app.pdf.pdfToHTML(newPdfDoc, this.printTitle);
+      return this.app.pdf.embedPDFinHTML(newPdfDoc, this.printTitle);
     }
     // For existing PDF document, convert to HTML
-    return this.app.pdf.pdfToHTML(pdfDoc, this.printTitle);
+    return this.app.pdf.embedPDFinHTML(pdfDoc, this.printTitle);
   }
 
   private computeFontSizePx(): number {
-    if (this.currentFontSizeMode === 'editor')
-      return this.app.vscodeapis.getEditorTypography().fontSize;
     return this.currentFontSizeMode;
   }
 
   private computeLineHeightPx(fontSize: number): number {
-    const editorTypo = this.app.vscodeapis.getEditorTypography();
-    if (this.currentFontSizeMode === 'editor') return editorTypo.lineHeight;
-    return Math.round(fontSize * 1.2); // Balanced line spacing for code printing
+    return Math.round(fontSize * 0.4); // Tight line spacing for code printing
   }
 
   // Create menus when needed for the webview
@@ -207,7 +203,7 @@ export class PaperPrinter {
       },
       {
         id: 'text',
-        icon: '📝',
+        icon: 'Tt',
         title: 'Text',
         menuItems: this.menuItems_Text.bind(this),
         selectionHandler: this.handleSelection_Text.bind(this),
@@ -279,6 +275,7 @@ export class PaperPrinter {
 
     // Create base size options
     const sizeOptions = [
+      { id: '8', displayName: '8px' },
       { id: '9', displayName: '9px' },
       { id: '10', displayName: '10px' },
       { id: '12', displayName: '12px' },
@@ -337,11 +334,25 @@ export class PaperPrinter {
 
   private async handleSelection_Text(selectedId: string): Promise<string> {
     if (selectedId === '0') {
+      // Return the actual editor font size for default selection
       const editorTypo = this.app.vscodeapis.getEditorTypography();
       return String(editorTypo.fontSize);
     }
-    this.dx.out(`Text menu selection: ${selectedId}`);
-    // TODO: Implement text handling
+
+    // Update font size mode
+    const fontSize = parseInt(selectedId, 10);
+    if (!isNaN(fontSize)) {
+      this.currentFontSizeMode = fontSize as 8 | 9 | 10 | 12 | 14 | 18 | 24;
+
+      // Regenerate PDF and update only the PDF content
+      if (this.pdfRendered) {
+        const newHtml = await this.applyRenderModes(this.pdfRendered);
+        await this.app.ui.updatePdfContentOnly(newHtml);
+      }
+
+      return selectedId; // Return the selected size for checkmark
+    }
+
     return ''; // selection handled
   }
 
