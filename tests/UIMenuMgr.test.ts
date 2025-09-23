@@ -221,7 +221,7 @@ describe('UIMenuMgr', () => {
 
       assert.ok('UIMENU_HTML' in mappings, 'Should have UIMENU_HTML mapping');
       assert.ok('UIMENU_JS' in mappings, 'Should have UIMENU_JS mapping');
-      assert.ok('TESTMENU_MENU_ITEMS' in mappings, 'Should have menu-specific mapping');
+      // Individual menu mappings are no longer generated as they're not used
     });
 
     it('should handle multiple menus in mappings', async () => {
@@ -251,8 +251,8 @@ describe('UIMenuMgr', () => {
 
       const mappings = await menuMgr.getTemplateVariableMappings();
 
-      assert.ok('MENU1_MENU_ITEMS' in mappings, 'Should have menu1 mapping');
-      assert.ok('MENU2_MENU_ITEMS' in mappings, 'Should have menu2 mapping');
+      // Individual menu mappings are no longer generated as they're not used
+      // Only the main UIMENU_HTML and UIMENU_JS mappings are generated
     });
   });
 

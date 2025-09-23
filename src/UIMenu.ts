@@ -52,21 +52,17 @@ export class UIMenu {
     return this._selectionHandler(id);
   }
 
-  // Generate the complete HTML for this menu using YAML template
-  async getHTML(): Promise<string> {
-    this.dx.out(`UIMenu.getHTML called for ${this.id}`);
-    this.dx.out(`Icon: "${this.icon}", Title: "${this.title}"`);
+  // Generate just the menu items HTML (for use in flyouts)
+  async getItemHTML(): Promise<string> {
+    this.dx.out(`UIMenu.getItemHTML called for ${this.id}`);
 
-    let yaml: { ui_menu_html: string; ui_menu_item: string; ui_flyout: string };
+    let yaml: { ui_menu_item: string };
     try {
       const yamlResult = this._app.os.fileRead<{
-        ui_menu_html: string;
         ui_menu_item: string;
-        ui_flyout: string;
       }>('src/UIMenu.yaml');
       if (!yamlResult) throw new Error('Failed to load UIMenu template');
       yaml = yamlResult;
-      this.dx.out(`YAML loaded, ui_menu_html length: ${yaml.ui_menu_html.length}`);
     } catch (error) {
       this.dx.out(`ERROR reading YAML: ${error}`);
       throw error;
@@ -94,48 +90,81 @@ export class UIMenu {
           const itemPrefix = showGutter ? ' ' : '';
           const itemSuffix = showGutter ? ' ' : '';
 
-          // Check if this item references a submenu
-          let flyoutHtml = '';
-          const submenu = this._app.uimenumgr.getMenu(item.id);
-          if (submenu) {
-            // This item represents a full menu - let it handle its own processing
-            const submenuHtml = await submenu.getHTML();
-
-            // Extract just the menu items from the submenu HTML (skip the outer menu wrapper)
-            const submenuItemsMatch = submenuHtml.match(
-              /<div class="p2p4vsc-menu-items"[^>]*>(.*?)<\/div>/s
-            );
-            const submenuItemsHtml = submenuItemsMatch ? submenuItemsMatch[1] : '';
-
-            // Wrap in a proper flyout structure using YAML template
-            const flyoutReplacementDict = {
-              FLYOUT_ID: `${submenu.id}-flyout`,
-              FLYOUT_ITEMS: submenuItemsHtml,
-            };
-            flyoutHtml = this._app.templateDictReplace(yaml.ui_flyout, flyoutReplacementDict);
-          }
-
-          // Apply flyout overrides after normal processing
-          const hasSubmenu = !!submenu;
-          const finalItemClasses = hasSubmenu ? `${itemClasses} flyout` : itemClasses;
-
           const replacementDict = {
             ITEM_ID: item.id,
             ITEM_LABEL: item.displayName,
-            ITEM_CLASSES: finalItemClasses,
+            ITEM_CLASSES: itemClasses,
             ITEM_PREFIX: itemPrefix,
             ITEM_SUFFIX: itemSuffix,
-            FLYOUT: flyoutHtml,
+            FLYOUT: '', // No flyouts in item HTML
           };
-
-          this.dx.out(
-            `Menu item ${item.id}: prefix="${itemPrefix}", suffix="${itemSuffix}", showGutter=${showGutter}, hasSubmenu=${!!submenu}`
-          );
 
           return this._app.templateDictReplace(yaml.ui_menu_item, replacementDict);
         })
       )
     ).join('\n');
+
+    return menuItemsHtml;
+  }
+
+  // Generate the complete HTML for this menu using YAML template
+  async getHTML(): Promise<string> {
+    this.dx.out(`UIMenu.getHTML called for ${this.id}`);
+    this.dx.out(`Icon: "${this.icon}", Title: "${this.title}"`);
+
+    let yaml: { ui_menu_html: string; ui_menu_item: string; ui_flyout: string };
+    try {
+      const yamlResult = this._app.os.fileRead<{
+        ui_menu_html: string;
+        ui_menu_item: string;
+        ui_flyout: string;
+      }>('src/UIMenu.yaml');
+      if (!yamlResult) throw new Error('Failed to load UIMenu template');
+      yaml = yamlResult;
+      this.dx.out(`YAML loaded, ui_menu_html length: ${yaml.ui_menu_html.length}`);
+    } catch (error) {
+      this.dx.out(`ERROR reading YAML: ${error}`);
+      throw error;
+    }
+
+    // Process each menu item to add flyouts if needed
+    const menuItems = this.getMenuItems();
+    const processedMenuItemsHtml = await Promise.all(
+      menuItems.map(async item => {
+        // Check if this item references a submenu
+        const submenu = this._app.uimenumgr.getMenu(item.id);
+        if (submenu) {
+          // This item represents a full menu - get just its items HTML
+          const submenuItemsHtml = await submenu.getItemHTML();
+
+          // Use the submenu's own ID and items directly
+          const flyoutReplacementDict = {
+            FLYOUT_ID: submenu.id,
+            FLYOUT_ITEMS: submenuItemsHtml,
+          };
+          const flyoutHtml = this._app.templateDictReplace(yaml.ui_flyout, flyoutReplacementDict);
+
+          // Get the base item HTML from getItemHTML, then add flyout class and flyout
+          const baseItemHtml = await this.getItemHTML();
+          const baseItemLines = baseItemHtml.split('\n');
+          const itemLine = baseItemLines.find(line => line.includes(`id="${item.id}"`));
+          
+          if (itemLine) {
+            // Add flyout class and flyout HTML
+            const updatedItemLine = itemLine
+              .replace('class="p2p4vsc-menu-item', 'class="p2p4vsc-menu-item flyout')
+              .replace('{{FLYOUT}}', flyoutHtml);
+            return updatedItemLine;
+          }
+        }
+
+        // Regular item - use getItemHTML result
+        const baseItemHtml = await this.getItemHTML();
+        const baseItemLines = baseItemHtml.split('\n');
+        const itemLine = baseItemLines.find(line => line.includes(`id="${item.id}"`));
+        return itemLine || '';
+      })
+    );
 
     // Generate complete menu HTML using the template
     const result = this._app.templateDictReplace(yaml.ui_menu_html, {
@@ -143,13 +172,10 @@ export class UIMenu {
       BUTTON_ID: this.getId_Button(),
       TITLE: this.title,
       ICON: this.icon,
-      MENU_ITEMS: menuItemsHtml,
+      MENU_ITEMS: processedMenuItemsHtml.join('\n'),
     });
 
     this.dx.out(`Generated HTML for ${this.id}: ${result.substring(0, 100)}...`);
-
-    // Debug: show the actual menu items HTML
-    this.dx.out(`Menu items HTML for ${this.id}: ${menuItemsHtml.substring(0, 200)}...`);
     return result;
   }
 

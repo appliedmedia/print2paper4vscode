@@ -88,27 +88,9 @@ export class UIMenuMgr {
   async getTemplateVariableMappings(): Promise<Record<string, string>> {
     const mappings: Record<string, string> = {};
 
-    // Add the new UIMenu placeholders
+    // Add the main UIMenu placeholders
     mappings['UIMENU_HTML'] = await this.getAllUIMenuHTML();
     mappings['UIMENU_JS'] = this.getAllUIMenuJS();
-
-    // Keep the old individual menu mappings for backward compatibility
-    this.getAllMenus().forEach(menu => {
-      const menuItems = menu.getMenuItems();
-      const yaml = this.app.os.fileRead<{ ui_menu_item: string }>('src/UIMenu.yaml');
-      const html = menuItems
-        .map(item =>
-          this.app.templateDictReplace(yaml?.ui_menu_item ?? '', {
-            ITEM_ID: item.id,
-            ITEM_LABEL: item.displayName,
-            ITEM_CLASSES: '',
-            ITEM_PREFIX: '',
-            ITEM_SUFFIX: '',
-          })
-        )
-        .join('\n');
-      mappings[menu.getTemplateVariableName()] = html;
-    });
 
     return mappings;
   }
