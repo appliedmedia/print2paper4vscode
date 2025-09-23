@@ -19,6 +19,9 @@ export class PaperPrinter {
 
   private currentFontSizeMode: 8 | 9 | 10 | 12 | 14 | 18 | 24 = 12; // Default to 12px
 
+  private currentPageSize: 'a4' | 'letter' | 'legal' | 'a3' | 'a5' | undefined; // User's page size preference
+  private currentOrientation: 'portrait' | 'landscape' | undefined; // User's orientation preference
+
   constructor(app: App) {
     this.app = app;
     this.clipboardCapture = new ClipboardCapture(app);
@@ -27,6 +30,10 @@ export class PaperPrinter {
 
   init(): void {
     this.clipboardCapture.init();
+
+    // Restore user's page size and orientation preferences, with locale-based defaults
+    this.currentPageSize = this.getPageSizePreference();
+    this.currentOrientation = this.getOrientationPreference();
   }
 
   done(): void {
@@ -213,6 +220,20 @@ export class PaperPrinter {
         menuItems: this.menuItems_Text.bind(this),
         selectionHandler: this.handleSelection_Text.bind(this),
       },
+      {
+        id: 'page',
+        icon: '📄',
+        title: 'Page',
+        menuItems: this.menuItems_Page.bind(this),
+        selectionHandler: this.handleSelection_Page.bind(this),
+      },
+      {
+        id: 'orient',
+        icon: '📋',
+        title: 'Orient',
+        menuItems: this.menuItems_Orient.bind(this),
+        selectionHandler: this.handleSelection_Orient.bind(this),
+      },
     ];
 
     menuConfigs.forEach(config => {
@@ -311,6 +332,37 @@ export class PaperPrinter {
     return sizeOptions;
   }
 
+  private menuItems_Page(): UIMenuItem[] {
+    return [
+      // Page sizes (top 5 most popular)
+      { id: 'a4', displayName: 'A4 (210mm × 297mm)' },
+      { id: 'letter', displayName: 'Letter (8.5" × 11")' },
+      { id: 'legal', displayName: 'Legal (8.5" × 14")' },
+      { id: 'a3', displayName: 'A3 (297mm × 420mm)' },
+      { id: 'a5', displayName: 'A5 (148mm × 210mm)' },
+    ];
+  }
+
+  private menuItems_Orient(): UIMenuItem[] {
+    const yaml = this.app.os.fileRead<{
+      portrait_icon: string;
+      landscape_icon: string;
+    }>('src/PaperPrinter.yaml');
+
+    if (!yaml) {
+      // Fallback to text if YAML fails to load
+      return [
+        { id: 'portrait', displayName: 'Portrait' },
+        { id: 'landscape', displayName: 'Landscape' },
+      ];
+    }
+
+    return [
+      { id: 'portrait', displayName: `${yaml.portrait_icon} Portrait` },
+      { id: 'landscape', displayName: `${yaml.landscape_icon} Landscape` },
+    ];
+  }
+
   // Selection handler methods for each menu type
   private async handleSelection_Print(selectedId: string): Promise<string> {
     if (selectedId === '0') {
@@ -395,6 +447,153 @@ export class PaperPrinter {
 
     dx.done();
     return ''; // selection handled
+  }
+
+  private async handleSelection_Page(selectedId: string): Promise<string> {
+    const dx = this.dx.sub('handleSelection_Page', true);
+    dx.out(`selectedId = ${selectedId}`);
+
+    if (selectedId === '0') {
+      // Return the current page size for default selection
+      const currentPageSize = this.currentPageSize || this.getPageSizePreference();
+      dx.out(`returning current page size: ${currentPageSize}`);
+      dx.done();
+      return currentPageSize;
+    }
+
+    // Handle page size selection
+    const pageSizes = ['a4', 'letter', 'legal', 'a3', 'a5'];
+    if (pageSizes.includes(selectedId)) {
+      dx.out(`updating page size to ${selectedId}`);
+      this.currentPageSize = selectedId as 'a4' | 'letter' | 'legal' | 'a3' | 'a5';
+      this.savePageSizePreference(this.currentPageSize);
+
+      // Regenerate PDF and update only the PDF content
+      if (this.pdfRendered) {
+        dx.out(`regenerating PDF with new page size`);
+        await this.applyRenderModes(this.pdfRendered);
+        dx.out(`calling updatePdfContentOnly with pdfRendered`);
+        await this.app.ui.updatePdfContentOnly(this.pdfRendered);
+      } else {
+        dx.out(`no pdfRendered available`);
+      }
+
+      dx.done();
+      return selectedId; // Return the selected size for checkmark
+    }
+
+    dx.done();
+    return ''; // selection handled
+  }
+
+  private async handleSelection_Orient(selectedId: string): Promise<string> {
+    const dx = this.dx.sub('handleSelection_Orient', true);
+    dx.out(`selectedId = ${selectedId}`);
+
+    if (selectedId === '0') {
+      // Return the current orientation for default selection
+      const currentOrientation = this.currentOrientation || this.getOrientationPreference();
+      dx.out(`returning current orientation: ${currentOrientation}`);
+      dx.done();
+      return currentOrientation;
+    }
+
+    // Handle orientation selection
+    if (selectedId === 'portrait' || selectedId === 'landscape') {
+      dx.out(`updating orientation to ${selectedId}`);
+      this.currentOrientation = selectedId;
+      this.saveOrientationPreference(this.currentOrientation);
+
+      // Regenerate PDF and update only the PDF content
+      if (this.pdfRendered) {
+        dx.out(`regenerating PDF with new orientation`);
+        await this.applyRenderModes(this.pdfRendered);
+        dx.out(`calling updatePdfContentOnly with pdfRendered`);
+        await this.app.ui.updatePdfContentOnly(this.pdfRendered);
+      } else {
+        dx.out(`no pdfRendered available`);
+      }
+
+      dx.done();
+      return selectedId; // Return the selected orientation for checkmark
+    }
+
+    dx.done();
+    return ''; // selection handled
+  }
+
+  // Page size preference management
+  getCurrentPageSize(): 'a4' | 'letter' | 'legal' | 'a3' | 'a5' {
+    return this.currentPageSize || this.getPageSizePreference();
+  }
+
+  getCurrentOrientation(): 'portrait' | 'landscape' {
+    return this.currentOrientation || this.getOrientationPreference();
+  }
+
+  private getPageSizePreference(): 'a4' | 'letter' | 'legal' | 'a3' | 'a5' {
+    const dx = this.dx.sub('getPageSizePreference');
+
+    // Try to restore saved preference
+    const savedPageSize = this.app.vscodeapis.getGlobalState<
+      'a4' | 'letter' | 'legal' | 'a3' | 'a5'
+    >('pageSize');
+    if (savedPageSize) {
+      dx.out(`Restored saved page size: ${savedPageSize}`);
+      return savedPageSize;
+    }
+
+    // Fallback to locale-based default
+    const locale = this.app.vscodeapis.getLocale();
+    const letterCountries = ['us', 'ca', 'mx'];
+    const isLetterSize = letterCountries.some(country =>
+      locale.toLowerCase().includes(country.toLowerCase())
+    );
+    const defaultPageSize = isLetterSize ? 'letter' : 'a4';
+
+    dx.out(
+      `No saved preference, using locale-based default: ${defaultPageSize} (locale: ${locale})`
+    );
+    return defaultPageSize;
+  }
+
+  private savePageSizePreference(pageSize: 'a4' | 'letter' | 'legal' | 'a3' | 'a5'): void {
+    const dx = this.dx.sub('savePageSizePreference');
+    try {
+      this.app.vscodeapis.updateGlobalState('pageSize', pageSize);
+      dx.out(`Saved page size preference: ${pageSize}`);
+    } catch (error) {
+      dx.out(`Failed to save page size preference: ${error}`);
+    }
+    dx.done();
+  }
+
+  private getOrientationPreference(): 'portrait' | 'landscape' {
+    const dx = this.dx.sub('getOrientationPreference');
+
+    // Try to restore saved preference
+    const savedOrientation = this.app.vscodeapis.getGlobalState<'portrait' | 'landscape'>(
+      'orientation'
+    );
+    if (savedOrientation) {
+      dx.out(`Restored saved orientation: ${savedOrientation}`);
+      return savedOrientation;
+    }
+
+    // Default to portrait
+    dx.out(`No saved preference, using default: portrait`);
+    return 'portrait';
+  }
+
+  private saveOrientationPreference(orientation: 'portrait' | 'landscape'): void {
+    const dx = this.dx.sub('saveOrientationPreference');
+    try {
+      this.app.vscodeapis.updateGlobalState('orientation', orientation);
+      dx.out(`Saved orientation preference: ${orientation}`);
+    } catch (error) {
+      dx.out(`Failed to save orientation preference: ${error}`);
+    }
+    dx.done();
   }
 
   // Removed CSS hacks; rely on theme overrides

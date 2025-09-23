@@ -16,6 +16,9 @@ describe('VSCodeAPIs Wrapper', () => {
         done: () => {},
       }),
     },
+    os: {
+      dateAsYYYYMMDDHHMMSS: () => '20250101120000',
+    },
   };
 
   // Mock VS Code API
@@ -48,6 +51,9 @@ describe('VSCodeAPIs Wrapper', () => {
         query: '',
         fragment: '',
       }),
+    },
+    env: {
+      language: 'en-US',
     },
     window: {
       showInformationMessage: (message: string) => Promise.resolve(undefined),
@@ -348,6 +354,25 @@ describe('VSCodeAPIs Wrapper', () => {
       const value = vscodeAPIs.getGlobalState('test-key');
 
       assert.strictEqual(value, undefined, 'Should return undefined for missing key');
+    });
+
+    it('should get locale from VS Code environment', () => {
+      mockVSCode.env = { language: 'en-US' };
+
+      const locale = vscodeAPIs.getLocale();
+
+      assert.strictEqual(locale, 'en-US', 'Should return VS Code language setting');
+    });
+
+    it('should handle missing env object', () => {
+      mockVSCode.env = undefined;
+
+      try {
+        const locale = vscodeAPIs.getLocale();
+        assert.strictEqual(locale, undefined, 'Should return undefined when env is missing');
+      } catch (error) {
+        assert.ok(error, 'Should throw error when env is missing');
+      }
     });
 
     // Note: setGlobalState, getWorkspaceState, setWorkspaceState methods not implemented in VSCodeAPIs

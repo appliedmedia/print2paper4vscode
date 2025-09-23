@@ -213,11 +213,45 @@ export class PDF {
     ]);
 
     try {
-      // Initialize PDF with a very tall page for continuous scrolling
+      // Get page size and orientation from PaperPrinter (handles saved preferences + locale fallback)
+      const pageSize = this.app.paperprinter.getCurrentPageSize();
+      const orientation = this.app.paperprinter.getCurrentOrientation();
+
+      dx.out(
+        `Using page size: ${pageSize}, orientation: ${orientation} (from PaperPrinter preferences)`
+      );
+
+      // Calculate required height based on content
+      const lineSpacing = fontSize * 0.4; // Tight line spacing
+      const titleHeight = title ? 40 : 20; // Space for title + margin
+      const bottomMargin = 20;
+      const contentHeight = tokens.length * lineSpacing;
+      const totalHeight = titleHeight + contentHeight + bottomMargin;
+
+      // Ensure height doesn't exceed jsPDF limit (14400 user units)
+      // Convert to appropriate unit based on page size
+      const unit = this.getUnitForPageSize(pageSize);
+      const maxHeight = unit === 'in' ? 200 : 14400; // 200 inches or 14400mm
+      const pageHeight = Math.min(totalHeight, maxHeight);
+
+      dx.out(
+        `Calculated page height: ${pageHeight}${unit} (${tokens.length} lines × ${lineSpacing}${unit} spacing)`
+      );
+
+      if (totalHeight > maxHeight) {
+        dx.out(
+          `WARNING: Content height ${totalHeight}${unit} exceeds jsPDF limit ${maxHeight}${unit}, truncating`
+        );
+      }
+
+      // Get page dimensions based on size and orientation
+      const pageDimensions = this.getPageDimensions(pageSize, orientation);
+
+      // Initialize PDF with user's page size, orientation, and calculated height
       const doc = new jsPDF({
-        orientation: 'portrait',
-        unit: 'mm',
-        format: [210, 10000], // Very tall page (A4 width, 10m height)
+        orientation,
+        unit,
+        format: [pageDimensions.width, pageHeight], // Width from format, height calculated
       });
 
       // Map font family to jsPDF supported fonts
@@ -239,8 +273,18 @@ export class PDF {
       let y = title ? 40 : 20;
       const margin = 20;
 
-      // Process each line of tokens
-      for (const line of tokens) {
+      // Calculate how many lines can fit on the page
+      const availableHeight = pageHeight - y - bottomMargin;
+      const maxLines = Math.floor(availableHeight / lineSpacing);
+      const linesToRender = Math.min(tokens.length, maxLines);
+
+      dx.out(
+        `Rendering ${linesToRender} of ${tokens.length} lines (max ${maxLines} lines fit on page)`
+      );
+
+      // Process each line of tokens (up to the limit)
+      for (let i = 0; i < linesToRender; i++) {
+        const line = tokens[i];
         let x = margin;
 
         // Process each token in the line
@@ -260,7 +304,16 @@ export class PDF {
           x += doc.getTextWidth(text);
         }
 
-        y += fontSize * 0.4; // Tight line spacing
+        y += lineSpacing;
+      }
+
+      // Add truncation notice if content was cut off
+      if (tokens.length > maxLines) {
+        const remainingLines = tokens.length - maxLines;
+        doc.setTextColor('#666666');
+        doc.setFontSize(fontSize - 2);
+        doc.text(`... (${remainingLines} more lines truncated)`, margin, y + 10);
+        dx.out(`Content truncated: ${remainingLines} lines not rendered`);
       }
 
       // Return PDF document pointer (in-memory)
@@ -325,6 +378,37 @@ export class PDF {
     } finally {
       dx.done();
     }
+  }
+
+  // Helper: Get unit based on page size
+  private getUnitForPageSize(pageSize: 'a4' | 'letter' | 'legal' | 'a3' | 'a5'): 'mm' | 'in' {
+    // US sizes use inches, metric sizes use mm
+    const usSizes = ['letter', 'legal'];
+    return usSizes.includes(pageSize) ? 'in' : 'mm';
+  }
+
+  // Helper: Get page dimensions based on size and orientation
+  private getPageDimensions(
+    pageSize: 'a4' | 'letter' | 'legal' | 'a3' | 'a5',
+    orientation: 'portrait' | 'landscape'
+  ): { width: number; height: number } {
+    // Standard page dimensions - US sizes in inches, metric in mm
+    const dimensions = {
+      a4: { width: 210, height: 297 }, // mm
+      letter: { width: 8.5, height: 11 }, // inches
+      legal: { width: 8.5, height: 14 }, // inches
+      a3: { width: 297, height: 420 }, // mm
+      a5: { width: 148, height: 210 }, // mm
+    };
+
+    const baseDimensions = dimensions[pageSize];
+
+    // Swap width/height for landscape
+    if (orientation === 'landscape') {
+      return { width: baseDimensions.height, height: baseDimensions.width };
+    }
+
+    return baseDimensions;
   }
 
   // Helper: Convert hex color to RGB

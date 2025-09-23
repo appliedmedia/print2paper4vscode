@@ -1,3 +1,15 @@
-# PaperPrinter.yaml - Leaving this file in case we need something here in the future.
-# The toolbar_html template has been moved to src/UI.yaml where it belongs
-# This file is kept for backward compatibility with tests
+# PaperPrinter.yaml - SVG icons and templates for PaperPrinter
+
+portrait_icon: |
+  <svg width="16" height="16" viewBox="0 0 16 16" style="display: inline-block; vertical-align: middle; margin-right: 4px;">
+    <rect x="2" y="2" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1"/>
+    <circle cx="8" cy="6" r="2" fill="currentColor"/>
+    <path d="M6 10 L10 10" stroke="currentColor" stroke-width="1"/>
+  </svg>
+
+landscape_icon: |
+  <svg width="16" height="16" viewBox="0 0 16 16" style="display: inline-block; vertical-align: middle; margin-right: 4px;">
+    <rect x="1" y="4" width="14" height="8" fill="none" stroke="currentColor" stroke-width="1"/>
+    <circle cx="8" cy="6" r="1.5" fill="currentColor"/>
+    <path d="M6 8 L10 8" stroke="currentColor" stroke-width="1"/>
+  </svg>

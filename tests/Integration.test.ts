@@ -60,7 +60,19 @@ describe('System Integration Tests', () => {
       ui: { debugOut: () => {} },
       vscodeapis: { getEditorTypography: () => ({ fontSize: 14, lineHeight: 20 }) },
       os: { readExtensionYaml: () => ({ stylize_html: '<div>{{CODE}}</div>' }) },
-      dx: { create: (name: string) => ({ out: () => {}, print: () => {}, done: () => {}, sub: (name: string) => ({ out: () => {}, print: () => {}, done: () => {}, require: () => true }) }) },
+      dx: {
+        create: (name: string) => ({
+          out: () => {},
+          print: () => {},
+          done: () => {},
+          sub: (name: string) => ({
+            out: () => {},
+            print: () => {},
+            done: () => {},
+            require: () => true,
+          }),
+        }),
+      },
     } as any;
 
     const stylize = new Stylize(mockApp);
@@ -168,7 +180,19 @@ describe('System Integration Tests', () => {
       templateDictReplace: (source: string, dict: Record<string, string>) => {
         return source.replace(/\{\{(\w+)\}\}/g, (match, key) => dict[key] || match);
       },
-      dx: { create: (name: string) => ({ out: () => {}, print: () => {}, done: () => {}, sub: (name: string) => ({ out: () => {}, print: () => {}, done: () => {}, require: () => true }) }) },
+      dx: {
+        create: (name: string) => ({
+          out: () => {},
+          print: () => {},
+          done: () => {},
+          sub: (name: string) => ({
+            out: () => {},
+            print: () => {},
+            done: () => {},
+            require: () => true,
+          }),
+        }),
+      },
     } as any;
 
     const stylize = new Stylize(mockApp);
@@ -186,5 +210,86 @@ describe('System Integration Tests', () => {
     const theme = themes[0];
     assert.ok(theme.id, 'Theme should have ID');
     assert.ok(theme.displayName, 'Theme should have displayName');
+  });
+
+  test('should validate page size and orientation integration', async () => {
+    // This test validates that page size and orientation functionality integrates properly
+
+    const mockApp = {
+      ui: { debugOut: () => {} },
+      vscodeapis: {
+        getGlobalState: (key: string) => {
+          const state: Record<string, any> = {
+            pageSize: 'a4',
+            orientation: 'portrait',
+          };
+          return state[key];
+        },
+        updateGlobalState: (key: string, value: any) => Promise.resolve(),
+        getLocale: () => 'en-US',
+        templateDictReplace: (source: string, dict: Record<string, string>) => {
+          return source.replace(/\{\{(\w+)\}\}/g, (match, key) => dict[key] || match);
+        },
+      },
+      os: {
+        readExtensionYaml: () => ({ stylize_html: '<div>{{CODE}}</div>' }),
+        fileRead: (path: string) => {
+          if (path === 'src/PaperPrinter.yaml') {
+            return {
+              portrait_icon:
+                '<svg width="16" height="16"><rect x="2" y="2" width="12" height="12"/></svg>',
+              landscape_icon:
+                '<svg width="16" height="16"><rect x="1" y="4" width="14" height="8"/></svg>',
+            };
+          }
+          return null;
+        },
+      },
+      templateDictReplace: (source: string, dict: Record<string, string>) => {
+        return source.replace(/\{\{(\w+)\}\}/g, (match, key) => dict[key] || match);
+      },
+      dx: {
+        create: (name: string) => ({
+          out: () => {},
+          print: () => {},
+          done: () => {},
+          sub: (name: string) => ({
+            out: () => {},
+            print: () => {},
+            done: () => {},
+            require: () => true,
+          }),
+        }),
+      },
+    } as any;
+
+    const paperPrinter = new PaperPrinter(mockApp);
+
+    // Test page size detection
+    const pageSize = paperPrinter.getCurrentPageSize();
+    assert.ok(
+      ['a4', 'letter', 'legal', 'a3', 'a5'].includes(pageSize),
+      'Should have valid page size'
+    );
+
+    // Test orientation detection
+    const orientation = paperPrinter.getCurrentOrientation();
+    assert.ok(['portrait', 'landscape'].includes(orientation), 'Should have valid orientation');
+
+    // Test page menu items
+    const pageMenuItems = (paperPrinter as any).menuItems_Page();
+    assert.strictEqual(pageMenuItems.length, 5, 'Should have 5 page size options');
+    assert.ok(
+      pageMenuItems.every((item: any) => item.id && item.displayName),
+      'All page items should have ID and display name'
+    );
+
+    // Test orientation menu items
+    const orientMenuItems = (paperPrinter as any).menuItems_Orient();
+    assert.strictEqual(orientMenuItems.length, 2, 'Should have 2 orientation options');
+    assert.ok(
+      orientMenuItems.every((item: any) => item.id && item.displayName),
+      'All orientation items should have ID and display name'
+    );
   });
 });

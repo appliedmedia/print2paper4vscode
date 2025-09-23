@@ -177,7 +177,7 @@ export class VSCodeAPIs {
   /**
    * Post message to panel
    */
-  postMessageToPanel(id: WebviewPanelId, message: any): void {
+  postMessageToPanel(id: WebviewPanelId, message: unknown): void {
     const panel = this.panels.get(id);
     if (panel) panel.webview.postMessage(message);
   }
@@ -206,8 +206,6 @@ export class VSCodeAPIs {
       const panel = this.panels.get(existingPanelId);
       if (panel) {
         try {
-          // Try to access a property to check if panel is still valid
-          const _ = panel.title;
           // Panel is still valid, reuse it
           this.dx.out(`Reusing existing panel: ${existingPanelId}`);
           panel.title = title;
@@ -480,5 +478,12 @@ export class VSCodeAPIs {
    */
   uriToPath(uri: Uri): string {
     return uri.fsPath;
+  }
+
+  /**
+   * Gets the current VS Code locale
+   */
+  getLocale(): string {
+    return this.vscode.env.language;
   }
 }
