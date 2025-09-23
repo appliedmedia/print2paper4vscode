@@ -83,7 +83,7 @@ export class UIMenu {
     }
 
     const menuItemsHtml = menuItems
-      .map(item => {
+      .map(async item => {
         const isDefault = item.id === defaultSelection;
         const itemClasses = isDefault ? 'default-item active' : '';
 
@@ -92,16 +92,46 @@ export class UIMenu {
         const itemPrefix = showGutter ? ' ' : '';
         const itemSuffix = showGutter ? ' ' : '';
 
+        // Check if this item references a submenu
+        let flyoutHtml = '';
+        const submenu = this._app.uimenumgr.getMenu(item.id);
+        if (submenu) {
+          // This item represents a full menu - generate its items as a flyout
+          const submenuItems = submenu.getMenuItems();
+          const submenuDefault = await submenu.dispatchSelection('0');
+
+          flyoutHtml = submenuItems
+            .map(subItem => {
+              const isSubDefault = subItem.id === submenuDefault;
+              const subItemClasses = isSubDefault ? 'default-item active' : '';
+              const subShowGutter = !!submenuDefault;
+              const subItemPrefix = subShowGutter ? ' ' : '';
+              const subItemSuffix = subShowGutter ? ' ' : '';
+
+              const subReplacementDict = {
+                ITEM_ID: subItem.id,
+                ITEM_LABEL: subItem.displayName,
+                ITEM_CLASSES: subItemClasses,
+                ITEM_PREFIX: subItemPrefix,
+                ITEM_SUFFIX: subItemSuffix,
+              };
+
+              return this._app.templateDictReplace(yaml.ui_menu_item, subReplacementDict);
+            })
+            .join('\n');
+        }
+
         const replacementDict = {
           ITEM_ID: item.id,
           ITEM_LABEL: item.displayName,
           ITEM_CLASSES: itemClasses,
           ITEM_PREFIX: itemPrefix,
           ITEM_SUFFIX: itemSuffix,
+          FLYOUT_ITEMS: flyoutHtml,
         };
 
         this.dx.out(
-          `Menu item ${item.id}: prefix="${itemPrefix}", suffix="${itemSuffix}", showGutter=${showGutter}`
+          `Menu item ${item.id}: prefix="${itemPrefix}", suffix="${itemSuffix}", showGutter=${showGutter}, hasSubmenu=${!!submenu}`
         );
 
         return this._app.templateDictReplace(yaml.ui_menu_item, replacementDict);

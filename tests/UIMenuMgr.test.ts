@@ -9,6 +9,7 @@ class MockApp {
   templateDictReplace: any;
   ui: any;
   dx: any;
+  uimenumgr: any;
 
   constructor() {
     this.os = {
@@ -40,6 +41,9 @@ class MockApp {
           require: () => true,
         }),
       }),
+    };
+    this.uimenumgr = {
+      getMenu: (id: string) => undefined, // Mock implementation
     };
   }
 }

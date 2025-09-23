@@ -1,4 +1,5 @@
 import type { App } from './App';
+import type { PageSize } from './PaperPrinter';
 import { Diagnostics } from './Diagnostics';
 import jsPDF from 'jspdf';
 import type { ThemedToken } from 'shiki';
@@ -213,9 +214,10 @@ export class PDF {
     ]);
 
     try {
-      // Get page size and orientation from PaperPrinter (handles saved preferences + locale fallback)
-      const pageSize = this.app.paperprinter.getCurrentPageSize();
-      const orientation = this.app.paperprinter.getCurrentOrientation();
+      // Get page size and orientation from global state (like toolbarLeft pattern)
+      const pageSize = this.app.vscodeapis.getGlobalState<PageSize>('pageSize') || 'a4';
+      const orientation =
+        this.app.vscodeapis.getGlobalState<'portrait' | 'landscape'>('orientation') || 'portrait';
 
       dx.out(
         `Using page size: ${pageSize}, orientation: ${orientation} (from PaperPrinter preferences)`
@@ -381,7 +383,7 @@ export class PDF {
   }
 
   // Helper: Get unit based on page size
-  private getUnitForPageSize(pageSize: 'a4' | 'letter' | 'legal' | 'a3' | 'a5'): 'mm' | 'in' {
+  private getUnitForPageSize(pageSize: PageSize): 'mm' | 'in' {
     // US sizes use inches, metric sizes use mm
     const usSizes = ['letter', 'legal'];
     return usSizes.includes(pageSize) ? 'in' : 'mm';
@@ -389,15 +391,15 @@ export class PDF {
 
   // Helper: Get page dimensions based on size and orientation
   private getPageDimensions(
-    pageSize: 'a4' | 'letter' | 'legal' | 'a3' | 'a5',
+    pageSize: PageSize,
     orientation: 'portrait' | 'landscape'
   ): { width: number; height: number } {
     // Standard page dimensions - US sizes in inches, metric in mm
     const dimensions = {
-      a4: { width: 210, height: 297 }, // mm
       letter: { width: 8.5, height: 11 }, // inches
       legal: { width: 8.5, height: 14 }, // inches
       a3: { width: 297, height: 420 }, // mm
+      a4: { width: 210, height: 297 }, // mm
       a5: { width: 148, height: 210 }, // mm
     };
 

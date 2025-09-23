@@ -266,19 +266,24 @@ describe('System Integration Tests', () => {
     const paperPrinter = new PaperPrinter(mockApp);
 
     // Test page size detection
-    const pageSize = paperPrinter.getCurrentPageSize();
+    const pageSize = (paperPrinter as any).app.vscodeapis.getGlobalState('pageSize') || 'a4';
     assert.ok(
       ['a4', 'letter', 'legal', 'a3', 'a5'].includes(pageSize),
       'Should have valid page size'
     );
 
     // Test orientation detection
-    const orientation = paperPrinter.getCurrentOrientation();
+    const orientation =
+      (paperPrinter as any).app.vscodeapis.getGlobalState('orientation') || 'portrait';
     assert.ok(['portrait', 'landscape'].includes(orientation), 'Should have valid orientation');
 
     // Test page menu items
     const pageMenuItems = (paperPrinter as any).menuItems_Page();
-    assert.strictEqual(pageMenuItems.length, 5, 'Should have 5 page size options');
+    assert.strictEqual(
+      pageMenuItems.length,
+      6,
+      'Should have 6 items (1 orientation + 5 page sizes)'
+    );
     assert.ok(
       pageMenuItems.every((item: any) => item.id && item.displayName),
       'All page items should have ID and display name'

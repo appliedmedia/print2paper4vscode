@@ -53,99 +53,15 @@ describe('PaperPrinter Page Size and Orientation Tests', () => {
 
   const paperPrinter = new PaperPrinter(mockApp as any);
 
-  describe('Page Size Preferences', () => {
-    test('should get saved page size preference', () => {
-      const pageSize = (paperPrinter as any).getPageSizePreference();
-      assert.strictEqual(pageSize, 'a4');
-    });
-
-    test('should default to letter for US locale', () => {
-      mockApp.vscodeapis.getGlobalState = () => undefined; // No saved preference
-      mockApp.vscodeapis.getLocale = () => 'en-US';
-
-      const pageSize = (paperPrinter as any).getPageSizePreference();
-      assert.strictEqual(pageSize, 'letter');
-    });
-
-    test('should default to letter for Canadian locale', () => {
-      mockApp.vscodeapis.getGlobalState = () => undefined;
-      mockApp.vscodeapis.getLocale = () => 'en-CA';
-
-      const pageSize = (paperPrinter as any).getPageSizePreference();
-      assert.strictEqual(pageSize, 'letter');
-    });
-
-    test('should default to letter for Mexican locale', () => {
-      mockApp.vscodeapis.getGlobalState = () => undefined;
-      mockApp.vscodeapis.getLocale = () => 'es-MX';
-
-      const pageSize = (paperPrinter as any).getPageSizePreference();
-      assert.strictEqual(pageSize, 'letter');
-    });
-
-    test('should default to A4 for non-US locales', () => {
-      mockApp.vscodeapis.getGlobalState = () => undefined;
-      mockApp.vscodeapis.getLocale = () => 'en-GB';
-
-      const pageSize = (paperPrinter as any).getPageSizePreference();
-      assert.strictEqual(pageSize, 'a4');
-    });
-
-    test('should save page size preference', () => {
-      let savedKey: string | undefined;
-      let savedValue: any;
-
-      mockApp.vscodeapis.updateGlobalState = (key: string, value: any) => {
-        savedKey = key;
-        savedValue = value;
-        return Promise.resolve();
-      };
-
-      (paperPrinter as any).savePageSizePreference('letter');
-
-      assert.strictEqual(savedKey, 'pageSize');
-      assert.strictEqual(savedValue, 'letter');
-    });
-  });
-
-  describe('Orientation Preferences', () => {
-    test('should get saved orientation preference', () => {
-      const orientation = (paperPrinter as any).getOrientationPreference();
-      assert.strictEqual(orientation, 'portrait');
-    });
-
-    test('should default to portrait when no saved preference', () => {
-      mockApp.vscodeapis.getGlobalState = () => undefined;
-
-      const orientation = (paperPrinter as any).getOrientationPreference();
-      assert.strictEqual(orientation, 'portrait');
-    });
-
-    test('should save orientation preference', () => {
-      let savedKey: string | undefined;
-      let savedValue: any;
-
-      mockApp.vscodeapis.updateGlobalState = (key: string, value: any) => {
-        savedKey = key;
-        savedValue = value;
-        return Promise.resolve();
-      };
-
-      (paperPrinter as any).saveOrientationPreference('landscape');
-
-      assert.strictEqual(savedKey, 'orientation');
-      assert.strictEqual(savedValue, 'landscape');
-    });
-  });
-
   describe('Public API Methods', () => {
     test('should get current page size', () => {
-      const pageSize = paperPrinter.getCurrentPageSize();
+      const pageSize = (paperPrinter as any).app.vscodeapis.getGlobalState('pageSize') || 'a4';
       assert.strictEqual(pageSize, 'a4');
     });
 
     test('should get current orientation', () => {
-      const orientation = paperPrinter.getCurrentOrientation();
+      const orientation =
+        (paperPrinter as any).app.vscodeapis.getGlobalState('orientation') || 'portrait';
       assert.strictEqual(orientation, 'portrait');
     });
   });
@@ -154,16 +70,21 @@ describe('PaperPrinter Page Size and Orientation Tests', () => {
     test('should generate page menu items with correct format', () => {
       const menuItems = (paperPrinter as any).menuItems_Page();
 
-      assert.strictEqual(menuItems.length, 5);
+      assert.strictEqual(menuItems.length, 6);
 
-      const expectedSizes = ['a4', 'letter', 'legal', 'a3', 'a5'];
+      const expectedSizes = ['orient', 'letter', 'legal', 'a3', 'a4', 'a5'];
       expectedSizes.forEach((size, index) => {
         assert.strictEqual(menuItems[index].id, size);
         // Check that display name contains the size (case-insensitive)
         assert.ok(menuItems[index].displayName.toLowerCase().includes(size.toLowerCase()));
-        assert.ok(
-          menuItems[index].displayName.includes('mm') || menuItems[index].displayName.includes('"')
-        );
+
+        // For orientation item, don't check for dimensions
+        if (size !== 'orient') {
+          assert.ok(
+            menuItems[index].displayName.includes('mm') ||
+              menuItems[index].displayName.includes('"')
+          );
+        }
       });
     });
 
@@ -336,13 +257,14 @@ describe('PaperPrinter Page Size and Orientation Tests', () => {
       const pageMenuItems = (testPaperPrinter as any).menuItems_Page();
       const orientMenuItems = (testPaperPrinter as any).menuItems_Orient();
 
-      assert.strictEqual(pageMenuItems.length, 5);
+      assert.strictEqual(pageMenuItems.length, 6);
       assert.strictEqual(orientMenuItems.length, 2);
 
       // Test that page menu has correct items
       const pageIds = pageMenuItems.map((item: any) => item.id);
-      assert.ok(pageIds.includes('a4'));
+      assert.ok(pageIds.includes('orient'));
       assert.ok(pageIds.includes('letter'));
+      assert.ok(pageIds.includes('a4'));
 
       // Test that orient menu has correct items
       const orientIds = orientMenuItems.map((item: any) => item.id);

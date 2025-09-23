@@ -5,6 +5,10 @@ import type { UIMenuItem } from './types/UI_t';
 import { Diagnostics } from './Diagnostics';
 import jsPDF from 'jspdf';
 
+// Page size type and order definition
+export type PageSize = 'letter' | 'legal' | 'a3' | 'a4' | 'a5';
+export const PAGE_SIZES: PageSize[] = ['letter', 'legal', 'a3', 'a4', 'a5'];
+
 export class PaperPrinter {
   private app: App;
   private clipboardCapture: ClipboardCapture;
@@ -19,7 +23,7 @@ export class PaperPrinter {
 
   private currentFontSizeMode: 8 | 9 | 10 | 12 | 14 | 18 | 24 = 12; // Default to 12px
 
-  private currentPageSize: 'a4' | 'letter' | 'legal' | 'a3' | 'a5' | undefined; // User's page size preference
+  private currentPageSize: PageSize | undefined; // User's page size preference
   private currentOrientation: 'portrait' | 'landscape' | undefined; // User's orientation preference
 
   constructor(app: App) {
@@ -32,8 +36,27 @@ export class PaperPrinter {
     this.clipboardCapture.init();
 
     // Restore user's page size and orientation preferences, with locale-based defaults
-    this.currentPageSize = this.getPageSizePreference();
-    this.currentOrientation = this.getOrientationPreference();
+    const savedPageSize = this.app.vscodeapis.getGlobalState<PageSize>('pageSize');
+    if (savedPageSize) {
+      this.currentPageSize = savedPageSize;
+    } else {
+      // Fallback to locale-based default
+      const locale = this.app.vscodeapis.getLocale();
+      const letterCountries = ['us', 'ca', 'mx'];
+      const isLetterSize = letterCountries.some(country =>
+        locale.toLowerCase().includes(country.toLowerCase())
+      );
+      this.currentPageSize = isLetterSize ? 'letter' : 'a4';
+    }
+
+    const savedOrientation = this.app.vscodeapis.getGlobalState<'portrait' | 'landscape'>(
+      'orientation'
+    );
+    if (savedOrientation) {
+      this.currentOrientation = savedOrientation;
+    } else {
+      this.currentOrientation = 'portrait';
+    }
   }
 
   done(): void {
@@ -207,6 +230,20 @@ export class PaperPrinter {
         selectionHandler: this.handleSelection_Print.bind(this),
       },
       {
+        id: 'page',
+        icon: '📄',
+        title: 'Page',
+        menuItems: this.menuItems_Page.bind(this),
+        selectionHandler: this.handleSelection_Page.bind(this),
+      },
+      {
+        id: 'orient',
+        icon: '', // submenu indicated by no icon, see Page > Orient
+        title: 'Orientation',
+        menuItems: this.menuItems_Orient.bind(this),
+        selectionHandler: this.handleSelection_Orient.bind(this),
+      },
+      {
         id: 'theme',
         icon: '🎨',
         title: 'Theme',
@@ -219,20 +256,6 @@ export class PaperPrinter {
         title: 'Text',
         menuItems: this.menuItems_Text.bind(this),
         selectionHandler: this.handleSelection_Text.bind(this),
-      },
-      {
-        id: 'page',
-        icon: '📄',
-        title: 'Page',
-        menuItems: this.menuItems_Page.bind(this),
-        selectionHandler: this.handleSelection_Page.bind(this),
-      },
-      {
-        id: 'orient',
-        icon: '📋',
-        title: 'Orient',
-        menuItems: this.menuItems_Orient.bind(this),
-        selectionHandler: this.handleSelection_Orient.bind(this),
       },
     ];
 
@@ -333,13 +356,19 @@ export class PaperPrinter {
   }
 
   private menuItems_Page(): UIMenuItem[] {
+    const pageSizeLabels: Record<PageSize, string> = {
+      letter: 'Letter (8.5" × 11")',
+      legal: 'Legal (8.5" × 14")',
+      a3: 'A3 (297mm × 420mm)',
+      a4: 'A4 (210mm × 297mm)',
+      a5: 'A5 (148mm × 210mm)',
+    };
+
     return [
-      // Page sizes (top 5 most popular)
-      { id: 'a4', displayName: 'A4 (210mm × 297mm)' },
-      { id: 'letter', displayName: 'Letter (8.5" × 11")' },
-      { id: 'legal', displayName: 'Legal (8.5" × 14")' },
-      { id: 'a3', displayName: 'A3 (297mm × 420mm)' },
-      { id: 'a5', displayName: 'A5 (148mm × 210mm)' },
+      // Orientation submenu reference
+      { id: 'orient', displayName: 'Orientation' },
+      // Page sizes in consistent order
+      ...PAGE_SIZES.map(size => ({ id: size, displayName: pageSizeLabels[size] })),
     ];
   }
 
@@ -455,18 +484,18 @@ export class PaperPrinter {
 
     if (selectedId === '0') {
       // Return the current page size for default selection
-      const currentPageSize = this.currentPageSize || this.getPageSizePreference();
+      const currentPageSize =
+        this.currentPageSize || this.app.vscodeapis.getGlobalState<PageSize>('pageSize') || 'a4';
       dx.out(`returning current page size: ${currentPageSize}`);
       dx.done();
       return currentPageSize;
     }
 
     // Handle page size selection
-    const pageSizes = ['a4', 'letter', 'legal', 'a3', 'a5'];
-    if (pageSizes.includes(selectedId)) {
+    if (PAGE_SIZES.includes(selectedId as PageSize)) {
       dx.out(`updating page size to ${selectedId}`);
-      this.currentPageSize = selectedId as 'a4' | 'letter' | 'legal' | 'a3' | 'a5';
-      this.savePageSizePreference(this.currentPageSize);
+      this.currentPageSize = selectedId as PageSize;
+      this.app.vscodeapis.updateGlobalState('pageSize', this.currentPageSize);
 
       // Regenerate PDF and update only the PDF content
       if (this.pdfRendered) {
@@ -492,7 +521,10 @@ export class PaperPrinter {
 
     if (selectedId === '0') {
       // Return the current orientation for default selection
-      const currentOrientation = this.currentOrientation || this.getOrientationPreference();
+      const currentOrientation =
+        this.currentOrientation ||
+        this.app.vscodeapis.getGlobalState<'portrait' | 'landscape'>('orientation') ||
+        'portrait';
       dx.out(`returning current orientation: ${currentOrientation}`);
       dx.done();
       return currentOrientation;
@@ -502,7 +534,7 @@ export class PaperPrinter {
     if (selectedId === 'portrait' || selectedId === 'landscape') {
       dx.out(`updating orientation to ${selectedId}`);
       this.currentOrientation = selectedId;
-      this.saveOrientationPreference(this.currentOrientation);
+      this.app.vscodeapis.updateGlobalState('orientation', this.currentOrientation);
 
       // Regenerate PDF and update only the PDF content
       if (this.pdfRendered) {
@@ -520,80 +552,6 @@ export class PaperPrinter {
 
     dx.done();
     return ''; // selection handled
-  }
-
-  // Page size preference management
-  getCurrentPageSize(): 'a4' | 'letter' | 'legal' | 'a3' | 'a5' {
-    return this.currentPageSize || this.getPageSizePreference();
-  }
-
-  getCurrentOrientation(): 'portrait' | 'landscape' {
-    return this.currentOrientation || this.getOrientationPreference();
-  }
-
-  private getPageSizePreference(): 'a4' | 'letter' | 'legal' | 'a3' | 'a5' {
-    const dx = this.dx.sub('getPageSizePreference');
-
-    // Try to restore saved preference
-    const savedPageSize = this.app.vscodeapis.getGlobalState<
-      'a4' | 'letter' | 'legal' | 'a3' | 'a5'
-    >('pageSize');
-    if (savedPageSize) {
-      dx.out(`Restored saved page size: ${savedPageSize}`);
-      return savedPageSize;
-    }
-
-    // Fallback to locale-based default
-    const locale = this.app.vscodeapis.getLocale();
-    const letterCountries = ['us', 'ca', 'mx'];
-    const isLetterSize = letterCountries.some(country =>
-      locale.toLowerCase().includes(country.toLowerCase())
-    );
-    const defaultPageSize = isLetterSize ? 'letter' : 'a4';
-
-    dx.out(
-      `No saved preference, using locale-based default: ${defaultPageSize} (locale: ${locale})`
-    );
-    return defaultPageSize;
-  }
-
-  private savePageSizePreference(pageSize: 'a4' | 'letter' | 'legal' | 'a3' | 'a5'): void {
-    const dx = this.dx.sub('savePageSizePreference');
-    try {
-      this.app.vscodeapis.updateGlobalState('pageSize', pageSize);
-      dx.out(`Saved page size preference: ${pageSize}`);
-    } catch (error) {
-      dx.out(`Failed to save page size preference: ${error}`);
-    }
-    dx.done();
-  }
-
-  private getOrientationPreference(): 'portrait' | 'landscape' {
-    const dx = this.dx.sub('getOrientationPreference');
-
-    // Try to restore saved preference
-    const savedOrientation = this.app.vscodeapis.getGlobalState<'portrait' | 'landscape'>(
-      'orientation'
-    );
-    if (savedOrientation) {
-      dx.out(`Restored saved orientation: ${savedOrientation}`);
-      return savedOrientation;
-    }
-
-    // Default to portrait
-    dx.out(`No saved preference, using default: portrait`);
-    return 'portrait';
-  }
-
-  private saveOrientationPreference(orientation: 'portrait' | 'landscape'): void {
-    const dx = this.dx.sub('saveOrientationPreference');
-    try {
-      this.app.vscodeapis.updateGlobalState('orientation', orientation);
-      dx.out(`Saved orientation preference: ${orientation}`);
-    } catch (error) {
-      dx.out(`Failed to save orientation preference: ${error}`);
-    }
-    dx.done();
   }
 
   // Removed CSS hacks; rely on theme overrides
