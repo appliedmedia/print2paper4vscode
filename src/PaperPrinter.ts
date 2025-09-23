@@ -379,11 +379,7 @@ export class PaperPrinter {
     }>('src/PaperPrinter.yaml');
 
     if (!yaml) {
-      // Fallback to text if YAML fails to load
-      return [
-        { id: 'portrait', displayName: 'Portrait' },
-        { id: 'landscape', displayName: 'Landscape' },
-      ];
+      throw new Error('Failed to load PaperPrinter template');
     }
 
     return [

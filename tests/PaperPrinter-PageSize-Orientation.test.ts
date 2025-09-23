@@ -117,16 +117,6 @@ describe('PaperPrinter Page Size and Orient Tests', () => {
       assert.ok(portraitItem?.displayName.includes('<svg'));
       assert.ok(landscapeItem?.displayName.includes('<svg'));
     });
-
-    test('should fallback to text-only when YAML not available', () => {
-      mockApp.os.fileRead = () => null;
-
-      const menuItems = (paperPrinter as any).menuItems_Orient();
-
-      assert.strictEqual(menuItems.length, 2);
-      assert.strictEqual(menuItems[0].displayName, 'Portrait');
-      assert.strictEqual(menuItems[1].displayName, 'Landscape');
-    });
   });
 
   describe('Menu Selection Handlers', () => {
@@ -244,6 +234,8 @@ describe('PaperPrinter Page Size and Orient Tests', () => {
             return menu;
           },
         },
+        // Explicitly include os for YAML loading
+        os: mockApp.os,
       };
 
       const testPaperPrinter = new PaperPrinter(testMockApp as any);
