@@ -51,9 +51,13 @@ export class UIMenuMgr {
 
   // Generate all HTML at once
   async getAllUIMenuHTML(): Promise<string> {
-    this.dx.out(`Generating HTML for ${this.getAllMenus().length} menus`);
+    // Filter out menus with empty icons (submenus)
+    const visibleMenus = this.getAllMenus().filter(menu => menu.icon?.length);
+    this.dx.out(
+      `Generating HTML for ${visibleMenus.length} visible menus (filtered from ${this.getAllMenus().length} total)`
+    );
 
-    const menuPromises = this.getAllMenus().map(async menu => {
+    const menuPromises = visibleMenus.map(async menu => {
       this.dx.out(`Generating HTML for menu: ${menu.id}`);
       try {
         const menuHTML = await menu.getHTML();

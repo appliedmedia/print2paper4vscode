@@ -82,66 +82,68 @@ export class UIMenu {
       this.dx.out(`Error getting default selection: ${error}`);
     }
 
-    const menuItemsHtml = menuItems
-      .map(async item => {
-        const isDefault = item.id === defaultSelection;
-        const itemClasses = isDefault ? 'default-item active' : '';
+    const menuItemsHtml = (
+      await Promise.all(
+        menuItems.map(async item => {
+          const isDefault = item.id === defaultSelection;
+          const itemClasses = isDefault ? 'default-item active' : '';
 
-        // Only show gutter if there's a default selection (not empty string)
-        const showGutter = !!defaultSelection;
-        const itemPrefix = showGutter ? ' ' : '';
-        const itemSuffix = showGutter ? ' ' : '';
+          // Only show gutter if there's a default selection (not empty string)
+          const showGutter = !!defaultSelection;
+          const itemPrefix = showGutter ? ' ' : '';
+          const itemSuffix = showGutter ? ' ' : '';
 
-        // Check if this item references a submenu
-        let flyoutHtml = '';
-        const submenu = this._app.uimenumgr.getMenu(item.id);
-        if (submenu) {
-          // This item represents a full menu - generate its items as a flyout
-          const submenuItems = submenu.getMenuItems();
-          const submenuDefault = await submenu.dispatchSelection('0');
+          // Check if this item references a submenu
+          let flyoutHtml = '';
+          const submenu = this._app.uimenumgr.getMenu(item.id);
+          if (submenu) {
+            // This item represents a full menu - generate its items as a flyout
+            const submenuItems = submenu.getMenuItems();
+            const submenuDefault = await submenu.dispatchSelection('0');
 
-          // Include a hidden div for the submenu itself so it becomes the closest parent
-          const hiddenSubmenuDiv = `<div class="p2p4vsc-menu" id="${submenu.id}" style="display: none;"></div>`;
+            // Include a hidden div for the submenu itself so it becomes the closest parent
+            const hiddenSubmenuDiv = `<div class="p2p4vsc-menu" id="${submenu.id}" style="display: none;"></div>`;
 
-          flyoutHtml =
-            hiddenSubmenuDiv +
-            submenuItems
-              .map(subItem => {
-                const isSubDefault = subItem.id === submenuDefault;
-                const subItemClasses = isSubDefault ? 'default-item active' : '';
-                const subShowGutter = !!submenuDefault;
-                const subItemPrefix = subShowGutter ? ' ' : '';
-                const subItemSuffix = subShowGutter ? ' ' : '';
+            flyoutHtml =
+              hiddenSubmenuDiv +
+              submenuItems
+                .map(subItem => {
+                  const isSubDefault = subItem.id === submenuDefault;
+                  const subItemClasses = isSubDefault ? 'default-item active' : '';
+                  const subShowGutter = !!submenuDefault;
+                  const subItemPrefix = subShowGutter ? ' ' : '';
+                  const subItemSuffix = subShowGutter ? ' ' : '';
 
-                const subReplacementDict = {
-                  ITEM_ID: subItem.id,
-                  ITEM_LABEL: subItem.displayName,
-                  ITEM_CLASSES: subItemClasses,
-                  ITEM_PREFIX: subItemPrefix,
-                  ITEM_SUFFIX: subItemSuffix,
-                };
+                  const subReplacementDict = {
+                    ITEM_ID: subItem.id,
+                    ITEM_LABEL: subItem.displayName,
+                    ITEM_CLASSES: subItemClasses,
+                    ITEM_PREFIX: subItemPrefix,
+                    ITEM_SUFFIX: subItemSuffix,
+                  };
 
-                return this._app.templateDictReplace(yaml.ui_menu_item, subReplacementDict);
-              })
-              .join('\n');
-        }
+                  return this._app.templateDictReplace(yaml.ui_menu_item, subReplacementDict);
+                })
+                .join('\n');
+          }
 
-        const replacementDict = {
-          ITEM_ID: item.id,
-          ITEM_LABEL: item.displayName,
-          ITEM_CLASSES: itemClasses,
-          ITEM_PREFIX: itemPrefix,
-          ITEM_SUFFIX: itemSuffix,
-          FLYOUT: flyoutHtml,
-        };
+          const replacementDict = {
+            ITEM_ID: item.id,
+            ITEM_LABEL: item.displayName,
+            ITEM_CLASSES: itemClasses,
+            ITEM_PREFIX: itemPrefix,
+            ITEM_SUFFIX: itemSuffix,
+            FLYOUT: flyoutHtml,
+          };
 
-        this.dx.out(
-          `Menu item ${item.id}: prefix="${itemPrefix}", suffix="${itemSuffix}", showGutter=${showGutter}, hasSubmenu=${!!submenu}`
-        );
+          this.dx.out(
+            `Menu item ${item.id}: prefix="${itemPrefix}", suffix="${itemSuffix}", showGutter=${showGutter}, hasSubmenu=${!!submenu}`
+          );
 
-        return this._app.templateDictReplace(yaml.ui_menu_item, replacementDict);
-      })
-      .join('\n');
+          return this._app.templateDictReplace(yaml.ui_menu_item, replacementDict);
+        })
+      )
+    ).join('\n');
 
     // Generate complete menu HTML using the template
     const result = this._app.templateDictReplace(yaml.ui_menu_html, {
