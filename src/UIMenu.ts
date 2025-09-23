@@ -127,52 +127,38 @@ export class UIMenu {
       throw error;
     }
 
-    // Process each menu item to add flyouts if needed
+    // Start simple - just get menu items HTML without flyouts
     const menuItems = this.getMenuItems();
     const processedMenuItemsHtml = await Promise.all(
       menuItems.map(async item => {
-        // Check if this item references a submenu
-        const submenu = this._app.uimenumgr.getMenu(item.id);
-        if (submenu) {
-          // This item represents a full menu - get just its items HTML
-          const submenuItemsHtml = await submenu.getItemHTML();
+        // For now, just return the basic item HTML
+        const isDefault = item.id === (await this._selectionHandler('0'));
+        const itemClasses = isDefault ? 'default-item active' : '';
+        const showGutter = !!isDefault;
+        const itemPrefix = showGutter ? ' ' : '';
+        const itemSuffix = showGutter ? ' ' : '';
 
-          // Use the submenu's own template variables - truly generic!
-          const flyoutReplacementDict = {
-            MENU_ID: submenu.id,
-            MENU_ITEMS: submenuItemsHtml,
-          };
-          const flyoutHtml = this._app.templateDictReplace(yaml.ui_flyout, flyoutReplacementDict);
+        const replacementDict = {
+          ITEM_ID: item.id,
+          ITEM_LABEL: item.displayName,
+          ITEM_CLASSES: itemClasses,
+          ITEM_PREFIX: itemPrefix,
+          ITEM_SUFFIX: itemSuffix,
+          FLYOUT: '', // No flyouts initially
+        };
 
-          // Get the base item HTML from getItemHTML, then add flyout class and flyout
-          const baseItemHtml = await this.getItemHTML();
-          const baseItemLines = baseItemHtml.split('\n');
-          const itemLine = baseItemLines.find(line => line.includes(`id="${item.id}"`));
-          
-          if (itemLine) {
-            // Add flyout class and flyout HTML
-            const updatedItemLine = itemLine
-              .replace('class="p2p4vsc-menu-item', 'class="p2p4vsc-menu-item flyout')
-              .replace('{{FLYOUT}}', flyoutHtml);
-            return updatedItemLine;
-          }
-        }
-
-        // Regular item - use getItemHTML result
-        const baseItemHtml = await this.getItemHTML();
-        const baseItemLines = baseItemHtml.split('\n');
-        const itemLine = baseItemLines.find(line => line.includes(`id="${item.id}"`));
-        return itemLine || '';
+        return this._app.templateDictReplace(yaml.ui_menu_item, replacementDict);
       })
     );
 
     // Generate complete menu HTML using the template
+    const menuItemsHtml = processedMenuItemsHtml.join('\n');
     const result = this._app.templateDictReplace(yaml.ui_menu_html, {
       MENU_ID: this.getId_Menu(),
       BUTTON_ID: this.getId_Button(),
       TITLE: this.title,
       ICON: this.icon,
-      MENU_ITEMS: processedMenuItemsHtml.join('\n'),
+      MENU_ITEMS: menuItemsHtml,
     });
 
     this.dx.out(`Generated HTML for ${this.id}: ${result.substring(0, 100)}...`);
