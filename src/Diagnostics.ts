@@ -108,11 +108,21 @@ export class Diagnostics {
       const duration = Date.now() - this.startTime;
       let timeDisplay: string;
 
-      if (duration >= 60000) {
-        // 60 seconds or more
-        timeDisplay = (duration / 60000).toFixed(2) + ' minutes';
+      if (duration >= 86400000) {
+        // 24 hours or more
+        timeDisplay = (duration / 86400000).toFixed(2) + 'd';
+      } else if (duration >= 3600000) {
+        // 1 hour or more
+        timeDisplay = (duration / 3600000).toFixed(2) + 'h';
+      } else if (duration >= 60000) {
+        // 1 minute or more
+        timeDisplay = (duration / 60000).toFixed(2) + 'm';
+      } else if (duration >= 1000) {
+        // 1 second or more
+        timeDisplay = (duration / 1000).toFixed(2) + 's';
       } else {
-        timeDisplay = (duration / 1000).toFixed(2) + ' seconds';
+        // Less than 1 second - show milliseconds
+        timeDisplay = duration.toFixed(2) + 'ms';
       }
 
       const completionMsg = message ? ` - ${message}` : '';
