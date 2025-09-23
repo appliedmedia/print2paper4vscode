@@ -15,7 +15,19 @@ const mockApp = {
       return result.replace(new RegExp(`{{${key}}}`, 'g'), value);
     }, template);
   },
-  dx: { create: (name: string) => ({ out: () => {}, print: () => {}, done: () => {}, sub: (name: string) => ({ out: () => {}, print: () => {}, done: () => {}, require: () => true }) }) },
+  dx: {
+    create: (name: string) => ({
+      out: () => {},
+      print: () => {},
+      done: () => {},
+      sub: (name: string) => ({
+        out: () => {},
+        print: () => {},
+        done: () => {},
+        require: () => true,
+      }),
+    }),
+  },
 } as any;
 
 // Mock list builder and selection handler
@@ -104,13 +116,6 @@ describe('UIMenu', () => {
     it('should provide correct menu and button IDs', () => {
       assert.strictEqual(menu.getId_Menu(), 'testMenu');
       assert.strictEqual(menu.getId_Button(), 'testMenu-btn');
-    });
-  });
-
-  describe('JavaScript Generation', () => {
-    it('should generate empty JavaScript (generic handlers used)', () => {
-      const js = menu.generateJavaScript();
-      assert.strictEqual(js, '', 'Should return empty string since generic handlers are used');
     });
   });
 

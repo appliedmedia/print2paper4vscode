@@ -4,16 +4,31 @@ import { Diagnostics } from './Diagnostics';
 
 export class UIMenu {
   private dx: Diagnostics;
+  private _yaml: {
+    ui_menu_html: string;
+    ui_menu_item: string;
+    ui_flyout: string;
+    ui_menu_generic_handlers: string;
+  } = {
+    ui_menu_html: '',
+    ui_menu_item: '',
+    ui_flyout: '',
+    ui_menu_generic_handlers: '',
+  };
 
   constructor(
     private _id: string,
     private _icon: string,
     private _title: string,
-    private _app: App,
-    private _listBuilder: () => UIMenuItem[],
+    private app: App,
+    private _menuItems: () => UIMenuItem[],
     private _selectionHandler: (id: string) => Promise<string>
   ) {
-    this.dx = this._app.dx.create('UIMenu');
+    this.dx = this.app.dx.create('UIMenu');
+  }
+
+  init(): void {
+    // No initialization needed
   }
 
   // Getters for private properties
@@ -44,7 +59,7 @@ export class UIMenu {
 
   // Get the menu items from the injected listBuilder
   getMenuItems(): UIMenuItem[] {
-    return this._listBuilder();
+    return this._menuItems();
   }
 
   // Dispatch a selection to this menu's handler
@@ -52,124 +67,86 @@ export class UIMenu {
     return this._selectionHandler(id);
   }
 
-  // Generate just the menu items HTML (for use in flyouts)
-  async getItemHTML(): Promise<string> {
-    this.dx.out(`UIMenu.getItemHTML called for ${this.id}`);
+  // Get the default item ID for this menu
+  async defaultItem(): Promise<string> {
+    return this.dispatchSelection('0');
+  }
 
-    let yaml: { ui_menu_item: string };
-    try {
-      const yamlResult = this._app.os.fileRead<{
-        ui_menu_item: string;
-      }>('src/UIMenu.yaml');
-      if (!yamlResult) throw new Error('Failed to load UIMenu template');
-      yaml = yamlResult;
-    } catch (error) {
-      this.dx.out(`ERROR reading YAML: ${error}`);
-      throw error;
+  // Getter for the YAML data - handles loading and validation automatically
+  get yaml() {
+    // If already loaded, return it
+    if (this._yaml.ui_menu_html) {
+      return this._yaml;
     }
 
-    // Generate menu items HTML with dynamic checkmarks and edit icons
-    const menuItems = this.getMenuItems();
+    // Load and cache the YAML
+    const yaml = this.app.os.fileRead<{
+      ui_menu_html: string;
+      ui_menu_item: string;
+      ui_flyout: string;
+      ui_menu_generic_handlers: string;
+    }>('src/UIMenu.yaml');
 
-    // Get the default selection to determine which item should be checked
-    let defaultSelection = '';
-    try {
-      defaultSelection = await this._selectionHandler('0');
-    } catch (error) {
-      this.dx.out(`Error getting default selection: ${error}`);
+    if (!yaml) {
+      throw new Error('Failed to load UIMenu yaml');
     }
 
-    const menuItemsHtml = (
-      await Promise.all(
-        menuItems.map(async item => {
-          const isDefault = item.id === defaultSelection;
-          const itemClasses = isDefault ? 'default-item active' : '';
+    // Cache it
+    this._yaml = yaml;
+    return this._yaml;
+  }
 
-          // Only show gutter if there's a default selection (not empty string)
-          const showGutter = !!defaultSelection;
-          const itemPrefix = showGutter ? ' ' : '';
-          const itemSuffix = showGutter ? ' ' : '';
+  // Generate a single menu item HTML
+  async getItemHTML(item: UIMenuItem, flyout: string = ''): Promise<string> {
+    const yaml = this.yaml; // This will load and validate automatically
 
-          const replacementDict = {
-            ITEM_ID: item.id,
-            ITEM_LABEL: item.displayName,
-            ITEM_CLASSES: itemClasses,
-            ITEM_PREFIX: itemPrefix,
-            ITEM_SUFFIX: itemSuffix,
-            FLYOUT: '', // No flyouts in item HTML
-          };
+    // Check if this item has a flyout by looking if its ID matches a main menu
+    const flyoutMenu = this.app.uimenumgr.getMenu(item.id);
+    const isFlyout = !!flyoutMenu;
+    const isDefault = item.id === (await this.defaultItem());
+    const itemClasses = isFlyout ? 'flyout' : isDefault ? 'default-item active' : '';
 
-          return this._app.templateDictReplace(yaml.ui_menu_item, replacementDict);
-        })
-      )
-    ).join('\n');
+    const replacementDict = {
+      ITEM_ID: item.id,
+      ITEM_LABEL: item.displayName,
+      ITEM_CLASSES: itemClasses,
+      FLYOUT: flyout,
+    };
 
-    return menuItemsHtml;
+    return this.app.templateDictReplace(yaml.ui_menu_item, replacementDict);
   }
 
   // Generate the complete HTML for this menu using YAML template
-  async getHTML(): Promise<string> {
+  async getHTML(flyoutCache: Record<string, string> = {}): Promise<string> {
     this.dx.out(`UIMenu.getHTML called for ${this.id}`);
     this.dx.out(`Icon: "${this.icon}", Title: "${this.title}"`);
 
-    let yaml: { ui_menu_html: string; ui_menu_item: string; ui_flyout: string };
-    try {
-      const yamlResult = this._app.os.fileRead<{
-        ui_menu_html: string;
-        ui_menu_item: string;
-        ui_flyout: string;
-      }>('src/UIMenu.yaml');
-      if (!yamlResult) throw new Error('Failed to load UIMenu template');
-      yaml = yamlResult;
-      this.dx.out(`YAML loaded, ui_menu_html length: ${yaml.ui_menu_html.length}`);
-    } catch (error) {
-      this.dx.out(`ERROR reading YAML: ${error}`);
-      throw error;
-    }
+    const yaml = this.yaml; // This will load and validate automatically
+    this.dx.out(`YAML loaded, ui_menu_html length: ${yaml.ui_menu_html.length}`);
 
-    // Start simple - just get menu items HTML without flyouts
+    // Generate menu items HTML using the new getItemHTML function
     const menuItems = this.getMenuItems();
     const processedMenuItemsHtml = await Promise.all(
-      menuItems.map(async item => {
-        // For now, just return the basic item HTML
-        const isDefault = item.id === (await this._selectionHandler('0'));
-        const itemClasses = isDefault ? 'default-item active' : '';
-        const showGutter = !!isDefault;
-        const itemPrefix = showGutter ? ' ' : '';
-        const itemSuffix = showGutter ? ' ' : '';
-
-        const replacementDict = {
-          ITEM_ID: item.id,
-          ITEM_LABEL: item.displayName,
-          ITEM_CLASSES: itemClasses,
-          ITEM_PREFIX: itemPrefix,
-          ITEM_SUFFIX: itemSuffix,
-          FLYOUT: '', // No flyouts initially
-        };
-
-        return this._app.templateDictReplace(yaml.ui_menu_item, replacementDict);
-      })
+      menuItems.map(item => this.getItemHTML(item, flyoutCache[item.id] || ''))
     );
-
-    // Generate complete menu HTML using the template
     const menuItemsHtml = processedMenuItemsHtml.join('\n');
-    const result = this._app.templateDictReplace(yaml.ui_menu_html, {
+
+    // Choose template based on whether this menu has an icon
+    const isFlyout = !this.icon || this.icon.length === 0;
+    const template = isFlyout ? yaml.ui_flyout : yaml.ui_menu_html;
+
+    const replacementDict = {
       MENU_ID: this.getId_Menu(),
       BUTTON_ID: this.getId_Button(),
       TITLE: this.title,
       ICON: this.icon,
       MENU_ITEMS: menuItemsHtml,
-    });
+    };
+
+    const result = this.app.templateDictReplace(template, replacementDict);
 
     this.dx.out(`Generated HTML for ${this.id}: ${result.substring(0, 100)}...`);
     return result;
-  }
-
-  // Generate JavaScript for this menu using YAML template
-  generateJavaScript(): string {
-    // All menus share the same generic handlers - no need to generate specific JS
-    // The generic handlers are provided by UIMenuMgr.generateAllJavaScript()
-    return '';
   }
 
   done(): void {

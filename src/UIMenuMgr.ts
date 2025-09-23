@@ -28,10 +28,10 @@ export class UIMenuMgr {
     id: string,
     icon: string,
     title: string,
-    listBuilder: () => UIMenuItem[],
+    menuItems: () => UIMenuItem[],
     selectionHandler: (selectedId: string) => Promise<string>
   ): UIMenu {
-    return new UIMenu(id, icon, title, this.app, listBuilder, selectionHandler);
+    return new UIMenu(id, icon, title, this.app, menuItems, selectionHandler);
   }
 
   // Get all menus
@@ -49,28 +49,38 @@ export class UIMenuMgr {
     this.menus.push(menu);
   }
 
-  // Generate all HTML at once
+  // Generate all HTML at once using two-pass flyout strategy
   async getAllUIMenuHTML(): Promise<string> {
-    // Filter out menus with empty icons (submenus)
-    const visibleMenus = this.getAllMenus().filter(menu => menu.icon?.length);
-    this.dx.out(
-      `Generating HTML for ${visibleMenus.length} visible menus (filtered from ${this.getAllMenus().length} total)`
-    );
+    const allMenus = this.getAllMenus();
+    const flyoutCache: Record<string, string> = {};
 
-    const menuPromises = visibleMenus.map(async menu => {
+    // Process flyout menus first
+    for (const menu of allMenus.filter(menu => !menu.icon?.length)) {
+      // flyout menus only (don't have an icon)
+      this.dx.out(`Caching flyout HTML for: ${menu.id}`);
+      try {
+        const html = await menu.getHTML();
+        flyoutCache[menu.id] = html;
+        this.dx.out(`Cached flyout for ${menu.id}: ${html.substring(0, 100)}...`);
+      } catch (error) {
+        this.dx.out(`ERROR generating flyout for ${menu.id}: ${String(error)}`);
+        flyoutCache[menu.id] = `<!-- ERROR: ${error} -->`;
+      }
+    }
+
+    // Rest of menus
+    let result = '';
+    for (const menu of allMenus.filter(menu => menu.icon?.length)) {
       this.dx.out(`Generating HTML for menu: ${menu.id}`);
       try {
-        const menuHTML = await menu.getHTML();
-        this.dx.out(`Generated HTML for menu ${menu.id}: ${menuHTML.substring(0, 100)}...`);
-        return menuHTML;
+        const html = await menu.getHTML(flyoutCache);
+        this.dx.out(`Generated HTML for menu ${menu.id}: ${html.substring(0, 100)}...`);
+        result += (result ? '\n' : '') + html;
       } catch (error) {
         this.dx.out(`ERROR generating HTML for menu ${menu.id}: ${String(error)}`);
-        return `<!-- ERROR generating menu ${menu.id}: ${error} -->`;
+        result += (result ? '\n' : '') + `<!-- ERROR generating menu ${menu.id}: ${error} -->`;
       }
-    });
-
-    const menuResults = await Promise.all(menuPromises);
-    const result = menuResults.join('\n');
+    }
 
     this.dx.out(`Total generated HTML length: ${result.length}`);
     this.dx.out(`Final HTML preview: ${result.substring(0, 200)}...`);
@@ -79,9 +89,12 @@ export class UIMenuMgr {
 
   // Generate all JavaScript at once
   getAllUIMenuJS(): string {
-    // All menus share the same generic handlers
-    const yaml = this.app.os.fileRead<{ ui_menu_generic_handlers: string }>('src/UIMenu.yaml');
-    return yaml?.ui_menu_generic_handlers ?? '';
+    // All menus share the same generic handlers - get from any menu's cached YAML
+    const anyMenu = this.getAllMenus()[0];
+    if (!anyMenu) return '';
+
+    // Get the generic handlers - yaml getter handles loading automatically
+    return anyMenu.yaml.ui_menu_generic_handlers;
   }
 
   // Get all template variable mappings

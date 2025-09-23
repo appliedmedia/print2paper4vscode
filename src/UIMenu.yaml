@@ -95,9 +95,9 @@ ui_menu_generic_handlers: |
 
 ui_menu_item: |
   <div class="p2p4vsc-menu-item {{ITEM_CLASSES}}" id="{{ITEM_ID}}">
-    <span class="item-prefix">{{ITEM_PREFIX}}</span>
+    <span class="item-prefix"></span>
     {{ITEM_LABEL}}
-    <span class="item-suffix {{ITEM_SUFFIX}}"></span>
+    <span class="item-suffix"></span>
     {{FLYOUT}}
   </div>
 
