@@ -117,40 +117,34 @@ toolbar_css: |
     background: #444;
   }
   /* Item prefix (checkmark) and suffix (edit icon) */
-  .p2p4vsc-menu-item .item-prefix {
+  /* Gutter only for active menus (menus with a selected item) */
+  .p2p4vsc-menu.active .p2p4vsc-menu-item::before {
     display: inline-block;
     width: 1em;
     margin-right: 6px;
+    content: "";
   }
-  .p2p4vsc-menu-item .item-suffix {
+
+  /* Active item styling - checkmark in gutter */
+  .p2p4vsc-menu.active .p2p4vsc-menu-item.active::before {
+    content: "✓";
+  }
+
+  /* Default item styling - edit icon */
+  .p2p4vsc-menu-item.default-item::after {
+    content: "📝";
     display: inline-block;
     margin-left: 6px;
     opacity: 0.7;
   }
-  /* Active item styling - automatically handle checkmark */
-  .p2p4vsc-menu-item.active .item-prefix::before {
-    content: "✓";
-  }
-  .p2p4vsc-menu-item:not(.active) .item-prefix::before {
-    content: "";
-  }
-  /* Default item styling - automatically handle edit icon */
-  .p2p4vsc-menu-item.default-item .item-suffix::before {
-    content: "📝";
-  }
-  .p2p4vsc-menu-item:not(.default-item):not(.flyout) .item-suffix::before {
-    content: "";
-  }
-  /* Flyout arrow styling - must come after the not(.flyout) rule */
-  .p2p4vsc-menu-item.flyout .item-suffix::before {
+
+  /* Flyout arrow styling */
+  .p2p4vsc-menu-item.flyout::after {
     content: "▶";
     font-size: 10px;
     opacity: 0.7;
-  }
-  /* Hide prefix/suffix when empty to remove gutter */
-  .p2p4vsc-menu-item .item-prefix:empty,
-  .p2p4vsc-menu-item .item-suffix:empty {
-    display: none;
+    display: inline-block;
+    margin-left: 6px;
   }
 
 

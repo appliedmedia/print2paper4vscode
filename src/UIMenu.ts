@@ -97,13 +97,13 @@ export class UIMenu {
   }
 
   // Generate a single menu item HTML
-  async getItemHTML(item: UIMenuItem, flyout: string = ''): Promise<string> {
+  async getItemHTML(item: UIMenuItem, flyout: string, defaultItemId: string): Promise<string> {
     const yaml = this.yaml; // This will load and validate automatically
 
     // Check if this item has a flyout by looking if its ID matches a main menu
     const flyoutMenu = this.app.uimenumgr.getMenu(item.id);
     const isFlyout = !!flyoutMenu;
-    const isDefault = item.id === (await this.defaultItem());
+    const isDefault = item.id === defaultItemId;
     const itemClasses = isFlyout ? 'flyout' : isDefault ? 'default-item active' : '';
 
     const replacementDict = {
@@ -126,10 +126,15 @@ export class UIMenu {
 
     // Generate menu items HTML using the new getItemHTML function
     const menuItems = this.getMenuItems();
+    const defaultItemId = await this.defaultItem(); // Get default once
     const processedMenuItemsHtml = await Promise.all(
-      menuItems.map(item => this.getItemHTML(item, flyoutCache[item.id] || ''))
+      menuItems.map(item => this.getItemHTML(item, flyoutCache[item.id] || '', defaultItemId))
     );
     const menuItemsHtml = processedMenuItemsHtml.join('\n');
+
+    // Check if any menu item is active (has a current selection)
+    const hasActiveItem = menuItems.some(item => item.id === defaultItemId);
+    const menuClasses = hasActiveItem ? 'active' : '';
 
     // Choose template based on whether this menu has an icon
     const isFlyout = !this.icon || this.icon.length === 0;
@@ -141,6 +146,7 @@ export class UIMenu {
       TITLE: this.title,
       ICON: this.icon,
       MENU_ITEMS: menuItemsHtml,
+      MENU_CLASSES: menuClasses,
     };
 
     const result = this.app.templateDictReplace(template, replacementDict);

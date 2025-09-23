@@ -1,5 +1,5 @@
 ui_menu_html: |
-  <div class="p2p4vsc-menu" id="{{MENU_ID}}">
+  <div class="p2p4vsc-menu {{MENU_CLASSES}}" id="{{MENU_ID}}">
     <button class="p2p4vsc-menu-btn"
             title="{{TITLE}}">{{ICON}}</button>
     <div class="p2p4vsc-menu-items" id="{{MENU_ID}}-items">
@@ -95,9 +95,7 @@ ui_menu_generic_handlers: |
 
 ui_menu_item: |
   <div class="p2p4vsc-menu-item {{ITEM_CLASSES}}" id="{{ITEM_ID}}">
-    <span class="item-prefix"></span>
     {{ITEM_LABEL}}
-    <span class="item-suffix"></span>
     {{FLYOUT}}
   </div>
 
