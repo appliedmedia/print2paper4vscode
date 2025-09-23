@@ -102,4 +102,4 @@ ui_menu_item: |
   </div>
 
 ui_flyout: |
-  <div class="p2p4vsc-flyout" id="{{FLYOUT_ID}}">{{FLYOUT_ITEMS}}</div>
+  <div class="p2p4vsc-flyout" id="{{MENU_ID}}">{{MENU_ITEMS}}</div>

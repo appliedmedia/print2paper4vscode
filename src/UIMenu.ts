@@ -137,10 +137,10 @@ export class UIMenu {
           // This item represents a full menu - get just its items HTML
           const submenuItemsHtml = await submenu.getItemHTML();
 
-          // Use the submenu's own ID and items directly
+          // Use the submenu's own template variables - truly generic!
           const flyoutReplacementDict = {
-            FLYOUT_ID: submenu.id,
-            FLYOUT_ITEMS: submenuItemsHtml,
+            MENU_ID: submenu.id,
+            MENU_ITEMS: submenuItemsHtml,
           };
           const flyoutHtml = this._app.templateDictReplace(yaml.ui_flyout, flyoutReplacementDict);
 
@@ -148,7 +148,7 @@ export class UIMenu {
           const baseItemHtml = await this.getItemHTML();
           const baseItemLines = baseItemHtml.split('\n');
           const itemLine = baseItemLines.find(line => line.includes(`id="${item.id}"`));
-
+          
           if (itemLine) {
             // Add flyout class and flyout HTML
             const updatedItemLine = itemLine
