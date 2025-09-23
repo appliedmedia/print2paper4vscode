@@ -148,7 +148,7 @@ export class UIMenu {
           const baseItemHtml = await this.getItemHTML();
           const baseItemLines = baseItemHtml.split('\n');
           const itemLine = baseItemLines.find(line => line.includes(`id="${item.id}"`));
-          
+
           if (itemLine) {
             // Add flyout class and flyout HTML
             const updatedItemLine = itemLine
