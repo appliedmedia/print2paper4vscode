@@ -2,7 +2,7 @@ import { test, describe } from 'node:test';
 import * as assert from 'node:assert';
 import { PDF } from '../src/PDF.js';
 
-describe('PDF Page Size and Orientation Tests', () => {
+describe('PDF Page Size and Orient Tests', () => {
   // Mock App with all required dependencies
   const mockApp = {
     dx: {

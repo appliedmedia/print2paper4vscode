@@ -2,7 +2,7 @@ import { test, describe } from 'node:test';
 import * as assert from 'node:assert';
 import { PaperPrinter } from '../src/PaperPrinter.js';
 
-describe('PaperPrinter Page Size and Orientation Tests', () => {
+describe('PaperPrinter Page Size and Orient Tests', () => {
   // Mock App with all required dependencies
   const mockApp = {
     dx: {

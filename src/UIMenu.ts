@@ -93,48 +93,52 @@ export class UIMenu {
           const itemPrefix = showGutter ? ' ' : '';
           const itemSuffix = showGutter ? ' ' : '';
 
-          // Check if this item references a submenu
-          let flyoutHtml = '';
-          const submenu = this._app.uimenumgr.getMenu(item.id);
-          if (submenu) {
-            // This item represents a full menu - generate its items as a flyout
-            const submenuItems = submenu.getMenuItems();
-            const submenuDefault = await submenu.dispatchSelection('0');
+        // Check if this item references a submenu
+        let flyoutHtml = '';
+        const submenu = this._app.uimenumgr.getMenu(item.id);
+        if (submenu) {
+          // This item represents a full menu - generate its items as a flyout
+          const submenuItems = submenu.getMenuItems();
+          const submenuDefault = await submenu.dispatchSelection('0');
 
-            // Include a hidden div for the submenu itself so it becomes the closest parent
-            const hiddenSubmenuDiv = `<div class="p2p4vsc-menu" id="${submenu.id}" style="display: none;"></div>`;
+          // Generate flyout as a proper submenu structure
+          const submenuItemsHtml = submenuItems
+            .map(subItem => {
+              const isSubDefault = subItem.id === submenuDefault;
+              const subItemClasses = isSubDefault ? 'default-item active' : '';
+              const subShowGutter = !!submenuDefault;
+              const subItemPrefix = subShowGutter ? ' ' : '';
+              const subItemSuffix = subShowGutter ? ' ' : '';
 
-            flyoutHtml =
-              hiddenSubmenuDiv +
-              submenuItems
-                .map(subItem => {
-                  const isSubDefault = subItem.id === submenuDefault;
-                  const subItemClasses = isSubDefault ? 'default-item active' : '';
-                  const subShowGutter = !!submenuDefault;
-                  const subItemPrefix = subShowGutter ? ' ' : '';
-                  const subItemSuffix = subShowGutter ? ' ' : '';
+              const subReplacementDict = {
+                ITEM_ID: subItem.id,
+                ITEM_LABEL: subItem.displayName,
+                ITEM_CLASSES: subItemClasses,
+                ITEM_PREFIX: subItemPrefix,
+                ITEM_SUFFIX: subItemSuffix,
+                FLYOUT: '', // No nested flyouts
+              };
 
-                  const subReplacementDict = {
-                    ITEM_ID: subItem.id,
-                    ITEM_LABEL: subItem.displayName,
-                    ITEM_CLASSES: subItemClasses,
-                    ITEM_PREFIX: subItemPrefix,
-                    ITEM_SUFFIX: subItemSuffix,
-                  };
+              return this._app.templateDictReplace(yaml.ui_menu_item, subReplacementDict);
+            })
+            .join('\n');
 
-                  return this._app.templateDictReplace(yaml.ui_menu_item, subReplacementDict);
-                })
-                .join('\n');
-          }
+          // Wrap in a proper submenu structure with hidden parent
+          flyoutHtml = `<div class="p2p4vsc-menu" id="${submenu.id}" style="display: none;"><div class="p2p4vsc-menu-items">${submenuItemsHtml}</div></div>`;
+        }
 
-          const replacementDict = {
-            ITEM_ID: item.id,
-            ITEM_LABEL: item.displayName,
-            ITEM_CLASSES: itemClasses,
-            ITEM_PREFIX: itemPrefix,
-            ITEM_SUFFIX: itemSuffix,
-            FLYOUT: flyoutHtml,
-          };
+        // Add > indicator for submenu items
+        const hasSubmenu = !!submenu;
+        const displayLabel = hasSubmenu ? `${item.displayName} >` : item.displayName;
+
+        const replacementDict = {
+          ITEM_ID: item.id,
+          ITEM_LABEL: displayLabel,
+          ITEM_CLASSES: itemClasses,
+          ITEM_PREFIX: itemPrefix,
+          ITEM_SUFFIX: itemSuffix,
+          FLYOUT: flyoutHtml,
+        };
 
           this.dx.out(
             `Menu item ${item.id}: prefix="${itemPrefix}", suffix="${itemSuffix}", showGutter=${showGutter}, hasSubmenu=${!!submenu}`

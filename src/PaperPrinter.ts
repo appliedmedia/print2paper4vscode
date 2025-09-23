@@ -239,7 +239,7 @@ export class PaperPrinter {
       {
         id: 'orient',
         icon: '', // submenu indicated by no icon, see Page > Orient
-        title: 'Orientation',
+        title: 'Orient',
         menuItems: this.menuItems_Orient.bind(this),
         selectionHandler: this.handleSelection_Orient.bind(this),
       },
@@ -366,7 +366,7 @@ export class PaperPrinter {
 
     return [
       // Orientation submenu reference
-      { id: 'orient', displayName: 'Orientation' },
+      { id: 'orient', displayName: 'Orient' },
       // Page sizes in consistent order
       ...PAGE_SIZES.map(size => ({ id: size, displayName: pageSizeLabels[size] })),
     ];
