@@ -74,4 +74,5 @@ ui_menu_item: |
     <span class="item-prefix">{{ITEM_PREFIX}}</span>
     {{ITEM_LABEL}}
     <span class="item-suffix">{{ITEM_SUFFIX}}</span>
+    {{FLYOUT}}
   </div>

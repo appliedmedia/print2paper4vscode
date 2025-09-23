@@ -100,25 +100,30 @@ export class UIMenu {
           const submenuItems = submenu.getMenuItems();
           const submenuDefault = await submenu.dispatchSelection('0');
 
-          flyoutHtml = submenuItems
-            .map(subItem => {
-              const isSubDefault = subItem.id === submenuDefault;
-              const subItemClasses = isSubDefault ? 'default-item active' : '';
-              const subShowGutter = !!submenuDefault;
-              const subItemPrefix = subShowGutter ? ' ' : '';
-              const subItemSuffix = subShowGutter ? ' ' : '';
+          // Include a hidden div for the submenu itself so it becomes the closest parent
+          const hiddenSubmenuDiv = `<div class="p2p4vsc-menu" id="${submenu.id}" style="display: none;"></div>`;
 
-              const subReplacementDict = {
-                ITEM_ID: subItem.id,
-                ITEM_LABEL: subItem.displayName,
-                ITEM_CLASSES: subItemClasses,
-                ITEM_PREFIX: subItemPrefix,
-                ITEM_SUFFIX: subItemSuffix,
-              };
+          flyoutHtml =
+            hiddenSubmenuDiv +
+            submenuItems
+              .map(subItem => {
+                const isSubDefault = subItem.id === submenuDefault;
+                const subItemClasses = isSubDefault ? 'default-item active' : '';
+                const subShowGutter = !!submenuDefault;
+                const subItemPrefix = subShowGutter ? ' ' : '';
+                const subItemSuffix = subShowGutter ? ' ' : '';
 
-              return this._app.templateDictReplace(yaml.ui_menu_item, subReplacementDict);
-            })
-            .join('\n');
+                const subReplacementDict = {
+                  ITEM_ID: subItem.id,
+                  ITEM_LABEL: subItem.displayName,
+                  ITEM_CLASSES: subItemClasses,
+                  ITEM_PREFIX: subItemPrefix,
+                  ITEM_SUFFIX: subItemSuffix,
+                };
+
+                return this._app.templateDictReplace(yaml.ui_menu_item, subReplacementDict);
+              })
+              .join('\n');
         }
 
         const replacementDict = {
@@ -127,7 +132,7 @@ export class UIMenu {
           ITEM_CLASSES: itemClasses,
           ITEM_PREFIX: itemPrefix,
           ITEM_SUFFIX: itemSuffix,
-          FLYOUT_ITEMS: flyoutHtml,
+          FLYOUT: flyoutHtml,
         };
 
         this.dx.out(
