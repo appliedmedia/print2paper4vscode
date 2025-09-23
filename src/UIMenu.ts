@@ -57,11 +57,12 @@ export class UIMenu {
     this.dx.out(`UIMenu.getHTML called for ${this.id}`);
     this.dx.out(`Icon: "${this.icon}", Title: "${this.title}"`);
 
-    let yaml: { ui_menu_html: string; ui_menu_item: string };
+    let yaml: { ui_menu_html: string; ui_menu_item: string; ui_flyout: string };
     try {
       const yamlResult = this._app.os.fileRead<{
         ui_menu_html: string;
         ui_menu_item: string;
+        ui_flyout: string;
       }>('src/UIMenu.yaml');
       if (!yamlResult) throw new Error('Failed to load UIMenu template');
       yaml = yamlResult;
@@ -97,44 +98,31 @@ export class UIMenu {
           let flyoutHtml = '';
           const submenu = this._app.uimenumgr.getMenu(item.id);
           if (submenu) {
-            // This item represents a full menu - generate its items as a flyout
-            const submenuItems = submenu.getMenuItems();
-            const submenuDefault = await submenu.dispatchSelection('0');
+            // This item represents a full menu - let it handle its own processing
+            const submenuHtml = await submenu.getHTML();
 
-            // Generate flyout as a proper submenu structure
-            const submenuItemsHtml = submenuItems
-              .map(subItem => {
-                const isSubDefault = subItem.id === submenuDefault;
-                const subItemClasses = isSubDefault ? 'default-item active' : '';
-                const subShowGutter = !!submenuDefault;
-                const subItemPrefix = subShowGutter ? ' ' : '';
-                const subItemSuffix = subShowGutter ? ' ' : '';
+            // Extract just the menu items from the submenu HTML (skip the outer menu wrapper)
+            const submenuItemsMatch = submenuHtml.match(
+              /<div class="p2p4vsc-menu-items"[^>]*>(.*?)<\/div>/s
+            );
+            const submenuItemsHtml = submenuItemsMatch ? submenuItemsMatch[1] : '';
 
-                const subReplacementDict = {
-                  ITEM_ID: subItem.id,
-                  ITEM_LABEL: subItem.displayName,
-                  ITEM_CLASSES: subItemClasses,
-                  ITEM_PREFIX: subItemPrefix,
-                  ITEM_SUFFIX: subItemSuffix,
-                  FLYOUT: '', // No nested flyouts
-                };
-
-                return this._app.templateDictReplace(yaml.ui_menu_item, subReplacementDict);
-              })
-              .join('\n');
-
-            // Wrap in a proper submenu structure with hidden parent
-            flyoutHtml = `<div class="p2p4vsc-menu" id="${submenu.id}" style="display: none;"><div class="p2p4vsc-menu-items">${submenuItemsHtml}</div></div>`;
+            // Wrap in a proper flyout structure using YAML template
+            const flyoutReplacementDict = {
+              FLYOUT_ID: `${submenu.id}-flyout`,
+              FLYOUT_ITEMS: submenuItemsHtml,
+            };
+            flyoutHtml = this._app.templateDictReplace(yaml.ui_flyout, flyoutReplacementDict);
           }
 
-          // Add > indicator for submenu items
+          // Apply flyout overrides after normal processing
           const hasSubmenu = !!submenu;
-          const displayLabel = hasSubmenu ? `${item.displayName} >` : item.displayName;
+          const finalItemClasses = hasSubmenu ? `${itemClasses} flyout` : itemClasses;
 
           const replacementDict = {
             ITEM_ID: item.id,
-            ITEM_LABEL: displayLabel,
-            ITEM_CLASSES: itemClasses,
+            ITEM_LABEL: item.displayName,
+            ITEM_CLASSES: finalItemClasses,
             ITEM_PREFIX: itemPrefix,
             ITEM_SUFFIX: itemSuffix,
             FLYOUT: flyoutHtml,

@@ -37,6 +37,27 @@ ui_menu_generic_handlers: |
       console.log('Menu item clicked:', e.target.id, 'in menu:', e.target.closest('.p2p4vsc-menu')?.getAttribute('id'));
       const menu = e.target.closest('.p2p4vsc-menu');
       
+      // Check if this item has a flyout
+      const flyout = e.target.querySelector('.p2p4vsc-flyout');
+      if (flyout) {
+        // This item has a flyout - toggle it instead of selecting
+        e.preventDefault();
+        
+        // Close all other flyouts
+        document.querySelectorAll('.p2p4vsc-flyout').forEach(f => {
+          if (f !== flyout) f.style.display = 'none';
+        });
+        
+        // Toggle this flyout
+        if (flyout.style.display === 'block') {
+          flyout.style.display = 'none';
+        } else {
+          flyout.style.display = 'block';
+        }
+        return;
+      }
+      
+      // No flyout - proceed with normal selection
       // Remove active class from all items in this menu
       const menuItems = menu.querySelectorAll('.p2p4vsc-menu-item');
       menuItems.forEach(item => item.classList.remove('active'));
@@ -66,6 +87,9 @@ ui_menu_generic_handlers: |
       document.querySelectorAll('.p2p4vsc-menu-items').forEach(items => {
         items.style.display = 'none';
       });
+      document.querySelectorAll('.p2p4vsc-flyout').forEach(flyout => {
+        flyout.style.display = 'none';
+      });
     }
   });
 
@@ -73,6 +97,9 @@ ui_menu_item: |
   <div class="p2p4vsc-menu-item {{ITEM_CLASSES}}" id="{{ITEM_ID}}">
     <span class="item-prefix">{{ITEM_PREFIX}}</span>
     {{ITEM_LABEL}}
-    <span class="item-suffix">{{ITEM_SUFFIX}}</span>
+    <span class="item-suffix {{ITEM_SUFFIX}}"></span>
     {{FLYOUT}}
   </div>
+
+ui_flyout: |
+  <div class="p2p4vsc-flyout" id="{{FLYOUT_ID}}">{{FLYOUT_ITEMS}}</div>

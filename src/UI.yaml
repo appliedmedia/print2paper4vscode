@@ -138,7 +138,7 @@ toolbar_css: |
   .p2p4vsc-menu-item.default-item .item-suffix::before {
     content: "📝";
   }
-  .p2p4vsc-menu-item:not(.default-item) .item-suffix::before {
+  .p2p4vsc-menu-item:not(.default-item):not(.flyout) .item-suffix::before {
     content: "";
   }
   /* Hide prefix/suffix when empty to remove gutter */
@@ -146,12 +146,82 @@ toolbar_css: |
   .p2p4vsc-menu-item .item-suffix:empty {
     display: none;
   }
+
+  /* Flyout arrow styling */
+  .p2p4vsc-menu-item.flyout .item-suffix::before {
+    content: "▶";
+    font-size: 10px;
+    opacity: 0.7;
+  }
+
+  /* Flyout submenu styling */
+  .p2p4vsc-flyout {
+    position: absolute;
+    left: 100%;
+    top: 0;
+    background: #333;
+    color: #fff;
+    border-radius: 6px;
+    box-shadow: 0 6px 18px rgba(0,0,0,.3);
+    padding: 4px 0;
+    display: none;
+    min-width: 180px;
+    z-index: 1001;
+    margin-left: 4px;
+  }
+
+  .p2p4vsc-flyout .p2p4vsc-menu-item {
+    padding: 3px 10px;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+
+  .p2p4vsc-flyout .p2p4vsc-menu-item:hover {
+    background: #555;
+  }
+
   .p2p4vsc-group { position: relative; }
 
 toolbar_js: |
   window.vscode = acquireVsCodeApi();
   const toolbar = document.getElementById('p2p4vsc-toolbar');
   const drag = document.getElementById('p2p4vsc-toolbar-grip');
+
+  // Generic flyout hover handler
+  function handleFlyoutHover() {
+    document.addEventListener('mouseenter', (e) => {
+      const menuItem = e.target.closest('.p2p4vsc-menu-item');
+      if (menuItem) {
+        const flyout = menuItem.querySelector('.p2p4vsc-flyout');
+        if (flyout) {
+          // Close all other flyouts
+          document.querySelectorAll('.p2p4vsc-flyout').forEach(f => {
+            if (f !== flyout) f.style.display = 'none';
+          });
+          // Show this flyout
+          flyout.style.display = 'block';
+        }
+      }
+    });
+    
+    document.addEventListener('mouseleave', (e) => {
+      const menuItem = e.target.closest('.p2p4vsc-menu-item');
+      if (menuItem) {
+        const flyout = menuItem.querySelector('.p2p4vsc-flyout');
+        if (flyout) {
+          // Hide flyout after a short delay to allow moving to it
+          setTimeout(() => {
+            if (!flyout.matches(':hover') && !menuItem.matches(':hover')) {
+              flyout.style.display = 'none';
+            }
+          }, 150);
+        }
+      }
+    });
+  }
+
+  // Initialize flyout handling
+  handleFlyoutHover();
 
   // Drag state tracking
   let isDragging = false;
