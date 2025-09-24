@@ -1,14 +1,10 @@
-# Print2Paper4VSCode - Project Context & Architecture
+# Print2Paper4VSCode - Developer Guide
 
-## Markdown Formatting Standards
+## Overview
 
-_No specific bullet point formatting requirements._
+**READ README.md FIRST** for complete project overview, user documentation, and architectural details.
 
-## Project Overview
-
-**READ README.md FIRST** for complete project overview and user-facing documentation.
-
-This document provides technical architecture details, implementation notes, and development context for the Print2Paper4VSCode VS Code extension. The extension enables printing of code selections, entire tabs, and preview content directly from the editor using jsPDF (vector-based) PDF generation with multiple printing options.
+This document provides developer-specific guidance, coding standards, and implementation notes for working on the Print2Paper4VSCode VS Code extension codebase.
 
 ## Project Structure
 
@@ -38,65 +34,31 @@ This document provides technical architecture details, implementation notes, and
 └── README.md                     # Project documentation
 ```
 
-## Core Architecture
+## Development Environment
 
-### 1. Extension Classes
+### Prerequisites
 
-#### App (`src/App.ts`)
+- **Node.js**: Required for build process and jsPDF PDF generation
+- **VS Code**: Extension development environment
+- **TypeScript**: Compilation to JavaScript
+- **macOS**: Currently optimized for macOS with AppleScript integration
 
-- Main application orchestrator that coordinates all components
-- Manages the overall printing workflow and user interactions
-- Handles command registration and extension lifecycle
+### Build & Test Process
 
-#### PaperPrinter (`src/PaperPrinter.ts`)
+1. **Compile**: `npm run compile` (TypeScript to JavaScript)
+2. **Test**: Run `npm test` to execute all tests using Node.js built-in test runner
+3. **Extension**: Load extension in VS Code for testing
 
-- Core printing functionality and workflow coordination
-- Manages print selection and current tab operations
-- Coordinates with PDF for complete print jobs
+**Testing Framework**: This project uses Node.js built-in test runner (`node:test`) with `node:assert`. All test files should import from `node:test` and `node:assert`, not third-party testing frameworks like Mocha or Jest.
 
-#### PDF (`src/PDF.ts`)
+### TypeScript Configuration
 
-- Creates PDFs using jsPDF (vector-based rendering)
-- Handles PDF generation, file management, and cleanup
-- Provides multiple output options:
-  - `printWithPreview`: Opens in Preview app with print dialog
-  - `printDirectly`: Sends directly to printer via Finder
-  - `saveToDownloads`: Saves PDF to Downloads folder
+The project uses specific TypeScript lib settings for VS Code extension compatibility:
 
-#### Stylize (`src/Stylize.ts`)
+- `ES2020` - Modern JavaScript features
+- `DOM` - Browser/extension globals (includes `setTimeout`, `setInterval`, etc.)
 
-- Handles syntax highlighting using Shiki
-- Manages theme application and code styling
-- Converts styled content to HTML for printing
-
-#### TabInspector (`src/TabInspector.ts`)
-
-- Inspects active editor tabs and preview tabs
-- Extracts selected text or entire content
-- Determines file types and appropriate handling
-
-#### VSCodeAPIs (`src/VSCodeAPIs.ts`)
-
-- Centralizes all VS Code API interactions and utilities
-- Provides helper functions for working with documents, selections, and themes
-- Abstracts VS Code-specific functionality for other components
-
-### 2. Commands
-
-- `p2p4vsc.print2paper`: Prints selected text with line numbers or entire current tab if nothing selected
-- Command available via context menu and keyboard shortcuts (Alt-P)
-- **Command Registration**: Handled in `VSCodeAPIs.init()` using `vscode.commands.registerCommand()`
-- **Command Flow**: User action → VS Code command system → `PaperPrinter.handleFirstPrintCommand()`
-
-### 3. Key Features
-
-- **Syntax Highlighting**: Shiki-based highlighting with VS Code themes
-- **Multiple Print Options**: Preview dialog, direct printing, PDF saving
-- **Tab Inspection**: Handles editor tabs, markdown, and preview tabs
-- **Cross-Platform**: Works on all platforms with Node.js and jsPDF
-- **In-Memory PDF Generation**: Uses jsPDF to create vector PDFs directly in memory
-- **Interactive Webview UI**: PDF preview with toolbar menus using PDF.js
-- **Theme Integration**: Real-time theme switching with Shiki highlighter
+**Critical**: Do not add `WebWorker` lib as it conflicts with DOM globals. VS Code extensions run in a DOM-like context, not a WebWorker context. Adding WebWorker lib causes 21+ TypeScript compilation errors due to conflicting global definitions.
 
 ## Current Status
 
@@ -122,30 +84,6 @@ This document provides technical architecture details, implementation notes, and
 - **PDF.js**: Client-side PDF rendering in webview
 - **jsPDF**: Vector PDF generation and manipulation
 - **VS Code Webview API**: Interactive UI panels
-
-### TypeScript Configuration
-
-The project uses specific TypeScript lib settings for VS Code extension compatibility:
-
-- `ES2020` - Modern JavaScript features
-- `DOM` - Browser/extension globals (includes `setTimeout`, `setInterval`, etc.)
-
-**Critical**: Do not add `WebWorker` lib as it conflicts with DOM globals. VS Code extensions run in a DOM-like context, not a WebWorker context. Adding WebWorker lib causes 21+ TypeScript compilation errors due to conflicting global definitions.
-
-## Development Environment
-
-- **OS**: macOS (darwin 24.6.0)
-- **Shell**: zsh
-- **Node.js**: Required for build process
-- **VS Code**: Extension development environment
-
-## Build & Test Process
-
-1. **Compile**: `npm run compile` (TypeScript to JavaScript)
-2. **Test**: Run `npm test` to execute all tests using Node.js built-in test runner
-3. **Extension**: Load extension in VS Code for testing
-
-**Testing Framework**: This project uses Node.js built-in test runner (`node:test`) with `node:assert`. All test files should import from `node:test` and `node:assert`, not third-party testing frameworks like Mocha or Jest.
 
 ## Key Implementation Details
 
@@ -189,39 +127,6 @@ The project uses specific TypeScript lib settings for VS Code extension compatib
 - **Message Handling**: Bidirectional communication between webview and extension
 - **Real-time Updates**: Theme and font size changes without regeneration
 
-## Execution Flow Architecture
-
-### Component Initialization Order
-
-1. **App Constructor**: Creates all component instances
-2. **App.init()**: Initializes components in dependency order
-   - VSCodeAPIs (registers commands)
-   - UI, OS, PDF, PaperPrinter, Stylize, TabInspector, UIMenuMgr
-
-### Print Command Execution Path
-
-```text
-User Action (Alt+P/Right-click)
-    ↓
-VSCode Command System
-    ↓
-VSCodeAPIs: 'p2p4vsc.print2paper' command
-    ↓
-PaperPrinter.handleFirstPrintCommand()
-    ↓
-TabInspector.detectActiveTabCategory()
-    ↓
-TabInspector.getEditorSelectionOrAll()
-    ↓
-Stylize.styleToPdf() → Shiki tokenization
-    ↓
-PDF.generatePdfFromTokens() → jsPDF creation
-    ↓
-PaperPrinter.openPrintPrepAndPrompt()
-    ↓
-UI.htmlToWebViewPanel() → PDF.js webview
-```
-
 ### Memory Management
 
 - **PDF Documents**: Stored in-memory as `jsPDF` objects
@@ -235,14 +140,6 @@ UI.htmlToWebViewPanel() → PDF.js webview
 - **Fallbacks**: Theme fallback to 'github-light', plain text on highlighting failure
 - **User Feedback**: Error messages via `UI.showErrorMessage()`
 - **Graceful Degradation**: Continue operation with reduced functionality
-
-## Future Improvements
-
-1. **Cross-Platform**: Support for Windows and Linux
-2. **Enhanced Highlighting**: Integration with VS Code's token system
-3. **Custom Templates**: User-configurable print templates
-4. **Print Settings**: Page size, margins, orientation options
-5. **Batch Printing**: Multiple file printing support
 
 ## Debugging Notes
 
@@ -288,4 +185,4 @@ If you've processed this file to this point:
 - Prompt the user by cycling through: {"What now?", "Sup?", "Now what?", "What?", "Now?", "Now whut?", "Next?"}.
 - Once an hour randomly cycle through adding: {"I am the Batman", "There is crime in this code", "Oh Captain, My Captain", "O'Cap'n, My Cap'n"}
 
-#### To indicate you're here, respond with: 'I am the Batman.'
+#### To indicate you're here, respond with: 'Who knows what crimes lurk in this code?'

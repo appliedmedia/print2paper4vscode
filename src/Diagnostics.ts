@@ -30,7 +30,7 @@ export class Diagnostics {
   constructor(name: string, debugOn?: boolean, parent?: Diagnostics | null) {
     this._name = name;
     this.parent = parent || null;
-    this.startTime = Date.now();
+    this.startTime = performance.now();
 
     // Build name lineage by crawling up parent tree
     this.name_lineage = this.buildNameLineage();
@@ -105,7 +105,7 @@ export class Diagnostics {
    */
   done(message?: MessageRef): this {
     if (this._debugOn && this.startTime !== null) {
-      const duration = Date.now() - this.startTime;
+      const duration = performance.now() - this.startTime;
       let timeDisplay: string;
 
       if (duration >= 86400000) {
@@ -120,9 +120,12 @@ export class Diagnostics {
       } else if (duration >= 1000) {
         // 1 second or more
         timeDisplay = (duration / 1000).toFixed(2) + 's';
+      } else if (duration >= 1) {
+        // 1ms or more - show milliseconds with 3 decimal places for microsecond precision
+        timeDisplay = duration.toFixed(3) + 'ms';
       } else {
-        // Less than 1 second - show milliseconds
-        timeDisplay = duration.toFixed(2) + 'ms';
+        // Less than 1ms - show microseconds
+        timeDisplay = (duration * 1000).toFixed(1) + 'μs';
       }
 
       const completionMsg = message ? ` - ${message}` : '';

@@ -81,122 +81,164 @@ The extension follows this workflow:
 - **Print Integration**: Cross-platform OS integration for printing operations
 - **Webview UI**: Interactive preview using VS Code's webview API with PDF.js
 
-## Execution Flow
+## Execution Flow Architecture
 
-The extension follows this detailed workflow:
-
-### 1. Extension Activation
+### 1. Extension Activation Flow
 
 ```text
-VSCode Extension Host
+VSCode Extension System
     ↓
-activate() in -entrypoint.ts
+src/-entrypoint.ts:activate()
     ↓
 new App(context, vscode)
     ↓
-app.init() - initializes all components
+App Constructor:
+  - Creates all component instances
+  - VSCodeAPIs, UI, OS, PDF, PaperPrinter, Stylize, TabInspector, UIMenuMgr
     ↓
-VSCodeAPIs.init() - registers 'p2p4vsc.print2paper' command
+app.init()
+    ↓
+Component Initialization Order:
+  - VSCodeAPIs.init() → Registers 'p2p4vsc.print2paper' command
+  - UI.init(), OS.init(), PDF.init(), PaperPrinter.init(), Stylize.init(), TabInspector.init(), UIMenuMgr.init()
 ```
 
-### 2. User Triggers Print Command
+### 2. Print Command Execution Path
 
 ```text
-User presses Alt+P or right-clicks → "Print Selection"
+User Action (Alt+P or Right-click → Print)
     ↓
 VSCode Command System
     ↓
-'p2p4vsc.print2paper' command registered in VSCodeAPIs
+VSCodeAPIs: 'p2p4vsc.print2paper' command handler
     ↓
-app.paperprinter.handleFirstPrintCommand()
-```
-
-### 3. Content Detection & Extraction
-
-```text
 PaperPrinter.handleFirstPrintCommand()
     ↓
 TabInspector.detectActiveTabCategory()
-    ├── 'editor-nonmd' → text editor (non-markdown)
-    ├── 'editor-md' → markdown editor
-    └── 'preview' → webview/preview tab (not supported yet)
     ↓
 TabInspector.getEditorSelectionOrAll()
-    ├── Gets selected text OR entire document
-    ├── Extracts languageId, filename, content
-    └── Returns: {text, languageId, name}
+    ↓
+Stylize.styleToPdf() → Shiki tokenization
+    ↓
+PDF.generatePdfFromTokens() → jsPDF creation
+    ↓
+PaperPrinter.openPrintPrepAndPrompt()
+    ↓
+UI.htmlToWebViewPanel() → PDF.js webview
 ```
 
-### 4. Syntax Highlighting & PDF Generation
+### 3. Detailed Component Flow
+
+#### A. Content Detection & Extraction
 
 ```text
-PaperPrinter gets content
-    ↓
-Stylize.styleToPdf(text, languageId, options)
-    ↓
-Shiki highlighter processes code
-    ├── Validates highlighter exists
-    ├── Creates highlighter with themes if needed
-    ├── Tokenizes code with syntax highlighting
-    └── Returns ThemedToken[][]
-    ↓
-PDF.generatePdfFromTokens(tokens, fontFamily, fontSize, lineHeight, title)
-    ↓
-jsPDF creates vector PDF document
-    ├── Sets font and size
-    ├── Adds title if provided
-    ├── Renders each token with its color
-    └── Returns jsPDF document (in-memory)
+TabInspector.detectActiveTabCategory()
+  ├── 'editor-nonmd' → Regular code files
+  ├── 'editor-md' → Markdown files
+  └── 'preview' → Webview/preview tabs
+
+TabInspector.getEditorSelectionOrAll()
+  ├── If selection exists → Return selected text
+  └── If no selection → Return entire document
 ```
 
-### 5. Print Preview & User Interface
+#### B. Syntax Highlighting & PDF Generation
 
 ```text
-PaperPrinter.openPrintPrepAndPrompt(pdfDoc, tabName)
-    ↓
-Creates UI menus (Print, Theme, Text)
-    ↓
-PDF.pdfToHTML(pdfDoc, title)
-    ├── Converts PDF to data URL
-    ├── Generates HTML with PDF.js viewer
-    └── Returns HTML with embedded PDF
-    ↓
-UI.htmlToWebViewPanel() - Shows preview in VS Code webview
-    ├── Displays PDF using PDF.js
-    ├── Shows toolbar with Print/Theme/Text menus
-    └── Handles user interactions
+Stylize.styleToPdf()
+  ├── Determine theme (specified or active editor theme)
+  ├── Validate highlighter (lazy initialization)
+  ├── Tokenize code with Shiki
+  ├── Extract font info from theme
+  └── Generate PDF via PDF.generatePdfFromTokens()
+
+PDF.generatePdfFromTokens()
+  ├── Get page size/orientation from global state
+  ├── Calculate content height and page dimensions
+  ├── Initialize jsPDF with user preferences
+  ├── Map font family to jsPDF supported fonts
+  ├── Render tokens with colors and styling
+  └── Return in-memory PDF document
 ```
 
-### 6. User Selection & Final Output
+#### C. Webview UI System
 
 ```text
-User selects from toolbar menus:
-    ├── Print Menu: Preview, Direct Print, Save as PDF
-    ├── Theme Menu: Available Shiki themes
-    └── Text Menu: Font size options
-    ↓
-PaperPrinter handles menu selections
-    ↓
-PDF class methods:
-    ├── printWithPreview() → Opens in Preview app
-    ├── printDirectly() → Sends to printer via OS
-    └── saveAsPDF() → Saves to Downloads folder
+UI.htmlToPanel()
+  ├── PDF.embedPDFinHTML() → Convert PDF to data URL
+  ├── VSCodeAPIs.createWebviewPanel() → Create webview
+  ├── UI.addToolbar() → Add interactive toolbar
+  └── Setup message handling
+
+UI.addToolbar()
+  ├── UIMenuMgr.getAllUIMenuHTML() → Generate menu HTML
+  ├── UIMenuMgr.getAllUIMenuJS() → Generate menu JavaScript
+  └── Template replacement with toolbar HTML/CSS/JS
 ```
 
-### 7. OS Integration
+#### D. Menu System Architecture
 
 ```text
-PDF output methods
-    ↓
-OS class (platform-specific)
-    ├── macOS: AppleScript for printing
-    ├── Windows: Windows printing APIs
-    └── Linux: Linux printing commands
-    ↓
-File operations:
-    ├── Create temp PDF files
-    ├── Open with system apps
-    └── Cleanup temp files
+UIMenuMgr.createMenu() → UIMenu instances
+  ├── Print Menu (🖨) → Preview, Direct, Save
+  ├── Page Menu (📄) → Page sizes + Orient submenu
+  ├── Orient Submenu → Portrait, Landscape
+  ├── Theme Menu (🎨) → Available themes
+  └── Text Menu (Tt) → Font sizes
+
+Menu Selection Flow:
+  ├── Webview message → UI.handleWebviewMessage()
+  ├── PaperPrinter.handleMenuItemSelected()
+  ├── UIMenu.dispatchSelection()
+  ├── Menu-specific handler (e.g., handleSelection_Theme)
+  ├── Regenerate PDF with new settings
+  └── UI.updatePdfContentOnly() → Update webview
+```
+
+#### E. Print Output Options
+
+```text
+PDF Output Methods:
+  ├── printWithPreview() → Save temp PDF → Open in Preview app
+  ├── printDirectly() → Save temp PDF → Send to printer via OS
+  └── saveAsPDF() → Show save dialog → Save to chosen location
+
+OS Platform Abstraction:
+  ├── OSMac → AppleScript for printing
+  ├── OSWin → Windows printing commands
+  └── OSLinux → Linux printing commands
+```
+
+### 4. Memory Management & State
+
+```text
+In-Memory Storage:
+  ├── PaperPrinter.pdfRendered → Current jsPDF document
+  ├── PaperPrinter.currentThemeChoice → Selected theme
+  ├── PaperPrinter.currentFontSizeMode → Selected font size
+  ├── PaperPrinter.currentPageSize → Selected page size
+  └── PaperPrinter.currentOrientation → Selected orientation
+
+Global State (VS Code):
+  ├── 'pageSize' → User's page size preference
+  ├── 'orientation' → User's orientation preference
+  └── 'toolbarPos' → Toolbar position for persistence
+```
+
+### 5. Error Handling & Diagnostics
+
+```text
+Diagnostics System:
+  ├── Hierarchical logging with method context
+  ├── Performance timing for each method
+  ├── Argument validation with require()
+  └── Debug state inheritance from parent contexts
+
+Error Recovery:
+  ├── Theme fallback to 'github-light'
+  ├── Font fallback to 'Courier'
+  ├── Plain text fallback on highlighting failure
+  └── User feedback via UI.showErrorMessage()
 ```
 
 ## Architecture Overview
