@@ -134,6 +134,7 @@ export class UIMenu {
 
   // Calculate the optimal width for this menu based on content using CSS ch units
   private calculateMenuWidth(hasGutterBefore: boolean, hasGutterAfter: boolean): string {
+    const dx = this.dx.sub('calculateMenuWidth', true /* debugOn */);
     const menuItems = this.getMenuItems();
     if (menuItems.length === 0) return '20ch'; // Default fallback
 
@@ -144,9 +145,11 @@ export class UIMenu {
     for (const item of menuItems) {
       // Extract text portion by removing {{...}} template placeholders
       const textOnly = item.displayName.replace(/\{\{[^}]+\}\}/g, '').trim();
+      dx.out(`  Item: "${item.displayName}" → "${textOnly}" (${textOnly.length} chars)`);
       if (textOnly.length > longestText.length) {
         longestText = textOnly;
         longestItem = item;
+        dx.out(`  → New longest: "${longestText}" (${longestText.length} chars)`);
       }
     }
     const longestItemNeedsGutterAfter =
@@ -160,7 +163,11 @@ export class UIMenu {
     const gutterAfter = hasGutterAfter && longestItemNeedsGutterAfter ? 1.2 + 1 : 0; // 1.2ch for right gutter + 1ch padding
     const horizontalPadding = 2; // 2ch for left and right padding
 
+    dx.out(
+      `  Final calculation: textWidth=${textWidth}, gutterBefore=${gutterBefore}, gutterAfter=${gutterAfter}, horizontalPadding=${horizontalPadding}`
+    );
     const calculatedWidth = textWidth + gutterBefore + gutterAfter + horizontalPadding;
+    dx.out(`  Calculated width: ${calculatedWidth}ch`);
 
     return `${calculatedWidth}ch`;
   }

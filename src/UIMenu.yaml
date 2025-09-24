@@ -9,14 +9,11 @@ ui_menu_html: |
 
 ui_menu_generic_handlers: |
   // Generic handlers for all menus - just pass events to extension
-  console.log('UIMenu handlers: Adding click event listener');
   document.addEventListener('click', (e) => {
-    console.log('UIMenu handlers: Click detected on', e.target);
     // Handle menu button clicks to show/hide dropdowns
     if (e.target && e.target.matches && e.target.matches('.p2p4vsc-menu-btn')) {
-      console.log('UIMenu handlers: Menu button clicked');
       e.preventDefault();
-      const menu = e.target.closest('.p2p4vsc-menu');
+      const menu = e.target.closest && e.target.closest('.p2p4vsc-menu');
       const menuItems = menu.querySelector('.p2p4vsc-menu-items');
 
       // Close all other menus first
@@ -40,8 +37,8 @@ ui_menu_generic_handlers: |
 
     // Handle menu item clicks
     if (e.target.matches('.p2p4vsc-menu-item')) {
-      console.log('Menu item clicked:', e.target.id, 'in menu:', e.target.closest('.p2p4vsc-menu')?.getAttribute('id'));
-      const menu = e.target.closest('.p2p4vsc-menu');
+      console.log('Menu item clicked:', e.target.id, 'in menu:', e.target.closest && e.target.closest('.p2p4vsc-menu')?.getAttribute('id'));
+      const menu = e.target.closest && e.target.closest('.p2p4vsc-menu');
       
       // Check if this item has a flyout
       const flyout = e.target.querySelector('.p2p4vsc-flyout');
@@ -76,7 +73,7 @@ ui_menu_generic_handlers: |
       window.vscode.postMessage({
         type: 'menuItemSelected',
         targetId: e.target.id,
-        parentId: e.target.closest('.p2p4vsc-menu')?.getAttribute('id')
+        parentId: e.target.closest && e.target.closest('.p2p4vsc-menu')?.getAttribute('id')
       });
       // console.debug('Message sent to extension');
 
@@ -89,7 +86,7 @@ ui_menu_generic_handlers: |
     }
 
     // Close all menus when clicking outside
-    if (!e.target.closest('.p2p4vsc-menu')) {
+    if (!e.target.closest && e.target.closest('.p2p4vsc-menu')) {
       document.querySelectorAll('.p2p4vsc-menu-items').forEach(items => {
         items.style.display = 'none';
       });
