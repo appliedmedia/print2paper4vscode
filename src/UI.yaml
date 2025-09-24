@@ -108,7 +108,7 @@ toolbar_css: |
     z-index: 1000;
   }
   .p2p4vsc-menu-item {
-    padding: 3px 10px;
+    padding: 3px;
     cursor: pointer;
     white-space: nowrap;
     display: flex;
@@ -174,7 +174,7 @@ toolbar_css: |
   }
 
   .p2p4vsc-flyout .p2p4vsc-menu-item {
-    padding: 3px 10px;
+    padding: 3px;
     cursor: pointer;
     white-space: nowrap;
     display: flex;

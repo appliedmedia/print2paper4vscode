@@ -138,36 +138,28 @@ export class UIMenu {
     const menuItems = this.getMenuItems();
     if (menuItems.length === 0) return '20ch'; // Default fallback
 
-    // Find the longest menu item text (extract text from displayName, ignoring template placeholders)
-    let longestText = '';
-    let longestItem = null;
+    // Find the longest menu item text length (extract text from displayName, ignoring template placeholders)
+    let longestTextLen = 0;
 
     for (const item of menuItems) {
       // Extract text portion by removing {{...}} template placeholders
       const textOnly = item.displayName.replace(/\{\{[^}]+\}\}/g, '').trim();
-      dx.out(`  Item: "${item.displayName}" → "${textOnly}" (${textOnly.length} chars)`);
-      if (textOnly.length > longestText.length) {
-        longestText = textOnly;
-        longestItem = item;
-        dx.out(`  → New longest: "${longestText}" (${longestText.length} chars)`);
+      const textOnlyLen = textOnly.length;
+      dx.out(`  Item: "${item.displayName}" → "${textOnly}" (${textOnlyLen} chars)`);
+      if (longestTextLen < textOnlyLen) {
+        longestTextLen = textOnlyLen;
+        dx.out(`  → New longest length: ${longestTextLen} chars`);
       }
     }
-    const longestItemNeedsGutterAfter =
-      longestItem &&
-      (longestItem.id === '0' || // Default item
-        this.app.uimenumgr.getMenu(longestItem.id) !== undefined); // Flyout item
-
-    // Calculate width using ch units: text length + gutters + padding
-    const textWidth = longestText.length;
-    const gutterBefore = hasGutterBefore ? 1 : 0; // 1ch for left gutter
-    const gutterAfter = hasGutterAfter && longestItemNeedsGutterAfter ? 1.2 + 1 : 0; // 1.2ch for right gutter + 1ch padding
-    const horizontalPadding = 2; // 2ch for left and right padding
+    // Calculate width using ch units: text length + gutters
+    const gutterBefore = hasGutterBefore ? 2 : 0; // 2ch for left gutter (1ch icon + 1ch space)
+    const gutterAfter = hasGutterAfter ? 2 : 0; // 2ch for right gutter (1ch space + 1ch icon)
 
     dx.out(
-      `  Final calculation: textWidth=${textWidth}, gutterBefore=${gutterBefore}, gutterAfter=${gutterAfter}, horizontalPadding=${horizontalPadding}`
+      `  Final calculation for ${this.id}: longestTextLen=${longestTextLen}, gutterBefore=${gutterBefore}, gutterAfter=${gutterAfter}`
     );
-    const calculatedWidth = textWidth + gutterBefore + gutterAfter + horizontalPadding;
-    dx.out(`  Calculated width: ${calculatedWidth}ch`);
+    const calculatedWidth = longestTextLen + gutterBefore + gutterAfter;
+    dx.out(`  Calculated width for ${this.id}: ${calculatedWidth}ch`);
 
     return `${calculatedWidth}ch`;
   }
