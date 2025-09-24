@@ -12,11 +12,20 @@ class MockApp {
   uimenumgr: any;
 
   constructor() {
+    this.dx = {
+      create: () => ({
+        out: () => {},
+        done: () => {},
+        require: () => true,
+      }),
+    };
     this.os = {
       fileRead: () => ({
         ui_menu_html: '<div>{{MENU_ID}} {{BUTTON_ID}} {{TITLE}} {{ICON}} {{MENU_ITEMS}}</div>',
         ui_menu_item: '<div id="{{ITEM_ID}}">{{ITEM_LABEL}}</div>',
-        ui_menu_generic_handlers: '// Generic handlers',
+        ui_flyout: '<div>{{MENU_ITEMS}}</div>',
+        ui_menu_generic_handlers:
+          '// Generic handlers for all menus - just pass events to extension',
       }),
     };
     this.templateDictReplace = (template: string, dict: Record<string, string>) => {
@@ -28,19 +37,6 @@ class MockApp {
       debugOut: (message: string, level?: string, source?: string) => {
         // Mock debug output - just ignore it for tests
       },
-    };
-    this.dx = {
-      create: (name: string) => ({
-        out: () => {},
-        print: () => {},
-        done: () => {},
-        sub: (name: string) => ({
-          out: () => {},
-          print: () => {},
-          done: () => {},
-          require: () => true,
-        }),
-      }),
     };
     this.uimenumgr = {
       getMenu: (id: string) => undefined, // Mock implementation
@@ -195,6 +191,18 @@ describe('UIMenuMgr', () => {
 
   describe('JavaScript Generation', () => {
     it('should generate generic JavaScript handlers', () => {
+      // Create a test menu first so getAllUIMenuJS has something to work with
+      const mockListBuilder = () => [{ id: 'test', displayName: 'Test Item' }];
+      const mockSelectionHandler = async (id: string): Promise<string> => Promise.resolve('');
+      const testMenu = menuMgr.createMenu(
+        'testMenu',
+        '🔧',
+        'Test Menu',
+        mockListBuilder,
+        mockSelectionHandler
+      );
+      menuMgr.addMenu(testMenu);
+
       const js = menuMgr.getAllUIMenuJS();
       assert.ok(js.includes('// Generic handlers'), 'Should include generic handlers');
     });

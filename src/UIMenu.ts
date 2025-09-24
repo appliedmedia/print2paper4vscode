@@ -138,17 +138,12 @@ export class UIMenu {
     // Calculate width using ch units: text length + gutters + padding
     const textWidth = longestText.length;
     const beforeGutter = hasGutterBefore ? 1 : 0; // 1ch for left gutter
-    const afterGutter = hasGutterAfter && longestItemNeedsRightGutter ? 1.2 : 0; // 1.2ch for right gutter
+    const afterGutter = hasGutterAfter && longestItemNeedsRightGutter ? 1.2 + 1 : 0; // 1.2ch for right gutter + 1ch padding
     const horizontalPadding = 2; // 2ch for left and right padding
 
     const calculatedWidth = textWidth + beforeGutter + afterGutter + horizontalPadding;
 
-    // Ensure minimum width and reasonable maximum
-    const minWidth = hasGutterBefore || hasGutterAfter ? 15 : 8;
-    const maxWidth = 50;
-    const finalWidth = Math.max(minWidth, Math.min(calculatedWidth, maxWidth));
-
-    return `${finalWidth}ch`;
+    return `${calculatedWidth}ch`;
   }
 
   // Generate the complete HTML for this menu using YAML template
