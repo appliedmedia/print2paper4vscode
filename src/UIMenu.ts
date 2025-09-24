@@ -116,6 +116,44 @@ export class UIMenu {
     return this.app.templateDictReplace(yaml.ui_menu_item, replacementDict);
   }
 
+  // Calculate the optimal width for this menu based on content
+  private calculateMenuWidth(hasGutterBefore: boolean, hasGutterAfter: boolean): number {
+    const menuItems = this.getMenuItems();
+    if (menuItems.length === 0) return 180; // Default fallback
+
+    // Find the longest menu item text
+    const longestText = menuItems.reduce(
+      (longest, item) => (item.displayName.length > longest.length ? item.displayName : longest),
+      ''
+    );
+
+    // Calculate width: text length * approximate character width + gutters + padding
+    const charWidth = 8; // Approximate character width in pixels
+    const horizontalPadding = 20; // Left and right padding
+
+    // For right gutter, we need to check if the LONGEST item specifically needs it
+    // because that's what determines the width
+    const longestItem = menuItems.find(item => item.displayName === longestText);
+    const longestItemNeedsRightGutter =
+      longestItem &&
+      (longestItem.id === '0' || // Default item
+        this.app.uimenumgr.getMenu(longestItem.id) !== undefined); // Flyout item
+
+    // Calculate gutters based on CSS: before=1em+8px, after=1.2em+8px
+    // Assuming 1em ≈ 12px (typical font size)
+    const emToPx = 12; // Approximate em to pixel conversion
+    const beforeGutter = hasGutterBefore ? 1 * emToPx + 8 : 0; // 1em + 8px
+    const afterGutter = hasGutterAfter && longestItemNeedsRightGutter ? 1.2 * emToPx + 8 : 0; // 1.2em + 8px
+
+    const calculatedWidth =
+      longestText.length * charWidth + beforeGutter + afterGutter + horizontalPadding;
+
+    // Ensure minimum width and reasonable maximum
+    // Use smaller minimum for menus with no gutters
+    const minWidth = hasGutterBefore || hasGutterAfter ? 160 : 100;
+    return Math.max(minWidth, Math.min(calculatedWidth, 400));
+  }
+
   // Generate the complete HTML for this menu using YAML template
   async getHTML(flyoutCache: Record<string, string> = {}): Promise<string> {
     this.dx.out(`UIMenu.getHTML called for ${this.id}`);
@@ -127,17 +165,26 @@ export class UIMenu {
     // Generate menu items HTML using the new getItemHTML function
     const menuItems = this.getMenuItems();
     const defaultItemId = await this.defaultItem(); // Get default once
+
+    // Calculate gutter flags right after getting defaultItemId
+    const hasActiveItem = !!defaultItemId; // Existence of defaultItemId means there's an active item
+    const isFlyout = !this.icon || this.icon.length === 0;
+    const hasGutterBefore = hasActiveItem; // Based on CSS: .p2p4vsc-menu.active gets before gutter
+    const hasGutterAfter = hasActiveItem || isFlyout; // Default items or flyout items
+
     const processedMenuItemsHtml = await Promise.all(
       menuItems.map(item => this.getItemHTML(item, flyoutCache[item.id] || '', defaultItemId))
     );
     const menuItemsHtml = processedMenuItemsHtml.join('\n');
 
-    // Check if any menu item is active (has a current selection)
-    const hasActiveItem = menuItems.some(item => item.id === defaultItemId);
-    const menuClasses = hasActiveItem ? 'active' : '';
+    // Calculate dynamic width for this menu
+    const menuWidth = this.calculateMenuWidth(hasGutterBefore, hasGutterAfter);
+    this.dx.out(
+      `Calculated menu width for ${this.id}: ${menuWidth}px (before:${hasGutterBefore}, after:${hasGutterAfter})`
+    );
 
+    const menuClasses = hasActiveItem ? 'active' : '';
     // Choose template based on whether this menu has an icon
-    const isFlyout = !this.icon || this.icon.length === 0;
     const template = isFlyout ? yaml.ui_flyout : yaml.ui_menu_html;
 
     const replacementDict = {
@@ -147,6 +194,7 @@ export class UIMenu {
       ICON: this.icon,
       MENU_ITEMS: menuItemsHtml,
       MENU_CLASSES: menuClasses,
+      MENU_WIDTH: menuWidth.toString(),
     };
 
     const result = this.app.templateDictReplace(template, replacementDict);

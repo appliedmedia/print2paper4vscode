@@ -103,7 +103,7 @@ toolbar_css: |
     box-shadow: 0 6px 18px rgba(0,0,0,.3);
     padding: 4px 0;
     display: none;
-    min-width: 220px;
+    min-width: 180px;
     top: 100%;
     left: 0;
     z-index: 1000;
@@ -112,39 +112,50 @@ toolbar_css: |
     padding: 3px 10px;
     cursor: pointer;
     white-space: nowrap;
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    position: relative;
   }
   .p2p4vsc-menu-item:hover, .p2p4vsc-menu-item.active {
     background: #444;
   }
-  /* Item prefix (checkmark) and suffix (edit icon) */
-  /* Gutter only for active menus (menus with a selected item) */
+  /* Left gutter for checkmarks - only for active menus */
   .p2p4vsc-menu.active .p2p4vsc-menu-item::before {
     display: inline-block;
     width: 1em;
-    margin-right: 6px;
+    margin-right: 8px;
     content: "";
+    flex-shrink: 0;
   }
 
-  /* Active item styling - checkmark in gutter */
+  /* Active item styling - checkmark in left gutter */
   .p2p4vsc-menu.active .p2p4vsc-menu-item.active::before {
     content: "✓";
   }
 
-  /* Default item styling - edit icon */
+  /* Right gutter container for icons - positioned absolutely */
+  .p2p4vsc-menu-item::after {
+    content: "";
+    position: absolute;
+    right: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 1.2em;
+    text-align: center;
+  }
+
+  /* Default item styling - edit icon in right gutter */
   .p2p4vsc-menu-item.default-item::after {
     content: "📝";
-    display: inline-block;
-    margin-left: 6px;
     opacity: 0.7;
   }
 
-  /* Flyout arrow styling */
+  /* Flyout arrow styling - right gutter */
   .p2p4vsc-menu-item.flyout::after {
     content: "▶";
     font-size: 10px;
     opacity: 0.7;
-    display: inline-block;
-    margin-left: 6px;
   }
 
 
@@ -161,13 +172,17 @@ toolbar_css: |
     display: none;
     min-width: 180px;
     z-index: 1001;
-    margin-left: 4px;
+    margin-left: 0;
   }
 
   .p2p4vsc-flyout .p2p4vsc-menu-item {
     padding: 3px 10px;
     cursor: pointer;
     white-space: nowrap;
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    position: relative;
   }
 
   .p2p4vsc-flyout .p2p4vsc-menu-item:hover {
