@@ -149,18 +149,18 @@ export class UIMenu {
         longestItem = item;
       }
     }
-    const longestItemNeedsRightGutter =
+    const longestItemNeedsGutterAfter =
       longestItem &&
       (longestItem.id === '0' || // Default item
         this.app.uimenumgr.getMenu(longestItem.id) !== undefined); // Flyout item
 
     // Calculate width using ch units: text length + gutters + padding
     const textWidth = longestText.length;
-    const beforeGutter = hasGutterBefore ? 1 : 0; // 1ch for left gutter
-    const afterGutter = hasGutterAfter && longestItemNeedsRightGutter ? 1.2 + 1 : 0; // 1.2ch for right gutter + 1ch padding
+    const gutterBefore = hasGutterBefore ? 1 : 0; // 1ch for left gutter
+    const gutterAfter = hasGutterAfter && longestItemNeedsGutterAfter ? 1.2 + 1 : 0; // 1.2ch for right gutter + 1ch padding
     const horizontalPadding = 2; // 2ch for left and right padding
 
-    const calculatedWidth = textWidth + beforeGutter + afterGutter + horizontalPadding;
+    const calculatedWidth = textWidth + gutterBefore + gutterAfter + horizontalPadding;
 
     return `${calculatedWidth}ch`;
   }
@@ -191,7 +191,7 @@ export class UIMenu {
     // Calculate dynamic width for this menu
     const menuWidth = this.calculateMenuWidth(hasGutterBefore, hasGutterAfter);
     this.dx.out(
-      `Calculated menu width for ${this.id}: ${menuWidth}px (before:${hasGutterBefore}, after:${hasGutterAfter})`
+      `Calculated menu width for ${this.id}: ${menuWidth} (before:${hasGutterBefore}, after:${hasGutterAfter})`
     );
 
     const menuClasses = hasActiveItem ? 'active' : '';
