@@ -108,7 +108,7 @@ toolbar_css: |
     z-index: 1000;
   }
   .p2p4vsc-menu-item {
-    padding: 3px 3px;
+    padding: 4px 4px;
     cursor: pointer;
     white-space: nowrap;
     display: flex;
@@ -119,11 +119,10 @@ toolbar_css: |
   .p2p4vsc-menu-item:hover, .p2p4vsc-menu-item.active {
     background: #444;
   }
-  /* Left gutter for checkmarks - only for active menus */
+  /* Gutter before menu item - only for active menus */
   .p2p4vsc-menu.active .p2p4vsc-menu-item::before {
     display: inline-block;
-    width: 1em;
-    margin-right: 8px;
+    width: 1ch;
     content: "";
     flex-shrink: 0;
   }
@@ -137,7 +136,7 @@ toolbar_css: |
   .p2p4vsc-menu-item::after {
     content: "";
     position: absolute;
-    right: calc(1ch + 3px);
+    right: calc(1ch + 4px);
     top: 50%;
     transform: translateY(-50%);
     width: 1ch;
