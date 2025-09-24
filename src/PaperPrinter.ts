@@ -41,11 +41,12 @@ export class PaperPrinter {
       this.currentPageSize = savedPageSize;
     } else {
       // Fallback to locale-based default
-      const locale = this.app.vscodeapis.getLocale();
-      const letterCountries = ['us', 'ca', 'mx'];
-      const isLetterSize = letterCountries.some(country =>
-        locale.toLowerCase().includes(country.toLowerCase())
-      );
+      const localeRaw = this.app.vscodeapis.getLocale() || '';
+      const loc = localeRaw.replace('_', '-');
+      const parts = loc.split('-');
+      const region = (parts[1] || '').toUpperCase();
+      const letterRegions = new Set(['US', 'CA', 'MX']);
+      const isLetterSize = letterRegions.has(region);
       this.currentPageSize = isLetterSize ? 'letter' : 'a4';
     }
 
@@ -211,7 +212,8 @@ export class PaperPrinter {
   }
 
   private computeLineHeightPx(fontSize: number): number {
-    return Math.round(fontSize * 0.4); // Tight line spacing for code printing
+    // Use readable leading for code; keep integer px
+    return Math.max(fontSize, Math.round(fontSize * 1.4));
   }
 
   // Create menus when needed for the webview
@@ -412,8 +414,7 @@ export class PaperPrinter {
     if (selectedId === '0') {
       // Return the current editor theme ID as the default
       const currentEditorTheme = this.app.vscodeapis.getActiveThemeId();
-      const availableThemes = this.app.stylize.getThemes();
-      const fallbackTheme = availableThemes[0]?.id || '';
+      const fallbackTheme = 'github-light';
       const result = currentEditorTheme || fallbackTheme;
       dx.out(`returning editor theme: ${result}`);
       dx.done();

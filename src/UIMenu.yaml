@@ -26,19 +26,23 @@ ui_menu_generic_handlers: |
       // Toggle this menu
       if (menuItems.style.display === 'block') {
         menuItems.style.display = 'none';
+        btn.setAttribute('aria-expanded', 'false');
       } else {
         menuItems.style.display = 'block';
+        btn.setAttribute('aria-expanded', 'true');
       }
       return;
     }
 
     // Handle menu item clicks
-    if (e.target.matches('.p2p4vsc-menu-item')) {
-      console.log('Menu item clicked:', e.target.id, 'in menu:', e.target.closest('.p2p4vsc-menu')?.getAttribute('id'));
-      const menu = e.target.closest('.p2p4vsc-menu');
+    const itemEl = (e.target as Element).closest?.('.p2p4vsc-menu-item');
+    if (itemEl) {
+      // Debug log optionally gated by a global DEBUG flag
+      // console.debug('Menu item clicked:', itemEl.id, 'in menu:', itemEl.closest('.p2p4vsc-menu')?.getAttribute('id'));
+      const menu = itemEl.closest('.p2p4vsc-menu');
       
       // Check if this item has a flyout
-      const flyout = e.target.querySelector('.p2p4vsc-flyout');
+      const flyout = itemEl.querySelector('.p2p4vsc-flyout');
       if (flyout) {
         // This item has a flyout - toggle it instead of selecting
         e.preventDefault();
@@ -63,22 +67,22 @@ ui_menu_generic_handlers: |
       menuItems.forEach(item => item.classList.remove('active'));
       
       // Add active class to clicked item
-      e.target.classList.add('active');
+      itemEl.classList.add('active');
 
-      console.log('About to send message to extension...');
+      // console.debug('About to send message to extension...');
       // Send minimal selection data to extension
       window.vscode.postMessage({
         type: 'menuItemSelected',
-        targetId: e.target.id,
-        parentId: e.target.closest('.p2p4vsc-menu')?.getAttribute('id'),
-        x: e.clientX,
-        y: e.clientY
+        targetId: itemEl.id,
+        parentId: itemEl.closest('.p2p4vsc-menu')?.getAttribute('id')
       });
-      console.log('Message sent to extension');
+      // console.debug('Message sent to extension');
 
       // Close the menu after selection
       const menuItemsContainer = menu.querySelector('.p2p4vsc-menu-items');
       menuItemsContainer.style.display = 'none';
+      const btn = menu.querySelector('.p2p4vsc-menu-btn');
+      btn?.setAttribute('aria-expanded', 'false');
       return;
     }
 

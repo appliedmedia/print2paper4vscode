@@ -1,7 +1,7 @@
 # PaperPrinter.yaml - SVG icons and templates for PaperPrinter
 
 portrait_icon: |
-  <svg width="16" height="16" viewBox="0 0 16 16" style="display: inline-block; vertical-align: middle; margin-right: 4px;">
+  <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true" focusable="false" style="display: inline-block; vertical-align: middle; margin-right: 4px;">
     <!-- Portrait stick figure (tall) -->
     <!-- Head (oval) -->
     <ellipse cx="8" cy="3" rx="2" ry="2.5" fill="none" stroke="currentColor" stroke-width="1"/>
@@ -19,7 +19,7 @@ portrait_icon: |
   </svg>
 
 landscape_icon: |
-  <svg width="16" height="16" viewBox="0 0 16 16" style="display: inline-block; vertical-align: middle; margin-right: 4px;">
+  <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true" focusable="false" style="display: inline-block; vertical-align: middle; margin-right: 4px;">
     <!-- Landscape stick figure (wide) -->
     <!-- Head (oval) -->
     <ellipse cx="8" cy="4" rx="2.5" ry="2" fill="none" stroke="currentColor" stroke-width="1"/>

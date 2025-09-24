@@ -142,10 +142,12 @@ export abstract class OS {
 
   // Convert relative src attributes and as_uri patterns in HTML to webview URIs
   htmlSrcPathToURI(html: string, webviewPanelId: WebviewPanelId): string {
-    if (!this.extensionRoot) return html;
+    let result = html;
+    
+    if (!this.extensionRoot) return result;
 
     const webviewPanel = this.app.vscodeapis.getPanelForUriConversion(webviewPanelId);
-    if (!webviewPanel?.webview) return html;
+    if (!webviewPanel?.webview) return result;
 
     const dx = this.dx.sub('htmlSrcPathToURI');
 
@@ -168,7 +170,7 @@ export abstract class OS {
     };
 
     // Convert src attributes (case-insensitive) - only match HTML src attributes, not JS assignments
-    let result = html.replace(
+    result = result.replace(
       /<[^>]*\s+\bsrc\b\s*=\s*["']([^"']+)["'][^>]*>/gi,
       (match, srcPath) => {
         const webviewUri = convertPathToURI(srcPath);

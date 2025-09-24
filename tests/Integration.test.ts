@@ -5,6 +5,23 @@ import { Stylize } from '../src/Stylize.js';
 import { VSCodeAPIs } from '../src/VSCodeAPIs.js';
 import { PaperPrinter } from '../src/PaperPrinter.js';
 
+// Helper function to create DX mock
+function buildDxMock() {
+  return {
+    create: (name: string) => ({
+      out: () => {},
+      print: () => {},
+      done: () => {},
+      sub: (name: string) => ({
+        out: () => {},
+        print: () => {},
+        done: () => {},
+        require: () => true,
+      }),
+    }),
+  };
+}
+
 describe('System Integration Tests', () => {
   test('should initialize all components correctly', async () => {
     // Create a minimal mock VSCode context
@@ -60,19 +77,7 @@ describe('System Integration Tests', () => {
       ui: { debugOut: () => {} },
       vscodeapis: { getEditorTypography: () => ({ fontSize: 14, lineHeight: 20 }) },
       os: { readExtensionYaml: () => ({ stylize_html: '<div>{{CODE}}</div>' }) },
-      dx: {
-        create: (name: string) => ({
-          out: () => {},
-          print: () => {},
-          done: () => {},
-          sub: (name: string) => ({
-            out: () => {},
-            print: () => {},
-            done: () => {},
-            require: () => true,
-          }),
-        }),
-      },
+      dx: buildDxMock(),
     } as any;
 
     const stylize = new Stylize(mockApp);
@@ -180,19 +185,7 @@ describe('System Integration Tests', () => {
       templateDictReplace: (source: string, dict: Record<string, string>) => {
         return source.replace(/\{\{(\w+)\}\}/g, (match, key) => dict[key] || match);
       },
-      dx: {
-        create: (name: string) => ({
-          out: () => {},
-          print: () => {},
-          done: () => {},
-          sub: (name: string) => ({
-            out: () => {},
-            print: () => {},
-            done: () => {},
-            require: () => true,
-          }),
-        }),
-      },
+      dx: buildDxMock(),
     } as any;
 
     const stylize = new Stylize(mockApp);
@@ -248,19 +241,7 @@ describe('System Integration Tests', () => {
       templateDictReplace: (source: string, dict: Record<string, string>) => {
         return source.replace(/\{\{(\w+)\}\}/g, (match, key) => dict[key] || match);
       },
-      dx: {
-        create: (name: string) => ({
-          out: () => {},
-          print: () => {},
-          done: () => {},
-          sub: (name: string) => ({
-            out: () => {},
-            print: () => {},
-            done: () => {},
-            require: () => true,
-          }),
-        }),
-      },
+      dx: buildDxMock(),
     } as any;
 
     const paperPrinter = new PaperPrinter(mockApp);
