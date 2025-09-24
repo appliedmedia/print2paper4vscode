@@ -41,12 +41,10 @@ export class PaperPrinter {
       this.currentPageSize = savedPageSize;
     } else {
       // Fallback to locale-based default
-      const localeRaw = this.app.vscodeapis.getLocale() || '';
-      const loc = localeRaw.replace('_', '-');
-      const parts = loc.split('-');
-      const region = (parts[1] || '').toUpperCase();
-      const letterRegions = new Set(['US', 'CA', 'MX']);
-      const isLetterSize = letterRegions.has(region);
+      const locale = this.app.vscodeapis.getLocale() || '  ';
+      const region = locale.slice(-2).toUpperCase();
+      const letterRegions = ['US', 'CA', 'MX'];
+      const isLetterSize = letterRegions.includes(region);
       this.currentPageSize = isLetterSize ? 'letter' : 'a4';
     }
 
@@ -79,7 +77,7 @@ export class PaperPrinter {
     if (msg.left !== undefined) {
       try {
         // Save position to VS Code global state
-        this.app.vscodeapis.updateGlobalState('toolbarLeft', msg.left);
+        this.app.vscodeapis.updateGlobalState('toolbarPos', msg.left);
         dx.out(`Drag ended at position: ${msg.left}`);
       } catch (error) {
         dx.out(`Failed to save toolbar position: ${error}`);
@@ -413,7 +411,8 @@ export class PaperPrinter {
     if (selectedId === '0') {
       // Return the current editor theme ID as the default
       const currentEditorTheme = this.app.vscodeapis.getActiveThemeId();
-      const fallbackTheme = 'github-light';
+      const availableThemes = this.app.stylize.getThemes();
+      const fallbackTheme = availableThemes[0]?.id || 'github-light';
       const result = currentEditorTheme || fallbackTheme;
       dx.out(`returning editor theme: ${result}`);
       dx.done();

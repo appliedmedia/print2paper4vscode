@@ -147,7 +147,7 @@ export class VSCodeAPIs {
     this.setupMessageHandling(panel);
 
     // Restore toolbar position if saved
-    const savedPosition = this.getGlobalState('toolbarLeft');
+    const savedPosition = this.getGlobalState('toolbarPos');
     if (savedPosition !== undefined) {
       panel.webview.postMessage({
         type: 'restorePosition',

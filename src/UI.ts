@@ -130,14 +130,14 @@ export class UI {
     const uimenuJs = this.app.uimenumgr.getAllUIMenuJS();
 
     // Get saved toolbar position
-    const toolbarLeft = this.app.vscodeapis.getGlobalState<number>('toolbarLeft');
+    const toolbarPos = this.app.vscodeapis.getGlobalState<number>('toolbarPos');
 
     const toolbar = this.app.templateDictReplace(toolbarYaml.toolbar_html, {
       TOOLBAR_CSS: toolbarYaml.toolbar_css,
       TOOLBAR_JS: toolbarYaml.toolbar_js,
       UIMENU_HTML: uimenuHtml,
       UIMENU_JS: uimenuJs,
-      TOOLBAR_LEFT: String(toolbarLeft ?? 0),
+      TOOLBAR_POS: String(toolbarPos ?? 0),
     });
 
     // Inject toolbar before closing body tag
