@@ -104,7 +104,7 @@ export class Diagnostics {
    * @returns this for method chaining
    */
   done(message?: MessageRef): this {
-    if (this.debugOn() && this.startTime !== null) {
+    if (this._debugOn && this.startTime !== null) {
       const duration = Date.now() - this.startTime;
       let timeDisplay: string;
 

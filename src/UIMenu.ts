@@ -116,20 +116,16 @@ export class UIMenu {
     return this.app.templateDictReplace(yaml.ui_menu_item, replacementDict);
   }
 
-  // Calculate the optimal width for this menu based on content
-  private calculateMenuWidth(hasGutterBefore: boolean, hasGutterAfter: boolean): number {
+  // Calculate the optimal width for this menu based on content using CSS ch units
+  private calculateMenuWidth(hasGutterBefore: boolean, hasGutterAfter: boolean): string {
     const menuItems = this.getMenuItems();
-    if (menuItems.length === 0) return 180; // Default fallback
+    if (menuItems.length === 0) return '20ch'; // Default fallback
 
     // Find the longest menu item text
     const longestText = menuItems.reduce(
       (longest, item) => (item.displayName.length > longest.length ? item.displayName : longest),
       ''
     );
-
-    // Calculate width: text length * approximate character width + gutters + padding
-    const charWidth = 8; // Approximate character width in pixels
-    const horizontalPadding = 20; // Left and right padding
 
     // For right gutter, we need to check if the LONGEST item specifically needs it
     // because that's what determines the width
@@ -139,19 +135,20 @@ export class UIMenu {
       (longestItem.id === '0' || // Default item
         this.app.uimenumgr.getMenu(longestItem.id) !== undefined); // Flyout item
 
-    // Calculate gutters based on CSS: before=1em+8px, after=1.2em+8px
-    // Assuming 1em ≈ 12px (typical font size)
-    const emToPx = 12; // Approximate em to pixel conversion
-    const beforeGutter = hasGutterBefore ? 1 * emToPx + 8 : 0; // 1em + 8px
-    const afterGutter = hasGutterAfter && longestItemNeedsRightGutter ? 1.2 * emToPx + 8 : 0; // 1.2em + 8px
+    // Calculate width using ch units: text length + gutters + padding
+    const textWidth = longestText.length;
+    const beforeGutter = hasGutterBefore ? 1 : 0; // 1ch for left gutter
+    const afterGutter = hasGutterAfter && longestItemNeedsRightGutter ? 1.2 : 0; // 1.2ch for right gutter
+    const horizontalPadding = 2; // 2ch for left and right padding
 
-    const calculatedWidth =
-      longestText.length * charWidth + beforeGutter + afterGutter + horizontalPadding;
+    const calculatedWidth = textWidth + beforeGutter + afterGutter + horizontalPadding;
 
     // Ensure minimum width and reasonable maximum
-    // Use smaller minimum for menus with no gutters
-    const minWidth = hasGutterBefore || hasGutterAfter ? 160 : 100;
-    return Math.max(minWidth, Math.min(calculatedWidth, 400));
+    const minWidth = hasGutterBefore || hasGutterAfter ? 15 : 8;
+    const maxWidth = 50;
+    const finalWidth = Math.max(minWidth, Math.min(calculatedWidth, maxWidth));
+
+    return `${finalWidth}ch`;
   }
 
   // Generate the complete HTML for this menu using YAML template

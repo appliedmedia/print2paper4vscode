@@ -2,7 +2,7 @@ ui_menu_html: |
   <div class="p2p4vsc-menu {{MENU_CLASSES}}" id="{{MENU_ID}}">
     <button class="p2p4vsc-menu-btn"
             title="{{TITLE}}">{{ICON}}</button>
-    <div class="p2p4vsc-menu-items" id="{{MENU_ID}}-items" style="width: {{MENU_WIDTH}}px;">
+    <div class="p2p4vsc-menu-items" id="{{MENU_ID}}-items" style="width: {{MENU_WIDTH}};">
       {{MENU_ITEMS}}
     </div>
   </div>
@@ -100,4 +100,4 @@ ui_menu_item: |
   </div>
 
 ui_flyout: |
-  <div class="p2p4vsc-flyout" id="{{MENU_ID}}" style="width: {{MENU_WIDTH}}px;">{{MENU_ITEMS}}</div>
+  <div class="p2p4vsc-flyout" id="{{MENU_ID}}" style="width: {{MENU_WIDTH}};">{{MENU_ITEMS}}</div>
