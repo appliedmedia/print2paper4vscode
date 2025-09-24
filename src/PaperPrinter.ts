@@ -212,8 +212,7 @@ export class PaperPrinter {
   }
 
   private computeLineHeightPx(fontSize: number): number {
-    // Use readable leading for code; keep integer px
-    return Math.max(fontSize, Math.round(fontSize * 1.4));
+    return Math.round(fontSize * 0.4); // Tight line spacing for code printing
   }
 
   // Create menus when needed for the webview

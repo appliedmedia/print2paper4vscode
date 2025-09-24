@@ -137,7 +137,7 @@ export class UI {
       TOOLBAR_JS: toolbarYaml.toolbar_js,
       UIMENU_HTML: uimenuHtml,
       UIMENU_JS: uimenuJs,
-      TOOLBAR_LEFT: toolbarLeft !== undefined ? String(toolbarLeft) : 'undefined',
+      TOOLBAR_LEFT: String(toolbarLeft ?? 0),
     });
 
     // Inject toolbar before closing body tag

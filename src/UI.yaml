@@ -41,7 +41,7 @@ toolbar_css: |
   #p2p4vsc-toolbar {
     position: fixed;
     top: 12px;
-    left: {{TOOLBAR_LEFT || 0}}px;
+    left: {{TOOLBAR_LEFT}}px;
     z-index: 9999;
     display: inline-flex;
     flex-direction: column;
