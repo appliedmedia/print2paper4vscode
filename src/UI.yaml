@@ -108,7 +108,7 @@ toolbar_css: |
     z-index: 1000;
   }
   .p2p4vsc-menu-item {
-    padding: 3px;
+    padding: 3px 3px;
     cursor: pointer;
     white-space: nowrap;
     display: flex;
@@ -133,14 +133,14 @@ toolbar_css: |
     content: "✓";
   }
 
-  /* Right gutter container for icons - positioned absolutely */
+  /* Gutter after end of line - positioned absolutely */
   .p2p4vsc-menu-item::after {
     content: "";
     position: absolute;
-    right: 8px;
+    right: calc(1ch + 3px);
     top: 50%;
     transform: translateY(-50%);
-    width: 1.2em;
+    width: 1ch;
     text-align: center;
   }
 
