@@ -106,9 +106,25 @@ export class UIMenu {
     const isDefault = item.id === defaultItemId;
     const itemClasses = isFlyout ? 'flyout' : isDefault ? 'default-item active' : '';
 
+    // Handle SVG template replacement for displayName
+    let processedDisplayName = item.displayName;
+    if (processedDisplayName.includes('{{svg:')) {
+      // Load PaperPrinter YAML for SVG icons
+      const paperPrinterYaml = this.app.os.fileRead<{
+        portrait_icon: string;
+        landscape_icon: string;
+      }>('src/PaperPrinter.yaml');
+
+      if (paperPrinterYaml) {
+        processedDisplayName = processedDisplayName
+          .replace(/\{\{svg:portrait_icon\}\}/g, paperPrinterYaml.portrait_icon)
+          .replace(/\{\{svg:landscape_icon\}\}/g, paperPrinterYaml.landscape_icon);
+      }
+    }
+
     const replacementDict = {
       ITEM_ID: item.id,
-      ITEM_LABEL: item.displayName,
+      ITEM_LABEL: processedDisplayName,
       ITEM_CLASSES: itemClasses,
       FLYOUT: flyout,
     };
@@ -121,15 +137,18 @@ export class UIMenu {
     const menuItems = this.getMenuItems();
     if (menuItems.length === 0) return '20ch'; // Default fallback
 
-    // Find the longest menu item text
-    const longestText = menuItems.reduce(
-      (longest, item) => (item.displayName.length > longest.length ? item.displayName : longest),
-      ''
-    );
+    // Find the longest menu item text (extract text from displayName, ignoring template placeholders)
+    let longestText = '';
+    let longestItem = null;
 
-    // For right gutter, we need to check if the LONGEST item specifically needs it
-    // because that's what determines the width
-    const longestItem = menuItems.find(item => item.displayName === longestText);
+    for (const item of menuItems) {
+      // Extract text portion by removing {{...}} template placeholders
+      const textOnly = item.displayName.replace(/\{\{[^}]+\}\}/g, '').trim();
+      if (textOnly.length > longestText.length) {
+        longestText = textOnly;
+        longestItem = item;
+      }
+    }
     const longestItemNeedsRightGutter =
       longestItem &&
       (longestItem.id === '0' || // Default item

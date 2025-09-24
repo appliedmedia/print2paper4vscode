@@ -383,8 +383,8 @@ export class PaperPrinter {
     }
 
     return [
-      { id: 'portrait', displayName: `${yaml.portrait_icon} Portrait` },
-      { id: 'landscape', displayName: `${yaml.landscape_icon} Landscape` },
+      { id: 'portrait', displayName: '{{svg:portrait_icon}} Portrait' },
+      { id: 'landscape', displayName: '{{svg:landscape_icon}} Landscape' },
     ];
   }
 
