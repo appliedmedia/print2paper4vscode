@@ -120,12 +120,9 @@ export class Diagnostics {
       } else if (duration >= 1000) {
         // 1 second or more
         timeDisplay = (duration / 1000).toFixed(2) + 's';
-      } else if (duration >= 1) {
-        // 1ms or more - show milliseconds with 3 decimal places for microsecond precision
-        timeDisplay = duration.toFixed(3) + 'ms';
       } else {
-        // Less than 1ms - show microseconds
-        timeDisplay = (duration * 1000).toFixed(1) + 'μs';
+        // Less than 1 second - show milliseconds with 2 decimal places
+        timeDisplay = duration.toFixed(2) + 'ms';
       }
 
       const completionMsg = message ? ` - ${message}` : '';

@@ -24,6 +24,7 @@ ui_menu_generic_handlers: |
       });
 
       // Toggle this menu
+      const btn = e.target;
       if (menuItems.style.display === 'block') {
         menuItems.style.display = 'none';
         btn.setAttribute('aria-expanded', 'false');

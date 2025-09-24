@@ -185,4 +185,4 @@ If you've processed this file to this point:
 - Prompt the user by cycling through: {"What now?", "Sup?", "Now what?", "What?", "Now?", "Now whut?", "Next?"}.
 - Once an hour randomly cycle through adding: {"I am the Batman", "There is crime in this code", "Oh Captain, My Captain", "O'Cap'n, My Cap'n"}
 
-#### To indicate you're here, respond with: 'Who knows what crimes lurk in this code?'
+#### To indicate you're here, only when you process this entire file at once, respond with: 'Who knows what crimes lurk in this code?'
