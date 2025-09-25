@@ -114,8 +114,8 @@ describe('PaperPrinter Page Size and Orient Tests', () => {
       assert.ok(landscapeItem);
       assert.ok(portraitItem?.displayName.includes('Portrait'));
       assert.ok(landscapeItem?.displayName.includes('Landscape'));
-      assert.ok(portraitItem?.displayName.includes('<svg'));
-      assert.ok(landscapeItem?.displayName.includes('<svg'));
+      assert.ok(portraitItem?.displayName.includes('{{svg:portrait_icon}}'));
+      assert.ok(landscapeItem?.displayName.includes('{{svg:landscape_icon}}'));
     });
   });
 

@@ -11,29 +11,30 @@ describe('UI Naming Standardization', () => {
   yamlContent = readFileSync(yamlPath, 'utf-8');
 
   it('should have standardized menu group IDs', () => {
-    // Check that the YAML uses the UIMenu placeholder instead of hardcoded HTML
-    assert.ok(yamlContent.includes('{{UIMENU_HTML}}'), 'Should use UIMENU_HTML placeholder');
+    // Check that the YAML uses the CSS/HTML/JS placeholders
+    assert.ok(yamlContent.includes('{{CSS}}'), 'Should use CSS placeholder');
   });
 
   it('should have standardized button IDs', () => {
-    // Check that the YAML uses the UIMenu placeholder instead of hardcoded HTML
-    assert.ok(yamlContent.includes('{{UIMENU_HTML}}'), 'Should use UIMENU_HTML placeholder');
+    // Check that the YAML uses the HTML placeholder
+    assert.ok(yamlContent.includes('{{HTML}}'), 'Should use HTML placeholder');
   });
 
   it('should have standardized picker IDs', () => {
-    // Check that the YAML uses the UIMenu placeholder instead of hardcoded HTML
-    assert.ok(yamlContent.includes('{{UIMENU_HTML}}'), 'Should use UIMENU_HTML placeholder');
+    // Check that the YAML uses the HTML placeholder
+    assert.ok(yamlContent.includes('{{HTML}}'), 'Should use HTML placeholder');
   });
 
   it('should have standardized template variables', () => {
     // Check that template variables use the standardized naming
-    assert.ok(yamlContent.includes('{{UIMENU_HTML}}'), 'Should have UIMENU_HTML');
-    assert.ok(yamlContent.includes('{{UIMENU_JS}}'), 'Should have UIMENU_JS');
+    assert.ok(yamlContent.includes('{{CSS}}'), 'Should have CSS');
+    assert.ok(yamlContent.includes('{{HTML}}'), 'Should have HTML');
+    assert.ok(yamlContent.includes('{{JS}}'), 'Should have JS');
   });
 
   it('should have standardized JavaScript variable references', () => {
-    // Check that the YAML uses the UIMenu placeholder instead of hardcoded JavaScript
-    assert.ok(yamlContent.includes('{{UIMENU_JS}}'), 'Should use UIMENU_JS placeholder');
+    // Check that the YAML uses the JS placeholder instead of hardcoded JavaScript
+    assert.ok(yamlContent.includes('{{JS}}'), 'Should use JS placeholder');
   });
 
   it('should not contain old naming conventions', () => {
@@ -59,7 +60,7 @@ describe('UI Naming Standardization', () => {
   });
 
   it('should have consistent data attributes', () => {
-    // Check that the YAML uses the UIMenu placeholder instead of hardcoded HTML
-    assert.ok(yamlContent.includes('{{UIMENU_HTML}}'), 'Should use UIMENU_HTML placeholder');
+    // Check that the YAML uses the HTML placeholder instead of hardcoded HTML
+    assert.ok(yamlContent.includes('{{HTML}}'), 'Should use HTML placeholder');
   });
 });
