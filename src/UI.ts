@@ -42,7 +42,7 @@ export class UI {
 
   // Central message handling - routes messages to registered handlers
   async handleWebviewMessage(msg: WebviewMessage): Promise<void> {
-    const dx = this.dx.sub('handleWebviewMessage', true);
+    const dx = this.dx.sub('handleWebviewMessage');
     dx.require({ msg }, ['msg']);
     dx.out(
       `Received message: type=${msg.type}, targetId=${msg.targetId}, parentId=${msg.parentId}`
@@ -184,7 +184,7 @@ export class UI {
   }
 
   async updatePdfContentOnly(pdfDoc: jsPDF): Promise<void> {
-    const dx = this.dx.sub('updatePdfContentOnly', true);
+    const dx = this.dx.sub('updatePdfContentOnly');
     dx.out(`currentPanelId = ${this.currentPanelId}`);
 
     if (this.currentPanelId && pdfDoc) {

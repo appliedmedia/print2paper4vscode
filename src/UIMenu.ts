@@ -119,7 +119,7 @@ export class UIMenu {
 
   // Generate a single menu item HTML
   async getItemHTML(item: UIMenuItem, flyout: string, defaultItemId: string): Promise<string> {
-    const dx = this.dx.sub('getItemHTML', true /* debugOn */);
+    const dx = this.dx.sub('getItemHTML');
     const yaml = this.yaml; // This will load and validate automatically
 
     // Check if this item has a flyout by checking if its ID is in flyoutMenuItemIds

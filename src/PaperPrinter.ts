@@ -88,7 +88,7 @@ export class PaperPrinter {
   }
 
   private async handleMenuItemSelected(msg: WebviewMessage): Promise<void> {
-    const dx = this.dx.sub('handleMenuItemSelected', true);
+    const dx = this.dx.sub('handleMenuItemSelected');
     dx.require({ msg }, ['msg']);
 
     // Handle menu item selections from the new generic UI system
@@ -331,7 +331,7 @@ export class PaperPrinter {
   }
 
   private menuItems_Text(): UIMenuItem[] {
-    const dx = this.dx.sub('menuItems_Text', true);
+    const dx = this.dx.sub('menuItems_Text');
     const editorTypo = this.app.vscodeapis.getEditorTypography();
     const editorSize = editorTypo.fontSize;
     dx.out(`editorSize = ${editorSize}`);
@@ -418,7 +418,7 @@ export class PaperPrinter {
   }
 
   private async handleSelection_Theme(selectedId: string): Promise<string> {
-    const dx = this.dx.sub('handleSelection_Theme', true);
+    const dx = this.dx.sub('handleSelection_Theme');
     dx.out(`selectedId = ${selectedId}`);
 
     if (selectedId === UIMenu.defaultId()) {
@@ -450,7 +450,7 @@ export class PaperPrinter {
   }
 
   private async handleSelection_Text(selectedId: string): Promise<string> {
-    const dx = this.dx.sub('handleSelection_Text', true);
+    const dx = this.dx.sub('handleSelection_Text');
     dx.out(`selectedId = ${selectedId}`);
 
     if (selectedId === UIMenu.defaultId()) {
@@ -487,7 +487,7 @@ export class PaperPrinter {
   }
 
   private async handleSelection_Page(selectedId: string): Promise<string> {
-    const dx = this.dx.sub('handleSelection_Page', true);
+    const dx = this.dx.sub('handleSelection_Page');
     dx.out(`selectedId = ${selectedId}`);
 
     if (selectedId === UIMenu.defaultId()) {
@@ -524,7 +524,7 @@ export class PaperPrinter {
   }
 
   private async handleSelection_Orient(selectedId: string): Promise<string> {
-    const dx = this.dx.sub('handleSelection_Orient', true);
+    const dx = this.dx.sub('handleSelection_Orient');
     dx.out(`selectedId = ${selectedId}`);
 
     if (selectedId === UIMenu.defaultId()) {

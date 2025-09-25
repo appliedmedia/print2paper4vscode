@@ -8,7 +8,8 @@ declare module 'jspdf' {
 
     setFont(fontName: string, fontStyle?: string): void;
     setFontSize(size: number): void;
-    setTextColor(color: string | number | number[]): void;
+    setTextColor(color: string | number): void;
+    setTextColor(r: number, g: number, b: number): void;
     text(text: string, x: number, y: number, options?: any): void;
     addPage(): void;
     save(filename?: string): void;

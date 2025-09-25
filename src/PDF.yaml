@@ -56,7 +56,7 @@ pdf_js: |
   let pageNum = 1;
   let pageRendering = false;
   let pageNumPending = null;
-  const scale = 1.5;
+  const scale = 1.0; // Reduced from 1.5 for better fit
   const canvas = document.getElementById('pdf-canvas');
   const ctx = canvas.getContext('2d');
 
@@ -69,7 +69,7 @@ pdf_js: |
 
       const renderContext = {
         canvasContext: ctx,
-        viewport: viewport,
+        viewport: viewport
       };
       const renderTask = page.render(renderContext);
 
@@ -144,10 +144,13 @@ pdf_js: |
       return;
     }
     
+    // Load the data URL directly
     const loadingTask = pdfjsLib.getDocument({
       url: pdfDataUrl,
       disableAutoFetch: true,
-      disableStream: true
+      disableStream: true,
+      disableRange: true,
+      disableFontFace: false
     });
     
     loadingTask.promise.then(onDocumentLoadSuccess, onDocumentLoadError);

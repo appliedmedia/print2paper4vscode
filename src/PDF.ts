@@ -179,22 +179,70 @@ export class PDF {
   }
 
   /**
-   * Normalize color for jsPDF compatibility
-   * Removes alpha channel and ensures proper hex format
+   * Convert page dimensions to points (72 points = 1 inch, 2.834645669 points = 1 mm)
+   * This centralizes all unit conversion so we work exclusively in points internally
    */
-  private normalizeColorForJsPDF(color: string): string {
-    // Remove alpha channel if present (e.g., #FFFFFF5C -> #FFFFFF)
-    if (color.length === 9 && color.startsWith('#')) {
-      return color.substring(0, 7);
+  private convertToPoints(value: number, unit: 'in' | 'mm'): number {
+    return unit === 'in' ? value * 72 : value * 2.834645669;
+  }
+
+  /**
+   * Set text color in jsPDF from web color (hex or named color)
+   * Supports hex colors like "#FF0000" and named colors like "red", "black", etc.
+   * Handles colors with alpha channels by stripping them
+   */
+  private setTextColorFromWebColor(doc: jsPDF, color: string): void {
+    // Start with black as default
+    let r = 0;
+    let g = 0;
+    let b = 0;
+
+    // Basic web color names to RGB
+    const webColors: { [key: string]: [number, number, number] } = {
+      black: [0, 0, 0],
+      white: [255, 255, 255],
+      red: [255, 0, 0],
+      green: [0, 128, 0],
+      blue: [0, 0, 255],
+    };
+
+    // Check if it's a named color
+    const namedColor = webColors[color.toLowerCase()];
+    if (namedColor) {
+      r = namedColor[0];
+      g = namedColor[1];
+      b = namedColor[2];
+    } else {
+      // Otherwise treat as hex color
+      let hex = color;
+
+      // Remove alpha channel if present (e.g., #FFFFFF5C -> #FFFFFF)
+      if (hex.length === 9 && hex.startsWith('#')) {
+        hex = hex.substring(0, 7);
+      }
+
+      // Remove # if present
+      hex = hex.replace('#', '');
+
+      // Convert 3-digit hex to 6-digit
+      if (hex.length === 3) {
+        hex = hex
+          .split('')
+          .map(char => char + char)
+          .join('');
+      }
+
+      // Parse hex to RGB if valid
+      if (hex.length === 6) {
+        r = parseInt(hex.substring(0, 2), 16);
+        g = parseInt(hex.substring(2, 4), 16);
+        b = parseInt(hex.substring(4, 6), 16);
+      }
+      // Otherwise r, g, b remain as black (0, 0, 0)
     }
 
-    // Ensure it's a valid hex color
-    if (color.startsWith('#') && (color.length === 4 || color.length === 7)) {
-      return color;
-    }
-
-    // Default to black if invalid
-    return '#000000';
+    // Single exit point - set the color
+    doc.setTextColor(r, g, b);
   }
 
   // NEW: Generate PDF directly from Shiki tokens
@@ -223,37 +271,35 @@ export class PDF {
         `Using page size: ${pageSize}, orientation: ${orientation} (from PaperPrinter preferences)`
       );
 
-      // Calculate required height based on content
+      // Calculate required height based on content (in original units, will convert to points)
       const lineSpacing = fontSize * 0.4; // Tight line spacing
-      const titleHeight = title ? 40 : 20; // Space for title + margin
-      const bottomMargin = 20;
-      const contentHeight = tokens.length * lineSpacing;
-      const totalHeight = titleHeight + contentHeight + bottomMargin;
+      // These were for dynamic height calculation, not needed for fixed page size
+      // const titleHeight = title ? 40 : 20; // Space for title + margin
+      // const bottomMargin = 20;
+      // const contentHeight = tokens.length * lineSpacing;
+      // const totalHeight = titleHeight + contentHeight + bottomMargin;
 
-      // Ensure height doesn't exceed jsPDF limit (14400 user units)
-      // Convert to appropriate unit based on page size
+      // Get the unit system and standard page height
       const unit = this.getUnitForPageSize(pageSize);
-      const maxHeight = unit === 'in' ? 200 : 14400; // 200 inches or 14400mm
-      const pageHeight = Math.min(totalHeight, maxHeight);
 
-      dx.out(
-        `Calculated page height: ${pageHeight}${unit} (${tokens.length} lines × ${lineSpacing}${unit} spacing)`
-      );
-
-      if (totalHeight > maxHeight) {
-        dx.out(
-          `WARNING: Content height ${totalHeight}${unit} exceeds jsPDF limit ${maxHeight}${unit}, truncating`
-        );
-      }
+      // Use standard page height for single page rendering
+      const standardHeight = unit === 'in' ? 11 : 297; // Letter=11in, A4=297mm
+      const pageHeight = standardHeight;
 
       // Get page dimensions based on size and orientation
       const pageDimensions = this.getPageDimensions(pageSize, orientation);
 
-      // Initialize PDF with user's page size, orientation, and calculated height
+      // Convert everything to points - we work exclusively in points internally
+      const widthInPoints = this.convertToPoints(pageDimensions.width, unit);
+      const heightInPoints = this.convertToPoints(pageHeight, unit);
+
+      dx.out(`Page size in points: ${widthInPoints.toFixed(1)} x ${heightInPoints.toFixed(1)} pt`);
+
+      // ALWAYS use points for jsPDF - simplifies all coordinate calculations
       const doc = new jsPDF({
         orientation,
-        unit,
-        format: [pageDimensions.width, pageHeight], // Width from format, height calculated
+        unit: 'pt', // ALWAYS points - makes all coordinates predictable
+        format: [widthInPoints, heightInPoints],
       });
 
       // Map font family to jsPDF supported fonts
@@ -266,18 +312,24 @@ export class PDF {
       dx.out(`Using font: ${jsPdfFont}, size: ${fontSize}, line spacing: ${fontSize * 0.4}`);
 
       // Add title if provided
+      const marginLeft = 20; // Left margin in points
+      const marginTop = 20; // Top margin in points
+
       if (title) {
-        doc.setFontSize(fontSize + 2);
-        doc.text(title, 20, 20);
-        doc.setFontSize(fontSize);
+        doc.setFontSize(fontSize * 1.25);
+        this.setTextColorFromWebColor(doc, 'black');
+        doc.text(title, marginLeft, marginTop + 20);
+        doc.setFontSize(fontSize); // Reset to normal size
       }
 
-      let y = title ? 40 : 20;
-      const margin = 20;
+      let y = title ? marginTop + 40 : marginTop + 20; // Start content below title
+      const margin = marginLeft;
 
-      // Calculate how many lines can fit on the page
-      const availableHeight = pageHeight - y - bottomMargin;
-      const maxLines = Math.floor(availableHeight / lineSpacing);
+      // Calculate how many lines can fit on the page (all in points now)
+      const bottomMarginPt = 36; // 0.5 inch margin
+      const availableHeight = heightInPoints - y - bottomMarginPt;
+      const lineSpacingPt = fontSize * 0.4; // Line spacing in points
+      const maxLines = Math.floor(availableHeight / lineSpacingPt);
       const linesToRender = Math.min(tokens.length, maxLines);
 
       dx.out(
@@ -294,12 +346,9 @@ export class PDF {
           const text = token.content;
           if (!text) continue;
 
-          // Get token color and normalize it for jsPDF
+          // Get token color and set it in jsPDF
           const color = token.color || '#000000';
-          const normalizedColor = this.normalizeColorForJsPDF(color);
-
-          // Set color and draw text
-          doc.setTextColor(normalizedColor);
+          this.setTextColorFromWebColor(doc, color);
           doc.text(text, x, y);
 
           // Advance x position
@@ -312,14 +361,14 @@ export class PDF {
       // Add truncation notice if content was cut off
       if (tokens.length > maxLines) {
         const remainingLines = tokens.length - maxLines;
-        doc.setTextColor('#666666');
+        this.setTextColorFromWebColor(doc, '#666666'); // Gray hex
         doc.setFontSize(fontSize - 2);
         doc.text(`... (${remainingLines} more lines truncated)`, margin, y + 10);
         dx.out(`Content truncated: ${remainingLines} lines not rendered`);
       }
 
       // Return PDF document pointer (in-memory)
-      dx.out(`PDF document created in memory with continuous scrolling`);
+      dx.out(`PDF document created with ${linesToRender} lines rendered`);
 
       return doc;
     } catch (error) {
@@ -362,9 +411,12 @@ export class PDF {
       }
 
       // Generate HTML using template with embedded resources
+      // Escape single quotes in the data URL for JavaScript string literal
+      const escapedPdfDataUrl = pdfDataUrl.replace(/'/g, "\\'");
+      
       const html = this.app.templateDictReplace(pdfTemplates.pdf_html, {
         TITLE: title,
-        PDF_DATA_URL: pdfDataUrl,
+        PDF_DATA_URL: escapedPdfDataUrl,
         PDF_CSS: this.app.templateDictReplace(pdfTemplates.pdf_css, {
           BASE_CSS: uiTemplates.base_css,
         }),
