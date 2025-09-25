@@ -128,6 +128,7 @@ export class UIMenuMgr {
     // Get the CSS - yaml getter handles loading automatically
     const css = anyMenu.yaml.ui_menu_css;
     this.dx.out(`getAllUIMenuCSS: Generated ${css.length} characters of CSS`);
+
     return css;
   }
 

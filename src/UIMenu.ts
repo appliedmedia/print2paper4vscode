@@ -119,6 +119,7 @@ export class UIMenu {
 
   // Generate a single menu item HTML
   async getItemHTML(item: UIMenuItem, flyout: string, defaultItemId: string): Promise<string> {
+    const dx = this.dx.sub('getItemHTML', true /* debugOn */);
     const yaml = this.yaml; // This will load and validate automatically
 
     // Check if this item has a flyout by checking if its ID is in flyoutMenuItemIds
@@ -135,6 +136,7 @@ export class UIMenu {
     ]
       .filter(Boolean)
       .join(' ');
+
     const itemId = isFlyout ? `flyout-${id}` : id;
 
     // Handle SVG template replacement for displayName
@@ -163,6 +165,7 @@ export class UIMenu {
       FLYOUT_MENU_ID_REF: flyoutMenuIdRef,
     };
 
+    dx.done();
     return this.app.templateDictReplace(yaml.ui_menu_item, replacementDict);
   }
 
@@ -177,14 +180,15 @@ export class UIMenu {
     // Generate menu items HTML using the new getItemHTML function
     const menuItems = this.getMenuItems();
     const defaultItemId = await this.defaultItem(); // Get default once
+    const hasDefaultItem = !!defaultItemId;
 
     // Use explicit properties instead of calculated values
     const isFlyout = this.isFlyout;
     const hasFlyout = this.flyoutMenuItemIds.length > 0;
 
     // Determine gutter states upfront - this is all we need for CSS
-    const hasGutterBefore = defaultItemId !== ''; // Only if there's a default selection
-    const hasGutterAfter = hasFlyout; // Only menus with flyout items get gutter-after
+    const hasGutterBefore = hasDefaultItem; // Only if there's a default selection
+    const hasGutterAfter = hasFlyout || hasDefaultItem; // Menus with flyout items OR default items get gutter-after
     const processedMenuItemsHtml = await Promise.all(
       menuItems.map(item => this.getItemHTML(item, flyoutCache[item.id] || '', defaultItemId))
     );

@@ -172,9 +172,16 @@ The project uses specific TypeScript lib settings for VS Code extension compatib
 
 **Use semaphores, not iteration:** Don't iterate through menuItems to determine gutter content. Use the available flags:
 
-- `isFlyout = !this.icon?.length` → gutter-after has content (flyout arrow)
-- `defaultItemId` exists → gutter-before has content (checkmark) AND gutter-after has content (editor icon)
-- Otherwise → no gutters needed
+- **Menu-level gutter determination**:
+  - `hasFlyout = this.flyoutMenuItemIds.length > 0` → menu has flyout parent items
+  - `hasDefaultItem = !!defaultItemId` → menu has a default selection
+  - `hasGutterBefore = hasDefaultItem` → gutter-before shows checkmarks for selected items
+  - `hasGutterAfter = hasFlyout || hasDefaultItem` → gutter-after shows flyout arrows OR editor icons
+
+- **Item-level class assignment**:
+  - `item.is-flyout` → when `this.flyoutMenuItemIds.includes(item.id)` → shows flyout arrow (▶)
+  - `item.default-item` → when `item.id === defaultItemId` → shows editor icon (📝)
+  - `item.selected` → when `item.id === defaultItemId` → shows checkmark (✓) in gutter-before
 
 **Never iterate when semaphores exist:** If you can determine state from existing flags/properties, don't loop through arrays.
 

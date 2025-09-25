@@ -99,6 +99,7 @@ toolbar_js: |
   // Generic flyout hover handler
   function handleFlyoutHover() {
     document.addEventListener('mouseenter', (e) => {
+      if (!e || !e.target || !e.target.closest) return;
       const menuItem = e.target.closest('.p2p4vsc-menu-item');
       if (menuItem) {
         const flyout = menuItem.querySelector('.p2p4vsc-flyout');
@@ -114,6 +115,7 @@ toolbar_js: |
     });
     
     document.addEventListener('mouseleave', (e) => {
+      if (!e || !e.target || !e.target.closest) return;
       const menuItem = e.target.closest('.p2p4vsc-menu-item');
       if (menuItem) {
         const flyout = menuItem.querySelector('.p2p4vsc-flyout');

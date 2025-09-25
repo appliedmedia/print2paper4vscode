@@ -50,12 +50,19 @@ ui_menu_css: |
     text-align: left;
   }
 
+  /* Ensure only items with is-flyout class get flyout arrows */
   .p2p4vsc-menu-item.is-flyout .gutter-after::after {
-    content: "▶";
+    content: "▶" !important;
   }
 
+  /* Ensure only items with default-item class get editor icons */
   .p2p4vsc-menu-item.default-item .gutter-after::after {
-    content: "📝";
+    content: "📝" !important;
+  }
+
+  /* Explicitly clear content for items without special classes */
+  .p2p4vsc-menu-item:not(.is-flyout):not(.default-item) .gutter-after::after {
+    content: "" !important;
   }
 
   .p2p4vsc-menu-item.selected {
@@ -111,10 +118,15 @@ ui_menu_html: |
 ui_menu_generic_handlers: |
   // Generic handlers for all menus - just pass events to extension
   document.addEventListener('click', (e) => {
+    // Safety checks
+    if (!e) return;
+    if (!e.target) return;
+    if (!e.target.closest) return;
+    
     // Handle menu button clicks to show/hide dropdowns
     if (e?.target?.matches?.('.p2p4vsc-menu-btn')) {
       e.preventDefault();
-      const menu = e.target.closest('.p2p4vsc-menu');
+      const menu = e.target?.closest?.('.p2p4vsc-menu');
       const menuItems = menu?.querySelector?.('.p2p4vsc-menu-items');
 
       // Close all other menus first
@@ -137,11 +149,11 @@ ui_menu_generic_handlers: |
     }
 
     // Handle menu item clicks
-    const itemEl = e?.target?.closest?.('.p2p4vsc-menu-item');
+    const itemEl = e.target?.closest?.('.p2p4vsc-menu-item');
     if (itemEl) {
       const menu = itemEl.closest('.p2p4vsc-menu');
       // Check if this item has a flyout (is a parent item with submenu)
-      if (itemEl.classList.contains('flyout')) {
+      if (itemEl.classList.contains('is-flyout')) {
         // This item has a flyout - toggle it instead of selecting
         e.preventDefault();
         
@@ -162,11 +174,15 @@ ui_menu_generic_handlers: |
           if (flyoutMenu.style.display === 'block') {
             flyoutMenu.style.display = 'none';
           } else {
-            // Position flyout relative to clicked item
-            const itemRect = itemEl.getBoundingClientRect();
+            // Position flyout relative to the clicked menu item
+            // Make the flyout a child of the clicked menu item for relative positioning
+            if (flyoutMenu.parentElement !== itemEl) {
+              itemEl.appendChild(flyoutMenu);
+            }
+            
             flyoutMenu.style.position = 'absolute';
-            flyoutMenu.style.left = (itemRect.right + 4) + 'px';
-            flyoutMenu.style.top = (itemRect.top - 4) + 'px';
+            flyoutMenu.style.left = '97%';
+            flyoutMenu.style.top = '3%';
             flyoutMenu.style.zIndex = '1001';
             flyoutMenu.style.display = 'block';
           }
@@ -189,13 +205,17 @@ ui_menu_generic_handlers: |
         parentId: menu?.getAttribute('id')
       });
 
-      // Close the menu after selection (only if not in a flyout)
-      if (!menu.classList.contains('flyout')) {
-        const menuItemsContainer = menu.querySelector('.p2p4vsc-menu-items');
-        menuItemsContainer.style.display = 'none';
-        const btn = menu.querySelector('.p2p4vsc-menu-btn');
-        btn?.setAttribute('aria-expanded', 'false');
-      }
+        // Close all menus after selection unless the clicked item is a flyout trigger
+        if (!itemEl.classList.contains('is-flyout')) {
+          // Close all dropdown menus (keeps buttons visible)
+          document.querySelectorAll('.p2p4vsc-menu-items').forEach(items => {
+            items.style.display = 'none';
+          });
+          // Reset all flyout menus to closed state
+          document.querySelectorAll('.p2p4vsc-menu.is-flyout').forEach(flyout => {
+            flyout.style.display = 'none';
+          });
+        }
       return;
     }
 
