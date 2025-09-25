@@ -106,6 +106,20 @@ export class UIMenuMgr {
     return js;
   }
 
+  // Get all UIMenu CSS
+  getAllUIMenuCSS(): string {
+    const anyMenu = this.getAllMenus()[0];
+    if (!anyMenu) {
+      this.dx.out('getAllUIMenuCSS: No menus available');
+      return '';
+    }
+
+    // Get the CSS - yaml getter handles loading automatically
+    const css = anyMenu.yaml.ui_menu_css;
+    this.dx.out(`getAllUIMenuCSS: Generated ${css.length} characters of CSS`);
+    return css;
+  }
+
   // Get all template variable mappings
   async getTemplateVariableMappings(): Promise<Record<string, string>> {
     const mappings: Record<string, string> = {};
@@ -113,8 +127,23 @@ export class UIMenuMgr {
     // Add the main UIMenu placeholders
     mappings['UIMENU_HTML'] = await this.getAllUIMenuHTML();
     mappings['UIMENU_JS'] = this.getAllUIMenuJS();
+    mappings['UIMENU_CSS'] = this.getAllUIMenuCSS();
 
     return mappings;
+  }
+
+  // Get menu components for generic toolbar integration
+  async getMenuComponents(): Promise<{ html: string; css: string; js: string }> {
+    this.dx.out('UIMenuMgr.getMenuComponents: Getting menu components for toolbar integration');
+
+    const html = await this.getAllUIMenuHTML();
+    const css = this.getAllUIMenuCSS();
+    const js = this.getAllUIMenuJS();
+
+    this.dx.out(
+      `UIMenuMgr.getMenuComponents: HTML=${html.length}, CSS=${css.length}, JS=${js.length} characters`
+    );
+    return { html, css, js };
   }
 
   // Get menu configuration for debugging

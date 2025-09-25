@@ -370,6 +370,7 @@ export class PDF {
         }),
         PDFJS_LIBRARY: pdfJsContent,
         PDF_JS: pdfTemplates.pdf_js,
+        TOOLBAR: '{{TOOLBAR}}', // Placeholder for toolbar injection
       });
 
       dx.out(`HTML generated for PDF document with embedded resources`);

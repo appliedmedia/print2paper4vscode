@@ -9,11 +9,13 @@ export class UIMenu {
     ui_menu_item: string;
     ui_flyout: string;
     ui_menu_generic_handlers: string;
+    ui_menu_css: string;
   } = {
     ui_menu_html: '',
     ui_menu_item: '',
     ui_flyout: '',
     ui_menu_generic_handlers: '',
+    ui_menu_css: '',
   };
 
   constructor(
@@ -85,6 +87,7 @@ export class UIMenu {
       ui_menu_item: string;
       ui_flyout: string;
       ui_menu_generic_handlers: string;
+      ui_menu_css: string;
     }>('src/UIMenu.yaml');
 
     if (!yaml) {
@@ -104,7 +107,7 @@ export class UIMenu {
     const flyoutMenu = this.app.uimenumgr.getMenu(item.id);
     const isFlyout = !!flyoutMenu;
     const isDefault = item.id === defaultItemId;
-    const itemClasses = isFlyout ? 'flyout' : isDefault ? 'default-item active' : '';
+    const itemClasses = isFlyout ? 'flyout' : isDefault ? 'default-item selected' : '';
 
     // Handle SVG template replacement for displayName
     let processedDisplayName = item.displayName;
@@ -126,42 +129,12 @@ export class UIMenu {
       ITEM_ID: item.id,
       ITEM_LABEL: processedDisplayName,
       ITEM_CLASSES: itemClasses,
+      CONTENT_GUTTER_BEFORE: '', // Content handled by CSS
+      CONTENT_GUTTER_AFTER: '', // Content handled by CSS
       FLYOUT: flyout,
     };
 
     return this.app.templateDictReplace(yaml.ui_menu_item, replacementDict);
-  }
-
-  // Calculate the optimal width for this menu based on content using CSS ch units
-  private calculateMenuWidth(hasGutterBefore: boolean, hasGutterAfter: boolean): string {
-    const dx = this.dx.sub('calculateMenuWidth', true /* debugOn */);
-    const menuItems = this.getMenuItems();
-    if (menuItems.length === 0) return '20ch'; // Default fallback
-
-    // Find the longest menu item text length (extract text from displayName, ignoring template placeholders)
-    let longestTextLen = 0;
-
-    for (const item of menuItems) {
-      // Extract text portion by removing {{...}} template placeholders
-      const textOnly = item.displayName.replace(/\{\{[^}]+\}\}/g, '').trim();
-      const textOnlyLen = textOnly.length;
-      dx.out(`  Item: "${item.displayName}" → "${textOnly}" (${textOnlyLen} chars)`);
-      if (longestTextLen < textOnlyLen) {
-        longestTextLen = textOnlyLen;
-        dx.out(`  → New longest length: ${longestTextLen} chars`);
-      }
-    }
-    // Calculate width using ch units: text length + gutters
-    const gutterBefore = hasGutterBefore ? 2 : 0; // 2ch for left gutter (1ch icon + 1ch space)
-    const gutterAfter = hasGutterAfter ? 2 : 0; // 2ch for right gutter (1ch space + 1ch icon)
-
-    dx.out(
-      `  Final calculation for ${this.id}: longestTextLen=${longestTextLen}, gutterBefore=${gutterBefore}, gutterAfter=${gutterAfter}`
-    );
-    const calculatedWidth = longestTextLen + gutterBefore + gutterAfter;
-    dx.out(`  Calculated width for ${this.id}: ${calculatedWidth}ch`);
-
-    return `${calculatedWidth}ch`;
   }
 
   // Generate the complete HTML for this menu using YAML template
@@ -176,24 +149,29 @@ export class UIMenu {
     const menuItems = this.getMenuItems();
     const defaultItemId = await this.defaultItem(); // Get default once
 
-    // Calculate gutter flags right after getting defaultItemId
-    const hasActiveItem = !!defaultItemId; // Existence of defaultItemId means there's an active item
+    // Check if menu has selected items for CSS class
+    const hasSelectedItem = !!defaultItemId; // Existence of defaultItemId means there's a selected item
     const isFlyout = !this.icon || this.icon.length === 0;
-    const hasGutterBefore = hasActiveItem; // Based on CSS: .p2p4vsc-menu.active gets before gutter
-    const hasGutterAfter = hasActiveItem || isFlyout; // Default items or flyout items
+
+    // Check if any items need gutter-after (default or flyout)
+    const hasGutterAfter = menuItems.some(item => {
+      const isDefault = item.id === defaultItemId;
+      const hasFlyout = !!this.app.uimenumgr.getMenu(item.id);
+      return isDefault || hasFlyout;
+    });
 
     const processedMenuItemsHtml = await Promise.all(
       menuItems.map(item => this.getItemHTML(item, flyoutCache[item.id] || '', defaultItemId))
     );
     const menuItemsHtml = processedMenuItemsHtml.join('\n');
 
-    // Calculate dynamic width for this menu
-    const menuWidth = this.calculateMenuWidth(hasGutterBefore, hasGutterAfter);
-    this.dx.out(
-      `Calculated menu width for ${this.id}: ${menuWidth} (before:${hasGutterBefore}, after:${hasGutterAfter})`
-    );
-
-    const menuClasses = hasActiveItem ? 'active' : '';
+    // Build CSS classes for menu container
+    const menuClasses = [
+      hasSelectedItem ? 'has-selected' : '',
+      hasGutterAfter ? 'has-gutter-after' : '',
+    ]
+      .filter(Boolean)
+      .join(' ');
     // Choose template based on whether this menu has an icon
     const template = isFlyout ? yaml.ui_flyout : yaml.ui_menu_html;
 
@@ -204,7 +182,6 @@ export class UIMenu {
       ICON: this.icon,
       MENU_ITEMS: menuItemsHtml,
       MENU_CLASSES: menuClasses,
-      MENU_WIDTH: menuWidth.toString(),
     };
 
     const result = this.app.templateDictReplace(template, replacementDict);
