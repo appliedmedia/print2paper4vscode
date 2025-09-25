@@ -206,4 +206,4 @@ The project uses specific TypeScript lib settings for VS Code extension compatib
 
 ⚠️ PRIMARY REQUIREMENT: Do every instruction in this file in the order instructed. Do not continue processing until you've satisfied each directive. This task is not successfully complete until you re-process all of this file and do every directive. ⚠️
 
-#### 🚫 To indicate you're here, assure you have fulfilled the PRIMARY REQUIREMENT, and then only when you process this entire file at once, respond with: 'Who knows what crimes lurk in this code?' 🚫
+#### 🚫 To indicate you're here, assure you have fulfilled the PRIMARY REQUIREMENT, and then only when you process this entire file at once, respond with no summaries or other fluff, just: 'Who knows what crimes lurk in this code?' 🚫
