@@ -19,11 +19,13 @@ export class UIMenu {
   };
 
   constructor(
-    private _id: string,
-    private _icon: string,
-    private _title: string,
     private app: App,
+    private _id: string,
+    private _displayName: string,
+    private _icon: string,
+    private _isFlyout: boolean = false,
     private _menuItems: () => UIMenuItem[],
+    private _flyoutMenuItemIds: string[] = [],
     private _selectionHandler: (id: string) => Promise<string>
   ) {
     this.dx = this.app.dx.create('UIMenu');
@@ -40,8 +42,14 @@ export class UIMenu {
   get icon(): string {
     return this._icon;
   }
-  get title(): string {
-    return this._title;
+  get displayName(): string {
+    return this._displayName;
+  }
+  get flyoutMenuItemIds(): string[] {
+    return this._flyoutMenuItemIds;
+  }
+  get isFlyout(): boolean {
+    return this._isFlyout;
   }
 
   // Get the menu element ID for JavaScript
@@ -64,6 +72,16 @@ export class UIMenu {
     return this._menuItems();
   }
 
+  // Static method to get the default selection ID
+  static defaultId(): string {
+    return 'default';
+  }
+
+  // Instance method to get the default selection ID
+  defaultId(): string {
+    return UIMenu.defaultId();
+  }
+
   // Dispatch a selection to this menu's handler
   async dispatchSelection(id: string): Promise<string> {
     return this._selectionHandler(id);
@@ -71,7 +89,7 @@ export class UIMenu {
 
   // Get the default item ID for this menu
   async defaultItem(): Promise<string> {
-    return this.dispatchSelection('0');
+    return this.dispatchSelection(this.defaultId());
   }
 
   // Getter for the YAML data - handles loading and validation automatically
@@ -103,12 +121,20 @@ export class UIMenu {
   async getItemHTML(item: UIMenuItem, flyout: string, defaultItemId: string): Promise<string> {
     const yaml = this.yaml; // This will load and validate automatically
 
-    // Check if this item has a flyout by looking if its ID matches a main menu
+    // Check if this item has a flyout by checking if its ID is in flyoutMenuItemIds
     const id = item.id;
-    const isFlyout = !!flyout;
+    const isFlyout = this.flyoutMenuItemIds.includes(id);
     const flyoutMenuIdRef = isFlyout ? ` flyout-menu-id-ref="${id}"` : '';
     const isDefault = id === defaultItemId;
-    const itemClasses = isFlyout ? 'flyout' : isDefault ? 'default-item selected' : '';
+
+    // Individual items only need these classes
+    const itemClasses = [
+      isFlyout ? 'is-flyout' : '',
+      isDefault ? 'selected' : '',
+      isDefault ? 'default-item' : '',
+    ]
+      .filter(Boolean)
+      .join(' ');
     const itemId = isFlyout ? `flyout-${id}` : id;
 
     // Handle SVG template replacement for displayName
@@ -143,7 +169,7 @@ export class UIMenu {
   // Generate the complete HTML for this menu using YAML template
   async getHTML(flyoutCache: Record<string, string> = {}): Promise<string> {
     this.dx.out(`UIMenu.getHTML called for ${this.id}`);
-    this.dx.out(`Icon: "${this.icon}", Title: "${this.title}"`);
+    this.dx.out(`Icon: "${this.icon}", DisplayName: "${this.displayName}"`);
 
     const yaml = this.yaml; // This will load and validate automatically
     this.dx.out(`YAML loaded, ui_menu_html length: ${yaml.ui_menu_html.length}`);
@@ -152,21 +178,22 @@ export class UIMenu {
     const menuItems = this.getMenuItems();
     const defaultItemId = await this.defaultItem(); // Get default once
 
-    // Check if menu has selection and default for CSS class
-    const haveSelectionAndDefault = !!defaultItemId;
-    const isFlyout = !this.icon?.length;
+    // Use explicit properties instead of calculated values
+    const isFlyout = this.isFlyout;
+    const hasFlyout = this.flyoutMenuItemIds.length > 0;
 
-    // Determine gutter content from semaphores
-    const hasGutterAfter = isFlyout || haveSelectionAndDefault;
+    // Determine gutter states upfront - this is all we need for CSS
+    const hasGutterBefore = defaultItemId !== ''; // Only if there's a default selection
+    const hasGutterAfter = hasFlyout; // Only menus with flyout items get gutter-after
     const processedMenuItemsHtml = await Promise.all(
       menuItems.map(item => this.getItemHTML(item, flyoutCache[item.id] || '', defaultItemId))
     );
     const menuItemsHtml = processedMenuItemsHtml.join('\n');
 
-    // Build CSS classes for menu container
+    // Build CSS classes for menu container - only what we need
     const menuClasses = [
-      isFlyout ? 'flyout' : '',
-      haveSelectionAndDefault ? 'has-selected' : '',
+      isFlyout ? 'is-flyout' : '',
+      hasGutterBefore ? 'has-gutter-before' : '',
       hasGutterAfter ? 'has-gutter-after' : '',
     ]
       .filter(Boolean)
@@ -177,7 +204,7 @@ export class UIMenu {
     const replacementDict = {
       MENU_ID: this.getId_Menu(),
       BUTTON_ID: this.getId_Button(),
-      TITLE: this.title,
+      DISPLAY_NAME: this.displayName,
       ICON: this.icon,
       MENU_ITEMS: menuItemsHtml,
       MENU_CLASSES: menuClasses,

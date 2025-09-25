@@ -2,6 +2,7 @@ import type { App } from './App';
 import type { WebviewMessage, MessageHandler } from './types/UI_t';
 import type { WebviewPanelId } from './VSCodeAPIs';
 import { Diagnostics } from './Diagnostics';
+import jsPDF from 'jspdf';
 
 export class UI {
   private app: App;
@@ -182,7 +183,7 @@ export class UI {
     }
   }
 
-  async updatePdfContentOnly(pdfDoc: any): Promise<void> {
+  async updatePdfContentOnly(pdfDoc: jsPDF): Promise<void> {
     const dx = this.dx.sub('updatePdfContentOnly', true);
     dx.out(`currentPanelId = ${this.currentPanelId}`);
 

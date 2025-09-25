@@ -50,17 +50,18 @@ ui_menu_css: |
     text-align: left;
   }
 
-  .p2p4vsc-menu-item.default-item .gutter-after::after {
-    content: "📝";
+  .p2p4vsc-menu-item.is-flyout .gutter-after::after {
+    content: "▶";
   }
 
-  .p2p4vsc-menu-item.flyout .gutter-after::after {
-    content: "▶";
+  .p2p4vsc-menu-item.default-item .gutter-after::after {
+    content: "📝";
   }
 
   .p2p4vsc-menu-item.selected {
     /* Keep the same grid structure as default */
   }
+
 
   .p2p4vsc-menu-item.selected .gutter-before::before {
     content: "✓";
@@ -74,34 +75,34 @@ ui_menu_css: |
     grid-template-columns: 0 1fr var(--gutter-after-width);
   }
 
-  .p2p4vsc-menu.has-selected .p2p4vsc-menu-item {
+  .p2p4vsc-menu.has-gutter-before .p2p4vsc-menu-item {
     grid-template-columns: var(--gutter-before-width) 1fr 0;
   }
 
-  .p2p4vsc-menu.has-selected.has-gutter-after .p2p4vsc-menu-item {
+  .p2p4vsc-menu.has-gutter-before.has-gutter-after .p2p4vsc-menu-item {
     grid-template-columns: var(--gutter-before-width) 1fr var(--gutter-after-width);
   }
 
   .p2p4vsc-group { position: relative; }
 
   /* Hide button for flyout menus */
-  .p2p4vsc-menu.flyout .p2p4vsc-menu-btn {
+  .p2p4vsc-menu.is-flyout .p2p4vsc-menu-btn {
     display: none;
   }
 
   /* Hide flyout menus by default */
-  .p2p4vsc-menu.flyout {
+  .p2p4vsc-menu.is-flyout {
     display: none;
   }
 
   /* Show menu items inside flyout menus when the flyout is visible */
-  .p2p4vsc-menu.flyout[style*="display: block"] .p2p4vsc-menu-items {
+  .p2p4vsc-menu.is-flyout[style*="display: block"] .p2p4vsc-menu-items {
     display: block !important;
   }
 
 ui_menu_html: |
   <div class="p2p4vsc-menu {{MENU_CLASSES}}" id="{{MENU_ID}}">
-    <button class="p2p4vsc-menu-btn" title="{{TITLE}}">{{ICON}}</button>
+    <button class="p2p4vsc-menu-btn" title="{{DISPLAY_NAME}}">{{ICON}}</button>
     <div class="p2p4vsc-menu-items" id="{{MENU_ID}}-items">
       {{MENU_ITEMS}}
     </div>
@@ -111,10 +112,10 @@ ui_menu_generic_handlers: |
   // Generic handlers for all menus - just pass events to extension
   document.addEventListener('click', (e) => {
     // Handle menu button clicks to show/hide dropdowns
-    if (e.target && e.target.matches && e.target.matches('.p2p4vsc-menu-btn')) {
+    if (e?.target?.matches?.('.p2p4vsc-menu-btn')) {
       e.preventDefault();
-      const menu = e.target.closest && e.target.closest('.p2p4vsc-menu');
-      const menuItems = menu.querySelector('.p2p4vsc-menu-items');
+      const menu = e.target.closest('.p2p4vsc-menu');
+      const menuItems = menu?.querySelector?.('.p2p4vsc-menu-items');
 
       // Close all other menus first
       document.querySelectorAll('.p2p4vsc-menu-items').forEach(items => {
@@ -151,7 +152,7 @@ ui_menu_generic_handlers: |
         console.log('Found flyout menu:', flyoutMenu);
         if (flyoutMenu) {
           // Close all other flyouts
-          document.querySelectorAll('.p2p4vsc-menu.flyout').forEach(menu => {
+          document.querySelectorAll('.p2p4vsc-menu.is-flyout').forEach(menu => {
             if (menu !== flyoutMenu) {
               menu.style.display = 'none';
             }
@@ -189,7 +190,7 @@ ui_menu_generic_handlers: |
       });
 
       // Close the menu after selection (only if not in a flyout)
-      if (!isFlyout) {
+      if (!menu.classList.contains('flyout')) {
         const menuItemsContainer = menu.querySelector('.p2p4vsc-menu-items');
         menuItemsContainer.style.display = 'none';
         const btn = menu.querySelector('.p2p4vsc-menu-btn');
@@ -203,7 +204,7 @@ ui_menu_generic_handlers: |
       document.querySelectorAll('.p2p4vsc-menu-items').forEach(items => {
         items.style.display = 'none';
       });
-      document.querySelectorAll('.p2p4vsc-menu.flyout').forEach(flyout => {
+      document.querySelectorAll('.p2p4vsc-menu.is-flyout').forEach(flyout => {
         flyout.style.display = 'none';
       });
     }

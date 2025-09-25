@@ -3,6 +3,7 @@ import type { App } from './App';
 import type { WebviewMessage } from './types/UI_t';
 import type { UIMenuItem } from './types/UI_t';
 import { Diagnostics } from './Diagnostics';
+import { UIMenu } from './UIMenu';
 import jsPDF from 'jspdf';
 
 // Page size type and order definition
@@ -223,37 +224,47 @@ export class PaperPrinter {
     const menuConfigs = [
       {
         id: 'print',
+        displayName: 'Print',
         icon: '🖨',
-        title: 'Print',
+        isFlyout: false,
         menuItems: this.menuItems_Print.bind(this),
+        flyoutMenuItemIds: [],
         selectionHandler: this.handleSelection_Print.bind(this),
       },
       {
         id: 'page',
+        displayName: 'Page',
         icon: '📄',
-        title: 'Page',
+        isFlyout: false,
         menuItems: this.menuItems_Page.bind(this),
+        flyoutMenuItemIds: ['orient'],
         selectionHandler: this.handleSelection_Page.bind(this),
       },
       {
         id: 'orient',
+        displayName: 'Orient',
         icon: '', // submenu indicated by no icon, see Page > Orient
-        title: 'Orient',
+        isFlyout: true,
         menuItems: this.menuItems_Orient.bind(this),
+        flyoutMenuItemIds: [],
         selectionHandler: this.handleSelection_Orient.bind(this),
       },
       {
         id: 'theme',
+        displayName: 'Theme',
         icon: '🎨',
-        title: 'Theme',
+        isFlyout: false,
         menuItems: this.menuItems_Theme.bind(this),
+        flyoutMenuItemIds: [],
         selectionHandler: this.handleSelection_Theme.bind(this),
       },
       {
         id: 'text',
+        displayName: 'Text',
         icon: 'Tt',
-        title: 'Text',
+        isFlyout: false,
         menuItems: this.menuItems_Text.bind(this),
+        flyoutMenuItemIds: [],
         selectionHandler: this.handleSelection_Text.bind(this),
       },
     ];
@@ -262,9 +273,11 @@ export class PaperPrinter {
       this.dx.out(`Creating menu: ${config.id} with icon: ${config.icon}`);
       const menu = this.app.uimenumgr.createMenu(
         config.id,
+        config.displayName,
         config.icon,
-        config.title,
+        config.isFlyout,
         config.menuItems,
+        config.flyoutMenuItemIds,
         config.selectionHandler
       );
       this.app.uimenumgr.addMenu(menu);
@@ -275,7 +288,7 @@ export class PaperPrinter {
     const allMenus = this.app.uimenumgr.getAllMenus();
     this.dx.out(`Total menus created: ${allMenus.length}`);
     allMenus.forEach(menu => {
-      this.dx.out(`Menu: ${menu.id}, Icon: ${menu.icon}, Title: ${menu.title}`);
+      this.dx.out(`Menu: ${menu.id}, Icon: ${menu.icon}, DisplayName: ${menu.displayName}`);
     });
   }
 
@@ -389,7 +402,7 @@ export class PaperPrinter {
 
   // Selection handler methods for each menu type
   private async handleSelection_Print(selectedId: string): Promise<string> {
-    if (selectedId === '0') {
+    if (selectedId === UIMenu.defaultId()) {
       return ''; // Print menu has no default selection
     }
     if (!this.pdfRendered) return '';
@@ -408,7 +421,7 @@ export class PaperPrinter {
     const dx = this.dx.sub('handleSelection_Theme', true);
     dx.out(`selectedId = ${selectedId}`);
 
-    if (selectedId === '0') {
+    if (selectedId === UIMenu.defaultId()) {
       // Return the current editor theme ID as the default
       const currentEditorTheme = this.app.vscodeapis.getActiveThemeId();
       const availableThemes = this.app.stylize.getThemes();
@@ -440,7 +453,7 @@ export class PaperPrinter {
     const dx = this.dx.sub('handleSelection_Text', true);
     dx.out(`selectedId = ${selectedId}`);
 
-    if (selectedId === '0') {
+    if (selectedId === UIMenu.defaultId()) {
       // Return the actual editor font size for default selection
       const editorTypo = this.app.vscodeapis.getEditorTypography();
       const editorSize = String(editorTypo.fontSize);
@@ -477,7 +490,7 @@ export class PaperPrinter {
     const dx = this.dx.sub('handleSelection_Page', true);
     dx.out(`selectedId = ${selectedId}`);
 
-    if (selectedId === '0') {
+    if (selectedId === UIMenu.defaultId()) {
       // Return the current page size for default selection
       const currentPageSize =
         this.currentPageSize || this.app.vscodeapis.getGlobalState<PageSize>('pageSize') || 'a4';
@@ -514,7 +527,7 @@ export class PaperPrinter {
     const dx = this.dx.sub('handleSelection_Orient', true);
     dx.out(`selectedId = ${selectedId}`);
 
-    if (selectedId === '0') {
+    if (selectedId === UIMenu.defaultId()) {
       // Return the current orientation for default selection
       const currentOrientation =
         this.currentOrientation ||

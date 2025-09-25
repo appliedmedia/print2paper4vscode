@@ -10,16 +10,12 @@ pdf_html: |
   <body>
     {{TOOLBAR}}
     <div class="pdf-container">
-      <div id="loading" style="display: block; text-align: center; padding: 50px;">
-        Loading PDF...
-      </div>
-      <div id="error" style="display: none; text-align: center; padding: 50px; color: red;">
-        Error loading PDF
-      </div>
-      <canvas id="pdf-canvas" style="display: none;"></canvas>
-      <div class="pdf-pages">
-        {{PDF_PAGES}}
-      </div>
+      <iframe 
+        id="pdf-viewer" 
+        src="{{PDF_DATA_URL}}" 
+        type="application/pdf"
+        style="width: 100%; height: 100vh; border: none;">
+      </iframe>
     </div>
   </body>
   </html>
@@ -28,126 +24,17 @@ pdf_css: |
   {{BASE_CSS}}
 
   .pdf-container {
-    position: relative;
     width: 100%;
     height: 100vh;
-    overflow: auto;
     background: white;
-    display: flex;
-    justify-content: center;
-    align-items: flex-start;
-    padding: 20px;
   }
 
-  #pdf-canvas {
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    border: 1px solid #ddd;
+  #pdf-viewer {
+    width: 100%;
+    height: 100%;
+    border: none;
   }
 
 pdf_js: |
-  // PDF Viewer JavaScript
-  // Browser environment globals are available automatically
-
-  let pdfDoc = null;
-  let pageNum = 1;
-  let pageRendering = false;
-  let pageNumPending = null;
-  const scale = 1.5;
-  const canvas = document.getElementById('pdf-canvas');
-  const ctx = canvas.getContext('2d');
-
-  function renderPage(num) {
-    pageRendering = true;
-    pdfDoc.getPage(num).then(function (page) {
-      const viewport = page.getViewport({ scale: scale });
-      canvas.height = viewport.height;
-      canvas.width = viewport.width;
-
-      const renderContext = {
-        canvasContext: ctx,
-        viewport: viewport,
-      };
-      const renderTask = page.render(renderContext);
-
-      renderTask.promise.then(function () {
-        pageRendering = false;
-        if (pageNumPending !== null) {
-          renderPage(pageNumPending);
-          pageNumPending = null;
-        }
-      });
-    });
-  }
-
-  function queueRenderPage(num) {
-    if (pageRendering) {
-      pageNumPending = num;
-    } else {
-      renderPage(num);
-    }
-  }
-
-  // Navigation functions (currently unused but available for future features)
-  function onPrevPage() {
-    if (pageNum <= 1) {
-      return;
-    }
-    pageNum--;
-    queueRenderPage(pageNum);
-  }
-
-  function onNextPage() {
-    if (pageNum >= pdfDoc.numPages) {
-      return;
-    }
-    pageNum++;
-    queueRenderPage(pageNum);
-  }
-
-  function onDocumentLoadSuccess(pdf) {
-    pdfDoc = pdf;
-    document.getElementById('loading').style.display = 'none';
-    document.getElementById('pdf-canvas').style.display = 'block';
-    renderPage(pageNum);
-  }
-
-  function onDocumentLoadError(error) {
-    document.getElementById('loading').style.display = 'none';
-    document.getElementById('error').style.display = 'block';
-    document.getElementById('error').textContent =
-      'Error loading PDF: ' + error.message;
-  }
-
-  // Initialize PDF viewer when page loads
-  function initPdfViewer(pdfDataUrl) {
-    if (typeof pdfjsLib === 'undefined') {
-      onDocumentLoadError(new Error('PDF.js library not loaded'));
-      return;
-    }
-    
-    if (!pdfDataUrl) {
-      onDocumentLoadError(new Error('No PDF data URL provided'));
-      return;
-    }
-    
-    // Set worker source to use local file
-    pdfjsLib.GlobalWorkerOptions.workerSrc = '{{as_uri:src/lib/pdf.worker.min.js}}';
-    
-    const loadingTask = pdfjsLib.getDocument({
-      url: pdfDataUrl,
-      disableAutoFetch: true,
-      disableStream: true
-    });
-    
-    loadingTask.promise.then(onDocumentLoadSuccess, onDocumentLoadError);
-  }
-
-  // Make initPdfViewer available globally
-  window.initPdfViewer = initPdfViewer;
-
-  // Listen for PDF update messages
-  window.addEventListener('message', (event) => {
-    if (event.data.type === 'updatePdf') {
-      initPdfViewer(event.data.pdfDataUrl);
-    }
-  });
+  // Simple PDF viewer - no JavaScript needed for iframe display
+  // The iframe handles PDF rendering natively

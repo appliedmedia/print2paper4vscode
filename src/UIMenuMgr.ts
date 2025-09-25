@@ -26,12 +26,23 @@ export class UIMenuMgr {
 
   createMenu(
     id: string,
+    displayName: string,
     icon: string,
-    title: string,
+    isFlyout: boolean = false,
     menuItems: () => UIMenuItem[],
+    flyoutMenuItemIds: string[] = [],
     selectionHandler: (selectedId: string) => Promise<string>
   ): UIMenu {
-    return new UIMenu(id, icon, title, this.app, menuItems, selectionHandler);
+    return new UIMenu(
+      this.app,
+      id,
+      displayName,
+      icon,
+      isFlyout,
+      menuItems,
+      flyoutMenuItemIds,
+      selectionHandler
+    );
   }
 
   // Get all menus
@@ -150,13 +161,13 @@ export class UIMenuMgr {
   getMenuConfiguration(): Array<{
     id: string;
     icon: string;
-    title: string;
+    displayName: string;
     templateVariable: string;
   }> {
     return this.getAllMenus().map(menu => ({
       id: menu.id,
       icon: menu.icon,
-      title: menu.title,
+      displayName: menu.displayName,
       templateVariable: menu.getTemplateVariableName(),
     }));
   }

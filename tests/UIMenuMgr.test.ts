@@ -69,9 +69,11 @@ describe('UIMenuMgr', () => {
 
       const menu = menuMgr.createMenu(
         'testMenu',
-        '🔧',
         'Test Menu',
+        '🔧',
+        false,
         mockListBuilder,
+        [],
         mockSelectionHandler
       );
       menuMgr.addMenu(menu);
@@ -90,16 +92,20 @@ describe('UIMenuMgr', () => {
 
       const menu1 = menuMgr.createMenu(
         'menu1',
-        '🔧',
         'Menu 1',
+        '🔧',
+        false,
         mockListBuilder,
+        [],
         mockSelectionHandler
       );
       const menu2 = menuMgr.createMenu(
         'menu2',
-        '🎨',
         'Menu 2',
+        '🎨',
+        false,
         mockListBuilder,
+        [],
         mockSelectionHandler
       );
 
@@ -126,9 +132,11 @@ describe('UIMenuMgr', () => {
 
       const testMenu = menuMgr.createMenu(
         'testMenu',
-        '🔧',
         'Test Menu',
+        '🔧',
+        false,
         mockListBuilder,
+        [],
         mockSelectionHandler
       );
       menuMgr.addMenu(testMenu);
@@ -159,16 +167,20 @@ describe('UIMenuMgr', () => {
 
       const menu1 = menuMgr.createMenu(
         'menu1',
-        '🔧',
         'Menu 1',
+        '🔧',
+        false,
         mockListBuilder,
+        [],
         mockSelectionHandler
       );
       const menu2 = menuMgr.createMenu(
         'menu2',
-        '🎨',
         'Menu 2',
+        '🎨',
+        false,
         mockListBuilder,
+        [],
         mockSelectionHandler
       );
 
@@ -196,9 +208,11 @@ describe('UIMenuMgr', () => {
       const mockSelectionHandler = async (id: string): Promise<string> => Promise.resolve('');
       const testMenu = menuMgr.createMenu(
         'testMenu',
-        '🔧',
         'Test Menu',
+        '🔧',
+        false,
         mockListBuilder,
+        [],
         mockSelectionHandler
       );
       menuMgr.addMenu(testMenu);
@@ -218,9 +232,11 @@ describe('UIMenuMgr', () => {
 
       const testMenu = menuMgr.createMenu(
         'testMenu',
-        '🔧',
         'Test Menu',
+        '🔧',
+        false,
         mockListBuilder,
+        [],
         mockSelectionHandler
       );
       menuMgr.addMenu(testMenu);
@@ -241,16 +257,20 @@ describe('UIMenuMgr', () => {
 
       const menu1 = menuMgr.createMenu(
         'menu1',
-        '🔧',
         'Menu 1',
+        '🔧',
+        false,
         mockListBuilder,
+        [],
         mockSelectionHandler
       );
       const menu2 = menuMgr.createMenu(
         'menu2',
-        '🎨',
         'Menu 2',
+        '🎨',
+        false,
         mockListBuilder,
+        [],
         mockSelectionHandler
       );
 
@@ -274,9 +294,11 @@ describe('UIMenuMgr', () => {
 
       const testMenu = menuMgr.createMenu(
         'testMenu',
-        '🔧',
         'Test Menu',
+        '🔧',
+        false,
         mockListBuilder,
+        [],
         mockSelectionHandler
       );
       menuMgr.addMenu(testMenu);
@@ -286,7 +308,7 @@ describe('UIMenuMgr', () => {
       assert.strictEqual(config.length, 1, 'Should have 1 menu configuration');
       assert.strictEqual(config[0].id, 'testMenu', 'Should have correct ID');
       assert.strictEqual(config[0].icon, '🔧', 'Should have correct icon');
-      assert.strictEqual(config[0].title, 'Test Menu', 'Should have correct title');
+      assert.strictEqual(config[0].displayName, 'Test Menu', 'Should have correct displayName');
       assert.strictEqual(
         config[0].templateVariable,
         'TESTMENU_MENU_ITEMS',
@@ -306,9 +328,11 @@ describe('UIMenuMgr', () => {
 
       const longMenu = menuMgr.createMenu(
         longId,
-        '🔧',
         'Long Menu',
+        '🔧',
+        false,
         mockListBuilder,
+        [],
         mockSelectionHandler
       );
       menuMgr.addMenu(longMenu);
@@ -328,9 +352,11 @@ describe('UIMenuMgr', () => {
 
       const specialMenu = menuMgr.createMenu(
         specialId,
-        '🔧',
         'Special Menu',
+        '🔧',
+        false,
         mockListBuilder,
+        [],
         mockSelectionHandler
       );
       menuMgr.addMenu(specialMenu);

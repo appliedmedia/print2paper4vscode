@@ -340,7 +340,7 @@ export class PDF {
       const pdfDataUrl = pdfDoc.output('datauristring') as string;
       dx.out(`PDF data URL generated: ${pdfDataUrl.substring(0, 50)}...`);
 
-      // Load YAML templates and PDF.js library
+      // Load YAML templates
       const pdfTemplates = this.app.os.fileRead<{
         pdf_html: string;
         pdf_css: string;
@@ -351,14 +351,8 @@ export class PDF {
         base_css: string;
       }>('src/UI.yaml');
 
-      const pdfJsContent = this.app.os.fileRead('src/lib/pdf.min.js');
-
-      dx.out(
-        `PDF.js library loaded: ${pdfJsContent ? `${pdfJsContent.length} characters` : 'failed'}`
-      );
-
-      if (!pdfTemplates || !uiTemplates || !pdfJsContent) {
-        throw new Error('Failed to load required templates or PDF.js library');
+      if (!pdfTemplates || !uiTemplates) {
+        throw new Error('Failed to load required templates');
       }
 
       // Generate HTML using template with embedded resources
@@ -368,7 +362,6 @@ export class PDF {
         PDF_CSS: this.app.templateDictReplace(pdfTemplates.pdf_css, {
           BASE_CSS: uiTemplates.base_css,
         }),
-        PDFJS_LIBRARY: pdfJsContent,
         PDF_JS: pdfTemplates.pdf_js,
         TOOLBAR: '{{TOOLBAR}}', // Placeholder for toolbar injection
       });
