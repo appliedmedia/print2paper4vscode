@@ -9,7 +9,7 @@ import type {
   // Position,
   // WorkspaceEdit,
 } from 'vscode';
-import type { WebviewMessage } from './types/UI_t';
+import type { WebviewMessage, ExtensionToWebviewMessage } from './types/UI_t';
 import { Diagnostics } from './Diagnostics';
 
 // Opaque ID type for webview panels
@@ -177,7 +177,7 @@ export class VSCodeAPIs {
   /**
    * Post message to panel
    */
-  postMessageToPanel(id: WebviewPanelId, message: unknown): void {
+  postMessageToPanel(id: WebviewPanelId, message: ExtensionToWebviewMessage): void {
     const panel = this.panels.get(id);
     if (panel) panel.webview.postMessage(message);
   }

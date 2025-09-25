@@ -413,7 +413,7 @@ export class PDF {
       // Generate HTML using template with embedded resources
       // Escape single quotes in the data URL for JavaScript string literal
       const escapedPdfDataUrl = pdfDataUrl.replace(/'/g, "\\'");
-      
+
       const html = this.app.templateDictReplace(pdfTemplates.pdf_html, {
         TITLE: title,
         PDF_DATA_URL: escapedPdfDataUrl,

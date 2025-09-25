@@ -111,6 +111,19 @@ export class PaperPrinter {
     dx.done();
   }
 
+  private async handleDxMessage(msg: WebviewMessage): Promise<void> {
+    const dx = this.dx.sub('handleDxMessage', true /* debugOn */);
+    dx.require({ msg }, ['msg']);
+
+    // Output webview diagnostic message via dx.out (forced debug on)
+    if (msg.message) {
+      dx.out(`[Webview] ${msg.message}`);
+    } else {
+      dx.out('Received dx message without message content');
+    }
+    dx.done();
+  }
+
   private async handlePrintMessage(msg: WebviewMessage): Promise<void> {
     if (!this.pdfRendered) return;
     void (await this.applyRenderModes(this.pdfRendered));
@@ -300,6 +313,7 @@ export class PaperPrinter {
       { type: 'dragEnd', handler: this.handleDragEnd.bind(this) },
       { type: 'menuItemSelected', handler: this.handleMenuItemSelected.bind(this) },
       { type: 'print', handler: this.handlePrintMessage.bind(this) },
+      { type: 'dx', handler: this.handleDxMessage.bind(this) },
     ];
 
     messageHandlers.forEach(({ type, handler }) => {
