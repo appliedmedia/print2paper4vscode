@@ -104,10 +104,12 @@ export class UIMenu {
     const yaml = this.yaml; // This will load and validate automatically
 
     // Check if this item has a flyout by looking if its ID matches a main menu
-    const flyoutMenu = this.app.uimenumgr.getMenu(item.id);
-    const isFlyout = !!flyoutMenu;
-    const isDefault = item.id === defaultItemId;
+    const id = item.id;
+    const isFlyout = !!flyout;
+    const flyoutMenuIdRef = isFlyout ? ` flyout-menu-id-ref="${id}"` : '';
+    const isDefault = id === defaultItemId;
     const itemClasses = isFlyout ? 'flyout' : isDefault ? 'default-item selected' : '';
+    const itemId = isFlyout ? `flyout-${id}` : id;
 
     // Handle SVG template replacement for displayName
     let processedDisplayName = item.displayName;
@@ -126,12 +128,13 @@ export class UIMenu {
     }
 
     const replacementDict = {
-      ITEM_ID: item.id,
-      ITEM_LABEL: processedDisplayName,
+      ITEM_ID: itemId,
+      ITEM_DISPLAY_NAME: processedDisplayName,
       ITEM_CLASSES: itemClasses,
       CONTENT_GUTTER_BEFORE: '', // Content handled by CSS
       CONTENT_GUTTER_AFTER: '', // Content handled by CSS
       FLYOUT: flyout,
+      FLYOUT_MENU_ID_REF: flyoutMenuIdRef,
     };
 
     return this.app.templateDictReplace(yaml.ui_menu_item, replacementDict);
@@ -162,13 +165,14 @@ export class UIMenu {
 
     // Build CSS classes for menu container
     const menuClasses = [
+      isFlyout ? 'flyout' : '',
       haveSelectionAndDefault ? 'has-selected' : '',
       hasGutterAfter ? 'has-gutter-after' : '',
     ]
       .filter(Boolean)
       .join(' ');
-    // Choose template based on whether this menu has an icon
-    const template = isFlyout ? yaml.ui_flyout : yaml.ui_menu_html;
+    // Use the main template for all menus
+    const template = yaml.ui_menu_html;
 
     const replacementDict = {
       MENU_ID: this.getId_Menu(),

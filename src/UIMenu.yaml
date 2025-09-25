@@ -59,13 +59,15 @@ ui_menu_css: |
   }
 
   .p2p4vsc-menu-item.selected {
-    grid-template-columns: 1ch 1fr 0;
+    /* Keep the same grid structure as default */
   }
 
   .p2p4vsc-menu-item.selected .gutter-before::before {
     content: "✓";
     display: inline-block;
     width: 100%;
+    vertical-align: baseline;
+    line-height: 1;
   }
 
   .p2p4vsc-menu.has-gutter-after .p2p4vsc-menu-item {
@@ -80,41 +82,26 @@ ui_menu_css: |
     grid-template-columns: var(--gutter-before-width) 1fr var(--gutter-after-width);
   }
 
-  /* Flyout submenu styling */
-  .p2p4vsc-flyout {
-    position: absolute;
-    left: 100%;
-    top: 0;
-    background: #333;
-    color: #fff;
-    border-radius: 6px;
-    box-shadow: 0 6px 18px rgba(0,0,0,.3);
-    padding: 4px 0;
-    display: none;
-    z-index: 1001;
-    margin-left: 0;
-  }
-
-  .p2p4vsc-flyout .p2p4vsc-menu-item {
-    padding: 3px;
-    cursor: pointer;
-    white-space: nowrap;
-    display: flex;
-    align-items: center;
-    justify-content: flex-start;
-    position: relative;
-  }
-
-  .p2p4vsc-flyout .p2p4vsc-menu-item:hover {
-    background: #555;
-  }
-
   .p2p4vsc-group { position: relative; }
+
+  /* Hide button for flyout menus */
+  .p2p4vsc-menu.flyout .p2p4vsc-menu-btn {
+    display: none;
+  }
+
+  /* Hide flyout menus by default */
+  .p2p4vsc-menu.flyout {
+    display: none;
+  }
+
+  /* Show menu items inside flyout menus when the flyout is visible */
+  .p2p4vsc-menu.flyout[style*="display: block"] .p2p4vsc-menu-items {
+    display: block !important;
+  }
 
 ui_menu_html: |
   <div class="p2p4vsc-menu {{MENU_CLASSES}}" id="{{MENU_ID}}">
-    <button class="p2p4vsc-menu-btn"
-            title="{{TITLE}}">{{ICON}}</button>
+    <button class="p2p4vsc-menu-btn" title="{{TITLE}}">{{ICON}}</button>
     <div class="p2p4vsc-menu-items" id="{{MENU_ID}}-items">
       {{MENU_ITEMS}}
     </div>
@@ -149,70 +136,83 @@ ui_menu_generic_handlers: |
     }
 
     // Handle menu item clicks
-    if (e.target.matches('.p2p4vsc-menu-item')) {
-      const menu = e.target.closest && e.target.closest('.p2p4vsc-menu');
-      
-      // Check if this item has a flyout
-      const flyout = e.target.querySelector('.p2p4vsc-flyout');
-      if (flyout) {
+    const itemEl = e?.target?.closest?.('.p2p4vsc-menu-item');
+    if (itemEl) {
+      const menu = itemEl.closest('.p2p4vsc-menu');
+      // Check if this item has a flyout (is a parent item with submenu)
+      if (itemEl.classList.contains('flyout')) {
         // This item has a flyout - toggle it instead of selecting
         e.preventDefault();
         
-        // Close all other flyouts
-        document.querySelectorAll('.p2p4vsc-flyout').forEach(f => {
-          if (f !== flyout) f.style.display = 'none';
-        });
-        
-        // Toggle this flyout
-        if (flyout.style.display === 'block') {
-          flyout.style.display = 'none';
-        } else {
-          flyout.style.display = 'block';
+        // Find the flyout menu for this item by checking flyout-menu-id-ref attribute
+        const flyoutMenuId = itemEl.getAttribute('flyout-menu-id-ref');
+        console.log('Flyout menu ID:', flyoutMenuId);
+        const flyoutMenu = flyoutMenuId ? document.getElementById(flyoutMenuId) : null;
+        console.log('Found flyout menu:', flyoutMenu);
+        if (flyoutMenu) {
+          // Close all other flyouts
+          document.querySelectorAll('.p2p4vsc-menu.flyout').forEach(menu => {
+            if (menu !== flyoutMenu) {
+              menu.style.display = 'none';
+            }
+          });
+          
+          // Toggle this flyout
+          if (flyoutMenu.style.display === 'block') {
+            flyoutMenu.style.display = 'none';
+          } else {
+            // Position flyout relative to clicked item
+            const itemRect = itemEl.getBoundingClientRect();
+            flyoutMenu.style.position = 'absolute';
+            flyoutMenu.style.left = (itemRect.right + 4) + 'px';
+            flyoutMenu.style.top = (itemRect.top - 4) + 'px';
+            flyoutMenu.style.zIndex = '1001';
+            flyoutMenu.style.display = 'block';
+          }
         }
         return;
       }
       
-      // No flyout - proceed with normal selection
-      // Remove active class from all items in this menu
+      // Regular menu item selection (works for both main menu and flyout items)
+      // Remove selected class from all items in this menu
       const menuItems = menu.querySelectorAll('.p2p4vsc-menu-item');
-      menuItems.forEach(item => item.classList.remove('active'));
+      menuItems.forEach(item => item.classList.remove('selected'));
       
-      // Add active class to clicked item
-      e.target.classList.add('active');
+      // Add selected class to clicked item
+      itemEl.classList.add('selected');
 
       // Send minimal selection data to extension
       window.vscode.postMessage({
         type: 'menuItemSelected',
-        targetId: e.target.id,
-        parentId: e.target.closest && e.target.closest('.p2p4vsc-menu')?.getAttribute('id')
+        targetId: itemEl.id,
+        parentId: menu?.getAttribute('id')
       });
 
-      // Close the menu after selection
-      const menuItemsContainer = menu.querySelector('.p2p4vsc-menu-items');
-      menuItemsContainer.style.display = 'none';
-      const btn = menu.querySelector('.p2p4vsc-menu-btn');
-      btn?.setAttribute('aria-expanded', 'false');
+      // Close the menu after selection (only if not in a flyout)
+      if (!isFlyout) {
+        const menuItemsContainer = menu.querySelector('.p2p4vsc-menu-items');
+        menuItemsContainer.style.display = 'none';
+        const btn = menu.querySelector('.p2p4vsc-menu-btn');
+        btn?.setAttribute('aria-expanded', 'false');
+      }
       return;
     }
 
     // Close all menus when clicking outside
-    if (!e.target.closest && e.target.closest('.p2p4vsc-menu')) {
+    if (!e.target?.closest?.('.p2p4vsc-menu')) {
       document.querySelectorAll('.p2p4vsc-menu-items').forEach(items => {
         items.style.display = 'none';
       });
-      document.querySelectorAll('.p2p4vsc-flyout').forEach(flyout => {
+      document.querySelectorAll('.p2p4vsc-menu.flyout').forEach(flyout => {
         flyout.style.display = 'none';
       });
     }
   });
 
 ui_menu_item: |
-  <div class="p2p4vsc-menu-item {{ITEM_CLASSES}}" id="{{ITEM_ID}}">
+  <div class="p2p4vsc-menu-item {{ITEM_CLASSES}}" id="{{ITEM_ID}}"{{FLYOUT_MENU_ID_REF}}>
     <div class="gutter-before">{{CONTENT_GUTTER_BEFORE}}</div>
-    <div class="menu-item-text">{{ITEM_LABEL}}</div>
+    <div class="menu-item-text">{{ITEM_DISPLAY_NAME}}</div>
     <div class="gutter-after">{{CONTENT_GUTTER_AFTER}}</div>
     {{FLYOUT}}
   </div>
-
-ui_flyout: |
-  <div class="p2p4vsc-flyout" id="{{MENU_ID}}" style="width: {{MENU_WIDTH}};">{{MENU_ITEMS}}</div>
