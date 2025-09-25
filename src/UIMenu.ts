@@ -149,17 +149,12 @@ export class UIMenu {
     const menuItems = this.getMenuItems();
     const defaultItemId = await this.defaultItem(); // Get default once
 
-    // Check if menu has selected items for CSS class
-    const hasSelectedItem = !!defaultItemId; // Existence of defaultItemId means there's a selected item
-    const isFlyout = !this.icon || this.icon.length === 0;
+    // Check if menu has selection and default for CSS class
+    const haveSelectionAndDefault = !!defaultItemId;
+    const isFlyout = !this.icon?.length;
 
-    // Check if any items need gutter-after (default or flyout)
-    const hasGutterAfter = menuItems.some(item => {
-      const isDefault = item.id === defaultItemId;
-      const hasFlyout = !!this.app.uimenumgr.getMenu(item.id);
-      return isDefault || hasFlyout;
-    });
-
+    // Determine gutter content from semaphores
+    const hasGutterAfter = isFlyout || haveSelectionAndDefault;
     const processedMenuItemsHtml = await Promise.all(
       menuItems.map(item => this.getItemHTML(item, flyoutCache[item.id] || '', defaultItemId))
     );
@@ -167,7 +162,7 @@ export class UIMenu {
 
     // Build CSS classes for menu container
     const menuClasses = [
-      hasSelectedItem ? 'has-selected' : '',
+      haveSelectionAndDefault ? 'has-selected' : '',
       hasGutterAfter ? 'has-gutter-after' : '',
     ]
       .filter(Boolean)

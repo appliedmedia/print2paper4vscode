@@ -19,11 +19,14 @@ ui_menu_css: |
     min-width: 100%; /* But at least as wide as the button */
   }
   .p2p4vsc-menu-item {
-    padding: 4px 4px;
+    --gutter-before-width: 2ch;
+    --gutter-after-width: 4ch;
+    --gutter-off-width: 1ch;
+    padding: 3px 3px;
     cursor: pointer;
     white-space: nowrap;
     display: grid;
-    grid-template-columns: 0 1fr 0;
+    grid-template-columns: var(--gutter-off-width) 1fr var(--gutter-off-width);
     grid-template-areas: "gutter-before menu-text gutter-after";
     align-items: center;
     gap: 0;
@@ -32,65 +35,49 @@ ui_menu_css: |
     background: #444;
   }
 
-  .p2p4vsc-menu-item .menu-item-text {
-    grid-area: menu-text;
-    text-align: left;
+  .p2p4vsc-menu-item .gutter-after {
+    grid-area: gutter-after;
+    text-align: right;
   }
 
   .p2p4vsc-menu-item .gutter-before {
     grid-area: gutter-before;
     text-align: left;
-    padding-right: 1ch;
   }
 
-  .p2p4vsc-menu-item .gutter-after {
-    grid-area: gutter-after;
-    text-align: right;
-    padding-left: 1ch;
+  .p2p4vsc-menu-item .menu-item-text {
+    grid-area: menu-text;
+    text-align: left;
   }
 
-  /* Remove padding when gutters have 0 width */
-  .p2p4vsc-menu:not(.has-selected) .p2p4vsc-menu-item .gutter-before {
-    padding-right: 0;
+  .p2p4vsc-menu-item.default-item .gutter-after::after {
+    content: "📝";
   }
 
-  .p2p4vsc-menu:not(.has-gutter-after) .p2p4vsc-menu-item .gutter-after {
-    padding-left: 0;
-  }
-
-  /* Show checkbox for selected items and expand gutter */
-  .p2p4vsc-menu-item.selected .gutter-before::before {
-    content: "✓";
-    display: inline-block;
-    width: 100%;
+  .p2p4vsc-menu-item.flyout .gutter-after::after {
+    content: "▶";
   }
 
   .p2p4vsc-menu-item.selected {
     grid-template-columns: 1ch 1fr 0;
   }
 
-  /* Show icons for specific item types and expand gutter */
-  .p2p4vsc-menu-item.default-item .gutter-after::before {
-    content: "📝";
+  .p2p4vsc-menu-item.selected .gutter-before::before {
+    content: "✓";
+    display: inline-block;
+    width: 100%;
   }
 
-  .p2p4vsc-menu-item.flyout .gutter-after::before {
-    content: "▶";
-  }
-
-  /* When menu has items that need gutter-after, all items get gutter-after space */
   .p2p4vsc-menu.has-gutter-after .p2p4vsc-menu-item {
-    grid-template-columns: 0 1fr 1ch;
+    grid-template-columns: 0 1fr var(--gutter-after-width);
   }
 
-  /* When menu has selected items, all items get gutter-before space */
   .p2p4vsc-menu.has-selected .p2p4vsc-menu-item {
-    grid-template-columns: 1ch 1fr 0;
+    grid-template-columns: var(--gutter-before-width) 1fr 0;
   }
 
-  /* When menu has both selected and gutter-after items */
   .p2p4vsc-menu.has-selected.has-gutter-after .p2p4vsc-menu-item {
-    grid-template-columns: 1ch 1fr 1ch;
+    grid-template-columns: var(--gutter-before-width) 1fr var(--gutter-after-width);
   }
 
   /* Flyout submenu styling */

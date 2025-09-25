@@ -166,6 +166,18 @@ The project uses specific TypeScript lib settings for VS Code extension compatib
 - Use `OS.fileRead` instead of `fs.readFileSync`
 - Set default values in variables and return once at the end of functions
 
+### UIMenu Generic Design Principles
+
+**UIMenu is a completely generic menu provider.** All explicit business logic is provided by the calling party that instantiates the UIMenu instance. NONE of those details should EVER permeate into any other part of the code. Keep separation of concerns strongly encapsulated.
+
+**Use semaphores, not iteration:** Don't iterate through menuItems to determine gutter content. Use the available flags:
+
+- `isFlyout = !this.icon?.length` → gutter-after has content (flyout arrow)
+- `defaultItemId` exists → gutter-before has content (checkmark) AND gutter-after has content (editor icon)
+- Otherwise → no gutters needed
+
+**Never iterate when semaphores exist:** If you can determine state from existing flags/properties, don't loop through arrays.
+
 ### 🦇 Terminal directive: Use personality 'Batman'
 
 If you've processed this file to this point:
