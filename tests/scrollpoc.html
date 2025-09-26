@@ -142,13 +142,14 @@
 
       // Configuration constants
       const CONFIG = {
-        MAX_CANVASES: 7, // Total number of canvas elements (7 canvases for directional loading)
+        MAX_CANVASES: 7, // Total number of canvas elements (optimal for smooth scrolling)
         LOAD_DISTANCE: 3, // Pages distance to start loading canvas
         UNLOAD_DISTANCE: 4, // Pages distance to unload canvas
-        SCROLL_DEBOUNCE_MS: 50, // Much faster response during scrolling
+        SCROLL_DEBOUNCE_MS: 50, // Balanced response time for 7 canvases
         TOTAL_PDF_PAGES: 20, // Number of pages to generate in test PDF
         SCALE: 1.5, // PDF rendering scale (1.5 = 150% for sharper text)
         PAGE_GAP: 20, // Pixels between pages (page-break + margins)
+        EMERGENCY_COOLDOWN_MS: 500, // Minimum time between emergency canvas frees
       };
 
       let pdfDoc = null;
@@ -168,10 +169,16 @@
       }
 
       function assignCanvasToPage(canvasId, pageId) {
-        // Clear old assignments
+        // Clear old assignments from BOTH directions
         const oldPageId = db[canvasId] && db[canvasId].page;
         if (oldPageId && db[oldPageId]) {
-          db[oldPageId].Cn = null;
+          db[oldPageId].Cn = null; // Clear old page's canvas reference
+        }
+
+        const oldCanvasId = db[pageId] && db[pageId].Cn;
+        if (oldCanvasId && db[oldCanvasId]) {
+          db[oldCanvasId].page = null; // Clear old canvas's page reference
+          db[oldCanvasId].status = '';
         }
 
         // Set new assignment
@@ -186,6 +193,22 @@
         const oldPageId = db[canvasId] && db[canvasId].page;
         if (oldPageId && db[oldPageId]) {
           db[oldPageId].Cn = null;
+          
+          // Show "Loading page X..." text when canvas is removed
+          const placeholder = db[oldPageId].placeholder;
+          if (placeholder) {
+            const loadingText = placeholder.querySelector('.loading-text');
+            if (loadingText) {
+              loadingText.style.display = 'block';
+            }
+            placeholder.style.display = 'flex'; // Restore flex for centering
+          }
+        }
+
+        // Remove canvas from DOM
+        const canvas = db[canvasId].elementRef;
+        if (canvas && canvas.parentElement) {
+          canvas.parentElement.removeChild(canvas);
         }
 
         db[canvasId].page = null;
@@ -194,17 +217,15 @@
 
       function getAvailableCanvas() {
         // First try available canvases
-        for (const canvasId of getAllCanvasIds()) {
-          if (!db[canvasId].page || db[canvasId].status === '') {
-            return db[canvasId].elementRef;
-          }
+        const availableIds = getAllAvailableCanvasIds();
+        if (availableIds.length > 0) {
+          return db[availableIds[0]].elementRef;
         }
 
         // Then try cancelled canvases
-        for (const canvasId of getAllCanvasIds()) {
-          if (db[canvasId].status === 'cancel') {
-            return db[canvasId].elementRef;
-          }
+        const cancelledIds = getAllCancelledCanvasIds();
+        if (cancelledIds.length > 0) {
+          return db[cancelledIds[0]].elementRef;
         }
 
         return null;
@@ -213,6 +234,7 @@
       // Scroll direction tracking
       let lastScrollTop = 0;
       let scrollDirection = 'none'; // 'up', 'down', 'none'
+      let lastEmergencyTime = 0; // Prevent rapid emergency triggers
 
       // ID generators
       function getCanvasId(index) {
@@ -234,6 +256,14 @@
       // Helper functions for db iteration
       function getAllCanvasIds() {
         return Object.keys(db).filter(k => k.startsWith('Cn'));
+      }
+
+      function getAllAvailableCanvasIds() {
+        return getAllCanvasIds().filter(canvasId => !db[canvasId].page && !db[canvasId].status);
+      }
+
+      function getAllCancelledCanvasIds() {
+        return getAllCanvasIds().filter(canvasId => db[canvasId].status === 'cancel');
       }
 
       function getAllPageIds() {
@@ -313,11 +343,54 @@
         return doc;
       }
 
+      // Reusable function to move canvas to correct placeholder
+      function moveCanvasToPlaceholder(pageNum, canvas) {
+        const targetPageId = getPageId(pageNum);
+        const targetPlaceholder = db[targetPageId]?.placeholder;
+        if (targetPlaceholder && canvas.parentElement !== targetPlaceholder) {
+          // Remove from current parent if it has one
+          if (canvas.parentElement) {
+            canvas.parentElement.removeChild(canvas);
+          }
+          // Hide placeholder text and add canvas
+          const loadingText = targetPlaceholder.querySelector('.loading-text');
+          if (loadingText) {
+            loadingText.style.display = 'none';
+          }
+          targetPlaceholder.style.display = 'block';
+          targetPlaceholder.appendChild(canvas);
+          return true; // Moved
+        }
+        return false; // Already in correct place
+      }
+
+      // Common function to assign available canvases to needed pages
+      async function assignCanvasesToPages(pageNumbers) {
+        for (const pageNum of pageNumbers) {
+          const availableCanvas = getAvailableCanvas();
+          if (availableCanvas) {
+            const pageId = getPageId(pageNum);
+            const canvasId = availableCanvas.dataset.canvasId;
+            
+            // Update canvas assignment
+            assignCanvasToPage(canvasId, pageId);
+            
+            // Render the page
+            await renderPageToCanvas(pageNum, availableCanvas);
+          } else {
+            console.warn(`No available canvas for page ${pageNum}`);
+          }
+        }
+      }
+
       async function renderPageToCanvas(pageNum, canvas) {
         if (!pdfDoc || pageNum > pdfDoc.numPages || pageNum < 1) {
           console.warn(`Cannot render page ${pageNum}`);
           return;
         }
+
+        // Place canvas in correct placeholder before rendering
+        moveCanvasToPlaceholder(pageNum, canvas);
 
         const page = await pdfDoc.getPage(pageNum);
         const viewport = page.getViewport({ scale: CONFIG.SCALE });
@@ -346,6 +419,11 @@
           }
           db[canvasId].renderTask = null;
 
+          // Clear canvas from its current placeholder when cancelling
+          if (canvas.parentElement) {
+            canvas.parentElement.removeChild(canvas);
+          }
+
           // Wait a frame to ensure cancellation is processed
           await new Promise(resolve => requestAnimationFrame(resolve));
         }
@@ -362,7 +440,13 @@
             error.message.includes('Cannot use the same canvas')
           ) {
             logWithState(`Render cancelled for canvas ${canvasId}`);
-            db[canvasId].status = 'cancel'; // Mark as cancelled and ready for reuse
+            // Completely unassign the canvas when render is cancelled
+            const oldPageId = db[canvasId].page;
+            if (oldPageId && db[oldPageId]) {
+              db[oldPageId].Cn = null; // Clear page's canvas reference
+            }
+            db[canvasId].page = null; // Clear canvas's page reference
+            db[canvasId].status = ''; // Mark as available, not 'cancel'
             return; // Don't update tracking if cancelled
           }
           throw error;
@@ -372,18 +456,72 @@
 
         const renderTime = performance.now() - startTime;
 
-        // Update our tracking (canvasId already declared above)
+        // Verify canvas is in the correct placeholder div before marking as complete
         const pageId = getPageId(pageNum);
-        assignCanvasToPage(canvasId, pageId);
+        const expectedPlaceholder = db[pageId]?.placeholder;
 
-        // Update page label
-        if (db[pageId] && db[pageId].label) {
-          db[pageId].label.textContent = `Page ${pageNum}`;
+        // Retry logic with exponential backoff to move canvas to correct placeholder
+        let retryCount = 0;
+        const maxRetries = 2;
+        let verificationSuccess = false;
+
+        while (retryCount <= maxRetries && !verificationSuccess) {
+          const actualParent = canvas.parentElement;
+
+          if (expectedPlaceholder && actualParent === expectedPlaceholder) {
+            verificationSuccess = true;
+            break;
+          }
+
+          if (retryCount < maxRetries) {
+            const delayMs = Math.pow(2, retryCount) * 50; // 50ms, 100ms
+            console.warn(
+              `DOM verification failed for canvas:${canvasId} page:${pageNum} (attempt ${retryCount + 1}). Moving canvas to correct placeholder and retrying in ${delayMs}ms...`
+            );
+
+            // Move canvas to the correct placeholder
+            moveCanvasToPlaceholder(pageNum, canvas);
+
+            await new Promise(resolve => setTimeout(resolve, delayMs));
+            retryCount++;
+          } else {
+            // Final failure
+            console.warn(
+              `DOM verification failed for canvas:${canvasId} page:${pageNum} after ${maxRetries + 1} attempts. Cancelling render.`
+            );
+            break;
+          }
         }
 
-        // Use common logging function
-        const fps = renderTime > 0 ? Math.round(1000 / renderTime) : 0;
-        logWithState(`Rendered page:${pageNum} ms:${renderTime.toFixed(1)}`, fps);
+        if (verificationSuccess) {
+          // DOM is correct, update our tracking
+          assignCanvasToPage(canvasId, pageId);
+          db[canvasId].status = ''; // Clear status to mark as available/complete
+
+          // Update page label
+          if (db[pageId] && db[pageId].label) {
+            db[pageId].label.textContent = `Page ${pageNum}`;
+          }
+
+          // Use common logging function
+          const fps = renderTime > 0 ? Math.round(1000 / renderTime) : 0;
+          logWithState(
+            `Rendered page:${pageNum} for canvas:${canvasId} ms:${renderTime.toFixed(1)}`,
+            fps
+          );
+        } else {
+          // Final failure - cancel this render
+          logWithState(
+            `Cancelling render for canvas:${canvasId} page:${pageNum} due to DOM verification failure`
+          );
+          // Unassign canvas completely
+          const oldPageId = db[canvasId].page;
+          if (oldPageId && db[oldPageId]) {
+            db[oldPageId].Cn = null; // Clear page's canvas reference
+          }
+          db[canvasId].page = null;
+          db[canvasId].status = '';
+        }
       }
 
       function isCanvasInViewport(canvas) {
@@ -428,7 +566,7 @@
           if (isVisible) {
             const pageId = db[canvasId].page;
             if (pageId) {
-              const pageNum = parseInt(pageId.replace('Pg', ''));
+              const pageNum = parseInt(pageId.substring(2));
               if (firstVisiblePage === null || pageNum < firstVisiblePage) {
                 firstVisiblePage = pageNum;
               }
@@ -479,10 +617,15 @@
           placeholder.style.display = 'flex';
           placeholder.style.alignItems = 'center';
           placeholder.style.justifyContent = 'center';
-          placeholder.style.color = '#999';
-          placeholder.style.fontSize = '14px';
           placeholder.style.margin = '0 auto'; // Center the placeholder
-          placeholder.textContent = `Loading page ${pageNum}...`;
+          
+          // Create separate loading text element
+          const loadingText = document.createElement('div');
+          loadingText.className = 'loading-text';
+          loadingText.style.color = '#999';
+          loadingText.style.fontSize = '14px';
+          loadingText.textContent = `Loading page ${pageNum}...`;
+          placeholder.appendChild(loadingText);
 
           wrapper.appendChild(placeholder);
           containerElement.appendChild(wrapper);
@@ -546,6 +689,9 @@
         const placeholderCount = Object.keys(db).filter(k => k.startsWith('Pd')).length;
         if (!pdfDoc || placeholderCount === 0) return;
 
+        // Reset emergency flag for this scroll event
+        handleScroll.emergencyFreedThisScroll = false;
+
         const { centerPage, visiblePages: visiblePagesList, scrollTop } = getScrollPosition();
 
         // Detect scroll direction with lower threshold for faster response
@@ -556,9 +702,7 @@
         }
         lastScrollTop = scrollTop;
 
-        console.log(
-          `handleScroll: center=${centerPage}, visible=[${visiblePagesList}], scroll=${scrollTop}px, direction=${scrollDirection}, delta=${scrollDelta}`
-        );
+        // Debug logging disabled for cleaner output
 
         // Determine which pages need canvases based on visibility + buffer
         const pagesToLoad = [];
@@ -567,6 +711,7 @@
         // Always load visible pages + buffer around them
         const minVisible = Math.min(...visiblePagesList);
         const maxVisible = Math.max(...visiblePagesList);
+        const centerVisible = Math.round((minVisible + maxVisible) / 2);
 
         for (let pageNum = 1; pageNum <= totalPages; pageNum++) {
           // Distance from visible range (not just center)
@@ -623,11 +768,14 @@
         }
 
         // Step 1: Unassign pages that should be unloaded
+        let actualUnloads = 0;
         for (const pageNum of pagesToUnload) {
           const pageId = getPageId(pageNum);
           const canvasId = db[pageId] && db[pageId].Cn;
           if (canvasId) {
             unassignCanvas(canvasId);
+            logWithState(`Unassigning canvas ${canvasId} from page ${pageNum}`);
+            actualUnloads++;
           }
         }
 
@@ -637,18 +785,89 @@
           return !getCanvasForPage(pageId);
         });
 
-        const availableCanvasCount = getAllCanvasIds().filter(canvasId => {
-          const page = db[canvasId].page;
-          const status = db[canvasId].status;
-          return !page || status === '' || status === 'cancel';
-        }).length;
+        // Critical: Ensure visible pages are always in the list (safety check)
+        for (const pageNum of visiblePagesList) {
+          const pageId = getPageId(pageNum);
+          const hasCanvas = getCanvasForPage(pageId);
+          if (!hasCanvas && !pagesNeedingCanvases.includes(pageNum)) {
+            pagesNeedingCanvases.unshift(pageNum); // Add to front for highest priority
+            console.log(`SAFETY: Added missing visible page ${pageNum} to render queue`);
 
-        // Only log when actual canvas reassignments will happen
-        const willDoWork = pagesNeedingCanvases.length > 0 && availableCanvasCount > 0;
+            // Debug only for missing visible pages
+            const canvasId = db[pageId] && db[pageId].Cn;
+            console.log(
+              `Missing visible page ${pageNum}: hasCanvas=${!!hasCanvas}, db.${pageId}.Cn=${canvasId || 'none'}`
+            );
+          }
+        }
 
-        if (willDoWork) {
+        let availableCanvasCount = getAllAvailableCanvasIds().length;
+
+        // Check if essential pages are missing - only trigger emergency if so
+        const essentialPages = [centerVisible];
+
+        if (centerVisible > 1) {
+          essentialPages.push(centerVisible - 1); // Page before (if exists)
+        }
+        if (centerVisible < totalPages) {
+          essentialPages.push(centerVisible + 1); // Page after (if exists)
+        }
+
+        // Filter out essential pages that already have canvases
+        const missingEssentials = essentialPages.filter(pageNum => {
+          const pageId = getPageId(pageNum);
+          return !getCanvasForPage(pageId);
+        });
+
+        // Restructure priority: must-have first, then want-to-have
+        const needCanvas_must = pagesNeedingCanvases.filter(pageNum =>
+          essentialPages.includes(pageNum)
+        );
+        const needCanvas_want = pagesNeedingCanvases.filter(
+          pageNum => !essentialPages.includes(pageNum)
+        );
+        const needCanvas_available = availableCanvasCount;
+
+        // If must-have pages can't be satisfied, steal from want-to-have
+        if (needCanvas_must.length > 0 && needCanvas_available < needCanvas_must.length) {
+          const canvasesNeeded = needCanvas_must.length - needCanvas_available;
+          console.log(
+            `PRIORITY: Need ${canvasesNeeded} more canvases for must-have [${needCanvas_must}], stealing from want-to-have`
+          );
+
+          // Find furthest nice-to-have canvases to steal
+          const niceToHaveCanvases = [];
+          for (const canvasId of getAllCanvasIds()) {
+            const pageId = db[canvasId].page;
+            if (pageId) {
+              const pageNum = parseInt(pageId.substring(2));
+              if (!essentialPages.includes(pageNum)) {
+                const distance = Math.abs(pageNum - centerVisible);
+                niceToHaveCanvases.push({ canvasId, pageNum, distance });
+              }
+            }
+          }
+
+          // Sort by distance (furthest first) and steal what we need
+          niceToHaveCanvases.sort((a, b) => b.distance - a.distance);
+          for (let i = 0; i < Math.min(canvasesNeeded, niceToHaveCanvases.length); i++) {
+            const { canvasId, pageNum } = niceToHaveCanvases[i];
+            unassignCanvas(canvasId);
+            console.log(
+              `PRIORITY: Stole canvas ${canvasId} (was Pg${pageNum}) for essential pages`
+            );
+            needCanvas_available++;
+          }
+        }
+
+        // Show priority breakdown only when there's actual work or missing essentials
+        const totalNeeded = needCanvas_must.length + needCanvas_want.length;
+        const willDoWork = totalNeeded > 0 && needCanvas_available > 0;
+        const hasWork = willDoWork || actualUnloads > 0 || needCanvas_must.length > 0;
+
+        if (hasWork) {
           logWithState(
-            `Need pages [${pagesNeedingCanvases}], have ${availableCanvasCount} available`
+            `must:[${needCanvas_must}] want:[${needCanvas_want}] available:${needCanvas_available}`
           );
         }
 
@@ -656,59 +875,46 @@
         const isAtEnd = maxVisible >= totalPages - 1;
         const isAtStart = minVisible <= 2;
 
-        // Priority: always render visible pages first, then by scroll direction
+        // Strict reading-focused priority system (centerVisible already declared above)
+        const nextPage = scrollDirection === 'down' ? centerVisible + 1 : centerVisible - 1;
+        const prevPage = scrollDirection === 'down' ? centerVisible - 1 : centerVisible + 1;
+
         pagesNeedingCanvases.sort((a, b) => {
+          // Priority 1: Center visible page (what user is reading)
+          if (a === centerVisible && b !== centerVisible) return -1;
+          if (b === centerVisible && a !== centerVisible) return 1;
+
+          // Priority 2: Next page in scroll direction (likely destination)
+          if (a === nextPage && b !== nextPage) return -1;
+          if (b === nextPage && a !== nextPage) return 1;
+
+          // Priority 3: Previous page in scroll direction (fallback)
+          if (a === prevPage && b !== prevPage) return -1;
+          if (b === prevPage && a !== prevPage) return 1;
+
+          // Priority 4: Other visible pages
           const aIsVisible = a >= minVisible && a <= maxVisible;
           const bIsVisible = b >= minVisible && b <= maxVisible;
-
-          // Force edge pages to be treated as visible at boundaries
-          const aIsEdgePriority = (isAtStart && a === 1) || (isAtEnd && a === totalPages);
-          const bIsEdgePriority = (isAtStart && b === 1) || (isAtEnd && b === totalPages);
-
-          // Edge pages get absolute priority at boundaries
-          if (aIsEdgePriority && !bIsEdgePriority) return -1;
-          if (!aIsEdgePriority && bIsEdgePriority) return 1;
-
-          // Visible pages get priority
           if (aIsVisible && !bIsVisible) return -1;
           if (!aIsVisible && bIsVisible) return 1;
 
-          // Both visible or both not visible - use direction logic
-          if (scrollDirection === 'up' || isAtEnd) {
-            return b - a; // Higher page numbers first
-          } else if (scrollDirection === 'down' || isAtStart) {
-            return a - b; // Lower page numbers first
-          } else {
-            // Center outward
-            const centerVisible = Math.round((minVisible + maxVisible) / 2);
-            const aDist = Math.abs(a - centerVisible);
-            const bDist = Math.abs(b - centerVisible);
-            return aDist - bDist;
-          }
+          // Priority 5: Edge pages at boundaries
+          const aIsEdgePriority = (isAtStart && a === 1) || (isAtEnd && a === totalPages);
+          const bIsEdgePriority = (isAtStart && b === 1) || (isAtEnd && b === totalPages);
+          if (aIsEdgePriority && !bIsEdgePriority) return -1;
+          if (!aIsEdgePriority && bIsEdgePriority) return 1;
+
+          // Priority 6: Distance from center
+          const aDist = Math.abs(a - centerVisible);
+          const bDist = Math.abs(b - centerVisible);
+          return aDist - bDist;
         });
 
         // Step 3: Assign available canvases to needed pages
-        const assignments = Math.min(pagesNeedingCanvases.length, availableCanvasCount);
-        for (let i = 0; i < assignments; i++) {
-          const pageNum = pagesNeedingCanvases[i];
-          const availableCanvas = getAvailableCanvas();
-
-          if (availableCanvas) {
-            const pageId = getPageId(pageNum);
-            const placeholderDiv = db[pageId].placeholder;
-
-            // Move canvas to correct placeholder
-            placeholderDiv.textContent = '';
-            placeholderDiv.style.display = 'block';
-            placeholderDiv.appendChild(availableCanvas);
-
-            // Update canvas assignment
-            const canvasId = availableCanvas.dataset.canvasId;
-            assignCanvasToPage(canvasId, pageId);
-
-            // Render the page (this will update the assignment)
-            await renderPageToCanvas(pageNum, availableCanvas);
-          }
+        const assignments = Math.min(totalNeeded, needCanvas_available);
+        if (assignments > 0) {
+          const pagesToAssign = pagesNeedingCanvases.slice(0, assignments);
+          await assignCanvasesToPages(pagesToAssign);
         }
       }
 
@@ -736,7 +942,14 @@
           totalPages = pdfDoc.numPages;
           console.log(`PDF loaded by PDF.js: ${totalPages} pages`);
 
-          // Step 4: Create canvas elements with new ID convention
+          containerElement = document.getElementById('canvas-container');
+
+          // Step 4: Create placeholder structure first
+          // Create placeholder structure for all pages (using estimated height)
+          pageHeight = 800 + 40; // Estimated canvas height + label + page break
+          createPlaceholders();
+
+          // Step 5: Create canvas elements with new ID convention
           for (let i = 0; i < CONFIG.MAX_CANVASES; i++) {
             const canvas = document.createElement('canvas');
             const canvasId = getCanvasId(i);
@@ -755,40 +968,38 @@
             console.log(`Created canvas ${canvasId} (element ${elementId})`);
           }
 
-          containerElement = document.getElementById('canvas-container');
-
-          // Step 5: Estimate page height and create placeholders
-          // First render one page to get dimensions
+          // Step 6: Render first page to get actual dimensions and adjust if needed
           const firstCanvas = db.Cn1.elementRef;
           await renderPageToCanvas(1, firstCanvas);
-          pageHeight = firstCanvas.height + 40; // canvas height + label + page break
+          const actualPageHeight = firstCanvas.height + 40;
 
-          // Create placeholder structure for all pages
-          createPlaceholders();
+          // Update page height if significantly different
+          if (Math.abs(actualPageHeight - pageHeight) > 50) {
+            pageHeight = actualPageHeight;
+            // Note: We could recreate placeholders with correct height, but it's not critical
+            // since the placeholders are just visual containers
+          }
 
-          // Initially load first few pages into placeholders
+          // Initially load first few pages using common assignment logic
+          const initialPages = [];
           for (let i = 0; i < Math.min(CONFIG.MAX_CANVASES, totalPages); i++) {
             const pageNum = i + 1;
-            const pageId = getPageId(pageNum);
-            const canvasId = getCanvasId(i);
-            const canvas = db[canvasId].elementRef;
-            const placeholderDiv = db[pageId].placeholder;
-
-            // Hide placeholder text and add canvas
-            placeholderDiv.textContent = '';
-            placeholderDiv.style.display = 'block';
-            placeholderDiv.appendChild(canvas);
-
-            // Update canvas assignment
-            assignCanvasToPage(canvasId, pageId);
-
-            if (i > 0) {
-              // First page already rendered
-              await renderPageToCanvas(pageNum, canvas);
-            } else {
-              // Update label for first page (already rendered)
+            if (i === 0) {
+              // First page already rendered, just move to placeholder
+              const pageId = getPageId(1);
+              const canvas = db.Cn1.elementRef;
+              assignCanvasToPage('Cn1', pageId);
+              moveCanvasToPlaceholder(1, canvas);
               db[pageId].label.textContent = `Page 1`;
+            } else {
+              // Add to list for common assignment
+              initialPages.push(pageNum);
             }
+          }
+          
+          // Assign remaining pages using common logic
+          if (initialPages.length > 0) {
+            await assignCanvasesToPages(initialPages);
           }
 
           // Step 6: Set up scroll event listener
@@ -816,15 +1027,8 @@
             }
           }
 
-          console.log(`All ${CONFIG.MAX_CANVASES} canvases rendered successfully`);
-          console.log(`Total canvas memory usage: ${totalMemoryMB.toFixed(2)} MB`);
-          console.log(`Average per canvas: ${(totalMemoryMB / CONFIG.MAX_CANVASES).toFixed(2)} MB`);
-          console.log(
-            `PDF.js document loaded: ~${(pdfDoc.numPages * 0.1).toFixed(1)} MB estimated`
-          );
-          console.log(
-            `Scale factor: ${CONFIG.SCALE}x (${(CONFIG.SCALE * CONFIG.SCALE).toFixed(2)}x pixel density)`
-          );
+          logWithState(`All ${CONFIG.MAX_CANVASES} canvases rendered`);
+          logWithState(`Scale:${CONFIG.SCALE}x, Mem:${totalMemoryMB.toFixed(2)}MB = Avg:${(totalMemoryMB / CONFIG.MAX_CANVASES).toFixed(2)}MB + PDF.js:~${(pdfDoc.numPages * 0.1).toFixed(1)}MB`);
         } catch (error) {
           console.error('Error generating/rendering PDF:', error);
           document.getElementById('loading').style.display = 'none';
