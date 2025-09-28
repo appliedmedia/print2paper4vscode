@@ -146,6 +146,8 @@ pdf_js: |
 
   // Listen for PDF update messages
   window.addEventListener('message', (event) => {
+    // Basic hardening: ensure shape and same window source
+    if (event.source !== window || !event.data || typeof event.data.type !== 'string') return;
     if (event.data.type === 'updatePdf') {
       initPdfViewer(event.data.pdfDataUrl);
     }

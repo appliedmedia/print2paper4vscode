@@ -15,6 +15,7 @@ export class UIMenu {
     ui_flyout: '',
     ui_menu_generic_handlers: '',
   };
+  private _paperPrinterYaml: { portrait_icon: string; landscape_icon: string } | null = null;
 
   constructor(
     private _id: string,
@@ -67,9 +68,15 @@ export class UIMenu {
     return this._selectionHandler(id);
   }
 
+  // Instance method to get the default selection ID (pure)
+  defaultId(): string {
+    return '0';
+  }
+
   // Get the default item ID for this menu
   async defaultItem(): Promise<string> {
-    return this.dispatchSelection('0');
+    // Pure default ID. If callers need to dispatch, do it explicitly after mount.
+    return this.defaultId();
   }
 
   // Getter for the YAML data - handles loading and validation automatically
@@ -109,16 +116,18 @@ export class UIMenu {
     // Handle SVG template replacement for displayName
     let processedDisplayName = item.displayName;
     if (processedDisplayName.includes('{{svg:')) {
-      // Load PaperPrinter YAML for SVG icons
-      const paperPrinterYaml = this.app.os.fileRead<{
-        portrait_icon: string;
-        landscape_icon: string;
-      }>('src/PaperPrinter.yaml');
+      // Load PaperPrinter YAML for SVG icons (cached)
+      if (!this._paperPrinterYaml) {
+        this._paperPrinterYaml = this.app.os.fileRead<{
+          portrait_icon: string;
+          landscape_icon: string;
+        }>('src/PaperPrinter.yaml');
+      }
 
-      if (paperPrinterYaml) {
+      if (this._paperPrinterYaml) {
         processedDisplayName = processedDisplayName
-          .replace(/\{\{svg:portrait_icon\}\}/g, paperPrinterYaml.portrait_icon)
-          .replace(/\{\{svg:landscape_icon\}\}/g, paperPrinterYaml.landscape_icon);
+          .replace(/\{\{svg:portrait_icon\}\}/g, this._paperPrinterYaml.portrait_icon)
+          .replace(/\{\{svg:landscape_icon\}\}/g, this._paperPrinterYaml.landscape_icon);
       }
     }
 

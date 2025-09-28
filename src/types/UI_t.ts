@@ -19,3 +19,8 @@ export type WebviewMessage = {
 
 // Message handler callback type
 export type MessageHandler = (msg: WebviewMessage) => Promise<void> | void;
+
+// Extension to webview message types
+export type ExtensionToWebviewMessage =
+  | { type: 'updatePdf'; pdfDataUrl: string }
+  | { type: 'restorePosition'; left: number };

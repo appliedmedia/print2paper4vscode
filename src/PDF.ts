@@ -249,11 +249,11 @@ export class PDF {
       // Get page dimensions based on size and orientation
       const pageDimensions = this.getPageDimensions(pageSize, orientation);
 
-      // Initialize PDF with user's page size, orientation, and calculated height
+      // Initialize PDF with user's page size, orientation, and actual page dimensions
       const doc = new jsPDF({
         orientation,
         unit,
-        format: [pageDimensions.width, pageHeight], // Width from format, height calculated
+        format: [pageDimensions.width, pageDimensions.height], // Use actual page dimensions
       });
 
       // Map font family to jsPDF supported fonts

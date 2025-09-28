@@ -8,6 +8,17 @@ export class Diagnostics {
 
   private static _debugOn = false; // Root level debug state
 
+  // Prefer high-res when available; safe fallback for Node/electron hosts
+  private static now(): number {
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-ignore - globalThis.performance may not exist in some hosts
+    return (typeof globalThis !== 'undefined' &&
+      globalThis.performance &&
+      typeof globalThis.performance.now === 'function')
+      ? globalThis.performance.now()
+      : Date.now();
+  }
+
   private _name: string = '';
   private name_lineage: string = '';
   private _displayName: string = '';
@@ -30,7 +41,7 @@ export class Diagnostics {
   constructor(name: string, debugOn?: boolean, parent?: Diagnostics | null) {
     this._name = name;
     this.parent = parent || null;
-    this.startTime = Date.now();
+    this.startTime = Diagnostics.now();
 
     // Build name lineage by crawling up parent tree
     this.name_lineage = this.buildNameLineage();
@@ -105,7 +116,7 @@ export class Diagnostics {
    */
   done(message?: MessageRef): this {
     if (this._debugOn && this.startTime !== null) {
-      const duration = Date.now() - this.startTime;
+      const duration = Diagnostics.now() - this.startTime;
       let timeDisplay: string;
 
       if (duration >= 86400000) {

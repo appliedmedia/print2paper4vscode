@@ -118,11 +118,11 @@ export class UI {
   // Add toolbar to HTML content
   async addToolbar(html: string): Promise<string> {
     // Read the UI.yaml template for the toolbar
-    const toolbarYaml = this.app.os.fileRead<{
+    const toolbarYaml = this.app.os.readExtensionYaml<{
       toolbar_css: string;
       toolbar_js: string;
       toolbar_html: string;
-    }>('src/UI.yaml');
+    }>('UI.yaml');
     if (!toolbarYaml) throw new Error('Failed to load toolbar template');
 
     // Replace template variables using UIMenuMgr - UI doesn't know what these represent
