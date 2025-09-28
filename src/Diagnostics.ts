@@ -19,6 +19,14 @@ export class Diagnostics {
       : Date.now();
   }
 
+  /**
+   * Instance method to get current timestamp
+   * @returns Current timestamp using high-res timing when available
+   */
+  now(): number {
+    return Diagnostics.now();
+  }
+
   private _name: string = '';
   private name_lineage: string = '';
   private _displayName: string = '';
@@ -43,7 +51,7 @@ export class Diagnostics {
     this._name = name;
     this.parent = parent || null;
     this.app = app;
-    this.startTime = Diagnostics.now();
+    this.startTime = this.now();
 
     // Build name lineage by crawling up parent tree
     this.name_lineage = this.buildNameLineage();
@@ -130,7 +138,7 @@ export class Diagnostics {
    */
   done(message?: MessageRef): this {
     if (this._debugOn && this.startTime !== null) {
-      const duration = Diagnostics.now() - this.startTime;
+      const duration = this.now() - this.startTime;
       let timeDisplay: string;
 
       if (duration >= 86400000) {
@@ -226,6 +234,15 @@ export class Diagnostics {
   }
 
   /**
+   * Instance method to get or set the root level debug state
+   * @param enabled - Optional: set global debug mode if provided
+   * @returns Current global debug state
+   */
+  debugOnGlobal(enabled?: boolean): boolean {
+    return Diagnostics.debugOn(enabled);
+  }
+
+  /**
    * Generic method to crawl up the parent tree and collect field values
    * @param fieldName - The field name to collect from each parent
    * @returns Array of field values in order from root to current
@@ -272,6 +289,6 @@ export class Diagnostics {
    */
   private buildDebugOnLineage(): boolean {
     const debugStates = this.crawlUp<boolean>('_debugOn');
-    return debugStates.length > 0 ? debugStates[debugStates.length - 1] : Diagnostics.debugOn();
+    return debugStates.length > 0 ? debugStates[debugStates.length - 1] : this.debugOnGlobal();
   }
 }
