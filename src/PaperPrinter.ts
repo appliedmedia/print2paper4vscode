@@ -223,8 +223,8 @@ export class PaperPrinter {
   }
 
   private computeLineHeightPx(fontSize: number): number {
-    // Use readable leading for code; keep integer px
-    return Math.round(fontSize * 1.4);
+    // Use normal line height for code (1.2x is typical for code)
+    return Math.round(fontSize * 1.2);
   }
 
 

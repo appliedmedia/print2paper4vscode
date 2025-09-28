@@ -272,7 +272,7 @@ export class PDF {
       );
 
       // Calculate required height based on content (in original units, will convert to points)
-      const lineSpacing = fontSize * 0.4; // Tight line spacing
+      const lineSpacing = lineHeight; // Use the passed lineHeight parameter
       // These were for dynamic height calculation, not needed for fixed page size
       // const titleHeight = title ? 40 : 20; // Space for title + margin
       // const bottomMargin = 20;
@@ -328,7 +328,7 @@ export class PDF {
       // Calculate how many lines can fit on the page (all in points now)
       const bottomMarginPt = 36; // 0.5 inch margin
       const availableHeight = heightInPoints - y - bottomMarginPt;
-      const lineSpacingPt = fontSize * 0.4; // Line spacing in points
+      const lineSpacingPt = lineHeight; // Line spacing in points
       const maxLines = Math.floor(availableHeight / lineSpacingPt);
       const linesToRender = Math.min(tokens.length, maxLines);
 
