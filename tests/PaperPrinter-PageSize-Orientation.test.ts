@@ -39,7 +39,7 @@ describe('PaperPrinter Page Size and Orient Tests', () => {
               '<svg width="16" height="16"><rect x="1" y="4" width="14" height="8"/></svg>',
           };
         }
-        return null;
+        return undefined;
       },
     },
     ui: {

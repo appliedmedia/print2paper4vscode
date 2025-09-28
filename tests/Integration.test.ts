@@ -235,7 +235,7 @@ describe('System Integration Tests', () => {
                 '<svg width="16" height="16"><rect x="1" y="4" width="14" height="8"/></svg>',
             };
           }
-          return null;
+          return undefined;
         },
       },
       templateDictReplace: (source: string, dict: Record<string, string>) => {
