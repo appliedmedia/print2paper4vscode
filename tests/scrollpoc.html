@@ -1007,18 +1007,21 @@
             await assignCanvasesToPages(initialPages);
           }
 
-          // Step 6: Set up scroll event listener with debouncing
-          let scrollTimer = 0;
+          // Step 6: Set up scroll event listener with requestAnimationFrame
+          let scrollScheduled = false;
           containerElement.addEventListener('scroll', () => {
-            clearTimeout(scrollTimer);
-            scrollTimer = window.setTimeout(() => {
-              try {
-                handleScroll();
-              } catch (error) {
-                console.error('Scroll handler error:', error);
-                console.error('Error stack:', error.stack);
-              }
-            }, CONFIG.SCROLL_DEBOUNCE_MS);
+            if (!scrollScheduled) {
+              scrollScheduled = true;
+              requestAnimationFrame(() => {
+                try {
+                  handleScroll();
+                } catch (error) {
+                  console.error('Scroll handler error:', error);
+                  console.error('Error stack:', error.stack);
+                }
+                scrollScheduled = false;
+              });
+            }
           });
 
           // Hide loading, show canvases
