@@ -22,7 +22,7 @@ export class PaperPrinter {
 
   private currentThemeChoice: string | undefined;
 
-  private currentFontSizeMode: 8 | 9 | 10 | 12 | 14 | 18 | 24 = 12; // Default to 12px
+  private currentFontSize: 8 | 9 | 10 | 12 | 14 | 18 | 24 = 12; // Default to 12px
 
   private currentPageSize: PageSize | undefined; // User's page size preference
   private currentOrientation: 'portrait' | 'landscape' | undefined; // User's orientation preference
@@ -219,7 +219,7 @@ export class PaperPrinter {
   }
 
   private computeFontSizePx(): number {
-    return this.currentFontSizeMode;
+    return this.currentFontSize;
   }
 
   private computeLineHeightPx(fontSize: number): number {
@@ -481,7 +481,7 @@ export class PaperPrinter {
     const fontSize = parseInt(selectedId, 10);
     if (!isNaN(fontSize)) {
       dx.out(`updating fontSize to ${fontSize}`);
-      this.currentFontSizeMode = fontSize as 8 | 9 | 10 | 12 | 14 | 18 | 24;
+      this.currentFontSize = fontSize as 8 | 9 | 10 | 12 | 14 | 18 | 24;
 
       // Regenerate PDF and update only the PDF content
       if (this.pdfRendered) {
