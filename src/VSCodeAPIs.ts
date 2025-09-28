@@ -21,7 +21,6 @@ export class VSCodeAPIs {
   private context: ExtensionContext; // Properly typed context
   private panels = new Map<WebviewPanelId, WebviewPanel>(); // Panel mapping
   private dx: Diagnostics;
-  private editorTypographyCache: { fontSize: number; lineHeight: number; fontFamily: string; sizeToHeightRatio: number } | null = null;
 
   constructor(app: App, vscode: typeof import('vscode'), context: ExtensionContext) {
     this.app = app;
@@ -67,12 +66,6 @@ export class VSCodeAPIs {
   }
 
   getEditorTypography(): { fontSize: number; lineHeight: number; fontFamily: string; sizeToHeightRatio: number } {
-    // Return cached value if available
-    if (this.editorTypographyCache) {
-      return this.editorTypographyCache;
-    }
-
-    // Calculate and cache the typography settings
     const editorCfg = this.vscode.workspace.getConfiguration('editor');
     const fontSize = Math.max(10, Number(editorCfg.get('fontSize') || 12));
     const cfgLineHeight = Number(editorCfg.get('lineHeight') || 0);
@@ -80,16 +73,7 @@ export class VSCodeAPIs {
     // VS Code uses 0 to mean "compute from font metrics". Use balanced spacing for code printing.
     const lineHeight = cfgLineHeight > 0 ? cfgLineHeight : Math.round(fontSize * 1.2);
     const sizeToHeightRatio = lineHeight / fontSize;
-    
-    this.editorTypographyCache = { fontSize, lineHeight, fontFamily, sizeToHeightRatio };
-    return this.editorTypographyCache;
-  }
-
-  /**
-   * Clear the editor typography cache (call when VS Code settings change)
-   */
-  clearEditorTypographyCache(): void {
-    this.editorTypographyCache = null;
+    return { fontSize, lineHeight, fontFamily, sizeToHeightRatio };
   }
 
   /**
