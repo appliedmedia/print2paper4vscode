@@ -25,7 +25,7 @@ export class PaperPrinter {
   private currentFontSize: number = 12; // Default to 12px
 
   private currentPageSize: PageSize | undefined; // User's page size preference
-  private currentOrientation: 'portrait' | 'landscape' | undefined; // User's orientation preference
+  private currentOrient: 'portrait' | 'landscape' | undefined; // User's orient preference
 
   constructor(app: App) {
     this.app = app;
@@ -36,12 +36,25 @@ export class PaperPrinter {
   init(): void {
     this.clipboardCapture.init();
 
-    // Restore user's page size and orientation preferences, with letter/portrait defaults
+    // Restore user's page size and orient preferences, with locale-based defaults
     const savedPageSize = this.app.vscodeapis.getGlobalState<PageSize>('pageSize');
-    this.currentPageSize = savedPageSize || 'letter';
+    if (savedPageSize) {
+      this.currentPageSize = savedPageSize;
+    } else {
+      // Fallback to locale-based default
+      const locale = this.app.vscodeapis.getLocale() || '  ';
+      const region = locale.slice(-2).toUpperCase();
+      const letterRegions = ['US', 'CA', 'MX'];
+      const isLetterSize = letterRegions.includes(region);
+      this.currentPageSize = isLetterSize ? 'letter' : 'a4';
+    }
 
-    const savedOrientation = this.app.vscodeapis.getGlobalState<'portrait' | 'landscape'>('orientation');
-    this.currentOrientation = savedOrientation || 'portrait';
+    const savedOrient = this.app.vscodeapis.getGlobalState<'portrait' | 'landscape'>('orient');
+    if (savedOrient) {
+      this.currentOrient = savedOrient;
+    } else {
+      this.currentOrient = 'portrait';
+    }
   }
 
   done(): void {
@@ -217,8 +230,8 @@ export class PaperPrinter {
     return this.currentPageSize!; // Safe after init()
   }
 
-  private getCurrentOrientation(): 'portrait' | 'landscape' {
-    return this.currentOrientation!; // Safe after init()
+  private getCurrentOrient(): 'portrait' | 'landscape' {
+    return this.currentOrient!; // Safe after init()
   }
 
 
@@ -537,25 +550,25 @@ export class PaperPrinter {
     dx.out(`selectedId = ${selectedId}`);
 
     if (selectedId === UIMenu.defaultId()) {
-      // Return the current orientation for default selection
-      const currentOrientation =
-        this.currentOrientation ||
-        this.app.vscodeapis.getGlobalState<'portrait' | 'landscape'>('orientation') ||
+      // Return the current orient for default selection
+      const currentOrient =
+        this.currentOrient ||
+        this.app.vscodeapis.getGlobalState<'portrait' | 'landscape'>('orient') ||
         'portrait';
-      dx.out(`returning current orientation: ${currentOrientation}`);
+      dx.out(`returning current orient: ${currentOrient}`);
       dx.done();
-      return currentOrientation;
+      return currentOrient;
     }
 
-    // Handle orientation selection
+    // Handle orient selection
     if (selectedId === 'portrait' || selectedId === 'landscape') {
-      dx.out(`updating orientation to ${selectedId}`);
-      this.currentOrientation = selectedId;
-      this.app.vscodeapis.updateGlobalState('orientation', this.currentOrientation);
+      dx.out(`updating orient to ${selectedId}`);
+      this.currentOrient = selectedId;
+      this.app.vscodeapis.updateGlobalState('orient', this.currentOrient);
 
       // Regenerate PDF and update only the PDF content
       if (this.pdfRendered) {
-        dx.out(`regenerating PDF with new orientation`);
+        dx.out(`regenerating PDF with new orient`);
         await this.generatePdf();
         dx.out(`calling updateWebviewPdf with pdfRendered`);
         await this.app.ui.updateWebviewPdf(this.pdfRendered);
@@ -564,7 +577,7 @@ export class PaperPrinter {
       }
 
       dx.done();
-      return selectedId; // Return the selected orientation for checkmark
+      return selectedId; // Return the selected orient for checkmark
     }
 
     dx.done();
