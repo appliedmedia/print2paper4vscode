@@ -204,7 +204,8 @@ export class PaperPrinter {
     return fontSize * editorTypo.sizeToHeightRatio;
   }
 
-  private getCurrentPageSize(): PageSize {
+  // ES6 getter/setter pattern for page size
+  get pageSize(): PageSize {
     // Get from global state with locale-based fallback
     const savedPageSize = this.app.vscodeapis.getGlobalState<PageSize>('pageSize');
     if (savedPageSize) {
@@ -219,9 +220,18 @@ export class PaperPrinter {
     return isLetterSize ? 'letter' : 'a4';
   }
 
-  private getCurrentOrient(): 'portrait' | 'landscape' {
+  set pageSize(value: PageSize) {
+    this.app.vscodeapis.updateGlobalState('pageSize', value);
+  }
+
+  // ES6 getter/setter pattern for orient
+  get orient(): 'portrait' | 'landscape' {
     // Get from global state with portrait fallback
     return this.app.vscodeapis.getGlobalState<'portrait' | 'landscape'>('orient') || 'portrait';
+  }
+
+  set orient(value: 'portrait' | 'landscape') {
+    this.app.vscodeapis.updateGlobalState('orient', value);
   }
 
 
@@ -504,7 +514,7 @@ export class PaperPrinter {
 
     if (selectedId === UIMenu.defaultId()) {
       // Return the current page size for default selection
-      const currentPageSize = this.getCurrentPageSize();
+      const currentPageSize = this.pageSize;
       dx.out(`returning current page size: ${currentPageSize}`);
       dx.done();
       return currentPageSize;
@@ -513,7 +523,7 @@ export class PaperPrinter {
     // Handle page size selection
     if (PAGE_SIZES.includes(selectedId as PageSize)) {
       dx.out(`updating page size to ${selectedId}`);
-      this.app.vscodeapis.updateGlobalState('pageSize', selectedId as PageSize);
+      this.pageSize = selectedId as PageSize;
 
       // Regenerate PDF and update only the PDF content
       if (this.pdfRendered) {
@@ -539,7 +549,7 @@ export class PaperPrinter {
 
     if (selectedId === UIMenu.defaultId()) {
       // Return the current orient for default selection
-      const currentOrient = this.getCurrentOrient();
+      const currentOrient = this.orient;
       dx.out(`returning current orient: ${currentOrient}`);
       dx.done();
       return currentOrient;
@@ -548,7 +558,7 @@ export class PaperPrinter {
     // Handle orient selection
     if (selectedId === 'portrait' || selectedId === 'landscape') {
       dx.out(`updating orient to ${selectedId}`);
-      this.app.vscodeapis.updateGlobalState('orient', selectedId);
+      this.orient = selectedId;
 
       // Regenerate PDF and update only the PDF content
       if (this.pdfRendered) {
