@@ -22,7 +22,7 @@ describe('PaperPrinter Page Size and Orient Tests', () => {
       getGlobalState: (key: string) => {
         const state: Record<string, any> = {
           pageSize: 'a4',
-          orientation: 'portrait',
+          orient: 'portrait',
         };
         return state[key];
       },
@@ -39,7 +39,7 @@ describe('PaperPrinter Page Size and Orient Tests', () => {
               '<svg width="16" height="16"><rect x="1" y="4" width="14" height="8"/></svg>',
           };
         }
-        return null;
+        return undefined;
       },
     },
     ui: {
@@ -59,10 +59,10 @@ describe('PaperPrinter Page Size and Orient Tests', () => {
       assert.strictEqual(pageSize, 'a4');
     });
 
-    test('should get current orientation', () => {
-      const orientation =
-        (paperPrinter as any).app.vscodeapis.getGlobalState('orientation') || 'portrait';
-      assert.strictEqual(orientation, 'portrait');
+    test('should get current orient', () => {
+      const orient =
+        (paperPrinter as any).app.vscodeapis.getGlobalState('orient') || 'portrait';
+      assert.strictEqual(orient, 'portrait');
     });
   });
 

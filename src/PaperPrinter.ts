@@ -22,10 +22,8 @@ export class PaperPrinter {
 
   private currentThemeChoice: string | undefined;
 
-  private currentFontSizeMode: 8 | 9 | 10 | 12 | 14 | 18 | 24 = 12; // Default to 12px
+  private currentFontSize: number = 12; // Default to 12px
 
-  private currentPageSize: PageSize | undefined; // User's page size preference
-  private currentOrientation: 'portrait' | 'landscape' | undefined; // User's orientation preference
 
   constructor(app: App) {
     this.app = app;
@@ -35,28 +33,6 @@ export class PaperPrinter {
 
   init(): void {
     this.clipboardCapture.init();
-
-    // Restore user's page size and orientation preferences, with locale-based defaults
-    const savedPageSize = this.app.vscodeapis.getGlobalState<PageSize>('pageSize');
-    if (savedPageSize) {
-      this.currentPageSize = savedPageSize;
-    } else {
-      // Fallback to locale-based default
-      const locale = this.app.vscodeapis.getLocale() || '  ';
-      const region = locale.slice(-2).toUpperCase();
-      const letterRegions = ['US', 'CA', 'MX'];
-      const isLetterSize = letterRegions.includes(region);
-      this.currentPageSize = isLetterSize ? 'letter' : 'a4';
-    }
-
-    const savedOrientation = this.app.vscodeapis.getGlobalState<'portrait' | 'landscape'>(
-      'orientation'
-    );
-    if (savedOrientation) {
-      this.currentOrientation = savedOrientation;
-    } else {
-      this.currentOrientation = 'portrait';
-    }
   }
 
   done(): void {
@@ -219,12 +195,45 @@ export class PaperPrinter {
   }
 
   private computeFontSizePx(): number {
-    return this.currentFontSizeMode;
+    return this.currentFontSize;
   }
 
   private computeLineHeightPx(fontSize: number): number {
-    return Math.round(fontSize * 0.4); // Tight line spacing for code printing
+    // Calculate line height proportionally based on VS Code's line height ratio
+    const editorTypo = this.app.vscodeapis.getEditorTypography();
+    return fontSize * editorTypo.sizeToHeightRatio;
   }
+
+  // ES6 getter/setter pattern for page size
+  get pageSize(): PageSize {
+    // Get from global state with locale-based fallback
+    const savedPageSize = this.app.vscodeapis.getGlobalState<PageSize>('pageSize');
+    if (savedPageSize) {
+      return savedPageSize;
+    }
+    
+    // Fallback to locale-based default
+    const locale = this.app.vscodeapis.getLocale() || '  ';
+    const region = locale.slice(-2).toUpperCase();
+    const letterRegions = ['US', 'CA', 'MX'];
+    const isLetterSize = letterRegions.includes(region);
+    return isLetterSize ? 'letter' : 'a4';
+  }
+
+  set pageSize(value: PageSize) {
+    this.app.vscodeapis.updateGlobalState('pageSize', value);
+  }
+
+  // ES6 getter/setter pattern for orient
+  get orient(): 'portrait' | 'landscape' {
+    // Get from global state with portrait fallback
+    return this.app.vscodeapis.getGlobalState<'portrait' | 'landscape'>('orient') || 'portrait';
+  }
+
+  set orient(value: 'portrait' | 'landscape') {
+    this.app.vscodeapis.updateGlobalState('orient', value);
+  }
+
 
   // Create menus when needed for the webview
   private createMenus(): void {
@@ -479,7 +488,7 @@ export class PaperPrinter {
     const fontSize = parseInt(selectedId, 10);
     if (!isNaN(fontSize)) {
       dx.out(`updating fontSize to ${fontSize}`);
-      this.currentFontSizeMode = fontSize as 8 | 9 | 10 | 12 | 14 | 18 | 24;
+      this.currentFontSize = fontSize;
 
       // Regenerate PDF and update only the PDF content
       if (this.pdfRendered) {
@@ -505,8 +514,7 @@ export class PaperPrinter {
 
     if (selectedId === UIMenu.defaultId()) {
       // Return the current page size for default selection
-      const currentPageSize =
-        this.currentPageSize || this.app.vscodeapis.getGlobalState<PageSize>('pageSize') || 'a4';
+      const currentPageSize = this.pageSize;
       dx.out(`returning current page size: ${currentPageSize}`);
       dx.done();
       return currentPageSize;
@@ -515,8 +523,7 @@ export class PaperPrinter {
     // Handle page size selection
     if (PAGE_SIZES.includes(selectedId as PageSize)) {
       dx.out(`updating page size to ${selectedId}`);
-      this.currentPageSize = selectedId as PageSize;
-      this.app.vscodeapis.updateGlobalState('pageSize', this.currentPageSize);
+      this.pageSize = selectedId as PageSize;
 
       // Regenerate PDF and update only the PDF content
       if (this.pdfRendered) {
@@ -541,25 +548,21 @@ export class PaperPrinter {
     dx.out(`selectedId = ${selectedId}`);
 
     if (selectedId === UIMenu.defaultId()) {
-      // Return the current orientation for default selection
-      const currentOrientation =
-        this.currentOrientation ||
-        this.app.vscodeapis.getGlobalState<'portrait' | 'landscape'>('orientation') ||
-        'portrait';
-      dx.out(`returning current orientation: ${currentOrientation}`);
+      // Return the current orient for default selection
+      const currentOrient = this.orient;
+      dx.out(`returning current orient: ${currentOrient}`);
       dx.done();
-      return currentOrientation;
+      return currentOrient;
     }
 
-    // Handle orientation selection
+    // Handle orient selection
     if (selectedId === 'portrait' || selectedId === 'landscape') {
-      dx.out(`updating orientation to ${selectedId}`);
-      this.currentOrientation = selectedId;
-      this.app.vscodeapis.updateGlobalState('orientation', this.currentOrientation);
+      dx.out(`updating orient to ${selectedId}`);
+      this.orient = selectedId;
 
       // Regenerate PDF and update only the PDF content
       if (this.pdfRendered) {
-        dx.out(`regenerating PDF with new orientation`);
+        dx.out(`regenerating PDF with new orient`);
         await this.generatePdf();
         dx.out(`calling updateWebviewPdf with pdfRendered`);
         await this.app.ui.updateWebviewPdf(this.pdfRendered);
@@ -568,7 +571,7 @@ export class PaperPrinter {
       }
 
       dx.done();
-      return selectedId; // Return the selected orientation for checkmark
+      return selectedId; // Return the selected orient for checkmark
     }
 
     dx.done();

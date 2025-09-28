@@ -205,8 +205,8 @@ describe('System Integration Tests', () => {
     assert.ok(theme.displayName, 'Theme should have displayName');
   });
 
-  test('should validate page size and orientation integration', async () => {
-    // This test validates that page size and orientation functionality integrates properly
+  test('should validate page size and orient integration', async () => {
+    // This test validates that page size and orient functionality integrates properly
 
     const mockApp = {
       ui: { debugOut: () => {} },
@@ -214,7 +214,7 @@ describe('System Integration Tests', () => {
         getGlobalState: (key: string) => {
           const state: Record<string, any> = {
             pageSize: 'a4',
-            orientation: 'portrait',
+            orient: 'portrait',
           };
           return state[key];
         },
@@ -235,7 +235,7 @@ describe('System Integration Tests', () => {
                 '<svg width="16" height="16"><rect x="1" y="4" width="14" height="8"/></svg>',
             };
           }
-          return null;
+          return undefined;
         },
       },
       templateDictReplace: (source: string, dict: Record<string, string>) => {
@@ -253,29 +253,29 @@ describe('System Integration Tests', () => {
       'Should have valid page size'
     );
 
-    // Test orientation detection
-    const orientation =
-      (paperPrinter as any).app.vscodeapis.getGlobalState('orientation') || 'portrait';
-    assert.ok(['portrait', 'landscape'].includes(orientation), 'Should have valid orientation');
+    // Test orient detection
+    const orient =
+      (paperPrinter as any).app.vscodeapis.getGlobalState('orient') || 'portrait';
+    assert.ok(['portrait', 'landscape'].includes(orient), 'Should have valid orient');
 
     // Test page menu items
     const pageMenuItems = (paperPrinter as any).menuItems_Page();
     assert.strictEqual(
       pageMenuItems.length,
       6,
-      'Should have 6 items (1 orientation + 5 page sizes)'
+      'Should have 6 items (1 orient + 5 page sizes)'
     );
     assert.ok(
       pageMenuItems.every((item: any) => item.id && item.displayName),
       'All page items should have ID and display name'
     );
 
-    // Test orientation menu items
+    // Test orient menu items
     const orientMenuItems = (paperPrinter as any).menuItems_Orient();
-    assert.strictEqual(orientMenuItems.length, 2, 'Should have 2 orientation options');
+    assert.strictEqual(orientMenuItems.length, 2, 'Should have 2 orient options');
     assert.ok(
       orientMenuItems.every((item: any) => item.id && item.displayName),
-      'All orientation items should have ID and display name'
+      'All orient items should have ID and display name'
     );
   });
 });

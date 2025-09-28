@@ -262,17 +262,17 @@ export class PDF {
     ]);
 
     try {
-      // Get page size and orientation from global state (like toolbarLeft pattern)
+      // Get page size and orient from global state (like toolbarLeft pattern)
       const pageSize = this.app.vscodeapis.getGlobalState<PageSize>('pageSize') || 'a4';
-      const orientation =
-        this.app.vscodeapis.getGlobalState<'portrait' | 'landscape'>('orientation') || 'portrait';
+      const orient =
+        this.app.vscodeapis.getGlobalState<'portrait' | 'landscape'>('orient') || 'portrait';
 
       dx.out(
-        `Using page size: ${pageSize}, orientation: ${orientation} (from PaperPrinter preferences)`
+        `Using page size: ${pageSize}, orient: ${orient} (from PaperPrinter preferences)`
       );
 
       // Calculate required height based on content (in original units, will convert to points)
-      const lineSpacing = fontSize * 0.4; // Tight line spacing
+      const lineSpacing = lineHeight; // Use the passed lineHeight parameter
       // These were for dynamic height calculation, not needed for fixed page size
       // const titleHeight = title ? 40 : 20; // Space for title + margin
       // const bottomMargin = 20;
@@ -286,8 +286,8 @@ export class PDF {
       const standardHeight = unit === 'in' ? 11 : 297; // Letter=11in, A4=297mm
       const pageHeight = standardHeight;
 
-      // Get page dimensions based on size and orientation
-      const pageDimensions = this.getPageDimensions(pageSize, orientation);
+      // Get page dimensions based on size and orient
+      const pageDimensions = this.getPageDimensions(pageSize, orient);
 
       // Convert everything to points - we work exclusively in points internally
       const widthInPoints = this.convertToPoints(pageDimensions.width, unit);
@@ -297,7 +297,7 @@ export class PDF {
 
       // ALWAYS use points for jsPDF - simplifies all coordinate calculations
       const doc = new jsPDF({
-        orientation,
+        orientation: orient,
         unit: 'pt', // ALWAYS points - makes all coordinates predictable
         format: [widthInPoints, heightInPoints],
       });
@@ -328,7 +328,7 @@ export class PDF {
       // Calculate how many lines can fit on the page (all in points now)
       const bottomMarginPt = 36; // 0.5 inch margin
       const availableHeight = heightInPoints - y - bottomMarginPt;
-      const lineSpacingPt = fontSize * 0.4; // Line spacing in points
+      const lineSpacingPt = lineHeight; // Line spacing in points
       const maxLines = Math.floor(availableHeight / lineSpacingPt);
       const linesToRender = Math.min(tokens.length, maxLines);
 
@@ -442,10 +442,10 @@ export class PDF {
     return usSizes.includes(pageSize) ? 'in' : 'mm';
   }
 
-  // Helper: Get page dimensions based on size and orientation
+  // Helper: Get page dimensions based on size and orient
   private getPageDimensions(
     pageSize: PageSize,
-    orientation: 'portrait' | 'landscape'
+    orient: 'portrait' | 'landscape'
   ): { width: number; height: number } {
     // Standard page dimensions - US sizes in inches, metric in mm
     const dimensions = {
@@ -459,7 +459,7 @@ export class PDF {
     const baseDimensions = dimensions[pageSize];
 
     // Swap width/height for landscape
-    if (orientation === 'landscape') {
+    if (orient === 'landscape') {
       return { width: baseDimensions.height, height: baseDimensions.width };
     }
 
