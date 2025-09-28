@@ -82,11 +82,28 @@ The extension follows this workflow:
 
 ## Technical Implementation
 
+### Three-Library PDF Pipeline
+
+The extension uses three distinct libraries for different purposes:
+
+1. **Shiki** (Server-side): Tokenizes source code with syntax highlighting themes
+   - Converts raw source code → `ThemedToken[][]` arrays with colors/styles
+   - Runs in VS Code extension context with theme support
+
+2. **jsPDF** (Server-side): Creates vector PDF documents in memory
+   - Converts Shiki tokens → In-memory PDF document with styled text
+   - Handles page layout, fonts, and PDF generation
+   - Outputs PDF as data URL or buffer for saving/printing
+
+3. **PDF.js** (Client-side): Renders PDF documents in the webview
+   - Converts PDF data URL → Canvas rendering in browser
+   - Handles zoom, scrolling, and interactive PDF display
+   - Runs in webview context for user preview
+
+### Flow: Source Code → Shiki → jsPDF → PDF.js → User
+
 - **Content Capture**: Direct VS Code API access to editor content and selections
-- **Syntax Highlighting**: Shiki-based highlighting with lazy highlighter initialization
-- **PDF Generation**: jsPDF vector rendering with in-memory document management
-- **Print Integration**: Platform-specific OS commands (AppleScript for macOS)
-- **Webview UI**: Interactive preview using VS Code's webview API with PDF.js
+- **Print Integration**: AppleScript-based printing (opens Preview with Cmd+P or uses Finder print)
 - **Menu Management**: Generic UIMenu system with flyout support and selection handlers
 - **State Management**: Global state persistence for user preferences
 - **Diagnostics**: Hierarchical logging system with performance timing
@@ -290,8 +307,9 @@ Error Recovery:
 
 - **Preview Tabs**: Printing from preview/webview tabs not yet supported
 - **Platform Support**: Print commands currently optimized for macOS only
-- **Content Truncation**: Large files may be truncated to fit page dimensions
+- **Single-Page PDFs**: Large files are truncated to fit single page dimensions
 - **Font Support**: Limited to jsPDF-supported fonts (Courier, Helvetica, Times)
+- **No Multi-Page Support**: Current PDF generation creates only single-page output
 
 ## Development
 

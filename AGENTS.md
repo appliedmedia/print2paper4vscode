@@ -66,46 +66,68 @@ The project uses specific TypeScript lib settings for VS Code extension compatib
 
 ### Working Components
 
-- jsPDF vector PDF generation works
+- jsPDF vector PDF generation works (single-page only)
 - AppleScript integration for macOS printing works
 - HTML template system with YAML-based snippets
 - Shiki syntax highlighting integration
 - Tab inspection and content extraction
-- **Webview UI System**: Interactive PDF preview with toolbar menus
+- **Webview UI System**: Interactive single-page PDF preview with toolbar menus
 - **Menu Management**: Dynamic menu creation and selection handling
 - **Theme System**: Real-time theme switching with fallback support
-- **PDF.js Integration**: Client-side PDF rendering in webview
+- **PDF.js Integration**: Client-side single-page PDF rendering in webview
 
 ### Technical Dependencies
 
-- Node.js runtime for jsPDF PDF generation
-- macOS-specific AppleScript for printing operations
-- VS Code Extension API v1.60.0+
-- TypeScript compilation to JavaScript
-- Shiki for syntax highlighting
-- **PDF.js**: Client-side PDF rendering in webview
-- **jsPDF**: Vector PDF generation and manipulation
-- **VS Code Webview API**: Interactive UI panels
+**Server-side (VS Code Extension Context)**:
+
+- **Node.js**: Runtime environment for extension execution
+- **Shiki**: Syntax highlighting and code tokenization with theme support
+- **jsPDF**: Vector PDF document creation and generation
+- **VS Code Extension API v1.60.0+**: Platform integration and webview management
+- **TypeScript**: Compiled to JavaScript for execution
+- **AppleScript**: macOS-specific printing operations
+
+**Client-side (Webview Browser Context)**:
+
+- **PDF.js**: Client-side PDF rendering and canvas display
+- **VS Code Webview API**: Interactive UI panels and message passing
 
 ## Key Implementation Details
 
-### PDF Generation
+### Three-Library PDF Architecture
 
-```typescript
-// jsPDF vector PDF generation (conceptual)
-// Tokens -> layout -> jsPDF text/draw -> save
-// See src/PDF.ts for token-to-PDF pipeline.
+The extension uses **three distinct PDF-related libraries** for different purposes:
 
-// Ensure jsPDF installed and available in the extension bundle
-// No external browser or separate node script is required.
+1. **Shiki** (Extension/Server-side):
+   - **Purpose**: Syntax highlighting and tokenization
+   - **Input**: Raw source code + theme name
+   - **Output**: `ThemedToken[][]` (styled text tokens with colors)
+   - **Location**: Runs in VS Code extension context
+
+2. **jsPDF** (Extension/Server-side):
+   - **Purpose**: Vector PDF document creation and generation
+   - **Input**: Shiki tokens + layout settings
+   - **Output**: In-memory PDF document (data URL or ArrayBuffer)
+   - **Location**: Runs in VS Code extension context
+
+3. **PDF.js** (Webview/Client-side):
+   - **Purpose**: PDF rendering and display in browser
+   - **Input**: PDF data URL from jsPDF
+   - **Output**: Canvas-based PDF display with zoom/scroll
+   - **Location**: Runs in webview browser context
+
+### Actual Implementation Flow
+
+```text
+Source Code → Shiki → jsPDF → PDF.js → User Display
+     ↓           ↓        ↓         ↓
+  Raw Text → Tokens → PDF Doc → Canvas
 ```
 
-**Actual Implementation Flow**:
-
 1. `Stylize.styleToPdf()` → Shiki tokenization → `ThemedToken[][]`
-2. `PDF.generatePdfFromTokens()` → jsPDF document creation
-3. In-memory PDF document stored in `PaperPrinter.pdfRendered`
-4. `PDF.pdfToHTML()` → Converts PDF to data URL for webview display
+2. `PDF.generatePdfFromTokens()` → jsPDF document creation → In-memory PDF
+3. `PDF.embedPDFinHTML()` → PDF data URL generation for webview
+4. PDF.js in webview → Canvas rendering of PDF for user interaction
 
 ### Syntax Highlighting
 
@@ -118,9 +140,9 @@ The project uses specific TypeScript lib settings for VS Code extension compatib
 
 ### Print Integration
 
-- **Preview Method**: Opens PDF in Preview app, triggers Cmd+P
-- **Direct Method**: Uses Finder's print functionality
-- **Save Method**: Moves PDF to Downloads folder
+- **Preview Method**: Opens PDF in Preview app via AppleScript, triggers Cmd+P via System Events
+- **Direct Method**: Uses Finder's print functionality via AppleScript
+- **Save Method**: Shows VS Code save dialog, saves PDF to chosen location
 
 ### Webview UI System
 
