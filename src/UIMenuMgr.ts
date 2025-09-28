@@ -57,6 +57,10 @@ export class UIMenuMgr {
 
   // Add a menu to the list (called by PaperPrinter)
   addMenu(menu: UIMenu): void {
+    if (this.menus.some(m => m.id === menu.id)) {
+      this.dx.out(`addMenu: Duplicate id ${menu.id} ignored`);
+      return;
+    }
     this.menus.push(menu);
     this.dx.out(`addMenu: Added menu ${menu.id}, total menus: ${this.menus.length}`);
   }
@@ -112,7 +116,11 @@ export class UIMenuMgr {
     }
 
     // Get the generic handlers - yaml getter handles loading automatically
-    const js = anyMenu.yaml.ui_menu_generic_handlers;
+    const js = anyMenu.yaml?.ui_menu_generic_handlers ?? '';
+    if (!js) {
+      this.dx.out('getAllUIMenuJS: JS is undefined/empty, YAML loading failed or no handlers present');
+      return '';
+    }
     this.dx.out(`getAllUIMenuJS: Generated ${js.length} characters of JS`);
     return js;
   }

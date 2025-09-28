@@ -103,8 +103,8 @@ describe('Diagnostics', () => {
     // Capture console.log output to verify message format
     const originalLog = console.log;
     let logOutput = '';
-    console.log = (msg: string) => {
-      logOutput += msg + '\n';
+    console.log = (...args: unknown[]) => {
+      logOutput += args.map(a => String(a)).join(' ') + '\n';
     };
 
     methodDx.require(args, ['content', 'missingKey']);

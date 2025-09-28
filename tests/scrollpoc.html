@@ -1,7 +1,7 @@
 <!doctype html>
 <html>
   <head>
-    <title>3-Canvas PDF Scroll POC</title>
+    <title>Virtualized PDF Scroll POC</title>
     <style>
       body {
         margin: 0;
@@ -142,7 +142,7 @@
 
       // Configuration constants
       const CONFIG = {
-        MAX_CANVASES: 7, // Total number of canvas elements (optimal for smooth scrolling)
+        MAX_CANVASES: 7, // Total number of canvas elements (tune for perf)
         LOAD_DISTANCE: 3, // Pages distance to start loading canvas
         UNLOAD_DISTANCE: 4, // Pages distance to unload canvas
         SCROLL_DEBOUNCE_MS: 50, // Balanced response time for 7 canvases
@@ -201,7 +201,7 @@
             if (loadingText) {
               loadingText.style.display = 'block';
             }
-            placeholder.style.display = 'flex'; // Restore flex for centering
+            // placeholder is already flex from creation; no change needed
           }
         }
 
@@ -357,7 +357,8 @@
           if (loadingText) {
             loadingText.style.display = 'none';
           }
-          targetPlaceholder.style.display = 'block';
+          // Keep flex layout; only hide loading text
+          // targetPlaceholder.style.display = 'block';
           targetPlaceholder.appendChild(canvas);
           return true; // Moved
         }
@@ -400,6 +401,10 @@
         canvas.height = viewport.height;
 
         const ctx = canvas.getContext('2d');
+        if (!ctx) {
+          console.warn('2D context unavailable for canvas', canvas.id);
+          return;
+        }
 
         // Render the page
         const renderContext = {
@@ -1002,14 +1007,18 @@
             await assignCanvasesToPages(initialPages);
           }
 
-          // Step 6: Set up scroll event listener
+          // Step 6: Set up scroll event listener with debouncing
+          let scrollTimer = 0;
           containerElement.addEventListener('scroll', () => {
-            try {
-              handleScroll();
-            } catch (error) {
-              console.error('Scroll handler error:', error);
-              console.error('Error stack:', error.stack);
-            }
+            clearTimeout(scrollTimer);
+            scrollTimer = window.setTimeout(() => {
+              try {
+                handleScroll();
+              } catch (error) {
+                console.error('Scroll handler error:', error);
+                console.error('Error stack:', error.stack);
+              }
+            }, CONFIG.SCROLL_DEBOUNCE_MS);
           });
 
           // Hide loading, show canvases
