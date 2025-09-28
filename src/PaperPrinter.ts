@@ -223,8 +223,10 @@ export class PaperPrinter {
   }
 
   private computeLineHeightPx(fontSize: number): number {
-    // Use normal line height for code (1.2x is typical for code)
-    return Math.round(fontSize * 1.2);
+    // Calculate line height proportionally based on VS Code's line height ratio
+    const editorTypo = this.app.vscodeapis.getEditorTypography();
+    const lineHeightRatio = editorTypo.lineHeight / editorTypo.fontSize;
+    return Math.round(fontSize * lineHeightRatio);
   }
 
 
