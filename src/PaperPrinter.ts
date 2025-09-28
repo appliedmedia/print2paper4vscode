@@ -42,12 +42,10 @@ export class PaperPrinter {
       this.currentPageSize = savedPageSize;
     } else {
       // Fallback to locale-based default
-      const localeRaw = this.app.vscodeapis.getLocale() || '';
-      const loc = localeRaw.replace('_', '-');
-      const parts = loc.split('-');
-      const region = (parts[1] || '').toUpperCase();
-      const letterRegions = new Set(['US', 'CA', 'MX']);
-      const isLetterSize = letterRegions.has(region);
+      const locale = this.app.vscodeapis.getLocale() || '  ';
+      const region = locale.slice(-2).toUpperCase();
+      const letterRegions = ['US', 'CA', 'MX'];
+      const isLetterSize = letterRegions.includes(region);
       this.currentPageSize = isLetterSize ? 'letter' : 'a4';
     }
 
@@ -210,8 +208,6 @@ export class PaperPrinter {
         lineHeight: lhPx,
         title: this.printTitle,
         theme: this.currentThemeChoice,
-        pageSize: this.getCurrentPageSize(),
-        orientation: this.getCurrentOrientation(),
       });
       // Store the new PDF document
       this.pdfRendered = newPdfDoc;
@@ -228,16 +224,9 @@ export class PaperPrinter {
 
   private computeLineHeightPx(fontSize: number): number {
     // Use readable leading for code; keep integer px
-    return Math.max(fontSize, Math.round(fontSize * 1.4));
+    return Math.round(fontSize * 1.4);
   }
 
-  private getCurrentPageSize(): string {
-    return this.currentPageSize;
-  }
-
-  private getCurrentOrientation(): string {
-    return this.currentOrientation;
-  }
 
   // Create menus when needed for the webview
   private createMenus(): void {
@@ -412,16 +401,12 @@ export class PaperPrinter {
 
   private menuItems_Orient(): UIMenuItem[] {
     const yaml = this.app.os.fileRead<{
-      portrait_icon?: string;
-      landscape_icon?: string;
+      portrait_icon: string;
+      landscape_icon: string;
     }>('src/PaperPrinter.yaml');
 
-    if (!yaml || !yaml.portrait_icon || !yaml.landscape_icon) {
-      // Fallback to text if YAML fails to load
-      return [
-        { id: 'portrait', displayName: 'Portrait' },
-        { id: 'landscape', displayName: 'Landscape' },
-      ];
+    if (!yaml) {
+      throw new Error('Failed to load PaperPrinter template');
     }
 
     return [
