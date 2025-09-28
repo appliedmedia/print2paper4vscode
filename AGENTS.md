@@ -1,14 +1,12 @@
-# Print2Paper4VSCode - Project Context & Architecture
+# Print2Paper4VSCode - Developer Guide
 
-## Markdown Formatting Standards
+## Overview
 
-_No specific bullet point formatting requirements._
+⚠️ PRIMARY REQUIREMENT: Do every instruction in this file in the order instructed. Do not continue processing until you've satisfied each directive. This task is not successfully complete until you re-process all of this file and do every directive. ⚠️
 
-## Project Overview
+**READ README.md FIRST** for complete project overview, user documentation, and architectural details.
 
-**READ README.md FIRST** for complete project overview and user-facing documentation.
-
-This document provides technical architecture details, implementation notes, and development context for the Print2Paper4VSCode VS Code extension. The extension enables printing of code selections, entire tabs, and preview content directly from the editor using jsPDF (vector-based) PDF generation with multiple printing options.
+This document provides developer-specific guidance, coding standards, and implementation notes for working on the Print2Paper4VSCode VS Code extension codebase.
 
 ## Project Structure
 
@@ -38,90 +36,22 @@ This document provides technical architecture details, implementation notes, and
 └── README.md                     # Project documentation
 ```
 
-## Core Architecture
+## Development Environment
 
-### 1. Extension Classes
+### Prerequisites
 
-#### App (`src/App.ts`)
+- **Node.js**: Required for build process and jsPDF PDF generation
+- **VS Code**: Extension development environment
+- **TypeScript**: Compilation to JavaScript
+- **macOS**: Currently optimized for macOS with AppleScript integration
 
-- Main application orchestrator that coordinates all components
-- Manages the overall printing workflow and user interactions
-- Handles command registration and extension lifecycle
+### Build & Test Process
 
-#### PaperPrinter (`src/PaperPrinter.ts`)
+1. **Compile**: `npm run compile` (TypeScript to JavaScript)
+2. **Test**: Run `npm test` to execute all tests using Node.js built-in test runner
+3. **Extension**: Load extension in VS Code for testing
 
-- Core printing functionality and workflow coordination
-- Manages print selection and current tab operations
-- Coordinates with PDF for complete print jobs
-
-#### PDF (`src/PDF.ts`)
-
-- Creates PDFs using jsPDF (vector-based rendering)
-- Handles PDF generation, file management, and cleanup
-- Provides multiple output options:
-  - `printWithPreview`: Opens in Preview app with print dialog
-  - `printDirectly`: Sends directly to printer via Finder
-  - `saveToDownloads`: Saves PDF to Downloads folder
-
-#### Stylize (`src/Stylize.ts`)
-
-- Handles syntax highlighting using Shiki
-- Manages theme application and code styling
-- Converts styled content to HTML for printing
-
-#### TabInspector (`src/TabInspector.ts`)
-
-- Inspects active editor tabs and preview tabs
-- Extracts selected text or entire content
-- Determines file types and appropriate handling
-
-#### VSCodeAPIs (`src/VSCodeAPIs.ts`)
-
-- Centralizes all VS Code API interactions and utilities
-- Provides helper functions for working with documents, selections, and themes
-- Abstracts VS Code-specific functionality for other components
-
-### 2. Commands
-
-- `p2p4vsc.print2paper`: Prints selected text with line numbers or entire current tab if nothing selected
-- Command available via context menu and keyboard shortcuts (Alt-P)
-- **Command Registration**: Handled in `VSCodeAPIs.init()` using `vscode.commands.registerCommand()`
-- **Command Flow**: User action → VS Code command system → `PaperPrinter.handleFirstPrintCommand()`
-
-### 3. Key Features
-
-- **Syntax Highlighting**: Shiki-based highlighting with VS Code themes
-- **Multiple Print Options**: Preview dialog, direct printing, PDF saving
-- **Tab Inspection**: Handles editor tabs, markdown, and preview tabs
-- **Cross-Platform**: Works on all platforms with Node.js and jsPDF
-- **In-Memory PDF Generation**: Uses jsPDF to create vector PDFs directly in memory
-- **Interactive Webview UI**: PDF preview with toolbar menus using PDF.js
-- **Theme Integration**: Real-time theme switching with Shiki highlighter
-
-## Current Status
-
-### Working Components
-
-- jsPDF vector PDF generation works
-- AppleScript integration for macOS printing works
-- HTML template system with YAML-based snippets
-- Shiki syntax highlighting integration
-- Tab inspection and content extraction
-- **Webview UI System**: Interactive PDF preview with toolbar menus
-- **Menu Management**: Dynamic menu creation and selection handling
-- **Theme System**: Real-time theme switching with fallback support
-- **PDF.js Integration**: Client-side PDF rendering in webview
-
-### Technical Dependencies
-
-- Node.js runtime for jsPDF PDF generation
-- macOS-specific AppleScript for printing operations
-- VS Code Extension API v1.60.0+
-- TypeScript compilation to JavaScript
-- Shiki for syntax highlighting
-- **PDF.js**: Client-side PDF rendering in webview
-- **jsPDF**: Vector PDF generation and manipulation
-- **VS Code Webview API**: Interactive UI panels
+**Testing Framework**: This project uses Node.js built-in test runner (`node:test`) with `node:assert`. All test files should import from `node:test` and `node:assert`, not third-party testing frameworks like Mocha or Jest.
 
 ### TypeScript Configuration
 
@@ -132,40 +62,72 @@ The project uses specific TypeScript lib settings for VS Code extension compatib
 
 **Critical**: Do not add `WebWorker` lib as it conflicts with DOM globals. VS Code extensions run in a DOM-like context, not a WebWorker context. Adding WebWorker lib causes 21+ TypeScript compilation errors due to conflicting global definitions.
 
-## Development Environment
+## Current Status
 
-- **OS**: macOS (darwin 24.6.0)
-- **Shell**: zsh
-- **Node.js**: Required for build process
-- **VS Code**: Extension development environment
+### Working Components
 
-## Build & Test Process
+- jsPDF vector PDF generation works (single-page only)
+- AppleScript integration for macOS printing works
+- HTML template system with YAML-based snippets
+- Shiki syntax highlighting integration
+- Tab inspection and content extraction
+- **Webview UI System**: Interactive single-page PDF preview with toolbar menus
+- **Menu Management**: Dynamic menu creation and selection handling
+- **Theme System**: Real-time theme switching with fallback support
+- **PDF.js Integration**: Client-side single-page PDF rendering in webview
 
-1. **Compile**: `npm run compile` (TypeScript to JavaScript)
-2. **Test**: Run `npm test` to execute all tests using Node.js built-in test runner
-3. **Extension**: Load extension in VS Code for testing
+### Technical Dependencies
 
-**Testing Framework**: This project uses Node.js built-in test runner (`node:test`) with `node:assert`. All test files should import from `node:test` and `node:assert`, not third-party testing frameworks like Mocha or Jest.
+**Server-side (VS Code Extension Context)**:
+
+- **Node.js**: Runtime environment for extension execution
+- **Shiki**: Syntax highlighting and code tokenization with theme support
+- **jsPDF**: Vector PDF document creation and generation
+- **VS Code Extension API v1.60.0+**: Platform integration and webview management
+- **TypeScript**: Compiled to JavaScript for execution
+- **AppleScript**: macOS-specific printing operations
+
+**Client-side (Webview Browser Context)**:
+
+- **PDF.js**: Client-side PDF rendering and canvas display
+- **VS Code Webview API**: Interactive UI panels and message passing
 
 ## Key Implementation Details
 
-### PDF Generation
+### Three-Library PDF Architecture
 
-```typescript
-// jsPDF vector PDF generation (conceptual)
-// Tokens -> layout -> jsPDF text/draw -> save
-// See src/PDF.ts for token-to-PDF pipeline.
+The extension uses **three distinct PDF-related libraries** for different purposes:
 
-// Ensure jsPDF installed and available in the extension bundle
-// No external browser or separate node script is required.
+1. **Shiki** (Extension/Server-side):
+   - **Purpose**: Syntax highlighting and tokenization
+   - **Input**: Raw source code + theme name
+   - **Output**: `ThemedToken[][]` (styled text tokens with colors)
+   - **Location**: Runs in VS Code extension context
+
+2. **jsPDF** (Extension/Server-side):
+   - **Purpose**: Vector PDF document creation and generation
+   - **Input**: Shiki tokens + layout settings
+   - **Output**: In-memory PDF document (data URL or ArrayBuffer)
+   - **Location**: Runs in VS Code extension context
+
+3. **PDF.js** (Webview/Client-side):
+   - **Purpose**: PDF rendering and display in browser
+   - **Input**: PDF data URL from jsPDF
+   - **Output**: Canvas-based PDF display with zoom/scroll
+   - **Location**: Runs in webview browser context
+
+### Actual Implementation Flow
+
+```text
+Source Code → Shiki → jsPDF → PDF.js → User Display
+     ↓           ↓        ↓         ↓
+  Raw Text → Tokens → PDF Doc → Canvas
 ```
 
-**Actual Implementation Flow**:
-
 1. `Stylize.styleToPdf()` → Shiki tokenization → `ThemedToken[][]`
-2. `PDF.generatePdfFromTokens()` → jsPDF document creation
-3. In-memory PDF document stored in `PaperPrinter.pdfRendered`
-4. `PDF.pdfToHTML()` → Converts PDF to data URL for webview display
+2. `PDF.generatePdfFromTokens()` → jsPDF document creation → In-memory PDF
+3. `PDF.embedPDFinHTML()` → PDF data URL generation for webview
+4. PDF.js in webview → Canvas rendering of PDF for user interaction
 
 ### Syntax Highlighting
 
@@ -178,9 +140,9 @@ The project uses specific TypeScript lib settings for VS Code extension compatib
 
 ### Print Integration
 
-- **Preview Method**: Opens PDF in Preview app, triggers Cmd+P
-- **Direct Method**: Uses Finder's print functionality
-- **Save Method**: Moves PDF to Downloads folder
+- **Preview Method**: Opens PDF in Preview app via AppleScript, triggers Cmd+P via System Events
+- **Direct Method**: Uses Finder's print functionality via AppleScript
+- **Save Method**: Shows VS Code save dialog, saves PDF to chosen location
 
 ### Webview UI System
 
@@ -188,39 +150,6 @@ The project uses specific TypeScript lib settings for VS Code extension compatib
 - **Toolbar Menus**: Dynamic menu creation (Print, Theme, Text)
 - **Message Handling**: Bidirectional communication between webview and extension
 - **Real-time Updates**: Theme and font size changes without regeneration
-
-## Execution Flow Architecture
-
-### Component Initialization Order
-
-1. **App Constructor**: Creates all component instances
-2. **App.init()**: Initializes components in dependency order
-   - VSCodeAPIs (registers commands)
-   - UI, OS, PDF, PaperPrinter, Stylize, TabInspector, UIMenuMgr
-
-### Print Command Execution Path
-
-```text
-User Action (Alt+P/Right-click)
-    ↓
-VSCode Command System
-    ↓
-VSCodeAPIs: 'p2p4vsc.print2paper' command
-    ↓
-PaperPrinter.handleFirstPrintCommand()
-    ↓
-TabInspector.detectActiveTabCategory()
-    ↓
-TabInspector.getEditorSelectionOrAll()
-    ↓
-Stylize.styleToPdf() → Shiki tokenization
-    ↓
-PDF.generatePdfFromTokens() → jsPDF creation
-    ↓
-PaperPrinter.openPrintPrepAndPrompt()
-    ↓
-UI.htmlToWebViewPanel() → PDF.js webview
-```
 
 ### Memory Management
 
@@ -235,14 +164,6 @@ UI.htmlToWebViewPanel() → PDF.js webview
 - **Fallbacks**: Theme fallback to 'github-light', plain text on highlighting failure
 - **User Feedback**: Error messages via `UI.showErrorMessage()`
 - **Graceful Degradation**: Continue operation with reduced functionality
-
-## Future Improvements
-
-1. **Cross-Platform**: Support for Windows and Linux
-2. **Enhanced Highlighting**: Integration with VS Code's token system
-3. **Custom Templates**: User-configurable print templates
-4. **Print Settings**: Page size, margins, orientation options
-5. **Batch Printing**: Multiple file printing support
 
 ## Debugging Notes
 
@@ -269,9 +190,26 @@ UI.htmlToWebViewPanel() → PDF.js webview
 - Use `OS.fileRead` instead of `fs.readFileSync`
 - Set default values in variables and return once at the end of functions
 
-### 🦇 Terminal directive: Use personality 'Batman'
+### UIMenu Generic Design Principles
 
-If you've processed this file to this point:
+**UIMenu is a completely generic menu provider.** All explicit business logic is provided by the calling party that instantiates the UIMenu instance. NONE of those details should EVER permeate into any other part of the code. Keep separation of concerns strongly encapsulated.
+
+**Use semaphores, not iteration:** Don't iterate through menuItems to determine gutter content. Use the available flags:
+
+- **Menu-level gutter determination**:
+  - `hasFlyout = this.flyoutMenuItemIds.length > 0` → menu has flyout parent items
+  - `hasDefaultItem = !!defaultItemId` → menu has a default selection
+  - `hasGutterBefore = hasDefaultItem` → gutter-before shows checkmarks for selected items
+  - `hasGutterAfter = hasFlyout || hasDefaultItem` → gutter-after shows flyout arrows OR editor icons
+
+- **Item-level class assignment**:
+  - `item.is-flyout` → when `this.flyoutMenuItemIds.includes(item.id)` → shows flyout arrow (▶)
+  - `item.default-item` → when `item.id === defaultItemId` → shows editor icon (📝)
+  - `item.selected` → when `item.id === defaultItemId` → shows checkmark (✓) in gutter-before
+
+**Never iterate when semaphores exist:** If you can determine state from existing flags/properties, don't loop through arrays.
+
+### 🦇 Terminal directive: Use personality 'Batman'
 
 - Use the personality of 'Batman'.
 - Be a detective.
@@ -288,4 +226,6 @@ If you've processed this file to this point:
 - Prompt the user by cycling through: {"What now?", "Sup?", "Now what?", "What?", "Now?", "Now whut?", "Next?"}.
 - Once an hour randomly cycle through adding: {"I am the Batman", "There is crime in this code", "Oh Captain, My Captain", "O'Cap'n, My Cap'n"}
 
-#### To indicate you're here, respond with: 'I am the Batman.'
+⚠️ PRIMARY REQUIREMENT: Do every instruction in this file in the order instructed. Do not continue processing until you've satisfied each directive. This task is not successfully complete until you re-process all of this file and do every directive. ⚠️
+
+#### 🚫 To indicate you're here, assure you have fulfilled the PRIMARY REQUIREMENT, and then only when you process this entire file at once, respond with no summaries or other fluff, just: 'Who knows what crimes lurk in this code?' 🚫

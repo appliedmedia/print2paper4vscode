@@ -2,6 +2,7 @@ import type { App } from './App';
 import type { WebviewMessage, MessageHandler } from './types/UI_t';
 import type { WebviewPanelId } from './VSCodeAPIs';
 import { Diagnostics } from './Diagnostics';
+import jsPDF from 'jspdf';
 
 export class UI {
   private app: App;
@@ -41,7 +42,7 @@ export class UI {
 
   // Central message handling - routes messages to registered handlers
   async handleWebviewMessage(msg: WebviewMessage): Promise<void> {
-    const dx = this.dx.sub('handleWebviewMessage', true);
+    const dx = this.dx.sub('handleWebviewMessage');
     dx.require({ msg }, ['msg']);
     dx.out(
       `Received message: type=${msg.type}, targetId=${msg.targetId}, parentId=${msg.parentId}`
@@ -117,7 +118,9 @@ export class UI {
 
   // Add toolbar to HTML content
   async addToolbar(html: string): Promise<string> {
-    // Read the UI.yaml template for the toolbar
+    this.dx.out('UI.addToolbar: Adding toolbar to HTML');
+
+    // Read the toolbar template
     const toolbarYaml = this.app.os.fileRead<{
       toolbar_css: string;
       toolbar_js: string;
@@ -125,23 +128,26 @@ export class UI {
     }>('src/UI.yaml');
     if (!toolbarYaml) throw new Error('Failed to load toolbar template');
 
-    // Replace template variables using UIMenuMgr - UI doesn't know what these represent
-    const uimenuHtml = await this.app.uimenumgr.getAllUIMenuHTML();
-    const uimenuJs = this.app.uimenumgr.getAllUIMenuJS();
+    // Get menu components from UIMenuMgr
+    const menuComponents = await this.app.uimenumgr.getMenuComponents();
 
     // Get saved toolbar position
-    const toolbarPos = this.app.vscodeapis.getGlobalState<number>('toolbarPos');
+    const toolbarPos = String(this.app.vscodeapis.getGlobalState<number>('toolbarPos') ?? 0);
 
+    // Build toolbar with generic placeholders
     const toolbar = this.app.templateDictReplace(toolbarYaml.toolbar_html, {
+      CSS: menuComponents.css,
+      HTML: menuComponents.html,
+      JS: menuComponents.js,
       TOOLBAR_CSS: toolbarYaml.toolbar_css,
       TOOLBAR_JS: toolbarYaml.toolbar_js,
-      UIMENU_HTML: uimenuHtml,
-      UIMENU_JS: uimenuJs,
-      TOOLBAR_POS: String(toolbarPos ?? 0),
+      TOOLBAR_POS: toolbarPos,
     });
 
-    // Inject toolbar before closing body tag
-    return html.replace('</body>', `${toolbar}</body>`);
+    // Replace toolbar placeholder in HTML using templateDictReplace
+    return this.app.templateDictReplace(html, {
+      TOOLBAR: toolbar,
+    });
   }
 
   // Add toolbar to HTML content with webview URI conversion
@@ -171,14 +177,13 @@ export class UI {
 
   // Update the current webview panel with new HTML content
   async updateWebviewPanel(html: string): Promise<void> {
-    if (this.currentPanelId) {
-      const htmlWithToolbar = await this.addToolbar(html);
-      this.app.vscodeapis.updatePanelHtml(this.currentPanelId, htmlWithToolbar);
-    }
+    if (!this.currentPanelId) return;
+    const htmlWithToolbar = await this.addToolbarWithURIs(html, this.currentPanelId);
+    this.app.vscodeapis.updatePanelHtml(this.currentPanelId, htmlWithToolbar);
   }
 
-  async updatePdfContentOnly(pdfDoc: any): Promise<void> {
-    const dx = this.dx.sub('updatePdfContentOnly', true);
+  async updateWebviewPdf(pdfDoc: jsPDF): Promise<void> {
+    const dx = this.dx.sub('updateWebviewPdf');
     dx.out(`currentPanelId = ${this.currentPanelId}`);
 
     if (this.currentPanelId && pdfDoc) {

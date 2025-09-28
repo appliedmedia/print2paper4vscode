@@ -3,6 +3,7 @@ import type { App } from './App';
 import type { WebviewMessage } from './types/UI_t';
 import type { UIMenuItem } from './types/UI_t';
 import { Diagnostics } from './Diagnostics';
+import { UIMenu } from './UIMenu';
 import jsPDF from 'jspdf';
 
 // Page size type and order definition
@@ -87,7 +88,7 @@ export class PaperPrinter {
   }
 
   private async handleMenuItemSelected(msg: WebviewMessage): Promise<void> {
-    const dx = this.dx.sub('handleMenuItemSelected', true);
+    const dx = this.dx.sub('handleMenuItemSelected');
     dx.require({ msg }, ['msg']);
 
     // Handle menu item selections from the new generic UI system
@@ -110,9 +111,22 @@ export class PaperPrinter {
     dx.done();
   }
 
+  private async handleDxMessage(msg: WebviewMessage): Promise<void> {
+    const dx = this.dx.sub('handleDxMessage', true /* debugOn */);
+    dx.require({ msg }, ['msg']);
+
+    // Output webview diagnostic message via dx.out (forced debug on)
+    if (msg.message) {
+      dx.out(`[Webview] ${msg.message}`);
+    } else {
+      dx.out('Received dx message without message content');
+    }
+    dx.done();
+  }
+
   private async handlePrintMessage(msg: WebviewMessage): Promise<void> {
     if (!this.pdfRendered) return;
-    void (await this.applyRenderModes(this.pdfRendered));
+    void (await this.generatePdf());
     if (msg.value === 'preview')
       await this.app.pdf.printWithPreview(this.pdfRendered, this.printTitle || 'Print Output');
     else if (msg.value === 'direct')
@@ -159,11 +173,11 @@ export class PaperPrinter {
       if (!this.currentThemeChoice) {
         this.currentThemeChoice = this.app.vscodeapis.getActiveThemeId();
       }
-      const pdfDoc = await this.app.stylize.styleToPdf(info.text, info.languageId, {
+      this.pdfRendered = await this.app.stylize.styleToPdf(info.text, info.languageId, {
         title: this.printTitle,
         theme: this.currentThemeChoice,
       });
-      await this.openPrintPrepAndPrompt(pdfDoc, printableLabel);
+      await this.openPrintPrepAndPrompt(printableLabel);
     } catch (error) {
       this.dx.out(`Error handling print: ${error}`);
       this.app.ui.showErrorMessage(
@@ -172,20 +186,19 @@ export class PaperPrinter {
     }
   }
 
-  private async openPrintPrepAndPrompt(pdfDoc: jsPDF, tabName: string): Promise<void> {
-    this.pdfRendered = pdfDoc; // Store in-memory PDF document
+  private async openPrintPrepAndPrompt(tabName: string): Promise<void> {
     this.printTitle = tabName;
 
     // Create menus and register message handlers when we actually need them
     this.createMenus();
     this.registerMessageHandlers();
 
-    const initial = await this.applyRenderModes(pdfDoc);
+    const initial = await this.generatePdf();
     const htmlWithToolbar = await this.app.ui.addToolbar(initial);
     await this.app.ui.htmlToPanel(`Printable: ${tabName}`, htmlWithToolbar);
   }
 
-  private async applyRenderModes(pdfDoc: jsPDF): Promise<string> {
+  private async generatePdf(): Promise<string> {
     // If we have raw code, regenerate with theme overrides
     if (this.lastRawCode && this.lastLanguageId) {
       const sizePx = this.computeFontSizePx();
@@ -202,7 +215,7 @@ export class PaperPrinter {
       return this.app.pdf.embedPDFinHTML(newPdfDoc, this.printTitle);
     }
     // For existing PDF document, convert to HTML
-    return this.app.pdf.embedPDFinHTML(pdfDoc, this.printTitle);
+    return this.app.pdf.embedPDFinHTML(this.pdfRendered!, this.printTitle);
   }
 
   private computeFontSizePx(): number {
@@ -223,37 +236,47 @@ export class PaperPrinter {
     const menuConfigs = [
       {
         id: 'print',
+        displayName: 'Print',
         icon: '🖨',
-        title: 'Print',
+        isFlyout: false,
         menuItems: this.menuItems_Print.bind(this),
+        flyoutMenuItemIds: [],
         selectionHandler: this.handleSelection_Print.bind(this),
       },
       {
         id: 'page',
+        displayName: 'Page',
         icon: '📄',
-        title: 'Page',
+        isFlyout: false,
         menuItems: this.menuItems_Page.bind(this),
+        flyoutMenuItemIds: ['orient'],
         selectionHandler: this.handleSelection_Page.bind(this),
       },
       {
         id: 'orient',
+        displayName: 'Orient',
         icon: '', // submenu indicated by no icon, see Page > Orient
-        title: 'Orient',
+        isFlyout: true,
         menuItems: this.menuItems_Orient.bind(this),
+        flyoutMenuItemIds: [],
         selectionHandler: this.handleSelection_Orient.bind(this),
       },
       {
         id: 'theme',
+        displayName: 'Theme',
         icon: '🎨',
-        title: 'Theme',
+        isFlyout: false,
         menuItems: this.menuItems_Theme.bind(this),
+        flyoutMenuItemIds: [],
         selectionHandler: this.handleSelection_Theme.bind(this),
       },
       {
         id: 'text',
+        displayName: 'Text',
         icon: 'Tt',
-        title: 'Text',
+        isFlyout: false,
         menuItems: this.menuItems_Text.bind(this),
+        flyoutMenuItemIds: [],
         selectionHandler: this.handleSelection_Text.bind(this),
       },
     ];
@@ -262,9 +285,11 @@ export class PaperPrinter {
       this.dx.out(`Creating menu: ${config.id} with icon: ${config.icon}`);
       const menu = this.app.uimenumgr.createMenu(
         config.id,
+        config.displayName,
         config.icon,
-        config.title,
+        config.isFlyout,
         config.menuItems,
+        config.flyoutMenuItemIds,
         config.selectionHandler
       );
       this.app.uimenumgr.addMenu(menu);
@@ -275,7 +300,7 @@ export class PaperPrinter {
     const allMenus = this.app.uimenumgr.getAllMenus();
     this.dx.out(`Total menus created: ${allMenus.length}`);
     allMenus.forEach(menu => {
-      this.dx.out(`Menu: ${menu.id}, Icon: ${menu.icon}, Title: ${menu.title}`);
+      this.dx.out(`Menu: ${menu.id}, Icon: ${menu.icon}, DisplayName: ${menu.displayName}`);
     });
   }
 
@@ -287,6 +312,7 @@ export class PaperPrinter {
       { type: 'dragEnd', handler: this.handleDragEnd.bind(this) },
       { type: 'menuItemSelected', handler: this.handleMenuItemSelected.bind(this) },
       { type: 'print', handler: this.handlePrintMessage.bind(this) },
+      { type: 'dx', handler: this.handleDxMessage.bind(this) },
     ];
 
     messageHandlers.forEach(({ type, handler }) => {
@@ -318,7 +344,7 @@ export class PaperPrinter {
   }
 
   private menuItems_Text(): UIMenuItem[] {
-    const dx = this.dx.sub('menuItems_Text', true);
+    const dx = this.dx.sub('menuItems_Text');
     const editorTypo = this.app.vscodeapis.getEditorTypography();
     const editorSize = editorTypo.fontSize;
     dx.out(`editorSize = ${editorSize}`);
@@ -389,11 +415,11 @@ export class PaperPrinter {
 
   // Selection handler methods for each menu type
   private async handleSelection_Print(selectedId: string): Promise<string> {
-    if (selectedId === '0') {
+    if (selectedId === UIMenu.defaultId()) {
       return ''; // Print menu has no default selection
     }
     if (!this.pdfRendered) return '';
-    void (await this.applyRenderModes(this.pdfRendered));
+    void (await this.generatePdf());
     if (selectedId === 'preview')
       await this.app.pdf.printWithPreview(this.pdfRendered, this.printTitle || 'Print Output');
     else if (selectedId === 'direct')
@@ -405,10 +431,10 @@ export class PaperPrinter {
   }
 
   private async handleSelection_Theme(selectedId: string): Promise<string> {
-    const dx = this.dx.sub('handleSelection_Theme', true);
+    const dx = this.dx.sub('handleSelection_Theme');
     dx.out(`selectedId = ${selectedId}`);
 
-    if (selectedId === '0') {
+    if (selectedId === UIMenu.defaultId()) {
       // Return the current editor theme ID as the default
       const currentEditorTheme = this.app.vscodeapis.getActiveThemeId();
       const availableThemes = this.app.stylize.getThemes();
@@ -425,9 +451,9 @@ export class PaperPrinter {
     // Regenerate PDF and update only the PDF content
     if (this.pdfRendered) {
       dx.out(`regenerating PDF with new theme`);
-      await this.applyRenderModes(this.pdfRendered);
-      dx.out(`calling updatePdfContentOnly with pdfRendered`);
-      await this.app.ui.updatePdfContentOnly(this.pdfRendered);
+      await this.generatePdf();
+      dx.out(`calling updateWebviewPdf with pdfRendered`);
+      await this.app.ui.updateWebviewPdf(this.pdfRendered);
     } else {
       dx.out(`no pdfRendered available`);
     }
@@ -437,10 +463,10 @@ export class PaperPrinter {
   }
 
   private async handleSelection_Text(selectedId: string): Promise<string> {
-    const dx = this.dx.sub('handleSelection_Text', true);
+    const dx = this.dx.sub('handleSelection_Text');
     dx.out(`selectedId = ${selectedId}`);
 
-    if (selectedId === '0') {
+    if (selectedId === UIMenu.defaultId()) {
       // Return the actual editor font size for default selection
       const editorTypo = this.app.vscodeapis.getEditorTypography();
       const editorSize = String(editorTypo.fontSize);
@@ -458,9 +484,9 @@ export class PaperPrinter {
       // Regenerate PDF and update only the PDF content
       if (this.pdfRendered) {
         dx.out(`regenerating PDF with new font size`);
-        await this.applyRenderModes(this.pdfRendered);
-        dx.out(`calling updatePdfContentOnly with pdfRendered`);
-        await this.app.ui.updatePdfContentOnly(this.pdfRendered);
+        await this.generatePdf();
+        dx.out(`calling updateWebviewPdf with pdfRendered`);
+        await this.app.ui.updateWebviewPdf(this.pdfRendered);
       } else {
         dx.out(`no pdfRendered available`);
       }
@@ -474,10 +500,10 @@ export class PaperPrinter {
   }
 
   private async handleSelection_Page(selectedId: string): Promise<string> {
-    const dx = this.dx.sub('handleSelection_Page', true);
+    const dx = this.dx.sub('handleSelection_Page');
     dx.out(`selectedId = ${selectedId}`);
 
-    if (selectedId === '0') {
+    if (selectedId === UIMenu.defaultId()) {
       // Return the current page size for default selection
       const currentPageSize =
         this.currentPageSize || this.app.vscodeapis.getGlobalState<PageSize>('pageSize') || 'a4';
@@ -495,9 +521,9 @@ export class PaperPrinter {
       // Regenerate PDF and update only the PDF content
       if (this.pdfRendered) {
         dx.out(`regenerating PDF with new page size`);
-        await this.applyRenderModes(this.pdfRendered);
-        dx.out(`calling updatePdfContentOnly with pdfRendered`);
-        await this.app.ui.updatePdfContentOnly(this.pdfRendered);
+        await this.generatePdf();
+        dx.out(`calling updateWebviewPdf with pdfRendered`);
+        await this.app.ui.updateWebviewPdf(this.pdfRendered);
       } else {
         dx.out(`no pdfRendered available`);
       }
@@ -511,10 +537,10 @@ export class PaperPrinter {
   }
 
   private async handleSelection_Orient(selectedId: string): Promise<string> {
-    const dx = this.dx.sub('handleSelection_Orient', true);
+    const dx = this.dx.sub('handleSelection_Orient');
     dx.out(`selectedId = ${selectedId}`);
 
-    if (selectedId === '0') {
+    if (selectedId === UIMenu.defaultId()) {
       // Return the current orientation for default selection
       const currentOrientation =
         this.currentOrientation ||
@@ -534,9 +560,9 @@ export class PaperPrinter {
       // Regenerate PDF and update only the PDF content
       if (this.pdfRendered) {
         dx.out(`regenerating PDF with new orientation`);
-        await this.applyRenderModes(this.pdfRendered);
-        dx.out(`calling updatePdfContentOnly with pdfRendered`);
-        await this.app.ui.updatePdfContentOnly(this.pdfRendered);
+        await this.generatePdf();
+        dx.out(`calling updateWebviewPdf with pdfRendered`);
+        await this.app.ui.updateWebviewPdf(this.pdfRendered);
       } else {
         dx.out(`no pdfRendered available`);
       }

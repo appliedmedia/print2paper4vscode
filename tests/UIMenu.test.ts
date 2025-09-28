@@ -37,21 +37,41 @@ const mockSelectionHandler = async (id: string): Promise<string> => Promise.reso
 describe('UIMenu', () => {
   let menu: UIMenu;
 
-  // Create menu for testing
-  menu = new UIMenu('testMenu', '🔧', 'Test Menu', mockApp, mockListBuilder, mockSelectionHandler);
+  beforeEach(() => {
+    // Create fresh menu for each test
+    menu = new UIMenu(
+      mockApp,
+      'testMenu',
+      'Test Menu',
+      '🔧',
+      false,
+      mockListBuilder,
+      [],
+      mockSelectionHandler
+    );
+  });
 
   describe('Constructor and Properties', () => {
     it('should create menu with correct properties', () => {
       assert.strictEqual(menu.id, 'testMenu');
       assert.strictEqual(menu.icon, '🔧');
-      assert.strictEqual(menu.title, 'Test Menu');
+      assert.strictEqual(menu.displayName, 'Test Menu');
     });
 
     it('should handle empty string properties', () => {
-      const emptyMenu = new UIMenu('', '', '', mockApp, mockListBuilder, mockSelectionHandler);
+      const emptyMenu = new UIMenu(
+        mockApp,
+        '',
+        '',
+        '',
+        false,
+        mockListBuilder,
+        [],
+        mockSelectionHandler
+      );
       assert.strictEqual(emptyMenu.id, '');
       assert.strictEqual(emptyMenu.icon, '');
-      assert.strictEqual(emptyMenu.title, '');
+      assert.strictEqual(emptyMenu.displayName, '');
     });
   });
 
@@ -66,11 +86,13 @@ describe('UIMenu', () => {
 
     it('should handle special characters in ID', () => {
       const specialMenu = new UIMenu(
-        'menu-with-dashes',
-        '🔧',
-        'Special Menu',
         mockApp,
+        'menu-with-dashes',
+        'Special Menu',
+        '🔧',
+        false,
         mockListBuilder,
+        [],
         mockSelectionHandler
       );
       assert.strictEqual(specialMenu.getId_Menu(), 'menu-with-dashes');
@@ -85,11 +107,13 @@ describe('UIMenu', () => {
 
     it('should handle single character ID', () => {
       const singleMenu = new UIMenu(
-        'a',
-        '🔧',
-        'Single',
         mockApp,
+        'a',
+        'Single',
+        '🔧',
+        false,
         mockListBuilder,
+        [],
         mockSelectionHandler
       );
       assert.strictEqual(singleMenu.getTemplateVariableName(), 'A_MENU_ITEMS');
@@ -97,11 +121,13 @@ describe('UIMenu', () => {
 
     it('should handle ID starting with number', () => {
       const numMenu = new UIMenu(
-        '1menu',
-        '🔧',
-        'Number',
         mockApp,
+        '1menu',
+        'Number',
+        '🔧',
+        false,
         mockListBuilder,
+        [],
         mockSelectionHandler
       );
       assert.strictEqual(numMenu.getTemplateVariableName(), '1MENU_MENU_ITEMS');
@@ -132,11 +158,13 @@ describe('UIMenu', () => {
     it('should handle very long ID', () => {
       const longId = 'a'.repeat(100);
       const longMenu = new UIMenu(
-        longId,
-        '🔧',
-        'Long Menu',
         mockApp,
+        longId,
+        'Long Menu',
+        '🔧',
+        false,
         mockListBuilder,
+        [],
         mockSelectionHandler
       );
 
@@ -146,11 +174,13 @@ describe('UIMenu', () => {
 
     it('should handle ID with special characters', () => {
       const specialMenu = new UIMenu(
-        'menu_$#@!',
-        '🔧',
-        'Special',
         mockApp,
+        'menu_$#@!',
+        'Special',
+        '🔧',
+        false,
         mockListBuilder,
+        [],
         mockSelectionHandler
       );
 
@@ -160,11 +190,13 @@ describe('UIMenu', () => {
 
     it('should handle unicode characters in ID', () => {
       const unicodeMenu = new UIMenu(
-        'ménu',
-        '🔧',
-        'Unicode',
         mockApp,
+        'ménu',
+        'Unicode',
+        '🔧',
+        false,
         mockListBuilder,
+        [],
         mockSelectionHandler
       );
 

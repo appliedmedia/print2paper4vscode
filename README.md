@@ -1,40 +1,47 @@
 # Print2Paper4VSCode
 
-A VS Code extension that captures content from the active tab (editor or preview), converts it to HTML, and provides multiple printing options. The extension uses minimal AppleScript to copy content, processes RTF data, and generates PDFs for printing or saving.
+A VS Code extension that captures content from the active editor, applies syntax highlighting, generates a vector PDF, and provides multiple printing options through an interactive webview interface.
 
 ## How It Actually Works
 
 The extension follows this workflow:
 
-1. **Capture Active Tab Content**:
-   - Uses minimal AppleScript to select-all (or current selection) and copy
-   - Works with any active tab - text editors, Markdown previews, web previews, etc.
+1. **Capture Active Editor Content**:
+   - Uses VS Code APIs to directly access editor content
+   - Detects selection or captures entire document
+   - Identifies language for syntax highlighting
 
-2. **Process Clipboard Data**:
-   - Imports clipboard content into TypeScript/JavaScript
-   - Converts RTF (Rich Text Format) data to HTML
-   - Preserves formatting and structure
+2. **Syntax Highlighting & Tokenization**:
+   - Uses Shiki to tokenize code with VS Code theme support
+   - Fallback to 'github-light' theme if current theme unavailable
+   - Preserves colors and styling from the active theme
 
-3. **Create PrintPrep Tab**:
-   - Opens new tab titled "PrintPrep: {original tab name}"
-   - Renders the converted HTML content with proper formatting
+3. **PDF Generation**:
+   - Creates vector PDF using jsPDF (in-memory)
+   - Maps themed tokens to PDF text with colors
+   - Supports configurable page sizes and orientations
+   - Applies user-selected font sizes and line heights
+
+4. **Interactive Webview Preview**:
+   - Opens webview panel titled "Printable: {document name}"
+   - Embeds PDF using PDF.js for client-side rendering
+   - Provides interactive toolbar with dynamic menus
    - Shows exactly what will be printed
 
-4. **Generate PDF & Print**:
-   - Saves PrintPrep tab content to temporary PDF
-   - Provides three output options:
-     - **Print with Preview**: Opens PDF in Preview app with print dialog
-     - **Print Directly**: Sends PDF directly to printer via Finder
-     - **Save as PDF**: Saves PDF to Downloads folder
+5. **Print & Export Options**:
+   - **Print with Preview**: Saves temp PDF and opens in Preview app
+   - **Print Directly**: Sends PDF to printer via OS commands
+   - **Save as PDF**: Shows save dialog for PDF export
 
 ## Features
 
-- **Universal Tab Support**: Works with any active tab - text editors, previews, web content
-- **Minimal AppleScript**: Uses only essential AppleScript for clipboard operations
-- **RTF to HTML Conversion**: Preserves formatting when converting clipboard content
-- **PrintPrep Preview**: See exactly what will be printed before committing
+- **Direct Editor Access**: Captures content directly from VS Code editor using APIs
+- **Syntax Highlighting**: Shiki-based highlighting with VS Code theme integration
+- **Vector PDF Generation**: Creates scalable PDFs using jsPDF
+- **Interactive Webview**: PDF.js-powered preview with live toolbar menus
+- **Dynamic Menu System**: Real-time theme, page size, and font size switching
 - **Multiple Print Options**: Preview dialog, direct printing, or PDF saving
-- **Context Menu Integration**: Right-click to access print options
+- **Persistent Settings**: Remembers page size, orientation, and toolbar position
 - **Keyboard Shortcuts**: Quick access via keyboard commands
 
 ## Installation
@@ -75,128 +82,190 @@ The extension follows this workflow:
 
 ## Technical Implementation
 
+### Three-Library PDF Pipeline
+
+The extension uses three distinct libraries for different purposes:
+
+1. **Shiki** (Server-side): Tokenizes source code with syntax highlighting themes
+   - Converts raw source code → `ThemedToken[][]` arrays with colors/styles
+   - Runs in VS Code extension context with theme support
+
+2. **jsPDF** (Server-side): Creates vector PDF documents in memory
+   - Converts Shiki tokens → In-memory PDF document with styled text
+   - Handles page layout, fonts, and PDF generation
+   - Outputs PDF as data URL or buffer for saving/printing
+
+3. **PDF.js** (Client-side): Renders PDF documents in the webview
+   - Converts PDF data URL → Canvas rendering in browser
+   - Handles zoom, scrolling, and interactive PDF display
+   - Runs in webview context for user preview
+
+### Flow: Source Code → Shiki → jsPDF → PDF.js → User
+
 - **Content Capture**: Direct VS Code API access to editor content and selections
-- **Syntax Highlighting**: Shiki-based highlighting with VS Code theme support
-- **PDF Generation**: Uses jsPDF with vector-based rendering engine
-- **Print Integration**: Cross-platform OS integration for printing operations
-- **Webview UI**: Interactive preview using VS Code's webview API with PDF.js
+- **Print Integration**: AppleScript-based printing (opens Preview with Cmd+P or uses Finder print)
+- **Menu Management**: Generic UIMenu system with flyout support and selection handlers
+- **State Management**: Global state persistence for user preferences
+- **Diagnostics**: Hierarchical logging system with performance timing
 
-## Execution Flow
+## Execution Flow Architecture
 
-The extension follows this detailed workflow:
-
-### 1. Extension Activation
+### 1. Extension Activation Flow
 
 ```text
-VSCode Extension Host
+VSCode Extension System
     ↓
-activate() in -entrypoint.ts
+src/-entrypoint.ts:activate()
     ↓
 new App(context, vscode)
     ↓
-app.init() - initializes all components
+App Constructor:
+  - Creates all component instances
+  - VSCodeAPIs, UI, OS, PDF, PaperPrinter, Stylize, TabInspector, UIMenuMgr
     ↓
-VSCodeAPIs.init() - registers 'p2p4vsc.print2paper' command
+app.init()
+    ↓
+Component Initialization Order:
+  - VSCodeAPIs.init() → Registers 'p2p4vsc.print2paper' command
+  - UI.init(), OS.init(), PDF.init(), PaperPrinter.init(), Stylize.init(), TabInspector.init(), UIMenuMgr.init()
 ```
 
-### 2. User Triggers Print Command
+### 2. Print Command Execution Path
 
 ```text
-User presses Alt+P or right-clicks → "Print Selection"
+User Action (Alt+P or Right-click → Print)
     ↓
 VSCode Command System
     ↓
-'p2p4vsc.print2paper' command registered in VSCodeAPIs
+VSCodeAPIs: 'p2p4vsc.print2paper' command handler
     ↓
-app.paperprinter.handleFirstPrintCommand()
-```
-
-### 3. Content Detection & Extraction
-
-```text
 PaperPrinter.handleFirstPrintCommand()
     ↓
 TabInspector.detectActiveTabCategory()
-    ├── 'editor-nonmd' → text editor (non-markdown)
-    ├── 'editor-md' → markdown editor
-    └── 'preview' → webview/preview tab (not supported yet)
     ↓
 TabInspector.getEditorSelectionOrAll()
-    ├── Gets selected text OR entire document
-    ├── Extracts languageId, filename, content
-    └── Returns: {text, languageId, name}
+    ↓
+Stylize.styleToPdf() → Shiki tokenization
+    ↓
+PDF.generatePdfFromTokens() → jsPDF creation
+    ↓
+PaperPrinter.openPrintPrepAndPrompt()
+    ↓
+UI.htmlToWebViewPanel() → PDF.js webview
 ```
 
-### 4. Syntax Highlighting & PDF Generation
+### 3. Detailed Component Flow
+
+#### A. Content Detection & Extraction
 
 ```text
-PaperPrinter gets content
-    ↓
-Stylize.styleToPdf(text, languageId, options)
-    ↓
-Shiki highlighter processes code
-    ├── Validates highlighter exists
-    ├── Creates highlighter with themes if needed
-    ├── Tokenizes code with syntax highlighting
-    └── Returns ThemedToken[][]
-    ↓
-PDF.generatePdfFromTokens(tokens, fontFamily, fontSize, lineHeight, title)
-    ↓
-jsPDF creates vector PDF document
-    ├── Sets font and size
-    ├── Adds title if provided
-    ├── Renders each token with its color
-    └── Returns jsPDF document (in-memory)
+TabInspector.detectActiveTabCategory()
+  ├── 'editor-nonmd' → Regular code files
+  ├── 'editor-md' → Markdown files
+  └── 'preview' → Webview/preview tabs
+
+TabInspector.getEditorSelectionOrAll()
+  ├── If selection exists → Return selected text
+  └── If no selection → Return entire document
 ```
 
-### 5. Print Preview & User Interface
+#### B. Syntax Highlighting & PDF Generation
 
 ```text
-PaperPrinter.openPrintPrepAndPrompt(pdfDoc, tabName)
-    ↓
-Creates UI menus (Print, Theme, Text)
-    ↓
-PDF.pdfToHTML(pdfDoc, title)
-    ├── Converts PDF to data URL
-    ├── Generates HTML with PDF.js viewer
-    └── Returns HTML with embedded PDF
-    ↓
-UI.htmlToWebViewPanel() - Shows preview in VS Code webview
-    ├── Displays PDF using PDF.js
-    ├── Shows toolbar with Print/Theme/Text menus
-    └── Handles user interactions
+Stylize.styleToPdf()
+  ├── Determine theme (specified or active editor theme)
+  ├── Validate highlighter (lazy initialization)
+  ├── Tokenize code with Shiki
+  ├── Extract font info from theme
+  └── Generate PDF via PDF.generatePdfFromTokens()
+
+PDF.generatePdfFromTokens()
+  ├── Get page size/orientation from global state
+  ├── Calculate content height and page dimensions
+  ├── Initialize jsPDF with user preferences
+  ├── Map font family to jsPDF supported fonts
+  ├── Render tokens with colors and styling
+  └── Return in-memory PDF document
 ```
 
-### 6. User Selection & Final Output
+#### C. Webview UI System
 
 ```text
-User selects from toolbar menus:
-    ├── Print Menu: Preview, Direct Print, Save as PDF
-    ├── Theme Menu: Available Shiki themes
-    └── Text Menu: Font size options
-    ↓
-PaperPrinter handles menu selections
-    ↓
-PDF class methods:
-    ├── printWithPreview() → Opens in Preview app
-    ├── printDirectly() → Sends to printer via OS
-    └── saveAsPDF() → Saves to Downloads folder
+UI.htmlToPanel()
+  ├── PDF.embedPDFinHTML() → Convert PDF to data URL
+  ├── VSCodeAPIs.createWebviewPanel() → Create webview
+  ├── UI.addToolbar() → Add interactive toolbar
+  └── Setup message handling
+
+UI.addToolbar()
+  ├── UIMenuMgr.getAllUIMenuHTML() → Generate menu HTML
+  ├── UIMenuMgr.getAllUIMenuJS() → Generate menu JavaScript
+  └── Template replacement with toolbar HTML/CSS/JS
 ```
 
-### 7. OS Integration
+#### D. Menu System Architecture
 
 ```text
-PDF output methods
-    ↓
-OS class (platform-specific)
-    ├── macOS: AppleScript for printing
-    ├── Windows: Windows printing APIs
-    └── Linux: Linux printing commands
-    ↓
-File operations:
-    ├── Create temp PDF files
-    ├── Open with system apps
-    └── Cleanup temp files
+UIMenuMgr.createMenu() → UIMenu instances
+  ├── Print Menu (🖨) → Preview, Direct, Save
+  ├── Page Menu (📄) → Page sizes + Orient submenu
+  ├── Orient Submenu → Portrait, Landscape
+  ├── Theme Menu (🎨) → Available themes
+  └── Text Menu (Tt) → Font sizes
+
+Menu Selection Flow:
+  ├── Webview message → UI.handleWebviewMessage()
+  ├── PaperPrinter.handleMenuItemSelected()
+  ├── UIMenu.dispatchSelection()
+  ├── Menu-specific handler (e.g., handleSelection_Theme)
+  ├── Regenerate PDF with new settings
+  └── UI.updatePdfContentOnly() → Update webview
+```
+
+#### E. Print Output Options
+
+```text
+PDF Output Methods:
+  ├── printWithPreview() → Save temp PDF → Open in Preview app
+  ├── printDirectly() → Save temp PDF → Send to printer via OS
+  └── saveAsPDF() → Show save dialog → Save to chosen location
+
+OS Platform Abstraction:
+  ├── OSMac → AppleScript for printing
+  ├── OSWin → Windows printing commands
+  └── OSLinux → Linux printing commands
+```
+
+### 4. Memory Management & State
+
+```text
+In-Memory Storage:
+  ├── PaperPrinter.pdfRendered → Current jsPDF document
+  ├── PaperPrinter.currentThemeChoice → Selected theme
+  ├── PaperPrinter.currentFontSizeMode → Selected font size
+  ├── PaperPrinter.currentPageSize → Selected page size
+  └── PaperPrinter.currentOrientation → Selected orientation
+
+Global State (VS Code):
+  ├── 'pageSize' → User's page size preference
+  ├── 'orientation' → User's orientation preference
+  └── 'toolbarPos' → Toolbar position for persistence
+```
+
+### 5. Error Handling & Diagnostics
+
+```text
+Diagnostics System:
+  ├── Hierarchical logging with method context
+  ├── Performance timing for each method
+  ├── Argument validation with require()
+  └── Debug state inheritance from parent contexts
+
+Error Recovery:
+  ├── Theme fallback to 'github-light'
+  ├── Font fallback to 'Courier'
+  ├── Plain text fallback on highlighting failure
+  └── User feedback via UI.showErrorMessage()
 ```
 
 ## Architecture Overview
@@ -225,27 +294,46 @@ File operations:
 
 ### Working Components
 
-- jsPDF vector PDF generation works
-- AppleScript integration for macOS printing works
-- Basic tab creation and management works
+- ✅ jsPDF vector PDF generation
+- ✅ Shiki syntax highlighting with theme support
+- ✅ Webview panel with PDF.js rendering
+- ✅ Interactive toolbar with dynamic menus
+- ✅ Theme switching without regeneration
+- ✅ Page size and orientation configuration
+- ✅ Font size adjustment (8px to 24px)
+- ✅ AppleScript integration for macOS printing
 
-### Known Issues
+### Known Limitations
 
-- **Missing RTF Processing**: RTF to HTML conversion not yet implemented
-- **Template System**: Current template approach may be unnecessary
-- **Platform Support**: jsPDF works on all platforms with Node.js
-- **Build Process**: Extension may not be properly compiled/built
+- **Preview Tabs**: Printing from preview/webview tabs not yet supported
+- **Platform Support**: Print commands currently optimized for macOS only
+- **Single-Page PDFs**: Large files are truncated to fit single page dimensions
+- **Font Support**: Limited to jsPDF-supported fonts (Courier, Helvetica, Times)
+- **No Multi-Page Support**: Current PDF generation creates only single-page output
 
 ## Development
 
 - **Source**: TypeScript files in `src/` directory
 - **Build Output**: Compiled JavaScript in `out/` directory
-- **Package Config**: `package.json`
-- **Test Script**: `test-pdf.js` (working Node.js implementation)
+- **Package Config**: `package.json` with extension manifest
+- **Test Files**: Test suite in `tests/` directory
+- **Documentation**: AGENTS.md for developer guide, README.md for user documentation
 
 ## Testing
 
-The extension includes a working test script (`test-pdf.js`) that demonstrates the PDF generation and printing functionality outside of VS Code. This can be used to verify that the core functionality works before testing the extension.
+Run the test suite:
+
+```bash
+npm test
+```
+
+The extension uses Node.js built-in test runner (`node:test`) with comprehensive tests for:
+
+- PDF generation and page size/orientation
+- Syntax highlighting with Shiki
+- Menu system functionality
+- OS platform operations
+- VS Code API integration
 
 ## Future Improvements
 
@@ -258,6 +346,9 @@ The extension includes a working test script (`test-pdf.js`) that demonstrates t
 ## Debugging Notes
 
 - Check Node.js installation for jsPDF PDF generation
-- Verify AppleScript permissions for printing operations
-- Test RTF to HTML conversion functionality
-- Test PDF generation with `test-pdf.js` first
+- Verify AppleScript permissions for macOS printing operations
+- Monitor Shiki highlighter initialization and theme loading
+- Check webview console for PDF.js loading issues
+- Verify VS Code API access to editor content
+- Test menu message handling between webview and extension
+- Check global state persistence for user preferences

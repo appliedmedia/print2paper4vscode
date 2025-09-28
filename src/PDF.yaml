@@ -6,8 +6,12 @@ pdf_html: |
     <style>
       {{PDF_CSS}}
     </style>
+    <script>
+      {{PDFJS_LIBRARY}}
+    </script>
   </head>
   <body>
+    {{TOOLBAR}}
     <div class="pdf-container">
       <div id="loading" style="display: block; text-align: center; padding: 50px;">
         Loading PDF...
@@ -16,10 +20,13 @@ pdf_html: |
         Error loading PDF
       </div>
       <canvas id="pdf-canvas" style="display: none;"></canvas>
-      <div class="pdf-pages">
-        {{PDF_PAGES}}
-      </div>
     </div>
+    <script>
+      {{PDF_JS}}
+      
+      // Initialize PDF viewer with embedded data
+      initPdfViewer('{{PDF_DATA_URL}}');
+    </script>
   </body>
   </html>
 
@@ -45,13 +52,11 @@ pdf_css: |
 
 pdf_js: |
   // PDF Viewer JavaScript
-  // Browser environment globals are available automatically
-
   let pdfDoc = null;
   let pageNum = 1;
   let pageRendering = false;
   let pageNumPending = null;
-  const scale = 1.5;
+  const scale = 1.0; // Reduced from 1.5 for better fit
   const canvas = document.getElementById('pdf-canvas');
   const ctx = canvas.getContext('2d');
 
@@ -64,7 +69,7 @@ pdf_js: |
 
       const renderContext = {
         canvasContext: ctx,
-        viewport: viewport,
+        viewport: viewport
       };
       const renderTask = page.render(renderContext);
 
@@ -86,7 +91,6 @@ pdf_js: |
     }
   }
 
-  // Navigation functions (currently unused but available for future features)
   function onPrevPage() {
     if (pageNum <= 1) {
       return;
@@ -113,40 +117,52 @@ pdf_js: |
   function onDocumentLoadError(error) {
     document.getElementById('loading').style.display = 'none';
     document.getElementById('error').style.display = 'block';
-    document.getElementById('error').textContent =
-      'Error loading PDF: ' + error.message;
+    document.getElementById('error').textContent = 'Error loading PDF: ' + error.message;
   }
 
-  // Initialize PDF viewer when page loads
+  // One-time setup + optional initial load
   function initPdfViewer(pdfDataUrl) {
+    // Setup phase (always runs)
     if (typeof pdfjsLib === 'undefined') {
       onDocumentLoadError(new Error('PDF.js library not loaded'));
       return;
     }
     
+    // Set worker source once
+    pdfjsLib.GlobalWorkerOptions.workerSrc = '{{as_uri:src/lib/pdf.worker.min.js}}';
+    
+    // If PDF data provided, load it
+    if (pdfDataUrl) {
+      updatePdfData(pdfDataUrl);
+    }
+  }
+
+  // Pure PDF loading/rendering function
+  function updatePdfData(pdfDataUrl) {
     if (!pdfDataUrl) {
       onDocumentLoadError(new Error('No PDF data URL provided'));
       return;
     }
     
-    // Set worker source to use local file
-    pdfjsLib.GlobalWorkerOptions.workerSrc = '{{as_uri:src/lib/pdf.worker.min.js}}';
-    
+    // Load the data URL directly
     const loadingTask = pdfjsLib.getDocument({
       url: pdfDataUrl,
       disableAutoFetch: true,
-      disableStream: true
+      disableStream: true,
+      disableRange: true,
+      disableFontFace: false
     });
     
     loadingTask.promise.then(onDocumentLoadSuccess, onDocumentLoadError);
   }
 
-  // Make initPdfViewer available globally
+  // Make functions available globally
   window.initPdfViewer = initPdfViewer;
+  window.updatePdfData = updatePdfData;
 
   // Listen for PDF update messages
   window.addEventListener('message', (event) => {
     if (event.data.type === 'updatePdf') {
-      initPdfViewer(event.data.pdfDataUrl);
+      updatePdfData(event.data.pdfDataUrl);
     }
   });

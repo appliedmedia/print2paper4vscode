@@ -6,7 +6,7 @@ export interface UIMenuItem {
 
 // Webview message types - defines the contract between frontend UI and backend
 export type WebviewMessage = {
-  type: 'dragEnd' | 'menu' | 'print' | 'menuItemSelected';
+  type: 'dragEnd' | 'menu' | 'print' | 'menuItemSelected' | 'dx';
   clientX?: number;
   left?: number;
   startLeft?: number;
@@ -15,6 +15,13 @@ export type WebviewMessage = {
   parentId?: string;
   x?: number;
   y?: number;
+  message?: string; // For dx messages
+};
+
+// Extension to webview message types - defines messages sent from extension to webview
+export type ExtensionToWebviewMessage = {
+  type: 'updatePdf';
+  pdfDataUrl: string;
 };
 
 // Message handler callback type
