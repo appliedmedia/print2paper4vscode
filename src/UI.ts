@@ -177,10 +177,9 @@ export class UI {
 
   // Update the current webview panel with new HTML content
   async updateWebviewPanel(html: string): Promise<void> {
-    if (this.currentPanelId) {
-      const htmlWithToolbar = await this.addToolbar(html);
-      this.app.vscodeapis.updatePanelHtml(this.currentPanelId, htmlWithToolbar);
-    }
+    if (!this.currentPanelId) return;
+    const htmlWithToolbar = await this.addToolbarWithURIs(html, this.currentPanelId);
+    this.app.vscodeapis.updatePanelHtml(this.currentPanelId, htmlWithToolbar);
   }
 
   async updatePdfContentOnly(pdfDoc: jsPDF): Promise<void> {

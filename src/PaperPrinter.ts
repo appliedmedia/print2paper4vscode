@@ -452,9 +452,9 @@ export class PaperPrinter {
     // Regenerate PDF and update only the PDF content
     if (this.pdfRendered) {
       dx.out(`regenerating PDF with new theme`);
-      await this.applyRenderModes(this.pdfRendered);
-      dx.out(`calling updatePdfContentOnly with pdfRendered`);
-      await this.app.ui.updatePdfContentOnly(this.pdfRendered);
+      const html = await this.applyRenderModes(this.pdfRendered);
+      dx.out(`calling updatePdfContentOnly with refreshed HTML`);
+      await this.app.ui.updatePdfContentOnly(html);
     } else {
       dx.out(`no pdfRendered available`);
     }
@@ -485,9 +485,9 @@ export class PaperPrinter {
       // Regenerate PDF and update only the PDF content
       if (this.pdfRendered) {
         dx.out(`regenerating PDF with new font size`);
-        await this.applyRenderModes(this.pdfRendered);
-        dx.out(`calling updatePdfContentOnly with pdfRendered`);
-        await this.app.ui.updatePdfContentOnly(this.pdfRendered);
+        const html = await this.applyRenderModes(this.pdfRendered);
+        dx.out(`calling updatePdfContentOnly with refreshed HTML`);
+        await this.app.ui.updatePdfContentOnly(html);
       } else {
         dx.out(`no pdfRendered available`);
       }
@@ -522,9 +522,9 @@ export class PaperPrinter {
       // Regenerate PDF and update only the PDF content
       if (this.pdfRendered) {
         dx.out(`regenerating PDF with new page size`);
-        await this.applyRenderModes(this.pdfRendered);
-        dx.out(`calling updatePdfContentOnly with pdfRendered`);
-        await this.app.ui.updatePdfContentOnly(this.pdfRendered);
+        const html = await this.applyRenderModes(this.pdfRendered);
+        dx.out(`calling updatePdfContentOnly with refreshed HTML`);
+        await this.app.ui.updatePdfContentOnly(html);
       } else {
         dx.out(`no pdfRendered available`);
       }
@@ -561,9 +561,9 @@ export class PaperPrinter {
       // Regenerate PDF and update only the PDF content
       if (this.pdfRendered) {
         dx.out(`regenerating PDF with new orientation`);
-        await this.applyRenderModes(this.pdfRendered);
-        dx.out(`calling updatePdfContentOnly with pdfRendered`);
-        await this.app.ui.updatePdfContentOnly(this.pdfRendered);
+        const html = await this.applyRenderModes(this.pdfRendered);
+        dx.out(`calling updatePdfContentOnly with refreshed HTML`);
+        await this.app.ui.updatePdfContentOnly(html);
       } else {
         dx.out(`no pdfRendered available`);
       }
