@@ -1,174 +1,378 @@
 # ScrollPOC Integration Implementation Plan
 
-## Phase 1: Multi-Page PDF Generation (Server-side)
+## Architecture Overview
 
-### 1.1 Extend PDF.ts Class
-- [ ] Add `maxLinesPerPage` parameter to `generatePdfFromTokens()`
-- [ ] Replace single-page logic with multi-page generation loop
-- [ ] Add page break detection between token lines
-- [ ] Calculate total pages needed based on content length
-- [ ] Return PDF metadata alongside PDF document:
-  ```typescript
-  interface PdfMetadata {
-    totalPages: number;
-    pageWidth: number;
-    pageHeight: number;
-    estimatedMemoryMB: number;
-  }
-  ```
+**Generic Scrollable Viewer Pattern**: UI.ts owns a generic scrollable content viewer that accepts any PageRender implementation. PDF.ts implements the PageRender interface to provide PDF-specific page generation.
 
-### 1.2 Update PaperPrinter.ts Integration
-- [ ] Modify `applyRenderModes()` to handle multi-page PDFs
-- [ ] Update `openPrintPrepAndPrompt()` to pass metadata to webview
-- [ ] Ensure existing single-page workflows remain functional
+### Interface Contract
 
-### 1.3 Update Stylize.ts Interface
-- [ ] Add optional page configuration to `styleToPdf()` options
-- [ ] Ensure Shiki tokenization works with large multi-page content
+```typescript
+interface PageRender {
+  pageRender(pageNumber: number, options: RenderOptions): Promise<PageData>;
+  getTotalPages(): Promise<number>;
+  getPageMetadata(): Promise<PageMetadata>;
+}
 
-## Phase 2: ScrollPdfViewer Webview Component
+interface PageData {
+  dataUrl: string;
+  width: number;
+  height: number;
+  pageNumber: number;
+}
 
-### 2.1 Create ScrollPdfViewer Template (src/ScrollPdfViewer.yaml)
-- [ ] Extract scrollpoc.html CSS → `scroll_pdf_css` template
-- [ ] Extract scrollpoc.html JavaScript → `scroll_pdf_js` template  
-- [ ] Extract scrollpoc.html HTML structure → `scroll_pdf_html` template
+interface RenderOptions {
+  fontFamily: string;
+  fontSize: number;
+  lineHeight: number;
+  theme: string;
+  pageSize: PageSize;
+  orientation: 'portrait' | 'landscape';
+}
+
+interface PageMetadata {
+  totalPages: number;
+  pageWidth: number;
+  pageHeight: number;
+  estimatedMemoryMB: number;
+}
+```
+
+## Phase 1: Define PageRender Interface & PDF Implementation
+
+### 1.1 Create PageRender Interface
+
+- [ ] Create `src/types/PageRender_t.ts` with interface definitions
+- [ ] Define `PageRender`, `PageData`, `RenderOptions`, `PageMetadata` interfaces
+- [ ] Add error handling interfaces for page generation failures
+- [ ] Document interface contract requirements and expected behavior
+
+### 1.2 Update PDF.ts to Implement PageRender
+
+- [ ] Add `implements PageRender` to PDF class declaration
+- [ ] Implement `pageRender(pageNumber: number, options: RenderOptions): Promise<PageData>`
+  - [ ] Extract page-specific tokens from full token array
+  - [ ] Generate single-page PDF using existing jsPDF logic
+  - [ ] Convert to data URL and return with dimensions
+  - [ ] Handle page number validation and bounds checking
+- [ ] Implement `getTotalPages(): Promise<number>`
+  - [ ] Calculate based on content length and page size constraints
+  - [ ] Cache result for performance
+- [ ] Implement `getPageMetadata(): Promise<PageMetadata>`
+  - [ ] Calculate total pages, dimensions, memory estimates
+  - [ ] Include performance hints for UI component
+- [ ] Add error handling for invalid page numbers and generation failures
+- [ ] Add diagnostic logging for page generation performance
+
+### 1.3 Refactor PDF.ts for Page-Based Generation
+
+- [ ] Extract page calculation logic from `generatePdfFromTokens()`
+- [ ] Create `calculatePageBreaks(tokens: ThemedToken[][]): number[]` method
+- [ ] Create `extractTokensForPage(tokens: ThemedToken[][], pageNumber: number): ThemedToken[][]` method
+- [ ] Create `generateSinglePagePdf(tokens: ThemedToken[][], options: RenderOptions): jsPDF` method
+- [ ] Update existing `generatePdfFromTokens()` to use new page-based methods
+- [ ] Ensure backward compatibility with single-page generation
+
+### 1.4 Add PageRender Configuration
+
+- [ ] Add page render options to global state management
+- [ ] Create `setPageRenderOptions(options: Partial<RenderOptions>)` method
+- [ ] Add validation for render options
+- [ ] Add defaults for missing render options
+- [ ] Integrate with existing theme/font/page size preferences
+
+## Phase 2: Generic Scrollable Viewer in UI.ts
+
+### 2.1 Create Generic Scroll Templates (UI.yaml)
+
+- [ ] Extract scrollpoc.html CSS → `scroll_css` template
+- [ ] Extract scrollpoc.html JavaScript → `scroll_js` template
+- [ ] Extract scrollpoc.html HTML structure → `scroll_html` template
 - [ ] Add template placeholders for:
-  - `{{TOTAL_PAGES}}` - from PDF metadata
+  - `{{TOTAL_PAGES}}` - from page render metadata
   - `{{MAX_CANVASES}}` - configurable canvas pool size
-  - `{{PDF_DATA_URL}}` - PDF data from jsPDF
+  - `{{PAGE_RENDER_SERVICE}}` - page render service reference
   - `{{TOOLBAR}}` - existing toolbar system
+  - `{{CONFIG}}` - scrollable viewer configuration
 
-### 2.2 Port ScrollPOC Core Logic
-Map scrollpoc.html components to webview JavaScript:
+### 2.2 Port ScrollPOC Core Logic to Generic Templates
 
 #### Configuration Management
-- [ ] `CONFIG` object → Template-driven configuration
-- [ ] `MAX_CANVASES` → Configurable based on content size
-- [ ] `TOTAL_PDF_PAGES` → From PDF metadata
-- [ ] `SCALE`, `PAGE_GAP` → User preferences
 
-#### Database State Management  
+- [ ] `CONFIG` object → Template-driven configuration with placeholders
+- [ ] `MAX_CANVASES` → Configurable based on content size and memory limits
+- [ ] `TOTAL_PAGES` → From page render metadata
+- [ ] `SCALE`, `PAGE_GAP` → User preferences from global state
+- [ ] `RENDER_OPTIONS` → Page render configuration
+
+#### Database State Management
+
 - [ ] `db` object → Local webview state management
 - [ ] `getCanvasId()`, `getPageId()` → ID generation utilities
-- [ ] Canvas-to-page assignment tracking
+- [ ] Canvas-to-page assignment tracking with page render data
 - [ ] Placeholder DOM element management
+- [ ] Page render request queue management
+- [ ] Error state tracking for failed page renders
 
 #### Canvas Pool Management
+
 - [ ] `getAllCanvasIds()` → Canvas enumeration
 - [ ] `getAllAvailableCanvasIds()` → Available canvas detection
-- [ ] `assignCanvasToPage()` → Canvas assignment logic
+- [ ] `assignCanvasToPage()` → Canvas assignment logic with page render integration
 - [ ] `unassignCanvas()` → Canvas cleanup and DOM removal
+- [ ] `requestPageRender(pageNumber)` → Request page from PageRender service
+- [ ] `handlePageRenderResponse(pageData)` → Process rendered page data
 
 #### Virtual Scrolling Core
+
 - [ ] `handleScroll()` → Scroll event handler with debouncing
 - [ ] `getScrollPosition()` → Viewport calculations
 - [ ] `getVisiblePageRange()` → Page visibility detection
 - [ ] Scroll direction tracking (`lastScrollTop`, `scrollDirection`)
+- [ ] Prefetch logic for upcoming pages based on scroll direction
 
 #### Render Management
-- [ ] `renderPageToCanvas()` → PDF.js page rendering
-- [ ] `assignCanvasesToPages()` → Batch canvas assignment
+
+- [ ] `renderPageToCanvas(pageData)` → Generic page rendering (not PDF-specific)
+- [ ] `assignCanvasesToPages()` → Batch canvas assignment with page render requests
 - [ ] `moveCanvasToPlaceholder()` → DOM manipulation
 - [ ] Render task cancellation and cleanup
+- [ ] Page render error handling and retry logic
 
 #### Placeholder System
+
 - [ ] `createPlaceholders()` → DOM structure creation
-- [ ] Page label management
+- [ ] Page label management with page numbers
 - [ ] Loading text display/hide logic
 - [ ] Page break visual elements
+- [ ] Error state display for failed page renders
 
 ### 2.3 Performance & Memory Management
+
 - [ ] `logWithState()` → Diagnostic logging integration
 - [ ] Canvas memory calculation and limits
 - [ ] Emergency canvas freeing logic
 - [ ] Render task prioritization based on scroll direction
+- [ ] Page render request throttling and batching
+- [ ] Memory usage monitoring and warnings
 
-## Phase 3: Update PDF.ts for ScrollPdfViewer
+### 2.4 Message Handling for Page Rendering
 
-### 3.1 New Template Method
-- [ ] Add `embedScrollablePDFinHTML()` method alongside existing `embedPDFinHTML()`
-- [ ] Load ScrollPdfViewer templates instead of single-page PDF templates
-- [ ] Pass PDF metadata to template system
-- [ ] Preserve existing single-page functionality for compatibility
+- [ ] Add `requestPageRender` message type for page generation requests
+- [ ] Add `pageRenderResponse` message type for rendered page data
+- [ ] Add `pageRenderError` message type for render failures
+- [ ] Add `scrollDiagnostic` message type for performance logging
+- [ ] Handle page render service registration and updates
 
-### 3.2 Template Integration
-- [ ] Update template replacement to include:
-  - PDF metadata (total pages, dimensions)  
-  - Canvas pool configuration
-  - Scroll performance settings
+## Phase 3: UI.ts Scrollable Viewer Implementation
+
+### 3.1 Create Scrollable Viewer Class
+
+- [ ] Create `ScrollableViewer` class in UI.ts
+- [ ] Add constructor that accepts PageRender implementation
+- [ ] Add `createScrollableViewer(pageRender: PageRender, options: ScrollOptions)` method
+- [ ] Add `updatePageRender(newPageRender: PageRender)` method for service updates
+- [ ] Add `destroyScrollableViewer()` method for cleanup
+
+### 3.2 Implement PageRender Integration
+
+- [ ] Add `registerPageRender(pageRender: PageRender)` method
+- [ ] Add `requestPageRender(pageNumber: number)` method
+- [ ] Add `handlePageRenderResponse(pageData: PageData)` method
+- [ ] Add `handlePageRenderError(error: Error, pageNumber: number)` method
+- [ ] Add page render caching and invalidation logic
+
+### 3.3 Update WebView Management
+
+- [ ] Modify `htmlToWebViewPanel()` to support scrollable viewer mode
+- [ ] Add `createScrollableWebViewPanel()` method
+- [ ] Update `updatePdfContentOnly()` to work with scrollable viewer
+- [ ] Ensure toolbar integration works with scrollable viewer
+- [ ] Add scrollable viewer state management
+
+### 3.4 Template Integration
+
+- [ ] Add `loadScrollableTemplates()` method
+- [ ] Add template replacement for scrollable viewer
+- [ ] Add page render service injection into templates
+- [ ] Add configuration injection into templates
 - [ ] Ensure PDF.js library integration remains compatible
 
-## Phase 4: UI.ts Message Handling Updates
+## Phase 4: PaperPrinter.ts Integration Updates
 
-### 4.1 Extend Message System
-- [ ] Add `scrollDiagnostic` message type for performance logging
-- [ ] Add `pdfMetadata` to `updatePdf` messages
-- [ ] Handle multi-page PDF content updates
+### 4.1 Add Scrollable Viewer Support
 
-### 4.2 Update WebView Management  
-- [ ] Modify `updatePdfContentOnly()` to work with scrollable viewer
-- [ ] Ensure toolbar integration works with new viewer
-- [ ] Maintain backward compatibility with single-page PDFs
+- [ ] Add `useScrollableViewer` preference to global state
+- [ ] Add `maxCanvasPoolSize` preference to global state
+- [ ] Add `scrollPerformanceMode` preference to global state
+- [ ] Add automatic detection for when to use scrollable viewer
+- [ ] Add manual toggle for scrollable vs single-page mode
 
-## Phase 5: Integration & Testing
+### 4.2 Update Print Workflow
 
-### 5.1 PaperPrinter.ts Integration
-- [ ] Add user preference for single-page vs multi-page mode
-- [ ] Update menu system to show page count information
+- [ ] Modify `applyRenderModes()` to support scrollable viewer
+- [ ] Update `openPrintPrepAndPrompt()` to choose viewer type
+- [ ] Add page count information to menu system
 - [ ] Ensure theme/font/page size changes work with scrollable viewer
+- [ ] Add scrollable viewer performance diagnostics
 
-### 5.2 Configuration Management
-- [ ] Add global settings for:
-  - Maximum canvas pool size (default: 7)
-  - Scroll performance settings
-  - Memory limits and warnings
-  - Auto-switch to multi-page for large content
+### 4.3 Menu System Updates
 
-### 5.3 Backward Compatibility
-- [ ] Ensure existing single-page workflows continue working
-- [ ] Add feature flag or automatic detection for multi-page content
-- [ ] Graceful fallback to single-page for small content
+- [ ] Add scrollable viewer toggle to print options menu
+- [ ] Add page count display in toolbar
+- [ ] Add canvas pool size indicator
+- [ ] Add scroll performance mode selector
+- [ ] Add memory usage indicator for large documents
 
-## Phase 6: Testing & Optimization
+## Phase 5: Configuration & Settings Management
 
-### 6.1 Performance Testing
+### 5.1 Global Settings
+
+- [ ] Add scrollable viewer settings to global state:
+  - `scrollableViewerEnabled: boolean` (default: true)
+  - `maxCanvasPoolSize: number` (default: 7)
+  - `scrollPerformanceMode: 'balanced' | 'memory' | 'speed'` (default: 'balanced')
+  - `autoScrollableViewerThreshold: number` (default: 1000 lines)
+  - `pageRenderCacheSize: number` (default: 10)
+  - `scrollDebounceMs: number` (default: 16)
+
+### 5.2 User Preferences
+
+- [ ] Add scrollable viewer settings to VS Code settings
+- [ ] Add UI for configuring scrollable viewer options
+- [ ] Add reset to defaults functionality
+- [ ] Add import/export of scrollable viewer settings
+
+### 5.3 Performance Configuration
+
+- [ ] Add memory limit warnings
+- [ ] Add automatic canvas pool size adjustment
+- [ ] Add scroll performance optimization
+- [ ] Add page render request batching configuration
+
+## Phase 6: Error Handling & Diagnostics
+
+### 6.1 PageRender Error Handling
+
+- [ ] Add comprehensive error handling for page generation failures
+- [ ] Add retry logic for transient page render errors
+- [ ] Add fallback to single-page mode on critical failures
+- [ ] Add user notification for page render errors
+- [ ] Add diagnostic logging for page render performance
+
+### 6.2 Scrollable Viewer Error Handling
+
+- [ ] Add error handling for canvas allocation failures
+- [ ] Add error handling for DOM manipulation failures
+- [ ] Add error handling for scroll event processing
+- [ ] Add graceful degradation for memory pressure
+- [ ] Add recovery mechanisms for corrupted state
+
+### 6.3 Diagnostic System
+
+- [ ] Add scrollable viewer performance metrics
+- [ ] Add page render timing diagnostics
+- [ ] Add memory usage tracking
+- [ ] Add scroll performance analysis
+- [ ] Add user-accessible diagnostic information
+
+## Phase 7: Testing & Optimization
+
+### 7.1 Unit Testing
+
+- [ ] Test PageRender interface implementation
+- [ ] Test scrollable viewer canvas management
+- [ ] Test page render request/response cycle
+- [ ] Test error handling and recovery
+- [ ] Test configuration management
+
+### 7.2 Integration Testing
+
+- [ ] Test PDF.ts PageRender implementation
+- [ ] Test UI.ts scrollable viewer integration
+- [ ] Test PaperPrinter.ts workflow integration
+- [ ] Test message passing between components
+- [ ] Test toolbar integration with scrollable viewer
+
+### 7.3 Performance Testing
+
 - [ ] Test with various file sizes (100 lines, 1000 lines, 5000+ lines)
-- [ ] Memory usage validation
+- [ ] Memory usage validation and optimization
 - [ ] Scroll performance benchmarking
 - [ ] Canvas pool size optimization
+- [ ] Page render caching effectiveness
 
-### 6.2 Cross-Platform Testing  
+### 7.4 Cross-Platform Testing
+
 - [ ] Verify PDF.js compatibility across different webview environments
 - [ ] Test canvas rendering performance on different hardware
 - [ ] Validate memory limits and emergency cleanup
+- [ ] Test scrollable viewer on different operating systems
 
-### 6.3 Integration Testing
-- [ ] Theme switching with multi-page content
+### 7.5 User Experience Testing
+
+- [ ] Theme switching with scrollable viewer
 - [ ] Font size changes with large documents
 - [ ] Page size/orientation changes
-- [ ] Print functionality with multi-page PDFs
+- [ ] Print functionality with scrollable viewer
+- [ ] Performance with very large documents (10k+ lines)
+
+## Phase 8: Backward Compatibility & Migration
+
+### 8.1 Single-Page Mode Preservation
+
+- [ ] Ensure existing single-page workflows continue working
+- [ ] Add feature flag for scrollable viewer
+- [ ] Add automatic detection for multi-page content
+- [ ] Add graceful fallback to single-page for small content
+- [ ] Maintain existing API compatibility
+
+### 8.2 Migration Strategy
+
+- [ ] Add migration path for existing configurations
+- [ ] Add user notification for new scrollable viewer feature
+- [ ] Add opt-in/opt-out mechanisms
+- [ ] Add performance comparison tools
+- [ ] Add user preference migration
 
 ## Key Implementation Notes
 
-### ScrollPOC → Main Codebase Mapping
+### Generic Scrollable Viewer Pattern
 
-**scrollpoc.html Functions → WebView JavaScript:**
-- `generateAndRenderPages()` → Split between PDF.ts (generation) and webview (rendering)
-- `handleScroll()` → Core scroll handler in ScrollPdfViewer template
-- `assignCanvasesToPages()` → Canvas management in webview
-- `renderPageToCanvas()` → PDF.js integration in webview
-- `createPlaceholders()` → DOM structure creation in webview
-- `getVisiblePageRange()` → Viewport calculations in webview
+**UI.ts Responsibilities:**
 
-**scrollpoc.html State → WebView State:**
-- `db` object → Local webview state management
-- `pdfDoc` → Passed from extension as PDF data URL
-- `totalPages` → From PDF metadata
-- `containerElement` → DOM reference in webview
-- `CONFIG` → Template-driven configuration
+- Generic scrollable content viewer
+- Canvas pool management and DOM manipulation
+- Scroll handling and viewport calculations
+- Page render service integration
+- Message handling and state management
 
-**Extension Integration Points:**
-- `PDF.generatePdfFromTokens()` → Multi-page generation
-- `PDF.embedScrollablePDFinHTML()` → ScrollPdfViewer template rendering
-- `UI.updatePdfContentOnly()` → Multi-page content updates
-- `PaperPrinter.applyRenderModes()` → Multi-page regeneration
+**PDF.ts Responsibilities:**
+
+- PageRender interface implementation
+- Page-specific PDF generation
+- Token-to-PDF conversion for individual pages
+- PDF metadata calculation and caching
+- Error handling for page generation
+
+**Communication Flow:**
+
+1. UI.ts creates scrollable webview with `scroll_*` templates
+2. Webview requests pages via `vscode.postMessage({ type: 'requestPageRender', pageNumber })`
+3. UI.ts receives message, calls `pageRender.pageRender(pageNumber, options)`
+4. PDF.ts generates single-page PDF, returns PageData
+5. UI.ts sends PageData back to webview for canvas rendering
+
+### Template Organization
+
+- **UI.yaml**: Contains `scroll_html`, `scroll_css`, `scroll_js` templates
+- **Generic naming**: Templates work with any PageRender implementation
+- **Interface-driven**: PDF.ts implements PageRender contract
+- **Extensible**: Other content types can implement PageRender interface
+
+### Performance Considerations
+
+- **Lazy loading**: Pages generated on-demand as user scrolls
+- **Memory efficient**: Only active pages in memory
+- **Canvas pooling**: Reuse canvas elements for performance
+- **Request batching**: Batch page render requests for efficiency
+- **Caching**: Cache rendered pages for quick access
