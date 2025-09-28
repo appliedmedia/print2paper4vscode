@@ -182,8 +182,8 @@ export class UI {
     this.app.vscodeapis.updatePanelHtml(this.currentPanelId, htmlWithToolbar);
   }
 
-  async updatePdfContentOnly(pdfDoc: jsPDF): Promise<void> {
-    const dx = this.dx.sub('updatePdfContentOnly');
+  async updateWebviewPdf(pdfDoc: jsPDF): Promise<void> {
+    const dx = this.dx.sub('updateWebviewPdf');
     dx.out(`currentPanelId = ${this.currentPanelId}`);
 
     if (this.currentPanelId && pdfDoc) {

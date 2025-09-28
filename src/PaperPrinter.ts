@@ -126,7 +126,7 @@ export class PaperPrinter {
 
   private async handlePrintMessage(msg: WebviewMessage): Promise<void> {
     if (!this.pdfRendered) return;
-    void (await this.applyRenderModes(this.pdfRendered));
+    void (await this.generatePdf());
     if (msg.value === 'preview')
       await this.app.pdf.printWithPreview(this.pdfRendered, this.printTitle || 'Print Output');
     else if (msg.value === 'direct')
@@ -173,11 +173,11 @@ export class PaperPrinter {
       if (!this.currentThemeChoice) {
         this.currentThemeChoice = this.app.vscodeapis.getActiveThemeId();
       }
-      const pdfDoc = await this.app.stylize.styleToPdf(info.text, info.languageId, {
+      this.pdfRendered = await this.app.stylize.styleToPdf(info.text, info.languageId, {
         title: this.printTitle,
         theme: this.currentThemeChoice,
       });
-      await this.openPrintPrepAndPrompt(pdfDoc, printableLabel);
+      await this.openPrintPrepAndPrompt(printableLabel);
     } catch (error) {
       this.dx.out(`Error handling print: ${error}`);
       this.app.ui.showErrorMessage(
@@ -186,20 +186,19 @@ export class PaperPrinter {
     }
   }
 
-  private async openPrintPrepAndPrompt(pdfDoc: jsPDF, tabName: string): Promise<void> {
-    this.pdfRendered = pdfDoc; // Store in-memory PDF document
+  private async openPrintPrepAndPrompt(tabName: string): Promise<void> {
     this.printTitle = tabName;
 
     // Create menus and register message handlers when we actually need them
     this.createMenus();
     this.registerMessageHandlers();
 
-    const initial = await this.applyRenderModes(pdfDoc);
+    const initial = await this.generatePdf();
     const htmlWithToolbar = await this.app.ui.addToolbar(initial);
     await this.app.ui.htmlToPanel(`Printable: ${tabName}`, htmlWithToolbar);
   }
 
-  private async applyRenderModes(pdfDoc: jsPDF): Promise<string> {
+  private async generatePdf(): Promise<string> {
     // If we have raw code, regenerate with theme overrides
     if (this.lastRawCode && this.lastLanguageId) {
       const sizePx = this.computeFontSizePx();
@@ -216,7 +215,7 @@ export class PaperPrinter {
       return this.app.pdf.embedPDFinHTML(newPdfDoc, this.printTitle);
     }
     // For existing PDF document, convert to HTML
-    return this.app.pdf.embedPDFinHTML(pdfDoc, this.printTitle);
+    return this.app.pdf.embedPDFinHTML(this.pdfRendered!, this.printTitle);
   }
 
   private computeFontSizePx(): number {
@@ -420,7 +419,7 @@ export class PaperPrinter {
       return ''; // Print menu has no default selection
     }
     if (!this.pdfRendered) return '';
-    void (await this.applyRenderModes(this.pdfRendered));
+    void (await this.generatePdf());
     if (selectedId === 'preview')
       await this.app.pdf.printWithPreview(this.pdfRendered, this.printTitle || 'Print Output');
     else if (selectedId === 'direct')
@@ -452,9 +451,9 @@ export class PaperPrinter {
     // Regenerate PDF and update only the PDF content
     if (this.pdfRendered) {
       dx.out(`regenerating PDF with new theme`);
-      await this.applyRenderModes(this.pdfRendered);
-      dx.out(`calling updatePdfContentOnly with pdfRendered`);
-      await this.app.ui.updatePdfContentOnly(this.pdfRendered);
+      await this.generatePdf();
+      dx.out(`calling updateWebviewPdf with pdfRendered`);
+      await this.app.ui.updateWebviewPdf(this.pdfRendered);
     } else {
       dx.out(`no pdfRendered available`);
     }
@@ -485,9 +484,9 @@ export class PaperPrinter {
       // Regenerate PDF and update only the PDF content
       if (this.pdfRendered) {
         dx.out(`regenerating PDF with new font size`);
-        await this.applyRenderModes(this.pdfRendered);
-        dx.out(`calling updatePdfContentOnly with pdfRendered`);
-        await this.app.ui.updatePdfContentOnly(this.pdfRendered);
+        await this.generatePdf();
+        dx.out(`calling updateWebviewPdf with pdfRendered`);
+        await this.app.ui.updateWebviewPdf(this.pdfRendered);
       } else {
         dx.out(`no pdfRendered available`);
       }
@@ -522,9 +521,9 @@ export class PaperPrinter {
       // Regenerate PDF and update only the PDF content
       if (this.pdfRendered) {
         dx.out(`regenerating PDF with new page size`);
-        await this.applyRenderModes(this.pdfRendered);
-        dx.out(`calling updatePdfContentOnly with pdfRendered`);
-        await this.app.ui.updatePdfContentOnly(this.pdfRendered);
+        await this.generatePdf();
+        dx.out(`calling updateWebviewPdf with pdfRendered`);
+        await this.app.ui.updateWebviewPdf(this.pdfRendered);
       } else {
         dx.out(`no pdfRendered available`);
       }
@@ -561,9 +560,9 @@ export class PaperPrinter {
       // Regenerate PDF and update only the PDF content
       if (this.pdfRendered) {
         dx.out(`regenerating PDF with new orientation`);
-        await this.applyRenderModes(this.pdfRendered);
-        dx.out(`calling updatePdfContentOnly with pdfRendered`);
-        await this.app.ui.updatePdfContentOnly(this.pdfRendered);
+        await this.generatePdf();
+        dx.out(`calling updateWebviewPdf with pdfRendered`);
+        await this.app.ui.updateWebviewPdf(this.pdfRendered);
       } else {
         dx.out(`no pdfRendered available`);
       }

@@ -142,7 +142,7 @@ describe('PaperPrinter Page Size and Orient Tests', () => {
           embedPDFinHTML: () => Promise.resolve(),
         },
         ui: {
-          updatePdfContentOnly: () => Promise.resolve(),
+          updateWebviewPdf: () => Promise.resolve(),
         },
         stylize: {
           styleToPdf: () => {
@@ -155,7 +155,7 @@ describe('PaperPrinter Page Size and Orient Tests', () => {
       const testPaperPrinter = new PaperPrinter(testMockApp as any);
       // Set a mock pdfRendered to trigger regeneration
       (testPaperPrinter as any).pdfRendered = { mock: true };
-      // Set required properties for applyRenderModes to work
+      // Set required properties for generatePdf to work
       (testPaperPrinter as any).lastRawCode = 'test code';
       (testPaperPrinter as any).lastLanguageId = 'javascript';
       await (testPaperPrinter as any).handleSelection_Page('letter'); // Select letter
@@ -186,7 +186,7 @@ describe('PaperPrinter Page Size and Orient Tests', () => {
           embedPDFinHTML: () => Promise.resolve(),
         },
         ui: {
-          updatePdfContentOnly: () => Promise.resolve(),
+          updateWebviewPdf: () => Promise.resolve(),
         },
         stylize: {
           styleToPdf: () => {
@@ -199,7 +199,7 @@ describe('PaperPrinter Page Size and Orient Tests', () => {
       const testPaperPrinter = new PaperPrinter(testMockApp as any);
       // Set a mock pdfRendered to trigger regeneration
       (testPaperPrinter as any).pdfRendered = { mock: true };
-      // Set required properties for applyRenderModes to work
+      // Set required properties for generatePdf to work
       (testPaperPrinter as any).lastRawCode = 'test code';
       (testPaperPrinter as any).lastLanguageId = 'javascript';
       await (testPaperPrinter as any).handleSelection_Orient('landscape'); // Select landscape
