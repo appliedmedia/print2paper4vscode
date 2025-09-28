@@ -37,8 +37,10 @@ const mockSelectionHandler = async (id: string): Promise<string> => Promise.reso
 describe('UIMenu', () => {
   let menu: UIMenu;
 
-  // Create menu for testing
-  menu = new UIMenu('testMenu', '🔧', 'Test Menu', mockApp, mockListBuilder, mockSelectionHandler);
+  beforeEach(() => {
+    // Create fresh menu for each test
+    menu = new UIMenu('testMenu', '🔧', 'Test Menu', mockApp, mockListBuilder, mockSelectionHandler);
+  });
 
   describe('Constructor and Properties', () => {
     it('should create menu with correct properties', () => {
