@@ -238,6 +238,18 @@ export abstract class OS {
   pathBasename(p: string): string {
     return path.basename(p);
   }
+
+  // Centralized timing utility with fallback for different environments
+  now(): number {
+    // Prefer high-res when available; safe fallback for Node/electron hosts
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-ignore - globalThis.performance may not exist in some hosts
+    return (typeof globalThis !== 'undefined' &&
+      globalThis.performance &&
+      typeof globalThis.performance.now === 'function')
+      ? globalThis.performance.now()
+      : Date.now();
+  }
 }
 
 // Import platform-specific classes at the end to avoid circular dependency
