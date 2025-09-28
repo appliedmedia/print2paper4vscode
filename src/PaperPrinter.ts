@@ -24,8 +24,6 @@ export class PaperPrinter {
 
   private currentFontSize: number = 12; // Default to 12px
 
-  private currentPageSize: PageSize | undefined; // User's page size preference
-  private currentOrient: 'portrait' | 'landscape' | undefined; // User's orient preference
 
   constructor(app: App) {
     this.app = app;
@@ -35,26 +33,6 @@ export class PaperPrinter {
 
   init(): void {
     this.clipboardCapture.init();
-
-    // Restore user's page size and orient preferences, with locale-based defaults
-    const savedPageSize = this.app.vscodeapis.getGlobalState<PageSize>('pageSize');
-    if (savedPageSize) {
-      this.currentPageSize = savedPageSize;
-    } else {
-      // Fallback to locale-based default
-      const locale = this.app.vscodeapis.getLocale() || '  ';
-      const region = locale.slice(-2).toUpperCase();
-      const letterRegions = ['US', 'CA', 'MX'];
-      const isLetterSize = letterRegions.includes(region);
-      this.currentPageSize = isLetterSize ? 'letter' : 'a4';
-    }
-
-    const savedOrient = this.app.vscodeapis.getGlobalState<'portrait' | 'landscape'>('orient');
-    if (savedOrient) {
-      this.currentOrient = savedOrient;
-    } else {
-      this.currentOrient = 'portrait';
-    }
   }
 
   done(): void {
@@ -227,11 +205,23 @@ export class PaperPrinter {
   }
 
   private getCurrentPageSize(): PageSize {
-    return this.currentPageSize!; // Safe after init()
+    // Get from global state with locale-based fallback
+    const savedPageSize = this.app.vscodeapis.getGlobalState<PageSize>('pageSize');
+    if (savedPageSize) {
+      return savedPageSize;
+    }
+    
+    // Fallback to locale-based default
+    const locale = this.app.vscodeapis.getLocale() || '  ';
+    const region = locale.slice(-2).toUpperCase();
+    const letterRegions = ['US', 'CA', 'MX'];
+    const isLetterSize = letterRegions.includes(region);
+    return isLetterSize ? 'letter' : 'a4';
   }
 
   private getCurrentOrient(): 'portrait' | 'landscape' {
-    return this.currentOrient!; // Safe after init()
+    // Get from global state with portrait fallback
+    return this.app.vscodeapis.getGlobalState<'portrait' | 'landscape'>('orient') || 'portrait';
   }
 
 
@@ -514,8 +504,7 @@ export class PaperPrinter {
 
     if (selectedId === UIMenu.defaultId()) {
       // Return the current page size for default selection
-      const currentPageSize =
-        this.currentPageSize || this.app.vscodeapis.getGlobalState<PageSize>('pageSize') || 'a4';
+      const currentPageSize = this.getCurrentPageSize();
       dx.out(`returning current page size: ${currentPageSize}`);
       dx.done();
       return currentPageSize;
@@ -524,8 +513,7 @@ export class PaperPrinter {
     // Handle page size selection
     if (PAGE_SIZES.includes(selectedId as PageSize)) {
       dx.out(`updating page size to ${selectedId}`);
-      this.currentPageSize = selectedId as PageSize;
-      this.app.vscodeapis.updateGlobalState('pageSize', this.currentPageSize);
+      this.app.vscodeapis.updateGlobalState('pageSize', selectedId as PageSize);
 
       // Regenerate PDF and update only the PDF content
       if (this.pdfRendered) {
@@ -551,10 +539,7 @@ export class PaperPrinter {
 
     if (selectedId === UIMenu.defaultId()) {
       // Return the current orient for default selection
-      const currentOrient =
-        this.currentOrient ||
-        this.app.vscodeapis.getGlobalState<'portrait' | 'landscape'>('orient') ||
-        'portrait';
+      const currentOrient = this.getCurrentOrient();
       dx.out(`returning current orient: ${currentOrient}`);
       dx.done();
       return currentOrient;
@@ -563,8 +548,7 @@ export class PaperPrinter {
     // Handle orient selection
     if (selectedId === 'portrait' || selectedId === 'landscape') {
       dx.out(`updating orient to ${selectedId}`);
-      this.currentOrient = selectedId;
-      this.app.vscodeapis.updateGlobalState('orient', this.currentOrient);
+      this.app.vscodeapis.updateGlobalState('orient', selectedId);
 
       // Regenerate PDF and update only the PDF content
       if (this.pdfRendered) {
