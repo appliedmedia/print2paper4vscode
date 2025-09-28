@@ -37,10 +37,12 @@ export class Diagnostics {
   private parent: Diagnostics | null = null;
   private startTime: number | null = null;
   private _debugOn: boolean | undefined;
+  private app: any;
 
-  constructor(name: string, debugOn?: boolean, parent?: Diagnostics | null) {
+  constructor(name: string, debugOn?: boolean, parent?: Diagnostics | null, app?: any) {
     this._name = name;
     this.parent = parent || null;
+    this.app = app;
     this.startTime = Diagnostics.now();
 
     // Build name lineage by crawling up parent tree
@@ -59,7 +61,7 @@ export class Diagnostics {
    * @returns New Diagnostics instance for the method
    */
   sub(name: string, debugOn?: boolean): Diagnostics {
-    const dx = new Diagnostics(name, debugOn, this);
+    const dx = new Diagnostics(name, debugOn, this, this.app);
     return dx;
   }
 
@@ -70,7 +72,19 @@ export class Diagnostics {
    * @returns New independent Diagnostics instance
    */
   create(name: string, debugOn?: boolean): Diagnostics {
-    const dx = new Diagnostics(name, debugOn, null);
+    const dx = new Diagnostics(name, debugOn, null, this.app);
+    return dx;
+  }
+
+  /**
+   * Static method to create a new independent Diagnostics instance
+   * @param name - The name of the new Diagnostics instance
+   * @param debugOn - Optional debug override (undefined uses global debug state)
+   * @param app - The app instance for OS access
+   * @returns New independent Diagnostics instance
+   */
+  static create(name: string, debugOn?: boolean, app?: any): Diagnostics {
+    const dx = new Diagnostics(name, debugOn, null, app);
     return dx;
   }
 
