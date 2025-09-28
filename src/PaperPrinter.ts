@@ -22,7 +22,7 @@ export class PaperPrinter {
 
   private currentThemeChoice: string | undefined;
 
-  private currentFontSize: 8 | 9 | 10 | 12 | 14 | 18 | 24 = 12; // Default to 12px
+  private currentFontSize: number = 12; // Default to 12px
 
   private currentPageSize: PageSize | undefined; // User's page size preference
   private currentOrientation: 'portrait' | 'landscape' | undefined; // User's orientation preference
@@ -36,27 +36,12 @@ export class PaperPrinter {
   init(): void {
     this.clipboardCapture.init();
 
-    // Restore user's page size and orientation preferences, with locale-based defaults
+    // Restore user's page size and orientation preferences, with letter/portrait defaults
     const savedPageSize = this.app.vscodeapis.getGlobalState<PageSize>('pageSize');
-    if (savedPageSize) {
-      this.currentPageSize = savedPageSize;
-    } else {
-      // Fallback to locale-based default
-      const locale = this.app.vscodeapis.getLocale() || '  ';
-      const region = locale.slice(-2).toUpperCase();
-      const letterRegions = ['US', 'CA', 'MX'];
-      const isLetterSize = letterRegions.includes(region);
-      this.currentPageSize = isLetterSize ? 'letter' : 'a4';
-    }
+    this.currentPageSize = savedPageSize || 'letter';
 
-    const savedOrientation = this.app.vscodeapis.getGlobalState<'portrait' | 'landscape'>(
-      'orientation'
-    );
-    if (savedOrientation) {
-      this.currentOrientation = savedOrientation;
-    } else {
-      this.currentOrientation = 'portrait';
-    }
+    const savedOrientation = this.app.vscodeapis.getGlobalState<'portrait' | 'landscape'>('orientation');
+    this.currentOrientation = savedOrientation || 'portrait';
   }
 
   done(): void {
@@ -226,6 +211,14 @@ export class PaperPrinter {
     // Calculate line height proportionally based on VS Code's line height ratio
     const editorTypo = this.app.vscodeapis.getEditorTypography();
     return fontSize * editorTypo.sizeToHeightRatio;
+  }
+
+  private getCurrentPageSize(): PageSize {
+    return this.currentPageSize!; // Safe after init()
+  }
+
+  private getCurrentOrientation(): 'portrait' | 'landscape' {
+    return this.currentOrientation!; // Safe after init()
   }
 
 
@@ -482,7 +475,7 @@ export class PaperPrinter {
     const fontSize = parseInt(selectedId, 10);
     if (!isNaN(fontSize)) {
       dx.out(`updating fontSize to ${fontSize}`);
-      this.currentFontSize = fontSize as 8 | 9 | 10 | 12 | 14 | 18 | 24;
+      this.currentFontSize = fontSize;
 
       // Regenerate PDF and update only the PDF content
       if (this.pdfRendered) {
