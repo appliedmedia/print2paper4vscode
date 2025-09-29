@@ -28,6 +28,12 @@ describe('PaperPrinter Page Size and Orient Tests', () => {
       },
       updateGlobalState: (key: string, value: any) => Promise.resolve(),
       getLocale: () => 'en-US',
+      getEditorTypography: () => ({
+        fontSize: 14,
+        lineHeight: 1.5,
+        fontFamily: 'Courier',
+        sizeToHeightRatio: 1.2
+      }),
     },
     os: {
       fileRead: (path: string) => {
@@ -174,7 +180,7 @@ describe('PaperPrinter Page Size and Orient Tests', () => {
         vscodeapis: {
           ...mockApp.vscodeapis,
           updateGlobalState: (key: string, value: any) => {
-            if (key === 'orientation') updatedOrientation = value;
+            if (key === 'orient') updatedOrientation = value;
             return Promise.resolve();
           },
         },

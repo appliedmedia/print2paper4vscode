@@ -35,11 +35,9 @@ const mockListBuilder = () => [{ id: 'test', displayName: 'Test Item' }];
 const mockSelectionHandler = async (id: string): Promise<string> => Promise.resolve('');
 
 describe('UIMenu', () => {
-  let menu: UIMenu;
-
-  beforeEach(() => {
-    // Create fresh menu for each test
-    menu = new UIMenu(
+  // Helper function to create fresh menu for each test
+  const createMenu = () => {
+    return new UIMenu(
       mockApp,
       'testMenu',
       'Test Menu',
@@ -49,10 +47,11 @@ describe('UIMenu', () => {
       [],
       mockSelectionHandler
     );
-  });
+  };
 
   describe('Constructor and Properties', () => {
     it('should create menu with correct properties', () => {
+      const menu = createMenu();
       assert.strictEqual(menu.id, 'testMenu');
       assert.strictEqual(menu.icon, '🔧');
       assert.strictEqual(menu.displayName, 'Test Menu');
@@ -77,10 +76,12 @@ describe('UIMenu', () => {
 
   describe('ID Generation Methods', () => {
     it('should generate correct menu ID', () => {
+      const menu = createMenu();
       assert.strictEqual(menu.getId_Menu(), 'testMenu');
     });
 
     it('should generate correct button ID', () => {
+      const menu = createMenu();
       assert.strictEqual(menu.getId_Button(), 'testMenu-btn');
     });
 
@@ -102,6 +103,7 @@ describe('UIMenu', () => {
 
   describe('Template Variable Names', () => {
     it('should generate correct template variable name', () => {
+      const menu = createMenu();
       assert.strictEqual(menu.getTemplateVariableName(), 'TESTMENU_MENU_ITEMS');
     });
 
@@ -136,10 +138,12 @@ describe('UIMenu', () => {
 
   describe('HTML Generation', () => {
     it('should provide correct template variable names', () => {
+      const menu = createMenu();
       assert.strictEqual(menu.getTemplateVariableName(), 'TESTMENU_MENU_ITEMS');
     });
 
     it('should provide correct menu and button IDs', () => {
+      const menu = createMenu();
       assert.strictEqual(menu.getId_Menu(), 'testMenu');
       assert.strictEqual(menu.getId_Button(), 'testMenu-btn');
     });
@@ -147,6 +151,7 @@ describe('UIMenu', () => {
 
   describe('Menu Items', () => {
     it('should return menu items from list builder', () => {
+      const menu = createMenu();
       const items = menu.getMenuItems();
       assert.strictEqual(items.length, 1);
       assert.strictEqual(items[0].id, 'test');
