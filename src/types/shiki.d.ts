@@ -42,6 +42,9 @@ declare module 'shiki' {
     themes?: string[];
     langs?: string[];
   }): Promise<Highlighter>;
-  export function createCssVariablesTheme(options: any): any;
-  export const bundledThemesInfo: any;
+  export function createCssVariablesTheme(options: unknown): unknown;
+  export const bundledThemesInfo: Array<{
+    id: string;
+    displayName: string;
+  }>;
 }
