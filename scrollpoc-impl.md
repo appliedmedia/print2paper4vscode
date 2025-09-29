@@ -1,5 +1,30 @@
 # ScrollPOC Integration Implementation Plan
 
+## Todo List
+
+🔲 Phase 1: Create PageRender interface and types in src/types/PageRender_t.ts
+🔲 Phase 1: Extract page calculation logic from generatePdfFromTokens into reusable methods
+🔲 Phase 1: Implement tests for PageRender interface and PDF.ts refactor to ensure new functionality works and existing functionality remains intact
+🔲 Phase 1: Refactor PDF.ts to implement PageRender interface with page-based generation
+🔲 Phase 1: Run core tests and make sure nothing is broken that isn't expected to be
+🔲 Phase 2: Create scrollable viewer templates in UI.yaml (scroll_html, scroll_css, scroll_js)
+🔲 Phase 2: Implement tests for scrollable templates to ensure template generation and scrollpoc logic porting work correctly
+🔲 Phase 2: Port scrollpoc.html core logic to generic scrollable templates
+🔲 Phase 2: Run core tests and make sure nothing is broken that isn't expected to be
+🔲 Phase 3: Create ScrollableViewer class in UI.ts with PageRender integration
+🔲 Phase 3: Implement tests for ScrollableViewer class and webview management updates to ensure scrollable viewer functionality works
+🔲 Phase 3: Run core tests and make sure nothing is broken that isn't expected to be
+🔲 Phase 3: Update webview management to support scrollable viewer mode
+🔲 Phase 4: Add scrollable viewer support to PaperPrinter.ts workflow
+🔲 Phase 4: Implement tests for PaperPrinter.ts integration to ensure scrollable viewer workflow works end-to-end
+🔲 Phase 4: Run core tests and make sure nothing is broken that isn't expected to be
+🔲 Phase 5: Add scrollable viewer settings to global state and user preferences
+🔲 Phase 5: Implement tests for configuration management to ensure settings work correctly
+🔲 Phase 5: Run core tests and make sure nothing is broken that isn't expected to be
+🔲 Phase 6: Implement comprehensive error handling and diagnostics
+🔲 Phase 6: Implement tests for error handling and diagnostics to ensure robust error recovery
+🔲 Phase 6: Run core tests and make sure nothing is broken that isn't expected to be
+
 ## Architecture Overview
 
 **Generic Scrollable Viewer Pattern**: UI.ts owns a generic scrollable content viewer that accepts any PageRender implementation. PDF.ts implements the PageRender interface to provide PDF-specific page generation.
