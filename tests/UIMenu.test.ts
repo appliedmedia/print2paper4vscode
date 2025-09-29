@@ -35,11 +35,9 @@ const mockListBuilder = () => [{ id: 'test', displayName: 'Test Item' }];
 const mockSelectionHandler = async (id: string): Promise<string> => Promise.resolve('');
 
 describe('UIMenu', () => {
-  let menu: UIMenu;
-
-  beforeEach(() => {
-    // Create fresh menu for each test
-    menu = new UIMenu(
+  // Helper function to create fresh menu for each test
+  const createMenu = () => {
+    return new UIMenu(
       mockApp,
       'testMenu',
       'Test Menu',
@@ -49,10 +47,11 @@ describe('UIMenu', () => {
       [],
       mockSelectionHandler
     );
-  });
+  };
 
   describe('Constructor and Properties', () => {
     it('should create menu with correct properties', () => {
+      const menu = createMenu();
       assert.strictEqual(menu.id, 'testMenu');
       assert.strictEqual(menu.icon, '🔧');
       assert.strictEqual(menu.displayName, 'Test Menu');
