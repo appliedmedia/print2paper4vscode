@@ -60,7 +60,7 @@
     "eslint": "latest",
     "markdownlint-cli": "latest",
     "prettier": "latest",
-    "typescript": "latest"
+    "typescript": "^5.9.2"
   },
   "dependencies": {
     "jspdf": "^2.5.1",

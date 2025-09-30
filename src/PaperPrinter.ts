@@ -169,9 +169,149 @@ export class PaperPrinter {
     this.createMenus();
     this.registerMessageHandlers();
 
-    const initial = await this.generatePdf();
-    const htmlWithToolbar = await this.app.ui.addToolbar(initial);
-    await this.app.ui.htmlToPanel(`Printable: ${tabName}`, htmlWithToolbar);
+    // Check if we should use scrollable viewer
+    const shouldUseScrollableViewer = this.shouldUseScrollableViewer();
+    
+    if (shouldUseScrollableViewer) {
+      await this.openScrollableViewer(tabName);
+    } else {
+      await this.openSinglePageViewer(tabName);
+    }
+  }
+
+  /**
+   * Determine if scrollable viewer should be used
+   */
+  private shouldUseScrollableViewer(): boolean {
+    const dx = this.dx.sub('shouldUseScrollableViewer');
+    
+    try {
+      // Check if scrollable viewer is enabled
+      const scrollableViewerEnabled = this.app.vscodeapis.getScrollableViewerEnabled();
+      if (!scrollableViewerEnabled) {
+        dx.out('Scrollable viewer disabled by user preference');
+        return false;
+      }
+      
+      // Check content size threshold
+      const threshold = this.app.vscodeapis.getAutoScrollableViewerThreshold();
+      const contentLength = this.lastRawCode?.length || 0;
+      const lineCount = this.lastRawCode?.split('\n').length || 0;
+      
+      if (lineCount >= threshold) {
+        dx.out(`Content exceeds threshold: ${lineCount} lines >= ${threshold}`);
+        return true;
+      }
+      
+      // Check if content would likely span multiple pages
+      const estimatedPages = this.estimatePageCount();
+      if (estimatedPages > 1) {
+        dx.out(`Content estimated to span ${estimatedPages} pages`);
+        return true;
+      }
+      
+      dx.out(`Using single-page viewer: ${lineCount} lines, ~${estimatedPages} pages`);
+      return false;
+      
+    } catch (error) {
+      dx.out(`Error determining viewer type: ${String(error)}`);
+      return false; // Fallback to single-page
+    } finally {
+      dx.done();
+    }
+  }
+
+  /**
+   * Estimate page count based on content
+   */
+  private estimatePageCount(): number {
+    if (!this.lastRawCode) return 1;
+    
+    const lines = this.lastRawCode.split('\n');
+    const lineHeight = this.computeLineHeightPx(this.computeFontSizePx());
+    const pageHeight = 800; // Estimated page height in points
+    const margin = 100; // Top and bottom margins
+    
+    const availableHeight = pageHeight - margin;
+    const linesPerPage = Math.floor(availableHeight / lineHeight);
+    
+    return Math.max(1, Math.ceil(lines.length / linesPerPage));
+  }
+
+  /**
+   * Open scrollable viewer
+   */
+  private async openScrollableViewer(tabName: string): Promise<void> {
+    const dx = this.dx.sub('openScrollableViewer');
+    
+    try {
+      // Generate PDF and set tokens for page-based rendering
+      await this.generatePdf();
+      
+      // Set tokens in PDF for page-based rendering
+      if (this.lastRawCode && this.lastLanguageId) {
+        const tokens = await this.app.stylize.getTokens(this.lastRawCode, this.lastLanguageId, {
+          theme: this.currentThemeChoice
+        });
+        this.app.pdf.setTokens(tokens);
+      }
+      
+      // Create scrollable viewer options
+      const scrollOptions = {
+        title: tabName,
+        pageSize: this.pageSize,
+        orientation: this.orient,
+        fontFamily: this.getCurrentFontFamily(),
+        fontSize: this.computeFontSizePx(),
+        lineHeight: this.computeLineHeightPx(this.computeFontSizePx()),
+        theme: this.currentThemeChoice
+      };
+      
+      // Create scrollable viewer
+      const panelId = await this.app.ui.createScrollableViewer(this.app.pdf, scrollOptions);
+      
+      // Add toolbar to the scrollable viewer
+      const htmlWithToolbar = await this.app.ui.addToolbar(`Scrollable: ${tabName}`);
+      await this.app.ui.htmlToPanel(`Scrollable: ${tabName}`, htmlWithToolbar);
+      
+      dx.out(`Opened scrollable viewer for ${tabName}`);
+      
+    } catch (error) {
+      this.app.ui.showErrorMessage(`Failed to open scrollable viewer: ${String(error)}`);
+      // Fallback to single-page viewer
+      await this.openSinglePageViewer(tabName);
+    } finally {
+      dx.done();
+    }
+  }
+
+  /**
+   * Open single-page viewer (existing behavior)
+   */
+  private async openSinglePageViewer(tabName: string): Promise<void> {
+    const dx = this.dx.sub('openSinglePageViewer');
+    
+    try {
+      const initial = await this.generatePdf();
+      const htmlWithToolbar = await this.app.ui.addToolbar(initial);
+      await this.app.ui.htmlToPanel(`Printable: ${tabName}`, htmlWithToolbar);
+      
+      dx.out(`Opened single-page viewer for ${tabName}`);
+      
+    } catch (error) {
+      this.app.ui.showErrorMessage(`Failed to open single-page viewer: ${String(error)}`);
+      throw error;
+    } finally {
+      dx.done();
+    }
+  }
+
+  /**
+   * Get current font family
+   */
+  private getCurrentFontFamily(): string {
+    const editorTypo = this.app.vscodeapis.getEditorTypography();
+    return editorTypo.fontFamily;
   }
 
   private async generatePdf(): Promise<string> {

@@ -65,6 +65,94 @@ export class VSCodeAPIs {
     return this.context.globalState.get(key, defaultValue);
   }
 
+  // ============================================================================
+  // PageRender Configuration Management
+  // ============================================================================
+
+  /**
+   * Get scrollable viewer enabled state
+   */
+  getScrollableViewerEnabled(): boolean {
+    return this.getGlobalState<boolean>('scrollableViewerEnabled', true) ?? true;
+  }
+
+  /**
+   * Set scrollable viewer enabled state
+   */
+  setScrollableViewerEnabled(enabled: boolean): void {
+    this.updateGlobalState('scrollableViewerEnabled', enabled);
+  }
+
+  /**
+   * Get maximum canvas pool size
+   */
+  getMaxCanvasPoolSize(): number {
+    return this.getGlobalState<number>('maxCanvasPoolSize', 7) ?? 7;
+  }
+
+  /**
+   * Set maximum canvas pool size
+   */
+  setMaxCanvasPoolSize(size: number): void {
+    this.updateGlobalState('maxCanvasPoolSize', Math.max(1, Math.min(20, size)));
+  }
+
+  /**
+   * Get scroll performance mode
+   */
+  getScrollPerformanceMode(): 'balanced' | 'memory' | 'speed' {
+    return this.getGlobalState<'balanced' | 'memory' | 'speed'>('scrollPerformanceMode', 'balanced') ?? 'balanced';
+  }
+
+  /**
+   * Set scroll performance mode
+   */
+  setScrollPerformanceMode(mode: 'balanced' | 'memory' | 'speed'): void {
+    this.updateGlobalState('scrollPerformanceMode', mode);
+  }
+
+  /**
+   * Get auto scrollable viewer threshold (lines)
+   */
+  getAutoScrollableViewerThreshold(): number {
+    return this.getGlobalState<number>('autoScrollableViewerThreshold', 1000) ?? 1000;
+  }
+
+  /**
+   * Set auto scrollable viewer threshold (lines)
+   */
+  setAutoScrollableViewerThreshold(threshold: number): void {
+    this.updateGlobalState('autoScrollableViewerThreshold', Math.max(100, threshold));
+  }
+
+  /**
+   * Get page render cache size
+   */
+  getPageRenderCacheSize(): number {
+    return this.getGlobalState<number>('pageRenderCacheSize', 10) ?? 10;
+  }
+
+  /**
+   * Set page render cache size
+   */
+  setPageRenderCacheSize(size: number): void {
+    this.updateGlobalState('pageRenderCacheSize', Math.max(1, Math.min(50, size)));
+  }
+
+  /**
+   * Get scroll debounce time in milliseconds
+   */
+  getScrollDebounceMs(): number {
+    return this.getGlobalState<number>('scrollDebounceMs', 16) ?? 16;
+  }
+
+  /**
+   * Set scroll debounce time in milliseconds
+   */
+  setScrollDebounceMs(ms: number): void {
+    this.updateGlobalState('scrollDebounceMs', Math.max(1, Math.min(100, ms)));
+  }
+
   getEditorTypography(): { fontSize: number; lineHeight: number; fontFamily: string; sizeToHeightRatio: number } {
     const editorCfg = this.vscode.workspace.getConfiguration('editor');
     const fontSize = Math.max(10, Number(editorCfg.get('fontSize') || 12));
