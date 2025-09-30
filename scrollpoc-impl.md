@@ -41,53 +41,53 @@ interface PageMetadata {
 
 ### 1.1 Create PageRender Interface
 
-- [ ] Create `src/types/PageRender_t.ts` with interface definitions
-- [ ] Define `PageRender`, `PageData`, `RenderOptions`, `PageMetadata` interfaces
-- [ ] Add error handling interfaces for page generation failures
-- [ ] Document interface contract requirements and expected behavior
+- [x] Create `src/types/PageRender_t.ts` with interface definitions
+- [x] Define `PageRender`, `PageData`, `RenderOptions`, `PageMetadata` interfaces
+- [x] Add error handling interfaces for page generation failures
+- [x] Document interface contract requirements and expected behavior
 
 ### 1.2 Update PDF.ts to Implement PageRender
 
-- [ ] Add `implements PageRender` to PDF class declaration
-- [ ] Implement `pageRender(pageNumber: number, options: RenderOptions): Promise<PageData>`
-  - [ ] Extract page-specific tokens from full token array
-  - [ ] Generate single-page PDF using existing jsPDF logic
-  - [ ] Convert to data URL and return with dimensions
-  - [ ] Handle page number validation and bounds checking
-- [ ] Implement `getTotalPages(): Promise<number>`
-  - [ ] Calculate based on content length and page size constraints
-  - [ ] Cache result for performance
-- [ ] Implement `getPageMetadata(): Promise<PageMetadata>`
-  - [ ] Calculate total pages, dimensions, memory estimates
-  - [ ] Include performance hints for UI component
-- [ ] Add error handling for invalid page numbers and generation failures
-- [ ] Add diagnostic logging for page generation performance
+- [x] Add `implements PageRender` to PDF class declaration
+- [x] Implement `pageRender(pageNumber: number, options: RenderOptions): Promise<PageData>`
+  - [x] Extract page-specific tokens from full token array
+  - [x] Generate single-page PDF using existing jsPDF logic
+  - [x] Convert to data URL and return with dimensions
+  - [x] Handle page number validation and bounds checking
+- [x] Implement `getTotalPages(): Promise<number>`
+  - [x] Calculate based on content length and page size constraints
+  - [x] Cache result for performance
+- [x] Implement `getPageMetadata(): Promise<PageMetadata>`
+  - [x] Calculate total pages, dimensions, memory estimates
+  - [x] Include performance hints for UI component
+- [x] Add error handling for invalid page numbers and generation failures
+- [x] Add diagnostic logging for page generation performance
 
 ### 1.3 Refactor PDF.ts for Page-Based Generation
 
-- [ ] Extract page calculation logic from `generatePdfFromTokens()`
-- [ ] Create `calculatePageBreaks(tokens: ThemedToken[][]): number[]` method
-- [ ] Create `extractTokensForPage(tokens: ThemedToken[][], pageNumber: number): ThemedToken[][]` method
-- [ ] Create `generateSinglePagePdf(tokens: ThemedToken[][], options: RenderOptions): jsPDF` method
-- [ ] Update existing `generatePdfFromTokens()` to use new page-based methods
-- [ ] Ensure backward compatibility with single-page generation
+- [x] Extract page calculation logic from `generatePdfFromTokens()`
+- [x] Create `calculatePageBreaks(tokens: ThemedToken[][]): number[]` method
+- [x] Create `extractTokensForPage(tokens: ThemedToken[][], pageNumber: number): ThemedToken[][]` method
+- [x] Create `generateSinglePagePdf(tokens: ThemedToken[][], options: RenderOptions): jsPDF` method
+- [x] Update existing `generatePdfFromTokens()` to use new page-based methods
+- [x] Ensure backward compatibility with single-page generation
 
 ### 1.4 Add PageRender Configuration
 
-- [ ] Add page render options to global state management
-- [ ] Create `setPageRenderOptions(options: Partial<RenderOptions>)` method
-- [ ] Add validation for render options
-- [ ] Add defaults for missing render options
-- [ ] Integrate with existing theme/font/page size preferences
+- [x] Add page render options to global state management
+- [x] Create `setPageRenderOptions(options: Partial<RenderOptions>)` method
+- [x] Add validation for render options
+- [x] Add defaults for missing render options
+- [x] Integrate with existing theme/font/page size preferences
 
 ## Phase 2: Generic Scrollable Viewer in UI.ts
 
 ### 2.1 Create Generic Scroll Templates (UI.yaml)
 
-- [ ] Extract scrollpoc.html CSS → `scroll_css` template
-- [ ] Extract scrollpoc.html JavaScript → `scroll_js` template
-- [ ] Extract scrollpoc.html HTML structure → `scroll_html` template
-- [ ] Add template placeholders for:
+- [x] Extract scrollpoc.html CSS → `scroll_css` template
+- [x] Extract scrollpoc.html JavaScript → `scroll_js` template
+- [x] Extract scrollpoc.html HTML structure → `scroll_html` template
+- [x] Add template placeholders for:
   - `{{TOTAL_PAGES}}` - from page render metadata
   - `{{MAX_CANVASES}}` - configurable canvas pool size
   - `{{PAGE_RENDER_SERVICE}}` - page render service reference
@@ -98,53 +98,53 @@ interface PageMetadata {
 
 #### Configuration Management
 
-- [ ] `CONFIG` object → Template-driven configuration with placeholders
-- [ ] `MAX_CANVASES` → Configurable based on content size and memory limits
-- [ ] `TOTAL_PAGES` → From page render metadata
-- [ ] `SCALE`, `PAGE_GAP` → User preferences from global state
-- [ ] `RENDER_OPTIONS` → Page render configuration
+- [x] `CONFIG` object → Template-driven configuration with placeholders
+- [x] `MAX_CANVASES` → Configurable based on content size and memory limits
+- [x] `TOTAL_PAGES` → From page render metadata
+- [x] `SCALE`, `PAGE_GAP` → User preferences from global state
+- [x] `RENDER_OPTIONS` → Page render configuration
 
 #### Database State Management
 
-- [ ] `db` object → Local webview state management
-- [ ] `getCanvasId()`, `getPageId()` → ID generation utilities
-- [ ] Canvas-to-page assignment tracking with page render data
-- [ ] Placeholder DOM element management
-- [ ] Page render request queue management
-- [ ] Error state tracking for failed page renders
+- [x] `db` object → Local webview state management
+- [x] `getCanvasId()`, `getPageId()` → ID generation utilities
+- [x] Canvas-to-page assignment tracking with page render data
+- [x] Placeholder DOM element management
+- [x] Page render request queue management
+- [x] Error state tracking for failed page renders
 
 #### Canvas Pool Management
 
-- [ ] `getAllCanvasIds()` → Canvas enumeration
-- [ ] `getAllAvailableCanvasIds()` → Available canvas detection
-- [ ] `assignCanvasToPage()` → Canvas assignment logic with page render integration
-- [ ] `unassignCanvas()` → Canvas cleanup and DOM removal
-- [ ] `requestPageRender(pageNumber)` → Request page from PageRender service
-- [ ] `handlePageRenderResponse(pageData)` → Process rendered page data
+- [x] `getAllCanvasIds()` → Canvas enumeration
+- [x] `getAllAvailableCanvasIds()` → Available canvas detection
+- [x] `assignCanvasToPage()` → Canvas assignment logic with page render integration
+- [x] `unassignCanvas()` → Canvas cleanup and DOM removal
+- [x] `requestPageRender(pageNumber)` → Request page from PageRender service
+- [x] `handlePageRenderResponse(pageData)` → Process rendered page data
 
 #### Virtual Scrolling Core
 
-- [ ] `handleScroll()` → Scroll event handler with debouncing
-- [ ] `getScrollPosition()` → Viewport calculations
-- [ ] `getVisiblePageRange()` → Page visibility detection
-- [ ] Scroll direction tracking (`lastScrollTop`, `scrollDirection`)
-- [ ] Prefetch logic for upcoming pages based on scroll direction
+- [x] `handleScroll()` → Scroll event handler with debouncing
+- [x] `getScrollPosition()` → Viewport calculations
+- [x] `getVisiblePageRange()` → Page visibility detection
+- [x] Scroll direction tracking (`lastScrollTop`, `scrollDirection`)
+- [x] Prefetch logic for upcoming pages based on scroll direction
 
 #### Render Management
 
-- [ ] `renderPageToCanvas(pageData)` → Generic page rendering (not PDF-specific)
-- [ ] `assignCanvasesToPages()` → Batch canvas assignment with page render requests
-- [ ] `moveCanvasToPlaceholder()` → DOM manipulation
-- [ ] Render task cancellation and cleanup
-- [ ] Page render error handling and retry logic
+- [x] `renderPageToCanvas(pageData)` → Generic page rendering (not PDF-specific)
+- [x] `assignCanvasesToPages()` → Batch canvas assignment with page render requests
+- [x] `moveCanvasToPlaceholder()` → DOM manipulation
+- [x] Render task cancellation and cleanup
+- [x] Page render error handling and retry logic
 
 #### Placeholder System
 
-- [ ] `createPlaceholders()` → DOM structure creation
-- [ ] Page label management with page numbers
-- [ ] Loading text display/hide logic
-- [ ] Page break visual elements
-- [ ] Error state display for failed page renders
+- [x] `createPlaceholders()` → DOM structure creation
+- [x] Page label management with page numbers
+- [x] Loading text display/hide logic
+- [x] Page break visual elements
+- [x] Error state display for failed page renders
 
 ### 2.3 Performance & Memory Management
 

@@ -215,7 +215,7 @@ export class UI {
   // Scrollable Viewer Implementation
   // ============================================================================
 
-  private scrollableViewer: ScrollableViewer | null = null;
+  private scrollView: ScrollView | null = null;
 
   /**
    * Create a scrollable viewer with PageRender implementation
@@ -226,7 +226,7 @@ export class UI {
 
     try {
       // Create scrollable viewer instance
-      this.scrollableViewer = new ScrollableViewer(this.app, pageRender, options);
+      this.scrollView = new ScrollView(this.app, pageRender, options);
       
       // Get page metadata
       const metadata = await pageRender.getPageMetadata();
@@ -267,8 +267,8 @@ export class UI {
     const dx = this.dx.sub('updatePageRender');
     
     try {
-      if (this.scrollableViewer) {
-        await this.scrollableViewer.updatePageRender(newPageRender);
+      if (this.scrollView) {
+        await this.scrollView.updatePageRender(newPageRender);
         dx.out('Updated PageRender service');
       } else {
         dx.out('No scrollable viewer to update');
@@ -288,9 +288,9 @@ export class UI {
     const dx = this.dx.sub('destroyScrollableViewer');
     
     try {
-      if (this.scrollableViewer) {
-        this.scrollableViewer.destroy();
-        this.scrollableViewer = null;
+      if (this.scrollView) {
+        this.scrollView.destroy();
+        this.scrollView = null;
         dx.out('Scrollable viewer destroyed');
       }
     } catch (error) {
@@ -416,13 +416,13 @@ export class UI {
     dx.require({ msg }, ['msg']);
     
     try {
-      if (!this.scrollableViewer || !msg.pageNumber) {
+      if (!this.scrollView || !msg.pageNumber) {
         dx.out('No scrollable viewer or page number provided');
         return;
       }
       
       // Request page render from scrollable viewer
-      const pageData = await this.scrollableViewer.requestPageRender(msg.pageNumber);
+      const pageData = await this.scrollView.requestPageRender(msg.pageNumber);
       
       // Send response back to webview
       if (this.currentPanelId) {
@@ -474,7 +474,7 @@ export class UI {
 }
 
 // ============================================================================
-// ScrollableViewer Class
+// ScrollView Class
 // ============================================================================
 
 interface ScrollOptions {
@@ -487,7 +487,7 @@ interface ScrollOptions {
   theme?: string;
 }
 
-class ScrollableViewer {
+class ScrollView {
   private app: App;
   private pageRender: PageRender;
   private options: ScrollOptions;
@@ -499,7 +499,7 @@ class ScrollableViewer {
     this.app = app;
     this.pageRender = pageRender;
     this.options = options;
-    this.dx = app.dx.create('ScrollableViewer');
+    this.dx = app.dx.create('ScrollView');
   }
 
   /**

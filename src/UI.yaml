@@ -778,7 +778,7 @@ scroll_js: |
     }
 
     // Export for external access
-    window.ScrollableViewer = {
+    window.ScrollView = {
       init: initScrollableViewer,
       handlePageRenderResponse,
       handlePageRenderError,
