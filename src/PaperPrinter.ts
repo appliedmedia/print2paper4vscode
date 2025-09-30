@@ -195,7 +195,7 @@ export class PaperPrinter {
       }
       
       // Create webview options
-      const webViewOptions = {
+      const scrollViewOptions = {
         title: tabName,
         pageSize: this.pageSize,
         orient: this.orient,
@@ -205,9 +205,20 @@ export class PaperPrinter {
         theme: this.currentThemeChoice
       };
       
-      // Create webview with menus
+      // Create webview and configure components
       this.currentWebView = new UIWebView(this.app);
-      const panelId = await this.currentWebView.createWebView(this.app.pdf, webViewOptions, this.app.uimenumgr);
+      
+      // Create menus (PaperPrinter manages the menu creation logic)
+      const menuMgr = this.currentWebView.createMenus();
+      
+      // Copy menus from PaperPrinter's menu manager to the webview's menu manager
+      const existingMenus = this.app.uimenumgr.getAllMenus();
+      for (const menu of existingMenus) {
+        menuMgr.addMenu(menu);
+      }
+      
+      // Create scroll view
+      const panelId = await this.currentWebView.createScrollView(this.app.pdf, scrollViewOptions);
       
       dx.out(`Opened webview for ${tabName}`);
       

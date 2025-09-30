@@ -5,59 +5,60 @@ import { UIScrollView } from './UIScrollView';
 import { UIMenuMgr } from './UIMenuMgr';
 import { Diagnostics } from './Diagnostics';
 
-// WebView options interface
-export interface WebViewOptions {
-  title?: string;
-  pageSize?: 'letter' | 'legal' | 'a3' | 'a4' | 'a5';
-  orient?: 'portrait' | 'landscape';
-  fontFamily?: string;
-  fontSize?: number;
-  lineHeight?: number;
-  theme?: string;
-}
-
 /**
- * UIWebView - Manages webview panels and content rendering
- * Acts as an abstraction layer between PaperPrinter and specific viewer implementations
+ * UIWebView - Lightweight webview container that can create and manage different components
+ * Acts as a flexible orchestrator for webview-related functionality
  */
 export class UIWebView {
   private app: App;
   private dx: Diagnostics;
   private currentViewer: UIScrollView | null = null;
+  private menuMgr: UIMenuMgr | null = null;
   private panelId: WebviewPanelId | null = null;
-  private menuMgr: UIMenuMgr;
 
   constructor(app: App) {
     this.app = app;
     this.dx = app.dx.create('UIWebView');
-    this.menuMgr = new UIMenuMgr(app);
   }
 
   /**
-   * Create a webview panel with PageRender content and menus
+   * Create and configure menu manager
    */
-  async createWebView(pageRender: PageRender, options: WebViewOptions, menus?: UIMenuMgr): Promise<WebviewPanelId> {
-    const dx = this.dx.sub('createWebView');
+  createMenus(): UIMenuMgr {
+    const dx = this.dx.sub('createMenus');
+    
+    try {
+      this.menuMgr = new UIMenuMgr(this.app);
+      dx.out('Created menu manager');
+      return this.menuMgr;
+    } finally {
+      dx.done();
+    }
+  }
+
+  /**
+   * Create scroll view with PageRender content
+   */
+  async createScrollView(pageRender: PageRender, options: any): Promise<WebviewPanelId> {
+    const dx = this.dx.sub('createScrollView');
     dx.require({ pageRender, options }, ['pageRender', 'options']);
 
     try {
-      // Use provided menu manager or create a new one
-      if (menus) {
-        this.menuMgr = menus;
+      if (!this.menuMgr) {
+        throw new Error('Menu manager not created. Call createMenus() first.');
       }
 
-      // For now, always use scroll view (can be extended to support other viewer types)
       this.currentViewer = new UIScrollView(this.app, pageRender, options, this.menuMgr);
       this.panelId = await this.currentViewer.create();
       
       // Store current panel ID in UI for message handling
       this.app.ui.currentPanelId = this.panelId;
       
-      dx.out(`Created webview panel: ${options.title || 'Document Viewer'}`);
+      dx.out(`Created scroll view: ${options.title || 'Document Viewer'}`);
       return this.panelId;
 
     } catch (error) {
-      this.app.ui.showErrorMessage(`Failed to create webview: ${String(error)}`);
+      this.app.ui.showErrorMessage(`Failed to create scroll view: ${String(error)}`);
       throw error;
     } finally {
       dx.done();
@@ -65,7 +66,7 @@ export class UIWebView {
   }
 
   /**
-   * Update webview content with new PageRender
+   * Update scroll view content with new PageRender
    */
   async updatePageRender(newPageRender: PageRender): Promise<void> {
     const dx = this.dx.sub('updatePageRender');
@@ -73,9 +74,9 @@ export class UIWebView {
     try {
       if (this.currentViewer) {
         await this.currentViewer.updatePageRender(newPageRender);
-        dx.out('Updated PageRender in webview');
+        dx.out('Updated PageRender in scroll view');
       } else {
-        dx.out('No active webview to update');
+        dx.out('No active scroll view to update');
       }
     } catch (error) {
       this.app.ui.showErrorMessage(`Failed to update PageRender: ${String(error)}`);
@@ -86,24 +87,31 @@ export class UIWebView {
   }
 
   /**
-   * Update webview options (theme, font, page size, etc.)
+   * Update scroll view options (theme, font, page size, etc.)
    */
-  async updateOptions(options: Partial<WebViewOptions>): Promise<void> {
+  async updateOptions(options: any): Promise<void> {
     const dx = this.dx.sub('updateOptions');
     
     try {
       if (this.currentViewer) {
         await this.currentViewer.updateOptions(options);
-        dx.out('Updated webview options');
+        dx.out('Updated scroll view options');
       } else {
-        dx.out('No active webview to update');
+        dx.out('No active scroll view to update');
       }
     } catch (error) {
-      this.app.ui.showErrorMessage(`Failed to update webview options: ${String(error)}`);
+      this.app.ui.showErrorMessage(`Failed to update scroll view options: ${String(error)}`);
       throw error;
     } finally {
       dx.done();
     }
+  }
+
+  /**
+   * Get the menu manager
+   */
+  getMenus(): UIMenuMgr | null {
+    return this.menuMgr;
   }
 
   /**
@@ -131,6 +139,7 @@ export class UIWebView {
         this.currentViewer.destroy();
         this.currentViewer = null;
       }
+      this.menuMgr = null;
       this.panelId = null;
       dx.out('Webview destroyed');
     } finally {
