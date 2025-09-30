@@ -205,9 +205,9 @@ export class PaperPrinter {
         theme: this.currentThemeChoice
       };
       
-      // Create webview
+      // Create webview with menus
       this.currentWebView = new UIWebView(this.app);
-      const panelId = await this.currentWebView.createWebView(this.app.pdf, webViewOptions);
+      const panelId = await this.currentWebView.createWebView(this.app.pdf, webViewOptions, this.app.uimenumgr);
       
       dx.out(`Opened webview for ${tabName}`);
       

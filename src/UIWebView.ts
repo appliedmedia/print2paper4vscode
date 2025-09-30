@@ -2,6 +2,7 @@ import type { App } from './App';
 import type { PageRender, PageData, PageMetadata } from './types/PageRender_t';
 import type { WebviewPanelId } from './VSCodeAPIs';
 import { UIScrollView } from './UIScrollView';
+import { UIMenuMgr } from './UIMenuMgr';
 import { Diagnostics } from './Diagnostics';
 
 // WebView options interface
@@ -24,22 +25,29 @@ export class UIWebView {
   private dx: Diagnostics;
   private currentViewer: UIScrollView | null = null;
   private panelId: WebviewPanelId | null = null;
+  private menuMgr: UIMenuMgr;
 
   constructor(app: App) {
     this.app = app;
     this.dx = app.dx.create('UIWebView');
+    this.menuMgr = new UIMenuMgr(app);
   }
 
   /**
-   * Create a webview panel with PageRender content
+   * Create a webview panel with PageRender content and menus
    */
-  async createWebView(pageRender: PageRender, options: WebViewOptions): Promise<WebviewPanelId> {
+  async createWebView(pageRender: PageRender, options: WebViewOptions, menus?: UIMenuMgr): Promise<WebviewPanelId> {
     const dx = this.dx.sub('createWebView');
     dx.require({ pageRender, options }, ['pageRender', 'options']);
 
     try {
+      // Use provided menu manager or create a new one
+      if (menus) {
+        this.menuMgr = menus;
+      }
+
       // For now, always use scroll view (can be extended to support other viewer types)
-      this.currentViewer = new UIScrollView(this.app, pageRender, options);
+      this.currentViewer = new UIScrollView(this.app, pageRender, options, this.menuMgr);
       this.panelId = await this.currentViewer.create();
       
       // Store current panel ID in UI for message handling

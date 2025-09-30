@@ -2,6 +2,7 @@ import type { App } from './App';
 import type { PageRender, PageData, PageMetadata } from './types/PageRender_t';
 import type { WebviewPanelId } from './VSCodeAPIs';
 import type { WebviewMessage } from './types/UI_t';
+import { UIMenuMgr } from './UIMenuMgr';
 import { Diagnostics } from './Diagnostics';
 
 // ScrollOptions interface
@@ -26,11 +27,13 @@ export class UIScrollView {
   private pageCache: Map<number, PageData> = new Map();
   private renderQueue: Set<number> = new Set();
   private panelId: WebviewPanelId | null = null;
+  private menuMgr: UIMenuMgr;
 
-  constructor(app: App, pageRender: PageRender, options: ScrollOptions) {
+  constructor(app: App, pageRender: PageRender, options: ScrollOptions, menuMgr: UIMenuMgr) {
     this.app = app;
     this.pageRender = pageRender;
     this.options = options;
+    this.menuMgr = menuMgr;
     this.dx = app.dx.create('UIScrollView');
   }
 
@@ -274,8 +277,8 @@ export class UIScrollView {
     const dx = this.dx.sub('generateToolbarHTML');
     
     try {
-      // Get menu HTML from UIMenuMgr
-      const menuHtml = await this.app.uimenumgr.getAllUIMenuHTML();
+      // Get menu HTML from the provided UIMenuMgr
+      const menuHtml = await this.menuMgr.getAllUIMenuHTML();
       return menuHtml;
     } finally {
       dx.done();
