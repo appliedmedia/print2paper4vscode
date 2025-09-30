@@ -215,7 +215,7 @@ export class UI {
   // Scrollable Viewer Implementation
   // ============================================================================
 
-  private scrollView: ScrollView | null = null;
+  private scrollView: UIScrollView | null = null;
 
   /**
    * Create a scrollable viewer with PageRender implementation
@@ -226,7 +226,7 @@ export class UI {
 
     try {
       // Create scrollable viewer instance
-      this.scrollView = new ScrollView(this.app, pageRender, options);
+      this.scrollView = new UIScrollView(this.app, pageRender, options);
       
       // Get page metadata
       const metadata = await pageRender.getPageMetadata();
@@ -474,7 +474,7 @@ export class UI {
 }
 
 // ============================================================================
-// ScrollView Class
+// UIScrollView Class
 // ============================================================================
 
 interface ScrollOptions {
@@ -487,7 +487,7 @@ interface ScrollOptions {
   theme?: string;
 }
 
-class ScrollView {
+class UIScrollView {
   private app: App;
   private pageRender: PageRender;
   private options: ScrollOptions;
@@ -499,7 +499,7 @@ class ScrollView {
     this.app = app;
     this.pageRender = pageRender;
     this.options = options;
-    this.dx = app.dx.create('ScrollView');
+    this.dx = app.dx.create('UIScrollView');
   }
 
   /**
