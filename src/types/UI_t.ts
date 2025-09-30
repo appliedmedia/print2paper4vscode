@@ -22,7 +22,7 @@ export type WebviewMessage = {
 
 // Extension to webview message types - defines messages sent from extension to webview
 export type ExtensionToWebviewMessage = {
-  type: 'updatePdf' | 'pageRenderResponse' | 'pageRenderError' | 'scrollDiagnostic';
+  type: 'updatePdf' | 'pageRenderResponse' | 'pageRenderError' | 'scrollDiagnostic' | 'clearAllPages';
   pdfDataUrl?: string;
   pageData?: {
     dataUrl: string;

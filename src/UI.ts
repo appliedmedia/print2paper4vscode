@@ -215,7 +215,7 @@ export class UI {
   // Scrollable Viewer Implementation
   // ============================================================================
 
-  private scrollView: UIScrollView | null = null;
+  public scrollView: UIScrollView | null = null;
 
   /**
    * Create a scrollable viewer with PageRender implementation
@@ -275,6 +275,27 @@ export class UI {
       }
     } catch (error) {
       this.app.ui.showErrorMessage(`Failed to update PageRender: ${String(error)}`);
+      throw error;
+    } finally {
+      dx.done();
+    }
+  }
+
+  /**
+   * Update scrollable viewer with new render options (theme, font, etc.)
+   */
+  async updateScrollableViewer(options: Partial<ScrollOptions>): Promise<void> {
+    const dx = this.dx.sub('updateScrollableViewer');
+    
+    try {
+      if (this.scrollView) {
+        await this.scrollView.updateOptions(options);
+        dx.out('Updated scrollable viewer options');
+      } else {
+        dx.out('No scrollable viewer to update');
+      }
+    } catch (error) {
+      this.app.ui.showErrorMessage(`Failed to update scrollable viewer: ${String(error)}`);
       throw error;
     } finally {
       dx.done();
@@ -513,6 +534,33 @@ class UIScrollView {
       this.pageCache.clear();
       this.renderQueue.clear();
       dx.out('PageRender service updated');
+    } finally {
+      dx.done();
+    }
+  }
+
+  /**
+   * Update scrollable viewer options and bust cache
+   */
+  async updateOptions(newOptions: Partial<ScrollOptions>): Promise<void> {
+    const dx = this.dx.sub('updateOptions');
+    
+    try {
+      // Update options
+      this.options = { ...this.options, ...newOptions };
+      
+      // Bust all cached pages since render options changed
+      this.pageCache.clear();
+      this.renderQueue.clear();
+      
+      // Notify webview to clear all rendered pages
+      if (this.app.ui.currentPanelId) {
+        this.app.vscodeapis.postMessageToPanel(this.app.ui.currentPanelId, {
+          type: 'clearAllPages'
+        });
+      }
+      
+      dx.out('Scrollable viewer options updated, cache cleared');
     } finally {
       dx.done();
     }

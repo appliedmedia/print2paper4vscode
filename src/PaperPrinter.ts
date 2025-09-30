@@ -314,6 +314,14 @@ export class PaperPrinter {
     return editorTypo.fontFamily;
   }
 
+  /**
+   * Check if currently using scrollable viewer
+   */
+  private isUsingScrollableViewer(): boolean {
+    // Check if UI has an active scrollable viewer
+    return this.app.ui.scrollView !== null;
+  }
+
   private async generatePdf(): Promise<string> {
     // If we have raw code, regenerate with theme overrides
     if (this.lastRawCode && this.lastLanguageId) {
@@ -597,14 +605,21 @@ export class PaperPrinter {
     dx.out(`updating theme to ${selectedId}`);
     this.currentThemeChoice = selectedId;
 
-    // Regenerate PDF and update only the PDF content
-    if (this.pdfRendered) {
-      dx.out(`regenerating PDF with new theme`);
-      await this.generatePdf();
-      dx.out(`calling updateWebviewPdf with pdfRendered`);
-      await this.app.ui.updateWebviewPdf(this.pdfRendered);
+    // Check if we're using scrollable viewer
+    if (this.isUsingScrollableViewer()) {
+      // Update scrollable viewer with new theme
+      dx.out(`updating scrollable viewer with new theme`);
+      await this.app.ui.updateScrollableViewer({ theme: selectedId });
     } else {
-      dx.out(`no pdfRendered available`);
+      // Regenerate PDF and update only the PDF content for single-page viewer
+      if (this.pdfRendered) {
+        dx.out(`regenerating PDF with new theme`);
+        await this.generatePdf();
+        dx.out(`calling updateWebviewPdf with pdfRendered`);
+        await this.app.ui.updateWebviewPdf(this.pdfRendered);
+      } else {
+        dx.out(`no pdfRendered available`);
+      }
     }
 
     dx.done();

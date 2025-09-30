@@ -760,9 +760,42 @@ scroll_js: |
         case 'scrollDiagnostic':
           console.log('Scroll diagnostic:', message.data);
           break;
+        case 'clearAllPages':
+          clearAllRenderedPages();
+          break;
         default:
           console.log('Unknown message type:', message.type);
       }
+    }
+
+    // Clear all rendered pages and reset to loading state
+    function clearAllRenderedPages() {
+      console.log('Clearing all rendered pages');
+      
+      // Clear all rendered page data
+      db.renderedPages.clear();
+      db.pendingPages.clear();
+      db.failedPages.clear();
+      
+      // Unassign all canvases
+      for (let i = 1; i <= CONFIG.totalPages; i++) {
+        unassignCanvas(i);
+      }
+      
+      // Reset all placeholders to loading state
+      for (let i = 1; i <= CONFIG.totalPages; i++) {
+        const placeholder = document.getElementById(`page-${i}`);
+        if (placeholder) {
+          placeholder.className = 'page-placeholder loading';
+          placeholder.innerHTML = `
+            <div class="page-label">Page ${i}</div>
+            <div class="loading-text">Loading page ${i}...</div>
+          `;
+        }
+      }
+      
+      // Trigger initial render
+      handleScroll();
     }
 
     // Set up message handling
