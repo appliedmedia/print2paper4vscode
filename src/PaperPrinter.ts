@@ -4,6 +4,7 @@ import type { WebviewMessage } from './types/UI_t';
 import type { UIMenuItem } from './types/UI_t';
 import { Diagnostics } from './Diagnostics';
 import { UIMenu } from './UIMenu';
+import { UIScrollView } from './UIScrollView';
 import jsPDF from 'jspdf';
 
 // Page size type and order definition
@@ -17,6 +18,7 @@ export class PaperPrinter {
   private pdfRendered: jsPDF | null = null; // In-memory PDF document
   private lastRawCode: string | null = null;
   private lastLanguageId: string | null = null;
+  private currentScrollView: UIScrollView | null = null;
   private printTitle: string = 'Printable';
   private dx: Diagnostics;
 
@@ -204,7 +206,8 @@ export class PaperPrinter {
       };
       
       // Create scroll view
-      const panelId = await this.app.ui.createScrollView(this.app.pdf, scrollOptions);
+      this.currentScrollView = new UIScrollView(this.app, this.app.pdf, scrollOptions);
+      const panelId = await this.currentScrollView.create();
       
       dx.out(`Opened scroll view for ${tabName}`);
       
@@ -510,7 +513,9 @@ export class PaperPrinter {
 
     // Update scroll view with new theme
     dx.out(`updating scroll view with new theme`);
-    await this.app.ui.updateScrollView({ theme: selectedId });
+    if (this.currentScrollView) {
+      await this.currentScrollView.updateOptions({ theme: selectedId });
+    }
 
     dx.done();
     return selectedId; // Return the selected theme for checkmark
@@ -537,10 +542,12 @@ export class PaperPrinter {
 
       // Update scroll view with new font size
       dx.out(`updating scroll view with new font size`);
-      await this.app.ui.updateScrollView({ 
-        fontSize: fontSize,
-        lineHeight: this.computeLineHeightPx(fontSize)
-      });
+      if (this.currentScrollView) {
+        await this.currentScrollView.updateOptions({ 
+          fontSize: fontSize,
+          lineHeight: this.computeLineHeightPx(fontSize)
+        });
+      }
 
       dx.done();
       return selectedId; // Return the selected size for checkmark
@@ -569,7 +576,9 @@ export class PaperPrinter {
 
       // Update scroll view with new page size
       dx.out(`updating scroll view with new page size`);
-      await this.app.ui.updateScrollView({ pageSize: selectedId as PageSize });
+      if (this.currentScrollView) {
+        await this.currentScrollView.updateOptions({ pageSize: selectedId as PageSize });
+      }
 
       dx.done();
       return selectedId; // Return the selected size for checkmark
@@ -598,7 +607,9 @@ export class PaperPrinter {
 
       // Update scroll view with new orientation
       dx.out(`updating scroll view with new orientation`);
-      await this.app.ui.updateScrollView({ orient: selectedId as 'portrait' | 'landscape' });
+      if (this.currentScrollView) {
+        await this.currentScrollView.updateOptions({ orient: selectedId as 'portrait' | 'landscape' });
+      }
 
       dx.done();
       return selectedId; // Return the selected orient for checkmark

@@ -128,7 +128,7 @@ describe('PaperPrinter Page Size and Orient Tests', () => {
   describe('Menu Selection Handlers', () => {
     test('should handle page size selection', async () => {
       let updatedPageSize: string | undefined;
-      let regeneratedPdf = false;
+      let scrollViewUpdated = false;
 
       // Create a new mock app for this test
       const testMockApp = {
@@ -142,7 +142,6 @@ describe('PaperPrinter Page Size and Orient Tests', () => {
         },
         pdf: {
           generatePdfFromTokens: () => {
-            regeneratedPdf = true;
             return Promise.resolve();
           },
           embedPDFinHTML: () => Promise.resolve(),
@@ -152,27 +151,31 @@ describe('PaperPrinter Page Size and Orient Tests', () => {
         },
         stylize: {
           styleToPdf: () => {
-            regeneratedPdf = true;
             return Promise.resolve({ mock: true });
           },
         },
       };
 
       const testPaperPrinter = new PaperPrinter(testMockApp as any);
-      // Set a mock pdfRendered to trigger regeneration
-      (testPaperPrinter as any).pdfRendered = { mock: true };
+      // Set a mock scroll view to track updates
+      (testPaperPrinter as any).currentScrollView = {
+        updateOptions: (options: any) => {
+          scrollViewUpdated = true;
+          return Promise.resolve();
+        }
+      };
       // Set required properties for generatePdf to work
       (testPaperPrinter as any).lastRawCode = 'test code';
       (testPaperPrinter as any).lastLanguageId = 'javascript';
       await (testPaperPrinter as any).handleSelection_Page('letter'); // Select letter
 
       assert.strictEqual(updatedPageSize, 'letter');
-      assert.ok(regeneratedPdf);
+      assert.ok(scrollViewUpdated);
     });
 
     test('should handle orientation selection', async () => {
       let updatedOrientation: string | undefined;
-      let regeneratedPdf = false;
+      let scrollViewUpdated = false;
 
       // Create a new mock app for this test
       const testMockApp = {
@@ -186,7 +189,6 @@ describe('PaperPrinter Page Size and Orient Tests', () => {
         },
         pdf: {
           generatePdfFromTokens: () => {
-            regeneratedPdf = true;
             return Promise.resolve();
           },
           embedPDFinHTML: () => Promise.resolve(),
@@ -196,22 +198,26 @@ describe('PaperPrinter Page Size and Orient Tests', () => {
         },
         stylize: {
           styleToPdf: () => {
-            regeneratedPdf = true;
             return Promise.resolve({ mock: true });
           },
         },
       };
 
       const testPaperPrinter = new PaperPrinter(testMockApp as any);
-      // Set a mock pdfRendered to trigger regeneration
-      (testPaperPrinter as any).pdfRendered = { mock: true };
+      // Set a mock scroll view to track updates
+      (testPaperPrinter as any).currentScrollView = {
+        updateOptions: (options: any) => {
+          scrollViewUpdated = true;
+          return Promise.resolve();
+        }
+      };
       // Set required properties for generatePdf to work
       (testPaperPrinter as any).lastRawCode = 'test code';
       (testPaperPrinter as any).lastLanguageId = 'javascript';
       await (testPaperPrinter as any).handleSelection_Orient('landscape'); // Select landscape
 
       assert.strictEqual(updatedOrientation, 'landscape');
-      assert.ok(regeneratedPdf);
+      assert.ok(scrollViewUpdated);
     });
   });
 
