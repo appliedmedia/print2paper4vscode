@@ -169,16 +169,16 @@ export class PaperPrinter {
     this.createMenus();
     this.registerMessageHandlers();
 
-    // Always use scrollable viewer (handles both single and multiple pages)
-    await this.openScrollableViewer(tabName);
+    // Always use scroll view (handles both single and multiple pages)
+    await this.openScrollView(tabName);
   }
 
 
   /**
-   * Open scrollable viewer (handles both single and multiple pages)
+   * Open scroll view (handles both single and multiple pages)
    */
-  private async openScrollableViewer(tabName: string): Promise<void> {
-    const dx = this.dx.sub('openScrollableViewer');
+  private async openScrollView(tabName: string): Promise<void> {
+    const dx = this.dx.sub('openScrollView');
     
     try {
       // Generate PDF and set tokens for page-based rendering
@@ -192,7 +192,7 @@ export class PaperPrinter {
         this.app.pdf.setTokens(tokens);
       }
       
-      // Create scrollable viewer options
+      // Create scroll view options
       const scrollOptions = {
         title: tabName,
         pageSize: this.pageSize,
@@ -203,13 +203,13 @@ export class PaperPrinter {
         theme: this.currentThemeChoice
       };
       
-      // Create scrollable viewer
-      const panelId = await this.app.ui.createScrollableViewer(this.app.pdf, scrollOptions);
+      // Create scroll view
+      const panelId = await this.app.ui.createScrollView(this.app.pdf, scrollOptions);
       
-      dx.out(`Opened scrollable viewer for ${tabName}`);
+      dx.out(`Opened scroll view for ${tabName}`);
       
     } catch (error) {
-      this.app.ui.showErrorMessage(`Failed to open scrollable viewer: ${String(error)}`);
+      this.app.ui.showErrorMessage(`Failed to open scroll view: ${String(error)}`);
       throw error;
     } finally {
       dx.done();
@@ -508,9 +508,9 @@ export class PaperPrinter {
     dx.out(`updating theme to ${selectedId}`);
     this.currentThemeChoice = selectedId;
 
-    // Update scrollable viewer with new theme
-    dx.out(`updating scrollable viewer with new theme`);
-    await this.app.ui.updateScrollableViewer({ theme: selectedId });
+    // Update scroll view with new theme
+    dx.out(`updating scroll view with new theme`);
+    await this.app.ui.updateScrollView({ theme: selectedId });
 
     dx.done();
     return selectedId; // Return the selected theme for checkmark
@@ -535,9 +535,9 @@ export class PaperPrinter {
       dx.out(`updating fontSize to ${fontSize}`);
       this.currentFontSize = fontSize;
 
-      // Update scrollable viewer with new font size
-      dx.out(`updating scrollable viewer with new font size`);
-      await this.app.ui.updateScrollableViewer({ 
+      // Update scroll view with new font size
+      dx.out(`updating scroll view with new font size`);
+      await this.app.ui.updateScrollView({ 
         fontSize: fontSize,
         lineHeight: this.computeLineHeightPx(fontSize)
       });
@@ -567,9 +567,9 @@ export class PaperPrinter {
       dx.out(`updating page size to ${selectedId}`);
       this.pageSize = selectedId as PageSize;
 
-      // Update scrollable viewer with new page size
-      dx.out(`updating scrollable viewer with new page size`);
-      await this.app.ui.updateScrollableViewer({ pageSize: selectedId as PageSize });
+      // Update scroll view with new page size
+      dx.out(`updating scroll view with new page size`);
+      await this.app.ui.updateScrollView({ pageSize: selectedId as PageSize });
 
       dx.done();
       return selectedId; // Return the selected size for checkmark
@@ -596,9 +596,9 @@ export class PaperPrinter {
       dx.out(`updating orient to ${selectedId}`);
       this.orient = selectedId;
 
-      // Update scrollable viewer with new orientation
-      dx.out(`updating scrollable viewer with new orientation`);
-      await this.app.ui.updateScrollableViewer({ orient: selectedId as 'portrait' | 'landscape' });
+      // Update scroll view with new orientation
+      dx.out(`updating scroll view with new orientation`);
+      await this.app.ui.updateScrollView({ orient: selectedId as 'portrait' | 'landscape' });
 
       dx.done();
       return selectedId; // Return the selected orient for checkmark

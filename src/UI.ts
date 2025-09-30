@@ -212,48 +212,48 @@ export class UI {
   }
 
   // ============================================================================
-  // Scrollable Viewer Implementation
+  // Scroll View Implementation
   // ============================================================================
 
   public scrollView: UIScrollView | null = null;
 
   /**
-   * Create a scrollable viewer with PageRender implementation
+   * Create a scroll view with PageRender implementation
    */
-  async createScrollableViewer(pageRender: PageRender, options: ScrollOptions): Promise<WebviewPanelId> {
-    const dx = this.dx.sub('createScrollableViewer');
+  async createScrollView(pageRender: PageRender, options: ScrollOptions): Promise<WebviewPanelId> {
+    const dx = this.dx.sub('createScrollView');
     dx.require({ pageRender, options }, ['pageRender', 'options']);
 
     try {
-      // Create scrollable viewer instance
+      // Create scroll view instance
       this.scrollView = new UIScrollView(this.app, pageRender, options);
       
       // Get page metadata
       const metadata = await pageRender.getPageMetadata();
       
-      // Load scrollable templates
-      const templates = this.loadScrollableTemplates();
+      // Load scroll view templates
+      const templates = this.loadScrollViewTemplates();
       
-      // Generate HTML with scrollable viewer
-      const html = this.generateScrollableHTML(templates, metadata, options);
+      // Generate HTML with scroll view
+      const html = this.generateScrollViewHTML(templates, metadata, options);
       
       // Create webview panel
       const panelId = this.app.vscodeapis.createWebviewPanel(
-        'Scrollable Document Viewer',
+        'Scroll View Document Viewer',
         html
       );
       
-      // Set up message handling for scrollable viewer
-      this.setupScrollableViewerMessageHandling(panelId);
+      // Set up message handling for scroll view
+      this.setupScrollViewMessageHandling(panelId);
       
       // Store current panel ID
       this.currentPanelId = panelId;
       
-      dx.out(`Created scrollable viewer with ${metadata.totalPages} pages`);
+      dx.out(`Created scroll view with ${metadata.totalPages} pages`);
       return panelId;
 
     } catch (error) {
-      this.app.ui.showErrorMessage(`Failed to create scrollable viewer: ${String(error)}`);
+      this.app.ui.showErrorMessage(`Failed to create scroll view: ${String(error)}`);
       throw error;
     } finally {
       dx.done();
@@ -261,7 +261,7 @@ export class UI {
   }
 
   /**
-   * Update PageRender service for existing scrollable viewer
+   * Update PageRender service for existing scroll view
    */
   async updatePageRender(newPageRender: PageRender): Promise<void> {
     const dx = this.dx.sub('updatePageRender');
@@ -271,7 +271,7 @@ export class UI {
         await this.scrollView.updatePageRender(newPageRender);
         dx.out('Updated PageRender service');
       } else {
-        dx.out('No scrollable viewer to update');
+        dx.out('No scroll view to update');
       }
     } catch (error) {
       this.app.ui.showErrorMessage(`Failed to update PageRender: ${String(error)}`);
@@ -282,20 +282,20 @@ export class UI {
   }
 
   /**
-   * Update scrollable viewer with new render options (theme, font, etc.)
+   * Update scroll view with new render options (theme, font, etc.)
    */
-  async updateScrollableViewer(options: Partial<ScrollOptions>): Promise<void> {
-    const dx = this.dx.sub('updateScrollableViewer');
+  async updateScrollView(options: Partial<ScrollOptions>): Promise<void> {
+    const dx = this.dx.sub('updateScrollView');
     
     try {
       if (this.scrollView) {
         await this.scrollView.updateOptions(options);
-        dx.out('Updated scrollable viewer options');
+        dx.out('Updated scroll view options');
       } else {
-        dx.out('No scrollable viewer to update');
+        dx.out('No scroll view to update');
       }
     } catch (error) {
-      this.app.ui.showErrorMessage(`Failed to update scrollable viewer: ${String(error)}`);
+      this.app.ui.showErrorMessage(`Failed to update scroll view: ${String(error)}`);
       throw error;
     } finally {
       dx.done();
@@ -305,31 +305,31 @@ export class UI {
   /**
    * Destroy scrollable viewer and cleanup resources
    */
-  destroyScrollableViewer(): void {
-    const dx = this.dx.sub('destroyScrollableViewer');
+  destroyScrollView(): void {
+    const dx = this.dx.sub('destroyScrollView');
     
     try {
       if (this.scrollView) {
         this.scrollView.destroy();
         this.scrollView = null;
-        dx.out('Scrollable viewer destroyed');
+        dx.out('Scroll view destroyed');
       }
     } catch (error) {
-      dx.out(`Error destroying scrollable viewer: ${String(error)}`);
+      dx.out(`Error destroying scroll view: ${String(error)}`);
     } finally {
       dx.done();
     }
   }
 
   /**
-   * Load scrollable viewer templates from UI.yaml
+   * Load scroll view templates from UI.yaml
    */
-  private loadScrollableTemplates(): {
+  private loadScrollViewTemplates(): {
     scroll_html: string;
     scroll_css: string;
     scroll_js: string;
   } {
-    const dx = this.dx.sub('loadScrollableTemplates');
+    const dx = this.dx.sub('loadScrollViewTemplates');
     
     try {
       const templates = this.app.os.fileRead<{
@@ -354,14 +354,14 @@ export class UI {
   }
 
   /**
-   * Generate HTML for scrollable viewer
+   * Generate HTML for scroll view
    */
-  private generateScrollableHTML(
+  private generateScrollViewHTML(
     templates: { scroll_html: string; scroll_css: string; scroll_js: string },
     metadata: PageMetadata,
     options: ScrollOptions
   ): string {
-    const dx = this.dx.sub('generateScrollableHTML');
+    const dx = this.dx.sub('generateScrollViewHTML');
     
     try {
       // Get configuration values
@@ -405,13 +405,13 @@ export class UI {
   }
 
   /**
-   * Set up message handling for scrollable viewer
+   * Set up message handling for scroll view
    */
-  private setupScrollableViewerMessageHandling(panelId: WebviewPanelId): void {
-    const dx = this.dx.sub('setupScrollableViewerMessageHandling');
+  private setupScrollViewMessageHandling(panelId: WebviewPanelId): void {
+    const dx = this.dx.sub('setupScrollViewMessageHandling');
     
     try {
-      // Register message handlers for scrollable viewer
+      // Register message handlers for scroll view
       this.registerMessageHandler('requestPageRender', async (msg) => {
         await this.handlePageRenderRequest(msg);
       });
