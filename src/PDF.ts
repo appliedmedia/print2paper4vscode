@@ -292,7 +292,7 @@ export class PDF implements PageRender {
         lineHeight,
         theme: 'github-light', // Default theme for backward compatibility
         pageSize,
-        orientation: orient
+        orient: orient
       };
 
       // For backward compatibility, render only the first page
@@ -679,9 +679,9 @@ export class PDF implements PageRender {
       const availableHeight = heightInPoints - marginTop - marginBottom;
       const linesPerPage = Math.floor(availableHeight / lineHeight);
       
-      // Calculate page breaks
-      const pageBreaks: number[] = [];
-      for (let i = 0; i < tokens.length; i += linesPerPage) {
+      // Calculate page breaks - always start with page 0
+      const pageBreaks: number[] = [0];
+      for (let i = linesPerPage; i < tokens.length; i += linesPerPage) {
         pageBreaks.push(i);
       }
       

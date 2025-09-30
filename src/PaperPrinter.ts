@@ -169,77 +169,13 @@ export class PaperPrinter {
     this.createMenus();
     this.registerMessageHandlers();
 
-    // Check if we should use scrollable viewer
-    const shouldUseScrollableViewer = this.shouldUseScrollableViewer();
-    
-    if (shouldUseScrollableViewer) {
-      await this.openScrollableViewer(tabName);
-    } else {
-      await this.openSinglePageViewer(tabName);
-    }
+    // Always use scrollable viewer (handles both single and multiple pages)
+    await this.openScrollableViewer(tabName);
   }
 
-  /**
-   * Determine if scrollable viewer should be used
-   */
-  private shouldUseScrollableViewer(): boolean {
-    const dx = this.dx.sub('shouldUseScrollableViewer');
-    
-    try {
-      // Check if scrollable viewer is enabled
-      const scrollableViewerEnabled = this.app.vscodeapis.getScrollableViewerEnabled();
-      if (!scrollableViewerEnabled) {
-        dx.out('Scrollable viewer disabled by user preference');
-        return false;
-      }
-      
-      // Check content size threshold
-      const threshold = this.app.vscodeapis.getAutoScrollableViewerThreshold();
-      const contentLength = this.lastRawCode?.length || 0;
-      const lineCount = this.lastRawCode?.split('\n').length || 0;
-      
-      if (lineCount >= threshold) {
-        dx.out(`Content exceeds threshold: ${lineCount} lines >= ${threshold}`);
-        return true;
-      }
-      
-      // Check if content would likely span multiple pages
-      const estimatedPages = this.estimatePageCount();
-      if (estimatedPages > 1) {
-        dx.out(`Content estimated to span ${estimatedPages} pages`);
-        return true;
-      }
-      
-      dx.out(`Using single-page viewer: ${lineCount} lines, ~${estimatedPages} pages`);
-      return false;
-      
-    } catch (error) {
-      dx.out(`Error determining viewer type: ${String(error)}`);
-      return false; // Fallback to single-page
-    } finally {
-      dx.done();
-    }
-  }
 
   /**
-   * Estimate page count based on content
-   */
-  private estimatePageCount(): number {
-    if (!this.lastRawCode) return 1;
-    
-    const lines = this.lastRawCode.split('\n');
-    const lineHeight = this.computeLineHeightPx(this.computeFontSizePx());
-    const pageHeight = 800; // Estimated page height in points
-    const margin = 100; // Top and bottom margins
-    
-    const availableHeight = pageHeight - margin;
-    const linesPerPage = Math.floor(availableHeight / lineHeight);
-    
-    return Math.max(1, Math.ceil(lines.length / linesPerPage));
-  }
-
-  /**
-   * Open scrollable viewer
+   * Open scrollable viewer (handles both single and multiple pages)
    */
   private async openScrollableViewer(tabName: string): Promise<void> {
     const dx = this.dx.sub('openScrollableViewer');
@@ -270,36 +206,10 @@ export class PaperPrinter {
       // Create scrollable viewer
       const panelId = await this.app.ui.createScrollableViewer(this.app.pdf, scrollOptions);
       
-      // Add toolbar to the scrollable viewer
-      const htmlWithToolbar = await this.app.ui.addToolbar(`Scrollable: ${tabName}`);
-      await this.app.ui.htmlToPanel(`Scrollable: ${tabName}`, htmlWithToolbar);
-      
       dx.out(`Opened scrollable viewer for ${tabName}`);
       
     } catch (error) {
       this.app.ui.showErrorMessage(`Failed to open scrollable viewer: ${String(error)}`);
-      // Fallback to single-page viewer
-      await this.openSinglePageViewer(tabName);
-    } finally {
-      dx.done();
-    }
-  }
-
-  /**
-   * Open single-page viewer (existing behavior)
-   */
-  private async openSinglePageViewer(tabName: string): Promise<void> {
-    const dx = this.dx.sub('openSinglePageViewer');
-    
-    try {
-      const initial = await this.generatePdf();
-      const htmlWithToolbar = await this.app.ui.addToolbar(initial);
-      await this.app.ui.htmlToPanel(`Printable: ${tabName}`, htmlWithToolbar);
-      
-      dx.out(`Opened single-page viewer for ${tabName}`);
-      
-    } catch (error) {
-      this.app.ui.showErrorMessage(`Failed to open single-page viewer: ${String(error)}`);
       throw error;
     } finally {
       dx.done();
@@ -314,13 +224,6 @@ export class PaperPrinter {
     return editorTypo.fontFamily;
   }
 
-  /**
-   * Check if currently using scrollable viewer
-   */
-  private isUsingScrollableViewer(): boolean {
-    // Check if UI has an active scrollable viewer
-    return this.app.ui.scrollView !== null;
-  }
 
   private async generatePdf(): Promise<string> {
     // If we have raw code, regenerate with theme overrides
@@ -605,22 +508,9 @@ export class PaperPrinter {
     dx.out(`updating theme to ${selectedId}`);
     this.currentThemeChoice = selectedId;
 
-    // Check if we're using scrollable viewer
-    if (this.isUsingScrollableViewer()) {
-      // Update scrollable viewer with new theme
-      dx.out(`updating scrollable viewer with new theme`);
-      await this.app.ui.updateScrollableViewer({ theme: selectedId });
-    } else {
-      // Regenerate PDF and update only the PDF content for single-page viewer
-      if (this.pdfRendered) {
-        dx.out(`regenerating PDF with new theme`);
-        await this.generatePdf();
-        dx.out(`calling updateWebviewPdf with pdfRendered`);
-        await this.app.ui.updateWebviewPdf(this.pdfRendered);
-      } else {
-        dx.out(`no pdfRendered available`);
-      }
-    }
+    // Update scrollable viewer with new theme
+    dx.out(`updating scrollable viewer with new theme`);
+    await this.app.ui.updateScrollableViewer({ theme: selectedId });
 
     dx.done();
     return selectedId; // Return the selected theme for checkmark
@@ -645,15 +535,12 @@ export class PaperPrinter {
       dx.out(`updating fontSize to ${fontSize}`);
       this.currentFontSize = fontSize;
 
-      // Regenerate PDF and update only the PDF content
-      if (this.pdfRendered) {
-        dx.out(`regenerating PDF with new font size`);
-        await this.generatePdf();
-        dx.out(`calling updateWebviewPdf with pdfRendered`);
-        await this.app.ui.updateWebviewPdf(this.pdfRendered);
-      } else {
-        dx.out(`no pdfRendered available`);
-      }
+      // Update scrollable viewer with new font size
+      dx.out(`updating scrollable viewer with new font size`);
+      await this.app.ui.updateScrollableViewer({ 
+        fontSize: fontSize,
+        lineHeight: this.computeLineHeightPx(fontSize)
+      });
 
       dx.done();
       return selectedId; // Return the selected size for checkmark
@@ -680,15 +567,9 @@ export class PaperPrinter {
       dx.out(`updating page size to ${selectedId}`);
       this.pageSize = selectedId as PageSize;
 
-      // Regenerate PDF and update only the PDF content
-      if (this.pdfRendered) {
-        dx.out(`regenerating PDF with new page size`);
-        await this.generatePdf();
-        dx.out(`calling updateWebviewPdf with pdfRendered`);
-        await this.app.ui.updateWebviewPdf(this.pdfRendered);
-      } else {
-        dx.out(`no pdfRendered available`);
-      }
+      // Update scrollable viewer with new page size
+      dx.out(`updating scrollable viewer with new page size`);
+      await this.app.ui.updateScrollableViewer({ pageSize: selectedId as PageSize });
 
       dx.done();
       return selectedId; // Return the selected size for checkmark
@@ -715,15 +596,9 @@ export class PaperPrinter {
       dx.out(`updating orient to ${selectedId}`);
       this.orient = selectedId;
 
-      // Regenerate PDF and update only the PDF content
-      if (this.pdfRendered) {
-        dx.out(`regenerating PDF with new orient`);
-        await this.generatePdf();
-        dx.out(`calling updateWebviewPdf with pdfRendered`);
-        await this.app.ui.updateWebviewPdf(this.pdfRendered);
-      } else {
-        dx.out(`no pdfRendered available`);
-      }
+      // Update scrollable viewer with new orientation
+      dx.out(`updating scrollable viewer with new orientation`);
+      await this.app.ui.updateScrollableViewer({ orient: selectedId as 'portrait' | 'landscape' });
 
       dx.done();
       return selectedId; // Return the selected orient for checkmark

@@ -9,7 +9,7 @@ export class UI {
   private app: App;
   private messageHandlers: Map<string, MessageHandler[]> = new Map();
   private dx: Diagnostics;
-  private currentPanelId: WebviewPanelId | null = null; // Store the current panel ID for updates
+  public currentPanelId: WebviewPanelId | null = null; // Store the current panel ID for updates
 
   constructor(app: App) {
     this.app = app;
