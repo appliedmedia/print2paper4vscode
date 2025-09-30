@@ -4,7 +4,7 @@ import type { WebviewMessage } from './types/UI_t';
 import type { UIMenuItem } from './types/UI_t';
 import { Diagnostics } from './Diagnostics';
 import { UIMenu } from './UIMenu';
-import { UIScrollView } from './UIScrollView';
+import { UIWebView } from './UIWebView';
 import jsPDF from 'jspdf';
 
 // Page size type and order definition
@@ -18,7 +18,7 @@ export class PaperPrinter {
   private pdfRendered: jsPDF | null = null; // In-memory PDF document
   private lastRawCode: string | null = null;
   private lastLanguageId: string | null = null;
-  private currentScrollView: UIScrollView | null = null;
+  private currentWebView: UIWebView | null = null;
   private printTitle: string = 'Printable';
   private dx: Diagnostics;
 
@@ -171,16 +171,16 @@ export class PaperPrinter {
     this.createMenus();
     this.registerMessageHandlers();
 
-    // Always use scroll view (handles both single and multiple pages)
-    await this.openScrollView(tabName);
+    // Always use webview (handles both single and multiple pages)
+    await this.openWebView(tabName);
   }
 
 
   /**
-   * Open scroll view (handles both single and multiple pages)
+   * Open webview (handles both single and multiple pages)
    */
-  private async openScrollView(tabName: string): Promise<void> {
-    const dx = this.dx.sub('openScrollView');
+  private async openWebView(tabName: string): Promise<void> {
+    const dx = this.dx.sub('openWebView');
     
     try {
       // Generate PDF and set tokens for page-based rendering
@@ -194,8 +194,8 @@ export class PaperPrinter {
         this.app.pdf.setTokens(tokens);
       }
       
-      // Create scroll view options
-      const scrollOptions = {
+      // Create webview options
+      const webViewOptions = {
         title: tabName,
         pageSize: this.pageSize,
         orient: this.orient,
@@ -205,14 +205,14 @@ export class PaperPrinter {
         theme: this.currentThemeChoice
       };
       
-      // Create scroll view
-      this.currentScrollView = new UIScrollView(this.app, this.app.pdf, scrollOptions);
-      const panelId = await this.currentScrollView.create();
+      // Create webview
+      this.currentWebView = new UIWebView(this.app);
+      const panelId = await this.currentWebView.createWebView(this.app.pdf, webViewOptions);
       
-      dx.out(`Opened scroll view for ${tabName}`);
+      dx.out(`Opened webview for ${tabName}`);
       
     } catch (error) {
-      this.app.ui.showErrorMessage(`Failed to open scroll view: ${String(error)}`);
+      this.app.ui.showErrorMessage(`Failed to open webview: ${String(error)}`);
       throw error;
     } finally {
       dx.done();
@@ -511,10 +511,10 @@ export class PaperPrinter {
     dx.out(`updating theme to ${selectedId}`);
     this.currentThemeChoice = selectedId;
 
-    // Update scroll view with new theme
-    dx.out(`updating scroll view with new theme`);
-    if (this.currentScrollView) {
-      await this.currentScrollView.updateOptions({ theme: selectedId });
+    // Update webview with new theme
+    dx.out(`updating webview with new theme`);
+    if (this.currentWebView) {
+      await this.currentWebView.updateOptions({ theme: selectedId });
     }
 
     dx.done();
@@ -540,10 +540,10 @@ export class PaperPrinter {
       dx.out(`updating fontSize to ${fontSize}`);
       this.currentFontSize = fontSize;
 
-      // Update scroll view with new font size
-      dx.out(`updating scroll view with new font size`);
-      if (this.currentScrollView) {
-        await this.currentScrollView.updateOptions({ 
+      // Update webview with new font size
+      dx.out(`updating webview with new font size`);
+      if (this.currentWebView) {
+        await this.currentWebView.updateOptions({ 
           fontSize: fontSize,
           lineHeight: this.computeLineHeightPx(fontSize)
         });
@@ -574,10 +574,10 @@ export class PaperPrinter {
       dx.out(`updating page size to ${selectedId}`);
       this.pageSize = selectedId as PageSize;
 
-      // Update scroll view with new page size
-      dx.out(`updating scroll view with new page size`);
-      if (this.currentScrollView) {
-        await this.currentScrollView.updateOptions({ pageSize: selectedId as PageSize });
+      // Update webview with new page size
+      dx.out(`updating webview with new page size`);
+      if (this.currentWebView) {
+        await this.currentWebView.updateOptions({ pageSize: selectedId as PageSize });
       }
 
       dx.done();
@@ -605,10 +605,10 @@ export class PaperPrinter {
       dx.out(`updating orient to ${selectedId}`);
       this.orient = selectedId;
 
-      // Update scroll view with new orientation
-      dx.out(`updating scroll view with new orientation`);
-      if (this.currentScrollView) {
-        await this.currentScrollView.updateOptions({ orient: selectedId as 'portrait' | 'landscape' });
+      // Update webview with new orientation
+      dx.out(`updating webview with new orientation`);
+      if (this.currentWebView) {
+        await this.currentWebView.updateOptions({ orient: selectedId as 'portrait' | 'landscape' });
       }
 
       dx.done();

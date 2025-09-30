@@ -157,8 +157,8 @@ describe('PaperPrinter Page Size and Orient Tests', () => {
       };
 
       const testPaperPrinter = new PaperPrinter(testMockApp as any);
-      // Set a mock scroll view to track updates
-      (testPaperPrinter as any).currentScrollView = {
+      // Set a mock webview to track updates
+      (testPaperPrinter as any).currentWebView = {
         updateOptions: (options: any) => {
           scrollViewUpdated = true;
           return Promise.resolve();
@@ -204,8 +204,8 @@ describe('PaperPrinter Page Size and Orient Tests', () => {
       };
 
       const testPaperPrinter = new PaperPrinter(testMockApp as any);
-      // Set a mock scroll view to track updates
-      (testPaperPrinter as any).currentScrollView = {
+      // Set a mock webview to track updates
+      (testPaperPrinter as any).currentWebView = {
         updateOptions: (options: any) => {
           scrollViewUpdated = true;
           return Promise.resolve();
