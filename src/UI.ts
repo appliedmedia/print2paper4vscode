@@ -480,7 +480,7 @@ export class UI {
 interface ScrollOptions {
   title?: string;
   pageSize?: 'letter' | 'legal' | 'a3' | 'a4' | 'a5';
-  orientation?: 'portrait' | 'landscape';
+  orient?: 'portrait' | 'landscape';
   fontFamily?: string;
   fontSize?: number;
   lineHeight?: number;
@@ -561,7 +561,7 @@ class ScrollView {
           lineHeight: this.options.lineHeight || 1.2,
           theme: this.options.theme || 'github-light',
           pageSize: this.options.pageSize || 'a4',
-          orientation: this.options.orientation || 'portrait'
+          orient: this.options.orient || 'portrait'
         };
         
         // Render page

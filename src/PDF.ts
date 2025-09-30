@@ -569,7 +569,7 @@ export class PDF implements PageRender {
       const dataUrl = pdfDoc.output('datauristring') as string;
       
       // Get page dimensions
-      const pageDimensions = this.getPageDimensions(options.pageSize, options.orientation);
+      const pageDimensions = this.getPageDimensions(options.pageSize, options.orient);
       const unit = this.getUnitForPageSize(options.pageSize);
       const widthInPoints = this.convertToPoints(pageDimensions.width, unit);
       const heightInPoints = this.convertToPoints(pageDimensions.height, unit);
@@ -663,12 +663,12 @@ export class PDF implements PageRender {
     const dx = this.dx.sub('calculatePageBreaks');
     
     try {
-      // Get current page size and orientation from global state
+      // Get current page size and orient from global state
       const pageSize = this.app.vscodeapis.getGlobalState<PageSize>('pageSize') || 'a4';
-      const orientation = this.app.vscodeapis.getGlobalState<'portrait' | 'landscape'>('orient') || 'portrait';
+      const orient = this.app.vscodeapis.getGlobalState<'portrait' | 'landscape'>('orient') || 'portrait';
       
       // Calculate how many lines fit per page
-      const pageDimensions = this.getPageDimensions(pageSize, orientation);
+      const pageDimensions = this.getPageDimensions(pageSize, orient);
       const unit = this.getUnitForPageSize(pageSize);
       const heightInPoints = this.convertToPoints(pageDimensions.height, unit);
       
@@ -728,14 +728,14 @@ export class PDF implements PageRender {
     
     try {
       // Get page dimensions
-      const pageDimensions = this.getPageDimensions(options.pageSize, options.orientation);
+      const pageDimensions = this.getPageDimensions(options.pageSize, options.orient);
       const unit = this.getUnitForPageSize(options.pageSize);
       const widthInPoints = this.convertToPoints(pageDimensions.width, unit);
       const heightInPoints = this.convertToPoints(pageDimensions.height, unit);
 
       // Create PDF document
       const doc = new jsPDF({
-        orientation: options.orientation,
+        orientation: options.orient,
         unit: 'pt',
         format: [widthInPoints, heightInPoints],
       });

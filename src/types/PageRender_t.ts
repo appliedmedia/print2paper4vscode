@@ -27,8 +27,8 @@ export interface RenderOptions {
   theme: string;
   /** Page size configuration */
   pageSize: 'letter' | 'legal' | 'a3' | 'a4' | 'a5';
-  /** Page orientation */
-  orientation: 'portrait' | 'landscape';
+  /** Page orient */
+  orient: 'portrait' | 'landscape';
 }
 
 export interface PageMetadata {

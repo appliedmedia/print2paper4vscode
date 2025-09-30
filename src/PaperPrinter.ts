@@ -260,7 +260,7 @@ export class PaperPrinter {
       const scrollOptions = {
         title: tabName,
         pageSize: this.pageSize,
-        orientation: this.orient,
+        orient: this.orient,
         fontFamily: this.getCurrentFontFamily(),
         fontSize: this.computeFontSizePx(),
         lineHeight: this.computeLineHeightPx(this.computeFontSizePx()),
