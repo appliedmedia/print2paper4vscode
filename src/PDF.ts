@@ -264,6 +264,14 @@ export class PDF implements PageRender {
     return px * PX_TO_PTS_RATIO;
   }
 
+  /**
+   * Convert points to pixels
+   */
+  private ptsToPx(pts: number): number {
+    const PX_TO_PTS_RATIO = 0.75; // 72 DPI / 96 DPI
+    return pts / PX_TO_PTS_RATIO;
+  }
+
   // NEW: Generate PDF directly from Shiki tokens
   async generatePdfFromTokens(
     tokens: ThemedToken[][],
@@ -307,10 +315,14 @@ export class PDF implements PageRender {
       
       // Convert data URL back to jsPDF document for backward compatibility
       // This is a temporary solution - ideally we'd return PageData directly
+      // Convert pixel dimensions back to points for jsPDF
+      const docWidthInPoints = this.pxToPts(pageData.width);
+      const docHeightInPoints = this.pxToPts(pageData.height);
+      
       const doc = new jsPDF({
         orientation: orient,
         unit: 'pt',
-        format: [pageData.width, pageData.height],
+        format: [docWidthInPoints, docHeightInPoints],
       });
 
       // Convert fontSize from pixels to points for jsPDF
@@ -331,14 +343,14 @@ export class PDF implements PageRender {
       // TODO: This should be refactored to use the page-based system properly
       const pageDimensions = this.getPageDimensions(pageSize, orient);
       const unit = this.getUnitForPageSize(pageSize);
-      const widthInPoints = this.convertToPoints(pageDimensions.width, unit);
-      const heightInPoints = this.convertToPoints(pageDimensions.height, unit);
+      const finalWidthInPoints = this.convertToPoints(pageDimensions.width, unit);
+      const finalHeightInPoints = this.convertToPoints(pageDimensions.height, unit);
 
       // Create new document with proper dimensions
       const finalDoc = new jsPDF({
         orientation: orient,
         unit: 'pt',
-        format: [widthInPoints, heightInPoints],
+        format: [finalWidthInPoints, finalHeightInPoints],
       });
 
       // Map font family to jsPDF supported fonts
@@ -362,7 +374,7 @@ export class PDF implements PageRender {
 
       // Calculate how many lines can fit on the page
       const bottomMarginPt = 36;
-      const availableHeight = heightInPoints - y - bottomMarginPt;
+      const availableHeight = finalHeightInPoints - y - bottomMarginPt;
       const lineSpacingPt = lineHeightPts;
       const maxLines = Math.floor(availableHeight / lineSpacingPt);
       const linesToRender = Math.min(tokens.length, maxLines);
@@ -588,10 +600,14 @@ export class PDF implements PageRender {
       const widthInPoints = this.convertToPoints(pageDimensions.width, unit);
       const heightInPoints = this.convertToPoints(pageDimensions.height, unit);
 
+      // Convert dimensions to pixels for PageData (interface expects pixels)
+      const widthInPixels = Math.round(this.ptsToPx(widthInPoints));
+      const heightInPixels = Math.round(this.ptsToPx(heightInPoints));
+      
       const pageData: PageData = {
         dataUrl,
-        width: widthInPoints,
-        height: heightInPoints,
+        width: widthInPixels,
+        height: heightInPixels,
         pageNumber
       };
 
@@ -642,8 +658,12 @@ export class PDF implements PageRender {
       // Calculate metadata
       const pageDimensions = this.getPageDimensions('a4', 'portrait'); // Use A4 as standard
       const unit = this.getUnitForPageSize('a4');
-      const pageWidth = this.convertToPoints(pageDimensions.width, unit);
-      const pageHeight = this.convertToPoints(pageDimensions.height, unit);
+      const pageWidthInPoints = this.convertToPoints(pageDimensions.width, unit);
+      const pageHeightInPoints = this.convertToPoints(pageDimensions.height, unit);
+      
+      // Convert to pixels for PageMetadata (interface expects pixels)
+      const pageWidth = Math.round(this.ptsToPx(pageWidthInPoints));
+      const pageHeight = Math.round(this.ptsToPx(pageHeightInPoints));
       
       // Estimate memory usage (rough calculation)
       const estimatedMemoryMB = (this.currentTokens.length * 0.1) + (this.pageTotal * 0.5);
@@ -655,7 +675,7 @@ export class PDF implements PageRender {
         estimatedMemoryMB
       };
 
-      dx.out(`Page metadata calculated: ${this.pageTotal} pages, ${pageWidth}x${pageHeight}pt, ~${estimatedMemoryMB.toFixed(1)}MB`);
+      dx.out(`Page metadata calculated: ${this.pageTotal} pages, ${pageWidth}x${pageHeight}px, ~${estimatedMemoryMB.toFixed(1)}MB`);
       return this.pageMetadata;
 
     } catch (error) {
