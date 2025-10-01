@@ -56,7 +56,7 @@ export class PaperPrinter {
     if (msg.left !== undefined) {
       try {
         // Save position to VS Code global state
-        this.app.vscodeapis.updateGlobalState('toolbarPos', msg.left);
+        this.app.vscodeapis.updateGlobalState('toolbarPosPx', msg.left);
         dx.out(`Drag ended at position: ${msg.left}`);
       } catch (error) {
         dx.out(`Failed to save toolbar position: ${error}`);
