@@ -260,16 +260,16 @@ export class PDF implements PageRender {
   async generatePdfFromTokens(
     tokens: ThemedToken[][],
     fontFamily: string,
-    fontSize: number,
-    lineHeight: number,
+    fontSizePx: number,
+    lineHeightPx: number,
     title?: string
   ): Promise<jsPDF> {
     const dx = this.dx.sub('generatePdfFromTokens');
-    dx.require({ tokens, fontFamily, fontSize, lineHeight }, [
+    dx.require({ tokens, fontFamily, fontSizePx, lineHeightPx }, [
       'tokens',
       'fontFamily',
-      'fontSize',
-      'lineHeight',
+      'fontSizePx',
+      'lineHeightPx',
     ]);
 
     try {
@@ -288,8 +288,8 @@ export class PDF implements PageRender {
       // Create render options
       const renderOptions: RenderOptions = {
         fontFamily,
-        fontSize,
-        lineHeight,
+        fontSize: fontSizePx,
+        lineHeight: lineHeightPx,
         theme: 'github-light', // Default theme for backward compatibility
         pageSize,
         orient: orient
@@ -307,10 +307,10 @@ export class PDF implements PageRender {
       });
 
       // Convert fontSize from pixels to points for jsPDF (72 DPI / 96 DPI = 0.75)
-      const fontSizePts = Math.round(fontSize * 0.75);
+      const fontSizePts = fontSizePx * 0.75;
       
       // Convert lineHeight from pixels to points for jsPDF
-      const lineHeightPts = Math.round(lineHeight * 0.75);
+      const lineHeightPts = lineHeightPx * 0.75;
       
       // Add title if provided (this is a simplified approach)
       if (title) {
@@ -752,11 +752,11 @@ export class PDF implements PageRender {
       doc.setFont(jsPdfFont, 'normal');
       
       // Convert fontSize from pixels to points for jsPDF (72 DPI / 96 DPI = 0.75)
-      const fontSizePts = Math.round(options.fontSize * 0.75);
+      const fontSizePts = options.fontSize * 0.75;
       doc.setFontSize(fontSizePts);
 
       // Convert lineHeight from pixels to points for jsPDF
-      const lineHeightPts = Math.round(options.lineHeight * 0.75);
+      const lineHeightPts = options.lineHeight * 0.75;
 
       // Render tokens
       const marginLeft = 20;

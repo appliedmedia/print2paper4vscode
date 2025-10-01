@@ -341,30 +341,30 @@ export class Stylize {
       opts?: { fontSize?: number; lineHeight?: number }
     ): {
       fontFamily: string;
-      fontSize: number;
-      lineHeight: number;
+      fontSizePx: number;
+      lineHeightPx: number;
     } {
       const themeData = this.app.stylize.getThemes().find(theme => theme.id === selectedTheme);
       const fontFamily = themeData ? this.app.stylize.getFontFamilyFromTheme(themeData) : 'courier';
 
       const editorTypo = this.app.vscodeapis.getEditorTypography();
-      const fontSize = typeof opts?.fontSize === 'number' ? opts.fontSize : editorTypo.fontSize;
-      const lineHeight =
+      const fontSizePx = typeof opts?.fontSize === 'number' ? opts.fontSize : editorTypo.fontSize;
+      const lineHeightPx =
         typeof opts?.lineHeight === 'number' ? opts.lineHeight : editorTypo.lineHeight;
 
-      return { fontFamily, fontSize, lineHeight };
+      return { fontFamily, fontSizePx, lineHeightPx };
     }
 
     private async generatePdfDocument(
       tokens: ThemedToken[][],
-      fontInfo: { fontFamily: string; fontSize: number; lineHeight: number },
+      fontInfo: { fontFamily: string; fontSizePx: number; lineHeightPx: number },
       title?: string
     ): Promise<jsPDF> {
       return await this.app.pdf.generatePdfFromTokens(
         tokens,
         fontInfo.fontFamily,
-        fontInfo.fontSize,
-        fontInfo.lineHeight,
+        fontInfo.fontSizePx,
+        fontInfo.lineHeightPx,
         title
       );
     }

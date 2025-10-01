@@ -202,8 +202,8 @@ export class PaperPrinter {
         pageSize: this.pageSize,
         orient: this.orient,
         fontFamily: this.getCurrentFontFamily(),
-        fontSize: fontSizePx, // fontSize in pixels - will be converted to points in PDF generation
-        lineHeight: lineHeightPx, // lineHeight in pixels - will be converted to points in PDF generation
+        fontSizePx: fontSizePx, // fontSize in pixels - will be converted to points in PDF generation
+        lineHeightPx: lineHeightPx, // lineHeight in pixels - will be converted to points in PDF generation
         theme: this.currentThemeChoice
       };
       
@@ -553,8 +553,8 @@ export class PaperPrinter {
       if (this.currentWebView) {
         try {
           await this.currentWebView.updateOptions({ 
-            fontSize: fontSize, // fontSize in pixels - will be converted to points in PDF generation
-            lineHeight: this.computeLineHeightPx(fontSize) // lineHeight in pixels - will be converted to points in PDF generation
+            fontSizePx: fontSize, // fontSize in pixels - will be converted to points in PDF generation
+            lineHeightPx: this.computeLineHeightPx(fontSize) // lineHeight in pixels - will be converted to points in PDF generation
           });
         } catch (error) {
           this.app.ui.showErrorMessage(`Failed to update font size: ${String(error)}`);
