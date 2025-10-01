@@ -193,7 +193,7 @@ export class PDF implements PageRender {
    * Convert page dimensions to points (72 points = 1 inch, 2.834645669 points = 1 mm)
    * This centralizes all unit conversion so we work exclusively in points internally
    */
-  private convertToPoints(value: number, unit: 'in' | 'mm'): number {
+  private dimensionsToPts(value: number, unit: 'in' | 'mm'): number {
     return unit === 'in' ? value * 72 : value * 2.834645669;
   }
 
@@ -343,8 +343,8 @@ export class PDF implements PageRender {
       // TODO: This should be refactored to use the page-based system properly
       const pageDimensions = this.getPageDimensions(pageSize, orient);
       const unit = this.getUnitForPageSize(pageSize);
-      const finalWidthPts = this.convertToPoints(pageDimensions.width, unit);
-      const finalHeightPts = this.convertToPoints(pageDimensions.height, unit);
+      const finalWidthPts = this.dimensionsToPts(pageDimensions.width, unit);
+      const finalHeightPts = this.dimensionsToPts(pageDimensions.height, unit);
 
       // Create new document with proper dimensions
       const finalDoc = new jsPDF({
@@ -597,8 +597,8 @@ export class PDF implements PageRender {
       // Get page dimensions
       const pageDimensions = this.getPageDimensions(options.pageSize, options.orient);
       const unit = this.getUnitForPageSize(options.pageSize);
-      const widthPts = this.convertToPoints(pageDimensions.width, unit);
-      const heightPts = this.convertToPoints(pageDimensions.height, unit);
+      const widthPts = this.dimensionsToPts(pageDimensions.width, unit);
+      const heightPts = this.dimensionsToPts(pageDimensions.height, unit);
 
       // Convert dimensions to pixels for PageData (interface expects pixels)
       const widthPx = Math.round(this.ptsToPx(widthPts));
@@ -658,8 +658,8 @@ export class PDF implements PageRender {
       // Calculate metadata
       const pageDimensions = this.getPageDimensions('a4', 'portrait'); // Use A4 as standard
       const unit = this.getUnitForPageSize('a4');
-      const pageWidthPts = this.convertToPoints(pageDimensions.width, unit);
-      const pageHeightPts = this.convertToPoints(pageDimensions.height, unit);
+      const pageWidthPts = this.dimensionsToPts(pageDimensions.width, unit);
+      const pageHeightPts = this.dimensionsToPts(pageDimensions.height, unit);
       
       // Convert to pixels for PageMetadata (interface expects pixels)
       const pageWidthPx = Math.round(this.ptsToPx(pageWidthPts));
@@ -704,7 +704,7 @@ export class PDF implements PageRender {
       // Calculate how many lines fit per page
       const pageDimensions = this.getPageDimensions(pageSize, orient);
       const unit = this.getUnitForPageSize(pageSize);
-      const heightPts = this.convertToPoints(pageDimensions.height, unit);
+      const heightPts = this.dimensionsToPts(pageDimensions.height, unit);
       
       // Estimate lines per page (rough calculation)
       const marginTop = 20; // Top margin in points
@@ -764,8 +764,8 @@ export class PDF implements PageRender {
       // Get page dimensions
       const pageDimensions = this.getPageDimensions(options.pageSize, options.orient);
       const unit = this.getUnitForPageSize(options.pageSize);
-      const widthPts = this.convertToPoints(pageDimensions.width, unit);
-      const heightPts = this.convertToPoints(pageDimensions.height, unit);
+      const widthPts = this.dimensionsToPts(pageDimensions.width, unit);
+      const heightPts = this.dimensionsToPts(pageDimensions.height, unit);
 
       // Create PDF document
       const doc = new jsPDF({
