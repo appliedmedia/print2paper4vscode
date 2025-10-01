@@ -164,10 +164,10 @@ export class UIWebView {
   }
 
   /**
-   * Destroy webview and cleanup resources
+   * Cleanup webview resources
    */
-  destroy(): void {
-    const dx = this.dx.sub('destroy');
+  done(): void {
+    const dx = this.dx.sub('done');
     
     try {
       if (this.currentViewer) {
@@ -177,7 +177,7 @@ export class UIWebView {
       this.menuMgr = null;
       this.panelId = null;
       this.initialized = false;
-      dx.out('Webview destroyed');
+      dx.out('Webview cleaned up');
     } finally {
       dx.done();
     }
