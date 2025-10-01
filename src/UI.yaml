@@ -545,16 +545,16 @@ scroll_js: |
       
       // Calculate page height based on actual page dimensions
       // Use the height from the first rendered page, or fallback to estimated height
-      let pageHeight = 800; // Fallback estimated height
+      let pageHeightPx = 800; // Fallback estimated height
       if (db.renderedPages.size > 0) {
         const firstPageData = db.renderedPages.values().next().value;
-        if (firstPageData && firstPageData.height) {
-          pageHeight = firstPageData.height;
+        if (firstPageData && firstPageData.heightPx) {
+          pageHeightPx = firstPageData.heightPx;
         }
       }
       
-      const startPage = Math.max(1, Math.floor(scrollTop / (pageHeight + pageGap)) + 1);
-      const endPage = Math.min(CONFIG.pageTotal, Math.ceil((scrollTop + clientHeight) / (pageHeight + pageGap)) + 1);
+      const startPage = Math.max(1, Math.floor(scrollTop / (pageHeightPx + pageGap)) + 1);
+      const endPage = Math.min(CONFIG.pageTotal, Math.ceil((scrollTop + clientHeight) / (pageHeightPx + pageGap)) + 1);
       
       return { start: startPage, end: endPage };
     }
@@ -666,7 +666,7 @@ scroll_js: |
 
     // Handle page render response
     function handlePageRenderResponse(pageData) {
-      const { pageNumber, dataUrl, width, height } = pageData;
+      const { pageNumber, dataUrl, widthPx, heightPx } = pageData;
       
       // Remove from pending
       db.pendingPages.delete(pageNumber);
@@ -706,18 +706,18 @@ scroll_js: |
       const canvas = document.getElementById(canvasId);
       if (!canvas) return;
       
-      const { dataUrl, width, height } = pageData;
+      const { dataUrl, widthPx, heightPx } = pageData;
       
       // Set canvas dimensions
-      canvas.width = width;
-      canvas.height = height;
+      canvas.width = widthPx;
+      canvas.height = heightPx;
       
       // Create image from data URL
       const img = new Image();
       img.onload = () => {
         const ctx = canvas.getContext('2d');
         if (ctx) {
-          ctx.drawImage(img, 0, 0, width, height);
+          ctx.drawImage(img, 0, 0, widthPx, heightPx);
         }
       };
       img.src = dataUrl;

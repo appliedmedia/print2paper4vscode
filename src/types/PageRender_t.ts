@@ -9,9 +9,9 @@ export interface PageData {
   /** Data URL of the rendered page (e.g., PDF data URL) */
   dataUrl: string;
   /** Width of the page in pixels */
-  width: number;
+  widthPx: number;
   /** Height of the page in pixels */
-  height: number;
+  heightPx: number;
   /** Page number (1-based) */
   pageNumber: number;
 }
@@ -35,9 +35,9 @@ export interface PageMetadata {
   /** Total number of pages in the document */
   pageTotal: number;
   /** Standard page width in pixels */
-  pageWidth: number;
+  pageWidthPx: number;
   /** Standard page height in pixels */
-  pageHeight: number;
+  pageHeightPx: number;
   /** Estimated memory usage in MB */
   estimatedMemoryMB: number;
 }

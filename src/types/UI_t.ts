@@ -26,8 +26,8 @@ export type ExtensionToWebviewMessage = {
   pdfDataUrl?: string;
   pageData?: {
     dataUrl: string;
-    width: number;
-    height: number;
+    widthPx: number;
+    heightPx: number;
     pageNumber: number;
   };
   error?: {

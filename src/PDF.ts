@@ -316,13 +316,13 @@ export class PDF implements PageRender {
       // Convert data URL back to jsPDF document for backward compatibility
       // This is a temporary solution - ideally we'd return PageData directly
       // Convert pixel dimensions back to points for jsPDF
-      const docWidthInPoints = this.pxToPts(pageData.width);
-      const docHeightInPoints = this.pxToPts(pageData.height);
+      const docWidthPts = this.pxToPts(pageData.widthPx);
+      const docHeightPts = this.pxToPts(pageData.heightPx);
       
       const doc = new jsPDF({
         orientation: orient,
         unit: 'pt',
-        format: [docWidthInPoints, docHeightInPoints],
+        format: [docWidthPts, docHeightPts],
       });
 
       // Convert fontSize from pixels to points for jsPDF
@@ -343,14 +343,14 @@ export class PDF implements PageRender {
       // TODO: This should be refactored to use the page-based system properly
       const pageDimensions = this.getPageDimensions(pageSize, orient);
       const unit = this.getUnitForPageSize(pageSize);
-      const finalWidthInPoints = this.convertToPoints(pageDimensions.width, unit);
-      const finalHeightInPoints = this.convertToPoints(pageDimensions.height, unit);
+      const finalWidthPts = this.convertToPoints(pageDimensions.width, unit);
+      const finalHeightPts = this.convertToPoints(pageDimensions.height, unit);
 
       // Create new document with proper dimensions
       const finalDoc = new jsPDF({
         orientation: orient,
         unit: 'pt',
-        format: [finalWidthInPoints, finalHeightInPoints],
+        format: [finalWidthPts, finalHeightPts],
       });
 
       // Map font family to jsPDF supported fonts
@@ -374,7 +374,7 @@ export class PDF implements PageRender {
 
       // Calculate how many lines can fit on the page
       const bottomMarginPt = 36;
-      const availableHeight = finalHeightInPoints - y - bottomMarginPt;
+      const availableHeight = finalHeightPts - y - bottomMarginPt;
       const lineSpacingPt = lineHeightPts;
       const maxLines = Math.floor(availableHeight / lineSpacingPt);
       const linesToRender = Math.min(tokens.length, maxLines);
@@ -597,21 +597,21 @@ export class PDF implements PageRender {
       // Get page dimensions
       const pageDimensions = this.getPageDimensions(options.pageSize, options.orient);
       const unit = this.getUnitForPageSize(options.pageSize);
-      const widthInPoints = this.convertToPoints(pageDimensions.width, unit);
-      const heightInPoints = this.convertToPoints(pageDimensions.height, unit);
+      const widthPts = this.convertToPoints(pageDimensions.width, unit);
+      const heightPts = this.convertToPoints(pageDimensions.height, unit);
 
       // Convert dimensions to pixels for PageData (interface expects pixels)
-      const widthInPixels = Math.round(this.ptsToPx(widthInPoints));
-      const heightInPixels = Math.round(this.ptsToPx(heightInPoints));
+      const widthPx = Math.round(this.ptsToPx(widthPts));
+      const heightPx = Math.round(this.ptsToPx(heightPts));
       
       const pageData: PageData = {
         dataUrl,
-        width: widthInPixels,
-        height: heightInPixels,
+        widthPx,
+        heightPx,
         pageNumber
       };
 
-      dx.out(`Page ${pageNumber} rendered: ${widthInPoints}x${heightInPoints}pt`);
+      dx.out(`Page ${pageNumber} rendered: ${widthPts}x${heightPts}pt`);
       return pageData;
 
     } catch (error) {
@@ -658,24 +658,24 @@ export class PDF implements PageRender {
       // Calculate metadata
       const pageDimensions = this.getPageDimensions('a4', 'portrait'); // Use A4 as standard
       const unit = this.getUnitForPageSize('a4');
-      const pageWidthInPoints = this.convertToPoints(pageDimensions.width, unit);
-      const pageHeightInPoints = this.convertToPoints(pageDimensions.height, unit);
+      const pageWidthPts = this.convertToPoints(pageDimensions.width, unit);
+      const pageHeightPts = this.convertToPoints(pageDimensions.height, unit);
       
       // Convert to pixels for PageMetadata (interface expects pixels)
-      const pageWidth = Math.round(this.ptsToPx(pageWidthInPoints));
-      const pageHeight = Math.round(this.ptsToPx(pageHeightInPoints));
+      const pageWidthPx = Math.round(this.ptsToPx(pageWidthPts));
+      const pageHeightPx = Math.round(this.ptsToPx(pageHeightPts));
       
       // Estimate memory usage (rough calculation)
       const estimatedMemoryMB = (this.currentTokens.length * 0.1) + (this.pageTotal * 0.5);
 
       this.pageMetadata = {
         pageTotal: this.pageTotal,
-        pageWidth,
-        pageHeight,
+        pageWidthPx,
+        pageHeightPx,
         estimatedMemoryMB
       };
 
-      dx.out(`Page metadata calculated: ${this.pageTotal} pages, ${pageWidth}x${pageHeight}px, ~${estimatedMemoryMB.toFixed(1)}MB`);
+      dx.out(`Page metadata calculated: ${this.pageTotal} pages, ${pageWidthPx}x${pageHeightPx}px, ~${estimatedMemoryMB.toFixed(1)}MB`);
       return this.pageMetadata;
 
     } catch (error) {
@@ -704,13 +704,13 @@ export class PDF implements PageRender {
       // Calculate how many lines fit per page
       const pageDimensions = this.getPageDimensions(pageSize, orient);
       const unit = this.getUnitForPageSize(pageSize);
-      const heightInPoints = this.convertToPoints(pageDimensions.height, unit);
+      const heightPts = this.convertToPoints(pageDimensions.height, unit);
       
       // Estimate lines per page (rough calculation)
       const marginTop = 20; // Top margin in points
       const marginBottom = 36; // Bottom margin in points
       const lineHeight = 12; // Default line height in points
-      const availableHeight = heightInPoints - marginTop - marginBottom;
+      const availableHeight = heightPts - marginTop - marginBottom;
       const linesPerPage = Math.floor(availableHeight / lineHeight);
       
       // Calculate page breaks - always start with page 0
@@ -764,14 +764,14 @@ export class PDF implements PageRender {
       // Get page dimensions
       const pageDimensions = this.getPageDimensions(options.pageSize, options.orient);
       const unit = this.getUnitForPageSize(options.pageSize);
-      const widthInPoints = this.convertToPoints(pageDimensions.width, unit);
-      const heightInPoints = this.convertToPoints(pageDimensions.height, unit);
+      const widthPts = this.convertToPoints(pageDimensions.width, unit);
+      const heightPts = this.convertToPoints(pageDimensions.height, unit);
 
       // Create PDF document
       const doc = new jsPDF({
         orientation: options.orient,
         unit: 'pt',
-        format: [widthInPoints, heightInPoints],
+        format: [widthPts, heightPts],
       });
 
       // Map font family to jsPDF supported fonts
