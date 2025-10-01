@@ -15,6 +15,7 @@ export class UIWebView {
   private currentViewer: UIScrollView | null = null;
   private menuMgr: UIMenuMgr | null = null;
   private panelId: WebviewPanelId | null = null;
+  private initialized: boolean = false;
 
   constructor(app: App) {
     this.app = app;
@@ -22,7 +23,41 @@ export class UIWebView {
   }
 
   /**
-   * Create and configure menu manager
+   * Initialize webview with menus and scroll view
+   */
+  async init(pageRender: PageRender, options: any, menus: UIMenuMgr): Promise<WebviewPanelId> {
+    const dx = this.dx.sub('init');
+    dx.require({ pageRender, options, menus }, ['pageRender', 'options', 'menus']);
+
+    try {
+      if (this.initialized) {
+        throw new Error('UIWebView already initialized');
+      }
+
+      // Set menu manager
+      this.menuMgr = menus;
+
+      // Create scroll view
+      this.currentViewer = new UIScrollView(this.app, pageRender, options, this.menuMgr);
+      this.panelId = await this.currentViewer.create();
+      
+      // Store current panel ID in UI for message handling
+      this.app.ui.currentPanelId = this.panelId;
+      
+      this.initialized = true;
+      dx.out(`Initialized webview: ${options.title || 'Document Viewer'}`);
+      return this.panelId;
+
+    } catch (error) {
+      this.app.ui.showErrorMessage(`Failed to initialize webview: ${String(error)}`);
+      throw error;
+    } finally {
+      dx.done();
+    }
+  }
+
+  /**
+   * Create and configure menu manager (for external use)
    */
   createMenus(): UIMenuMgr {
     const dx = this.dx.sub('createMenus');
@@ -37,7 +72,7 @@ export class UIWebView {
   }
 
   /**
-   * Create scroll view with PageRender content
+   * Create scroll view with PageRender content (for external use)
    */
   async createScrollView(pageRender: PageRender, options: any): Promise<WebviewPanelId> {
     const dx = this.dx.sub('createScrollView');
@@ -141,6 +176,7 @@ export class UIWebView {
       }
       this.menuMgr = null;
       this.panelId = null;
+      this.initialized = false;
       dx.out('Webview destroyed');
     } finally {
       dx.done();
