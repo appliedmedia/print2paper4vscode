@@ -285,9 +285,8 @@ export class PDF implements PageRender {
       this.setTokens(tokens);
 
       // Get page size and orient from global state
-      const pageSize = this.app.vscodeapis.getGlobalState<PageSize>('pageSize') || 'a4';
-      const orient =
-        this.app.vscodeapis.getGlobalState<'portrait' | 'landscape'>('orient') || 'portrait';
+      const pageSize = (this.app.vscodeapis.getGlobalState('pageSize') || 'a4') as PageSize;
+      const orient = (this.app.vscodeapis.getGlobalState('orient') || 'portrait') as 'portrait' | 'landscape';
 
       dx.out(
         `Using page size: ${pageSize}, orient: ${orient} (from PaperPrinter preferences)`
@@ -679,8 +678,8 @@ export class PDF implements PageRender {
     
     try {
       // Get current page size and orient from global state
-      const pageSize = this.app.vscodeapis.getGlobalState<PageSize>('pageSize') || 'a4';
-      const orient = this.app.vscodeapis.getGlobalState<'portrait' | 'landscape'>('orient') || 'portrait';
+      const pageSize = (this.app.vscodeapis.getGlobalState('pageSize') || 'a4') as PageSize;
+      const orient = (this.app.vscodeapis.getGlobalState('orient') || 'portrait') as 'portrait' | 'landscape';
       
       // Calculate how many lines fit per page
       const pageDimensions = this.getPageDimensions(pageSize, orient);

@@ -353,7 +353,7 @@ describe('VSCodeAPIs Wrapper', () => {
     it('should get global state', () => {
       const value = vscodeAPIs.getGlobalState('test-key');
 
-      assert.strictEqual(value, undefined, 'Should return undefined for missing key');
+      assert.strictEqual(value, '', 'Should return empty string for missing key');
     });
 
     it('should get locale from VS Code environment', () => {

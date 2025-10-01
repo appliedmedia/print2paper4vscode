@@ -265,9 +265,9 @@ export class PaperPrinter {
   // ES6 getter/setter pattern for page size
   get pageSize(): PageSize {
     // Get from global state with locale-based fallback
-    const savedPageSize = this.app.vscodeapis.getGlobalState<PageSize>('pageSize');
+    const savedPageSize = this.app.vscodeapis.getGlobalState('pageSize');
     if (savedPageSize) {
-      return savedPageSize;
+      return savedPageSize as PageSize;
     }
     
     // Fallback to locale-based default
@@ -285,7 +285,7 @@ export class PaperPrinter {
   // ES6 getter/setter pattern for orient
   get orient(): 'portrait' | 'landscape' {
     // Get from global state with portrait fallback
-    return this.app.vscodeapis.getGlobalState<'portrait' | 'landscape'>('orient') || 'portrait';
+    return (this.app.vscodeapis.getGlobalState('orient') || 'portrait') as 'portrait' | 'landscape';
   }
 
   set orient(value: 'portrait' | 'landscape') {
