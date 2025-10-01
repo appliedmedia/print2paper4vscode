@@ -218,28 +218,6 @@ toolbar_html: |
 # Scrollable Viewer Templates
 # ============================================================================
 
-stylize_css: |
-  /* Stylize CSS - minimal styles for token-based theming */
-  body { 
-    margin: 24px;
-  }
-  pre { 
-    white-space: pre; 
-    word-wrap: normal; 
-    margin: 0; 
-  }
-  code { 
-    display: block; 
-    margin: 0; 
-    white-space: normal; 
-  }
-  .line { 
-    display: block; 
-    margin: 0; 
-    padding: 0; 
-    white-space: pre; 
-  }
-
 # ============================================================================
 
 scroll_css: |

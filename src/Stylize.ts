@@ -541,9 +541,6 @@ export class Stylize {
   <head>
     <meta charset="utf-8">
     <meta name="color-scheme" content="light dark">
-    <style>
-      ${this.app.templateDictReplace(this.app.templates.stylize_css, {})}
-    </style>
     <title>${title}</title>
   </head>
   <body>
