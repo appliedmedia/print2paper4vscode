@@ -108,6 +108,9 @@ export class VSCodeAPIs {
    * Set scroll performance mode
    */
   setScrollPerformanceMode(mode: 'balanced' | 'memory' | 'speed'): void {
+    if (!['balanced', 'memory', 'speed'].includes(mode)) {
+      throw new Error(`Invalid scroll performance mode: ${mode}`);
+    }
     this.updateGlobalState('scrollPerformanceMode', mode);
   }
 
