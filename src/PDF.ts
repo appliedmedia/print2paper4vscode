@@ -256,6 +256,16 @@ export class PDF implements PageRender {
     doc.setTextColor(r, g, b);
   }
 
+  // Conversion factor from pixels to points (72 DPI / 96 DPI)
+  private static readonly PX_TO_PTS_RATIO = 0.75;
+
+  /**
+   * Convert pixels to points
+   */
+  private pxToPts(px: number): number {
+    return px * PDF.PX_TO_PTS_RATIO;
+  }
+
   // NEW: Generate PDF directly from Shiki tokens
   async generatePdfFromTokens(
     tokens: ThemedToken[][],
@@ -306,11 +316,11 @@ export class PDF implements PageRender {
         format: [pageData.width, pageData.height],
       });
 
-      // Convert fontSize from pixels to points for jsPDF (72 DPI / 96 DPI = 0.75)
-      const fontSizePts = fontSizePx * 0.75;
+      // Convert fontSize from pixels to points for jsPDF
+      const fontSizePts = this.pxToPts(fontSizePx);
       
       // Convert lineHeight from pixels to points for jsPDF
-      const lineHeightPts = lineHeightPx * 0.75;
+      const lineHeightPts = this.pxToPts(lineHeightPx);
       
       // Add title if provided (this is a simplified approach)
       if (title) {
@@ -751,12 +761,12 @@ export class PDF implements PageRender {
       const jsPdfFont = this.mapFontFamilyToJsPDF(options.fontFamily, doc);
       doc.setFont(jsPdfFont, 'normal');
       
-      // Convert fontSize from pixels to points for jsPDF (72 DPI / 96 DPI = 0.75)
-      const fontSizePts = options.fontSize * 0.75;
+      // Convert fontSize from pixels to points for jsPDF
+      const fontSizePts = this.pxToPts(options.fontSize);
       doc.setFontSize(fontSizePts);
 
       // Convert lineHeight from pixels to points for jsPDF
-      const lineHeightPts = options.lineHeight * 0.75;
+      const lineHeightPts = this.pxToPts(options.lineHeight);
 
       // Render tokens
       const marginLeft = 20;
