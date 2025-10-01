@@ -541,8 +541,17 @@ scroll_js: |
     function getVisiblePageRange() {
       const scrollTop = viewer.scrollTop;
       const clientHeight = viewer.clientHeight;
-      const pageHeight = 800; // Estimated page height
       const pageGap = CONFIG.pageGap;
+      
+      // Calculate page height based on actual page dimensions
+      // Use the height from the first rendered page, or fallback to estimated height
+      let pageHeight = 800; // Fallback estimated height
+      if (db.renderedPages.size > 0) {
+        const firstPageData = db.renderedPages.values().next().value;
+        if (firstPageData && firstPageData.height) {
+          pageHeight = firstPageData.height;
+        }
+      }
       
       const startPage = Math.max(1, Math.floor(scrollTop / (pageHeight + pageGap)) + 1);
       const endPage = Math.min(CONFIG.pageTotal, Math.ceil((scrollTop + clientHeight) / (pageHeight + pageGap)) + 1);
