@@ -189,7 +189,7 @@ export class PaperPrinter {
       // Set tokens in PDF for page-based rendering
       if (this.lastRawCode && this.lastLanguageId) {
         const tokens = await this.app.stylize.getTokens(this.lastRawCode, this.lastLanguageId, {
-          theme: this.currentThemeChoice || 'github-light'
+          theme: this.currentThemeChoice
         });
         this.app.pdf.setTokens(tokens);
       }
@@ -201,9 +201,9 @@ export class PaperPrinter {
         pageSize: this.pageSize,
         orient: this.orient,
         fontFamily: this.getCurrentFontFamily(),
-        fontSize: Math.round(fontSizePx * 0.75), // px→pt (72/96)
+        fontSize: fontSizePx,
         lineHeight: this.app.vscodeapis.getEditorTypography().sizeToHeightRatio, // multiplier
-        theme: this.currentThemeChoice || 'github-light'
+        theme: this.currentThemeChoice
       };
       
       // Create webview and initialize with everything upfront
@@ -227,7 +227,7 @@ export class PaperPrinter {
    */
   private getCurrentFontFamily(): string {
     const editorTypo = this.app.vscodeapis.getEditorTypography();
-    return editorTypo.fontFamily || 'Courier';
+    return editorTypo.fontFamily;
   }
 
 
@@ -552,7 +552,7 @@ export class PaperPrinter {
       if (this.currentWebView) {
         try {
           await this.currentWebView.updateOptions({ 
-            fontSize: Math.round(fontSize * 0.75), // px→pt
+            fontSize: fontSize,
             lineHeight: this.app.vscodeapis.getEditorTypography().sizeToHeightRatio // multiplier
           });
         } catch (error) {
