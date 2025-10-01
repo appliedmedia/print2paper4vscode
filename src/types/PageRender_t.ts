@@ -19,9 +19,9 @@ export interface PageData {
 export interface RenderOptions {
   /** Font family for text rendering */
   fontFamily: string;
-  /** Font size in points */
+  /** Font size in pixels */
   fontSize: number;
-  /** Line height multiplier */
+  /** Line height in pixels */
   lineHeight: number;
   /** Theme name for syntax highlighting */
   theme: string;

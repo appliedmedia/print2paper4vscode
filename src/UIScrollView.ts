@@ -11,8 +11,8 @@ interface ScrollOptions {
   pageSize?: 'letter' | 'legal' | 'a3' | 'a4' | 'a5';
   orient?: 'portrait' | 'landscape';
   fontFamily?: string;
-  fontSize?: number;
-  lineHeight?: number;
+  fontSize?: number; // fontSize in pixels
+  lineHeight?: number; // lineHeight in pixels
   theme?: string;
 }
 
@@ -151,7 +151,7 @@ export class UIScrollView {
         const pageData = await this.pageRender.pageRender(pageNumber, {
           fontFamily: this.options.fontFamily || 'Courier New',
           fontSize: this.options.fontSize || 12, // fontSize in pixels - will be converted to points in PDF generation
-          lineHeight: this.options.lineHeight || 1.5, // lineHeight as multiplier
+          lineHeight: this.options.lineHeight || 18, // lineHeight in pixels - will be converted to points in PDF generation
           theme: this.options.theme || 'github-light',
           pageSize: this.options.pageSize || 'a4',
           orient: this.options.orient || 'portrait'

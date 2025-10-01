@@ -307,14 +307,17 @@ export class PDF implements PageRender {
       });
 
       // Convert fontSize from pixels to points for jsPDF (72 DPI / 96 DPI = 0.75)
-      const fontSizeInPoints = Math.round(fontSize * 0.75);
+      const fontSizePts = Math.round(fontSize * 0.75);
+      
+      // Convert lineHeight from pixels to points for jsPDF
+      const lineHeightPts = Math.round(lineHeight * 0.75);
       
       // Add title if provided (this is a simplified approach)
       if (title) {
-        doc.setFontSize(fontSizeInPoints * 1.25);
+        doc.setFontSize(fontSizePts * 1.25);
         this.setTextColorFromWebColor(doc, 'black');
         doc.text(title, 20, 40);
-        doc.setFontSize(fontSizeInPoints);
+        doc.setFontSize(fontSizePts);
       }
 
       // For now, we'll use the existing single-page logic for backward compatibility
@@ -334,17 +337,17 @@ export class PDF implements PageRender {
       // Map font family to jsPDF supported fonts
       const jsPdfFont = this.mapFontFamilyToJsPDF(fontFamily, finalDoc);
       finalDoc.setFont(jsPdfFont, 'normal');
-      finalDoc.setFontSize(fontSizeInPoints);
+      finalDoc.setFontSize(fontSizePts);
 
       // Add title if provided
       const marginLeft = 20;
       const marginTop = 20;
 
       if (title) {
-        finalDoc.setFontSize(fontSizeInPoints * 1.25);
+        finalDoc.setFontSize(fontSizePts * 1.25);
         this.setTextColorFromWebColor(finalDoc, 'black');
         finalDoc.text(title, marginLeft, marginTop + 20);
-        finalDoc.setFontSize(fontSizeInPoints);
+        finalDoc.setFontSize(fontSizePts);
       }
 
       let y = title ? marginTop + 40 : marginTop + 20;
@@ -353,7 +356,7 @@ export class PDF implements PageRender {
       // Calculate how many lines can fit on the page
       const bottomMarginPt = 36;
       const availableHeight = heightInPoints - y - bottomMarginPt;
-      const lineSpacingPt = lineHeight;
+      const lineSpacingPt = lineHeightPts;
       const maxLines = Math.floor(availableHeight / lineSpacingPt);
       const linesToRender = Math.min(tokens.length, maxLines);
 
@@ -384,7 +387,7 @@ export class PDF implements PageRender {
       if (tokens.length > maxLines) {
         const remainingLines = tokens.length - maxLines;
         this.setTextColorFromWebColor(finalDoc, '#666666');
-        finalDoc.setFontSize(fontSizeInPoints - 2);
+        finalDoc.setFontSize(fontSizePts - 2);
         finalDoc.text(`... (${remainingLines} more lines truncated)`, margin, y + 10);
         dx.out(`Content truncated: ${remainingLines} lines not rendered`);
       }
@@ -562,7 +565,7 @@ export class PDF implements PageRender {
         throw error;
       }
 
-      // Note: options.fontSize is in pixels, will be converted to points in generateSinglePagePdf
+      // Note: options.fontSize and options.lineHeight are in pixels, will be converted to points in generateSinglePagePdf
       // Extract tokens for this page
       const pageTokens = this.extractTokensForPage(this.currentTokens, pageNumber);
       
@@ -749,14 +752,17 @@ export class PDF implements PageRender {
       doc.setFont(jsPdfFont, 'normal');
       
       // Convert fontSize from pixels to points for jsPDF (72 DPI / 96 DPI = 0.75)
-      const fontSizeInPoints = Math.round(options.fontSize * 0.75);
-      doc.setFontSize(fontSizeInPoints);
+      const fontSizePts = Math.round(options.fontSize * 0.75);
+      doc.setFontSize(fontSizePts);
+
+      // Convert lineHeight from pixels to points for jsPDF
+      const lineHeightPts = Math.round(options.lineHeight * 0.75);
 
       // Render tokens
       const marginLeft = 20;
       const marginTop = 20;
       let y = marginTop;
-      const lineSpacing = fontSizeInPoints * options.lineHeight;
+      const lineSpacing = lineHeightPts;
 
       for (const line of tokens) {
         let x = marginLeft;
