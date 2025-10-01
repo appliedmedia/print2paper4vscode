@@ -409,7 +409,7 @@ scroll_js: |
 
     // Configuration from template
     const CONFIG = {
-      totalPages: {{TOTAL_PAGES}},
+      pageTotal: {{TOTAL_PAGES}},
       maxCanvases: {{MAX_CANVASES}},
       scale: 1.0,
       pageGap: 20,
@@ -485,7 +485,7 @@ scroll_js: |
 
     // Create page placeholders
     function createPagePlaceholders() {
-      for (let i = 1; i <= CONFIG.totalPages; i++) {
+      for (let i = 1; i <= CONFIG.pageTotal; i++) {
         const placeholder = document.createElement('div');
         placeholder.id = `page-${i}`;
         placeholder.className = 'page-placeholder loading';
@@ -495,7 +495,7 @@ scroll_js: |
         `;
         content.appendChild(placeholder);
       }
-      console.log(`Created ${CONFIG.totalPages} page placeholders`);
+      console.log(`Created ${CONFIG.pageTotal} page placeholders`);
     }
 
     // Set up scroll handling with debouncing
@@ -546,7 +546,7 @@ scroll_js: |
       const pageGap = CONFIG.pageGap;
       
       const startPage = Math.max(1, Math.floor(scrollTop / (pageHeight + pageGap)) + 1);
-      const endPage = Math.min(CONFIG.totalPages, Math.ceil((scrollTop + clientHeight) / (pageHeight + pageGap)) + 1);
+      const endPage = Math.min(CONFIG.pageTotal, Math.ceil((scrollTop + clientHeight) / (pageHeight + pageGap)) + 1);
       
       return { start: startPage, end: endPage };
     }
@@ -556,7 +556,7 @@ scroll_js: |
       const { start, end } = visibleRange;
       
       // Free canvases for pages outside visible range
-      for (let i = 1; i <= CONFIG.totalPages; i++) {
+      for (let i = 1; i <= CONFIG.pageTotal; i++) {
         if (i < start || i > end) {
           unassignCanvas(i);
         }
@@ -778,12 +778,12 @@ scroll_js: |
       db.failedPages.clear();
       
       // Unassign all canvases
-      for (let i = 1; i <= CONFIG.totalPages; i++) {
+      for (let i = 1; i <= CONFIG.pageTotal; i++) {
         unassignCanvas(i);
       }
       
       // Reset all placeholders to loading state
-      for (let i = 1; i <= CONFIG.totalPages; i++) {
+      for (let i = 1; i <= CONFIG.pageTotal; i++) {
         const placeholder = document.getElementById(`page-${i}`);
         if (placeholder) {
           placeholder.className = 'page-placeholder loading';

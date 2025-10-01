@@ -30,7 +30,7 @@ interface RenderOptions {
 }
 
 interface PageMetadata {
-  totalPages: number;
+  pageTotal: number;
   pageWidth: number;
   pageHeight: number;
   estimatedMemoryMB: number;

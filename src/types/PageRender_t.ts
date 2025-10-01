@@ -33,7 +33,7 @@ export interface RenderOptions {
 
 export interface PageMetadata {
   /** Total number of pages in the document */
-  totalPages: number;
+  pageTotal: number;
   /** Standard page width in pixels */
   pageWidth: number;
   /** Standard page height in pixels */

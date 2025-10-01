@@ -65,7 +65,7 @@ export class UIScrollView {
       // Store current panel ID in UI
       this.app.ui.currentPanelId = this.panelId;
       
-      dx.out(`Created scroll view with ${metadata.totalPages} pages`);
+      dx.out(`Created scroll view with ${metadata.pageTotal} pages`);
       return this.panelId;
 
     } catch (error) {
@@ -237,7 +237,7 @@ export class UIScrollView {
       
       // Create template dictionary
       const templateDict = {
-        TOTAL_PAGES: metadata.totalPages.toString(),
+        TOTAL_PAGES: metadata.pageTotal.toString(),
         MAX_CANVASES: maxCanvases.toString(),
         SCROLL_DEBOUNCE_MS: scrollDebounceMs.toString(),
         PERFORMANCE_MODE: performanceMode,

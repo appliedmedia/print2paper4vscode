@@ -13,7 +13,7 @@ export class PDF implements PageRender {
   // PageRender implementation state
   private currentTokens: ThemedToken[][] | null = null;
   private pageBreaks: number[] = [];
-  private totalPages: number = 0;
+  private pageTotal: number = 0;
   private pageMetadata: PageMetadata | null = null;
 
   constructor(app: App) {
@@ -25,7 +25,7 @@ export class PDF implements PageRender {
     this.tempPdfs = [];
     this.currentTokens = null;
     this.pageBreaks = [];
-    this.totalPages = 0;
+    this.pageTotal = 0;
     this.pageMetadata = null;
   }
 
@@ -527,9 +527,9 @@ export class PDF implements PageRender {
     const dx = this.dx.sub('setTokens');
     this.currentTokens = tokens;
     this.pageBreaks = this.calculatePageBreaks(tokens);
-    this.totalPages = this.pageBreaks.length;
+    this.pageTotal = this.pageBreaks.length;
     this.pageMetadata = null; // Invalidate cached metadata
-    dx.out(`Set tokens: ${tokens.length} lines, ${this.totalPages} pages`);
+    dx.out(`Set tokens: ${tokens.length} lines, ${this.pageTotal} pages`);
     dx.done();
   }
 
@@ -539,9 +539,9 @@ export class PDF implements PageRender {
 
     try {
       // Validate page number
-      if (pageNumber < 1 || pageNumber > this.totalPages) {
+      if (pageNumber < 1 || pageNumber > this.pageTotal) {
         const error: PageRenderError = {
-          message: `Invalid page number: ${pageNumber}. Valid range: 1-${this.totalPages}`,
+          message: `Invalid page number: ${pageNumber}. Valid range: 1-${this.pageTotal}`,
           pageNumber,
           type: 'validation',
           timestamp: new Date()
@@ -605,7 +605,7 @@ export class PDF implements PageRender {
 
   async getTotalPages(): Promise<number> {
     const dx = this.dx.sub('getTotalPages');
-    const total = this.totalPages;
+    const total = this.pageTotal;
     dx.out(`Total pages: ${total}`);
     dx.done();
     return total;
@@ -632,16 +632,16 @@ export class PDF implements PageRender {
       const pageHeight = this.convertToPoints(pageDimensions.height, unit);
       
       // Estimate memory usage (rough calculation)
-      const estimatedMemoryMB = (this.currentTokens.length * 0.1) + (this.totalPages * 0.5);
+      const estimatedMemoryMB = (this.currentTokens.length * 0.1) + (this.pageTotal * 0.5);
 
       this.pageMetadata = {
-        totalPages: this.totalPages,
+        pageTotal: this.pageTotal,
         pageWidth,
         pageHeight,
         estimatedMemoryMB
       };
 
-      dx.out(`Page metadata calculated: ${this.totalPages} pages, ${pageWidth}x${pageHeight}pt, ~${estimatedMemoryMB.toFixed(1)}MB`);
+      dx.out(`Page metadata calculated: ${this.pageTotal} pages, ${pageWidth}x${pageHeight}pt, ~${estimatedMemoryMB.toFixed(1)}MB`);
       return this.pageMetadata;
 
     } catch (error) {
