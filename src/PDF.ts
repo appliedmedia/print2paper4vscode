@@ -256,14 +256,12 @@ export class PDF implements PageRender {
     doc.setTextColor(r, g, b);
   }
 
-  // Conversion factor from pixels to points (72 DPI / 96 DPI)
-  private static readonly PX_TO_PTS_RATIO = 0.75;
-
   /**
    * Convert pixels to points
    */
   private pxToPts(px: number): number {
-    return px * PDF.PX_TO_PTS_RATIO;
+    const PX_TO_PTS_RATIO = 0.75; // 72 DPI / 96 DPI
+    return px * PX_TO_PTS_RATIO;
   }
 
   // NEW: Generate PDF directly from Shiki tokens
