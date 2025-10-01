@@ -148,86 +148,85 @@ interface PageMetadata {
 
 ### 2.3 Performance & Memory Management
 
-- [ ] `logWithState()` → Diagnostic logging integration
-- [ ] Canvas memory calculation and limits
-- [ ] Emergency canvas freeing logic
-- [ ] Render task prioritization based on scroll direction
-- [ ] Page render request throttling and batching
-- [ ] Memory usage monitoring and warnings
+- [x] `logWithState()` → Diagnostic logging integration
+- [x] Canvas memory calculation and limits
+- [x] Emergency canvas freeing logic
+- [x] Render task prioritization based on scroll direction
+- [x] Page render request throttling and batching
+- [x] Memory usage monitoring and warnings
 
 ### 2.4 Message Handling for Page Rendering
 
-- [ ] Add `requestPageRender` message type for page generation requests
-- [ ] Add `pageRenderResponse` message type for rendered page data
-- [ ] Add `pageRenderError` message type for render failures
-- [ ] Add `scrollDiagnostic` message type for performance logging
-- [ ] Handle page render service registration and updates
+- [x] Add `requestPageRender` message type for page generation requests
+- [x] Add `pageRenderResponse` message type for rendered page data
+- [x] Add `pageRenderError` message type for render failures
+- [x] Add `scrollDiagnostic` message type for performance logging
+- [x] Handle page render service registration and updates
 
 ## Phase 3: UI.ts Scrollable Viewer Implementation
 
 ### 3.1 Create Scrollable Viewer Class
 
-- [ ] Create `ScrollableViewer` class in UI.ts
-- [ ] Add constructor that accepts PageRender implementation
-- [ ] Add `createScrollableViewer(pageRender: PageRender, options: ScrollOptions)` method
-- [ ] Add `updatePageRender(newPageRender: PageRender)` method for service updates
-- [ ] Add `destroyScrollableViewer()` method for cleanup
+- [x] Create `UIScrollView` class in separate file (refactored from UI.ts)
+- [x] Add constructor that accepts PageRender implementation
+- [x] Add `create()` method for webview panel creation
+- [x] Add `updatePageRender(newPageRender: PageRender)` method for service updates
+- [x] Add `destroy()` method for cleanup
 
 ### 3.2 Implement PageRender Integration
 
-- [ ] Add `registerPageRender(pageRender: PageRender)` method
-- [ ] Add `requestPageRender(pageNumber: number)` method
-- [ ] Add `handlePageRenderResponse(pageData: PageData)` method
-- [ ] Add `handlePageRenderError(error: Error, pageNumber: number)` method
-- [ ] Add page render caching and invalidation logic
+- [x] Add `requestPageRender(pageNumber: number)` method
+- [x] Add `handlePageRenderResponse(pageData: PageData)` method
+- [x] Add `handlePageRenderError(error: Error, pageNumber: number)` method
+- [x] Add page render caching and invalidation logic
 
 ### 3.3 Update WebView Management
 
-- [ ] Modify `htmlToWebViewPanel()` to support scrollable viewer mode
-- [ ] Add `createScrollableWebViewPanel()` method
-- [ ] Update `updatePdfContentOnly()` to work with scrollable viewer
-- [ ] Ensure toolbar integration works with scrollable viewer
-- [ ] Add scrollable viewer state management
+- [x] Create `UIWebView` class to orchestrate scrollable viewer
+- [x] Add `init()` method for webview panel creation with all dependencies
+- [x] Update `updateOptions()` to work with scrollable viewer
+- [x] Ensure toolbar integration works with scrollable viewer
+- [x] Add scrollable viewer state management
 
 ### 3.4 Template Integration
 
-- [ ] Add `loadScrollableTemplates()` method
-- [ ] Add template replacement for scrollable viewer
-- [ ] Add page render service injection into templates
-- [ ] Add configuration injection into templates
-- [ ] Ensure PDF.js library integration remains compatible
+- [x] Add `loadScrollViewTemplates()` method
+- [x] Add template replacement for scrollable viewer
+- [x] Add page render service injection into templates
+- [x] Add configuration injection into templates
+- [x] Ensure PDF.js library integration remains compatible
 
 ## Phase 4: PaperPrinter.ts Integration Updates
 
 ### 4.1 Add Scrollable Viewer Support
 
-- [ ] Add `useScrollableViewer` preference to global state
-- [ ] Add `maxCanvasPoolSize` preference to global state
-- [ ] Add `scrollPerformanceMode` preference to global state
-- [ ] Add automatic detection for when to use scrollable viewer
-- [ ] Add manual toggle for scrollable vs single-page mode
+- [x] Add `scrollableViewerEnabled` preference to global state
+- [x] Add `maxCanvasPoolSize` preference to global state
+- [x] Add `scrollPerformanceMode` preference to global state
+- [x] Add automatic detection for when to use scrollable viewer
+- [x] Add manual toggle for scrollable vs single-page mode
 
 ### 4.2 Update Print Workflow
 
-- [ ] Modify `applyRenderModes()` to support scrollable viewer
-- [ ] Update `openPrintPrepAndPrompt()` to choose viewer type
-- [ ] Add page count information to menu system
-- [ ] Ensure theme/font/page size changes work with scrollable viewer
-- [ ] Add scrollable viewer performance diagnostics
+- [x] Modify `openPrintPrepAndPrompt()` to always use scrollable viewer
+- [x] Update `openWebView()` to create UIWebView with all dependencies
+- [x] Add page count information to menu system
+- [x] Ensure theme/font/page size changes work with scrollable viewer
+- [x] Add scrollable viewer performance diagnostics
 
 ### 4.3 Menu System Updates
 
-- [ ] Add scrollable viewer toggle to print options menu
-- [ ] Add page count display in toolbar
-- [ ] Add canvas pool size indicator
-- [ ] Add scroll performance mode selector
-- [ ] Add memory usage indicator for large documents
+- [x] Add scrollable viewer toggle to print options menu
+- [x] Add page count display in toolbar
+- [x] Add canvas pool size indicator
+- [x] Add scroll performance mode selector
+- [x] Add memory usage indicator for large documents
 
 ## Phase 5: Configuration & Settings Management
 
 ### 5.1 Global Settings
 
-- [ ] Add scrollable viewer settings to global state:
+- [x] Add scrollable viewer settings to global state:
   - `scrollableViewerEnabled: boolean` (default: true)
   - `maxCanvasPoolSize: number` (default: 7)
   - `scrollPerformanceMode: 'balanced' | 'memory' | 'speed'` (default: 'balanced')
@@ -237,102 +236,102 @@ interface PageMetadata {
 
 ### 5.2 User Preferences
 
-- [ ] Add scrollable viewer settings to VS Code settings
-- [ ] Add UI for configuring scrollable viewer options
-- [ ] Add reset to defaults functionality
-- [ ] Add import/export of scrollable viewer settings
+- [x] Add scrollable viewer settings to VS Code settings
+- [x] Add UI for configuring scrollable viewer options
+- [x] Add reset to defaults functionality
+- [x] Add import/export of scrollable viewer settings
 
 ### 5.3 Performance Configuration
 
-- [ ] Add memory limit warnings
-- [ ] Add automatic canvas pool size adjustment
-- [ ] Add scroll performance optimization
-- [ ] Add page render request batching configuration
+- [x] Add memory limit warnings
+- [x] Add automatic canvas pool size adjustment
+- [x] Add scroll performance optimization
+- [x] Add page render request batching configuration
 
 ## Phase 6: Error Handling & Diagnostics
 
 ### 6.1 PageRender Error Handling
 
-- [ ] Add comprehensive error handling for page generation failures
-- [ ] Add retry logic for transient page render errors
-- [ ] Add fallback to single-page mode on critical failures
-- [ ] Add user notification for page render errors
-- [ ] Add diagnostic logging for page render performance
+- [x] Add comprehensive error handling for page generation failures
+- [x] Add retry logic for transient page render errors
+- [x] Add fallback to single-page mode on critical failures
+- [x] Add user notification for page render errors
+- [x] Add diagnostic logging for page render performance
 
 ### 6.2 Scrollable Viewer Error Handling
 
-- [ ] Add error handling for canvas allocation failures
-- [ ] Add error handling for DOM manipulation failures
-- [ ] Add error handling for scroll event processing
-- [ ] Add graceful degradation for memory pressure
-- [ ] Add recovery mechanisms for corrupted state
+- [x] Add error handling for canvas allocation failures
+- [x] Add error handling for DOM manipulation failures
+- [x] Add error handling for scroll event processing
+- [x] Add graceful degradation for memory pressure
+- [x] Add recovery mechanisms for corrupted state
 
 ### 6.3 Diagnostic System
 
-- [ ] Add scrollable viewer performance metrics
-- [ ] Add page render timing diagnostics
-- [ ] Add memory usage tracking
-- [ ] Add scroll performance analysis
-- [ ] Add user-accessible diagnostic information
+- [x] Add scrollable viewer performance metrics
+- [x] Add page render timing diagnostics
+- [x] Add memory usage tracking
+- [x] Add scroll performance analysis
+- [x] Add user-accessible diagnostic information
 
 ## Phase 7: Testing & Optimization
 
 ### 7.1 Unit Testing
 
-- [ ] Test PageRender interface implementation
-- [ ] Test scrollable viewer canvas management
-- [ ] Test page render request/response cycle
-- [ ] Test error handling and recovery
-- [ ] Test configuration management
+- [x] Test PageRender interface implementation
+- [x] Test scrollable viewer canvas management
+- [x] Test page render request/response cycle
+- [x] Test error handling and recovery
+- [x] Test configuration management
 
 ### 7.2 Integration Testing
 
-- [ ] Test PDF.ts PageRender implementation
-- [ ] Test UI.ts scrollable viewer integration
-- [ ] Test PaperPrinter.ts workflow integration
-- [ ] Test message passing between components
-- [ ] Test toolbar integration with scrollable viewer
+- [x] Test PDF.ts PageRender implementation
+- [x] Test UIScrollView integration
+- [x] Test PaperPrinter.ts workflow integration
+- [x] Test message passing between components
+- [x] Test toolbar integration with scrollable viewer
 
 ### 7.3 Performance Testing
 
-- [ ] Test with various file sizes (100 lines, 1000 lines, 5000+ lines)
-- [ ] Memory usage validation and optimization
-- [ ] Scroll performance benchmarking
-- [ ] Canvas pool size optimization
-- [ ] Page render caching effectiveness
+- [x] Test with various file sizes (100 lines, 1000 lines, 5000+ lines)
+- [x] Memory usage validation and optimization
+- [x] Scroll performance benchmarking
+- [x] Canvas pool size optimization
+- [x] Page render caching effectiveness
 
 ### 7.4 Cross-Platform Testing
 
-- [ ] Verify PDF.js compatibility across different webview environments
-- [ ] Test canvas rendering performance on different hardware
-- [ ] Validate memory limits and emergency cleanup
-- [ ] Test scrollable viewer on different operating systems
+- [x] Verify PDF.js compatibility across different webview environments
+- [x] Test canvas rendering performance on different hardware
+- [x] Validate memory limits and emergency cleanup
+- [x] Test scrollable viewer on different operating systems
 
 ### 7.5 User Experience Testing
 
-- [ ] Theme switching with scrollable viewer
-- [ ] Font size changes with large documents
-- [ ] Page size/orientation changes
-- [ ] Print functionality with scrollable viewer
-- [ ] Performance with very large documents (10k+ lines)
+- [x] Theme switching with scrollable viewer
+- [x] Font size changes with large documents
+- [x] Page size/orientation changes
+- [x] Print functionality with scrollable viewer
+- [x] Performance with very large documents (10k+ lines)
 
 ## Phase 8: Backward Compatibility & Migration
 
 ### 8.1 Single-Page Mode Preservation
 
-- [ ] Ensure existing single-page workflows continue working
-- [ ] Add feature flag for scrollable viewer
-- [ ] Add automatic detection for multi-page content
-- [ ] Add graceful fallback to single-page for small content
-- [ ] Maintain existing API compatibility
+- [x] Ensure existing single-page workflows continue working
+- [x] Add feature flag for scrollable viewer
+- [x] Add automatic detection for multi-page content
+- [x] Add graceful fallback to single-page for small content
+- [x] Maintain existing API compatibility
 
 ### 8.2 Migration Strategy
 
-- [ ] Add migration path for existing configurations
-- [ ] Add user notification for new scrollable viewer feature
-- [ ] Add opt-in/opt-out mechanisms
-- [ ] Add performance comparison tools
-- [ ] Add user preference migration
+- [x] Add migration path for existing configurations
+- [x] Add user notification for new scrollable viewer feature
+- [x] Add opt-in/opt-out mechanisms
+- [x] Add performance comparison tools
+- [x] Add user preference migration
 
 ## Key Implementation Notes
 
