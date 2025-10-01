@@ -66,14 +66,6 @@ export class VSCodeAPIs {
     return value !== undefined ? value : defaultValue;
   }
 
-  /**
-   * Get global state value with required default
-   */
-  getGlobalStateWithDefault<T>(key: string, defaultValue: T): T {
-    const value = this.context.globalState.get(key, defaultValue);
-    return value !== undefined ? value : defaultValue;
-  }
-
   // ============================================================================
   // PageRender Configuration Management
   // ============================================================================
@@ -82,7 +74,7 @@ export class VSCodeAPIs {
    * Get scrollable viewer enabled state
    */
   getScrollableViewerEnabled(): boolean {
-    return this.getGlobalStateWithDefault<boolean>('scrollableViewerEnabled', true);
+    return this.getGlobalState<boolean>('scrollableViewerEnabled', true) ?? true;
   }
 
   /**
@@ -96,7 +88,7 @@ export class VSCodeAPIs {
    * Get maximum canvas pool size
    */
   getMaxCanvasPoolSize(): number {
-    return this.getGlobalStateWithDefault<number>('maxCanvasPoolSize', 7);
+    return this.getGlobalState<number>('maxCanvasPoolSize', 7) ?? 7;
   }
 
   /**
@@ -110,7 +102,7 @@ export class VSCodeAPIs {
    * Get scroll performance mode
    */
   getScrollPerformanceMode(): 'balanced' | 'memory' | 'speed' {
-    return this.getGlobalStateWithDefault<'balanced' | 'memory' | 'speed'>('scrollPerformanceMode', 'balanced');
+    return this.getGlobalState<'balanced' | 'memory' | 'speed'>('scrollPerformanceMode', 'balanced') ?? 'balanced';
   }
 
   /**
@@ -127,7 +119,7 @@ export class VSCodeAPIs {
    * Get auto scrollable viewer threshold (lines)
    */
   getAutoScrollableViewerThreshold(): number {
-    return this.getGlobalStateWithDefault<number>('autoScrollableViewerThreshold', 1000);
+    return this.getGlobalState<number>('autoScrollableViewerThreshold', 1000) ?? 1000;
   }
 
   /**
@@ -141,7 +133,7 @@ export class VSCodeAPIs {
    * Get page render cache size
    */
   getPageRenderCacheSize(): number {
-    return this.getGlobalStateWithDefault<number>('pageRenderCacheSize', 10);
+    return this.getGlobalState<number>('pageRenderCacheSize', 10) ?? 10;
   }
 
   /**
@@ -155,7 +147,7 @@ export class VSCodeAPIs {
    * Get scroll debounce time in milliseconds
    */
   getScrollDebounceMs(): number {
-    return this.getGlobalStateWithDefault<number>('scrollDebounceMs', 16);
+    return this.getGlobalState<number>('scrollDebounceMs', 16) ?? 16;
   }
 
   /**
