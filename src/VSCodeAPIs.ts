@@ -99,23 +99,6 @@ export class VSCodeAPIs {
     this.updateGlobalState('maxCanvasPoolSize', Math.max(1, Math.min(20, size)));
   }
 
-  /**
-   * Get scroll performance mode
-   */
-  getScrollPerformanceMode(): 'balanced' | 'memory' | 'speed' {
-    const value = this.getGlobalState('scrollPerformanceMode');
-    return (value === 'memory' || value === 'speed') ? value : 'balanced';
-  }
-
-  /**
-   * Set scroll performance mode
-   */
-  setScrollPerformanceMode(mode: 'balanced' | 'memory' | 'speed'): void {
-    if (!['balanced', 'memory', 'speed'].includes(mode)) {
-      throw new Error(`Invalid scroll performance mode: ${mode}`);
-    }
-    this.updateGlobalState('scrollPerformanceMode', mode);
-  }
 
   /**
    * Get auto scrollable viewer threshold (lines)

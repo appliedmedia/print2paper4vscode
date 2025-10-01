@@ -414,7 +414,6 @@ scroll_js: |
       scale: 1.0,
       pageGap: 20,
       scrollDebounceMs: {{SCROLL_DEBOUNCE_MS}},
-      performanceMode: '{{PERFORMANCE_MODE}}',
       pageRenderService: null // Will be set by extension
     };
 

@@ -233,14 +233,12 @@ export class UIScrollView {
       // Get configuration values
       const maxCanvases = this.app.vscodeapis.getMaxCanvasPoolSize();
       const scrollDebounceMs = this.app.vscodeapis.getScrollDebounceMs();
-      const performanceMode = this.app.vscodeapis.getScrollPerformanceMode();
       
       // Create template dictionary
       const templateDict = {
         PAGE_TOTAL: metadata.pageTotal.toString(),
         MAX_CANVASES: maxCanvases.toString(),
         SCROLL_DEBOUNCE_MS: scrollDebounceMs.toString(),
-        PERFORMANCE_MODE: performanceMode,
         TOOLBAR: await this.generateToolbarHTML()
       };
       
