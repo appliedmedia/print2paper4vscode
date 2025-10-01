@@ -409,7 +409,7 @@ scroll_js: |
 
     // Configuration from template
     const CONFIG = {
-      pageTotal: {{TOTAL_PAGES}},
+      pageTotal: {{PAGE_TOTAL}},
       maxCanvases: {{MAX_CANVASES}},
       scale: 1.0,
       pageGap: 20,

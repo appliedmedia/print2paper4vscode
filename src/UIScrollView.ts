@@ -237,7 +237,7 @@ export class UIScrollView {
       
       // Create template dictionary
       const templateDict = {
-        TOTAL_PAGES: metadata.pageTotal.toString(),
+        PAGE_TOTAL: metadata.pageTotal.toString(),
         MAX_CANVASES: maxCanvases.toString(),
         SCROLL_DEBOUNCE_MS: scrollDebounceMs.toString(),
         PERFORMANCE_MODE: performanceMode,
