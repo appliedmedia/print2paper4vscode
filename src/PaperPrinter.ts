@@ -199,7 +199,7 @@ export class PaperPrinter {
       const scrollViewOptions = {
         title: tabName,
         pageSize: this.pageSize,
-        orientation: this.orient,
+        orient: this.orient,
         fontFamily: this.getCurrentFontFamily(),
         fontSize: Math.round(fontSizePx * 0.75), // px→pt (72/96)
         lineHeight: this.app.vscodeapis.getEditorTypography().sizeToHeightRatio, // multiplier
@@ -624,7 +624,7 @@ export class PaperPrinter {
       dx.out(`updating webview with new orientation`);
       if (this.currentWebView) {
         try {
-          await this.currentWebView.updateOptions({ orientation: selectedId as 'portrait' | 'landscape' });
+          await this.currentWebView.updateOptions({ orient: selectedId as 'portrait' | 'landscape' });
         } catch (error) {
           this.app.ui.showErrorMessage(`Failed to update orientation: ${String(error)}`);
         }

@@ -292,7 +292,7 @@ export class PDF implements PageRender {
         lineHeight,
         theme: 'github-light', // Default theme for backward compatibility
         pageSize,
-        orientation: orient
+        orient: orient
       };
 
       // For backward compatibility, render only the first page
@@ -569,7 +569,7 @@ export class PDF implements PageRender {
       const dataUrl = pdfDoc.output('datauristring') as string;
       
       // Get page dimensions
-      const pageDimensions = this.getPageDimensions(options.pageSize, options.orientation);
+      const pageDimensions = this.getPageDimensions(options.pageSize, options.orient);
       const unit = this.getUnitForPageSize(options.pageSize);
       const widthInPoints = this.convertToPoints(pageDimensions.width, unit);
       const heightInPoints = this.convertToPoints(pageDimensions.height, unit);
@@ -728,14 +728,14 @@ export class PDF implements PageRender {
     
     try {
       // Get page dimensions
-      const pageDimensions = this.getPageDimensions(options.pageSize, options.orientation);
+      const pageDimensions = this.getPageDimensions(options.pageSize, options.orient);
       const unit = this.getUnitForPageSize(options.pageSize);
       const widthInPoints = this.convertToPoints(pageDimensions.width, unit);
       const heightInPoints = this.convertToPoints(pageDimensions.height, unit);
 
       // Create PDF document
       const doc = new jsPDF({
-        orientation: options.orientation,
+        orientation: options.orient,
         unit: 'pt',
         format: [widthInPoints, heightInPoints],
       });
