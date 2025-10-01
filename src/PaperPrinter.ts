@@ -189,20 +189,21 @@ export class PaperPrinter {
       // Set tokens in PDF for page-based rendering
       if (this.lastRawCode && this.lastLanguageId) {
         const tokens = await this.app.stylize.getTokens(this.lastRawCode, this.lastLanguageId, {
-          theme: this.currentThemeChoice
+          theme: this.currentThemeChoice || 'github-light'
         });
         this.app.pdf.setTokens(tokens);
       }
       
       // Create webview options
+      const fontSizePx = this.computeFontSizePx();
       const scrollViewOptions = {
         title: tabName,
         pageSize: this.pageSize,
-        orient: this.orient,
+        orientation: this.orient,
         fontFamily: this.getCurrentFontFamily(),
-        fontSize: this.computeFontSizePx(),
-        lineHeight: this.computeLineHeightPx(this.computeFontSizePx()),
-        theme: this.currentThemeChoice
+        fontSize: Math.round(fontSizePx * 0.75), // px→pt (72/96)
+        lineHeight: this.app.vscodeapis.getEditorTypography().sizeToHeightRatio, // multiplier
+        theme: this.currentThemeChoice || 'github-light'
       };
       
       // Create webview and initialize with everything upfront
@@ -226,7 +227,7 @@ export class PaperPrinter {
    */
   private getCurrentFontFamily(): string {
     const editorTypo = this.app.vscodeapis.getEditorTypography();
-    return editorTypo.fontFamily;
+    return editorTypo.fontFamily || 'Courier';
   }
 
 
@@ -516,7 +517,11 @@ export class PaperPrinter {
     // Update webview with new theme
     dx.out(`updating webview with new theme`);
     if (this.currentWebView) {
-      await this.currentWebView.updateOptions({ theme: selectedId });
+      try {
+        await this.currentWebView.updateOptions({ theme: selectedId });
+      } catch (error) {
+        this.app.ui.showErrorMessage(`Failed to update theme: ${String(error)}`);
+      }
     }
 
     dx.done();
@@ -545,10 +550,14 @@ export class PaperPrinter {
       // Update webview with new font size
       dx.out(`updating webview with new font size`);
       if (this.currentWebView) {
-        await this.currentWebView.updateOptions({ 
-          fontSize: fontSize,
-          lineHeight: this.computeLineHeightPx(fontSize)
-        });
+        try {
+          await this.currentWebView.updateOptions({ 
+            fontSize: Math.round(fontSize * 0.75), // px→pt
+            lineHeight: this.app.vscodeapis.getEditorTypography().sizeToHeightRatio // multiplier
+          });
+        } catch (error) {
+          this.app.ui.showErrorMessage(`Failed to update font size: ${String(error)}`);
+        }
       }
 
       dx.done();
@@ -579,7 +588,11 @@ export class PaperPrinter {
       // Update webview with new page size
       dx.out(`updating webview with new page size`);
       if (this.currentWebView) {
-        await this.currentWebView.updateOptions({ pageSize: selectedId as PageSize });
+        try {
+          await this.currentWebView.updateOptions({ pageSize: selectedId as PageSize });
+        } catch (error) {
+          this.app.ui.showErrorMessage(`Failed to update page size: ${String(error)}`);
+        }
       }
 
       dx.done();
@@ -610,7 +623,11 @@ export class PaperPrinter {
       // Update webview with new orientation
       dx.out(`updating webview with new orientation`);
       if (this.currentWebView) {
-        await this.currentWebView.updateOptions({ orient: selectedId as 'portrait' | 'landscape' });
+        try {
+          await this.currentWebView.updateOptions({ orientation: selectedId as 'portrait' | 'landscape' });
+        } catch (error) {
+          this.app.ui.showErrorMessage(`Failed to update orientation: ${String(error)}`);
+        }
       }
 
       dx.done();

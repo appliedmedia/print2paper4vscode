@@ -9,7 +9,7 @@ import { Diagnostics } from './Diagnostics';
 interface ScrollOptions {
   title?: string;
   pageSize?: 'letter' | 'legal' | 'a3' | 'a4' | 'a5';
-  orient?: 'portrait' | 'landscape';
+  orientation?: 'portrait' | 'landscape';
   fontFamily?: string;
   fontSize?: number;
   lineHeight?: number;
@@ -154,7 +154,7 @@ export class UIScrollView {
           lineHeight: this.options.lineHeight || 1.5,
           theme: this.options.theme || 'github-light',
           pageSize: this.options.pageSize || 'a4',
-          orient: this.options.orient || 'portrait'
+          orientation: this.options.orientation || 'portrait'
         });
 
         // Cache the result
