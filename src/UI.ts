@@ -125,11 +125,14 @@ export class UI {
       // Get menu HTML from UIMenuMgr
       const menuHtml = await this.app.uimenumgr.getAllUIMenuHTML();
       
-      // Inject toolbar into HTML
-      const htmlWithToolbar = html.replace(
-        '{{TOOLBAR}}',
-        `<div class="toolbar">${menuHtml}</div>`
-      );
+      // Inject toolbar into HTML using template
+      const toolbarHtml = this.app.templateDictReplace(this.app.templates.toolbar_html, {
+        TOOLBAR_CSS: this.app.templates.toolbar_css,
+        TOOLBAR_JS: this.app.templates.toolbar_js,
+        MENU_HTML: menuHtml
+      });
+      
+      const htmlWithToolbar = html.replace('{{TOOLBAR}}', toolbarHtml);
 
       dx.out('Toolbar added to HTML');
       return htmlWithToolbar;

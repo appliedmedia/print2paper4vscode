@@ -243,26 +243,16 @@ export class UIScrollView {
       };
       
       // Replace placeholders in templates
-      const html = this.app.templateDictReplace(templates.scroll_html, templateDict);
       const css = this.app.templateDictReplace(templates.scroll_css, templateDict);
       const js = this.app.templateDictReplace(templates.scroll_js, templateDict);
       
-      // Combine into final HTML
-      return `
-        <!DOCTYPE html>
-        <html>
-        <head>
-          <meta charset="UTF-8">
-          <meta name="viewport" content="width=device-width, initial-scale=1.0">
-          <title>Scroll View Document Viewer</title>
-          <style>${css}</style>
-        </head>
-        <body>
-          ${html}
-          <script>${js}</script>
-        </body>
-        </html>
-      `;
+      // Use the scroll_html template instead of hardcoded HTML
+      return this.app.templateDictReplace(templates.scroll_html, {
+        TITLE: this.options.title || 'Scrollable Document',
+        CSS: css,
+        HTML: templateDict.TOOLBAR, // The HTML content is the toolbar
+        JS: js
+      });
     } finally {
       dx.done();
     }

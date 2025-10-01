@@ -498,10 +498,11 @@ export class Stylize {
             const color = token.color || '#000000';
             const fontStyle = token.fontStyle || 0;
 
-            // Apply font styles (bold, italic)
-            let style = `color: ${color};`;
-            if (fontStyle & 1) style += ' font-weight: bold;';
-            if (fontStyle & 2) style += ' font-style: italic;';
+            // Apply font styles (bold, italic) using template
+            const styleParts = [`color: ${color}`];
+            if (fontStyle & 1) styleParts.push('font-weight: bold');
+            if (fontStyle & 2) styleParts.push('font-style: italic');
+            const style = styleParts.join('; ') + ';';
 
             return this.app.templateDictReplace(yaml.stylize_token_span, {
               STYLE: style,
@@ -541,29 +542,7 @@ export class Stylize {
     <meta charset="utf-8">
     <meta name="color-scheme" content="light dark">
     <style>
-      body { 
-        margin: 24px;
-        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace; 
-      }
-      pre { 
-        white-space: pre; 
-        word-wrap: normal; 
-        margin: 0; 
-      }
-      code { 
-        font-size: ${fontSize}px; 
-        display: block; 
-        margin: 0; 
-        white-space: normal; 
-      }
-      .line { 
-        display: block; 
-        line-height: ${lineHeight}px; 
-        min-height: ${lineHeight}px; 
-        margin: 0; 
-        padding: 0; 
-        white-space: pre; 
-      }
+      ${this.app.templateDictReplace(this.app.templates.stylize_css, {})}
     </style>
     <title>${title}</title>
   </head>
