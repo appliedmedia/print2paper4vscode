@@ -150,8 +150,8 @@ export class UIScrollView {
         // Render the page
         const pageData = await this.pageRender.pageRender(pageNumber, {
           fontFamily: this.options.fontFamily || 'Courier New',
-          fontSize: this.options.fontSize || 12,
-          lineHeight: this.options.lineHeight || 1.5,
+          fontSize: this.options.fontSize || 12, // fontSize in pixels - will be converted to points in PDF generation
+          lineHeight: this.options.lineHeight || 1.5, // lineHeight as multiplier
           theme: this.options.theme || 'github-light',
           pageSize: this.options.pageSize || 'a4',
           orient: this.options.orient || 'portrait'

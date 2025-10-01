@@ -195,14 +195,14 @@ export class PaperPrinter {
       }
       
       // Create webview options
-      const fontSizePx = this.computeFontSizePx();
+      const fontSizePx = this.computeFontSizePx(); // fontSize in pixels
       const scrollViewOptions = {
         title: tabName,
         pageSize: this.pageSize,
         orient: this.orient,
         fontFamily: this.getCurrentFontFamily(),
-        fontSize: fontSizePx,
-        lineHeight: this.app.vscodeapis.getEditorTypography().sizeToHeightRatio, // multiplier
+        fontSize: fontSizePx, // fontSize in pixels - will be converted to points in PDF generation
+        lineHeight: this.app.vscodeapis.getEditorTypography().sizeToHeightRatio, // lineHeight as multiplier
         theme: this.currentThemeChoice
       };
       
@@ -552,8 +552,8 @@ export class PaperPrinter {
       if (this.currentWebView) {
         try {
           await this.currentWebView.updateOptions({ 
-            fontSize: fontSize,
-            lineHeight: this.app.vscodeapis.getEditorTypography().sizeToHeightRatio // multiplier
+            fontSize: fontSize, // fontSize in pixels - will be converted to points in PDF generation
+            lineHeight: this.app.vscodeapis.getEditorTypography().sizeToHeightRatio // lineHeight as multiplier
           });
         } catch (error) {
           this.app.ui.showErrorMessage(`Failed to update font size: ${String(error)}`);
