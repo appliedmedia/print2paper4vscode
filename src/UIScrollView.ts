@@ -42,32 +42,31 @@ export class UIScrollView {
    */
   async create(): Promise<WebviewPanelId> {
     const dx = this.dx.sub('create');
-    
+
     try {
       // Get page metadata
       const metadata = await this.pageRender.getPageMetadata();
-      
+
       // Load scroll view templates
       const templates = this.loadScrollViewTemplates();
-      
+
       // Generate HTML with scroll view
       const html = await this.generateScrollViewHTML(templates, metadata, this.options);
-      
+
       // Create webview panel
       this.panelId = this.app.vscodeapis.createWebviewPanel(
-        'Scroll View Document Viewer',
+        this.options.title || 'Scrollable Document',
         html
       );
-      
+
       // Set up message handling for scroll view
       this.setupScrollViewMessageHandling(this.panelId);
-      
+
       // Store current panel ID in UI
       this.app.ui.currentPanelId = this.panelId;
-      
+
       dx.out(`Created scroll view with ${metadata.pageTotal} pages`);
       return this.panelId;
-
     } catch (error) {
       this.app.ui.showErrorMessage(`Failed to create scroll view: ${String(error)}`);
       throw error;
@@ -81,7 +80,7 @@ export class UIScrollView {
    */
   async updatePageRender(newPageRender: PageRender): Promise<void> {
     const dx = this.dx.sub('updatePageRender');
-    
+
     try {
       this.pageRender = newPageRender;
       this.pageCache.clear();
@@ -97,22 +96,22 @@ export class UIScrollView {
    */
   async updateOptions(newOptions: Partial<ScrollOptions>): Promise<void> {
     const dx = this.dx.sub('updateOptions');
-    
+
     try {
       // Update options
       this.options = { ...this.options, ...newOptions };
-      
+
       // Bust all cached pages since render options changed
       this.pageCache.clear();
       this.renderQueue.clear();
-      
+
       // Notify webview to clear all rendered pages
       if (this.panelId) {
         this.app.vscodeapis.postMessageToPanel(this.panelId, {
-          type: 'clearAllPages'
+          type: 'clearAllPages',
         });
       }
-      
+
       dx.out('Scroll view options updated, cache cleared');
     } finally {
       dx.done();
@@ -154,7 +153,7 @@ export class UIScrollView {
           lineHeight: this.options.lineHeightPx || 18, // lineHeight in pixels - will be converted to points in PDF generation
           theme: this.options.theme || 'github-light',
           pageSize: this.options.pageSize || 'a4',
-          orient: this.options.orient || 'portrait'
+          orient: this.options.orient || 'portrait',
         });
 
         // Cache the result
@@ -162,12 +161,10 @@ export class UIScrollView {
         dx.out(`Page ${pageNumber} rendered and cached`);
 
         return pageData;
-
       } finally {
         // Remove from render queue
         this.renderQueue.delete(pageNumber);
       }
-
     } catch (error) {
       dx.out(`Error rendering page ${pageNumber}: ${String(error)}`);
       throw error;
@@ -181,7 +178,7 @@ export class UIScrollView {
    */
   destroy(): void {
     const dx = this.dx.sub('destroy');
-    
+
     try {
       this.pageCache.clear();
       this.renderQueue.clear();
@@ -201,18 +198,18 @@ export class UIScrollView {
     scroll_js: string;
   } {
     const dx = this.dx.sub('loadScrollViewTemplates');
-    
+
     try {
       const templates = this.app.os.fileRead<{
         scroll_html: string;
         scroll_css: string;
         scroll_js: string;
       }>('src/UI.yaml');
-      
+
       if (!templates) {
         throw new Error('Failed to load scroll view templates');
       }
-      
+
       return templates;
     } finally {
       dx.done();
@@ -228,30 +225,32 @@ export class UIScrollView {
     options: ScrollOptions
   ): Promise<string> {
     const dx = this.dx.sub('generateScrollViewHTML');
-    
+
     try {
       // Get configuration values
       const maxCanvases = this.app.vscodeapis.getMaxCanvasPoolSize();
       const scrollDebounceMs = this.app.vscodeapis.getScrollDebounceMs();
-      
+
       // Create template dictionary
       const templateDict = {
         PAGE_TOTAL: metadata.pageTotal.toString(),
+        TOTAL_PAGES: metadata.pageTotal.toString(), // Also provide TOTAL_PAGES for HTML template
         MAX_CANVASES: maxCanvases.toString(),
         SCROLL_DEBOUNCE_MS: scrollDebounceMs.toString(),
-        TOOLBAR: await this.generateToolbarHTML()
+        TOOLBAR: await this.generateToolbarHTML(),
       };
-      
+
       // Replace placeholders in templates
       const css = this.app.templateDictReplace(templates.scroll_css, templateDict);
       const js = this.app.templateDictReplace(templates.scroll_js, templateDict);
-      
+
       // Use the scroll_html template instead of hardcoded HTML
       return this.app.templateDictReplace(templates.scroll_html, {
         TITLE: this.options.title || 'Scrollable Document',
-        CSS: css,
-        HTML: templateDict.TOOLBAR, // The HTML content is the toolbar
-        JS: js
+        BASE_CSS: templates.base_css,
+        SCROLL_CSS: css,
+        SCROLL_JS: js,
+        ...templateDict, // Include all template variables
       });
     } finally {
       dx.done();
@@ -263,11 +262,34 @@ export class UIScrollView {
    */
   private async generateToolbarHTML(): Promise<string> {
     const dx = this.dx.sub('generateToolbarHTML');
-    
+
     try {
       // Get menu HTML from the provided UIMenuMgr
       const menuHtml = await this.menuMgr.getAllUIMenuHTML();
-      return menuHtml;
+
+      // Load toolbar templates to get full toolbar with CSS/JS
+      const templates = this.app.os.fileRead<{
+        toolbar_html: string;
+        toolbar_css: string;
+        toolbar_js: string;
+        base_css: string;
+      }>('src/UI.yaml');
+
+      // Load UIMenu CSS for proper menu styling
+      const uiMenuCss = this.menuMgr.getAllUIMenuCSS();
+
+      if (!templates) {
+        throw new Error('Failed to load toolbar templates');
+      }
+
+      // Generate full toolbar HTML with CSS and JS
+      return this.app.templateDictReplace(templates.toolbar_html, {
+        TOOLBAR_CSS: templates.toolbar_css + '\n' + uiMenuCss, // Include UIMenu CSS
+        CSS: templates.base_css,
+        HTML: menuHtml, // This matches {{HTML}} in toolbar_html
+        TOOLBAR_JS: templates.toolbar_js,
+        JS: '', // No additional JS needed for scrollable viewer
+      });
     } finally {
       dx.done();
     }
@@ -278,17 +300,17 @@ export class UIScrollView {
    */
   private setupScrollViewMessageHandling(panelId: WebviewPanelId): void {
     const dx = this.dx.sub('setupScrollViewMessageHandling');
-    
+
     try {
       // Register message handlers for scroll view
-      this.app.ui.registerMessageHandler('requestPageRender', async (msg) => {
+      this.app.ui.registerMessageHandler('requestPageRender', async msg => {
         await this.handlePageRenderRequest(msg);
       });
-      
-      this.app.ui.registerMessageHandler('scrollDiagnostic', async (msg) => {
+
+      this.app.ui.registerMessageHandler('scrollDiagnostic', async msg => {
         await this.handleScrollDiagnostic(msg);
       });
-      
+
       dx.out('Scroll view message handlers registered');
     } finally {
       dx.done();
@@ -300,7 +322,7 @@ export class UIScrollView {
    */
   private async handlePageRenderRequest(msg: WebviewMessage): Promise<void> {
     const dx = this.dx.sub('handlePageRenderRequest');
-    
+
     try {
       const pageNumber = msg.pageNumber;
       if (typeof pageNumber !== 'number') {
@@ -309,19 +331,19 @@ export class UIScrollView {
 
       // Request page render
       const pageData = await this.requestPageRender(pageNumber);
-      
+
       // Send response back to webview
       if (this.panelId) {
         this.app.vscodeapis.postMessageToPanel(this.panelId, {
           type: 'pageRenderResponse',
-          pageData: pageData
+          pageData: pageData,
         });
       }
-      
+
       dx.out(`Page ${pageNumber} rendered and sent to webview`);
     } catch (error) {
       dx.out(`Error handling page render request: ${String(error)}`);
-      
+
       // Send error response
       if (this.panelId) {
         this.app.vscodeapis.postMessageToPanel(this.panelId, {
@@ -330,8 +352,8 @@ export class UIScrollView {
             message: String(error),
             pageNumber: msg.pageNumber || 0,
             type: 'generation',
-            timestamp: new Date()
-          }
+            timestamp: new Date(),
+          },
         });
       }
     } finally {
@@ -344,7 +366,7 @@ export class UIScrollView {
    */
   private async handleScrollDiagnostic(msg: WebviewMessage): Promise<void> {
     const dx = this.dx.sub('handleScrollDiagnostic');
-    
+
     try {
       dx.out(`Scroll diagnostic: ${JSON.stringify(msg.data)}`);
     } finally {
