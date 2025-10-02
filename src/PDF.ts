@@ -1,6 +1,12 @@
 import type { App } from './App';
 import type { PageSize } from './PaperPrinter';
-import type { PageRender, PageData, RenderOptions, PageMetadata, PageRenderError } from './types/PageRender_t';
+import type {
+  PageRender,
+  PageData,
+  RenderOptions,
+  PageMetadata,
+  PageRenderError,
+} from './types/PageRender_t';
 import { Diagnostics } from './Diagnostics';
 import jsPDF from 'jspdf';
 import type { ThemedToken } from 'shiki';
@@ -9,7 +15,7 @@ export class PDF implements PageRender {
   private app: App;
   private tempPdfs: string[] = [];
   private dx: Diagnostics;
-  
+
   // PageRender implementation state
   private currentTokens: ThemedToken[][] | null = null;
   private pageBreaks: number[] = [];
@@ -294,11 +300,11 @@ export class PDF implements PageRender {
 
       // Get page size and orient from global state
       const pageSize = (this.app.vscodeapis.getGlobalState('pageSize') || 'a4') as PageSize;
-      const orient = (this.app.vscodeapis.getGlobalState('orient') || 'portrait') as 'portrait' | 'landscape';
+      const orient = (this.app.vscodeapis.getGlobalState('orient') || 'portrait') as
+        | 'portrait'
+        | 'landscape';
 
-      dx.out(
-        `Using page size: ${pageSize}, orient: ${orient} (from PaperPrinter preferences)`
-      );
+      dx.out(`Using page size: ${pageSize}, orient: ${orient} (from PaperPrinter preferences)`);
 
       // Create render options
       const renderOptions: RenderOptions = {
@@ -307,18 +313,18 @@ export class PDF implements PageRender {
         lineHeight: lineHeightPx,
         theme: 'github-light', // Default theme for backward compatibility
         pageSize,
-        orient: orient
+        orient: orient,
       };
 
       // For backward compatibility, render only the first page
       const pageData = await this.pageRender(1, renderOptions);
-      
+
       // Convert data URL back to jsPDF document for backward compatibility
       // This is a temporary solution - ideally we'd return PageData directly
       // Convert pixel dimensions back to points for jsPDF
       const docWidthPts = this.pxToPts(pageData.widthPx);
       const docHeightPts = this.pxToPts(pageData.heightPx);
-      
+
       const doc = new jsPDF({
         orientation: orient,
         unit: 'pt',
@@ -327,10 +333,10 @@ export class PDF implements PageRender {
 
       // Convert fontSize from pixels to points for jsPDF
       const fontSizePts = this.pxToPts(fontSizePx);
-      
+
       // Convert lineHeight from pixels to points for jsPDF
       const lineHeightPts = this.pxToPts(lineHeightPx);
-      
+
       // Add title if provided (this is a simplified approach)
       if (title) {
         doc.setFontSize(fontSizePts * 1.25);
@@ -413,7 +419,6 @@ export class PDF implements PageRender {
 
       dx.out(`PDF document created with ${linesToRender} lines rendered`);
       return finalDoc;
-
     } catch (error) {
       this.app.ui.showErrorMessage(`Failed to generate PDF: ${String(error)}`);
       throw error;
@@ -439,9 +444,7 @@ export class PDF implements PageRender {
         pdf_js: string;
       }>('src/PDF.yaml');
 
-      const uiTemplates = this.app.os.fileRead<{
-        base_css: string;
-      }>('src/UI.yaml');
+      const uiTemplates = this.app.ui.yaml;
 
       const pdfJsContent = this.app.os.fileRead('src/lib/pdf.min.js');
 
@@ -569,7 +572,7 @@ export class PDF implements PageRender {
           message: `Invalid page number: ${pageNumber}. Valid range: 1-${this.pageTotal}`,
           pageNumber,
           type: 'validation',
-          timestamp: new Date()
+          timestamp: new Date(),
         };
         throw error;
       }
@@ -579,7 +582,7 @@ export class PDF implements PageRender {
           message: 'No tokens available for rendering. Call setTokens() first.',
           pageNumber,
           type: 'generation',
-          timestamp: new Date()
+          timestamp: new Date(),
         };
         throw error;
       }
@@ -587,13 +590,13 @@ export class PDF implements PageRender {
       // Note: options.fontSize and options.lineHeight are in pixels, will be converted to points in generateSinglePagePdf
       // Extract tokens for this page
       const pageTokens = this.extractTokensForPage(this.currentTokens, pageNumber);
-      
+
       // Generate single-page PDF
       const pdfDoc = await this.generateSinglePagePdf(pageTokens, options);
-      
+
       // Convert to data URL
       const dataUrl = pdfDoc.output('datauristring') as string;
-      
+
       // Get page dimensions
       const pageDimensions = this.getPageDimensions(options.pageSize, options.orient);
       const unit = this.getUnitForPageSize(options.pageSize);
@@ -603,29 +606,28 @@ export class PDF implements PageRender {
       // Convert dimensions to pixels for PageData (interface expects pixels)
       const widthPx = Math.round(this.ptsToPx(widthPts));
       const heightPx = Math.round(this.ptsToPx(heightPts));
-      
+
       const pageData: PageData = {
         dataUrl,
         widthPx,
         heightPx,
-        pageNumber
+        pageNumber,
       };
 
       dx.out(`Page ${pageNumber} rendered: ${widthPts}x${heightPts}pt`);
       return pageData;
-
     } catch (error) {
       if (error instanceof Error && 'type' in error) {
         // Re-throw PageRenderError as-is
         throw error;
       }
-      
+
       // Wrap other errors as PageRenderError
       const pageRenderError: PageRenderError = {
         message: `Page generation failed: ${String(error)}`,
         pageNumber,
         type: 'generation',
-        timestamp: new Date()
+        timestamp: new Date(),
       };
       throw pageRenderError;
     } finally {
@@ -643,7 +645,7 @@ export class PDF implements PageRender {
 
   async getPageMetadata(): Promise<PageMetadata> {
     const dx = this.dx.sub('getPageMetadata');
-    
+
     try {
       // Return cached metadata if available
       if (this.pageMetadata) {
@@ -660,24 +662,25 @@ export class PDF implements PageRender {
       const unit = this.getUnitForPageSize('a4');
       const pageWidthPts = this.dimensionsToPts(pageDimensions.width, unit);
       const pageHeightPts = this.dimensionsToPts(pageDimensions.height, unit);
-      
+
       // Convert to pixels for PageMetadata (interface expects pixels)
       const pageWidthPx = Math.round(this.ptsToPx(pageWidthPts));
       const pageHeightPx = Math.round(this.ptsToPx(pageHeightPts));
-      
+
       // Estimate memory usage (rough calculation)
-      const estimatedMemoryMB = (this.currentTokens.length * 0.1) + (this.pageTotal * 0.5);
+      const estimatedMemoryMB = this.currentTokens.length * 0.1 + this.pageTotal * 0.5;
 
       this.pageMetadata = {
         pageTotal: this.pageTotal,
         pageWidthPx,
         pageHeightPx,
-        estimatedMemoryMB
+        estimatedMemoryMB,
       };
 
-      dx.out(`Page metadata calculated: ${this.pageTotal} pages, ${pageWidthPx}x${pageHeightPx}px, ~${estimatedMemoryMB.toFixed(1)}MB`);
+      dx.out(
+        `Page metadata calculated: ${this.pageTotal} pages, ${pageWidthPx}x${pageHeightPx}px, ~${estimatedMemoryMB.toFixed(1)}MB`
+      );
       return this.pageMetadata;
-
     } catch (error) {
       this.app.ui.showErrorMessage(`Failed to get page metadata: ${String(error)}`);
       throw error;
@@ -695,33 +698,36 @@ export class PDF implements PageRender {
    */
   private calculatePageBreaks(tokens: ThemedToken[][]): number[] {
     const dx = this.dx.sub('calculatePageBreaks');
-    
+
     try {
       // Get current page size and orient from global state
       const pageSize = (this.app.vscodeapis.getGlobalState('pageSize') || 'a4') as PageSize;
-      const orient = (this.app.vscodeapis.getGlobalState('orient') || 'portrait') as 'portrait' | 'landscape';
-      
+      const orient = (this.app.vscodeapis.getGlobalState('orient') || 'portrait') as
+        | 'portrait'
+        | 'landscape';
+
       // Calculate how many lines fit per page
       const pageDimensions = this.getPageDimensions(pageSize, orient);
       const unit = this.getUnitForPageSize(pageSize);
       const heightPts = this.dimensionsToPts(pageDimensions.height, unit);
-      
+
       // Estimate lines per page (rough calculation)
       const marginTop = 20; // Top margin in points
       const marginBottom = 36; // Bottom margin in points
       const lineHeight = 12; // Default line height in points
       const availableHeight = heightPts - marginTop - marginBottom;
       const linesPerPage = Math.floor(availableHeight / lineHeight);
-      
+
       // Calculate page breaks - always start with page 0
       const pageBreaks: number[] = [0];
       for (let i = linesPerPage; i < tokens.length; i += linesPerPage) {
         pageBreaks.push(i);
       }
-      
-      dx.out(`Calculated ${pageBreaks.length} page breaks for ${tokens.length} lines (${linesPerPage} lines/page)`);
+
+      dx.out(
+        `Calculated ${pageBreaks.length} page breaks for ${tokens.length} lines (${linesPerPage} lines/page)`
+      );
       return pageBreaks;
-      
     } catch (error) {
       dx.out(`Error calculating page breaks: ${String(error)}`);
       // Fallback to single page
@@ -736,15 +742,16 @@ export class PDF implements PageRender {
    */
   private extractTokensForPage(tokens: ThemedToken[][], pageNumber: number): ThemedToken[][] {
     const dx = this.dx.sub('extractTokensForPage');
-    
+
     try {
       const startLine = this.pageBreaks[pageNumber - 1] || 0;
       const endLine = this.pageBreaks[pageNumber] || tokens.length;
-      
+
       const pageTokens = tokens.slice(startLine, endLine);
-      dx.out(`Extracted page ${pageNumber}: lines ${startLine}-${endLine-1} (${pageTokens.length} lines)`);
+      dx.out(
+        `Extracted page ${pageNumber}: lines ${startLine}-${endLine - 1} (${pageTokens.length} lines)`
+      );
       return pageTokens;
-      
     } catch (error) {
       dx.out(`Error extracting tokens for page ${pageNumber}: ${String(error)}`);
       return [];
@@ -756,10 +763,13 @@ export class PDF implements PageRender {
   /**
    * Generate a single-page PDF from tokens
    */
-  private async generateSinglePagePdf(tokens: ThemedToken[][], options: RenderOptions): Promise<jsPDF> {
+  private async generateSinglePagePdf(
+    tokens: ThemedToken[][],
+    options: RenderOptions
+  ): Promise<jsPDF> {
     const dx = this.dx.sub('generateSinglePagePdf');
     dx.require({ tokens, options }, ['tokens', 'options']);
-    
+
     try {
       // Get page dimensions
       const pageDimensions = this.getPageDimensions(options.pageSize, options.orient);
@@ -777,7 +787,7 @@ export class PDF implements PageRender {
       // Map font family to jsPDF supported fonts
       const jsPdfFont = this.mapFontFamilyToJsPDF(options.fontFamily, doc);
       doc.setFont(jsPdfFont, 'normal');
-      
+
       // Convert fontSize from pixels to points for jsPDF
       const fontSizePts = this.pxToPts(options.fontSize);
       doc.setFontSize(fontSizePts);
@@ -793,7 +803,7 @@ export class PDF implements PageRender {
 
       for (const line of tokens) {
         let x = marginLeft;
-        
+
         for (const token of line) {
           const text = token.content;
           if (!text) continue;
@@ -803,13 +813,12 @@ export class PDF implements PageRender {
           doc.text(text, x, y);
           x += doc.getTextWidth(text);
         }
-        
+
         y += lineSpacing;
       }
 
       dx.out(`Single-page PDF generated: ${tokens.length} lines`);
       return doc;
-
     } catch (error) {
       this.app.ui.showErrorMessage(`Failed to generate single-page PDF: ${String(error)}`);
       throw error;

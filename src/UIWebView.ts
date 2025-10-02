@@ -40,14 +40,13 @@ export class UIWebView {
       // Create scroll view
       this.currentViewer = new UIScrollView(this.app, pageRender, options, this.menuMgr);
       this.panelId = await this.currentViewer.create();
-      
+
       // Store current panel ID in UI for message handling
       this.app.ui.currentPanelId = this.panelId;
-      
+
       this.initialized = true;
       dx.out(`Initialized webview: ${options.title || 'Document Viewer'}`);
       return this.panelId;
-
     } catch (error) {
       this.app.ui.showErrorMessage(`Failed to initialize webview: ${String(error)}`);
       throw error;
@@ -61,7 +60,7 @@ export class UIWebView {
    */
   createMenus(): UIMenuMgr {
     const dx = this.dx.sub('createMenus');
-    
+
     try {
       this.menuMgr = new UIMenuMgr(this.app);
       dx.out('Created menu manager');
@@ -85,13 +84,12 @@ export class UIWebView {
 
       this.currentViewer = new UIScrollView(this.app, pageRender, options, this.menuMgr);
       this.panelId = await this.currentViewer.create();
-      
+
       // Store current panel ID in UI for message handling
       this.app.ui.currentPanelId = this.panelId;
-      
+
       dx.out(`Created scroll view: ${options.title || 'Document Viewer'}`);
       return this.panelId;
-
     } catch (error) {
       this.app.ui.showErrorMessage(`Failed to create scroll view: ${String(error)}`);
       throw error;
@@ -105,7 +103,7 @@ export class UIWebView {
    */
   async updatePageRender(newPageRender: PageRender): Promise<void> {
     const dx = this.dx.sub('updatePageRender');
-    
+
     try {
       if (this.currentViewer) {
         await this.currentViewer.updatePageRender(newPageRender);
@@ -126,7 +124,7 @@ export class UIWebView {
    */
   async updateOptions(options: any): Promise<void> {
     const dx = this.dx.sub('updateOptions');
-    
+
     try {
       if (this.currentViewer) {
         await this.currentViewer.updateOptions(options);
@@ -168,10 +166,10 @@ export class UIWebView {
    */
   done(): void {
     const dx = this.dx.sub('done');
-    
+
     try {
       if (this.currentViewer) {
-        this.currentViewer.destroy();
+        this.currentViewer.done();
         this.currentViewer = null;
       }
       this.menuMgr = null;

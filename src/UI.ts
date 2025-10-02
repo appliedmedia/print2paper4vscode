@@ -9,6 +9,12 @@ export class UI {
   private messageHandlers: Map<string, MessageHandler[]> = new Map();
   private dx: Diagnostics;
   public currentPanelId: WebviewPanelId | null = null; // Store the current panel ID for updates
+  private _yaml: {
+    base_css: string;
+    toolbar_css: string;
+    toolbar_js: string;
+    toolbar_html: string;
+  } | null = null;
 
   constructor(app: App) {
     this.app = app;
@@ -19,6 +25,29 @@ export class UI {
 
   done(): void {
     this.dx.done();
+  }
+
+  get yaml() {
+    // If already loaded, return it
+    if (this._yaml) {
+      return this._yaml;
+    }
+
+    // Load and cache the YAML
+    const yaml = this.app.os.fileRead<{
+      base_css: string;
+      toolbar_css: string;
+      toolbar_js: string;
+      toolbar_html: string;
+    }>('src/UI.yaml');
+
+    if (!yaml) {
+      throw new Error('Failed to load UI yaml');
+    }
+
+    // Cache it
+    this._yaml = yaml;
+    return this._yaml;
   }
 
   // Register a message handler for a specific message type
@@ -125,16 +154,8 @@ export class UI {
       // Get menu HTML from UIMenuMgr
       const menuHtml = await this.app.uimenumgr.getAllUIMenuHTML();
       
-      // Load toolbar templates
-      const templates = this.app.os.fileRead<{
-        toolbar_html: string;
-        toolbar_css: string;
-        toolbar_js: string;
-      }>('src/UI.yaml');
-      
-      if (!templates) {
-        throw new Error('Failed to load toolbar templates');
-      }
+      // Get toolbar templates from yaml getter
+      const templates = this.yaml;
       
       // Inject toolbar into HTML using template
       const toolbarHtml = this.app.templateDictReplace(templates.toolbar_html, {
@@ -184,11 +205,7 @@ export class UI {
 
   // Get base CSS
   getBaseCSS(): string {
-    const baseTemplates = this.app.os.fileRead<{
-      base_css: string;
-    }>('src/UI.yaml');
-    
-    return baseTemplates?.base_css || '';
+    return this.yaml.base_css;
   }
 
   // Choose save location

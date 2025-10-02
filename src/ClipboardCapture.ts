@@ -104,9 +104,7 @@ export class ClipboardCapture {
       clipboard_css: string;
     }>('src/ClipboardCapture.yaml');
 
-    const uiYaml = this.app.os.fileRead<{
-      base_css: string;
-    }>('src/UI.yaml');
+    const uiYaml = this.app.ui.yaml;
 
     if (!clipboardYaml || !uiYaml) {
       throw new Error('Failed to load required templates');

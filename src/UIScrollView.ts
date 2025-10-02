@@ -28,6 +28,11 @@ export class UIScrollView {
   private renderQueue: Set<number> = new Set();
   private panelId: WebviewPanelId | null = null;
   private menuMgr: UIMenuMgr;
+  private _yaml: {
+    scroll_html: string;
+    scroll_css: string;
+    scroll_js: string;
+  } | null = null;
 
   constructor(app: App, pageRender: PageRender, options: ScrollOptions, menuMgr: UIMenuMgr) {
     this.app = app;
@@ -35,6 +40,28 @@ export class UIScrollView {
     this.options = options;
     this.menuMgr = menuMgr;
     this.dx = app.dx.create('UIScrollView');
+  }
+
+  get yaml() {
+    // If already loaded, return it
+    if (this._yaml) {
+      return this._yaml;
+    }
+
+    // Load and cache the YAML
+    const yaml = this.app.os.fileRead<{
+      scroll_html: string;
+      scroll_css: string;
+      scroll_js: string;
+    }>('src/UIScrollView.yaml');
+
+    if (!yaml) {
+      throw new Error('Failed to load UIScrollView yaml');
+    }
+
+    // Cache it
+    this._yaml = yaml;
+    return this._yaml;
   }
 
   /**
@@ -47,11 +74,17 @@ export class UIScrollView {
       // Get page metadata
       const metadata = await this.pageRender.getPageMetadata();
 
-      // Load scroll view templates
-      const templates = this.loadScrollViewTemplates();
+      // Get scroll view templates from yaml getter
+      const templates = this.yaml;
+
+      // Get base CSS from UI yaml getter
+      const baseCss = this.app.ui.yaml.base_css;
+
+      // Add base_css to templates
+      const templatesWithBaseCss = { ...templates, base_css: baseCss };
 
       // Generate HTML with scroll view
-      const html = await this.generateScrollViewHTML(templates, metadata, this.options);
+      const html = await this.generateScrollViewHTML(templatesWithBaseCss, metadata, this.options);
 
       // Create webview panel
       this.panelId = this.app.vscodeapis.createWebviewPanel(
@@ -174,43 +207,16 @@ export class UIScrollView {
   }
 
   /**
-   * Destroy scroll view and cleanup resources
+   * Cleanup scroll view resources
    */
-  destroy(): void {
-    const dx = this.dx.sub('destroy');
+  done(): void {
+    const dx = this.dx.sub('done');
 
     try {
       this.pageCache.clear();
       this.renderQueue.clear();
       this.panelId = null;
-      dx.out('Scroll view destroyed');
-    } finally {
-      dx.done();
-    }
-  }
-
-  /**
-   * Load scroll view templates from UI.yaml
-   */
-  private loadScrollViewTemplates(): {
-    scroll_html: string;
-    scroll_css: string;
-    scroll_js: string;
-  } {
-    const dx = this.dx.sub('loadScrollViewTemplates');
-
-    try {
-      const templates = this.app.os.fileRead<{
-        scroll_html: string;
-        scroll_css: string;
-        scroll_js: string;
-      }>('src/UI.yaml');
-
-      if (!templates) {
-        throw new Error('Failed to load scroll view templates');
-      }
-
-      return templates;
+      dx.out('Scroll view cleaned up');
     } finally {
       dx.done();
     }
@@ -220,7 +226,7 @@ export class UIScrollView {
    * Generate HTML for scroll view
    */
   private async generateScrollViewHTML(
-    templates: { scroll_html: string; scroll_css: string; scroll_js: string },
+    templates: { scroll_html: string; scroll_css: string; scroll_js: string; base_css: string },
     metadata: PageMetadata,
     options: ScrollOptions
   ): Promise<string> {
@@ -244,16 +250,10 @@ export class UIScrollView {
       const css = this.app.templateDictReplace(templates.scroll_css, templateDict);
       const js = this.app.templateDictReplace(templates.scroll_js, templateDict);
 
-      // Load base CSS separately for scroll template
-      const baseCss =
-        this.app.os.fileRead<{
-          base_css: string;
-        }>('src/UI.yaml')?.base_css || '';
-
       // Use the scroll_html template instead of hardcoded HTML
       return this.app.templateDictReplace(templates.scroll_html, {
         TITLE: this.options.title || 'Scrollable Document',
-        BASE_CSS: baseCss,
+        BASE_CSS: templates.base_css,
         SCROLL_CSS: css,
         SCROLL_JS: js,
         ...templateDict, // Include all template variables
@@ -273,31 +273,16 @@ export class UIScrollView {
       // Get menu HTML from the provided UIMenuMgr
       const menuHtml = await this.menuMgr.getAllUIMenuHTML();
 
-      // Load toolbar templates to get full toolbar with CSS/JS
-      const templates = this.app.os.fileRead<{
-        toolbar_html: string;
-        toolbar_css: string;
-        toolbar_js: string;
-        base_css: string;
-      }>('src/UI.yaml');
-
-      // Load base CSS separately
-      const baseCss =
-        this.app.os.fileRead<{
-          base_css: string;
-        }>('src/UI.yaml')?.base_css || '';
+      // Get toolbar templates from UI yaml getter
+      const templates = this.app.ui.yaml;
 
       // Load UIMenu CSS for proper menu styling
       const uiMenuCss = this.menuMgr.getAllUIMenuCSS();
 
-      if (!templates) {
-        throw new Error('Failed to load toolbar templates');
-      }
-
       // Generate full toolbar HTML with CSS and JS
       return this.app.templateDictReplace(templates.toolbar_html, {
         TOOLBAR_CSS: templates.toolbar_css + '\n' + uiMenuCss, // Include UIMenu CSS
-        CSS: baseCss,
+        CSS: templates.base_css, // Use base_css from templates
         HTML: menuHtml, // This matches {{HTML}} in toolbar_html
         TOOLBAR_JS: templates.toolbar_js,
         JS: '', // No additional JS needed for scrollable viewer
