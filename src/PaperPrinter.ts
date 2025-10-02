@@ -231,7 +231,7 @@ export class PaperPrinter {
     // Fallback to locale-based default
     const locale = this.app.vscodeapis.getLocale() || '  ';
     const parts = locale.split(/[-_]/);
-    const region = parts[parts.length - 1].toUpperCase();
+    const region = parts.pop().toUpperCase();
     const letterRegions = ['US', 'CA', 'MX', '419'];
     const isLetterSize = letterRegions.includes(region);
     return isLetterSize ? 'letter' : 'a4';
