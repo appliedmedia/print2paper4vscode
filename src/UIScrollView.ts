@@ -1,12 +1,11 @@
 import type { App } from './App';
 import type { PageRender, PageData, PageMetadata } from './types/PageRender_t';
 import type { WebviewPanelId } from './VSCodeAPIs';
-import type { WebviewMessage } from './types/UI_t';
 import { UIMenuMgr } from './UIMenuMgr';
 import { Diagnostics } from './Diagnostics';
 
 // ScrollOptions interface
-interface ScrollOptions {
+export interface ScrollOptions {
   title?: string;
   pageSize?: 'letter' | 'legal' | 'a3' | 'a4' | 'a5';
   orient?: 'portrait' | 'landscape';
@@ -91,7 +90,6 @@ export class UIScrollView {
         this.options.title || 'Scrollable Document',
         html
       );
-
 
       // Store current panel ID in UI
       this.app.ui.currentPanelId = this.panelId;
@@ -289,5 +287,4 @@ export class UIScrollView {
       dx.done();
     }
   }
-
 }

@@ -1,8 +1,8 @@
 import type { App } from './App';
-import type { PageRender, PageData, PageMetadata } from './types/PageRender_t';
+import type { PageRender } from './types/PageRender_t';
 import type { WebviewPanelId } from './VSCodeAPIs';
 import type { WebviewMessage } from './types/UI_t';
-import { UIScrollView } from './UIScrollView';
+import { UIScrollView, type ScrollOptions } from './UIScrollView';
 import { UIMenuMgr } from './UIMenuMgr';
 import { Diagnostics } from './Diagnostics';
 
@@ -31,7 +31,11 @@ export class UIWebView {
   /**
    * Initialize webview with menus and scroll view
    */
-  async initWebview(pageRender: PageRender, options: any, menus: UIMenuMgr): Promise<WebviewPanelId> {
+  async initWebview(
+    pageRender: PageRender,
+    options: ScrollOptions,
+    menus: UIMenuMgr
+  ): Promise<WebviewPanelId> {
     const dx = this.dx.sub('init');
     dx.require({ pageRender, options, menus }, ['pageRender', 'options', 'menus']);
 
@@ -79,7 +83,7 @@ export class UIWebView {
   /**
    * Create scroll view with PageRender content (for external use)
    */
-  async createScrollView(pageRender: PageRender, options: any): Promise<WebviewPanelId> {
+  async createScrollView(pageRender: PageRender, options: ScrollOptions): Promise<WebviewPanelId> {
     const dx = this.dx.sub('createScrollView');
     dx.require({ pageRender, options }, ['pageRender', 'options']);
 
@@ -128,7 +132,7 @@ export class UIWebView {
   /**
    * Update scroll view options (theme, font, page size, etc.)
    */
-  async updateOptions(options: any): Promise<void> {
+  async updateOptions(options: ScrollOptions): Promise<void> {
     const dx = this.dx.sub('updateOptions');
 
     try {
