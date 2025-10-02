@@ -230,23 +230,10 @@ export class PaperPrinter {
     
     // Fallback to locale-based default
     const locale = this.app.vscodeapis.getLocale() || '  ';
-    let region: string | undefined;
-    if (locale) {
-      try {
-        region = new Intl.Locale(locale).region ?? undefined;
-      } catch {
-        const parts = locale.split(/[-_]/);
-        for (let i = parts.length - 1; i >= 0; i -= 1) {
-          const part = parts[i];
-          if (/^[A-Za-z]{2}$/.test(part) || /^[0-9]{3}$/.test(part)) {
-            region = part.toUpperCase();
-            break;
-          }
-        }
-      }
-    }
-    const letterRegions = new Set(['US', 'CA', 'MX', '419']);
-    const isLetterSize = region ? letterRegions.has(region) : false;
+    const parts = locale.split(/[-_]/);
+    const region = parts[parts.length - 1].toUpperCase();
+    const letterRegions = ['US', 'CA', 'MX', '419'];
+    const isLetterSize = letterRegions.includes(region);
     return isLetterSize ? 'letter' : 'a4';
   }
 
