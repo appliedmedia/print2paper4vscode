@@ -244,10 +244,15 @@ export class UIScrollView {
       const css = this.app.templateDictReplace(templates.scroll_css, templateDict);
       const js = this.app.templateDictReplace(templates.scroll_js, templateDict);
 
+      // Load base CSS separately for scroll template
+      const baseCss = this.app.os.fileRead<{
+        base_css: string;
+      }>('src/UI.yaml')?.base_css || '';
+
       // Use the scroll_html template instead of hardcoded HTML
       return this.app.templateDictReplace(templates.scroll_html, {
         TITLE: this.options.title || 'Scrollable Document',
-        BASE_CSS: templates.base_css,
+        BASE_CSS: baseCss,
         SCROLL_CSS: css,
         SCROLL_JS: js,
         ...templateDict, // Include all template variables
@@ -274,6 +279,11 @@ export class UIScrollView {
         toolbar_js: string;
         base_css: string;
       }>('src/UI.yaml');
+      
+      // Load base CSS separately
+      const baseCss = this.app.os.fileRead<{
+        base_css: string;
+      }>('src/UI.yaml')?.base_css || '';
 
       // Load UIMenu CSS for proper menu styling
       const uiMenuCss = this.menuMgr.getAllUIMenuCSS();
@@ -285,7 +295,7 @@ export class UIScrollView {
       // Generate full toolbar HTML with CSS and JS
       return this.app.templateDictReplace(templates.toolbar_html, {
         TOOLBAR_CSS: templates.toolbar_css + '\n' + uiMenuCss, // Include UIMenu CSS
-        CSS: templates.base_css,
+        CSS: baseCss,
         HTML: menuHtml, // This matches {{HTML}} in toolbar_html
         TOOLBAR_JS: templates.toolbar_js,
         JS: '', // No additional JS needed for scrollable viewer
