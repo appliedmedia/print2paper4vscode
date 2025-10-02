@@ -386,7 +386,8 @@ scroll_js: |
       // Performance tracking
       renderStartTime: 0,
       renderCount: 0,
-      memoryUsage: 0
+      memoryUsage: 0,
+      perfUpdateCounter: 0
     };
 
     // DOM elements
@@ -448,19 +449,18 @@ scroll_js: |
     // Set up scroll handling with debouncing and throttling
     function setupScrollHandling() {
       let scrollTimeout;
-      let isScrolling = false;
       
       viewer.addEventListener('scroll', () => {
-        if (isScrolling) return; // Prevent multiple simultaneous scroll handlers
+        if (db.isScrolling) return; // Prevent multiple simultaneous scroll handlers
         
         if (scrollTimeout) {
           clearTimeout(scrollTimeout);
         }
         
         scrollTimeout = setTimeout(() => {
-          isScrolling = true;
+          db.isScrolling = true;
           handleScroll();
-          isScrolling = false;
+          db.isScrolling = false;
         }, CONFIG.scrollDebounceMs);
       });
     }
@@ -494,8 +494,10 @@ scroll_js: |
       // Assign canvases to visible pages
       assignCanvasesToPages(visibleRange);
       
-      // Update performance info less frequently
-      if (Math.random() < 0.1) { // Only update 10% of the time
+      // Update performance info every 10th call
+      db.perfUpdateCounter++;
+      if (db.perfUpdateCounter >= 10) {
+        db.perfUpdateCounter = 0;
         updatePerformanceInfo();
       }
     }

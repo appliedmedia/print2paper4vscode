@@ -247,7 +247,7 @@ export class UIScrollView {
       // Use the scroll_html template instead of hardcoded HTML
       return this.app.templateDictReplace(templates.scroll_html, {
         TITLE: this.options.title || 'Scrollable Document',
-        BASE_CSS: '', // Will be filled by the template system
+        BASE_CSS: templates.base_css,
         SCROLL_CSS: css,
         SCROLL_JS: js,
         ...templateDict, // Include all template variables
@@ -276,7 +276,7 @@ export class UIScrollView {
       }>('src/UI.yaml');
 
       // Load UIMenu CSS for proper menu styling
-      const uiMenuCss = this.app.uimenumgr.getAllUIMenuCSS();
+      const uiMenuCss = this.menuMgr.getAllUIMenuCSS();
 
       if (!templates) {
         throw new Error('Failed to load toolbar templates');
