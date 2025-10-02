@@ -84,7 +84,7 @@ export class UIScrollView {
       const templatesWithBaseCss = { ...templates, base_css: baseCss };
 
       // Generate HTML with scroll view
-      const html = await this.generateScrollViewHTML(templatesWithBaseCss, metadata, this.options);
+      const html = await this.generateScrollViewHTML(templatesWithBaseCss, metadata);
 
       // Create webview panel
       this.panelId = this.app.vscodeapis.createWebviewPanel(
@@ -92,8 +92,6 @@ export class UIScrollView {
         html
       );
 
-      // Set up message handling for scroll view
-      this.setupScrollViewMessageHandling(this.panelId);
 
       // Store current panel ID in UI
       this.app.ui.currentPanelId = this.panelId;
@@ -227,8 +225,8 @@ export class UIScrollView {
    */
   private async generateScrollViewHTML(
     templates: { scroll_html: string; scroll_css: string; scroll_js: string; base_css: string },
-    metadata: PageMetadata,
-    options: ScrollOptions
+    metadata: PageMetadata
+    /* options: ScrollOptions */
   ): Promise<string> {
     const dx = this.dx.sub('generateScrollViewHTML');
 
@@ -292,82 +290,4 @@ export class UIScrollView {
     }
   }
 
-  /**
-   * Set up message handling for scroll view
-   */
-  private setupScrollViewMessageHandling(panelId: WebviewPanelId): void {
-    const dx = this.dx.sub('setupScrollViewMessageHandling');
-
-    try {
-      // Register message handlers for scroll view
-      this.app.ui.registerMessageHandler('requestPageRender', async msg => {
-        await this.handlePageRenderRequest(msg);
-      });
-
-      this.app.ui.registerMessageHandler('scrollDiagnostic', async msg => {
-        await this.handleScrollDiagnostic(msg);
-      });
-
-      dx.out('Scroll view message handlers registered');
-    } finally {
-      dx.done();
-    }
-  }
-
-  /**
-   * Handle page render request from webview
-   */
-  private async handlePageRenderRequest(msg: WebviewMessage): Promise<void> {
-    const dx = this.dx.sub('handlePageRenderRequest');
-
-    try {
-      const pageNumber = msg.pageNumber;
-      if (typeof pageNumber !== 'number') {
-        throw new Error('Invalid page number');
-      }
-
-      // Request page render
-      const pageData = await this.requestPageRender(pageNumber);
-
-      // Send response back to webview
-      if (this.panelId) {
-        this.app.vscodeapis.postMessageToPanel(this.panelId, {
-          type: 'pageRenderResponse',
-          pageData: pageData,
-        });
-      }
-
-      dx.out(`Page ${pageNumber} rendered and sent to webview`);
-    } catch (error) {
-      dx.out(`Error handling page render request: ${String(error)}`);
-
-      // Send error response
-      if (this.panelId) {
-        this.app.vscodeapis.postMessageToPanel(this.panelId, {
-          type: 'pageRenderError',
-          error: {
-            message: String(error),
-            pageNumber: msg.pageNumber || 0,
-            type: 'generation',
-            timestamp: new Date(),
-          },
-        });
-      }
-    } finally {
-      dx.done();
-    }
-  }
-
-  /**
-   * Handle scroll diagnostic from webview
-   */
-  private async handleScrollDiagnostic(msg: WebviewMessage): Promise<void> {
-    const dx = this.dx.sub('handleScrollDiagnostic');
-
-    try {
-      dx.out(`Scroll diagnostic: ${JSON.stringify(msg.data)}`);
-    } finally {
-      dx.done();
-    }
-  }
 }

@@ -50,6 +50,23 @@ export class UIMenuMgr {
     return [...this.menus];
   }
 
+  // Handle menu item selection
+  async handleMenuItemSelected(menuId: string, itemId: string): Promise<void> {
+    const dx = this.dx.sub('handleMenuItemSelected');
+    
+    try {
+      const menu = this.getMenu(menuId);
+      if (menu) {
+        await menu.dispatchSelection(itemId);
+        dx.out(`Menu item selected: ${menuId}.${itemId}`);
+      } else {
+        dx.out(`No menu found for menuId: ${menuId}`);
+      }
+    } finally {
+      dx.done();
+    }
+  }
+
   // Get a specific menu by ID
   getMenu(id: string): UIMenu | undefined {
     return this.getAllMenus().find(menu => menu.id === id);

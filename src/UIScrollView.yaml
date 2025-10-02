@@ -536,9 +536,6 @@ scroll_js: |
         case 'pageRenderError':
           handlePageRenderError(message.error, message.pageNumber);
           break;
-        case 'scrollDiagnostic':
-          console.log('Scroll diagnostic:', message.data);
-          break;
         case 'clearAllPages':
           clearAllRenderedPages();
           break;

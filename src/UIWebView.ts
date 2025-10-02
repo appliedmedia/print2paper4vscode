@@ -1,6 +1,7 @@
 import type { App } from './App';
 import type { PageRender, PageData, PageMetadata } from './types/PageRender_t';
 import type { WebviewPanelId } from './VSCodeAPIs';
+import type { WebviewMessage } from './types/UI_t';
 import { UIScrollView } from './UIScrollView';
 import { UIMenuMgr } from './UIMenuMgr';
 import { Diagnostics } from './Diagnostics';
@@ -16,16 +17,21 @@ export class UIWebView {
   private menuMgr: UIMenuMgr | null = null;
   private panelId: WebviewPanelId | null = null;
   private initialized: boolean = false;
+  private handlersRegistered: boolean = false;
 
   constructor(app: App) {
     this.app = app;
     this.dx = app.dx.create('UIWebView');
   }
 
+  init(): void {
+    this.registerMessageHandlers();
+  }
+
   /**
    * Initialize webview with menus and scroll view
    */
-  async init(pageRender: PageRender, options: any, menus: UIMenuMgr): Promise<WebviewPanelId> {
+  async initWebview(pageRender: PageRender, options: any, menus: UIMenuMgr): Promise<WebviewPanelId> {
     const dx = this.dx.sub('init');
     dx.require({ pageRender, options, menus }, ['pageRender', 'options', 'menus']);
 
@@ -176,6 +182,148 @@ export class UIWebView {
       this.panelId = null;
       this.initialized = false;
       dx.out('Webview cleaned up');
+    } finally {
+      dx.done();
+    }
+  }
+
+  /**
+   * Register all webview message handlers
+   */
+  private registerMessageHandlers(): void {
+    if (this.handlersRegistered) return;
+
+    const messageHandlers = [
+      { type: 'dragEnd', handler: this.handleDragEnd.bind(this) },
+      { type: 'menuItemSelected', handler: this.handleMenuItemSelected.bind(this) },
+      { type: 'print', handler: this.handlePrintMessage.bind(this) },
+      { type: 'dx', handler: this.handleDxMessage.bind(this) },
+      { type: 'requestPageRender', handler: this.handlePageRenderRequest.bind(this) },
+    ];
+
+    messageHandlers.forEach(({ type, handler }) => {
+      this.app.ui.registerMessageHandler(type, handler);
+    });
+
+    this.handlersRegistered = true;
+    this.dx.out('Webview message handlers registered');
+  }
+
+  /**
+   * Handle toolbar drag end message
+   */
+  private async handleDragEnd(msg: WebviewMessage): Promise<void> {
+    const dx = this.dx.sub('handleDragEnd');
+
+    try {
+      const left = msg.left;
+      if (typeof left === 'number') {
+        // Save toolbar position to global state
+        this.app.vscodeapis.updateGlobalState('toolbarPos', left);
+        dx.out(`Toolbar position saved: ${left}px`);
+      }
+    } finally {
+      dx.done();
+    }
+  }
+
+  /**
+   * Handle menu item selection message
+   */
+  private async handleMenuItemSelected(msg: WebviewMessage): Promise<void> {
+    const dx = this.dx.sub('handleMenuItemSelected');
+
+    try {
+      const { menuId, itemId } = msg;
+      if (typeof menuId === 'string' && typeof itemId === 'string') {
+        // Handle menu item selection through menu manager
+        if (this.menuMgr) {
+          await this.menuMgr.handleMenuItemSelected(menuId, itemId);
+          dx.out(`Menu item selected: ${menuId}.${itemId}`);
+        }
+      }
+    } finally {
+      dx.done();
+    }
+  }
+
+  /**
+   * Handle print message
+   */
+  private async handlePrintMessage(msg: WebviewMessage): Promise<void> {
+    const dx = this.dx.sub('handlePrintMessage');
+
+    try {
+      const { printType } = msg;
+      if (typeof printType === 'string') {
+        // Delegate to PaperPrinter for actual printing logic
+        await this.app.paperprinter.handlePrintRequest(printType);
+        dx.out(`Print request handled: ${printType}`);
+      }
+    } finally {
+      dx.done();
+    }
+  }
+
+  /**
+   * Handle diagnostic message from webview
+   */
+  private async handleDxMessage(msg: WebviewMessage): Promise<void> {
+    const dx = this.dx.sub('handleDxMessage', true /* debugOn */);
+    dx.require({ msg }, ['msg']);
+
+    // Output webview diagnostic message via dx.out (forced debug on)
+    if (msg.message) {
+      dx.out(`[Webview] ${msg.message}`);
+    } else {
+      dx.out('Received dx message without message content');
+    }
+    dx.done();
+  }
+
+  /**
+   * Handle page render request from scroll view
+   */
+  private async handlePageRenderRequest(msg: WebviewMessage): Promise<void> {
+    const dx = this.dx.sub('handlePageRenderRequest');
+
+    try {
+      const pageNumber = msg.pageNumber;
+      if (typeof pageNumber !== 'number') {
+        throw new Error('Invalid page number');
+      }
+
+      if (!this.currentViewer) {
+        throw new Error('No active scroll view');
+      }
+
+      // Request page render through current viewer
+      const pageData = await this.currentViewer.requestPageRender(pageNumber);
+
+      // Send response back to webview
+      if (this.panelId) {
+        this.app.vscodeapis.postMessageToPanel(this.panelId, {
+          type: 'pageRenderResponse',
+          pageData: pageData,
+        });
+      }
+
+      dx.out(`Page ${pageNumber} rendered and sent to webview`);
+    } catch (error) {
+      dx.out(`Error handling page render request: ${String(error)}`);
+
+      // Send error response
+      if (this.panelId) {
+        this.app.vscodeapis.postMessageToPanel(this.panelId, {
+          type: 'pageRenderError',
+          error: {
+            message: String(error),
+            pageNumber: msg.pageNumber || 0,
+            type: 'generation',
+            timestamp: new Date(),
+          },
+        });
+      }
     } finally {
       dx.done();
     }

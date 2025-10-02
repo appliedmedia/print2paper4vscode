@@ -14,7 +14,6 @@ export const PAGE_SIZES: PageSize[] = ['letter', 'legal', 'a3', 'a4', 'a5'];
 export class PaperPrinter {
   private app: App;
   private clipboardCapture: ClipboardCapture;
-  private handlersRegistered = false;
   private pdfRendered: jsPDF | null = null; // In-memory PDF document
   private lastRawCode: string | null = null;
   private lastLanguageId: string | null = null;
@@ -47,72 +46,31 @@ export class PaperPrinter {
     return this.clipboardCapture.captureAndConvert();
   }
 
-  // Message handler methods
-  private async handleDragEnd(msg: WebviewMessage): Promise<void> {
-    const dx = this.dx.sub('handleDragEnd');
-    dx.require({ msg }, ['msg']);
-
-    // Save final position when drag ends
-    if (msg.left !== undefined) {
-      try {
-        // Save position to VS Code global state
-        this.app.vscodeapis.updateGlobalState('toolbarPosPx', msg.left);
-        dx.out(`Drag ended at position: ${msg.left}`);
-      } catch (error) {
-        dx.out(`Failed to save toolbar position: ${error}`);
-      }
+  /**
+   * Handle print request from UIWebView
+   */
+  async handlePrintRequest(printType: string): Promise<void> {
+    const dx = this.dx.sub('handlePrintRequest');
+    
+    try {
+      if (!this.pdfRendered) return;
+      void (await this.generatePdf());
+      
+      if (printType === 'preview')
+        await this.app.pdf.printWithPreview(this.pdfRendered, this.printTitle || 'Print Output');
+      else if (printType === 'direct')
+        await this.app.pdf.printDirectly(this.pdfRendered, this.printTitle || 'Print Output');
+      else if (printType === 'save')
+        await this.app.pdf.saveAsPDF(this.pdfRendered, this.printTitle || 'Print Output');
+        
+      dx.out(`Print request handled: ${printType}`);
+    } finally {
+      dx.done();
     }
-    dx.done();
   }
 
-  private async handleMenuItemSelected(msg: WebviewMessage): Promise<void> {
-    const dx = this.dx.sub('handleMenuItemSelected');
-    dx.require({ msg }, ['msg']);
 
-    // Handle menu item selections from the new generic UI system
-    const { targetId, parentId, x, y } = msg;
-    dx.out(`Menu item selected: ${targetId} in menu ${parentId} at (${x}, ${y})`);
 
-    // Get the menu and call its selection handler directly
-    if (parentId && targetId) {
-      const menu = this.app.uimenumgr.getMenu(parentId);
-      if (menu) {
-        dx.out(`Found menu: ${menu.id}, dispatching selection: ${targetId}`);
-        // Dispatch selection via public API
-        await menu.dispatchSelection(targetId);
-      } else {
-        dx.out(`No menu found for parentId: ${parentId}`);
-      }
-    } else {
-      dx.out(`Missing parentId or targetId: parentId=${parentId}, targetId=${targetId}`);
-    }
-    dx.done();
-  }
-
-  private async handleDxMessage(msg: WebviewMessage): Promise<void> {
-    const dx = this.dx.sub('handleDxMessage', true /* debugOn */);
-    dx.require({ msg }, ['msg']);
-
-    // Output webview diagnostic message via dx.out (forced debug on)
-    if (msg.message) {
-      dx.out(`[Webview] ${msg.message}`);
-    } else {
-      dx.out('Received dx message without message content');
-    }
-    dx.done();
-  }
-
-  private async handlePrintMessage(msg: WebviewMessage): Promise<void> {
-    if (!this.pdfRendered) return;
-    void (await this.generatePdf());
-    if (msg.value === 'preview')
-      await this.app.pdf.printWithPreview(this.pdfRendered, this.printTitle || 'Print Output');
-    else if (msg.value === 'direct')
-      await this.app.pdf.printDirectly(this.pdfRendered, this.printTitle || 'Print Output');
-    else if (msg.value === 'save')
-      await this.app.pdf.saveAsPDF(this.pdfRendered, this.printTitle || 'Print Output');
-    // TODO: Re-render webview - need access to panel
-  }
 
   /**
    * Handles print command - automatically detects selection vs document
@@ -169,7 +127,6 @@ export class PaperPrinter {
 
     // Create menus and register message handlers when we actually need them
     this.createMenus();
-    this.registerMessageHandlers();
 
     // Always use webview (handles both single and multiple pages)
     await this.openWebView(tabName);
@@ -209,9 +166,10 @@ export class PaperPrinter {
       
       // Create webview and initialize with everything upfront
       this.currentWebView = new UIWebView(this.app);
+      this.currentWebView.init(); // Initialize message handlers
       
       // Initialize webview with menus and scroll view
-      const panelId = await this.currentWebView.init(this.app.pdf, scrollViewOptions, this.app.uimenumgr);
+      const panelId = await this.currentWebView.initWebview(this.app.pdf, scrollViewOptions, this.app.uimenumgr);
       
       dx.out(`Opened webview for ${tabName}`);
       
@@ -371,23 +329,6 @@ export class PaperPrinter {
     });
   }
 
-  // Register message handlers when needed for the webview
-  private registerMessageHandlers(): void {
-    if (this.handlersRegistered) return;
-
-    const messageHandlers = [
-      { type: 'dragEnd', handler: this.handleDragEnd.bind(this) },
-      { type: 'menuItemSelected', handler: this.handleMenuItemSelected.bind(this) },
-      { type: 'print', handler: this.handlePrintMessage.bind(this) },
-      { type: 'dx', handler: this.handleDxMessage.bind(this) },
-    ];
-
-    messageHandlers.forEach(({ type, handler }) => {
-      this.app.ui.registerMessageHandler(type, handler);
-    });
-
-    this.handlersRegistered = true;
-  }
 
   // Build list methods for each menu type
   private menuItems_Print(): UIMenuItem[] {
