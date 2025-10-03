@@ -18,6 +18,9 @@ describe('PaperPrinter Page Size and Orient Tests', () => {
         }),
       }),
     },
+    ui: {
+      registerMessageHandler: () => {}
+    },
     vscodeapis: {
       getGlobalState: (key: string) => {
         const state: Record<string, any> = {
