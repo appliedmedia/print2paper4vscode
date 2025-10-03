@@ -488,9 +488,21 @@ scroll_js: |
       
       const { dataUrl, widthPx, heightPx } = pageData;
       
-      // Set canvas dimensions
+      // Set canvas dimensions to actual page size
       canvas.width = widthPx;
       canvas.height = heightPx;
+      
+      // Set CSS dimensions to maintain aspect ratio while fitting container
+      const container = canvas.parentElement;
+      if (container) {
+        const containerWidth = container.clientWidth;
+        const aspectRatio = heightPx / widthPx;
+        const scaledHeight = containerWidth * aspectRatio;
+        
+        canvas.style.width = '100%';
+        canvas.style.height = scaledHeight + 'px';
+        canvas.style.maxWidth = '100%';
+      }
       
       // Create image from data URL
       const img = new Image();
