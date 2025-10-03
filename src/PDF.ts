@@ -335,7 +335,7 @@ export class PDF implements PageRender {
     fontSizePx: number,
     lineHeightPx: number,
     title?: string
-  ): Promise<jsPDF> {
+  ): Promise<PDFDoc> {
     const dx = this.dx.sub('generatePdfFromTokens');
     dx.require({ tokens, fontFamily, fontSizePx, lineHeightPx }, [
       'tokens',
@@ -468,7 +468,7 @@ export class PDF implements PageRender {
       }
 
       dx.out(`PDF document created with ${linesToRender} lines rendered`);
-      return finalDoc;
+      return this.createPDFDoc(finalDoc);
     } catch (error) {
       this.app.ui.showErrorMessage(`Failed to generate PDF: ${String(error)}`);
       throw error;
@@ -645,12 +645,12 @@ export class PDF implements PageRender {
         throw error;
       }
 
-      // Note: options.fontSize and options.lineHeight are in pixels, will be converted to points in generateSinglePagePdf
+      // Note: options.fontSize and options.lineHeight are in pixels, will be converted to points in generatePdfPage
       // Extract tokens for this page
       const pageTokens = this.extractTokensForPage(this.currentTokens, pageNumber);
 
       // Generate single-page PDF
-      const pdfDoc = await this.generateSinglePagePdf(pageTokens, options);
+      const pdfDoc = await this.generatePdfPage(pageTokens, options);
 
       // Convert to data URL
       const dataUrl = pdfDoc.output('datauristring') as string;
@@ -821,11 +821,11 @@ export class PDF implements PageRender {
   /**
    * Generate a single-page PDF from tokens
    */
-  private async generateSinglePagePdf(
+  private async generatePdfPage(
     tokens: ThemedToken[][],
     options: RenderOptions
-  ): Promise<jsPDF> {
-    const dx = this.dx.sub('generateSinglePagePdf');
+  ): Promise<PDFDoc> {
+    const dx = this.dx.sub('generatePdfPage');
     dx.require({ tokens, options }, ['tokens', 'options']);
 
     try {
@@ -875,10 +875,10 @@ export class PDF implements PageRender {
         y += lineSpacing;
       }
 
-      dx.out(`Single-page PDF generated: ${tokens.length} lines`);
-      return doc;
+      dx.out(`PDF page generated: ${tokens.length} lines`);
+      return this.createPDFDoc(doc);
     } catch (error) {
-      this.app.ui.showErrorMessage(`Failed to generate single-page PDF: ${String(error)}`);
+      this.app.ui.showErrorMessage(`Failed to generate PDF page: ${String(error)}`);
       throw error;
     } finally {
       dx.done();
