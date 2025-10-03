@@ -5,7 +5,6 @@ import type { UIMenuItem } from './types/UI_t';
 import { Diagnostics } from './Diagnostics';
 import { UIMenu } from './UIMenu';
 import { UIWebView } from './UIWebView';
-import jsPDF from 'jspdf';
 
 // Page size type and order definition
 export type PageSize = 'letter' | 'legal' | 'a3' | 'a4' | 'a5';
@@ -14,7 +13,7 @@ export const PAGE_SIZES: PageSize[] = ['letter', 'legal', 'a3', 'a4', 'a5'];
 export class PaperPrinter {
   private app: App;
   private clipboardCapture: ClipboardCapture;
-  private pdfRendered: jsPDF | null = null; // In-memory PDF document
+  private pdfRendered: any | null = null; // In-memory PDF document (jsPDF instance from PDF abstraction)
   private lastRawCode: string | null = null;
   private lastLanguageId: string | null = null;
   private currentWebView: UIWebView | null = null;
@@ -230,8 +229,9 @@ export class PaperPrinter {
     
     // Fallback to locale-based default
     const locale = this.app.vscodeapis.getLocale() || '  ';
-    const region = locale.slice(-2).toUpperCase();
-    const letterRegions = ['US', 'CA', 'MX'];
+    const parts = locale.split(/[-_]/);
+    const region = parts.pop().toUpperCase();
+    const letterRegions = ['US', 'CA', 'MX', '419'];
     const isLetterSize = letterRegions.includes(region);
     return isLetterSize ? 'letter' : 'a4';
   }
