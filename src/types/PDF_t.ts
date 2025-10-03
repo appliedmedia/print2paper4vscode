@@ -3,7 +3,7 @@
  * Hides jsPDF implementation details behind our own interface
  */
 
-export interface PDFDocument {
+export interface PDFDoc {
   /**
    * Get the number of pages in the document
    */
@@ -43,7 +43,7 @@ export interface PDFDocument {
 /**
  * PDF generation options
  */
-export interface PDFGenerationOptions {
+export interface PDFGenOptions {
   title?: string;
   theme?: string;
   fontSize?: number;

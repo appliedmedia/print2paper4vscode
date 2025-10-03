@@ -7,15 +7,15 @@ import type {
   PageMetadata,
   PageRenderError,
 } from './types/PageRender_t';
-import type { PDFDocument, PDFGenerationOptions } from './types/PDF_t';
+import type { PDFDoc, PDFGenOptions } from './types/PDF_t';
 import { Diagnostics } from './Diagnostics';
 import jsPDF from 'jspdf';
 import type { ThemedToken } from 'shiki';
 
 /**
- * PDFDocument wrapper that hides jsPDF implementation details
+ * PDFDoc wrapper that hides jsPDF implementation details
  */
-class PDFDocumentWrapper implements PDFDocument {
+class PDFDocWrapper implements PDFDoc {
   constructor(private jsPdfDoc: jsPDF) {}
 
   getNumberOfPages(): number {
@@ -91,14 +91,14 @@ export class PDF implements PageRender {
   }
 
   /**
-   * Create a PDFDocument wrapper from a jsPDF instance
+   * Create a PDFDoc wrapper from a jsPDF instance
    * This hides the jsPDF implementation details
    */
-  createPDFDocument(jsPdfDoc: jsPDF): PDFDocument {
-    return new PDFDocumentWrapper(jsPdfDoc);
+  createPDFDoc(jsPdfDoc: jsPDF): PDFDoc {
+    return new PDFDocWrapper(jsPdfDoc);
   }
 
-  async printWithPreview(pdfDoc: PDFDocument, descriptiveName?: string): Promise<void> {
+  async printWithPreview(pdfDoc: PDFDoc, descriptiveName?: string): Promise<void> {
     const dx = this.dx.sub('printWithPreview');
     dx.require({ pdfDoc }, ['pdfDoc']);
 
@@ -127,7 +127,7 @@ export class PDF implements PageRender {
     dx.done();
   }
 
-  async printDirectly(pdfDoc: PDFDocument, descriptiveName?: string): Promise<void> {
+  async printDirectly(pdfDoc: PDFDoc, descriptiveName?: string): Promise<void> {
     try {
       // Generate filename with timestamp
       const timestamp = this.app.os.dateAsYYYYMMDDHHMMSS();
@@ -153,7 +153,7 @@ export class PDF implements PageRender {
     }
   }
 
-  async saveAsPDF(pdfDoc: PDFDocument, descriptiveName?: string): Promise<void> {
+  async saveAsPDF(pdfDoc: PDFDoc, descriptiveName?: string): Promise<void> {
     try {
       // Generate default filename with timestamp
       const timestamp = this.app.os.dateAsYYYYMMDDHHMMSS();
@@ -335,7 +335,7 @@ export class PDF implements PageRender {
     fontSizePx: number,
     lineHeightPx: number,
     title?: string
-  ): Promise<PDFDocument> {
+  ): Promise<PDFDoc> {
     const dx = this.dx.sub('generatePdfFromTokens');
     dx.require({ tokens, fontFamily, fontSizePx, lineHeightPx }, [
       'tokens',
@@ -468,7 +468,7 @@ export class PDF implements PageRender {
       }
 
       dx.out(`PDF document created with ${linesToRender} lines rendered`);
-      return this.createPDFDocument(finalDoc);
+      return this.createPDFDoc(finalDoc);
     } catch (error) {
       this.app.ui.showErrorMessage(`Failed to generate PDF: ${String(error)}`);
       throw error;
@@ -478,7 +478,7 @@ export class PDF implements PageRender {
   }
 
   // Convert PDF document to HTML with scrollable PDF view
-  embedPDFinHTML(pdfDoc: PDFDocument, title: string): string {
+  embedPDFinHTML(pdfDoc: PDFDoc, title: string): string {
     const dx = this.dx.sub('embedPDFinHTML');
     dx.require({ pdfDoc, title }, ['pdfDoc', 'title']);
 
@@ -816,7 +816,7 @@ export class PDF implements PageRender {
   private async generateSinglePagePdf(
     tokens: ThemedToken[][],
     options: RenderOptions
-  ): Promise<PDFDocument> {
+  ): Promise<PDFDoc> {
     const dx = this.dx.sub('generateSinglePagePdf');
     dx.require({ tokens, options }, ['tokens', 'options']);
 
@@ -868,7 +868,7 @@ export class PDF implements PageRender {
       }
 
       dx.out(`Single-page PDF generated: ${tokens.length} lines`);
-      return this.createPDFDocument(doc);
+      return this.createPDFDoc(doc);
     } catch (error) {
       this.app.ui.showErrorMessage(`Failed to generate single-page PDF: ${String(error)}`);
       throw error;
