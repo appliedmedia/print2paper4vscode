@@ -30,7 +30,6 @@ export class PaperPrinter {
     this.app = app;
     this.clipboardCapture = new ClipboardCapture(app);
     this.dx = app.dx.create('PaperPrinter');
-    this.registerMessageHandlers();
   }
 
   init(): void {
@@ -584,26 +583,4 @@ export class PaperPrinter {
   }
 
   // Removed CSS hacks; rely on theme overrides
-
-  /**
-   * Register message handlers for webview communication
-   */
-  private registerMessageHandlers(): void {
-    this.app.ui.registerMessageHandler('dx', this.handleDxMessage.bind(this));
-  }
-
-  /**
-   * Handle dx messages from webview
-   */
-  private async handleDxMessage(msg: WebviewMessage): Promise<void> {
-    const dx = this.dx.sub('handleDxMessage');
-    
-    if (msg.message) {
-      dx.out(`[Webview] ${msg.message}`);
-    } else {
-      dx.out('Received dx message without message content');
-    }
-    
-    dx.done();
-  }
 }
