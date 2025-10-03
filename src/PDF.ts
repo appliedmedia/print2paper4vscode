@@ -608,6 +608,12 @@ export class PDF implements PageRender {
     this.pageTotal = this.pageBreaks.length;
     this.pageMetadata = null; // Invalidate cached metadata
     dx.out(`Set tokens: ${tokens.length} lines, ${this.pageTotal} pages`);
+    
+    // Debug: Log the first few tokens to verify they're set correctly
+    if (tokens.length > 0) {
+      dx.out(`First token line: ${JSON.stringify(tokens[0].slice(0, 3))}`);
+    }
+    
     dx.done();
   }
 
@@ -616,6 +622,8 @@ export class PDF implements PageRender {
     dx.require({ pageNumber, options }, ['pageNumber', 'options']);
 
     try {
+      dx.out(`Page render requested: page ${pageNumber}, total pages: ${this.pageTotal}`);
+      
       // Validate page number
       if (pageNumber < 1 || pageNumber > this.pageTotal) {
         const error: PageRenderError = {

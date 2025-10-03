@@ -209,7 +209,10 @@ describe('System Integration Tests', () => {
     // This test validates that page size and orient functionality integrates properly
 
     const mockApp = {
-      ui: { debugOut: () => {} },
+      ui: { 
+        debugOut: () => {},
+        registerMessageHandler: () => {}
+      },
       vscodeapis: {
         getGlobalState: (key: string) => {
           const state: Record<string, any> = {

@@ -293,6 +293,8 @@ export class UIWebView {
 
     try {
       const pageNumber = msg.pageNumber;
+      dx.out(`Received page render request for page ${pageNumber}`);
+      
       if (typeof pageNumber !== 'number') {
         throw new Error('Invalid page number');
       }

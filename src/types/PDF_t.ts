@@ -20,12 +20,13 @@ export interface PDFDoc {
   getPageHeight(): number;
 
   /**
-   * Set the current page number (1-based)
+   * Set the current page number
+   * @param pageNumber The page number to set (1-indexed)
    */
   setPage(pageNumber: number): void;
 
   /**
-   * Get current page information
+   * Get information about the current page
    */
   getCurrentPageInfo(): { pageNumber: number; pageCount: number };
 
