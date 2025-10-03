@@ -437,10 +437,13 @@ scroll_js: |
       
       // Send message to extension
       if (window.vscode) {
+        console.log(`Sending page render request for page ${pageNumber}`);
         window.vscode.postMessage({
           type: 'requestPageRender',
           pageNumber: pageNumber
         });
+      } else {
+        console.error('window.vscode not available!');
       }
       
       console.log(`Requested render for page ${pageNumber}`);
@@ -536,6 +539,7 @@ scroll_js: |
 
     // Message handling from extension
     function handleExtensionMessage(message) {
+      console.log('Received message from extension:', message);
       switch (message.type) {
         case 'pageRenderResponse':
           handlePageRenderResponse(message.pageData);
