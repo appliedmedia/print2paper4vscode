@@ -7,9 +7,51 @@ import type {
   PageMetadata,
   PageRenderError,
 } from './types/PageRender_t';
+import type { PDFDoc, PDFGenOptions } from './types/PDF_t';
 import { Diagnostics } from './Diagnostics';
 import jsPDF from 'jspdf';
 import type { ThemedToken } from 'shiki';
+
+/**
+ * PDFDoc wrapper that hides jsPDF implementation details
+ */
+class PDFDocWrapper implements PDFDoc {
+  constructor(private jsPdfDoc: jsPDF) {}
+
+  getNumberOfPages(): number {
+    return this.jsPdfDoc.getNumberOfPages();
+  }
+
+  getPageWidth(): number {
+    return this.jsPdfDoc.getPageWidth();
+  }
+
+  getPageHeight(): number {
+    return this.jsPdfDoc.getPageHeight();
+  }
+
+  setPage(pageNumber: number): void {
+    this.jsPdfDoc.setPage(pageNumber);
+  }
+
+  getCurrentPageInfo(): { pageNumber: number; pageCount: number } {
+    return this.jsPdfDoc.getCurrentPageInfo();
+  }
+
+  outputArrayBuffer(): ArrayBuffer {
+    return this.jsPdfDoc.output('arraybuffer') as ArrayBuffer;
+  }
+
+  outputDataUrl(): string {
+    return this.jsPdfDoc.output('datauristring') as string;
+  }
+
+  // Internal method to get the underlying jsPDF instance
+  // This should only be used within the PDF class
+  _getJsPDFInstance(): jsPDF {
+    return this.jsPdfDoc;
+  }
+}
 
 export class PDF implements PageRender {
   private app: App;
@@ -48,7 +90,15 @@ export class PDF implements PageRender {
     this.dx.done();
   }
 
-  async printWithPreview(pdfDoc: jsPDF, descriptiveName?: string): Promise<void> {
+  /**
+   * Create a PDFDoc wrapper from a jsPDF instance
+   * This hides the jsPDF implementation details
+   */
+  createPDFDoc(jsPdfDoc: jsPDF): PDFDoc {
+    return new PDFDocWrapper(jsPdfDoc);
+  }
+
+  async printWithPreview(pdfDoc: PDFDoc, descriptiveName?: string): Promise<void> {
     const dx = this.dx.sub('printWithPreview');
     dx.require({ pdfDoc }, ['pdfDoc']);
 
@@ -77,7 +127,7 @@ export class PDF implements PageRender {
     dx.done();
   }
 
-  async printDirectly(pdfDoc: jsPDF, descriptiveName?: string): Promise<void> {
+  async printDirectly(pdfDoc: PDFDoc, descriptiveName?: string): Promise<void> {
     try {
       // Generate filename with timestamp
       const timestamp = this.app.os.dateAsYYYYMMDDHHMMSS();
@@ -103,7 +153,7 @@ export class PDF implements PageRender {
     }
   }
 
-  async saveAsPDF(pdfDoc: jsPDF, descriptiveName?: string): Promise<void> {
+  async saveAsPDF(pdfDoc: PDFDoc, descriptiveName?: string): Promise<void> {
     try {
       // Generate default filename with timestamp
       const timestamp = this.app.os.dateAsYYYYMMDDHHMMSS();
@@ -428,7 +478,7 @@ export class PDF implements PageRender {
   }
 
   // Convert PDF document to HTML with scrollable PDF view
-  embedPDFinHTML(pdfDoc: jsPDF, title: string): string {
+  embedPDFinHTML(pdfDoc: PDFDoc, title: string): string {
     const dx = this.dx.sub('embedPDFinHTML');
     dx.require({ pdfDoc, title }, ['pdfDoc', 'title']);
 
