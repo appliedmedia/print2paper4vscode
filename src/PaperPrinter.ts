@@ -5,7 +5,7 @@ import type { UIMenuItem } from './types/UI_t';
 import { Diagnostics } from './Diagnostics';
 import { UIMenu } from './UIMenu';
 import { UIWebView } from './UIWebView';
-import type jsPDF from 'jspdf';
+import type { PDFDoc } from './types/PDF_t';
 
 // Page size type and order definition
 export type PageSize = 'letter' | 'legal' | 'a3' | 'a4' | 'a5';
@@ -14,7 +14,7 @@ export const PAGE_SIZES: PageSize[] = ['letter', 'legal', 'a3', 'a4', 'a5'];
 export class PaperPrinter {
   private app: App;
   private clipboardCapture: ClipboardCapture;
-  private pdfRendered: jsPDF | null = null; // In-memory PDF document
+  private pdfRendered: PDFDoc | null = null; // In-memory PDF document
   private lastRawCode: string | null = null;
   private lastLanguageId: string | null = null;
   private currentWebView: UIWebView | null = null;
