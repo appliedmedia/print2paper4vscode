@@ -201,8 +201,8 @@ ui_menu_generic_handlers: |
       // Send minimal selection data to extension
       window.vscode.postMessage({
         type: 'menuItemSelected',
-        targetId: itemEl.id,
-        parentId: menu?.getAttribute('id')
+        itemId: itemEl.id,
+        menuId: menu?.getAttribute('id')
       });
 
         // Close all menus after selection unless the clicked item is a flyout trigger
