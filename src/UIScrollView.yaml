@@ -229,8 +229,10 @@ scroll_js: |
       // Set up performance monitoring
       setupPerformanceMonitoring();
       
-      // Initial render
-      handleScroll();
+      // Initial render with a small delay to ensure webview is ready
+      setTimeout(() => {
+        handleScroll();
+      }, 100);
       
       console.log('Scrollable viewer initialized');
     }
