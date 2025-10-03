@@ -114,7 +114,7 @@ export class PDF implements PageRender {
       const tempPdfPath = this.app.os.pathJoin(tempDir, filename);
 
       // Write PDF document to temp file
-      const pdfBuffer = pdfDoc.output('arraybuffer') as ArrayBuffer;
+      const pdfBuffer = pdfDoc.outputArrayBuffer();
       this.app.os.fileWrite(tempPdfPath, Buffer.from(new Uint8Array(pdfBuffer)));
 
       this.trackTempPdf(tempPdfPath);
@@ -140,7 +140,7 @@ export class PDF implements PageRender {
       const tempPdfPath = this.app.os.pathJoin(tempDir, filename);
 
       // Write PDF document to temp file
-      const pdfBuffer = pdfDoc.output('arraybuffer') as ArrayBuffer;
+      const pdfBuffer = pdfDoc.outputArrayBuffer();
       this.app.os.fileWrite(tempPdfPath, Buffer.from(new Uint8Array(pdfBuffer)));
 
       this.trackTempPdf(tempPdfPath);
@@ -173,7 +173,7 @@ export class PDF implements PageRender {
       this.app.os.ensureDir(targetDir);
 
       // Save PDF document directly to chosen location
-      const pdfBuffer = pdfDoc.output('arraybuffer') as ArrayBuffer;
+      const pdfBuffer = pdfDoc.outputArrayBuffer();
       this.app.os.fileWrite(targetPath, Buffer.from(new Uint8Array(pdfBuffer)));
 
       // Track file for cleanup (optional)
@@ -484,7 +484,7 @@ export class PDF implements PageRender {
 
     try {
       // Generate a data URL from the PDF document
-      const pdfDataUrl = pdfDoc.output('datauristring') as string;
+      const pdfDataUrl = pdfDoc.outputDataUrl();
       dx.out(`PDF data URL generated: ${pdfDataUrl.substring(0, 50)}...`);
 
       // Load YAML templates and PDF.js library

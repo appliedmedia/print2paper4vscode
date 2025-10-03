@@ -30,6 +30,7 @@ export class PaperPrinter {
     this.app = app;
     this.clipboardCapture = new ClipboardCapture(app);
     this.dx = app.dx.create('PaperPrinter');
+    this.registerMessageHandlers();
   }
 
   init(): void {
@@ -109,10 +110,11 @@ export class PaperPrinter {
       if (!this.currentThemeChoice) {
         this.currentThemeChoice = this.app.vscodeapis.getActiveThemeId();
       }
-      this.pdfRendered = await this.app.stylize.styleToPdf(info.text, info.languageId, {
+      const jsPdfDoc = await this.app.stylize.styleToPdf(info.text, info.languageId, {
         title: this.printTitle,
         theme: this.currentThemeChoice,
       });
+      this.pdfRendered = this.app.pdf.createPDFDoc(jsPdfDoc);
       await this.openPrintPrepAndPrompt(printableLabel);
     } catch (error) {
       this.dx.out(`Error handling print: ${error}`);
@@ -195,16 +197,16 @@ export class PaperPrinter {
     if (this.lastRawCode && this.lastLanguageId) {
       const sizePx = this.computeFontSizePx();
       const lhPx = this.computeLineHeightPx(sizePx);
-      const newPdfDoc = await this.app.stylize.styleToPdf(this.lastRawCode, this.lastLanguageId, {
+      const jsPdfDoc = await this.app.stylize.styleToPdf(this.lastRawCode, this.lastLanguageId, {
         fontSize: sizePx,
         lineHeight: lhPx,
         title: this.printTitle,
         theme: this.currentThemeChoice,
       });
       // Store the new PDF document
-      this.pdfRendered = newPdfDoc;
+      this.pdfRendered = this.app.pdf.createPDFDoc(jsPdfDoc);
       // Convert PDF to HTML
-      return this.app.pdf.embedPDFinHTML(newPdfDoc, this.printTitle);
+      return this.app.pdf.embedPDFinHTML(this.pdfRendered, this.printTitle);
     }
     // For existing PDF document, convert to HTML
     return this.app.pdf.embedPDFinHTML(this.pdfRendered!, this.printTitle);
@@ -231,7 +233,7 @@ export class PaperPrinter {
     // Fallback to locale-based default
     const locale = this.app.vscodeapis.getLocale() || '  ';
     const parts = locale.split(/[-_]/);
-    const region = parts.pop().toUpperCase();
+    const region = parts.pop()?.toUpperCase() || '';
     const letterRegions = ['US', 'CA', 'MX', '419'];
     const isLetterSize = letterRegions.includes(region);
     return isLetterSize ? 'letter' : 'a4';
@@ -582,4 +584,26 @@ export class PaperPrinter {
   }
 
   // Removed CSS hacks; rely on theme overrides
+
+  /**
+   * Register message handlers for webview communication
+   */
+  private registerMessageHandlers(): void {
+    this.app.ui.registerMessageHandler('dx', this.handleDxMessage.bind(this));
+  }
+
+  /**
+   * Handle dx messages from webview
+   */
+  private async handleDxMessage(msg: WebviewMessage): Promise<void> {
+    const dx = this.dx.sub('handleDxMessage');
+    
+    if (msg.message) {
+      dx.out(`[Webview] ${msg.message}`);
+    } else {
+      dx.out('Received dx message without message content');
+    }
+    
+    dx.done();
+  }
 }
