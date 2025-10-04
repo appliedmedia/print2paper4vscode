@@ -602,6 +602,9 @@ scroll_js: |
         }
       }
       
+      // Force scroll handler to re-render by resetting lastScrollTop
+      db.lastScrollTop = -999;
+      
       // Trigger initial render
       handleScroll();
     }
