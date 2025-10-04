@@ -45,12 +45,18 @@ This document provides developer-specific guidance, coding standards, and implem
 - **TypeScript**: Compilation to JavaScript
 - **macOS**: Currently optimized for macOS with AppleScript integration
 
+### Environment Setup (Run First in New VM)
+
+1. **Install Node.js/npm**: `curl -fsSL https://deb.nodesource.com/setup_lts.x | sudo -E bash - && sudo apt-get install -y nodejs`
+2. **Install TypeScript**: `npm install -g typescript`
+3. **Install GitHub CLI**: `curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | sudo dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg && echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | sudo tee /etc/apt/sources.list.d/github-cli.list > /dev/null && sudo apt update && sudo apt install gh`
+4. **Install Project Dependencies**: `npm install`
+
 ### Build & Test Process
 
-1. **Install Dependencies**: `npm install` (run this first in any new environment)
-2. **Compile**: `npm run compile` (TypeScript to JavaScript)
-3. **Test**: Run `npm test` to execute all tests using Node.js built-in test runner
-4. **Extension**: Load extension in VS Code for testing
+1. **Compile**: `npm run compile` (TypeScript to JavaScript)
+2. **Test**: Run `npm test` to execute all tests using Node.js built-in test runner
+3. **Extension**: Load extension in VS Code for testing
 
 **Testing Framework**: This project uses Node.js built-in test runner (`node:test`) with `node:assert`. All test files should import from `node:test` and `node:assert`, not third-party testing frameworks like Mocha or Jest.
 
