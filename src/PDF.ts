@@ -418,6 +418,12 @@ export class PDF implements PageRender {
         format: [finalWidthPts, finalHeightPts],
       });
 
+      // Convert fontSize from pixels to points for jsPDF
+      const fontSizePts = this.pxToPts(fontSizePx);
+
+      // Convert lineHeight from pixels to points for jsPDF
+      const lineHeightPts = this.pxToPts(lineHeightPx);
+
       // Add title if provided
       const marginLeft = 20;
       const marginTop = 20;
