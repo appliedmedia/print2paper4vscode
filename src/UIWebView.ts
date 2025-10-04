@@ -241,7 +241,7 @@ export class UIWebView {
       const left = msg.left;
       if (typeof left === 'number') {
         // Save toolbar position to global state
-        this.app.vscodeapis.updateGlobalState('toolbarPos', left);
+        this.app.vscodeapis.updateGlobalState('toolbarPos', String(left));
         dx.out(`Toolbar position saved: ${left}px`);
       }
     } finally {

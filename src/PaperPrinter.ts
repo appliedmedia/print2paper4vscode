@@ -7,8 +7,8 @@ import { UIWebView } from './UIWebView';
 import type { PDFDoc } from './types/PDF_t';
 
 // Page size type and order definition
-export type PageSize = 'letter' | 'legal' | 'a3' | 'a4' | 'a5';
-export const PAGE_SIZES: PageSize[] = ['letter', 'legal', 'a3', 'a4', 'a5'];
+export type PageSizeId = 'letter' | 'legal' | 'a3' | 'a4' | 'a5';
+export const PAGE_SIZE_IDS: PageSizeId[] = ['letter', 'legal', 'a3', 'a4', 'a5'];
 
 export class PaperPrinter {
   private app: App;
@@ -138,19 +138,22 @@ export class PaperPrinter {
       await this.generatePdf();
 
       // Set tokens in PDF for page-based rendering
-      if (this.lastRawCode && this.lastLanguageId) {
-        const tokens = await this.app.stylize.getTokens(this.lastRawCode, this.lastLanguageId, {
-          theme: this.currentThemeChoice,
-        });
-        this.app.pdf.setTokens(tokens);
+      if (!this.lastRawCode || !this.lastLanguageId) {
+        this.app.ui.showErrorMessage('No active editor found. Please open a file to print.');
+        return;
       }
+
+      const tokens = await this.app.stylize.getTokens(this.lastRawCode, this.lastLanguageId, {
+        theme: this.currentThemeChoice,
+      });
+      this.app.pdf.setTokens(tokens);
 
       // Create webview options
       const fontSizePx = this.computeFontSizePx(); // fontSize in pixels
       const lineHeightPx = this.computeLineHeightPx(fontSizePx); // lineHeight in pixels
       const scrollViewOptions = {
         title: tabName,
-        pageSize: this.pageSize,
+        pageSize: this.pageSizeId,
         orient: this.orient,
         fontFamily: this.getCurrentFontFamily(),
         fontSizePx: fontSizePx, // fontSize in pixels - will be converted to points in PDF generation
@@ -212,11 +215,11 @@ export class PaperPrinter {
   }
 
   // ES6 getter/setter pattern for page size
-  get pageSize(): PageSize {
+  get pageSizeId(): PageSizeId {
     // Get from global state with locale-based fallback
-    const savedPageSize = this.app.vscodeapis.getGlobalState('pageSize');
-    if (savedPageSize) {
-      return savedPageSize as PageSize;
+    const savedPageSizeId = this.app.vscodeapis.getGlobalState('pageSizeId');
+    if (savedPageSizeId) {
+      return savedPageSizeId as PageSizeId;
     }
 
     // Fallback to locale-based default
@@ -228,8 +231,8 @@ export class PaperPrinter {
     return isLetterSize ? 'letter' : 'a4';
   }
 
-  set pageSize(value: PageSize) {
-    this.app.vscodeapis.updateGlobalState('pageSize', value);
+  set pageSizeId(value: PageSizeId) {
+    this.app.vscodeapis.updateGlobalState('pageSizeId', value);
   }
 
   // ES6 getter/setter pattern for orient
@@ -379,7 +382,7 @@ export class PaperPrinter {
   }
 
   private menuItems_Page(): UIMenuItem[] {
-    const pageSizeLabels: Record<PageSize, string> = {
+    const pageSizeLabels: Record<PageSizeId, string> = {
       letter: 'Letter (8.5" × 11")',
       legal: 'Legal (8.5" × 14")',
       a3: 'A3 (297mm × 420mm)',
@@ -391,7 +394,7 @@ export class PaperPrinter {
       // Orientation submenu reference
       { id: 'orient', displayName: 'Orient' },
       // Page sizes in consistent order
-      ...PAGE_SIZES.map(size => ({ id: size, displayName: pageSizeLabels[size] })),
+      ...PAGE_SIZE_IDS.map(size => ({ id: size, displayName: pageSizeLabels[size] })),
     ];
   }
 
@@ -506,22 +509,22 @@ export class PaperPrinter {
 
     if (selectedId === UIMenu.defaultId()) {
       // Return the current page size for default selection
-      const currentPageSize = this.pageSize;
-      dx.out(`returning current page size: ${currentPageSize}`);
+      const currentPageSizeId = this.pageSizeId;
+      dx.out(`returning current page size: ${currentPageSizeId}`);
       dx.done();
-      return currentPageSize;
+      return currentPageSizeId;
     }
 
     // Handle page size selection
-    if (PAGE_SIZES.includes(selectedId as PageSize)) {
+    if (PAGE_SIZE_IDS.includes(selectedId as PageSizeId)) {
       dx.out(`updating page size to ${selectedId}`);
-      this.pageSize = selectedId as PageSize;
+      this.pageSizeId = selectedId as PageSizeId;
 
       // Update webview with new page size
       dx.out(`updating webview with new page size`);
       if (this.currentWebView) {
         try {
-          await this.currentWebView.updateOptions({ pageSize: selectedId as PageSize });
+          await this.currentWebView.updateOptions({ pageSize: selectedId as PageSizeId });
         } catch (error) {
           this.app.ui.showErrorMessage(`Failed to update page size: ${String(error)}`);
         }

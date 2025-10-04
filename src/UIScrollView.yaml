@@ -149,7 +149,7 @@ scroll_html: |
     <div class="performance-info" id="performance-info">
       <div>Pages: <span id="page-count">0</span>/<span id="total-pages">{{TOTAL_PAGES}}</span></div>
       <div>Canvases: <span id="canvas-count">0</span>/<span id="max-canvases">{{MAX_CANVASES}}</span></div>
-      <div>Memory: <span id="memory-usage">0</span>MB</div>
+      <div>Canvas assignments: <span id="canvas-assignments">1:0 2:0 3:0 4:0 5:0 6:0 7:0</span></div>
     </div>
 
 
@@ -198,7 +198,6 @@ scroll_js: |
       // Performance tracking
       renderStartTime: 0,
       renderCount: 0,
-      memoryUsage: 0,
       perfUpdateCounter: 0
     };
 
@@ -208,9 +207,19 @@ scroll_js: |
     const canvasPool = document.getElementById('canvas-pool');
     const performanceInfo = document.getElementById('performance-info');
 
+    // Send diagnostic message to extension
+    function sendDxMessage(message) {
+      if (window.vscode) {
+        window.vscode.postMessage({
+          type: 'dx',
+          message
+        });
+      }
+    }
+
     // Initialize the scrollable viewer
     function initScrollableViewer() {
-      console.log('Initializing scrollable viewer with config:', CONFIG);
+      sendDxMessage(`Initializing scrollable viewer with config: ${JSON.stringify(CONFIG)}`);
       
       // Set up canvas pool
       createCanvasPool();
@@ -227,7 +236,7 @@ scroll_js: |
       // Initial render
       handleScroll();
       
-      console.log('Scrollable viewer initialized');
+      sendDxMessage('Scrollable viewer initialized');
     }
 
     // Create canvas pool for performance
@@ -240,7 +249,7 @@ scroll_js: |
         db.canvasPool.push(canvas);
         db.availableCanvases.add(canvas.id);
       }
-      console.log(`Created canvas pool with ${CONFIG.maxCanvases} canvases`);
+      sendDxMessage(`Created canvas pool with ${CONFIG.maxCanvases} canvases`);
     }
 
     // Create page placeholders
@@ -255,7 +264,7 @@ scroll_js: |
         `;
         content.appendChild(placeholder);
       }
-      console.log(`Created ${CONFIG.pageTotal} page placeholders`);
+      sendDxMessage(`Created ${CONFIG.pageTotal} page placeholders`);
     }
 
     // Set up scroll handling with debouncing and throttling
@@ -300,7 +309,7 @@ scroll_js: |
       
       // Only log in debug mode
       if (CONFIG.debug) {
-        console.log(`Visible pages: ${visibleRange.start}-${visibleRange.end}`);
+        sendDxMessage(`Visible pages: ${visibleRange.start}-${visibleRange.end}`);
       }
       
       // Assign canvases to visible pages
@@ -385,7 +394,8 @@ scroll_js: |
       // Request page render
       requestPageRender(pageNumber);
       
-      console.log(`Assigned canvas ${canvasId} to page ${pageNumber}`);
+      sendDxMessage(`Assigned canvas ${canvasId} to page ${pageNumber}`);
+      updateCanvasAssignments();
     }
 
     // Unassign canvas from page
@@ -419,7 +429,8 @@ scroll_js: |
         `;
       }
       
-      console.log(`Unassigned canvas ${canvasId} from page ${pageNumber}`);
+      sendDxMessage(`Unassigned canvas ${canvasId} from page ${pageNumber}`);
+      updateCanvasAssignments();
     }
 
     // Request page render from extension
@@ -432,7 +443,7 @@ scroll_js: |
       
       // Send message to extension
       if (window.vscode) {
-        console.log(`Sending page render request for page ${pageNumber}`);
+        sendDxMessage(`Sending page render request for page ${pageNumber}`);
         window.vscode.postMessage({
           type: 'requestPageRender',
           pageNumber: pageNumber
@@ -441,7 +452,7 @@ scroll_js: |
         console.error('window.vscode not available!');
       }
       
-      console.log(`Requested render for page ${pageNumber}`);
+      sendDxMessage(`Requested render for page ${pageNumber}`);
     }
 
     // Handle page render response
@@ -460,7 +471,7 @@ scroll_js: |
         renderPageToCanvas(pageData, canvasId);
       }
       
-      console.log(`Rendered page ${pageNumber}`);
+      sendDxMessage(`Rendered page ${pageNumber}`);
     }
 
     // Handle page render error
@@ -519,7 +530,6 @@ scroll_js: |
     function setupPerformanceMonitoring() {
       setInterval(() => {
         updatePerformanceInfo();
-        checkMemoryUsage();
       }, 1000);
     }
 
@@ -527,26 +537,27 @@ scroll_js: |
     function updatePerformanceInfo() {
       const pageCount = db.assignedCanvases.size;
       const canvasCount = CONFIG.maxCanvases - db.availableCanvases.size;
-      const memoryUsage = db.memoryUsage.toFixed(1);
       
       document.getElementById('page-count').textContent = pageCount;
       document.getElementById('canvas-count').textContent = canvasCount;
-      document.getElementById('memory-usage').textContent = memoryUsage;
+      updateCanvasAssignments();
     }
 
-    // Check memory usage
-    function checkMemoryUsage() {
-      // Use real memory API if available
-      if (performance.memory) {
-        db.memoryUsage = performance.memory.usedJSHeapSize / (1024 * 1024);
-      } else {
-        db.memoryUsage = 0; // Unavailable
+    // Update canvas assignments display
+    function updateCanvasAssignments() {
+      const assignments = [];
+      for (let i = 1; i <= CONFIG.maxCanvases; i++) {
+        const pageNumber = Array.from(db.assignedCanvases.entries())
+          .find(([page, canvasId]) => canvasId === `canvas-${i}`)?.[0] || 0;
+        assignments.push(`${i}:${pageNumber}`);
       }
+      document.getElementById('canvas-assignments').textContent = assignments.join(' ');
     }
+
 
     // Message handling from extension
     function handleExtensionMessage(message) {
-      console.log('Received message from extension:', message);
+      sendDxMessage(`Received message from extension: ${JSON.stringify(message)}`);
       switch (message.type) {
         case 'pageRenderResponse':
           handlePageRenderResponse(message.pageData);
@@ -558,13 +569,13 @@ scroll_js: |
           clearAllRenderedPages();
           break;
         default:
-          console.log('Unknown message type:', message.type);
+          sendDxMessage(`Unknown message type: ${message.type}`);
       }
     }
 
     // Clear all rendered pages and reset to loading state
     function clearAllRenderedPages() {
-      console.log('Clearing all rendered pages');
+      sendDxMessage('Clearing all rendered pages');
       
       // Clear all rendered page data
       db.renderedPages.clear();

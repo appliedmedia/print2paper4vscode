@@ -1,6 +1,6 @@
 /**
  * PageRender Interface Definitions
- * 
+ *
  * Defines the contract for page-based content rendering in the scrollable viewer system.
  * Any content type that can be rendered as pages should implement this interface.
  */
@@ -38,8 +38,6 @@ export interface PageMetadata {
   pageWidthPx: number;
   /** Standard page height in pixels */
   pageHeightPx: number;
-  /** Estimated memory usage in MB */
-  estimatedMemoryMB: number;
 }
 
 export interface PageRenderError {
@@ -55,7 +53,7 @@ export interface PageRenderError {
 
 /**
  * PageRender Interface
- * 
+ *
  * Core interface for page-based content rendering. Implementations should:
  * - Generate individual pages on-demand
  * - Provide metadata about the document
@@ -76,14 +74,14 @@ export interface PageRender {
    * Get the total number of pages in the document
    * @returns Promise resolving to total page count
    */
-  getTotalPages(): Promise<number>;
+  getPageTotal(): Promise<number>;
 
   /**
-   * Get metadata about the document and pages
-   * @returns Promise resolving to page metadata
+   * Get page dimensions in pixels
+   * @returns Promise resolving to page dimensions
    */
-  getPageMetadata(): Promise<PageMetadata>;
+  getPageDimensionsPx(): Promise<{ widthPx: number; heightPx: number }>;
 }
 
-// Re-export PageSize from PaperPrinter for convenience
-export type { PageSize } from '../PaperPrinter';
+// Re-export PageSizeId from PaperPrinter for convenience
+export type { PageSizeId } from '../PaperPrinter';

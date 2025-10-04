@@ -1,7 +1,6 @@
 import type { App } from './App';
 import type { PageRender, PageData, PageMetadata } from './types/PageRender_t';
 import type { WebviewPanelId } from './VSCodeAPIs';
-import { UIMenuMgr } from './UIMenuMgr';
 import { Diagnostics } from './Diagnostics';
 
 // ScrollOptions interface
@@ -26,7 +25,6 @@ export class UIScrollView {
   private pageCache: Map<number, PageData> = new Map();
   private renderQueue: Set<number> = new Set();
   private panelId: WebviewPanelId | null = null;
-  private menuMgr: UIMenuMgr;
   private _yaml: {
     scroll_html: string;
     scroll_css: string;
@@ -37,7 +35,6 @@ export class UIScrollView {
     this.app = app;
     this.pageRender = pageRender;
     this.options = options;
-    this.menuMgr = app.uimenumgr;
     this.dx = app.dx.create('UIScrollView');
   }
 
@@ -70,8 +67,9 @@ export class UIScrollView {
     const dx = this.dx.sub('generateContent');
 
     try {
-      // Get page metadata
-      const metadata = await this.pageRender.getPageMetadata();
+      // Get page total and dimensions
+      const pageTotal = await this.pageRender.getPageTotal();
+      const dimensions = await this.pageRender.getPageDimensionsPx();
 
       // Get scroll view templates from yaml getter
       const templates = this.yaml;
@@ -83,9 +81,9 @@ export class UIScrollView {
       const templatesWithBaseCss = { ...templates, base_css: baseCss };
 
       // Generate HTML with scroll view
-      const html = await this.generateScrollViewHTML(templatesWithBaseCss, metadata);
+      const html = await this.generateScrollViewHTML(templatesWithBaseCss, pageTotal, dimensions);
 
-      dx.out(`Generated scroll view content with ${metadata.pageTotal} pages`);
+      dx.out(`Generated scroll view content with ${pageTotal} pages`);
       return html;
     } catch (error) {
       this.app.ui.showErrorMessage(`Failed to generate scroll view content: ${String(error)}`);
@@ -221,7 +219,8 @@ export class UIScrollView {
    */
   private async generateScrollViewHTML(
     templates: { scroll_html: string; scroll_css: string; scroll_js: string; base_css: string },
-    metadata: PageMetadata
+    pageTotal: number,
+    dimensions: { widthPx: number; heightPx: number }
     /* options: ScrollOptions */
   ): Promise<string> {
     const dx = this.dx.sub('generateScrollViewHTML');
@@ -233,8 +232,8 @@ export class UIScrollView {
 
       // Create template dictionary
       const templateDict = {
-        PAGE_TOTAL: metadata.pageTotal.toString(),
-        TOTAL_PAGES: metadata.pageTotal.toString(), // Also provide TOTAL_PAGES for HTML template
+        PAGE_TOTAL: pageTotal.toString(),
+        TOTAL_PAGES: pageTotal.toString(), // Also provide TOTAL_PAGES for HTML template
         MAX_CANVASES: maxCanvases.toString(),
         SCROLL_DEBOUNCE_MS: scrollDebounceMs.toString(),
         TOOLBAR: await this.generateToolbarHTML(),
@@ -265,20 +264,21 @@ export class UIScrollView {
 
     try {
       // Get menu HTML from the provided UIMenuMgr
-      const menuHtml = await this.menuMgr.getAllUIMenuHTML();
+      const menuHtml = await this.app.uimenumgr.getAllUIMenuHTML();
 
       // Get toolbar templates from UI yaml getter
       const templates = this.app.ui.yaml;
 
-      // Load UIMenu CSS for proper menu styling
-      const uiMenuCss = this.menuMgr.getAllUIMenuCSS();
+      // Load UIMenu CSS and JS for proper menu styling and functionality
+      const uiMenuCss = this.app.uimenumgr.getAllUIMenuCSS();
+      const uiMenuJs = this.app.uimenumgr.getAllUIMenuJS();
 
       // Generate full toolbar HTML with CSS and JS
       return this.app.templateDictReplace(templates.toolbar_html, {
         TOOLBAR_CSS: templates.toolbar_css + '\n' + uiMenuCss, // Include UIMenu CSS
         CSS: templates.base_css, // Use base_css from templates
         HTML: menuHtml, // This matches {{HTML}} in toolbar_html
-        TOOLBAR_JS: templates.toolbar_js,
+        TOOLBAR_JS: templates.toolbar_js + '\n' + uiMenuJs, // Include UIMenu JS
         JS: '', // No additional JS needed for scrollable viewer
       });
     } finally {
