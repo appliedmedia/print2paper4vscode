@@ -400,11 +400,6 @@ export class PDF implements PageRender {
       const pageTokens = this.extractTokensForPage(tokens, 1);
       const finalDoc = await this.generatePdfPage(pageTokens, renderOptions);
 
-      // Map font family to jsPDF supported fonts
-      const jsPdfFont = this.mapFontFamilyToJsPDF(fontFamily, finalDoc);
-      finalDoc.setFont(jsPdfFont, 'normal');
-      finalDoc.setFontSize(fontSizePts);
-
       // Add title if provided
       const marginLeft = 20;
       const marginTop = 20;
@@ -694,9 +689,15 @@ export class PDF implements PageRender {
     const dx = this.dx.sub('getPageSizePx');
 
     try {
-      // Calculate page dimensions
-      const pageSize = this.getPageDimensions('a4', 'portrait'); // Use A4 as standard
-      const unit = this.getUnitForPageSize('a4');
+      // Get page size and orient from global state (same as generatePdfFromTokens)
+      const pageSizeId = (this.app.vscodeapis.getGlobalState('pageSizeId') || 'a4') as PageSizeId;
+      const orient = (this.app.vscodeapis.getGlobalState('orient') || 'portrait') as
+        | 'portrait'
+        | 'landscape';
+
+      // Calculate page dimensions using actual settings
+      const pageSize = this.getPageDimensions(pageSizeId, orient);
+      const unit = this.getUnitForPageSize(pageSizeId);
 
       // Convert to pixels using existing pattern
       const { widthPts: pageWidthPts, heightPts: pageHeightPts } = this.pageSizeToPts(
