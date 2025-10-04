@@ -47,9 +47,10 @@ This document provides developer-specific guidance, coding standards, and implem
 
 ### Build & Test Process
 
-1. **Compile**: `npm run compile` (TypeScript to JavaScript)
-2. **Test**: Run `npm test` to execute all tests using Node.js built-in test runner
-3. **Extension**: Load extension in VS Code for testing
+1. **Install Dependencies**: `npm install` (run this first in any new environment)
+2. **Compile**: `npm run compile` (TypeScript to JavaScript)
+3. **Test**: Run `npm test` to execute all tests using Node.js built-in test runner
+4. **Extension**: Load extension in VS Code for testing
 
 **Testing Framework**: This project uses Node.js built-in test runner (`node:test`) with `node:assert`. All test files should import from `node:test` and `node:assert`, not third-party testing frameworks like Mocha or Jest.
 
