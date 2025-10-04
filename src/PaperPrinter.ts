@@ -454,23 +454,32 @@ export class PaperPrinter {
     this.currentThemeChoice = selectedId;
 
     // Regenerate PDF with new theme
-    await this.generatePdf();
+    if (this.lastRawCode && this.lastLanguageId) {
+      const sizePx = this.computeFontSizePx();
+      const lhPx = this.computeLineHeightPx(sizePx);
+      this.pdfDoc = await this.app.stylize.styleToPdf(this.lastRawCode, this.lastLanguageId, {
+        fontSize: sizePx,
+        lineHeight: lhPx,
+        title: this.printTitle,
+        theme: this.currentThemeChoice,
+      });
 
-    // Update PageRender with regenerated PDF
-    const pageRender: PageRender = {
-      renderPage: this.app.pdf.renderPage.bind(this.app.pdf),
-      getPageTotal: this.app.pdf.getPageTotal.bind(this.app.pdf),
-      getPageSizePx: this.app.pdf.getPageSizePx.bind(this.app.pdf),
-    };
+      // Update PageRender with regenerated PDF
+      const pageRender: PageRender = {
+        renderPage: this.app.pdf.renderPage.bind(this.app.pdf),
+        getPageTotal: this.app.pdf.getPageTotal.bind(this.app.pdf),
+        getPageSizePx: this.app.pdf.getPageSizePx.bind(this.app.pdf),
+      };
 
-    // Update webview with new theme and PageRender
-    dx.out(`updating webview with new theme and page render`);
-    if (this.currentWebView) {
-      try {
-        await this.currentWebView.updatePageRender(pageRender);
-        await this.currentWebView.updateOptions({ theme: selectedId });
-      } catch (error) {
-        this.app.ui.showErrorMessage(`Failed to update theme: ${String(error)}`);
+      // Update webview with new theme and PageRender
+      dx.out(`updating webview with new theme and page render`);
+      if (this.currentWebView) {
+        try {
+          await this.currentWebView.updatePageRender(pageRender);
+          await this.currentWebView.updateOptions({ theme: selectedId });
+        } catch (error) {
+          this.app.ui.showErrorMessage(`Failed to update theme: ${String(error)}`);
+        }
       }
     }
 
@@ -498,26 +507,34 @@ export class PaperPrinter {
       this.currentFontSize = fontSize;
 
       // Regenerate PDF with new font size
-      await this.generatePdf();
+      if (this.lastRawCode && this.lastLanguageId) {
+        const lhPx = this.computeLineHeightPx(fontSize);
+        this.pdfDoc = await this.app.stylize.styleToPdf(this.lastRawCode, this.lastLanguageId, {
+          fontSize: fontSize,
+          lineHeight: lhPx,
+          title: this.printTitle,
+          theme: this.currentThemeChoice,
+        });
 
-      // Update PageRender with regenerated PDF
-      const pageRender: PageRender = {
-        renderPage: this.app.pdf.renderPage.bind(this.app.pdf),
-        getPageTotal: this.app.pdf.getPageTotal.bind(this.app.pdf),
-        getPageSizePx: this.app.pdf.getPageSizePx.bind(this.app.pdf),
-      };
+        // Update PageRender with regenerated PDF
+        const pageRender: PageRender = {
+          renderPage: this.app.pdf.renderPage.bind(this.app.pdf),
+          getPageTotal: this.app.pdf.getPageTotal.bind(this.app.pdf),
+          getPageSizePx: this.app.pdf.getPageSizePx.bind(this.app.pdf),
+        };
 
-      // Update webview with new font size and PageRender
-      dx.out(`updating webview with new font size and page render`);
-      if (this.currentWebView) {
-        try {
-          await this.currentWebView.updatePageRender(pageRender);
-          await this.currentWebView.updateOptions({
-            fontSizePx: fontSize,
-            lineHeightPx: this.computeLineHeightPx(fontSize),
-          });
-        } catch (error) {
-          this.app.ui.showErrorMessage(`Failed to update font size: ${String(error)}`);
+        // Update webview with new font size and PageRender
+        dx.out(`updating webview with new font size and page render`);
+        if (this.currentWebView) {
+          try {
+            await this.currentWebView.updatePageRender(pageRender);
+            await this.currentWebView.updateOptions({
+              fontSizePx: fontSize,
+              lineHeightPx: lhPx,
+            });
+          } catch (error) {
+            this.app.ui.showErrorMessage(`Failed to update font size: ${String(error)}`);
+          }
         }
       }
 
