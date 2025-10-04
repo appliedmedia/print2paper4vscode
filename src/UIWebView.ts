@@ -63,8 +63,8 @@ export class UIWebView {
       // Store current panel ID in UI for message handling
       this.app.ui.currentPanelId = panelId;
 
-      // Pre-render initial pages
-      await this.preRenderInitialPages(pageRender, options);
+      // Note: Pre-rendering disabled - let scroll handler render pages on demand
+      // This avoids coordinate transform issues and ensures fresh data
 
       this.initialized = true;
       dx.out(`Created webview panel: ${options.title || 'Document Viewer'}`);
