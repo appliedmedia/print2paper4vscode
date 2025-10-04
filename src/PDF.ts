@@ -396,13 +396,7 @@ export class PDF implements PageRender {
         orient: orient,
       };
 
-      // Render the first page to get the PDF content
-      const pageData = await this.renderPage(1, renderOptions);
-
-      // The pageData.dataUrl contains the PDF content we need
-      // Since jsPDF can't directly load from data URL, we need to extract the PDF bytes
-      // and recreate the document. For now, we'll use the existing approach but
-      // ensure we're using the actual rendered content dimensions
+      // Create document with proper dimensions
       const pageSize = this.getPageDimensions(pageSizeId, orient);
       const unit = this.getUnitForPageSize(pageSizeId);
       const { widthPts: finalWidthPts, heightPts: finalHeightPts } = this.pageSizeToPts(
