@@ -631,9 +631,11 @@ export class PDF implements PageRender {
   setTokens(tokens: ThemedToken[][]): void {
     const dx = this.dx.sub('setTokens');
     this.currentTokens = tokens;
-    this.pageBreaks = this.calculatePageBreaks(tokens);
-    this.pageTotal = this.pageBreaks.length;
-    dx.out(`Set tokens: ${tokens.length} lines, ${this.pageTotal} pages`);
+    // Don't calculate page breaks here - they'll be calculated dynamically in renderPage
+    // based on the actual render options (font size, line height, etc.)
+    this.pageBreaks = [];
+    this.pageTotal = 0;
+    dx.out(`Set tokens: ${tokens.length} lines (page breaks calculated dynamically)`);
 
     // Debug: Log the first few tokens to verify they're set correctly
     if (tokens.length > 0) {
@@ -648,6 +650,20 @@ export class PDF implements PageRender {
     dx.require({ pageNumber, options }, ['pageNumber', 'options']);
 
     try {
+      if (!this.currentTokens) {
+        const error: PageRenderError = {
+          message: 'No tokens available for rendering. Call setTokens() first.',
+          pageNumber,
+          type: 'generation',
+          timestamp: new Date(),
+        };
+        throw error;
+      }
+
+      // Calculate page breaks dynamically based on actual render options
+      this.pageBreaks = this.calculatePageBreaks(this.currentTokens, options);
+      this.pageTotal = this.pageBreaks.length;
+
       dx.out(`Page render requested: page ${pageNumber}, total pages: ${this.pageTotal}`);
 
       // Validate page number
@@ -656,16 +672,6 @@ export class PDF implements PageRender {
           message: `Invalid page number: ${pageNumber}. Valid range: 1-${this.pageTotal}`,
           pageNumber,
           type: 'validation',
-          timestamp: new Date(),
-        };
-        throw error;
-      }
-
-      if (!this.currentTokens) {
-        const error: PageRenderError = {
-          message: 'No tokens available for rendering. Call setTokens() first.',
-          pageNumber,
-          type: 'generation',
           timestamp: new Date(),
         };
         throw error;
@@ -760,27 +766,21 @@ export class PDF implements PageRender {
   /**
    * Calculate page breaks based on content and page size constraints
    */
-  private calculatePageBreaks(tokens: ThemedToken[][]): number[] {
+  private calculatePageBreaks(tokens: ThemedToken[][], options: RenderOptions): number[] {
     const dx = this.dx.sub('calculatePageBreaks');
 
     try {
-      // Get current page size and orient from global state
-      const pageSizeId = (this.app.vscodeapis.getGlobalState('pageSizeId') || 'a4') as PageSizeId;
-      const orient = (this.app.vscodeapis.getGlobalState('orient') || 'portrait') as
-        | 'portrait'
-        | 'landscape';
-
-      // Calculate how many lines fit per page
-      const pageSize = this.getPageDimensions(pageSizeId, orient);
-      const unit = this.getUnitForPageSize(pageSizeId);
+      // Calculate how many lines fit per page using actual render options
+      const pageSize = this.getPageDimensions(options.pageSizeId, options.orient);
+      const unit = this.getUnitForPageSize(options.pageSizeId);
       const { heightPts } = this.pageSizeToPts(0, pageSize.height, unit);
 
-      // Estimate lines per page (rough calculation)
+      // Use actual line height from options (convert pixels to points)
       const marginTop = 20; // Top margin in points
       const marginBottom = 36; // Bottom margin in points
-      const lineHeight = 12; // Default line height in points
+      const lineHeightPts = this.pxToPts(options.lineHeight);
       const availableHeight = heightPts - marginTop - marginBottom;
-      const linesPerPage = Math.floor(availableHeight / lineHeight);
+      const linesPerPage = Math.floor(availableHeight / lineHeightPts);
 
       // Calculate page breaks - always start with page 0
       const pageBreaks: number[] = [0];
@@ -789,7 +789,7 @@ export class PDF implements PageRender {
       }
 
       dx.out(
-        `Calculated ${pageBreaks.length} page breaks for ${tokens.length} lines (${linesPerPage} lines/page)`
+        `Calculated ${pageBreaks.length} page breaks for ${tokens.length} lines (${linesPerPage} lines/page, ${lineHeightPts}pt line height)`
       );
       return pageBreaks;
     } catch (error) {
