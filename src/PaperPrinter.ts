@@ -135,19 +135,13 @@ export class PaperPrinter {
     const dx = this.dx.sub('openWebView');
 
     try {
-      // Generate PDF and set tokens for page-based rendering
+      // Generate PDF (styleToPdf already sets tokens internally)
       await this.generatePdf();
 
-      // Set tokens in PDF for page-based rendering
       if (!this.lastRawCode || !this.lastLanguageId) {
         this.app.ui.showErrorMessage('No active editor found. Please open a file to print.');
         return;
       }
-
-      const tokens = await this.app.stylize.getTokens(this.lastRawCode, this.lastLanguageId, {
-        theme: this.currentThemeChoice,
-      });
-      this.app.pdf.setTokens(tokens);
 
       // Construct PageRender implementation
       const pageRender: PageRender = {

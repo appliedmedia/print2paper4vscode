@@ -406,46 +406,6 @@ export class Stylize {
     return converter.convert(code, languageId, opts);
   }
 
-  /**
-   * Get tokens for page-based rendering
-   */
-  async getTokens(
-    code: string,
-    languageId: LanguageId,
-    opts?: { theme?: string }
-  ): Promise<ThemedToken[][]> {
-    const dx = this.dx.sub('getTokens');
-    dx.require({ code, languageId }, ['code', 'languageId']);
-
-    try {
-      // Ensure highlighter is ready
-      await this.validateHighlighter(languageId);
-      
-      if (!this.highlighter) {
-        throw new Error('Highlighter not available');
-      }
-
-      // Determine theme
-      const selectedTheme = opts?.theme || this.resolveActiveTheme();
-      
-      // Tokenize code
-      const tokenResult = this.highlighter.codeToTokens(code, {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        lang: languageId as any,
-        theme: selectedTheme,
-      });
-
-      const tokens = tokenResult?.tokens || [];
-      dx.out(`Generated ${tokens.length} lines of tokens`);
-      return tokens;
-
-    } catch (error) {
-      dx.out(`Token generation failed: ${String(error)}`);
-      throw error;
-    } finally {
-      dx.done();
-    }
-  }
 
   /**
    * Resolve active theme for token generation
