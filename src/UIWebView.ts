@@ -49,24 +49,78 @@ export class UIWebView {
       // Generate HTML content from scroll view
       const html = await this.currentViewer.generateContent();
 
-      // Create webview panel
-      this.panelId = this.app.vscodeapis.createWebviewPanel(
+      // Create or reuse webview panel
+      const panelId = await this.app.vscodeapis.getOrCreateWebviewPanel(
         options.title || 'Document Viewer',
-        html
+        html,
+        this.panelId || undefined
       );
+      this.panelId = panelId;
 
       // Set panel ID in scroll view
-      this.currentViewer.setPanelId(this.panelId);
+      this.currentViewer.setPanelId(panelId);
 
       // Store current panel ID in UI for message handling
-      this.app.ui.currentPanelId = this.panelId;
+      this.app.ui.currentPanelId = panelId;
+
+      // Pre-render initial pages
+      await this.preRenderInitialPages(pageRender, options);
 
       this.initialized = true;
       dx.out(`Created webview panel: ${options.title || 'Document Viewer'}`);
-      return this.panelId;
+      return panelId;
     } catch (error) {
       this.app.ui.showErrorMessage(`Failed to create webview panel: ${String(error)}`);
       throw error;
+    } finally {
+      dx.done();
+    }
+  }
+
+  /**
+   * Pre-render initial pages for faster display
+   */
+  private async preRenderInitialPages(
+    pageRender: PageRender,
+    options: ScrollOptions
+  ): Promise<void> {
+    const dx = this.dx.sub('preRenderInitialPages');
+
+    try {
+      // Get total pages
+      const pageTotal = await pageRender.getPageTotal();
+
+      // Pre-render first 5 pages or total pages, whichever is smaller
+      const pagesToRender = Math.min(5, pageTotal);
+      dx.out(`Pre-rendering ${pagesToRender} of ${pageTotal} pages`);
+
+      // Render each page and send to webview
+      for (let pageNumber = 1; pageNumber <= pagesToRender; pageNumber++) {
+        try {
+          const pageData = await pageRender.renderPage(pageNumber, {
+            fontFamily: options.fontFamily || 'Courier New',
+            fontSize: options.fontSizePx || 12,
+            lineHeight: options.lineHeightPx || 18,
+            theme: options.theme || 'github-light',
+            pageSizeId: options.pageSize || 'a4',
+            orient: options.orient || 'portrait',
+          });
+
+          // Send rendered page to webview
+          if (this.panelId) {
+            this.app.vscodeapis.postMessage(this.panelId, {
+              type: 'pageRenderResponse',
+              pageData: pageData,
+            });
+          }
+
+          dx.out(`Pre-rendered page ${pageNumber}`);
+        } catch (error) {
+          dx.out(`Failed to pre-render page ${pageNumber}: ${String(error)}`);
+        }
+      }
+    } catch (error) {
+      dx.out(`Pre-render failed: ${String(error)}`);
     } finally {
       dx.done();
     }
@@ -104,20 +158,22 @@ export class UIWebView {
       // Generate HTML content from scroll view
       const html = await this.currentViewer.generateContent();
 
-      // Create webview panel
-      this.panelId = this.app.vscodeapis.createWebviewPanel(
+      // Create or reuse webview panel
+      const panelId = await this.app.vscodeapis.getOrCreateWebviewPanel(
         options.title || 'Document Viewer',
-        html
+        html,
+        this.panelId || undefined
       );
+      this.panelId = panelId;
 
       // Set panel ID in scroll view
-      this.currentViewer.setPanelId(this.panelId);
+      this.currentViewer.setPanelId(panelId);
 
       // Store current panel ID in UI for message handling
-      this.app.ui.currentPanelId = this.panelId;
+      this.app.ui.currentPanelId = panelId;
 
       dx.out(`Created scroll view: ${options.title || 'Document Viewer'}`);
-      return this.panelId;
+      return panelId;
     } catch (error) {
       this.app.ui.showErrorMessage(`Failed to create scroll view: ${String(error)}`);
       throw error;
@@ -200,6 +256,12 @@ export class UIWebView {
         this.currentViewer.done();
         this.currentViewer = null;
       }
+
+      // Remove panel from VSCodeAPIs map
+      if (this.panelId) {
+        this.app.vscodeapis.removePanel(this.panelId);
+      }
+
       this.menuMgr = null;
       this.panelId = null;
       this.initialized = false;
@@ -291,7 +353,7 @@ export class UIWebView {
    * Handle diagnostic message from webview
    */
   private async handleDxMessage(msg: PostMessage): Promise<void> {
-    const dx = this.dx.sub('handleDxMessage', true /* debugOn */);
+    const dx = this.dx.sub('dx', true /* debugOn */);
     dx.require({ msg }, ['msg']);
 
     // Output webview diagnostic message via dx.out (forced debug on)
@@ -326,7 +388,7 @@ export class UIWebView {
 
       // Send response back to webview
       if (this.panelId) {
-        this.app.vscodeapis.postMessageToPanel(this.panelId, {
+        this.app.vscodeapis.postMessage(this.panelId, {
           type: 'pageRenderResponse',
           pageData: pageData,
         });
@@ -338,7 +400,7 @@ export class UIWebView {
 
       // Send error response
       if (this.panelId) {
-        this.app.vscodeapis.postMessageToPanel(this.panelId, {
+        this.app.vscodeapis.postMessage(this.panelId, {
           type: 'pageRenderError',
           error: {
             message: String(error),

@@ -1,13 +1,7 @@
 import type { App } from './App';
 import type { PageSizeId } from './PaperPrinter';
-import type {
-  PageRender,
-  PageData,
-  RenderOptions,
-  PageMetadata,
-  PageRenderError,
-} from './types/PageRender_t';
-import type { PDFDoc, PDFGenOptions } from './types/PDF_t';
+import type { PageRender, PageData, RenderOptions, PageRenderError } from './types/PageRender_t';
+import type { PDFDoc } from './types/PDF_t';
 import { Diagnostics } from './Diagnostics';
 import jsPDF from 'jspdf';
 import type { ThemedToken } from 'shiki';
@@ -57,16 +51,44 @@ export class PDF implements PageRender {
   private app: App;
   private tempPdfs: string[] = [];
   private dx: Diagnostics;
+  private _yaml: {
+    pdf_html: string;
+    pdf_css: string;
+    pdf_js: string;
+  } = {
+    pdf_html: '',
+    pdf_css: '',
+    pdf_js: '',
+  };
 
   // PageRender implementation state
   private currentTokens: ThemedToken[][] | null = null;
   private pageBreaks: number[] = [];
   private pageTotal: number = 0;
-  private pageMetadata: PageMetadata | null = null;
 
   constructor(app: App) {
     this.app = app;
     this.dx = app.dx.create('PDF');
+  }
+
+  get yaml() {
+    // If already loaded, return it
+    if (this._yaml.pdf_html) {
+      return this._yaml;
+    }
+
+    // Load and parse YAML file
+    const yaml = this.app.os.fileRead<{
+      pdf_html: string;
+      pdf_css: string;
+      pdf_js: string;
+    }>('src/PDF.yaml');
+
+    // Cache it
+    if (yaml) {
+      this._yaml = yaml;
+    }
+    return this._yaml;
   }
 
   init(): void {
@@ -74,7 +96,6 @@ export class PDF implements PageRender {
     this.currentTokens = null;
     this.pageBreaks = [];
     this.pageTotal = 0;
-    this.pageMetadata = null;
   }
 
   done(): void {
@@ -371,12 +392,12 @@ export class PDF implements PageRender {
         fontSize: fontSizePx,
         lineHeight: lineHeightPx,
         theme: 'github-light', // Default theme for backward compatibility
-        pageSize: pageSizeId,
+        pageSizeId: pageSizeId,
         orient: orient,
       };
 
       // For backward compatibility, render only the first page
-      const pageData = await this.pageRender(1, renderOptions);
+      const pageData = await this.renderPage(1, renderOptions);
 
       // Convert data URL back to jsPDF document for backward compatibility
       // This is a temporary solution - ideally we'd return PageData directly
@@ -490,8 +511,8 @@ export class PDF implements PageRender {
   }
 
   // Convert PDF document to HTML with scrollable PDF view
-  embedPDFinHTML(pdfDoc: PDFDoc, title: string): string {
-    const dx = this.dx.sub('embedPDFinHTML');
+  embedPDFinHTML_OBSOLETE_DELETEME(pdfDoc: PDFDoc, title: string): string {
+    const dx = this.dx.sub('embedPDFinHTML_OBSOLETE_DELETEME');
     dx.require({ pdfDoc, title }, ['pdfDoc', 'title']);
 
     try {
@@ -500,14 +521,8 @@ export class PDF implements PageRender {
       dx.out(`PDF data URL generated: ${pdfDataUrl.substring(0, 50)}...`);
 
       // Load YAML templates and PDF.js library
-      const pdfTemplates = this.app.os.fileRead<{
-        pdf_html: string;
-        pdf_css: string;
-        pdf_js: string;
-      }>('src/PDF.yaml');
-
+      const pdfTemplates = this.yaml;
       const uiTemplates = this.app.ui.yaml;
-
       const pdfJsContent = this.app.os.fileRead('src/lib/pdf.min.js');
 
       dx.out(
@@ -618,7 +633,6 @@ export class PDF implements PageRender {
     this.currentTokens = tokens;
     this.pageBreaks = this.calculatePageBreaks(tokens);
     this.pageTotal = this.pageBreaks.length;
-    this.pageMetadata = null; // Invalidate cached metadata
     dx.out(`Set tokens: ${tokens.length} lines, ${this.pageTotal} pages`);
 
     // Debug: Log the first few tokens to verify they're set correctly
@@ -629,8 +643,8 @@ export class PDF implements PageRender {
     dx.done();
   }
 
-  async pageRender(pageNumber: number, options: RenderOptions): Promise<PageData> {
-    const dx = this.dx.sub('pageRender');
+  async renderPage(pageNumber: number, options: RenderOptions): Promise<PageData> {
+    const dx = this.dx.sub('renderPage');
     dx.require({ pageNumber, options }, ['pageNumber', 'options']);
 
     try {
@@ -668,8 +682,8 @@ export class PDF implements PageRender {
       const dataUrl = pdfDoc.asDataUrl();
 
       // Get page dimensions
-      const pageSize = this.getPageDimensions(options.pageSize, options.orient);
-      const unit = this.getUnitForPageSize(options.pageSize);
+      const pageSize = this.getPageDimensions(options.pageSizeId, options.orient);
+      const unit = this.getUnitForPageSize(options.pageSizeId);
       const { widthPts, heightPts } = this.pageSizeToPts(pageSize.width, pageSize.height, unit);
 
       // Convert dimensions to pixels for PageData (interface expects pixels)
@@ -712,8 +726,8 @@ export class PDF implements PageRender {
     return total;
   }
 
-  async getPageDimensionsPx(): Promise<{ widthPx: number; heightPx: number }> {
-    const dx = this.dx.sub('getPageDimensionsPx');
+  async getPageSizePx(): Promise<{ widthPx: number; heightPx: number }> {
+    const dx = this.dx.sub('getPageSizePx');
 
     try {
       // Calculate page dimensions
@@ -819,8 +833,8 @@ export class PDF implements PageRender {
 
     try {
       // Get page dimensions
-      const pageSize = this.getPageDimensions(options.pageSize, options.orient);
-      const unit = this.getUnitForPageSize(options.pageSize);
+      const pageSize = this.getPageDimensions(options.pageSizeId, options.orient);
+      const unit = this.getUnitForPageSize(options.pageSizeId);
       const { widthPts, heightPts } = this.pageSizeToPts(pageSize.width, pageSize.height, unit);
 
       // Create PDF document

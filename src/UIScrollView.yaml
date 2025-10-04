@@ -132,6 +132,9 @@ scroll_html: |
       {{BASE_CSS}}
       {{SCROLL_CSS}}
     </style>
+    <script>
+      {{PDFJS_LIBRARY}}
+    </script>
   </head>
   <body>
     <div class="scrollable-viewer" id="scrollable-viewer">
@@ -149,7 +152,7 @@ scroll_html: |
     <div class="performance-info" id="performance-info">
       <div>Pages: <span id="page-count">0</span>/<span id="total-pages">{{TOTAL_PAGES}}</span></div>
       <div>Canvases: <span id="canvas-count">0</span>/<span id="max-canvases">{{MAX_CANVASES}}</span></div>
-      <div>Canvas assignments: <span id="canvas-assignments">1:0 2:0 3:0 4:0 5:0 6:0 7:0</span></div>
+      <div><span id="canvas-assignments">c1:p0 c2:p0 c3:p0 c4:p0 c5:p0 c6:p0 c7:p0</span></div>
     </div>
 
 
@@ -166,6 +169,14 @@ scroll_js: |
   // Scrollable Viewer Implementation
   (function() {
     'use strict';
+
+    // Initialize PDF.js
+    if (typeof pdfjsLib !== 'undefined') {
+      pdfjsLib.GlobalWorkerOptions.workerSrc = '{{as_uri:src/lib/pdf.worker.min.js}}';
+      dx('PDF.js initialized');
+    } else {
+      dx('ERROR: PDF.js library not loaded!');
+    }
 
     // Configuration from template
     const CONFIG = {
@@ -189,9 +200,10 @@ scroll_js: |
       renderedPages: new Map(), // pageNumber -> PageData
       pendingPages: new Set(), // pageNumbers being rendered
       failedPages: new Set(), // pageNumbers that failed to render
+      pdfDocs: new Map(), // pageNumber -> PDF.js document for each page
       
       // Scroll state
-      lastScrollTop: 0,
+      lastScrollTop: -999, // Set to -999 to ensure initial scroll triggers assignment
       scrollDirection: 'down',
       isScrolling: false,
       
@@ -208,7 +220,7 @@ scroll_js: |
     const performanceInfo = document.getElementById('performance-info');
 
     // Send diagnostic message to extension
-    function sendDxMessage(message) {
+    function dx(message) {
       if (window.vscode) {
         window.vscode.postMessage({
           type: 'dx',
@@ -219,7 +231,7 @@ scroll_js: |
 
     // Initialize the scrollable viewer
     function initScrollableViewer() {
-      sendDxMessage(`Initializing scrollable viewer with config: ${JSON.stringify(CONFIG)}`);
+      dx(`Initializing scrollable viewer with config: ${JSON.stringify(CONFIG)}`);
       
       // Set up canvas pool
       createCanvasPool();
@@ -236,7 +248,7 @@ scroll_js: |
       // Initial render
       handleScroll();
       
-      sendDxMessage('Scrollable viewer initialized');
+      dx('Scrollable viewer initialized');
     }
 
     // Create canvas pool for performance
@@ -249,7 +261,7 @@ scroll_js: |
         db.canvasPool.push(canvas);
         db.availableCanvases.add(canvas.id);
       }
-      sendDxMessage(`Created canvas pool with ${CONFIG.maxCanvases} canvases`);
+      dx(`Created canvas pool with ${CONFIG.maxCanvases} canvases`);
     }
 
     // Create page placeholders
@@ -258,43 +270,41 @@ scroll_js: |
         const placeholder = document.createElement('div');
         placeholder.id = `page-${i}`;
         placeholder.className = 'page-placeholder loading';
+        placeholder.style.width = '{{PAGE_WIDTH_PX}}px';
+        placeholder.style.height = '{{PAGE_HEIGHT_PX}}px';
         placeholder.innerHTML = `
           <div class="page-label">Page ${i}</div>
           <div class="loading-text">Loading page ${i}...</div>
         `;
         content.appendChild(placeholder);
       }
-      sendDxMessage(`Created ${CONFIG.pageTotal} page placeholders`);
+      dx(`Created ${CONFIG.pageTotal} page placeholders`);
     }
 
-    // Set up scroll handling with debouncing and throttling
+    // Set up scroll handling with RAF-based throttling
     function setupScrollHandling() {
-      let scrollTimeout;
+      let rafPending = false;
       
       viewer.addEventListener('scroll', () => {
-        if (db.isScrolling) return; // Prevent multiple simultaneous scroll handlers
+        if (rafPending) return; // One request per frame
         
-        if (scrollTimeout) {
-          clearTimeout(scrollTimeout);
-        }
-        
-        scrollTimeout = setTimeout(() => {
-          db.isScrolling = true;
+        rafPending = true;
+        requestAnimationFrame(() => {
           handleScroll();
-          db.isScrolling = false;
-        }, CONFIG.scrollDebounceMs);
+          rafPending = false;
+        });
       });
     }
 
     // Handle scroll events
     function handleScroll() {
       const scrollTop = viewer.scrollTop;
-      const scrollHeight = viewer.scrollHeight;
-      const clientHeight = viewer.clientHeight;
       
       // Only process if scroll position actually changed significantly
       const scrollDelta = Math.abs(scrollTop - db.lastScrollTop);
-      if (scrollDelta < 10) return; // Ignore small scroll changes
+      if (scrollDelta < 10) {
+        return; // Ignore small scroll changes
+      }
       
       // Update scroll direction
       if (scrollTop > db.lastScrollTop) {
@@ -304,15 +314,8 @@ scroll_js: |
       }
       db.lastScrollTop = scrollTop;
       
-      // Get visible page range
+      // Get visible page range and assign canvases
       const visibleRange = getVisiblePageRange();
-      
-      // Only log in debug mode
-      if (CONFIG.debug) {
-        sendDxMessage(`Visible pages: ${visibleRange.start}-${visibleRange.end}`);
-      }
-      
-      // Assign canvases to visible pages
       assignCanvasesToPages(visibleRange);
       
       // Update performance info every 10th call
@@ -329,15 +332,8 @@ scroll_js: |
       const clientHeight = viewer.clientHeight;
       const pageGap = CONFIG.pageGap;
       
-      // Calculate page height based on actual page dimensions
-      // Use the height from the first rendered page, or fallback to estimated height
-      let pageHeightPx = 800; // Fallback estimated height
-      if (db.renderedPages.size > 0) {
-        const firstPageData = db.renderedPages.values().next().value;
-        if (firstPageData && firstPageData.heightPx) {
-          pageHeightPx = firstPageData.heightPx;
-        }
-      }
+      // Use exact page dimensions from config
+      const pageHeightPx = {{PAGE_HEIGHT_PX}};
       
       const startPage = Math.max(1, Math.floor(scrollTop / (pageHeightPx + pageGap)) + 1);
       const endPage = Math.min(CONFIG.pageTotal, Math.ceil((scrollTop + clientHeight) / (pageHeightPx + pageGap)) + 1);
@@ -366,18 +362,11 @@ scroll_js: |
 
     // Assign canvas to page
     function assignCanvasToPage(pageNumber) {
-      if (db.availableCanvases.size === 0) {
-        console.warn('No available canvases for page', pageNumber);
-        return;
-      }
+      if (db.availableCanvases.size === 0) return;
       
       const canvasId = db.availableCanvases.values().next().value;
       const canvas = document.getElementById(canvasId);
-      
-      if (!canvas) {
-        console.error('Canvas not found:', canvasId);
-        return;
-      }
+      if (!canvas) return;
       
       // Remove from available pool
       db.availableCanvases.delete(canvasId);
@@ -391,10 +380,14 @@ scroll_js: |
         placeholder.appendChild(canvas);
       }
       
-      // Request page render
-      requestPageRender(pageNumber);
+      // Check if page already rendered
+      if (db.renderedPages.has(pageNumber)) {
+        const pageData = db.renderedPages.get(pageNumber);
+        renderPageToCanvas(pageData, canvasId);
+      } else {
+        requestPageRender(pageNumber);
+      }
       
-      sendDxMessage(`Assigned canvas ${canvasId} to page ${pageNumber}`);
       updateCanvasAssignments();
     }
 
@@ -429,7 +422,7 @@ scroll_js: |
         `;
       }
       
-      sendDxMessage(`Unassigned canvas ${canvasId} from page ${pageNumber}`);
+      dx(`Unassigned canvas ${canvasId} from page ${pageNumber}`);
       updateCanvasAssignments();
     }
 
@@ -443,16 +436,11 @@ scroll_js: |
       
       // Send message to extension
       if (window.vscode) {
-        sendDxMessage(`Sending page render request for page ${pageNumber}`);
         window.vscode.postMessage({
           type: 'requestPageRender',
           pageNumber: pageNumber
         });
-      } else {
-        console.error('window.vscode not available!');
       }
-      
-      sendDxMessage(`Requested render for page ${pageNumber}`);
     }
 
     // Handle page render response
@@ -471,7 +459,7 @@ scroll_js: |
         renderPageToCanvas(pageData, canvasId);
       }
       
-      sendDxMessage(`Rendered page ${pageNumber}`);
+      dx(`Rendered page ${pageNumber}`);
     }
 
     // Handle page render error
@@ -492,38 +480,52 @@ scroll_js: |
       console.error(`Page ${pageNumber} render failed:`, error);
     }
 
-    // Render page data to canvas
-    function renderPageToCanvas(pageData, canvasId) {
+    // Render page data to canvas using PDF.js
+    async function renderPageToCanvas(pageData, canvasId) {
       const canvas = document.getElementById(canvasId);
       if (!canvas) return;
       
-      const { dataUrl, widthPx, heightPx } = pageData;
+      const { dataUrl, widthPx, heightPx, pageNumber } = pageData;
+      if (!dataUrl) return;
       
-      // Set canvas dimensions to actual page size
-      canvas.width = widthPx;
-      canvas.height = heightPx;
-      
-      // Set CSS dimensions to maintain aspect ratio while fitting container
-      const container = canvas.parentElement;
-      if (container) {
-        const containerWidth = container.clientWidth;
-        const aspectRatio = heightPx / widthPx;
-        const scaledHeight = containerWidth * aspectRatio;
-        
-        canvas.style.width = '100%';
-        canvas.style.height = scaledHeight + 'px';
-        canvas.style.maxWidth = '100%';
-      }
-      
-      // Create image from data URL
-      const img = new Image();
-      img.onload = () => {
-        const ctx = canvas.getContext('2d');
-        if (ctx) {
-          ctx.drawImage(img, 0, 0, widthPx, heightPx);
+      try {
+        // Load PDF document if not already loaded for this page
+        if (!db.pdfDocs.has(pageNumber)) {
+          const loadingTask = pdfjsLib.getDocument({
+            url: dataUrl,
+            disableAutoFetch: true,
+            disableStream: true,
+            disableRange: true
+          });
+          const pdfDoc = await loadingTask.promise;
+          db.pdfDocs.set(pageNumber, pdfDoc);
         }
-      };
-      img.src = dataUrl;
+        
+        const pdfDoc = db.pdfDocs.get(pageNumber);
+        const page = await pdfDoc.getPage(1); // Single-page PDF
+        
+        const viewport = page.getViewport({ scale: CONFIG.scale });
+        canvas.width = viewport.width;
+        canvas.height = viewport.height;
+        
+        // Set CSS dimensions
+        const container = canvas.parentElement;
+        if (container) {
+          canvas.style.width = '100%';
+          canvas.style.height = 'auto';
+        }
+        
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return;
+        
+        await page.render({
+          canvasContext: ctx,
+          viewport: viewport
+        }).promise;
+        
+      } catch (error) {
+        dx(`🖼️ PDF render error for canvas ${canvasId}: ${error.message}`);
+      }
     }
 
     // Set up performance monitoring
@@ -546,10 +548,11 @@ scroll_js: |
     // Update canvas assignments display
     function updateCanvasAssignments() {
       const assignments = [];
-      for (let i = 1; i <= CONFIG.maxCanvases; i++) {
+      for (let i = 0; i < CONFIG.maxCanvases; i++) {
+        const canvasId = `canvas-${i}`;
         const pageNumber = Array.from(db.assignedCanvases.entries())
-          .find(([page, canvasId]) => canvasId === `canvas-${i}`)?.[0] || 0;
-        assignments.push(`${i}:${pageNumber}`);
+          .find(([page, cid]) => cid === canvasId)?.[0] || 0;
+        assignments.push(`c${i+1}:p${pageNumber}`);
       }
       document.getElementById('canvas-assignments').textContent = assignments.join(' ');
     }
@@ -557,7 +560,7 @@ scroll_js: |
 
     // Message handling from extension
     function handleExtensionMessage(message) {
-      sendDxMessage(`Received message from extension: ${JSON.stringify(message)}`);
+      dx(`Received message from extension: ${JSON.stringify(message)}`);
       switch (message.type) {
         case 'pageRenderResponse':
           handlePageRenderResponse(message.pageData);
@@ -569,13 +572,13 @@ scroll_js: |
           clearAllRenderedPages();
           break;
         default:
-          sendDxMessage(`Unknown message type: ${message.type}`);
+          dx(`Unknown message type: ${message.type}`);
       }
     }
 
     // Clear all rendered pages and reset to loading state
     function clearAllRenderedPages() {
-      sendDxMessage('Clearing all rendered pages');
+      dx('Clearing all rendered pages');
       
       // Clear all rendered page data
       db.renderedPages.clear();

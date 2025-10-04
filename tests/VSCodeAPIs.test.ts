@@ -175,15 +175,18 @@ describe('VSCodeAPIs Wrapper', () => {
   });
 
   describe('WebView Panel Management', () => {
-    it('should create webview panel', () => {
-      const panelId = vscodeAPIs.createWebviewPanel('Test Panel', '<html><body>Test</body></html>');
+    it('should create webview panel', async () => {
+      const panelId = await vscodeAPIs.getOrCreateWebviewPanel(
+        'Test Panel',
+        '<html><body>Test</body></html>'
+      );
 
       assert.ok(panelId, 'Should create webview panel ID');
       assert.strictEqual(typeof panelId, 'string', 'Should return string ID');
     });
 
-    it('should handle webview panel options', () => {
-      const panelId = vscodeAPIs.createWebviewPanel(
+    it('should handle webview panel options', async () => {
+      const panelId = await vscodeAPIs.getOrCreateWebviewPanel(
         'Test Panel',
         '<html><body>Test with options</body></html>'
       );
@@ -192,11 +195,11 @@ describe('VSCodeAPIs Wrapper', () => {
       assert.strictEqual(typeof panelId, 'string', 'Should return string ID');
     });
 
-    it('should handle different view types', () => {
+    it('should handle different view types', async () => {
       const viewTypes = ['test-view', 'custom-view', 'print-preview'];
 
       for (const viewType of viewTypes) {
-        const panelId = vscodeAPIs.createWebviewPanel(
+        const panelId = await vscodeAPIs.getOrCreateWebviewPanel(
           'Test Panel',
           `<html><body>Test ${viewType}</body></html>`
         );

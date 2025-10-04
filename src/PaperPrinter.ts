@@ -5,6 +5,7 @@ import { Diagnostics } from './Diagnostics';
 import { UIMenu } from './UIMenu';
 import { UIWebView } from './UIWebView';
 import type { PDFDoc } from './types/PDF_t';
+import type { PageRender } from './types/PageRender_t';
 
 // Page size type and order definition
 export type PageSizeId = 'letter' | 'legal' | 'a3' | 'a4' | 'a5';
@@ -148,25 +149,32 @@ export class PaperPrinter {
       });
       this.app.pdf.setTokens(tokens);
 
-      // Create webview options
-      const fontSizePx = this.computeFontSizePx(); // fontSize in pixels
-      const lineHeightPx = this.computeLineHeightPx(fontSizePx); // lineHeight in pixels
-      const scrollViewOptions = {
+      // Construct PageRender implementation
+      const pageRender: PageRender = {
+        renderPage: (pageNumber, options) => this.app.pdf.renderPage(pageNumber, options),
+        getPageTotal: () => this.app.pdf.getPageTotal(),
+        getPageSizePx: () => this.app.pdf.getPageSizePx(),
+      };
+
+      // ScrollView options
+      const fontSizePx = this.computeFontSizePx();
+      const lineHeightPx = this.computeLineHeightPx(fontSizePx);
+      const options = {
         title: tabName,
         pageSize: this.pageSizeId,
         orient: this.orient,
         fontFamily: this.getCurrentFontFamily(),
-        fontSizePx: fontSizePx, // fontSize in pixels - will be converted to points in PDF generation
-        lineHeightPx: lineHeightPx, // lineHeight in pixels - will be converted to points in PDF generation
+        fontSizePx: fontSizePx,
+        lineHeightPx: lineHeightPx,
         theme: this.currentThemeChoice,
       };
 
-      // Create webview and initialize with everything upfront
+      // Create webview and initialize message handlers
       this.currentWebView = new UIWebView(this.app);
-      this.currentWebView.init(); // Initialize message handlers
+      this.currentWebView.init();
 
-      // Create webview panel with menus and scroll view
-      await this.currentWebView.createPanel(this.app.pdf, scrollViewOptions);
+      // Create webview panel with page renderer and options
+      await this.currentWebView.createPanel(pageRender, options);
 
       dx.out(`Opened webview for ${tabName}`);
     } catch (error) {
@@ -185,7 +193,7 @@ export class PaperPrinter {
     return editorTypo.fontFamily;
   }
 
-  private async generatePdf(): Promise<string> {
+  private async generatePdf(): Promise<void> {
     // If we have raw code, regenerate with theme overrides
     if (this.lastRawCode && this.lastLanguageId) {
       const sizePx = this.computeFontSizePx();
@@ -197,11 +205,7 @@ export class PaperPrinter {
         title: this.printTitle,
         theme: this.currentThemeChoice,
       });
-      // Convert PDF to HTML
-      return this.app.pdf.embedPDFinHTML(this.pdfDoc, this.printTitle);
     }
-    // For existing PDF document, convert to HTML
-    return this.app.pdf.embedPDFinHTML(this.pdfDoc!, this.printTitle);
   }
 
   private computeFontSizePx(): number {
@@ -449,10 +453,21 @@ export class PaperPrinter {
     dx.out(`updating theme to ${selectedId}`);
     this.currentThemeChoice = selectedId;
 
-    // Update webview with new theme
-    dx.out(`updating webview with new theme`);
+    // Regenerate PDF with new theme
+    await this.generatePdf();
+
+    // Update PageRender with regenerated PDF
+    const pageRender: PageRender = {
+      renderPage: this.app.pdf.renderPage.bind(this.app.pdf),
+      getPageTotal: this.app.pdf.getPageTotal.bind(this.app.pdf),
+      getPageSizePx: this.app.pdf.getPageSizePx.bind(this.app.pdf),
+    };
+
+    // Update webview with new theme and PageRender
+    dx.out(`updating webview with new theme and page render`);
     if (this.currentWebView) {
       try {
+        await this.currentWebView.updatePageRender(pageRender);
         await this.currentWebView.updateOptions({ theme: selectedId });
       } catch (error) {
         this.app.ui.showErrorMessage(`Failed to update theme: ${String(error)}`);
@@ -482,13 +497,24 @@ export class PaperPrinter {
       dx.out(`updating fontSize to ${fontSize}`);
       this.currentFontSize = fontSize;
 
-      // Update webview with new font size
-      dx.out(`updating webview with new font size`);
+      // Regenerate PDF with new font size
+      await this.generatePdf();
+
+      // Update PageRender with regenerated PDF
+      const pageRender: PageRender = {
+        renderPage: this.app.pdf.renderPage.bind(this.app.pdf),
+        getPageTotal: this.app.pdf.getPageTotal.bind(this.app.pdf),
+        getPageSizePx: this.app.pdf.getPageSizePx.bind(this.app.pdf),
+      };
+
+      // Update webview with new font size and PageRender
+      dx.out(`updating webview with new font size and page render`);
       if (this.currentWebView) {
         try {
+          await this.currentWebView.updatePageRender(pageRender);
           await this.currentWebView.updateOptions({
-            fontSizePx: fontSize, // fontSize in pixels - will be converted to points in PDF generation
-            lineHeightPx: this.computeLineHeightPx(fontSize), // lineHeight in pixels - will be converted to points in PDF generation
+            fontSizePx: fontSize,
+            lineHeightPx: this.computeLineHeightPx(fontSize),
           });
         } catch (error) {
           this.app.ui.showErrorMessage(`Failed to update font size: ${String(error)}`);

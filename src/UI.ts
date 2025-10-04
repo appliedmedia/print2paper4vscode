@@ -14,7 +14,12 @@ export class UI {
     toolbar_css: string;
     toolbar_js: string;
     toolbar_html: string;
-  } | null = null;
+  } = {
+    base_css: '',
+    toolbar_css: '',
+    toolbar_js: '',
+    toolbar_html: '',
+  };
 
   constructor(app: App) {
     this.app = app;
@@ -29,7 +34,7 @@ export class UI {
 
   get yaml() {
     // If already loaded, return it
-    if (this._yaml) {
+    if (this._yaml.base_css) {
       return this._yaml;
     }
 
@@ -111,8 +116,13 @@ export class UI {
   }
 
   // Create webview panel
-  createWebviewPanel(title: string, html: string): WebviewPanelId {
-    const panelId = this.app.vscodeapis.createWebviewPanel(title, html);
+  /** @deprecated Dead code, never called */
+  async createWebviewPanel_OBSOLETE_DELETEME(title: string, html: string): Promise<WebviewPanelId> {
+    const panelId = await this.app.vscodeapis.getOrCreateWebviewPanel(
+      title,
+      html,
+      this.currentPanelId || undefined
+    );
     this.currentPanelId = panelId;
     return panelId;
   }
@@ -131,7 +141,7 @@ export class UI {
       const pdfDataUrl = pdf.output('datauristring') as string;
 
       // Send message to webview to update PDF
-      this.app.vscodeapis.postMessageToPanel(this.currentPanelId, {
+      this.app.vscodeapis.postMessage(this.currentPanelId, {
         type: 'updatePdf',
         pdfDataUrl: pdfDataUrl,
       });
@@ -177,8 +187,9 @@ export class UI {
   }
 
   // Convert HTML to webview panel
-  async htmlToPanel(title: string, html: string): Promise<WebviewPanelId> {
-    const dx = this.dx.sub('htmlToPanel');
+  /** @deprecated Dead code, never called */
+  async htmlToPanel_OBSOLETE_DELETEME(title: string, html: string): Promise<WebviewPanelId> {
+    const dx = this.dx.sub('htmlToPanel_OBSOLETE_DELETEME');
     dx.require({ title, html }, ['title', 'html']);
 
     try {
@@ -186,7 +197,7 @@ export class UI {
       const htmlWithToolbar = await this.addToolbar(html);
 
       // Create webview panel
-      const panelId = this.createWebviewPanel(title, htmlWithToolbar);
+      const panelId = this.createWebviewPanel_OBSOLETE_DELETEME(title, htmlWithToolbar);
 
       dx.out(`Created webview panel: ${title}`);
       return panelId;

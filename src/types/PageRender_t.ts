@@ -25,19 +25,10 @@ export interface RenderOptions {
   lineHeight: number;
   /** Theme name for syntax highlighting */
   theme: string;
-  /** Page size configuration */
-  pageSize: 'letter' | 'legal' | 'a3' | 'a4' | 'a5';
+  /** Page size ID */
+  pageSizeId: 'letter' | 'legal' | 'a3' | 'a4' | 'a5';
   /** Page orient */
   orient: 'portrait' | 'landscape';
-}
-
-export interface PageMetadata {
-  /** Total number of pages in the document */
-  pageTotal: number;
-  /** Standard page width in pixels */
-  pageWidthPx: number;
-  /** Standard page height in pixels */
-  pageHeightPx: number;
 }
 
 export interface PageRenderError {
@@ -68,7 +59,7 @@ export interface PageRender {
    * @returns Promise resolving to page data
    * @throws PageRenderError for invalid page numbers or generation failures
    */
-  pageRender(pageNumber: number, options: RenderOptions): Promise<PageData>;
+  renderPage(pageNumber: number, options: RenderOptions): Promise<PageData>;
 
   /**
    * Get the total number of pages in the document
@@ -80,7 +71,7 @@ export interface PageRender {
    * Get page dimensions in pixels
    * @returns Promise resolving to page dimensions
    */
-  getPageDimensionsPx(): Promise<{ widthPx: number; heightPx: number }>;
+  getPageSizePx(): Promise<{ widthPx: number; heightPx: number }>;
 }
 
 // Re-export PageSizeId from PaperPrinter for convenience

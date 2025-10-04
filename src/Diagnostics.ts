@@ -2,6 +2,7 @@
 type MessageRef = string | object;
 
 import { UI } from './UI';
+import { OS } from './OS';
 
 export class Diagnostics {
   static separator = ' > ';
@@ -30,7 +31,7 @@ export class Diagnostics {
   constructor(name: string, debugOn?: boolean, parent?: Diagnostics | null) {
     this._name = name;
     this.parent = parent || null;
-    this.startTime = performance.now();
+    this.startTime = OS.performance.now();
 
     // Build name lineage by crawling up parent tree
     this.name_lineage = this.buildNameLineage();
@@ -105,7 +106,7 @@ export class Diagnostics {
    */
   done(message?: MessageRef): this {
     if (this._debugOn && this.startTime !== null) {
-      const duration = performance.now() - this.startTime;
+      const duration = OS.performance.now() - this.startTime;
       let timeDisplay: string;
 
       if (duration >= 86400000) {

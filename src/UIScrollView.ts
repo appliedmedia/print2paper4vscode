@@ -1,5 +1,5 @@
 import type { App } from './App';
-import type { PageRender, PageData, PageMetadata } from './types/PageRender_t';
+import type { PageRender, PageData } from './types/PageRender_t';
 import type { WebviewPanelId } from './VSCodeAPIs';
 import { Diagnostics } from './Diagnostics';
 
@@ -18,6 +18,11 @@ export interface ScrollOptions {
  * UIScrollView - Handles scroll view document viewing with virtual scrolling
  */
 export class UIScrollView {
+  private readonly CONFIG = {
+    MAX_CANVAS_POOL_SIZE: 7, // Number of canvas elements for virtual scrolling
+    SCROLL_DEBOUNCE_MS: 16, // ~60fps, syncs with requestAnimationFrame
+  };
+
   private app: App;
   private pageRender: PageRender;
   private options: ScrollOptions;
@@ -29,7 +34,11 @@ export class UIScrollView {
     scroll_html: string;
     scroll_css: string;
     scroll_js: string;
-  } | null = null;
+  } = {
+    scroll_html: '',
+    scroll_css: '',
+    scroll_js: '',
+  };
 
   constructor(app: App, pageRender: PageRender, options: ScrollOptions) {
     this.app = app;
@@ -40,7 +49,7 @@ export class UIScrollView {
 
   get yaml() {
     // If already loaded, return it
-    if (this._yaml) {
+    if (this._yaml.scroll_html) {
       return this._yaml;
     }
 
@@ -69,7 +78,7 @@ export class UIScrollView {
     try {
       // Get page total and dimensions
       const pageTotal = await this.pageRender.getPageTotal();
-      const dimensions = await this.pageRender.getPageDimensionsPx();
+      const dimensions = await this.pageRender.getPageSizePx();
 
       // Get scroll view templates from yaml getter
       const templates = this.yaml;
@@ -132,7 +141,7 @@ export class UIScrollView {
 
       // Notify webview to clear all rendered pages
       if (this.panelId) {
-        this.app.vscodeapis.postMessageToPanel(this.panelId, {
+        this.app.vscodeapis.postMessage(this.panelId, {
           type: 'clearAllPages',
         });
       }
@@ -172,12 +181,12 @@ export class UIScrollView {
 
       try {
         // Render the page
-        const pageData = await this.pageRender.pageRender(pageNumber, {
+        const pageData = await this.pageRender.renderPage(pageNumber, {
           fontFamily: this.options.fontFamily || 'Courier New',
           fontSize: this.options.fontSizePx || 12, // fontSize in pixels - will be converted to points in PDF generation
           lineHeight: this.options.lineHeightPx || 18, // lineHeight in pixels - will be converted to points in PDF generation
           theme: this.options.theme || 'github-light',
-          pageSize: this.options.pageSize || 'a4',
+          pageSizeId: this.options.pageSize || 'a4',
           orient: this.options.orient || 'portrait',
         });
 
@@ -220,23 +229,28 @@ export class UIScrollView {
   private async generateScrollViewHTML(
     templates: { scroll_html: string; scroll_css: string; scroll_js: string; base_css: string },
     pageTotal: number,
-    dimensions: { widthPx: number; heightPx: number }
+    pageSizePx: { widthPx: number; heightPx: number }
     /* options: ScrollOptions */
   ): Promise<string> {
     const dx = this.dx.sub('generateScrollViewHTML');
 
     try {
-      // Get configuration values
-      const maxCanvases = this.app.vscodeapis.getMaxCanvasPoolSize();
-      const scrollDebounceMs = this.app.vscodeapis.getScrollDebounceMs();
+      // Load PDF.js library
+      const pdfJsContent = this.app.os.fileRead('src/lib/pdf.min.js');
+      dx.out(
+        `PDF.js library loaded: ${pdfJsContent ? `${pdfJsContent.length} characters` : 'failed'}`
+      );
 
       // Create template dictionary
       const templateDict = {
         PAGE_TOTAL: pageTotal.toString(),
         TOTAL_PAGES: pageTotal.toString(), // Also provide TOTAL_PAGES for HTML template
-        MAX_CANVASES: maxCanvases.toString(),
-        SCROLL_DEBOUNCE_MS: scrollDebounceMs.toString(),
+        MAX_CANVASES: this.CONFIG.MAX_CANVAS_POOL_SIZE.toString(),
+        SCROLL_DEBOUNCE_MS: this.CONFIG.SCROLL_DEBOUNCE_MS.toString(),
+        PAGE_WIDTH_PX: pageSizePx.widthPx.toString(),
+        PAGE_HEIGHT_PX: pageSizePx.heightPx.toString(),
         TOOLBAR: await this.generateToolbarHTML(),
+        PDFJS_LIBRARY: pdfJsContent || '',
       };
 
       // Replace placeholders in templates

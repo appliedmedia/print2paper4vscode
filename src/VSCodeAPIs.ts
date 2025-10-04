@@ -211,8 +211,13 @@ export class VSCodeAPIs {
 
   /**
    * Create and show a Webview panel with provided HTML
+   * @deprecated Use getOrCreateWebviewPanel instead for URI conversion and panel reuse
    */
-  createWebviewPanel(title: string, htmlContent: string): WebviewPanelId {
+  createWebviewPanel_OBSOLETE_DELETEME(title: string, htmlContent: string): WebviewPanelId {
+    // Get extension root URI for local resource access
+    const extensionRoot = this.app.os.getExtensionRoot();
+    const extensionUri = extensionRoot ? this.vscode.Uri.file(extensionRoot) : undefined;
+
     const panel = this.vscode.window.createWebviewPanel(
       'p2p4vsc.printprep',
       title,
@@ -220,7 +225,7 @@ export class VSCodeAPIs {
       {
         enableScripts: true,
         retainContextWhenHidden: true,
-        localResourceRoots: [], // No local file access
+        localResourceRoots: extensionUri ? [extensionUri] : [], // Allow access to extension files
         // Most restrictive sandbox settings for security
         // allow-same-origin: false - prevents access to parent window
         // allow-forms: false - no form submission needed
@@ -239,6 +244,12 @@ export class VSCodeAPIs {
     // Generate unique ID and store panel
     const id = this.generatePanelId(title);
     this.panels.set(id, panel);
+
+    // Clean up when panel is closed
+    panel.onDidDispose(() => {
+      this.panels.delete(id);
+      this.dx.out(`Panel ${id} disposed and removed from map`);
+    });
 
     // Set up message handling
     this.setupMessageHandling(panel);
@@ -274,9 +285,26 @@ export class VSCodeAPIs {
   /**
    * Post message to panel
    */
-  postMessageToPanel(id: WebviewPanelId, message: PostMessage): void {
+  postMessage(id: WebviewPanelId, message: PostMessage): void {
     const panel = this.panels.get(id);
-    if (panel) panel.webview.postMessage(message);
+    if (!panel) return;
+
+    try {
+      panel.webview.postMessage(message);
+    } catch (error) {
+      // Panel disposed, remove from map
+      this.panels.delete(id);
+      this.dx.out(`Panel disposed, removing from map: ${id}`);
+      this.dx.out(`Error posting message to panel: ${String(error)}`);
+    }
+  }
+
+  /**
+   * Remove panel from map (for cleanup)
+   */
+  removePanel(id: WebviewPanelId): void {
+    this.panels.delete(id);
+    this.dx.out(`Removed panel from map: ${id}`);
   }
 
   /**
@@ -323,7 +351,7 @@ export class VSCodeAPIs {
 
     // Create new panel
     this.dx.out(`Creating new panel for title: ${title}`);
-    const id = this.createWebviewPanel(title, '');
+    const id = this.createWebviewPanel_OBSOLETE_DELETEME(title, '');
     const htmlWithURIs = this.app.os.htmlSrcPathToURI(html, id);
     this.updatePanelHtml(id, htmlWithURIs);
     return id;
