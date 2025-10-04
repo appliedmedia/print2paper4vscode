@@ -396,51 +396,9 @@ export class PDF implements PageRender {
         orient: orient,
       };
 
-      // For backward compatibility, render only the first page
-      const pageData = await this.renderPage(1, renderOptions);
-
-      // Convert data URL back to jsPDF document for backward compatibility
-      // This is a temporary solution - ideally we'd return PageData directly
-      // Convert pixel dimensions back to points for jsPDF
-      const docWidthPts = this.pxToPts(pageData.widthPx);
-      const docHeightPts = this.pxToPts(pageData.heightPx);
-
-      const doc = new jsPDF({
-        orientation: orient,
-        unit: 'pt',
-        format: [docWidthPts, docHeightPts],
-      });
-
-      // Convert fontSize from pixels to points for jsPDF
-      const fontSizePts = this.pxToPts(fontSizePx);
-
-      // Convert lineHeight from pixels to points for jsPDF
-      const lineHeightPts = this.pxToPts(lineHeightPx);
-
-      // Add title if provided (this is a simplified approach)
-      if (title) {
-        doc.setFontSize(fontSizePts * 1.25);
-        this.setTextColorFromWebColor(doc, 'black');
-        doc.text(title, 20, 40);
-        doc.setFontSize(fontSizePts);
-      }
-
-      // For now, we'll use the existing single-page logic for backward compatibility
-      // TODO: This should be refactored to use the page-based system properly
-      const pageSize = this.getPageDimensions(pageSizeId, orient);
-      const unit = this.getUnitForPageSize(pageSizeId);
-      const { widthPts: finalWidthPts, heightPts: finalHeightPts } = this.pageSizeToPts(
-        pageSize.width,
-        pageSize.height,
-        unit
-      );
-
-      // Create new document with proper dimensions
-      const finalDoc = new jsPDF({
-        orientation: orient,
-        unit: 'pt',
-        format: [finalWidthPts, finalHeightPts],
-      });
+      // Generate the first page directly using generatePdfPage
+      const pageTokens = this.extractTokensForPage(tokens, 1);
+      const finalDoc = await this.generatePdfPage(pageTokens, renderOptions);
 
       // Map font family to jsPDF supported fonts
       const jsPdfFont = this.mapFontFamilyToJsPDF(fontFamily, finalDoc);
