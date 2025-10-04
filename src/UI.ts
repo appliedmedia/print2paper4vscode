@@ -1,5 +1,5 @@
 import type { App } from './App';
-import type { WebviewMessage, MessageHandler } from './types/UI_t';
+import type { PostMessage, MessageHandler } from './types/UI_t';
 import type { WebviewPanelId } from './VSCodeAPIs';
 import { Diagnostics } from './Diagnostics';
 import jsPDF from 'jspdf';
@@ -8,13 +8,17 @@ export class UI {
   private app: App;
   private messageHandlers: Map<string, MessageHandler[]> = new Map();
   private dx: Diagnostics;
-  public currentPanelId: WebviewPanelId | null = null; // Store the current panel ID for updates
   private _yaml: {
     base_css: string;
     toolbar_css: string;
     toolbar_js: string;
     toolbar_html: string;
-  } | null = null;
+  } = {
+    base_css: '',
+    toolbar_css: '',
+    toolbar_js: '',
+    toolbar_html: '',
+  };
 
   constructor(app: App) {
     this.app = app;
@@ -29,7 +33,7 @@ export class UI {
 
   get yaml() {
     // If already loaded, return it
-    if (this._yaml) {
+    if (this._yaml.base_css) {
       return this._yaml;
     }
 
@@ -70,7 +74,7 @@ export class UI {
   }
 
   // Central message handling - routes messages to registered handlers
-  async handleWebviewMessage(msg: WebviewMessage): Promise<void> {
+  async handleWebviewMessage(msg: PostMessage): Promise<void> {
     const dx = this.dx.sub('handleWebviewMessage');
     dx.require({ msg }, ['msg']);
     dx.out(
@@ -111,38 +115,17 @@ export class UI {
   }
 
   // Create webview panel
-  createWebviewPanel(title: string, html: string): WebviewPanelId {
-    const panelId = this.app.vscodeapis.createWebviewPanel(title, html);
-    this.currentPanelId = panelId;
+  /** @deprecated Dead code, never called */
+  async createWebviewPanel_OBSOLETE_DELETEME(title: string, html: string): Promise<WebviewPanelId> {
+    const panelId = await this.app.vscodeapis.getOrCreateWebviewPanel(title, html, undefined);
     return panelId;
   }
 
-  // Update webview panel with new HTML
-  async updateWebviewPdf(pdf: jsPDF): Promise<void> {
-    const dx = this.dx.sub('updateWebviewPdf');
+  /** @deprecated Dead code, never called */
+  async updateWebviewPdf_OBSOLETE_DELETEME(pdf: jsPDF): Promise<void> {
+    const dx = this.dx.sub('updateWebviewPdf_OBSOLETE_DELETEME');
     dx.require({ pdf }, ['pdf']);
-
-    try {
-      if (!this.currentPanelId) {
-        throw new Error('No active webview panel to update');
-      }
-
-      // Convert PDF to data URL
-      const pdfDataUrl = pdf.output('datauristring') as string;
-      
-      // Send message to webview to update PDF
-      this.app.vscodeapis.postMessageToPanel(this.currentPanelId, {
-        type: 'updatePdf',
-        pdfDataUrl: pdfDataUrl
-      });
-
-      dx.out('PDF updated in webview');
-    } catch (error) {
-      dx.out(`Error updating webview PDF: ${String(error)}`);
-      throw error;
-    } finally {
-      dx.done();
-    }
+    throw new Error('Dead code - currentPanelId removed');
   }
 
   // Add toolbar to HTML content
@@ -153,17 +136,17 @@ export class UI {
     try {
       // Get menu HTML from UIMenuMgr
       const menuHtml = await this.app.uimenumgr.getAllUIMenuHTML();
-      
+
       // Get toolbar templates from yaml getter
       const templates = this.yaml;
-      
+
       // Inject toolbar into HTML using template
       const toolbarHtml = this.app.templateDictReplace(templates.toolbar_html, {
         TOOLBAR_CSS: templates.toolbar_css,
         TOOLBAR_JS: templates.toolbar_js,
-        MENU_HTML: menuHtml
+        MENU_HTML: menuHtml,
       });
-      
+
       const htmlWithToolbar = html.replace('{{TOOLBAR}}', toolbarHtml);
 
       dx.out('Toolbar added to HTML');
@@ -177,17 +160,18 @@ export class UI {
   }
 
   // Convert HTML to webview panel
-  async htmlToPanel(title: string, html: string): Promise<WebviewPanelId> {
-    const dx = this.dx.sub('htmlToPanel');
+  /** @deprecated Dead code, never called */
+  async htmlToPanel_OBSOLETE_DELETEME(title: string, html: string): Promise<WebviewPanelId> {
+    const dx = this.dx.sub('htmlToPanel_OBSOLETE_DELETEME');
     dx.require({ title, html }, ['title', 'html']);
 
     try {
       // Add toolbar to HTML
       const htmlWithToolbar = await this.addToolbar(html);
-      
+
       // Create webview panel
-      const panelId = this.createWebviewPanel(title, htmlWithToolbar);
-      
+      const panelId = this.createWebviewPanel_OBSOLETE_DELETEME(title, htmlWithToolbar);
+
       dx.out(`Created webview panel: ${title}`);
       return panelId;
     } catch (error) {
@@ -211,16 +195,16 @@ export class UI {
   // Choose save location
   async chooseSaveLocation(defaultFilename: string): Promise<string | null> {
     const dx = this.dx.sub('chooseSaveLocation');
-    
+
     try {
       const uri = await this.app.vscodeapis.showSaveDialog({
         defaultUri: this.app.vscodeapis.uriFromPath(defaultFilename),
         filters: {
-          'PDF files': ['pdf']
+          'PDF files': ['pdf'],
         },
-        title: 'Save PDF As'
+        title: 'Save PDF As',
       });
-      
+
       if (uri) {
         const path = this.app.vscodeapis.uriToPath(uri);
         dx.out(`User chose save location: ${path}`);

@@ -44,6 +44,29 @@ The extension follows this workflow:
 - **Persistent Settings**: Remembers page size, orientation, and toolbar position
 - **Keyboard Shortcuts**: Quick access via keyboard commands
 
+## Quick Start
+
+```bash
+# Install Node.js/npm (if not already installed)
+curl -fsSL https://deb.nodesource.com/setup_lts.x | sudo -E bash -
+sudo apt-get install -y nodejs
+
+# Install TypeScript globally
+npm install -g typescript
+
+# Install GitHub CLI (if not already installed)
+curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | sudo dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg
+echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | sudo tee /etc/apt/sources.list.d/github-cli.list > /dev/null
+sudo apt update
+sudo apt install gh
+
+# Install project dependencies and compile
+npm install
+npm run compile
+```
+
+This will install all prerequisites and compile the TypeScript code to JavaScript.
+
 ## Installation
 
 ### Local Development Installation

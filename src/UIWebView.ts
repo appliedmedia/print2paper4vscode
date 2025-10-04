@@ -1,7 +1,7 @@
 import type { App } from './App';
 import type { PageRender } from './types/PageRender_t';
 import type { WebviewPanelId } from './VSCodeAPIs';
-import type { WebviewMessage } from './types/UI_t';
+import type { PostMessage } from './types/UI_t';
 import { UIScrollView, type ScrollOptions } from './UIScrollView';
 import { UIMenuMgr } from './UIMenuMgr';
 import { Diagnostics } from './Diagnostics';
@@ -29,37 +29,95 @@ export class UIWebView {
   }
 
   /**
-   * Initialize webview with menus and scroll view
+   * Create webview panel with menus and scroll view
    */
-  async initWebview(
-    pageRender: PageRender,
-    options: ScrollOptions,
-    menus: UIMenuMgr
-  ): Promise<WebviewPanelId> {
-    const dx = this.dx.sub('init');
-    dx.require({ pageRender, options, menus }, ['pageRender', 'options', 'menus']);
+  async createPanel(pageRender: PageRender, options: ScrollOptions): Promise<WebviewPanelId> {
+    const dx = this.dx.sub('createPanel');
+    dx.require({ pageRender, options }, ['pageRender', 'options']);
 
     try {
       if (this.initialized) {
         throw new Error('UIWebView already initialized');
       }
 
-      // Set menu manager
-      this.menuMgr = menus;
+      // Set menu manager from app
+      this.menuMgr = this.app.uimenumgr;
 
       // Create scroll view
-      this.currentViewer = new UIScrollView(this.app, pageRender, options, this.menuMgr);
-      this.panelId = await this.currentViewer.create();
+      this.currentViewer = new UIScrollView(this.app, pageRender, options);
 
-      // Store current panel ID in UI for message handling
-      this.app.ui.currentPanelId = this.panelId;
+      // Generate HTML content from scroll view
+      const html = await this.currentViewer.generateContent();
+
+      // Create or reuse webview panel
+      const panelId = await this.app.vscodeapis.getOrCreateWebviewPanel(
+        options.title || 'Document Viewer',
+        html,
+        this.panelId || undefined
+      );
+      this.panelId = panelId;
+
+      // Set panel ID in scroll view
+      this.currentViewer.setPanelId(panelId);
+
+      // Note: Pre-rendering disabled - let scroll handler render pages on demand
+      // This avoids coordinate transform issues and ensures fresh data
 
       this.initialized = true;
-      dx.out(`Initialized webview: ${options.title || 'Document Viewer'}`);
-      return this.panelId;
+      dx.out(`Created webview panel: ${options.title || 'Document Viewer'}`);
+      return panelId;
     } catch (error) {
-      this.app.ui.showErrorMessage(`Failed to initialize webview: ${String(error)}`);
+      this.app.ui.showErrorMessage(`Failed to create webview panel: ${String(error)}`);
       throw error;
+    } finally {
+      dx.done();
+    }
+  }
+
+  /**
+   * Pre-render initial pages for faster display
+   */
+  private async preRenderInitialPages(
+    pageRender: PageRender,
+    options: ScrollOptions
+  ): Promise<void> {
+    const dx = this.dx.sub('preRenderInitialPages');
+
+    try {
+      // Get total pages
+      const pageTotal = await pageRender.getPageTotal();
+
+      // Pre-render first 5 pages or total pages, whichever is smaller
+      const pagesToRender = Math.min(5, pageTotal);
+      dx.out(`Pre-rendering ${pagesToRender} of ${pageTotal} pages`);
+
+      // Render each page and send to webview
+      for (let pageNumber = 1; pageNumber <= pagesToRender; pageNumber++) {
+        try {
+          const pageData = await pageRender.renderPage(pageNumber, {
+            fontFamily: options.fontFamily || 'Courier New',
+            fontSize: options.fontSizePx || 12,
+            lineHeight: options.lineHeightPx || 18,
+            theme: options.theme || 'github-light',
+            pageSizeId: options.pageSizeId || 'a4',
+            orient: options.orient || 'portrait',
+          });
+
+          // Send rendered page to webview
+          if (this.panelId) {
+            this.app.vscodeapis.postMessage(this.panelId, {
+              type: 'pageRenderResponse',
+              pageData: pageData,
+            });
+          }
+
+          dx.out(`Pre-rendered page ${pageNumber}`);
+        } catch (error) {
+          dx.out(`Failed to pre-render page ${pageNumber}: ${String(error)}`);
+        }
+      }
+    } catch (error) {
+      dx.out(`Pre-render failed: ${String(error)}`);
     } finally {
       dx.done();
     }
@@ -92,14 +150,24 @@ export class UIWebView {
         throw new Error('Menu manager not created. Call createMenus() first.');
       }
 
-      this.currentViewer = new UIScrollView(this.app, pageRender, options, this.menuMgr);
-      this.panelId = await this.currentViewer.create();
+      this.currentViewer = new UIScrollView(this.app, pageRender, options);
 
-      // Store current panel ID in UI for message handling
-      this.app.ui.currentPanelId = this.panelId;
+      // Generate HTML content from scroll view
+      const html = await this.currentViewer.generateContent();
+
+      // Create or reuse webview panel
+      const panelId = await this.app.vscodeapis.getOrCreateWebviewPanel(
+        options.title || 'Document Viewer',
+        html,
+        this.panelId || undefined
+      );
+      this.panelId = panelId;
+
+      // Set panel ID in scroll view
+      this.currentViewer.setPanelId(panelId);
 
       dx.out(`Created scroll view: ${options.title || 'Document Viewer'}`);
-      return this.panelId;
+      return panelId;
     } catch (error) {
       this.app.ui.showErrorMessage(`Failed to create scroll view: ${String(error)}`);
       throw error;
@@ -182,6 +250,12 @@ export class UIWebView {
         this.currentViewer.done();
         this.currentViewer = null;
       }
+
+      // Remove panel from VSCodeAPIs map
+      if (this.panelId) {
+        this.app.vscodeapis.removePanel(this.panelId);
+      }
+
       this.menuMgr = null;
       this.panelId = null;
       this.initialized = false;
@@ -216,14 +290,14 @@ export class UIWebView {
   /**
    * Handle toolbar drag end message
    */
-  private async handleDragEnd(msg: WebviewMessage): Promise<void> {
+  private async handleDragEnd(msg: PostMessage): Promise<void> {
     const dx = this.dx.sub('handleDragEnd');
 
     try {
       const left = msg.left;
       if (typeof left === 'number') {
         // Save toolbar position to global state
-        this.app.vscodeapis.updateGlobalState('toolbarPos', left);
+        this.app.vscodeapis.updateGlobalState('toolbarPos', String(left));
         dx.out(`Toolbar position saved: ${left}px`);
       }
     } finally {
@@ -234,7 +308,7 @@ export class UIWebView {
   /**
    * Handle menu item selection message
    */
-  private async handleMenuItemSelected(msg: WebviewMessage): Promise<void> {
+  private async handleMenuItemSelected(msg: PostMessage): Promise<void> {
     const dx = this.dx.sub('handleMenuItemSelected');
 
     try {
@@ -254,7 +328,7 @@ export class UIWebView {
   /**
    * Handle print message
    */
-  private async handlePrintMessage(msg: WebviewMessage): Promise<void> {
+  private async handlePrintMessage(msg: PostMessage): Promise<void> {
     const dx = this.dx.sub('handlePrintMessage');
 
     try {
@@ -272,8 +346,8 @@ export class UIWebView {
   /**
    * Handle diagnostic message from webview
    */
-  private async handleDxMessage(msg: WebviewMessage): Promise<void> {
-    const dx = this.dx.sub('handleDxMessage', true /* debugOn */);
+  private async handleDxMessage(msg: PostMessage): Promise<void> {
+    const dx = this.dx.sub('dx', true /* debugOn */);
     dx.require({ msg }, ['msg']);
 
     // Output webview diagnostic message via dx.out (forced debug on)
@@ -288,13 +362,13 @@ export class UIWebView {
   /**
    * Handle page render request from scroll view
    */
-  private async handlePageRenderRequest(msg: WebviewMessage): Promise<void> {
+  private async handlePageRenderRequest(msg: PostMessage): Promise<void> {
     const dx = this.dx.sub('handlePageRenderRequest');
 
     try {
       const pageNumber = msg.pageNumber;
       dx.out(`Received page render request for page ${pageNumber}`);
-      
+
       if (typeof pageNumber !== 'number') {
         throw new Error('Invalid page number');
       }
@@ -308,7 +382,7 @@ export class UIWebView {
 
       // Send response back to webview
       if (this.panelId) {
-        this.app.vscodeapis.postMessageToPanel(this.panelId, {
+        this.app.vscodeapis.postMessage(this.panelId, {
           type: 'pageRenderResponse',
           pageData: pageData,
         });
@@ -320,7 +394,7 @@ export class UIWebView {
 
       // Send error response
       if (this.panelId) {
-        this.app.vscodeapis.postMessageToPanel(this.panelId, {
+        this.app.vscodeapis.postMessage(this.panelId, {
           type: 'pageRenderError',
           error: {
             message: String(error),

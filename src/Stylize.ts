@@ -1,5 +1,6 @@
 import type { App } from './App';
 import type { fileRead_t } from './OS';
+import type { PDFDoc } from './types/PDF_t';
 import {
   getSingletonHighlighter,
   bundledThemesInfo,
@@ -359,7 +360,7 @@ export class Stylize {
       tokens: ThemedToken[][],
       fontInfo: { fontFamily: string; fontSizePx: number; lineHeightPx: number },
       title?: string
-    ): Promise<jsPDF> {
+    ): Promise<PDFDoc> {
       return await this.app.pdf.generatePdfFromTokens(
         tokens,
         fontInfo.fontFamily,
@@ -373,7 +374,7 @@ export class Stylize {
       code: string,
       languageId: LanguageId,
       opts?: { fontSize?: number; lineHeight?: number; title?: string; theme?: string }
-    ): Promise<jsPDF> {
+    ): Promise<PDFDoc> {
       const dx = this.dx.sub('Converter_StyleToPdf');
       dx.require({ code, languageId }, ['code', 'languageId']);
 
@@ -400,51 +401,11 @@ export class Stylize {
     code: string,
     languageId: LanguageId,
     opts?: { fontSize?: number; lineHeight?: number; title?: string; theme?: string }
-  ): Promise<jsPDF> {
+  ): Promise<PDFDoc> {
     const converter = new this.Converter_StyleToPdf(this.app);
     return converter.convert(code, languageId, opts);
   }
 
-  /**
-   * Get tokens for page-based rendering
-   */
-  async getTokens(
-    code: string,
-    languageId: LanguageId,
-    opts?: { theme?: string }
-  ): Promise<ThemedToken[][]> {
-    const dx = this.dx.sub('getTokens');
-    dx.require({ code, languageId }, ['code', 'languageId']);
-
-    try {
-      // Ensure highlighter is ready
-      await this.validateHighlighter(languageId);
-      
-      if (!this.highlighter) {
-        throw new Error('Highlighter not available');
-      }
-
-      // Determine theme
-      const selectedTheme = opts?.theme || this.resolveActiveTheme();
-      
-      // Tokenize code
-      const tokenResult = this.highlighter.codeToTokens(code, {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        lang: languageId as any,
-        theme: selectedTheme,
-      });
-
-      const tokens = tokenResult?.tokens || [];
-      dx.out(`Generated ${tokens.length} lines of tokens`);
-      return tokens;
-
-    } catch (error) {
-      dx.out(`Token generation failed: ${String(error)}`);
-      throw error;
-    } finally {
-      dx.done();
-    }
-  }
 
   /**
    * Resolve active theme for token generation

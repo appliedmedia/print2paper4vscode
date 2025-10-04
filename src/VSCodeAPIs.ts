@@ -9,7 +9,8 @@ import type {
   // Position,
   // WorkspaceEdit,
 } from 'vscode';
-import type { WebviewMessage, ExtensionToWebviewMessage } from './types/UI_t';
+import type { PostMessage } from './types/UI_t';
+import type { GlobalStateKey, GlobalStateMap } from './types/globalState_t';
 import { Diagnostics } from './Diagnostics';
 
 // Opaque ID type for webview panels
@@ -54,16 +55,15 @@ export class VSCodeAPIs {
   /**
    * Update global state value
    */
-  updateGlobalState(key: string, value: unknown): void {
+  updateGlobalState<K extends GlobalStateKey>(key: K, value: GlobalStateMap[K]): void {
     this.context.globalState.update(key, value);
   }
 
   /**
    * Get global state value as string
    */
-  getGlobalState(key: string): string {
-    const value = this.context.globalState.get(key, '');
-    return value !== undefined ? String(value) : '';
+  getGlobalState<K extends GlobalStateKey>(key: K): GlobalStateMap[K] | undefined {
+    return this.context.globalState.get(key);
   }
 
   // ============================================================================
@@ -81,7 +81,7 @@ export class VSCodeAPIs {
    * Set scrollable viewer enabled state
    */
   setScrollableViewerEnabled(enabled: boolean): void {
-    this.updateGlobalState('scrollableViewerEnabled', enabled);
+    this.updateGlobalState('scrollableViewerEnabled', String(enabled));
   }
 
   /**
@@ -96,9 +96,8 @@ export class VSCodeAPIs {
    * Set maximum canvas pool size
    */
   setMaxCanvasPoolSize(size: number): void {
-    this.updateGlobalState('maxCanvasPoolSize', Math.max(1, Math.min(20, size)));
+    this.updateGlobalState('maxCanvasPoolSize', String(Math.max(1, Math.min(20, size))));
   }
-
 
   /**
    * Get auto scrollable viewer threshold (lines)
@@ -112,7 +111,7 @@ export class VSCodeAPIs {
    * Set auto scrollable viewer threshold (lines)
    */
   setAutoScrollableViewerThreshold(threshold: number): void {
-    this.updateGlobalState('autoScrollableViewerThreshold', Math.max(100, threshold));
+    this.updateGlobalState('autoScrollableViewerThreshold', String(Math.max(100, threshold)));
   }
 
   /**
@@ -127,7 +126,7 @@ export class VSCodeAPIs {
    * Set page render cache size
    */
   setPageRenderCacheSize(size: number): void {
-    this.updateGlobalState('pageRenderCacheSize', Math.max(1, Math.min(50, size)));
+    this.updateGlobalState('pageRenderCacheSize', String(Math.max(1, Math.min(50, size))));
   }
 
   /**
@@ -142,10 +141,15 @@ export class VSCodeAPIs {
    * Set scroll debounce time in milliseconds
    */
   setScrollDebounceMs(ms: number): void {
-    this.updateGlobalState('scrollDebounceMs', Math.max(1, Math.min(100, ms)));
+    this.updateGlobalState('scrollDebounceMs', String(Math.max(1, Math.min(100, ms))));
   }
 
-  getEditorTypography(): { fontSize: number; lineHeight: number; fontFamily: string; sizeToHeightRatio: number } {
+  getEditorTypography(): {
+    fontSize: number;
+    lineHeight: number;
+    fontFamily: string;
+    sizeToHeightRatio: number;
+  } {
     const editorCfg = this.vscode.workspace.getConfiguration('editor');
     const fontSize = Math.max(10, Number(editorCfg.get('fontSize') || 12));
     const cfgLineHeight = Number(editorCfg.get('lineHeight') || 0);
@@ -207,8 +211,13 @@ export class VSCodeAPIs {
 
   /**
    * Create and show a Webview panel with provided HTML
+   * @deprecated Use getOrCreateWebviewPanel instead for URI conversion and panel reuse
    */
-  createWebviewPanel(title: string, htmlContent: string): WebviewPanelId {
+  createWebviewPanel_OBSOLETE_DELETEME(title: string, htmlContent: string): WebviewPanelId {
+    // Get extension root URI for local resource access
+    const extensionRoot = this.app.os.getExtensionRoot();
+    const extensionUri = extensionRoot ? this.vscode.Uri.file(extensionRoot) : undefined;
+
     const panel = this.vscode.window.createWebviewPanel(
       'p2p4vsc.printprep',
       title,
@@ -216,6 +225,18 @@ export class VSCodeAPIs {
       {
         enableScripts: true,
         retainContextWhenHidden: true,
+        localResourceRoots: extensionUri ? [extensionUri] : [], // Allow access to extension files
+        // Most restrictive sandbox settings for security
+        // allow-same-origin: false - prevents access to parent window
+        // allow-forms: false - no form submission needed
+        // allow-popups: false - no popups needed
+        // allow-top-navigation: false - no navigation needed
+        // allow-modals: false - no modals needed
+        // allow-downloads: false - no downloads needed
+        // allow-pointer-lock: false - no pointer lock needed
+        // allow-presentation: false - no presentation needed
+        // allow-storage-access-by-user-activation: false - no storage access needed
+        // allow-top-navigation-by-user-activation: false - no user navigation needed
       }
     );
     panel.webview.html = htmlContent;
@@ -223,6 +244,12 @@ export class VSCodeAPIs {
     // Generate unique ID and store panel
     const id = this.generatePanelId(title);
     this.panels.set(id, panel);
+
+    // Clean up when panel is closed
+    panel.onDidDispose(() => {
+      this.panels.delete(id);
+      this.dx.out(`Panel ${id} disposed and removed from map`);
+    });
 
     // Set up message handling
     this.setupMessageHandling(panel);
@@ -258,9 +285,26 @@ export class VSCodeAPIs {
   /**
    * Post message to panel
    */
-  postMessageToPanel(id: WebviewPanelId, message: ExtensionToWebviewMessage): void {
+  postMessage(id: WebviewPanelId, message: PostMessage): void {
     const panel = this.panels.get(id);
-    if (panel) panel.webview.postMessage(message);
+    if (!panel) return;
+
+    try {
+      panel.webview.postMessage(message);
+    } catch (error) {
+      // Panel disposed, remove from map
+      this.panels.delete(id);
+      this.dx.out(`Panel disposed, removing from map: ${id}`);
+      this.dx.out(`Error posting message to panel: ${String(error)}`);
+    }
+  }
+
+  /**
+   * Remove panel from map (for cleanup)
+   */
+  removePanel(id: WebviewPanelId): void {
+    this.panels.delete(id);
+    this.dx.out(`Removed panel from map: ${id}`);
   }
 
   /**
@@ -307,7 +351,7 @@ export class VSCodeAPIs {
 
     // Create new panel
     this.dx.out(`Creating new panel for title: ${title}`);
-    const id = this.createWebviewPanel(title, '');
+    const id = this.createWebviewPanel_OBSOLETE_DELETEME(title, '');
     const htmlWithURIs = this.app.os.htmlSrcPathToURI(html, id);
     this.updatePanelHtml(id, htmlWithURIs);
     return id;
@@ -317,7 +361,7 @@ export class VSCodeAPIs {
    * Set up message handling for an existing webview panel
    */
   setupMessageHandling(panel: WebviewPanel): void {
-    panel.webview.onDidReceiveMessage(async (msg: WebviewMessage) => {
+    panel.webview.onDidReceiveMessage(async (msg: PostMessage) => {
       await this.app.ui.handleWebviewMessage(msg);
     });
   }

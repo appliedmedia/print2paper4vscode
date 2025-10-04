@@ -4,6 +4,7 @@ import { homedir } from 'os';
 import { exec as cpExec, execSync as cpExecSync } from 'child_process';
 import { promisify } from 'util';
 import { parse as yamlParse } from 'yaml';
+import { performance } from 'node:perf_hooks';
 import type { App } from './App';
 import type { WebviewPanelId } from './VSCodeAPIs';
 import { Diagnostics } from './Diagnostics';
@@ -12,9 +13,17 @@ import { Diagnostics } from './Diagnostics';
 export type fileRead_t = <T = string>(path: string, key?: string) => T | undefined;
 
 export abstract class OS {
+  // Performance timing from Node.js perf_hooks
+  static performance = performance;
   protected app: App;
   protected extensionRoot?: string;
   protected dx: Diagnostics;
+
+  // Getter for extension root
+  getExtensionRoot(): string | undefined {
+    return this.extensionRoot;
+  }
+
   constructor(app: App) {
     this.app = app;
     this.extensionRoot = app.vscodeapis.getExtensionPath();
@@ -143,7 +152,7 @@ export abstract class OS {
   // Convert relative src attributes and as_uri patterns in HTML to webview URIs
   htmlSrcPathToURI(html: string, webviewPanelId: WebviewPanelId): string {
     let result = html;
-    
+
     if (!this.extensionRoot) return result;
 
     const webviewPanel = this.app.vscodeapis.getPanelForUriConversion(webviewPanelId);
@@ -170,13 +179,10 @@ export abstract class OS {
     };
 
     // Convert src attributes (case-insensitive) - only match HTML src attributes, not JS assignments
-    result = result.replace(
-      /<[^>]*\s+\bsrc\b\s*=\s*["']([^"']+)["'][^>]*>/gi,
-      (match, srcPath) => {
-        const webviewUri = convertPathToURI(srcPath);
-        return match.replace(srcPath, webviewUri);
-      }
-    );
+    result = result.replace(/<[^>]*\s+\bsrc\b\s*=\s*["']([^"']+)["'][^>]*>/gi, (match, srcPath) => {
+      const webviewUri = convertPathToURI(srcPath);
+      return match.replace(srcPath, webviewUri);
+    });
 
     // Convert as_uri patterns (case-insensitive)
     const replaceRegex = new RegExp('\\{\\{as_uri:([^}]+)\\}\\}', 'gi');
