@@ -557,13 +557,33 @@ export class PaperPrinter {
       dx.out(`updating page size to ${selectedId}`);
       this.pageSizeId = selectedId as PageSizeId;
 
-      // Update webview with new page size
-      dx.out(`updating webview with new page size`);
-      if (this.currentWebView) {
-        try {
-          await this.currentWebView.updateOptions({ pageSize: selectedId as PageSizeId });
-        } catch (error) {
-          this.app.ui.showErrorMessage(`Failed to update page size: ${String(error)}`);
+      // Regenerate PDF with new page size
+      if (this.lastRawCode && this.lastLanguageId) {
+        const sizePx = this.computeFontSizePx();
+        const lhPx = this.computeLineHeightPx(sizePx);
+        this.pdfDoc = await this.app.stylize.styleToPdf(this.lastRawCode, this.lastLanguageId, {
+          fontSize: sizePx,
+          lineHeight: lhPx,
+          title: this.printTitle,
+          theme: this.currentThemeChoice,
+        });
+
+        // Update PageRender with regenerated PDF
+        const pageRender: PageRender = {
+          renderPage: this.app.pdf.renderPage.bind(this.app.pdf),
+          getPageTotal: this.app.pdf.getPageTotal.bind(this.app.pdf),
+          getPageSizePx: this.app.pdf.getPageSizePx.bind(this.app.pdf),
+        };
+
+        // Update webview with new page size and PageRender
+        dx.out(`updating webview with new page size and page render`);
+        if (this.currentWebView) {
+          try {
+            await this.currentWebView.updatePageRender(pageRender);
+            await this.currentWebView.updateOptions({ pageSize: selectedId as PageSizeId });
+          } catch (error) {
+            this.app.ui.showErrorMessage(`Failed to update page size: ${String(error)}`);
+          }
         }
       }
 
@@ -592,15 +612,35 @@ export class PaperPrinter {
       dx.out(`updating orient to ${selectedId}`);
       this.orient = selectedId;
 
-      // Update webview with new orientation
-      dx.out(`updating webview with new orientation`);
-      if (this.currentWebView) {
-        try {
-          await this.currentWebView.updateOptions({
-            orient: selectedId as 'portrait' | 'landscape',
-          });
-        } catch (error) {
-          this.app.ui.showErrorMessage(`Failed to update orientation: ${String(error)}`);
+      // Regenerate PDF with new orientation
+      if (this.lastRawCode && this.lastLanguageId) {
+        const sizePx = this.computeFontSizePx();
+        const lhPx = this.computeLineHeightPx(sizePx);
+        this.pdfDoc = await this.app.stylize.styleToPdf(this.lastRawCode, this.lastLanguageId, {
+          fontSize: sizePx,
+          lineHeight: lhPx,
+          title: this.printTitle,
+          theme: this.currentThemeChoice,
+        });
+
+        // Update PageRender with regenerated PDF
+        const pageRender: PageRender = {
+          renderPage: this.app.pdf.renderPage.bind(this.app.pdf),
+          getPageTotal: this.app.pdf.getPageTotal.bind(this.app.pdf),
+          getPageSizePx: this.app.pdf.getPageSizePx.bind(this.app.pdf),
+        };
+
+        // Update webview with new orientation and PageRender
+        dx.out(`updating webview with new orientation and page render`);
+        if (this.currentWebView) {
+          try {
+            await this.currentWebView.updatePageRender(pageRender);
+            await this.currentWebView.updateOptions({
+              orient: selectedId as 'portrait' | 'landscape',
+            });
+          } catch (error) {
+            this.app.ui.showErrorMessage(`Failed to update orientation: ${String(error)}`);
+          }
         }
       }
 
