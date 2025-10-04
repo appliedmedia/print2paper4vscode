@@ -8,7 +8,6 @@ export class UI {
   private app: App;
   private messageHandlers: Map<string, MessageHandler[]> = new Map();
   private dx: Diagnostics;
-  public currentPanelId: WebviewPanelId | null = null; // Store the current panel ID for updates
   private _yaml: {
     base_css: string;
     toolbar_css: string;
@@ -118,41 +117,15 @@ export class UI {
   // Create webview panel
   /** @deprecated Dead code, never called */
   async createWebviewPanel_OBSOLETE_DELETEME(title: string, html: string): Promise<WebviewPanelId> {
-    const panelId = await this.app.vscodeapis.getOrCreateWebviewPanel(
-      title,
-      html,
-      this.currentPanelId || undefined
-    );
-    this.currentPanelId = panelId;
+    const panelId = await this.app.vscodeapis.getOrCreateWebviewPanel(title, html, undefined);
     return panelId;
   }
 
-  // Update webview panel with new HTML
-  async updateWebviewPdf(pdf: jsPDF): Promise<void> {
-    const dx = this.dx.sub('updateWebviewPdf');
+  /** @deprecated Dead code, never called */
+  async updateWebviewPdf_OBSOLETE_DELETEME(pdf: jsPDF): Promise<void> {
+    const dx = this.dx.sub('updateWebviewPdf_OBSOLETE_DELETEME');
     dx.require({ pdf }, ['pdf']);
-
-    try {
-      if (!this.currentPanelId) {
-        throw new Error('No active webview panel to update');
-      }
-
-      // Convert PDF to data URL
-      const pdfDataUrl = pdf.output('datauristring') as string;
-
-      // Send message to webview to update PDF
-      this.app.vscodeapis.postMessage(this.currentPanelId, {
-        type: 'updatePdf',
-        pdfDataUrl: pdfDataUrl,
-      });
-
-      dx.out('PDF updated in webview');
-    } catch (error) {
-      dx.out(`Error updating webview PDF: ${String(error)}`);
-      throw error;
-    } finally {
-      dx.done();
-    }
+    throw new Error('Dead code - currentPanelId removed');
   }
 
   // Add toolbar to HTML content

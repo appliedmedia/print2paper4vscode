@@ -6,7 +6,7 @@ import { Diagnostics } from './Diagnostics';
 // ScrollOptions interface
 export interface ScrollOptions {
   title?: string;
-  pageSize?: 'letter' | 'legal' | 'a3' | 'a4' | 'a5';
+  pageSizeId?: 'letter' | 'legal' | 'a3' | 'a4' | 'a5';
   orient?: 'portrait' | 'landscape';
   fontFamily?: string;
   fontSizePx?: number; // fontSize in pixels
@@ -186,7 +186,7 @@ export class UIScrollView {
           fontSize: this.options.fontSizePx || 12, // fontSize in pixels - will be converted to points in PDF generation
           lineHeight: this.options.lineHeightPx || 18, // lineHeight in pixels - will be converted to points in PDF generation
           theme: this.options.theme || 'github-light',
-          pageSizeId: this.options.pageSize || 'a4',
+          pageSizeId: this.options.pageSizeId || 'a4',
           orient: this.options.orient || 'portrait',
         });
 

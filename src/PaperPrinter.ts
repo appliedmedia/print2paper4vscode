@@ -15,8 +15,8 @@ export class PaperPrinter {
   private app: App;
   private clipboardCapture: ClipboardCapture;
   private pdfDoc: PDFDoc | null = null; // In-memory PDF document (PDFDoc abstraction)
-  private lastRawCode: string | null = null;
-  private lastLanguageId: string | null = null;
+  private rawCode: string = '';
+  private languageId: string = '';
   private currentWebView: UIWebView | null = null;
   private printTitle: string = 'Printable';
   private dx: Diagnostics;
@@ -84,13 +84,13 @@ export class PaperPrinter {
       }
 
       const info = this.app.tabinspector.getEditorSelectionOrAll();
-      if (!info) {
-        this.app.ui.showErrorMessage('No active editor found');
+      if (!info || !info.text || !info.languageId) {
+        this.app.ui.showErrorMessage('No active editor or content found');
         return;
       }
 
-      this.lastRawCode = info.text;
-      this.lastLanguageId = info.languageId;
+      this.rawCode = info.text;
+      this.languageId = info.languageId;
       const selection = this.app.vscodeapis.getActiveTextEditor()?.selection;
       let printableLabel = info.name;
       if (selection && !selection.isEmpty) {
@@ -138,11 +138,6 @@ export class PaperPrinter {
       // Generate PDF (styleToPdf already sets tokens internally)
       await this.generatePdf();
 
-      if (!this.lastRawCode || !this.lastLanguageId) {
-        this.app.ui.showErrorMessage('No active editor found. Please open a file to print.');
-        return;
-      }
-
       // Construct PageRender implementation
       const pageRender: PageRender = {
         renderPage: (pageNumber, options) => this.app.pdf.renderPage(pageNumber, options),
@@ -155,7 +150,7 @@ export class PaperPrinter {
       const lineHeightPx = this.computeLineHeightPx(fontSizePx);
       const options = {
         title: `Print: ${tabName}`,
-        pageSize: this.pageSizeId,
+        pageSizeId: this.pageSizeId,
         orient: this.orient,
         fontFamily: this.getCurrentFontFamily(),
         fontSizePx: fontSizePx,
@@ -188,18 +183,15 @@ export class PaperPrinter {
   }
 
   private async generatePdf(): Promise<void> {
-    // If we have raw code, regenerate with theme overrides
-    if (this.lastRawCode && this.lastLanguageId) {
-      const sizePx = this.computeFontSizePx();
-      const lhPx = this.computeLineHeightPx(sizePx);
-      // Store the new PDF document
-      this.pdfDoc = await this.app.stylize.styleToPdf(this.lastRawCode, this.lastLanguageId, {
-        fontSize: sizePx,
-        lineHeight: lhPx,
-        title: this.printTitle,
-        theme: this.currentThemeChoice,
-      });
-    }
+    const sizePx = this.computeFontSizePx();
+    const lhPx = this.computeLineHeightPx(sizePx);
+    // Store the new PDF document
+    this.pdfDoc = await this.app.stylize.styleToPdf(this.rawCode, this.languageId, {
+      fontSize: sizePx,
+      lineHeight: lhPx,
+      title: this.printTitle,
+      theme: this.currentThemeChoice,
+    });
   }
 
   private computeFontSizePx(): number {
@@ -448,32 +440,30 @@ export class PaperPrinter {
     this.currentThemeChoice = selectedId;
 
     // Regenerate PDF with new theme
-    if (this.lastRawCode && this.lastLanguageId) {
-      const sizePx = this.computeFontSizePx();
-      const lhPx = this.computeLineHeightPx(sizePx);
-      this.pdfDoc = await this.app.stylize.styleToPdf(this.lastRawCode, this.lastLanguageId, {
-        fontSize: sizePx,
-        lineHeight: lhPx,
-        title: this.printTitle,
-        theme: this.currentThemeChoice,
-      });
+    const sizePx = this.computeFontSizePx();
+    const lhPx = this.computeLineHeightPx(sizePx);
+    this.pdfDoc = await this.app.stylize.styleToPdf(this.rawCode, this.languageId, {
+      fontSize: sizePx,
+      lineHeight: lhPx,
+      title: this.printTitle,
+      theme: this.currentThemeChoice,
+    });
 
-      // Update PageRender with regenerated PDF
-      const pageRender: PageRender = {
-        renderPage: this.app.pdf.renderPage.bind(this.app.pdf),
-        getPageTotal: this.app.pdf.getPageTotal.bind(this.app.pdf),
-        getPageSizePx: this.app.pdf.getPageSizePx.bind(this.app.pdf),
-      };
+    // Update PageRender with regenerated PDF
+    const pageRender: PageRender = {
+      renderPage: this.app.pdf.renderPage.bind(this.app.pdf),
+      getPageTotal: this.app.pdf.getPageTotal.bind(this.app.pdf),
+      getPageSizePx: this.app.pdf.getPageSizePx.bind(this.app.pdf),
+    };
 
-      // Update webview with new theme and PageRender
-      dx.out(`updating webview with new theme and page render`);
-      if (this.currentWebView) {
-        try {
-          await this.currentWebView.updatePageRender(pageRender);
-          await this.currentWebView.updateOptions({ theme: selectedId });
-        } catch (error) {
-          this.app.ui.showErrorMessage(`Failed to update theme: ${String(error)}`);
-        }
+    // Update webview with new theme and PageRender
+    dx.out(`updating webview with new theme and page render`);
+    if (this.currentWebView) {
+      try {
+        await this.currentWebView.updatePageRender(pageRender);
+        await this.currentWebView.updateOptions({ theme: selectedId });
+      } catch (error) {
+        this.app.ui.showErrorMessage(`Failed to update theme: ${String(error)}`);
       }
     }
 
@@ -501,34 +491,32 @@ export class PaperPrinter {
       this.currentFontSize = fontSize;
 
       // Regenerate PDF with new font size
-      if (this.lastRawCode && this.lastLanguageId) {
-        const lhPx = this.computeLineHeightPx(fontSize);
-        this.pdfDoc = await this.app.stylize.styleToPdf(this.lastRawCode, this.lastLanguageId, {
-          fontSize: fontSize,
-          lineHeight: lhPx,
-          title: this.printTitle,
-          theme: this.currentThemeChoice,
-        });
+      const lhPx = this.computeLineHeightPx(fontSize);
+      this.pdfDoc = await this.app.stylize.styleToPdf(this.rawCode, this.languageId, {
+        fontSize: fontSize,
+        lineHeight: lhPx,
+        title: this.printTitle,
+        theme: this.currentThemeChoice,
+      });
 
-        // Update PageRender with regenerated PDF
-        const pageRender: PageRender = {
-          renderPage: this.app.pdf.renderPage.bind(this.app.pdf),
-          getPageTotal: this.app.pdf.getPageTotal.bind(this.app.pdf),
-          getPageSizePx: this.app.pdf.getPageSizePx.bind(this.app.pdf),
-        };
+      // Update PageRender with regenerated PDF
+      const pageRender: PageRender = {
+        renderPage: this.app.pdf.renderPage.bind(this.app.pdf),
+        getPageTotal: this.app.pdf.getPageTotal.bind(this.app.pdf),
+        getPageSizePx: this.app.pdf.getPageSizePx.bind(this.app.pdf),
+      };
 
-        // Update webview with new font size and PageRender
-        dx.out(`updating webview with new font size and page render`);
-        if (this.currentWebView) {
-          try {
-            await this.currentWebView.updatePageRender(pageRender);
-            await this.currentWebView.updateOptions({
-              fontSizePx: fontSize,
-              lineHeightPx: lhPx,
-            });
-          } catch (error) {
-            this.app.ui.showErrorMessage(`Failed to update font size: ${String(error)}`);
-          }
+      // Update webview with new font size and PageRender
+      dx.out(`updating webview with new font size and page render`);
+      if (this.currentWebView) {
+        try {
+          await this.currentWebView.updatePageRender(pageRender);
+          await this.currentWebView.updateOptions({
+            fontSizePx: fontSize,
+            lineHeightPx: lhPx,
+          });
+        } catch (error) {
+          this.app.ui.showErrorMessage(`Failed to update font size: ${String(error)}`);
         }
       }
 
@@ -558,32 +546,30 @@ export class PaperPrinter {
       this.pageSizeId = selectedId as PageSizeId;
 
       // Regenerate PDF with new page size
-      if (this.lastRawCode && this.lastLanguageId) {
-        const sizePx = this.computeFontSizePx();
-        const lhPx = this.computeLineHeightPx(sizePx);
-        this.pdfDoc = await this.app.stylize.styleToPdf(this.lastRawCode, this.lastLanguageId, {
-          fontSize: sizePx,
-          lineHeight: lhPx,
-          title: this.printTitle,
-          theme: this.currentThemeChoice,
-        });
+      const sizePx = this.computeFontSizePx();
+      const lhPx = this.computeLineHeightPx(sizePx);
+      this.pdfDoc = await this.app.stylize.styleToPdf(this.rawCode, this.languageId, {
+        fontSize: sizePx,
+        lineHeight: lhPx,
+        title: this.printTitle,
+        theme: this.currentThemeChoice,
+      });
 
-        // Update PageRender with regenerated PDF
-        const pageRender: PageRender = {
-          renderPage: this.app.pdf.renderPage.bind(this.app.pdf),
-          getPageTotal: this.app.pdf.getPageTotal.bind(this.app.pdf),
-          getPageSizePx: this.app.pdf.getPageSizePx.bind(this.app.pdf),
-        };
+      // Update PageRender with regenerated PDF
+      const pageRender: PageRender = {
+        renderPage: this.app.pdf.renderPage.bind(this.app.pdf),
+        getPageTotal: this.app.pdf.getPageTotal.bind(this.app.pdf),
+        getPageSizePx: this.app.pdf.getPageSizePx.bind(this.app.pdf),
+      };
 
-        // Update webview with new page size and PageRender
-        dx.out(`updating webview with new page size and page render`);
-        if (this.currentWebView) {
-          try {
-            await this.currentWebView.updatePageRender(pageRender);
-            await this.currentWebView.updateOptions({ pageSize: selectedId as PageSizeId });
-          } catch (error) {
-            this.app.ui.showErrorMessage(`Failed to update page size: ${String(error)}`);
-          }
+      // Update webview with new page size and PageRender
+      dx.out(`updating webview with new page size and page render`);
+      if (this.currentWebView) {
+        try {
+          await this.currentWebView.updatePageRender(pageRender);
+          await this.currentWebView.updateOptions({ pageSizeId: selectedId as PageSizeId });
+        } catch (error) {
+          this.app.ui.showErrorMessage(`Failed to update page size: ${String(error)}`);
         }
       }
 
@@ -613,34 +599,32 @@ export class PaperPrinter {
       this.orient = selectedId;
 
       // Regenerate PDF with new orientation
-      if (this.lastRawCode && this.lastLanguageId) {
-        const sizePx = this.computeFontSizePx();
-        const lhPx = this.computeLineHeightPx(sizePx);
-        this.pdfDoc = await this.app.stylize.styleToPdf(this.lastRawCode, this.lastLanguageId, {
-          fontSize: sizePx,
-          lineHeight: lhPx,
-          title: this.printTitle,
-          theme: this.currentThemeChoice,
-        });
+      const sizePx = this.computeFontSizePx();
+      const lhPx = this.computeLineHeightPx(sizePx);
+      this.pdfDoc = await this.app.stylize.styleToPdf(this.rawCode, this.languageId, {
+        fontSize: sizePx,
+        lineHeight: lhPx,
+        title: this.printTitle,
+        theme: this.currentThemeChoice,
+      });
 
-        // Update PageRender with regenerated PDF
-        const pageRender: PageRender = {
-          renderPage: this.app.pdf.renderPage.bind(this.app.pdf),
-          getPageTotal: this.app.pdf.getPageTotal.bind(this.app.pdf),
-          getPageSizePx: this.app.pdf.getPageSizePx.bind(this.app.pdf),
-        };
+      // Update PageRender with regenerated PDF
+      const pageRender: PageRender = {
+        renderPage: this.app.pdf.renderPage.bind(this.app.pdf),
+        getPageTotal: this.app.pdf.getPageTotal.bind(this.app.pdf),
+        getPageSizePx: this.app.pdf.getPageSizePx.bind(this.app.pdf),
+      };
 
-        // Update webview with new orientation and PageRender
-        dx.out(`updating webview with new orientation and page render`);
-        if (this.currentWebView) {
-          try {
-            await this.currentWebView.updatePageRender(pageRender);
-            await this.currentWebView.updateOptions({
-              orient: selectedId as 'portrait' | 'landscape',
-            });
-          } catch (error) {
-            this.app.ui.showErrorMessage(`Failed to update orientation: ${String(error)}`);
-          }
+      // Update webview with new orientation and PageRender
+      dx.out(`updating webview with new orientation and page render`);
+      if (this.currentWebView) {
+        try {
+          await this.currentWebView.updatePageRender(pageRender);
+          await this.currentWebView.updateOptions({
+            orient: selectedId as 'portrait' | 'landscape',
+          });
+        } catch (error) {
+          this.app.ui.showErrorMessage(`Failed to update orientation: ${String(error)}`);
         }
       }
 

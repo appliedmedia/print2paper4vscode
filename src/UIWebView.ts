@@ -60,9 +60,6 @@ export class UIWebView {
       // Set panel ID in scroll view
       this.currentViewer.setPanelId(panelId);
 
-      // Store current panel ID in UI for message handling
-      this.app.ui.currentPanelId = panelId;
-
       // Note: Pre-rendering disabled - let scroll handler render pages on demand
       // This avoids coordinate transform issues and ensures fresh data
 
@@ -102,7 +99,7 @@ export class UIWebView {
             fontSize: options.fontSizePx || 12,
             lineHeight: options.lineHeightPx || 18,
             theme: options.theme || 'github-light',
-            pageSizeId: options.pageSize || 'a4',
+            pageSizeId: options.pageSizeId || 'a4',
             orient: options.orient || 'portrait',
           });
 
@@ -168,9 +165,6 @@ export class UIWebView {
 
       // Set panel ID in scroll view
       this.currentViewer.setPanelId(panelId);
-
-      // Store current panel ID in UI for message handling
-      this.app.ui.currentPanelId = panelId;
 
       dx.out(`Created scroll view: ${options.title || 'Document Viewer'}`);
       return panelId;
