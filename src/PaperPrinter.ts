@@ -154,7 +154,7 @@ export class PaperPrinter {
       const fontSizePx = this.computeFontSizePx();
       const lineHeightPx = this.computeLineHeightPx(fontSizePx);
       const options = {
-        title: tabName,
+        title: `Print: ${tabName}`,
         pageSize: this.pageSizeId,
         orient: this.orient,
         fontFamily: this.getCurrentFontFamily(),
