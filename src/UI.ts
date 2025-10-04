@@ -1,5 +1,5 @@
 import type { App } from './App';
-import type { WebviewMessage, MessageHandler } from './types/UI_t';
+import type { PostMessage, MessageHandler } from './types/UI_t';
 import type { WebviewPanelId } from './VSCodeAPIs';
 import { Diagnostics } from './Diagnostics';
 import jsPDF from 'jspdf';
@@ -70,7 +70,7 @@ export class UI {
   }
 
   // Central message handling - routes messages to registered handlers
-  async handleWebviewMessage(msg: WebviewMessage): Promise<void> {
+  async handleWebviewMessage(msg: PostMessage): Promise<void> {
     const dx = this.dx.sub('handleWebviewMessage');
     dx.require({ msg }, ['msg']);
     dx.out(
@@ -129,11 +129,11 @@ export class UI {
 
       // Convert PDF to data URL
       const pdfDataUrl = pdf.output('datauristring') as string;
-      
+
       // Send message to webview to update PDF
       this.app.vscodeapis.postMessageToPanel(this.currentPanelId, {
         type: 'updatePdf',
-        pdfDataUrl: pdfDataUrl
+        pdfDataUrl: pdfDataUrl,
       });
 
       dx.out('PDF updated in webview');
@@ -153,17 +153,17 @@ export class UI {
     try {
       // Get menu HTML from UIMenuMgr
       const menuHtml = await this.app.uimenumgr.getAllUIMenuHTML();
-      
+
       // Get toolbar templates from yaml getter
       const templates = this.yaml;
-      
+
       // Inject toolbar into HTML using template
       const toolbarHtml = this.app.templateDictReplace(templates.toolbar_html, {
         TOOLBAR_CSS: templates.toolbar_css,
         TOOLBAR_JS: templates.toolbar_js,
-        MENU_HTML: menuHtml
+        MENU_HTML: menuHtml,
       });
-      
+
       const htmlWithToolbar = html.replace('{{TOOLBAR}}', toolbarHtml);
 
       dx.out('Toolbar added to HTML');
@@ -184,10 +184,10 @@ export class UI {
     try {
       // Add toolbar to HTML
       const htmlWithToolbar = await this.addToolbar(html);
-      
+
       // Create webview panel
       const panelId = this.createWebviewPanel(title, htmlWithToolbar);
-      
+
       dx.out(`Created webview panel: ${title}`);
       return panelId;
     } catch (error) {
@@ -211,16 +211,16 @@ export class UI {
   // Choose save location
   async chooseSaveLocation(defaultFilename: string): Promise<string | null> {
     const dx = this.dx.sub('chooseSaveLocation');
-    
+
     try {
       const uri = await this.app.vscodeapis.showSaveDialog({
         defaultUri: this.app.vscodeapis.uriFromPath(defaultFilename),
         filters: {
-          'PDF files': ['pdf']
+          'PDF files': ['pdf'],
         },
-        title: 'Save PDF As'
+        title: 'Save PDF As',
       });
-      
+
       if (uri) {
         const path = this.app.vscodeapis.uriToPath(uri);
         dx.out(`User chose save location: ${path}`);

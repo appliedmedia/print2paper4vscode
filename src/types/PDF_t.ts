@@ -31,14 +31,14 @@ export interface PDFDoc {
   getCurrentPageInfo(): { pageNumber: number; pageCount: number };
 
   /**
-   * Output the PDF as an ArrayBuffer
+   * Get the PDF as an ArrayBuffer
    */
-  outputArrayBuffer(): ArrayBuffer;
+  asArrayBuffer(): ArrayBuffer;
 
   /**
-   * Output the PDF as a data URL string
+   * Get the PDF as a data URL string
    */
-  outputDataUrl(): string;
+  asDataUrl(): string;
 }
 
 /**

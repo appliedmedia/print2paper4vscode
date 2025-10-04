@@ -1,6 +1,5 @@
 import { ClipboardCapture } from './ClipboardCapture';
 import type { App } from './App';
-import type { WebviewMessage } from './types/UI_t';
 import type { UIMenuItem } from './types/UI_t';
 import { Diagnostics } from './Diagnostics';
 import { UIMenu } from './UIMenu';
@@ -14,7 +13,7 @@ export const PAGE_SIZES: PageSize[] = ['letter', 'legal', 'a3', 'a4', 'a5'];
 export class PaperPrinter {
   private app: App;
   private clipboardCapture: ClipboardCapture;
-  private pdfRendered: PDFDoc | null = null; // In-memory PDF document (PDFDoc abstraction)
+  private pdfDoc: PDFDoc | null = null; // In-memory PDF document (PDFDoc abstraction)
   private lastRawCode: string | null = null;
   private lastLanguageId: string | null = null;
   private currentWebView: UIWebView | null = null;
@@ -24,7 +23,6 @@ export class PaperPrinter {
   private currentThemeChoice: string | undefined;
 
   private currentFontSize: number = 12; // Default to 12px
-
 
   constructor(app: App) {
     this.app = app;
@@ -51,26 +49,23 @@ export class PaperPrinter {
    */
   async handlePrintRequest(printType: string): Promise<void> {
     const dx = this.dx.sub('handlePrintRequest');
-    
+
     try {
-      if (!this.pdfRendered) return;
+      if (!this.pdfDoc) return;
       void (await this.generatePdf());
-      
+
       if (printType === 'preview')
-        await this.app.pdf.printWithPreview(this.pdfRendered, this.printTitle || 'Print Output');
+        await this.app.pdf.printWithPreview(this.pdfDoc, this.printTitle || 'Print Output');
       else if (printType === 'direct')
-        await this.app.pdf.printDirectly(this.pdfRendered, this.printTitle || 'Print Output');
+        await this.app.pdf.printDirectly(this.pdfDoc, this.printTitle || 'Print Output');
       else if (printType === 'save')
-        await this.app.pdf.saveAsPDF(this.pdfRendered, this.printTitle || 'Print Output');
-        
+        await this.app.pdf.saveAsPDF(this.pdfDoc, this.printTitle || 'Print Output');
+
       dx.out(`Print request handled: ${printType}`);
     } finally {
       dx.done();
     }
   }
-
-
-
 
   /**
    * Handles print command - automatically detects selection vs document
@@ -109,11 +104,10 @@ export class PaperPrinter {
       if (!this.currentThemeChoice) {
         this.currentThemeChoice = this.app.vscodeapis.getActiveThemeId();
       }
-      const jsPdfDoc = await this.app.stylize.styleToPdf(info.text, info.languageId, {
+      this.pdfDoc = await this.app.stylize.styleToPdf(info.text, info.languageId, {
         title: this.printTitle,
         theme: this.currentThemeChoice,
       });
-      this.pdfRendered = this.app.pdf.createPDFDoc(jsPdfDoc);
       await this.openPrintPrepAndPrompt(printableLabel);
     } catch (error) {
       this.dx.out(`Error handling print: ${error}`);
@@ -133,25 +127,24 @@ export class PaperPrinter {
     await this.openWebView(tabName);
   }
 
-
   /**
    * Open webview (handles both single and multiple pages)
    */
   private async openWebView(tabName: string): Promise<void> {
     const dx = this.dx.sub('openWebView');
-    
+
     try {
       // Generate PDF and set tokens for page-based rendering
       await this.generatePdf();
-      
+
       // Set tokens in PDF for page-based rendering
       if (this.lastRawCode && this.lastLanguageId) {
         const tokens = await this.app.stylize.getTokens(this.lastRawCode, this.lastLanguageId, {
-          theme: this.currentThemeChoice
+          theme: this.currentThemeChoice,
         });
         this.app.pdf.setTokens(tokens);
       }
-      
+
       // Create webview options
       const fontSizePx = this.computeFontSizePx(); // fontSize in pixels
       const lineHeightPx = this.computeLineHeightPx(fontSizePx); // lineHeight in pixels
@@ -162,18 +155,17 @@ export class PaperPrinter {
         fontFamily: this.getCurrentFontFamily(),
         fontSizePx: fontSizePx, // fontSize in pixels - will be converted to points in PDF generation
         lineHeightPx: lineHeightPx, // lineHeight in pixels - will be converted to points in PDF generation
-        theme: this.currentThemeChoice
+        theme: this.currentThemeChoice,
       };
-      
+
       // Create webview and initialize with everything upfront
       this.currentWebView = new UIWebView(this.app);
       this.currentWebView.init(); // Initialize message handlers
-      
-      // Initialize webview with menus and scroll view
-      const panelId = await this.currentWebView.initWebview(this.app.pdf, scrollViewOptions, this.app.uimenumgr);
-      
+
+      // Create webview panel with menus and scroll view
+      await this.currentWebView.createPanel(this.app.pdf, scrollViewOptions);
+
       dx.out(`Opened webview for ${tabName}`);
-      
     } catch (error) {
       this.app.ui.showErrorMessage(`Failed to open webview: ${String(error)}`);
       throw error;
@@ -190,25 +182,23 @@ export class PaperPrinter {
     return editorTypo.fontFamily;
   }
 
-
   private async generatePdf(): Promise<string> {
     // If we have raw code, regenerate with theme overrides
     if (this.lastRawCode && this.lastLanguageId) {
       const sizePx = this.computeFontSizePx();
       const lhPx = this.computeLineHeightPx(sizePx);
-      const jsPdfDoc = await this.app.stylize.styleToPdf(this.lastRawCode, this.lastLanguageId, {
+      // Store the new PDF document
+      this.pdfDoc = await this.app.stylize.styleToPdf(this.lastRawCode, this.lastLanguageId, {
         fontSize: sizePx,
         lineHeight: lhPx,
         title: this.printTitle,
         theme: this.currentThemeChoice,
       });
-      // Store the new PDF document
-      this.pdfRendered = this.app.pdf.createPDFDoc(jsPdfDoc);
       // Convert PDF to HTML
-      return this.app.pdf.embedPDFinHTML(this.pdfRendered, this.printTitle);
+      return this.app.pdf.embedPDFinHTML(this.pdfDoc, this.printTitle);
     }
     // For existing PDF document, convert to HTML
-    return this.app.pdf.embedPDFinHTML(this.pdfRendered!, this.printTitle);
+    return this.app.pdf.embedPDFinHTML(this.pdfDoc!, this.printTitle);
   }
 
   private computeFontSizePx(): number {
@@ -228,15 +218,11 @@ export class PaperPrinter {
     if (savedPageSize) {
       return savedPageSize as PageSize;
     }
-    
+
     // Fallback to locale-based default
     const locale = this.app.vscodeapis.getLocale() || '  ';
     const parts = locale.split(/[-_]/);
-<<<<<<< HEAD
     const region = parts.pop()?.toUpperCase() || '';
-=======
-    const region = parts.pop().toUpperCase();
->>>>>>> origin/main
     const letterRegions = ['US', 'CA', 'MX', '419'];
     const isLetterSize = letterRegions.includes(region);
     return isLetterSize ? 'letter' : 'a4';
@@ -255,7 +241,6 @@ export class PaperPrinter {
   set orient(value: 'portrait' | 'landscape') {
     this.app.vscodeapis.updateGlobalState('orient', value);
   }
-
 
   // Create menus when needed for the webview
   private createMenus(): void {
@@ -334,7 +319,6 @@ export class PaperPrinter {
       this.dx.out(`Menu: ${menu.id}, Icon: ${menu.icon}, DisplayName: ${menu.displayName}`);
     });
   }
-
 
   // Build list methods for each menu type
   private menuItems_Print(): UIMenuItem[] {
@@ -432,14 +416,14 @@ export class PaperPrinter {
     if (selectedId === UIMenu.defaultId()) {
       return ''; // Print menu has no default selection
     }
-    if (!this.pdfRendered) return '';
+    if (!this.pdfDoc) return '';
     void (await this.generatePdf());
     if (selectedId === 'preview')
-      await this.app.pdf.printWithPreview(this.pdfRendered, this.printTitle || 'Print Output');
+      await this.app.pdf.printWithPreview(this.pdfDoc, this.printTitle || 'Print Output');
     else if (selectedId === 'direct')
-      await this.app.pdf.printDirectly(this.pdfRendered, this.printTitle || 'Print Output');
+      await this.app.pdf.printDirectly(this.pdfDoc, this.printTitle || 'Print Output');
     else if (selectedId === 'save')
-      await this.app.pdf.saveAsPDF(this.pdfRendered, this.printTitle || 'Print Output');
+      await this.app.pdf.saveAsPDF(this.pdfDoc, this.printTitle || 'Print Output');
     // TODO: Re-render webview - need access to panel
     return ''; // action handled
   }
@@ -499,9 +483,9 @@ export class PaperPrinter {
       dx.out(`updating webview with new font size`);
       if (this.currentWebView) {
         try {
-          await this.currentWebView.updateOptions({ 
+          await this.currentWebView.updateOptions({
             fontSizePx: fontSize, // fontSize in pixels - will be converted to points in PDF generation
-            lineHeightPx: this.computeLineHeightPx(fontSize) // lineHeight in pixels - will be converted to points in PDF generation
+            lineHeightPx: this.computeLineHeightPx(fontSize), // lineHeight in pixels - will be converted to points in PDF generation
           });
         } catch (error) {
           this.app.ui.showErrorMessage(`Failed to update font size: ${String(error)}`);
@@ -572,7 +556,9 @@ export class PaperPrinter {
       dx.out(`updating webview with new orientation`);
       if (this.currentWebView) {
         try {
-          await this.currentWebView.updateOptions({ orient: selectedId as 'portrait' | 'landscape' });
+          await this.currentWebView.updateOptions({
+            orient: selectedId as 'portrait' | 'landscape',
+          });
         } catch (error) {
           this.app.ui.showErrorMessage(`Failed to update orientation: ${String(error)}`);
         }

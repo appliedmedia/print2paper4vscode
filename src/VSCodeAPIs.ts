@@ -9,7 +9,7 @@ import type {
   // Position,
   // WorkspaceEdit,
 } from 'vscode';
-import type { WebviewMessage, ExtensionToWebviewMessage } from './types/UI_t';
+import type { PostMessage } from './types/UI_t';
 import { Diagnostics } from './Diagnostics';
 
 // Opaque ID type for webview panels
@@ -99,7 +99,6 @@ export class VSCodeAPIs {
     this.updateGlobalState('maxCanvasPoolSize', Math.max(1, Math.min(20, size)));
   }
 
-
   /**
    * Get auto scrollable viewer threshold (lines)
    */
@@ -145,7 +144,12 @@ export class VSCodeAPIs {
     this.updateGlobalState('scrollDebounceMs', Math.max(1, Math.min(100, ms)));
   }
 
-  getEditorTypography(): { fontSize: number; lineHeight: number; fontFamily: string; sizeToHeightRatio: number } {
+  getEditorTypography(): {
+    fontSize: number;
+    lineHeight: number;
+    fontFamily: string;
+    sizeToHeightRatio: number;
+  } {
     const editorCfg = this.vscode.workspace.getConfiguration('editor');
     const fontSize = Math.max(10, Number(editorCfg.get('fontSize') || 12));
     const cfgLineHeight = Number(editorCfg.get('lineHeight') || 0);
@@ -258,7 +262,7 @@ export class VSCodeAPIs {
   /**
    * Post message to panel
    */
-  postMessageToPanel(id: WebviewPanelId, message: ExtensionToWebviewMessage): void {
+  postMessageToPanel(id: WebviewPanelId, message: PostMessage): void {
     const panel = this.panels.get(id);
     if (panel) panel.webview.postMessage(message);
   }
@@ -317,7 +321,7 @@ export class VSCodeAPIs {
    * Set up message handling for an existing webview panel
    */
   setupMessageHandling(panel: WebviewPanel): void {
-    panel.webview.onDidReceiveMessage(async (msg: WebviewMessage) => {
+    panel.webview.onDidReceiveMessage(async (msg: PostMessage) => {
       await this.app.ui.handleWebviewMessage(msg);
     });
   }

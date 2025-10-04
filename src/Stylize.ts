@@ -1,5 +1,6 @@
 import type { App } from './App';
 import type { fileRead_t } from './OS';
+import type { PDFDoc } from './types/PDF_t';
 import {
   getSingletonHighlighter,
   bundledThemesInfo,
@@ -359,7 +360,7 @@ export class Stylize {
       tokens: ThemedToken[][],
       fontInfo: { fontFamily: string; fontSizePx: number; lineHeightPx: number },
       title?: string
-    ): Promise<jsPDF> {
+    ): Promise<PDFDoc> {
       return await this.app.pdf.generatePdfFromTokens(
         tokens,
         fontInfo.fontFamily,
@@ -373,7 +374,7 @@ export class Stylize {
       code: string,
       languageId: LanguageId,
       opts?: { fontSize?: number; lineHeight?: number; title?: string; theme?: string }
-    ): Promise<jsPDF> {
+    ): Promise<PDFDoc> {
       const dx = this.dx.sub('Converter_StyleToPdf');
       dx.require({ code, languageId }, ['code', 'languageId']);
 
@@ -400,7 +401,7 @@ export class Stylize {
     code: string,
     languageId: LanguageId,
     opts?: { fontSize?: number; lineHeight?: number; title?: string; theme?: string }
-  ): Promise<jsPDF> {
+  ): Promise<PDFDoc> {
     const converter = new this.Converter_StyleToPdf(this.app);
     return converter.convert(code, languageId, opts);
   }

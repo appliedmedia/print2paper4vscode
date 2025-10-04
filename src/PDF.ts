@@ -38,11 +38,11 @@ class PDFDocWrapper implements PDFDoc {
     return this.jsPdfDoc.getCurrentPageInfo();
   }
 
-  outputArrayBuffer(): ArrayBuffer {
+  asArrayBuffer(): ArrayBuffer {
     return this.jsPdfDoc.output('arraybuffer') as ArrayBuffer;
   }
 
-  outputDataUrl(): string {
+  asDataUrl(): string {
     return this.jsPdfDoc.output('datauristring') as string;
   }
 
@@ -114,7 +114,7 @@ export class PDF implements PageRender {
       const tempPdfPath = this.app.os.pathJoin(tempDir, filename);
 
       // Write PDF document to temp file
-      const pdfBuffer = pdfDoc.outputArrayBuffer();
+      const pdfBuffer = pdfDoc.asArrayBuffer();
       this.app.os.fileWrite(tempPdfPath, Buffer.from(new Uint8Array(pdfBuffer)));
 
       this.trackTempPdf(tempPdfPath);
@@ -140,7 +140,7 @@ export class PDF implements PageRender {
       const tempPdfPath = this.app.os.pathJoin(tempDir, filename);
 
       // Write PDF document to temp file
-      const pdfBuffer = pdfDoc.outputArrayBuffer();
+      const pdfBuffer = pdfDoc.asArrayBuffer();
       this.app.os.fileWrite(tempPdfPath, Buffer.from(new Uint8Array(pdfBuffer)));
 
       this.trackTempPdf(tempPdfPath);
@@ -173,7 +173,7 @@ export class PDF implements PageRender {
       this.app.os.ensureDir(targetDir);
 
       // Save PDF document directly to chosen location
-      const pdfBuffer = pdfDoc.outputArrayBuffer();
+      const pdfBuffer = pdfDoc.asArrayBuffer();
       this.app.os.fileWrite(targetPath, Buffer.from(new Uint8Array(pdfBuffer)));
 
       // Track file for cleanup (optional)
@@ -484,7 +484,7 @@ export class PDF implements PageRender {
 
     try {
       // Generate a data URL from the PDF document
-      const pdfDataUrl = pdfDoc.outputDataUrl();
+      const pdfDataUrl = pdfDoc.asDataUrl();
       dx.out(`PDF data URL generated: ${pdfDataUrl.substring(0, 50)}...`);
 
       // Load YAML templates and PDF.js library
@@ -608,12 +608,12 @@ export class PDF implements PageRender {
     this.pageTotal = this.pageBreaks.length;
     this.pageMetadata = null; // Invalidate cached metadata
     dx.out(`Set tokens: ${tokens.length} lines, ${this.pageTotal} pages`);
-    
+
     // Debug: Log the first few tokens to verify they're set correctly
     if (tokens.length > 0) {
       dx.out(`First token line: ${JSON.stringify(tokens[0].slice(0, 3))}`);
     }
-    
+
     dx.done();
   }
 
@@ -623,7 +623,7 @@ export class PDF implements PageRender {
 
     try {
       dx.out(`Page render requested: page ${pageNumber}, total pages: ${this.pageTotal}`);
-      
+
       // Validate page number
       if (pageNumber < 1 || pageNumber > this.pageTotal) {
         const error: PageRenderError = {
@@ -653,7 +653,7 @@ export class PDF implements PageRender {
       const pdfDoc = await this.generatePdfPage(pageTokens, options);
 
       // Convert to data URL
-      const dataUrl = pdfDoc.output('datauristring') as string;
+      const dataUrl = pdfDoc.asDataUrl();
 
       // Get page dimensions
       const pageDimensions = this.getPageDimensions(options.pageSize, options.orient);
@@ -821,10 +821,7 @@ export class PDF implements PageRender {
   /**
    * Generate a single-page PDF from tokens
    */
-  private async generatePdfPage(
-    tokens: ThemedToken[][],
-    options: RenderOptions
-  ): Promise<PDFDoc> {
+  private async generatePdfPage(tokens: ThemedToken[][], options: RenderOptions): Promise<PDFDoc> {
     const dx = this.dx.sub('generatePdfPage');
     dx.require({ tokens, options }, ['tokens', 'options']);
 

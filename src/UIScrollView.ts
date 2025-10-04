@@ -33,11 +33,11 @@ export class UIScrollView {
     scroll_js: string;
   } | null = null;
 
-  constructor(app: App, pageRender: PageRender, options: ScrollOptions, menuMgr: UIMenuMgr) {
+  constructor(app: App, pageRender: PageRender, options: ScrollOptions) {
     this.app = app;
     this.pageRender = pageRender;
     this.options = options;
-    this.menuMgr = menuMgr;
+    this.menuMgr = app.uimenumgr;
     this.dx = app.dx.create('UIScrollView');
   }
 
@@ -64,10 +64,10 @@ export class UIScrollView {
   }
 
   /**
-   * Create the scroll view webview panel
+   * Generate HTML content for the scroll view
    */
-  async create(): Promise<WebviewPanelId> {
-    const dx = this.dx.sub('create');
+  async generateContent(): Promise<string> {
+    const dx = this.dx.sub('generateContent');
 
     try {
       // Get page metadata
@@ -85,23 +85,21 @@ export class UIScrollView {
       // Generate HTML with scroll view
       const html = await this.generateScrollViewHTML(templatesWithBaseCss, metadata);
 
-      // Create webview panel
-      this.panelId = this.app.vscodeapis.createWebviewPanel(
-        this.options.title || 'Scrollable Document',
-        html
-      );
-
-      // Store current panel ID in UI
-      this.app.ui.currentPanelId = this.panelId;
-
-      dx.out(`Created scroll view with ${metadata.pageTotal} pages`);
-      return this.panelId;
+      dx.out(`Generated scroll view content with ${metadata.pageTotal} pages`);
+      return html;
     } catch (error) {
-      this.app.ui.showErrorMessage(`Failed to create scroll view: ${String(error)}`);
+      this.app.ui.showErrorMessage(`Failed to generate scroll view content: ${String(error)}`);
       throw error;
     } finally {
       dx.done();
     }
+  }
+
+  /**
+   * Set the panel ID after panel creation
+   */
+  setPanelId(panelId: WebviewPanelId): void {
+    this.panelId = panelId;
   }
 
   /**

@@ -4,9 +4,19 @@ export interface UIMenuItem {
   attributes?: Record<string, string>;
 }
 
-// Webview message types - defines the contract between frontend UI and backend
-export type WebviewMessage = {
-  type: 'dragEnd' | 'menu' | 'print' | 'menuItemSelected' | 'dx' | 'requestPageRender';
+// PostMessage types - defines messages sent via postMessage API
+export type PostMessage = {
+  type:
+    | 'dragEnd'
+    | 'menu'
+    | 'print'
+    | 'menuItemSelected'
+    | 'dx'
+    | 'requestPageRender'
+    | 'updatePdf'
+    | 'pageRenderResponse'
+    | 'pageRenderError'
+    | 'clearAllPages';
   clientX?: number;
   left?: number;
   startLeft?: number;
@@ -17,16 +27,11 @@ export type WebviewMessage = {
   y?: number;
   message?: string; // For dx messages
   pageNumber?: number; // For page render requests
-  data?: any; // For diagnostic messages
+  data?: unknown; // For diagnostic messages
   menuId?: string; // For menu item selection
   itemId?: string; // For menu item selection
   printType?: string; // For print messages
-};
-
-// Extension to webview message types - defines messages sent from extension to webview
-export type ExtensionToWebviewMessage = {
-  type: 'updatePdf' | 'pageRenderResponse' | 'pageRenderError' | 'clearAllPages';
-  pdfDataUrl?: string;
+  pdfDataUrl?: string; // For PDF updates
   pageData?: {
     dataUrl: string;
     widthPx: number;
@@ -39,9 +44,7 @@ export type ExtensionToWebviewMessage = {
     type: 'generation' | 'validation' | 'memory' | 'unknown';
     timestamp: Date;
   };
-  pageNumber?: number;
-  data?: any;
 };
 
 // Message handler callback type
-export type MessageHandler = (msg: WebviewMessage) => Promise<void> | void;
+export type MessageHandler = (msg: PostMessage) => Promise<void> | void;
