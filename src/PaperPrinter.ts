@@ -405,6 +405,57 @@ export class PaperPrinter {
   }
 
   // Selection handler methods for each menu type
+  /**
+   * Regenerate PDF and update webview after any option change
+   * This is the ONLY place that should regenerate PDFs for menu changes
+   */
+  private async regenerateAndUpdateWebview(): Promise<void> {
+    const dx = this.dx.sub('regenerateAndUpdateWebview');
+
+    try {
+      // Regenerate PDF with current settings
+      const sizePx = this.computeFontSizePx();
+      const lhPx = this.computeLineHeightPx(sizePx);
+      this.pdfDoc = await this.app.stylize.styleToPdf(this.rawCode, this.languageId, {
+        fontSize: sizePx,
+        lineHeight: lhPx,
+        title: this.printTitle,
+        theme: this.currentThemeChoice,
+      });
+
+      // Update PageRender with regenerated PDF
+      const pageRender: PageRender = {
+        renderPage: this.app.pdf.renderPage.bind(this.app.pdf),
+        getPageTotal: this.app.pdf.getPageTotal.bind(this.app.pdf),
+        getPageSizePx: this.app.pdf.getPageSizePx.bind(this.app.pdf),
+      };
+
+      // Update webview if it exists
+      if (this.currentWebView) {
+        try {
+          await this.currentWebView.updatePageRender(pageRender);
+          await this.currentWebView.updateOptions({
+            theme: this.currentThemeChoice,
+            fontSizePx: sizePx,
+            lineHeightPx: lhPx,
+            pageSizeId: this.pageSizeId,
+            orient: this.orient,
+          });
+          dx.out('Webview updated with new configuration');
+        } catch (error) {
+          this.app.ui.showErrorMessage(`Failed to update webview: ${String(error)}`);
+        }
+      }
+
+      dx.out('PDF regenerated successfully');
+    } catch (error) {
+      dx.out(`Error regenerating PDF: ${error}`);
+      throw error;
+    } finally {
+      dx.done();
+    }
+  }
+
   private async handleSelection_Print(selectedId: string): Promise<string> {
     if (selectedId === UIMenu.defaultId()) {
       return ''; // Print menu has no default selection
@@ -436,39 +487,20 @@ export class PaperPrinter {
       return result;
     }
 
+    // Update theme
     dx.out(`updating theme to ${selectedId}`);
     this.currentThemeChoice = selectedId;
 
-    // Regenerate PDF with new theme
-    const sizePx = this.computeFontSizePx();
-    const lhPx = this.computeLineHeightPx(sizePx);
-    this.pdfDoc = await this.app.stylize.styleToPdf(this.rawCode, this.languageId, {
-      fontSize: sizePx,
-      lineHeight: lhPx,
-      title: this.printTitle,
-      theme: this.currentThemeChoice,
-    });
-
-    // Update PageRender with regenerated PDF
-    const pageRender: PageRender = {
-      renderPage: this.app.pdf.renderPage.bind(this.app.pdf),
-      getPageTotal: this.app.pdf.getPageTotal.bind(this.app.pdf),
-      getPageSizePx: this.app.pdf.getPageSizePx.bind(this.app.pdf),
-    };
-
-    // Update webview with new theme and PageRender
-    dx.out(`updating webview with new theme and page render`);
-    if (this.currentWebView) {
-      try {
-        await this.currentWebView.updatePageRender(pageRender);
-        await this.currentWebView.updateOptions({ theme: selectedId });
-      } catch (error) {
-        this.app.ui.showErrorMessage(`Failed to update theme: ${String(error)}`);
-      }
+    // Regenerate everything
+    try {
+      await this.regenerateAndUpdateWebview();
+      dx.done();
+      return selectedId; // Return the selected theme for checkmark
+    } catch (error) {
+      this.app.ui.showErrorMessage(`Failed to update theme: ${String(error)}`);
+      dx.done();
+      return '';
     }
-
-    dx.done();
-    return selectedId; // Return the selected theme for checkmark
   }
 
   private async handleSelection_Text(selectedId: string): Promise<string> {
@@ -484,48 +516,26 @@ export class PaperPrinter {
       return editorSize;
     }
 
-    // Update font size mode
+    // Update font size
     const fontSize = parseInt(selectedId, 10);
-    if (!isNaN(fontSize)) {
-      dx.out(`updating fontSize to ${fontSize}`);
-      this.currentFontSize = fontSize;
-
-      // Regenerate PDF with new font size
-      const lhPx = this.computeLineHeightPx(fontSize);
-      this.pdfDoc = await this.app.stylize.styleToPdf(this.rawCode, this.languageId, {
-        fontSize: fontSize,
-        lineHeight: lhPx,
-        title: this.printTitle,
-        theme: this.currentThemeChoice,
-      });
-
-      // Update PageRender with regenerated PDF
-      const pageRender: PageRender = {
-        renderPage: this.app.pdf.renderPage.bind(this.app.pdf),
-        getPageTotal: this.app.pdf.getPageTotal.bind(this.app.pdf),
-        getPageSizePx: this.app.pdf.getPageSizePx.bind(this.app.pdf),
-      };
-
-      // Update webview with new font size and PageRender
-      dx.out(`updating webview with new font size and page render`);
-      if (this.currentWebView) {
-        try {
-          await this.currentWebView.updatePageRender(pageRender);
-          await this.currentWebView.updateOptions({
-            fontSizePx: fontSize,
-            lineHeightPx: lhPx,
-          });
-        } catch (error) {
-          this.app.ui.showErrorMessage(`Failed to update font size: ${String(error)}`);
-        }
-      }
-
+    if (isNaN(fontSize)) {
       dx.done();
-      return selectedId; // Return the selected size for checkmark
+      return '';
     }
 
-    dx.done();
-    return ''; // selection handled
+    dx.out(`updating fontSize to ${fontSize}`);
+    this.currentFontSize = fontSize;
+
+    // Regenerate everything
+    try {
+      await this.regenerateAndUpdateWebview();
+      dx.done();
+      return selectedId; // Return the selected size for checkmark
+    } catch (error) {
+      this.app.ui.showErrorMessage(`Failed to update font size: ${String(error)}`);
+      dx.done();
+      return '';
+    }
   }
 
   private async handleSelection_Page(selectedId: string): Promise<string> {
@@ -540,45 +550,25 @@ export class PaperPrinter {
       return currentPageSizeId;
     }
 
-    // Handle page size selection
-    if (PAGE_SIZE_IDS.includes(selectedId as PageSizeId)) {
-      dx.out(`updating page size to ${selectedId}`);
-      this.pageSizeId = selectedId as PageSizeId;
-
-      // Regenerate PDF with new page size
-      const sizePx = this.computeFontSizePx();
-      const lhPx = this.computeLineHeightPx(sizePx);
-      this.pdfDoc = await this.app.stylize.styleToPdf(this.rawCode, this.languageId, {
-        fontSize: sizePx,
-        lineHeight: lhPx,
-        title: this.printTitle,
-        theme: this.currentThemeChoice,
-      });
-
-      // Update PageRender with regenerated PDF
-      const pageRender: PageRender = {
-        renderPage: this.app.pdf.renderPage.bind(this.app.pdf),
-        getPageTotal: this.app.pdf.getPageTotal.bind(this.app.pdf),
-        getPageSizePx: this.app.pdf.getPageSizePx.bind(this.app.pdf),
-      };
-
-      // Update webview with new page size and PageRender
-      dx.out(`updating webview with new page size and page render`);
-      if (this.currentWebView) {
-        try {
-          await this.currentWebView.updatePageRender(pageRender);
-          await this.currentWebView.updateOptions({ pageSizeId: selectedId as PageSizeId });
-        } catch (error) {
-          this.app.ui.showErrorMessage(`Failed to update page size: ${String(error)}`);
-        }
-      }
-
+    // Update page size
+    if (!PAGE_SIZE_IDS.includes(selectedId as PageSizeId)) {
       dx.done();
-      return selectedId; // Return the selected size for checkmark
+      return '';
     }
 
-    dx.done();
-    return ''; // selection handled
+    dx.out(`updating page size to ${selectedId}`);
+    this.pageSizeId = selectedId as PageSizeId;
+
+    // Regenerate everything
+    try {
+      await this.regenerateAndUpdateWebview();
+      dx.done();
+      return selectedId; // Return the selected size for checkmark
+    } catch (error) {
+      this.app.ui.showErrorMessage(`Failed to update page size: ${String(error)}`);
+      dx.done();
+      return '';
+    }
   }
 
   private async handleSelection_Orient(selectedId: string): Promise<string> {
@@ -593,47 +583,25 @@ export class PaperPrinter {
       return currentOrient;
     }
 
-    // Handle orient selection
-    if (selectedId === 'portrait' || selectedId === 'landscape') {
-      dx.out(`updating orient to ${selectedId}`);
-      this.orient = selectedId;
-
-      // Regenerate PDF with new orientation
-      const sizePx = this.computeFontSizePx();
-      const lhPx = this.computeLineHeightPx(sizePx);
-      this.pdfDoc = await this.app.stylize.styleToPdf(this.rawCode, this.languageId, {
-        fontSize: sizePx,
-        lineHeight: lhPx,
-        title: this.printTitle,
-        theme: this.currentThemeChoice,
-      });
-
-      // Update PageRender with regenerated PDF
-      const pageRender: PageRender = {
-        renderPage: this.app.pdf.renderPage.bind(this.app.pdf),
-        getPageTotal: this.app.pdf.getPageTotal.bind(this.app.pdf),
-        getPageSizePx: this.app.pdf.getPageSizePx.bind(this.app.pdf),
-      };
-
-      // Update webview with new orientation and PageRender
-      dx.out(`updating webview with new orientation and page render`);
-      if (this.currentWebView) {
-        try {
-          await this.currentWebView.updatePageRender(pageRender);
-          await this.currentWebView.updateOptions({
-            orient: selectedId as 'portrait' | 'landscape',
-          });
-        } catch (error) {
-          this.app.ui.showErrorMessage(`Failed to update orientation: ${String(error)}`);
-        }
-      }
-
+    // Update orientation
+    if (selectedId !== 'portrait' && selectedId !== 'landscape') {
       dx.done();
-      return selectedId; // Return the selected orient for checkmark
+      return '';
     }
 
-    dx.done();
-    return ''; // selection handled
+    dx.out(`updating orient to ${selectedId}`);
+    this.orient = selectedId;
+
+    // Regenerate everything
+    try {
+      await this.regenerateAndUpdateWebview();
+      dx.done();
+      return selectedId; // Return the selected orient for checkmark
+    } catch (error) {
+      this.app.ui.showErrorMessage(`Failed to update orientation: ${String(error)}`);
+      dx.done();
+      return '';
+    }
   }
 
   // Removed CSS hacks; rely on theme overrides
