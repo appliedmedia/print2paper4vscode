@@ -7,7 +7,7 @@
 - ✅ Simplify all 4 menu handlers to use the new method
 - ✅ Eliminate ~110 lines of duplicated code
 
-### Phase 2: YAML and SVG System
+### Phase 2: YAML and SVG System (COMPLETED)
 - ✅ Add YAML getter to PaperPrinter class
 - ✅ Update PaperPrinter.yaml with new icon names (`icon_orient_portrait_svg`, etc.)
 - ✅ Fix menuItems_Orient() to use template literals like margin
@@ -15,12 +15,27 @@
 - ✅ Remove manual SVG handling from UIMenu.ts
 - ✅ Update UIMenu.ts to remove `{{svg:...}}` processing
 
-### Phase 3: Document Info Structure
-- [ ] Create `docInfo` struct in PaperPrinter with `persist_` prefix
-- [ ] Create `docInfo` struct in PDF class for computed values
-- [ ] Add `localGlobalUpdate()` method for persistent variables
-- [ ] Add getters/setters with `persist_` prefix (e.g., `get persist_themeChoice()`)
-- [ ] Update PDF class to access via `this.app.paperprinter.docInfo`
+**Phase 2 Results:**
+- No more manual SVG replacement bullshit
+- Consistent template literal approach across all menu items
+- PaperPrinter handles its own YAML loading and SVG processing
+- UIMenu just uses the processed displayName as-is
+- All icons have consistent `_svg` suffix naming
+
+### Phase 3: Document Info Structure (COMPLETED)
+- ✅ Create `docInfo` struct in PaperPrinter with `persist_` prefix
+- ✅ Create `docInfo` struct in PDF class for computed values
+- ✅ Add `localGlobalUpdate()` method for persistent variables
+- ✅ Add getters/setters with `persist_` prefix (e.g., `get persist_themeChoice()`)
+- ✅ Update PDF class to access via `this.app.paperprinter.docInfo`
+
+**Phase 3 Results:**
+- PaperPrinter has `docInfo` with document content + persistent user preferences
+- PDF has `docInfo` with computed values (page dimensions, margins, etc.)
+- `localGlobalUpdate()` method handles both local + global state updates
+- Getters/setters use `persist_` prefix so callers know they're persistent
+- PDF accesses PaperPrinter data via `this.app.paperprinter.docInfo`
+- No more parameter passing of configuration structs
 
 ### Phase 4: Method Signatures and Parameters
 - [ ] Add `pageBegin`/`pageEnd` parameters to Stylize.tokenize()

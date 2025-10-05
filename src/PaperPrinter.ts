@@ -25,6 +25,20 @@ export class PaperPrinter {
 
   private currentFontSize: number = 12; // Default to 12px
 
+  private docInfo = {
+    // Document content
+    rawCode: '',
+    languageId: '',
+    printTitle: 'Printable',
+    
+    // User preferences (persisted in global state)
+    persist_themeChoice: undefined,
+    persist_fontSize: 12,
+    persist_pageSizeId: 'a4' as PageSizeId,
+    persist_orient: 'portrait' as const,
+    persist_marginId: 'normal' as 'none' | 'minimal' | 'normal' | 'wide'
+  };
+
   private _yaml: {
     icon_orient_portrait_svg: string;
     icon_orient_landscape_svg: string;
@@ -78,6 +92,54 @@ export class PaperPrinter {
     }
     
     return this._yaml;
+  }
+
+  // Clever setter that updates both local and global state
+  private localGlobalUpdate(container: any, varName: string, value: any) {
+    const persistKey = `persist_${varName}`;
+    container[persistKey] = value;
+    this.app.vscodeapis.updateGlobalState(varName, value);
+  }
+
+  // Getters that read from global state - callers know it's persistent
+  get persist_themeChoice() {
+    return this.docInfo.persist_themeChoice || this.app.vscodeapis.getActiveThemeId();
+  }
+  
+  set persist_themeChoice(value: string) {
+    this.localGlobalUpdate(this.docInfo, 'themeChoice', value);
+  }
+  
+  get persist_fontSize() {
+    return this.docInfo.persist_fontSize || 12;
+  }
+  
+  set persist_fontSize(value: number) {
+    this.localGlobalUpdate(this.docInfo, 'fontSize', value);
+  }
+  
+  get persist_pageSizeId() {
+    return this.docInfo.persist_pageSizeId || 'a4';
+  }
+  
+  set persist_pageSizeId(value: PageSizeId) {
+    this.localGlobalUpdate(this.docInfo, 'pageSizeId', value);
+  }
+  
+  get persist_orient() {
+    return this.docInfo.persist_orient || 'portrait';
+  }
+  
+  set persist_orient(value: 'portrait' | 'landscape') {
+    this.localGlobalUpdate(this.docInfo, 'orient', value);
+  }
+  
+  get persist_marginId() {
+    return this.docInfo.persist_marginId || 'normal';
+  }
+  
+  set persist_marginId(value: 'none' | 'minimal' | 'normal' | 'wide') {
+    this.localGlobalUpdate(this.docInfo, 'marginId', value);
   }
 
   // Public façade to decouple TabInspector from internal fields

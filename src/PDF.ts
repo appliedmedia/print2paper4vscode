@@ -66,6 +66,19 @@ export class PDF implements PageRender {
   private pageBreaks: number[] = [];
   private pageTotal: number = 0;
 
+  // PDF-specific computed values
+  private docInfo = {
+    pageWidthPts: 0,
+    pageHeightPts: 0,
+    marginPts: 0,
+    lineHeightPts: 0
+  };
+
+  // Access PaperPrinter's data via app
+  private get paperDocInfo() {
+    return this.app.paperprinter.docInfo;
+  }
+
   constructor(app: App) {
     this.app = app;
     this.dx = app.dx.create('PDF');
