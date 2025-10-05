@@ -11,6 +11,15 @@ import type { PageRender } from './types/PageRender_t';
 export type PageSizeId = 'letter' | 'legal' | 'a3' | 'a4' | 'a5';
 export const PAGE_SIZE_IDS: PageSizeId[] = ['letter', 'legal', 'a3', 'a4', 'a5'];
 
+// Margin level type and lookup table
+export type MarginId = 'none' | 'minimal' | 'normal' | 'wide';
+export const MARGIN_IDS = {
+  none: 0,      // 0pts
+  minimal: 5,   // ~7px
+  normal: 15,   // ~20px  
+  wide: 30      // ~40px
+} as const;
+
 export class PaperPrinter {
   private app: App;
   private clipboardCapture: ClipboardCapture;
@@ -140,6 +149,11 @@ export class PaperPrinter {
   
   set persist_marginId(value: 'none' | 'minimal' | 'normal' | 'wide') {
     this.localGlobalUpdate(this.docInfo, 'marginId', value);
+  }
+
+  // Get margin in points from margin ID
+  getMarginPts(marginId: MarginId): number {
+    return MARGIN_IDS[marginId];
   }
 
   // Public façade to decouple TabInspector from internal fields
@@ -389,6 +403,15 @@ export class PaperPrinter {
         menuItems: this.menuItems_Text.bind(this),
         flyoutMenuItemIds: [],
         selectionHandler: this.handleSelection_Text.bind(this),
+      },
+      {
+        id: 'margin',
+        displayName: 'Margin',
+        icon: '📏',
+        isFlyout: false,
+        menuItems: this.menuItems_Margin.bind(this),
+        flyoutMenuItemIds: [],
+        selectionHandler: this.handleSelection_Margin.bind(this),
       },
     ];
 
@@ -705,6 +728,39 @@ export class PaperPrinter {
       return selectedId; // Return the selected orient for checkmark
     } catch (error) {
       this.app.ui.showErrorMessage(`Failed to update orientation: ${String(error)}`);
+      dx.done();
+      return '';
+    }
+  }
+
+  private async handleSelection_Margin(selectedId: string): Promise<string> {
+    const dx = this.dx.sub('handleSelection_Margin');
+    dx.out(`selectedId = ${selectedId}`);
+
+    if (selectedId === UIMenu.defaultId()) {
+      // Return the current margin for default selection
+      const currentMargin = this.persist_marginId;
+      dx.out(`returning current margin: ${currentMargin}`);
+      dx.done();
+      return currentMargin;
+    }
+
+    // Update margin
+    if (!['none', 'minimal', 'normal', 'wide'].includes(selectedId)) {
+      dx.done();
+      return '';
+    }
+
+    dx.out(`updating margin to ${selectedId}`);
+    this.persist_marginId = selectedId as MarginId;
+
+    // Regenerate everything
+    try {
+      await this.regenerateAndUpdateWebview();
+      dx.done();
+      return selectedId; // Return the selected margin for checkmark
+    } catch (error) {
+      this.app.ui.showErrorMessage(`Failed to update margin: ${String(error)}`);
       dx.done();
       return '';
     }

@@ -51,11 +51,18 @@
 - PDF.finish() completes the PDF and resets state
 - Method signatures support the new page-by-page rendering flow
 
-### Phase 5: Margin System
-- [ ] Add `persist_marginId` to PaperPrinter docInfo
-- [ ] Create `MARGIN_IDS` const lookup table
-- [ ] Add `getMarginPts()` method
-- [ ] Add margin menu handler
+### Phase 5: Margin System (COMPLETED)
+- ✅ Add `persist_marginId` to PaperPrinter docInfo
+- ✅ Create `MARGIN_IDS` const lookup table
+- ✅ Add `getMarginPts()` method
+- ✅ Add margin menu handler
+
+**Phase 5 Results:**
+- Margin system with 4 levels: none (0pts), minimal (5pts), normal (15pts), wide (30pts)
+- Const lookup table for type-safe margin calculations
+- Margin menu with SVG icons for visual selection
+- Margin handler follows same pattern as other menu handlers
+- getMarginPts() method converts margin ID to points
 
 ### Phase 6: Cleanup
 - [ ] Remove old methods: `styleToPdf()`, `Converter_StyleToPdf`, `generatePdfFromTokens()`
