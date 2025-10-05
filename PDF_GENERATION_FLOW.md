@@ -37,12 +37,19 @@
 - PDF accesses PaperPrinter data via `this.app.paperprinter.docInfo`
 - No more parameter passing of configuration structs
 
-### Phase 4: Method Signatures and Parameters
-- [ ] Add `pageBegin`/`pageEnd` parameters to Stylize.tokenize()
-- [ ] Add `pageBegin`/`pageEnd` parameters to PDF.renderPage()
-- [ ] Add `optPerLineHandler` parameter to Stylize.tokenize()
-- [ ] Add `PDF.renderByLine()` method for incremental PDF building
-- [ ] Add `PDF.finish()` method to complete PDF
+### Phase 4: Method Signatures and Parameters (COMPLETED)
+- ✅ Add `pageBegin`/`pageEnd` parameters to Stylize.tokenize()
+- ✅ Add `pageBegin`/`pageEnd` parameters to PDF.renderPage()
+- ✅ Add `optPerLineHandler` parameter to Stylize.tokenize()
+- ✅ Add `PDF.renderByLine()` method for incremental PDF building
+- ✅ Add `PDF.finish()` method to complete PDF
+
+**Phase 4 Results:**
+- Stylize.tokenize() supports page range filtering (1,0=page1; 0,0=all; 1,2=pages1-2)
+- optPerLineHandler callback enables parallel rendering architecture
+- PDF.renderByLine() builds jsPDF incrementally with per-line processing
+- PDF.finish() completes the PDF and resets state
+- Method signatures support the new page-by-page rendering flow
 
 ### Phase 5: Margin System
 - [ ] Add `persist_marginId` to PaperPrinter docInfo

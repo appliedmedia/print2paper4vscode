@@ -406,6 +406,67 @@ export class Stylize {
     return converter.convert(code, languageId, opts);
   }
 
+  // Simple tokenization without PDF generation - render one page at a time
+  async tokenize(
+    code: string,
+    languageId: LanguageId,
+    theme?: string,
+    pageBegin?: number,
+    pageEnd?: number,
+    optPerLineHandler?: (pageNumber: number, lineNumber: number, htmlData: string) => void
+  ): Promise<ThemedToken[][]> {
+    const dx = this.dx.sub('tokenize');
+
+    try {
+      const highlighter = await this.getHighlighterForLanguage(languageId);
+      const themeToUse = theme || this.resolveActiveTheme();
+
+      // Load theme if not already loaded
+      if (!highlighter.getLoadedThemes().includes(themeToUse)) {
+        await highlighter.loadTheme(themeToUse);
+      }
+
+      const tokens = highlighter.codeToThemedTokens(code, languageId, themeToUse);
+      
+      // Apply page range filtering if specified
+      let filteredTokens = tokens;
+      if (pageBegin !== undefined && pageEnd !== undefined) {
+        if (pageBegin === 0 && pageEnd === 0) {
+          // 0,0 means everything - no filtering
+          filteredTokens = tokens;
+        } else if (pageEnd === 0) {
+          // pageBegin,0 means just that page
+          filteredTokens = tokens.slice(pageBegin - 1, pageBegin);
+        } else {
+          // pageBegin,pageEnd means range
+          filteredTokens = tokens.slice(pageBegin - 1, pageEnd);
+        }
+      }
+
+      // Call per-line handler if provided
+      if (optPerLineHandler) {
+        for (let pageNum = pageBegin || 1; pageNum <= (pageEnd || 1); pageNum++) {
+          for (let lineNum = 0; lineNum < filteredTokens.length; lineNum++) {
+            const line = filteredTokens[lineNum];
+            // Convert line tokens to HTML (simplified)
+            const htmlData = line.map(token => 
+              `<span style="color: ${token.color || '#000000'}">${token.content}</span>`
+            ).join('');
+            optPerLineHandler(pageNum, lineNum, htmlData);
+          }
+        }
+      }
+
+      dx.out(`Tokenized ${filteredTokens.length} lines with theme ${themeToUse}`);
+      return filteredTokens;
+    } catch (error) {
+      dx.out(`Error tokenizing: ${error}`);
+      throw error;
+    } finally {
+      dx.done();
+    }
+  }
+
 
   /**
    * Resolve active theme for token generation

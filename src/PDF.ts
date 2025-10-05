@@ -79,6 +79,81 @@ export class PDF implements PageRender {
     return this.app.paperprinter.docInfo;
   }
 
+  // Incremental PDF building - render one line at a time
+  private currentPdfDoc: jsPDF | null = null;
+  private currentPageNumber: number = 1;
+  private currentYPosition: number = 0;
+
+  renderByLine(pageNumber: number, lineNumber: number, htmlData: string): void {
+    const dx = this.dx.sub('renderByLine');
+
+    try {
+      // Initialize PDF document if needed
+      if (!this.currentPdfDoc) {
+        this.currentPdfDoc = new jsPDF({
+          orientation: this.paperDocInfo.persist_orient,
+          unit: 'pt',
+          format: [this.docInfo.pageWidthPts, this.docInfo.pageHeightPts],
+        });
+        this.currentPageNumber = 1;
+        this.currentYPosition = this.docInfo.marginPts;
+      }
+
+      // Add new page if needed
+      if (pageNumber > this.currentPageNumber) {
+        this.currentPdfDoc.addPage([this.docInfo.pageWidthPts, this.docInfo.pageHeightPts], this.paperDocInfo.persist_orient);
+        this.currentPageNumber = pageNumber;
+        this.currentYPosition = this.docInfo.marginPts;
+      }
+
+      // Set font and size
+      this.currentPdfDoc.setFont('Courier New');
+      this.currentPdfDoc.setFontSize(this.pxToPts(this.paperDocInfo.persist_fontSize));
+
+      // Parse HTML data to extract text and colors
+      const textContent = htmlData.replace(/<[^>]*>/g, ''); // Strip HTML tags
+      
+      // Draw text at current position
+      this.currentPdfDoc.text(textContent, this.docInfo.marginPts, this.currentYPosition);
+
+      // Advance Y position
+      this.currentYPosition += this.docInfo.lineHeightPts;
+
+      dx.out(`Rendered line ${lineNumber} on page ${pageNumber}`);
+    } catch (error) {
+      dx.out(`Error rendering line: ${error}`);
+      throw error;
+    } finally {
+      dx.done();
+    }
+  }
+
+  // Complete the PDF document
+  finish(): PDFDoc {
+    const dx = this.dx.sub('finish');
+
+    try {
+      if (!this.currentPdfDoc) {
+        throw new Error('No PDF document to finish. Call renderByLine() first.');
+      }
+
+      const pdfDoc = new PDFDocWrapper(this.currentPdfDoc);
+      
+      // Reset state
+      this.currentPdfDoc = null;
+      this.currentPageNumber = 1;
+      this.currentYPosition = 0;
+
+      dx.out('PDF document completed');
+      return pdfDoc;
+    } catch (error) {
+      dx.out(`Error finishing PDF: ${error}`);
+      throw error;
+    } finally {
+      dx.done();
+    }
+  }
+
   constructor(app: App) {
     this.app = app;
     this.dx = app.dx.create('PDF');
@@ -629,7 +704,7 @@ export class PDF implements PageRender {
     dx.done();
   }
 
-  async renderPage(pageNumber: number, options: RenderOptions): Promise<PageData> {
+  async renderPage(pageNumber: number, options: RenderOptions, pageBegin?: number, pageEnd?: number): Promise<PageData> {
     const dx = this.dx.sub('renderPage');
     dx.require({ pageNumber, options }, ['pageNumber', 'options']);
 
