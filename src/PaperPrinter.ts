@@ -374,7 +374,7 @@ export class PaperPrinter {
         icon: '📄',
         isFlyout: false,
         menuItems: this.menuItems_Page.bind(this),
-        flyoutMenuItemIds: ['orient'],
+        flyoutMenuItemIds: ['orient', 'margin'],
         selectionHandler: this.handleSelection_Page.bind(this),
       },
       {
@@ -385,6 +385,15 @@ export class PaperPrinter {
         menuItems: this.menuItems_Orient.bind(this),
         flyoutMenuItemIds: [],
         selectionHandler: this.handleSelection_Orient.bind(this),
+      },
+      {
+        id: 'margin',
+        displayName: 'Margin',
+        icon: '', // submenu indicated by no icon, see Page > Margin
+        isFlyout: true,
+        menuItems: this.menuItems_Margin.bind(this),
+        flyoutMenuItemIds: [],
+        selectionHandler: this.handleSelection_Margin.bind(this),
       },
       {
         id: 'theme',
@@ -403,15 +412,6 @@ export class PaperPrinter {
         menuItems: this.menuItems_Text.bind(this),
         flyoutMenuItemIds: [],
         selectionHandler: this.handleSelection_Text.bind(this),
-      },
-      {
-        id: 'margin',
-        displayName: 'Margin',
-        icon: '📏',
-        isFlyout: false,
-        menuItems: this.menuItems_Margin.bind(this),
-        flyoutMenuItemIds: [],
-        selectionHandler: this.handleSelection_Margin.bind(this),
       },
     ];
 
