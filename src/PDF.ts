@@ -101,7 +101,7 @@ export class PDF implements PageRender {
 
       // Add new page if needed
       if (pageNumber > this.currentPageNumber) {
-        this.currentPdfDoc.addPage([this.docInfo.pageWidthPts, this.docInfo.pageHeightPts], this.paperDocInfo.persist_orient);
+        this.currentPdfDoc.addPage();
         this.currentPageNumber = pageNumber;
         this.currentYPosition = this.docInfo.marginPts;
       }

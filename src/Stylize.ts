@@ -418,15 +418,15 @@ export class Stylize {
     const dx = this.dx.sub('tokenize');
 
     try {
-      const highlighter = await this.getHighlighterForLanguage(languageId);
+      await this.validateHighlighter(languageId);
+      const highlighter = this.highlighter!;
       const themeToUse = theme || this.resolveActiveTheme();
 
-      // Load theme if not already loaded
-      if (!highlighter.getLoadedThemes().includes(themeToUse)) {
-        await highlighter.loadTheme(themeToUse);
-      }
-
-      const tokens = highlighter.codeToThemedTokens(code, languageId, themeToUse);
+      const tokenResult = highlighter.codeToTokens(code, {
+        lang: languageId as any,
+        theme: themeToUse,
+      });
+      const tokens = tokenResult?.tokens || [];
       
       // Apply page range filtering if specified
       let filteredTokens = tokens;
@@ -449,7 +449,7 @@ export class Stylize {
           for (let lineNum = 0; lineNum < filteredTokens.length; lineNum++) {
             const line = filteredTokens[lineNum];
             // Convert line tokens to HTML (simplified)
-            const htmlData = line.map(token => 
+            const htmlData = line.map((token: ThemedToken) => 
               `<span style="color: ${token.color || '#000000'}">${token.content}</span>`
             ).join('');
             optPerLineHandler(pageNum, lineNum, htmlData);

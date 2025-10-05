@@ -107,7 +107,7 @@ export class PaperPrinter {
   private localGlobalUpdate(container: any, varName: string, value: any) {
     const persistKey = `persist_${varName}`;
     container[persistKey] = value;
-    this.app.vscodeapis.updateGlobalState(varName, value);
+    this.app.vscodeapis.updateGlobalState(varName as 'themeChoice' | 'marginId', value);
   }
 
   // Getters that read from global state - callers know it's persistent
