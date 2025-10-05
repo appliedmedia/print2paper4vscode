@@ -374,8 +374,17 @@ export class PaperPrinter {
         icon: '📄',
         isFlyout: false,
         menuItems: this.menuItems_Page.bind(this),
-        flyoutMenuItemIds: ['orient', 'margin'],
+        flyoutMenuItemIds: ['size', 'orient', 'margin'],
         selectionHandler: this.handleSelection_Page.bind(this),
+      },
+      {
+        id: 'size',
+        displayName: 'Size',
+        icon: '', // submenu indicated by no icon, see Page > Size
+        isFlyout: true,
+        menuItems: this.menuItems_Size.bind(this),
+        flyoutMenuItemIds: [],
+        selectionHandler: this.handleSelection_Size.bind(this),
       },
       {
         id: 'orient',
@@ -497,6 +506,17 @@ export class PaperPrinter {
   }
 
   private menuItems_Page(): UIMenuItem[] {
+    return [
+      // Size submenu reference
+      { id: 'size', displayName: 'Size' },
+      // Orientation submenu reference
+      { id: 'orient', displayName: 'Orient' },
+      // Margin submenu reference
+      { id: 'margin', displayName: 'Margin' },
+    ];
+  }
+
+  private menuItems_Size(): UIMenuItem[] {
     const pageSizeLabels: Record<PageSizeId, string> = {
       letter: 'Letter (8.5" × 11")',
       legal: 'Legal (8.5" × 14")',
@@ -505,14 +525,7 @@ export class PaperPrinter {
       a5: 'A5 (148mm × 210mm)',
     };
 
-    return [
-      // Orientation submenu reference
-      { id: 'orient', displayName: 'Orient' },
-      // Margin submenu reference
-      { id: 'margin', displayName: 'Margin' },
-      // Page sizes in consistent order
-      ...PAGE_SIZE_IDS.map(size => ({ id: size, displayName: pageSizeLabels[size] })),
-    ];
+    return PAGE_SIZE_IDS.map(size => ({ id: size, displayName: pageSizeLabels[size] }));
   }
 
   private menuItems_Orient(): UIMenuItem[] {
@@ -671,6 +684,39 @@ export class PaperPrinter {
 
   private async handleSelection_Page(selectedId: string): Promise<string> {
     const dx = this.dx.sub('handleSelection_Page');
+    dx.out(`selectedId = ${selectedId}`);
+
+    if (selectedId === UIMenu.defaultId()) {
+      // Return the current page size for default selection
+      const currentPageSizeId = this.pageSizeId;
+      dx.out(`returning current page size: ${currentPageSizeId}`);
+      dx.done();
+      return currentPageSizeId;
+    }
+
+    // Update page size
+    if (!PAGE_SIZE_IDS.includes(selectedId as PageSizeId)) {
+      dx.done();
+      return '';
+    }
+
+    dx.out(`updating page size to ${selectedId}`);
+    this.pageSizeId = selectedId as PageSizeId;
+
+    // Regenerate everything
+    try {
+      await this.regenerateAndUpdateWebview();
+      dx.done();
+      return selectedId; // Return the selected size for checkmark
+    } catch (error) {
+      this.app.ui.showErrorMessage(`Failed to update page size: ${String(error)}`);
+      dx.done();
+      return '';
+    }
+  }
+
+  private async handleSelection_Size(selectedId: string): Promise<string> {
+    const dx = this.dx.sub('handleSelection_Size');
     dx.out(`selectedId = ${selectedId}`);
 
     if (selectedId === UIMenu.defaultId()) {
