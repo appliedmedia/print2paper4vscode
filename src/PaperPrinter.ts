@@ -508,6 +508,8 @@ export class PaperPrinter {
     return [
       // Orientation submenu reference
       { id: 'orient', displayName: 'Orient' },
+      // Margin submenu reference
+      { id: 'margin', displayName: 'Margin' },
       // Page sizes in consistent order
       ...PAGE_SIZE_IDS.map(size => ({ id: size, displayName: pageSizeLabels[size] })),
     ];
