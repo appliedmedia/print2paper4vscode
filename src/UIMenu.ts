@@ -139,21 +139,8 @@ export class UIMenu {
 
     const itemId = isFlyout ? `flyout-${id}` : id;
 
-    // Handle SVG template replacement for displayName
-    let processedDisplayName = item.displayName;
-    if (processedDisplayName.includes('{{svg:')) {
-      // Load PaperPrinter YAML for SVG icons
-      const paperPrinterYaml = this.app.os.fileRead<{
-        portrait_icon: string;
-        landscape_icon: string;
-      }>('src/PaperPrinter.yaml');
-
-      if (paperPrinterYaml) {
-        processedDisplayName = processedDisplayName
-          .replace(/\{\{svg:portrait_icon\}\}/g, paperPrinterYaml.portrait_icon)
-          .replace(/\{\{svg:landscape_icon\}\}/g, paperPrinterYaml.landscape_icon);
-      }
-    }
+    // DisplayName already contains processed SVG content from PaperPrinter
+    const processedDisplayName = item.displayName;
 
     const replacementDict = {
       ITEM_ID: itemId,

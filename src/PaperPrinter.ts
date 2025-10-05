@@ -25,6 +25,22 @@ export class PaperPrinter {
 
   private currentFontSize: number = 12; // Default to 12px
 
+  private _yaml: {
+    icon_orient_portrait_svg: string;
+    icon_orient_landscape_svg: string;
+    icon_margin_none_svg: string;
+    icon_margin_minimal_svg: string;
+    icon_margin_normal_svg: string;
+    icon_margin_wide_svg: string;
+  } = {
+    icon_orient_portrait_svg: '',
+    icon_orient_landscape_svg: '',
+    icon_margin_none_svg: '',
+    icon_margin_minimal_svg: '',
+    icon_margin_normal_svg: '',
+    icon_margin_wide_svg: ''
+  };
+
   constructor(app: App) {
     this.app = app;
     this.clipboardCapture = new ClipboardCapture(app);
@@ -38,6 +54,30 @@ export class PaperPrinter {
   done(): void {
     this.clipboardCapture.done();
     this.dx.done();
+  }
+
+  get yaml() {
+    // If already loaded, return it
+    if (this._yaml?.icon_orient_portrait_svg) {
+      return this._yaml;
+    }
+
+    // Load and parse YAML file
+    const yaml = this.app.os.fileRead<{
+      icon_orient_portrait_svg: string;
+      icon_orient_landscape_svg: string;
+      icon_margin_none_svg: string;
+      icon_margin_minimal_svg: string;
+      icon_margin_normal_svg: string;
+      icon_margin_wide_svg: string;
+    }>('src/PaperPrinter.yaml');
+
+    // Cache it if loaded successfully
+    if (yaml) {
+      this._yaml = yaml;
+    }
+    
+    return this._yaml;
   }
 
   // Public façade to decouple TabInspector from internal fields
@@ -389,18 +429,22 @@ export class PaperPrinter {
   }
 
   private menuItems_Orient(): UIMenuItem[] {
-    const yaml = this.app.os.fileRead<{
-      portrait_icon: string;
-      landscape_icon: string;
-    }>('src/PaperPrinter.yaml');
-
-    if (!yaml) {
-      throw new Error('Failed to load PaperPrinter template');
-    }
-
+    const yaml = this.yaml;
+    
     return [
-      { id: 'portrait', displayName: '{{svg:portrait_icon}} Portrait' },
-      { id: 'landscape', displayName: '{{svg:landscape_icon}} Landscape' },
+      { id: 'portrait', displayName: `${yaml.icon_orient_portrait_svg} Portrait` },
+      { id: 'landscape', displayName: `${yaml.icon_orient_landscape_svg} Landscape` },
+    ];
+  }
+
+  private menuItems_Margin(): UIMenuItem[] {
+    const yaml = this.yaml;
+    
+    return [
+      { id: 'none', displayName: `${yaml.icon_margin_none_svg} None` },
+      { id: 'minimal', displayName: `${yaml.icon_margin_minimal_svg} Minimal` },
+      { id: 'normal', displayName: `${yaml.icon_margin_normal_svg} Normal` },
+      { id: 'wide', displayName: `${yaml.icon_margin_wide_svg} Wide` }
     ];
   }
 

@@ -1,5 +1,49 @@
 # PDF Generation Flow Analysis
 
+## 🚀 COMPLETE REFACTOR TODO LIST
+
+### Phase 1: Simple Changes (Handler Simplification - DONE)
+- ✅ Add `regenerateAndUpdateWebview()` method to PaperPrinter
+- ✅ Simplify all 4 menu handlers to use the new method
+- ✅ Eliminate ~110 lines of duplicated code
+
+### Phase 2: YAML and SVG System
+- ✅ Add YAML getter to PaperPrinter class
+- ✅ Update PaperPrinter.yaml with new icon names (`icon_orient_portrait_svg`, etc.)
+- ✅ Fix menuItems_Orient() to use template literals like margin
+- ✅ Add menuItems_Margin() method
+- ✅ Remove manual SVG handling from UIMenu.ts
+- ✅ Update UIMenu.ts to remove `{{svg:...}}` processing
+
+### Phase 3: Document Info Structure
+- [ ] Create `docInfo` struct in PaperPrinter with `persist_` prefix
+- [ ] Create `docInfo` struct in PDF class for computed values
+- [ ] Add `localGlobalUpdate()` method for persistent variables
+- [ ] Add getters/setters with `persist_` prefix (e.g., `get persist_themeChoice()`)
+- [ ] Update PDF class to access via `this.app.paperprinter.docInfo`
+
+### Phase 4: Method Signatures and Parameters
+- [ ] Add `pageBegin`/`pageEnd` parameters to Stylize.tokenize()
+- [ ] Add `pageBegin`/`pageEnd` parameters to PDF.renderPage()
+- [ ] Add `optPerLineHandler` parameter to Stylize.tokenize()
+- [ ] Add `PDF.renderByLine()` method for incremental PDF building
+- [ ] Add `PDF.finish()` method to complete PDF
+
+### Phase 5: Margin System
+- [ ] Add `persist_marginId` to PaperPrinter docInfo
+- [ ] Create `MARGIN_IDS` const lookup table
+- [ ] Add `getMarginPts()` method
+- [ ] Add margin menu handler
+
+### Phase 6: Cleanup
+- [ ] Remove old methods: `styleToPdf()`, `Converter_StyleToPdf`, `generatePdfFromTokens()`
+- [ ] Update all method calls to use new signatures
+- [ ] Test the complete flow
+
+**Total: ~25 tasks across 6 phases**
+
+---
+
 ## 📋 TABLE OF CONTENTS
 
 ### 🔍 UNDERSTANDING THE PROBLEM (Read First)
