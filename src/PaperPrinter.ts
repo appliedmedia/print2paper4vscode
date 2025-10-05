@@ -34,7 +34,7 @@ export class PaperPrinter {
 
   private currentFontSize: number = 12; // Default to 12px
 
-  private docInfo = {
+  public docInfo = {
     // Document content
     rawCode: '',
     languageId: '',

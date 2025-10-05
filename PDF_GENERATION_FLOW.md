@@ -56,11 +56,13 @@
 - ✅ Create `MARGIN_IDS` const lookup table
 - ✅ Add `getMarginPts()` method
 - ✅ Add margin menu handler
+- ✅ Reorganize Page menu with Size/Orient/Margin as flyouts
 
 **Phase 5 Results:**
 - Margin system with 4 levels: none (0pts), minimal (5pts), normal (15pts), wide (30pts)
 - Const lookup table for type-safe margin calculations
-- Margin menu with SVG icons for visual selection
+- Clean menu hierarchy: Page > Size/Orient/Margin (all flyouts)
+- All page settings grouped logically under Page menu
 - Margin handler follows same pattern as other menu handlers
 - getMarginPts() method converts margin ID to points
 
