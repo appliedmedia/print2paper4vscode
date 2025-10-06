@@ -687,19 +687,22 @@ export class PDF implements PageRender {
     dx.require({ pageNumber, options }, ['pageNumber', 'options']);
 
     try {
-      // Use renderByLine for incremental PDF building
-      // This method handles the actual PDF generation line by line
-      this.renderByLine(pageNumber, 1, ''); // Initialize the PDF document
-      
-      // For now, return a simple page data structure
-      // The actual implementation should extract the page from the built PDF
-      const pdfDoc = this.docInfo.currentPdfDoc;
-      if (!pdfDoc) {
-        throw new Error('Failed to generate PDF page');
-      }
+      // Initialize PDF document for this page
+      this.docInfo.currentPdfDoc = new jsPDF({
+        orientation: this.app.paperprinter.docInfo.persist_orient as 'portrait' | 'landscape',
+        unit: 'pt',
+        format: [this.docInfo.pageWidthPts, this.docInfo.pageHeightPts],
+      });
+      this.currentPageNumber = pageNumber;
+      this.currentYPosition = this.docInfo.marginPts.topPts;
 
-      // Convert to data URL
-      const dataUrl = pdfDoc.asDataUrl();
+      // Set font and size
+      this.docInfo.currentPdfDoc.setFont('Courier New');
+      this.docInfo.currentPdfDoc.setFontSize(this.pxToPts(this.app.paperprinter.docInfo.persist_fontSizePx));
+
+      // For now, return a simple page data structure
+      // TODO: Implement proper page rendering with content
+      const dataUrl = this.docInfo.currentPdfDoc.asDataUrl();
 
       // Get page dimensions
       const pageSize = this.getPageDimensions(options.pageSizeId, options.orient);
