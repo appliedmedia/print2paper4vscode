@@ -89,6 +89,28 @@
 - [ ] Test that all property access works through DocInfo pattern
 - [ ] Ensure global state synchronization works with DocInfo properties
 
+### Phase 5.5: DocInfo Pattern Implementation (PENDING - Requires Full Refactor)
+
+- [ ] Create `PaperPrinter_DocInfo` class with all document properties
+- [ ] Create `PDF_DocInfo` class with all PDF-specific properties  
+- [ ] Update `PaperPrinter` constructor to accept `(app)` and set `this.app = app`
+- [ ] Update `PDF` constructor to accept `(app)` and set `this.app = app`
+- [ ] Initialize `this.docInfo = new PaperPrinter_DocInfo(this, app)` in PaperPrinter
+- [ ] Initialize `this.docInfo = new PDF_DocInfo(this, app)` in PDF
+- [ ] Move all document properties from main classes to DocInfo classes
+- [ ] Update all property access to use `this.docInfo.propertyName`
+- [ ] Update all external access to use `this.app.paperprinter.docInfo.propertyName`
+- [ ] Update all external access to use `this.app.pdf.docInfo.propertyName`
+- [ ] Remove old property declarations from main classes
+- [ ] Update all method signatures to use DocInfo properties
+- [ ] Test that all property access works through DocInfo pattern
+- [ ] Ensure global state synchronization works with DocInfo properties
+- [ ] Update all references throughout codebase to use new access patterns
+- [ ] Compile and fix all TypeScript errors
+- [ ] Run tests to ensure functionality is preserved
+
+**Note:** Phase 5.5 implements the DocInfo pattern as outlined in the PROPOSED REFACTOR section. This provides clean separation of concerns and consistent access patterns.
+
 ### Phase 6: Cleanup (PENDING - Requires Full Refactor)
 
 - [ ] Complete the full refactor to use new tokenization + PDF generation flow
