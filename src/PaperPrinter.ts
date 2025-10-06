@@ -574,13 +574,13 @@ export class PaperPrinter {
       if (this.currentWebView) {
         try {
           const sizePx = this.computeFontSizePx();
-          const lhPx = this.computeLineHeightPx(sizePx);
+          const lineHeightPx = this.computeLineHeightPx(sizePx);
           
           await this.currentWebView.updatePageRender(pageRender);
           await this.currentWebView.updateOptions({
             theme: this.currentThemeChoice,
             fontSizePx: sizePx,
-            lineHeightPx: lhPx,
+            lineHeightPx: lineHeightPx,
             pageSizeId: this.pageSizeId,
             orient: this.orient,
           });
