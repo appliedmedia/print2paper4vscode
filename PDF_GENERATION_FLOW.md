@@ -75,15 +75,43 @@
 - Margin handler follows same pattern as other menu handlers
 - getMarginPts() method converts margin ID to points
 
-### Phase 6: Cleanup
+### Phase 6: Cleanup (PENDING - Requires Full Refactor)
 
+- [ ] Complete the full refactor to use new tokenization + PDF generation flow
+- [ ] Update `generatePdf()` to use new `tokenize()` + `setTokensAndConfig()` + `generateFullDocument()` flow
 - [ ] Remove old methods: `styleToPdf()`, `Converter_StyleToPdf`, `generatePdfFromTokens()`
 - [ ] Update all method calls to use new signatures
 - [ ] Test the complete flow
 
+**Note:** Phase 6 requires completing the full architectural refactor outlined in the PROPOSED REFACTOR section. The current implementation still uses the old `styleToPdf()` method in `generatePdf()`.
+
+### Phase 7: Theme and Font System Refactor (COMPLETED)
+
+- ✅ Convert `currentThemeChoice` to `persist_theme` with proper getter/setter
+- ✅ Convert `currentFontSize` to `persist_fontSizePx` with proper getter/setter
+- ✅ Remove `computeFontSizePx()` method - use `persist_fontSizePx` directly
+- ✅ Rename `computeLineHeightPx()` to `getLineHeightPxFromFontSizePx()` for clarity
+- ✅ Create `lineHeightPx` getter that calculates from `persist_fontSizePx`
+- ✅ Inline `getLineHeightPxFromFontSizePx()` into the getter
+- ✅ Remove `currentWebView` → rename to `uiwebview` (lowercase class instance naming)
+- ✅ Update global state types to use `fontSizePx` instead of `fontSize`
+- ✅ Remove `test-key` from global state types (test cruft)
+- ✅ Fix all TypeScript compilation errors
+- ✅ Fix all linter errors
+- ✅ Update tests to match new structure
+
+**Phase 7 Results:**
+
+- Consistent `persist_` prefix for all persistent variables
+- Clean getter/setter pattern with arrow functions preserving `this` context
+- No more redundant `current*` variables - everything uses `persist_*`
+- Type-safe global state management
+- All tests passing
+- Clean separation between persistent state and computed values
+
 ## Summary
 
-### Total: ~25 tasks across 6 phases
+### Total: ~35 tasks across 7 phases
 
 ---
 
