@@ -559,14 +559,7 @@ export class PaperPrinter {
 
     try {
       // Regenerate PDF with current settings
-      const sizePx = this.computeFontSizePx();
-      const lhPx = this.computeLineHeightPx(sizePx);
-      this.pdfDoc = await this.app.stylize.styleToPdf(this.rawCode, this.languageId, {
-        fontSize: sizePx,
-        lineHeight: lhPx,
-        title: this.printTitle,
-        theme: this.currentThemeChoice,
-      });
+      await this.generatePdf();
 
       // Update PageRender with regenerated PDF
       const pageRender: PageRender = {
