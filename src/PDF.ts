@@ -62,7 +62,6 @@ export class PDF implements PageRender {
   };
 
   // PageRender implementation state
-  private currentTokens: ThemedToken[][] | null = null;
   private pageBreaks: number[] = [];
   private pageTotal: number = 0;
 
@@ -85,7 +84,7 @@ export class PDF implements PageRender {
       // Initialize PDF document if needed
       if (!this.docInfo.currentPdfDoc) {
         this.docInfo.currentPdfDoc = new jsPDF({
-          orientation: this.app.paperprinter.docInfo.persist_orient,
+          orientation: this.app.paperprinter.docInfo.persist_orient as 'portrait' | 'landscape',
           unit: 'pt',
           format: [this.docInfo.pageWidthPts, this.docInfo.pageHeightPts],
         });
@@ -176,7 +175,6 @@ export class PDF implements PageRender {
 
   init(): void {
     this.docInfo.tempPdfs = [];
-    this.currentTokens = null;
     this.pageBreaks = [];
     this.pageTotal = 0;
   }
@@ -683,29 +681,13 @@ export class PDF implements PageRender {
    * Set the tokens for page-based rendering
    * This must be called before using PageRender methods
    */
-  setTokens(tokens: ThemedToken[][]): void {
-    const dx = this.dx.sub('setTokens');
-    this.currentTokens = tokens;
-    // Don't calculate page breaks here - they'll be calculated dynamically in renderPage
-    // based on the actual render options (font size, line height, etc.)
-    this.pageBreaks = [];
-    this.pageTotal = 0;
-    dx.out(`Set tokens: ${tokens.length} lines (page breaks calculated dynamically)`);
-
-    // Debug: Log the first few tokens to verify they're set correctly
-    if (tokens.length > 0) {
-      dx.out(`First token line: ${JSON.stringify(tokens[0].slice(0, 3))}`);
-    }
-
-    dx.done();
-  }
 
   async renderPage(pageNumber: number, options: RenderOptions, pageBegin?: number, pageEnd?: number): Promise<PageData> {
     const dx = this.dx.sub('renderPage');
     dx.require({ pageNumber, options }, ['pageNumber', 'options']);
 
     try {
-      if (!this.currentTokens) {
+      if (!this.docInfo.currentTokens) {
         const error: PageRenderError = {
           message: 'No tokens available for rendering. Call setTokens() first.',
           pageNumber,
@@ -716,7 +698,7 @@ export class PDF implements PageRender {
       }
 
       // Calculate page breaks dynamically based on actual render options
-      this.pageBreaks = this.calculatePageBreaks(this.currentTokens, options);
+      this.pageBreaks = this.calculatePageBreaks(this.docInfo.currentTokens, options);
       this.pageTotal = this.pageBreaks.length;
 
       dx.out(`Page render requested: page ${pageNumber}, total pages: ${this.pageTotal}`);
@@ -734,7 +716,7 @@ export class PDF implements PageRender {
 
       // Note: options.fontSize and options.lineHeight are in pixels, will be converted to points in generatePdfPage
       // Extract tokens for this page
-      const pageTokens = this.extractTokensForPage(this.currentTokens, pageNumber);
+      const pageTokens = this.extractTokensForPage(this.docInfo.currentTokens, pageNumber);
 
       // Generate single-page PDF
       const pdfDoc = await this.generatePdfPage(pageTokens, options);

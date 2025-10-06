@@ -11,6 +11,7 @@ export class PDF_DocInfo {
   // PDF document state
   public currentPdfDoc: any = null;
   public paperDocInfo: any = null;
+  public currentTokens: any = null;
 
   // PDF generation settings
   public embedFonts: boolean = true;

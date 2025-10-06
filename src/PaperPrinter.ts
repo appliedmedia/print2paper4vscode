@@ -164,11 +164,11 @@ export class PaperPrinter {
       void (await this.generatePdf());
 
       if (printType === 'preview')
-        await this.app.pdf.printWithPreview(this.pdfDoc, this.printTitle || 'Print Output');
+        await this.app.pdf.printWithPreview(this.pdfDoc, this.docInfo.printTitle || 'Print Output');
       else if (printType === 'direct')
-        await this.app.pdf.printDirectly(this.pdfDoc, this.printTitle || 'Print Output');
+        await this.app.pdf.printDirectly(this.pdfDoc, this.docInfo.printTitle || 'Print Output');
       else if (printType === 'save')
-        await this.app.pdf.saveAsPDF(this.pdfDoc, this.printTitle || 'Print Output');
+        await this.app.pdf.saveAsPDF(this.pdfDoc, this.docInfo.printTitle || 'Print Output');
 
       dx.out(`Print request handled: ${printType}`);
     } finally {
@@ -207,14 +207,14 @@ export class PaperPrinter {
         printableLabel =
           start === end ? `Line ${start} of ${info.name}` : `Lines ${start}-${end} of ${info.name}`;
       }
-      this.printTitle = printableLabel;
+      this.docInfo.printTitle = printableLabel;
 
       // Initialize theme choice if not set yet
       if (!this.docInfo.persist_theme) {
         this.docInfo.persist_theme = this.app.vscodeapis.getActiveThemeId();
       }
       this.pdfDoc = await this.app.stylize.styleToPdf(info.text, info.languageId, {
-        title: this.printTitle,
+        title: this.docInfo.printTitle,
         theme: this.docInfo.persist_theme,
       });
       await this.openPrintPrepAndPrompt(printableLabel);
@@ -227,7 +227,7 @@ export class PaperPrinter {
   }
 
   private async openPrintPrepAndPrompt(tabName: string): Promise<void> {
-    this.printTitle = tabName;
+    this.docInfo.printTitle = tabName;
 
     // Create menus and register message handlers when we actually need them
     this.createMenus();
@@ -292,10 +292,10 @@ export class PaperPrinter {
     const marginPts = this.getMarginPts(this.persist_marginId);
     
     // Store the new PDF document
-    this.pdfDoc = await this.app.stylize.styleToPdf(this.rawCode, this.languageId, {
+    this.pdfDoc = await this.app.stylize.styleToPdf(this.docInfo.rawCode, this.docInfo.languageId, {
       fontSize: this.persist_fontSizePx,
       lineHeight: this.lineHeightPx,
-      title: this.printTitle,
+      title: this.docInfo.printTitle,
       theme: this.docInfo.persist_theme,
       marginPts: marginPts,
     });
@@ -581,11 +581,11 @@ export class PaperPrinter {
     if (!this.pdfDoc) return '';
     void (await this.generatePdf());
     if (selectedId === 'preview')
-      await this.app.pdf.printWithPreview(this.pdfDoc, this.printTitle || 'Print Output');
+      await this.app.pdf.printWithPreview(this.pdfDoc, this.docInfo.printTitle || 'Print Output');
     else if (selectedId === 'direct')
-      await this.app.pdf.printDirectly(this.pdfDoc, this.printTitle || 'Print Output');
+      await this.app.pdf.printDirectly(this.pdfDoc, this.docInfo.printTitle || 'Print Output');
     else if (selectedId === 'save')
-      await this.app.pdf.saveAsPDF(this.pdfDoc, this.printTitle || 'Print Output');
+      await this.app.pdf.saveAsPDF(this.pdfDoc, this.docInfo.printTitle || 'Print Output');
     // TODO: Re-render webview - need access to panel
     return ''; // action handled
   }
