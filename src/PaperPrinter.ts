@@ -33,7 +33,6 @@ export class PaperPrinter {
 
   private currentThemeChoice: string | undefined;
 
-  private currentFontSize: number = 12; // Default to 12px
 
   public docInfo = {
     // Document content
