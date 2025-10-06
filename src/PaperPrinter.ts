@@ -7,6 +7,7 @@ import { UIWebView } from './UIWebView';
 import type { PDFDoc } from './types/PDF_t';
 import type { PageRender } from './types/PageRender_t';
 import type { GlobalStateKey } from './types/globalState_t';
+import { PaperPrinter_DocInfo } from './PaperPrinter_DocInfo';
 
 // Page size type and order definition
 export type PageSizeId = 'letter' | 'legal' | 'a3' | 'a4' | 'a5';
