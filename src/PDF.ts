@@ -85,7 +85,7 @@ export class PDF implements PageRender {
       // Initialize PDF document if needed
       if (!this.docInfo.currentPdfDoc) {
         this.docInfo.currentPdfDoc = new jsPDF({
-          orientation: this.paperDocInfo.persist_orient,
+          orientation: this.app.paperprinter.docInfo.persist_orient,
           unit: 'pt',
           format: [this.docInfo.pageWidthPts, this.docInfo.pageHeightPts],
         });
@@ -95,20 +95,20 @@ export class PDF implements PageRender {
 
       // Add new page if needed
       if (pageNumber > this.currentPageNumber) {
-        this.currentPdfDoc.addPage();
+        this.docInfo.currentPdfDoc.addPage();
         this.currentPageNumber = pageNumber;
-        this.currentYPosition = this.docInfo.marginPts;
+        this.currentYPosition = this.docInfo.marginPts.topPts;
       }
 
       // Set font and size
-      this.currentPdfDoc.setFont('Courier New');
-      this.currentPdfDoc.setFontSize(this.pxToPts(this.paperDocInfo.persist_fontSizePx));
+      this.docInfo.currentPdfDoc.setFont('Courier New');
+      this.docInfo.currentPdfDoc.setFontSize(this.pxToPts(this.app.paperprinter.docInfo.persist_fontSizePx));
 
       // Parse HTML data to extract text and colors
       const textContent = htmlData.replace(/<[^>]*>/g, ''); // Strip HTML tags
       
       // Draw text at current position
-      this.currentPdfDoc.text(textContent, this.docInfo.marginPts, this.currentYPosition);
+      this.docInfo.currentPdfDoc.text(textContent, this.docInfo.marginPts.leftPts, this.currentYPosition);
 
       // Advance Y position
       this.currentYPosition += this.docInfo.lineHeightPts;
@@ -127,14 +127,14 @@ export class PDF implements PageRender {
     const dx = this.dx.sub('finish');
 
     try {
-      if (!this.currentPdfDoc) {
+      if (!this.docInfo.currentPdfDoc) {
         throw new Error('No PDF document to finish. Call renderByLine() first.');
       }
 
-      const pdfDoc = new PDFDocWrapper(this.currentPdfDoc);
+      const pdfDoc = new PDFDocWrapper(this.docInfo.currentPdfDoc);
       
       // Reset state
-      this.currentPdfDoc = null;
+      this.docInfo.currentPdfDoc = null;
       this.currentPageNumber = 1;
       this.currentYPosition = 0;
 
@@ -175,7 +175,7 @@ export class PDF implements PageRender {
   }
 
   init(): void {
-    this.tempPdfs = [];
+    this.docInfo.tempPdfs = [];
     this.currentTokens = null;
     this.pageBreaks = [];
     this.pageTotal = 0;
