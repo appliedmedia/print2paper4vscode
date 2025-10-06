@@ -26,13 +26,10 @@ export class PaperPrinter {
   private app: App;
   private clipboardCapture: ClipboardCapture;
   private pdfDoc: PDFDoc | null = null; // In-memory PDF document (PDFDoc abstraction)
-  private rawCode: string = '';
-  private languageId: string = '';
   private uiwebview: UIWebView | null = null;
-  private printTitle: string = 'Printable';
   private dx: Diagnostics;
 
-  public docInfo: any;
+  public docInfo: PaperPrinter_DocInfo;
 
   private _yaml: {
     icon_orient_portrait_svg: string;
@@ -56,32 +53,7 @@ export class PaperPrinter {
     this.dx = app.dx.create('PaperPrinter');
     
     // Initialize docInfo
-    this.docInfo = {
-      // Document content
-      rawCode: '',
-      languageId: '',
-      printTitle: 'Printable',
-      
-      // User preferences (persisted in global state)
-      persist_fontSizePx: 12,
-      persist_pageSizeId: 'a4' as PageSizeId,
-      persist_orient: 'portrait' as const,
-      persist_marginId: 'normal' as 'none' | 'minimal' | 'normal' | 'wide',
-      
-      // Private backing storage for theme
-      _persist_theme: undefined as string | undefined
-    };
-    
-    // Define getter/setter with arrow functions to preserve 'this' context
-    Object.defineProperty(this.docInfo, 'persist_theme', {
-      get: () => {
-        return this.docInfo._persist_theme || this.app.vscodeapis.getActiveThemeId();
-      },
-      set: (value: string) => {
-        this.docInfo._persist_theme = value;
-        this.app.vscodeapis.updateGlobalState('theme', value);
-      }
-    });
+    this.docInfo = new PaperPrinter_DocInfo(this, app);
   }
 
   init(): void {
