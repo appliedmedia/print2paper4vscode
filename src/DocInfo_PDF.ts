@@ -4,7 +4,7 @@
  * This class contains all PDF-related properties and provides a clean interface
  * for accessing them. The main PDF class accesses these through this.docInfo.
  */
-export class PDF_DocInfo {
+export class DocInfo_PDF {
   private owner: any;
   private app: any;
 
