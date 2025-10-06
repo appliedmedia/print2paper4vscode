@@ -4,7 +4,7 @@
  * This class contains all document-related properties and provides a clean interface
  * for accessing them. The main PaperPrinter class accesses these through this.docInfo.
  */
-export class PaperPrinter_DocInfo {
+export class DocInfo_PaperPrinter {
   private owner: any;
   private app: any;
 
