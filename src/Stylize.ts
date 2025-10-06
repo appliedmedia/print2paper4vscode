@@ -384,8 +384,7 @@ export class Stylize {
         await this.ensureHighlighterReady(languageId);
         const tokens = this.tokenizeCode(code, languageId, selectedTheme);
         const fontInfo = this.extractFontInfo(selectedTheme, opts);
-        const marginPts = opts?.marginPts ? { topPts: opts.marginPts, bottomPts: opts.marginPts, leftPts: opts.marginPts, rightPts: opts.marginPts } : undefined;
-        const pdfDoc = await this.generatePdfDocument(tokens, fontInfo, opts?.title, marginPts);
+        const pdfDoc = await this.generatePdfDocument(tokens, fontInfo, opts?.title);
 
         dx.out(`PDF document generated successfully`);
         return pdfDoc;
