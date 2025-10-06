@@ -1,98 +1,51 @@
 /**
  * PaperPrinter_DocInfo - Document information and configuration for PaperPrinter
  * 
- * This class provides a clean interface to PaperPrinter's document-related properties
- * through getters/setters that map directly to the owner's fields.
+ * This class contains all document-related properties and provides a clean interface
+ * for accessing them. The main PaperPrinter class accesses these through this.docInfo.
  */
 export class PaperPrinter_DocInfo {
   private owner: any;
   private app: any;
+
+  // Document content
+  public rawCode: string = '';
+  public languageId: string = '';
+  public printTitle: string = 'Printable';
+
+  // User preferences (persistent)
+  private _persist_theme: string = 'github-light';
+  public persist_fontSizePx: number = 12;
+  public persist_pageSizeId: string = 'a4';
+  public persist_orient: string = 'portrait';
+  public persist_marginId: string = 'normal';
+
+  // Computed values (read-only)
+  public pageWidthPx: number = 0;
+  public pageHeightPx: number = 0;
+  public pageWidthPts: number = 0;
+  public pageHeightPts: number = 0;
 
   constructor(owner: any, app: any) {
     this.owner = owner;
     this.app = app;
   }
 
-  // Document content
-  get rawCode(): string {
-    return this.owner.rawCode;
-  }
-  set rawCode(value: string) {
-    this.owner.rawCode = value;
-  }
-
-  get languageId(): string {
-    return this.owner.languageId;
-  }
-  set languageId(value: string) {
-    this.owner.languageId = value;
-  }
-
-  get printTitle(): string {
-    return this.owner.printTitle;
-  }
-  set printTitle(value: string) {
-    this.owner.printTitle = value;
-  }
-
-  // User preferences (persistent)
+  // Theme getter/setter with global state sync
   get persist_theme(): string {
-    return this.owner.docInfo._persist_theme || 'github-light';
+    return this._persist_theme;
   }
   set persist_theme(value: string) {
-    this.owner.docInfo._persist_theme = value;
-    this.owner.localGlobalUpdate(this.owner.docInfo, 'theme', value);
+    this._persist_theme = value;
+    this.owner.localGlobalUpdate(this, 'theme', value);
   }
 
-  get persist_fontSizePx(): number {
-    return this.owner.persist_fontSizePx;
-  }
-  set persist_fontSizePx(value: number) {
-    this.owner.persist_fontSizePx = value;
-  }
-
-  get persist_pageSizeId(): string {
-    return this.owner.pageSizeId;
-  }
-  set persist_pageSizeId(value: string) {
-    this.owner.pageSizeId = value;
-  }
-
-  get persist_orient(): string {
-    return this.owner.orient;
-  }
-  set persist_orient(value: string) {
-    this.owner.orient = value;
-  }
-
-  get persist_marginId(): string {
-    return this.owner.marginId;
-  }
-  set persist_marginId(value: string) {
-    this.owner.marginId = value;
-  }
-
-  // Computed values
+  // Computed line height
   get lineHeightPx(): number {
-    return this.owner.lineHeightPx;
+    return this.persist_fontSizePx * 1.2;
   }
 
-  get pageWidthPx(): number {
-    return this.owner.pageWidthPx;
-  }
-
-  get pageHeightPx(): number {
-    return this.owner.pageHeightPx;
-  }
-
-  get pageWidthPts(): number {
-    return this.owner.pageWidthPts;
-  }
-
-  get pageHeightPts(): number {
-    return this.owner.pageHeightPts;
-  }
-
+  // Margin in points
   get marginPts(): { topPts: number; bottomPts: number; leftPts: number; rightPts: number } {
     return this.owner.getMarginPts();
   }
