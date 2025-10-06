@@ -68,16 +68,16 @@ export class PaperPrinter {
       persist_marginId: 'normal' as 'none' | 'minimal' | 'normal' | 'wide',
       
       // Private backing storage for theme
-      _themeValue: undefined as string | undefined
+      _persist_theme: undefined as string | undefined
     };
     
     // Define getter/setter with arrow functions to preserve 'this' context
     Object.defineProperty(this.docInfo, 'persist_theme', {
       get: () => {
-        return this.docInfo._themeValue || this.app.vscodeapis.getActiveThemeId();
+        return this.docInfo._persist_theme || this.app.vscodeapis.getActiveThemeId();
       },
       set: (value: string) => {
-        this.docInfo._themeValue = value;
+        this.docInfo._persist_theme = value;
         this.app.vscodeapis.updateGlobalState('theme', value);
       }
     });
