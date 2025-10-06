@@ -88,7 +88,7 @@ describe('PaperPrinter Page Size and Orient Tests', () => {
     });
 
     test('should include dimensions in display names', () => {
-      const menuItems = (paperPrinter as any).menuItems_Page();
+      const menuItems = (paperPrinter as any).menuItems_Size();
 
       // Check A4 has mm dimensions
       const a4Item = menuItems.find((item: any) => item.id === 'a4');
@@ -113,8 +113,9 @@ describe('PaperPrinter Page Size and Orient Tests', () => {
       assert.ok(landscapeItem);
       assert.ok(portraitItem?.displayName.includes('Portrait'));
       assert.ok(landscapeItem?.displayName.includes('Landscape'));
-      assert.ok(portraitItem?.displayName.includes('{{svg:portrait_icon}}'));
-      assert.ok(landscapeItem?.displayName.includes('{{svg:landscape_icon}}'));
+      // Check that SVG icons are embedded (not template placeholders)
+      assert.ok(portraitItem?.displayName.includes('<svg'));
+      assert.ok(landscapeItem?.displayName.includes('<svg'));
     });
   });
 
@@ -160,7 +161,7 @@ describe('PaperPrinter Page Size and Orient Tests', () => {
       // Set required properties for generatePdf to work
       (testPaperPrinter as any).lastRawCode = 'test code';
       (testPaperPrinter as any).lastLanguageId = 'javascript';
-      await (testPaperPrinter as any).handleSelection_Page('letter'); // Select letter
+      await (testPaperPrinter as any).handleSelection_Size('letter'); // Select letter
 
       assert.strictEqual(updatedPageSize, 'letter');
       assert.ok(scrollViewUpdated);
@@ -254,14 +255,14 @@ describe('PaperPrinter Page Size and Orient Tests', () => {
       const pageMenuItems = (testPaperPrinter as any).menuItems_Page();
       const orientMenuItems = (testPaperPrinter as any).menuItems_Orient();
 
-      assert.strictEqual(pageMenuItems.length, 6);
+      assert.strictEqual(pageMenuItems.length, 3);
       assert.strictEqual(orientMenuItems.length, 2);
 
-      // Test that page menu has correct items
+      // Test that page menu has correct submenu items
       const pageIds = pageMenuItems.map((item: any) => item.id);
+      assert.ok(pageIds.includes('size'));
       assert.ok(pageIds.includes('orient'));
-      assert.ok(pageIds.includes('letter'));
-      assert.ok(pageIds.includes('a4'));
+      assert.ok(pageIds.includes('margin'));
 
       // Test that orient menu has correct items
       const orientIds = orientMenuItems.map((item: any) => item.id);

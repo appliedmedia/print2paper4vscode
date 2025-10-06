@@ -265,8 +265,8 @@ describe('System Integration Tests', () => {
     const pageMenuItems = (paperPrinter as any).menuItems_Page();
     assert.strictEqual(
       pageMenuItems.length,
-      6,
-      'Should have 6 items (1 orient + 5 page sizes)'
+      3,
+      'Should have 3 items (Size, Orient, Margin submenus)'
     );
     assert.ok(
       pageMenuItems.every((item: any) => item.id && item.displayName),
