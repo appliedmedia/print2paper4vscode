@@ -108,7 +108,7 @@ export class PDF implements PageRender {
 
       // Set font and size
       this.currentPdfDoc.setFont('Courier New');
-      this.currentPdfDoc.setFontSize(this.pxToPts(this.paperDocInfo.persist_fontSize));
+      this.currentPdfDoc.setFontSize(this.pxToPts(this.paperDocInfo.persist_fontSizePx));
 
       // Parse HTML data to extract text and colors
       const textContent = htmlData.replace(/<[^>]*>/g, ''); // Strip HTML tags

@@ -314,7 +314,7 @@ export class PaperPrinter {
   }
 
   private computeFontSizePx(): number {
-    return this.currentFontSize;
+    return this.persist_fontSizePx;
   }
 
   private computeLineHeightPx(fontSize: number): number {
@@ -664,7 +664,7 @@ export class PaperPrinter {
     }
 
     dx.out(`updating fontSize to ${fontSize}`);
-    this.currentFontSize = fontSize;
+    this.persist_fontSizePx = fontSize;
 
     // Regenerate everything
     try {
