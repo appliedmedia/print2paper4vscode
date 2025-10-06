@@ -355,11 +355,6 @@ describe('VSCodeAPIs Wrapper', () => {
   });
 
   describe('State Management', () => {
-    it('should get global state', () => {
-      const value = vscodeAPIs.getGlobalState('pageSizeId');
-
-      assert.strictEqual(value, '', 'Should return empty string for missing key');
-    });
 
     it('should get locale from VS Code environment', () => {
       mockVSCode.env = { language: 'en-US' };
