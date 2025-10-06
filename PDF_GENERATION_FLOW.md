@@ -89,6 +89,8 @@
 - [ ] Test that all property access works through DocInfo pattern
 - [ ] Ensure global state synchronization works with DocInfo properties
 
+**Note:** Phase 5.1 implements the DocInfo pattern as outlined in the PROPOSED REFACTOR section. This provides clean separation of concerns and consistent access patterns.
+
 ### Phase 5.2: Line-by-Line Rendering Architecture (PENDING)
 
 **Core Concept:** Stylize owns tokens and line composition, PDF renders line-by-line via callback
@@ -98,17 +100,10 @@
 - [ ] **PDF.renderByLine()** - processes one line of HTML into PDF content
 - [ ] **PDF.finish()** - finalizes PDF and resets state for display
 - [ ] **Stylize** calls `optPerLineHandler(pageNum, lineNum, htmlData)` for each line
-- [ ] **PDF.renderByLine()** receives HTML and converts to PDF text/graphics
-- [ ] **PDF.finish()** completes PDF generation and prepares for PDF.js display
 - [ ] Remove `currentTokens` storage from PDF class (Stylize owns tokens)
 - [ ] Remove `setTokens()` method from PDF class
 - [ ] Update `renderPage()` to use line-by-line callback pattern
 - [ ] Test complete flow: Stylize → callback → PDF → finish → display
-- [ ] Update all references throughout codebase to use new access patterns
-- [ ] Compile and fix all TypeScript errors
-- [ ] Run tests to ensure functionality is preserved
-
-**Note:** Phase 5.5 implements the DocInfo pattern as outlined in the PROPOSED REFACTOR section. This provides clean separation of concerns and consistent access patterns.
 
 ### Phase 6: Cleanup (PENDING - Requires Full Refactor)
 
