@@ -568,13 +568,12 @@ export class PaperPrinter {
       // Update webview if it exists
       if (this.currentWebView) {
         try {
-          const sizePx = this.persist_fontSizePx;
-          const lineHeightPx = this.getLineHeightPxFromFontSizePx(sizePx);
+          const lineHeightPx = this.getLineHeightPxFromFontSizePx(this.persist_fontSizePx);
           
           await this.currentWebView.updatePageRender(pageRender);
           await this.currentWebView.updateOptions({
             theme: this.currentThemeChoice,
-            fontSizePx: sizePx,
+            fontSizePx: this.persist_fontSizePx,
             lineHeightPx: lineHeightPx,
             pageSizeId: this.pageSizeId,
             orient: this.orient,
