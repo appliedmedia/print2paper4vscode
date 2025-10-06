@@ -31,7 +31,19 @@ export class PaperPrinter {
   private printTitle: string = 'Printable';
   private dx: Diagnostics;
 
-  public docInfo: any;
+  public docInfo: any = {
+    // Document content
+    rawCode: '',
+    languageId: '',
+    printTitle: 'Printable',
+    
+    // User preferences (persisted in global state)
+    _persist_theme: undefined as string | undefined,
+    persist_fontSizePx: 12,
+    persist_pageSizeId: 'a4' as PageSizeId,
+    persist_orient: 'portrait' as const,
+    persist_marginId: 'normal' as 'none' | 'minimal' | 'normal' | 'wide'
+  };
 
   private _yaml: {
     icon_orient_portrait_svg: string;
@@ -54,33 +66,16 @@ export class PaperPrinter {
     this.clipboardCapture = new ClipboardCapture(app);
     this.dx = app.dx.create('PaperPrinter');
     
-    // Initialize docInfo with getters/setters
-    this.docInfo = {
-      // Document content
-      rawCode: '',
-      languageId: '',
-      printTitle: 'Printable',
-      
-      // User preferences (persisted in global state)
-      _persist_theme: undefined as string | undefined,
-      persist_fontSizePx: 12,
-      persist_pageSizeId: 'a4' as PageSizeId,
-      persist_orient: 'portrait' as const,
-      persist_marginId: 'normal' as 'none' | 'minimal' | 'normal' | 'wide',
-      
-      // Getter/setter for theme that handles persistence
-      get persist_theme() {
-        return this._persist_theme || this.app.vscodeapis.getActiveThemeId();
-      },
-      
-      set persist_theme(value: string) {
-        this._persist_theme = value;
+    // Bind the getter/setter to the correct this context
+    Object.defineProperty(this.docInfo, 'persist_theme', {
+      get: function(this: PaperPrinter) {
+        return this.docInfo._persist_theme || this.app.vscodeapis.getActiveThemeId();
+      }.bind(this),
+      set: function(this: PaperPrinter, value: string) {
+        this.docInfo._persist_theme = value;
         this.app.vscodeapis.updateGlobalState('theme', value);
-      },
-      
-      // Reference to app for getter/setter access
-      app: this.app
-    };
+      }.bind(this)
+    });
   }
 
   init(): void {
