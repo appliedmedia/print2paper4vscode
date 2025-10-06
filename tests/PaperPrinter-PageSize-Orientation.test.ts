@@ -28,6 +28,7 @@ describe('PaperPrinter Page Size and Orient Tests', () => {
       },
       updateGlobalState: (key: string, value: any) => Promise.resolve(),
       getLocale: () => 'en-US',
+      getActiveThemeId: () => 'github-light',
       getEditorTypography: () => ({
         fontSize: 14,
         lineHeight: 1.5,
@@ -39,10 +40,14 @@ describe('PaperPrinter Page Size and Orient Tests', () => {
       fileRead: (path: string) => {
         if (path === 'src/PaperPrinter.yaml') {
           return {
-            portrait_icon:
+            icon_orient_portrait_svg:
               '<svg width="16" height="16"><rect x="2" y="2" width="12" height="12"/></svg>',
-            landscape_icon:
+            icon_orient_landscape_svg:
               '<svg width="16" height="16"><rect x="1" y="4" width="14" height="8"/></svg>',
+            icon_margin_none_svg: '<svg width="16" height="16"><rect x="2" y="2" width="12" height="12"/></svg>',
+            icon_margin_minimal_svg: '<svg width="16" height="16"><rect x="2" y="2" width="12" height="12"/></svg>',
+            icon_margin_normal_svg: '<svg width="16" height="16"><rect x="2" y="2" width="12" height="12"/></svg>',
+            icon_margin_wide_svg: '<svg width="16" height="16"><rect x="2" y="2" width="12" height="12"/></svg>',
           };
         }
         return undefined;
@@ -58,6 +63,7 @@ describe('PaperPrinter Page Size and Orient Tests', () => {
   };
 
   const paperPrinter = new PaperPrinter(mockApp as any);
+  paperPrinter.init();
 
   describe('Public API Methods', () => {
     test('should get current page size', () => {
@@ -142,6 +148,7 @@ describe('PaperPrinter Page Size and Orient Tests', () => {
         },
         ui: {
           updateWebviewPdf: () => Promise.resolve(),
+          showErrorMessage: (msg: string) => Promise.resolve(),
         },
         stylize: {
           styleToPdf: () => {
@@ -189,6 +196,7 @@ describe('PaperPrinter Page Size and Orient Tests', () => {
         },
         ui: {
           updateWebviewPdf: () => Promise.resolve(),
+          showErrorMessage: (msg: string) => Promise.resolve(),
         },
         stylize: {
           styleToPdf: () => {

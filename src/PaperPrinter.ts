@@ -112,8 +112,16 @@ export class PaperPrinter {
     if (yaml) {
       this._yaml = yaml;
     }
-    
-    return this._yaml;
+
+    // Return cached value or empty object with default values
+    return this._yaml || {
+      icon_orient_portrait_svg: '',
+      icon_orient_landscape_svg: '',
+      icon_margin_none_svg: '',
+      icon_margin_minimal_svg: '',
+      icon_margin_normal_svg: '',
+      icon_margin_wide_svg: ''
+    };
   }
 
   // Clever setter that updates both local and global state
