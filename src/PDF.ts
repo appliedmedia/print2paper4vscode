@@ -183,14 +183,14 @@ export class PDF implements PageRender {
 
   done(): void {
     // Best-effort cleanup of temp PDFs created this session
-    for (const p of this.tempPdfs) {
+    for (const p of this.docInfo.tempPdfs) {
       try {
         this.app.os.fileDelete(p);
       } catch {
         /* ignore */
       }
     }
-    this.tempPdfs = [];
+    this.docInfo.tempPdfs = [];
     this.dx.done();
   }
 
@@ -295,7 +295,7 @@ export class PDF implements PageRender {
 
   private trackTempPdf(p: string): void {
     if (!p) return;
-    this.tempPdfs.push(p);
+    this.docInfo.tempPdfs.push(p);
   }
 
   // Map font family to jsPDF built-in fonts
