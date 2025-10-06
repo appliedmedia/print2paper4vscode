@@ -153,7 +153,8 @@ export class PaperPrinter {
 
   // Computed line height from font size
   get lineHeightPx(): number {
-    return this.getLineHeightPxFromFontSizePx(this.persist_fontSizePx);
+    const editorTypo = this.app.vscodeapis.getEditorTypography();
+    return this.persist_fontSizePx * editorTypo.sizeToHeightRatio;
   }
 
   // Get margin in points from margin ID
@@ -312,13 +313,6 @@ export class PaperPrinter {
       theme: this.currentThemeChoice,
       marginPts: marginPts,
     });
-  }
-
-
-  private getLineHeightPxFromFontSizePx(fontSizePx: number): number {
-    // Calculate line height proportionally based on VS Code's line height ratio
-    const editorTypo = this.app.vscodeapis.getEditorTypography();
-    return fontSizePx * editorTypo.sizeToHeightRatio;
   }
 
   // ES6 getter/setter pattern for page size
