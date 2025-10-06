@@ -161,7 +161,7 @@ describe('PaperPrinter Page Size and Orient Tests', () => {
       // Set required properties for generatePdf to work
       (testPaperPrinter as any).lastRawCode = 'test code';
       (testPaperPrinter as any).lastLanguageId = 'javascript';
-      await (testPaperPrinter as any).handleSelection_Size('letter'); // Select letter
+      await (testPaperPrinter as any).handleSelection_pageSizeId('letter'); // Select letter
 
       assert.strictEqual(updatedPageSize, 'letter');
       assert.ok(scrollViewUpdated);
