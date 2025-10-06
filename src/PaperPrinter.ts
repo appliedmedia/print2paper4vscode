@@ -44,7 +44,17 @@ export class PaperPrinter {
     persist_marginId: 'normal' as 'none' | 'minimal' | 'normal' | 'wide',
     
     // Private backing storage for theme
-    _themeValue: undefined as string | undefined
+    _themeValue: undefined as string | undefined,
+    
+    // Getter/setter for theme that handles persistence
+    get persist_theme() {
+      return this._themeValue || this.app.vscodeapis.getActiveThemeId();
+    },
+    
+    set persist_theme(value: string) {
+      this._themeValue = value;
+      this.app.vscodeapis.updateGlobalState('theme', value);
+    }
   };
 
   private _yaml: {
@@ -67,17 +77,6 @@ export class PaperPrinter {
     this.app = app;
     this.clipboardCapture = new ClipboardCapture(app);
     this.dx = app.dx.create('PaperPrinter');
-    
-    // Bind the getter/setter to the correct this context
-    Object.defineProperty(this.docInfo, 'persist_theme', {
-      get: function(this: PaperPrinter) {
-        return this.docInfo._themeValue || this.app.vscodeapis.getActiveThemeId();
-      }.bind(this),
-      set: function(this: PaperPrinter, value: string) {
-        this.docInfo._themeValue = value;
-        this.app.vscodeapis.updateGlobalState('theme', value);
-      }.bind(this)
-    });
   }
 
   init(): void {
