@@ -31,9 +31,6 @@ export class PaperPrinter {
   private printTitle: string = 'Printable';
   private dx: Diagnostics;
 
-  private currentThemeChoice: string | undefined;
-
-
   public docInfo = {
     // Document content
     rawCode: '',
@@ -111,11 +108,11 @@ export class PaperPrinter {
   }
 
   // Getters that read from global state - callers know it's persistent
-  get persist_themeChoice() {
+  get persist_theme() {
     return this.docInfo.persist_themeChoice || this.app.vscodeapis.getActiveThemeId();
   }
   
-  set persist_themeChoice(value: string) {
+  set persist_theme(value: string) {
     this.localGlobalUpdate(this.docInfo, 'themeChoice', value);
   }
   
@@ -224,12 +221,12 @@ export class PaperPrinter {
       this.printTitle = printableLabel;
 
       // Initialize theme choice if not set yet
-      if (!this.currentThemeChoice) {
-        this.currentThemeChoice = this.app.vscodeapis.getActiveThemeId();
+      if (!this.persist_theme) {
+        this.persist_theme = this.app.vscodeapis.getActiveThemeId();
       }
       this.pdfDoc = await this.app.stylize.styleToPdf(info.text, info.languageId, {
         title: this.printTitle,
-        theme: this.currentThemeChoice,
+        theme: this.persist_theme,
       });
       await this.openPrintPrepAndPrompt(printableLabel);
     } catch (error) {
@@ -275,7 +272,7 @@ export class PaperPrinter {
         fontFamily: this.getCurrentFontFamily(),
         fontSizePx: this.persist_fontSizePx,
         lineHeightPx: this.lineHeightPx,
-        theme: this.currentThemeChoice,
+        theme: this.persist_theme,
       };
 
       // Create webview and initialize message handlers
@@ -310,7 +307,7 @@ export class PaperPrinter {
       fontSize: this.persist_fontSizePx,
       lineHeight: this.lineHeightPx,
       title: this.printTitle,
-      theme: this.currentThemeChoice,
+      theme: this.persist_theme,
       marginPts: marginPts,
     });
   }
@@ -567,7 +564,7 @@ export class PaperPrinter {
         try {
           await this.uiwebview.updatePageRender(pageRender);
           await this.uiwebview.updateOptions({
-            theme: this.currentThemeChoice,
+            theme: this.persist_theme,
             fontSizePx: this.persist_fontSizePx,
             lineHeightPx: this.lineHeightPx,
             pageSizeId: this.pageSizeId,
@@ -621,7 +618,7 @@ export class PaperPrinter {
 
     // Update theme
     dx.out(`updating theme to ${selectedId}`);
-    this.currentThemeChoice = selectedId;
+    this.persist_theme = selectedId;
 
     // Regenerate everything
     try {
