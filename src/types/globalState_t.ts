@@ -8,7 +8,7 @@
 export type GlobalStateKey =
   | 'pageSizeId'
   | 'orient'
-  | 'fontSize'
+  | 'fontSizePx'
   | 'lineHeight'
   | 'theme'
   | 'fontFamily'
@@ -19,14 +19,14 @@ export type GlobalStateKey =
   | 'scrollableViewerEnabled'
   | 'autoScrollableViewerThreshold'
   | 'toolbarPos'
-  | 'test-key';
+  | 'marginId';
 
 export type GlobalStateValue = string | number | boolean | undefined;
 
 export interface GlobalStateMap {
   pageSizeId: string;
   orient: string;
-  fontSize: string;
+  fontSizePx: string;
   lineHeight: string;
   theme: string;
   fontFamily: string;
@@ -37,5 +37,5 @@ export interface GlobalStateMap {
   scrollableViewerEnabled: string;
   autoScrollableViewerThreshold: string;
   toolbarPos: string;
-  'test-key': string;
+  marginId: string;
 }

@@ -5,6 +5,7 @@ import type { PDFDoc } from './types/PDF_t';
 import { Diagnostics } from './Diagnostics';
 import jsPDF from 'jspdf';
 import type { ThemedToken } from 'shiki';
+import { DocInfo_PDF } from './DocInfo_PDF';
 
 /**
  * PDFDoc wrapper that hides jsPDF implementation details
@@ -49,7 +50,6 @@ class PDFDocWrapper implements PDFDoc {
 
 export class PDF implements PageRender {
   private app: App;
-  private tempPdfs: string[] = [];
   private dx: Diagnostics;
   private _yaml: {
     pdf_html: string;
@@ -62,13 +62,95 @@ export class PDF implements PageRender {
   };
 
   // PageRender implementation state
-  private currentTokens: ThemedToken[][] | null = null;
   private pageBreaks: number[] = [];
   private pageTotal: number = 0;
+
+  // PDF document information
+  public docInfo: DocInfo_PDF;
+
+  // Access PaperPrinter's data via app
+  private get paperDocInfo() {
+    return this.app.paperprinter.docInfo;
+  }
+
+  // Incremental PDF building - render one line at a time
+  private currentPageNumber: number = 1;
+  private currentYPosition: number = 0;
+
+  renderByLine(pageNumber: number, lineNumber: number, htmlData: string): void {
+    const dx = this.dx.sub('renderByLine');
+
+    try {
+      // Initialize PDF document if needed
+      if (!this.docInfo.currentPdfDoc) {
+        this.docInfo.currentPdfDoc = new jsPDF({
+          orientation: this.app.paperprinter.docInfo.persist_orient as 'portrait' | 'landscape',
+          unit: 'pt',
+          format: [this.docInfo.pageWidthPts, this.docInfo.pageHeightPts],
+        });
+        this.currentPageNumber = 1;
+        this.currentYPosition = this.docInfo.marginPts.topPts;
+      }
+
+      // Add new page if needed
+      if (pageNumber > this.currentPageNumber) {
+        this.docInfo.currentPdfDoc.addPage();
+        this.currentPageNumber = pageNumber;
+        this.currentYPosition = this.docInfo.marginPts.topPts;
+      }
+
+      // Set font and size
+      this.docInfo.currentPdfDoc.setFont('Courier New');
+      this.docInfo.currentPdfDoc.setFontSize(this.pxToPts(this.app.paperprinter.docInfo.persist_fontSizePx));
+
+      // Parse HTML data to extract text and colors
+      const textContent = htmlData.replace(/<[^>]*>/g, ''); // Strip HTML tags
+      
+      // Draw text at current position
+      this.docInfo.currentPdfDoc.text(textContent, this.docInfo.marginPts.leftPts, this.currentYPosition);
+
+      // Advance Y position
+      this.currentYPosition += this.docInfo.lineHeightPts;
+
+      dx.out(`Rendered line ${lineNumber} on page ${pageNumber}`);
+    } catch (error) {
+      dx.out(`Error rendering line: ${error}`);
+      throw error;
+    } finally {
+      dx.done();
+    }
+  }
+
+  // Complete the PDF document
+  finish(): PDFDoc {
+    const dx = this.dx.sub('finish');
+
+    try {
+      if (!this.docInfo.currentPdfDoc) {
+        throw new Error('No PDF document to finish. Call renderByLine() first.');
+      }
+
+      const pdfDoc = new PDFDocWrapper(this.docInfo.currentPdfDoc);
+      
+      // Reset state
+      this.docInfo.currentPdfDoc = null;
+      this.currentPageNumber = 1;
+      this.currentYPosition = 0;
+
+      dx.out('PDF document completed');
+      return pdfDoc;
+    } catch (error) {
+      dx.out(`Error finishing PDF: ${error}`);
+      throw error;
+    } finally {
+      dx.done();
+    }
+  }
 
   constructor(app: App) {
     this.app = app;
     this.dx = app.dx.create('PDF');
+    this.docInfo = new DocInfo_PDF(this, app);
   }
 
   get yaml() {
@@ -92,22 +174,21 @@ export class PDF implements PageRender {
   }
 
   init(): void {
-    this.tempPdfs = [];
-    this.currentTokens = null;
+    this.docInfo.tempPdfs = [];
     this.pageBreaks = [];
     this.pageTotal = 0;
   }
 
   done(): void {
     // Best-effort cleanup of temp PDFs created this session
-    for (const p of this.tempPdfs) {
+    for (const p of this.docInfo.tempPdfs) {
       try {
         this.app.os.fileDelete(p);
       } catch {
         /* ignore */
       }
     }
-    this.tempPdfs = [];
+    this.docInfo.tempPdfs = [];
     this.dx.done();
   }
 
@@ -212,7 +293,7 @@ export class PDF implements PageRender {
 
   private trackTempPdf(p: string): void {
     if (!p) return;
-    this.tempPdfs.push(p);
+    this.docInfo.tempPdfs.push(p);
   }
 
   // Map font family to jsPDF built-in fonts
@@ -364,7 +445,8 @@ export class PDF implements PageRender {
     fontFamily: string,
     fontSizePx: number,
     lineHeightPx: number,
-    title?: string
+    title?: string,
+    marginPts?: { topPts: number; bottomPts: number; leftPts: number; rightPts: number }
   ): Promise<PDFDoc> {
     const dx = this.dx.sub('generatePdfFromTokens');
     dx.require({ tokens, fontFamily, fontSizePx, lineHeightPx }, [
@@ -376,7 +458,7 @@ export class PDF implements PageRender {
 
     try {
       // Set tokens for page-based rendering
-      this.setTokens(tokens);
+      this.docInfo.currentTokens = tokens;
 
       // Get page size and orient from global state
       const pageSizeId = (this.app.vscodeapis.getGlobalState('pageSizeId') || 'a4') as PageSizeId;
@@ -419,8 +501,8 @@ export class PDF implements PageRender {
       const lineHeightPts = this.pxToPts(lineHeightPx);
 
       // Add title if provided
-      const marginLeft = 20;
-      const marginTop = 20;
+      const marginLeft = marginPts?.leftPts || 20;
+      const marginTop = marginPts?.topPts || 20;
 
       if (title) {
         finalDoc.setFontSize(fontSizePts * 1.25);
@@ -433,7 +515,7 @@ export class PDF implements PageRender {
       const margin = marginLeft;
 
       // Calculate how many lines can fit on the page
-      const bottomMarginPt = 36;
+      const bottomMarginPt = marginPts?.bottomPts || 36;
       const availableHeight = finalHeightPts - y - bottomMarginPt;
       const lineSpacingPt = lineHeightPts;
       const maxLines = Math.floor(availableHeight / lineSpacingPt);
@@ -599,64 +681,28 @@ export class PDF implements PageRender {
    * Set the tokens for page-based rendering
    * This must be called before using PageRender methods
    */
-  setTokens(tokens: ThemedToken[][]): void {
-    const dx = this.dx.sub('setTokens');
-    this.currentTokens = tokens;
-    // Don't calculate page breaks here - they'll be calculated dynamically in renderPage
-    // based on the actual render options (font size, line height, etc.)
-    this.pageBreaks = [];
-    this.pageTotal = 0;
-    dx.out(`Set tokens: ${tokens.length} lines (page breaks calculated dynamically)`);
 
-    // Debug: Log the first few tokens to verify they're set correctly
-    if (tokens.length > 0) {
-      dx.out(`First token line: ${JSON.stringify(tokens[0].slice(0, 3))}`);
-    }
-
-    dx.done();
-  }
-
-  async renderPage(pageNumber: number, options: RenderOptions): Promise<PageData> {
+  async renderPage(pageNumber: number, options: RenderOptions, pageBegin?: number, pageEnd?: number): Promise<PageData> {
     const dx = this.dx.sub('renderPage');
     dx.require({ pageNumber, options }, ['pageNumber', 'options']);
 
     try {
-      if (!this.currentTokens) {
-        const error: PageRenderError = {
-          message: 'No tokens available for rendering. Call setTokens() first.',
-          pageNumber,
-          type: 'generation',
-          timestamp: new Date(),
-        };
-        throw error;
-      }
+      // Initialize PDF document for this page
+      this.docInfo.currentPdfDoc = new jsPDF({
+        orientation: this.app.paperprinter.docInfo.persist_orient as 'portrait' | 'landscape',
+        unit: 'pt',
+        format: [this.docInfo.pageWidthPts, this.docInfo.pageHeightPts],
+      });
+      this.currentPageNumber = pageNumber;
+      this.currentYPosition = this.docInfo.marginPts.topPts;
 
-      // Calculate page breaks dynamically based on actual render options
-      this.pageBreaks = this.calculatePageBreaks(this.currentTokens, options);
-      this.pageTotal = this.pageBreaks.length;
+      // Set font and size
+      this.docInfo.currentPdfDoc.setFont('Courier New');
+      this.docInfo.currentPdfDoc.setFontSize(this.pxToPts(this.app.paperprinter.docInfo.persist_fontSizePx));
 
-      dx.out(`Page render requested: page ${pageNumber}, total pages: ${this.pageTotal}`);
-
-      // Validate page number
-      if (pageNumber < 1 || pageNumber > this.pageTotal) {
-        const error: PageRenderError = {
-          message: `Invalid page number: ${pageNumber}. Valid range: 1-${this.pageTotal}`,
-          pageNumber,
-          type: 'validation',
-          timestamp: new Date(),
-        };
-        throw error;
-      }
-
-      // Note: options.fontSize and options.lineHeight are in pixels, will be converted to points in generatePdfPage
-      // Extract tokens for this page
-      const pageTokens = this.extractTokensForPage(this.currentTokens, pageNumber);
-
-      // Generate single-page PDF
-      const pdfDoc = await this.generatePdfPage(pageTokens, options);
-
-      // Convert to data URL
-      const dataUrl = pdfDoc.asDataUrl();
+      // For now, return a simple page data structure
+      // TODO: Implement proper page rendering with content
+      const dataUrl = this.docInfo.currentPdfDoc.asDataUrl();
 
       // Get page dimensions
       const pageSize = this.getPageDimensions(options.pageSizeId, options.orient);

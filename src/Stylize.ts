@@ -366,14 +366,15 @@ export class Stylize {
         fontInfo.fontFamily,
         fontInfo.fontSizePx,
         fontInfo.lineHeightPx,
-        title
+        title,
+        this.app.paperprinter.docInfo.marginPts
       );
     }
 
     async convert(
       code: string,
       languageId: LanguageId,
-      opts?: { fontSize?: number; lineHeight?: number; title?: string; theme?: string }
+      opts?: { fontSize?: number; lineHeight?: number; title?: string; theme?: string; marginPts?: number }
     ): Promise<PDFDoc> {
       const dx = this.dx.sub('Converter_StyleToPdf');
       dx.require({ code, languageId }, ['code', 'languageId']);
@@ -400,10 +401,71 @@ export class Stylize {
   async styleToPdf(
     code: string,
     languageId: LanguageId,
-    opts?: { fontSize?: number; lineHeight?: number; title?: string; theme?: string }
+    opts?: { fontSize?: number; lineHeight?: number; title?: string; theme?: string; marginPts?: number }
   ): Promise<PDFDoc> {
     const converter = new this.Converter_StyleToPdf(this.app);
     return converter.convert(code, languageId, opts);
+  }
+
+  // Simple tokenization without PDF generation - render one page at a time
+  async tokenize(
+    code: string,
+    languageId: LanguageId,
+    theme?: string,
+    pageBegin?: number,
+    pageEnd?: number,
+    optPerLineHandler?: (pageNumber: number, lineNumber: number, htmlData: string) => void
+  ): Promise<ThemedToken[][]> {
+    const dx = this.dx.sub('tokenize');
+
+    try {
+      await this.validateHighlighter(languageId);
+      const highlighter = this.highlighter!;
+      const themeToUse = theme || this.resolveActiveTheme();
+
+      const tokenResult = highlighter.codeToTokens(code, {
+        lang: languageId as any,
+        theme: themeToUse,
+      });
+      const tokens = tokenResult?.tokens || [];
+      
+      // Apply page range filtering if specified
+      let filteredTokens = tokens;
+      if (pageBegin !== undefined && pageEnd !== undefined) {
+        if (pageBegin === 0 && pageEnd === 0) {
+          // 0,0 means everything - no filtering
+          filteredTokens = tokens;
+        } else if (pageEnd === 0) {
+          // pageBegin,0 means just that page
+          filteredTokens = tokens.slice(pageBegin - 1, pageBegin);
+        } else {
+          // pageBegin,pageEnd means range
+          filteredTokens = tokens.slice(pageBegin - 1, pageEnd);
+        }
+      }
+
+      // Call per-line handler if provided
+      if (optPerLineHandler) {
+        for (let pageNum = pageBegin || 1; pageNum <= (pageEnd || 1); pageNum++) {
+          for (let lineNum = 0; lineNum < filteredTokens.length; lineNum++) {
+            const line = filteredTokens[lineNum];
+            // Convert line tokens to HTML (simplified)
+            const htmlData = line.map((token: ThemedToken) => 
+              `<span style="color: ${token.color || '#000000'}">${token.content}</span>`
+            ).join('');
+            optPerLineHandler(pageNum, lineNum, htmlData);
+          }
+        }
+      }
+
+      dx.out(`Tokenized ${filteredTokens.length} lines with theme ${themeToUse}`);
+      return filteredTokens;
+    } catch (error) {
+      dx.out(`Error tokenizing: ${error}`);
+      throw error;
+    } finally {
+      dx.done();
+    }
   }
 
 

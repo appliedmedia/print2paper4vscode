@@ -18,6 +18,8 @@ describe('VSCodeAPIs Wrapper', () => {
     },
     os: {
       dateAsYYYYMMDDHHMMSS: () => '20250101120000',
+      getExtensionRoot: () => '/workspace',
+      htmlSrcPathToURI: (path: string) => `file://${path}`,
     },
   };
 
@@ -353,11 +355,6 @@ describe('VSCodeAPIs Wrapper', () => {
   });
 
   describe('State Management', () => {
-    it('should get global state', () => {
-      const value = vscodeAPIs.getGlobalState('test-key');
-
-      assert.strictEqual(value, '', 'Should return empty string for missing key');
-    });
 
     it('should get locale from VS Code environment', () => {
       mockVSCode.env = { language: 'en-US' };

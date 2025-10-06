@@ -1,5 +1,150 @@
 # PDF Generation Flow Analysis
 
+## 🚀 COMPLETE REFACTOR TODO LIST
+
+### Phase 1: Simple Changes (Handler Simplification - DONE)
+
+- ✅ Add `regenerateAndUpdateWebview()` method to PaperPrinter
+- ✅ Simplify all 4 menu handlers to use the new method
+- ✅ Eliminate ~110 lines of duplicated code
+
+### Phase 2: YAML and SVG System (COMPLETED)
+
+- ✅ Add YAML getter to PaperPrinter class
+- ✅ Update PaperPrinter.yaml with new icon names (`icon_orient_portrait_svg`, etc.)
+- ✅ Fix menuItems_Orient() to use template literals like margin
+- ✅ Add menuItems_Margin() method
+- ✅ Remove manual SVG handling from UIMenu.ts
+- ✅ Update UIMenu.ts to remove `{{svg:...}}` processing
+
+**Phase 2 Results:**
+
+- No more manual SVG replacement bullshit
+- Consistent template literal approach across all menu items
+- PaperPrinter handles its own YAML loading and SVG processing
+- UIMenu just uses the processed displayName as-is
+- All icons have consistent `_svg` suffix naming
+
+### Phase 3: Document Info Structure (COMPLETED)
+
+- ✅ Create `docInfo` struct in PaperPrinter with `persist_` prefix
+- ✅ Create `docInfo` struct in PDF class for computed values
+- ✅ Add `localGlobalUpdate()` method for persistent variables
+- ✅ Add getters/setters with `persist_` prefix (e.g., `get persist_themeChoice()`)
+- ✅ Update PDF class to access via `this.app.paperprinter.docInfo`
+
+**Phase 3 Results:**
+
+- PaperPrinter has `docInfo` with document content + persistent user preferences
+- PDF has `docInfo` with computed values (page dimensions, margins, etc.)
+- `localGlobalUpdate()` method handles both local + global state updates
+- Getters/setters use `persist_` prefix so callers know they're persistent
+- PDF accesses PaperPrinter data via `this.app.paperprinter.docInfo`
+- No more parameter passing of configuration structs
+
+### Phase 4: Method Signatures and Parameters (COMPLETED)
+
+- ✅ Add `pageBegin`/`pageEnd` parameters to Stylize.tokenize()
+- ✅ Add `pageBegin`/`pageEnd` parameters to PDF.renderPage()
+- ✅ Add `optPerLineHandler` parameter to Stylize.tokenize()
+- ✅ Add `PDF.renderByLine()` method for incremental PDF building
+- ✅ Add `PDF.finish()` method to complete PDF
+
+**Phase 4 Results:**
+
+- Stylize.tokenize() supports page range filtering (1,0=page1; 0,0=all; 1,2=pages1-2)
+- optPerLineHandler callback enables parallel rendering architecture
+- PDF.renderByLine() builds jsPDF incrementally with per-line processing
+- PDF.finish() completes the PDF and resets state
+- Method signatures support the new page-by-page rendering flow
+
+### Phase 5: Margin System (COMPLETED)
+
+- ✅ Add `persist_marginId` to PaperPrinter docInfo
+- ✅ Create `MARGIN_IDS` const lookup table
+- ✅ Add `getMarginPts()` method
+- ✅ Add margin menu handler
+- ✅ Reorganize Page menu with Size/Orient/Margin as flyouts
+
+**Phase 5 Results:**
+
+- Margin system with 4 levels: none (0pts), minimal (5pts), normal (15pts), wide (30pts)
+- Const lookup table for type-safe margin calculations
+- Clean menu hierarchy: Page > Size/Orient/Margin (all flyouts)
+- All page settings grouped logically under Page menu
+- Margin handler follows same pattern as other menu handlers
+- getMarginPts() method converts margin ID to points
+
+### Phase 5.1: DocInfo Architecture Implementation (PENDING)
+
+- [ ] Create `DocInfo_PaperPrinter` class with all document properties
+- [ ] Create `DocInfo_PDF` class with all PDF-specific properties  
+- [ ] Update `PaperPrinter` constructor to use `new DocInfo_PaperPrinter(this, app)`
+- [ ] Update `PDF` constructor to use `new DocInfo_PDF(this, app)`
+- [ ] Move all document properties from main classes to their respective DocInfo classes
+- [ ] Update all property access to use `this.docInfo.property` pattern
+- [ ] Update all external access to use `this.app.paperprinter.docInfo.property` and `this.app.pdf.docInfo.property`
+- [ ] Remove old property declarations from main classes
+- [ ] Update all method signatures to use DocInfo properties
+- [ ] Test that all property access works through DocInfo pattern
+- [ ] Ensure global state synchronization works with DocInfo properties
+
+**Note:** Phase 5.1 implements the DocInfo pattern as outlined in the PROPOSED REFACTOR section. This provides clean separation of concerns and consistent access patterns.
+
+### Phase 5.2: Line-by-Line Rendering Architecture (PENDING)
+
+**Core Concept:** Stylize owns tokens and line composition, PDF renders line-by-line via callback
+
+- [ ] **Stylize.tokenize()** - owns all tokenization and line composition
+- [ ] **Stylize.tokenize()** accepts `optPerLineHandler?: (pageNum: number, lineNum: number, htmlData: string) => void`
+- [ ] **PDF.renderByLine()** - processes one line of HTML into PDF content
+- [ ] **PDF.finish()** - finalizes PDF and resets state for display
+- [ ] **Stylize** calls `optPerLineHandler(pageNum, lineNum, htmlData)` for each line
+- [ ] Remove `currentTokens` storage from PDF class (Stylize owns tokens)
+- [ ] Remove `setTokens()` method from PDF class
+- [ ] Update `renderPage()` to use line-by-line callback pattern
+- [ ] Test complete flow: Stylize → callback → PDF → finish → display
+
+### Phase 6: Cleanup (PENDING - Requires Full Refactor)
+
+- [ ] Complete the full refactor to use new tokenization + PDF generation flow
+- [ ] Update `generatePdf()` to use new `tokenize()` + `setTokensAndConfig()` + `generateFullDocument()` flow
+- [ ] Remove old methods: `styleToPdf()`, `Converter_StyleToPdf`, `generatePdfFromTokens()`
+- [ ] Update all method calls to use new signatures
+- [ ] Test the complete flow
+
+**Note:** Phase 6 requires completing the full architectural refactor outlined in the PROPOSED REFACTOR section. The current implementation still uses the old `styleToPdf()` method in `generatePdf()`.
+
+### Phase 7: Theme and Font System Refactor (COMPLETED)
+
+- ✅ Convert `currentThemeChoice` to `persist_theme` with proper getter/setter
+- ✅ Convert `currentFontSize` to `persist_fontSizePx` with proper getter/setter
+- ✅ Remove `computeFontSizePx()` method - use `persist_fontSizePx` directly
+- ✅ Rename `computeLineHeightPx()` to `getLineHeightPxFromFontSizePx()` for clarity
+- ✅ Create `lineHeightPx` getter that calculates from `persist_fontSizePx`
+- ✅ Inline `getLineHeightPxFromFontSizePx()` into the getter
+- ✅ Remove `currentWebView` → rename to `uiwebview` (lowercase class instance naming)
+- ✅ Update global state types to use `fontSizePx` instead of `fontSize`
+- ✅ Remove `test-key` from global state types (test cruft)
+- ✅ Fix all TypeScript compilation errors
+- ✅ Fix all linter errors
+- ✅ Update tests to match new structure
+
+**Phase 7 Results:**
+
+- Consistent `persist_` prefix for all persistent variables
+- Clean getter/setter pattern with arrow functions preserving `this` context
+- No more redundant `current*` variables - everything uses `persist_*`
+- Type-safe global state management
+- All tests passing
+- Clean separation between persistent state and computed values
+
+## Summary
+
+### Total: ~45 tasks across 8 phases
+
+---
+
 ## 📋 TABLE OF CONTENTS
 
 ### 🔍 UNDERSTANDING THE PROBLEM (Read First)
@@ -24,17 +169,17 @@
 
 ### 🛠️ THE SOLUTION (Execute in This Order)
 
-**PHASE 1: Type Definitions**
+### PHASE 1: Type Definitions
 
-5. **[STANDARDIZED OPTIONS STRUCTURE](#standardized-options-structure)** - Define `PDFDocInfo` interface
+1. **[STANDARDIZED OPTIONS STRUCTURE](#standardized-options-structure)** - Define `PDFDocInfo` interface
    - **DO THIS FIRST** - Create `src/types/PDFDocInfo_t.ts`
    - Single source of truth for all PDF configuration
    - All measurements in points (not pixels)
    - Includes: title, pageSizeId, orient, dimensions, fonts, theme, margins
 
-**PHASE 2: Core Refactor**
+### PHASE 2: Core Refactor
 
-6. **[PROPOSED REFACTOR](#proposed-refactor)** - Complete architectural overhaul
+1. **[PROPOSED REFACTOR](#proposed-refactor)** - Complete architectural overhaul
    - **Step 1:** Add `Stylize.tokenize()` - simple tokenization without PDF generation
    - **Step 2:** Add `PDF.setTokensAndConfig(tokens, docInfo)` - store tokens + config
    - **Step 3:** Add `PDF.generateFullDocument()` - create complete multi-page jsPDF
@@ -45,9 +190,9 @@
    - **Step 8:** Test webview page rendering
    - **Step 9:** Remove old methods: `styleToPdf()`, `Converter_StyleToPdf`, `generatePdfFromTokens()`
 
-**PHASE 3: Menu Handler Cleanup**
+### PHASE 3: Menu Handler Cleanup
 
-7. **[MENU HANDLERS REFACTOR](#menu-handlers-refactor)** - Eliminate duplicated regeneration code
+1. **[MENU HANDLERS REFACTOR](#menu-handlers-refactor)** - Eliminate duplicated regeneration code
    - **Step 1:** Add `regenerateAndUpdateWebview()` method to PaperPrinter
    - **Step 2:** Simplify all 4 menu handlers (Theme, Text, Page, Orient) to:
      1. Update their ONE property
@@ -81,7 +226,7 @@
 
 ### Initial PDF Generation (openWebView)
 
-```
+```text
 1. PaperPrinter.openWebView()
    ↓
 2. PaperPrinter.generatePdf()
@@ -114,7 +259,7 @@
 
 ### Per-Page Rendering (scroll view)
 
-```
+```text
 1. UIScrollView.requestPageRender(pageNumber)
    ↓
 2. PageRender.renderPage(pageNumber, options)
@@ -470,7 +615,7 @@ The `PageRender` interface and `UIScrollView.requestPageRender()` already work c
 - `PaperPrinter.generatePdf()` - use new tokenize + configure flow
 - Menu handlers in `PaperPrinter` - already correct, just need to call new `generatePdf()`
 
-### Benefits
+### Benefits of Proposed Refactor
 
 1. **Explicit parameter passing** - no more global state reads
 2. **Separation of concerns** - tokenization vs rendering vs document generation
@@ -823,7 +968,7 @@ export interface PageRender {
 }
 ```
 
-### Benefits
+### Benefits of PDFDocInfo Structure
 
 1. **Single source of truth** - one structure for all PDF configuration
 2. **Type safety** - TypeScript enforces correct usage
@@ -911,7 +1056,7 @@ async handleSelection_Text(selectedId: string): Promise<string> {
 
 // handleSelection_Page (EXACT SAME PATTERN AGAIN)
 // handleSelection_Orient (AND AGAIN)
-```
+```text
 
 **Every handler duplicates:**
 
@@ -1098,7 +1243,7 @@ async handleSelection_Orient(selectedId: string): Promise<string> {
 }
 ```
 
-### Benefits
+### Benefits of Menu Handler Refactor
 
 1. **DRY (Don't Repeat Yourself)** - regeneration logic in ONE place
 2. **Single source of truth** - `createPDFDocInfo()` reads all current properties
