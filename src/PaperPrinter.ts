@@ -31,19 +31,7 @@ export class PaperPrinter {
   private printTitle: string = 'Printable';
   private dx: Diagnostics;
 
-  public docInfo = {
-    // Document content
-    rawCode: '',
-    languageId: '',
-    printTitle: 'Printable',
-    
-    // User preferences (persisted in global state)
-    persist_theme: undefined as string | undefined,
-    persist_fontSizePx: 12,
-    persist_pageSizeId: 'a4' as PageSizeId,
-    persist_orient: 'portrait' as const,
-    persist_marginId: 'normal' as 'none' | 'minimal' | 'normal' | 'wide'
-  };
+  public docInfo: any;
 
   private _yaml: {
     icon_orient_portrait_svg: string;
@@ -65,6 +53,34 @@ export class PaperPrinter {
     this.app = app;
     this.clipboardCapture = new ClipboardCapture(app);
     this.dx = app.dx.create('PaperPrinter');
+    
+    // Initialize docInfo with getters/setters
+    this.docInfo = {
+      // Document content
+      rawCode: '',
+      languageId: '',
+      printTitle: 'Printable',
+      
+      // User preferences (persisted in global state)
+      _persist_theme: undefined as string | undefined,
+      persist_fontSizePx: 12,
+      persist_pageSizeId: 'a4' as PageSizeId,
+      persist_orient: 'portrait' as const,
+      persist_marginId: 'normal' as 'none' | 'minimal' | 'normal' | 'wide',
+      
+      // Getter/setter for theme that handles persistence
+      get persist_theme() {
+        return this._persist_theme || this.app.vscodeapis.getActiveThemeId();
+      },
+      
+      set persist_theme(value: string) {
+        this._persist_theme = value;
+        this.app.vscodeapis.updateGlobalState('theme', value);
+      },
+      
+      // Reference to app for getter/setter access
+      app: this.app
+    };
   }
 
   init(): void {
@@ -107,15 +123,6 @@ export class PaperPrinter {
     this.app.vscodeapis.updateGlobalState(varName as GlobalStateKey, value);
   }
 
-  // Getters/setters that work with docInfo - callers know where data lives
-  get theme() {
-    return this.docInfo.persist_theme || this.app.vscodeapis.getActiveThemeId();
-  }
-  
-  set theme(value: string) {
-    this.docInfo.persist_theme = value;
-    this.app.vscodeapis.updateGlobalState('theme', value);
-  }
   
   get persist_fontSizePx() {
     return this.docInfo.persist_fontSizePx || 12;
@@ -222,12 +229,12 @@ export class PaperPrinter {
       this.printTitle = printableLabel;
 
       // Initialize theme choice if not set yet
-      if (!this.theme) {
-        this.theme = this.app.vscodeapis.getActiveThemeId();
+      if (!this.docInfo.persist_theme) {
+        this.docInfo.persist_theme = this.app.vscodeapis.getActiveThemeId();
       }
       this.pdfDoc = await this.app.stylize.styleToPdf(info.text, info.languageId, {
         title: this.printTitle,
-        theme: this.theme,
+        theme: this.docInfo.persist_theme,
       });
       await this.openPrintPrepAndPrompt(printableLabel);
     } catch (error) {
@@ -273,7 +280,7 @@ export class PaperPrinter {
         fontFamily: this.getCurrentFontFamily(),
         fontSizePx: this.persist_fontSizePx,
         lineHeightPx: this.lineHeightPx,
-        theme: this.theme,
+        theme: this.docInfo.persist_theme,
       };
 
       // Create webview and initialize message handlers
@@ -308,7 +315,7 @@ export class PaperPrinter {
       fontSize: this.persist_fontSizePx,
       lineHeight: this.lineHeightPx,
       title: this.printTitle,
-      theme: this.theme,
+      theme: this.docInfo.persist_theme,
       marginPts: marginPts,
     });
   }
@@ -565,7 +572,7 @@ export class PaperPrinter {
         try {
           await this.uiwebview.updatePageRender(pageRender);
           await this.uiwebview.updateOptions({
-            theme: this.theme,
+            theme: this.docInfo.persist_theme,
             fontSizePx: this.persist_fontSizePx,
             lineHeightPx: this.lineHeightPx,
             pageSizeId: this.pageSizeId,
@@ -619,7 +626,7 @@ export class PaperPrinter {
 
     // Update theme
     dx.out(`updating theme to ${selectedId}`);
-    this.theme = selectedId;
+    this.docInfo.persist_theme = selectedId;
 
     // Regenerate everything
     try {
