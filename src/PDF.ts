@@ -5,6 +5,7 @@ import type { PDFDoc } from './types/PDF_t';
 import { Diagnostics } from './Diagnostics';
 import jsPDF from 'jspdf';
 import type { ThemedToken } from 'shiki';
+import { PDF_DocInfo } from './PDF_DocInfo';
 
 /**
  * PDFDoc wrapper that hides jsPDF implementation details
