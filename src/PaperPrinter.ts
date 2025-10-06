@@ -42,7 +42,7 @@ export class PaperPrinter {
     
     // User preferences (persisted in global state)
     persist_themeChoice: undefined,
-    persist_fontSize: 12,
+    persist_fontSizePx: 12,
     persist_pageSizeId: 'a4' as PageSizeId,
     persist_orient: 'portrait' as const,
     persist_marginId: 'normal' as 'none' | 'minimal' | 'normal' | 'wide'
@@ -119,12 +119,12 @@ export class PaperPrinter {
     this.localGlobalUpdate(this.docInfo, 'themeChoice', value);
   }
   
-  get persist_fontSize() {
-    return this.docInfo.persist_fontSize || 12;
+  get persist_fontSizePx() {
+    return this.docInfo.persist_fontSizePx || 12;
   }
   
-  set persist_fontSize(value: number) {
-    this.localGlobalUpdate(this.docInfo, 'fontSize', value);
+  set persist_fontSizePx(value: number) {
+    this.localGlobalUpdate(this.docInfo, 'fontSizePx', value);
   }
   
   get persist_pageSizeId() {
