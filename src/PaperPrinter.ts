@@ -38,7 +38,7 @@ export class PaperPrinter {
     printTitle: 'Printable',
     
     // User preferences (persisted in global state)
-    persist_themeChoice: undefined,
+    persist_theme: undefined,
     persist_fontSizePx: 12,
     persist_pageSizeId: 'a4' as PageSizeId,
     persist_orient: 'portrait' as const,
@@ -109,11 +109,11 @@ export class PaperPrinter {
 
   // Getters that read from global state - callers know it's persistent
   get persist_theme() {
-    return this.docInfo.persist_themeChoice || this.app.vscodeapis.getActiveThemeId();
+    return this.docInfo.persist_theme || this.app.vscodeapis.getActiveThemeId();
   }
   
   set persist_theme(value: string) {
-    this.localGlobalUpdate(this.docInfo, 'themeChoice', value);
+    this.localGlobalUpdate(this.docInfo, 'theme', value);
   }
   
   get persist_fontSizePx() {
