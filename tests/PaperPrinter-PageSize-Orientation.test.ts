@@ -76,21 +76,14 @@ describe('PaperPrinter Page Size and Orient Tests', () => {
     test('should generate page menu items with correct format', () => {
       const menuItems = (paperPrinter as any).menuItems_Page();
 
-      assert.strictEqual(menuItems.length, 6);
+      // Should have 3 items (Size, Orient, Margin submenus)
+      assert.strictEqual(menuItems.length, 3);
 
-      const expectedSizes = ['orient', 'letter', 'legal', 'a3', 'a4', 'a5'];
-      expectedSizes.forEach((size, index) => {
-        assert.strictEqual(menuItems[index].id, size);
-        // Check that display name contains the size (case-insensitive)
-        assert.ok(menuItems[index].displayName.toLowerCase().includes(size.toLowerCase()));
-
-        // For orientation item, don't check for dimensions
-        if (size !== 'orient') {
-          assert.ok(
-            menuItems[index].displayName.includes('mm') ||
-              menuItems[index].displayName.includes('"')
-          );
-        }
+      const expectedSubmenus = ['size', 'orient', 'margin'];
+      expectedSubmenus.forEach((submenu, index) => {
+        assert.strictEqual(menuItems[index].id, submenu);
+        // Check that display name contains the submenu name (case-insensitive)
+        assert.ok(menuItems[index].displayName.toLowerCase().includes(submenu.toLowerCase()));
       });
     });
 
