@@ -262,14 +262,13 @@ export class PaperPrinter {
       };
 
       // ScrollView options
-      const fontSizePx = this.persist_fontSizePx;
-      const lineHeightPx = this.getLineHeightPxFromFontSizePx(fontSizePx);
+      const lineHeightPx = this.getLineHeightPxFromFontSizePx(this.persist_fontSizePx);
       const options = {
         title: `Print: ${tabName}`,
         pageSizeId: this.pageSizeId,
         orient: this.orient,
         fontFamily: this.getCurrentFontFamily(),
-        fontSizePx: fontSizePx,
+        fontSizePx: this.persist_fontSizePx,
         lineHeightPx: lineHeightPx,
         theme: this.currentThemeChoice,
       };
@@ -299,13 +298,12 @@ export class PaperPrinter {
   }
 
   private async generatePdf(): Promise<void> {
-    const sizePx = this.persist_fontSizePx;
-    const lineHeightPx = this.getLineHeightPxFromFontSizePx(sizePx);
+    const lineHeightPx = this.getLineHeightPxFromFontSizePx(this.persist_fontSizePx);
     const marginPts = this.getMarginPts(this.persist_marginId);
     
     // Store the new PDF document
     this.pdfDoc = await this.app.stylize.styleToPdf(this.rawCode, this.languageId, {
-      fontSize: sizePx,
+      fontSize: this.persist_fontSizePx,
       lineHeight: lineHeightPx,
       title: this.printTitle,
       theme: this.currentThemeChoice,
