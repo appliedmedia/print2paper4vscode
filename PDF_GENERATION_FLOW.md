@@ -125,7 +125,7 @@
 
 ## Summary
 
-### Total: ~35 tasks across 7 phases
+### Total: ~45 tasks across 8 phases
 
 ---
 

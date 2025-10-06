@@ -83,14 +83,14 @@ export class PDF implements PageRender {
 
     try {
       // Initialize PDF document if needed
-      if (!this.currentPdfDoc) {
-        this.currentPdfDoc = new jsPDF({
+      if (!this.docInfo.currentPdfDoc) {
+        this.docInfo.currentPdfDoc = new jsPDF({
           orientation: this.paperDocInfo.persist_orient,
           unit: 'pt',
           format: [this.docInfo.pageWidthPts, this.docInfo.pageHeightPts],
         });
         this.currentPageNumber = 1;
-        this.currentYPosition = this.docInfo.marginPts;
+        this.currentYPosition = this.docInfo.marginPts.topPts;
       }
 
       // Add new page if needed
