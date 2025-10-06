@@ -197,8 +197,8 @@ export class PaperPrinter {
         return;
       }
 
-      this.rawCode = info.text;
-      this.languageId = info.languageId;
+      this.docInfo.rawCode = info.text;
+      this.docInfo.languageId = info.languageId;
       const selection = this.app.vscodeapis.getActiveTextEditor()?.selection;
       let printableLabel = info.name;
       if (selection && !selection.isEmpty) {
