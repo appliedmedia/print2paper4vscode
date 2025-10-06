@@ -50,7 +50,6 @@ class PDFDocWrapper implements PDFDoc {
 
 export class PDF implements PageRender {
   private app: App;
-  private tempPdfs: string[] = [];
   private dx: Diagnostics;
   private _yaml: {
     pdf_html: string;
@@ -67,13 +66,8 @@ export class PDF implements PageRender {
   private pageBreaks: number[] = [];
   private pageTotal: number = 0;
 
-  // PDF-specific computed values
-  private docInfo = {
-    pageWidthPts: 0,
-    pageHeightPts: 0,
-    marginPts: 0,
-    lineHeightPts: 0
-  };
+  // PDF document information
+  public docInfo: PDF_DocInfo;
 
   // Access PaperPrinter's data via app
   private get paperDocInfo() {
@@ -81,7 +75,6 @@ export class PDF implements PageRender {
   }
 
   // Incremental PDF building - render one line at a time
-  private currentPdfDoc: jsPDF | null = null;
   private currentPageNumber: number = 1;
   private currentYPosition: number = 0;
 
@@ -158,6 +151,7 @@ export class PDF implements PageRender {
   constructor(app: App) {
     this.app = app;
     this.dx = app.dx.create('PDF');
+    this.docInfo = new PDF_DocInfo(this, app);
   }
 
   get yaml() {

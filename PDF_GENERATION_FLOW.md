@@ -75,6 +75,20 @@
 - Margin handler follows same pattern as other menu handlers
 - getMarginPts() method converts margin ID to points
 
+### Phase 5.5: DocInfo Architecture Implementation (PENDING)
+
+- [ ] Create `PaperPrinter_DocInfo` class with all document properties
+- [ ] Create `PDF_DocInfo` class with all PDF-specific properties  
+- [ ] Update `PaperPrinter` constructor to use `new PaperPrinter_DocInfo(this, app)`
+- [ ] Update `PDF` constructor to use `new PDF_DocInfo(this, app)`
+- [ ] Move all document properties from main classes to their respective DocInfo classes
+- [ ] Update all property access to use `this.docInfo.property` pattern
+- [ ] Update all external access to use `this.app.paperprinter.docInfo.property` and `this.app.pdf.docInfo.property`
+- [ ] Remove old property declarations from main classes
+- [ ] Update all method signatures to use DocInfo properties
+- [ ] Test that all property access works through DocInfo pattern
+- [ ] Ensure global state synchronization works with DocInfo properties
+
 ### Phase 6: Cleanup (PENDING - Requires Full Refactor)
 
 - [ ] Complete the full refactor to use new tokenization + PDF generation flow
