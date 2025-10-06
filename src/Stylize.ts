@@ -359,21 +359,23 @@ export class Stylize {
     private async generatePdfDocument(
       tokens: ThemedToken[][],
       fontInfo: { fontFamily: string; fontSizePx: number; lineHeightPx: number },
-      title?: string
+      title?: string,
+      marginPts?: number
     ): Promise<PDFDoc> {
       return await this.app.pdf.generatePdfFromTokens(
         tokens,
         fontInfo.fontFamily,
         fontInfo.fontSizePx,
         fontInfo.lineHeightPx,
-        title
+        title,
+        marginPts
       );
     }
 
     async convert(
       code: string,
       languageId: LanguageId,
-      opts?: { fontSize?: number; lineHeight?: number; title?: string; theme?: string }
+      opts?: { fontSize?: number; lineHeight?: number; title?: string; theme?: string; marginPts?: number }
     ): Promise<PDFDoc> {
       const dx = this.dx.sub('Converter_StyleToPdf');
       dx.require({ code, languageId }, ['code', 'languageId']);
@@ -383,7 +385,7 @@ export class Stylize {
         await this.ensureHighlighterReady(languageId);
         const tokens = this.tokenizeCode(code, languageId, selectedTheme);
         const fontInfo = this.extractFontInfo(selectedTheme, opts);
-        const pdfDoc = await this.generatePdfDocument(tokens, fontInfo, opts?.title);
+        const pdfDoc = await this.generatePdfDocument(tokens, fontInfo, opts?.title, opts?.marginPts);
 
         dx.out(`PDF document generated successfully`);
         return pdfDoc;
@@ -400,7 +402,7 @@ export class Stylize {
   async styleToPdf(
     code: string,
     languageId: LanguageId,
-    opts?: { fontSize?: number; lineHeight?: number; title?: string; theme?: string }
+    opts?: { fontSize?: number; lineHeight?: number; title?: string; theme?: string; marginPts?: number }
   ): Promise<PDFDoc> {
     const converter = new this.Converter_StyleToPdf(this.app);
     return converter.convert(code, languageId, opts);

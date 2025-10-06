@@ -302,12 +302,15 @@ export class PaperPrinter {
   private async generatePdf(): Promise<void> {
     const sizePx = this.computeFontSizePx();
     const lhPx = this.computeLineHeightPx(sizePx);
+    const marginPts = this.getMarginPts(this.persist_marginId);
+    
     // Store the new PDF document
     this.pdfDoc = await this.app.stylize.styleToPdf(this.rawCode, this.languageId, {
       fontSize: sizePx,
       lineHeight: lhPx,
       title: this.printTitle,
       theme: this.currentThemeChoice,
+      marginPts: marginPts,
     });
   }
 
