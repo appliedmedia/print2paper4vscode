@@ -263,7 +263,7 @@ export class PaperPrinter {
 
       // ScrollView options
       const fontSizePx = this.persist_fontSizePx;
-      const lineHeightPx = this.computeLineHeightPx(fontSizePx);
+      const lineHeightPx = this.getLineHeightPxFromFontSizePx(fontSizePx);
       const options = {
         title: `Print: ${tabName}`,
         pageSizeId: this.pageSizeId,
@@ -300,7 +300,7 @@ export class PaperPrinter {
 
   private async generatePdf(): Promise<void> {
     const sizePx = this.persist_fontSizePx;
-    const lineHeightPx = this.computeLineHeightPx(sizePx);
+    const lineHeightPx = this.getLineHeightPxFromFontSizePx(sizePx);
     const marginPts = this.getMarginPts(this.persist_marginId);
     
     // Store the new PDF document
@@ -314,10 +314,10 @@ export class PaperPrinter {
   }
 
 
-  private computeLineHeightPx(fontSize: number): number {
+  private getLineHeightPxFromFontSizePx(fontSizePx: number): number {
     // Calculate line height proportionally based on VS Code's line height ratio
     const editorTypo = this.app.vscodeapis.getEditorTypography();
-    return fontSize * editorTypo.sizeToHeightRatio;
+    return fontSizePx * editorTypo.sizeToHeightRatio;
   }
 
   // ES6 getter/setter pattern for page size
@@ -571,7 +571,7 @@ export class PaperPrinter {
       if (this.currentWebView) {
         try {
           const sizePx = this.persist_fontSizePx;
-          const lineHeightPx = this.computeLineHeightPx(sizePx);
+          const lineHeightPx = this.getLineHeightPxFromFontSizePx(sizePx);
           
           await this.currentWebView.updatePageRender(pageRender);
           await this.currentWebView.updateOptions({
