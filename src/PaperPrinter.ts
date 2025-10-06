@@ -262,7 +262,7 @@ export class PaperPrinter {
       };
 
       // ScrollView options
-      const fontSizePx = this.computeFontSizePx();
+      const fontSizePx = this.persist_fontSizePx;
       const lineHeightPx = this.computeLineHeightPx(fontSizePx);
       const options = {
         title: `Print: ${tabName}`,
@@ -299,7 +299,7 @@ export class PaperPrinter {
   }
 
   private async generatePdf(): Promise<void> {
-    const sizePx = this.computeFontSizePx();
+    const sizePx = this.persist_fontSizePx;
     const lineHeightPx = this.computeLineHeightPx(sizePx);
     const marginPts = this.getMarginPts(this.persist_marginId);
     
@@ -313,9 +313,6 @@ export class PaperPrinter {
     });
   }
 
-  private computeFontSizePx(): number {
-    return this.persist_fontSizePx;
-  }
 
   private computeLineHeightPx(fontSize: number): number {
     // Calculate line height proportionally based on VS Code's line height ratio
@@ -573,7 +570,7 @@ export class PaperPrinter {
       // Update webview if it exists
       if (this.currentWebView) {
         try {
-          const sizePx = this.computeFontSizePx();
+          const sizePx = this.persist_fontSizePx;
           const lineHeightPx = this.computeLineHeightPx(sizePx);
           
           await this.currentWebView.updatePageRender(pageRender);
