@@ -75,12 +75,12 @@
 - Margin handler follows same pattern as other menu handlers
 - getMarginPts() method converts margin ID to points
 
-### Phase 5.5: DocInfo Architecture Implementation (PENDING)
+### Phase 5.1: DocInfo Architecture Implementation (PENDING)
 
-- [ ] Create `PaperPrinter_DocInfo` class with all document properties
-- [ ] Create `PDF_DocInfo` class with all PDF-specific properties  
-- [ ] Update `PaperPrinter` constructor to use `new PaperPrinter_DocInfo(this, app)`
-- [ ] Update `PDF` constructor to use `new PDF_DocInfo(this, app)`
+- [ ] Create `DocInfo_PaperPrinter` class with all document properties
+- [ ] Create `DocInfo_PDF` class with all PDF-specific properties  
+- [ ] Update `PaperPrinter` constructor to use `new DocInfo_PaperPrinter(this, app)`
+- [ ] Update `PDF` constructor to use `new DocInfo_PDF(this, app)`
 - [ ] Move all document properties from main classes to their respective DocInfo classes
 - [ ] Update all property access to use `this.docInfo.property` pattern
 - [ ] Update all external access to use `this.app.paperprinter.docInfo.property` and `this.app.pdf.docInfo.property`
@@ -89,22 +89,21 @@
 - [ ] Test that all property access works through DocInfo pattern
 - [ ] Ensure global state synchronization works with DocInfo properties
 
-### Phase 5.5: DocInfo Pattern Implementation (PENDING - Requires Full Refactor)
+### Phase 5.2: Line-by-Line Rendering Architecture (PENDING)
 
-- [ ] Create `PaperPrinter_DocInfo` class with all document properties
-- [ ] Create `PDF_DocInfo` class with all PDF-specific properties  
-- [ ] Update `PaperPrinter` constructor to accept `(app)` and set `this.app = app`
-- [ ] Update `PDF` constructor to accept `(app)` and set `this.app = app`
-- [ ] Initialize `this.docInfo = new PaperPrinter_DocInfo(this, app)` in PaperPrinter
-- [ ] Initialize `this.docInfo = new PDF_DocInfo(this, app)` in PDF
-- [ ] Move all document properties from main classes to DocInfo classes
-- [ ] Update all property access to use `this.docInfo.propertyName`
-- [ ] Update all external access to use `this.app.paperprinter.docInfo.propertyName`
-- [ ] Update all external access to use `this.app.pdf.docInfo.propertyName`
-- [ ] Remove old property declarations from main classes
-- [ ] Update all method signatures to use DocInfo properties
-- [ ] Test that all property access works through DocInfo pattern
-- [ ] Ensure global state synchronization works with DocInfo properties
+**Core Concept:** Stylize owns tokens and line composition, PDF renders line-by-line via callback
+
+- [ ] **Stylize.tokenize()** - owns all tokenization and line composition
+- [ ] **Stylize.tokenize()** accepts `optPerLineHandler?: (pageNum: number, lineNum: number, htmlData: string) => void`
+- [ ] **PDF.renderByLine()** - processes one line of HTML into PDF content
+- [ ] **PDF.finish()** - finalizes PDF and resets state for display
+- [ ] **Stylize** calls `optPerLineHandler(pageNum, lineNum, htmlData)` for each line
+- [ ] **PDF.renderByLine()** receives HTML and converts to PDF text/graphics
+- [ ] **PDF.finish()** completes PDF generation and prepares for PDF.js display
+- [ ] Remove `currentTokens` storage from PDF class (Stylize owns tokens)
+- [ ] Remove `setTokens()` method from PDF class
+- [ ] Update `renderPage()` to use line-by-line callback pattern
+- [ ] Test complete flow: Stylize → callback → PDF → finish → display
 - [ ] Update all references throughout codebase to use new access patterns
 - [ ] Compile and fix all TypeScript errors
 - [ ] Run tests to ensure functionality is preserved

@@ -5,7 +5,7 @@ import type { PDFDoc } from './types/PDF_t';
 import { Diagnostics } from './Diagnostics';
 import jsPDF from 'jspdf';
 import type { ThemedToken } from 'shiki';
-import { PDF_DocInfo } from './PDF_DocInfo';
+import { DocInfo_PDF } from './DocInfo_PDF';
 
 /**
  * PDFDoc wrapper that hides jsPDF implementation details
@@ -66,7 +66,7 @@ export class PDF implements PageRender {
   private pageTotal: number = 0;
 
   // PDF document information
-  public docInfo: PDF_DocInfo;
+  public docInfo: DocInfo_PDF;
 
   // Access PaperPrinter's data via app
   private get paperDocInfo() {
@@ -150,7 +150,7 @@ export class PDF implements PageRender {
   constructor(app: App) {
     this.app = app;
     this.dx = app.dx.create('PDF');
-    this.docInfo = new PDF_DocInfo(this, app);
+    this.docInfo = new DocInfo_PDF(this, app);
   }
 
   get yaml() {
