@@ -458,7 +458,7 @@ export class PDF implements PageRender {
 
     try {
       // Set tokens for page-based rendering
-      this.setTokens(tokens);
+      this.docInfo.currentTokens = tokens;
 
       // Get page size and orient from global state
       const pageSizeId = (this.app.vscodeapis.getGlobalState('pageSizeId') || 'a4') as PageSizeId;
@@ -687,18 +687,15 @@ export class PDF implements PageRender {
     dx.require({ pageNumber, options }, ['pageNumber', 'options']);
 
     try {
-      if (!this.docInfo.currentTokens) {
-        const error: PageRenderError = {
-          message: 'No tokens available for rendering. Call setTokens() first.',
-          pageNumber,
-          type: 'generation',
-          timestamp: new Date(),
-        };
-        throw error;
-      }
+      // Get tokens from Stylize - PDF should not store tokens
+      const tokens = await this.app.stylize.tokenize(
+        this.app.paperprinter.docInfo.rawCode,
+        this.app.paperprinter.docInfo.languageId,
+        options.theme || this.app.paperprinter.docInfo.persist_theme
+      );
 
       // Calculate page breaks dynamically based on actual render options
-      this.pageBreaks = this.calculatePageBreaks(this.docInfo.currentTokens, options);
+      this.pageBreaks = this.calculatePageBreaks(tokens, options);
       this.pageTotal = this.pageBreaks.length;
 
       dx.out(`Page render requested: page ${pageNumber}, total pages: ${this.pageTotal}`);
@@ -716,7 +713,7 @@ export class PDF implements PageRender {
 
       // Note: options.fontSize and options.lineHeight are in pixels, will be converted to points in generatePdfPage
       // Extract tokens for this page
-      const pageTokens = this.extractTokensForPage(this.docInfo.currentTokens, pageNumber);
+      const pageTokens = this.extractTokensForPage(tokens, pageNumber);
 
       // Generate single-page PDF
       const pdfDoc = await this.generatePdfPage(pageTokens, options);
