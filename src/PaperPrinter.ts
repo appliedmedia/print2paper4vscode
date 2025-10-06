@@ -6,6 +6,7 @@ import { UIMenu } from './UIMenu';
 import { UIWebView } from './UIWebView';
 import type { PDFDoc } from './types/PDF_t';
 import type { PageRender } from './types/PageRender_t';
+import type { GlobalStateKey } from './types/globalState_t';
 
 // Page size type and order definition
 export type PageSizeId = 'letter' | 'legal' | 'a3' | 'a4' | 'a5';
@@ -107,7 +108,7 @@ export class PaperPrinter {
   private localGlobalUpdate(container: any, varName: string, value: any) {
     const persistKey = `persist_${varName}`;
     container[persistKey] = value;
-    this.app.vscodeapis.updateGlobalState(varName as 'themeChoice' | 'marginId', value);
+    this.app.vscodeapis.updateGlobalState(varName as GlobalStateKey, value);
   }
 
   // Getters that read from global state - callers know it's persistent
