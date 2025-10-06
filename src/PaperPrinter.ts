@@ -385,7 +385,7 @@ export class PaperPrinter {
         isFlyout: true,
         menuItems: this.menuItems_pageSizeId.bind(this),
         flyoutMenuItemIds: [],
-        selectionHandler: this.handleSelection_Size.bind(this),
+        selectionHandler: this.handleSelection_pageSizeId.bind(this),
       },
       {
         id: 'orient',
@@ -716,8 +716,8 @@ export class PaperPrinter {
     }
   }
 
-  private async handleSelection_Size(selectedId: string): Promise<string> {
-    const dx = this.dx.sub('handleSelection_Size');
+  private async handleSelection_pageSizeId(selectedId: string): Promise<string> {
+    const dx = this.dx.sub('handleSelection_pageSizeId');
     dx.out(`selectedId = ${selectedId}`);
 
     if (selectedId === UIMenu.defaultId()) {
