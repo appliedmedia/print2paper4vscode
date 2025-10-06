@@ -19,7 +19,6 @@ export type GlobalStateKey =
   | 'scrollableViewerEnabled'
   | 'autoScrollableViewerThreshold'
   | 'toolbarPos'
-  | 'test-key'
   | 'marginId';
 
 export type GlobalStateValue = string | number | boolean | undefined;
@@ -38,6 +37,5 @@ export interface GlobalStateMap {
   scrollableViewerEnabled: string;
   autoScrollableViewerThreshold: string;
   toolbarPos: string;
-  'test-key': string;
   marginId: string;
 }
