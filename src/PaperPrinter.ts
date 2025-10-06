@@ -151,6 +151,11 @@ export class PaperPrinter {
     this.localGlobalUpdate(this.docInfo, 'marginId', value);
   }
 
+  // Computed line height from font size
+  get lineHeightPx(): number {
+    return this.getLineHeightPxFromFontSizePx(this.persist_fontSizePx);
+  }
+
   // Get margin in points from margin ID
   getMarginPts(marginId: MarginId): number {
     return MARGIN_IDS[marginId];
@@ -262,14 +267,13 @@ export class PaperPrinter {
       };
 
       // ScrollView options
-      const lineHeightPx = this.getLineHeightPxFromFontSizePx(this.persist_fontSizePx);
       const options = {
         title: `Print: ${tabName}`,
         pageSizeId: this.pageSizeId,
         orient: this.orient,
         fontFamily: this.getCurrentFontFamily(),
         fontSizePx: this.persist_fontSizePx,
-        lineHeightPx: lineHeightPx,
+        lineHeightPx: this.lineHeightPx,
         theme: this.currentThemeChoice,
       };
 
@@ -298,13 +302,12 @@ export class PaperPrinter {
   }
 
   private async generatePdf(): Promise<void> {
-    const lineHeightPx = this.getLineHeightPxFromFontSizePx(this.persist_fontSizePx);
     const marginPts = this.getMarginPts(this.persist_marginId);
     
     // Store the new PDF document
     this.pdfDoc = await this.app.stylize.styleToPdf(this.rawCode, this.languageId, {
       fontSize: this.persist_fontSizePx,
-      lineHeight: lineHeightPx,
+      lineHeight: this.lineHeightPx,
       title: this.printTitle,
       theme: this.currentThemeChoice,
       marginPts: marginPts,
@@ -568,13 +571,11 @@ export class PaperPrinter {
       // Update webview if it exists
       if (this.currentWebView) {
         try {
-          const lineHeightPx = this.getLineHeightPxFromFontSizePx(this.persist_fontSizePx);
-          
           await this.currentWebView.updatePageRender(pageRender);
           await this.currentWebView.updateOptions({
             theme: this.currentThemeChoice,
             fontSizePx: this.persist_fontSizePx,
-            lineHeightPx: lineHeightPx,
+            lineHeightPx: this.lineHeightPx,
             pageSizeId: this.pageSizeId,
             orient: this.orient,
           });
