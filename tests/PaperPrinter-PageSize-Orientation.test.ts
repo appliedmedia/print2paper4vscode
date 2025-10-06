@@ -88,7 +88,7 @@ describe('PaperPrinter Page Size and Orient Tests', () => {
     });
 
     test('should include dimensions in display names', () => {
-      const menuItems = (paperPrinter as any).menuItems_Size();
+      const menuItems = (paperPrinter as any).menuItems_pageSizeId();
 
       // Check A4 has mm dimensions
       const a4Item = menuItems.find((item: any) => item.id === 'a4');

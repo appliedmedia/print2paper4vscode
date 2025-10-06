@@ -383,7 +383,7 @@ export class PaperPrinter {
         displayName: 'Size',
         icon: '', // submenu indicated by no icon, see Page > Size
         isFlyout: true,
-        menuItems: this.menuItems_Size.bind(this),
+        menuItems: this.menuItems_pageSizeId.bind(this),
         flyoutMenuItemIds: [],
         selectionHandler: this.handleSelection_Size.bind(this),
       },
@@ -517,7 +517,7 @@ export class PaperPrinter {
     ];
   }
 
-  private menuItems_Size(): UIMenuItem[] {
+  private menuItems_pageSizeId(): UIMenuItem[] {
     const pageSizeLabels: Record<PageSizeId, string> = {
       letter: 'Letter (8.5" × 11")',
       legal: 'Legal (8.5" × 14")',
