@@ -29,7 +29,7 @@ export class PaperPrinter {
   private uiwebview: UIWebView | null = null;
   private dx: Diagnostics;
 
-  public docInfo: PaperPrinter_DocInfo;
+  public docInfo: DocInfo_PaperPrinter;
 
   private _yaml: {
     icon_orient_portrait_svg: string;
@@ -53,7 +53,7 @@ export class PaperPrinter {
     this.dx = app.dx.create('PaperPrinter');
     
     // Initialize docInfo
-    this.docInfo = new PaperPrinter_DocInfo(this, app);
+    this.docInfo = new DocInfo_PaperPrinter(this, app);
   }
 
   init(): void {

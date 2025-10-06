@@ -501,8 +501,8 @@ export class PDF implements PageRender {
       const lineHeightPts = this.pxToPts(lineHeightPx);
 
       // Add title if provided
-      const marginLeft = marginPts || 20;
-      const marginTop = marginPts || 20;
+      const marginLeft = marginPts?.leftPts || 20;
+      const marginTop = marginPts?.topPts || 20;
 
       if (title) {
         finalDoc.setFontSize(fontSizePts * 1.25);
@@ -515,7 +515,7 @@ export class PDF implements PageRender {
       const margin = marginLeft;
 
       // Calculate how many lines can fit on the page
-      const bottomMarginPt = marginPts || 36;
+      const bottomMarginPt = marginPts?.bottomPts || 36;
       const availableHeight = finalHeightPts - y - bottomMarginPt;
       const lineSpacingPt = lineHeightPts;
       const maxLines = Math.floor(availableHeight / lineSpacingPt);

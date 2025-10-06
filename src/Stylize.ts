@@ -360,7 +360,7 @@ export class Stylize {
       tokens: ThemedToken[][],
       fontInfo: { fontFamily: string; fontSizePx: number; lineHeightPx: number },
       title?: string,
-      marginPts?: number
+      marginPts?: { topPts: number; bottomPts: number; leftPts: number; rightPts: number }
     ): Promise<PDFDoc> {
       return await this.app.pdf.generatePdfFromTokens(
         tokens,
@@ -385,7 +385,8 @@ export class Stylize {
         await this.ensureHighlighterReady(languageId);
         const tokens = this.tokenizeCode(code, languageId, selectedTheme);
         const fontInfo = this.extractFontInfo(selectedTheme, opts);
-        const pdfDoc = await this.generatePdfDocument(tokens, fontInfo, opts?.title, opts?.marginPts);
+        const marginPts = opts?.marginPts ? { topPts: opts.marginPts, bottomPts: opts.marginPts, leftPts: opts.marginPts, rightPts: opts.marginPts } : undefined;
+        const pdfDoc = await this.generatePdfDocument(tokens, fontInfo, opts?.title, marginPts);
 
         dx.out(`PDF document generated successfully`);
         return pdfDoc;
