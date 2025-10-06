@@ -38,12 +38,13 @@ export class PaperPrinter {
     printTitle: 'Printable',
     
     // User preferences (persisted in global state)
-    _persist_theme: undefined as string | undefined,
     persist_fontSizePx: 12,
     persist_pageSizeId: 'a4' as PageSizeId,
     persist_orient: 'portrait' as const,
     persist_marginId: 'normal' as 'none' | 'minimal' | 'normal' | 'wide'
   };
+
+  private _persist_theme: string | undefined = undefined;
 
   private _yaml: {
     icon_orient_portrait_svg: string;
@@ -69,10 +70,10 @@ export class PaperPrinter {
     // Bind the getter/setter to the correct this context
     Object.defineProperty(this.docInfo, 'persist_theme', {
       get: function(this: PaperPrinter) {
-        return this.docInfo._persist_theme || this.app.vscodeapis.getActiveThemeId();
+        return this._persist_theme || this.app.vscodeapis.getActiveThemeId();
       }.bind(this),
       set: function(this: PaperPrinter, value: string) {
-        this.docInfo._persist_theme = value;
+        this._persist_theme = value;
         this.app.vscodeapis.updateGlobalState('theme', value);
       }.bind(this)
     });
