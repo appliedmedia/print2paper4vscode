@@ -359,8 +359,7 @@ export class Stylize {
     private async generatePdfDocument(
       tokens: ThemedToken[][],
       fontInfo: { fontFamily: string; fontSizePx: number; lineHeightPx: number },
-      title?: string,
-      marginPts?: { topPts: number; bottomPts: number; leftPts: number; rightPts: number }
+      title?: string
     ): Promise<PDFDoc> {
       return await this.app.pdf.generatePdfFromTokens(
         tokens,
@@ -368,7 +367,7 @@ export class Stylize {
         fontInfo.fontSizePx,
         fontInfo.lineHeightPx,
         title,
-        marginPts
+        this.app.paperprinter.docInfo.marginPts
       );
     }
 
