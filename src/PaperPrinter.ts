@@ -27,7 +27,7 @@ export class PaperPrinter {
   private pdfDoc: PDFDoc | null = null; // In-memory PDF document (PDFDoc abstraction)
   private rawCode: string = '';
   private languageId: string = '';
-  private currentWebView: UIWebView | null = null;
+  private webView: UIWebView | null = null;
   private printTitle: string = 'Printable';
   private dx: Diagnostics;
 
@@ -279,11 +279,11 @@ export class PaperPrinter {
       };
 
       // Create webview and initialize message handlers
-      this.currentWebView = new UIWebView(this.app);
-      this.currentWebView.init();
+      this.webView = new UIWebView(this.app);
+      this.webView.init();
 
       // Create webview panel with page renderer and options
-      await this.currentWebView.createPanel(pageRender, options);
+      await this.webView.createPanel(pageRender, options);
 
       dx.out(`Opened webview for ${tabName}`);
     } catch (error) {
@@ -563,10 +563,10 @@ export class PaperPrinter {
       };
 
       // Update webview if it exists
-      if (this.currentWebView) {
+      if (this.webView) {
         try {
-          await this.currentWebView.updatePageRender(pageRender);
-          await this.currentWebView.updateOptions({
+          await this.webView.updatePageRender(pageRender);
+          await this.webView.updateOptions({
             theme: this.currentThemeChoice,
             fontSizePx: this.persist_fontSizePx,
             lineHeightPx: this.lineHeightPx,
