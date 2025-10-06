@@ -31,31 +31,7 @@ export class PaperPrinter {
   private printTitle: string = 'Printable';
   private dx: Diagnostics;
 
-  public docInfo: any = {
-    // Document content
-    rawCode: '',
-    languageId: '',
-    printTitle: 'Printable',
-    
-    // User preferences (persisted in global state)
-    persist_fontSizePx: 12,
-    persist_pageSizeId: 'a4' as PageSizeId,
-    persist_orient: 'portrait' as const,
-    persist_marginId: 'normal' as 'none' | 'minimal' | 'normal' | 'wide',
-    
-    // Private backing storage for theme
-    _themeValue: undefined as string | undefined,
-    
-    // Getter/setter for theme that handles persistence
-    get persist_theme() {
-      return this._themeValue || this.app.vscodeapis.getActiveThemeId();
-    },
-    
-    set persist_theme(value: string) {
-      this._themeValue = value;
-      this.app.vscodeapis.updateGlobalState('theme', value);
-    }
-  };
+  public docInfo: any;
 
   private _yaml: {
     icon_orient_portrait_svg: string;
@@ -77,6 +53,34 @@ export class PaperPrinter {
     this.app = app;
     this.clipboardCapture = new ClipboardCapture(app);
     this.dx = app.dx.create('PaperPrinter');
+    
+    // Initialize docInfo
+    this.docInfo = {
+      // Document content
+      rawCode: '',
+      languageId: '',
+      printTitle: 'Printable',
+      
+      // User preferences (persisted in global state)
+      persist_fontSizePx: 12,
+      persist_pageSizeId: 'a4' as PageSizeId,
+      persist_orient: 'portrait' as const,
+      persist_marginId: 'normal' as 'none' | 'minimal' | 'normal' | 'wide',
+      
+      // Private backing storage for theme
+      _themeValue: undefined as string | undefined
+    };
+    
+    // Define getter/setter with arrow functions to preserve 'this' context
+    Object.defineProperty(this.docInfo, 'persist_theme', {
+      get: () => {
+        return this.docInfo._themeValue || this.app.vscodeapis.getActiveThemeId();
+      },
+      set: (value: string) => {
+        this.docInfo._themeValue = value;
+        this.app.vscodeapis.updateGlobalState('theme', value);
+      }
+    });
   }
 
   init(): void {
