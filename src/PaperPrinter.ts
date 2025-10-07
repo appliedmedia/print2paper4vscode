@@ -7,20 +7,15 @@ import { UIWebView } from './UIWebView';
 import type { PDFDoc } from './types/PDF_t';
 import type { PageRender } from './types/PageRender_t';
 import type { GlobalStateKey } from './types/globalState_t';
-import { DocInfo_PaperPrinter } from './DocInfo_PaperPrinter';
+import { DocInfo_PaperPrinter, type MarginId, MARGIN_IDS } from './DocInfo_PaperPrinter';
 
 // Page size type and order definition
 export type PageSizeId = 'letter' | 'legal' | 'a3' | 'a4' | 'a5';
 export const PAGE_SIZE_IDS: PageSizeId[] = ['letter', 'legal', 'a3', 'a4', 'a5'];
 
-// Margin level type and lookup table
-export type MarginId = 'none' | 'minimal' | 'normal' | 'wide';
-export const MARGIN_IDS = {
-  none: 0,      // 0pts
-  minimal: 5,   // ~7px
-  normal: 15,   // ~20px  
-  wide: 30      // ~40px
-} as const;
+// Re-export types for backward compatibility
+export type { MarginId };
+export { MARGIN_IDS };
 
 export class PaperPrinter {
   private app: App;
@@ -53,7 +48,7 @@ export class PaperPrinter {
     this.dx = app.dx.create('PaperPrinter');
     
     // Initialize docInfo
-    this.docInfo = new DocInfo_PaperPrinter(this, app);
+    this.docInfo = new DocInfo_PaperPrinter(app);
   }
 
   init(): void {

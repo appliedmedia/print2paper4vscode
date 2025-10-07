@@ -150,7 +150,7 @@ export class PDF implements PageRender {
   constructor(app: App) {
     this.app = app;
     this.dx = app.dx.create('PDF');
-    this.docInfo = new DocInfo_PDF(this, app);
+    this.docInfo = new DocInfo_PDF(app);
   }
 
   get yaml() {

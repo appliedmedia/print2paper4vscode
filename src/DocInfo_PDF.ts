@@ -1,3 +1,5 @@
+import type { App } from './App';
+
 /**
  * PDF_DocInfo - Document information and configuration for PDF
  * 
@@ -5,8 +7,7 @@
  * for accessing them. The main PDF class accesses these through this.docInfo.
  */
 export class DocInfo_PDF {
-  private owner: any;
-  private app: any;
+  private app: App;
 
   // PDF document state
   public currentPdfDoc: any = null;
@@ -37,12 +38,11 @@ export class DocInfo_PDF {
   // Temporary file tracking
   public tempPdfs: string[] = [];
 
-  constructor(owner: any, app: any) {
-    this.owner = owner;
+  constructor(app: App) {
     this.app = app;
   }
 
-  // Margin getter/setter
+  // Margin getter/setter - self-contained, no delegates
   get marginPts(): { topPts: number; bottomPts: number; leftPts: number; rightPts: number } {
     return {
       topPts: this.marginTopPts,

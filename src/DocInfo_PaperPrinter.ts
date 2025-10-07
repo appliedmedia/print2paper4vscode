@@ -1,3 +1,14 @@
+import type { App } from './App';
+
+// Margin level type and lookup table
+export type MarginId = 'none' | 'minimal' | 'normal' | 'wide';
+export const MARGIN_IDS = {
+  none: 0,      // 0pts
+  minimal: 5,   // ~7px
+  normal: 15,   // ~20px  
+  wide: 30      // ~40px
+} as const;
+
 /**
  * PaperPrinter_DocInfo - Document information and configuration for PaperPrinter
  * 
@@ -5,8 +16,7 @@
  * for accessing them. The main PaperPrinter class accesses these through this.docInfo.
  */
 export class DocInfo_PaperPrinter {
-  private owner: any;
-  private app: any;
+  private app: App;
 
   // Document content
   public rawCode: string = '';
@@ -18,7 +28,7 @@ export class DocInfo_PaperPrinter {
   public persist_fontSizePx: number = 12;
   public persist_pageSizeId: 'letter' | 'legal' | 'a3' | 'a4' | 'a5' = 'a4';
   public persist_orient: 'portrait' | 'landscape' = 'portrait';
-  public persist_marginId: 'none' | 'minimal' | 'normal' | 'wide' = 'normal';
+  public persist_marginId: MarginId = 'normal';
 
   // Computed values (read-only)
   public pageWidthPx: number = 0;
@@ -26,8 +36,7 @@ export class DocInfo_PaperPrinter {
   public pageWidthPts: number = 0;
   public pageHeightPts: number = 0;
 
-  constructor(owner: any, app: any) {
-    this.owner = owner;
+  constructor(app: App) {
     this.app = app;
   }
 
@@ -37,7 +46,7 @@ export class DocInfo_PaperPrinter {
   }
   set persist_theme(value: string) {
     this._persist_theme = value;
-    this.owner.localGlobalUpdate(this, 'theme', value);
+    // Note: global state sync should be handled by the calling class
   }
 
   // Computed line height
@@ -45,8 +54,14 @@ export class DocInfo_PaperPrinter {
     return this.persist_fontSizePx * 1.2;
   }
 
-  // Margin in points
+  // Margin in points - self-contained, no delegates
   get marginPts(): { topPts: number; bottomPts: number; leftPts: number; rightPts: number } {
-    return this.owner.getMarginPts();
+    const marginValue = MARGIN_IDS[this.persist_marginId];
+    return {
+      topPts: marginValue,
+      bottomPts: marginValue,
+      leftPts: marginValue,
+      rightPts: marginValue
+    };
   }
 }
