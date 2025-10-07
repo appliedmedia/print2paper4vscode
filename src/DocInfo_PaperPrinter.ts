@@ -54,9 +54,14 @@ export class DocInfo_PaperPrinter {
     return this.persist_fontSizePx * 1.2;
   }
 
-  // Margin in points - self-contained, no delegates
+  // Get margin value in points from margin ID
+  getMarginPts(): number {
+    return MARGIN_IDS[this.persist_marginId];
+  }
+
+  // Margin in points - computed from margin ID
   get marginPts(): { topPts: number; bottomPts: number; leftPts: number; rightPts: number } {
-    const marginValue = MARGIN_IDS[this.persist_marginId];
+    const marginValue = this.getMarginPts();
     return {
       topPts: marginValue,
       bottomPts: marginValue,

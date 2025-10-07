@@ -361,14 +361,14 @@ export class Stylize {
       fontInfo: { fontFamily: string; fontSizePx: number; lineHeightPx: number },
       title?: string
     ): Promise<PDFDoc> {
-      return await this.app.pdf.generatePdfFromTokens(
-        tokens,
-        fontInfo.fontFamily,
-        fontInfo.fontSizePx,
-        fontInfo.lineHeightPx,
-        title,
-        this.app.paperprinter.docInfo.marginPts
-      );
+      return await         this.app.pdf.generatePdfFromTokens(
+          tokens,
+          fontInfo.fontFamily,
+          fontInfo.fontSizePx,
+          fontInfo.lineHeightPx,
+          title,
+          this.app.paperprinter.docInfo.marginPts
+        );
     }
 
     async convert(

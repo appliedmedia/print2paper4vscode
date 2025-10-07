@@ -284,7 +284,7 @@ export class PaperPrinter {
   }
 
   private async generatePdf(): Promise<void> {
-    const marginPts = this.getMarginPts(this.persist_marginId);
+    const marginPts = this.docInfo.getMarginPts();
     
     // Store the new PDF document
     this.pdfDoc = await this.app.stylize.styleToPdf(this.docInfo.rawCode, this.docInfo.languageId, {

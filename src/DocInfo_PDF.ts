@@ -38,8 +38,14 @@ export class DocInfo_PDF {
     this.app = app;
   }
 
-  // Margin getter - gets margin data from PaperPrinter (single source of truth)
+  // Margin getter - computes margin data from PaperPrinter's margin ID
   get marginPts(): { topPts: number; bottomPts: number; leftPts: number; rightPts: number } {
-    return this.app.paperprinter.docInfo.marginPts;
+    const marginValue = this.app.paperprinter.docInfo.getMarginPts();
+    return {
+      topPts: marginValue,
+      bottomPts: marginValue,
+      leftPts: marginValue,
+      rightPts: marginValue
+    };
   }
 }
