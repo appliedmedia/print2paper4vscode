@@ -22,10 +22,6 @@ export class DocInfo_PDF {
   // Page rendering settings
   public pageWidthPts: number = 0;
   public pageHeightPts: number = 0;
-  public marginTopPts: number = 15;
-  public marginBottomPts: number = 15;
-  public marginLeftPts: number = 15;
-  public marginRightPts: number = 15;
 
   // Font settings
   public fontSizePts: number = 0;
@@ -42,19 +38,8 @@ export class DocInfo_PDF {
     this.app = app;
   }
 
-  // Margin getter/setter - self-contained, no delegates
+  // Margin getter - gets margin data from PaperPrinter (single source of truth)
   get marginPts(): { topPts: number; bottomPts: number; leftPts: number; rightPts: number } {
-    return {
-      topPts: this.marginTopPts,
-      bottomPts: this.marginBottomPts,
-      leftPts: this.marginLeftPts,
-      rightPts: this.marginRightPts
-    };
-  }
-  set marginPts(value: { topPts: number; bottomPts: number; leftPts: number; rightPts: number }) {
-    this.marginTopPts = value.topPts;
-    this.marginBottomPts = value.bottomPts;
-    this.marginLeftPts = value.leftPts;
-    this.marginRightPts = value.rightPts;
+    return this.app.paperprinter.docInfo.marginPts;
   }
 }
