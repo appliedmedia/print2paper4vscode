@@ -30,13 +30,13 @@ vscode.window.createWebviewPanel(
 ```typescript
 // Create a webview panel with HTML content
 const panel = vscode.window.createWebviewPanel(
-    'capturedContent', // viewType
-    'Captured Content', // title
-    vscode.ViewColumn.One, // showOptions
-    {
-        enableScripts: true,
-        retainContextWhenHidden: true
-    }
+  'capturedContent', // viewType
+  'Captured Content', // title
+  vscode.ViewColumn.One, // showOptions
+  {
+    enableScripts: true,
+    retainContextWhenHidden: true,
+  }
 );
 
 // Set HTML content directly from memory
@@ -76,14 +76,14 @@ vscode.workspace.openTextDocument(
 ```typescript
 // Create a text document from memory
 const document = await vscode.workspace.openTextDocument({
-    content: capturedContent,
-    language: 'html'
+  content: capturedContent,
+  language: 'html',
 });
 
 // Show the document in a new tab
 await vscode.window.showTextDocument(document, {
-    preview: false,
-    viewColumn: vscode.ViewColumn.One
+  preview: false,
+  viewColumn: vscode.ViewColumn.One,
 });
 ```
 
@@ -189,12 +189,12 @@ This minimizes AppleScript usage while leveraging VS Code's native capabilities.
 // Check if active tab is a text editor
 const activeEditor = vscode.window.activeTextEditor;
 if (activeEditor) {
-    // It's a text editor
-    const tabName = this.getDescriptiveName(activeEditor.document);
+  // It's a text editor
+  const tabName = this.getDescriptiveName(activeEditor.document);
 } else {
-    // It might be a preview tab - we need to detect it differently
-    // For now, fall back to a generic name
-    const tabName = 'Preview Tab';
+  // It might be a preview tab - we need to detect it differently
+  // For now, fall back to a generic name
+  const tabName = 'Preview Tab';
 }
 ```
 
@@ -204,10 +204,10 @@ if (activeEditor) {
 // Get active tab group
 const activeTabGroup = vscode.window.tabGroups.activeTabGroup;
 if (activeTabGroup) {
-    const activeTab = activeTabGroup.activeTab;
-    if (activeTab) {
-        const tabName = activeTab.label;
-    }
+  const activeTab = activeTabGroup.activeTab;
+  if (activeTab) {
+    const tabName = activeTab.label;
+  }
 }
 ```
 
@@ -238,12 +238,12 @@ vscode.workspace.getConfiguration(section?: string, scope?: vscode.Configuration
 
 ```typescript
 // Get current theme name
-const themeName = vscode.workspace.getConfiguration("workbench").get("colorTheme");
+const themeName = vscode.workspace.getConfiguration('workbench').get('colorTheme');
 // Returns: "Default Dark Modern"
 
 // Get other workbench settings
-const fontSize = vscode.workspace.getConfiguration("editor").get("fontSize");
-const wordWrap = vscode.workspace.getConfiguration("editor").get("wordWrap");
+const fontSize = vscode.workspace.getConfiguration('editor').get('fontSize');
+const wordWrap = vscode.workspace.getConfiguration('editor').get('wordWrap');
 ```
 
 ## Extension Management APIs
@@ -271,18 +271,18 @@ vscode.extensions.getExtension<T>(extensionId: string): vscode.Extension<T> | un
 // List all extensions
 const allExtensions = vscode.extensions.all;
 allExtensions.forEach(ext => {
-    console.log(`${ext.id}: ${ext.isActive ? 'Active' : 'Inactive'}`);
+  console.log(`${ext.id}: ${ext.isActive ? 'Active' : 'Inactive'}`);
 });
 
 // Get specific extension
 const typescriptExt = vscode.extensions.getExtension('ms-vscode.vscode-typescript-next');
 if (typescriptExt) {
-    console.log(`TypeScript extension path: ${typescriptExt.extensionPath}`);
+  console.log(`TypeScript extension path: ${typescriptExt.extensionPath}`);
 }
 
 // Find theme extensions
-const themeExtensions = vscode.extensions.all.filter(ext => 
-    ext.id.includes('theme') || ext.packageJSON.contributes?.themes
+const themeExtensions = vscode.extensions.all.filter(
+  ext => ext.id.includes('theme') || ext.packageJSON.contributes?.themes
 );
 
 // Distinguish built-in vs user extensions
@@ -297,10 +297,10 @@ const themeDefaults = vscode.extensions.getExtension('vscode.theme-defaults');
 const typescriptBasics = vscode.extensions.getExtension('vscode.typescript-language-features');
 
 if (themeDefaults) {
-    console.log(`Theme defaults at: ${themeDefaults.extensionPath}`);
+  console.log(`Theme defaults at: ${themeDefaults.extensionPath}`);
 }
 if (typescriptBasics) {
-    console.log(`TypeScript basics at: ${typescriptBasics.extensionPath}`);
+  console.log(`TypeScript basics at: ${typescriptBasics.extensionPath}`);
 }
 ```
 
@@ -312,17 +312,17 @@ if (typescriptBasics) {
 
 ```typescript
 interface ExtensionContext {
-    readonly extensionPath: string;
-    readonly extensionUri: vscode.Uri;
-    readonly globalStorageUri: vscode.Uri;
-    readonly globalStoragePath: string; // deprecated
-    readonly logUri: vscode.Uri;
-    readonly storageUri: vscode.Uri | undefined;
-    readonly subscriptions: { dispose(): any }[];
-    readonly workspaceState: vscode.Memento;
-    readonly globalState: vscode.Memento;
-    readonly extensionMode: vscode.ExtensionMode;
-    readonly extensionKind: vscode.ExtensionKind;
+  readonly extensionPath: string;
+  readonly extensionUri: vscode.Uri;
+  readonly globalStorageUri: vscode.Uri;
+  readonly globalStoragePath: string; // deprecated
+  readonly logUri: vscode.Uri;
+  readonly storageUri: vscode.Uri | undefined;
+  readonly subscriptions: { dispose(): any }[];
+  readonly workspaceState: vscode.Memento;
+  readonly globalState: vscode.Memento;
+  readonly extensionMode: vscode.ExtensionMode;
+  readonly extensionKind: vscode.ExtensionKind;
 }
 ```
 
@@ -333,26 +333,26 @@ interface ExtensionContext {
 
 ```typescript
 export function activate(context: vscode.ExtensionContext) {
-    // Get our extension's directory
-    const extensionDir = context.extensionPath;
-    console.log(`Our extension is located at: ${extensionDir}`);
-    
-    // Get global storage location for our extension
-    const globalStoragePath = context.globalStorageUri.fsPath;
-    console.log(`Global storage at: ${globalStoragePath}`);
-    
-    // Store data in global state
-    context.globalState.update('lastRun', new Date().toISOString());
-    
-    // Get data from global state
-    const lastRun = context.globalState.get('lastRun');
-    
-    // Subscribe to extension deactivation
-    context.subscriptions.push({
-        dispose() {
-            console.log('Extension deactivating...');
-        }
-    });
+  // Get our extension's directory
+  const extensionDir = context.extensionPath;
+  console.log(`Our extension is located at: ${extensionDir}`);
+
+  // Get global storage location for our extension
+  const globalStoragePath = context.globalStorageUri.fsPath;
+  console.log(`Global storage at: ${globalStoragePath}`);
+
+  // Store data in global state
+  context.globalState.update('lastRun', new Date().toISOString());
+
+  // Get data from global state
+  const lastRun = context.globalState.get('lastRun');
+
+  // Subscribe to extension deactivation
+  context.subscriptions.push({
+    dispose() {
+      console.log('Extension deactivating...');
+    },
+  });
 }
 ```
 
@@ -379,24 +379,24 @@ vscode.commands.executeCommand(command: string, ...args: any[]): Promise<any>
 ```typescript
 // Get semantic tokens for a document
 const tokens = await vscode.commands.executeCommand(
-    'vscode.executeDocumentSemanticTokensProvider', 
-    document.uri
+  'vscode.executeDocumentSemanticTokensProvider',
+  document.uri
 );
 
 if (tokens) {
-    console.log(`Found ${tokens.data.length} semantic tokens`);
-    
-    // Decode tokens
-    const decoded = vscode.SemanticTokensLegend.decode(tokens);
-    decoded.forEach(token => {
-        const range = new vscode.Range(
-            new vscode.Position(token.line, token.startCharacter),
-            new vscode.Position(token.line, token.startCharacter + token.length)
-        );
-        
-        // token.type: 0=class, 1=interface, 2=type, 3=function, 4=variable, etc.
-        console.log(`Token type ${token.type} at ${range.start.line}:${range.start.character}`);
-    });
+  console.log(`Found ${tokens.data.length} semantic tokens`);
+
+  // Decode tokens
+  const decoded = vscode.SemanticTokensLegend.decode(tokens);
+  decoded.forEach(token => {
+    const range = new vscode.Range(
+      new vscode.Position(token.line, token.startCharacter),
+      new vscode.Position(token.line, token.startCharacter + token.length)
+    );
+
+    // token.type: 0=class, 1=interface, 2=type, 3=function, 4=variable, etc.
+    console.log(`Token type ${token.type} at ${range.start.line}:${range.start.character}`);
+  });
 }
 ```
 
@@ -421,17 +421,17 @@ vscode.commands.executeCommand(command: string, ...args: any[]): Promise<any>
 ```typescript
 // Get colors from a document
 const colors = await vscode.commands.executeCommand(
-    'vscode.executeDocumentColorProvider',
-    document.uri
+  'vscode.executeDocumentColorProvider',
+  document.uri
 );
 
 if (colors && colors.length > 0) {
-    console.log(`Found ${colors.length} colors in document`);
-    
-    colors.forEach(colorInfo => {
-        const { color, range } = colorInfo;
-        console.log(`Color ${color.toString()} at line ${range.start.line}`);
-    });
+  console.log(`Found ${colors.length} colors in document`);
+
+  colors.forEach(colorInfo => {
+    const { color, range } = colorInfo;
+    console.log(`Color ${color.toString()} at line ${range.start.line}`);
+  });
 }
 ```
 
@@ -443,22 +443,22 @@ if (colors && colors.length > 0) {
 
 ```typescript
 interface TextDocument {
-    readonly uri: vscode.Uri;
-    readonly fileName: string;
-    readonly isUntitled: boolean;
-    readonly languageId: string;
-    readonly version: number;
-    readonly isDirty: boolean;
-    readonly isClosed: boolean;
-    readonly eol: vscode.EndOfLine;
-    readonly lineCount: number;
-    
-    getText(range?: vscode.Range): string;
-    getWordRangeAtPosition(position: vscode.Position, regex?: RegExp): vscode.Range | undefined;
-    positionAt(offset: number): vscode.Position;
-    offsetAt(position: vscode.Position): number;
-    validateRange(range: vscode.Range): vscode.Range;
-    validatePosition(position: vscode.Position): vscode.Position;
+  readonly uri: vscode.Uri;
+  readonly fileName: string;
+  readonly isUntitled: boolean;
+  readonly languageId: string;
+  readonly version: number;
+  readonly isDirty: boolean;
+  readonly isClosed: boolean;
+  readonly eol: vscode.EndOfLine;
+  readonly lineCount: number;
+
+  getText(range?: vscode.Range): string;
+  getWordRangeAtPosition(position: vscode.Position, regex?: RegExp): vscode.Range | undefined;
+  positionAt(offset: number): vscode.Position;
+  offsetAt(position: vscode.Position): number;
+  validateRange(range: vscode.Range): vscode.Range;
+  validatePosition(position: vscode.Position): vscode.Position;
 }
 ```
 
@@ -469,7 +469,7 @@ interface TextDocument {
 
 ```typescript
 // Get document information
-const languageId = document.languageId;  // "typescript", "markdown", etc.
+const languageId = document.languageId; // "typescript", "markdown", etc.
 const fileName = document.fileName;
 const content = document.getText();
 const lineCount = document.lineCount;
@@ -484,11 +484,11 @@ const firstLine = document.getText(new vscode.Range(0, 0, 0, 100));
 // Get word at cursor position
 const position = vscode.window.activeTextEditor?.selection.active;
 if (position) {
-    const wordRange = document.getWordRangeAtPosition(position);
-    if (wordRange) {
-        const word = document.getText(wordRange);
-        console.log(`Word at cursor: ${word}`);
-    }
+  const wordRange = document.getWordRangeAtPosition(position);
+  if (wordRange) {
+    const word = document.getText(wordRange);
+    console.log(`Word at cursor: ${word}`);
+  }
 }
 ```
 
@@ -502,14 +502,14 @@ if (position) {
 
 ```typescript
 interface FileSystem {
-    readFile(uri: vscode.Uri): Promise<Uint8Array>;
-    writeFile(uri: vscode.Uri, data: Uint8Array): Promise<void>;
-    delete(uri: vscode.Uri): Promise<void>;
-    rename(source: vscode.Uri, target: vscode.Uri): Promise<void>;
-    copy(source: vscode.Uri, target: vscode.Uri): Promise<void>;
-    createDirectory(uri: vscode.Uri): Promise<void>;
-    readDirectory(uri: vscode.Uri): Promise<[string, vscode.FileType][]>;
-    stat(uri: vscode.Uri): Promise<vscode.FileStat>;
+  readFile(uri: vscode.Uri): Promise<Uint8Array>;
+  writeFile(uri: vscode.Uri, data: Uint8Array): Promise<void>;
+  delete(uri: vscode.Uri): Promise<void>;
+  rename(source: vscode.Uri, target: vscode.Uri): Promise<void>;
+  copy(source: vscode.Uri, target: vscode.Uri): Promise<void>;
+  createDirectory(uri: vscode.Uri): Promise<void>;
+  readDirectory(uri: vscode.Uri): Promise<[string, vscode.FileType][]>;
+  stat(uri: vscode.Uri): Promise<vscode.FileStat>;
 }
 ```
 
@@ -522,32 +522,32 @@ interface FileSystem {
 // Read a file
 const uri = vscode.Uri.file('/path/to/file.txt');
 try {
-    const content = await vscode.workspace.fs.readFile(uri);
-    const text = new TextDecoder().decode(content);
-    console.log(`File content: ${text}`);
+  const content = await vscode.workspace.fs.readFile(uri);
+  const text = new TextDecoder().decode(content);
+  console.log(`File content: ${text}`);
 } catch (error) {
-    console.error(`Failed to read file: ${error}`);
+  console.error(`Failed to read file: ${error}`);
 }
 
 // Write a file
 const newContent = new TextEncoder().encode('Hello, World!');
 try {
-    await vscode.workspace.fs.writeFile(uri, newContent);
-    console.log('File written successfully');
+  await vscode.workspace.fs.writeFile(uri, newContent);
+  console.log('File written successfully');
 } catch (error) {
-    console.error(`Failed to write file: ${error}`);
+  console.error(`Failed to write file: ${error}`);
 }
 
 // List directory contents
 const dirUri = vscode.Uri.file('/path/to/directory');
 try {
-    const entries = await vscode.workspace.fs.readDirectory(dirUri);
-    entries.forEach(([name, type]) => {
-        const typeStr = type === vscode.FileType.Directory ? 'DIR' : 'FILE';
-        console.log(`${typeStr}: ${name}`);
-    });
+  const entries = await vscode.workspace.fs.readDirectory(dirUri);
+  entries.forEach(([name, type]) => {
+    const typeStr = type === vscode.FileType.Directory ? 'DIR' : 'FILE';
+    console.log(`${typeStr}: ${name}`);
+  });
 } catch (error) {
-    console.error(`Failed to read directory: ${error}`);
+  console.error(`Failed to read directory: ${error}`);
 }
 ```
 
@@ -555,27 +555,27 @@ try {
 
 ### ❌ VS Code Installation Directory
 
-* No API to get `/Applications/Cursor.app/Contents/Resources/app/`
-* No API to get the root extensions directory
-* No API to get built-in theme locations
+- No API to get `/Applications/Cursor.app/Contents/Resources/app/`
+- No API to get the root extensions directory
+- No API to get built-in theme locations
 
 ### ❌ Built-in Extension File Paths
 
-* Built-in extensions (like `theme-defaults`) are bundled into VS Code's app bundle
-* They don't expose their file paths via the extension API
-* This is by design for security and packaging reasons
+- Built-in extensions (like `theme-defaults`) are bundled into VS Code's app bundle
+- They don't expose their file paths via the extension API
+- This is by design for security and packaging reasons
 
 ### ❌ TextMate Tokenization
 
-* No API to get TextMate scopes like `entity.name.function`
-* No API to get syntax highlighting tokenization
-* No API to access VS Code's internal syntax highlighting engine
+- No API to get TextMate scopes like `entity.name.function`
+- No API to get syntax highlighting tokenization
+- No API to access VS Code's internal syntax highlighting engine
 
 ### ❌ Editor DOM Access
 
-* VS Code editors are native UI components, not HTML/CSS
-* No API to access editor DOM or rendered HTML
-* No API to capture syntax highlighting as it appears in the editor
+- VS Code editors are native UI components, not HTML/CSS
+- No API to access editor DOM or rendered HTML
+- No API to capture syntax highlighting as it appears in the editor
 
 ## Initial API Learnings
 
@@ -590,17 +590,17 @@ try {
 
 VS Code's extension API system is comprehensive for building extensions, but it intentionally doesn't provide access to:
 
-* ~~VS Code's internal file structure~~ **CORRECTED: `vscode.env.appRoot` provides app structure**
-* ~~Built-in extension files~~ **CORRECTED: `vscode.extensions.all` includes built-in extensions with paths**
-* Syntax highlighting engine internals
-* Editor rendering details
+- ~~VS Code's internal file structure~~ **CORRECTED: `vscode.env.appRoot` provides app structure**
+- ~~Built-in extension files~~ **CORRECTED: `vscode.extensions.all` includes built-in extensions with paths**
+- Syntax highlighting engine internals
+- Editor rendering details
 
 **UPDATED CONCLUSION:** We can now use VS Code APIs to dynamically find theme and grammar files:
 
-* **`vscode.env.appRoot`** gives us the VS Code installation directory
-* **`vscode.extensions.all`** gives us all extensions (built-in + user) with their paths  
-* **`extension.packageJSON.isBuiltin`** distinguishes built-in vs user extensions
-* **`vscode.extensions.getExtension(id)`** gets specific extensions by ID
+- **`vscode.env.appRoot`** gives us the VS Code installation directory
+- **`vscode.extensions.all`** gives us all extensions (built-in + user) with their paths
+- **`extension.packageJSON.isBuiltin`** distinguishes built-in vs user extensions
+- **`vscode.extensions.getExtension(id)`** gets specific extensions by ID
 
 This makes our solution **portable and dynamic** instead of relying on hardcoded paths.
 
@@ -637,11 +637,11 @@ namespace vscode.env {
 
 **Key Discovery - `vscode.env.appRoot`:**
 
-* **Description:** "The application root folder from which the editor is running"
-* **What this means:** This should give us `/Applications/Cursor.app/Contents/Resources/app/`
-* **Built-in extensions location:** `${appRoot}/extensions/`
-* **Theme files:** `${appRoot}/extensions/theme-defaults/themes/`
-* **Grammar files:** `${appRoot}/extensions/typescript-basics/syntaxes/`
+- **Description:** "The application root folder from which the editor is running"
+- **What this means:** This should give us `/Applications/Cursor.app/Contents/Resources/app/`
+- **Built-in extensions location:** `${appRoot}/extensions/`
+- **Theme files:** `${appRoot}/extensions/theme-defaults/themes/`
+- **Grammar files:** `${appRoot}/extensions/typescript-basics/syntaxes/`
 
 **Example Usage:**
 
@@ -663,20 +663,20 @@ console.log(`Grammar files: ${grammarDir}`);
 const themePath = path.join(themeDir, 'dark_modern.json');
 const themeData = JSON.parse(fs.readFileSync(themePath, 'utf8'));
 
-// Load grammar file dynamically  
+// Load grammar file dynamically
 const grammarPath = path.join(grammarDir, 'TypeScript.tmLanguage.json');
 const grammarData = JSON.parse(fs.readFileSync(grammarPath, 'utf8'));
 ```
 
 **Other Environment Properties:**
 
-* **`appHost`:** Hosting environment ("desktop", "github.dev", "codespaces", "web")
-* **`appName`:** Application name ("VS Code", "Cursor", etc.)
-* **`language`:** User language preference ("en-US", "de-CH", etc.)
-* **`machineId`:** Unique machine identifier
-* **`sessionId`:** Unique session identifier
-* **`shell`:** Default shell path
-* **`uriScheme`:** URI scheme for the application
+- **`appHost`:** Hosting environment ("desktop", "github.dev", "codespaces", "web")
+- **`appName`:** Application name ("VS Code", "Cursor", etc.)
+- **`language`:** User language preference ("en-US", "de-CH", etc.)
+- **`machineId`:** Unique machine identifier
+- **`sessionId`:** Unique session identifier
+- **`shell`:** Default shell path
+- **`uriScheme`:** URI scheme for the application
 
 **Complete Solution for Finding All Extensions:**
 
@@ -690,14 +690,14 @@ const userExtensionsDir = path.join(os.homedir(), '.vscode', 'extensions');
 
 // Method 3: Get individual extension paths (both built-in and user)
 vscode.extensions.all.forEach(extension => {
-    console.log(`${extension.id}: ${extension.extensionPath}`);
-    // This gives the actual path for each extension, regardless of location
+  console.log(`${extension.id}: ${extension.extensionPath}`);
+  // This gives the actual path for each extension, regardless of location
 });
 
 // Method 4: Get specific extension path
 const themeExt = vscode.extensions.getExtension('ms-vscode.theme-defaults');
 if (themeExt) {
-    console.log(`Built-in themes at: ${themeExt.extensionPath}`);
+  console.log(`Built-in themes at: ${themeExt.extensionPath}`);
 }
 ```
 
@@ -723,22 +723,22 @@ User extensions: 43
 
 **Extension ID Patterns:**
 
-* **Theme extension:** `theme-defaults`
-* **Language extensions follow the language name:**
-  * JavaScript: `"javascript"`
-  * TypeScript: `"typescript"`
-  * CSS: `"css"`
-  * HTML: `"html"`
-  * Java: `"java"`
-  * Python: `"python"`
-  * Markdown: `"markdown"`
+- **Theme extension:** `theme-defaults`
+- **Language extensions follow the language name:**
+  - JavaScript: `"javascript"`
+  - TypeScript: `"typescript"`
+  - CSS: `"css"`
+  - HTML: `"html"`
+  - Java: `"java"`
+  - Python: `"python"`
+  - Markdown: `"markdown"`
 
 **Dynamic Extension Discovery:**
 
 ```typescript
 // Get extension for any language
 function getLanguageExtension(languageId: string) {
-    return vscode.extensions.getExtension(languageId);
+  return vscode.extensions.getExtension(languageId);
 }
 
 // Usage
@@ -823,18 +823,16 @@ TextMate grammars are the foundation of VS Code's syntax highlighting. They defi
     "1": { "name": "punctuation.definition.string.end.ts" },
     "2": { "name": "invalid.illegal.newline.ts" }
   },
-  "patterns": [
-    { "include": "#string-character-escape" }
-  ]
+  "patterns": [{ "include": "#string-character-escape" }]
 }
 ```
 
 **What it does:**
 
-* Starts matching at `"`
-* Continues until closing `"` or end of line
-* Can include nested patterns (like escape sequences)
-* Assigns different scopes to different parts
+- Starts matching at `"`
+- Continues until closing `"` or end of line
+- Can include nested patterns (like escape sequences)
+- Assigns different scopes to different parts
 
 ### Real TextMate Regex Features
 
@@ -872,7 +870,7 @@ TextMate grammars are the foundation of VS Code's syntax highlighting. They defi
   "patterns": [{ "include": "#string-character-escape" }]
 }
 
-// Single-quoted strings  
+// Single-quoted strings
 {
   "name": "string.quoted.single.ts",
   "begin": "'",
@@ -883,7 +881,7 @@ TextMate grammars are the foundation of VS Code's syntax highlighting. They defi
 // Template literals
 {
   "name": "string.template.ts",
-  "begin": "([_$[:alpha:]][_$[:alnum:]]*)?(`))", 
+  "begin": "([_$[:alpha:]][_$[:alnum:]]*)?(`))",
   "end": "`",
   "patterns": [
     { "include": "#template-substitution-element" },
@@ -903,7 +901,7 @@ TextMate grammars are the foundation of VS Code's syntax highlighting. They defi
 
 // Loop keywords
 {
-  "name": "keyword.control.loop.ts", 
+  "name": "keyword.control.loop.ts",
   "match": "(?<![_$[:alnum:]])(?:(?<=\\.\\.\\.)|(?<!\\.))(break|continue|do|goto|while)(?![_$[:alnum:]])(?:(?=\\.\\.\\.)|(?!\\.))"
 }
 
@@ -918,23 +916,23 @@ TextMate grammars are the foundation of VS Code's syntax highlighting. They defi
 
 #### 1. Pattern Resolution
 
-* Start with top-level `patterns` array
-* Resolve `#include` references to `repository` entries
-* Handle nested includes recursively
-* Detect and prevent circular references
+- Start with top-level `patterns` array
+- Resolve `#include` references to `repository` entries
+- Handle nested includes recursively
+- Detect and prevent circular references
 
 #### 2. Pattern Matching
 
-* Apply patterns in order of definition
-* Use `begin`/`end` for multi-line constructs
-* Use `match` for single-line patterns
-* Handle captures for sub-groups
+- Apply patterns in order of definition
+- Use `begin`/`end` for multi-line constructs
+- Use `match` for single-line patterns
+- Handle captures for sub-groups
 
 #### 3. Scope Assignment
 
-* Each pattern assigns a `name` (scope)
-* Scopes are hierarchical: `string.quoted.double.ts`
-* Captures can assign different scopes to different parts
+- Each pattern assigns a `name` (scope)
+- Scopes are hierarchical: `string.quoted.double.ts`
+- Captures can assign different scopes to different parts
 
 ### Why TextMate Patterns Are Complex
 
@@ -951,12 +949,12 @@ TextMate grammars are the foundation of VS Code's syntax highlighting. They defi
 // Template literals can contain expressions
 {
   "begin": "`",
-  "end": "`", 
+  "end": "`",
   "patterns": [
     {
       "begin": "\\$\\{",
       "end": "\\}",
-      "patterns": [{ "include": "#expression" }]  // Recursive!
+      "patterns": [{ "include": "#expression" }] // Recursive!
     }
   ]
 }
@@ -964,9 +962,9 @@ TextMate grammars are the foundation of VS Code's syntax highlighting. They defi
 
 #### 3. Language Evolution
 
-* Patterns handle ES6+, TypeScript, JSX
-* Support for new syntax like `using`, `await using`
-* Backwards compatibility with older syntax
+- Patterns handle ES6+, TypeScript, JSX
+- Support for new syntax like `using`, `await using`
+- Backwards compatibility with older syntax
 
 ### Deep Grammar Analysis
 
@@ -976,20 +974,20 @@ After examining the actual TypeScript grammar file (`/Applications/Cursor.app/Co
 
 **File Statistics:**
 
-* **Size:** 48,495 tokens (massive file)
-* **Repository entries:** 146 named pattern definitions
-* **Main patterns:** 3 top-level entry points
-* **Scope name:** `source.ts`
+- **Size:** 48,495 tokens (massive file)
+- **Repository entries:** 146 named pattern definitions
+- **Main patterns:** 3 top-level entry points
+- **Scope name:** `source.ts`
 
 **Top-level structure:**
 
 ```json
 {
   "name": "TypeScript",
-  "scopeName": "source.ts", 
+  "scopeName": "source.ts",
   "patterns": [
     { "include": "#directives" },
-    { "include": "#statements" }, 
+    { "include": "#statements" },
     { "include": "#shebang" }
   ],
   "repository": {
@@ -1055,12 +1053,12 @@ After examining the actual TypeScript grammar file (`/Applications/Cursor.app/Co
 
 This single pattern handles:
 
-* Async arrow functions
-* Generic type parameters  
-* Complex parameter destructuring
-* Return type annotations
-* Multiple arrow function syntaxes
-* Edge cases with comments and whitespace
+- Async arrow functions
+- Generic type parameters
+- Complex parameter destructuring
+- Return type annotations
+- Multiple arrow function syntaxes
+- Edge cases with comments and whitespace
 
 #### Why Independent Pattern Application Fails
 
@@ -1082,7 +1080,7 @@ This single pattern handles:
 
 // But the SAME pattern in a different context would be:
 {
-  "match": "([_$[:alpha:]][_$[:alnum:]]*)", 
+  "match": "([_$[:alpha:]][_$[:alnum:]]*)",
   "name": "variable.other.readwrite.ts"
 }
 ```
@@ -1145,31 +1143,31 @@ Each step depends on the context from previous steps.
 
 ```javascript
 class TextMateTokenizer {
-    constructor(grammarData) {
-        this.repository = grammarData.repository || {};
-        this.resolvedIncludes = new Map(); // Memoization cache!
+  constructor(grammarData) {
+    this.repository = grammarData.repository || {};
+    this.resolvedIncludes = new Map(); // Memoization cache!
+  }
+
+  resolveInclude(includeName) {
+    // if ![includeName] then [includeName] = [includeContent] else skip
+    if (!this.resolvedIncludes.has(includeName)) {
+      const pattern = this.repository[includeName];
+      this.resolvedIncludes.set(includeName, pattern);
+      return pattern;
+    } else {
+      return this.resolvedIncludes.get(includeName); // Use cached version
     }
-    
-    resolveInclude(includeName) {
-        // if ![includeName] then [includeName] = [includeContent] else skip
-        if (!this.resolvedIncludes.has(includeName)) {
-            const pattern = this.repository[includeName];
-            this.resolvedIncludes.set(includeName, pattern);
-            return pattern;
-        } else {
-            return this.resolvedIncludes.get(includeName); // Use cached version
-        }
-    }
+  }
 }
 ```
 
 **Why this works:**
 
-* Each include is resolved exactly once
-* Circular references become harmless (return cached version)
-* No infinite recursion
-* Preserves grammar structure
-* **This is exactly how professional compilers work!**
+- Each include is resolved exactly once
+- Circular references become harmless (return cached version)
+- No infinite recursion
+- Preserves grammar structure
+- **This is exactly how professional compilers work!**
 
 This ensures we get **exactly** the same tokenization VS Code uses, automatically handling language updates and edge cases.
 
@@ -1182,7 +1180,7 @@ This ensures we get **exactly** the same tokenization VS Code uses, automaticall
 ```javascript
 // const message = "hello";
 "const" → "storage.type.ts"
-"message" → "variable.other.constant.ts" 
+"message" → "variable.other.constant.ts"
 "=" → "keyword.operator.assignment.ts"
 ""hello"" → "string.quoted.double.ts"
 ";" → "punctuation.terminator.statement.ts"
@@ -1224,16 +1222,16 @@ npm install vscode-textmate vscode-oniguruma
 
 **What it provides:**
 
-* Complete TextMate grammar parsing with Oniguruma regex engine
-* Exact same tokenization as VS Code
-* Handles all complex regex features (POSIX classes, lookbehind, etc.)
-* State machine with proper rule stacks
+- Complete TextMate grammar parsing with Oniguruma regex engine
+- Exact same tokenization as VS Code
+- Handles all complex regex features (POSIX classes, lookbehind, etc.)
+- State machine with proper rule stacks
 
 **Why we're not using it:**
 
-* Requires WASM Oniguruma engine (adds complexity)
-* We want to understand the underlying patterns ourselves
-* Our goal is to learn how TextMate works, not just use a black box
+- Requires WASM Oniguruma engine (adds complexity)
+- We want to understand the underlying patterns ourselves
+- Our goal is to learn how TextMate works, not just use a black box
 
 #### 2. posix-character-classes
 
@@ -1249,15 +1247,15 @@ npm install posix-character-classes
 
 ```javascript
 const posix = require('posix-character-classes');
-posix.alnum  // Returns: 'a-zA-Z0-9'
-posix.alpha  // Returns: 'a-zA-Z'
+posix.alnum; // Returns: 'a-zA-Z0-9'
+posix.alpha; // Returns: 'a-zA-Z'
 ```
 
 **Why we're not using it:**
 
-* We're already doing this conversion manually
-* Want to understand the conversion process ourselves
-* Need to handle more than just character classes
+- We're already doing this conversion manually
+- Want to understand the conversion process ourselves
+- Need to handle more than just character classes
 
 #### 3. oniguruma-to-es
 
@@ -1265,15 +1263,15 @@ posix.alpha  // Returns: 'a-zA-Z'
 
 **What it provides:**
 
-* Handles complex TextMate regex features
-* Converts lookbehind/lookahead patterns
-* Processes named capture groups
+- Handles complex TextMate regex features
+- Converts lookbehind/lookahead patterns
+- Processes named capture groups
 
 **Why we're not using it:**
 
-* We want to build our own conversion logic
-* Need to understand what each pattern does
-* Want control over the conversion process
+- We want to build our own conversion logic
+- Need to understand what each pattern does
+- Want control over the conversion process
 
 ### Our Approach vs. Libraries
 
@@ -1305,10 +1303,9 @@ This gives us the knowledge to handle edge cases and debug issues when they aris
 ### What Actually Worked
 
 1. **Direct File System Access** - We successfully located VS Code/Cursor theme and grammar files on disk by searching in the app bundle directories:
-
-   * `/Applications/Cursor.app/Contents/Resources/app/extensions/theme-defaults/themes/`
-   * `/Applications/Cursor.app/Contents/Resources/app/extensions/typescript-basics/syntaxes/`
-   * `/Applications/Cursor.app/Contents/Resources/app/extensions/markdown-basics/syntaxes/`
+   - `/Applications/Cursor.app/Contents/Resources/app/extensions/theme-defaults/themes/`
+   - `/Applications/Cursor.app/Contents/Resources/app/extensions/typescript-basics/syntaxes/`
+   - `/Applications/Cursor.app/Contents/Resources/app/extensions/markdown-basics/syntaxes/`
 
 2. **Theme File Parsing** - We successfully parsed VS Code theme JSON files, including handling nested `include` statements (e.g., `dark_modern.json` including `dark_plus.json`) to merge `tokenColors`.
 
@@ -1323,12 +1320,11 @@ This gives us the knowledge to handle edge cases and debug issues when they aris
 ### Next Implementation Strategy
 
 1. **Create a SyntaxHighlighter Class** - This class will handle:
-
-   * Loading theme and grammar files
-   * Parsing TextMate patterns
-   * Converting regex patterns
-   * Tokenizing code
-   * Generating styled HTML
+   - Loading theme and grammar files
+   - Parsing TextMate patterns
+   - Converting regex patterns
+   - Tokenizing code
+   - Generating styled HTML
 
 2. **Integrate with PDFManager** - Modify the PDF generation process to use the SyntaxHighlighter instead of basic templates.
 

@@ -26,15 +26,21 @@ declare module 'shiki' {
   }
 
   export class Highlighter {
-    codeToTokens(code: string, options?: {
-      lang?: string;
-      theme?: string;
-    }): TokenResult;
-    
-    codeToThemedTokens(code: string, options?: {
-      lang?: string;
-      theme?: string;
-    }): ThemedToken[][];
+    codeToTokens(
+      code: string,
+      options?: {
+        lang?: string;
+        theme?: string;
+      }
+    ): TokenResult;
+
+    codeToThemedTokens(
+      code: string,
+      options?: {
+        lang?: string;
+        theme?: string;
+      }
+    ): ThemedToken[][];
   }
 
   // Export the functions that are being imported

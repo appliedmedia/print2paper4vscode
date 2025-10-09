@@ -106,7 +106,7 @@
 #### Phase 1: DocInfo Architecture Implementation (PENDING)
 
 - [ ] Create `DocInfo_PaperPrinter` class with all document properties
-- [ ] Create `DocInfo_PDF` class with all PDF-specific properties  
+- [ ] Create `DocInfo_PDF` class with all PDF-specific properties
 - [ ] Update `PaperPrinter` constructor to use `new DocInfo_PaperPrinter(this, app)`
 - [ ] Update `PDF` constructor to use `new DocInfo_PDF(this, app)`
 - [ ] Move all document properties from main classes to their respective DocInfo classes
@@ -1006,7 +1006,7 @@ export interface PageRender {
 
 The menu selection handlers in `PaperPrinter.ts` are **completely fucked** with duplicated code:
 
-```typescript
+````typescript
 // handleSelection_Theme
 async handleSelection_Theme(selectedId: string): Promise<string> {
   // ... validation ...
@@ -1116,7 +1116,7 @@ private async regenerateAndUpdateWebview(): Promise<void> {
     dx.done();
   }
 }
-```
+````
 
 **Simplified menu handlers:**
 
