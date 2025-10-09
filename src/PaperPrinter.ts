@@ -81,35 +81,12 @@ export class PaperPrinter {
   }
 
   
-  get persist_fontSizePx() {
-    return this.docInfo.persist_fontSizePx || 12;
-  }
-  
-  set persist_fontSizePx(value: number) {
-    this.localGlobalUpdate(this.docInfo, 'fontSizePx', value);
-  }
-  
-  get persist_pageSizeId() {
-    return this.docInfo.persist_pageSizeId || 'a4';
-  }
-  
-  set persist_pageSizeId(value: PageSizeId) {
-    this.localGlobalUpdate(this.docInfo, 'pageSizeId', value);
-  }
-  
-  get persist_orient() {
-    return this.docInfo.persist_orient || 'portrait';
-  }
-  
-  set persist_orient(value: 'portrait' | 'landscape') {
-    this.localGlobalUpdate(this.docInfo, 'orient', value);
-  }
   
 
   // Computed line height from font size
   get lineHeightPx(): number {
     const editorTypo = this.app.vscodeapis.getEditorTypography();
-    return this.persist_fontSizePx * editorTypo.sizeToHeightRatio;
+    return this.docInfo.persist_fontSizePx * editorTypo.sizeToHeightRatio;
   }
 
 
@@ -221,10 +198,10 @@ export class PaperPrinter {
       // ScrollView options
       const options = {
         title: `Print: ${tabName}`,
-        pageSizeId: this.pageSizeId,
-        orient: this.orient,
+        pageSizeId: this.docInfo.persist_pageSizeId,
+        orient: this.docInfo.persist_orient,
         fontFamily: this.getCurrentFontFamily(),
-        fontSizePx: this.persist_fontSizePx,
+        fontSizePx: this.docInfo.persist_fontSizePx,
         lineHeightPx: this.lineHeightPx,
         theme: this.docInfo.persist_theme,
       };
@@ -256,7 +233,7 @@ export class PaperPrinter {
   private async generatePdf(): Promise<void> {
     // Store the new PDF document
     this.pdfDoc = await this.app.stylize.styleToPdf(this.docInfo.rawCode, this.docInfo.languageId, {
-      fontSize: this.persist_fontSizePx,
+      fontSize: this.docInfo.persist_fontSizePx,
       lineHeight: this.lineHeightPx,
       title: this.docInfo.printTitle,
       theme: this.docInfo.persist_theme,
@@ -515,10 +492,10 @@ export class PaperPrinter {
           await this.uiwebview.updatePageRender(pageRender);
           await this.uiwebview.updateOptions({
             theme: this.docInfo.persist_theme,
-            fontSizePx: this.persist_fontSizePx,
+            fontSizePx: this.docInfo.persist_fontSizePx,
             lineHeightPx: this.lineHeightPx,
-            pageSizeId: this.pageSizeId,
-            orient: this.orient,
+            pageSizeId: this.docInfo.persist_pageSizeId,
+            orient: this.docInfo.persist_orient,
           });
           dx.out('Webview updated with new configuration');
         } catch (error) {
@@ -603,7 +580,7 @@ export class PaperPrinter {
     }
 
     dx.out(`updating fontSize to ${fontSize}`);
-    this.persist_fontSizePx = fontSize;
+    this.docInfo.persist_fontSizePx = fontSize;
 
     // Regenerate everything
     try {
@@ -623,7 +600,7 @@ export class PaperPrinter {
 
     if (selectedId === UIMenu.defaultId()) {
       // Return the current page size for default selection
-      const currentPageSizeId = this.pageSizeId;
+      const currentPageSizeId = this.docInfo.persist_pageSizeId;
       dx.out(`returning current page size: ${currentPageSizeId}`);
       dx.done();
       return currentPageSizeId;
@@ -636,7 +613,7 @@ export class PaperPrinter {
     }
 
     dx.out(`updating page size to ${selectedId}`);
-    this.pageSizeId = selectedId as PageSizeId;
+    this.docInfo.persist_pageSizeId = selectedId as PageSizeId;
 
     // Regenerate everything
     try {
@@ -656,7 +633,7 @@ export class PaperPrinter {
 
     if (selectedId === UIMenu.defaultId()) {
       // Return the current page size for default selection
-      const currentPageSizeId = this.pageSizeId;
+      const currentPageSizeId = this.docInfo.persist_pageSizeId;
       dx.out(`returning current page size: ${currentPageSizeId}`);
       dx.done();
       return currentPageSizeId;
@@ -669,7 +646,7 @@ export class PaperPrinter {
     }
 
     dx.out(`updating page size to ${selectedId}`);
-    this.pageSizeId = selectedId as PageSizeId;
+    this.docInfo.persist_pageSizeId = selectedId as PageSizeId;
 
     // Regenerate everything
     try {
@@ -689,7 +666,7 @@ export class PaperPrinter {
 
     if (selectedId === UIMenu.defaultId()) {
       // Return the current orient for default selection
-      const currentOrient = this.orient;
+      const currentOrient = this.docInfo.persist_orient;
       dx.out(`returning current orient: ${currentOrient}`);
       dx.done();
       return currentOrient;
@@ -702,7 +679,7 @@ export class PaperPrinter {
     }
 
     dx.out(`updating orient to ${selectedId}`);
-    this.orient = selectedId;
+    this.docInfo.persist_orient = selectedId;
 
     // Regenerate everything
     try {
@@ -722,10 +699,9 @@ export class PaperPrinter {
 
     if (selectedId === UIMenu.defaultId()) {
       // Return the current margin for default selection
-      const currentMargin = this.app.pdf.docInfo.marginPts;
-      dx.out(`returning current margin: ${currentMargin.topPts}pt`);
+      dx.out(`returning current margin: ${this.docInfo.persist_marginId}`);
       dx.done();
-      return 'normal'; // Default to normal for now
+      return this.docInfo.persist_marginId;
     }
 
     // Update margin in PDF
@@ -739,6 +715,11 @@ export class PaperPrinter {
     const marginPts = marginValues[selectedId as keyof typeof marginValues];
     
     dx.out(`updating margin to ${selectedId} (${marginPts}pt)`);
+    
+    // Update persistent margin selection
+    this.docInfo.persist_marginId = selectedId as 'none' | 'minimal' | 'normal' | 'wide';
+    
+    // Update PDF margin values
     this.app.pdf.docInfo.marginPts = {
       topPts: marginPts,
       bottomPts: marginPts,

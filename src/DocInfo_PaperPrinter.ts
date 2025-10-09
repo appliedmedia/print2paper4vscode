@@ -28,6 +28,7 @@ export class DocInfo_PaperPrinter {
   public persist_fontSizePx: number = 12;
   public persist_pageSizeId: 'letter' | 'legal' | 'a3' | 'a4' | 'a5' = 'a4';
   public persist_orient: 'portrait' | 'landscape' = 'portrait';
+  public persist_marginId: 'none' | 'minimal' | 'normal' | 'wide' = 'normal';
 
   // Computed values (read-only)
   public pageWidthPx: number = 0;
