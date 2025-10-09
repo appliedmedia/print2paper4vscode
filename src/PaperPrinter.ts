@@ -7,15 +7,12 @@ import { UIWebView } from './UIWebView';
 import type { PDFDoc } from './types/PDF_t';
 import type { PageRender } from './types/PageRender_t';
 import type { GlobalStateKey } from './types/globalState_t';
-import { DocInfo_PaperPrinter, type MarginId, MARGIN_IDS } from './DocInfo_PaperPrinter';
+import { DocInfo_PaperPrinter } from './DocInfo_PaperPrinter';
 
 // Page size type and order definition
 export type PageSizeId = 'letter' | 'legal' | 'a3' | 'a4' | 'a5';
 export const PAGE_SIZE_IDS: PageSizeId[] = ['letter', 'legal', 'a3', 'a4', 'a5'];
 
-// Re-export types for backward compatibility
-export type { MarginId };
-export { MARGIN_IDS };
 
 export class PaperPrinter {
   private app: App;
@@ -29,17 +26,9 @@ export class PaperPrinter {
   private _yaml: {
     icon_orient_portrait_svg: string;
     icon_orient_landscape_svg: string;
-    icon_margin_none_svg: string;
-    icon_margin_minimal_svg: string;
-    icon_margin_normal_svg: string;
-    icon_margin_wide_svg: string;
   } = {
     icon_orient_portrait_svg: '',
-    icon_orient_landscape_svg: '',
-    icon_margin_none_svg: '',
-    icon_margin_minimal_svg: '',
-    icon_margin_normal_svg: '',
-    icon_margin_wide_svg: ''
+    icon_orient_landscape_svg: ''
   };
 
   constructor(app: App) {
@@ -70,10 +59,6 @@ export class PaperPrinter {
     const yaml = this.app.os.fileRead<{
       icon_orient_portrait_svg: string;
       icon_orient_landscape_svg: string;
-      icon_margin_none_svg: string;
-      icon_margin_minimal_svg: string;
-      icon_margin_normal_svg: string;
-      icon_margin_wide_svg: string;
     }>('src/PaperPrinter.yaml');
 
     // Cache it if loaded successfully
@@ -84,11 +69,7 @@ export class PaperPrinter {
     // Return cached value or empty object with default values
     return this._yaml || {
       icon_orient_portrait_svg: '',
-      icon_orient_landscape_svg: '',
-      icon_margin_none_svg: '',
-      icon_margin_minimal_svg: '',
-      icon_margin_normal_svg: '',
-      icon_margin_wide_svg: ''
+      icon_orient_landscape_svg: ''
     };
   }
 
@@ -124,13 +105,6 @@ export class PaperPrinter {
     this.localGlobalUpdate(this.docInfo, 'orient', value);
   }
   
-  get persist_marginId() {
-    return this.docInfo.persist_marginId || 'normal';
-  }
-  
-  set persist_marginId(value: 'none' | 'minimal' | 'normal' | 'wide') {
-    this.localGlobalUpdate(this.docInfo, 'marginId', value);
-  }
 
   // Computed line height from font size
   get lineHeightPx(): number {
@@ -138,10 +112,6 @@ export class PaperPrinter {
     return this.persist_fontSizePx * editorTypo.sizeToHeightRatio;
   }
 
-  // Get margin in points from margin ID
-  getMarginPts(marginId: MarginId): number {
-    return MARGIN_IDS[marginId];
-  }
 
   // Public façade to decouple TabInspector from internal fields
   async capturePreviewHtml(): Promise<string | null> {
@@ -284,15 +254,12 @@ export class PaperPrinter {
   }
 
   private async generatePdf(): Promise<void> {
-    const marginPts = this.docInfo.getMarginPts();
-    
     // Store the new PDF document
     this.pdfDoc = await this.app.stylize.styleToPdf(this.docInfo.rawCode, this.docInfo.languageId, {
       fontSize: this.persist_fontSizePx,
       lineHeight: this.lineHeightPx,
       title: this.docInfo.printTitle,
       theme: this.docInfo.persist_theme,
-      marginPts: marginPts,
     });
   }
 
@@ -350,7 +317,7 @@ export class PaperPrinter {
         icon: '📄',
         isFlyout: false,
         menuItems: this.menuItems_Page.bind(this),
-        flyoutMenuItemIds: ['size', 'orient', 'margin'],
+        flyoutMenuItemIds: ['size', 'orient'],
         selectionHandler: this.handleSelection_Page.bind(this),
       },
       {
@@ -370,15 +337,6 @@ export class PaperPrinter {
         menuItems: this.menuItems_Orient.bind(this),
         flyoutMenuItemIds: [],
         selectionHandler: this.handleSelection_Orient.bind(this),
-      },
-      {
-        id: 'margin',
-        displayName: 'Margin',
-        icon: '', // submenu indicated by no icon, see Page > Margin
-        isFlyout: true,
-        menuItems: this.menuItems_Margin.bind(this),
-        flyoutMenuItemIds: [],
-        selectionHandler: this.handleSelection_Margin.bind(this),
       },
       {
         id: 'theme',
@@ -487,8 +445,6 @@ export class PaperPrinter {
       { id: 'size', displayName: 'Size' },
       // Orientation submenu reference
       { id: 'orient', displayName: 'Orient' },
-      // Margin submenu reference
-      { id: 'margin', displayName: 'Margin' },
     ];
   }
 
@@ -513,16 +469,6 @@ export class PaperPrinter {
     ];
   }
 
-  private menuItems_Margin(): UIMenuItem[] {
-    const yaml = this.yaml;
-    
-    return [
-      { id: 'none', displayName: `${yaml.icon_margin_none_svg} None` },
-      { id: 'minimal', displayName: `${yaml.icon_margin_minimal_svg} Minimal` },
-      { id: 'normal', displayName: `${yaml.icon_margin_normal_svg} Normal` },
-      { id: 'wide', displayName: `${yaml.icon_margin_wide_svg} Wide` }
-    ];
-  }
 
   // Selection handler methods for each menu type
   /**
@@ -750,38 +696,6 @@ export class PaperPrinter {
     }
   }
 
-  private async handleSelection_Margin(selectedId: string): Promise<string> {
-    const dx = this.dx.sub('handleSelection_Margin');
-    dx.out(`selectedId = ${selectedId}`);
-
-    if (selectedId === UIMenu.defaultId()) {
-      // Return the current margin for default selection
-      const currentMargin = this.persist_marginId;
-      dx.out(`returning current margin: ${currentMargin}`);
-      dx.done();
-      return currentMargin;
-    }
-
-    // Update margin
-    if (!['none', 'minimal', 'normal', 'wide'].includes(selectedId)) {
-      dx.done();
-      return '';
-    }
-
-    dx.out(`updating margin to ${selectedId}`);
-    this.persist_marginId = selectedId as MarginId;
-
-    // Regenerate everything
-    try {
-      await this.regenerateAndUpdateWebview();
-      dx.done();
-      return selectedId; // Return the selected margin for checkmark
-    } catch (error) {
-      this.app.ui.showErrorMessage(`Failed to update margin: ${String(error)}`);
-      dx.done();
-      return '';
-    }
-  }
 
   // Removed CSS hacks; rely on theme overrides
 }

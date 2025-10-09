@@ -28,7 +28,6 @@ export class DocInfo_PaperPrinter {
   public persist_fontSizePx: number = 12;
   public persist_pageSizeId: 'letter' | 'legal' | 'a3' | 'a4' | 'a5' = 'a4';
   public persist_orient: 'portrait' | 'landscape' = 'portrait';
-  public persist_marginId: MarginId = 'normal';
 
   // Computed values (read-only)
   public pageWidthPx: number = 0;
@@ -54,19 +53,4 @@ export class DocInfo_PaperPrinter {
     return this.persist_fontSizePx * 1.2;
   }
 
-  // Get margin value in points from margin ID
-  getMarginPts(): number {
-    return MARGIN_IDS[this.persist_marginId];
-  }
-
-  // Margin in points - computed from margin ID
-  get marginPts(): { topPts: number; bottomPts: number; leftPts: number; rightPts: number } {
-    const marginValue = this.getMarginPts();
-    return {
-      topPts: marginValue,
-      bottomPts: marginValue,
-      leftPts: marginValue,
-      rightPts: marginValue
-    };
-  }
 }

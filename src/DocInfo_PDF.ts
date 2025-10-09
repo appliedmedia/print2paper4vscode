@@ -22,6 +22,12 @@ export class DocInfo_PDF {
   // Page rendering settings
   public pageWidthPts: number = 0;
   public pageHeightPts: number = 0;
+  
+  // Margin settings (all 4 sides in points)
+  public marginTopPts: number = 15;
+  public marginBottomPts: number = 15;
+  public marginLeftPts: number = 15;
+  public marginRightPts: number = 15;
 
   // Font settings
   public fontSizePts: number = 0;
@@ -38,14 +44,21 @@ export class DocInfo_PDF {
     this.app = app;
   }
 
-  // Margin getter - computes margin data from PaperPrinter's margin ID
+  // Margin getter - uses PDF's own margin data
   get marginPts(): { topPts: number; bottomPts: number; leftPts: number; rightPts: number } {
-    const marginValue = this.app.paperprinter.docInfo.getMarginPts();
     return {
-      topPts: marginValue,
-      bottomPts: marginValue,
-      leftPts: marginValue,
-      rightPts: marginValue
+      topPts: this.marginTopPts,
+      bottomPts: this.marginBottomPts,
+      leftPts: this.marginLeftPts,
+      rightPts: this.marginRightPts
     };
+  }
+  
+  // Margin setter - sets all 4 sides
+  set marginPts(value: { topPts: number; bottomPts: number; leftPts: number; rightPts: number }) {
+    this.marginTopPts = value.topPts;
+    this.marginBottomPts = value.bottomPts;
+    this.marginLeftPts = value.leftPts;
+    this.marginRightPts = value.rightPts;
   }
 }
