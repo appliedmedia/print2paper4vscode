@@ -317,7 +317,7 @@ export class PaperPrinter {
         icon: '📄',
         isFlyout: false,
         menuItems: this.menuItems_Page.bind(this),
-        flyoutMenuItemIds: ['size', 'orient'],
+        flyoutMenuItemIds: ['size', 'orient', 'margin'],
         selectionHandler: this.handleSelection_Page.bind(this),
       },
       {
@@ -337,6 +337,15 @@ export class PaperPrinter {
         menuItems: this.menuItems_Orient.bind(this),
         flyoutMenuItemIds: [],
         selectionHandler: this.handleSelection_Orient.bind(this),
+      },
+      {
+        id: 'margin',
+        displayName: 'Margin',
+        icon: '', // submenu indicated by no icon, see Page > Margin
+        isFlyout: true,
+        menuItems: this.menuItems_Margin.bind(this),
+        flyoutMenuItemIds: [],
+        selectionHandler: this.handleSelection_Margin.bind(this),
       },
       {
         id: 'theme',
@@ -468,6 +477,15 @@ export class PaperPrinter {
     return [
       { id: 'portrait', displayName: `${yaml.icon_orient_portrait_svg} Portrait` },
       { id: 'landscape', displayName: `${yaml.icon_orient_landscape_svg} Landscape` },
+    ];
+  }
+
+  private menuItems_Margin(): UIMenuItem[] {
+    return [
+      { id: 'none', displayName: 'None (0pt)' },
+      { id: 'minimal', displayName: 'Minimal (5pt)' },
+      { id: 'normal', displayName: 'Normal (15pt)' },
+      { id: 'wide', displayName: 'Wide (30pt)' },
     ];
   }
 
@@ -693,6 +711,48 @@ export class PaperPrinter {
       return selectedId; // Return the selected orient for checkmark
     } catch (error) {
       this.app.ui.showErrorMessage(`Failed to update orientation: ${String(error)}`);
+      dx.done();
+      return '';
+    }
+  }
+
+  private async handleSelection_Margin(selectedId: string): Promise<string> {
+    const dx = this.dx.sub('handleSelection_Margin');
+    dx.out(`selectedId = ${selectedId}`);
+
+    if (selectedId === UIMenu.defaultId()) {
+      // Return the current margin for default selection
+      const currentMargin = this.app.pdf.docInfo.marginPts;
+      dx.out(`returning current margin: ${currentMargin.topPts}pt`);
+      dx.done();
+      return 'normal'; // Default to normal for now
+    }
+
+    // Update margin in PDF
+    if (!['none', 'minimal', 'normal', 'wide'].includes(selectedId)) {
+      dx.done();
+      return '';
+    }
+
+    // Convert margin ID to points and update PDF
+    const marginValues = { none: 0, minimal: 5, normal: 15, wide: 30 };
+    const marginPts = marginValues[selectedId as keyof typeof marginValues];
+    
+    dx.out(`updating margin to ${selectedId} (${marginPts}pt)`);
+    this.app.pdf.docInfo.marginPts = {
+      topPts: marginPts,
+      bottomPts: marginPts,
+      leftPts: marginPts,
+      rightPts: marginPts
+    };
+
+    // Regenerate everything
+    try {
+      await this.regenerateAndUpdateWebview();
+      dx.done();
+      return selectedId; // Return the selected margin for checkmark
+    } catch (error) {
+      this.app.ui.showErrorMessage(`Failed to update margin: ${String(error)}`);
       dx.done();
       return '';
     }
