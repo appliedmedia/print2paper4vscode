@@ -445,6 +445,8 @@ export class PaperPrinter {
       { id: 'size', displayName: 'Size' },
       // Orientation submenu reference
       { id: 'orient', displayName: 'Orient' },
+      // Margin submenu reference
+      { id: 'margin', displayName: 'Margin' },
     ];
   }
 

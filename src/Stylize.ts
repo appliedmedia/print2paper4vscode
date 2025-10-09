@@ -367,7 +367,7 @@ export class Stylize {
           fontInfo.fontSizePx,
           fontInfo.lineHeightPx,
           title,
-          this.app.paperprinter.docInfo.marginPts
+          this.app.pdf.docInfo.marginPts
         );
     }
 
