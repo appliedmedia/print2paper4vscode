@@ -1,5 +1,5 @@
 import type { App } from './App';
-import type { Persist } from './Persist';
+import { Persist } from './Persist';
 
 export class DocInfo_PaperPrinter {
   private app: App;
