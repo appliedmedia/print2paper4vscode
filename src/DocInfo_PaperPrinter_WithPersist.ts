@@ -43,6 +43,6 @@ export class DocInfo_PaperPrinter {
 
   // Computed properties
   get lineHeightPx(): number {
-    return this.persist_fontSizePx * 1.2;
+    return this._persist_fontSizePx * 1.2;
   }
 }
