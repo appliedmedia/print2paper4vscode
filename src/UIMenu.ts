@@ -1,5 +1,6 @@
 import type { App } from './App';
 import type { UIMenuItem } from './types/UI_t';
+import type { GlobalStateKey } from './types/globalState_t';
 import { Diagnostics } from './Diagnostics';
 import { Persist } from './Persist';
 
@@ -34,7 +35,7 @@ export class UIMenu {
     this.dx = this.app.dx.create('UIMenu');
     
     // Register persist property (no value set yet)
-    this.persist.register(this._id);
+    this.persist.register(this._id as GlobalStateKey);
   }
 
   init(): void {
@@ -96,7 +97,7 @@ export class UIMenu {
   // Get the default item ID for this menu
   async defaultItem(): Promise<string> {
     // Get global state value
-    const globalValue = this.app.vscodeapis.getGlobalState(this._id as any);
+    const globalValue = this.app.vscodeapis.getGlobalState(this._id as GlobalStateKey);
     
     if (globalValue !== undefined) {
       // Global state has a value, set it and return it
@@ -108,7 +109,7 @@ export class UIMenu {
     const defaultValue = await this.dispatchSelection(this.defaultId());
     
     // Set the default value after getting it from selection handler
-    this.persist.setDefault(this._id, defaultValue);
+    this.persist.setDefault(this._id as GlobalStateKey, defaultValue);
     
     return defaultValue;
   }
