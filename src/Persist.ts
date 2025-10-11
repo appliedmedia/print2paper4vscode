@@ -3,59 +3,45 @@ import type { GlobalStateKey } from './types/globalState_t';
 
 export class Persist {
   private app: App;
-  private bindings: Map<string, { localRef: any; propertyName: string; globalKey: GlobalStateKey }> = new Map();
+  private properties: Map<string, any> = new Map();
 
   constructor(app: App) {
     this.app = app;
   }
 
   /**
-   * Create a persistent property that syncs with global state
-   * @param localRef - The object containing the property
-   * @param propertyName - The property name (without persist_ prefix)
+   * Register a persistent property and return this for chaining
+   * @param name - The property name
+   * @param defaultValue - The default value
    */
-  createProperty(localRef: any, propertyName: string): void {
-    const fullPropertyName = `persist_${propertyName}`;
-    
-    // Store the binding
-    this.bindings.set(fullPropertyName, {
-      localRef,
-      propertyName: fullPropertyName,
-      globalKey: propertyName as GlobalStateKey
-    });
+  register(name: string, defaultValue: any): this {
+    // Store the default value
+    this.properties.set(name, defaultValue);
 
-    // Store the original value as default
-    const defaultValue = localRef[fullPropertyName];
-
-    // Create getter/setter on the local object
-    Object.defineProperty(localRef, fullPropertyName, {
+    // Create getter/setter on this instance
+    Object.defineProperty(this, name, {
       get: () => {
-        // Get from global state, fallback to local default
-        const globalValue = this.app.vscodeapis.getGlobalState(propertyName as GlobalStateKey);
-        return globalValue !== undefined ? globalValue : defaultValue;
+        // Get from global state, fallback to default
+        const globalValue = this.app.vscodeapis.getGlobalState(name as GlobalStateKey);
+        return globalValue !== undefined ? globalValue : this.properties.get(name);
       },
       set: (value: any) => {
         // Update global state
-        this.app.vscodeapis.updateGlobalState(propertyName as GlobalStateKey, value);
+        this.app.vscodeapis.updateGlobalState(name as GlobalStateKey, value);
+        // Update local cache
+        this.properties.set(name, value);
       },
       enumerable: true,
       configurable: true
     });
+
+    return this;
   }
 
   /**
-   * Initialize all bound properties from global state
-   * Call this after all bindings are set up
+   * Get all registered properties for debugging
    */
-  initialize(): void {
-    // No need to initialize - the getters handle this automatically
-    // They check global state first, then fall back to defaults
-  }
-
-  /**
-   * Get all bound properties for debugging
-   */
-  getBindings(): Map<string, { localRef: any; propertyName: string; globalKey: GlobalStateKey }> {
-    return new Map(this.bindings);
+  getProperties(): Map<string, any> {
+    return new Map(this.properties);
   }
 }
