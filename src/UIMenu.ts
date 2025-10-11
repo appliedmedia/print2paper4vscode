@@ -1,6 +1,6 @@
 import type { App } from './App';
 import type { UIMenuItem } from './types/UI_t';
-import type { GlobalStateKey } from './types/globalState_t';
+import type { GlobalStateKey, GlobalStateValue } from './types/globalState_t';
 import { Diagnostics } from './Diagnostics';
 import { Persist } from './Persist';
 
@@ -101,7 +101,7 @@ export class UIMenu {
     
     if (globalValue !== undefined) {
       // Global state has a value, set it and return it
-      (this.persist as any)[this._id] = globalValue;
+      (this.persist as { [key in GlobalStateKey]: GlobalStateValue })[this._id as GlobalStateKey] = globalValue;
       return globalValue;
     }
     
