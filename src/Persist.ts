@@ -1,10 +1,10 @@
 import type { App } from './App';
-import type { GlobalStateKey, GlobalStateValue } from './types/globalState_t';
+import type { GlobalStateKey } from './types/globalState_t';
 
 export class Persist {
   private app: App;
-  private default: { [key in GlobalStateKey]?: GlobalStateValue } = {};
-  private value: { [key in GlobalStateKey]?: GlobalStateValue } = {};
+  private default: { [key in GlobalStateKey]?: string } = {};
+  private value: { [key in GlobalStateKey]?: string } = {};
 
   constructor(app: App) {
     this.app = app;
@@ -32,7 +32,7 @@ export class Persist {
         
         return undefined;
       },
-      set: (value: GlobalStateValue) => {
+      set: (value: string) => {
         const currentValue = this.value[name];
         if (value !== currentValue) {
           this.value[name] = value;
@@ -45,7 +45,7 @@ export class Persist {
     return this;
   }
 
-  setDefault(name: GlobalStateKey, defaultValue: GlobalStateValue): this {
+  setDefault(name: GlobalStateKey, defaultValue: string): this {
     this.default[name] = defaultValue;
     return this;
   }

@@ -21,7 +21,6 @@ export type GlobalStateKey =
   | 'toolbarPos'
   | 'marginId';
 
-export type GlobalStateValue = string;
 
 export interface GlobalStateMap {
   pageSizeId: string;
