@@ -84,7 +84,7 @@ export class PDF implements PageRender {
       // Initialize PDF document if needed
       if (!this.docInfo.currentPdfDoc) {
         this.docInfo.currentPdfDoc = new jsPDF({
-          orientation: this.app.paperprinter.docInfo.persist_orient as 'portrait' | 'landscape',
+          orientation: this.app.paperprinter.docInfo.persist.orient as 'portrait' | 'landscape',
           unit: 'pt',
           format: [this.docInfo.pageWidthPts, this.docInfo.pageHeightPts],
         });
@@ -101,7 +101,7 @@ export class PDF implements PageRender {
 
       // Set font and size
       this.docInfo.currentPdfDoc.setFont('Courier New');
-      this.docInfo.currentPdfDoc.setFontSize(this.pxToPts(this.app.paperprinter.docInfo.persist_fontSizePx));
+      this.docInfo.currentPdfDoc.setFontSize(this.pxToPts(parseInt(this.app.paperprinter.docInfo.persist.fontSizePx, 10)));
 
       // Parse HTML data to extract text and colors
       const textContent = htmlData.replace(/<[^>]*>/g, ''); // Strip HTML tags
@@ -689,7 +689,7 @@ export class PDF implements PageRender {
     try {
       // Initialize PDF document for this page
       this.docInfo.currentPdfDoc = new jsPDF({
-        orientation: this.app.paperprinter.docInfo.persist_orient as 'portrait' | 'landscape',
+        orientation: this.app.paperprinter.docInfo.persist.orient as 'portrait' | 'landscape',
         unit: 'pt',
         format: [this.docInfo.pageWidthPts, this.docInfo.pageHeightPts],
       });
@@ -698,7 +698,7 @@ export class PDF implements PageRender {
 
       // Set font and size
       this.docInfo.currentPdfDoc.setFont('Courier New');
-      this.docInfo.currentPdfDoc.setFontSize(this.pxToPts(this.app.paperprinter.docInfo.persist_fontSizePx));
+      this.docInfo.currentPdfDoc.setFontSize(this.pxToPts(parseInt(this.app.paperprinter.docInfo.persist.fontSizePx, 10)));
 
       // For now, return a simple page data structure
       // TODO: Implement proper page rendering with content

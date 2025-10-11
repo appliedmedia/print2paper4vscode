@@ -26,9 +26,17 @@ export class PaperPrinter {
   private _yaml: {
     icon_orient_portrait_svg: string;
     icon_orient_landscape_svg: string;
+    icon_margin_none_svg: string;
+    icon_margin_minimal_svg: string;
+    icon_margin_normal_svg: string;
+    icon_margin_wide_svg: string;
   } = {
     icon_orient_portrait_svg: '',
-    icon_orient_landscape_svg: ''
+    icon_orient_landscape_svg: '',
+    icon_margin_none_svg: '',
+    icon_margin_minimal_svg: '',
+    icon_margin_normal_svg: '',
+    icon_margin_wide_svg: '',
   };
 
   constructor(app: App) {
@@ -59,6 +67,10 @@ export class PaperPrinter {
     const yaml = this.app.os.fileRead<{
       icon_orient_portrait_svg: string;
       icon_orient_landscape_svg: string;
+      icon_margin_none_svg: string;
+      icon_margin_minimal_svg: string;
+      icon_margin_normal_svg: string;
+      icon_margin_wide_svg: string;
     }>('src/PaperPrinter.yaml');
 
     // Cache it if loaded successfully
@@ -87,7 +99,7 @@ export class PaperPrinter {
   get lineHeightPx(): number {
     const editorTypo = this.app.vscodeapis.getEditorTypography();
     const menu = this.app.uimenumgr.getMenu('text');
-    return ((menu?.persist as any).fontSizePx || 12) * editorTypo.sizeToHeightRatio;
+    return (parseInt((menu?.persist as any).fontSizePx || '12', 10)) * editorTypo.sizeToHeightRatio;
   }
 
 
@@ -200,12 +212,12 @@ export class PaperPrinter {
       // ScrollView options
       const options = {
         title: `Print: ${tabName}`,
-        pageSizeId: this.docInfo.persist.pageSizeId,
-        orient: this.docInfo.persist.orient,
+        pageSizeId: (this.docInfo.persist as any).pageSizeId as 'letter' | 'legal' | 'a3' | 'a4' | 'a5',
+        orient: (this.docInfo.persist as any).orient as 'portrait' | 'landscape',
         fontFamily: this.getCurrentFontFamily(),
-        fontSizePx: this.docInfo.persist.fontSizePx,
+        fontSizePx: parseInt((this.docInfo.persist as any).fontSizePx, 10),
         lineHeightPx: this.lineHeightPx,
-        theme: this.docInfo.persist.theme,
+        theme: (this.docInfo.persist as any).theme,
       };
 
       // Create webview and initialize message handlers
@@ -235,10 +247,10 @@ export class PaperPrinter {
   private async generatePdf(): Promise<void> {
     // Store the new PDF document
     this.pdfDoc = await this.app.stylize.styleToPdf(this.docInfo.rawCode, this.docInfo.languageId, {
-      fontSize: this.docInfo.persist.fontSizePx,
+      fontSize: parseInt((this.docInfo.persist as any).fontSizePx, 10),
       lineHeight: this.lineHeightPx,
       title: this.docInfo.printTitle,
-      theme: this.docInfo.persist.theme,
+      theme: (this.docInfo.persist as any).theme,
     });
   }
 
@@ -306,7 +318,7 @@ export class PaperPrinter {
         isFlyout: true,
         menuItems: this.menuItems_pageSizeId.bind(this),
         flyoutMenuItemIds: [],
-        selectionHandler: this.handleSelection_pageSizeId.bind(this),
+        selectionHandler: this.handleSelection_Page.bind(this),
       },
       {
         id: 'orient',
@@ -461,10 +473,10 @@ export class PaperPrinter {
 
   private menuItems_MarginId(): UIMenuItem[] {
     return [
-      { id: 'none', displayName: 'None (0pt)' },
-      { id: 'minimal', displayName: 'Minimal (5pt)' },
-      { id: 'normal', displayName: 'Normal (15pt)' },
-      { id: 'wide', displayName: 'Wide (30pt)' },
+      { id: 'none', displayName: 'None (0pt)', icon: this.yaml.icon_margin_none_svg },
+      { id: 'minimal', displayName: 'Minimal (5pt)', icon: this.yaml.icon_margin_minimal_svg },
+      { id: 'normal', displayName: 'Normal (15pt)', icon: this.yaml.icon_margin_normal_svg },
+      { id: 'wide', displayName: 'Wide (30pt)', icon: this.yaml.icon_margin_wide_svg },
     ];
   }
 
@@ -493,11 +505,11 @@ export class PaperPrinter {
         try {
           await this.uiwebview.updatePageRender(pageRender);
           await this.uiwebview.updateOptions({
-            theme: this.docInfo.persist.theme,
-            fontSizePx: this.docInfo.persist.fontSizePx,
+            theme: (this.docInfo.persist as any).theme,
+            fontSizePx: parseInt((this.docInfo.persist as any).fontSizePx, 10),
             lineHeightPx: this.lineHeightPx,
-            pageSizeId: this.docInfo.persist.pageSizeId,
-            orient: this.docInfo.persist.orient,
+            pageSizeId: (this.docInfo.persist as any).pageSizeId as 'letter' | 'legal' | 'a3' | 'a4' | 'a5',
+            orient: (this.docInfo.persist as any).orient as 'portrait' | 'landscape',
           });
           dx.out('Webview updated with new configuration');
         } catch (error) {
@@ -605,11 +617,12 @@ export class PaperPrinter {
     dx.out(`selectedId = ${selectedId}`);
 
     if (selectedId === UIMenu.defaultId()) {
-      // Return the current page size for default selection
-      const currentPageSizeId = this.docInfo.persist_pageSizeId;
-      dx.out(`returning current page size: ${currentPageSizeId}`);
-      dx.done();
-      return currentPageSizeId;
+      const menu = this.app.uimenumgr.getMenu('pageSizeId');
+      if (menu) {
+        dx.out(`returning current page size: ${(menu.persist as any).pageSizeId}`);
+        dx.done();
+        return (menu.persist as any).pageSizeId;
+      }
     }
 
     // Update page size
@@ -619,7 +632,10 @@ export class PaperPrinter {
     }
 
     dx.out(`updating page size to ${selectedId}`);
-    this.docInfo.persist_pageSizeId = selectedId as PageSizeId;
+    const menu = this.app.uimenumgr.getMenu('pageSizeId');
+    if (menu) {
+      (menu.persist as any).pageSizeId = selectedId as PageSizeId;
+    }
 
     // Regenerate everything
     try {

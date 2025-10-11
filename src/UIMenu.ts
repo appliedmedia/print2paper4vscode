@@ -2,7 +2,7 @@ import type { App } from './App';
 import type { UIMenuItem } from './types/UI_t';
 import type { GlobalStateKey } from './types/globalState_t';
 import { Diagnostics } from './Diagnostics';
-import { Persist } from './Persist';
+import { Persist, type PersistProperties } from './Persist';
 
 export class UIMenu {
   private dx: Diagnostics;
