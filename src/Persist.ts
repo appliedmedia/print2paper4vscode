@@ -15,7 +15,7 @@ export class Persist {
    * @param defaultValue - The default value
    */
   register(name: string, defaultValue: any): this {
-    // Store the default value
+    // Store the default value for fallback
     this.properties.set(name, defaultValue);
 
     // Create getter/setter on this instance
@@ -23,13 +23,16 @@ export class Persist {
       get: () => {
         // Get from global state, fallback to default
         const globalValue = this.app.vscodeapis.getGlobalState(name as GlobalStateKey);
-        return globalValue !== undefined ? globalValue : this.properties.get(name);
+        if (globalValue !== undefined) {
+          return globalValue;
+        }
+        // First time - set default in global state
+        this.app.vscodeapis.updateGlobalState(name as GlobalStateKey, defaultValue);
+        return defaultValue;
       },
       set: (value: any) => {
         // Update global state
         this.app.vscodeapis.updateGlobalState(name as GlobalStateKey, value);
-        // Update local cache
-        this.properties.set(name, value);
       },
       enumerable: true,
       configurable: true
