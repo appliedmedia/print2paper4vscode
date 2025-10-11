@@ -101,7 +101,7 @@ export class UIMenu {
     
     if (globalValue !== undefined) {
       // Global state has a value, set it and return it
-      (this.persist as any)[`_${this._id}`] = globalValue;
+      (this.persist as any)[this._id] = globalValue;
       return globalValue;
     }
     
