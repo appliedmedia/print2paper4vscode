@@ -10,19 +10,18 @@ export class Persist {
   }
 
   /**
-   * Bind a local object property to global state
+   * Create a persistent property that syncs with global state
    * @param localRef - The object containing the property
    * @param propertyName - The property name (without persist_ prefix)
-   * @param globalKey - The global state key to sync with
    */
-  bindProperty(localRef: any, propertyName: string, globalKey: GlobalStateKey): void {
+  createProperty(localRef: any, propertyName: string): void {
     const fullPropertyName = `persist_${propertyName}`;
     
     // Store the binding
     this.bindings.set(fullPropertyName, {
       localRef,
       propertyName: fullPropertyName,
-      globalKey
+      globalKey: propertyName as GlobalStateKey
     });
 
     // Store the original value as default
@@ -32,12 +31,12 @@ export class Persist {
     Object.defineProperty(localRef, fullPropertyName, {
       get: () => {
         // Get from global state, fallback to local default
-        const globalValue = this.app.vscodeapis.getGlobalState(globalKey);
+        const globalValue = this.app.vscodeapis.getGlobalState(propertyName as GlobalStateKey);
         return globalValue !== undefined ? globalValue : defaultValue;
       },
       set: (value: any) => {
         // Update global state
-        this.app.vscodeapis.updateGlobalState(globalKey, value);
+        this.app.vscodeapis.updateGlobalState(propertyName as GlobalStateKey, value);
       },
       enumerable: true,
       configurable: true
