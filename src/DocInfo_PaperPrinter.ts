@@ -1,5 +1,5 @@
 import type { App } from './App';
-import { Persist } from './Persist';
+import { Persist, type PersistProperties } from './Persist';
 
 // Margin level type
 export type MarginId = 'none' | 'minimal' | 'normal' | 'wide';
