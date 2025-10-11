@@ -322,7 +322,8 @@ export class PaperPrinter {
         isFlyout: true,
         menuItems: this.menuItems_MarginId.bind(this),
         flyoutMenuItemIds: [],
-        selectionHandler: this.handleSelection_Margin.bind(this),
+        selectionHandler: this.handleSelection_MarginId.bind(this),
+        getDefaultValue: () => 'normal',
       },
       {
         id: 'theme',
