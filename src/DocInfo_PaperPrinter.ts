@@ -1,4 +1,5 @@
 import type { App } from './App';
+import { Persist } from './Persist';
 
 // Margin level type
 export type MarginId = 'none' | 'minimal' | 'normal' | 'wide';
@@ -11,6 +12,7 @@ export type MarginId = 'none' | 'minimal' | 'normal' | 'wide';
  */
 export class DocInfo_PaperPrinter {
   private app: App;
+  public persist: Persist;
 
   // Document content
   public rawCode: string = '';
@@ -22,7 +24,6 @@ export class DocInfo_PaperPrinter {
   public persist_fontSizePx: number = 12;
   public persist_pageSizeId: 'letter' | 'legal' | 'a3' | 'a4' | 'a5' = 'a4';
   public persist_orient: 'portrait' | 'landscape' = 'portrait';
-  public persist_marginId: 'none' | 'minimal' | 'normal' | 'wide' = 'normal';
 
   // Computed values (read-only)
   public pageWidthPx: number = 0;
@@ -32,6 +33,7 @@ export class DocInfo_PaperPrinter {
 
   constructor(app: App) {
     this.app = app;
+    this.persist = new Persist(app);
   }
 
   // Theme getter/setter with global state sync
@@ -46,6 +48,25 @@ export class DocInfo_PaperPrinter {
   // Computed line height
   get lineHeightPx(): number {
     return this.persist_fontSizePx * 1.2;
+  }
+
+  // Margin in pixels for webview display
+  get marginPx(): { topPx: number; bottomPx: number; leftPx: number; rightPx: number } {
+    const marginIdToPx: { [key in MarginId]: number } = {
+      none: 0,      // 0px
+      minimal: 7,   // ~7px
+      normal: 20,   // ~20px  
+      wide: 40      // ~40px
+    };
+    
+    const marginPx = marginIdToPx[this.persist.marginId as MarginId];
+    
+    return {
+      topPx: marginPx,
+      bottomPx: marginPx,
+      leftPx: marginPx,
+      rightPx: marginPx
+    };
   }
 
 }
