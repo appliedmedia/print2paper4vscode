@@ -200,12 +200,12 @@ export class PaperPrinter {
       // ScrollView options
       const options = {
         title: `Print: ${tabName}`,
-        pageSizeId: this.docInfo.persist_pageSizeId,
-        orient: this.docInfo.persist_orient,
+        pageSizeId: this.docInfo.persist.pageSizeId,
+        orient: this.docInfo.persist.orient,
         fontFamily: this.getCurrentFontFamily(),
-        fontSizePx: this.docInfo.persist_fontSizePx,
+        fontSizePx: this.docInfo.persist.fontSizePx,
         lineHeightPx: this.lineHeightPx,
-        theme: this.docInfo.persist_theme,
+        theme: this.docInfo.persist.theme,
       };
 
       // Create webview and initialize message handlers
@@ -235,10 +235,10 @@ export class PaperPrinter {
   private async generatePdf(): Promise<void> {
     // Store the new PDF document
     this.pdfDoc = await this.app.stylize.styleToPdf(this.docInfo.rawCode, this.docInfo.languageId, {
-      fontSize: this.docInfo.persist_fontSizePx,
+      fontSize: this.docInfo.persist.fontSizePx,
       lineHeight: this.lineHeightPx,
       title: this.docInfo.printTitle,
-      theme: this.docInfo.persist_theme,
+      theme: this.docInfo.persist.theme,
     });
   }
 
@@ -493,11 +493,11 @@ export class PaperPrinter {
         try {
           await this.uiwebview.updatePageRender(pageRender);
           await this.uiwebview.updateOptions({
-            theme: this.docInfo.persist_theme,
-            fontSizePx: this.docInfo.persist_fontSizePx,
+            theme: this.docInfo.persist.theme,
+            fontSizePx: this.docInfo.persist.fontSizePx,
             lineHeightPx: this.lineHeightPx,
-            pageSizeId: this.docInfo.persist_pageSizeId,
-            orient: this.docInfo.persist_orient,
+            pageSizeId: this.docInfo.persist.pageSizeId,
+            orient: this.docInfo.persist.orient,
           });
           dx.out('Webview updated with new configuration');
         } catch (error) {

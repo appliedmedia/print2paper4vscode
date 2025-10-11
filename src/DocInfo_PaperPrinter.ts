@@ -12,18 +12,12 @@ export type MarginId = 'none' | 'minimal' | 'normal' | 'wide';
  */
 export class DocInfo_PaperPrinter {
   private app: App;
-  public persist: Persist;
+  public persist: Persist & PersistProperties;
 
   // Document content
   public rawCode: string = '';
   public languageId: string = '';
   public printTitle: string = 'Printable';
-
-  // User preferences (persistent) - these will be moved to persist class
-  private _persist_theme: string = 'github-light';
-  public persist_fontSizePx: number = 12;
-  public persist_pageSizeId: 'letter' | 'legal' | 'a3' | 'a4' | 'a5' = 'a4';
-  public persist_orient: 'portrait' | 'landscape' = 'portrait';
 
   // Computed values (read-only)
   public pageWidthPx: number = 0;
@@ -33,21 +27,7 @@ export class DocInfo_PaperPrinter {
 
   constructor(app: App) {
     this.app = app;
-    this.persist = new Persist(app);
-  }
-
-  // Theme getter/setter with global state sync
-  get persist_theme(): string {
-    return this._persist_theme;
-  }
-  set persist_theme(value: string) {
-    this._persist_theme = value;
-    // Note: global state sync should be handled by the calling class
-  }
-
-  // Computed line height
-  get lineHeightPx(): number {
-    return this.persist_fontSizePx * 1.2;
+    this.persist = new Persist(app) as Persist & PersistProperties;
   }
 
   // Margin in pixels for webview display
