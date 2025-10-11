@@ -633,38 +633,6 @@ export class PaperPrinter {
     }
   }
 
-  private async handleSelection_pageSizeId(selectedId: string): Promise<string> {
-    const dx = this.dx.sub('handleSelection_pageSizeId');
-    dx.out(`selectedId = ${selectedId}`);
-
-    if (selectedId === UIMenu.defaultId()) {
-      // Return the current page size for default selection
-      const currentPageSizeId = this.docInfo.persist_pageSizeId;
-      dx.out(`returning current page size: ${currentPageSizeId}`);
-      dx.done();
-      return currentPageSizeId;
-    }
-
-    // Update page size
-    if (!PAGE_SIZE_IDS.includes(selectedId as PageSizeId)) {
-      dx.done();
-      return '';
-    }
-
-    dx.out(`updating page size to ${selectedId}`);
-    this.docInfo.persist_pageSizeId = selectedId as PageSizeId;
-
-    // Regenerate everything
-    try {
-      await this.regenerateAndUpdateWebview();
-      dx.done();
-      return selectedId; // Return the selected size for checkmark
-    } catch (error) {
-      this.app.ui.showErrorMessage(`Failed to update page size: ${String(error)}`);
-      dx.done();
-      return '';
-    }
-  }
 
   private async handleSelection_Orient(selectedId: string): Promise<string> {
     const dx = this.dx.sub('handleSelection_Orient');
