@@ -15,7 +15,19 @@ export class Persist {
    * @param defaultValue - The default value
    */
   register(name: string, defaultValue: any): this {
-    // Sync with global state on first register
+    // If already registered, just update the default logic
+    if (this.properties.has(name)) {
+      const globalValue = this.app.vscodeapis.getGlobalState(name as GlobalStateKey);
+      
+      // If global state has a value, keep it; otherwise use new default
+      if (globalValue === undefined) {
+        this.properties.set(name, defaultValue);
+        this.app.vscodeapis.updateGlobalState(name as GlobalStateKey, defaultValue);
+      }
+      return this;
+    }
+
+    // First time registration
     const globalValue = this.app.vscodeapis.getGlobalState(name as GlobalStateKey);
     const initialValue = globalValue !== undefined ? globalValue : defaultValue;
     
@@ -49,6 +61,7 @@ export class Persist {
 
     return this;
   }
+
 
   /**
    * Get all registered properties for debugging
