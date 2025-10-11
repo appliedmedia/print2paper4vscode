@@ -721,11 +721,7 @@ export class PaperPrinter {
       return '';
     }
 
-    // Convert margin ID to points and update PDF
-    const marginValues = { none: 0, minimal: 5, normal: 15, wide: 30 };
-    const marginPts = marginValues[selectedId as keyof typeof marginValues];
-    
-    dx.out(`updating margin to ${selectedId} (${marginPts}pt)`);
+    dx.out(`updating margin to ${selectedId}`);
     
     // Update persistent margin selection via UIMenu
     const menu = this.app.uimenumgr.getMenu('marginId');
@@ -733,13 +729,8 @@ export class PaperPrinter {
       menu.persist.marginId = selectedId as 'none' | 'minimal' | 'normal' | 'wide';
     }
     
-    // Update PDF margin values
-    this.app.pdf.docInfo.marginPts = {
-      topPts: marginPts,
-      bottomPts: marginPts,
-      leftPts: marginPts,
-      rightPts: marginPts
-    };
+    // Update PDF margin values using the proper conversion method
+    this.app.pdf.docInfo.setMarginFromId(selectedId as 'none' | 'minimal' | 'normal' | 'wide');
 
     // Regenerate everything
     try {
