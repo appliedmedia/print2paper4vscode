@@ -34,9 +34,12 @@ export class UIMenu {
     this.persist = new Persist(app);
     this.dx = this.app.dx.create('UIMenu');
     
-    // Register persist property if default value provided
+    // Register persist property (no value set yet)
+    this.persist.register(this._id);
+    
+    // Set default value if provided
     if (this._defaultValue !== undefined) {
-      this.persist.register(this._id, this._defaultValue);
+      this.persist.setDefault(this._id, this._defaultValue);
     }
   }
 
@@ -98,7 +101,22 @@ export class UIMenu {
 
   // Get the default item ID for this menu
   async defaultItem(): Promise<string> {
-    return this.dispatchSelection(this.defaultId());
+    // Get global state value
+    const globalValue = this.app.vscodeapis.getGlobalState(this._id as any);
+    
+    if (globalValue !== undefined) {
+      // Global state has a value, set it and return it
+      (this.persist as any)[`_${this._id}`] = globalValue;
+      return globalValue;
+    }
+    
+    // No global value, dispatch to selection handler to get default
+    const defaultValue = await this.dispatchSelection(this.defaultId());
+    
+    // Set the default value
+    this.persist.setDefault(this._id, defaultValue);
+    
+    return defaultValue;
   }
 
   // Getter for the YAML data - handles loading and validation automatically
