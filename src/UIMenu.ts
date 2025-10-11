@@ -28,10 +28,16 @@ export class UIMenu {
     private _isFlyout: boolean = false,
     private _menuItems: () => UIMenuItem[],
     private _flyoutMenuItemIds: string[] = [],
-    private _selectionHandler: (id: string) => Promise<string>
+    private _selectionHandler: (id: string) => Promise<string>,
+    private _defaultValue?: any
   ) {
     this.persist = new Persist(app);
     this.dx = this.app.dx.create('UIMenu');
+    
+    // Register persist property if default value provided
+    if (this._defaultValue !== undefined) {
+      this.persist.register(this._id, this._defaultValue);
+    }
   }
 
   init(): void {

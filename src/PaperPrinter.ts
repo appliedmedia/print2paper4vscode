@@ -698,13 +698,9 @@ export class PaperPrinter {
     dx.out(`selectedId = ${selectedId}`);
 
     if (selectedId === UIMenu.defaultId()) {
-      // Get the UIMenu instance and check global state (or use default)
+      // Get the UIMenu instance and return current value
       const menu = this.app.uimenumgr.getMenu('marginId');
       if (menu) {
-        // Register persist property if not already done
-        if (!menu.persist.hasOwnProperty('marginId')) {
-          menu.persist.register('marginId', 'normal');
-        }
         dx.out(`returning current margin: ${menu.persist.marginId}`);
         dx.done();
         return menu.persist.marginId;
