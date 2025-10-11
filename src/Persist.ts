@@ -15,7 +15,7 @@ export class Persist {
    * @param propertyName - The property name (without persist_ prefix)
    * @param globalKey - The global state key to sync with
    */
-  bind(localRef: any, propertyName: string, globalKey: GlobalStateKey): void {
+  bindProperty(localRef: any, propertyName: string, globalKey: GlobalStateKey): void {
     const fullPropertyName = `persist_${propertyName}`;
     
     // Store the binding
