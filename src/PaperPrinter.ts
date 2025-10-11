@@ -294,17 +294,18 @@ export class PaperPrinter {
         icon: '📄',
         isFlyout: false,
         menuItems: this.menuItems_Page.bind(this),
-        flyoutMenuItemIds: ['size', 'orient', 'margin'],
+        flyoutMenuItemIds: ['pageSizeId', 'orient', 'marginId'],
         selectionHandler: this.handleSelection_Page.bind(this),
       },
       {
-        id: 'size',
+        id: 'pageSizeId',
         displayName: 'Size',
         icon: '', // submenu indicated by no icon, see Page > Size
         isFlyout: true,
         menuItems: this.menuItems_pageSizeId.bind(this),
         flyoutMenuItemIds: [],
         selectionHandler: this.handleSelection_pageSizeId.bind(this),
+        defaultValue: 'a4',
       },
       {
         id: 'orient',
@@ -314,6 +315,7 @@ export class PaperPrinter {
         menuItems: this.menuItems_Orient.bind(this),
         flyoutMenuItemIds: [],
         selectionHandler: this.handleSelection_Orient.bind(this),
+        defaultValue: 'portrait',
       },
       {
         id: 'marginId',
@@ -333,6 +335,7 @@ export class PaperPrinter {
         menuItems: this.menuItems_Theme.bind(this),
         flyoutMenuItemIds: [],
         selectionHandler: this.handleSelection_Theme.bind(this),
+        defaultValue: 'github-light',
       },
       {
         id: 'text',
@@ -342,6 +345,7 @@ export class PaperPrinter {
         menuItems: this.menuItems_Text.bind(this),
         flyoutMenuItemIds: [],
         selectionHandler: this.handleSelection_Text.bind(this),
+        defaultValue: 12,
       },
     ];
 
@@ -355,6 +359,7 @@ export class PaperPrinter {
         config.menuItems,
         config.flyoutMenuItemIds,
         config.selectionHandler,
+        config.defaultValue
       );
       this.app.uimenumgr.addMenu(menu);
       this.dx.out(`Added menu: ${config.id}`);
@@ -534,19 +539,20 @@ export class PaperPrinter {
     dx.out(`selectedId = ${selectedId}`);
 
     if (selectedId === UIMenu.defaultId()) {
-      // Return the current editor theme ID as the default
-      const currentEditorTheme = this.app.vscodeapis.getActiveThemeId();
-      const availableThemes = this.app.stylize.getThemes();
-      const fallbackTheme = availableThemes[0]?.id || 'github-light';
-      const result = currentEditorTheme || fallbackTheme;
-      dx.out(`returning editor theme: ${result}`);
-      dx.done();
-      return result;
+      const menu = this.app.uimenumgr.getMenu('theme');
+      if (menu) {
+        dx.out(`returning current theme: ${menu.persist.theme}`);
+        dx.done();
+        return menu.persist.theme;
+      }
     }
 
     // Update theme
     dx.out(`updating theme to ${selectedId}`);
-    this.docInfo.persist_theme = selectedId;
+    const menu = this.app.uimenumgr.getMenu('theme');
+    if (menu) {
+      menu.persist.theme = selectedId;
+    }
 
     // Regenerate everything
     try {
@@ -565,12 +571,12 @@ export class PaperPrinter {
     dx.out(`selectedId = ${selectedId}`);
 
     if (selectedId === UIMenu.defaultId()) {
-      // Return the actual editor font size for default selection
-      const editorTypo = this.app.vscodeapis.getEditorTypography();
-      const editorSize = String(editorTypo.fontSize);
-      dx.out(`returning editor size: ${editorSize}`);
-      dx.done();
-      return editorSize;
+      const menu = this.app.uimenumgr.getMenu('text');
+      if (menu) {
+        dx.out(`returning current fontSize: ${menu.persist.text}`);
+        dx.done();
+        return String(menu.persist.text);
+      }
     }
 
     // Update font size
@@ -581,7 +587,10 @@ export class PaperPrinter {
     }
 
     dx.out(`updating fontSize to ${fontSize}`);
-    this.docInfo.persist_fontSizePx = fontSize;
+    const menu = this.app.uimenumgr.getMenu('text');
+    if (menu) {
+      menu.persist.text = fontSize;
+    }
 
     // Regenerate everything
     try {
@@ -667,10 +676,12 @@ export class PaperPrinter {
 
     if (selectedId === UIMenu.defaultId()) {
       // Return the current orient for default selection
-      const currentOrient = this.docInfo.persist_orient;
-      dx.out(`returning current orient: ${currentOrient}`);
-      dx.done();
-      return currentOrient;
+      const menu = this.app.uimenumgr.getMenu('orient');
+      if (menu) {
+        dx.out(`returning current orient: ${menu.persist.orient}`);
+        dx.done();
+        return menu.persist.orient;
+      }
     }
 
     // Update orientation
@@ -680,7 +691,10 @@ export class PaperPrinter {
     }
 
     dx.out(`updating orient to ${selectedId}`);
-    this.docInfo.persist_orient = selectedId;
+    const menu = this.app.uimenumgr.getMenu('orient');
+    if (menu) {
+      menu.persist.orient = selectedId;
+    }
 
     // Regenerate everything
     try {
@@ -699,7 +713,6 @@ export class PaperPrinter {
     dx.out(`selectedId = ${selectedId}`);
 
     if (selectedId === UIMenu.defaultId()) {
-      // Get the UIMenu instance and return current value
       const menu = this.app.uimenumgr.getMenu('marginId');
       if (menu) {
         dx.out(`returning current margin: ${menu.persist.marginId}`);
