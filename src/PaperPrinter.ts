@@ -86,7 +86,8 @@ export class PaperPrinter {
   // Computed line height from font size
   get lineHeightPx(): number {
     const editorTypo = this.app.vscodeapis.getEditorTypography();
-    return this.docInfo.persist_fontSizePx * editorTypo.sizeToHeightRatio;
+    const menu = this.app.uimenumgr.getMenu('text');
+    return (menu?.persist.fontSizePx || 12) * editorTypo.sizeToHeightRatio;
   }
 
 

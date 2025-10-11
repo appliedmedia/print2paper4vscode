@@ -19,7 +19,7 @@ export class DocInfo_PaperPrinter {
   public languageId: string = '';
   public printTitle: string = 'Printable';
 
-  // User preferences (persistent)
+  // User preferences (persistent) - these will be moved to persist class
   private _persist_theme: string = 'github-light';
   public persist_fontSizePx: number = 12;
   public persist_pageSizeId: 'letter' | 'legal' | 'a3' | 'a4' | 'a5' = 'a4';
