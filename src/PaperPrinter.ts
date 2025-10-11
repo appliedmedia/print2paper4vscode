@@ -720,8 +720,11 @@ export class PaperPrinter {
     
     dx.out(`updating margin to ${selectedId} (${marginPts}pt)`);
     
-    // Update persistent margin selection
-    this.docInfo.persist_marginId = selectedId as 'none' | 'minimal' | 'normal' | 'wide';
+    // Update persistent margin selection via UIMenu
+    const menu = this.app.uimenumgr.getMenu('marginId');
+    if (menu) {
+      menu.persist.marginId = selectedId as 'none' | 'minimal' | 'normal' | 'wide';
+    }
     
     // Update PDF margin values
     this.app.pdf.docInfo.marginPts = {
