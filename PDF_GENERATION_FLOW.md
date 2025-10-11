@@ -103,23 +103,56 @@
 
 ### PENDING PHASES
 
-#### Phase 1: DocInfo Architecture Implementation (PENDING)
+#### Phase 1: DocInfo Architecture Implementation (COMPLETED)
 
-- [ ] Create `DocInfo_PaperPrinter` class with all document properties
-- [ ] Create `DocInfo_PDF` class with all PDF-specific properties
-- [ ] Update `PaperPrinter` constructor to use `new DocInfo_PaperPrinter(this, app)`
-- [ ] Update `PDF` constructor to use `new DocInfo_PDF(this, app)`
-- [ ] Move all document properties from main classes to their respective DocInfo classes
-- [ ] Update all property access to use `this.docInfo.property` pattern
-- [ ] Update all external access to use `this.app.paperprinter.docInfo.property` and `this.app.pdf.docInfo.property`
-- [ ] Remove old property declarations from main classes
-- [ ] Update all method signatures to use DocInfo properties
-- [ ] Test that all property access works through DocInfo pattern
-- [ ] Ensure global state synchronization works with DocInfo properties
+- ✅ Create `DocInfo_PaperPrinter` class with all document properties
+- ✅ Create `DocInfo_PDF` class with all PDF-specific properties
+- ✅ Update `PaperPrinter` constructor to use `new DocInfo_PaperPrinter(app)`
+- ✅ Update `PDF` constructor to use `new DocInfo_PDF(app)`
+- ✅ Move all document properties from main classes to their respective DocInfo classes
+- ✅ Update all property access to use `this.docInfo.property` pattern
+- ✅ Update all external access to use `this.app.paperprinter.docInfo.property` and `this.app.pdf.docInfo.property`
+- ✅ Remove old property declarations from main classes
+- ✅ Update all method signatures to use DocInfo properties
+- ✅ Test that all property access works through DocInfo pattern
+- ✅ Ensure global state synchronization works with DocInfo properties
 
-**Note:** Phase 1 implements the DocInfo pattern as outlined in the PROPOSED REFACTOR section. This provides clean separation of concerns and consistent access patterns.
+**Phase 1 Results:**
 
-#### Phase 2: Line-by-Line Rendering Architecture (PENDING)
+- Clean separation of concerns with DocInfo classes
+- PaperPrinter owns document content and user preferences
+- PDF owns PDF-specific data and margin calculations
+- Proper encapsulation with `this.docInfo.property` access pattern
+- No more owner/delegate pattern - clean dependency injection via `this.app.*`
+
+#### Phase 2: Persist Class Implementation (COMPLETED)
+
+- ✅ Create `Persist` class with `register(name)` and `setDefault(name, value)` methods
+- ✅ Use `Object.defineProperty` to create dynamic getters/setters
+- ✅ Implement local caching with conditional global state updates
+- ✅ Use `this.default[name]` object instead of Map for defaults
+- ✅ Integrate `Persist` with `UIMenu` system
+- ✅ Update `UIMenu` constructor to create `Persist` instance and register properties
+- ✅ Update `UIMenu.defaultItem()` to call `persist.setDefault()` after getting computed defaults
+- ✅ Update all selection handlers to use `menu.persist.propertyName` syntax
+- ✅ Remove all `persist_` prefix properties from `DocInfo_PaperPrinter`
+- ✅ Fix margin architecture - `DocInfo_PDF.marginPts` getter calculates from `persist.marginId`
+- ✅ Add `marginPx` getter to `DocInfo_PaperPrinter` for webview CSS display
+- ✅ Update all property access to use proper `persist.propertyName` syntax
+- ✅ Fix TypeScript types - use `string` instead of `GlobalStateValue` alias
+- ✅ Remove all `any` casts and use proper `GlobalStateKey` types
+
+**Phase 2 Results:**
+
+- Clean `Persist` class with automatic global state synchronization
+- `UIMenu` instances own their persistent state via `persist` property
+- Selection handlers only access `menu.persist.propertyName` - no implementation details
+- Proper separation: UI layer manages selections, PDF layer calculates points
+- `marginPts` getter automatically calculates from current `marginId` selection
+- Type-safe global state management with explicit `string` types
+- No more `persist_` prefix - clean `persist.propertyName` syntax throughout
+
+#### Phase 3: Line-by-Line Rendering Architecture (PENDING)
 
 **Core Concept:** Stylize owns tokens and line composition, PDF renders line-by-line via callback
 
@@ -133,7 +166,7 @@
 - [ ] Update `renderPage()` to use line-by-line callback pattern
 - [ ] Test complete flow: Stylize → callback → PDF → finish → display
 
-#### Phase 3: Cleanup (PENDING - Requires Full Refactor)
+#### Phase 4: Cleanup (PENDING - Requires Full Refactor)
 
 - [ ] Complete the full refactor to use new tokenization + PDF generation flow
 - [ ] Update `generatePdf()` to use new `tokenize()` + `setTokensAndConfig()` + `generateFullDocument()` flow

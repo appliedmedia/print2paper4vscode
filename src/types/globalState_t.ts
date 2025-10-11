@@ -21,7 +21,6 @@ export type GlobalStateKey =
   | 'toolbarPos'
   | 'marginId';
 
-
 export interface GlobalStateMap {
   pageSizeId: string;
   orient: string;

@@ -59,7 +59,7 @@ export class DocInfo_PaperPrinter {
       wide: 40      // ~40px
     };
     
-    const marginPx = marginIdToPx[this.persist.marginId as MarginId];
+    const marginPx = marginIdToPx[(this.persist as any).marginId as MarginId];
     
     return {
       topPx: marginPx,

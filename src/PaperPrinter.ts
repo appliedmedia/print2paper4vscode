@@ -87,7 +87,7 @@ export class PaperPrinter {
   get lineHeightPx(): number {
     const editorTypo = this.app.vscodeapis.getEditorTypography();
     const menu = this.app.uimenumgr.getMenu('text');
-    return (menu?.persist.fontSizePx || 12) * editorTypo.sizeToHeightRatio;
+    return ((menu?.persist as any).fontSizePx || 12) * editorTypo.sizeToHeightRatio;
   }
 
 
@@ -154,12 +154,12 @@ export class PaperPrinter {
 
       // Initialize theme choice if not set yet
       const themeMenu = this.app.uimenumgr.getMenu('theme');
-      if (!themeMenu?.persist.theme) {
-        themeMenu!.persist.theme = this.app.vscodeapis.getActiveThemeId();
+      if (!(themeMenu?.persist as any).theme) {
+        (themeMenu!.persist as any).theme = this.app.vscodeapis.getActiveThemeId();
       }
       this.pdfDoc = await this.app.stylize.styleToPdf(info.text, info.languageId, {
         title: this.docInfo.printTitle,
-        theme: themeMenu?.persist.theme || 'github-light',
+        theme: (themeMenu?.persist as any).theme || 'github-light',
       });
       await this.openPrintPrepAndPrompt(printableLabel);
     } catch (error) {
@@ -537,9 +537,9 @@ export class PaperPrinter {
     if (selectedId === UIMenu.defaultId()) {
       const menu = this.app.uimenumgr.getMenu('theme');
       if (menu) {
-        dx.out(`returning current theme: ${menu.persist.theme}`);
+        dx.out(`returning current theme: ${(menu.persist as any).theme}`);
         dx.done();
-        return menu.persist.theme;
+        return (menu.persist as any).theme;
       }
     }
 
@@ -547,7 +547,7 @@ export class PaperPrinter {
     dx.out(`updating theme to ${selectedId}`);
     const menu = this.app.uimenumgr.getMenu('theme');
     if (menu) {
-      menu.persist.theme = selectedId;
+      (menu.persist as any).theme = selectedId;
     }
 
     // Regenerate everything
@@ -569,9 +569,9 @@ export class PaperPrinter {
     if (selectedId === UIMenu.defaultId()) {
       const menu = this.app.uimenumgr.getMenu('text');
       if (menu) {
-        dx.out(`returning current fontSize: ${menu.persist.text}`);
+        dx.out(`returning current fontSize: ${(menu.persist as any).text}`);
         dx.done();
-        return String(menu.persist.text);
+        return String((menu.persist as any).text);
       }
     }
 
@@ -585,7 +585,7 @@ export class PaperPrinter {
     dx.out(`updating fontSize to ${fontSize}`);
     const menu = this.app.uimenumgr.getMenu('text');
     if (menu) {
-      menu.persist.text = fontSize;
+      (menu.persist as any).text = fontSize;
     }
 
     // Regenerate everything
@@ -674,9 +674,9 @@ export class PaperPrinter {
       // Return the current orient for default selection
       const menu = this.app.uimenumgr.getMenu('orient');
       if (menu) {
-        dx.out(`returning current orient: ${menu.persist.orient}`);
+        dx.out(`returning current orient: ${(menu.persist as any).orient}`);
         dx.done();
-        return menu.persist.orient;
+        return (menu.persist as any).orient;
       }
     }
 
@@ -689,7 +689,7 @@ export class PaperPrinter {
     dx.out(`updating orient to ${selectedId}`);
     const menu = this.app.uimenumgr.getMenu('orient');
     if (menu) {
-      menu.persist.orient = selectedId;
+      (menu.persist as any).orient = selectedId;
     }
 
     // Regenerate everything
@@ -711,9 +711,9 @@ export class PaperPrinter {
     if (selectedId === UIMenu.defaultId()) {
       const menu = this.app.uimenumgr.getMenu('marginId');
       if (menu) {
-        dx.out(`returning current margin: ${menu.persist.marginId}`);
+        dx.out(`returning current margin: ${(menu.persist as any).marginId}`);
         dx.done();
-        return menu.persist.marginId;
+        return (menu.persist as any).marginId;
       }
     }
 
@@ -728,7 +728,7 @@ export class PaperPrinter {
     // Update persistent margin selection via UIMenu
     const menu = this.app.uimenumgr.getMenu('marginId');
     if (menu) {
-      menu.persist.marginId = selectedId as 'none' | 'minimal' | 'normal' | 'wide';
+      (menu.persist as any).marginId = selectedId as 'none' | 'minimal' | 'normal' | 'wide';
     }
 
     // Regenerate everything

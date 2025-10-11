@@ -56,7 +56,7 @@ export class DocInfo_PDF {
   // Margin getter - calculates from current marginId
   get marginPts(): { topPts: number; bottomPts: number; leftPts: number; rightPts: number } {
     // Get current margin ID from PaperPrinter's persistent state
-    const marginId = this.app.paperprinter.docInfo.persist.marginId as MarginId;
+    const marginId = (this.app.paperprinter.docInfo.persist as any).marginId as MarginId;
     const marginPts = MARGIN_ID_TO_PTS[marginId];
     
     return {
