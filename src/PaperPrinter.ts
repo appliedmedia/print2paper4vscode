@@ -153,12 +153,13 @@ export class PaperPrinter {
       this.docInfo.printTitle = printableLabel;
 
       // Initialize theme choice if not set yet
-      if (!this.docInfo.persist_theme) {
-        this.docInfo.persist_theme = this.app.vscodeapis.getActiveThemeId();
+      const themeMenu = this.app.uimenumgr.getMenu('theme');
+      if (!themeMenu?.persist.theme) {
+        themeMenu!.persist.theme = this.app.vscodeapis.getActiveThemeId();
       }
       this.pdfDoc = await this.app.stylize.styleToPdf(info.text, info.languageId, {
         title: this.docInfo.printTitle,
-        theme: this.docInfo.persist_theme,
+        theme: themeMenu?.persist.theme || 'github-light',
       });
       await this.openPrintPrepAndPrompt(printableLabel);
     } catch (error) {
