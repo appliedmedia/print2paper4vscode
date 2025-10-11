@@ -231,12 +231,6 @@ export class PaperPrinter {
   }
 
   private async generatePdf(): Promise<void> {
-    // Update PDF margins from current selection
-    const menu = this.app.uimenumgr.getMenu('marginId');
-    if (menu) {
-      this.app.pdf.docInfo.setMarginFromId(menu.persist.marginId as 'none' | 'minimal' | 'normal' | 'wide');
-    }
-    
     // Store the new PDF document
     this.pdfDoc = await this.app.stylize.styleToPdf(this.docInfo.rawCode, this.docInfo.languageId, {
       fontSize: this.docInfo.persist_fontSizePx,

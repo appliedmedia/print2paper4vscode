@@ -53,13 +53,17 @@ export class DocInfo_PDF {
     this.app = app;
   }
 
-  // Margin getter - uses PDF's own margin data
+  // Margin getter - calculates from current marginId
   get marginPts(): { topPts: number; bottomPts: number; leftPts: number; rightPts: number } {
+    // Get current margin ID from PaperPrinter's persistent state
+    const marginId = this.app.paperprinter.docInfo.persist_marginId;
+    const marginPts = MARGIN_ID_TO_PTS[marginId];
+    
     return {
-      topPts: this.marginTopPts,
-      bottomPts: this.marginBottomPts,
-      leftPts: this.marginLeftPts,
-      rightPts: this.marginRightPts
+      topPts: marginPts,
+      bottomPts: marginPts,
+      leftPts: marginPts,
+      rightPts: marginPts
     };
   }
   
@@ -71,12 +75,4 @@ export class DocInfo_PDF {
     this.marginRightPts = value.rightPts;
   }
 
-  // Convert margin ID to points and set all 4 sides
-  setMarginFromId(marginId: MarginId): void {
-    const marginPts = MARGIN_ID_TO_PTS[marginId];
-    this.marginTopPts = marginPts;
-    this.marginBottomPts = marginPts;
-    this.marginLeftPts = marginPts;
-    this.marginRightPts = marginPts;
-  }
 }
