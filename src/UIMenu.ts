@@ -107,7 +107,7 @@ export class UIMenu {
     // No global value, dispatch to selection handler to get default
     const defaultValue = await this.dispatchSelection(this.defaultId());
     
-    // Set the default value
+    // Set the default value after getting it from selection handler
     this.persist.setDefault(this._id, defaultValue);
     
     return defaultValue;

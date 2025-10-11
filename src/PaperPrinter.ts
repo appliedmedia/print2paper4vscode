@@ -305,7 +305,6 @@ export class PaperPrinter {
         menuItems: this.menuItems_pageSizeId.bind(this),
         flyoutMenuItemIds: [],
         selectionHandler: this.handleSelection_pageSizeId.bind(this),
-        defaultValue: 'a4',
       },
       {
         id: 'orient',

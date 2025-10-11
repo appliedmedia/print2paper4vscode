@@ -3,7 +3,7 @@ import type { GlobalStateKey } from './types/globalState_t';
 
 export class Persist {
   private app: App;
-  private defaults: { [key: string]: any } = {};
+  private default: { [key: string]: any } = {};
 
   constructor(app: App) {
     this.app = app;
@@ -22,8 +22,8 @@ export class Persist {
           return globalValue;
         }
         
-        if (this.defaults[name] !== undefined) {
-          const defaultValue = this.defaults[name];
+        if (this.default[name] !== undefined) {
+          const defaultValue = this.default[name];
           (this as any)[`_${name}`] = defaultValue;
           this.app.vscodeapis.updateGlobalState(name as GlobalStateKey, defaultValue);
           return defaultValue;
@@ -45,7 +45,7 @@ export class Persist {
   }
 
   setDefault(name: string, defaultValue: any): this {
-    this.defaults[name] = defaultValue;
+    this.default[name] = defaultValue;
     return this;
   }
 }
