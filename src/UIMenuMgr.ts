@@ -31,8 +31,7 @@ export class UIMenuMgr {
     isFlyout: boolean = false,
     menuItems: () => UIMenuItem[],
     flyoutMenuItemIds: string[] = [],
-    selectionHandler: (selectedId: string) => Promise<string>,
-    getDefaultValue?: () => any
+    selectionHandler: (selectedId: string) => Promise<string>
   ): UIMenu {
     return new UIMenu(
       this.app,
@@ -42,8 +41,7 @@ export class UIMenuMgr {
       isFlyout,
       menuItems,
       flyoutMenuItemIds,
-      selectionHandler,
-      getDefaultValue
+      selectionHandler
     );
   }
 

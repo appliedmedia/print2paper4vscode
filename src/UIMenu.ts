@@ -28,8 +28,7 @@ export class UIMenu {
     private _isFlyout: boolean = false,
     private _menuItems: () => UIMenuItem[],
     private _flyoutMenuItemIds: string[] = [],
-    private _selectionHandler: (id: string) => Promise<string>,
-    private _getDefaultValue?: () => any
+    private _selectionHandler: (id: string) => Promise<string>
   ) {
     this.persist = new Persist(app);
     this.dx = this.app.dx.create('UIMenu');
@@ -93,10 +92,6 @@ export class UIMenu {
 
   // Get the default item ID for this menu
   async defaultItem(): Promise<string> {
-    // Register persist property if not already done and we have a default value function
-    if (this._getDefaultValue && !this.persist.getProperties().has(this._id)) {
-      this.persist.register(this._id, this._getDefaultValue());
-    }
     return this.dispatchSelection(this.defaultId());
   }
 

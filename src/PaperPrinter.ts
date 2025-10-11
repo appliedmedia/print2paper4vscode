@@ -323,7 +323,6 @@ export class PaperPrinter {
         menuItems: this.menuItems_MarginId.bind(this),
         flyoutMenuItemIds: [],
         selectionHandler: this.handleSelection_MarginId.bind(this),
-        getDefaultValue: () => 'normal',
       },
       {
         id: 'theme',
@@ -354,7 +353,7 @@ export class PaperPrinter {
         config.isFlyout,
         config.menuItems,
         config.flyoutMenuItemIds,
-        config.selectionHandler
+        config.selectionHandler,
       );
       this.app.uimenumgr.addMenu(menu);
       this.dx.out(`Added menu: ${config.id}`);
@@ -699,10 +698,13 @@ export class PaperPrinter {
     dx.out(`selectedId = ${selectedId}`);
 
     if (selectedId === UIMenu.defaultId()) {
-      // Get the UIMenu instance and register persist property
+      // Get the UIMenu instance and check global state (or use default)
       const menu = this.app.uimenumgr.getMenu('marginId');
       if (menu) {
-        menu.persist.register('marginId', 'normal');
+        // Register persist property if not already done
+        if (!menu.persist.getProperties().has('marginId')) {
+          menu.persist.register('marginId', 'normal');
+        }
         dx.out(`returning current margin: ${menu.persist.marginId}`);
         dx.done();
         return menu.persist.marginId;
