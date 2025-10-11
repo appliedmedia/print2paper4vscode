@@ -1,13 +1,7 @@
 import type { App } from './App';
 
-// Margin level type and lookup table
+// Margin level type
 export type MarginId = 'none' | 'minimal' | 'normal' | 'wide';
-export const MARGIN_IDS = {
-  none: 0,      // 0pts
-  minimal: 5,   // ~7px
-  normal: 15,   // ~20px  
-  wide: 30      // ~40px
-} as const;
 
 /**
  * PaperPrinter_DocInfo - Document information and configuration for PaperPrinter

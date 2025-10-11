@@ -1,4 +1,13 @@
 import type { App } from './App';
+import type { MarginId } from './DocInfo_PaperPrinter';
+
+// Margin ID to points conversion
+const MARGIN_ID_TO_PTS: { [key in MarginId]: number } = {
+  none: 0,      // 0pts
+  minimal: 5,   // 5pts
+  normal: 15,   // 15pts  
+  wide: 30      // 30pts
+} as const;
 
 /**
  * PDF_DocInfo - Document information and configuration for PDF
@@ -60,5 +69,14 @@ export class DocInfo_PDF {
     this.marginBottomPts = value.bottomPts;
     this.marginLeftPts = value.leftPts;
     this.marginRightPts = value.rightPts;
+  }
+
+  // Convert margin ID to points and set all 4 sides
+  setMarginFromId(marginId: MarginId): void {
+    const marginPts = MARGIN_ID_TO_PTS[marginId];
+    this.marginTopPts = marginPts;
+    this.marginBottomPts = marginPts;
+    this.marginLeftPts = marginPts;
+    this.marginRightPts = marginPts;
   }
 }
