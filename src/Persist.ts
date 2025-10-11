@@ -3,7 +3,6 @@ import type { GlobalStateKey } from './types/globalState_t';
 
 export class Persist {
   private app: App;
-  private properties: Map<string, any> = new Map();
 
   constructor(app: App) {
     this.app = app;
@@ -16,12 +15,12 @@ export class Persist {
    */
   register(name: string, defaultValue: any): this {
     // If already registered, just update the default logic
-    if (this.properties.has(name)) {
+    if (this.hasOwnProperty(name)) {
       const globalValue = this.app.vscodeapis.getGlobalState(name as GlobalStateKey);
       
       // If global state has a value, keep it; otherwise use new default
       if (globalValue === undefined) {
-        this.properties.set(name, defaultValue);
+        (this as any)[name] = defaultValue;
         this.app.vscodeapis.updateGlobalState(name as GlobalStateKey, defaultValue);
       }
       return this;
@@ -30,9 +29,6 @@ export class Persist {
     // First time registration
     const globalValue = this.app.vscodeapis.getGlobalState(name as GlobalStateKey);
     const initialValue = globalValue !== undefined ? globalValue : defaultValue;
-    
-    // Store the local value
-    this.properties.set(name, initialValue);
     
     // If global state was undefined, set it to default
     if (globalValue === undefined) {
@@ -43,14 +39,14 @@ export class Persist {
     Object.defineProperty(this, name, {
       get: () => {
         // Always return local value (fast)
-        return this.properties.get(name);
+        return (this as any)[`_${name}`];
       },
       set: (value: any) => {
-        const currentValue = this.properties.get(name);
+        const currentValue = (this as any)[`_${name}`];
         // Only update if value actually changed
         if (value !== currentValue) {
           // Update local cache
-          this.properties.set(name, value);
+          (this as any)[`_${name}`] = value;
           // Update global state
           this.app.vscodeapis.updateGlobalState(name as GlobalStateKey, value);
         }
@@ -59,14 +55,9 @@ export class Persist {
       configurable: true
     });
 
+    // Set the initial value
+    (this as any)[`_${name}`] = initialValue;
+
     return this;
-  }
-
-
-  /**
-   * Get all registered properties for debugging
-   */
-  getProperties(): Map<string, any> {
-    return new Map(this.properties);
   }
 }

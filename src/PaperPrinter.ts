@@ -702,7 +702,7 @@ export class PaperPrinter {
       const menu = this.app.uimenumgr.getMenu('marginId');
       if (menu) {
         // Register persist property if not already done
-        if (!menu.persist.getProperties().has('marginId')) {
+        if (!menu.persist.hasOwnProperty('marginId')) {
           menu.persist.register('marginId', 'normal');
         }
         dx.out(`returning current margin: ${menu.persist.marginId}`);
