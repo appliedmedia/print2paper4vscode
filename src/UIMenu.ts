@@ -33,6 +33,11 @@ export class UIMenu {
   ) {
     this.persist = new Persist(app);
     this.dx = this.app.dx.create('UIMenu');
+    
+    // Register persist property if default value provided
+    if (this._defaultValue !== undefined) {
+      this.persist.register(this._id, this._defaultValue);
+    }
   }
 
   init(): void {
@@ -170,12 +175,6 @@ export class UIMenu {
 
     // Generate menu items HTML using the new getItemHTML function
     const menuItems = this.getMenuItems();
-    
-    // Register persist property if default value provided (right before getting initial selection)
-    if (this._defaultValue !== undefined && !this.persist.hasOwnProperty(this._id)) {
-      this.persist.register(this._id, this._defaultValue);
-    }
-    
     const defaultItemId = await this.defaultItem(); // Get default once
     const hasDefaultItem = !!defaultItemId;
 
