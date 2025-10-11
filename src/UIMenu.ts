@@ -1,9 +1,11 @@
 import type { App } from './App';
 import type { UIMenuItem } from './types/UI_t';
 import { Diagnostics } from './Diagnostics';
+import { Persist } from './Persist';
 
 export class UIMenu {
   private dx: Diagnostics;
+  public persist: Persist;
   private _yaml: {
     ui_menu_html: string;
     ui_menu_item: string;
@@ -28,6 +30,7 @@ export class UIMenu {
     private _flyoutMenuItemIds: string[] = [],
     private _selectionHandler: (id: string) => Promise<string>
   ) {
+    this.persist = new Persist(app);
     this.dx = this.app.dx.create('UIMenu');
   }
 

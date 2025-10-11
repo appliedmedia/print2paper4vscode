@@ -316,11 +316,11 @@ export class PaperPrinter {
         selectionHandler: this.handleSelection_Orient.bind(this),
       },
       {
-        id: 'margin',
+        id: 'marginId',
         displayName: 'Margin',
         icon: '', // submenu indicated by no icon, see Page > Margin
         isFlyout: true,
-        menuItems: this.menuItems_Margin.bind(this),
+        menuItems: this.menuItems_MarginId.bind(this),
         flyoutMenuItemIds: [],
         selectionHandler: this.handleSelection_Margin.bind(this),
       },
@@ -457,7 +457,7 @@ export class PaperPrinter {
     ];
   }
 
-  private menuItems_Margin(): UIMenuItem[] {
+  private menuItems_MarginId(): UIMenuItem[] {
     return [
       { id: 'none', displayName: 'None (0pt)' },
       { id: 'minimal', displayName: 'Minimal (5pt)' },
