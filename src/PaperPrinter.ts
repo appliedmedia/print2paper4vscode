@@ -314,7 +314,6 @@ export class PaperPrinter {
         menuItems: this.menuItems_Orient.bind(this),
         flyoutMenuItemIds: [],
         selectionHandler: this.handleSelection_Orient.bind(this),
-        defaultValue: 'portrait',
       },
       {
         id: 'marginId',
@@ -324,7 +323,6 @@ export class PaperPrinter {
         menuItems: this.menuItems_MarginId.bind(this),
         flyoutMenuItemIds: [],
         selectionHandler: this.handleSelection_MarginId.bind(this),
-        defaultValue: 'normal',
       },
       {
         id: 'theme',
@@ -334,7 +332,6 @@ export class PaperPrinter {
         menuItems: this.menuItems_Theme.bind(this),
         flyoutMenuItemIds: [],
         selectionHandler: this.handleSelection_Theme.bind(this),
-        defaultValue: 'github-light',
       },
       {
         id: 'text',
@@ -344,7 +341,6 @@ export class PaperPrinter {
         menuItems: this.menuItems_Text.bind(this),
         flyoutMenuItemIds: [],
         selectionHandler: this.handleSelection_Text.bind(this),
-        defaultValue: 12,
       },
     ];
 
@@ -358,7 +354,6 @@ export class PaperPrinter {
         config.menuItems,
         config.flyoutMenuItemIds,
         config.selectionHandler,
-        config.defaultValue
       );
       this.app.uimenumgr.addMenu(menu);
       this.dx.out(`Added menu: ${config.id}`);
