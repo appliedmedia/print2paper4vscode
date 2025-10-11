@@ -693,15 +693,19 @@ export class PaperPrinter {
     }
   }
 
-  private async handleSelection_Margin(selectedId: string): Promise<string> {
+  private async handleSelection_MarginId(selectedId: string): Promise<string> {
     const dx = this.dx.sub('handleSelection_Margin');
     dx.out(`selectedId = ${selectedId}`);
 
     if (selectedId === UIMenu.defaultId()) {
-      // Return the current margin for default selection
-      dx.out(`returning current margin: ${this.docInfo.persist_marginId}`);
-      dx.done();
-      return this.docInfo.persist_marginId;
+      // Get the UIMenu instance and register persist property
+      const menu = this.app.uimenumgr.getMenu('marginId');
+      if (menu) {
+        menu.persist.register('marginId', 'normal');
+        dx.out(`returning current margin: ${menu.persist.marginId}`);
+        dx.done();
+        return menu.persist.marginId;
+      }
     }
 
     // Update margin in PDF
