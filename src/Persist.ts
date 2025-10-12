@@ -2,9 +2,9 @@ import type { App } from './App';
 import type { GlobalStateKey } from './types/globalState_t';
 
 // Type for dynamically created properties on Persist instances
-export interface PersistProperties {
-  [key: string]: string;
-}
+export type PersistProperties = {
+  [K in GlobalStateKey]?: string;
+};
 
 export class Persist {
   private app: App;
