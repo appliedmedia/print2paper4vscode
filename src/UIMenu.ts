@@ -171,6 +171,27 @@ export class UIMenu {
     return this._selectionHandler(id);
   }
 
+  // Convert stored value back to item ID for UI display
+  private convertValueToItemId(value: GlobalStateMap[GlobalStateKey]): string {
+    // For most cases, the value IS the item ID (e.g., 'a4', 'portrait', 'github-light')
+    if (typeof value === 'string') {
+      return value;
+    }
+    
+    // For numeric values, convert back to string (e.g., 14 -> '14')
+    if (typeof value === 'number') {
+      return String(value);
+    }
+    
+    // For boolean values, convert to string (e.g., true -> 'true')
+    if (typeof value === 'boolean') {
+      return String(value);
+    }
+    
+    // Fallback
+    return String(value);
+  }
+
   // Get the default item ID for this menu
   async defaultItem(): Promise<string> {
     // Get global state value
@@ -179,28 +200,30 @@ export class UIMenu {
     if (globalValue !== undefined) {
       // Global state has a value, set it and return the item ID
       (this.persist as any)[this._id] = globalValue;
-      return String(globalValue);
+      // Convert the stored value back to the corresponding item ID
+      return this.convertValueToItemId(globalValue);
     }
     
     // No global value, dispatch to selection handler to get default
-    const defaultValueStr = await this.dispatchSelection(this.defaultId() as ItemId_t);
+    const defaultItemId = await this.dispatchSelection(this.defaultId() as ItemId_t);
     
-    // Convert string to proper type based on the key
+    // Convert item ID to proper typed value for storage
     let defaultValue: GlobalStateMap[GlobalStateKey];
     if (this._id === 'fontSizePx' || this._id === 'lineHeight' || this._id === 'toolbarPosPx' || 
         this._id === 'pageRenderCacheSize' || this._id === 'scrollDebounceMs' || 
         this._id === 'maxCanvasPoolSize' || this._id === 'autoScrollableViewerThreshold') {
-      defaultValue = parseInt(defaultValueStr, 10) as GlobalStateMap[GlobalStateKey];
+      defaultValue = parseInt(defaultItemId, 10) as GlobalStateMap[GlobalStateKey];
     } else if (this._id === 'scrollableViewerEnabled') {
-      defaultValue = (defaultValueStr === 'true') as GlobalStateMap[GlobalStateKey];
+      defaultValue = (defaultItemId === 'true') as GlobalStateMap[GlobalStateKey];
     } else {
-      defaultValue = defaultValueStr as GlobalStateMap[GlobalStateKey];
+      defaultValue = defaultItemId as GlobalStateMap[GlobalStateKey];
     }
     
     // Set the default value after getting it from selection handler
     this.persist.setDefault(this._id as GlobalStateKey, defaultValue);
     
-    return defaultValueStr;
+    // Return the item ID for UI display
+    return defaultItemId;
   }
 
   // Getter for the YAML data - handles loading and validation automatically
