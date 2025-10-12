@@ -19,7 +19,6 @@ export interface GlobalStateMap {
   orient: string;               // 'portrait', 'landscape' - actual orientation ID
   fontSizePx: number;           // 12, 14, 18 - actual pixel value for calculations
   theme: string;                // 'github-light', 'monokai' - actual theme ID
-  fontFamily: string;           // 'Courier New' - actual font family
   toolbarPosPx: number;         // 100, 200 - actual pixel position
   pageRenderCacheSize: number;  // 10, 20 - actual cache size
   scrollDebounceMs: number;     // 16, 32 - actual milliseconds

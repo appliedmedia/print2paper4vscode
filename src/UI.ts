@@ -11,7 +11,6 @@ export type GlobalStateKey_t =
   | 'marginId'
   | 'theme'
   | 'fontSizePx'
-  | 'fontFamily'
   | 'toolbarPosPx'
   | 'pageRenderCacheSize'
   | 'scrollDebounceMs'
