@@ -171,26 +171,6 @@ export class UIMenu {
     return this._selectionHandler(id);
   }
 
-  // Convert stored value back to item ID for UI display
-  private convertValueToItemId(value: GlobalStateMap[GlobalStateKey]): string {
-    // For most cases, the value IS the item ID (e.g., 'a4', 'portrait', 'github-light')
-    if (typeof value === 'string') {
-      return value;
-    }
-    
-    // For numeric values, convert back to string (e.g., 14 -> '14')
-    if (typeof value === 'number') {
-      return String(value);
-    }
-    
-    // For boolean values, convert to string (e.g., true -> 'true')
-    if (typeof value === 'boolean') {
-      return String(value);
-    }
-    
-    // Fallback
-    return String(value);
-  }
 
   // Get the default item ID for this menu
   async defaultItemId(): Promise<string> {
@@ -200,8 +180,8 @@ export class UIMenu {
     if (globalValue !== undefined) {
       // Global state has a value, set it and return the item ID
       (this.persist as any)[this._id] = globalValue;
-      // Convert the stored value back to the corresponding item ID
-      return this.convertValueToItemId(globalValue);
+      // The stored value should already be the item ID
+      return String(globalValue);
     }
     
     // No global value, dispatch to selection handler to get default
