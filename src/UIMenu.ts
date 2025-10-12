@@ -1,6 +1,6 @@
 import type { App } from './App';
 import type { UIMenuItem } from './types/UI_t';
-import type { GlobalStateKey, GlobalStateMap } from './types/globalState_t';
+import type { GlobalStateKey, GlobalStateKeyToValueType } from './types/globalState_t';
 import { Diagnostics } from './Diagnostics';
 import { Persist } from './Persist';
 

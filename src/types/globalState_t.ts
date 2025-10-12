@@ -14,7 +14,7 @@ export type GlobalStateValue = string | number | boolean;
 // Re-export for backward compatibility
 export type GlobalStateKey = GlobalStateKey_t;
 
-export interface GlobalStateMap {
+export interface GlobalStateKeyToValueType {
   pageSizeId: string;           // 'a4', 'letter' - page size item ID
   orient: string;               // 'portrait', 'landscape' - orientation item ID
   fontSizePx: string;           // '12', '14', '18' - font size item ID
