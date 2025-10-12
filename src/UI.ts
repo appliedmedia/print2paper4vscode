@@ -24,7 +24,6 @@ export const kGlobalStateKey: readonly GlobalStateKey_t[] = [
   'marginId',
   'theme',
   'fontSizePx',
-  'fontFamily',
   'toolbarPosPx',
   'pageRenderCacheSize',
   'scrollDebounceMs',
