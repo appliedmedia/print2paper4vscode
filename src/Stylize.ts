@@ -11,6 +11,26 @@ import { Diagnostics } from './Diagnostics';
 import jsPDF from 'jspdf';
 import type { Theme, ThemeData, TokenColor } from './types/theme_t';
 
+// Theme ID types - Dynamic from Shiki but with known fallbacks
+export type ThemeId_t = string; // Dynamic from Shiki themes
+export const kDefaultThemeId: ThemeId_t = 'github-light';
+export const kKnownThemeIds: readonly ThemeId_t[] = [
+  'github-light',
+  'github-dark',
+  'monokai',
+  'vs',
+  'vs-dark',
+  'one-dark',
+  'one-light'
+] as const;
+
+// Type guard for theme validation
+export function isThemeId(id: string): id is ThemeId_t {
+  // For themes, we accept any string since they're dynamic from Shiki
+  // but we can validate against known themes
+  return typeof id === 'string' && id.length > 0;
+}
+
 // Module-level constants for theme filtering
 const USE_ALL_LIGHT_SHIKI_THEMES = 'light|bright|day';
 const USE_ALL_LIGHT_VSCODE_THEMES = 'light|bright|day';

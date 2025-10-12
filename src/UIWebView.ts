@@ -4,7 +4,7 @@ import type { WebviewPanelId } from './VSCodeAPIs';
 import type { PostMessage } from './types/UI_t';
 import { UIScrollView, type ScrollOptions } from './UIScrollView';
 import { UIMenuMgr } from './UIMenuMgr';
-import { isMenuId } from './UIMenu';
+import { isMenuId, isItemId } from './UIMenu';
 import { Diagnostics } from './Diagnostics';
 
 /**
@@ -315,16 +315,16 @@ export class UIWebView {
     try {
       const { menuId, itemId } = msg;
       if (typeof menuId === 'string' && typeof itemId === 'string') {
-        // Validate menuId is a valid MenuId_t before proceeding
-        if (isMenuId(menuId)) {
+        // Validate both menuId and itemId before proceeding
+        if (isMenuId(menuId) && isItemId(itemId)) {
           // Handle menu item selection through menu manager
           if (this.menuMgr) {
             await this.menuMgr.handleMenuItemSelected(menuId, itemId);
             dx.out(`Menu item selected: ${menuId}.${itemId}`);
           }
         } else {
-          dx.out(`Invalid menu ID received from webview: ${menuId}`);
-          throw new Error(`Invalid menu ID: ${menuId}`);
+          dx.out(`Invalid menu ID or item ID received from webview: ${menuId}.${itemId}`);
+          throw new Error(`Invalid menu ID or item ID: ${menuId}.${itemId}`);
         }
       }
     } finally {

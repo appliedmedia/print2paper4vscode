@@ -7,6 +7,40 @@ import jsPDF from 'jspdf';
 import type { ThemedToken } from 'shiki';
 import { DocInfo_PDF } from './DocInfo_PDF';
 
+// PDF-related ID types
+export type PageSizeId_t = 'letter' | 'legal' | 'a3' | 'a4' | 'a5';
+export type OrientationId_t = 'portrait' | 'landscape';
+export type MarginId_t = 'none' | 'minimal' | 'normal' | 'wide';
+export type FontSizeId_t = '8' | '9' | '10' | '12' | '14' | '18' | '24';
+export type PrintActionId_t = 'preview' | 'direct' | 'save';
+
+export const kPageSizeId: readonly PageSizeId_t[] = ['letter', 'legal', 'a3', 'a4', 'a5'] as const;
+export const kOrientationId: readonly OrientationId_t[] = ['portrait', 'landscape'] as const;
+export const kMarginId: readonly MarginId_t[] = ['none', 'minimal', 'normal', 'wide'] as const;
+export const kFontSizeId: readonly FontSizeId_t[] = ['8', '9', '10', '12', '14', '18', '24'] as const;
+export const kPrintActionId: readonly PrintActionId_t[] = ['preview', 'direct', 'save'] as const;
+
+// Type guards for runtime validation
+export function isPageSizeId(id: string): id is PageSizeId_t {
+  return kPageSizeId.includes(id as PageSizeId_t);
+}
+
+export function isOrientationId(id: string): id is OrientationId_t {
+  return kOrientationId.includes(id as OrientationId_t);
+}
+
+export function isMarginId(id: string): id is MarginId_t {
+  return kMarginId.includes(id as MarginId_t);
+}
+
+export function isFontSizeId(id: string): id is FontSizeId_t {
+  return kFontSizeId.includes(id as FontSizeId_t);
+}
+
+export function isPrintActionId(id: string): id is PrintActionId_t {
+  return kPrintActionId.includes(id as PrintActionId_t);
+}
+
 /**
  * PDFDoc wrapper that hides jsPDF implementation details
  */

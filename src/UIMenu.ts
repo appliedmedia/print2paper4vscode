@@ -24,9 +24,59 @@ export const kMenuId: readonly MenuId_t[] = [
   'fontSizePx'
 ] as const;
 
-// Type guard for runtime validation
+// Item ID types - Individual menu item identifiers
+export type ItemId_t = 
+  | 'test'
+  | 'preview'
+  | 'direct'
+  | 'save'
+  | 'size'
+  | 'orient'
+  | 'margin'
+  | 'portrait'
+  | 'landscape'
+  | 'none'
+  | 'minimal'
+  | 'normal'
+  | 'wide'
+  | '8'
+  | '9'
+  | '10'
+  | '12'
+  | '14'
+  | '18'
+  | '24';
+
+export const kItemId: readonly ItemId_t[] = [
+  'test',
+  'preview',
+  'direct',
+  'save',
+  'size',
+  'orient',
+  'margin',
+  'portrait',
+  'landscape',
+  'none',
+  'minimal',
+  'normal',
+  'wide',
+  '8',
+  '9',
+  '10',
+  '12',
+  '14',
+  '18',
+  '24'
+] as const;
+
+// Type guards for runtime validation
 export function isMenuId(id: string): id is MenuId_t {
   return kMenuId.includes(id as MenuId_t);
+}
+
+export function isItemId(id: string): id is ItemId_t {
+  return kItemId.includes(id as ItemId_t);
 }
 
 export class UIMenu {
@@ -59,7 +109,7 @@ export class UIMenu {
     private _isFlyout: boolean = false,
     private _menuItems: () => UIMenuItem[],
     private _flyoutMenuItemIds: string[] = [],
-    private _selectionHandler: (id: string) => Promise<string>
+    private _selectionHandler: (id: ItemId_t) => Promise<string>
   ) {
     this.persist = new Persist(app);
     this.dx = this.app.dx.create('UIMenu');
@@ -117,7 +167,7 @@ export class UIMenu {
   }
 
   // Dispatch a selection to this menu's handler
-  async dispatchSelection(id: string): Promise<string> {
+  async dispatchSelection(id: ItemId_t): Promise<string> {
     return this._selectionHandler(id);
   }
 
@@ -133,7 +183,7 @@ export class UIMenu {
     }
     
     // No global value, dispatch to selection handler to get default
-    const defaultValueStr = await this.dispatchSelection(this.defaultId());
+    const defaultValueStr = await this.dispatchSelection(this.defaultId() as ItemId_t);
     
     // Convert string to proper type based on the key
     let defaultValue: GlobalStateMap[GlobalStateKey];
