@@ -7,6 +7,11 @@ import { Persist, type PersistProperties } from './Persist';
 export class UIMenu {
   private dx: Diagnostics;
   public persist: Persist;
+  
+  // Public getter for id
+  get id(): GlobalStateKey {
+    return this._id;
+  }
   private _yaml: {
     ui_menu_html: string;
     ui_menu_item: string;
@@ -23,7 +28,7 @@ export class UIMenu {
 
   constructor(
     private app: App,
-    private _id: string,
+    private _id: GlobalStateKey,
     private _displayName: string,
     private _icon: string,
     private _isFlyout: boolean = false,
@@ -35,7 +40,7 @@ export class UIMenu {
     this.dx = this.app.dx.create('UIMenu');
     
     // Register persist property (no value set yet)
-    this.persist.register(this._id as GlobalStateKey);
+    this.persist.register(this._id);
   }
 
   init(): void {
@@ -97,7 +102,7 @@ export class UIMenu {
   // Get the default item ID for this menu
   async defaultItem(): Promise<string> {
     // Get global state value
-    const globalValue = this.app.vscodeapis.getGlobalState(this._id as GlobalStateKey);
+    const globalValue = this.app.vscodeapis.getGlobalState(this._id);
     
     if (globalValue !== undefined) {
       // Global state has a value, set it and return it

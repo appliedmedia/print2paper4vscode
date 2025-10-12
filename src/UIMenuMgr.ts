@@ -1,6 +1,7 @@
 import type { App } from './App';
 import { UIMenu } from './UIMenu';
 import type { UIMenuItem } from './types/UI_t';
+import type { GlobalStateKey } from './types/globalState_t';
 import { Diagnostics } from './Diagnostics';
 
 export class UIMenuMgr {
@@ -25,7 +26,7 @@ export class UIMenuMgr {
   }
 
   createMenu(
-    id: string,
+    id: GlobalStateKey,
     displayName: string,
     icon: string,
     isFlyout: boolean = false,
@@ -51,7 +52,7 @@ export class UIMenuMgr {
   }
 
   // Handle menu item selection
-  async handleMenuItemSelected(menuId: string, itemId: string): Promise<void> {
+  async handleMenuItemSelected(menuId: GlobalStateKey, itemId: string): Promise<void> {
     const dx = this.dx.sub('handleMenuItemSelected');
     
     try {
@@ -68,7 +69,7 @@ export class UIMenuMgr {
   }
 
   // Get a specific menu by ID
-  getMenu(id: string): UIMenu | undefined {
+  getMenu(id: GlobalStateKey): UIMenu | undefined {
     return this.getAllMenus().find(menu => menu.id === id);
   }
 
