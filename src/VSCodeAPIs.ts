@@ -74,47 +74,42 @@ export class VSCodeAPIs {
    * Get scrollable viewer enabled state
    */
   getScrollableViewerEnabled(): boolean {
-    const value = this.getGlobalState('scrollableViewerEnabled');
-    return value === 'true';
+    return this.getGlobalState('scrollableViewerEnabled') ?? false;
   }
 
   /**
    * Set scrollable viewer enabled state
    */
   setScrollableViewerEnabled(enabled: boolean): void {
-    this.updateGlobalState('scrollableViewerEnabled', enabled ? 'true' : 'false');
+    this.updateGlobalState('scrollableViewerEnabled', enabled);
   }
 
   /**
    * Get maximum canvas pool size
    */
   getMaxCanvasPoolSize(): number {
-    const value = this.getGlobalState('maxCanvasPoolSize');
-    return value ? parseInt(value, 10) : 7;
+    return this.getGlobalState('maxCanvasPoolSize') ?? 7;
   }
 
   /**
    * Set maximum canvas pool size
    */
   setMaxCanvasPoolSize(size: number): void {
-    const clampedSize = Math.max(1, Math.min(20, size));
-    this.updateGlobalState('maxCanvasPoolSize', String(clampedSize));
+    this.updateGlobalState('maxCanvasPoolSize', Math.max(1, Math.min(20, size)));
   }
 
   /**
    * Get auto scrollable viewer threshold (lines)
    */
   getAutoScrollableViewerThreshold(): number {
-    const value = this.getGlobalState('autoScrollableViewerThreshold');
-    return value ? parseInt(value, 10) : 1000;
+    return this.getGlobalState('autoScrollableViewerThreshold') ?? 1000;
   }
 
   /**
    * Set auto scrollable viewer threshold (lines)
    */
   setAutoScrollableViewerThreshold(threshold: number): void {
-    const clampedThreshold = Math.max(100, threshold);
-    this.updateGlobalState('autoScrollableViewerThreshold', String(clampedThreshold));
+    this.updateGlobalState('autoScrollableViewerThreshold', Math.max(100, threshold));
   }
 
   /**
