@@ -2,9 +2,9 @@ import type { App } from './App';
 import type { fileRead_t } from './OS';
 import type { PDFDoc } from './types/PDF_t';
 import {
-  getHighlighter,
-  BUNDLED_THEMES,
-  type IThemedToken as ThemedToken,
+  getSingletonHighlighter,
+  bundledThemesInfo,
+  type ThemedToken,
   type Highlighter,
 } from 'shiki';
 import { Diagnostics } from './Diagnostics';
@@ -54,10 +54,10 @@ export class Stylize {
         theme => theme.themeData || theme.id
       );
 
-      this.highlighter = await getHighlighter({
+      this.highlighter = await getSingletonHighlighter({
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         themes: themesForHighlighter as any,
-        langs: [languageId as any],
+        langs: [languageId],
       });
 
       dx.out(`Highlighter created successfully`);
@@ -99,19 +99,17 @@ export class Stylize {
 
   // Get Shiki themes with optional filter (returns Theme objects)
   getShikiThemes(filter?: string): Theme[] {
-    // Use BUNDLED_THEMES which are just theme IDs as strings
-    let themes = [...BUNDLED_THEMES];
+    // Use bundledThemesInfo which has proper display names
+    let themes = [...bundledThemesInfo];
 
     if (filter) {
       const filterRegex = new RegExp(filter, 'i');
-      themes = themes.filter(theme => filterRegex.test(theme));
+      themes = themes.filter(theme => filterRegex.test(theme.id));
     }
 
     return themes.map(theme => ({
-      id: theme,
-      displayName: theme.split('-').map(word => 
-        word.charAt(0).toUpperCase() + word.slice(1)
-      ).join(' '), // Convert kebab-case to Title Case
+      id: theme.id,
+      displayName: theme.displayName, // Use the actual display name from Shiki
       themeData: null, // Pure Shiki themes use id directly
     }));
   }
@@ -326,9 +324,13 @@ export class Stylize {
       this.dx.out(`Highlighter exists: ${!!this.app.stylize.highlighter}`);
 
       try {
-        const tokenResult = this.app.stylize.highlighter?.codeToThemedTokens(code, languageId, selectedTheme);
+        const tokenResult = this.app.stylize.highlighter?.codeToTokens(code, {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          lang: languageId as any,
+          theme: selectedTheme,
+        });
         this.dx.out(`tokenizeCode result: ${tokenResult ? 'success' : 'failed'}`);
-        return tokenResult || [];
+        return tokenResult?.tokens || [];
       } catch (error) {
         this.dx.out(`tokenizeCode error: ${error}`);
         throw error;
@@ -421,7 +423,11 @@ export class Stylize {
       const highlighter = this.highlighter!;
       const themeToUse = theme || this.resolveActiveTheme();
 
-      const tokens = highlighter.codeToThemedTokens(code, languageId, themeToUse);
+      const tokenResult = highlighter.codeToTokens(code, {
+        lang: languageId as any,
+        theme: themeToUse,
+      });
+      const tokens = tokenResult?.tokens || [];
       
       // Apply page range filtering if specified
       let filteredTokens = tokens;
