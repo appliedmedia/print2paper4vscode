@@ -187,20 +187,8 @@ export class UIMenu {
     // No global value, dispatch to selection handler to get default
     const defaultItemId = await this.dispatchSelection(this.defaultId() as ItemId_t);
     
-    // Convert item ID to proper typed value for storage
-    let defaultValue: GlobalStateMap[GlobalStateKey];
-    if (this._id === 'fontSizePx' || this._id === 'lineHeight' || this._id === 'toolbarPosPx' || 
-        this._id === 'pageRenderCacheSize' || this._id === 'scrollDebounceMs' || 
-        this._id === 'maxCanvasPoolSize' || this._id === 'autoScrollableViewerThreshold') {
-      defaultValue = parseInt(defaultItemId, 10) as GlobalStateMap[GlobalStateKey];
-    } else if (this._id === 'scrollableViewerEnabled') {
-      defaultValue = (defaultItemId === 'true') as GlobalStateMap[GlobalStateKey];
-    } else {
-      defaultValue = defaultItemId as GlobalStateMap[GlobalStateKey];
-    }
-    
-    // Set the default value after getting it from selection handler
-    this.persist.setDefault(this._id as GlobalStateKey, defaultValue);
+    // Store the item ID directly (everything is stored as strings)
+    this.persist.setDefault(this._id as GlobalStateKey, defaultItemId);
     
     // Return the item ID for UI display
     return defaultItemId;
