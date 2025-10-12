@@ -3,25 +3,16 @@
  *
  * Defines the keys and types for VS Code global state storage.
  * This ensures type safety when accessing global state values.
+ * 
+ * Note: GlobalStateKey_t is now defined in UI.ts where it belongs.
  */
+
+import type { GlobalStateKey_t } from '../UI';
 
 export type GlobalStateValue = string | number | boolean;
 
-export type GlobalStateKey =
-  | 'pageSizeId'
-  | 'orient'
-  | 'fontSizePx'
-  | 'lineHeight'
-  | 'theme'
-  | 'fontFamily'
-  | 'toolbarPosPx'
-  | 'pageRenderCacheSize'
-  | 'scrollDebounceMs'
-  | 'maxCanvasPoolSize'
-  | 'scrollableViewerEnabled'
-  | 'autoScrollableViewerThreshold'
-  | 'toolbarPos'
-  | 'marginId';
+// Re-export for backward compatibility
+export type GlobalStateKey = GlobalStateKey_t;
 
 export interface GlobalStateMap {
   pageSizeId: string;

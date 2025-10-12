@@ -1,5 +1,5 @@
 import type { App } from './App';
-import { UIMenu } from './UIMenu';
+import { UIMenu, type MenuId_t } from './UIMenu';
 import type { UIMenuItem } from './types/UI_t';
 import type { GlobalStateKey } from './types/globalState_t';
 import { Diagnostics } from './Diagnostics';
@@ -52,7 +52,7 @@ export class UIMenuMgr {
   }
 
   // Handle menu item selection
-  async handleMenuItemSelected(menuId: string, itemId: string): Promise<void> {
+  async handleMenuItemSelected(menuId: MenuId_t, itemId: string): Promise<void> {
     const dx = this.dx.sub('handleMenuItemSelected');
     
     try {
@@ -75,8 +75,8 @@ export class UIMenuMgr {
     return this.getAllMenus().find(menu => menu.id === id);
   }
 
-  // Get a specific menu by string ID (for webview validation)
-  getMenuById(id: string): UIMenu | undefined {
+  // Get a specific menu by MenuId_t (for webview validation)
+  getMenuById(id: MenuId_t): UIMenu | undefined {
     return this.getAllMenus().find(menu => menu.id === id);
   }
 

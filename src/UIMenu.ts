@@ -4,6 +4,31 @@ import type { GlobalStateKey, GlobalStateMap } from './types/globalState_t';
 import { Diagnostics } from './Diagnostics';
 import { Persist } from './Persist';
 
+// Menu ID types - UI component identifiers
+export type MenuId_t = 
+  | 'print'
+  | 'page' 
+  | 'pageSizeId'
+  | 'orient'
+  | 'marginId'
+  | 'theme'
+  | 'fontSizePx';
+
+export const kMenuId: readonly MenuId_t[] = [
+  'print',
+  'page', 
+  'pageSizeId',
+  'orient',
+  'marginId',
+  'theme',
+  'fontSizePx'
+] as const;
+
+// Type guard for runtime validation
+export function isMenuId(id: string): id is MenuId_t {
+  return kMenuId.includes(id as MenuId_t);
+}
+
 export class UIMenu {
   private dx: Diagnostics;
   public persist: Persist;

@@ -4,6 +4,45 @@ import type { WebviewPanelId } from './VSCodeAPIs';
 import { Diagnostics } from './Diagnostics';
 import jsPDF from 'jspdf';
 
+// Global State Key types - UI-related persistent storage identifiers
+export type GlobalStateKey_t =
+  | 'pageSizeId'
+  | 'orient'
+  | 'marginId'
+  | 'theme'
+  | 'fontSizePx'
+  | 'lineHeight'
+  | 'fontFamily'
+  | 'toolbarPosPx'
+  | 'pageRenderCacheSize'
+  | 'scrollDebounceMs'
+  | 'maxCanvasPoolSize'
+  | 'scrollableViewerEnabled'
+  | 'autoScrollableViewerThreshold'
+  | 'toolbarPos';
+
+export const kGlobalStateKey: readonly GlobalStateKey_t[] = [
+  'pageSizeId',
+  'orient',
+  'marginId',
+  'theme',
+  'fontSizePx',
+  'lineHeight',
+  'fontFamily',
+  'toolbarPosPx',
+  'pageRenderCacheSize',
+  'scrollDebounceMs',
+  'maxCanvasPoolSize',
+  'scrollableViewerEnabled',
+  'autoScrollableViewerThreshold',
+  'toolbarPos'
+] as const;
+
+// Type guard for runtime validation
+export function isGlobalStateKey(id: string): id is GlobalStateKey_t {
+  return kGlobalStateKey.includes(id as GlobalStateKey_t);
+}
+
 export class UI {
   private app: App;
   private messageHandlers: Map<string, MessageHandler[]> = new Map();

@@ -147,12 +147,12 @@ describe('UIMenuMgr', () => {
     });
 
     it('should return undefined for non-existent menu', () => {
-      const nonExistent = menuMgr.getMenuById('nonExistent');
+      const nonExistent = menuMgr.getMenuById('nonExistent' as any);
       assert.strictEqual(nonExistent, undefined, 'Should return undefined for non-existent menu');
     });
 
     it('should handle case-sensitive menu IDs', () => {
-      const testMenu = menuMgr.getMenuById('TestMenu');
+      const testMenu = menuMgr.getMenuById('TestMenu' as any);
       assert.strictEqual(testMenu, undefined, 'Should be case-sensitive');
     });
   });
