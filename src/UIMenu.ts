@@ -200,7 +200,7 @@ export class UIMenu {
     // Set the default value after getting it from selection handler
     this.persist.setDefault(this._id as GlobalStateKey, defaultValue);
     
-    return this.defaultId();
+    return defaultValueStr;
   }
 
   // Getter for the YAML data - handles loading and validation automatically
