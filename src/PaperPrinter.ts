@@ -693,12 +693,9 @@ export class PaperPrinter {
     dx.out(`selectedId = ${selectedId}`);
 
     if (selectedId === UIMenu.defaultId()) {
-      const menu = this.app.uimenumgr.getMenu('marginId');
-      if (menu) {
-        dx.out(`returning current margin: ${(menu.persist as any).marginId}`);
-        dx.done();
-        return (menu.persist as any).marginId;
-      }
+      dx.out(`returning current margin: ${(this.docInfo.persist as any).marginId ?? 'normal'}`);
+      dx.done();
+      return (this.docInfo.persist as any).marginId ?? 'normal';
     }
 
     // Update margin in PDF
