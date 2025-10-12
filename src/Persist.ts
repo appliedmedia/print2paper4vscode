@@ -18,34 +18,38 @@ export class Persist {
   register(name: GlobalStateKey): this {
     Object.defineProperty(this, name, {
       get: () => {
+        let result: string | undefined = undefined;
+        
+        // Check in-memory cache first
         if (this.value[name] !== undefined) {
-          return this.value[name];
-        }
-        
-        try {
-          const globalValue = this.app.vscodeapis.getGlobalState(name);
-          if (globalValue !== undefined) {
-            this.value[name] = globalValue;
-            return globalValue;
-          }
-        } catch (error) {
-          this.app.ui.showErrorMessage(`Failed to load setting: ${name}`);
-          // Fall through to use default value
-        }
-        
-        if (this.default[name] !== undefined) {
-          const defaultValue = this.default[name];
-          this.value[name] = defaultValue;
+          result = this.value[name];
+        } else {
+          // Try to get from global state
           try {
-            this.app.vscodeapis.updateGlobalState(name, defaultValue);
+            const globalValue = this.app.vscodeapis.getGlobalState(name as GlobalStateKey);
+            if (globalValue !== undefined) {
+              result = globalValue;
+              this.value[name] = globalValue; // Populate cache
+            }
           } catch (error) {
-            this.app.ui.showErrorMessage(`Failed to save setting: ${name}`);
-            // Swallow error - local value is still set
+            this.app.ui.showErrorMessage(`Failed to load setting: ${name}`);
+            // Fall through to use default value
           }
-          return defaultValue;
+          
+          // If no global value, try default
+          if (result === undefined && this.default[name] !== undefined) {
+            result = this.default[name];
+            this.value[name] = result; // Populate cache
+            try {
+              this.app.vscodeapis.updateGlobalState(name as GlobalStateKey, result);
+            } catch (error) {
+              this.app.ui.showErrorMessage(`Failed to save setting: ${name}`);
+              // Swallow error - local value is still set
+            }
+          }
         }
         
-        return undefined;
+        return result;
       },
       set: (value: string) => {
         const currentValue = this.value[name];
