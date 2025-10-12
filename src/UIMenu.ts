@@ -179,7 +179,7 @@ export class UIMenu {
     if (globalValue !== undefined) {
       // Global state has a value, set it and return the item ID
       (this.persist as any)[this._id] = globalValue;
-      return this.defaultId();
+      return String(globalValue);
     }
     
     // No global value, dispatch to selection handler to get default

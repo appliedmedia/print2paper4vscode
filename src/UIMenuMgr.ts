@@ -62,22 +62,24 @@ export class UIMenuMgr {
         await menu.dispatchSelection(itemId);
         dx.out(`Menu item selected: ${menuId}.${itemId}`);
       } else {
-        dx.out(`No menu found for menuId: ${menuId}`);
-        throw new Error(`Invalid menu ID: ${menuId}`);
+        const msg = `Invalid menu: ${menuId}`;
+        dx.out(msg);
+        this.app.ui.showErrorMessage(msg);
+        return;
       }
     } finally {
       dx.done();
     }
   }
 
-  // Get a specific menu by ID (for internal use with GlobalStateKey)
-  getMenu(id: GlobalStateKey): UIMenu | undefined {
+  // Get a specific menu by ID (accepts GlobalStateKey or MenuId_t)
+  getMenu(id: string): UIMenu | undefined {
     return this.getAllMenus().find(menu => menu.id === id);
   }
 
-  // Get a specific menu by MenuId_t (for webview validation)
+  // Alias for getMenu for backward compatibility
   getMenuById(id: MenuId_t): UIMenu | undefined {
-    return this.getAllMenus().find(menu => menu.id === id);
+    return this.getMenu(id);
   }
 
   // Add a menu to the list (called by PaperPrinter)
