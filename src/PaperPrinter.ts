@@ -308,7 +308,7 @@ export class PaperPrinter {
         icon: '📄',
         isFlyout: false,
         menuItems: this.menuItems_Page.bind(this),
-        flyoutMenuItemIds: ['size', 'orient', 'margin'],
+        flyoutMenuItemIds: ['pageSizeId', 'orient', 'marginId'],
         selectionHandler: this.handleSelection_Page.bind(this),
       },
       {
