@@ -22,16 +22,26 @@ export class Persist {
           return this.value[name];
         }
         
-        const globalValue = this.app.vscodeapis.getGlobalState(name);
-        if (globalValue !== undefined) {
-          this.value[name] = globalValue;
-          return globalValue;
+        try {
+          const globalValue = this.app.vscodeapis.getGlobalState(name);
+          if (globalValue !== undefined) {
+            this.value[name] = globalValue;
+            return globalValue;
+          }
+        } catch (error) {
+          this.app.ui.showErrorMessage(`Failed to load setting: ${name}`);
+          // Fall through to use default value
         }
         
         if (this.default[name] !== undefined) {
           const defaultValue = this.default[name];
           this.value[name] = defaultValue;
-          this.app.vscodeapis.updateGlobalState(name, defaultValue);
+          try {
+            this.app.vscodeapis.updateGlobalState(name, defaultValue);
+          } catch (error) {
+            this.app.ui.showErrorMessage(`Failed to save setting: ${name}`);
+            // Swallow error - local value is still set
+          }
           return defaultValue;
         }
         
@@ -41,7 +51,12 @@ export class Persist {
         const currentValue = this.value[name];
         if (value !== currentValue) {
           this.value[name] = value;
-          this.app.vscodeapis.updateGlobalState(name, value);
+          try {
+            this.app.vscodeapis.updateGlobalState(name, value);
+          } catch (error) {
+            this.app.ui.showErrorMessage(`Failed to save setting: ${name}`);
+            // Swallow error - local value is still set
+          }
         }
       },
       enumerable: true,
