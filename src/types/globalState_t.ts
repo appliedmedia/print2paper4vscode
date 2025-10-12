@@ -18,7 +18,6 @@ export interface GlobalStateMap {
   pageSizeId: string;           // 'a4', 'letter' - actual page size ID
   orient: string;               // 'portrait', 'landscape' - actual orientation ID
   fontSizePx: number;           // 12, 14, 18 - actual pixel value for calculations
-  lineHeight: number;           // 18, 20 - actual line height value
   theme: string;                // 'github-light', 'monokai' - actual theme ID
   fontFamily: string;           // 'Courier New' - actual font family
   toolbarPosPx: number;         // 100, 200 - actual pixel position
@@ -27,6 +26,5 @@ export interface GlobalStateMap {
   maxCanvasPoolSize: number;    // 7, 10 - actual pool size
   scrollableViewerEnabled: boolean; // true, false - actual boolean
   autoScrollableViewerThreshold: number; // 100, 500 - actual threshold
-  toolbarPos: string;           // 'top', 'bottom' - actual position ID
   marginId: string;             // 'normal', 'wide' - actual margin ID
 }

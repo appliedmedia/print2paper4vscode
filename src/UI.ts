@@ -11,15 +11,13 @@ export type GlobalStateKey_t =
   | 'marginId'
   | 'theme'
   | 'fontSizePx'
-  | 'lineHeight'
   | 'fontFamily'
   | 'toolbarPosPx'
   | 'pageRenderCacheSize'
   | 'scrollDebounceMs'
   | 'maxCanvasPoolSize'
   | 'scrollableViewerEnabled'
-  | 'autoScrollableViewerThreshold'
-  | 'toolbarPos';
+  | 'autoScrollableViewerThreshold';
 
 export const kGlobalStateKey: readonly GlobalStateKey_t[] = [
   'pageSizeId',
@@ -27,15 +25,13 @@ export const kGlobalStateKey: readonly GlobalStateKey_t[] = [
   'marginId',
   'theme',
   'fontSizePx',
-  'lineHeight',
   'fontFamily',
   'toolbarPosPx',
   'pageRenderCacheSize',
   'scrollDebounceMs',
   'maxCanvasPoolSize',
   'scrollableViewerEnabled',
-  'autoScrollableViewerThreshold',
-  'toolbarPos'
+  'autoScrollableViewerThreshold'
 ] as const;
 
 // Type guard for runtime validation

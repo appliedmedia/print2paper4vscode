@@ -217,7 +217,7 @@ export class UIMenu {
   // Convert item ID to actual value for storage and calculations
   private convertItemIdToValue(itemId: string): GlobalStateMap[GlobalStateKey] {
     // For numeric fields, parse the ID as a number
-    if (this._id === 'fontSizePx' || this._id === 'lineHeight' || this._id === 'toolbarPosPx' || 
+    if (this._id === 'fontSizePx' || this._id === 'toolbarPosPx' || 
         this._id === 'pageRenderCacheSize' || this._id === 'scrollDebounceMs' || 
         this._id === 'maxCanvasPoolSize' || this._id === 'autoScrollableViewerThreshold') {
       return parseInt(itemId, 10) as GlobalStateMap[GlobalStateKey];
