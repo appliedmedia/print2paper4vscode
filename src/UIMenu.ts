@@ -193,7 +193,7 @@ export class UIMenu {
   }
 
   // Get the default item ID for this menu
-  async defaultItem(): Promise<string> {
+  async defaultItemId(): Promise<string> {
     // Get global state value
     const globalValue = this.app.vscodeapis.getGlobalState(this._id);
     
@@ -300,7 +300,7 @@ export class UIMenu {
 
     // Generate menu items HTML using the new getItemHTML function
     const menuItems = this.getMenuItems();
-    const defaultItemId = await this.defaultItem(); // Get default once
+    const defaultItemId = await this.defaultItemId(); // Get default once
     const hasDefaultItem = !!defaultItemId;
 
     // Use explicit properties instead of calculated values
