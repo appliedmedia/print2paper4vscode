@@ -68,7 +68,7 @@ describe('UIMenuMgr', () => {
       const mockSelectionHandler = async (id: string): Promise<string> => Promise.resolve('');
 
       const menu = menuMgr.createMenu(
-        'testMenu',
+        'theme', // Use valid GlobalStateKey
         'Test Menu',
         '🔧',
         false,
@@ -80,7 +80,7 @@ describe('UIMenuMgr', () => {
 
       const menus = menuMgr.getAllMenus();
       assert.strictEqual(menus.length, 1, 'Should have 1 menu after adding');
-      assert.strictEqual(menus[0].id, 'testMenu', 'Should have correct menu ID');
+      assert.strictEqual(menus[0].id, 'theme', 'Should have correct menu ID');
     });
 
     it('should create multiple menus correctly', () => {
@@ -91,7 +91,7 @@ describe('UIMenuMgr', () => {
       const mockSelectionHandler = async (id: string): Promise<string> => Promise.resolve('');
 
       const menu1 = menuMgr.createMenu(
-        'menu1',
+        'theme', // Use valid GlobalStateKey
         'Menu 1',
         '🔧',
         false,
@@ -100,7 +100,7 @@ describe('UIMenuMgr', () => {
         mockSelectionHandler
       );
       const menu2 = menuMgr.createMenu(
-        'menu2',
+        'fontSizePx', // Use valid GlobalStateKey
         'Menu 2',
         '🎨',
         false,
@@ -131,7 +131,7 @@ describe('UIMenuMgr', () => {
       const mockSelectionHandler = async (id: string): Promise<string> => Promise.resolve('');
 
       const testMenu = menuMgr.createMenu(
-        'testMenu',
+        'theme', // Use valid GlobalStateKey
         'Test Menu',
         '🔧',
         false,
@@ -141,18 +141,18 @@ describe('UIMenuMgr', () => {
       );
       menuMgr.addMenu(testMenu);
 
-      const foundMenu = menuMgr.getMenu('testMenu');
+      const foundMenu = menuMgr.getMenuById('theme');
       assert.ok(foundMenu, 'Should find test menu');
-      assert.strictEqual(foundMenu?.id, 'testMenu', 'Should have correct ID');
+      assert.strictEqual(foundMenu?.id, 'theme', 'Should have correct ID');
     });
 
     it('should return undefined for non-existent menu', () => {
-      const nonExistent = menuMgr.getMenu('nonExistent');
+      const nonExistent = menuMgr.getMenuById('nonExistent');
       assert.strictEqual(nonExistent, undefined, 'Should return undefined for non-existent menu');
     });
 
     it('should handle case-sensitive menu IDs', () => {
-      const testMenu = menuMgr.getMenu('TestMenu');
+      const testMenu = menuMgr.getMenuById('TestMenu');
       assert.strictEqual(testMenu, undefined, 'Should be case-sensitive');
     });
   });
@@ -166,7 +166,7 @@ describe('UIMenuMgr', () => {
       const mockSelectionHandler = async (id: string): Promise<string> => Promise.resolve('');
 
       const menu1 = menuMgr.createMenu(
-        'menu1',
+        'theme', // Use valid GlobalStateKey
         'Menu 1',
         '🔧',
         false,
@@ -175,7 +175,7 @@ describe('UIMenuMgr', () => {
         mockSelectionHandler
       );
       const menu2 = menuMgr.createMenu(
-        'menu2',
+        'fontSizePx', // Use valid GlobalStateKey
         'Menu 2',
         '🎨',
         false,
@@ -189,8 +189,8 @@ describe('UIMenuMgr', () => {
 
       const html = await menuMgr.getAllUIMenuHTML();
 
-      assert.ok(html.includes('menu1'), 'Should include menu1 HTML');
-      assert.ok(html.includes('menu2'), 'Should include menu2 HTML');
+      assert.ok(html.includes('theme'), 'Should include theme HTML');
+      assert.ok(html.includes('fontSizePx'), 'Should include fontSizePx HTML');
     });
 
     it('should handle empty menu list', async () => {
@@ -207,7 +207,7 @@ describe('UIMenuMgr', () => {
       const mockListBuilder = () => [{ id: 'test', displayName: 'Test Item' }];
       const mockSelectionHandler = async (id: string): Promise<string> => Promise.resolve('');
       const testMenu = menuMgr.createMenu(
-        'testMenu',
+        'theme', // Use valid GlobalStateKey
         'Test Menu',
         '🔧',
         false,
@@ -231,7 +231,7 @@ describe('UIMenuMgr', () => {
       const mockSelectionHandler = async (id: string): Promise<string> => Promise.resolve('');
 
       const testMenu = menuMgr.createMenu(
-        'testMenu',
+        'theme', // Use valid GlobalStateKey
         'Test Menu',
         '🔧',
         false,
@@ -256,7 +256,7 @@ describe('UIMenuMgr', () => {
       const mockSelectionHandler = async (id: string): Promise<string> => Promise.resolve('');
 
       const menu1 = menuMgr.createMenu(
-        'menu1',
+        'theme', // Use valid GlobalStateKey
         'Menu 1',
         '🔧',
         false,
@@ -265,7 +265,7 @@ describe('UIMenuMgr', () => {
         mockSelectionHandler
       );
       const menu2 = menuMgr.createMenu(
-        'menu2',
+        'fontSizePx', // Use valid GlobalStateKey
         'Menu 2',
         '🎨',
         false,
@@ -293,7 +293,7 @@ describe('UIMenuMgr', () => {
       const mockSelectionHandler = async (id: string): Promise<string> => Promise.resolve('');
 
       const testMenu = menuMgr.createMenu(
-        'testMenu',
+        'theme', // Use valid GlobalStateKey
         'Test Menu',
         '🔧',
         false,
@@ -306,12 +306,12 @@ describe('UIMenuMgr', () => {
       const config = menuMgr.getMenuConfiguration();
 
       assert.strictEqual(config.length, 1, 'Should have 1 menu configuration');
-      assert.strictEqual(config[0].id, 'testMenu', 'Should have correct ID');
+      assert.strictEqual(config[0].id, 'theme', 'Should have correct ID');
       assert.strictEqual(config[0].icon, '🔧', 'Should have correct icon');
       assert.strictEqual(config[0].displayName, 'Test Menu', 'Should have correct displayName');
       assert.strictEqual(
         config[0].templateVariable,
-        'TESTMENU_MENU_ITEMS',
+        'THEME_MENU_ITEMS',
         'Should have correct template variable'
       );
     });
@@ -327,7 +327,7 @@ describe('UIMenuMgr', () => {
       const mockSelectionHandler = async (id: string): Promise<string> => Promise.resolve('');
 
       const longMenu = menuMgr.createMenu(
-        longId,
+        'theme', // Use valid GlobalStateKey
         'Long Menu',
         '🔧',
         false,
@@ -337,9 +337,9 @@ describe('UIMenuMgr', () => {
       );
       menuMgr.addMenu(longMenu);
 
-      const foundMenu = menuMgr.getMenu(longId);
+      const foundMenu = menuMgr.getMenuById('theme');
       assert.ok(foundMenu, 'Should find long menu');
-      assert.strictEqual(foundMenu?.id, longId, 'Should have correct long ID');
+      assert.strictEqual(foundMenu?.id, 'theme', 'Should have correct long ID');
     });
 
     it('should handle special characters in menu ID', () => {
@@ -351,7 +351,7 @@ describe('UIMenuMgr', () => {
       const mockSelectionHandler = async (id: string): Promise<string> => Promise.resolve('');
 
       const specialMenu = menuMgr.createMenu(
-        specialId,
+        'fontSizePx', // Use valid GlobalStateKey
         'Special Menu',
         '🔧',
         false,
@@ -361,9 +361,9 @@ describe('UIMenuMgr', () => {
       );
       menuMgr.addMenu(specialMenu);
 
-      const foundMenu = menuMgr.getMenu(specialId);
+      const foundMenu = menuMgr.getMenuById('fontSizePx');
       assert.ok(foundMenu, 'Should find special menu');
-      assert.strictEqual(foundMenu?.id, specialId, 'Should have correct special ID');
+      assert.strictEqual(foundMenu?.id, 'fontSizePx', 'Should have correct special ID');
     });
   });
 });

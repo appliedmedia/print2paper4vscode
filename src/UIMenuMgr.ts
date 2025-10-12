@@ -52,24 +52,31 @@ export class UIMenuMgr {
   }
 
   // Handle menu item selection
-  async handleMenuItemSelected(menuId: GlobalStateKey, itemId: string): Promise<void> {
+  async handleMenuItemSelected(menuId: string, itemId: string): Promise<void> {
     const dx = this.dx.sub('handleMenuItemSelected');
     
     try {
-      const menu = this.getMenu(menuId);
+      // Validate menuId exists in our menus
+      const menu = this.getMenuById(menuId);
       if (menu) {
         await menu.dispatchSelection(itemId);
         dx.out(`Menu item selected: ${menuId}.${itemId}`);
       } else {
         dx.out(`No menu found for menuId: ${menuId}`);
+        throw new Error(`Invalid menu ID: ${menuId}`);
       }
     } finally {
       dx.done();
     }
   }
 
-  // Get a specific menu by ID
+  // Get a specific menu by ID (for internal use with GlobalStateKey)
   getMenu(id: GlobalStateKey): UIMenu | undefined {
+    return this.getAllMenus().find(menu => menu.id === id);
+  }
+
+  // Get a specific menu by string ID (for webview validation)
+  getMenuById(id: string): UIMenu | undefined {
     return this.getAllMenus().find(menu => menu.id === id);
   }
 
