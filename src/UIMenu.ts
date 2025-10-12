@@ -1,6 +1,6 @@
 import type { App } from './App';
 import type { UIMenuItem } from './types/UI_t';
-import type { GlobalStateKey } from './types/globalState_t';
+import type { GlobalStateKey, GlobalStateMap } from './types/globalState_t';
 import { Diagnostics } from './Diagnostics';
 import { Persist } from './Persist';
 
@@ -104,11 +104,23 @@ export class UIMenu {
     if (globalValue !== undefined) {
       // Global state has a value, set it and return it
       (this.persist as any)[this._id] = globalValue;
-      return globalValue;
+      return globalValue as GlobalStateMap[GlobalStateKey];
     }
     
     // No global value, dispatch to selection handler to get default
-    const defaultValue = await this.dispatchSelection(this.defaultId());
+    const defaultValueStr = await this.dispatchSelection(this.defaultId());
+    
+    // Convert string to proper type based on the key
+    let defaultValue: GlobalStateMap[GlobalStateKey];
+    if (this._id === 'fontSizePx' || this._id === 'lineHeight' || this._id === 'toolbarPosPx' || 
+        this._id === 'pageRenderCacheSize' || this._id === 'scrollDebounceMs' || 
+        this._id === 'maxCanvasPoolSize' || this._id === 'autoScrollableViewerThreshold') {
+      defaultValue = parseInt(defaultValueStr, 10) as GlobalStateMap[GlobalStateKey];
+    } else if (this._id === 'scrollableViewerEnabled') {
+      defaultValue = (defaultValueStr === 'true') as GlobalStateMap[GlobalStateKey];
+    } else {
+      defaultValue = defaultValueStr as GlobalStateMap[GlobalStateKey];
+    }
     
     // Set the default value after getting it from selection handler
     this.persist.setDefault(this._id as GlobalStateKey, defaultValue);

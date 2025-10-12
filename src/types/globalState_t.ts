@@ -5,6 +5,8 @@
  * This ensures type safety when accessing global state values.
  */
 
+export type GlobalStateValue = string | number | boolean;
+
 export type GlobalStateKey =
   | 'pageSizeId'
   | 'orient'
@@ -24,16 +26,16 @@ export type GlobalStateKey =
 export interface GlobalStateMap {
   pageSizeId: string;
   orient: string;
-  fontSizePx: string;
-  lineHeight: string;
+  fontSizePx: number;
+  lineHeight: number;
   theme: string;
   fontFamily: string;
-  toolbarPosPx: string;
-  pageRenderCacheSize: string;
-  scrollDebounceMs: string;
-  maxCanvasPoolSize: string;
-  scrollableViewerEnabled: string;
-  autoScrollableViewerThreshold: string;
+  toolbarPosPx: number;
+  pageRenderCacheSize: number;
+  scrollDebounceMs: number;
+  maxCanvasPoolSize: number;
+  scrollableViewerEnabled: boolean;
+  autoScrollableViewerThreshold: number;
   toolbarPos: string;
   marginId: string;
 }

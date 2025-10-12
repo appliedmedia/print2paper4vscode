@@ -74,74 +74,70 @@ export class VSCodeAPIs {
    * Get scrollable viewer enabled state
    */
   getScrollableViewerEnabled(): boolean {
-    return this.getGlobalState('scrollableViewerEnabled') === 'true';
+    return this.getGlobalState('scrollableViewerEnabled') ?? false;
   }
 
   /**
    * Set scrollable viewer enabled state
    */
   setScrollableViewerEnabled(enabled: boolean): void {
-    this.updateGlobalState('scrollableViewerEnabled', String(enabled));
+    this.updateGlobalState('scrollableViewerEnabled', enabled);
   }
 
   /**
    * Get maximum canvas pool size
    */
   getMaxCanvasPoolSize(): number {
-    const value = this.getGlobalState('maxCanvasPoolSize');
-    return value ? parseInt(value, 10) || 7 : 7;
+    return this.getGlobalState('maxCanvasPoolSize') ?? 7;
   }
 
   /**
    * Set maximum canvas pool size
    */
   setMaxCanvasPoolSize(size: number): void {
-    this.updateGlobalState('maxCanvasPoolSize', String(Math.max(1, Math.min(20, size))));
+    this.updateGlobalState('maxCanvasPoolSize', Math.max(1, Math.min(20, size)));
   }
 
   /**
    * Get auto scrollable viewer threshold (lines)
    */
   getAutoScrollableViewerThreshold(): number {
-    const value = this.getGlobalState('autoScrollableViewerThreshold');
-    return value ? parseInt(value, 10) || 1000 : 1000;
+    return this.getGlobalState('autoScrollableViewerThreshold') ?? 1000;
   }
 
   /**
    * Set auto scrollable viewer threshold (lines)
    */
   setAutoScrollableViewerThreshold(threshold: number): void {
-    this.updateGlobalState('autoScrollableViewerThreshold', String(Math.max(100, threshold)));
+    this.updateGlobalState('autoScrollableViewerThreshold', Math.max(100, threshold));
   }
 
   /**
    * Get page render cache size
    */
   getPageRenderCacheSize(): number {
-    const value = this.getGlobalState('pageRenderCacheSize');
-    return value ? parseInt(value, 10) || 10 : 10;
+    return this.getGlobalState('pageRenderCacheSize') ?? 10;
   }
 
   /**
    * Set page render cache size
    */
   setPageRenderCacheSize(size: number): void {
-    this.updateGlobalState('pageRenderCacheSize', String(Math.max(1, Math.min(50, size))));
+    this.updateGlobalState('pageRenderCacheSize', Math.max(1, Math.min(50, size)));
   }
 
   /**
    * Get scroll debounce time in milliseconds
    */
   getScrollDebounceMs(): number {
-    const value = this.getGlobalState('scrollDebounceMs');
-    return value ? parseInt(value, 10) || 16 : 16;
+    return this.getGlobalState('scrollDebounceMs') ?? 16;
   }
 
   /**
    * Set scroll debounce time in milliseconds
    */
   setScrollDebounceMs(ms: number): void {
-    this.updateGlobalState('scrollDebounceMs', String(Math.max(1, Math.min(100, ms))));
+    this.updateGlobalState('scrollDebounceMs', Math.max(1, Math.min(100, ms)));
   }
 
   getEditorTypography(): {
