@@ -102,9 +102,9 @@ export class UIMenu {
     const globalValue = this.app.vscodeapis.getGlobalState(this._id);
     
     if (globalValue !== undefined) {
-      // Global state has a value, set it and return it
+      // Global state has a value, set it and return the item ID
       (this.persist as any)[this._id] = globalValue;
-      return globalValue as GlobalStateMap[GlobalStateKey];
+      return this.defaultId();
     }
     
     // No global value, dispatch to selection handler to get default
@@ -125,7 +125,7 @@ export class UIMenu {
     // Set the default value after getting it from selection handler
     this.persist.setDefault(this._id as GlobalStateKey, defaultValue);
     
-    return defaultValue;
+    return this.defaultId();
   }
 
   // Getter for the YAML data - handles loading and validation automatically
