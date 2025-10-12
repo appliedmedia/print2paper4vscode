@@ -4,7 +4,7 @@ import type { WebviewPanelId } from './VSCodeAPIs';
 import type { PostMessage } from './types/UI_t';
 import { UIScrollView, type ScrollOptions } from './UIScrollView';
 import { UIMenuMgr } from './UIMenuMgr';
-import { isMenuId, isItemId } from './UIMenu';
+import { isMenuId, isMenuItemId } from './UIMenu';
 import { Diagnostics } from './Diagnostics';
 
 /**
@@ -316,7 +316,7 @@ export class UIWebView {
       const { menuId, itemId } = msg;
       if (typeof menuId === 'string' && typeof itemId === 'string') {
         // Validate both menuId and itemId before proceeding
-        if (isMenuId(menuId) && isItemId(itemId)) {
+        if (isMenuId(menuId) && isMenuItemId(itemId)) {
           // Handle menu item selection through menu manager
           if (this.menuMgr) {
             await this.menuMgr.handleMenuItemSelected(menuId, itemId);

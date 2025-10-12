@@ -24,8 +24,8 @@ export const kMenuId: readonly MenuId_t[] = [
   'fontSizePx'
 ] as const;
 
-// Item ID types - Individual menu item identifiers
-export type ItemId_t = 
+// Menu Item ID types - Individual menu item identifiers
+export type MenuItemId_t = 
   | 'test'
   | 'preview'
   | 'direct'
@@ -47,7 +47,7 @@ export type ItemId_t =
   | '18'
   | '24';
 
-export const kItemId: readonly ItemId_t[] = [
+export const kMenuItemId: readonly MenuItemId_t[] = [
   'test',
   'preview',
   'direct',
@@ -75,8 +75,8 @@ export function isMenuId(id: string): id is MenuId_t {
   return kMenuId.includes(id as MenuId_t);
 }
 
-export function isItemId(id: string): id is ItemId_t {
-  return kItemId.includes(id as ItemId_t);
+export function isMenuItemId(id: string): id is MenuItemId_t {
+  return kMenuItemId.includes(id as MenuItemId_t);
 }
 
 export class UIMenu {
@@ -109,7 +109,7 @@ export class UIMenu {
     private _isFlyout: boolean = false,
     private _menuItems: () => UIMenuItem[],
     private _flyoutMenuItemIds: string[] = [],
-    private _selectionHandler: (id: ItemId_t) => Promise<string>
+    private _selectionHandler: (id: MenuItemId_t) => Promise<string>
   ) {
     this.persist = new Persist(app);
     this.dx = this.app.dx.create('UIMenu');
@@ -167,7 +167,7 @@ export class UIMenu {
   }
 
   // Dispatch a selection to this menu's handler
-  async dispatchSelection(id: ItemId_t): Promise<string> {
+  async dispatchSelection(id: MenuItemId_t): Promise<string> {
     return this._selectionHandler(id);
   }
 
@@ -184,7 +184,7 @@ export class UIMenu {
     }
     
     // No global value, dispatch to selection handler to get default
-    const defaultItemId = await this.dispatchSelection(this.defaultId() as ItemId_t);
+    const defaultItemId = await this.dispatchSelection(this.defaultId() as MenuItemId_t);
     
     // Store the item ID directly
     this.persist.setDefault(this._id as GlobalStateKey, defaultItemId);

@@ -1,5 +1,5 @@
 import type { App } from './App';
-import { UIMenu, type MenuId_t, type ItemId_t } from './UIMenu';
+import { UIMenu, type MenuId_t, type MenuItemId_t } from './UIMenu';
 import type { UIMenuItem } from './types/UI_t';
 import type { GlobalStateKey } from './types/globalState_t';
 import { Diagnostics } from './Diagnostics';
@@ -52,7 +52,7 @@ export class UIMenuMgr {
   }
 
   // Handle menu item selection
-  async handleMenuItemSelected(menuId: MenuId_t, itemId: ItemId_t): Promise<void> {
+  async handleMenuItemSelected(menuId: MenuId_t, itemId: MenuItemId_t): Promise<void> {
     const dx = this.dx.sub('handleMenuItemSelected');
     
     try {
