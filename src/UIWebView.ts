@@ -2,6 +2,7 @@ import type { App } from './App';
 import type { PageRender } from './types/PageRender_t';
 import type { WebviewPanelId } from './VSCodeAPIs';
 import type { PostMessage } from './types/UI_t';
+import type { GlobalStateKey } from './types/globalState_t';
 import { UIScrollView, type ScrollOptions } from './UIScrollView';
 import { UIMenuMgr } from './UIMenuMgr';
 import { Diagnostics } from './Diagnostics';
@@ -316,7 +317,7 @@ export class UIWebView {
       if (typeof menuId === 'string' && typeof itemId === 'string') {
         // Handle menu item selection through menu manager
         if (this.menuMgr) {
-          await this.menuMgr.handleMenuItemSelected(menuId, itemId);
+          await this.menuMgr.handleMenuItemSelected(menuId as GlobalStateKey, itemId);
           dx.out(`Menu item selected: ${menuId}.${itemId}`);
         }
       }

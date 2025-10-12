@@ -48,9 +48,6 @@ export class UIMenu {
   }
 
   // Getters for private properties
-  get id(): string {
-    return this._id;
-  }
   get icon(): string {
     return this._icon;
   }

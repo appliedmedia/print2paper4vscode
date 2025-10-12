@@ -98,7 +98,7 @@ export class PaperPrinter {
   // Computed line height from font size
   get lineHeightPx(): number {
     const editorTypo = this.app.vscodeapis.getEditorTypography();
-    const menu = this.app.uimenumgr.getMenu('text');
+    const menu = this.app.uimenumgr.getMenu('fontSizePx');
     return (parseInt((menu?.persist as any).fontSizePx || '12', 10)) * editorTypo.sizeToHeightRatio;
   }
 
@@ -308,7 +308,7 @@ export class PaperPrinter {
         icon: '📄',
         isFlyout: false,
         menuItems: this.menuItems_Page.bind(this),
-        flyoutMenuItemIds: ['pageSizeId', 'orient', 'marginId'],
+        flyoutMenuItemIds: ['size', 'orient', 'margin'],
         selectionHandler: this.handleSelection_Page.bind(this),
       },
       {
@@ -348,7 +348,7 @@ export class PaperPrinter {
         selectionHandler: this.handleSelection_Theme.bind(this),
       },
       {
-        id: 'text',
+        id: 'fontSizePx',
         displayName: 'Text',
         icon: 'Tt',
         isFlyout: false,
@@ -361,7 +361,7 @@ export class PaperPrinter {
     menuConfigs.forEach(config => {
       this.dx.out(`Creating menu: ${config.id} with icon: ${config.icon}`);
       const menu = this.app.uimenumgr.createMenu(
-        config.id,
+        config.id as GlobalStateKey,
         config.displayName,
         config.icon,
         config.isFlyout,
@@ -579,7 +579,7 @@ export class PaperPrinter {
     dx.out(`selectedId = ${selectedId}`);
 
     if (selectedId === UIMenu.defaultId()) {
-      const menu = this.app.uimenumgr.getMenu('text');
+      const menu = this.app.uimenumgr.getMenu('fontSizePx');
       if (menu) {
         dx.out(`returning current fontSize: ${(menu.persist as any).text}`);
         dx.done();
@@ -595,7 +595,7 @@ export class PaperPrinter {
     }
 
     dx.out(`updating fontSize to ${fontSize}`);
-    const menu = this.app.uimenumgr.getMenu('text');
+    const menu = this.app.uimenumgr.getMenu('fontSizePx');
     if (menu) {
       (menu.persist as any).text = fontSize;
     }
