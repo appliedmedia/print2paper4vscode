@@ -4,7 +4,7 @@ import type { PageRender, PageData, RenderOptions, PageRenderError } from './typ
 import type { PDFDoc } from './types/PDF_t';
 import { Diagnostics } from './Diagnostics';
 import jsPDF from 'jspdf';
-import type { ThemedToken } from 'shiki';
+import type { IThemedToken as ThemedToken } from 'shiki';
 import { DocInfo_PDF } from './DocInfo_PDF';
 
 /**

@@ -63,10 +63,10 @@
     "typescript": "^5.9.2"
   },
   "dependencies": {
-    "@shikijs/vscode-textmate": "^10.0.2",
     "jspdf": "^2.5.1",
-    "shiki": "^3.11.0",
-    "vscode-oniguruma": "^2.0.1",
+    "shiki": "^0.14.7",
+    "vscode-textmate": "^5.4.0",
+    "vscode-oniguruma": "^1.7.0",
     "yaml": "latest"
   }
 }
