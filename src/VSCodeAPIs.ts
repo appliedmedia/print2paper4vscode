@@ -70,96 +70,82 @@ export class VSCodeAPIs {
   // PageRender Configuration Management
   // ============================================================================
 
-  /**
-   * Get scrollable viewer enabled state
-   */
   getFontSizePx(): number {
-    const value = this.getGlobalState('fontSizePx');
-    return value ? parseInt(value, 10) : 12;
+    return this.getGlobalState('fontSizePx') ?? 12;
   }
 
   /**
    * Set font size in pixels
    */
   setFontSizePx(size: number): void {
-    const clampedSize = Math.max(8, Math.min(48, size));
-    this.updateGlobalState('fontSizePx', String(clampedSize));
+    this.updateGlobalState('fontSizePx', Math.max(8, Math.min(48, size)));
   }
 
   getScrollableViewerEnabled(): boolean {
-    const value = this.getGlobalState('scrollableViewerEnabled');
-    return value === 'true';
+    return this.getGlobalState('scrollableViewerEnabled') ?? false;
   }
 
   /**
    * Set scrollable viewer enabled state
    */
   setScrollableViewerEnabled(enabled: boolean): void {
-    this.updateGlobalState('scrollableViewerEnabled', enabled ? 'true' : 'false');
+    this.updateGlobalState('scrollableViewerEnabled', enabled);
   }
 
   /**
    * Get maximum canvas pool size
    */
   getMaxCanvasPoolSize(): number {
-    const value = this.getGlobalState('maxCanvasPoolSize');
-    return value ? parseInt(value, 10) : 7;
+    return this.getGlobalState('maxCanvasPoolSize') ?? 7;
   }
 
   /**
    * Set maximum canvas pool size
    */
   setMaxCanvasPoolSize(size: number): void {
-    const clampedSize = Math.max(1, Math.min(20, size));
-    this.updateGlobalState('maxCanvasPoolSize', String(clampedSize));
+    this.updateGlobalState('maxCanvasPoolSize', Math.max(1, Math.min(20, size)));
   }
 
   /**
    * Get auto scrollable viewer threshold (lines)
    */
   getAutoScrollableViewerThreshold(): number {
-    const value = this.getGlobalState('autoScrollableViewerThreshold');
-    return value ? parseInt(value, 10) : 1000;
+    return this.getGlobalState('autoScrollableViewerThreshold') ?? 1000;
   }
 
   /**
    * Set auto scrollable viewer threshold (lines)
    */
   setAutoScrollableViewerThreshold(threshold: number): void {
-    const clampedThreshold = Math.max(100, threshold);
-    this.updateGlobalState('autoScrollableViewerThreshold', String(clampedThreshold));
+    this.updateGlobalState('autoScrollableViewerThreshold', Math.max(100, threshold));
   }
 
   /**
    * Get page render cache size
    */
   getPageRenderCacheSize(): number {
-    const value = this.getGlobalState('pageRenderCacheSize');
-    return value ? parseInt(value, 10) : 10;
+    return this.getGlobalState('pageRenderCacheSize') ?? 10;
   }
 
   /**
    * Set page render cache size
    */
   setPageRenderCacheSize(size: number): void {
-    const clampedSize = Math.max(1, Math.min(50, size));
-    this.updateGlobalState('pageRenderCacheSize', String(clampedSize));
+    this.updateGlobalState('pageRenderCacheSize', Math.max(1, Math.min(50, size)));
   }
 
   /**
    * Get scroll debounce time in milliseconds
    */
   getScrollDebounceMs(): number {
-    const value = this.getGlobalState('scrollDebounceMs');
-    return value ? parseInt(value, 10) : 16;
+    return this.getGlobalState('scrollDebounceMs') ?? 16;
   }
 
   /**
    * Set scroll debounce time in milliseconds
    */
   setScrollDebounceMs(ms: number): void {
-    const clampedMs = Math.max(1, Math.min(100, ms));
-    this.updateGlobalState('scrollDebounceMs', String(clampedMs));
+    this.updateGlobalState('scrollDebounceMs', Math.max(1, Math.min(100, ms)));
   }
 
   getEditorTypography(): {

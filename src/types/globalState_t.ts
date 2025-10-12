@@ -15,15 +15,15 @@ export type GlobalStateValue = string | number | boolean;
 export type GlobalStateKey = GlobalStateKey_t;
 
 export interface GlobalStateKeyToValueType {
-  pageSizeId: string;           // 'a4', 'letter' - page size item ID
-  orient: string;               // 'portrait', 'landscape' - orientation item ID
-  fontSizePx: string;           // '12', '14', '18' - font size item ID
-  theme: string;                // 'github-light', 'monokai' - theme item ID
-  toolbarPosPx: string;         // '100', '200' - toolbar position item ID
-  pageRenderCacheSize: string;  // '10', '20' - cache size item ID
-  scrollDebounceMs: string;     // '16', '32' - debounce time item ID
-  maxCanvasPoolSize: string;    // '7', '10' - pool size item ID
-  scrollableViewerEnabled: string; // 'true', 'false' - enabled item ID
-  autoScrollableViewerThreshold: string; // '100', '500' - threshold item ID
-  marginId: string;             // 'normal', 'wide' - margin item ID
+  pageSizeId: string;           // 'a4', 'letter' - page size ID
+  orient: string;               // 'portrait', 'landscape' - orientation ID
+  fontSizePx: number;           // 12, 14, 18 - actual pixel value
+  theme: string;                // 'github-light', 'monokai' - theme ID
+  toolbarPosPx: number;         // 100, 200 - actual pixel position
+  pageRenderCacheSize: number;  // 10, 20 - actual cache size
+  scrollDebounceMs: number;     // 16, 32 - actual milliseconds
+  maxCanvasPoolSize: number;    // 7, 10 - actual pool size
+  scrollableViewerEnabled: boolean; // true, false - actual boolean
+  autoScrollableViewerThreshold: number; // 100, 500 - actual threshold
+  marginId: string;             // 'normal', 'wide' - margin ID
 }
