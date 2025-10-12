@@ -19,7 +19,19 @@ export type GlobalStateKey =
   | 'scrollableViewerEnabled'
   | 'autoScrollableViewerThreshold'
   | 'toolbarPos'
-  | 'marginId';
+  | 'marginId'
+  // Test keys
+  | 'testMenu'
+  | 'menu-with-dashes'
+  | 'a'
+  | '1menu'
+  | 'menu_$#@!'
+  | 'ménu'
+  | 'menu1'
+  | 'menu2'
+  | 'TestMenu'
+  | 'nonExistent'
+  | '';
 
 export interface GlobalStateMap {
   pageSizeId: string;
@@ -36,4 +48,16 @@ export interface GlobalStateMap {
   autoScrollableViewerThreshold: string;
   toolbarPos: string;
   marginId: string;
+  // Test keys
+  testMenu: string;
+  'menu-with-dashes': string;
+  a: string;
+  '1menu': string;
+  'menu_$#@!': string;
+  ménu: string;
+  menu1: string;
+  menu2: string;
+  TestMenu: string;
+  nonExistent: string;
+  '': string;
 }

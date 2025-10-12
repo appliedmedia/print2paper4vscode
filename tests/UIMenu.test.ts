@@ -2,6 +2,7 @@ import { describe, it } from 'node:test';
 import * as assert from 'node:assert';
 import { UIMenu } from '../src/UIMenu.js';
 import type { UIMenuItem } from '../src/types/UI_t.js';
+import type { GlobalStateKey } from '../src/types/globalState_t.js';
 
 // Mock App for testing
 const mockApp = {
@@ -164,7 +165,7 @@ describe('UIMenu', () => {
       const longId = 'a'.repeat(100);
       const longMenu = new UIMenu(
         mockApp,
-        longId,
+        longId as GlobalStateKey,
         'Long Menu',
         '🔧',
         false,

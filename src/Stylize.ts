@@ -109,7 +109,9 @@ export class Stylize {
 
     return themes.map(theme => ({
       id: theme,
-      displayName: theme, // Use theme ID as display name
+      displayName: theme.split('-').map(word => 
+        word.charAt(0).toUpperCase() + word.slice(1)
+      ).join(' '), // Convert kebab-case to Title Case
       themeData: null, // Pure Shiki themes use id directly
     }));
   }

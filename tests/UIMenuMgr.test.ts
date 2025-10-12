@@ -2,6 +2,7 @@ import { describe, it } from 'node:test';
 import * as assert from 'node:assert';
 import { UIMenuMgr } from '../src/UIMenuMgr.js';
 import { UIMenu } from '../src/UIMenu.js';
+import type { GlobalStateKey } from '../src/types/globalState_t.js';
 
 // Mock App class for testing
 class MockApp {
@@ -327,7 +328,7 @@ describe('UIMenuMgr', () => {
       const mockSelectionHandler = async (id: string): Promise<string> => Promise.resolve('');
 
       const longMenu = menuMgr.createMenu(
-        longId,
+        longId as GlobalStateKey,
         'Long Menu',
         '🔧',
         false,
@@ -337,7 +338,7 @@ describe('UIMenuMgr', () => {
       );
       menuMgr.addMenu(longMenu);
 
-      const foundMenu = menuMgr.getMenu(longId);
+      const foundMenu = menuMgr.getMenu(longId as GlobalStateKey);
       assert.ok(foundMenu, 'Should find long menu');
       assert.strictEqual(foundMenu?.id, longId, 'Should have correct long ID');
     });
