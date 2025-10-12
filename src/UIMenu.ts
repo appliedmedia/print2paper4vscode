@@ -178,58 +178,19 @@ export class UIMenu {
     const globalValue = this.app.vscodeapis.getGlobalState(this._id);
     
     if (globalValue !== undefined) {
-      // Global state has a value, set it and convert to item ID
+      // Global state has a value, set it and return as string
       (this.persist as any)[this._id] = globalValue;
-      return this.convertValueToItemId(globalValue);
+      return String(globalValue);
     }
     
     // No global value, dispatch to selection handler to get default
     const defaultItemId = await this.dispatchSelection(this.defaultId() as ItemId_t);
     
-    // Convert item ID to actual value and store it
-    const actualValue = this.convertItemIdToValue(defaultItemId);
-    this.persist.setDefault(this._id as GlobalStateKey, actualValue);
+    // Store the item ID directly
+    this.persist.setDefault(this._id as GlobalStateKey, defaultItemId);
     
     // Return the item ID for UI display
     return defaultItemId;
-  }
-
-  // Convert stored value back to item ID for UI display
-  private convertValueToItemId(value: GlobalStateMap[GlobalStateKey]): string {
-    // For string values (IDs), return as-is
-    if (typeof value === 'string') {
-      return value;
-    }
-    
-    // For numeric values, convert to string ID
-    if (typeof value === 'number') {
-      return String(value);
-    }
-    
-    // For boolean values, convert to string ID
-    if (typeof value === 'boolean') {
-      return String(value);
-    }
-    
-    return String(value);
-  }
-
-  // Convert item ID to actual value for storage and calculations
-  private convertItemIdToValue(itemId: string): GlobalStateMap[GlobalStateKey] {
-    // For numeric fields, parse the ID as a number
-    if (this._id === 'fontSizePx' || this._id === 'toolbarPosPx' || 
-        this._id === 'pageRenderCacheSize' || this._id === 'scrollDebounceMs' || 
-        this._id === 'maxCanvasPoolSize' || this._id === 'autoScrollableViewerThreshold') {
-      return parseInt(itemId, 10) as GlobalStateMap[GlobalStateKey];
-    }
-    
-    // For boolean fields, convert string to boolean
-    if (this._id === 'scrollableViewerEnabled') {
-      return (itemId === 'true') as GlobalStateMap[GlobalStateKey];
-    }
-    
-    // For string fields, return as-is
-    return itemId as GlobalStateMap[GlobalStateKey];
   }
 
   // Getter for the YAML data - handles loading and validation automatically
