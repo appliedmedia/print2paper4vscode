@@ -706,6 +706,9 @@ export class PaperPrinter {
 
     dx.out(`updating margin to ${selectedId}`);
     
+    // Update document persist state first (PDF pipeline reads this)
+    (this.docInfo.persist as any).marginId = selectedId as 'none' | 'minimal' | 'normal' | 'wide';
+    
     // Update persistent margin selection via UIMenu
     const menu = this.app.uimenumgr.getMenu('marginId');
     if (menu) {
