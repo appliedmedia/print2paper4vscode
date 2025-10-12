@@ -1,35 +1,35 @@
 import type { App } from './App';
-import type { GlobalStateKey } from './types/globalState_t';
+import type { GlobalStateKey, GlobalStateMap } from './types/globalState_t';
 
 // Type for dynamically created properties on Persist instances
 export type PersistProperties = {
-  [K in GlobalStateKey]?: string;
+  [K in GlobalStateKey]?: GlobalStateMap[K];
 };
 
 export class Persist {
   private app: App;
-  private default: { [key in GlobalStateKey]?: string } = {};
-  private value: { [key in GlobalStateKey]?: string } = {};
+  private default: Partial<GlobalStateMap> = {};
+  private value: Partial<GlobalStateMap> = {};
 
   constructor(app: App) {
     this.app = app;
   }
 
-  register(name: GlobalStateKey): this {
+  register<K extends GlobalStateKey>(name: K): this {
     Object.defineProperty(this, name, {
       get: () => {
-        let result: string | undefined = undefined;
+        let result: GlobalStateMap[K] | undefined = undefined;
         
         // Check in-memory cache first
         if (this.value[name] !== undefined) {
-          result = this.value[name];
+          result = this.value[name] as GlobalStateMap[K];
         } else {
           // Try to get from global state
           try {
-            const globalValue = this.app.vscodeapis.getGlobalState(name as GlobalStateKey);
+            const globalValue = this.app.vscodeapis.getGlobalState(name);
             if (globalValue !== undefined) {
-              result = globalValue;
-              this.value[name] = globalValue; // Populate cache
+              result = globalValue as GlobalStateMap[K];
+              this.value[name] = result; // Populate cache
             }
           } catch (error) {
             this.app.ui.showErrorMessage(`Failed to load setting: ${name}`);
@@ -38,10 +38,10 @@ export class Persist {
           
           // If no global value, try default
           if (result === undefined && this.default[name] !== undefined) {
-            result = this.default[name];
+            result = this.default[name] as GlobalStateMap[K];
             this.value[name] = result; // Populate cache
             try {
-              this.app.vscodeapis.updateGlobalState(name as GlobalStateKey, result);
+              this.app.vscodeapis.updateGlobalState(name, result);
             } catch (error) {
               this.app.ui.showErrorMessage(`Failed to save setting: ${name}`);
               // Swallow error - local value is still set
@@ -51,7 +51,7 @@ export class Persist {
         
         return result;
       },
-      set: (value: string) => {
+      set: (value: GlobalStateMap[K]) => {
         const currentValue = this.value[name];
         if (value !== currentValue) {
           this.value[name] = value;
@@ -69,7 +69,7 @@ export class Persist {
     return this;
   }
 
-  setDefault(name: GlobalStateKey, defaultValue: string): this {
+  setDefault<K extends GlobalStateKey>(name: K, defaultValue: GlobalStateMap[K]): this {
     this.default[name] = defaultValue;
     return this;
   }
