@@ -22,7 +22,6 @@ export class DocInfo_PDF {
 
   // PDF document state
   public currentPdfDoc: jsPDF | null = null;
-  public paperDocInfo: any = null; // TODO: Type this properly
   public currentTokens: ThemedToken[][] | null = null;
 
   // PDF generation settings
