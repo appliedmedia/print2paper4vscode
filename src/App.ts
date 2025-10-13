@@ -20,6 +20,22 @@ type components_t = {
   uimenumgr: UIMenuMgr;
 };
 
+/**
+ * App - Main application container and component manager
+ *
+ * Central orchestrator for the Print2Paper4VSCode extension. Creates and manages
+ * all major components, handles initialization/cleanup lifecycle, and provides
+ * shared utilities like template replacement.
+ *
+ * @input context - VS Code extension context
+ * @input vscode - VS Code API module
+ * @output Initialized component ecosystem, lifecycle management, template utilities
+ *
+ * @example
+ * const app = new App(context, vscode);
+ * app.init();
+ * const replaced = app.templateDictReplace('Hello {{name}}', {name: 'World'});
+ */
 export class App {
   vscodeapis: VSCodeAPIs;
   ui: UI;

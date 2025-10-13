@@ -6,6 +6,22 @@ import { kMenuId } from './UIMenu';
 // UI persist keys - union of menu IDs and toolbar position
 export const kUI_t = [...kMenuId, 'toolbarPosPx'] as const;
 
+/**
+ * UI - User interface utilities and message handling
+ *
+ * Provides VS Code UI integration including error/info messages, save dialogs,
+ * message handler registration/dispatch, and YAML-based toolbar/CSS generation.
+ * Acts as central hub for webview-to-extension communication.
+ *
+ * @input app - Application instance
+ * @output UI dialogs, message routing, toolbar HTML/CSS/JS from templates
+ *
+ * @example
+ * const ui = new UI(app);
+ * ui.showErrorMessage('Something fucked up');
+ * ui.onMessage('menuItemSelected', async (data) => { ... });
+ * const toolbar = ui.getToolbarHTML();
+ */
 export class UI {
   private app: App;
   private messageHandlers: Map<string, MessageHandler[]> = new Map();

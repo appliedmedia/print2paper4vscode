@@ -15,7 +15,24 @@ export interface ScrollOptions {
 }
 
 /**
- * UIScrollView - Handles scroll view document viewing with virtual scrolling
+ * UIScrollView - Virtual scrolling document viewer with canvas pooling
+ *
+ * Renders multi-page documents using virtual scrolling and canvas pooling for
+ * performance. Manages page cache, render queue, and scroll-synchronized canvas
+ * updates. Generates HTML/CSS/JS for webview display from YAML templates.
+ *
+ * @input app - Application instance
+ * @input pageRender - PageRender interface for page-by-page rendering
+ * @input options - Display options (theme, font, page size, orientation)
+ * @output Virtual scrolling HTML/CSS/JS, page rendering, scroll handling
+ *
+ * @example
+ * const scrollView = new UIScrollView(app, pdfRenderer, {
+ *   title: 'Document',
+ *   theme: 'github-light',
+ *   fontSizePx: 12
+ * });
+ * const html = await scrollView.getHTML();
  */
 export class UIScrollView {
   private readonly CONFIG = {

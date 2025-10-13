@@ -64,6 +64,27 @@ export function isMenuItemId(id: string): id is MenuItemId_t {
   return kMenuItemId.includes(id as MenuItemId_t);
 }
 
+/**
+ * UIMenu - Generic menu component for webview toolbar
+ *
+ * Creates and manages individual menu instances with items, flyouts, and selection
+ * handling. Generates HTML/CSS/JS from YAML templates, manages persistence of
+ * selections, and dispatches user interactions to handlers.
+ *
+ * @input app - Application instance
+ * @input id - Unique menu identifier
+ * @input displayName - User-visible menu name
+ * @input icon - SVG icon for menu button
+ * @input menuItems - Function returning menu item definitions
+ * @input selectionHandler - Async handler for menu item selections
+ * @output HTML menu structure, selection handling, persistent state
+ *
+ * @example
+ * const menu = new UIMenu(app, 'theme', 'Themes', '🎨', false,
+ *   () => [{id: 'light', displayName: 'Light'}],
+ *   [],
+ *   async (id) => ({ id, value: id }));
+ */
 export class UIMenu {
   private dx: Diagnostics;
   public persist: Persist & Persist_t;

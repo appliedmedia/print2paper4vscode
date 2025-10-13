@@ -2,6 +2,21 @@ import { OS } from './OS';
 import { Diagnostics } from './Diagnostics';
 import type { App } from './App';
 
+/**
+ * OSLinux - Linux-specific operating system operations
+ *
+ * Provides Linux-specific implementations for file operations and printing.
+ * Uses xdg-open for file operations and lp command for printing.
+ *
+ * @input app - Application instance for accessing shared services
+ * @output File operations, print commands via lp, directory reveal
+ *
+ * @example
+ * const os = new OSLinux(app);
+ * await os.fileOpenInDefaultApp('/path/to/file.pdf');
+ * await os.filePrint('/path/to/file.pdf');
+ * await os.fileReveal('/path/to/file.pdf');
+ */
 export class OSLinux extends OS {
   protected dx: Diagnostics;
 
@@ -25,21 +40,6 @@ export class OSLinux extends OS {
   async fileOpenPrintDialog(path: string): Promise<void> {
     // Open PDF in default application (user can print from there)
     await this.fileOpenInDefaultApp(path);
-  }
-
-  async copyToClipboard(): Promise<void> {
-    // Linux clipboard copy - would need Linux-specific implementation
-    throw new Error('copyToClipboard not implemented for Linux');
-  }
-
-  async selectAllCopyDeselect(): Promise<void> {
-    // Linux select all, copy, deselect - would need Linux-specific implementation
-    throw new Error('selectAllCopyDeselect not implemented for Linux');
-  }
-
-  async getClipboardContent(): Promise<string | null> {
-    // Linux clipboard content - would need Linux-specific implementation
-    throw new Error('getClipboardContent not implemented for Linux');
   }
 
   done(): void {

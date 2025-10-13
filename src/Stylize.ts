@@ -36,6 +36,21 @@ interface VSCodeTheme {
   };
 }
 
+/**
+ * Stylize - Syntax highlighting and theme management with Shiki
+ *
+ * Provides syntax highlighting using Shiki with lazy highlighter initialization.
+ * Manages theme loading, validation, and token generation. Supports both bundled
+ * Shiki themes and VS Code themes. Handles fallback to 'github-light' on errors.
+ *
+ * @input app - Application instance
+ * @output Highlighted tokens, theme data, theme lists, CSS token styling
+ *
+ * @example
+ * const stylize = new Stylize(app);
+ * const tokens = await stylize.getTokens('console.log("hi")', 'javascript', 'github-light');
+ * const themes = stylize.getThemes();
+ */
 export class Stylize {
   private app: App;
   private highlighter: Highlighter | null = null;

@@ -4,6 +4,24 @@ type MessageRef = string | object;
 import { UI } from './UI';
 import { OS } from './OS';
 
+/**
+ * Diagnostics - Hierarchical debug logging and validation system
+ *
+ * Provides scoped diagnostic output with parent-child relationships, timing,
+ * argument validation, and conditional debug output. Supports nested diagnostic
+ * contexts with automatic cleanup and performance tracking.
+ *
+ * @input name - Diagnostic scope name
+ * @input parent - Optional parent diagnostics context
+ * @output Debug messages, timing info, argument validation, lifecycle tracking
+ *
+ * @example
+ * const dx = new Diagnostics('MyClass');
+ * const sub = dx.sub('myMethod');
+ * sub.require({path, content}, ['path', 'content']);
+ * sub.out('Processing file');
+ * sub.done();
+ */
 export class Diagnostics {
   static separator = ' > ';
 

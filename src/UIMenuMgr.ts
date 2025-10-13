@@ -8,6 +8,22 @@ import {
 } from './UIMenu';
 import { Diagnostics } from './Diagnostics';
 
+/**
+ * UIMenuMgr - Menu manager for webview toolbar system
+ *
+ * Manages collection of UIMenu instances, coordinates HTML/CSS/JS generation,
+ * handles two-pass flyout rendering, and dispatches menu item selections.
+ * Provides centralized menu lookup and configuration management.
+ *
+ * @input app - Application instance
+ * @output Aggregated menu HTML/CSS/JS, menu item selection routing, menu lookup
+ *
+ * @example
+ * const mgr = new UIMenuMgr(app);
+ * const menu = mgr.createMenu('print', 'Print', '🖨️', false, ...);
+ * mgr.addMenu(menu);
+ * const html = await mgr.getAllUIMenuHTML();
+ */
 export class UIMenuMgr {
   private app: App;
   private menus: UIMenu[] = [];

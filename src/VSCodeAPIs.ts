@@ -19,6 +19,24 @@ export type WebviewPanelId = string & { readonly __brand: 'WebviewPanelId' };
 export type GlobalStateKey_t = string;
 export type GlobalStateValue_t = string | number | boolean;
 
+/**
+ * VSCodeAPIs - VS Code API isolation layer
+ *
+ * Single source of truth for all VS Code API access. Isolates vscode module imports
+ * to prevent circular dependencies. Manages commands, webview panels, global state,
+ * text editors, and workspace operations. Provides typed wrappers around VS Code APIs.
+ *
+ * @input app - Application instance
+ * @input vscode - VS Code API module
+ * @input context - Extension context from VS Code
+ * @output VS Code operations, webview management, global state, editor access
+ *
+ * @example
+ * const apis = new VSCodeAPIs(app, vscode, context);
+ * const editor = apis.getActiveTextEditor();
+ * apis.updateGlobalState('theme', 'github-light');
+ * const panel = apis.createWebviewPanel('preview', 'Preview', ...);
+ */
 export class VSCodeAPIs {
   private app: App;
   private vscode: typeof import('vscode'); // Use official VS Code types

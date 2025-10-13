@@ -1,4 +1,3 @@
-import { ClipboardCapture } from './ClipboardCapture';
 import type { App } from './App';
 import { Diagnostics } from './Diagnostics';
 import { UIMenu, type MenuId_t, type HandleSelection_t, type UIMenuItem_t } from './UIMenu';
@@ -16,9 +15,23 @@ export const kPageSizeIds: PageSizeId_t[] = ['letter', 'legal', 'a3', 'a4', 'a5'
 // Margin type and order definition
 export const kMarginIds: MarginId_t[] = ['none', 'minimal', 'normal', 'wide'];
 
+/**
+ * PaperPrinter - Main print workflow orchestrator
+ *
+ * Orchestrates the complete print workflow: tab inspection, content extraction,
+ * syntax highlighting, menu creation, webview display, and print operations.
+ * Creates all menus (Print, Page, Theme, Font) and handles user interactions.
+ * Manages document state and coordinates between PDF, Stylize, and UI components.
+ *
+ * @input app - Application instance
+ * @output Complete print workflow, interactive webview, menu system, print operations
+ *
+ * @example
+ * const printer = new PaperPrinter(app);
+ * await printer.handleFirstPrintCommand();
+ */
 export class PaperPrinter {
   private app: App;
-  private clipboardCapture: ClipboardCapture;
   private pdfDoc: PDFDoc | null = null; // In-memory PDF document (PDFDoc abstraction)
   private uiwebview: UIWebView | null = null;
   private dx: Diagnostics;
@@ -43,19 +56,15 @@ export class PaperPrinter {
 
   constructor(app: App) {
     this.app = app;
-    this.clipboardCapture = new ClipboardCapture(app);
     this.dx = app.dx.create('PaperPrinter');
 
     // Initialize docInfo
     this.docInfo = new DocInfo_PaperPrinter(app);
   }
 
-  init(): void {
-    this.clipboardCapture.init();
-  }
+  init(): void {}
 
   done(): void {
-    this.clipboardCapture.done();
     this.dx.done();
   }
 
@@ -94,11 +103,6 @@ export class PaperPrinter {
     const editorTypo = this.app.vscodeapis.getEditorTypography();
     const fontSizeId = this.app.uimenumgr.getValueForSelectedByMenuId('fontSizeId');
     return parseInt(fontSizeId || '12', 10) * editorTypo.sizeToHeightRatio;
-  }
-
-  // Public façade to decouple TabInspector from internal fields
-  async capturePreviewHtml(): Promise<string | null> {
-    return this.clipboardCapture.captureAndConvert();
   }
 
   /**

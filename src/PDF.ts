@@ -48,6 +48,23 @@ class PDFDocWrapper implements PDFDoc {
   }
 }
 
+/**
+ * PDF - Vector PDF generation and page rendering
+ *
+ * Creates vector PDFs from Shiki-highlighted tokens using jsPDF. Implements
+ * PageRender interface for multi-page document rendering. Handles font sizing,
+ * line wrapping, page breaks, margins, and theme-based color rendering.
+ * Manages temporary PDF files and provides save/print/preview operations.
+ *
+ * @input app - Application instance
+ * @output PDF documents (ArrayBuffer/DataURL), page-by-page rendering, file operations
+ *
+ * @example
+ * const pdf = new PDF(app);
+ * pdf.setTokensForPageRender(tokens, 'github-light');
+ * const pageData = await pdf.renderPage(0);
+ * const pdfDoc = await pdf.getCurrentPdfDoc();
+ */
 export class PDF implements PageRender {
   private app: App;
   private tempPdfs: string[] = [];

@@ -8,6 +8,23 @@ export type PersistValue_t = string | number | boolean;
 // Type for dynamically created properties on Persist instances
 export type Persist_t = Record<(typeof kUI_t)[number], PersistValue_t>;
 
+/**
+ * Persist - Dynamic property persistence with VS Code global state
+ *
+ * Creates dynamic properties that automatically sync with VS Code's global state.
+ * Properties are registered on-demand and use a three-tier lookup: in-memory cache,
+ * global state, then default values. Supports transparent read/write with automatic
+ * state synchronization.
+ *
+ * @input app - Application instance for global state access
+ * @output Dynamic properties with persistent storage, default value management
+ *
+ * @example
+ * const persist = new Persist(app);
+ * persist.register('theme').setDefault('theme', 'github-light');
+ * console.log(persist.theme); // 'github-light' from default
+ * persist.theme = 'dark'; // Saves to VS Code global state
+ */
 export class Persist {
   private app: App;
   private default: Record<string, PersistValue_t> = {};
