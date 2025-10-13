@@ -8,6 +8,7 @@ import type { PDFDoc } from './types/PDF_t';
 import type { PageRender } from './types/PageRender_t';
 import { DocInfo_PaperPrinter, type MarginId_t } from './DocInfo_PaperPrinter';
 import type { LanguageId_t } from './Stylize';
+import type { Persist_t } from './Persist';
 
 // Page size type and order definition
 export type PageSizeId_t = 'letter' | 'legal' | 'a3' | 'a4' | 'a5';
@@ -280,7 +281,7 @@ export class PaperPrinter {
         isFlyout: true,
         menuItems: this.menuItems_pageSizeId.bind(this),
         flyoutMenuItemIds: [],
-        selectionHandler: this.handleSelection_Page.bind(this),
+        selectionHandler: this.handleSelection_PageSizeId.bind(this),
       },
       {
         id: 'orient',
@@ -549,7 +550,7 @@ export class PaperPrinter {
         dx.out(`updating fontSize to ${fontSize}`);
         const menu = this.app.uimenumgr.getMenuById('fontSizeId');
         if (menu) {
-          (menu.persist as any).text = fontSize;
+          (menu.persist as Persist_t).fontSizeId = String(fontSize);
         }
 
         // Regenerate everything (fire and forget)
@@ -562,8 +563,13 @@ export class PaperPrinter {
     return result;
   }
 
-  private async handleSelection_Page(selectedId: string): Promise<string> {
-    const dx = this.dx.sub('handleSelection_Page');
+  private async handleSelection_Page(/* selectedId: string */): Promise<string> {
+    // Page menu is just a flyout parent - no default selection
+    return '';
+  }
+
+  private async handleSelection_PageSizeId(selectedId: string): Promise<string> {
+    const dx = this.dx.sub('handleSelection_PageSizeId');
     dx.out(`selectedId = ${selectedId}`);
 
     let result = '';
@@ -582,7 +588,7 @@ export class PaperPrinter {
       dx.out(`updating page size to ${selectedId}`);
       const menu = this.app.uimenumgr.getMenuById('pageSizeId');
       if (menu) {
-        (menu.persist as any).pageSizeId = selectedId as PageSizeId_t;
+        (menu.persist as Persist_t).pageSizeId = selectedId;
       }
 
       // Regenerate everything (fire and forget)
@@ -609,7 +615,7 @@ export class PaperPrinter {
       dx.out(`updating orient to ${selectedId}`);
       const menu = this.app.uimenumgr.getMenuById('orient');
       if (menu) {
-        (menu.persist as any).orient = selectedId;
+        (menu.persist as Persist_t).orient = selectedId;
       }
 
       // Regenerate everything (fire and forget)
@@ -623,11 +629,12 @@ export class PaperPrinter {
 
   private async handleSelection_MarginId(selectedId: string): Promise<string> {
     const dx = this.dx.sub('handleSelection_Margin');
-    let newMarginId: string = selectedId;
+    const defaultMarginId: MarginId_t = 'normal';
+    let newMarginId: MarginId_t = selectedId as MarginId_t;
 
     if (selectedId === UIMenu.defaultId()) {
       // Return the default margin (always normal)
-      newMarginId = 'normal';
+      newMarginId = defaultMarginId;
       dx.out(`returning default margin: ${newMarginId}`);
     } else if (kMarginIds.includes(selectedId as MarginId_t)) {
       dx.out(`updating margin to ${selectedId}`);
@@ -635,14 +642,13 @@ export class PaperPrinter {
       // Update persistent margin selection via UIMenu
       const menu = this.app.uimenumgr.getMenuById('marginId');
       if (menu) {
-        (menu.persist as any).marginId = selectedId as MarginId_t;
+        (menu.persist as Persist_t).marginId = newMarginId;
       }
 
       // Regenerate everything (fire and forget)
       void this.regenerateAndUpdateWebview();
-      newMarginId = selectedId;
     } else {
-      newMarginId = '';
+      newMarginId = defaultMarginId;
     }
 
     dx.done();

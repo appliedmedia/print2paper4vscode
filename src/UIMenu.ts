@@ -1,6 +1,6 @@
 import type { App } from './App';
 import type { UIMenuItem } from './types/UI_t';
-import type { GlobalStateKey_t, GlobalStateKeyToValueType_t } from './types/globalState_t';
+import type { GlobalStateKey_t, GlobalStateValue_t } from './types/globalState_t';
 import { Diagnostics } from './Diagnostics';
 import { Persist, type Persist_t } from './Persist';
 
@@ -19,6 +19,7 @@ export type MenuId_t = (typeof kMenuId)[number];
 
 // Menu Item ID types - Individual menu item identifiers
 export const kMenuItemId = [
+  'default', // Special sentinel for requesting default selection
   'preview',
   'direct',
   'save',
@@ -129,12 +130,13 @@ export class UIMenu {
   }
 
   // Static method to get the default selection ID
-  static defaultId(): string {
-    return 'default';
+  static defaultId(): MenuItemId_t {
+    const defaultMenuItemId: MenuItemId_t = 'default';
+    return defaultMenuItemId;
   }
 
   // Instance method to get the default selection ID
-  defaultId(): string {
+  defaultId(): MenuItemId_t {
     return UIMenu.defaultId();
   }
 
@@ -146,21 +148,16 @@ export class UIMenu {
   // Get the default item ID for this menu (for UI highlighting)
   async getDefaultItemId(): Promise<string> {
     // Try to get global state value if this menu ID is a global state key
-    let globalValue: any;
-    try {
-      globalValue = this.app.vscodeapis.getGlobalState(this._id as GlobalStateKey_t);
-    } catch {
-      // Not a global state key, skip
-    }
+    const globalValue = this.app.vscodeapis.getGlobalState(this._id as GlobalStateKey_t);
 
     if (globalValue !== undefined) {
       // Global state has a value, set it and return as string
-      (this.persist as any)[this._id] = globalValue;
+      (this.persist as unknown as Record<string, GlobalStateValue_t>)[this._id] = globalValue;
       return String(globalValue);
     }
 
     // No global value, dispatch to selection handler to get default
-    const defaultItemId = await this.dispatchSelection(this.defaultId() as MenuItemId_t);
+    const defaultItemId = await this.dispatchSelection(this.defaultId());
 
     // Store the item ID directly
     this.persist.setDefault(this._id, defaultItemId);

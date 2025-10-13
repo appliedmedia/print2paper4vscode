@@ -209,9 +209,9 @@ describe('System Integration Tests', () => {
     // This test validates that page size and orient functionality integrates properly
 
     const mockApp = {
-      ui: { 
+      ui: {
         debugOut: () => {},
-        registerMessageHandler: () => {}
+        registerMessageHandler: () => {},
       },
       vscodeapis: {
         getGlobalState: (key: string) => {
@@ -257,8 +257,7 @@ describe('System Integration Tests', () => {
     );
 
     // Test orient detection
-    const orient =
-      (paperPrinter as any).app.vscodeapis.getGlobalState('orient') || 'portrait';
+    const orient = (paperPrinter as any).app.vscodeapis.getGlobalState('orient') || 'portrait';
     assert.ok(['portrait', 'landscape'].includes(orient), 'Should have valid orient');
 
     // Test page menu items

@@ -55,7 +55,10 @@ export class VSCodeAPIs {
   /**
    * Update global state value
    */
-  updateGlobalState<K extends GlobalStateKey_t>(key: K, value: GlobalStateKeyToValueType_t[K]): void {
+  updateGlobalState<K extends GlobalStateKey_t>(
+    key: K,
+    value: GlobalStateKeyToValueType_t[K]
+  ): void {
     this.context.globalState.update(key, value);
   }
 

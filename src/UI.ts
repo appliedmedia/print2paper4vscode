@@ -29,7 +29,7 @@ export const kGlobalStateKey: readonly GlobalStateKey_t[] = [
   'scrollDebounceMs',
   'maxCanvasPoolSize',
   'scrollableViewerEnabled',
-  'autoScrollableViewerThreshold'
+  'autoScrollableViewerThreshold',
 ] as const;
 
 // Type guard for runtime validation

@@ -53,7 +53,19 @@ describe('Stylize', () => {
         // Mock debug output - do nothing in tests
       },
     },
-    dx: { create: (name: string) => ({ out: () => {}, print: () => {}, done: () => {}, sub: (name: string) => ({ out: () => {}, print: () => {}, done: () => {}, require: () => true }) }) },
+    dx: {
+      create: (name: string) => ({
+        out: () => {},
+        print: () => {},
+        done: () => {},
+        sub: (name: string) => ({
+          out: () => {},
+          print: () => {},
+          done: () => {},
+          require: () => true,
+        }),
+      }),
+    },
   };
   stylize = new Stylize(mockApp);
 
@@ -141,5 +153,4 @@ describe('Stylize', () => {
       assert.ok(theme.displayName.includes(' '), 'Theme displayName should contain spaces');
     });
   });
-
 });

@@ -193,7 +193,7 @@
         const oldPageId = db[canvasId] && db[canvasId].page;
         if (oldPageId && db[oldPageId]) {
           db[oldPageId].Cn = null;
-          
+
           // Show "Loading page X..." text when canvas is removed
           const placeholder = db[oldPageId].placeholder;
           if (placeholder) {
@@ -372,10 +372,10 @@
           if (availableCanvas) {
             const pageId = getPageId(pageNum);
             const canvasId = availableCanvas.dataset.canvasId;
-            
+
             // Update canvas assignment
             assignCanvasToPage(canvasId, pageId);
-            
+
             // Render the page
             await renderPageToCanvas(pageNum, availableCanvas);
           } else {
@@ -623,7 +623,7 @@
           placeholder.style.alignItems = 'center';
           placeholder.style.justifyContent = 'center';
           placeholder.style.margin = '0 auto'; // Center the placeholder
-          
+
           // Create separate loading text element
           const loadingText = document.createElement('div');
           loadingText.className = 'loading-text';
@@ -1001,7 +1001,7 @@
               initialPages.push(pageNum);
             }
           }
-          
+
           // Assign remaining pages using common logic
           if (initialPages.length > 0) {
             await assignCanvasesToPages(initialPages);
@@ -1040,7 +1040,9 @@
           }
 
           logWithState(`All ${CONFIG.MAX_CANVASES} canvases rendered`);
-          logWithState(`Scale:${CONFIG.SCALE}x, Mem:${totalMemoryMB.toFixed(2)}MB = Avg:${(totalMemoryMB / CONFIG.MAX_CANVASES).toFixed(2)}MB + PDF.js:~${(pdfDoc.numPages * 0.1).toFixed(1)}MB`);
+          logWithState(
+            `Scale:${CONFIG.SCALE}x, Mem:${totalMemoryMB.toFixed(2)}MB = Avg:${(totalMemoryMB / CONFIG.MAX_CANVASES).toFixed(2)}MB + PDF.js:~${(pdfDoc.numPages * 0.1).toFixed(1)}MB`
+          );
         } catch (error) {
           console.error('Error generating/rendering PDF:', error);
           document.getElementById('loading').style.display = 'none';

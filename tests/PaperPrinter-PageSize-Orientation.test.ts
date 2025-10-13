@@ -33,7 +33,7 @@ describe('PaperPrinter Page Size and Orient Tests', () => {
         fontSize: 14,
         lineHeight: 1.5,
         fontFamily: 'Courier',
-        sizeToHeightRatio: 1.2
+        sizeToHeightRatio: 1.2,
       }),
     },
     os: {
@@ -44,10 +44,14 @@ describe('PaperPrinter Page Size and Orient Tests', () => {
               '<svg width="16" height="16"><rect x="2" y="2" width="12" height="12"/></svg>',
             icon_orient_landscape_svg:
               '<svg width="16" height="16"><rect x="1" y="4" width="14" height="8"/></svg>',
-            icon_margin_none_svg: '<svg width="16" height="16"><rect x="2" y="2" width="12" height="12"/></svg>',
-            icon_margin_minimal_svg: '<svg width="16" height="16"><rect x="2" y="2" width="12" height="12"/></svg>',
-            icon_margin_normal_svg: '<svg width="16" height="16"><rect x="2" y="2" width="12" height="12"/></svg>',
-            icon_margin_wide_svg: '<svg width="16" height="16"><rect x="2" y="2" width="12" height="12"/></svg>',
+            icon_margin_none_svg:
+              '<svg width="16" height="16"><rect x="2" y="2" width="12" height="12"/></svg>',
+            icon_margin_minimal_svg:
+              '<svg width="16" height="16"><rect x="2" y="2" width="12" height="12"/></svg>',
+            icon_margin_normal_svg:
+              '<svg width="16" height="16"><rect x="2" y="2" width="12" height="12"/></svg>',
+            icon_margin_wide_svg:
+              '<svg width="16" height="16"><rect x="2" y="2" width="12" height="12"/></svg>',
           };
         }
         return undefined;
@@ -72,8 +76,7 @@ describe('PaperPrinter Page Size and Orient Tests', () => {
     });
 
     test('should get current orient', () => {
-      const orient =
-        (paperPrinter as any).app.vscodeapis.getGlobalState('orient') || 'portrait';
+      const orient = (paperPrinter as any).app.vscodeapis.getGlobalState('orient') || 'portrait';
       assert.strictEqual(orient, 'portrait');
     });
   });
@@ -124,7 +127,6 @@ describe('PaperPrinter Page Size and Orient Tests', () => {
       assert.ok(landscapeItem?.displayName.includes('<svg'));
     });
   });
-
 
   describe('Menu Configuration', () => {
     test('should include page and orient menus in configuration', () => {
