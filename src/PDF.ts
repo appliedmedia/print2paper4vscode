@@ -837,8 +837,9 @@ export class PDF implements PageRender {
       const jsPdfFont = this.mapFontFamilyToJsPDF(options.fontFamily, doc);
       doc.setFont(jsPdfFont, 'normal');
 
-      // Convert fontSize from pixels to points for jsPDF
-      const fontSizePts = this.pxToPts(options.fontSize);
+      // Convert fontSize from pixels to points for jsPDF, clamping to minimum of 8pt
+      const px = options.fontSize ?? 12;
+      const fontSizePts = this.pxToPts(Math.max(8, px));
       doc.setFontSize(fontSizePts);
 
       // Convert lineHeight from pixels to points for jsPDF

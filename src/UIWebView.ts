@@ -323,8 +323,10 @@ export class UIWebView {
             dx.out(`Menu item selected: ${menuId}.${itemId}`);
           }
         } else {
-          dx.out(`Invalid menu ID or item ID received from webview: ${menuId}.${itemId}`);
-          throw new Error(`Invalid menu ID or item ID: ${menuId}.${itemId}`);
+          const msg = `Invalid menu selection: ${menuId}.${itemId}`;
+          dx.out(msg);
+          this.app.ui.showErrorMessage(msg);
+          return;
         }
       }
     } finally {
