@@ -4,16 +4,19 @@ import { UIMenu, type MenuId_t, type HandleSelection_t, type UIMenuItem_t } from
 import { UIWebView } from './UIWebView';
 import type { PDFDoc } from './types/PDF_t';
 import type { PageRender } from './types/PageRender_t';
-import { DocInfo_PaperPrinter, type MarginId_t } from './DocInfo_PaperPrinter';
+import { DocInfo_PaperPrinter } from './DocInfo_PaperPrinter';
 import type { LanguageId_t } from './Stylize';
 import type { Persist_t } from './Persist';
-
-// Page size type and order definition
-export type PageSizeId_t = 'letter' | 'legal' | 'a3' | 'a4' | 'a5';
-export const kPageSizeIds: PageSizeId_t[] = ['letter', 'legal', 'a3', 'a4', 'a5'];
-
-// Margin type and order definition
-export const kMarginIds: MarginId_t[] = ['none', 'minimal', 'normal', 'wide'];
+import {
+  type PageSizeId_t,
+  type OrientationId_t,
+  type MarginId_t,
+  type FontSizeId_t,
+  kPageSizeIds,
+  kOrientationIds,
+  kMarginIds,
+  kFontSizeIds,
+} from './types/PaperPrinter_t';
 
 /**
  * PaperPrinter - Main print workflow orchestrator

@@ -5,6 +5,8 @@
  * Any content type that can be rendered as pages should implement this interface.
  */
 
+import type { PageSizeId_t, OrientationId_t } from './PaperPrinter_t';
+
 export interface PageData {
   /** Data URL of the rendered page (e.g., PDF data URL) */
   dataUrl: string;
@@ -26,9 +28,9 @@ export interface RenderOptions {
   /** Theme name for syntax highlighting */
   theme: string;
   /** Page size ID */
-  pageSizeId: 'letter' | 'legal' | 'a3' | 'a4' | 'a5';
-  /** Page orient */
-  orient: 'portrait' | 'landscape';
+  pageSizeId: PageSizeId_t;
+  /** Page orientation */
+  orient: OrientationId_t;
 }
 
 export interface PageRenderError {

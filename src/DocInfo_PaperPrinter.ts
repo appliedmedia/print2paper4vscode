@@ -1,8 +1,6 @@
 import type { App } from './App';
 import type { LanguageId_t } from './Stylize';
-
-// Margin level type
-export type MarginId_t = 'none' | 'minimal' | 'normal' | 'wide';
+import type { MarginId_t } from './types/PaperPrinter_t';
 
 /**
  * PaperPrinter_DocInfo - Document information and configuration for PaperPrinter
@@ -15,7 +13,7 @@ export class DocInfo_PaperPrinter {
 
   // Document content
   public rawCode: string = '';
-  public languageId: LanguageId_t = 'plaintext';
+  public languageId: LanguageId_t = 'typescript'; // Default to TypeScript for a coding extension
   public printTitle: string = 'Printable';
 
   // Computed values (read-only)

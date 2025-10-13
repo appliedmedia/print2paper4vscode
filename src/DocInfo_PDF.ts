@@ -1,5 +1,5 @@
 import type { App } from './App';
-import type { MarginId_t } from './DocInfo_PaperPrinter';
+import type { MarginId_t } from './types/PaperPrinter_t';
 import type { ThemedToken } from 'shiki';
 import type jsPDF from 'jspdf';
 

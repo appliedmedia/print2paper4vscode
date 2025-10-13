@@ -1,5 +1,5 @@
 import type { App } from './App';
-import type { PageSizeId_t } from './PaperPrinter';
+import type { PageSizeId_t } from './types/PaperPrinter_t';
 import type { PageRender, PageData, RenderOptions, PageRenderError } from './types/PageRender_t';
 import type { PDFDoc } from './types/PDF_t';
 import { Diagnostics } from './Diagnostics';
