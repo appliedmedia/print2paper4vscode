@@ -1,6 +1,6 @@
 import type { App } from './App';
 import type { UIMenuItem } from './types/UI_t';
-import type { GlobalStateKey_t, GlobalStateValue_t } from './types/globalState_t';
+import type { GlobalStateValue_t } from './types/globalState_t';
 import { Diagnostics } from './Diagnostics';
 import { Persist, type Persist_t } from './Persist';
 
@@ -146,24 +146,21 @@ export class UIMenu {
   }
 
   // Get the default item ID for this menu (for UI highlighting)
-  async getDefaultItemId(): Promise<string> {
-    // Try to get global state value if this menu ID is a global state key
-    const globalValue = this.app.vscodeapis.getGlobalState(this._id as GlobalStateKey_t);
+  async getDefaultItemId(): Promise<MenuItemId_t> {
+    // Check if persist already has a value (cache/global/default)
+    const cachedValue = (this.persist as unknown as Record<string, GlobalStateValue_t>)[this._id];
 
-    if (globalValue !== undefined) {
-      // Global state has a value, set it and return as string
-      (this.persist as unknown as Record<string, GlobalStateValue_t>)[this._id] = globalValue;
-      return String(globalValue);
+    if (cachedValue !== undefined) {
+      return cachedValue as MenuItemId_t;
     }
 
-    // No global value, dispatch to selection handler to get default
+    // No cached value, dispatch to selection handler to compute default
     const defaultItemId = await this.dispatchSelection(this.defaultId());
 
-    // Store the item ID directly
+    // Store the computed default
     this.persist.setDefault(this._id, defaultItemId);
 
-    // Return the item ID for UI display
-    return defaultItemId;
+    return defaultItemId as MenuItemId_t;
   }
 
   // Getter for the YAML data - handles loading and validation automatically
