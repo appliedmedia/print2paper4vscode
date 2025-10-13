@@ -9,13 +9,13 @@ import type { LanguageId_t } from './Stylize';
 import type { Persist_t } from './Persist';
 import {
   type PageSizeId_t,
-  type OrientationId_t,
+  type Orient_t,
   type MarginId_t,
   type FontSizeId_t,
-  kPageSizeIds,
-  kOrientationIds,
-  kMarginIds,
-  kFontSizeIds,
+  kPageSizeId,
+  kOrient,
+  kMarginId,
+  kFontSizeId,
 } from './types/PaperPrinter_t';
 
 /**
@@ -394,7 +394,10 @@ export class PaperPrinter {
       { id: '12', displayName: '12px' },
       { id: '14', displayName: '14px' },
       { id: '18', displayName: '18px' },
+      { id: '20', displayName: '20px' },
       { id: '24', displayName: '24px' },
+      { id: '32', displayName: '32px' },
+      { id: '48', displayName: '48px' },
     ];
 
     // Check if editor size already exists in the list
@@ -616,7 +619,7 @@ export class PaperPrinter {
       id = isLetterSize ? 'letter' : 'a4';
       value = id; // value is the page size ID
       dx.out(`returning locale-based default page size: ${id}`);
-    } else if (kPageSizeIds.includes(selectedId as PageSizeId_t)) {
+    } else if (kPageSizeId.includes(selectedId as PageSizeId_t)) {
       // Update page size
       dx.out(`updating page size to ${selectedId}`);
       const menu = this.app.uimenumgr.getMenuById('pageSizeId');
@@ -676,7 +679,7 @@ export class PaperPrinter {
       id = defaultMarginId;
       value = id; // value is the margin ID
       dx.out(`returning default margin: ${id}`);
-    } else if (kMarginIds.includes(selectedId as MarginId_t)) {
+    } else if (kMarginId.includes(selectedId as MarginId_t)) {
       dx.out(`updating margin to ${selectedId}`);
 
       // Update persistent margin selection via UIMenu
