@@ -1,13 +1,14 @@
 import type { App } from './App';
 import type { PageRender, PageData } from './types/PageRender_t';
 import type { WebviewPanelId } from './VSCodeAPIs';
+import type { PageSizeId_t, Orient_t } from './types/PaperPrinter_t';
 import { Diagnostics } from './Diagnostics';
 
-// ScrollOptions interface
+// ScrollOptions interface - uses centralized types from PaperPrinter_t.ts
 export interface ScrollOptions {
   title?: string;
-  pageSizeId?: 'letter' | 'legal' | 'a3' | 'a4' | 'a5';
-  orient?: 'portrait' | 'landscape';
+  pageSizeId?: PageSizeId_t;
+  orient?: Orient_t;
   fontFamily?: string;
   fontSizePx?: number; // fontSize in pixels
   lineHeightPx?: number; // lineHeight in pixels

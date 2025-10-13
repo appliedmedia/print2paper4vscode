@@ -386,19 +386,11 @@ export class PaperPrinter {
     const editorSize = editorTypo.fontSize;
     dx.out(`editorSize = ${editorSize}`);
 
-    // Create base size options
-    const sizeOptions = [
-      { id: '8', displayName: '8px' },
-      { id: '9', displayName: '9px' },
-      { id: '10', displayName: '10px' },
-      { id: '12', displayName: '12px' },
-      { id: '14', displayName: '14px' },
-      { id: '18', displayName: '18px' },
-      { id: '20', displayName: '20px' },
-      { id: '24', displayName: '24px' },
-      { id: '32', displayName: '32px' },
-      { id: '48', displayName: '48px' },
-    ];
+    // Use centralized const as base - single source of truth for font sizes
+    const sizeOptions: UIMenuItem_t[] = (Object.keys(kFontSizeId) as FontSizeId_t[]).map(id => ({
+      id,
+      displayName: kFontSizeId[id].displayName,
+    }));
 
     // Check if editor size already exists in the list
     const existingEditorOption = sizeOptions.find(option => option.id === String(editorSize));
@@ -432,31 +424,27 @@ export class PaperPrinter {
   }
 
   private menuItems_pageSizeId(): UIMenuItem_t[] {
-    return [
-      { id: 'letter', displayName: 'Letter (8.5" × 11")' },
-      { id: 'legal', displayName: 'Legal (8.5" × 14")' },
-      { id: 'a3', displayName: 'A3 (297mm × 420mm)' },
-      { id: 'a4', displayName: 'A4 (210mm × 297mm)' },
-      { id: 'a5', displayName: 'A5 (148mm × 210mm)' },
-    ];
+    // Use centralized const - single source of truth for page sizes
+    return (Object.keys(kPageSizeId) as PageSizeId_t[]).map(id => ({
+      id,
+      displayName: kPageSizeId[id].displayName,
+    }));
   }
 
   private menuItems_Orient(): UIMenuItem_t[] {
-    const yaml = this.yaml;
-
-    return [
-      { id: 'portrait', displayName: `${yaml.icon_orient_portrait_svg} Portrait` },
-      { id: 'landscape', displayName: `${yaml.icon_orient_landscape_svg} Landscape` },
-    ];
+    // Use centralized const with template replacement for SVG icons
+    return (Object.keys(kOrient) as Orient_t[]).map(id => ({
+      id,
+      displayName: this.app.templateDictReplace(kOrient[id].displayName, this.yaml),
+    }));
   }
 
   private menuItems_MarginId(): UIMenuItem_t[] {
-    return [
-      { id: 'none', displayName: 'None (0pt)', icon: this.yaml.icon_margin_none_svg },
-      { id: 'minimal', displayName: 'Minimal (5pt)', icon: this.yaml.icon_margin_minimal_svg },
-      { id: 'normal', displayName: 'Normal (15pt)', icon: this.yaml.icon_margin_normal_svg },
-      { id: 'wide', displayName: 'Wide (30pt)', icon: this.yaml.icon_margin_wide_svg },
-    ];
+    // Use centralized const with template replacement for SVG icons
+    return (Object.keys(kMarginId) as MarginId_t[]).map(id => ({
+      id,
+      displayName: this.app.templateDictReplace(kMarginId[id].displayName, this.yaml),
+    }));
   }
 
   // Selection handler methods for each menu type
@@ -619,7 +607,7 @@ export class PaperPrinter {
       id = isLetterSize ? 'letter' : 'a4';
       value = id; // value is the page size ID
       dx.out(`returning locale-based default page size: ${id}`);
-    } else if (kPageSizeId.includes(selectedId as PageSizeId_t)) {
+    } else if (selectedId in kPageSizeId) {
       // Update page size
       dx.out(`updating page size to ${selectedId}`);
       const menu = this.app.uimenumgr.getMenuById('pageSizeId');
@@ -679,7 +667,7 @@ export class PaperPrinter {
       id = defaultMarginId;
       value = id; // value is the margin ID
       dx.out(`returning default margin: ${id}`);
-    } else if (kMarginId.includes(selectedId as MarginId_t)) {
+    } else if (selectedId in kMarginId) {
       dx.out(`updating margin to ${selectedId}`);
 
       // Update persistent margin selection via UIMenu

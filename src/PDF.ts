@@ -1,5 +1,6 @@
 import type { App } from './App';
-import type { PageSizeId_t } from './types/PaperPrinter_t';
+import type { PageSizeId_t, Orient_t } from './types/PaperPrinter_t';
+import { kPageSizeId } from './types/PaperPrinter_t';
 import type { PageRender, PageData, RenderOptions, PageRenderError } from './types/PageRender_t';
 import type { PDFDoc } from './types/PDF_t';
 import { Diagnostics } from './Diagnostics';
@@ -542,34 +543,28 @@ export class PDF implements PageRender {
   }
 
   // Helper: Get unit based on page size
+  // Uses centralized unit from PaperPrinter_t.ts
   private getUnitForPageSize(pageSize: PageSizeId_t): 'mm' | 'in' {
-    // US sizes use inches, metric sizes use mm
-    const usSizes = ['letter', 'legal'];
-    return usSizes.includes(pageSize) ? 'in' : 'mm';
+    // Get unit from centralized constant (single source of truth)
+    const unit = kPageSizeId[pageSize].unit;
+    return unit === 'inches' ? 'in' : 'mm';
   }
 
   // Helper: Get page dimensions based on size and orient
+  // Uses centralized dimensions from PaperPrinter_t.ts - single source of truth
   private getPageDimensions(
     pageSize: PageSizeId_t,
-    orient: 'portrait' | 'landscape'
+    orient: Orient_t
   ): { width: number; height: number } {
-    // Standard page dimensions - US sizes in inches, metric in mm
-    const dimensions: Record<PageSizeId_t, { width: number; height: number }> = {
-      letter: { width: 8.5, height: 11 }, // inches
-      legal: { width: 8.5, height: 14 }, // inches
-      a3: { width: 297, height: 420 }, // mm
-      a4: { width: 210, height: 297 }, // mm
-      a5: { width: 148, height: 210 }, // mm
-    };
-
-    const baseDimensions = dimensions[pageSize];
+    // Get dimensions from centralized const object (id → metadata)
+    const metadata = kPageSizeId[pageSize];
 
     // Swap width/height for landscape
     if (orient === 'landscape') {
-      return { width: baseDimensions.height, height: baseDimensions.width };
+      return { width: metadata.height, height: metadata.width };
     }
 
-    return baseDimensions;
+    return { width: metadata.width, height: metadata.height };
   }
 
   // Helper: Convert hex color to RGB

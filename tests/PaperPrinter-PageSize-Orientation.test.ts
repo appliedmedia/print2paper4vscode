@@ -57,6 +57,14 @@ describe('PaperPrinter Page Size and Orient Tests', () => {
         return undefined;
       },
     },
+    templateDictReplace: (source: string, dict: Record<string, any>) => {
+      // Simple template replacement for tests
+      let result = source;
+      for (const [key, value] of Object.entries(dict)) {
+        result = result.replace(new RegExp(`\\{\\{${key}\\}\\}`, 'g'), String(value));
+      }
+      return result;
+    },
     ui: {
       showErrorMessage: (msg: string) => Promise.resolve(),
       htmlToWebViewPanel: (html: string) => 'panel-id',
