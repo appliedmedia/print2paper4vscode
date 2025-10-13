@@ -37,6 +37,9 @@ class MockApp {
       debugOut: (message: string, level?: string, source?: string) => {
         // Mock debug output - just ignore it for tests
       },
+      showErrorMessage: (message: string) => {
+        // Mock error message - just ignore it for tests
+      },
     };
     this.uimenumgr = {
       getMenu: (id: string) => undefined, // Mock implementation
@@ -100,7 +103,7 @@ describe('UIMenuMgr', () => {
         mockSelectionHandler
       );
       const menu2 = menuMgr.createMenu(
-        'fontSizePx', // Use valid GlobalStateKey
+        'fontSizeId', // Use valid GlobalStateKey
         'Menu 2',
         '🎨',
         false,
@@ -146,14 +149,20 @@ describe('UIMenuMgr', () => {
       assert.strictEqual(foundMenu?.id, 'theme', 'Should have correct ID');
     });
 
-    it('should return undefined for non-existent menu', () => {
-      const nonExistent = menuMgr.getMenuById('nonExistent' as any);
-      assert.strictEqual(nonExistent, undefined, 'Should return undefined for non-existent menu');
+    it('should throw error for non-existent menu', () => {
+      assert.throws(
+        () => menuMgr.getMenuById('nonExistent' as any),
+        /Menu not found: nonExistent/,
+        'Should throw error for non-existent menu'
+      );
     });
 
-    it('should handle case-sensitive menu IDs', () => {
-      const testMenu = menuMgr.getMenuById('TestMenu' as any);
-      assert.strictEqual(testMenu, undefined, 'Should be case-sensitive');
+    it('should throw error for case-mismatched menu IDs', () => {
+      assert.throws(
+        () => menuMgr.getMenuById('TestMenu' as any),
+        /Menu not found: TestMenu/,
+        'Should be case-sensitive and throw error'
+      );
     });
   });
 
@@ -175,7 +184,7 @@ describe('UIMenuMgr', () => {
         mockSelectionHandler
       );
       const menu2 = menuMgr.createMenu(
-        'fontSizePx', // Use valid GlobalStateKey
+        'fontSizeId', // Use valid GlobalStateKey
         'Menu 2',
         '🎨',
         false,
@@ -190,7 +199,7 @@ describe('UIMenuMgr', () => {
       const html = await menuMgr.getAllUIMenuHTML();
 
       assert.ok(html.includes('theme'), 'Should include theme HTML');
-      assert.ok(html.includes('fontSizePx'), 'Should include fontSizePx HTML');
+      assert.ok(html.includes('fontSizeId'), 'Should include fontSizeId HTML');
     });
 
     it('should handle empty menu list', async () => {
@@ -265,7 +274,7 @@ describe('UIMenuMgr', () => {
         mockSelectionHandler
       );
       const menu2 = menuMgr.createMenu(
-        'fontSizePx', // Use valid GlobalStateKey
+        'fontSizeId', // Use valid GlobalStateKey
         'Menu 2',
         '🎨',
         false,
@@ -351,7 +360,7 @@ describe('UIMenuMgr', () => {
       const mockSelectionHandler = async (id: string): Promise<string> => Promise.resolve('');
 
       const specialMenu = menuMgr.createMenu(
-        'fontSizePx', // Use valid GlobalStateKey
+        'fontSizeId', // Use valid GlobalStateKey
         'Special Menu',
         '🔧',
         false,
@@ -361,9 +370,9 @@ describe('UIMenuMgr', () => {
       );
       menuMgr.addMenu(specialMenu);
 
-      const foundMenu = menuMgr.getMenuById('fontSizePx');
+      const foundMenu = menuMgr.getMenuById('fontSizeId');
       assert.ok(foundMenu, 'Should find special menu');
-      assert.strictEqual(foundMenu?.id, 'fontSizePx', 'Should have correct special ID');
+      assert.strictEqual(foundMenu?.id, 'fontSizeId', 'Should have correct special ID');
     });
   });
 });

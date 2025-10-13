@@ -1,54 +1,24 @@
 import type { App } from './App';
 import type { UIMenuItem } from './types/UI_t';
-import type { GlobalStateKey, GlobalStateKeyToValueType } from './types/globalState_t';
+import type { GlobalStateKey_t, GlobalStateKeyToValueType_t } from './types/globalState_t';
 import { Diagnostics } from './Diagnostics';
-import { Persist } from './Persist';
+import { Persist, type Persist_t } from './Persist';
 
 // Menu ID types - UI component identifiers
-export type MenuId_t = 
-  | 'print'
-  | 'page' 
-  | 'pageSizeId'
-  | 'orient'
-  | 'marginId'
-  | 'theme'
-  | 'fontSizePx';
-
-export const kMenuId: readonly MenuId_t[] = [
+export const kMenuId = [
   'print',
-  'page', 
+  'page',
   'pageSizeId',
   'orient',
   'marginId',
   'theme',
-  'fontSizePx'
+  'fontSizeId',
 ] as const;
 
-// Menu Item ID types - Individual menu item identifiers
-export type MenuItemId_t = 
-  | 'test'
-  | 'preview'
-  | 'direct'
-  | 'save'
-  | 'size'
-  | 'orient'
-  | 'margin'
-  | 'portrait'
-  | 'landscape'
-  | 'none'
-  | 'minimal'
-  | 'normal'
-  | 'wide'
-  | '8'
-  | '9'
-  | '10'
-  | '12'
-  | '14'
-  | '18'
-  | '24';
+export type MenuId_t = (typeof kMenuId)[number];
 
-export const kMenuItemId: readonly MenuItemId_t[] = [
-  'test',
+// Menu Item ID types - Individual menu item identifiers
+export const kMenuItemId = [
   'preview',
   'direct',
   'save',
@@ -67,8 +37,10 @@ export const kMenuItemId: readonly MenuItemId_t[] = [
   '12',
   '14',
   '18',
-  '24'
+  '24',
 ] as const;
+
+export type MenuItemId_t = (typeof kMenuItemId)[number];
 
 // Type guards for runtime validation
 export function isMenuId(id: string): id is MenuId_t {
@@ -81,10 +53,10 @@ export function isMenuItemId(id: string): id is MenuItemId_t {
 
 export class UIMenu {
   private dx: Diagnostics;
-  public persist: Persist;
-  
+  public persist: Persist & Persist_t;
+
   // Public getter for id
-  get id(): GlobalStateKey {
+  get id(): MenuId_t {
     return this._id;
   }
   private _yaml: {
@@ -103,7 +75,7 @@ export class UIMenu {
 
   constructor(
     private app: App,
-    private _id: GlobalStateKey,
+    private _id: MenuId_t,
     private _displayName: string,
     private _icon: string,
     private _isFlyout: boolean = false,
@@ -111,9 +83,9 @@ export class UIMenu {
     private _flyoutMenuItemIds: string[] = [],
     private _selectionHandler: (id: MenuItemId_t) => Promise<string>
   ) {
-    this.persist = new Persist(app);
+    this.persist = new Persist(app) as Persist & Persist_t;
     this.dx = this.app.dx.create('UIMenu');
-    
+
     // Register persist property (no value set yet)
     this.persist.register(this._id);
   }
@@ -171,24 +143,28 @@ export class UIMenu {
     return this._selectionHandler(id);
   }
 
-
   // Get the default item ID for this menu (for UI highlighting)
-  async defaultItemId(): Promise<string> {
-    // Get global state value
-    const globalValue = this.app.vscodeapis.getGlobalState(this._id);
-    
+  async getDefaultItemId(): Promise<string> {
+    // Try to get global state value if this menu ID is a global state key
+    let globalValue: any;
+    try {
+      globalValue = this.app.vscodeapis.getGlobalState(this._id as GlobalStateKey_t);
+    } catch {
+      // Not a global state key, skip
+    }
+
     if (globalValue !== undefined) {
       // Global state has a value, set it and return as string
       (this.persist as any)[this._id] = globalValue;
       return String(globalValue);
     }
-    
+
     // No global value, dispatch to selection handler to get default
     const defaultItemId = await this.dispatchSelection(this.defaultId() as MenuItemId_t);
-    
+
     // Store the item ID directly
-    this.persist.setDefault(this._id as GlobalStateKey, defaultItemId);
-    
+    this.persist.setDefault(this._id, defaultItemId);
+
     // Return the item ID for UI display
     return defaultItemId;
   }
@@ -267,7 +243,7 @@ export class UIMenu {
 
     // Generate menu items HTML using the new getItemHTML function
     const menuItems = this.getMenuItems();
-    const defaultItemId = await this.defaultItemId(); // Get default once
+    const defaultItemId = await this.getDefaultItemId(); // Get default once
     const hasDefaultItem = !!defaultItemId;
 
     // Use explicit properties instead of calculated values

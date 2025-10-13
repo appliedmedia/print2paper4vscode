@@ -10,7 +10,7 @@ export type GlobalStateKey_t =
   | 'orient'
   | 'marginId'
   | 'theme'
-  | 'fontSizePx'
+  | 'fontSizeId'
   | 'toolbarPosPx'
   | 'pageRenderCacheSize'
   | 'scrollDebounceMs'
@@ -23,7 +23,7 @@ export const kGlobalStateKey: readonly GlobalStateKey_t[] = [
   'orient',
   'marginId',
   'theme',
-  'fontSizePx',
+  'fontSizeId',
   'toolbarPosPx',
   'pageRenderCacheSize',
   'scrollDebounceMs',

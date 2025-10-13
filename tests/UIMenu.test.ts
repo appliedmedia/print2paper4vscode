@@ -88,7 +88,7 @@ describe('UIMenu', () => {
     it('should handle special characters in ID', () => {
       const specialMenu = new UIMenu(
         mockApp,
-        'fontSizePx', // Use valid GlobalStateKey
+        'fontSizeId', // Use valid GlobalStateKey
         'Special Menu',
         '🔧',
         false,
@@ -96,8 +96,8 @@ describe('UIMenu', () => {
         [],
         mockSelectionHandler
       );
-      assert.strictEqual(specialMenu.getId_Menu(), 'fontSizePx');
-      assert.strictEqual(specialMenu.getId_Button(), 'fontSizePx-btn');
+      assert.strictEqual(specialMenu.getId_Menu(), 'fontSizeId');
+      assert.strictEqual(specialMenu.getId_Button(), 'fontSizeId-btn');
     });
   });
 
@@ -179,7 +179,7 @@ describe('UIMenu', () => {
     it('should handle ID with special characters', () => {
       const specialMenu = new UIMenu(
         mockApp,
-        'fontSizePx', // Use valid GlobalStateKey
+        'fontSizeId', // Use valid GlobalStateKey
         'Special',
         '🔧',
         false,
@@ -188,8 +188,8 @@ describe('UIMenu', () => {
         mockSelectionHandler
       );
 
-      assert.strictEqual(specialMenu.getId_Menu(), 'fontSizePx');
-      assert.strictEqual(specialMenu.getId_Button(), 'fontSizePx-btn');
+      assert.strictEqual(specialMenu.getId_Menu(), 'fontSizeId');
+      assert.strictEqual(specialMenu.getId_Button(), 'fontSizeId-btn');
     });
 
     it('should handle unicode characters in ID', () => {

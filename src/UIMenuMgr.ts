@@ -1,7 +1,6 @@
 import type { App } from './App';
 import { UIMenu, type MenuId_t, type MenuItemId_t } from './UIMenu';
 import type { UIMenuItem } from './types/UI_t';
-import type { GlobalStateKey } from './types/globalState_t';
 import { Diagnostics } from './Diagnostics';
 
 export class UIMenuMgr {
@@ -26,7 +25,7 @@ export class UIMenuMgr {
   }
 
   createMenu(
-    id: GlobalStateKey,
+    id: MenuId_t,
     displayName: string,
     icon: string,
     isFlyout: boolean = false,
@@ -54,32 +53,27 @@ export class UIMenuMgr {
   // Handle menu item selection
   async handleMenuItemSelected(menuId: MenuId_t, itemId: MenuItemId_t): Promise<void> {
     const dx = this.dx.sub('handleMenuItemSelected');
-    
+
     try {
-      // Validate menuId exists in our menus
       const menu = this.getMenuById(menuId);
-      if (menu) {
-        await menu.dispatchSelection(itemId);
-        dx.out(`Menu item selected: ${menuId}.${itemId}`);
-      } else {
-        const msg = `Invalid menu: ${menuId}`;
-        dx.out(msg);
-        this.app.ui.showErrorMessage(msg);
-        return;
-      }
+      await menu.dispatchSelection(itemId);
+      dx.out(`Menu item selected: ${menuId}.${itemId}`);
     } finally {
       dx.done();
     }
   }
 
-  // Get a specific menu by ID (accepts GlobalStateKey or MenuId_t)
-  getMenu(id: string): UIMenu | undefined {
-    return this.getAllMenus().find(menu => menu.id === id);
-  }
-
-  // Alias for getMenu for backward compatibility
-  getMenuById(id: MenuId_t): UIMenu | undefined {
-    return this.getMenu(id);
+  // Get a specific menu by ID
+  // Throws error if menu not found - guarantees a valid menu is returned
+  getMenuById(id: string): UIMenu {
+    const menu = this.getAllMenus().find(menu => menu.id === id);
+    if (!menu) {
+      const msg = `Menu not found: ${id}`;
+      this.dx.out(msg);
+      this.app.ui.showErrorMessage(msg);
+      throw new Error(msg);
+    }
+    return menu;
   }
 
   // Add a menu to the list (called by PaperPrinter)
@@ -145,7 +139,9 @@ export class UIMenuMgr {
     // Get the generic handlers - yaml getter handles loading automatically
     const js = anyMenu.yaml?.ui_menu_generic_handlers ?? '';
     if (!js) {
-      this.dx.out('getAllUIMenuJS: JS is undefined/empty, YAML loading failed or no handlers present');
+      this.dx.out(
+        'getAllUIMenuJS: JS is undefined/empty, YAML loading failed or no handlers present'
+      );
       return '';
     }
     this.dx.out(`getAllUIMenuJS: Generated ${js.length} characters of JS`);

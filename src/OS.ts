@@ -10,7 +10,7 @@ import type { WebviewPanelId } from './VSCodeAPIs';
 import { Diagnostics } from './Diagnostics';
 
 // Type definition for fileRead method
-export type fileRead_t = <T = string>(path: string, key?: string) => T | undefined;
+export type FileRead_t = <T = string>(path: string, key?: string) => T | undefined;
 
 export abstract class OS {
   // Performance timing from Node.js perf_hooks
@@ -105,7 +105,7 @@ export abstract class OS {
   }
 
   // Smart file reader that handles everything
-  fileRead: fileRead_t = <T = string>(path: string, key?: string): T | undefined => {
+  fileRead: FileRead_t = <T = string>(path: string, key?: string): T | undefined => {
     try {
       // Determine if this is an extension-relative path
       const isExtensionPath = !path.startsWith('/') && !path.includes(':\\');
