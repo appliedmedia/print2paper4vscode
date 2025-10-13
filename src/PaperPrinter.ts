@@ -31,7 +31,7 @@ import {
  *
  * @example
  * const printer = new PaperPrinter(app);
- * await printer.handleFirstPrintCommand();
+ * await printer.handlePrintCommandFromVSCode();
  */
 export class PaperPrinter {
   private app: App;
@@ -134,7 +134,7 @@ export class PaperPrinter {
   /**
    * Handles print command - automatically detects selection vs document
    */
-  async handleFirstPrintCommand(): Promise<void> {
+  async handlePrintCommandFromVSCode(): Promise<void> {
     try {
       const category = this.app.tabinspector.detectActiveTabCategory();
       if (category === 'preview') {
@@ -164,6 +164,9 @@ export class PaperPrinter {
       }
       this.docInfo.printTitle = printableLabel;
 
+      // Create menus if they don't exist yet (needed before accessing theme menu)
+      this.createMenus();
+
       // Initialize theme choice if not set yet
       const themeMenu = this.app.uimenumgr.getMenuById('theme');
       const currentTheme = this.app.uimenumgr.getValueForSelectedByMenuId('theme');
@@ -175,23 +178,15 @@ export class PaperPrinter {
         theme: (this.app.uimenumgr.getValueForSelectedByMenuId('theme') ||
           'github-light') as string,
       });
-      await this.openPrintPrepAndPrompt(printableLabel);
+
+      // Open webview (fire and forget)
+      void this.openWebView(printableLabel);
     } catch (error) {
       this.dx.out(`Error handling print: ${error}`);
       this.app.ui.showErrorMessage(
         `Print failed: ${error instanceof Error ? error.message : String(error)}`
       );
     }
-  }
-
-  private async openPrintPrepAndPrompt(tabName: string): Promise<void> {
-    this.docInfo.printTitle = tabName;
-
-    // Create menus and register message handlers when we actually need them
-    this.createMenus();
-
-    // Always use webview (handles both single and multiple pages)
-    await this.openWebView(tabName);
   }
 
   /**

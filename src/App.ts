@@ -62,15 +62,15 @@ export class App {
     // Create Diagnostics instance first
     this.dx = new Diagnostics('App');
 
-    // Create components - VSCodeAPIs first, then UI, then others in alphabetical order
+    // Create components - VSCodeAPIs first, then UI, then UIMenuMgr (needed by PaperPrinter), then others
     this.vscodeapis = new VSCodeAPIs(this, vscode, context);
     this.ui = new UI(this);
+    this.uimenumgr = new UIMenuMgr(this); // Must be created before PaperPrinter (which creates menus in constructor)
     this.os = OS.create(this);
     this.pdf = new PDF(this);
     this.paperprinter = new PaperPrinter(this);
     this.stylize = new Stylize(this);
     this.tabinspector = new TabInspector(this);
-    this.uimenumgr = new UIMenuMgr(this);
   }
 
   init(): void {
