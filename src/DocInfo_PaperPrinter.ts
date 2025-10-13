@@ -15,7 +15,7 @@ export class DocInfo_PaperPrinter {
 
   // Document content
   public rawCode: string = '';
-  public languageId: LanguageId_t = '' as LanguageId_t;
+  public languageId: LanguageId_t = 'plaintext';
   public printTitle: string = 'Printable';
 
   // Computed values (read-only)
@@ -37,7 +37,11 @@ export class DocInfo_PaperPrinter {
 
     // Get margin from menu's persistent state
     const menu = this.app.uimenumgr.getMenuById('marginId');
-    const marginId = (menu.persist.marginId as MarginId_t) || 'normal';
+    const rawMarginId = menu.persist.marginId;
+    const marginId: MarginId_t =
+      typeof rawMarginId === 'string' && rawMarginId in marginIdToPx
+        ? (rawMarginId as MarginId_t)
+        : 'normal';
     const marginPx = marginIdToPx[marginId];
 
     return {

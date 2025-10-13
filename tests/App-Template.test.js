@@ -2,15 +2,18 @@ import { describe, it } from 'node:test';
 import assert from 'node:assert';
 import { App } from '../src/App.js';
 describe('App templateDictReplace', () => {
-  // Create a minimal mock context for App constructor
+  // Create minimal mocks for App constructor
   const mockContext = {
     subscriptions: {
       push: () => {},
     },
   };
+  const mockVscode = {
+    // Add minimal vscode API mocks as needed
+  };
   let app;
   // Initialize app before tests
-  app = new App(mockContext);
+  app = new App(mockContext, mockVscode);
   it('should replace all placeholders with dictionary values', () => {
     const source = 'Hello {{NAME}}, your age is {{AGE}} and you live in {{CITY}}';
     const dictionary = {
@@ -63,7 +66,7 @@ describe('App templateDictReplace', () => {
     const result = app.templateDictReplace(source, dictionary);
     assert.strictEqual(result, 'Hello John! Hello again, John!');
   });
-  it('should handle complex nested placeholders', () => {
+  it('should perform single-pass replacement without recursion', () => {
     const source =
       '{{SECTION_1_TITLE}}: {{SECTION_1_CONTENT}} | {{SECTION_2_TITLE}}: {{SECTION_2_CONTENT}}';
     const dictionary = {
