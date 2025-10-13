@@ -250,3 +250,5 @@ export abstract class OS {
 import { OSMac } from './OSMac';
 import { OSWin } from './OSWin';
 import { OSLinux } from './OSLinux';
+
+// end, OS.ts

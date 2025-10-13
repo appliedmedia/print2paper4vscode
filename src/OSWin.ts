@@ -47,3 +47,5 @@ export class OSWin extends OS {
     this.dx.done();
   }
 }
+
+// end, OSWin.ts

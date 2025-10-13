@@ -1,8 +1,7 @@
 import { ClipboardCapture } from './ClipboardCapture';
 import type { App } from './App';
-import type { UIMenuItem } from './types/UI_t';
 import { Diagnostics } from './Diagnostics';
-import { UIMenu, type MenuId_t } from './UIMenu';
+import { UIMenu, type MenuId_t, type HandleSelection_t, type UIMenuItem_t } from './UIMenu';
 import { UIWebView } from './UIWebView';
 import type { PDFDoc } from './types/PDF_t';
 import type { PageRender } from './types/PageRender_t';
@@ -93,8 +92,8 @@ export class PaperPrinter {
   // Computed line height from font size
   get lineHeightPx(): number {
     const editorTypo = this.app.vscodeapis.getEditorTypography();
-    const menu = this.app.uimenumgr.getMenuById('fontSizeId');
-    return parseInt(menu.persist.fontSizeId || '12', 10) * editorTypo.sizeToHeightRatio;
+    const fontSizeId = this.app.uimenumgr.getValueForSelectedByMenuId('fontSizeId');
+    return parseInt(fontSizeId || '12', 10) * editorTypo.sizeToHeightRatio;
   }
 
   // Public façade to decouple TabInspector from internal fields
@@ -160,12 +159,14 @@ export class PaperPrinter {
 
       // Initialize theme choice if not set yet
       const themeMenu = this.app.uimenumgr.getMenuById('theme');
-      if (!themeMenu.persist.theme) {
+      const currentTheme = this.app.uimenumgr.getValueForSelectedByMenuId('theme');
+      if (!currentTheme) {
         themeMenu.persist.theme = this.app.vscodeapis.getActiveThemeId();
       }
       this.pdfDoc = await this.app.stylize.styleToPdf(info.text, this.docInfo.languageId, {
         title: this.docInfo.printTitle,
-        theme: themeMenu.persist.theme || 'github-light',
+        theme: (this.app.uimenumgr.getValueForSelectedByMenuId('theme') ||
+          'github-light') as string,
       });
       await this.openPrintPrepAndPrompt(printableLabel);
     } catch (error) {
@@ -206,12 +207,19 @@ export class PaperPrinter {
       // ScrollView options
       const options = {
         title: `Print: ${tabName}`,
-        pageSizeId: this.docInfo.persist.pageSizeId as 'letter' | 'legal' | 'a3' | 'a4' | 'a5',
-        orient: this.docInfo.persist.orient as 'portrait' | 'landscape',
+        pageSizeId: (this.app.uimenumgr.getValueForSelectedByMenuId('pageSizeId') ||
+          'a4') as PageSizeId_t,
+        orient: (this.app.uimenumgr.getValueForSelectedByMenuId('orient') || 'portrait') as
+          | 'portrait'
+          | 'landscape',
         fontFamily: this.getCurrentFontFamily(),
-        fontSizePx: parseInt(this.docInfo.persist.fontSizeId || '12', 10),
+        fontSizePx: parseInt(
+          this.app.uimenumgr.getValueForSelectedByMenuId('fontSizeId') || '12',
+          10
+        ),
         lineHeightPx: this.lineHeightPx,
-        theme: this.docInfo.persist.theme,
+        theme: (this.app.uimenumgr.getValueForSelectedByMenuId('theme') ||
+          'github-light') as string,
       };
 
       // Create webview and initialize message handlers
@@ -241,10 +249,10 @@ export class PaperPrinter {
   private async generatePdf(): Promise<void> {
     // Store the new PDF document
     this.pdfDoc = await this.app.stylize.styleToPdf(this.docInfo.rawCode, this.docInfo.languageId, {
-      fontSize: parseInt(this.docInfo.persist.fontSizeId || '12', 10),
+      fontSize: parseInt(this.app.uimenumgr.getValueForSelectedByMenuId('fontSizeId') || '12', 10),
       lineHeight: this.lineHeightPx,
       title: this.docInfo.printTitle,
-      theme: this.docInfo.persist.theme,
+      theme: (this.app.uimenumgr.getValueForSelectedByMenuId('theme') || 'github-light') as string,
     });
   }
 
@@ -345,7 +353,7 @@ export class PaperPrinter {
   }
 
   // Build list methods for each menu type
-  private menuItems_Print(): UIMenuItem[] {
+  private menuItems_Print(): UIMenuItem_t[] {
     return [
       { id: 'preview', displayName: 'Print with Preview' },
       { id: 'direct', displayName: 'Print' },
@@ -353,7 +361,7 @@ export class PaperPrinter {
     ];
   }
 
-  private menuItems_Theme(): UIMenuItem[] {
+  private menuItems_Theme(): UIMenuItem_t[] {
     const themes = this.app.stylize.getThemes();
 
     return themes.map(theme => {
@@ -365,7 +373,7 @@ export class PaperPrinter {
     });
   }
 
-  private menuItems_Text(): UIMenuItem[] {
+  private menuItems_Text(): UIMenuItem_t[] {
     const dx = this.dx.sub('menuItems_Text');
     const editorTypo = this.app.vscodeapis.getEditorTypography();
     const editorSize = editorTypo.fontSize;
@@ -402,7 +410,7 @@ export class PaperPrinter {
     return sizeOptions;
   }
 
-  private menuItems_Page(): UIMenuItem[] {
+  private menuItems_Page(): UIMenuItem_t[] {
     return [
       // Size submenu reference
       { id: 'size', displayName: 'Size' },
@@ -413,19 +421,17 @@ export class PaperPrinter {
     ];
   }
 
-  private menuItems_pageSizeId(): UIMenuItem[] {
-    const pageSizeLabels: Record<PageSizeId_t, string> = {
-      letter: 'Letter (8.5" × 11")',
-      legal: 'Legal (8.5" × 14")',
-      a3: 'A3 (297mm × 420mm)',
-      a4: 'A4 (210mm × 297mm)',
-      a5: 'A5 (148mm × 210mm)',
-    };
-
-    return kPageSizeIds.map(size => ({ id: size, displayName: pageSizeLabels[size] }));
+  private menuItems_pageSizeId(): UIMenuItem_t[] {
+    return [
+      { id: 'letter', displayName: 'Letter (8.5" × 11")' },
+      { id: 'legal', displayName: 'Legal (8.5" × 14")' },
+      { id: 'a3', displayName: 'A3 (297mm × 420mm)' },
+      { id: 'a4', displayName: 'A4 (210mm × 297mm)' },
+      { id: 'a5', displayName: 'A5 (148mm × 210mm)' },
+    ];
   }
 
-  private menuItems_Orient(): UIMenuItem[] {
+  private menuItems_Orient(): UIMenuItem_t[] {
     const yaml = this.yaml;
 
     return [
@@ -434,7 +440,7 @@ export class PaperPrinter {
     ];
   }
 
-  private menuItems_MarginId(): UIMenuItem[] {
+  private menuItems_MarginId(): UIMenuItem_t[] {
     return [
       { id: 'none', displayName: 'None (0pt)', icon: this.yaml.icon_margin_none_svg },
       { id: 'minimal', displayName: 'Minimal (5pt)', icon: this.yaml.icon_margin_minimal_svg },
@@ -467,11 +473,18 @@ export class PaperPrinter {
         try {
           await this.uiwebview.updatePageRender(pageRender);
           await this.uiwebview.updateOptions({
-            theme: this.docInfo.persist.theme,
-            fontSizePx: parseInt(this.docInfo.persist.fontSizeId || '12', 10),
+            theme: (this.app.uimenumgr.getValueForSelectedByMenuId('theme') ||
+              'github-light') as string,
+            fontSizePx: parseInt(
+              this.app.uimenumgr.getValueForSelectedByMenuId('fontSizeId') || '12',
+              10
+            ),
             lineHeightPx: this.lineHeightPx,
-            pageSizeId: this.docInfo.persist.pageSizeId as 'letter' | 'legal' | 'a3' | 'a4' | 'a5',
-            orient: this.docInfo.persist.orient as 'portrait' | 'landscape',
+            pageSizeId: (this.app.uimenumgr.getValueForSelectedByMenuId('pageSizeId') ||
+              'a4') as PageSizeId_t,
+            orient: (this.app.uimenumgr.getValueForSelectedByMenuId('orient') || 'portrait') as
+              | 'portrait'
+              | 'landscape',
           });
           dx.out('Webview updated with new configuration');
         } catch (error) {
@@ -488,35 +501,42 @@ export class PaperPrinter {
     }
   }
 
-  private async handleSelection_Print(selectedId: string): Promise<string> {
+  private async handleSelection_Print(selectedId: string): Promise<HandleSelection_t> {
+    let id = '';
+    let value: string | number | boolean = '';
+
     if (selectedId === UIMenu.defaultId()) {
-      return ''; // Print menu has no default selection
+      // Print menu has no default selection
+    } else {
+      if (!this.pdfDoc) return { id, value };
+      void (await this.generatePdf());
+      if (selectedId === 'preview')
+        await this.app.pdf.printWithPreview(this.pdfDoc, this.docInfo.printTitle || 'Print Output');
+      else if (selectedId === 'direct')
+        await this.app.pdf.printDirectly(this.pdfDoc, this.docInfo.printTitle || 'Print Output');
+      else if (selectedId === 'save')
+        await this.app.pdf.saveAsPDF(this.pdfDoc, this.docInfo.printTitle || 'Print Output');
+      // TODO: Re-render webview - need access to panel
     }
-    if (!this.pdfDoc) return '';
-    void (await this.generatePdf());
-    if (selectedId === 'preview')
-      await this.app.pdf.printWithPreview(this.pdfDoc, this.docInfo.printTitle || 'Print Output');
-    else if (selectedId === 'direct')
-      await this.app.pdf.printDirectly(this.pdfDoc, this.docInfo.printTitle || 'Print Output');
-    else if (selectedId === 'save')
-      await this.app.pdf.saveAsPDF(this.pdfDoc, this.docInfo.printTitle || 'Print Output');
-    // TODO: Re-render webview - need access to panel
-    return ''; // action handled
+
+    return { id, value };
   }
 
-  private async handleSelection_Theme(selectedId: string): Promise<string> {
+  private async handleSelection_Theme(selectedId: string): Promise<HandleSelection_t> {
     const dx = this.dx.sub('handleSelection_Theme');
     dx.out(`selectedId = ${selectedId}`);
 
-    let result = '';
+    let id = '';
+    let value: string | number | boolean = '';
 
     if (selectedId === UIMenu.defaultId()) {
       // Return the current editor theme ID as the default
       const currentEditorTheme = this.app.vscodeapis.getActiveThemeId();
       const availableThemes = this.app.stylize.getThemes();
       const fallbackTheme = availableThemes[0]?.id || 'github-light';
-      result = currentEditorTheme || fallbackTheme;
-      dx.out(`returning editor theme: ${result}`);
+      id = currentEditorTheme || fallbackTheme;
+      value = id; // value is the theme ID
+      dx.out(`returning editor theme: ${id}`);
     } else {
       // Update theme
       dx.out(`updating theme to ${selectedId}`);
@@ -525,24 +545,27 @@ export class PaperPrinter {
 
       // Regenerate everything (fire and forget)
       void this.regenerateAndUpdateWebview();
-      result = selectedId;
+      id = selectedId;
+      value = id; // value is the theme ID
     }
 
     dx.done();
-    return result;
+    return { id, value };
   }
 
-  private async handleSelection_Text(selectedId: string): Promise<string> {
+  private async handleSelection_Text(selectedId: string): Promise<HandleSelection_t> {
     const dx = this.dx.sub('handleSelection_Text');
     dx.out(`selectedId = ${selectedId}`);
 
-    let result = '';
+    let id = '';
+    let value: string | number | boolean = '';
 
     if (selectedId === UIMenu.defaultId()) {
       // Return the actual editor font size for default selection
       const editorTypo = this.app.vscodeapis.getEditorTypography();
-      result = String(editorTypo.fontSize);
-      dx.out(`returning editor size: ${result}`);
+      id = String(editorTypo.fontSize);
+      value = id; // value is the font size ID
+      dx.out(`returning editor size: ${id}`);
     } else {
       // Update font size
       const fontSize = parseInt(selectedId, 10);
@@ -555,24 +578,26 @@ export class PaperPrinter {
 
         // Regenerate everything (fire and forget)
         void this.regenerateAndUpdateWebview();
-        result = selectedId;
+        id = selectedId;
+        value = id; // value is the font size ID
       }
     }
 
     dx.done();
-    return result;
+    return { id, value };
   }
 
-  private async handleSelection_Page(/* selectedId: string */): Promise<string> {
+  private async handleSelection_Page(/* selectedId: string */): Promise<HandleSelection_t> {
     // Page menu is just a flyout parent - no default selection
-    return '';
+    return { id: '', value: '' };
   }
 
-  private async handleSelection_PageSizeId(selectedId: string): Promise<string> {
+  private async handleSelection_PageSizeId(selectedId: string): Promise<HandleSelection_t> {
     const dx = this.dx.sub('handleSelection_PageSizeId');
     dx.out(`selectedId = ${selectedId}`);
 
-    let result = '';
+    let id = '';
+    let value: string | number | boolean = '';
 
     if (selectedId === UIMenu.defaultId()) {
       // Return locale-based default page size (letter for US/CA/MX, a4 for rest)
@@ -581,8 +606,9 @@ export class PaperPrinter {
       const region = parts.pop()?.toUpperCase() || '';
       const letterRegions = ['US', 'CA', 'MX', '419'];
       const isLetterSize = letterRegions.includes(region);
-      result = isLetterSize ? 'letter' : 'a4';
-      dx.out(`returning locale-based default page size: ${result}`);
+      id = isLetterSize ? 'letter' : 'a4';
+      value = id; // value is the page size ID
+      dx.out(`returning locale-based default page size: ${id}`);
     } else if (kPageSizeIds.includes(selectedId as PageSizeId_t)) {
       // Update page size
       dx.out(`updating page size to ${selectedId}`);
@@ -593,23 +619,26 @@ export class PaperPrinter {
 
       // Regenerate everything (fire and forget)
       void this.regenerateAndUpdateWebview();
-      result = selectedId;
+      id = selectedId;
+      value = id; // value is the page size ID
     }
 
     dx.done();
-    return result;
+    return { id, value };
   }
 
-  private async handleSelection_Orient(selectedId: string): Promise<string> {
+  private async handleSelection_Orient(selectedId: string): Promise<HandleSelection_t> {
     const dx = this.dx.sub('handleSelection_Orient');
     dx.out(`selectedId = ${selectedId}`);
 
-    let result = '';
+    let id = '';
+    let value: string | number | boolean = '';
 
     if (selectedId === UIMenu.defaultId()) {
       // Return the default orientation (always portrait)
-      result = 'portrait';
-      dx.out(`returning default orient: ${result}`);
+      id = 'portrait';
+      value = id; // value is the orientation
+      dx.out(`returning default orient: ${id}`);
     } else if (selectedId === 'portrait' || selectedId === 'landscape') {
       // Update orientation
       dx.out(`updating orient to ${selectedId}`);
@@ -620,40 +649,49 @@ export class PaperPrinter {
 
       // Regenerate everything (fire and forget)
       void this.regenerateAndUpdateWebview();
-      result = selectedId;
+      id = selectedId;
+      value = id; // value is the orientation
     }
 
     dx.done();
-    return result;
+    return { id, value };
   }
 
-  private async handleSelection_MarginId(selectedId: string): Promise<string> {
+  private async handleSelection_MarginId(selectedId: string): Promise<HandleSelection_t> {
     const dx = this.dx.sub('handleSelection_Margin');
     const defaultMarginId: MarginId_t = 'normal';
-    let newMarginId: MarginId_t = selectedId as MarginId_t;
+
+    let id = '';
+    let value: string | number | boolean = '';
 
     if (selectedId === UIMenu.defaultId()) {
       // Return the default margin (always normal)
-      newMarginId = defaultMarginId;
-      dx.out(`returning default margin: ${newMarginId}`);
+      id = defaultMarginId;
+      value = id; // value is the margin ID
+      dx.out(`returning default margin: ${id}`);
     } else if (kMarginIds.includes(selectedId as MarginId_t)) {
       dx.out(`updating margin to ${selectedId}`);
 
       // Update persistent margin selection via UIMenu
       const menu = this.app.uimenumgr.getMenuById('marginId');
       if (menu) {
-        (menu.persist as Persist_t).marginId = newMarginId;
+        (menu.persist as Persist_t).marginId = selectedId as MarginId_t;
       }
 
       // Regenerate everything (fire and forget)
       void this.regenerateAndUpdateWebview();
+      id = selectedId;
+      value = id; // value is the margin ID
     } else {
-      newMarginId = defaultMarginId;
+      id = defaultMarginId;
+      value = id;
     }
 
     dx.done();
-    return newMarginId;
+    return { id, value };
   }
 
   // Removed CSS hacks; rely on theme overrides
 }
+
+// end, PaperPrinter.ts

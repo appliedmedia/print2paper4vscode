@@ -685,3 +685,5 @@ export class Stylize {
     }
   }
 }
+
+// end, Stylize.ts

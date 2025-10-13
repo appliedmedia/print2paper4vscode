@@ -78,3 +78,5 @@ export class DocInfo_PDF {
     this.marginRightPts = value.rightPts;
   }
 }
+
+// end, DocInfo_PDF.ts

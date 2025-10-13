@@ -49,3 +49,5 @@ export type PostMessage = {
 
 // Message handler callback type
 export type MessageHandler = (msg: PostMessage) => Promise<void> | void;
+
+// end, UI_t.ts

@@ -92,3 +92,5 @@ export class TabInspector {
     }
   }
 }
+
+// end, TabInspector.ts

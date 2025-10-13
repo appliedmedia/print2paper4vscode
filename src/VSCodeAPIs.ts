@@ -10,11 +10,14 @@ import type {
   // WorkspaceEdit,
 } from 'vscode';
 import type { PostMessage } from './types/UI_t';
-import type { GlobalStateKey_t, GlobalStateKeyToValueType_t } from './types/globalState_t';
 import { Diagnostics } from './Diagnostics';
 
 // Opaque ID type for webview panels
 export type WebviewPanelId = string & { readonly __brand: 'WebviewPanelId' };
+
+// Global state base types - simple scalars
+export type GlobalStateKey_t = string;
+export type GlobalStateValue_t = string | number | boolean;
 
 export class VSCodeAPIs {
   private app: App;
@@ -55,17 +58,14 @@ export class VSCodeAPIs {
   /**
    * Update global state value
    */
-  updateGlobalState<K extends GlobalStateKey_t>(
-    key: K,
-    value: GlobalStateKeyToValueType_t[K]
-  ): void {
+  updateGlobalState(key: GlobalStateKey_t, value: GlobalStateValue_t): void {
     this.context.globalState.update(key, value);
   }
 
   /**
-   * Get global state value as string
+   * Get global state value
    */
-  getGlobalState<K extends GlobalStateKey_t>(key: K): GlobalStateKeyToValueType_t[K] | undefined {
+  getGlobalState(key: GlobalStateKey_t): GlobalStateValue_t | undefined {
     return this.context.globalState.get(key);
   }
 
@@ -537,3 +537,5 @@ export class VSCodeAPIs {
     return this.vscode.env.language;
   }
 }
+
+// end, VSCodeAPIs.ts

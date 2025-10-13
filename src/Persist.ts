@@ -1,19 +1,17 @@
 import type { App } from './App';
-import type {
-  GlobalStateKey_t,
-  GlobalStateKeyToValueType_t,
-  GlobalStateValue_t,
-} from './types/globalState_t';
+import type { kUI_t } from './UI';
+import type { GlobalStateKey_t, GlobalStateValue_t } from './VSCodeAPIs';
+
+// Persist value types - what we store locally
+export type PersistValue_t = string | number | boolean;
 
 // Type for dynamically created properties on Persist instances
-export type Persist_t = {
-  [K in GlobalStateKey_t]?: GlobalStateKeyToValueType_t[K];
-};
+export type Persist_t = Record<(typeof kUI_t)[number], PersistValue_t>;
 
 export class Persist {
   private app: App;
-  private default: Record<string, GlobalStateValue_t> = {};
-  private value: Record<string, GlobalStateValue_t> = {};
+  private default: Record<string, PersistValue_t> = {};
+  private value: Record<string, PersistValue_t> = {};
 
   constructor(app: App) {
     this.app = app;
@@ -48,10 +46,16 @@ export class Persist {
 
         return result;
       },
-      set: (value: GlobalStateValue_t) => {
+      set: (value: PersistValue_t) => {
         if (value !== this.value[name]) {
           this.value[name] = value;
-          this.app.vscodeapis.updateGlobalState(name as GlobalStateKey_t, value);
+          // Skip global state update if value is empty string (non-persistent menus like 'print'/'page')
+          if (value !== '') {
+            this.app.vscodeapis.updateGlobalState(
+              name as GlobalStateKey_t,
+              value as GlobalStateValue_t
+            );
+          }
         }
       },
       enumerable: true,
@@ -60,8 +64,10 @@ export class Persist {
     return this;
   }
 
-  setDefault(name: string, defaultValue: GlobalStateValue_t): this {
+  setDefault(name: string, defaultValue: PersistValue_t): this {
     this.default[name] = defaultValue;
     return this;
   }
 }
+
+// end, Persist.ts

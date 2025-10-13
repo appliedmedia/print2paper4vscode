@@ -1,41 +1,10 @@
 import type { App } from './App';
 import type { PostMessage, MessageHandler } from './types/UI_t';
-import type { WebviewPanelId } from './VSCodeAPIs';
 import { Diagnostics } from './Diagnostics';
-import jsPDF from 'jspdf';
+import { kMenuId } from './UIMenu';
 
-// Global State Key types - UI-related persistent storage identifiers
-export type GlobalStateKey_t =
-  | 'pageSizeId'
-  | 'orient'
-  | 'marginId'
-  | 'theme'
-  | 'fontSizeId'
-  | 'toolbarPosPx'
-  | 'pageRenderCacheSize'
-  | 'scrollDebounceMs'
-  | 'maxCanvasPoolSize'
-  | 'scrollableViewerEnabled'
-  | 'autoScrollableViewerThreshold';
-
-export const kGlobalStateKey: readonly GlobalStateKey_t[] = [
-  'pageSizeId',
-  'orient',
-  'marginId',
-  'theme',
-  'fontSizeId',
-  'toolbarPosPx',
-  'pageRenderCacheSize',
-  'scrollDebounceMs',
-  'maxCanvasPoolSize',
-  'scrollableViewerEnabled',
-  'autoScrollableViewerThreshold',
-] as const;
-
-// Type guard for runtime validation
-export function isGlobalStateKey(id: string): id is GlobalStateKey_t {
-  return kGlobalStateKey.includes(id as GlobalStateKey_t);
-}
+// UI persist keys - union of menu IDs and toolbar position
+export const kUI_t = [...kMenuId, 'toolbarPosPx'] as const;
 
 export class UI {
   private app: App;
@@ -147,20 +116,6 @@ export class UI {
     this.app.vscodeapis.showWarningMessage(message);
   }
 
-  // Create webview panel
-  /** @deprecated Dead code, never called */
-  async createWebviewPanel_OBSOLETE_DELETEME(title: string, html: string): Promise<WebviewPanelId> {
-    const panelId = await this.app.vscodeapis.getOrCreateWebviewPanel(title, html, undefined);
-    return panelId;
-  }
-
-  /** @deprecated Dead code, never called */
-  async updateWebviewPdf_OBSOLETE_DELETEME(pdf: jsPDF): Promise<void> {
-    const dx = this.dx.sub('updateWebviewPdf_OBSOLETE_DELETEME');
-    dx.require({ pdf }, ['pdf']);
-    throw new Error('Dead code - currentPanelId removed');
-  }
-
   // Add toolbar to HTML content
   async addToolbar(html: string): Promise<string> {
     const dx = this.dx.sub('addToolbar');
@@ -186,29 +141,6 @@ export class UI {
       return htmlWithToolbar;
     } catch (error) {
       dx.out(`Error adding toolbar: ${String(error)}`);
-      throw error;
-    } finally {
-      dx.done();
-    }
-  }
-
-  // Convert HTML to webview panel
-  /** @deprecated Dead code, never called */
-  async htmlToPanel_OBSOLETE_DELETEME(title: string, html: string): Promise<WebviewPanelId> {
-    const dx = this.dx.sub('htmlToPanel_OBSOLETE_DELETEME');
-    dx.require({ title, html }, ['title', 'html']);
-
-    try {
-      // Add toolbar to HTML
-      const htmlWithToolbar = await this.addToolbar(html);
-
-      // Create webview panel
-      const panelId = this.createWebviewPanel_OBSOLETE_DELETEME(title, htmlWithToolbar);
-
-      dx.out(`Created webview panel: ${title}`);
-      return panelId;
-    } catch (error) {
-      dx.out(`Error creating webview panel: ${String(error)}`);
       throw error;
     } finally {
       dx.done();
@@ -259,3 +191,5 @@ export class UI {
     console.log(message);
   }
 }
+
+// end, UI.ts

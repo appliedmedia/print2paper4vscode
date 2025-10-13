@@ -1,5 +1,4 @@
 import type { App } from './App';
-import { Persist, type Persist_t } from './Persist';
 import type { LanguageId_t } from './Stylize';
 
 // Margin level type
@@ -13,7 +12,6 @@ export type MarginId_t = 'none' | 'minimal' | 'normal' | 'wide';
  */
 export class DocInfo_PaperPrinter {
   private app: App;
-  public persist: Persist & Persist_t;
 
   // Document content
   public rawCode: string = '';
@@ -23,12 +21,9 @@ export class DocInfo_PaperPrinter {
   // Computed values (read-only)
   public pageWidthPx: number = 0;
   public pageHeightPx: number = 0;
-  public pageWidthPts: number = 0;
-  public pageHeightPts: number = 0;
 
   constructor(app: App) {
     this.app = app;
-    this.persist = new Persist(app) as Persist & Persist_t;
   }
 
   // Margin in pixels for webview display
@@ -53,3 +48,5 @@ export class DocInfo_PaperPrinter {
     };
   }
 }
+
+// end, DocInfo_PaperPrinter.ts

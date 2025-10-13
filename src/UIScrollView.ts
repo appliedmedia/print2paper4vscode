@@ -300,3 +300,5 @@ export class UIScrollView {
     }
   }
 }
+
+// end, UIScrollView.ts

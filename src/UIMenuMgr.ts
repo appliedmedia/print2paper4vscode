@@ -1,6 +1,11 @@
 import type { App } from './App';
-import { UIMenu, type MenuId_t, type MenuItemId_t } from './UIMenu';
-import type { UIMenuItem } from './types/UI_t';
+import {
+  UIMenu,
+  type MenuId_t,
+  type MenuItemId_t,
+  type HandleSelection_t,
+  type UIMenuItem_t,
+} from './UIMenu';
 import { Diagnostics } from './Diagnostics';
 
 export class UIMenuMgr {
@@ -29,9 +34,9 @@ export class UIMenuMgr {
     displayName: string,
     icon: string,
     isFlyout: boolean = false,
-    menuItems: () => UIMenuItem[],
+    menuItems: () => UIMenuItem_t[],
     flyoutMenuItemIds: string[] = [],
-    selectionHandler: (selectedId: string) => Promise<string>
+    selectionHandler: (selectedId: string) => Promise<HandleSelection_t>
   ): UIMenu {
     return new UIMenu(
       this.app,
@@ -74,6 +79,13 @@ export class UIMenuMgr {
       throw new Error(msg);
     }
     return menu;
+  }
+
+  // Get the selected value for a menu
+  getValueForSelectedByMenuId(menuId: MenuId_t): string | undefined {
+    const menu = this.getMenuById(menuId);
+    const selectedValue = (menu.persist as unknown as Record<string, string>)[menuId];
+    return selectedValue;
   }
 
   // Add a menu to the list (called by PaperPrinter)
@@ -208,3 +220,5 @@ export class UIMenuMgr {
     }));
   }
 }
+
+// end, UIMenuMgr.ts

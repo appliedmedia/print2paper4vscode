@@ -18,3 +18,5 @@ export function deactivate() {
   }
   console.log('Print2Paper4VSCode extension deactivated');
 }
+
+// end, -entrypoint.ts

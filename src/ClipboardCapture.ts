@@ -141,3 +141,5 @@ export class ClipboardCapture {
     return this.captureAndConvert();
   }
 }
+
+// end, ClipboardCapture.ts

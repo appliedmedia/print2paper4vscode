@@ -1,8 +1,14 @@
 import type { App } from './App';
-import type { UIMenuItem } from './types/UI_t';
-import type { GlobalStateValue_t } from './types/globalState_t';
 import { Diagnostics } from './Diagnostics';
 import { Persist, type Persist_t } from './Persist';
+
+// UIMenuItem type - menu item structure
+export interface UIMenuItem_t {
+  id: string;
+  displayName: string;
+  icon?: string;
+  attributes?: Record<string, string>;
+}
 
 // Menu ID types - UI component identifiers
 export const kMenuId = [
@@ -43,6 +49,12 @@ export const kMenuItemId = [
 
 export type MenuItemId_t = (typeof kMenuItemId)[number];
 
+// Selection handler return type - id is what's selected, value is what to use
+export interface HandleSelection_t {
+  id: string;
+  value: string | number | boolean;
+}
+
 // Type guards for runtime validation
 export function isMenuId(id: string): id is MenuId_t {
   return kMenuId.includes(id as MenuId_t);
@@ -80,9 +92,9 @@ export class UIMenu {
     private _displayName: string,
     private _icon: string,
     private _isFlyout: boolean = false,
-    private _menuItems: () => UIMenuItem[],
+    private _menuItems: () => UIMenuItem_t[],
     private _flyoutMenuItemIds: string[] = [],
-    private _selectionHandler: (id: MenuItemId_t) => Promise<string>
+    private _selectionHandler: (id: MenuItemId_t) => Promise<HandleSelection_t>
   ) {
     this.persist = new Persist(app) as Persist & Persist_t;
     this.dx = this.app.dx.create('UIMenu');
@@ -125,7 +137,7 @@ export class UIMenu {
   }
 
   // Get the menu items from the injected listBuilder
-  getMenuItems(): UIMenuItem[] {
+  getMenuItems(): UIMenuItem_t[] {
     return this._menuItems();
   }
 
@@ -141,21 +153,21 @@ export class UIMenu {
   }
 
   // Dispatch a selection to this menu's handler
-  async dispatchSelection(id: MenuItemId_t): Promise<string> {
+  async dispatchSelection(id: MenuItemId_t): Promise<HandleSelection_t> {
     return this._selectionHandler(id);
   }
 
   // Get the default item ID for this menu (for UI highlighting)
   async getDefaultItemId(): Promise<MenuItemId_t> {
     // Check if persist already has a value (cache/global/default)
-    const cachedValue = (this.persist as unknown as Record<string, GlobalStateValue_t>)[this._id];
+    const cachedValue = (this.persist as Persist_t)[this._id];
 
     if (cachedValue !== undefined) {
       return cachedValue as MenuItemId_t;
     }
 
     // No cached value, dispatch to selection handler to compute default
-    const defaultItemId = await this.dispatchSelection(this.defaultId());
+    const { id: defaultItemId } = await this.dispatchSelection(this.defaultId());
 
     // Store the computed default
     this.persist.setDefault(this._id, defaultItemId);
@@ -189,7 +201,7 @@ export class UIMenu {
   }
 
   // Generate a single menu item HTML
-  async getItemHTML(item: UIMenuItem, flyout: string, defaultItemId: string): Promise<string> {
+  async getItemHTML(item: UIMenuItem_t, flyout: string, defaultItemId: string): Promise<string> {
     const dx = this.dx.sub('getItemHTML');
     const yaml = this.yaml; // This will load and validate automatically
 
@@ -282,3 +294,5 @@ export class UIMenu {
     this.dx.done();
   }
 }
+
+// end, UIMenu.ts

@@ -1,7 +1,6 @@
 import { describe, it } from 'node:test';
 import * as assert from 'node:assert';
-import { UIMenu } from '../src/UIMenu.js';
-import type { UIMenuItem } from '../src/types/UI_t.js';
+import { UIMenu, type HandleSelection_t, type UIMenuItem_t } from '../src/UIMenu.js';
 
 // Mock App for testing
 const mockApp = {
@@ -31,8 +30,12 @@ const mockApp = {
 } as any;
 
 // Mock list builder and selection handler
-const mockListBuilder = () => [{ id: 'test', displayName: 'Test Item' }];
-const mockSelectionHandler = async (id: string): Promise<string> => Promise.resolve('');
+const mockListBuilder = (): UIMenuItem_t[] => [
+  { id: 'default', displayName: 'Default' },
+  { id: 'test', displayName: 'Test Item' },
+];
+const mockSelectionHandler = async (id: string): Promise<HandleSelection_t> =>
+  Promise.resolve({ id: '', value: '' });
 
 describe('UIMenu', () => {
   // Helper function to create fresh menu for each test
@@ -153,9 +156,10 @@ describe('UIMenu', () => {
     it('should return menu items from list builder', () => {
       const menu = createMenu();
       const items = menu.getMenuItems();
-      assert.strictEqual(items.length, 1);
-      assert.strictEqual(items[0].id, 'test');
-      assert.strictEqual(items[0].displayName, 'Test Item');
+      assert.strictEqual(items.length, 2);
+      assert.strictEqual(items[0].id, 'default');
+      assert.strictEqual(items[1].id, 'test');
+      assert.strictEqual(items[1].displayName, 'Test Item');
     });
   });
 

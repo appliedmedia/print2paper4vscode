@@ -251,3 +251,5 @@ export class Diagnostics {
     return debugStates.length > 0 ? debugStates[debugStates.length - 1] : Diagnostics.debugOn();
   }
 }
+
+// end, Diagnostics.ts

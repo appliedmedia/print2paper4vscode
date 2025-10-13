@@ -1,7 +1,7 @@
 import { describe, it } from 'node:test';
 import * as assert from 'node:assert';
 import { UIMenuMgr } from '../src/UIMenuMgr.js';
-import { UIMenu } from '../src/UIMenu.js';
+import { UIMenu, type HandleSelection_t } from '../src/UIMenu.js';
 
 // Mock App class for testing
 class MockApp {
@@ -68,7 +68,8 @@ describe('UIMenuMgr', () => {
       (menuMgr as any).menus = [];
 
       const mockListBuilder = () => [{ id: 'test', displayName: 'Test Item' }];
-      const mockSelectionHandler = async (id: string): Promise<string> => Promise.resolve('');
+      const mockSelectionHandler = async (id: string): Promise<HandleSelection_t> =>
+        Promise.resolve({ id: '', value: '' });
 
       const menu = menuMgr.createMenu(
         'theme', // Use valid GlobalStateKey
@@ -91,7 +92,8 @@ describe('UIMenuMgr', () => {
       (menuMgr as any).menus = [];
 
       const mockListBuilder = () => [{ id: 'test', displayName: 'Test Item' }];
-      const mockSelectionHandler = async (id: string): Promise<string> => Promise.resolve('');
+      const mockSelectionHandler = async (id: string): Promise<HandleSelection_t> =>
+        Promise.resolve({ id: '', value: '' });
 
       const menu1 = menuMgr.createMenu(
         'theme', // Use valid GlobalStateKey
@@ -131,7 +133,8 @@ describe('UIMenuMgr', () => {
       (menuMgr as any).menus = [];
 
       const mockListBuilder = () => [{ id: 'test', displayName: 'Test Item' }];
-      const mockSelectionHandler = async (id: string): Promise<string> => Promise.resolve('');
+      const mockSelectionHandler = async (id: string): Promise<HandleSelection_t> =>
+        Promise.resolve({ id: '', value: '' });
 
       const testMenu = menuMgr.createMenu(
         'theme', // Use valid GlobalStateKey
@@ -172,7 +175,8 @@ describe('UIMenuMgr', () => {
       (menuMgr as any).menus = [];
 
       const mockListBuilder = () => [{ id: 'test', displayName: 'Test Item' }];
-      const mockSelectionHandler = async (id: string): Promise<string> => Promise.resolve('');
+      const mockSelectionHandler = async (id: string): Promise<HandleSelection_t> =>
+        Promise.resolve({ id: '', value: '' });
 
       const menu1 = menuMgr.createMenu(
         'theme', // Use valid GlobalStateKey
@@ -214,7 +218,8 @@ describe('UIMenuMgr', () => {
     it('should generate generic JavaScript handlers', () => {
       // Create a test menu first so getAllUIMenuJS has something to work with
       const mockListBuilder = () => [{ id: 'test', displayName: 'Test Item' }];
-      const mockSelectionHandler = async (id: string): Promise<string> => Promise.resolve('');
+      const mockSelectionHandler = async (id: string): Promise<HandleSelection_t> =>
+        Promise.resolve({ id: '', value: '' });
       const testMenu = menuMgr.createMenu(
         'theme', // Use valid GlobalStateKey
         'Test Menu',
@@ -237,7 +242,8 @@ describe('UIMenuMgr', () => {
       (menuMgr as any).menus = [];
 
       const mockListBuilder = () => [{ id: 'test', displayName: 'Test Item' }];
-      const mockSelectionHandler = async (id: string): Promise<string> => Promise.resolve('');
+      const mockSelectionHandler = async (id: string): Promise<HandleSelection_t> =>
+        Promise.resolve({ id: '', value: '' });
 
       const testMenu = menuMgr.createMenu(
         'theme', // Use valid GlobalStateKey
@@ -262,7 +268,8 @@ describe('UIMenuMgr', () => {
       (menuMgr as any).menus = [];
 
       const mockListBuilder = () => [{ id: 'test', displayName: 'Test Item' }];
-      const mockSelectionHandler = async (id: string): Promise<string> => Promise.resolve('');
+      const mockSelectionHandler = async (id: string): Promise<HandleSelection_t> =>
+        Promise.resolve({ id: '', value: '' });
 
       const menu1 = menuMgr.createMenu(
         'theme', // Use valid GlobalStateKey
@@ -299,7 +306,8 @@ describe('UIMenuMgr', () => {
       (menuMgr as any).menus = [];
 
       const mockListBuilder = () => [{ id: 'test', displayName: 'Test Item' }];
-      const mockSelectionHandler = async (id: string): Promise<string> => Promise.resolve('');
+      const mockSelectionHandler = async (id: string): Promise<HandleSelection_t> =>
+        Promise.resolve({ id: '', value: '' });
 
       const testMenu = menuMgr.createMenu(
         'theme', // Use valid GlobalStateKey
@@ -333,7 +341,8 @@ describe('UIMenuMgr', () => {
 
       const longId = 'a'.repeat(100);
       const mockListBuilder = () => [{ id: 'test', displayName: 'Test Item' }];
-      const mockSelectionHandler = async (id: string): Promise<string> => Promise.resolve('');
+      const mockSelectionHandler = async (id: string): Promise<HandleSelection_t> =>
+        Promise.resolve({ id: '', value: '' });
 
       const longMenu = menuMgr.createMenu(
         'theme', // Use valid GlobalStateKey
@@ -357,7 +366,8 @@ describe('UIMenuMgr', () => {
 
       const specialId = 'menu_$#@!';
       const mockListBuilder = () => [{ id: 'test', displayName: 'Test Item' }];
-      const mockSelectionHandler = async (id: string): Promise<string> => Promise.resolve('');
+      const mockSelectionHandler = async (id: string): Promise<HandleSelection_t> =>
+        Promise.resolve({ id: '', value: '' });
 
       const specialMenu = menuMgr.createMenu(
         'fontSizeId', // Use valid GlobalStateKey

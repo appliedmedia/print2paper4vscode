@@ -74,5 +74,4 @@ export interface PageRender {
   getPageSizePx(): Promise<{ widthPx: number; heightPx: number }>;
 }
 
-// Re-export PageSizeId_t from PaperPrinter for convenience
-export type { PageSizeId_t } from '../PaperPrinter';
+// end, PageRender_t.ts
