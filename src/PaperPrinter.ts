@@ -409,12 +409,12 @@ export class PaperPrinter {
 
   private menuItems_Page(): UIMenuItem_t[] {
     return [
-      // Size submenu reference
-      { id: 'size', displayName: 'Size' },
+      // Size submenu reference (id must match the actual menu id)
+      { id: 'pageSizeId', displayName: 'Size' },
       // Orientation submenu reference
       { id: 'orient', displayName: 'Orient' },
-      // Margin submenu reference
-      { id: 'margin', displayName: 'Margin' },
+      // Margin submenu reference (id must match the actual menu id)
+      { id: 'marginId', displayName: 'Margin' },
     ];
   }
 
