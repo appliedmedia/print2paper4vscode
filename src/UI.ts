@@ -1,6 +1,7 @@
 import type { App } from './App';
 import type { PostMessage, MessageHandler } from './types/UI_t';
 import { Diagnostics } from './Diagnostics';
+import { Yaml } from './Yaml';
 import { kMenuId } from './UIMenu';
 
 // UI persist keys - union of menu IDs and toolbar position
@@ -23,24 +24,22 @@ export const kUI_t = [...kMenuId, 'toolbarPosPx'] as const;
  * const toolbar = ui.getToolbarHTML();
  */
 export class UI {
-  private app: App;
-  private messageHandlers: Map<string, MessageHandler[]> = new Map();
-  private dx: Diagnostics;
-  private _yaml: {
-    base_css: string;
-    toolbar_css: string;
-    toolbar_js: string;
-    toolbar_html: string;
-  } = {
+  private static readonly kYaml = {
     base_css: '',
     toolbar_css: '',
     toolbar_js: '',
     toolbar_html: '',
-  };
+  } as const;
+
+  private app: App;
+  private messageHandlers: Map<string, MessageHandler[]> = new Map();
+  private dx: Diagnostics;
+  private _yaml: Yaml<typeof UI.kYaml>;
 
   constructor(app: App) {
     this.app = app;
     this.dx = app.dx.create('UI');
+    this._yaml = new Yaml(app, 'src/UI.yaml', UI.kYaml);
   }
 
   init(): void {}
@@ -50,26 +49,7 @@ export class UI {
   }
 
   get yaml() {
-    // If already loaded, return it
-    if (this._yaml.base_css) {
-      return this._yaml;
-    }
-
-    // Load and cache the YAML
-    const yaml = this.app.os.fileRead<{
-      base_css: string;
-      toolbar_css: string;
-      toolbar_js: string;
-      toolbar_html: string;
-    }>('src/UI.yaml');
-
-    if (!yaml) {
-      throw new Error('Failed to load UI yaml');
-    }
-
-    // Cache it
-    this._yaml = yaml;
-    return this._yaml;
+    return this._yaml.get();
   }
 
   // Register a message handler for a specific message type

@@ -97,9 +97,18 @@ export class App {
    * @returns The source text with all placeholders replaced
    */
   templateDictReplace(source: string, dictionary: Record<string, string>): string {
-    return source.replace(/\{\{(\w+)\}\}/g, (match, key) => {
-      return key in dictionary ? dictionary[key] : match; // Return value even if empty string
-    });
+    let result = source;
+    let iter = 0;
+    const iter_max = 4;
+
+    // Keep replacing until no more {{...}} patterns or hit max iterations
+    while (result.includes('{{') && ++iter < iter_max) {
+      result = result.replace(/\{\{(\w+)\}\}/g, (match, key) => {
+        return key in dictionary ? dictionary[key] : match; // Return value even if empty string
+      });
+    }
+
+    return result;
   }
 }
 

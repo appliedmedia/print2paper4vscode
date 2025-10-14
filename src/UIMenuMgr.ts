@@ -165,7 +165,7 @@ export class UIMenuMgr {
     }
 
     // Get the generic handlers - yaml getter handles loading automatically
-    const js = anyMenu.yaml?.ui_menu_generic_handlers ?? '';
+    const js: string = anyMenu.yaml.ui_menu_generic_handlers;
     if (!js) {
       this.dx.out(
         'getAllUIMenuJS: JS is undefined/empty, YAML loading failed or no handlers present'
@@ -185,7 +185,7 @@ export class UIMenuMgr {
     }
 
     // Get the CSS - yaml getter handles loading automatically
-    const css = anyMenu.yaml.ui_menu_css;
+    const css: string = anyMenu.yaml.ui_menu_css;
     if (!css) {
       this.dx.out('getAllUIMenuCSS: CSS is undefined, YAML loading failed');
       return '';

@@ -4,9 +4,18 @@ import * as assert from 'node:assert';
 describe('Template Dictionary Replacement', () => {
   // Test the template replacement logic directly
   const templateDictReplace = (source: string, dictionary: Record<string, string>): string => {
-    return source.replace(/\{\{(\w+)\}\}/g, (match, key) => {
-      return dictionary.hasOwnProperty(key) ? dictionary[key] : match; // Return value even if empty string
-    });
+    let result = source;
+    let iter = 0;
+    const iter_max = 4;
+
+    // Keep replacing until no more {{...}} patterns or hit max iterations
+    while (result.includes('{{') && ++iter < iter_max) {
+      result = result.replace(/\{\{(\w+)\}\}/g, (match, key) => {
+        return dictionary.hasOwnProperty(key) ? dictionary[key] : match; // Return value even if empty string
+      });
+    }
+
+    return result;
   };
 
   it('should replace all placeholders with dictionary values', () => {
@@ -84,7 +93,7 @@ describe('Template Dictionary Replacement', () => {
     assert.strictEqual(result, 'Hello John! Hello again, John!');
   });
 
-  it('should handle complex nested placeholders', () => {
+  it('should handle complex nested placeholders with multi-pass', () => {
     const source =
       '{{SECTION_1_TITLE}}: {{SECTION_1_CONTENT}} | {{SECTION_2_TITLE}}: {{SECTION_2_CONTENT}}';
     const dictionary = {
@@ -92,12 +101,14 @@ describe('Template Dictionary Replacement', () => {
       SECTION_1_CONTENT: 'Welcome to {{APP_NAME}}',
       SECTION_2_TITLE: 'Conclusion',
       SECTION_2_CONTENT: 'Thanks for using {{APP_NAME}}',
+      APP_NAME: 'MyApp',
     };
 
     const result = templateDictReplace(source, dictionary);
+    // With multi-pass replacement (up to 3 iterations), nested {{APP_NAME}} should be replaced
     assert.strictEqual(
       result,
-      'Introduction: Welcome to {{APP_NAME}} | Conclusion: Thanks for using {{APP_NAME}}'
+      'Introduction: Welcome to MyApp | Conclusion: Thanks for using MyApp'
     );
   });
 

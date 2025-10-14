@@ -1,6 +1,7 @@
 import type { App } from './App';
 import { Diagnostics } from './Diagnostics';
 import { Persist, type Persist_t } from './Persist';
+import { Yaml } from './Yaml';
 
 // UIMenuItem type - menu item structure
 export interface UIMenuItem_t {
@@ -86,26 +87,22 @@ export function isMenuItemId(id: string): id is MenuItemId_t {
  *   async (id) => ({ id, value: id }));
  */
 export class UIMenu {
-  private dx: Diagnostics;
-  public persist: Persist & Persist_t;
-
-  // Public getter for id
-  get id(): MenuId_t {
-    return this._id;
-  }
-  private _yaml: {
-    ui_menu_html: string;
-    ui_menu_item: string;
-    ui_flyout: string;
-    ui_menu_generic_handlers: string;
-    ui_menu_css: string;
-  } = {
+  private static readonly kYaml = {
     ui_menu_html: '',
     ui_menu_item: '',
     ui_flyout: '',
     ui_menu_generic_handlers: '',
     ui_menu_css: '',
-  };
+  } as const;
+
+  private dx: Diagnostics;
+  public persist: Persist & Persist_t;
+  private _yaml: Yaml<typeof UIMenu.kYaml>;
+
+  // Public getter for id
+  get id(): MenuId_t {
+    return this._id;
+  }
 
   constructor(
     private app: App,
@@ -119,9 +116,14 @@ export class UIMenu {
   ) {
     this.persist = new Persist(app) as Persist & Persist_t;
     this.dx = this.app.dx.create('UIMenu');
+    this._yaml = new Yaml(app, 'src/UIMenu.yaml', UIMenu.kYaml);
 
     // Register persist property (no value set yet)
     this.persist.register(this._id);
+  }
+
+  get yaml() {
+    return this._yaml.get();
   }
 
   init(): void {
@@ -194,31 +196,6 @@ export class UIMenu {
     this.persist.setDefault(this._id, defaultItemId);
 
     return defaultItemId as MenuItemId_t;
-  }
-
-  // Getter for the YAML data - handles loading and validation automatically
-  get yaml() {
-    // If already loaded, return it
-    if (this._yaml.ui_menu_html) {
-      return this._yaml;
-    }
-
-    // Load and cache the YAML
-    const yaml = this.app.os.fileRead<{
-      ui_menu_html: string;
-      ui_menu_item: string;
-      ui_flyout: string;
-      ui_menu_generic_handlers: string;
-      ui_menu_css: string;
-    }>('src/UIMenu.yaml');
-
-    if (!yaml) {
-      throw new Error('Failed to load UIMenu yaml');
-    }
-
-    // Cache it
-    this._yaml = yaml;
-    return this._yaml;
   }
 
   // Generate a single menu item HTML

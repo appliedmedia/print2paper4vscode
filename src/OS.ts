@@ -129,7 +129,10 @@ export abstract class OS {
           : undefined
         : path;
 
-      if (!absPath || !fs.existsSync(absPath)) return undefined;
+      if (!absPath || !fs.existsSync(absPath)) {
+        this.app.ui.showErrorMessage(`Failed to load ${path}: file not found`);
+        return undefined;
+      }
 
       // Read the raw content
       const content = fs.readFileSync(absPath, 'utf8');
@@ -156,7 +159,8 @@ export abstract class OS {
       }
 
       return parsed as T;
-    } catch {
+    } catch (err) {
+      this.app.ui.showErrorMessage(`Failed to load ${path}: ${err}`);
       return undefined;
     }
   };

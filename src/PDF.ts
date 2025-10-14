@@ -4,6 +4,7 @@ import { kPageSizeId } from './types/PaperPrinter_t';
 import type { PageRender, PageData, RenderOptions, PageRenderError } from './types/PageRender_t';
 import type { PDFDoc } from './types/PDF_t';
 import { Diagnostics } from './Diagnostics';
+import { Yaml } from './Yaml';
 import jsPDF from 'jspdf';
 import type { ThemedToken } from 'shiki';
 import { DocInfo_PDF } from './DocInfo_PDF';
@@ -67,18 +68,16 @@ class PDFDocWrapper implements PDFDoc {
  * const pdfDoc = await pdf.getCurrentPdfDoc();
  */
 export class PDF implements PageRender {
-  private app: App;
-  private tempPdfs: string[] = [];
-  private dx: Diagnostics;
-  private _yaml: {
-    pdf_html: string;
-    pdf_css: string;
-    pdf_js: string;
-  } = {
+  private static readonly kYaml = {
     pdf_html: '',
     pdf_css: '',
     pdf_js: '',
-  };
+  } as const;
+
+  private app: App;
+  private tempPdfs: string[] = [];
+  private dx: Diagnostics;
+  private _yaml: Yaml<typeof PDF.kYaml>;
 
   // PageRender implementation state
   private currentTokens: ThemedToken[][] | null = null;
@@ -92,26 +91,11 @@ export class PDF implements PageRender {
     this.app = app;
     this.dx = app.dx.create('PDF');
     this.docInfo = new DocInfo_PDF(app);
+    this._yaml = new Yaml(app, 'src/PDF.yaml', PDF.kYaml);
   }
 
   get yaml() {
-    // If already loaded, return it
-    if (this._yaml.pdf_html) {
-      return this._yaml;
-    }
-
-    // Load and parse YAML file
-    const yaml = this.app.os.fileRead<{
-      pdf_html: string;
-      pdf_css: string;
-      pdf_js: string;
-    }>('src/PDF.yaml');
-
-    // Cache it
-    if (yaml) {
-      this._yaml = yaml;
-    }
-    return this._yaml;
+    return this._yaml.get();
   }
 
   init(): void {
@@ -488,54 +472,6 @@ export class PDF implements PageRender {
       return this.createPDFDoc(finalDoc);
     } catch (error) {
       this.app.ui.showErrorMessage(`Failed to generate PDF: ${String(error)}`);
-      throw error;
-    } finally {
-      dx.done();
-    }
-  }
-
-  // Convert PDF document to HTML with scrollable PDF view
-  embedPDFinHTML_OBSOLETE_DELETEME(pdfDoc: PDFDoc, title: string): string {
-    const dx = this.dx.sub('embedPDFinHTML_OBSOLETE_DELETEME');
-    dx.require({ pdfDoc, title }, ['pdfDoc', 'title']);
-
-    try {
-      // Generate a data URL from the PDF document
-      const pdfDataUrl = pdfDoc.asDataUrl();
-      dx.out(`PDF data URL generated: ${pdfDataUrl.substring(0, 50)}...`);
-
-      // Load YAML templates and PDF.js library
-      const pdfTemplates = this.yaml;
-      const uiTemplates = this.app.ui.yaml;
-      const pdfJsContent = this.app.os.fileRead('src/lib/pdf.min.js');
-
-      dx.out(
-        `PDF.js library loaded: ${pdfJsContent ? `${pdfJsContent.length} characters` : 'failed'}`
-      );
-
-      if (!pdfTemplates || !uiTemplates || !pdfJsContent) {
-        throw new Error('Failed to load required templates or PDF.js library');
-      }
-
-      // Generate HTML using template with embedded resources
-      // Escape single quotes in the data URL for JavaScript string literal
-      const escapedPdfDataUrl = pdfDataUrl.replace(/'/g, "\\'");
-
-      const html = this.app.templateDictReplace(pdfTemplates.pdf_html, {
-        TITLE: title,
-        PDF_DATA_URL: escapedPdfDataUrl,
-        PDF_CSS: this.app.templateDictReplace(pdfTemplates.pdf_css, {
-          BASE_CSS: uiTemplates.base_css,
-        }),
-        PDFJS_LIBRARY: pdfJsContent,
-        PDF_JS: pdfTemplates.pdf_js,
-        TOOLBAR: '{{TOOLBAR}}', // Placeholder for toolbar injection
-      });
-
-      dx.out(`HTML generated for PDF document with embedded resources`);
-      return html;
-    } catch (error) {
-      this.app.ui.showErrorMessage(`Failed to generate PDF preview: ${String(error)}`);
       throw error;
     } finally {
       dx.done();

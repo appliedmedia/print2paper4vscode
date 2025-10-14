@@ -7,6 +7,7 @@ import type { PageRender } from './types/PageRender_t';
 import { DocInfo_PaperPrinter } from './DocInfo_PaperPrinter';
 import type { LanguageId_t } from './Stylize';
 import type { Persist_t } from './Persist';
+import { Yaml } from './Yaml';
 import {
   type PageSizeId_t,
   type Orient_t,
@@ -34,28 +35,24 @@ import {
  * await printer.handlePrintCommandFromVSCode();
  */
 export class PaperPrinter {
-  private app: App;
-  private pdfDoc: PDFDoc | null = null; // In-memory PDF document (PDFDoc abstraction)
-  private uiwebview: UIWebView | null = null;
-  private dx: Diagnostics;
-
-  public docInfo: DocInfo_PaperPrinter;
-
-  private _yaml: {
-    icon_orient_portrait_svg: string;
-    icon_orient_landscape_svg: string;
-    icon_margin_none_svg: string;
-    icon_margin_minimal_svg: string;
-    icon_margin_normal_svg: string;
-    icon_margin_wide_svg: string;
-  } = {
+  private static readonly kYaml = {
+    icon_box_portrait_svg: '',
+    icon_orient_figure_svg: '',
     icon_orient_portrait_svg: '',
     icon_orient_landscape_svg: '',
     icon_margin_none_svg: '',
     icon_margin_minimal_svg: '',
     icon_margin_normal_svg: '',
     icon_margin_wide_svg: '',
-  };
+  } as const;
+
+  private app: App;
+  private pdfDoc: PDFDoc | null = null; // In-memory PDF document (PDFDoc abstraction)
+  private uiwebview: UIWebView | null = null;
+  private dx: Diagnostics;
+  private _yaml: Yaml<typeof PaperPrinter.kYaml>;
+
+  public docInfo: DocInfo_PaperPrinter;
 
   constructor(app: App) {
     this.app = app;
@@ -63,6 +60,9 @@ export class PaperPrinter {
 
     // Initialize docInfo
     this.docInfo = new DocInfo_PaperPrinter(app);
+
+    // Initialize YAML loader
+    this._yaml = new Yaml(app, 'src/PaperPrinter.yaml', PaperPrinter.kYaml);
   }
 
   init(): void {}
@@ -72,33 +72,7 @@ export class PaperPrinter {
   }
 
   get yaml() {
-    // If already loaded, return it
-    if (this._yaml?.icon_orient_portrait_svg) {
-      return this._yaml;
-    }
-
-    // Load and parse YAML file
-    const yaml = this.app.os.fileRead<{
-      icon_orient_portrait_svg: string;
-      icon_orient_landscape_svg: string;
-      icon_margin_none_svg: string;
-      icon_margin_minimal_svg: string;
-      icon_margin_normal_svg: string;
-      icon_margin_wide_svg: string;
-    }>('src/PaperPrinter.yaml');
-
-    // Cache it if loaded successfully
-    if (yaml) {
-      this._yaml = yaml;
-    }
-
-    // Return cached value or empty object with default values
-    return (
-      this._yaml || {
-        icon_orient_portrait_svg: '',
-        icon_orient_landscape_svg: '',
-      }
-    );
+    return this._yaml.get();
   }
 
   // Computed line height from font size
