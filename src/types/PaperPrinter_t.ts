@@ -32,10 +32,10 @@ export type Orient_t = keyof typeof kOrient;
 
 // Margin level: id → metadata (displayName with embedded SVG template)
 export const kMarginId = {
-  none: { displayName: '{{icon_margin_none_svg}} None (0pt)' },
-  minimal: { displayName: '{{icon_margin_minimal_svg}} Minimal (5pt)' },
-  normal: { displayName: '{{icon_margin_normal_svg}} Normal (15pt)' },
-  wide: { displayName: '{{icon_margin_wide_svg}} Wide (30pt)' },
+  none: { displayName: '{{icon_margin_none_svg}} None' },
+  minimal: { displayName: '{{icon_margin_minimal_svg}} Minimal' },
+  normal: { displayName: '{{icon_margin_normal_svg}} Normal' },
+  wide: { displayName: '{{icon_margin_wide_svg}} Wide' },
 } as const;
 export type MarginId_t = keyof typeof kMarginId;
 

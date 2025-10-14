@@ -2,6 +2,8 @@
 
 icon_orient_portrait_svg: |
   <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true" focusable="false" style="display: inline-block; vertical-align: middle; margin-right: 4px;">
+    <!-- Tall, narrow box for portrait orientation -->
+    <rect x="5" y="1" width="6" height="14" fill="none" stroke="currentColor" stroke-width="1.5"/>
     <!-- Portrait stick figure (tall) -->
     <!-- Head (oval) -->
     <ellipse cx="8" cy="3" rx="2" ry="2.5" fill="none" stroke="currentColor" stroke-width="1"/>
@@ -20,6 +22,8 @@ icon_orient_portrait_svg: |
 
 icon_orient_landscape_svg: |
   <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true" focusable="false" style="display: inline-block; vertical-align: middle; margin-right: 4px;">
+    <!-- Wide, short box for landscape orientation -->
+    <rect x="1" y="5" width="14" height="6" fill="none" stroke="currentColor" stroke-width="1.5"/>
     <!-- Landscape stick figure (wide) -->
     <!-- Head (oval) -->
     <ellipse cx="8" cy="4" rx="2.5" ry="2" fill="none" stroke="currentColor" stroke-width="1"/>
@@ -38,24 +42,40 @@ icon_orient_landscape_svg: |
 
 icon_margin_none_svg: |
   <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true" focusable="false" style="display: inline-block; vertical-align: middle; margin-right: 4px;">
-    <!-- No margins - content edge-to-edge -->
-    <rect x="1" y="1" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"/>
+    <!-- Tall narrow box (same as portrait) -->
+    <rect x="5" y="1" width="6" height="14" fill="none" stroke="currentColor" stroke-width="1.5"/>
+    <!-- Text lines with 1px margin from edge -->
+    <line x1="6" y1="4" x2="10" y2="4" stroke="currentColor" stroke-width="1"/>
+    <line x1="6" y1="8" x2="10" y2="8" stroke="currentColor" stroke-width="1"/>
+    <line x1="6" y1="12" x2="10" y2="12" stroke="currentColor" stroke-width="1"/>
   </svg>
 
 icon_margin_minimal_svg: |
   <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true" focusable="false" style="display: inline-block; vertical-align: middle; margin-right: 4px;">
-    <!-- Thin margins -->
-    <rect x="2" y="2" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1"/>
+    <!-- Tall narrow box (same as portrait) -->
+    <rect x="5" y="1" width="6" height="14" fill="none" stroke="currentColor" stroke-width="1.5"/>
+    <!-- Text lines with 1.5px margin from edge -->
+    <line x1="6.5" y1="4" x2="9.5" y2="4" stroke="currentColor" stroke-width="1"/>
+    <line x1="6.5" y1="8" x2="9.5" y2="8" stroke="currentColor" stroke-width="1"/>
+    <line x1="6.5" y1="12" x2="9.5" y2="12" stroke="currentColor" stroke-width="1"/>
   </svg>
 
 icon_margin_normal_svg: |
   <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true" focusable="false" style="display: inline-block; vertical-align: middle; margin-right: 4px;">
-    <!-- Standard margins -->
-    <rect x="3" y="3" width="10" height="10" fill="none" stroke="currentColor" stroke-width="1.5"/>
+    <!-- Tall narrow box (same as portrait) -->
+    <rect x="5" y="1" width="6" height="14" fill="none" stroke="currentColor" stroke-width="1.5"/>
+    <!-- Text lines with 2px margin from edge -->
+    <line x1="7" y1="4" x2="9" y2="4" stroke="currentColor" stroke-width="1"/>
+    <line x1="7" y1="8" x2="9" y2="8" stroke="currentColor" stroke-width="1"/>
+    <line x1="7" y1="12" x2="9" y2="12" stroke="currentColor" stroke-width="1"/>
   </svg>
 
 icon_margin_wide_svg: |
   <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true" focusable="false" style="display: inline-block; vertical-align: middle; margin-right: 4px;">
-    <!-- Generous margins -->
-    <rect x="4" y="4" width="8" height="8" fill="none" stroke="currentColor" stroke-width="2"/>
+    <!-- Tall narrow box (same as portrait) -->
+    <rect x="5" y="1" width="6" height="14" fill="none" stroke="currentColor" stroke-width="1.5"/>
+    <!-- Text lines with 2.5px margin from edge -->
+    <line x1="7.5" y1="4" x2="8.5" y2="4" stroke="currentColor" stroke-width="1"/>
+    <line x1="7.5" y1="8" x2="8.5" y2="8" stroke="currentColor" stroke-width="1"/>
+    <line x1="7.5" y1="12" x2="8.5" y2="12" stroke="currentColor" stroke-width="1"/>
   </svg>

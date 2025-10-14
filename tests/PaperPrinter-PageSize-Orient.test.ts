@@ -96,12 +96,13 @@ describe('PaperPrinter Page Size and Orient Tests', () => {
       // Should have 3 items (Size, Orient, Margin submenus)
       assert.strictEqual(menuItems.length, 3);
 
-      const expectedSubmenus = ['size', 'orient', 'margin'];
-      expectedSubmenus.forEach((submenu, index) => {
-        assert.strictEqual(menuItems[index].id, submenu);
-        // Check that display name contains the submenu name (case-insensitive)
-        assert.ok(menuItems[index].displayName.toLowerCase().includes(submenu.toLowerCase()));
-      });
+      // Check IDs and display names
+      assert.strictEqual(menuItems[0].id, 'pageSizeId');
+      assert.strictEqual(menuItems[0].displayName, 'Size');
+      assert.strictEqual(menuItems[1].id, 'orient');
+      assert.strictEqual(menuItems[1].displayName, 'Orient');
+      assert.strictEqual(menuItems[2].id, 'marginId');
+      assert.strictEqual(menuItems[2].displayName, 'Margin');
     });
 
     test('should include dimensions in display names', () => {
@@ -181,9 +182,9 @@ describe('PaperPrinter Page Size and Orient Tests', () => {
 
       // Test that page menu has correct submenu items
       const pageIds = pageMenuItems.map((item: any) => item.id);
-      assert.ok(pageIds.includes('size'));
+      assert.ok(pageIds.includes('pageSizeId'));
       assert.ok(pageIds.includes('orient'));
-      assert.ok(pageIds.includes('margin'));
+      assert.ok(pageIds.includes('marginId'));
 
       // Test that orient menu has correct items
       const orientIds = orientMenuItems.map((item: any) => item.id);
