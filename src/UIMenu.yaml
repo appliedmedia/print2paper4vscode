@@ -30,6 +30,8 @@ ui_menu_css: |
     grid-template-areas: "gutter-before menu-text gutter-after";
     align-items: center;
     gap: 0;
+    user-select: none;
+    -webkit-user-select: none;
   }
   .p2p4vsc-menu-item:hover, .p2p4vsc-menu-item.selected {
     background: #444;
@@ -38,16 +40,29 @@ ui_menu_css: |
   .p2p4vsc-menu-item .gutter-after {
     grid-area: gutter-after;
     text-align: right;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
   }
 
   .p2p4vsc-menu-item .gutter-before {
     grid-area: gutter-before;
     text-align: left;
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
   }
 
   .p2p4vsc-menu-item .menu-item-text {
     grid-area: menu-text;
     text-align: left;
+    display: flex;
+    align-items: center;
+  }
+
+  .p2p4vsc-menu-item .menu-item-text svg {
+    vertical-align: middle;
+    display: inline-block;
   }
 
   /* Ensure only items with is-flyout class get flyout arrows */
@@ -134,6 +149,11 @@ ui_menu_generic_handlers: |
         if (items !== menuItems) {
           items.style.display = 'none';
         }
+      });
+
+      // Close all flyout menus when switching to a different main menu
+      document.querySelectorAll('.p2p4vsc-menu.is-flyout').forEach(flyout => {
+        flyout.style.display = 'none';
       });
 
       // Toggle this menu

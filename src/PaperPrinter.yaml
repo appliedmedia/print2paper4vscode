@@ -31,7 +31,9 @@ icon_orient_landscape_svg: |
   <svg width="32" height="32" viewBox="0 0 32 32" aria-hidden="true" focusable="false" style="display: inline-block; vertical-align: middle; margin-right: 4px;">
     <!-- Wide box for landscape orientation - same width as before -->
     <rect x="2" y="6" width="28" height="20" fill="none" stroke="currentColor" stroke-width="2"/>
-    {{icon_orient_figure_svg}}
+    <g transform="translate(0, 2)">
+      {{icon_orient_figure_svg}}
+    </g>
   </svg>
 
 icon_margin_none_svg: |
