@@ -258,7 +258,7 @@ export class UIMenu {
     const hasGutterBefore = hasSelectedItem; // Only if there's a selected item
     const hasGutterAfter = hasFlyout || hasSelectedItem; // Menus with flyout items OR selected items get gutter-after
     const processedMenuItemsHtml = await Promise.all(
-      menuItems.map(item => this.getItemHTML(item, flyoutCache[item.id] || '', defaultItemId))
+      menuItems.map(item => this.getItemHTML(item, flyoutCache[item.id] || '', selectedItemId))
     );
     const menuItemsHtml = processedMenuItemsHtml.join('\n');
 
