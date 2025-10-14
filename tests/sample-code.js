@@ -1,3 +1,4 @@
+/* eslint-disable */
 // sample-code.js - Simple syntax highlighting demo
 
 // Variables

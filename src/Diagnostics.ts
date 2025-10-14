@@ -57,7 +57,7 @@ export class Diagnostics {
     // Set debug state before calling out()
     this.debugOn(debugOn);
 
-    this.out(`🚀 Entering method: ${this.name}`);
+    this.out(`🚀 Start`);
   }
 
   /**
@@ -145,7 +145,7 @@ export class Diagnostics {
       }
 
       const completionMsg = message ? ` - ${message}` : '';
-      this.out(`🏁 Method completed in ${timeDisplay}${completionMsg}`);
+      this.out(`🏁 Done in ${timeDisplay}${completionMsg}`);
     }
 
     return this;
