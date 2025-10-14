@@ -1,12 +1,12 @@
 import type { App } from './App';
-import type { kUI_t } from './UI';
+import type { UI_t } from './UI';
 import type { GlobalStateKey_t, GlobalStateValue_t } from './VSCodeAPIs';
 
 // Persist value types - what we store locally
 export type PersistValue_t = string | number | boolean;
 
 // Type for dynamically created properties on Persist instances
-export type Persist_t = Record<(typeof kUI_t)[number], PersistValue_t>;
+export type Persist_t = Record<UI_t, PersistValue_t>;
 
 /**
  * Persist - Dynamic property persistence with VS Code global state
