@@ -20,6 +20,7 @@ describe('VSCodeAPIs Wrapper', () => {
       dateAsYYYYMMDDHHMMSS: () => '20250101120000',
       getExtensionRoot: () => '/workspace',
       htmlSrcPathToURI: (path: string) => `file://${path}`,
+      pathJoin: (...parts: string[]) => parts.join('/'),
     },
   };
 
