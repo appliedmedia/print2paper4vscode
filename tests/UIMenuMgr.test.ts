@@ -339,7 +339,6 @@ describe('UIMenuMgr', () => {
       // Clear any existing menus
       (menuMgr as any).menus = [];
 
-      const longId = 'a'.repeat(100);
       const mockListBuilder = () => [{ id: 'test', displayName: 'Test Item' }];
       const mockSelectionHandler = async (id: string): Promise<HandleSelection_t> =>
         Promise.resolve({ id: '', value: '' });
@@ -364,7 +363,6 @@ describe('UIMenuMgr', () => {
       // Clear any existing menus
       (menuMgr as any).menus = [];
 
-      const specialId = 'menu_$#@!';
       const mockListBuilder = () => [{ id: 'test', displayName: 'Test Item' }];
       const mockSelectionHandler = async (id: string): Promise<HandleSelection_t> =>
         Promise.resolve({ id: '', value: '' });

@@ -76,9 +76,16 @@ export class UIMenuMgr {
     const dx = this.dx.sub('handleMenuItemSelected');
 
     try {
-      const menu = this.getMenuById(menuId);
-      await menu.dispatchSelection(itemId);
-      dx.out(`Menu item selected: ${menuId}.${itemId}`);
+      const menu = this.getAllMenus().find(menu => menu.id === menuId);
+      if (menu) {
+        await menu.dispatchSelection(itemId);
+        dx.out(`Menu item selected: ${menuId}.${itemId}`);
+      } else {
+        const msg = `Invalid menu: ${menuId}`;
+        dx.out(msg);
+        this.app.ui.showErrorMessage(msg);
+        return;
+      }
     } finally {
       dx.done();
     }
