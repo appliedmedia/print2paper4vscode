@@ -86,8 +86,30 @@ export class Persist {
     return this;
   }
 
-  getDefault(name: string): PersistValue_t | undefined {
-    return this.default[name];
+  getDefault(name: string, computeFn?: () => PersistValue_t): PersistValue_t | undefined {
+    const existing = this.default[name];
+    if (existing !== undefined) {
+      return existing;
+    }
+    
+    if (computeFn) {
+      const computed = computeFn();
+      this.default[name] = computed;
+      return computed;
+    }
+    
+    return undefined;
+  }
+
+  async getDefaultAsync(name: string, computeFn: () => Promise<PersistValue_t>): Promise<PersistValue_t> {
+    const existing = this.default[name];
+    if (existing !== undefined) {
+      return existing;
+    }
+    
+    const computed = await computeFn();
+    this.default[name] = computed;
+    return computed;
   }
 }
 

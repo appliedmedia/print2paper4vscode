@@ -182,20 +182,12 @@ export class UIMenu {
 
   // Get the default item ID for this menu (for UI highlighting)
   async getDefaultItemId(): Promise<MenuItemId_t> {
-    // Check if we have a stored default value
-    const storedDefault = this.persist.getDefault(this._id);
+    const defaultItemId = await this.persist.getDefaultAsync(this._id, async () => {
+      const { id } = await this.dispatchSelection(this.defaultId());
+      return id;
+    });
 
-    if (storedDefault !== undefined) {
-      return String(storedDefault) as MenuItemId_t;
-    }
-
-    // No stored default, dispatch to selection handler to compute default
-    const { id: defaultItemId } = await this.dispatchSelection(this.defaultId());
-
-    // Store the computed default
-    this.persist.setDefault(this._id, defaultItemId);
-
-    return defaultItemId as MenuItemId_t;
+    return String(defaultItemId) as MenuItemId_t;
   }
 
   // Generate a single menu item HTML
