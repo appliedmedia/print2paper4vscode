@@ -1,5 +1,114 @@
 # PDF Generation Flow Analysis
 
+## ⚡ QUICK ACTION PLAN - DO THIS NEXT
+
+**Priority: Fix multi-page PDF rendering (currently only renders page 1)**
+
+### Immediate Tasks (In Order):
+
+1. **Add PDF.renderByLine() method** (~30 mins)
+   - Location: PDF.ts around line 810
+   - Accept: pageNumber, lineNumber, htmlData
+   - Initialize jsPDF on first line, render text, track y position
+
+2. **Add PDF.finish() method** (~15 mins)
+   - Location: PDF.ts around line 850
+   - Finalize jsPDF document, return PDFDoc wrapper, reset state
+
+3. **Refactor PDF.renderPage()** (~45 mins)
+   - Location: PDF.ts lines 562-639
+   - Call Stylize.tokenize() with optPerLineHandler callback
+   - Callback invokes renderByLine() for each line
+   - Call finish() when done, return PageData
+
+4. **Test with 10-page document** (~30 mins)
+   - Create test file with 200+ lines
+   - Verify all pages render in webview
+   - Check Print/Save operations work
+
+5. **Remove token storage** (~20 mins)
+   - Delete currentTokens, setTokens(), pageBreaks, pageTotal from PDF
+   - Delete currentTokens from DocInfo_PDF
+   - Verify nothing breaks
+
+6. **Update PaperPrinter.generatePdf()** (~30 mins)
+   - Replace styleToPdf() with tokenize() + callback
+   - Test full integration
+
+**Total Time: ~3 hours to complete per-page rendering**
+
+---
+
+## 🔥 CURRENT STATUS: Per-Page Rendering Incomplete
+
+### What Works ✅
+- PageRender Interface fully implemented in PDF.ts
+- UIScrollView virtual scrolling with canvas pooling
+- PDF.renderPage() renders individual pages on-demand
+- Page cache and render queue management
+- Stylize.tokenize() has optPerLineHandler callback support (but unused)
+
+### What's BROKEN ❌
+- **generatePdfFromTokens() only renders page 1** (line 400-478 in PDF.ts)
+- Multi-page documents **truncated** to fit first page
+- Webview scroll works but shows **incomplete content**
+- Token storage duplicated in PDF class (should be in Stylize)
+- No line-by-line rendering architecture implemented
+
+### What's MISSING for Complete Per-Page Rendering
+
+#### 1. PDF.renderByLine() method (DOESN'T EXIST)
+- Process one line of HTML into PDF content
+- Called by Stylize's optPerLineHandler callback
+- Incrementally build jsPDF document
+
+#### 2. PDF.finish() method (DOESN'T EXIST)
+- Finalize PDF and reset state
+- Return complete multi-page PDFDoc
+
+#### 3. Remove currentTokens from PDF class
+- Currently stored in `PDF.currentTokens` and `DocInfo_PDF.currentTokens`
+- Stylize should own tokens, not PDF
+- PDF should only render what Stylize gives it via callback
+
+#### 4. Update renderPage() to use line-by-line callback
+- Currently calls `generatePdfPage()` which tokenizes again
+- Should use `Stylize.tokenize()` with optPerLineHandler
+- Should call `PDF.renderByLine()` for each line
+- Should call `PDF.finish()` when done
+
+### Current Flow (WRONG)
+```
+PaperPrinter.generatePdf() 
+  → Stylize.styleToPdf() 
+  → PDF.generatePdfFromTokens() 
+  → Only renders page 1 ❌
+```
+
+### Should Be (CORRECT)
+```
+PaperPrinter.generatePdf()
+  → Stylize.tokenize(code, lang, theme, pageBegin, pageEnd, optPerLineHandler)
+  → optPerLineHandler calls PDF.renderByLine(pageNum, lineNum, htmlData)
+  → PDF.finish() returns complete multi-page PDFDoc
+```
+
+### Specific Missing Code Locations
+
+**In PDF.ts:**
+- ~Line 810: Need `renderByLine(pageNum, lineNum, htmlData)` method
+- ~Line 850: Need `finish()` method  
+- ~Line 545: Remove `setTokens()` and token storage
+- Lines 562-809: Refactor `renderPage()` to use callback pattern
+
+**In PaperPrinter.ts:**
+- Lines 219-227: `generatePdf()` still uses old `styleToPdf()` method
+- Should use new `tokenize() → renderByLine() → finish()` flow
+
+**In Stylize.ts:**
+- Lines 446-507: `tokenize()` exists with optPerLineHandler support
+- **Nothing consumes the callback** - it's wired but unused
+
 ## 🚀 COMPLETE REFACTOR TODO LIST
 
 ### COMPLETED PHASES
@@ -152,33 +261,151 @@
 - Type-safe global state management with explicit `string` types
 - No more `persist_` prefix - clean `persist.propertyName` syntax throughout
 
-#### Phase 3: Line-by-Line Rendering Architecture (PENDING)
+#### Phase 3: Line-by-Line Rendering Architecture (IN PROGRESS - 30% Complete)
 
 **Core Concept:** Stylize owns tokens and line composition, PDF renders line-by-line via callback
 
-- [ ] **Stylize.tokenize()** - owns all tokenization and line composition
-- [ ] **Stylize.tokenize()** accepts `optPerLineHandler?: (pageNum: number, lineNum: number, htmlData: string) => void`
-- [ ] **PDF.renderByLine()** - processes one line of HTML into PDF content
-- [ ] **PDF.finish()** - finalizes PDF and resets state for display
-- [ ] **Stylize** calls `optPerLineHandler(pageNum, lineNum, htmlData)` for each line
-- [ ] Remove `currentTokens` storage from PDF class (Stylize owns tokens)
-- [ ] Remove `setTokens()` method from PDF class
-- [ ] Update `renderPage()` to use line-by-line callback pattern
-- [ ] Test complete flow: Stylize → callback → PDF → finish → display
+**What's Already Done:**
+- ✅ **Stylize.tokenize()** - exists with optPerLineHandler support (lines 446-507)
+- ✅ **Signature correct** - `optPerLineHandler?: (pageNum: number, lineNum: number, htmlData: string) => void`
+- ✅ **Callback invocation** - Lines 483-495 call optPerLineHandler for each line
+- ✅ **HTML generation** - Converts tokens to HTML with color styles
 
-#### Phase 4: Cleanup (PENDING - Requires Full Refactor)
+**What's MISSING - Implementation Required:**
 
-- [ ] Complete the full refactor to use new tokenization + PDF generation flow
-- [ ] Update `generatePdf()` to use new `tokenize()` + `setTokensAndConfig()` + `generateFullDocument()` flow
-- [ ] Remove old methods: `styleToPdf()`, `Converter_StyleToPdf`, `generatePdfFromTokens()`
-- [ ] Update all method calls to use new signatures
-- [ ] Test the complete flow
+**Step 1: Add PDF.renderByLine() method (~40 lines)**
+```typescript
+// PDF.ts ~line 810
+private renderByLine(
+  pageNumber: number,
+  lineNumber: number,
+  htmlData: string
+): void {
+  // Initialize jsPDF document on first line
+  // Extract styles from HTML
+  // Render text to current y position
+  // Advance y position by lineHeight
+  // Add new page if needed
+}
+```
 
-**Note:** Phase 3 requires completing the full architectural refactor outlined in the PROPOSED REFACTOR section. The current implementation still uses the old `styleToPdf()` method in `generatePdf()`.
+**Step 2: Add PDF.finish() method (~30 lines)**
+```typescript
+// PDF.ts ~line 850
+finish(): PDFDoc {
+  // Finalize current jsPDF document
+  // Return as PDFDoc wrapper
+  // Reset internal state for next render
+  // Clear temporary line tracking
+}
+```
 
-## Summary
+**Step 3: Refactor PDF.renderPage() (~50 lines)**
+```typescript
+// PDF.ts lines 562-639 - refactor existing method
+async renderPage(pageNumber: number, options: RenderOptions): Promise<PageData> {
+  // Calculate page range (startLine, endLine)
+  // Call Stylize.tokenize() with optPerLineHandler
+  // optPerLineHandler calls this.renderByLine()
+  // Call this.finish() after tokenization complete
+  // Return PageData with data URL
+}
+```
 
-### Total: ~45 tasks across 8 phases
+**Step 4: Remove token storage from PDF class**
+- [ ] Remove `currentTokens` from PDF class (line 83)
+- [ ] Remove `currentTokens` from DocInfo_PDF (line 25)
+- [ ] Remove `setTokens()` method (lines 545-560)
+- [ ] Remove `pageBreaks` array (line 84)
+- [ ] Remove `pageTotal` counter (line 85)
+
+**Step 5: Update PaperPrinter.generatePdf()**
+```typescript
+// PaperPrinter.ts lines 219-227 - replace current implementation
+private async generatePdf(): Promise<void> {
+  // Use new Stylize.tokenize() → PDF.renderByLine() → PDF.finish() flow
+  // Replace styleToPdf() call with tokenize() + callback pattern
+  // Store result in this.pdfDoc for Print/Save operations
+}
+```
+
+**Step 6: Test complete flow**
+- [ ] Test single-page documents
+- [ ] Test multi-page documents (10+ pages)
+- [ ] Test page scrolling in webview
+- [ ] Test Print/Save operations
+- [ ] Verify no truncation of content
+
+**Implementation Order:**
+1. Add renderByLine() with basic line rendering
+2. Add finish() to return PDFDoc
+3. Refactor renderPage() to use callback pattern
+4. Test with small document (3-5 pages)
+5. Remove token storage once working
+6. Update PaperPrinter.generatePdf()
+7. Full integration test
+
+#### Phase 4: Cleanup & Deprecation (PENDING - After Phase 3 Complete)
+
+**Remove Old PDF Generation Methods:**
+- [ ] Remove `PDF.generatePdfFromTokens()` (lines 369-479) - replaced by renderByLine + finish
+- [ ] Remove `PDF.generatePdfPage()` (lines 750-809) - use renderPage with callback instead
+- [ ] Remove `Stylize.styleToPdf()` (lines 430-443) - use tokenize() directly
+- [ ] Remove `Converter_StyleToPdf` class (lines 248-427) - logic moved to tokenize()
+
+**Remove Duplicate Page Calculation Logic:**
+- [ ] Remove `PDF.calculatePageBreaks()` (lines 689-722) - page breaks calculated in renderPage
+- [ ] Remove `PDF.extractTokensForPage()` (lines 727-745) - tokens extracted in callback
+
+**Update All Call Sites:**
+- [ ] Search codebase for `generatePdfFromTokens()` calls - replace with new flow
+- [ ] Search codebase for `styleToPdf()` calls - replace with tokenize()
+- [ ] Update any tests that use old methods
+- [ ] Remove imports of deleted classes/methods
+
+**Final Verification:**
+- [ ] Run full test suite
+- [ ] Test Print with multi-page documents
+- [ ] Test Save as PDF with multi-page documents
+- [ ] Test webview scrolling with 50+ page documents
+- [ ] Verify memory usage stays reasonable
+- [ ] Check for any remaining token storage in PDF class
+
+**Code Reduction Expected:**
+- ~300 lines removed from PDF.ts
+- ~180 lines removed from Stylize.ts
+- ~500 total lines eliminated
+- Cleaner separation of concerns
+- Better memory management
+
+**Note:** Don't start Phase 4 until Phase 3 is complete and tested. Old methods provide fallback during migration.
+
+## 📊 PROGRESS SUMMARY
+
+### Completed: 7 of 8 phases (87.5%)
+- ✅ Phase 1: Handler Simplification
+- ✅ Phase 2: YAML and SVG System  
+- ✅ Phase 3: Document Info Structure
+- ✅ Phase 4: Method Signatures (partial - optPerLineHandler wired but unused)
+- ✅ Phase 5: Margin System
+- ✅ Phase 7: Theme and Font System
+- ✅ DocInfo Architecture
+- ✅ Persist Class Implementation
+
+### In Progress: Phase 3 - Line-by-Line Rendering (30%)
+- ✅ Stylize.tokenize() exists with callback support
+- ❌ PDF.renderByLine() - **DOESN'T EXIST**
+- ❌ PDF.finish() - **DOESN'T EXIST**
+- ❌ PDF.renderPage() refactor - **NOT USING CALLBACK**
+- ❌ Token storage removal - **STILL IN PDF CLASS**
+
+### Pending: Phase 4 - Cleanup (0%)
+- Waiting for Phase 3 completion
+- ~500 lines of code to delete
+- Full integration testing required
+
+### Critical Blocker
+**generatePdfFromTokens() only renders page 1** - This breaks multi-page documents completely. Everything else works but content is truncated. Fix Phase 3 first.
 
 ---
 
