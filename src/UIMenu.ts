@@ -180,8 +180,8 @@ export class UIMenu {
     return this._selectionHandler(id);
   }
 
-  // Get the selected item ID for this menu (for UI highlighting)
-  async getSelectedItemId(): Promise<MenuItemId_t> {
+  // Get the default item ID for this menu (for UI highlighting)
+  async getDefaultItemId(): Promise<MenuItemId_t> {
     // Check if we have a stored default value
     const storedDefault = this.persist.getDefault(this._id);
 
@@ -247,18 +247,18 @@ export class UIMenu {
 
     // Generate menu items HTML using the new getItemHTML function
     const menuItems = this.getMenuItems();
-    const selectedItemId = await this.getSelectedItemId(); // Get selected item once
-    const hasSelectedItem = !!selectedItemId;
+    const defaultItemId = await this.getDefaultItemId(); // Get default item once
+    const hasDefaultItem = !!defaultItemId;
 
     // Use explicit properties instead of calculated values
     const isFlyout = this.isFlyout;
     const hasFlyout = this.flyoutMenuItemIds.length > 0;
 
     // Determine gutter states upfront - this is all we need for CSS
-    const hasGutterBefore = hasSelectedItem; // Only if there's a selected item
-    const hasGutterAfter = hasFlyout || hasSelectedItem; // Menus with flyout items OR selected items get gutter-after
+    const hasGutterBefore = hasDefaultItem; // Only if there's a default item
+    const hasGutterAfter = hasFlyout || hasDefaultItem; // Menus with flyout items OR default items get gutter-after
     const processedMenuItemsHtml = await Promise.all(
-      menuItems.map(item => this.getItemHTML(item, flyoutCache[item.id] || '', selectedItemId))
+      menuItems.map(item => this.getItemHTML(item, flyoutCache[item.id] || '', defaultItemId))
     );
     const menuItemsHtml = processedMenuItemsHtml.join('\n');
 
