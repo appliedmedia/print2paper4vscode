@@ -182,7 +182,7 @@ export class UIMenu {
 
   // Get the default item ID for this menu (for UI highlighting)
   async getDefaultItemId(): Promise<MenuItemId_t> {
-    const defaultItemId = await this.persist.getDefaultAsync(this._id, async () => {
+    const defaultItemId = await this.persist.validateDefault(this._id, async () => {
       const { id } = await this.dispatchSelection(this.defaultId());
       return id;
     });

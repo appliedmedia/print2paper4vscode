@@ -21,7 +21,7 @@ export type Persist_t = Record<UI_t, PersistValue_t>;
  *
  * @example
  * const persist = new Persist(app);
- * persist.register('theme').setDefault('theme', 'github-light');
+ * persist.register('theme').validateDefault('theme', async () => 'github-light');
  * console.log(persist.theme); // 'github-light' from default
  * persist.theme = 'dark'; // Saves to VS Code global state
  */
@@ -81,27 +81,7 @@ export class Persist {
     return this;
   }
 
-  setDefault(name: string, defaultValue: PersistValue_t): this {
-    this.default[name] = defaultValue;
-    return this;
-  }
-
-  getDefault(name: string, computeFn?: () => PersistValue_t): PersistValue_t | undefined {
-    const existing = this.default[name];
-    if (existing !== undefined) {
-      return existing;
-    }
-    
-    if (computeFn) {
-      const computed = computeFn();
-      this.default[name] = computed;
-      return computed;
-    }
-    
-    return undefined;
-  }
-
-  async getDefaultAsync(name: string, computeFn: () => Promise<PersistValue_t>): Promise<PersistValue_t> {
+  async validateDefault(name: string, computeFn: () => Promise<PersistValue_t>): Promise<PersistValue_t> {
     const existing = this.default[name];
     if (existing !== undefined) {
       return existing;
