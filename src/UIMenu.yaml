@@ -22,11 +22,13 @@ ui_menu_css: |
     --gutter-before-width: 2ch;
     --gutter-after-width: 4ch;
     --gutter-off-width: 1ch;
+    --gutter-before: var(--gutter-off-width);
+    --gutter-after: var(--gutter-off-width);
     padding: 3px 3px;
     cursor: pointer;
     white-space: nowrap;
     display: grid;
-    grid-template-columns: var(--gutter-off-width) 1fr var(--gutter-off-width);
+    grid-template-columns: var(--gutter-before) 1fr var(--gutter-after);
     grid-template-areas: "gutter-before menu-text gutter-after";
     align-items: center;
     gap: 0;
@@ -93,16 +95,12 @@ ui_menu_css: |
     line-height: 1;
   }
 
-  .p2p4vsc-menu.has-gutter-after .p2p4vsc-menu-item {
-    grid-template-columns: 0 1fr var(--gutter-after-width);
-  }
-
   .p2p4vsc-menu.has-gutter-before .p2p4vsc-menu-item {
-    grid-template-columns: var(--gutter-before-width) 1fr 0;
+    --gutter-before: var(--gutter-before-width);
   }
 
-  .p2p4vsc-menu.has-gutter-before.has-gutter-after .p2p4vsc-menu-item {
-    grid-template-columns: var(--gutter-before-width) 1fr var(--gutter-after-width);
+  .p2p4vsc-menu.has-gutter-after .p2p4vsc-menu-item {
+    --gutter-after: var(--gutter-after-width);
   }
 
   .p2p4vsc-group { position: relative; }

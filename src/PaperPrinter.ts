@@ -147,11 +147,6 @@ export class PaperPrinter {
       if (!currentTheme) {
         themeMenu.persist.theme = this.app.vscodeapis.getActiveThemeId();
       }
-      this.pdfDoc = await this.app.stylize.styleToPdf(info.text, this.docInfo.languageId, {
-        title: this.docInfo.printTitle,
-        theme: (this.app.uimenumgr.getValueForSelectedByMenuId('theme') ||
-          'github-light') as string,
-      });
 
       // Open webview (fire and forget)
       void this.openWebView(printableLabel);
