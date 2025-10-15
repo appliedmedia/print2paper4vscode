@@ -49,3 +49,5 @@ declare module 'jspdf' {
     };
   }
 }
+
+// end, jspdf.d.ts

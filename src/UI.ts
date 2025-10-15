@@ -1,28 +1,47 @@
 import type { App } from './App';
 import type { PostMessage, MessageHandler } from './types/UI_t';
-import type { WebviewPanelId } from './VSCodeAPIs';
 import { Diagnostics } from './Diagnostics';
-import jsPDF from 'jspdf';
+import { Yaml } from './Yaml';
+import { kMenuId } from './UIMenu';
 
+// UI persist keys - union of menu IDs and toolbar position
+export const kUI = [...kMenuId, 'toolbarPosPx'] as const;
+
+export type UI_t = (typeof kUI)[number];
+
+/**
+ * UI - User interface utilities and message handling
+ *
+ * Provides VS Code UI integration including error/info messages, save dialogs,
+ * message handler registration/dispatch, and YAML-based toolbar/CSS generation.
+ * Acts as central hub for webview-to-extension communication.
+ *
+ * @input app - Application instance
+ * @output UI dialogs, message routing, toolbar HTML/CSS/JS from templates
+ *
+ * @example
+ * const ui = new UI(app);
+ * ui.showErrorMessage('Something fucked up');
+ * ui.onMessage('menuItemSelected', async (data) => { ... });
+ * const toolbar = ui.getToolbarHTML();
+ */
 export class UI {
-  private app: App;
-  private messageHandlers: Map<string, MessageHandler[]> = new Map();
-  private dx: Diagnostics;
-  private _yaml: {
-    base_css: string;
-    toolbar_css: string;
-    toolbar_js: string;
-    toolbar_html: string;
-  } = {
+  private static readonly kYaml = {
     base_css: '',
     toolbar_css: '',
     toolbar_js: '',
     toolbar_html: '',
-  };
+  } as const;
+
+  private app: App;
+  private messageHandlers: Map<string, MessageHandler[]> = new Map();
+  private dx: Diagnostics;
+  private _yaml: Yaml<typeof UI.kYaml>;
 
   constructor(app: App) {
     this.app = app;
     this.dx = app.dx.create('UI');
+    this._yaml = new Yaml(app, 'src/UI.yaml', UI.kYaml);
   }
 
   init(): void {}
@@ -32,26 +51,7 @@ export class UI {
   }
 
   get yaml() {
-    // If already loaded, return it
-    if (this._yaml.base_css) {
-      return this._yaml;
-    }
-
-    // Load and cache the YAML
-    const yaml = this.app.os.fileRead<{
-      base_css: string;
-      toolbar_css: string;
-      toolbar_js: string;
-      toolbar_html: string;
-    }>('src/UI.yaml');
-
-    if (!yaml) {
-      throw new Error('Failed to load UI yaml');
-    }
-
-    // Cache it
-    this._yaml = yaml;
-    return this._yaml;
+    return this._yaml.get();
   }
 
   // Register a message handler for a specific message type
@@ -114,20 +114,6 @@ export class UI {
     this.app.vscodeapis.showWarningMessage(message);
   }
 
-  // Create webview panel
-  /** @deprecated Dead code, never called */
-  async createWebviewPanel_OBSOLETE_DELETEME(title: string, html: string): Promise<WebviewPanelId> {
-    const panelId = await this.app.vscodeapis.getOrCreateWebviewPanel(title, html, undefined);
-    return panelId;
-  }
-
-  /** @deprecated Dead code, never called */
-  async updateWebviewPdf_OBSOLETE_DELETEME(pdf: jsPDF): Promise<void> {
-    const dx = this.dx.sub('updateWebviewPdf_OBSOLETE_DELETEME');
-    dx.require({ pdf }, ['pdf']);
-    throw new Error('Dead code - currentPanelId removed');
-  }
-
   // Add toolbar to HTML content
   async addToolbar(html: string): Promise<string> {
     const dx = this.dx.sub('addToolbar');
@@ -153,29 +139,6 @@ export class UI {
       return htmlWithToolbar;
     } catch (error) {
       dx.out(`Error adding toolbar: ${String(error)}`);
-      throw error;
-    } finally {
-      dx.done();
-    }
-  }
-
-  // Convert HTML to webview panel
-  /** @deprecated Dead code, never called */
-  async htmlToPanel_OBSOLETE_DELETEME(title: string, html: string): Promise<WebviewPanelId> {
-    const dx = this.dx.sub('htmlToPanel_OBSOLETE_DELETEME');
-    dx.require({ title, html }, ['title', 'html']);
-
-    try {
-      // Add toolbar to HTML
-      const htmlWithToolbar = await this.addToolbar(html);
-
-      // Create webview panel
-      const panelId = this.createWebviewPanel_OBSOLETE_DELETEME(title, htmlWithToolbar);
-
-      dx.out(`Created webview panel: ${title}`);
-      return panelId;
-    } catch (error) {
-      dx.out(`Error creating webview panel: ${String(error)}`);
       throw error;
     } finally {
       dx.done();
@@ -226,3 +189,5 @@ export class UI {
     console.log(message);
   }
 }
+
+// end, UI.ts

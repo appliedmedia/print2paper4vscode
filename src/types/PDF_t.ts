@@ -52,3 +52,5 @@ export interface PDFGenOptions {
   pageSize?: 'letter' | 'legal' | 'a3' | 'a4' | 'a5';
   orient?: 'portrait' | 'landscape';
 }
+
+// end, PDF_t.ts

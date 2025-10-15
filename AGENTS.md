@@ -185,6 +185,13 @@ Source Code → Shiki → jsPDF → PDF.js → User Display
 
 ## Development Guidelines
 
+### Naming Conventions
+
+- **Types**: Suffix with `_t` (e.g., `PageSizeId_t`, `MarginId_t`, `LanguageId_t`)
+- **Constants**: Prefix with `k` (e.g., `kPageSizeIds`, `kMarginIds`)
+- **Interfaces**: Follow same `_t` convention if used across files (e.g., `Persist_t`, `UI_t`)
+- **Class instances**: Use lowercase (e.g., `uiwebview`, not `currentWebView`)
+
 ### Code Organization
 
 - All VS Code API imports should be in `VSCodeAPIs.ts` only

@@ -10,8 +10,25 @@ import type { WebviewPanelId } from './VSCodeAPIs';
 import { Diagnostics } from './Diagnostics';
 
 // Type definition for fileRead method
-export type fileRead_t = <T = string>(path: string, key?: string) => T | undefined;
+export type FileRead_t = <T = string>(path: string, key?: string) => T | undefined;
 
+/**
+ * OS - Abstract base class for operating system operations
+ *
+ * Provides cross-platform abstractions for file system operations, path handling,
+ * printing, and platform-specific operations. Factory method creates appropriate
+ * platform implementation (OSMac, OSWin, OSLinux). Handles file I/O, YAML/JSON
+ * parsing, URI conversion for webviews, and timestamp generation.
+ *
+ * @input app - Application instance for accessing shared services
+ * @output Platform-agnostic file operations, path utilities, print dialogs, webview URIs
+ *
+ * @example
+ * const os = OS.create(app);
+ * const content = os.fileRead('src/config.yaml');
+ * await os.fileOpenPrintDialog('/path/to/file.pdf');
+ * os.fileWrite('/tmp/output.txt', 'content');
+ */
 export abstract class OS {
   // Performance timing from Node.js perf_hooks
   static performance = performance;
@@ -65,11 +82,6 @@ export abstract class OS {
   abstract filePrint(path: string): Promise<void>;
   abstract fileOpenPrintDialog(path: string): Promise<void>;
 
-  // Clipboard operations - platform specific
-  abstract copyToClipboard(): Promise<void>;
-  abstract selectAllCopyDeselect(): Promise<void>;
-  abstract getClipboardContent(): Promise<string | null>;
-
   // Platform-agnostic home directory
   getDir_Home(): string {
     return homedir();
@@ -105,7 +117,7 @@ export abstract class OS {
   }
 
   // Smart file reader that handles everything
-  fileRead: fileRead_t = <T = string>(path: string, key?: string): T | undefined => {
+  fileRead: FileRead_t = <T = string>(path: string, key?: string): T | undefined => {
     try {
       // Determine if this is an extension-relative path
       const isExtensionPath = !path.startsWith('/') && !path.includes(':\\');
@@ -117,7 +129,10 @@ export abstract class OS {
           : undefined
         : path;
 
-      if (!absPath || !fs.existsSync(absPath)) return undefined;
+      if (!absPath || !fs.existsSync(absPath)) {
+        this.app.ui.showErrorMessage(`Failed to load ${path}: file not found`);
+        return undefined;
+      }
 
       // Read the raw content
       const content = fs.readFileSync(absPath, 'utf8');
@@ -144,7 +159,8 @@ export abstract class OS {
       }
 
       return parsed as T;
-    } catch {
+    } catch (err) {
+      this.app.ui.showErrorMessage(`Failed to load ${path}: ${err}`);
       return undefined;
     }
   };
@@ -250,3 +266,5 @@ export abstract class OS {
 import { OSMac } from './OSMac';
 import { OSWin } from './OSWin';
 import { OSLinux } from './OSLinux';
+
+// end, OS.ts

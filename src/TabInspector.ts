@@ -3,6 +3,21 @@ import { Diagnostics } from './Diagnostics';
 
 export type TabCategory = 'editor-nonmd' | 'editor-md' | 'preview';
 
+/**
+ * TabInspector - VS Code tab inspection and content extraction
+ *
+ * Inspects active VS Code tabs to determine content type (editor vs preview),
+ * extracts text content, detects language IDs, and captures preview HTML.
+ * Handles both text editor tabs and webview preview tabs.
+ *
+ * @input app - Application instance for accessing VS Code APIs
+ * @output Tab metadata, source code content, language detection, preview HTML
+ *
+ * @example
+ * const inspector = new TabInspector(app);
+ * const category = inspector.detectActiveTabCategory();
+ * const content = inspector.getEditorSelectionOrAll();
+ */
 export class TabInspector {
   private app: App;
   private dx: Diagnostics;
@@ -36,17 +51,6 @@ export class TabInspector {
     const languageId = editor.document.languageId || 'plaintext';
     const name = this.app.vscodeapis.getDescriptiveName(editor.document);
     return { text, languageId, name };
-  }
-
-  async capturePreviewHtml(): Promise<{ html: string; name: string } | null> {
-    try {
-      // Reuse existing capture path which returns HTML via ClipboardCapture
-      const html = await this.app.paperprinter.capturePreviewHtml();
-      const name = this.app.vscodeapis.getActiveTabName();
-      return html ? { html, name } : null;
-    } catch {
-      return null;
-    }
   }
 
   async inspectTab(): Promise<{
@@ -92,3 +96,5 @@ export class TabInspector {
     }
   }
 }
+
+// end, TabInspector.ts

@@ -355,7 +355,6 @@ describe('VSCodeAPIs Wrapper', () => {
   });
 
   describe('State Management', () => {
-
     it('should get locale from VS Code environment', () => {
       mockVSCode.env = { language: 'en-US' };
 

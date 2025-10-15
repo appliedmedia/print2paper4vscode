@@ -32,3 +32,5 @@ export interface ThemeData {
     editor?: string;
   };
 }
+
+// end, theme_t.ts

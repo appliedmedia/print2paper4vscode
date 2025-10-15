@@ -1,9 +1,29 @@
 import type { App } from './App';
-import { UIMenu } from './UIMenu';
-import type { UIMenuItem } from './types/UI_t';
-import type { GlobalStateKey } from './types/globalState_t';
+import {
+  UIMenu,
+  type MenuId_t,
+  type MenuItemId_t,
+  type HandleSelection_t,
+  type UIMenuItem_t,
+} from './UIMenu';
 import { Diagnostics } from './Diagnostics';
 
+/**
+ * UIMenuMgr - Menu manager for webview toolbar system
+ *
+ * Manages collection of UIMenu instances, coordinates HTML/CSS/JS generation,
+ * handles two-pass flyout rendering, and dispatches menu item selections.
+ * Provides centralized menu lookup and configuration management.
+ *
+ * @input app - Application instance
+ * @output Aggregated menu HTML/CSS/JS, menu item selection routing, menu lookup
+ *
+ * @example
+ * const mgr = new UIMenuMgr(app);
+ * const menu = mgr.createMenu('print', 'Print', '🖨️', false, ...);
+ * mgr.addMenu(menu);
+ * const html = await mgr.getAllUIMenuHTML();
+ */
 export class UIMenuMgr {
   private app: App;
   private menus: UIMenu[] = [];
@@ -26,13 +46,13 @@ export class UIMenuMgr {
   }
 
   createMenu(
-    id: GlobalStateKey,
+    id: MenuId_t,
     displayName: string,
     icon: string,
     isFlyout: boolean = false,
-    menuItems: () => UIMenuItem[],
+    menuItems: () => UIMenuItem_t[],
     flyoutMenuItemIds: string[] = [],
-    selectionHandler: (selectedId: string) => Promise<string>
+    selectionHandler: (selectedId: string) => Promise<HandleSelection_t>
   ): UIMenu {
     return new UIMenu(
       this.app,
@@ -52,16 +72,19 @@ export class UIMenuMgr {
   }
 
   // Handle menu item selection
-  async handleMenuItemSelected(menuId: GlobalStateKey, itemId: string): Promise<void> {
+  async handleMenuItemSelected(menuId: MenuId_t, itemId: MenuItemId_t): Promise<void> {
     const dx = this.dx.sub('handleMenuItemSelected');
-    
+
     try {
-      const menu = this.getMenu(menuId);
+      const menu = this.getAllMenus().find(menu => menu.id === menuId);
       if (menu) {
         await menu.dispatchSelection(itemId);
         dx.out(`Menu item selected: ${menuId}.${itemId}`);
       } else {
-        dx.out(`No menu found for menuId: ${menuId}`);
+        const msg = `Invalid menu: ${menuId}`;
+        dx.out(msg);
+        this.app.ui.showErrorMessage(msg);
+        return;
       }
     } finally {
       dx.done();
@@ -69,8 +92,23 @@ export class UIMenuMgr {
   }
 
   // Get a specific menu by ID
-  getMenu(id: GlobalStateKey): UIMenu | undefined {
-    return this.getAllMenus().find(menu => menu.id === id);
+  // Throws error if menu not found - guarantees a valid menu is returned
+  getMenuById(id: string): UIMenu {
+    const menu = this.getAllMenus().find(menu => menu.id === id);
+    if (!menu) {
+      const msg = `Menu not found: ${id}`;
+      this.dx.out(msg);
+      this.app.ui.showErrorMessage(msg);
+      throw new Error(msg);
+    }
+    return menu;
+  }
+
+  // Get the selected value for a menu
+  getValueForSelectedByMenuId(menuId: MenuId_t): string | undefined {
+    const menu = this.getMenuById(menuId);
+    const selectedValue = (menu.persist as unknown as Record<string, string>)[menuId];
+    return selectedValue;
   }
 
   // Add a menu to the list (called by PaperPrinter)
@@ -134,9 +172,11 @@ export class UIMenuMgr {
     }
 
     // Get the generic handlers - yaml getter handles loading automatically
-    const js = anyMenu.yaml?.ui_menu_generic_handlers ?? '';
+    const js: string = anyMenu.yaml.ui_menu_generic_handlers;
     if (!js) {
-      this.dx.out('getAllUIMenuJS: JS is undefined/empty, YAML loading failed or no handlers present');
+      this.dx.out(
+        'getAllUIMenuJS: JS is undefined/empty, YAML loading failed or no handlers present'
+      );
       return '';
     }
     this.dx.out(`getAllUIMenuJS: Generated ${js.length} characters of JS`);
@@ -152,7 +192,7 @@ export class UIMenuMgr {
     }
 
     // Get the CSS - yaml getter handles loading automatically
-    const css = anyMenu.yaml.ui_menu_css;
+    const css: string = anyMenu.yaml.ui_menu_css;
     if (!css) {
       this.dx.out('getAllUIMenuCSS: CSS is undefined, YAML loading failed');
       return '';
@@ -203,3 +243,5 @@ export class UIMenuMgr {
     }));
   }
 }
+
+// end, UIMenuMgr.ts

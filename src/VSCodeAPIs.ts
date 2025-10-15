@@ -10,12 +10,33 @@ import type {
   // WorkspaceEdit,
 } from 'vscode';
 import type { PostMessage } from './types/UI_t';
-import type { GlobalStateKey, GlobalStateMap } from './types/globalState_t';
 import { Diagnostics } from './Diagnostics';
 
 // Opaque ID type for webview panels
 export type WebviewPanelId = string & { readonly __brand: 'WebviewPanelId' };
 
+// Global state base types - simple scalars
+export type GlobalStateKey_t = string;
+export type GlobalStateValue_t = string | number | boolean;
+
+/**
+ * VSCodeAPIs - VS Code API isolation layer
+ *
+ * Single source of truth for all VS Code API access. Isolates vscode module imports
+ * to prevent circular dependencies. Manages commands, webview panels, global state,
+ * text editors, and workspace operations. Provides typed wrappers around VS Code APIs.
+ *
+ * @input app - Application instance
+ * @input vscode - VS Code API module
+ * @input context - Extension context from VS Code
+ * @output VS Code operations, webview management, global state, editor access
+ *
+ * @example
+ * const apis = new VSCodeAPIs(app, vscode, context);
+ * const editor = apis.getActiveTextEditor();
+ * apis.updateGlobalState('theme', 'github-light');
+ * const panel = apis.createWebviewPanel('preview', 'Preview', ...);
+ */
 export class VSCodeAPIs {
   private app: App;
   private vscode: typeof import('vscode'); // Use official VS Code types
@@ -36,7 +57,7 @@ export class VSCodeAPIs {
 
     // Register VS Code commands
     const printCommand = this.vscode.commands.registerCommand('p2p4vsc.print2paper', () => {
-      this.app.paperprinter.handleFirstPrintCommand();
+      this.app.paperprinter.handlePrintCommandFromVSCode();
     });
 
     this.context.subscriptions.push(printCommand);
@@ -55,93 +76,15 @@ export class VSCodeAPIs {
   /**
    * Update global state value
    */
-  updateGlobalState<K extends GlobalStateKey>(key: K, value: GlobalStateMap[K]): void {
+  updateGlobalState(key: GlobalStateKey_t, value: GlobalStateValue_t): void {
     this.context.globalState.update(key, value);
   }
 
   /**
-   * Get global state value as string
+   * Get global state value
    */
-  getGlobalState<K extends GlobalStateKey>(key: K): GlobalStateMap[K] | undefined {
+  getGlobalState(key: GlobalStateKey_t): GlobalStateValue_t | undefined {
     return this.context.globalState.get(key);
-  }
-
-  // ============================================================================
-  // PageRender Configuration Management
-  // ============================================================================
-
-  /**
-   * Get scrollable viewer enabled state
-   */
-  getScrollableViewerEnabled(): boolean {
-    return this.getGlobalState('scrollableViewerEnabled') === 'true';
-  }
-
-  /**
-   * Set scrollable viewer enabled state
-   */
-  setScrollableViewerEnabled(enabled: boolean): void {
-    this.updateGlobalState('scrollableViewerEnabled', String(enabled));
-  }
-
-  /**
-   * Get maximum canvas pool size
-   */
-  getMaxCanvasPoolSize(): number {
-    const value = this.getGlobalState('maxCanvasPoolSize');
-    return value ? parseInt(value, 10) || 7 : 7;
-  }
-
-  /**
-   * Set maximum canvas pool size
-   */
-  setMaxCanvasPoolSize(size: number): void {
-    this.updateGlobalState('maxCanvasPoolSize', String(Math.max(1, Math.min(20, size))));
-  }
-
-  /**
-   * Get auto scrollable viewer threshold (lines)
-   */
-  getAutoScrollableViewerThreshold(): number {
-    const value = this.getGlobalState('autoScrollableViewerThreshold');
-    return value ? parseInt(value, 10) || 1000 : 1000;
-  }
-
-  /**
-   * Set auto scrollable viewer threshold (lines)
-   */
-  setAutoScrollableViewerThreshold(threshold: number): void {
-    this.updateGlobalState('autoScrollableViewerThreshold', String(Math.max(100, threshold)));
-  }
-
-  /**
-   * Get page render cache size
-   */
-  getPageRenderCacheSize(): number {
-    const value = this.getGlobalState('pageRenderCacheSize');
-    return value ? parseInt(value, 10) || 10 : 10;
-  }
-
-  /**
-   * Set page render cache size
-   */
-  setPageRenderCacheSize(size: number): void {
-    this.updateGlobalState('pageRenderCacheSize', String(Math.max(1, Math.min(50, size))));
-  }
-
-  /**
-   * Get scroll debounce time in milliseconds
-   */
-  getScrollDebounceMs(): number {
-    const value = this.getGlobalState('scrollDebounceMs');
-    return value ? parseInt(value, 10) || 16 : 16;
-  }
-
-  /**
-   * Set scroll debounce time in milliseconds
-   */
-  setScrollDebounceMs(ms: number): void {
-    this.updateGlobalState('scrollDebounceMs', String(Math.max(1, Math.min(100, ms))));
   }
 
   getEditorTypography(): {
@@ -612,3 +555,5 @@ export class VSCodeAPIs {
     return this.vscode.env.language;
   }
 }
+
+// end, VSCodeAPIs.ts

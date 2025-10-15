@@ -1,13 +1,15 @@
 import type { App } from './App';
 import type { PageRender, PageData } from './types/PageRender_t';
 import type { WebviewPanelId } from './VSCodeAPIs';
+import type { PageSizeId_t, Orient_t } from './types/PaperPrinter_t';
 import { Diagnostics } from './Diagnostics';
+import { Yaml } from './Yaml';
 
-// ScrollOptions interface
+// ScrollOptions interface - uses centralized types from PaperPrinter_t.ts
 export interface ScrollOptions {
   title?: string;
-  pageSizeId?: 'letter' | 'legal' | 'a3' | 'a4' | 'a5';
-  orient?: 'portrait' | 'landscape';
+  pageSizeId?: PageSizeId_t;
+  orient?: Orient_t;
   fontFamily?: string;
   fontSizePx?: number; // fontSize in pixels
   lineHeightPx?: number; // lineHeight in pixels
@@ -15,9 +17,32 @@ export interface ScrollOptions {
 }
 
 /**
- * UIScrollView - Handles scroll view document viewing with virtual scrolling
+ * UIScrollView - Virtual scrolling document viewer with canvas pooling
+ *
+ * Renders multi-page documents using virtual scrolling and canvas pooling for
+ * performance. Manages page cache, render queue, and scroll-synchronized canvas
+ * updates. Generates HTML/CSS/JS for webview display from YAML templates.
+ *
+ * @input app - Application instance
+ * @input pageRender - PageRender interface for page-by-page rendering
+ * @input options - Display options (theme, font, page size, orientation)
+ * @output Virtual scrolling HTML/CSS/JS, page rendering, scroll handling
+ *
+ * @example
+ * const scrollView = new UIScrollView(app, pdfRenderer, {
+ *   title: 'Document',
+ *   theme: 'github-light',
+ *   fontSizePx: 12
+ * });
+ * const html = await scrollView.getHTML();
  */
 export class UIScrollView {
+  private static readonly kYaml = {
+    scroll_html: '',
+    scroll_css: '',
+    scroll_js: '',
+  } as const;
+
   private readonly CONFIG = {
     MAX_CANVAS_POOL_SIZE: 7, // Number of canvas elements for virtual scrolling
     SCROLL_DEBOUNCE_MS: 16, // ~60fps, syncs with requestAnimationFrame
@@ -30,43 +55,18 @@ export class UIScrollView {
   private pageCache: Map<number, PageData> = new Map();
   private renderQueue: Set<number> = new Set();
   private panelId: WebviewPanelId | null = null;
-  private _yaml: {
-    scroll_html: string;
-    scroll_css: string;
-    scroll_js: string;
-  } = {
-    scroll_html: '',
-    scroll_css: '',
-    scroll_js: '',
-  };
+  private _yaml: Yaml<typeof UIScrollView.kYaml>;
 
   constructor(app: App, pageRender: PageRender, options: ScrollOptions) {
     this.app = app;
     this.pageRender = pageRender;
     this.options = options;
     this.dx = app.dx.create('UIScrollView');
+    this._yaml = new Yaml(app, 'src/UIScrollView.yaml', UIScrollView.kYaml);
   }
 
   get yaml() {
-    // If already loaded, return it
-    if (this._yaml.scroll_html) {
-      return this._yaml;
-    }
-
-    // Load and cache the YAML
-    const yaml = this.app.os.fileRead<{
-      scroll_html: string;
-      scroll_css: string;
-      scroll_js: string;
-    }>('src/UIScrollView.yaml');
-
-    if (!yaml) {
-      throw new Error('Failed to load UIScrollView yaml');
-    }
-
-    // Cache it
-    this._yaml = yaml;
-    return this._yaml;
+    return this._yaml.get();
   }
 
   /**
@@ -300,3 +300,5 @@ export class UIScrollView {
     }
   }
 }
+
+// end, UIScrollView.ts

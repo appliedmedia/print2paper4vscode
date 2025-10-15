@@ -33,7 +33,7 @@ describe('PaperPrinter Page Size and Orient Tests', () => {
         fontSize: 14,
         lineHeight: 1.5,
         fontFamily: 'Courier',
-        sizeToHeightRatio: 1.2
+        sizeToHeightRatio: 1.2,
       }),
     },
     os: {
@@ -44,14 +44,26 @@ describe('PaperPrinter Page Size and Orient Tests', () => {
               '<svg width="16" height="16"><rect x="2" y="2" width="12" height="12"/></svg>',
             icon_orient_landscape_svg:
               '<svg width="16" height="16"><rect x="1" y="4" width="14" height="8"/></svg>',
-            icon_margin_none_svg: '<svg width="16" height="16"><rect x="2" y="2" width="12" height="12"/></svg>',
-            icon_margin_minimal_svg: '<svg width="16" height="16"><rect x="2" y="2" width="12" height="12"/></svg>',
-            icon_margin_normal_svg: '<svg width="16" height="16"><rect x="2" y="2" width="12" height="12"/></svg>',
-            icon_margin_wide_svg: '<svg width="16" height="16"><rect x="2" y="2" width="12" height="12"/></svg>',
+            icon_margin_none_svg:
+              '<svg width="16" height="16"><rect x="2" y="2" width="12" height="12"/></svg>',
+            icon_margin_minimal_svg:
+              '<svg width="16" height="16"><rect x="2" y="2" width="12" height="12"/></svg>',
+            icon_margin_normal_svg:
+              '<svg width="16" height="16"><rect x="2" y="2" width="12" height="12"/></svg>',
+            icon_margin_wide_svg:
+              '<svg width="16" height="16"><rect x="2" y="2" width="12" height="12"/></svg>',
           };
         }
         return undefined;
       },
+    },
+    templateDictReplace: (source: string, dict: Record<string, any>) => {
+      // Simple template replacement for tests
+      let result = source;
+      for (const [key, value] of Object.entries(dict)) {
+        result = result.replace(new RegExp(`\\{\\{${key}\\}\\}`, 'g'), String(value));
+      }
+      return result;
     },
     ui: {
       showErrorMessage: (msg: string) => Promise.resolve(),
@@ -72,8 +84,7 @@ describe('PaperPrinter Page Size and Orient Tests', () => {
     });
 
     test('should get current orient', () => {
-      const orient =
-        (paperPrinter as any).app.vscodeapis.getGlobalState('orient') || 'portrait';
+      const orient = (paperPrinter as any).app.vscodeapis.getGlobalState('orient') || 'portrait';
       assert.strictEqual(orient, 'portrait');
     });
   });
@@ -85,12 +96,13 @@ describe('PaperPrinter Page Size and Orient Tests', () => {
       // Should have 3 items (Size, Orient, Margin submenus)
       assert.strictEqual(menuItems.length, 3);
 
-      const expectedSubmenus = ['size', 'orient', 'margin'];
-      expectedSubmenus.forEach((submenu, index) => {
-        assert.strictEqual(menuItems[index].id, submenu);
-        // Check that display name contains the submenu name (case-insensitive)
-        assert.ok(menuItems[index].displayName.toLowerCase().includes(submenu.toLowerCase()));
-      });
+      // Check IDs and display names
+      assert.strictEqual(menuItems[0].id, 'pageSizeId');
+      assert.strictEqual(menuItems[0].displayName, 'Size');
+      assert.strictEqual(menuItems[1].id, 'orient');
+      assert.strictEqual(menuItems[1].displayName, 'Orient');
+      assert.strictEqual(menuItems[2].id, 'marginId');
+      assert.strictEqual(menuItems[2].displayName, 'Margin');
     });
 
     test('should include dimensions in display names', () => {
@@ -124,7 +136,6 @@ describe('PaperPrinter Page Size and Orient Tests', () => {
       assert.ok(landscapeItem?.displayName.includes('<svg'));
     });
   });
-
 
   describe('Menu Configuration', () => {
     test('should include page and orient menus in configuration', () => {
@@ -171,9 +182,9 @@ describe('PaperPrinter Page Size and Orient Tests', () => {
 
       // Test that page menu has correct submenu items
       const pageIds = pageMenuItems.map((item: any) => item.id);
-      assert.ok(pageIds.includes('size'));
+      assert.ok(pageIds.includes('pageSizeId'));
       assert.ok(pageIds.includes('orient'));
-      assert.ok(pageIds.includes('margin'));
+      assert.ok(pageIds.includes('marginId'));
 
       // Test that orient menu has correct items
       const orientIds = orientMenuItems.map((item: any) => item.id);

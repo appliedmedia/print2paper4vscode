@@ -2,9 +2,9 @@ import type { App } from './App';
 import type { PageRender } from './types/PageRender_t';
 import type { WebviewPanelId } from './VSCodeAPIs';
 import type { PostMessage } from './types/UI_t';
-import type { GlobalStateKey } from './types/globalState_t';
 import { UIScrollView, type ScrollOptions } from './UIScrollView';
 import { UIMenuMgr } from './UIMenuMgr';
+import { isMenuId, isMenuItemId } from './UIMenu';
 import { Diagnostics } from './Diagnostics';
 
 /**
@@ -298,7 +298,7 @@ export class UIWebView {
       const left = msg.left;
       if (typeof left === 'number') {
         // Save toolbar position to global state
-        this.app.vscodeapis.updateGlobalState('toolbarPos', String(left));
+        this.app.vscodeapis.updateGlobalState('toolbarPosPx', left);
         dx.out(`Toolbar position saved: ${left}px`);
       }
     } finally {
@@ -315,10 +315,18 @@ export class UIWebView {
     try {
       const { menuId, itemId } = msg;
       if (typeof menuId === 'string' && typeof itemId === 'string') {
-        // Handle menu item selection through menu manager
-        if (this.menuMgr) {
-          await this.menuMgr.handleMenuItemSelected(menuId as GlobalStateKey, itemId);
-          dx.out(`Menu item selected: ${menuId}.${itemId}`);
+        // Validate both menuId and itemId before proceeding
+        if (isMenuId(menuId) && isMenuItemId(itemId)) {
+          // Handle menu item selection through menu manager
+          if (this.menuMgr) {
+            await this.menuMgr.handleMenuItemSelected(menuId, itemId);
+            dx.out(`Menu item selected: ${menuId}.${itemId}`);
+          }
+        } else {
+          const msg = `Invalid menu selection: ${menuId}.${itemId}`;
+          dx.out(msg);
+          this.app.ui.showErrorMessage(msg);
+          return;
         }
       }
     } finally {
@@ -410,3 +418,5 @@ export class UIWebView {
     }
   }
 }
+
+// end, UIWebView.ts

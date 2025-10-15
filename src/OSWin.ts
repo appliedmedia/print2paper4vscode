@@ -2,6 +2,21 @@ import { OS } from './OS';
 import { Diagnostics } from './Diagnostics';
 import type { App } from './App';
 
+/**
+ * OSWin - Windows-specific operating system operations
+ *
+ * Provides Windows-specific implementations for file operations and printing.
+ * Uses Windows shell commands (start, explorer.exe) and rundll32 for printing.
+ *
+ * @input app - Application instance for accessing shared services
+ * @output File operations, print commands via rundll32, Explorer integration
+ *
+ * @example
+ * const os = new OSWin(app);
+ * await os.fileOpenInDefaultApp('C:\\path\\to\\file.pdf');
+ * await os.filePrint('C:\\path\\to\\file.pdf');
+ * await os.fileReveal('C:\\path\\to\\file.pdf');
+ */
 export class OSWin extends OS {
   protected dx: Diagnostics;
 
@@ -28,22 +43,9 @@ export class OSWin extends OS {
     await this.fileOpenInDefaultApp(path);
   }
 
-  async copyToClipboard(): Promise<void> {
-    // Windows clipboard copy - would need Windows-specific implementation
-    throw new Error('copyToClipboard not implemented for Windows');
-  }
-
-  async selectAllCopyDeselect(): Promise<void> {
-    // Windows select all, copy, deselect - would need Windows-specific implementation
-    throw new Error('selectAllCopyDeselect not implemented for Windows');
-  }
-
-  async getClipboardContent(): Promise<string | null> {
-    // Windows clipboard content - would need Windows-specific implementation
-    throw new Error('getClipboardContent not implemented for Windows');
-  }
-
   done(): void {
     this.dx.done();
   }
 }
+
+// end, OSWin.ts

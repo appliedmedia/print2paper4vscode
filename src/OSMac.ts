@@ -2,6 +2,22 @@ import { OS } from './OS';
 import { Diagnostics } from './Diagnostics';
 import type { App } from './App';
 
+/**
+ * OSMac - macOS-specific operating system operations
+ *
+ * Provides macOS-specific implementations for file operations and printing.
+ * Uses AppleScript for complex operations (print dialogs via Preview/Finder)
+ * and native macOS commands for file operations (open, open -R).
+ *
+ * @input app - Application instance for accessing shared services
+ * @output File operations, AppleScript-based print dialogs, Finder integration
+ *
+ * @example
+ * const os = new OSMac(app);
+ * await os.fileOpenInDefaultApp('/path/to/file.pdf');
+ * await os.fileOpenPrintDialog('/path/to/file.pdf');
+ * await os.filePrint('/path/to/file.pdf');
+ */
 export class OSMac extends OS {
   protected dx: Diagnostics;
 
@@ -44,25 +60,9 @@ export class OSMac extends OS {
     await this.executeAppleScript('apple_script_open_preview_print_dialog', { FILE_PATH: path });
   }
 
-  async copyToClipboard(): Promise<void> {
-    await this.executeAppleScript('apple_script_copy');
-  }
-
-  async selectAllCopyDeselect(): Promise<void> {
-    await this.executeAppleScript('apple_script_select_all_copy_deselect');
-  }
-
-  async getClipboardContent(): Promise<string | null> {
-    try {
-      // Get plain text from clipboard using pbpaste (macOS)
-      const { stdout } = await this.execAsync('pbpaste');
-      return stdout || null;
-    } catch {
-      return null;
-    }
-  }
-
   done(): void {
     this.dx.done();
   }
 }
+
+// end, OSMac.ts

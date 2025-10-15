@@ -1,23 +1,32 @@
 import type { App } from './App';
-import type { fileRead_t } from './OS';
+import type { FileRead_t } from './OS';
 import type { PDFDoc } from './types/PDF_t';
 import {
   getSingletonHighlighter,
   bundledThemesInfo,
   type ThemedToken,
   type Highlighter,
+  type BundledLanguage,
 } from 'shiki';
 import { Diagnostics } from './Diagnostics';
-import jsPDF from 'jspdf';
 import type { Theme, ThemeData, TokenColor } from './types/theme_t';
+
+// Language ID type - abstraction over Shiki's BundledLanguage
+export type LanguageId_t = BundledLanguage;
+
+// Theme ID types - Dynamic from Shiki
+export type ThemeId_t = string; // Dynamic from Shiki themes, cannot be hardcoded
+
+// Type guard for theme validation - accepts any non-empty string since themes come from Shiki
+export function isThemeId(id: string): id is ThemeId_t {
+  return typeof id === 'string' && id.length > 0;
+}
 
 // Module-level constants for theme filtering
 const USE_ALL_LIGHT_SHIKI_THEMES = 'light|bright|day';
 const USE_ALL_LIGHT_VSCODE_THEMES = 'light|bright|day';
 
 // Type definitions for Shiki highlighter and theme data
-type LanguageId = string; // We accept any string as language ID, even if Shiki expects specific types
-
 interface VSCodeTheme {
   name?: string;
   colors?: Record<string, string>;
@@ -27,6 +36,21 @@ interface VSCodeTheme {
   };
 }
 
+/**
+ * Stylize - Syntax highlighting and theme management with Shiki
+ *
+ * Provides syntax highlighting using Shiki with lazy highlighter initialization.
+ * Manages theme loading, validation, and token generation. Supports both bundled
+ * Shiki themes and VS Code themes. Handles fallback to 'github-light' on errors.
+ *
+ * @input app - Application instance
+ * @output Highlighted tokens, theme data, theme lists, CSS token styling
+ *
+ * @example
+ * const stylize = new Stylize(app);
+ * const tokens = await stylize.getTokens('console.log("hi")', 'javascript', 'github-light');
+ * const themes = stylize.getThemes();
+ */
 export class Stylize {
   private app: App;
   private highlighter: Highlighter | null = null;
@@ -41,7 +65,7 @@ export class Stylize {
     // No initialization needed - highlighter will be initialized lazily when needed
   }
 
-  private async validateHighlighter(languageId: string): Promise<void> {
+  private async validateHighlighter(languageId: LanguageId_t): Promise<void> {
     const dx = this.dx.sub('validateHighlighter');
     dx.require({ languageId }, ['languageId']);
 
@@ -311,13 +335,13 @@ export class Stylize {
       return themes[0].id;
     }
 
-    private async ensureHighlighterReady(languageId: LanguageId): Promise<void> {
+    private async ensureHighlighterReady(languageId: LanguageId_t): Promise<void> {
       await this.app.stylize.validateHighlighter(languageId);
     }
 
     private tokenizeCode(
       code: string,
-      languageId: LanguageId,
+      languageId: LanguageId_t,
       selectedTheme: string
     ): ThemedToken[][] {
       this.dx.out(`tokenizeCode called with theme: '${selectedTheme}'`);
@@ -361,20 +385,25 @@ export class Stylize {
       fontInfo: { fontFamily: string; fontSizePx: number; lineHeightPx: number },
       title?: string
     ): Promise<PDFDoc> {
-      return await         this.app.pdf.generatePdfFromTokens(
-          tokens,
-          fontInfo.fontFamily,
-          fontInfo.fontSizePx,
-          fontInfo.lineHeightPx,
-          title,
-          this.app.pdf.docInfo.marginPts
-        );
+      return await this.app.pdf.generatePdfFromTokens(
+        tokens,
+        fontInfo.fontFamily,
+        fontInfo.fontSizePx,
+        fontInfo.lineHeightPx,
+        title
+      );
     }
 
     async convert(
       code: string,
-      languageId: LanguageId,
-      opts?: { fontSize?: number; lineHeight?: number; title?: string; theme?: string; marginPts?: number }
+      languageId: LanguageId_t,
+      opts?: {
+        fontSize?: number;
+        lineHeight?: number;
+        title?: string;
+        theme?: string;
+        marginPts?: number;
+      }
     ): Promise<PDFDoc> {
       const dx = this.dx.sub('Converter_StyleToPdf');
       dx.require({ code, languageId }, ['code', 'languageId']);
@@ -400,8 +429,14 @@ export class Stylize {
   // NEW: Generate PDF directly from code using theme font and user size
   async styleToPdf(
     code: string,
-    languageId: LanguageId,
-    opts?: { fontSize?: number; lineHeight?: number; title?: string; theme?: string; marginPts?: number }
+    languageId: LanguageId_t,
+    opts?: {
+      fontSize?: number;
+      lineHeight?: number;
+      title?: string;
+      theme?: string;
+      marginPts?: number;
+    }
   ): Promise<PDFDoc> {
     const converter = new this.Converter_StyleToPdf(this.app);
     return converter.convert(code, languageId, opts);
@@ -410,7 +445,7 @@ export class Stylize {
   // Simple tokenization without PDF generation - render one page at a time
   async tokenize(
     code: string,
-    languageId: LanguageId,
+    languageId: LanguageId_t,
     theme?: string,
     pageBegin?: number,
     pageEnd?: number,
@@ -424,11 +459,11 @@ export class Stylize {
       const themeToUse = theme || this.resolveActiveTheme();
 
       const tokenResult = highlighter.codeToTokens(code, {
-        lang: languageId as any,
+        lang: languageId,
         theme: themeToUse,
       });
       const tokens = tokenResult?.tokens || [];
-      
+
       // Apply page range filtering if specified
       let filteredTokens = tokens;
       if (pageBegin !== undefined && pageEnd !== undefined) {
@@ -450,9 +485,12 @@ export class Stylize {
           for (let lineNum = 0; lineNum < filteredTokens.length; lineNum++) {
             const line = filteredTokens[lineNum];
             // Convert line tokens to HTML (simplified)
-            const htmlData = line.map((token: ThemedToken) => 
-              `<span style="color: ${token.color || '#000000'}">${token.content}</span>`
-            ).join('');
+            const htmlData = line
+              .map(
+                (token: ThemedToken) =>
+                  `<span style="color: ${token.color || '#000000'}">${token.content}</span>`
+              )
+              .join('');
             optPerLineHandler(pageNum, lineNum, htmlData);
           }
         }
@@ -467,7 +505,6 @@ export class Stylize {
       dx.done();
     }
   }
-
 
   /**
    * Resolve active theme for token generation
@@ -498,7 +535,7 @@ export class Stylize {
     lineHeight: number
   ): string {
     // Load YAML templates
-    const fileRead: fileRead_t = this.app.os.fileRead;
+    const fileRead: FileRead_t = this.app.os.fileRead;
     const yaml = fileRead<{
       stylize_token_pre: string;
       stylize_token_line: string;
@@ -591,10 +628,8 @@ export class Stylize {
   // Convert VS Code theme JSON to Shiki-compatible CSS variables format
   private convertVSCodeThemeToShiki(vscodeTheme: VSCodeTheme): ThemeData {
     // Derive theme type early so both success and error paths agree
-    const derivedType: 'light' | 'dark' = ((vscodeTheme as unknown as { type?: string })?.type ===
-    'dark'
-      ? 'dark'
-      : 'light');
+    const derivedType: 'light' | 'dark' =
+      (vscodeTheme as unknown as { type?: string })?.type === 'dark' ? 'dark' : 'light';
 
     try {
       // Extract basic theme info
@@ -665,3 +700,5 @@ export class Stylize {
     }
   }
 }
+
+// end, Stylize.ts
