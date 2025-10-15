@@ -85,6 +85,10 @@ export class Persist {
     this.default[name] = defaultValue;
     return this;
   }
+
+  getDefault(name: string): PersistValue_t | undefined {
+    return this.default[name];
+  }
 }
 
 // end, Persist.ts

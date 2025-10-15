@@ -182,14 +182,14 @@ export class UIMenu {
 
   // Get the selected item ID for this menu (for UI highlighting)
   async getSelectedItemId(): Promise<MenuItemId_t> {
-    // Check if persist already has a value (cache/global/default)
-    const cachedValue = (this.persist as Persist_t)[this._id];
+    // Check if we have a stored default value
+    const storedDefault = this.persist.getDefault(this._id);
 
-    if (cachedValue !== undefined) {
-      return String(cachedValue) as MenuItemId_t;
+    if (storedDefault !== undefined) {
+      return String(storedDefault) as MenuItemId_t;
     }
 
-    // No cached value, dispatch to selection handler to compute default
+    // No stored default, dispatch to selection handler to compute default
     const { id: defaultItemId } = await this.dispatchSelection(this.defaultId());
 
     // Store the computed default
