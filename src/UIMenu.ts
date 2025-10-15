@@ -186,7 +186,7 @@ export class UIMenu {
     const cachedValue = (this.persist as Persist_t)[this._id];
 
     if (cachedValue !== undefined) {
-      return cachedValue as MenuItemId_t;
+      return String(cachedValue) as MenuItemId_t;
     }
 
     // No cached value, dispatch to selection handler to compute default
