@@ -55,7 +55,12 @@ export class DocInfo_PDF {
   }
 
   // Margin getter - calculates from current marginId
-  get marginPts(): { topPts: number; bottomPts: number; leftPts: number; rightPts: number } {
+  get marginPts(): {
+    topMarginPts: number;
+    bottomMarginPts: number;
+    leftMarginPts: number;
+    rightMarginPts: number;
+  } {
     // Get current margin ID from menu's persistent state
     const menu = this.app.uimenumgr.getMenuById('marginId');
     const rawMarginId = menu.persist.marginId;
@@ -66,19 +71,24 @@ export class DocInfo_PDF {
     const marginPts = MARGIN_ID_TO_PTS[marginId];
 
     return {
-      topPts: marginPts,
-      bottomPts: marginPts,
-      leftPts: marginPts,
-      rightPts: marginPts,
+      topMarginPts: marginPts,
+      bottomMarginPts: marginPts,
+      leftMarginPts: marginPts,
+      rightMarginPts: marginPts,
     };
   }
 
   // Margin setter - sets all 4 sides
-  set marginPts(value: { topPts: number; bottomPts: number; leftPts: number; rightPts: number }) {
-    this.marginTopPts = value.topPts;
-    this.marginBottomPts = value.bottomPts;
-    this.marginLeftPts = value.leftPts;
-    this.marginRightPts = value.rightPts;
+  set marginPts(value: {
+    topMarginPts: number;
+    bottomMarginPts: number;
+    leftMarginPts: number;
+    rightMarginPts: number;
+  }) {
+    this.marginTopPts = value.topMarginPts;
+    this.marginBottomPts = value.bottomMarginPts;
+    this.marginLeftPts = value.leftMarginPts;
+    this.marginRightPts = value.rightMarginPts;
   }
 }
 

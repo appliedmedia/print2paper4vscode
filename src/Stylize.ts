@@ -244,14 +244,14 @@ export class Stylize {
     }
   }
 
-  // Internal converter class for styleToPdf logic
-  private Converter_StyleToPdf = class {
+  // OBSOLETE: Internal converter class for styleToPdf logic - replaced by line-by-line rendering
+  private Converter_StyleToPdf_OBSOLETE_DELETEME = class {
     private app: App;
     private dx: Diagnostics;
 
     constructor(app: App) {
       this.app = app;
-      this.dx = app.stylize.dx.sub('Converter_StyleToPdf');
+      this.dx = app.stylize.dx.sub('Converter_StyleToPdf_OBSOLETE_DELETEME');
     }
 
     private determineTheme(opts?: { theme?: string }): string {
@@ -426,8 +426,8 @@ export class Stylize {
     }
   };
 
-  // NEW: Generate PDF directly from code using theme font and user size
-  async styleToPdf(
+  // OBSOLETE: Generate PDF directly from code using theme font and user size - replaced by line-by-line rendering
+  async styleToPdf_OBSOLETE_DELETEME(
     code: string,
     languageId: LanguageId_t,
     opts?: {
@@ -438,7 +438,7 @@ export class Stylize {
       marginPts?: number;
     }
   ): Promise<PDFDoc> {
-    const converter = new this.Converter_StyleToPdf(this.app);
+    const converter = new this.Converter_StyleToPdf_OBSOLETE_DELETEME(this.app);
     return converter.convert(code, languageId, opts);
   }
 
@@ -471,8 +471,8 @@ export class Stylize {
           // 0,0 means everything - no filtering
           filteredTokens = tokens;
         } else if (pageEnd === 0) {
-          // pageBegin,0 means just that page
-          filteredTokens = tokens.slice(pageBegin - 1, pageBegin);
+          // pageBegin,0 means all pages from pageBegin onwards
+          filteredTokens = tokens.slice(pageBegin - 1);
         } else {
           // pageBegin,pageEnd means range
           filteredTokens = tokens.slice(pageBegin - 1, pageEnd);
@@ -481,18 +481,18 @@ export class Stylize {
 
       // Call per-line handler if provided
       if (optPerLineHandler) {
-        for (let pageNum = pageBegin || 1; pageNum <= (pageEnd || 1); pageNum++) {
-          for (let lineNum = 0; lineNum < filteredTokens.length; lineNum++) {
-            const line = filteredTokens[lineNum];
-            // Convert line tokens to HTML (simplified)
-            const htmlData = line
-              .map(
-                (token: ThemedToken) =>
-                  `<span style="color: ${token.color || '#000000'}">${token.content}</span>`
-              )
-              .join('');
-            optPerLineHandler(pageNum, lineNum, htmlData);
-          }
+        // Process each line once - the callback will handle page breaks internally
+        for (let lineNum = 0; lineNum < filteredTokens.length; lineNum++) {
+          const line = filteredTokens[lineNum];
+          // Convert line tokens to HTML (simplified)
+          const htmlData = line
+            .map(
+              (token: ThemedToken) =>
+                `<span style="color: ${token.color || '#000000'}">${token.content}</span>`
+            )
+            .join('');
+          // Pass pageNum as 1 since we're processing all lines sequentially
+          optPerLineHandler(1, lineNum, htmlData);
         }
       }
 

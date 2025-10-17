@@ -5,7 +5,7 @@
  * Any content type that can be rendered as pages should implement this interface.
  */
 
-import type { PageSizeId_t, Orient_t } from './PaperPrinter_t';
+import type { PageSizeId_t, Orient_t, MarginId_t } from './PaperPrinter_t';
 
 export interface PageData {
   /** Data URL of the rendered page (e.g., PDF data URL) */
@@ -31,6 +31,8 @@ export interface RenderOptions {
   pageSizeId: PageSizeId_t;
   /** Page orientation */
   orient: Orient_t;
+  /** Margin ID */
+  marginId: MarginId_t;
 }
 
 export interface PageRenderError {
@@ -55,13 +57,14 @@ export interface PageRenderError {
  */
 export interface PageRender {
   /**
-   * Render a specific page with the given options
-   * @param pageNumber 1-based page number
-   * @param options Rendering configuration
-   * @returns Promise resolving to page data
-   * @throws PageRenderError for invalid page numbers or generation failures
+   * Render content for a specific line range
+   * @param lineBegin Starting line number (0-based)
+   * @param lineEnd Ending line number (exclusive, 0-based)
+   * @param options Rendering options (font, size, theme, etc.)
+   * @returns Promise resolving to page data (data URL, dimensions, etc.)
+   * @throws PageRenderError for invalid line ranges or generation failures
    */
-  renderPage(pageNumber: number, options: RenderOptions): Promise<PageData>;
+  renderContent(lineBegin: number, lineEnd: number, options: RenderOptions): Promise<PageData>;
 
   /**
    * Get the total number of pages in the document

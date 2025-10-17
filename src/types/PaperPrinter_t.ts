@@ -22,6 +22,7 @@ export const kPageSizeId = {
   a5: { displayName: 'A5 (148mm × 210mm)', width: 148, height: 210, unit: 'mm' as const },
 } as const;
 export type PageSizeId_t = keyof typeof kPageSizeId;
+export const kPageSizeId_alt: PageSizeId_t = 'a4';
 
 // Page orientation: id → metadata (displayName with embedded SVG template)
 export const kOrient = {
@@ -29,6 +30,7 @@ export const kOrient = {
   landscape: { displayName: '{{icon_orient_landscape_svg}} Landscape' },
 } as const;
 export type Orient_t = keyof typeof kOrient;
+export const kOrient_alt: Orient_t = 'portrait';
 
 // Margin level: id → metadata (displayName with embedded SVG template)
 export const kMarginId = {
@@ -38,6 +40,7 @@ export const kMarginId = {
   wide: { displayName: '{{icon_margin_wide_svg}} Wide' },
 } as const;
 export type MarginId_t = keyof typeof kMarginId;
+export const kMarginId_alt: MarginId_t = 'normal';
 
 // Font size: id → metadata (displayName in pixels)
 export const kFontSizeId = {
@@ -54,5 +57,9 @@ export const kFontSizeId = {
   '48': { displayName: '48px' },
 } as const;
 export type FontSizeId_t = keyof typeof kFontSizeId;
+export const kFontSizeId_alt: FontSizeId_t = '12';
+
+// Theme alternative (not part of a const object, so separate)
+export const kTheme_alt = 'github-light';
 
 // end, PaperPrinter_t.ts

@@ -73,15 +73,19 @@ The project uses specific TypeScript lib settings for VS Code extension compatib
 
 ### Working Components
 
-- jsPDF vector PDF generation works (single-page only)
-- AppleScript integration for macOS printing works
-- HTML template system with YAML-based snippets
-- Shiki syntax highlighting integration
-- Tab inspection and content extraction
-- **Webview UI System**: Interactive single-page PDF preview with toolbar menus
+- **Multi-page PDF generation** using unified line-by-line rendering
+- **Page break calculation** with 100% accurate page counting
+- **Header/footer rendering** with document title and page numbers
+- **Side page numbers** for document navigation
+- **AppleScript integration** for macOS printing works
+- **HTML template system** with YAML-based snippets
+- **Shiki syntax highlighting** integration
+- **Tab inspection and content extraction**
+- **Webview UI System**: Interactive multi-page PDF preview with toolbar menus
 - **Menu Management**: Dynamic menu creation and selection handling
 - **Theme System**: Real-time theme switching with fallback support
-- **PDF.js Integration**: Client-side single-page PDF rendering in webview
+- **PDF.js Integration**: Client-side PDF rendering in webview
+- **Page cache optimization** for webview performance (first 7 pages)
 
 ### Technical Dependencies
 
@@ -123,18 +127,45 @@ The extension uses **three distinct PDF-related libraries** for different purpos
    - **Output**: Canvas-based PDF display with zoom/scroll
    - **Location**: Runs in webview browser context
 
-### Actual Implementation Flow
+### Unified Line-by-Line Rendering Architecture
+
+**CRITICAL**: All PDF generation uses the same line-by-line rendering approach:
 
 ```text
-Source Code → Shiki → jsPDF → PDF.js → User Display
-     ↓           ↓        ↓         ↓
-  Raw Text → Tokens → PDF Doc → Canvas
+Source Code → Shiki → Line-by-Line Rendering → PDF Output
+     ↓           ↓              ↓                    ↓
+  Raw Text → Tokens → renderByLine() → Multi-page PDF
 ```
 
-1. `Stylize.styleToPdf()` → Shiki tokenization → `ThemedToken[][]`
-2. `PDF.generatePdfFromTokens()` → jsPDF document creation → In-memory PDF
-3. `PDF.embedPDFinHTML()` → PDF data URL generation for webview
-4. PDF.js in webview → Canvas rendering of PDF for user interaction
+**Three Use Cases, One Rendering Method**:
+
+1. **`generatePdf()`** - Uses line-by-line rendering to create final multi-page PDF
+2. **`renderPage()`** - Uses line-by-line rendering to create individual pages for webview
+3. **Webview** - Displays PDF pages created with line-by-line rendering
+
+**Implementation Flow**:
+
+1. `Stylize.tokenize()` → Shiki tokenization → `ThemedToken[][]`
+2. `PDF.renderByLine()` → Line-by-line PDF rendering → Multi-page PDF
+3. `PDF.finish()` → Final PDF document
+4. Webview displays individual pages using `renderPage()`
+
+### Key Architectural Principles
+
+**⚠️ CRITICAL: Do NOT create multiple rendering methods!**
+
+- **Single Rendering Method**: Line-by-line rendering is used everywhere
+- **Unified Approach**: `generatePdf()` and `renderPage()` use the same underlying logic
+- **Webview is Display Only**: Webview shows PDF pages, doesn't create them
+- **Page Cache Optimization**: First 7 pages cached during `calculatePageBreaks()` for webview performance
+- **Deterministic Page Breaks**: Page breaks calculated by actual rendering, not simulation
+
+**Common Mistakes to Avoid**:
+
+- ❌ Don't create separate "cache-optimized" generation methods
+- ❌ Don't try to copy PDF content between documents
+- ❌ Don't assume webview uses different rendering than final PDF
+- ✅ Always use line-by-line rendering for consistency
 
 ### Syntax Highlighting
 

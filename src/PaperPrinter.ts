@@ -3,7 +3,7 @@ import { Diagnostics } from './Diagnostics';
 import { UIMenu, type MenuId_t, type HandleSelection_t, type UIMenuItem_t } from './UIMenu';
 import { UIWebView } from './UIWebView';
 import type { PDFDoc } from './types/PDF_t';
-import type { PageRender } from './types/PageRender_t';
+import type { PageRender, RenderOptions } from './types/PageRender_t';
 import { DocInfo_PaperPrinter } from './DocInfo_PaperPrinter';
 import type { LanguageId_t } from './Stylize';
 import type { Persist_t } from './Persist';
@@ -17,6 +17,11 @@ import {
   kOrient,
   kMarginId,
   kFontSizeId,
+  kPageSizeId_alt,
+  kOrient_alt,
+  kMarginId_alt,
+  kFontSizeId_alt,
+  kTheme_alt,
 } from './types/PaperPrinter_t';
 
 /**
@@ -79,7 +84,7 @@ export class PaperPrinter {
   get lineHeightPx(): number {
     const editorTypo = this.app.vscodeapis.getEditorTypography();
     const fontSizeId = this.app.uimenumgr.getValueForSelectedByMenuId('fontSizeId');
-    return parseInt(fontSizeId || '12', 10) * editorTypo.sizeToHeightRatio;
+    return parseInt(fontSizeId || kFontSizeId_alt, 10) * editorTypo.sizeToHeightRatio;
   }
 
   /**
@@ -170,7 +175,8 @@ export class PaperPrinter {
 
       // Construct PageRender implementation
       const pageRender: PageRender = {
-        renderPage: (pageNumber, options) => this.app.pdf.renderPage(pageNumber, options),
+        renderContent: (lineBegin, lineEnd, options) =>
+          this.app.pdf.renderContent(lineBegin, lineEnd, options),
         getPageTotal: () => this.app.pdf.getPageTotal(),
         getPageSizePx: () => this.app.pdf.getPageSizePx(),
       };
@@ -179,18 +185,17 @@ export class PaperPrinter {
       const options = {
         title: `Print: ${tabName}`,
         pageSizeId: (this.app.uimenumgr.getValueForSelectedByMenuId('pageSizeId') ||
-          'a4') as PageSizeId_t,
-        orient: (this.app.uimenumgr.getValueForSelectedByMenuId('orient') || 'portrait') as
+          kPageSizeId_alt) as PageSizeId_t,
+        orient: (this.app.uimenumgr.getValueForSelectedByMenuId('orient') || kOrient_alt) as
           | 'portrait'
           | 'landscape',
         fontFamily: this.getCurrentFontFamily(),
         fontSizePx: parseInt(
-          this.app.uimenumgr.getValueForSelectedByMenuId('fontSizeId') || '12',
+          this.app.uimenumgr.getValueForSelectedByMenuId('fontSizeId') || kFontSizeId_alt,
           10
         ),
         lineHeightPx: this.lineHeightPx,
-        theme: (this.app.uimenumgr.getValueForSelectedByMenuId('theme') ||
-          'github-light') as string,
+        theme: (this.app.uimenumgr.getValueForSelectedByMenuId('theme') || kTheme_alt) as string,
       };
 
       // Create webview and initialize message handlers
@@ -218,13 +223,81 @@ export class PaperPrinter {
   }
 
   private async generatePdf(): Promise<void> {
-    // Store the new PDF document
-    this.pdfDoc = await this.app.stylize.styleToPdf(this.docInfo.rawCode, this.docInfo.languageId, {
-      fontSize: parseInt(this.app.uimenumgr.getValueForSelectedByMenuId('fontSizeId') || '12', 10),
-      lineHeight: this.lineHeightPx,
-      title: this.docInfo.printTitle,
-      theme: (this.app.uimenumgr.getValueForSelectedByMenuId('theme') || 'github-light') as string,
-    });
+    const dx = this.dx.sub('generatePdf');
+
+    try {
+      // Get current settings
+      const fontSize = parseInt(
+        this.app.uimenumgr.getValueForSelectedByMenuId('fontSizeId') || kFontSizeId_alt,
+        10
+      );
+      const theme = (this.app.uimenumgr.getValueForSelectedByMenuId('theme') ||
+        kTheme_alt) as string;
+      const pageSizeId = (this.app.uimenumgr.getValueForSelectedByMenuId('pageSizeId') ||
+        kPageSizeId_alt) as PageSizeId_t;
+      const orient = (this.app.uimenumgr.getValueForSelectedByMenuId('orient') || kOrient_alt) as
+        | 'portrait'
+        | 'landscape';
+      const marginId = (this.app.uimenumgr.getValueForSelectedByMenuId('marginId') ||
+        kMarginId_alt) as MarginId_t;
+
+      // Create render options
+      const options: RenderOptions = {
+        fontFamily: this.getCurrentFontFamily(),
+        fontSize,
+        lineHeight: this.lineHeightPx,
+        theme,
+        pageSizeId,
+        orient,
+        marginId,
+      };
+
+      // First tokenize to get tokens for renderContent method
+      const tokens = await this.app.stylize.tokenize(
+        this.docInfo.rawCode,
+        this.docInfo.languageId,
+        theme
+      );
+
+      // Set tokens for renderContent method
+      this.app.pdf.setTokens(tokens);
+
+      // Use the new smart renderContent approach
+      // This will render the full document and automatically determine page total
+      dx.out(`Generating PDF with smart renderContent approach`);
+
+      // Render the full document (lineBegin=0, lineEnd=tokens.length)
+      const pageData = await this.app.pdf.renderContent(0, tokens.length, options);
+
+      // Store the PDF document from the page data
+      this.pdfDoc = this.createPDFDocFromDataUrl(pageData.dataUrl);
+
+      dx.out(`PDF generation complete: ${this.app.pdf.pageTotal} pages using smart renderContent`);
+    } catch (error) {
+      dx.out(`Error in generatePdf: ${error}`);
+      throw error;
+    } finally {
+      dx.done();
+    }
+  }
+
+  /**
+   * Create a PDFDoc from a data URL
+   */
+  private createPDFDocFromDataUrl(dataUrl: string): PDFDoc {
+    // Extract the base64 data from the data URL
+    const base64Data = dataUrl.split(',')[1];
+    const pdfBuffer = Buffer.from(base64Data, 'base64');
+
+    return {
+      asDataUrl: () => dataUrl,
+      asArrayBuffer: () => pdfBuffer.buffer,
+      getNumberOfPages: () => this.app.pdf.pageTotal,
+      getPageWidth: () => 0, // Not needed for this use case
+      getPageHeight: () => 0, // Not needed for this use case
+      setPage: () => {}, // Not needed for this use case
+      getCurrentPageInfo: () => ({ pageNumber: 1, pageCount: this.app.pdf.pageTotal }),
+    };
   }
 
   // Create menus when needed for the webview
@@ -425,7 +498,7 @@ export class PaperPrinter {
 
       // Update PageRender with regenerated PDF
       const pageRender: PageRender = {
-        renderPage: this.app.pdf.renderPage.bind(this.app.pdf),
+        renderContent: this.app.pdf.renderContent.bind(this.app.pdf),
         getPageTotal: this.app.pdf.getPageTotal.bind(this.app.pdf),
         getPageSizePx: this.app.pdf.getPageSizePx.bind(this.app.pdf),
       };
@@ -436,15 +509,15 @@ export class PaperPrinter {
           await this.uiwebview.updatePageRender(pageRender);
           await this.uiwebview.updateOptions({
             theme: (this.app.uimenumgr.getValueForSelectedByMenuId('theme') ||
-              'github-light') as string,
+              kTheme_alt) as string,
             fontSizePx: parseInt(
-              this.app.uimenumgr.getValueForSelectedByMenuId('fontSizeId') || '12',
+              this.app.uimenumgr.getValueForSelectedByMenuId('fontSizeId') || kFontSizeId_alt,
               10
             ),
             lineHeightPx: this.lineHeightPx,
             pageSizeId: (this.app.uimenumgr.getValueForSelectedByMenuId('pageSizeId') ||
-              'a4') as PageSizeId_t,
-            orient: (this.app.uimenumgr.getValueForSelectedByMenuId('orient') || 'portrait') as
+              kPageSizeId_alt) as PageSizeId_t,
+            orient: (this.app.uimenumgr.getValueForSelectedByMenuId('orient') || kOrient_alt) as
               | 'portrait'
               | 'landscape',
           });

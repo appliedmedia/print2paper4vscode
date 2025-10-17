@@ -50,6 +50,18 @@ scroll_css: |
     margin: 0 auto 20px auto;
   }
 
+  .page-placeholder .page-number-box {
+    background: #e9ecef;
+    border: 1px solid #ced4da;
+    border-radius: 8px;
+    padding: 20px 40px;
+    color: #6c757d;
+    font-size: 18px;
+    font-weight: 500;
+    text-align: center;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  }
+
   .page-placeholder.loading {
     background: #e3f2fd;
     border-color: #2196f3;
@@ -150,8 +162,7 @@ scroll_html: |
 
     <!-- Performance indicators -->
     <div class="performance-info" id="performance-info">
-      <div>Pages: <span id="page-count">0</span>/<span id="total-pages">{{TOTAL_PAGES}}</span></div>
-      <div>Canvases: <span id="canvas-count">0</span>/<span id="max-canvases">{{MAX_CANVASES}}</span></div>
+      <div>Pages: <span id="page-count">0</span>/<span id="total-pages">{{TOTAL_PAGES}}</span> | Canvases: <span id="canvas-count">0</span>/<span id="max-canvases">{{MAX_CANVASES}}</span> | Memory: <span id="memory-usage">0MB</span></div>
       <div><span id="canvas-assignments">c1:p0 c2:p0 c3:p0 c4:p0 c5:p0 c6:p0 c7:p0</span></div>
     </div>
 
@@ -274,7 +285,7 @@ scroll_js: |
         placeholder.style.height = '{{PAGE_HEIGHT_PX}}px';
         placeholder.innerHTML = `
           <div class="page-label">Page ${i}</div>
-          <div class="loading-text">Loading page ${i}...</div>
+          <div class="page-number-box">Page ${i}</div>
         `;
         content.appendChild(placeholder);
       }
@@ -338,6 +349,8 @@ scroll_js: |
       const startPage = Math.max(1, Math.floor(scrollTop / (pageHeightPx + pageGap)) + 1);
       const endPage = Math.min(CONFIG.pageTotal, Math.ceil((scrollTop + clientHeight) / (pageHeightPx + pageGap)) + 1);
       
+      dx(`Visible range: scrollTop=${scrollTop}, clientHeight=${clientHeight}, pageHeightPx=${pageHeightPx}, startPage=${startPage}, endPage=${endPage}`);
+      
       return { start: startPage, end: endPage };
     }
 
@@ -362,7 +375,18 @@ scroll_js: |
 
     // Assign canvas to page
     function assignCanvasToPage(pageNumber) {
-      if (db.availableCanvases.size === 0) return;
+      dx(`Attempting to assign canvas to page ${pageNumber}`);
+      
+      if (db.availableCanvases.size === 0) {
+        dx(`No available canvases for page ${pageNumber}`);
+        return;
+      }
+      
+      // Check if page already has a canvas assigned
+      if (db.assignedCanvases.has(pageNumber)) {
+        dx(`Page ${pageNumber} already has canvas assigned, skipping`);
+        return;
+      }
       
       const canvasId = db.availableCanvases.values().next().value;
       const canvas = document.getElementById(canvasId);
@@ -418,7 +442,7 @@ scroll_js: |
         placeholder.className = 'page-placeholder loading';
         placeholder.innerHTML = `
           <div class="page-label">Page ${pageNumber}</div>
-          <div class="loading-text">Loading page ${pageNumber}...</div>
+          <div class="page-number-box">Page ${pageNumber}</div>
         `;
       }
       
@@ -428,7 +452,15 @@ scroll_js: |
 
     // Request page render from extension
     function requestPageRender(pageNumber) {
-      if (db.pendingPages.has(pageNumber) || db.renderedPages.has(pageNumber)) {
+      dx(`Requesting page render for page ${pageNumber}`);
+      
+      if (db.pendingPages.has(pageNumber)) {
+        dx(`Page ${pageNumber} already pending, skipping`);
+        return;
+      }
+      
+      if (db.renderedPages.has(pageNumber)) {
+        dx(`Page ${pageNumber} already rendered, skipping`);
         return;
       }
       
@@ -436,10 +468,13 @@ scroll_js: |
       
       // Send message to extension
       if (window.vscode) {
+        dx(`Sending requestPageRender message for page ${pageNumber}`);
         window.vscode.postMessage({
           type: 'requestPageRender',
           pageNumber: pageNumber
         });
+      } else {
+        dx(`window.vscode not available for page ${pageNumber}`);
       }
     }
 
@@ -481,6 +516,13 @@ scroll_js: |
     }
 
     // Render page data to canvas using PDF.js
+    // ⚠️ CRITICAL: PDF.js COORDINATE SYSTEM ⚠️
+    // PDF.js has TWO coordinate systems:
+    // - PDF Content Rendering: Bottom-left origin (standard PDF)
+    // - Viewer Interface/Canvas: Top-left origin (web standard)
+    // We use the VIEWER INTERFACE system for canvas rendering
+    // This matches jsPDF's coordinate system (top-left origin, Y increases downward)
+    // This ensures consistent coordinates between PDF generation and webview display
     async function renderPageToCanvas(pageData, canvasId) {
       const canvas = document.getElementById(canvasId);
       if (!canvas) return;
@@ -488,7 +530,24 @@ scroll_js: |
       const { dataUrl, widthPx, heightPx, pageNumber } = pageData;
       if (!dataUrl) return;
       
+      // Check if this specific canvas is already being used for rendering
+      if (canvas.dataset.rendering === 'true') {
+        dx(`Canvas ${canvasId} is already being rendered, skipping`);
+        return;
+      }
+      
+      // Check if page is already being rendered using existing pendingPages set
+      if (db.pendingPages.has(pageNumber)) {
+        dx(`Page ${pageNumber} is already being rendered, skipping canvas ${canvasId}`);
+        return;
+      }
+      
       try {
+        // Mark canvas as being rendered
+        canvas.dataset.rendering = 'true';
+        // Mark page as being rendered
+        db.pendingPages.add(pageNumber);
+        
         // Load PDF document if not already loaded for this page
         if (!db.pdfDocs.has(pageNumber)) {
           const loadingTask = pdfjsLib.getDocument({
@@ -525,6 +584,11 @@ scroll_js: |
         
       } catch (error) {
         dx(`🖼️ PDF render error for canvas ${canvasId}: ${error.message}`);
+      } finally {
+        // Mark canvas as no longer being rendered
+        canvas.dataset.rendering = 'false';
+        // Mark page as no longer being rendered
+        db.pendingPages.delete(pageNumber);
       }
     }
 
@@ -542,7 +606,30 @@ scroll_js: |
       
       document.getElementById('page-count').textContent = pageCount;
       document.getElementById('canvas-count').textContent = canvasCount;
+      
+      // Calculate and display memory usage
+      const memoryUsage = calculateMemoryUsage();
+      document.getElementById('memory-usage').textContent = memoryUsage;
+      
       updateCanvasAssignments();
+    }
+
+    // Calculate estimated memory usage for PDF pages
+    function calculateMemoryUsage() {
+      const totalPages = CONFIG.pageTotal;
+      const renderedPages = db.assignedCanvases.size;
+      
+      // Estimate memory usage:
+      // - Cached pages (first 7): ~2MB per page (PDF data + canvas)
+      // - Additional pages: ~1MB per page (PDF data only)
+      const cachedPages = Math.min(renderedPages, CONFIG.maxCanvases);
+      const additionalPages = Math.max(0, totalPages - CONFIG.maxCanvases);
+      
+      const cachedMemoryMB = cachedPages * 2; // 2MB per cached page
+      const additionalMemoryMB = additionalPages * 1; // 1MB per additional page
+      const totalMemoryMB = cachedMemoryMB + additionalMemoryMB;
+      
+      return `${totalMemoryMB}MB`;
     }
 
     // Update canvas assignments display
@@ -552,7 +639,7 @@ scroll_js: |
         const canvasId = `canvas-${i}`;
         const pageNumber = Array.from(db.assignedCanvases.entries())
           .find(([page, cid]) => cid === canvasId)?.[0] || 0;
-        assignments.push(`c${i+1}:p${pageNumber}`);
+        assignments.push(`c${i}:p${pageNumber}`);
       }
       document.getElementById('canvas-assignments').textContent = assignments.join(' ');
     }
@@ -560,7 +647,9 @@ scroll_js: |
 
     // Message handling from extension
     function handleExtensionMessage(message) {
-      dx(`Received message from extension: ${JSON.stringify(message)}`);
+      const messageStr = JSON.stringify(message);
+      const truncated = messageStr.length > 100 ? messageStr.substring(0, 100) + '...' : messageStr;
+      dx(`Received message from extension: ${truncated}`);
       switch (message.type) {
         case 'pageRenderResponse':
           handlePageRenderResponse(message.pageData);
@@ -597,7 +686,7 @@ scroll_js: |
           placeholder.className = 'page-placeholder loading';
           placeholder.innerHTML = `
             <div class="page-label">Page ${i}</div>
-            <div class="loading-text">Loading page ${i}...</div>
+            <div class="page-number-box">Page ${i}</div>
           `;
         }
       }

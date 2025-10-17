@@ -85,6 +85,22 @@ export class UIWebView {
     const dx = this.dx.sub('preRenderInitialPages');
 
     try {
+      // First, render the full document to calculate page breaks
+      // This ensures pageBreaks is populated before we try to get line ranges
+      const totalLines = this.app.pdf.currentTokens?.length || 0;
+      if (totalLines > 0) {
+        dx.out(`Calculating page breaks for ${totalLines} lines`);
+        await pageRender.renderContent(0, totalLines, {
+          fontFamily: options.fontFamily || 'Courier New',
+          fontSize: options.fontSizePx || 12,
+          lineHeight: options.lineHeightPx || 18,
+          theme: options.theme || 'github-light',
+          pageSizeId: options.pageSizeId || 'a4',
+          orient: options.orient || 'portrait',
+          marginId: options.marginId || 'normal',
+        });
+      }
+
       // Get total pages
       const pageTotal = await pageRender.getPageTotal();
 
@@ -95,13 +111,16 @@ export class UIWebView {
       // Render each page and send to webview
       for (let pageNumber = 1; pageNumber <= pagesToRender; pageNumber++) {
         try {
-          const pageData = await pageRender.renderPage(pageNumber, {
+          // Get the actual line range for this page
+          const { lineBegin, lineEnd } = this.app.pdf.getPageLineRange(pageNumber);
+          const pageData = await pageRender.renderContent(lineBegin, lineEnd, {
             fontFamily: options.fontFamily || 'Courier New',
             fontSize: options.fontSizePx || 12,
             lineHeight: options.lineHeightPx || 18,
             theme: options.theme || 'github-light',
             pageSizeId: options.pageSizeId || 'a4',
             orient: options.orient || 'portrait',
+            marginId: options.marginId || 'normal',
           });
 
           // Send rendered page to webview
