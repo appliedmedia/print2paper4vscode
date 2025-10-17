@@ -85,21 +85,9 @@ export class UIWebView {
     const dx = this.dx.sub('preRenderInitialPages');
 
     try {
-      // First, render the full document to calculate page breaks
-      // This ensures pageBreaks is populated before we try to get line ranges
-      const totalLines = this.app.pdf.currentTokens?.length || 0;
-      if (totalLines > 0) {
-        dx.out(`Calculating page breaks for ${totalLines} lines`);
-        await pageRender.renderContent(0, totalLines, {
-          fontFamily: options.fontFamily || 'Courier New',
-          fontSize: options.fontSizePx || 12,
-          lineHeight: options.lineHeightPx || 18,
-          theme: options.theme || 'github-light',
-          pageSizeId: options.pageSizeId || 'a4',
-          orient: options.orient || 'portrait',
-          marginId: options.marginId || 'normal',
-        });
-      }
+      // Pre-render is no longer needed with unified approach
+      // The complete PDF is generated during tokenization
+      dx.out(`Pre-render not needed with unified approach`);
 
       // Get total pages
       const pageTotal = await pageRender.getPageTotal();
@@ -111,12 +99,11 @@ export class UIWebView {
       // Render each page and send to webview
       for (let pageNumber = 1; pageNumber <= pagesToRender; pageNumber++) {
         try {
-          // Get the actual line range for this page
-          const { lineBegin, lineEnd } = this.app.pdf.getPageLineRange(pageNumber);
-          const pageData = await pageRender.renderContent(lineBegin, lineEnd, {
+          // Render page content (unified approach doesn't need line ranges)
+          const pageData = await pageRender.renderContent(0, 0, {
             fontFamily: options.fontFamily || 'Courier New',
-            fontSize: options.fontSizePx || 12,
-            lineHeight: options.lineHeightPx || 18,
+            fontSizePx: options.fontSizePx || 12,
+            lineHeightPx: options.lineHeightPx || 18,
             theme: options.theme || 'github-light',
             pageSizeId: options.pageSizeId || 'a4',
             orient: options.orient || 'portrait',

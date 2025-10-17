@@ -244,35 +244,27 @@ export class PaperPrinter {
       // Create render options
       const options: RenderOptions = {
         fontFamily: this.getCurrentFontFamily(),
-        fontSize,
-        lineHeight: this.lineHeightPx,
+        fontSizePx: fontSize,
+        lineHeightPx: this.lineHeightPx,
         theme,
         pageSizeId,
         orient,
         marginId,
       };
 
-      // First tokenize to get tokens for renderContent method
-      const tokens = await this.app.stylize.tokenize(
+      // Generate complete PDF during tokenization (unified approach)
+      dx.out(`Generating complete PDF with unified tokenize + build approach`);
+
+      // Generate the complete PDF in one pass
+      this.pdfDoc = await this.app.pdf.generatePdf(
         this.docInfo.rawCode,
         this.docInfo.languageId,
-        theme
+        options
       );
 
-      // Set tokens for renderContent method
-      this.app.pdf.setTokens(tokens);
-
-      // Use the new smart renderContent approach
-      // This will render the full document and automatically determine page total
-      dx.out(`Generating PDF with smart renderContent approach`);
-
-      // Render the full document (lineBegin=0, lineEnd=tokens.length)
-      const pageData = await this.app.pdf.renderContent(0, tokens.length, options);
-
-      // Store the PDF document from the page data
-      this.pdfDoc = this.createPDFDocFromDataUrl(pageData.dataUrl);
-
-      dx.out(`PDF generation complete: ${this.app.pdf.pageTotal} pages using smart renderContent`);
+      dx.out(
+        `PDF generation complete: ${this.pdfDoc.getNumberOfPages()} pages using unified approach`
+      );
     } catch (error) {
       dx.out(`Error in generatePdf: ${error}`);
       throw error;

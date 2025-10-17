@@ -181,12 +181,11 @@ export class UIScrollView {
       this.renderQueue.add(pageNumber);
 
       try {
-        // Render the page content with actual line range
-        const { lineBegin, lineEnd } = this.app.pdf.getPageLineRange(pageNumber);
-        const pageData = await this.pageRender.renderContent(lineBegin, lineEnd, {
+        // Render the page content (unified approach doesn't need line ranges)
+        const pageData = await this.pageRender.renderContent(0, 0, {
           fontFamily: this.options.fontFamily || 'Courier New',
-          fontSize: this.options.fontSizePx || 12, // fontSize in pixels - will be converted to points in PDF generation
-          lineHeight: this.options.lineHeightPx || 18, // lineHeight in pixels - will be converted to points in PDF generation
+          fontSizePx: this.options.fontSizePx || 12, // fontSize in pixels - will be converted to points in PDF generation
+          lineHeightPx: this.options.lineHeightPx || 18, // lineHeight in pixels - will be converted to points in PDF generation
           theme: this.options.theme || 'github-light',
           pageSizeId: this.options.pageSizeId || 'a4',
           orient: this.options.orient || 'portrait',

@@ -22,9 +22,9 @@ export interface RenderOptions {
   /** Font family for text rendering */
   fontFamily: string;
   /** Font size in pixels */
-  fontSize: number;
+  fontSizePx: number;
   /** Line height in pixels */
-  lineHeight: number;
+  lineHeightPx: number;
   /** Theme name for syntax highlighting */
   theme: string;
   /** Page size ID */

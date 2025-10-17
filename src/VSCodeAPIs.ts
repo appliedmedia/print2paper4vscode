@@ -38,6 +38,9 @@ export type GlobalStateValue_t = string | number | boolean;
  * const panel = apis.createWebviewPanel('preview', 'Preview', ...);
  */
 export class VSCodeAPIs {
+  private static readonly EXTENSION_ID = 'p2p4vsc';
+  private static readonly WEBVIEW_ID = VSCodeAPIs.EXTENSION_ID + '.printprep';
+
   private app: App;
   private vscode: typeof import('vscode'); // Use official VS Code types
   private context: ExtensionContext; // Properly typed context
@@ -153,63 +156,6 @@ export class VSCodeAPIs {
   }
 
   /**
-   * Create and show a Webview panel with provided HTML
-   * @deprecated Use getOrCreateWebviewPanel instead for URI conversion and panel reuse
-   */
-  createWebviewPanel_OBSOLETE_DELETEME(title: string, htmlContent: string): WebviewPanelId {
-    // Get extension root URI for local resource access
-    const extensionRoot = this.app.os.getExtensionRoot();
-    const extensionUri = extensionRoot ? this.vscode.Uri.file(extensionRoot) : undefined;
-
-    const panel = this.vscode.window.createWebviewPanel(
-      'p2p4vsc.printprep',
-      title,
-      this.vscode.ViewColumn.Active, // Use the correct ViewColumn from vscode namespace
-      {
-        enableScripts: true,
-        retainContextWhenHidden: true,
-        localResourceRoots: extensionUri ? [extensionUri] : [], // Allow access to extension files
-        // Most restrictive sandbox settings for security
-        // allow-same-origin: false - prevents access to parent window
-        // allow-forms: false - no form submission needed
-        // allow-popups: false - no popups needed
-        // allow-top-navigation: false - no navigation needed
-        // allow-modals: false - no modals needed
-        // allow-downloads: false - no downloads needed
-        // allow-pointer-lock: false - no pointer lock needed
-        // allow-presentation: false - no presentation needed
-        // allow-storage-access-by-user-activation: false - no storage access needed
-        // allow-top-navigation-by-user-activation: false - no user navigation needed
-      }
-    );
-    panel.webview.html = htmlContent;
-
-    // Generate unique ID and store panel
-    const id = this.generatePanelId(title);
-    this.panels.set(id, panel);
-
-    // Clean up when panel is closed
-    panel.onDidDispose(() => {
-      this.panels.delete(id);
-      this.dx.out(`Panel ${id} disposed and removed from map`);
-    });
-
-    // Set up message handling
-    this.setupMessageHandling(panel);
-
-    // Restore toolbar position if saved
-    const savedPosition = this.getGlobalState('toolbarPosPx');
-    if (savedPosition) {
-      panel.webview.postMessage({
-        type: 'restorePosition',
-        left: savedPosition,
-      });
-    }
-
-    return id;
-  }
-
-  /**
    * Update panel title
    */
   setPanelTitle(id: WebviewPanelId, title: string): void {
@@ -294,7 +240,44 @@ export class VSCodeAPIs {
 
     // Create new panel
     this.dx.out(`Creating new panel for title: ${title}`);
-    const id = this.createWebviewPanel_OBSOLETE_DELETEME(title, '');
+
+    // Get extension root URI for local resource access
+    const extensionRoot = this.app.os.getExtensionRoot();
+    const extensionUri = extensionRoot ? this.vscode.Uri.file(extensionRoot) : undefined;
+
+    const panel = this.vscode.window.createWebviewPanel(
+      VSCodeAPIs.WEBVIEW_ID,
+      title,
+      this.vscode.ViewColumn.Active,
+      {
+        enableScripts: true,
+        retainContextWhenHidden: true,
+        localResourceRoots: extensionUri ? [extensionUri] : [],
+      }
+    );
+
+    // Generate unique ID and store panel
+    const id = this.generatePanelId(title);
+    this.panels.set(id, panel);
+
+    // Clean up when panel is closed
+    panel.onDidDispose(() => {
+      this.panels.delete(id);
+      this.dx.out(`Panel ${id} disposed and removed from map`);
+    });
+
+    // Set up message handling
+    this.setupMessageHandling(panel);
+
+    // Restore toolbar position if saved
+    const savedPosition = this.getGlobalState('toolbarPosPx');
+    if (savedPosition) {
+      panel.webview.postMessage({
+        type: 'restorePosition',
+        left: savedPosition,
+      });
+    }
+
     const htmlWithURIs = this.app.os.htmlSrcPathToURI(html, id);
     this.updatePanelHtml(id, htmlWithURIs);
     return id;

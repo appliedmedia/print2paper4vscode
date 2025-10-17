@@ -70,7 +70,7 @@ describe('PaperPrinter Page Size and Orient Tests', () => {
       htmlToWebViewPanel: (html: string) => 'panel-id',
     },
     pdf: {
-      generatePdfFromTokens: () => Promise.resolve(),
+      generatePdf: () => Promise.resolve(),
     },
   };
 
