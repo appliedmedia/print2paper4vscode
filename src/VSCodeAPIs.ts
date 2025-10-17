@@ -9,6 +9,7 @@ import type {
   // Position,
   // WorkspaceEdit,
 } from 'vscode';
+import { Range } from 'vscode';
 import type { PostMessage } from './types/UI_t';
 import { Diagnostics } from './Diagnostics';
 
@@ -409,7 +410,11 @@ export class VSCodeAPIs {
   getSelectionOrDocumentText(editor: TextEditor): string {
     const selection = editor.selection;
     if (!selection.isEmpty) {
-      return editor.document.getText(selection);
+      // If there's a selection, get the entire line(s) that contain the selection
+      const startLine = selection.start.line;
+      const endLine = selection.end.line;
+      const lineRange = new Range(startLine, 0, endLine + 1, 0);
+      return editor.document.getText(lineRange);
     }
     return editor.document.getText();
   }

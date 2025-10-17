@@ -561,7 +561,7 @@ scroll_js: |
         }
         
         const pdfDoc = db.pdfDocs.get(pageNumber);
-        const page = await pdfDoc.getPage(1); // Single-page PDF
+        const page = await pdfDoc.getPage(pageNumber); // Multi-page PDF
         
         const viewport = page.getViewport({ scale: CONFIG.scale });
         canvas.width = viewport.width;

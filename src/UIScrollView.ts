@@ -182,7 +182,7 @@ export class UIScrollView {
 
       try {
         // Render the page content (unified approach doesn't need line ranges)
-        const pageData = await this.pageRender.renderContent(0, 0, {
+        const pageData = await this.pageRender.renderContent(pageNumber, 0, 0, {
           fontFamily: this.options.fontFamily || 'Courier New',
           fontSizePx: this.options.fontSizePx || 12, // fontSize in pixels - will be converted to points in PDF generation
           lineHeightPx: this.options.lineHeightPx || 18, // lineHeight in pixels - will be converted to points in PDF generation

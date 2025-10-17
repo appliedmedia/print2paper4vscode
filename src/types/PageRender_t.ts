@@ -57,14 +57,20 @@ export interface PageRenderError {
  */
 export interface PageRender {
   /**
-   * Render content for a specific line range
-   * @param lineBegin Starting line number (0-based)
-   * @param lineEnd Ending line number (exclusive, 0-based)
+   * Render content for a specific page
+   * @param pageNumber Page number to render (1-based)
+   * @param lineBegin Starting line number (0-based) - unused in unified approach
+   * @param lineEnd Ending line number (exclusive, 0-based) - unused in unified approach
    * @param options Rendering options (font, size, theme, etc.)
    * @returns Promise resolving to page data (data URL, dimensions, etc.)
-   * @throws PageRenderError for invalid line ranges or generation failures
+   * @throws PageRenderError for invalid page numbers or generation failures
    */
-  renderContent(lineBegin: number, lineEnd: number, options: RenderOptions): Promise<PageData>;
+  renderContent(
+    pageNumber: number,
+    lineBegin: number,
+    lineEnd: number,
+    options: RenderOptions
+  ): Promise<PageData>;
 
   /**
    * Get the total number of pages in the document

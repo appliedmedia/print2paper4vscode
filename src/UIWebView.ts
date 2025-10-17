@@ -100,7 +100,7 @@ export class UIWebView {
       for (let pageNumber = 1; pageNumber <= pagesToRender; pageNumber++) {
         try {
           // Render page content (unified approach doesn't need line ranges)
-          const pageData = await pageRender.renderContent(0, 0, {
+          const pageData = await pageRender.renderContent(pageNumber, 0, 0, {
             fontFamily: options.fontFamily || 'Courier New',
             fontSizePx: options.fontSizePx || 12,
             lineHeightPx: options.lineHeightPx || 18,

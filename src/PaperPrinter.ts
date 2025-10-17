@@ -2,7 +2,7 @@ import type { App } from './App';
 import { Diagnostics } from './Diagnostics';
 import { UIMenu, type MenuId_t, type HandleSelection_t, type UIMenuItem_t } from './UIMenu';
 import { UIWebView } from './UIWebView';
-import type { PDFDoc } from './types/PDF_t';
+import { DocInfo_PDF } from './DocInfo_PDF';
 import type { PageRender, RenderOptions } from './types/PageRender_t';
 import { DocInfo_PaperPrinter } from './DocInfo_PaperPrinter';
 import type { LanguageId_t } from './Stylize';
@@ -52,7 +52,7 @@ export class PaperPrinter {
   } as const;
 
   private app: App;
-  private pdfDoc: PDFDoc | null = null; // In-memory PDF document (PDFDoc abstraction)
+  private pdfDoc: DocInfo_PDF | null = null; // In-memory PDF document (DocInfo_PDF abstraction)
   private uiwebview: UIWebView | null = null;
   private dx: Diagnostics;
   private _yaml: Yaml<typeof PaperPrinter.kYaml>;
@@ -175,8 +175,8 @@ export class PaperPrinter {
 
       // Construct PageRender implementation
       const pageRender: PageRender = {
-        renderContent: (lineBegin, lineEnd, options) =>
-          this.app.pdf.renderContent(lineBegin, lineEnd, options),
+        renderContent: (pageNumber, lineBegin, lineEnd, options) =>
+          this.app.pdf.renderContent(pageNumber, lineBegin, lineEnd, options),
         getPageTotal: () => this.app.pdf.getPageTotal(),
         getPageSizePx: () => this.app.pdf.getPageSizePx(),
       };
@@ -271,25 +271,6 @@ export class PaperPrinter {
     } finally {
       dx.done();
     }
-  }
-
-  /**
-   * Create a PDFDoc from a data URL
-   */
-  private createPDFDocFromDataUrl(dataUrl: string): PDFDoc {
-    // Extract the base64 data from the data URL
-    const base64Data = dataUrl.split(',')[1];
-    const pdfBuffer = Buffer.from(base64Data, 'base64');
-
-    return {
-      asDataUrl: () => dataUrl,
-      asArrayBuffer: () => pdfBuffer.buffer,
-      getNumberOfPages: () => this.app.pdf.pageTotal,
-      getPageWidth: () => 0, // Not needed for this use case
-      getPageHeight: () => 0, // Not needed for this use case
-      setPage: () => {}, // Not needed for this use case
-      getCurrentPageInfo: () => ({ pageNumber: 1, pageCount: this.app.pdf.pageTotal }),
-    };
   }
 
   // Create menus when needed for the webview
