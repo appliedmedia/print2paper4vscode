@@ -27,6 +27,7 @@ export class Diagnostics {
 
   private static _debugOn = false; // Root level debug state
   private static _lastMessageContent = ''; // Store last message content for truncation
+  private static _messageCounter = 0; // Global message counter
 
   private _name: string = '';
   private name_lineage: string = '';
@@ -169,6 +170,10 @@ export class Diagnostics {
    * @returns Formatted message string
    */
   private messageHeader(message: MessageRef): string {
+    // Increment and wrap the global counter
+    Diagnostics._messageCounter = (Diagnostics._messageCounter + 1) % 10000;
+    const counter = String(Diagnostics._messageCounter).padStart(4, '0');
+
     const now = new Date();
     const year = now.getFullYear();
     const month = String(now.getMonth() + 1).padStart(2, '0');
@@ -186,7 +191,9 @@ export class Diagnostics {
     const formattedMessage =
       typeof message === 'string' ? message : JSON.stringify(message, null, 2);
     const messageContent = `${this.name} > ${formattedMessage}`;
-    const fullMessage = `[${timestamp}] ${messageContent}`;
+
+    // Default to full message with timestamp
+    let result = `${counter} | ${timestamp} | ${messageContent}`;
 
     // Check if this message content starts with the same content as the last message
     if (Diagnostics._lastMessageContent) {
@@ -200,16 +207,15 @@ export class Diagnostics {
         const currentMessage = messageContent.substring(currentLastGt + 1).trim();
 
         if (lastPrefix === currentPrefix) {
-          const shortTimestamp = `${minutes}:${seconds}.${milliseconds}${ampm}`;
-          Diagnostics._lastMessageContent = messageContent;
-          return `[${shortTimestamp}] ${currentMessage}`;
+          // Override with truncated message - no timestamp, just counter and message
+          result = `${counter} | ${currentMessage}`;
         }
       }
     }
 
     // Store this message content as the last message
     Diagnostics._lastMessageContent = messageContent;
-    return fullMessage;
+    return result;
   }
 
   /**

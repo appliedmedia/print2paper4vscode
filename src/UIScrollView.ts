@@ -140,10 +140,16 @@ export class UIScrollView {
       this.pageCache.clear();
       this.renderQueue.clear();
 
-      // Notify webview to clear all rendered pages
+      // Notify webview to clear all rendered pages and update page total
       if (this.panelId) {
         this.app.vscodeapis.postMessage(this.panelId, {
           type: 'clearAllPages',
+        });
+
+        // Trigger a full PDF reload
+        this.app.vscodeapis.postMessage(this.panelId, {
+          type: 'updatePdf',
+          pdfDataUrl: '', // Empty to trigger reload
         });
       }
 

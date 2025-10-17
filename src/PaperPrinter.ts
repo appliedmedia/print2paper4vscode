@@ -462,10 +462,12 @@ export class PaperPrinter {
    * This is the ONLY place that should regenerate PDFs for menu changes
    */
   private async regenerateAndUpdateWebview(): Promise<void> {
-    const dx = this.dx.sub('regenerateAndUpdateWebview');
+    const dx = this.dx.sub('regenerateAndUpdateWebview', true /* debugOn */);
+    dx.out('Starting PDF regeneration...');
     try {
       // Regenerate PDF with current settings
       await this.generatePdf();
+      dx.out('PDF regeneration complete');
 
       // Update PageRender with regenerated PDF
       const pageRender: PageRender = {
@@ -476,8 +478,10 @@ export class PaperPrinter {
 
       // Update webview if it exists
       if (this.uiwebview) {
+        dx.out('Updating webview with new PageRender...');
         try {
           await this.uiwebview.updatePageRender(pageRender);
+          dx.out('PageRender updated, updating options...');
           await this.uiwebview.updateOptions({
             theme: (this.app.uimenumgr.getValueForSelectedByMenuId('theme') ||
               kTheme_alt) as string,
@@ -492,9 +496,13 @@ export class PaperPrinter {
               | 'portrait'
               | 'landscape',
           });
+          dx.out('Webview updated successfully');
         } catch (error) {
+          dx.out(`Failed to update webview: ${String(error)}`);
           this.app.ui.showErrorMessage(`Failed to update webview: ${String(error)}`);
         }
+      } else {
+        dx.out('No webview to update');
       }
     } catch (error) {
       dx.out(`Error regenerating PDF: ${error}`);
@@ -549,8 +557,8 @@ export class PaperPrinter {
       id = selectedId;
       value = id; // value is the theme ID
 
-      // Regenerate everything and wait for completion
-      await this.regenerateAndUpdateWebview(); // Not sure we need to wait for this at all
+      // Regenerate everything (fire and forget)
+      void this.regenerateAndUpdateWebview();
     }
 
     dx.done();
@@ -587,10 +595,11 @@ export class PaperPrinter {
           );
         }
 
-        // Regenerate everything and wait for completion
-        await this.regenerateAndUpdateWebview();
         id = selectedId;
         value = id; // value is the font size ID
+
+        // Regenerate everything (fire and forget)
+        void this.regenerateAndUpdateWebview();
       }
     }
 
@@ -628,10 +637,11 @@ export class PaperPrinter {
         (menu.persist as Persist_t).pageSizeId = selectedId;
       }
 
-      // Regenerate everything and wait for completion
-      await this.regenerateAndUpdateWebview();
       id = selectedId;
       value = id; // value is the page size ID
+
+      // Regenerate everything (fire and forget)
+      void this.regenerateAndUpdateWebview();
     }
 
     dx.done();
@@ -658,10 +668,11 @@ export class PaperPrinter {
         (menu.persist as Persist_t).orient = selectedId;
       }
 
-      // Regenerate everything and wait for completion
-      await this.regenerateAndUpdateWebview();
       id = selectedId;
       value = id; // value is the orientation
+
+      // Regenerate everything (fire and forget)
+      void this.regenerateAndUpdateWebview();
     }
 
     dx.done();
@@ -689,10 +700,11 @@ export class PaperPrinter {
         (menu.persist as Persist_t).marginId = selectedId as MarginId_t;
       }
 
-      // Regenerate everything and wait for completion
-      await this.regenerateAndUpdateWebview();
       id = selectedId;
       value = id; // value is the margin ID
+
+      // Regenerate everything (fire and forget)
+      void this.regenerateAndUpdateWebview();
     } else {
       id = defaultMarginId;
       value = id;

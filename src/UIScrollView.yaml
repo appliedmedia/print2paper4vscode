@@ -708,6 +708,15 @@ scroll_js: |
       handleScroll();
     }
 
+    // Update page total and re-render
+    function updatePageTotal(newPageTotal) {
+      dx(`Updating page total from ${CONFIG.pageTotal} to ${newPageTotal}`);
+      CONFIG.pageTotal = newPageTotal;
+      
+      // Clear all pages and re-render with new total
+      clearAllRenderedPages();
+    }
+
     // Set up message handling
     window.addEventListener('message', (event) => {
       handleExtensionMessage(event.data);
