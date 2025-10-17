@@ -26,6 +26,7 @@ export class Diagnostics {
   static separator = ' > ';
 
   private static _debugOn = false; // Root level debug state
+  private static _lastMessageContent = ''; // Store last message content for truncation
 
   private _name: string = '';
   private name_lineage: string = '';
@@ -176,7 +177,7 @@ export class Diagnostics {
     const minutes = String(now.getMinutes()).padStart(2, '0');
     const seconds = String(now.getSeconds()).padStart(2, '0');
     const milliseconds = String(now.getMilliseconds()).padStart(3, '0');
-    const ampm = hours >= 12 ? 'pm' : 'am';
+    const ampm = hours >= 12 ? 'p' : 'a';
     const displayHours = hours % 12 || 12;
 
     const timestamp = `${year}-${month}-${day} ${displayHours}:${minutes}:${seconds}.${milliseconds}${ampm}`;
@@ -184,7 +185,31 @@ export class Diagnostics {
     // Show full context: lineage > current name > message
     const formattedMessage =
       typeof message === 'string' ? message : JSON.stringify(message, null, 2);
-    return `[${timestamp}] ${this.name} > ${formattedMessage}`;
+    const messageContent = `${this.name} > ${formattedMessage}`;
+    const fullMessage = `[${timestamp}] ${messageContent}`;
+
+    // Check if this message content starts with the same content as the last message
+    if (Diagnostics._lastMessageContent) {
+      // Split on last '>' to get prefix and message parts
+      const lastLastGt = Diagnostics._lastMessageContent.lastIndexOf('>');
+      const currentLastGt = messageContent.lastIndexOf('>');
+
+      if (lastLastGt !== -1 && currentLastGt !== -1) {
+        const lastPrefix = Diagnostics._lastMessageContent.substring(0, lastLastGt).trim();
+        const currentPrefix = messageContent.substring(0, currentLastGt).trim();
+        const currentMessage = messageContent.substring(currentLastGt + 1).trim();
+
+        if (lastPrefix === currentPrefix) {
+          const shortTimestamp = `${minutes}:${seconds}.${milliseconds}${ampm}`;
+          Diagnostics._lastMessageContent = messageContent;
+          return `[${shortTimestamp}] ${currentMessage}`;
+        }
+      }
+    }
+
+    // Store this message content as the last message
+    Diagnostics._lastMessageContent = messageContent;
+    return fullMessage;
   }
 
   /**

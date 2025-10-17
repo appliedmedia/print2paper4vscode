@@ -42,10 +42,14 @@ export const kMenuItemId = [
   '8',
   '9',
   '10',
+  '11',
   '12',
   '14',
   '18',
+  '20',
   '24',
+  '32',
+  '48',
 ] as const;
 
 export type MenuItemId_t = (typeof kMenuItemId)[number];

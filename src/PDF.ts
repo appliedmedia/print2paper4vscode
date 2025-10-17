@@ -500,7 +500,7 @@ export class PDF implements PageRender {
   async getPageTotal(): Promise<number> {
     const dx = this.dx.sub('getPageTotal');
     const total = this.pageTotal;
-    dx.out(`Total pages: ${total}`);
+    dx.out(`WEBVIEW: Requesting page total = ${total}`);
     dx.done();
     return total;
   }
@@ -592,6 +592,7 @@ export class PDF implements PageRender {
       const px = options.fontSizePx ?? 12;
       const fontSizePts = this.pxToPts(Math.max(8, px));
       this.docInfo.pdfDoc.setFontSize(fontSizePts);
+      dx.out(`PDF font size set: ${px}px -> ${fontSizePts}pt`);
 
       // Convert lineHeight from pixels to points for jsPDF
       this.currentLineHeight = this.pxToPts(options.lineHeightPx);
@@ -886,7 +887,9 @@ export class PDF implements PageRender {
       // Add page totals to all pages now that we know the total
       this.renderPageTotals();
 
-      dx.out(`PDF document finalized with ${this.pageTotal} pages`);
+      dx.out(
+        `PDF FINALIZED: ${this.pageTotal} pages with ${this.currentRenderOptions?.fontSizePx}px font`
+      );
       return this.docInfo;
     } catch (error) {
       dx.out(`Error finishing PDF: ${error}`);

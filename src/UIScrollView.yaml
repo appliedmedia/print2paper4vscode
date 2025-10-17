@@ -272,7 +272,7 @@ scroll_js: |
         db.canvasPool.push(canvas);
         db.availableCanvases.add(canvas.id);
       }
-      dx(`Created canvas pool with ${CONFIG.maxCanvases} canvases`);
+      // dx(`CANVAS: Created canvas pool with ${CONFIG.maxCanvases} canvases`);
     }
 
     // Create page placeholders
@@ -349,7 +349,7 @@ scroll_js: |
       const startPage = Math.max(1, Math.floor(scrollTop / (pageHeightPx + pageGap)) + 1);
       const endPage = Math.min(CONFIG.pageTotal, Math.ceil((scrollTop + clientHeight) / (pageHeightPx + pageGap)) + 1);
       
-      dx(`Visible range: scrollTop=${scrollTop}, clientHeight=${clientHeight}, pageHeightPx=${pageHeightPx}, startPage=${startPage}, endPage=${endPage}`);
+      // dx(`CANVAS:Visible range: scrollTop=${scrollTop}, clientHeight=${clientHeight}, pageHeightPx=${pageHeightPx}, startPage=${startPage}, endPage=${endPage}`);
       
       return { start: startPage, end: endPage };
     }
@@ -494,7 +494,7 @@ scroll_js: |
         renderPageToCanvas(pageData, canvasId);
       }
       
-      dx(`Rendered page ${pageNumber}`);
+      // dx(`CANVAS: Rendered page ${pageNumber}`);
     }
 
     // Handle page render error

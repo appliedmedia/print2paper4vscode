@@ -316,17 +316,22 @@ export class UIWebView {
    * Handle menu item selection message
    */
   private async handleMenuItemSelected(msg: PostMessage): Promise<void> {
-    const dx = this.dx.sub('handleMenuItemSelected');
+    const dx = this.dx.sub('handleMenuItemSelected', true /* debugOn */);
+    dx.out(`Received menuItemSelected message: ${JSON.stringify(msg)}`);
 
     try {
       const { menuId, itemId } = msg;
       if (typeof menuId === 'string' && typeof itemId === 'string') {
+        dx.out(`Processing menu selection: menuId=${menuId}, itemId=${itemId}`);
         // Validate both menuId and itemId before proceeding
         if (isMenuId(menuId) && isMenuItemId(itemId)) {
+          dx.out(`Validation passed, calling menuMgr.handleMenuItemSelected`);
           // Handle menu item selection through menu manager
           if (this.menuMgr) {
             await this.menuMgr.handleMenuItemSelected(menuId, itemId);
             dx.out(`Menu item selected: ${menuId}.${itemId}`);
+          } else {
+            dx.out(`ERROR: menuMgr is null!`);
           }
         } else {
           const msg = `Invalid menu selection: ${menuId}.${itemId}`;
@@ -334,6 +339,8 @@ export class UIWebView {
           this.app.ui.showErrorMessage(msg);
           return;
         }
+      } else {
+        dx.out(`Invalid message format: menuId=${typeof menuId}, itemId=${typeof itemId}`);
       }
     } finally {
       dx.done();
@@ -362,14 +369,14 @@ export class UIWebView {
    * Handle diagnostic message from webview
    */
   private async handleDxMessage(msg: PostMessage): Promise<void> {
-    const dx = this.dx.sub('dx', true /* debugOn */);
+    const dx = this.dx.sub('dx'); // Every message has start/done if we debugOn here, too noisy.
     dx.require({ msg }, ['msg']);
 
     // Output webview diagnostic message via dx.out (forced debug on)
     if (msg.message) {
-      dx.out(`[Webview] ${msg.message}`);
+      dx.print(`[Webview] > ${msg.message}`); // Equivalent of dx.out() with debugOn
     } else {
-      dx.out('Received dx message without message content');
+      dx.print('Received dx message without message content');
     }
     dx.done();
   }

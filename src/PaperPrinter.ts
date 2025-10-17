@@ -227,10 +227,9 @@ export class PaperPrinter {
 
     try {
       // Get current settings
-      const fontSize = parseInt(
-        this.app.uimenumgr.getValueForSelectedByMenuId('fontSizeId') || kFontSizeId_alt,
-        10
-      );
+      const fontSizeValue = this.app.uimenumgr.getValueForSelectedByMenuId('fontSizeId');
+      const fontSize = parseInt(fontSizeValue || kFontSizeId_alt, 10);
+      dx.out(`PDF GENERATION: Using font size ${fontSize}px`);
       const theme = (this.app.uimenumgr.getValueForSelectedByMenuId('theme') ||
         kTheme_alt) as string;
       const pageSizeId = (this.app.uimenumgr.getValueForSelectedByMenuId('pageSizeId') ||
@@ -464,7 +463,6 @@ export class PaperPrinter {
    */
   private async regenerateAndUpdateWebview(): Promise<void> {
     const dx = this.dx.sub('regenerateAndUpdateWebview');
-
     try {
       // Regenerate PDF with current settings
       await this.generatePdf();
@@ -494,13 +492,10 @@ export class PaperPrinter {
               | 'portrait'
               | 'landscape',
           });
-          dx.out('Webview updated with new configuration');
         } catch (error) {
           this.app.ui.showErrorMessage(`Failed to update webview: ${String(error)}`);
         }
       }
-
-      dx.out('PDF regenerated successfully');
     } catch (error) {
       dx.out(`Error regenerating PDF: ${error}`);
       throw error;
@@ -551,10 +546,11 @@ export class PaperPrinter {
       const menu = this.app.uimenumgr.getMenuById('theme');
       menu.persist.theme = selectedId;
 
-      // Regenerate everything (fire and forget)
-      void this.regenerateAndUpdateWebview();
       id = selectedId;
       value = id; // value is the theme ID
+
+      // Regenerate everything and wait for completion
+      await this.regenerateAndUpdateWebview(); // Not sure we need to wait for this at all
     }
 
     dx.done();
@@ -562,7 +558,7 @@ export class PaperPrinter {
   }
 
   private async handleSelection_Text(selectedId: string): Promise<HandleSelection_t> {
-    const dx = this.dx.sub('handleSelection_Text');
+    const dx = this.dx.sub('handleSelection_Text', true /* debugOn */);
     dx.out(`selectedId = ${selectedId}`);
 
     let id = '';
@@ -578,14 +574,21 @@ export class PaperPrinter {
       // Update font size
       const fontSize = parseInt(selectedId, 10);
       if (!isNaN(fontSize)) {
-        dx.out(`updating fontSize to ${fontSize}`);
+        dx.out(`FONT SIZE: Changing to ${fontSize}px`);
         const menu = this.app.uimenumgr.getMenuById('fontSizeId');
         if (menu) {
           (menu.persist as Persist_t).fontSizeId = String(fontSize);
+          dx.out(`FONT SIZE: Set persist.fontSizeId to ${String(fontSize)}`);
+
+          // Verify the value was set
+          const verifyValue = this.app.uimenumgr.getValueForSelectedByMenuId('fontSizeId');
+          dx.out(
+            `FONT SIZE: Verification - getValueForSelectedByMenuId('fontSizeId') = ${verifyValue}`
+          );
         }
 
-        // Regenerate everything (fire and forget)
-        void this.regenerateAndUpdateWebview();
+        // Regenerate everything and wait for completion
+        await this.regenerateAndUpdateWebview();
         id = selectedId;
         value = id; // value is the font size ID
       }
@@ -625,8 +628,8 @@ export class PaperPrinter {
         (menu.persist as Persist_t).pageSizeId = selectedId;
       }
 
-      // Regenerate everything (fire and forget)
-      void this.regenerateAndUpdateWebview();
+      // Regenerate everything and wait for completion
+      await this.regenerateAndUpdateWebview();
       id = selectedId;
       value = id; // value is the page size ID
     }
@@ -655,8 +658,8 @@ export class PaperPrinter {
         (menu.persist as Persist_t).orient = selectedId;
       }
 
-      // Regenerate everything (fire and forget)
-      void this.regenerateAndUpdateWebview();
+      // Regenerate everything and wait for completion
+      await this.regenerateAndUpdateWebview();
       id = selectedId;
       value = id; // value is the orientation
     }
@@ -686,8 +689,8 @@ export class PaperPrinter {
         (menu.persist as Persist_t).marginId = selectedId as MarginId_t;
       }
 
-      // Regenerate everything (fire and forget)
-      void this.regenerateAndUpdateWebview();
+      // Regenerate everything and wait for completion
+      await this.regenerateAndUpdateWebview();
       id = selectedId;
       value = id; // value is the margin ID
     } else {
