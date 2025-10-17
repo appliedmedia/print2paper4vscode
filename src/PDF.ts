@@ -48,6 +48,9 @@ export class PDF implements PageRender {
   private currentLineHeight: number = 0;
   private currentRenderOptions: RenderOptions | null = null;
 
+  // Header/footer styling
+  private static readonly HEADER_FOOTER_COLOR = '#cccccc'; // Light gray
+
   // Page cache for reusing rendered pages
   private pageCache: Map<number, PageData> = new Map();
 
@@ -772,7 +775,7 @@ export class PDF implements PageRender {
     // Store current font size (we know it from currentRenderOptions)
     const originalFontSize = this.currentRenderOptions.fontSizePx;
     this.docInfo.pdfDoc.setFontSize(8);
-    this.setTextColorFromWebColor(this.docInfo.pdfDoc, '#999999'); // Lighter gray
+    this.setTextColorFromWebColor(this.docInfo.pdfDoc, PDF.HEADER_FOOTER_COLOR);
 
     // Header - centered at top, within margin area
     // jsPDF uses top-left origin: Y=0 at top, Y increases downward
@@ -847,7 +850,7 @@ export class PDF implements PageRender {
     // Set small font for page total
     const originalFontSize = this.currentRenderOptions.fontSizePx;
     this.docInfo.pdfDoc.setFontSize(8);
-    this.setTextColorFromWebColor(this.docInfo.pdfDoc, '#999999');
+    this.setTextColorFromWebColor(this.docInfo.pdfDoc, PDF.HEADER_FOOTER_COLOR);
 
     // Add page total right after "Page N of " text
     const footerY = heightPts - margins.bottomMarginPts + 5;
