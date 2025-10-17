@@ -660,6 +660,16 @@ scroll_js: |
         case 'clearAllPages':
           clearAllRenderedPages();
           break;
+        case 'restorePosition':
+          if (message.left !== undefined) {
+            const toolbar = document.getElementById('p2p4vsc-toolbar');
+            if (toolbar) {
+              const maxLeft = Math.max(8, window.innerWidth - toolbar.offsetWidth - 8);
+              toolbar.style.left = Math.min(Math.max(8, message.left), maxLeft) + 'px';
+              dx(`Restored toolbar position to: ${message.left}px`);
+            }
+          }
+          break;
         default:
           dx(`Unknown message type: ${message.type}`);
       }

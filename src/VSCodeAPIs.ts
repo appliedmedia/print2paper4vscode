@@ -269,7 +269,10 @@ export class VSCodeAPIs {
     // Set up message handling
     this.setupMessageHandling(panel);
 
-    // Restore toolbar position if saved
+    const htmlWithURIs = this.app.os.htmlSrcPathToURI(html, id);
+    this.updatePanelHtml(id, htmlWithURIs);
+
+    // Restore toolbar position if saved (after webview is initialized)
     const savedPosition = this.getGlobalState('toolbarPosPx');
     if (savedPosition) {
       panel.webview.postMessage({
@@ -278,8 +281,6 @@ export class VSCodeAPIs {
       });
     }
 
-    const htmlWithURIs = this.app.os.htmlSrcPathToURI(html, id);
-    this.updatePanelHtml(id, htmlWithURIs);
     return id;
   }
 
