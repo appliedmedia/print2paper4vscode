@@ -184,7 +184,7 @@ export class UIMenu {
     return this._selectionHandler(id);
   }
 
-  // Get the default item ID for this menu (for UI highlighting)
+  // Get the default item ID for this menu (for default icon 📝)
   async getDefaultItemId(): Promise<MenuItemId_t> {
     const defaultItemId = await this.persist.validateDefault(this._id, async () => {
       const { id } = await this.dispatchSelection(this.defaultId());
@@ -194,8 +194,25 @@ export class UIMenu {
     return String(defaultItemId) as MenuItemId_t;
   }
 
+  // Get the currently selected item ID for this menu (for highlighting ✓)
+  async getSelectedItemId(): Promise<MenuItemId_t> {
+    // Get the current persisted value (user's selection)
+    const selectedValue = this.persist[this._id as keyof typeof this.persist];
+    if (selectedValue !== undefined) {
+      return String(selectedValue) as MenuItemId_t;
+    }
+
+    // Fall back to default if no selection made yet
+    return await this.getDefaultItemId();
+  }
+
   // Generate a single menu item HTML
-  async getItemHTML(item: UIMenuItem_t, flyout: string, defaultItemId: string): Promise<string> {
+  async getItemHTML(
+    item: UIMenuItem_t,
+    flyout: string,
+    defaultItemId: string,
+    selectedItemId: string
+  ): Promise<string> {
     const dx = this.dx.sub('getItemHTML');
     const yaml = this.yaml; // This will load and validate automatically
 
@@ -204,11 +221,12 @@ export class UIMenu {
     const isFlyout = this.flyoutMenuItemIds.includes(id);
     const flyoutMenuIdRef = isFlyout ? ` flyout-menu-id-ref="${id}"` : '';
     const isDefault = id === defaultItemId;
+    const isSelected = id === selectedItemId;
 
     // Individual items only need these classes
     const itemClasses = [
       isFlyout ? 'is-flyout' : '',
-      isDefault ? 'selected' : '',
+      isSelected ? 'selected' : '',
       isDefault ? 'default-item' : '',
     ]
       .filter(Boolean)
@@ -243,7 +261,8 @@ export class UIMenu {
 
     // Generate menu items HTML using the new getItemHTML function
     const menuItems = this.getMenuItems();
-    const defaultItemId = await this.getDefaultItemId(); // Get default item once
+    const defaultItemId = await this.getDefaultItemId(); // Get default item for 📝 icon
+    const selectedItemId = await this.getSelectedItemId(); // Get selected item for ✓ highlighting
     const hasDefaultItem = !!defaultItemId;
 
     // Use explicit properties instead of calculated values
@@ -254,7 +273,9 @@ export class UIMenu {
     const hasGutterBefore = hasDefaultItem; // Only if there's a default item
     const hasGutterAfter = hasFlyout || hasDefaultItem; // Menus with flyout items OR default items get gutter-after
     const processedMenuItemsHtml = await Promise.all(
-      menuItems.map(item => this.getItemHTML(item, flyoutCache[item.id] || '', defaultItemId))
+      menuItems.map(item =>
+        this.getItemHTML(item, flyoutCache[item.id] || '', defaultItemId, selectedItemId)
+      )
     );
     const menuItemsHtml = processedMenuItemsHtml.join('\n');
 

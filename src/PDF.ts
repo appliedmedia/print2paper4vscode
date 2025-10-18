@@ -75,6 +75,34 @@ export class PDF implements PageRender {
     this.coords.init();
   }
 
+  /**
+   * Invalidate all PDF caches and reset state
+   * Called when regenerating PDF after menu changes
+   */
+  invalidateAllCaches(): void {
+    const dx = this.dx.sub('invalidateAllCaches');
+    try {
+      // Clear page cache
+      this.pageCache.clear();
+
+      // Reset PDF document
+      this.docInfo.pdfDoc = null;
+
+      // Reset rendering state
+      this.currentX = 0;
+      this.currentY = 0;
+      this.currentLineHeight = 0;
+      this.currentRenderOptions = null;
+
+      // Reset page total
+      this.pageTotal = 0;
+
+      dx.out('All PDF caches invalidated and state reset');
+    } finally {
+      dx.done();
+    }
+  }
+
   done(): void {
     // Best-effort cleanup of temp PDFs created this session
     for (const p of this.tempPdfs) {

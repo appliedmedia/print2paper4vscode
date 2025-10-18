@@ -460,50 +460,41 @@ export class PaperPrinter {
   /**
    * Regenerate PDF and update webview after any option change
    * This is the ONLY place that should regenerate PDFs for menu changes
+   *
+   * BRAIN-DEAD SIMPLE REGENERATION STRATEGY:
+   * 1. Close the current webview completely
+   * 2. Invalidate all PDF caches and reset state
+   * 3. Regenerate the PDF from scratch with new settings
+   * 4. Open a brand new webview with the fresh PDF
+   *
+   * This ensures we never have stale data or cache issues.
+   * Worst case: We close and reopen the webview (acceptable for menu changes)
+   * Best case: Everything is fresh and clean
    */
   private async regenerateAndUpdateWebview(): Promise<void> {
     const dx = this.dx.sub('regenerateAndUpdateWebview', true /* debugOn */);
     dx.out('Starting PDF regeneration...');
     try {
+      // BRAIN-DEAD SIMPLE: Close current webview and open a new one
+      if (this.uiwebview) {
+        dx.out('Closing current webview...');
+        this.uiwebview.done();
+        this.uiwebview = null;
+      }
+
+      // Invalidate all PDF caches and reset state
+      this.app.pdf.invalidateAllCaches();
+      dx.out('PDF caches invalidated');
+
       // Regenerate PDF with current settings
       await this.generatePdf();
       dx.out('PDF regeneration complete');
 
-      // Update PageRender with regenerated PDF
-      const pageRender: PageRender = {
-        renderContent: this.app.pdf.renderContent.bind(this.app.pdf),
-        getPageTotal: this.app.pdf.getPageTotal.bind(this.app.pdf),
-        getPageSizePx: this.app.pdf.getPageSizePx.bind(this.app.pdf),
-      };
-
-      // Update webview if it exists
-      if (this.uiwebview) {
-        dx.out('Updating webview with new PageRender...');
-        try {
-          await this.uiwebview.updatePageRender(pageRender);
-          dx.out('PageRender updated, updating options...');
-          await this.uiwebview.updateOptions({
-            theme: (this.app.uimenumgr.getValueForSelectedByMenuId('theme') ||
-              kTheme_alt) as string,
-            fontSizePx: parseInt(
-              this.app.uimenumgr.getValueForSelectedByMenuId('fontSizeId') || kFontSizeId_alt,
-              10
-            ),
-            lineHeightPx: this.lineHeightPx,
-            pageSizeId: (this.app.uimenumgr.getValueForSelectedByMenuId('pageSizeId') ||
-              kPageSizeId_alt) as PageSizeId_t,
-            orient: (this.app.uimenumgr.getValueForSelectedByMenuId('orient') || kOrient_alt) as
-              | 'portrait'
-              | 'landscape',
-          });
-          dx.out('Webview updated successfully');
-        } catch (error) {
-          dx.out(`Failed to update webview: ${String(error)}`);
-          this.app.ui.showErrorMessage(`Failed to update webview: ${String(error)}`);
-        }
-      } else {
-        dx.out('No webview to update');
-      }
+      // Reopen webview with fresh PDF
+      const tabName = this.docInfo.printTitle || 'Document';
+      dx.out('Reopening webview with fresh PDF...');
+      await this.openWebView(tabName);
+      dx.out('Webview reopened successfully');
     } catch (error) {
       dx.out(`Error regenerating PDF: ${error}`);
       throw error;
