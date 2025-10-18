@@ -261,6 +261,8 @@ export class UIScrollView {
         TOTAL_PAGES: pageTotal.toString(), // Also provide TOTAL_PAGES for HTML template
         MAX_CANVASES: this.CONFIG.MAX_CANVAS_POOL_SIZE.toString(),
         SCROLL_DEBOUNCE_MS: this.CONFIG.SCROLL_DEBOUNCE_MS.toString(),
+        LOAD_DISTANCE: '2', // Pages distance to start loading canvas
+        UNLOAD_DISTANCE: '3', // Pages distance to unload canvas
         PAGE_WIDTH_PX: pageSizePx.widthPx.toString(),
         PAGE_HEIGHT_PX: pageSizePx.heightPx.toString(),
         TOOLBAR: await this.generateToolbarHTML(),

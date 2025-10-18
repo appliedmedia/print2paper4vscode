@@ -35,7 +35,7 @@ export type PostMessage = {
   printType?: string; // For print messages
   pdfDataUrl?: string; // For PDF updates
   pageTotal?: number; // For page total updates
-  pageRender?: any; // For PageRender updates
+  pageRender?: import('./PageRender_t').PageRender; // For PageRender updates
   pageData?: {
     dataUrl: string;
     widthPx: number;

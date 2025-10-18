@@ -496,14 +496,14 @@ export class PaperPrinter {
         // Update webview with new PageRender
         await this.uiwebview.updatePageRender(pageRender);
 
-        // Clear all pages - page total will be updated automatically from PageRender
+        // Clear all pages and update page total
         if (this.uiwebview.getPanelId()) {
+          const newPageTotal = await this.app.pdf.getPageTotal();
           this.app.vscodeapis.postMessage(this.uiwebview.getPanelId()!, {
             type: 'clearAllPages',
+            pageTotal: newPageTotal,
           });
-          dx.out(
-            'Sent clearAllPages message to webview (will clear db.pdfDocs cache and update page total)'
-          );
+          dx.out(`Sent clearAllPages with pageTotal=${newPageTotal} to webview`);
         }
 
         dx.out('Webview updated successfully');
