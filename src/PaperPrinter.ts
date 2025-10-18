@@ -461,27 +461,19 @@ export class PaperPrinter {
    * Regenerate PDF and update webview after any option change
    * This is the ONLY place that should regenerate PDFs for menu changes
    *
-   * BRAIN-DEAD SIMPLE REGENERATION STRATEGY:
-   * 1. Close the current webview completely
-   * 2. Invalidate all PDF caches and reset state
-   * 3. Regenerate the PDF from scratch with new settings
-   * 4. Open a brand new webview with the fresh PDF
+   * IN-PLACE REGENERATION STRATEGY:
+   * 1. Invalidate all PDF caches and reset state
+   * 2. Regenerate the PDF from scratch with new settings
+   * 3. Update the webview's PageRender with new PDF
+   * 4. Send clearAllPages to force webview to reload all pages
    *
-   * This ensures we never have stale data or cache issues.
-   * Worst case: We close and reopen the webview (acceptable for menu changes)
-   * Best case: Everything is fresh and clean
+   * This avoids the jarring flash of closing/reopening the webview.
+   * The key fix: clearAllPages now clears db.pdfDocs cache in webview.
    */
   private async regenerateAndUpdateWebview(): Promise<void> {
     const dx = this.dx.sub('regenerateAndUpdateWebview', true /* debugOn */);
     dx.out('Starting PDF regeneration...');
     try {
-      // BRAIN-DEAD SIMPLE: Close current webview and open a new one
-      if (this.uiwebview) {
-        dx.out('Closing current webview...');
-        this.uiwebview.done();
-        this.uiwebview = null;
-      }
-
       // Invalidate all PDF caches and reset state
       this.app.pdf.invalidateAllCaches();
       dx.out('PDF caches invalidated');
@@ -490,11 +482,34 @@ export class PaperPrinter {
       await this.generatePdf();
       dx.out('PDF regeneration complete');
 
-      // Reopen webview with fresh PDF
-      const tabName = this.docInfo.printTitle || 'Document';
-      dx.out('Reopening webview with fresh PDF...');
-      await this.openWebView(tabName);
-      dx.out('Webview reopened successfully');
+      // Update webview with new PDF and clear all cached pages
+      if (this.uiwebview) {
+        dx.out('Updating webview with new PDF...');
+
+        // Update PageRender with regenerated PDF
+        const pageRender: PageRender = {
+          renderContent: this.app.pdf.renderContent.bind(this.app.pdf),
+          getPageTotal: this.app.pdf.getPageTotal.bind(this.app.pdf),
+          getPageSizePx: this.app.pdf.getPageSizePx.bind(this.app.pdf),
+        };
+
+        // Update webview with new PageRender
+        await this.uiwebview.updatePageRender(pageRender);
+
+        // Clear all pages - page total will be updated automatically from PageRender
+        if (this.uiwebview.getPanelId()) {
+          this.app.vscodeapis.postMessage(this.uiwebview.getPanelId()!, {
+            type: 'clearAllPages',
+          });
+          dx.out(
+            'Sent clearAllPages message to webview (will clear db.pdfDocs cache and update page total)'
+          );
+        }
+
+        dx.out('Webview updated successfully');
+      } else {
+        dx.out('No webview to update');
+      }
     } catch (error) {
       dx.out(`Error regenerating PDF: ${error}`);
       throw error;

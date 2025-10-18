@@ -660,6 +660,11 @@ scroll_js: |
         case 'clearAllPages':
           clearAllRenderedPages();
           break;
+        case 'updatePageTotal':
+          if (message.pageTotal !== undefined) {
+            updatePageTotal(message.pageTotal);
+          }
+          break;
         case 'restorePosition':
           if (message.left !== undefined) {
             const toolbar = document.getElementById('p2p4vsc-toolbar');
@@ -684,6 +689,70 @@ scroll_js: |
       db.pendingPages.clear();
       db.failedPages.clear();
       
+      // Clear cached PDF documents to force reload with new data
+      db.pdfDocs.clear();
+      
+      // Get fresh page total from current PageRender
+      if (window.currentPageRender && window.currentPageRender.getPageTotal) {
+        window.currentPageRender.getPageTotal().then(newPageTotal => {
+          const oldPageTotal = CONFIG.pageTotal;
+          dx(`Updating page total from ${oldPageTotal} to ${newPageTotal}`);
+          CONFIG.pageTotal = newPageTotal;
+          
+          // Check if we need to adjust scroll position
+          if (newPageTotal < oldPageTotal) {
+            // Fewer pages - check if we're viewing beyond the new total
+            const currentScrollTop = viewer.scrollTop;
+            const viewerHeight = viewer.clientHeight;
+            const scrollBottom = currentScrollTop + viewerHeight;
+            
+            // Calculate the height of the new last page
+            // Each page is PAGE_HEIGHT_PX + pageGap, plus final pageGap
+            const pageHeight = {{PAGE_HEIGHT_PX}} || 800; // Fallback to 800px if not available
+            const lastPageHeight = (newPageTotal * (pageHeight + CONFIG.pageGap)) + CONFIG.pageGap;
+            
+            if (scrollBottom > lastPageHeight) {
+              // We're viewing beyond the new page count - snap to bottom
+              dx(`Snapping to bottom: was viewing beyond page ${newPageTotal}, lastPageHeight=${lastPageHeight}`);
+              viewer.scrollTop = Math.max(0, lastPageHeight - viewerHeight);
+            }
+          }
+          
+          // Unassign all canvases with new page total
+          for (let i = 1; i <= CONFIG.pageTotal; i++) {
+            unassignCanvas(i);
+          }
+          
+          // Reset all placeholders to loading state with new page total
+          for (let i = 1; i <= CONFIG.pageTotal; i++) {
+            const placeholder = document.getElementById(`page-${i}`);
+            if (placeholder) {
+              placeholder.className = 'page-placeholder loading';
+              placeholder.innerHTML = `
+                <div class="page-label">Page ${i}</div>
+                <div class="page-number-box">Page ${i}</div>
+              `;
+            }
+          }
+          
+          // Force scroll handler to re-render by resetting lastScrollTop
+          db.lastScrollTop = -999;
+          
+          // Trigger initial render
+          handleScroll();
+        }).catch(error => {
+          dx(`Error getting page total: ${error}`);
+          // Fallback to current page total
+          handleClearAllPages();
+        });
+      } else {
+        // Fallback if no PageRender available
+        handleClearAllPages();
+      }
+    }
+    
+    // Helper function for the actual clearing logic
+    function handleClearAllPages() {
       // Unassign all canvases
       for (let i = 1; i <= CONFIG.pageTotal; i++) {
         unassignCanvas(i);
