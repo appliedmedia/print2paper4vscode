@@ -60,6 +60,6 @@ export type FontSizeId_t = keyof typeof kFontSizeId;
 export const kFontSizeId_alt: FontSizeId_t = '12';
 
 // Theme alternative (not part of a const object, so separate)
-export const kTheme_alt = 'github-light';
+export const kTheme_alt: string = 'github-light';
 
 // end, PaperPrinter_t.ts

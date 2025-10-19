@@ -1,3 +1,5 @@
+import type { PageRender } from './PageRender_t';
+
 export interface UIMenuItem {
   id: string;
   displayName: string;
@@ -35,7 +37,7 @@ export type PostMessage = {
   printType?: string; // For print messages
   pdfDataUrl?: string; // For PDF updates
   pageTotal?: number; // For page total updates
-  pageRender?: import('./PageRender_t').PageRender; // For PageRender updates
+  pageRender?: PageRender; // For PageRender updates
   pageData?: {
     dataUrl: string;
     widthPx: number;
