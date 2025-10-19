@@ -86,6 +86,15 @@ export class Diagnostics {
   }
 
   /**
+   * Reset static state for testing purposes
+   */
+  static reset(): void {
+    Diagnostics._lastMessageContent = '';
+    Diagnostics._lastMessagePrefix = '';
+    Diagnostics._messageCounter = 0;
+  }
+
+  /**
    * Validate that required arguments are present in the args object
    * @param args - The arguments object to validate
    * @param requiredKeys - Array of required argument key names
@@ -255,7 +264,7 @@ export class Diagnostics {
       // Access the private field through appropriate methods
       let currentValue: T;
       if (fieldName === '_name') {
-        currentValue = current.name as T;
+        currentValue = (current as unknown as { _name: T })._name;
       } else if (fieldName === '_debugOn') {
         currentValue = current.debugOn() as T;
       } else {
