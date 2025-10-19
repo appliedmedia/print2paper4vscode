@@ -28,9 +28,11 @@ export class Coords {
   // - We use the VIEWER INTERFACE system for canvas rendering
   // - This matches jsPDF's coordinate system!
   //
-  // All methods in this class work with TOP-LEFT origin systems
-  // (jsPDF generation + PDF.js viewer interface)
-  // NOT the standard PDF coordinate system!
+  // METHOD COORDINATE SYSTEMS:
+  // - Methods with "PdfPts" in the name: Accept/return BOTTOM-LEFT PDF coordinates
+  //   (Y=0 at bottom, Y increases upward) and provide conversions to/from top-left
+  // - Methods without "PdfPts": Work with TOP-LEFT coordinate systems
+  //   (jsPDF generation + PDF.js viewer interface)
 
   // Conversion constants
   private static readonly POINTS_PER_INCH = 72;
@@ -87,8 +89,8 @@ export class Coords {
 
   /**
    * Convert PdfPts Y coordinate to screen Y coordinate
-   * PdfPts: Y=0 at bottom-left, Y increases upward
-   * Screen: Y=0 at top-left, Y increases downward
+   * INPUT: PdfPts coordinates (Y=0 at bottom-left, Y increases upward)
+   * OUTPUT: Screen coordinates (Y=0 at top-left, Y increases downward)
    */
   pdfPtsYToScreenY(pdfPtsY: number, pageHeightPts: number): number {
     return pageHeightPts - pdfPtsY;
@@ -96,8 +98,8 @@ export class Coords {
 
   /**
    * Convert screen Y coordinate to PdfPts Y coordinate
-   * Screen: Y=0 at top-left, Y increases downward
-   * PdfPts: Y=0 at bottom-left, Y increases upward
+   * INPUT: Screen coordinates (Y=0 at top-left, Y increases downward)
+   * OUTPUT: PdfPts coordinates (Y=0 at bottom-left, Y increases upward)
    */
   screenYToPdfPtsY(screenY: number, pageHeightPts: number): number {
     return pageHeightPts - screenY;
@@ -105,6 +107,7 @@ export class Coords {
 
   /**
    * Get the PdfPts Y coordinate where the top margin starts
+   * INPUT/OUTPUT: PdfPts coordinates (Y=0 at bottom-left, Y increases upward)
    * This is where the first line of content should be positioned
    */
   getPdfPtsYForTopMarginStart(pageHeightPts: number, topMarginPts: number): number {
@@ -113,6 +116,7 @@ export class Coords {
 
   /**
    * Get the PdfPts Y coordinate where the bottom margin starts
+   * INPUT/OUTPUT: PdfPts coordinates (Y=0 at bottom-left, Y increases upward)
    * This is where we need to stop rendering content
    */
   getPdfPtsYForBottomMarginStart(bottomMarginPts: number): number {
@@ -121,7 +125,8 @@ export class Coords {
 
   /**
    * Move down one line in PdfPts coordinate system
-   * PdfPts: Y decreases as we go down the page
+   * INPUT/OUTPUT: PdfPts coordinates (Y=0 at bottom-left, Y increases upward)
+   * Note: Y decreases as we go down the page in PdfPts system
    */
   movePdfPtsYDownOneLine(currentPdfPtsY: number, lineHeightPts: number): number {
     return currentPdfPtsY - lineHeightPts;
@@ -129,7 +134,8 @@ export class Coords {
 
   /**
    * Move up one line in PdfPts coordinate system
-   * PdfPts: Y increases as we go up the page
+   * INPUT/OUTPUT: PdfPts coordinates (Y=0 at bottom-left, Y increases upward)
+   * Note: Y increases as we go up the page in PdfPts system
    */
   movePdfPtsYUpOneLine(currentPdfPtsY: number, lineHeightPts: number): number {
     return currentPdfPtsY + lineHeightPts;
@@ -137,6 +143,7 @@ export class Coords {
 
   /**
    * Check if current PdfPts Y position has reached the bottom margin
+   * INPUT: PdfPts coordinates (Y=0 at bottom-left, Y increases upward)
    * Returns true if we need to start a new page
    */
   hasPdfPtsYReachedBottomMargin(currentPdfPtsY: number, bottomMarginPts: number): boolean {
@@ -145,6 +152,7 @@ export class Coords {
 
   /**
    * Calculate available height for content in PdfPts coordinates
+   * INPUT/OUTPUT: PdfPts coordinates (Y=0 at bottom-left, Y increases upward)
    * This is the space between top margin and bottom margin
    */
   calculatePdfPtsAvailableHeightForContent(
@@ -157,6 +165,7 @@ export class Coords {
 
   /**
    * Calculate available width for content in PdfPts coordinates
+   * INPUT/OUTPUT: PdfPts coordinates (Y=0 at bottom-left, Y increases upward)
    * This is the space between left margin and right margin
    */
   calculatePdfPtsAvailableWidthForContent(

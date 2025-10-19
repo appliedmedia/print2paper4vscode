@@ -94,8 +94,11 @@ export class PaperPrinter {
     const dx = this.dx.sub('handlePrintRequest');
 
     try {
-      if (!this.pdfDoc) return;
-      void (await this.generatePdf());
+      await this.generatePdf();
+      if (!this.pdfDoc) {
+        this.app.ui.showErrorMessage('Failed to generate PDF');
+        return;
+      }
 
       if (printType === 'preview')
         await this.app.pdf.printWithPreview(this.pdfDoc, this.docInfo.printTitle || 'Print Output');
@@ -525,8 +528,8 @@ export class PaperPrinter {
     if (selectedId === UIMenu.defaultId()) {
       // Print menu has no default selection
     } else {
+      await this.generatePdf();
       if (!this.pdfDoc) return { id, value };
-      void (await this.generatePdf());
       if (selectedId === 'preview')
         await this.app.pdf.printWithPreview(this.pdfDoc, this.docInfo.printTitle || 'Print Output');
       else if (selectedId === 'direct')

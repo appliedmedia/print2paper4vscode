@@ -151,7 +151,7 @@ export class Stylize {
         themeExtensions = themeExtensions.filter(ext => filterRegex.test(ext.id));
       }
 
-      const themes: Theme[] = [];
+      const themesOut: Theme[] = [];
 
       for (const ext of themeExtensions) {
         // Get theme data for this extension
@@ -159,8 +159,8 @@ export class Stylize {
         if (!themeJson) continue;
 
         // Process each theme in the extension
-        const themes = Array.isArray(themeJson) ? themeJson : [themeJson];
-        for (const theme of themes) {
+        const themeJsons = Array.isArray(themeJson) ? themeJson : [themeJson];
+        for (const theme of themeJsons) {
           if (!theme.id) continue;
 
           // Resolve display name from NLS if available
@@ -190,7 +190,7 @@ export class Stylize {
                 colors: theme.colors as Record<string, string>,
                 tokenColors: theme.tokenColors as TokenColor[],
               });
-              themes.push({
+              themesOut.push({
                 id: theme.id,
                 displayName,
                 themeData,
@@ -206,14 +206,14 @@ export class Stylize {
 
       // Move current editor theme to the top
       const id = this.app.vscodeapis.getActiveThemeId();
-      const theme = themes.find(t => t.id === id);
+      const theme = themesOut.find(t => t.id === id);
 
       if (theme) {
         // Move active theme to the top
-        const index = themes.indexOf(theme);
+        const index = themesOut.indexOf(theme);
         if (index > 0) {
-          themes.splice(index, 1);
-          themes.unshift(theme);
+          themesOut.splice(index, 1);
+          themesOut.unshift(theme);
         }
       } else {
         // If editor theme not in list, add it at the top
@@ -226,7 +226,7 @@ export class Stylize {
               colors: themeJson.colors as Record<string, string>,
               tokenColors: themeJson.tokenColors as TokenColor[],
             });
-            themes.unshift({
+            themesOut.unshift({
               id,
               displayName: id,
               themeData,
@@ -239,7 +239,7 @@ export class Stylize {
         }
       }
 
-      return themes;
+      return themesOut;
     } catch (err) {
       this.dx.out(`ERROR:getVSCodeThemes: Failed to get themes: ${String(err)}`);
       return [];
@@ -268,20 +268,8 @@ export class Stylize {
       });
       const tokens = tokenResult?.tokens || [];
 
-      // Apply page range filtering if specified
-      let filteredTokens = tokens;
-      if (pageBegin !== undefined && pageEnd !== undefined) {
-        if (pageBegin === 0 && pageEnd === 0) {
-          // 0,0 means everything - no filtering
-          filteredTokens = tokens;
-        } else if (pageEnd === 0) {
-          // pageBegin,0 means all pages from pageBegin onwards
-          filteredTokens = tokens.slice(pageBegin - 1);
-        } else {
-          // pageBegin,pageEnd means range
-          filteredTokens = tokens.slice(pageBegin - 1, pageEnd);
-        }
-      }
+      // Page-based filtering removed here; paging is handled by the renderer.
+      const filteredTokens = tokens;
 
       // Call per-line handler if provided
       if (optPerLineHandler) {

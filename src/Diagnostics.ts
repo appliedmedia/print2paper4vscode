@@ -27,6 +27,7 @@ export class Diagnostics {
 
   private static _debugOn = false; // Root level debug state
   private static _lastMessageContent = ''; // Store last message content for truncation
+  private static _lastMessagePrefix = '';  // Store last prefix for robust truncation
   private static _messageCounter = 0; // Global message counter
 
   private _name: string = '';
@@ -190,31 +191,22 @@ export class Diagnostics {
     // Show full context: lineage > current name > message
     const formattedMessage =
       typeof message === 'string' ? message : JSON.stringify(message, null, 2);
-    const messageContent = `${this.name} > ${formattedMessage}`;
+    const sep = Diagnostics.separator;
+    const prefix = `${this.name}${sep}`;
+    const messageContent = `${prefix}${formattedMessage}`;
 
     // Default to full message with timestamp
     let result = `${counter} | ${timestamp} | ${messageContent}`;
 
-    // Check if this message content starts with the same content as the last message
-    if (Diagnostics._lastMessageContent) {
-      // Split on last '>' to get prefix and message parts
-      const lastLastGt = Diagnostics._lastMessageContent.lastIndexOf('>');
-      const currentLastGt = messageContent.lastIndexOf('>');
-
-      if (lastLastGt !== -1 && currentLastGt !== -1) {
-        const lastPrefix = Diagnostics._lastMessageContent.substring(0, lastLastGt).trim();
-        const currentPrefix = messageContent.substring(0, currentLastGt).trim();
-        const currentMessage = messageContent.substring(currentLastGt + 1).trim();
-
-        if (lastPrefix === currentPrefix) {
-          // Override with truncated message - no timestamp, just counter and message
-          result = `${counter} | ${currentMessage}`;
-        }
-      }
+    // Truncate only when prefixes match exactly
+    if (Diagnostics._lastMessageContent && Diagnostics._lastMessagePrefix === prefix) {
+      const currentMessage = messageContent.slice(prefix.length).trim();
+      result = `${counter} | ${currentMessage}`;
     }
 
-    // Store this message content as the last message
+    // Store this message content and prefix as the last message
     Diagnostics._lastMessageContent = messageContent;
+    Diagnostics._lastMessagePrefix = prefix;
     return result;
   }
 

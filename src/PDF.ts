@@ -281,21 +281,6 @@ export class PDF implements PageRender {
     return { widthPts, heightPts };
   }
 
-  /**
-   * Convert pixels to points
-   */
-  private pxToPts(px: number): number {
-    const PX_TO_PTS_RATIO = 0.75; // 72 DPI / 96 DPI
-    return px * PX_TO_PTS_RATIO;
-  }
-
-  /**
-   * Convert points to pixels
-   */
-  private ptsToPx(pts: number): number {
-    const PX_TO_PTS_RATIO = 0.75; // 72 DPI / 96 DPI
-    return pts / PX_TO_PTS_RATIO;
-  }
 
   /**
    * Set text color in jsPDF from web color (hex or named color)
@@ -376,10 +361,10 @@ export class PDF implements PageRender {
       // Add title if provided
       if (title) {
         const marginsPts = this.docInfo.marginPts;
-        this.docInfo.pdfDoc!.setFontSize(this.pxToPts(options.fontSizePx) * 1.25);
+        this.docInfo.pdfDoc!.setFontSize(this.coords.cssPxToPdfPts(options.fontSizePx) * 1.25);
         this.setTextColorFromWebColor(this.docInfo.pdfDoc!, 'black');
         this.docInfo.pdfDoc!.text(title, marginsPts.leftMarginPts, marginsPts.topMarginPts + 20);
-        this.docInfo.pdfDoc!.setFontSize(this.pxToPts(options.fontSizePx));
+        this.docInfo.pdfDoc!.setFontSize(this.coords.cssPxToPdfPts(options.fontSizePx));
       }
 
       // Tokenize and build complete PDF in one pass
@@ -496,6 +481,16 @@ export class PDF implements PageRender {
         throw error;
       }
 
+      // Create cache key based on page number and relevant options
+      const cacheKey = `${pageNumber}-${options.pageSizeId}-${options.orient}`;
+      
+      // Check if we have cached data for this page
+      if (this.pageCache.has(pageNumber)) {
+        const cachedData = this.pageCache.get(pageNumber)!;
+        dx.out(`Returning cached page data for page ${pageNumber}`);
+        return cachedData;
+      }
+
       // Get page dimensions
       const pageSize = this.getPageDimensions(options.pageSizeId, options.orient);
       const unit = this.getUnitForPageSize(options.pageSizeId);
@@ -506,11 +501,13 @@ export class PDF implements PageRender {
       const pageData: PageData = {
         pageNumber: pageNumber,
         dataUrl: this.docInfo.pdfDoc.output('dataurlstring') as string,
-        widthPx: this.ptsToPx(widthPts),
-        heightPx: this.ptsToPx(heightPts),
+        widthPx: this.coords.pdfPtsToCssPx(widthPts),
+        heightPx: this.coords.pdfPtsToCssPx(heightPts),
       };
 
-      dx.out(`Rendered content from complete PDF`);
+      // Cache the page data
+      this.pageCache.set(pageNumber, pageData);
+      dx.out(`Rendered and cached content from complete PDF for page ${pageNumber}`);
       return pageData;
     } catch (error) {
       const pageError: PageRenderError = {
@@ -537,26 +534,25 @@ export class PDF implements PageRender {
     const dx = this.dx.sub('getPageSizePx');
 
     try {
-      // Get page size and orient from global state (same as generatePdfFromTokens)
-      const pageSizeId = (this.app.vscodeapis.getGlobalState('pageSizeId') || 'a4') as PageSizeId_t;
-      const orient = (this.app.vscodeapis.getGlobalState('orient') || 'portrait') as
-        | 'portrait'
-        | 'landscape';
-
-      // Calculate page dimensions using actual settings
+      // Prefer actual PDF dimensions if available
+      if (this.docInfo.pdfDoc) {
+        const pageWidthPts = this.docInfo.pdfDoc.getPageWidth();
+        const pageHeightPts = this.docInfo.pdfDoc.getPageHeight();
+        const pageWidthPx = Math.round(this.coords.pdfPtsToCssPx(pageWidthPts));
+        const pageHeightPx = Math.round(this.coords.pdfPtsToCssPx(pageHeightPts));
+        dx.out(`Page dimensions (from PDF): ${pageWidthPx}x${pageHeightPx}px`);
+        return { widthPx: pageWidthPx, heightPx: pageHeightPx };
+      }
+      
+      // Fallback to configured size if no PDF yet
+      const pageSizeId = (this.app.uimenumgr.getValueForSelectedByMenuId('pageSizeId') || 'a4') as PageSizeId_t;
+      const orient = (this.app.uimenumgr.getValueForSelectedByMenuId('orient') || 'portrait') as 'portrait' | 'landscape';
       const pageSize = this.getPageDimensions(pageSizeId, orient);
       const unit = this.getUnitForPageSize(pageSizeId);
-
-      // Convert to pixels using existing pattern
-      const { widthPts: pageWidthPts, heightPts: pageHeightPts } = this.pageSizeToPts(
-        pageSize.width,
-        pageSize.height,
-        unit
-      );
-      const pageWidthPx = Math.round(this.ptsToPx(pageWidthPts));
-      const pageHeightPx = Math.round(this.ptsToPx(pageHeightPts));
-
-      dx.out(`Page dimensions: ${pageWidthPx}x${pageHeightPx}px`);
+      const { widthPts: pageWidthPts, heightPts: pageHeightPts } = this.pageSizeToPts(pageSize.width, pageSize.height, unit);
+      const pageWidthPx = Math.round(this.coords.pdfPtsToCssPx(pageWidthPts));
+      const pageHeightPx = Math.round(this.coords.pdfPtsToCssPx(pageHeightPts));
+      dx.out(`Page dimensions (from config): ${pageWidthPx}x${pageHeightPx}px`);
       return { widthPx: pageWidthPx, heightPx: pageHeightPx };
     } catch (error) {
       this.app.ui.showErrorMessage(`Failed to get page dimensions: ${String(error)}`);
@@ -618,12 +614,12 @@ export class PDF implements PageRender {
 
       // Convert fontSize from pixels to points for jsPDF, clamping to minimum of 8pt
       const px = options.fontSizePx ?? 12;
-      const fontSizePts = this.pxToPts(Math.max(8, px));
+      const fontSizePts = this.coords.cssPxToPdfPts(Math.max(8, px));
       this.docInfo.pdfDoc.setFontSize(fontSizePts);
       dx.out(`PDF font size set: ${px}px -> ${fontSizePts}pt`);
 
       // Convert lineHeight from pixels to points for jsPDF
-      this.currentLineHeight = this.pxToPts(options.lineHeightPx);
+      this.currentLineHeight = this.coords.cssPxToPdfPts(options.lineHeightPx);
 
       // Set initial position using docInfo margins
       // jsPDF uses top-left origin: Y=0 at top, Y increases downward
@@ -647,7 +643,6 @@ export class PDF implements PageRender {
         `Page dimensions: ${pageWidthPts}x${pageHeightPts}pts, margins: top=${marginsPts.topMarginPts}, bottom=${marginsPts.bottomMarginPts}, left=${marginsPts.leftMarginPts}, right=${marginsPts.rightMarginPts}`
       );
       dx.out(`Initial position: (${this.currentX}, ${this.currentY})`);
-      dx.out(`jsPDF coordinate system: Y=0 at bottom, Y increases upward`);
     } catch (error) {
       dx.out(`Error setting up PDF document: ${error}`);
       throw error;

@@ -6,7 +6,7 @@ import { promisify } from 'util';
 import { parse as yamlParse } from 'yaml';
 import { performance } from 'node:perf_hooks';
 import type { App } from './App';
-import type { WebviewPanelId } from './VSCodeAPIs';
+import type { WebviewPanelId_t } from './VSCodeAPIs';
 import { Diagnostics } from './Diagnostics';
 
 // Type definition for fileRead method
@@ -166,7 +166,7 @@ export abstract class OS {
   };
 
   // Convert relative src attributes and as_uri patterns in HTML to webview URIs
-  htmlSrcPathToURI(html: string, webviewPanelId: WebviewPanelId): string {
+  htmlSrcPathToURI(html: string, webviewPanelId: WebviewPanelId_t): string {
     let result = html;
 
     if (!this.extensionRoot) return result;

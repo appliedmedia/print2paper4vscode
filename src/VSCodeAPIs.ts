@@ -14,7 +14,7 @@ import type { PostMessage } from './types/UI_t';
 import { Diagnostics } from './Diagnostics';
 
 // Opaque ID type for webview panels
-export type WebviewPanelId = string & { readonly __brand: 'WebviewPanelId' };
+export type WebviewPanelId_t = string & { readonly __brand: 'WebviewPanelId' };
 
 // Global state base types - simple scalars
 export type GlobalStateKey_t = string;
@@ -45,7 +45,7 @@ export class VSCodeAPIs {
   private app: App;
   private vscode: typeof import('vscode'); // Use official VS Code types
   private context: ExtensionContext; // Properly typed context
-  private panels = new Map<WebviewPanelId, WebviewPanel>(); // Panel mapping
+  private panels = new Map<WebviewPanelId_t, WebviewPanel>(); // Panel mapping
   private dx: Diagnostics;
 
   constructor(app: App, vscode: typeof import('vscode'), context: ExtensionContext) {
@@ -145,12 +145,12 @@ export class VSCodeAPIs {
   /**
    * Generate a unique panel ID from title
    */
-  private generatePanelId(title: string): WebviewPanelId {
-    let baseId = title.toLowerCase().replace(/\s+/g, '_') as WebviewPanelId;
+  private generatePanelId(title: string): WebviewPanelId_t {
+    let baseId = title.toLowerCase().replace(/\s+/g, '_') as WebviewPanelId_t;
 
     if (this.panels.has(baseId)) {
       const dt = this.app.os.dateAsYYYYMMDDHHMMSS();
-      baseId = `${baseId}_${dt}` as WebviewPanelId;
+      baseId = `${baseId}_${dt}` as WebviewPanelId_t;
     }
 
     return baseId;
@@ -159,7 +159,7 @@ export class VSCodeAPIs {
   /**
    * Update panel title
    */
-  setPanelTitle(id: WebviewPanelId, title: string): void {
+  setPanelTitle(id: WebviewPanelId_t, title: string): void {
     const panel = this.panels.get(id);
     if (panel) panel.title = title;
   }
@@ -167,7 +167,7 @@ export class VSCodeAPIs {
   /**
    * Update panel HTML content
    */
-  updatePanelHtml(id: WebviewPanelId, html: string): void {
+  updatePanelHtml(id: WebviewPanelId_t, html: string): void {
     const panel = this.panels.get(id);
     if (panel) panel.webview.html = html;
   }
@@ -175,7 +175,7 @@ export class VSCodeAPIs {
   /**
    * Post message to panel
    */
-  postMessage(id: WebviewPanelId, message: PostMessage): void {
+  postMessage(id: WebviewPanelId_t, message: PostMessage): void {
     const panel = this.panels.get(id);
     if (!panel) return;
 
@@ -192,7 +192,7 @@ export class VSCodeAPIs {
   /**
    * Remove panel from map (for cleanup)
    */
-  removePanel(id: WebviewPanelId): void {
+  removePanel(id: WebviewPanelId_t): void {
     this.panels.delete(id);
     this.dx.out(`Removed panel from map: ${id}`);
   }
@@ -200,7 +200,7 @@ export class VSCodeAPIs {
   /**
    * Get panel for URI conversion (internal use)
    */
-  getPanelForUriConversion(id: WebviewPanelId): WebviewPanel | undefined {
+  getPanelForUriConversion(id: WebviewPanelId_t): WebviewPanel | undefined {
     return this.panels.get(id);
   }
 
@@ -210,8 +210,8 @@ export class VSCodeAPIs {
   async getOrCreateWebviewPanel(
     title: string,
     html: string,
-    existingPanelId?: WebviewPanelId
-  ): Promise<WebviewPanelId> {
+    existingPanelId?: WebviewPanelId_t
+  ): Promise<WebviewPanelId_t> {
     this.dx.out(
       `getOrCreateWebviewPanel: existingPanelId=${existingPanelId}, panels.size=${this.panels.size}`
     );

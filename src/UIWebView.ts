@@ -1,6 +1,6 @@
 import type { App } from './App';
 import type { PageRender } from './types/PageRender_t';
-import type { WebviewPanelId } from './VSCodeAPIs';
+import type { WebviewPanelId_t } from './VSCodeAPIs';
 import type { PostMessage } from './types/UI_t';
 import { UIScrollView, type ScrollOptions } from './UIScrollView';
 import { UIMenuMgr } from './UIMenuMgr';
@@ -16,7 +16,7 @@ export class UIWebView {
   private dx: Diagnostics;
   private currentViewer: UIScrollView | null = null;
   private menuMgr: UIMenuMgr | null = null;
-  private panelId: WebviewPanelId | null = null;
+  private panelId: WebviewPanelId_t | null = null;
   private initialized: boolean = false;
   private handlersRegistered: boolean = false;
 
@@ -32,7 +32,7 @@ export class UIWebView {
   /**
    * Create webview panel with menus and scroll view
    */
-  async createPanel(pageRender: PageRender, options: ScrollOptions): Promise<WebviewPanelId> {
+  async createPanel(pageRender: PageRender, options: ScrollOptions): Promise<WebviewPanelId_t> {
     const dx = this.dx.sub('createPanel');
     dx.require({ pageRender, options }, ['pageRender', 'options']);
 
@@ -88,41 +88,7 @@ export class UIWebView {
       // Pre-render is no longer needed with unified approach
       // The complete PDF is generated during tokenization
       dx.out(`Pre-render not needed with unified approach`);
-
-      // Get total pages
-      const pageTotal = await pageRender.getPageTotal();
-
-      // Pre-render first 5 pages or total pages, whichever is smaller
-      const pagesToRender = Math.min(5, pageTotal);
-      dx.out(`Pre-rendering ${pagesToRender} of ${pageTotal} pages`);
-
-      // Render each page and send to webview
-      for (let pageNumber = 1; pageNumber <= pagesToRender; pageNumber++) {
-        try {
-          // Render page content (unified approach doesn't need line ranges)
-          const pageData = await pageRender.renderContent(pageNumber, 0, 0, {
-            fontFamily: options.fontFamily || 'Courier New',
-            fontSizePx: options.fontSizePx || 12,
-            lineHeightPx: options.lineHeightPx || 18,
-            theme: options.theme || 'github-light',
-            pageSizeId: options.pageSizeId || 'a4',
-            orient: options.orient || 'portrait',
-            marginId: options.marginId || 'normal',
-          });
-
-          // Send rendered page to webview
-          if (this.panelId) {
-            this.app.vscodeapis.postMessage(this.panelId, {
-              type: 'pageRenderResponse',
-              pageData: pageData,
-            });
-          }
-
-          dx.out(`Pre-rendered page ${pageNumber}`);
-        } catch (error) {
-          dx.out(`Failed to pre-render page ${pageNumber}: ${String(error)}`);
-        }
-      }
+      return;
     } catch (error) {
       dx.out(`Pre-render failed: ${String(error)}`);
     } finally {
@@ -148,7 +114,7 @@ export class UIWebView {
   /**
    * Create scroll view with PageRender content (for external use)
    */
-  async createScrollView(pageRender: PageRender, options: ScrollOptions): Promise<WebviewPanelId> {
+  async createScrollView(pageRender: PageRender, options: ScrollOptions): Promise<WebviewPanelId_t> {
     const dx = this.dx.sub('createScrollView');
     dx.require({ pageRender, options }, ['pageRender', 'options']);
 
@@ -242,7 +208,7 @@ export class UIWebView {
   /**
    * Get current panel ID
    */
-  getPanelId(): WebviewPanelId | null {
+  getPanelId(): WebviewPanelId_t | null {
     return this.panelId;
   }
 

@@ -202,7 +202,7 @@ scroll_js: |
       renderedPages: new Map(), // pageNumber -> PageData
       pendingPages: new Set(), // pageNumbers being rendered
       failedPages: new Set(), // pageNumbers that failed to render
-      pdfDocs: new Map(), // pageNumber -> PDF.js document for each page
+      pdfDoc: null, // Single PDF.js document reused for all pages
       
       // Scroll state
       lastScrollTop: -999, // Set to -999 to ensure initial scroll triggers assignment
@@ -675,19 +675,18 @@ scroll_js: |
         // Mark page as being rendered
         db.pendingPages.add(pageNumber);
         
-        // Load PDF document if not already loaded for this page
-        if (!db.pdfDocs.has(pageNumber)) {
+        // Load PDF document once
+        if (!db.pdfDoc) {
           const loadingTask = pdfjsLib.getDocument({
             url: dataUrl,
             disableAutoFetch: true,
             disableStream: true,
             disableRange: true
           });
-          const pdfDoc = await loadingTask.promise;
-          db.pdfDocs.set(pageNumber, pdfDoc);
+          db.pdfDoc = await loadingTask.promise;
         }
         
-        const pdfDoc = db.pdfDocs.get(pageNumber);
+        const pdfDoc = db.pdfDoc;
         const page = await pdfDoc.getPage(pageNumber); // Multi-page PDF
         
         const viewport = page.getViewport({ scale: CONFIG.scale });
@@ -815,7 +814,7 @@ scroll_js: |
             db.renderedPages.clear();
             db.pendingPages.clear();
             db.failedPages.clear();
-            db.pdfDocs.clear();
+            db.pdfDoc = null;
           } else {
             // No page total provided - do full clear
             clearAllRenderedPages();
@@ -845,8 +844,8 @@ scroll_js: |
       db.pendingPages.clear();
       db.failedPages.clear();
       
-      // Clear cached PDF documents to force reload with new data
-      db.pdfDocs.clear();
+      // Clear cached PDF document to force reload with new data
+      db.pdfDoc = null;
       
       // Clear all pages
       handleClearAllPages();

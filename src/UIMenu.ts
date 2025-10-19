@@ -185,21 +185,21 @@ export class UIMenu {
   }
 
   // Get the default item ID for this menu (for default icon 📝)
-  async getDefaultItemId(): Promise<MenuItemId_t> {
+  async getDefaultItemId(): Promise<string> {
     const defaultItemId = await this.persist.validateDefault(this._id, async () => {
       const { id } = await this.dispatchSelection(this.defaultId());
       return id;
     });
 
-    return String(defaultItemId) as MenuItemId_t;
+    return String(defaultItemId);
   }
 
   // Get the currently selected item ID for this menu (for highlighting ✓)
-  async getSelectedItemId(): Promise<MenuItemId_t> {
+  async getSelectedItemId(): Promise<string> {
     // Get the current persisted value (user's selection)
     const selectedValue = this.persist[this._id as keyof typeof this.persist];
     if (selectedValue !== undefined) {
-      return String(selectedValue) as MenuItemId_t;
+      return String(selectedValue);
     }
 
     // Fall back to default if no selection made yet

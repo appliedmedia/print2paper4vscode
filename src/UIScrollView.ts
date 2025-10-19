@@ -1,6 +1,6 @@
 import type { App } from './App';
 import type { PageRender, PageData } from './types/PageRender_t';
-import type { WebviewPanelId } from './VSCodeAPIs';
+import type { WebviewPanelId_t } from './VSCodeAPIs';
 import type { PageSizeId_t, Orient_t, MarginId_t } from './types/PaperPrinter_t';
 import { Diagnostics } from './Diagnostics';
 import { Yaml } from './Yaml';
@@ -55,7 +55,7 @@ export class UIScrollView {
   private dx: Diagnostics;
   private pageCache: Map<number, PageData> = new Map();
   private renderQueue: Set<number> = new Set();
-  private panelId: WebviewPanelId | null = null;
+  private panelId: WebviewPanelId_t | null = null;
   private _yaml: Yaml<typeof UIScrollView.kYaml>;
 
   constructor(app: App, pageRender: PageRender, options: ScrollOptions) {
@@ -106,7 +106,7 @@ export class UIScrollView {
   /**
    * Set the panel ID after panel creation
    */
-  setPanelId(panelId: WebviewPanelId): void {
+  setPanelId(panelId: WebviewPanelId_t): void {
     this.panelId = panelId;
   }
 
