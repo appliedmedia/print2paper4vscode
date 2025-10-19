@@ -796,9 +796,9 @@ export class PDF implements PageRender {
     const margins = this.docInfo.marginPts;
 
     // Set small font for header/footer
-    // Store current font size (we know it from currentRenderOptions)
-    const originalFontSize = this.currentRenderOptions.fontSizePx;
-    this.docInfo.pdfDoc.setFontSize(8);
+    // Store current font size in points (jsPDF expects points)
+    const originalFontSizePx = this.currentRenderOptions.fontSizePx;
+    this.docInfo.pdfDoc.setFontSize(8); // points
     this.setTextColorFromWebColor(this.docInfo.pdfDoc, PDF.HEADER_FOOTER_COLOR);
 
     // Header - centered at top, within margin area
@@ -819,8 +819,8 @@ export class PDF implements PageRender {
 
     // Side page number removed - only show in footer
 
-    // Restore original font size
-    this.docInfo.pdfDoc.setFontSize(originalFontSize);
+    // Restore original font size (convert px to pts)
+    this.docInfo.pdfDoc.setFontSize(this.coords.cssPxToPdfPts(originalFontSizePx));
   }
 
   /**
@@ -872,8 +872,8 @@ export class PDF implements PageRender {
     const currentPage = pageInfo.pageNumber;
 
     // Set small font for page total
-    const originalFontSize = this.currentRenderOptions.fontSizePx;
-    this.docInfo.pdfDoc.setFontSize(8);
+    const originalFontSizePx = this.currentRenderOptions.fontSizePx;
+    this.docInfo.pdfDoc.setFontSize(8); // points
     this.setTextColorFromWebColor(this.docInfo.pdfDoc, PDF.HEADER_FOOTER_COLOR);
 
     // Add page total right after "Page N of " text
@@ -888,8 +888,8 @@ export class PDF implements PageRender {
 
     this.docInfo.pdfDoc.text(pageTotalText, pageTotalX, footerY);
 
-    // Restore original font size
-    this.docInfo.pdfDoc.setFontSize(originalFontSize);
+    // Restore original font size (convert px to pts)
+    this.docInfo.pdfDoc.setFontSize(this.coords.cssPxToPdfPts(originalFontSizePx));
   }
 
   /**
