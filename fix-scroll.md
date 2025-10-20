@@ -876,7 +876,6 @@ function dx(message) {
 }
 ```
 
-**Note**: Functions are renamed with "Bidirectional" suffix to avoid conflicts during refactor. After Step 4 is complete, remove the suffix.
 
 **Test**:
 
@@ -1061,7 +1060,7 @@ db.availableCanvases.delete(canvasId);
 db.assignedCanvases.set(pageNumber, canvasId);
 
 // REPLACE with:
-// Use helper function (after removing Bidirectional suffix):
+// Use helper function:
 const pgId = `pg${pageNumber}`;
 assignCanvasToPage(cbId, pgId);
 ```
@@ -1088,16 +1087,10 @@ db.assignedCanvases.delete(pageNumber);
 db.availableCanvases.add(canvasId);
 
 // REPLACE with:
-// Use helper function (after removing Bidirectional suffix):
+// Use helper function:
 unassignCanvas(cbId);
 ```
 
-**Task 5.5**: Remove "Bidirectional" suffix from helper functions
-
-Now that the refactor is complete, rename:
-
-- `assignCanvasToPageBidirectional` → `assignCanvasToPage`
-- `unassignCanvasBidirectional` → `unassignCanvas`
 
 **Test**:
 
