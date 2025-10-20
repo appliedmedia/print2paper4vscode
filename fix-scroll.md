@@ -66,7 +66,7 @@
 
 **Links**:
 
-- GitHub PR: https://github.com/appliedmedia/print2paper4vscode/pull/26
+- GitHub PR: <https://github.com/appliedmedia/print2paper4vscode/pull/26>
 - Local PR data: PR26.json (saved by user)
 
 **Relevant CodeRabbit Recommendations**:
@@ -448,7 +448,7 @@ function getAllPageIds() {
 
 **Changes**:
 
-1. **Add Emoji Status Updates**:
+#### Add Emoji Status Updates
 
 ```javascript
 // When requesting page render:
@@ -474,7 +474,7 @@ function updateHudStatus(cbId, status, pgId) {
 }
 ```
 
-2. **Integrate into existing functions**:
+#### Integrate into existing functions
 
 - Call `updateHudStatus(cbId, 'requesting', pgId)` in `assignCanvasToPage()`
 - Call `updateHudStatus(cbId, 'clearing', pgId)` in `unassignCanvas()`
@@ -1349,8 +1349,8 @@ If any step fails:
 - **Production File**: `src/UIScrollView.yaml` (lines 168-937)
 - **Architecture Doc**: `AGENTS.md`
 - **PR Discussion**: GitHub PR #26 - CodeRabbit's recommendations
-- **PDF.js Docs**: https://mozilla.github.io/pdf.js/
-- **jsPDF Docs**: https://github.com/parallax/jsPDF
+- **PDF.js Docs**: <https://mozilla.github.io/pdf.js/>
+- **jsPDF Docs**: <https://github.com/parallax/jsPDF>
 
 ---
 
