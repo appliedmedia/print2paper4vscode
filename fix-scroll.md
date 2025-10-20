@@ -434,6 +434,15 @@ function getAllCancelledCanvasIds() {
 function getAllPageIds() {
   return Object.keys(db).filter(k => k.startsWith('pg'));
 }
+
+// ID generation helpers - centralized for easy maintenance
+function pageId(pageNumber) {
+  return `pg${pageNumber}`;
+}
+
+function canvasId(canvasNumber) {
+  return `cb${canvasNumber}`;
+}
 ```
 
 **Impact**:
@@ -722,7 +731,7 @@ const cachedMemoryMB = cachedPages * 2; // 2MB per cached page
 // Calculate actual memory usage using helper function
 let totalMemoryMB = 0;
 for (let i = 0; i < bufferedPageCount; i++) {
-  const pgId = `pg${i + 1}`;
+  const pgId = pageId(i + 1);
   totalMemoryMB += calculatePageMemoryUsage(pgId);
 }
 const bufferedMemoryMB = Math.round(totalMemoryMB * 100) / 100; // Round to 2 decimal places
@@ -850,6 +859,20 @@ function getAllPageIds() {
   return Object.keys(db).filter(k => k.startsWith('pg'));
 }
 
+// ID generation helpers - centralized for easy maintenance
+function pageId(pageNumber) {
+  return `pg${pageNumber}`;
+}
+
+function canvasId(canvasNumber) {
+  return `cb${canvasNumber}`;
+}
+
+// Parse canvas index from canvas ID
+function canvasIndex(cbId) {
+  return parseInt(cbId.replace('cb', ''));
+}
+
 // Helper: Calculate memory usage for a rendered page
 function calculatePageMemoryUsage(pgId) {
   const cbId = db[pgId] && db[pgId].cb;
@@ -944,12 +967,12 @@ function createCanvasPool() {
 function createDOMElements_Canvas() {
   for (let i = 0; i < CONFIG.canvasBuffersSize; i++) {
     const canvas = document.createElement('canvas');
-    canvas.id = `cb${i}`; // Consistent DOM ID format
+    canvas.id = canvasId(i); // Use helper function
     canvas.className = 'page-canvas';
     canvasContainer.appendChild(canvas);
 
     // Store in db with cb prefix
-    db[`cb${i}`] = {
+    db[canvasId(i)] = {
       pg: null,
       status: '',
       domElementRef: canvas,
@@ -976,7 +999,7 @@ content.appendChild(placeholder);
 
 // ADD after content.appendChild(placeholder):
 // Store in db with pg prefix
-const pgId = `pg${i}`;
+const pgId = pageId(i);
 if (!db[pgId]) db[pgId] = {};
 db[pgId].placeholder = placeholder;
 db[pgId].cb = null; // No canvas assigned yet
@@ -1156,7 +1179,7 @@ await page.render({
 
 // ADD AFTER render completes:
 const cbId = canvas.id;
-const pgId = `pg${pageNumber}`;
+const pgId = pageId(pageNumber);
 updateHudStatus(cbId, 'assigned', pgId);
 ```
 
