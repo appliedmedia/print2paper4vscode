@@ -879,6 +879,16 @@ function canvasIndex(cbId) {
   return parseInt(cbId.replace('cb', ''));
 }
 
+// Parse page number from page ID (robust version using data-index)
+function pageNumber(pgId) {
+  const pageData = db[pgId];
+  if (pageData && pageData.placeholder && pageData.placeholder.dataset.index) {
+    return parseInt(pageData.placeholder.dataset.index);
+  }
+  // Fallback to ID parsing if data-index not available
+  return parseInt(pgId.replace('pg', ''));
+}
+
 // Helper: Calculate memory usage for a rendered page
 function calculatePageMemoryUsage(pgId) {
   const cbId = db[pgId] && db[pgId].cb;
