@@ -496,10 +496,10 @@ function updateHudStatus(cbId, status, pageNumber) {
 
 #### Integrate into existing functions
 
-- Call `updateHudStatus(cbId, 'requesting', pgId)` in `assignCanvasToPage()`
-- Call `updateHudStatus(cbId, 'clearing', pgId)` in `unassignCanvas()`
-- Call `updateHudStatus(cbId, 'assigned', pgId)` after render completes
-- Call `updateHudStatus(cbId, 'available', null)` when canvas freed
+- Call `updateHudStatus(cbId, 'requesting', pageNumber)` in `assignCanvasToPage()`
+- Call `updateHudStatus(cbId, 'clearing', pageNumber)` in `unassignCanvas()`
+- Call `updateHudStatus(cbId, 'assigned', pageNumber)` after render completes
+- Call `updateHudStatus(cbId, 'available', 0)` when canvas freed
 
 **Impact**:
 
@@ -1104,22 +1104,17 @@ const kCBStatus = {
 };
 
 // Update HUD with emoji status
-function updateHudStatus(cbId, status, pgIdOrPageNum) {
+function updateHudStatus(cbId, status, pageNumber) {
   const cbIndex = canvasIndex(cbId);
   const hudElement = document.getElementById('canvas-assignments');
   if (!hudElement) return;
-
-  // Parse page number
-  let pageNum = pgIdOrPageNum;
-  if (typeof pgIdOrPageNum === 'string' && pgIdOrPageNum.startsWith('pg')) {
-    pageNum = parseInt(pgIdOrPageNum.replace('pg', ''));
-  }
 
   const assignments = hudElement.textContent.split(' ');
   const statusInfo = kCBStatus[status];
   
   if (statusInfo) {
-    const pageDisplay = status === 'available' ? '0' : pageNum;
+    // Always use a valid page number - 0 for available, actual page number for others
+    const pageDisplay = status === 'available' ? 0 : (pageNumber || 0);
     assignments[cbIndex] = `c${cbIndex}${statusInfo.char}p${pageDisplay}`;
   }
 
@@ -1143,7 +1138,7 @@ function assignCanvasToPage(cbId, pgId) {
   db[pgId].cb = cbId;
 
   // ADD HERE:
-  updateHudStatus(cbId, 'requesting', pgId);
+  updateHudStatus(cbId, 'requesting', pageNumber);
 }
 ```
 
@@ -1156,7 +1151,7 @@ function unassignCanvas(cbId) {
 
   // ADD HERE (before clearing):
   if (oldPgId) {
-    updateHudStatus(cbId, 'clearing', oldPgId);
+    updateHudStatus(cbId, 'clearing', oldPageNumber);
   }
 
   // ... existing unassign logic
@@ -1165,7 +1160,7 @@ function unassignCanvas(cbId) {
   db[cbId].status = '';
 
   // ADD HERE (after clearing):
-  updateHudStatus(cbId, 'available', null);
+  updateHudStatus(cbId, 'available', 0);
 }
 ```
 
@@ -1181,7 +1176,7 @@ await page.render({
 // ADD AFTER render completes:
 const cbId = canvas.id;
 const pgId = pageId(pageNumber);
-updateHudStatus(cbId, 'assigned', pgId);
+updateHudStatus(cbId, 'assigned', pageNumber);
 ```
 
 **Task 6.5**: Update existing HUD calls
