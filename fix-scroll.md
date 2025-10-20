@@ -475,7 +475,7 @@ const kCBStatus = {
 };
 
 // When requesting page render:
-function updateHudStatus(cbId, status, pgId) {
+function updateHudStatus(cbId, status, pageNumber) {
   const cbIndex = canvasIndex(cbId);
   const hudElement = document.getElementById('canvas-assignments');
   if (!hudElement) return;
@@ -484,7 +484,8 @@ function updateHudStatus(cbId, status, pgId) {
   const statusInfo = kCBStatus[status];
   
   if (statusInfo) {
-    const pageDisplay = status === 'available' ? '0' : pgId;
+    // Always use a valid page number - 0 for available, actual page number for others
+    const pageDisplay = status === 'available' ? 0 : (pageNumber || 0);
     assignments[cbIndex] = `c${cbIndex}${statusInfo.char}p${pageDisplay}`;
   }
 
