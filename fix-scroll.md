@@ -34,7 +34,7 @@
 
 - **CONFIG**: MAX_CANVASES=7, LOAD_DISTANCE=3, UNLOAD_DISTANCE=4, SCALE=1.5
 - **Database structure**: Simple `db` object with direct property access
-  - Canvas properties: `db[canvasId] = { page, status, elementRef, renderTask }`
+  - Canvas properties: `db[canvasId] = { page, status, domElementRef, renderTask }`
   - Page properties: `db[pageId] = { cb, placeholder, wrapper, label }`
 - **Canvas IDs**: `cb0, cb1, cb2...` (Canvas buffers)
 - **Page IDs**: `pg1, pg2, pg3...` (Pages)
@@ -152,7 +152,7 @@ const page = await db.pdfDoc.getPage(pageNumber);
    // POC approach - clean and direct
    db[canvasId].page = pageId;
    db[pageId].Cn = canvasId;
-   db[canvasId].elementRef = canvas;
+   db[canvasId].domElementRef = canvas;
    ```
 
 3. **Bidirectional Canvas↔Page Linking**
@@ -201,7 +201,7 @@ const page = await db.pdfDoc.getPage(pageNumber);
 4. **Confusing Terminology** ❌
    - "Cache" instead of "buffer" (cache implies optional, buffer implies pooled resource)
    - Consistent `cb0...cb6` format (matches page `pg1...pgN` style)
-   - `elementRef` sometimes used, sometimes not
+   - `domElementRef` sometimes used, sometimes not
 
 5. **Verbose Logging** ❌
    - Individual `dx()` calls instead of HUD updates
@@ -288,7 +288,7 @@ const db = {
 
 // AFTER (SIMPLE - POC approach):
 const db = {
-  // Canvas buffers: db.cb0 = { pg: 'pg5', status: 'render', elementRef, renderTask }
+  // Canvas buffers: db.cb0 = { pg: 'pg5', status: 'render', domElementRef, renderTask }
   // Pages: db.pg5 = { cb: 'cb0', placeholder, wrapper, label }
   pdfDoc: null, // Single PDF.js document
   lastScrollTop: -999,
@@ -349,7 +349,7 @@ const db = {
 // Get canvas element for page
 function getCanvasForPage(pgId) {
   const cbId = db[pgId] && db[pgId].cb;
-  return cbId ? db[cbId].elementRef : null;
+  return cbId ? db[cbId].domElementRef : null;
 }
 
 // Assign canvas to page (bidirectional)
@@ -389,7 +389,7 @@ function unassignCanvas(cbId) {
   }
 
   // Remove canvas from DOM
-  const canvas = db[cbId].elementRef;
+  const canvas = db[cbId].domElementRef;
   if (canvas && canvas.parentElement) {
     canvas.parentElement.removeChild(canvas);
   }
@@ -403,13 +403,13 @@ function getAvailableCanvas() {
   // First try available canvases
   const availableIds = getAllAvailableCanvasIds();
   if (availableIds.length > 0) {
-    return db[availableIds[0]].elementRef;
+    return db[availableIds[0]].domElementRef;
   }
 
   // Then try cancelled canvases
   const cancelledIds = getAllCancelledCanvasIds();
   if (cancelledIds.length > 0) {
-    return db[cancelledIds[0]].elementRef;
+    return db[cancelledIds[0]].domElementRef;
   }
 
   return null;
@@ -522,7 +522,7 @@ for (let i = 0; i < CONFIG.canvasBuffersSize; i++) {
   db[`cb${i}`] = {
     pg: null,
     status: '',
-    elementRef: canvas,
+    domElementRef: canvas,
     renderTask: null,
   };
 }
@@ -747,7 +747,7 @@ const bufferedMemoryMB = Math.round(totalMemoryMB * 100) / 100; // Round to 2 de
 ```javascript
 // Database state management (POC approach - simple object)
 const db = {
-  // Canvas buffers: db.cb0 = { pg: 'pg5', status: 'render', elementRef, renderTask }
+  // Canvas buffers: db.cb0 = { pg: 'pg5', status: 'render', domElementRef, renderTask }
   // Pages: db.pg5 = { cb: 'cb0', placeholder, wrapper, label }
   pdfDoc: null, // Single PDF.js document
   lastScrollTop: -999,
@@ -764,7 +764,7 @@ const viewer = document.getElementById('scrollable-viewer');
 // Get canvas element for page
 function getCanvasForPage(pgId) {
   const cbId = db[pgId] && db[pgId].cb;
-  return cbId ? db[cbId].elementRef : null;
+  return cbId ? db[cbId].domElementRef : null;
 }
 
 // Assign canvas to page (bidirectional)
@@ -804,7 +804,7 @@ function unassignCanvas(cbId) {
   }
 
   // Remove canvas from DOM
-  const canvas = db[cbId].elementRef;
+  const canvas = db[cbId].domElementRef;
   if (canvas && canvas.parentElement) {
     canvas.parentElement.removeChild(canvas);
   }
@@ -818,13 +818,13 @@ function getAvailableCanvas() {
   // First try available canvases
   const availableIds = getAllAvailableCanvasIds();
   if (availableIds.length > 0) {
-    return db[availableIds[0]].elementRef;
+    return db[availableIds[0]].domElementRef;
   }
 
   // Then try cancelled canvases
   const cancelledIds = getAllCancelledCanvasIds();
   if (cancelledIds.length > 0) {
-    return db[cancelledIds[0]].elementRef;
+    return db[cancelledIds[0]].domElementRef;
   }
 
   return null;
@@ -853,9 +853,9 @@ function getAllPageIds() {
 // Helper: Calculate memory usage for a rendered page
 function calculatePageMemoryUsage(pgId) {
   const cbId = db[pgId] && db[pgId].cb;
-  if (!cbId || !db[cbId].elementRef) return 0;
+  if (!cbId || !db[cbId].domElementRef) return 0;
 
-  const canvas = db[cbId].elementRef;
+  const canvas = db[cbId].domElementRef;
   const canvasMemory = (canvas.width * canvas.height * 4) / (1024 * 1024); // RGBA bytes to MB
 
   // Add PDF data memory (if available)
@@ -916,7 +916,7 @@ const db = {
 
 // AFTER (POC approach - simple object):
 const db = {
-  // Canvas buffers: db.cb0 = { pg: 'pg5', status: 'render', elementRef, renderTask }
+  // Canvas buffers: db.cb0 = { pg: 'pg5', status: 'render', domElementRef, renderTask }
   // Pages: db.pg5 = { cb: 'cb0', placeholder, wrapper, label }
   // Canvas buffers (cb0...cb6) and pages (pg1...pgN) will be added dynamically
   pdfDoc: null, // Single PDF.js document
@@ -953,7 +953,7 @@ function createDOMElements_Canvas() {
     db[`cb${i}`] = {
       pg: null,
       status: '',
-      elementRef: canvas,
+      domElementRef: canvas,
       renderTask: null,
     };
   }
@@ -1243,7 +1243,7 @@ updateHudStatus(cbId, 'assigned', pgId);
    - `getAvailableCanvas()` finds next free canvas
 
 2. **Test Database Structure**:
-   - Canvas buffer properties: `pg`, `status`, `elementRef`, `renderTask`
+   - Canvas buffer properties: `pg`, `status`, `domElementRef`, `renderTask`
    - Page properties: `cb`, `placeholder`
    - Bidirectional consistency: `db[cbId].pg === pgId` ⟺ `db[pgId].cb === cbId`
 
