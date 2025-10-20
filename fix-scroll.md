@@ -502,7 +502,7 @@ function updateHudStatus(cbId, status, pgId) {
 
 ```javascript
 // Canvas creation:
-for (let i = 0; i < CONFIG.maxCanvases; i++) {
+for (let i = 0; i < CONFIG.canvasBuffersSize; i++) {
   const canvas = document.createElement('canvas');
   canvas.id = `canvas-${i}`; // DOM ID stays as-is
   canvas.className = 'page-canvas';
@@ -653,7 +653,7 @@ db.pdfDoc = null;
 MAX_CANVAS_POOL_SIZE: 7, // Number of canvas elements for virtual scrolling
 
 // REPLACE with:
-MAX_CANVAS_BUFFERS: 7, // Number of canvas buffer elements for virtual scrolling
+CANVAS_BUFFERS_SIZE: 7, // Number of canvas buffer elements for virtual scrolling
 ```
 
 **Task 2.3**: Update pageCache to pageBuffers (line 56)
@@ -695,20 +695,32 @@ private pageBuffers: Map<number, PageData> = new Map();
 // - Cached pages (first 7): ~2MB per page (PDF data + canvas)
 
 // REPLACE with:
-// Estimate memory usage:
-// - Buffered pages (first 7): ~2MB per page (PDF data + canvas)
+// Calculate actual memory usage:
+// - Measure PDF page sizes after rendering
+// - Include canvas memory overhead
 
 // Find line 751:
-const cachedPages = Math.min(renderedPages, CONFIG.maxCanvases);
+const cachedPages = Math.min(renderedPages, CONFIG.canvasBuffersSize);
 
 // REPLACE with:
-const bufferedPages = Math.min(renderedPages, CONFIG.maxCanvases);
+const bufferedPages = Math.min(renderedPages, CONFIG.canvasBuffersSize);
 
 // Find line 754:
 const cachedMemoryMB = cachedPages * 2; // 2MB per cached page
 
 // REPLACE with:
-const bufferedMemoryMB = bufferedPages * 2; // 2MB per buffered page
+// Calculate actual memory usage
+let totalMemoryMB = 0;
+for (let i = 0; i < bufferedPages; i++) {
+  const pgId = `pg${i + 1}`;
+  const cbId = db[pgId] && db[pgId].cb;
+  if (cbId && db[cbId].elementRef) {
+    const canvas = db[cbId].elementRef;
+    const canvasMemory = (canvas.width * canvas.height * 4) / (1024 * 1024); // RGBA bytes to MB
+    totalMemoryMB += canvasMemory;
+  }
+}
+const bufferedMemoryMB = Math.round(totalMemoryMB * 100) / 100; // Round to 2 decimal places
 ```
 
 **Test**:
@@ -931,7 +943,7 @@ function createCanvasPool() {
       renderTask: null,
     };
   }
-  dx(`Created canvas buffer pool with ${CONFIG.maxCanvases} buffers`);
+  dx(`Created canvas buffer pool with ${CONFIG.canvasBuffersSize} buffers`);
 }
 ```
 
