@@ -1,6 +1,8 @@
 import type { App } from './App';
 import type { FileRead_t } from './OS';
 import type { PDFDoc } from './types/PDF_t';
+import type { PageSizeId_t, Orient_t, MarginId_t } from './types/PaperPrinter_t';
+import type { RenderOptions } from './types/PageRender_t';
 import {
   getSingletonHighlighter,
   bundledThemesInfo,
@@ -149,7 +151,7 @@ export class Stylize {
         themeExtensions = themeExtensions.filter(ext => filterRegex.test(ext.id));
       }
 
-      const themes: Theme[] = [];
+      const themesOut: Theme[] = [];
 
       for (const ext of themeExtensions) {
         // Get theme data for this extension
@@ -157,8 +159,8 @@ export class Stylize {
         if (!themeJson) continue;
 
         // Process each theme in the extension
-        const themes = Array.isArray(themeJson) ? themeJson : [themeJson];
-        for (const theme of themes) {
+        const themeJsons = Array.isArray(themeJson) ? themeJson : [themeJson];
+        for (const theme of themeJsons) {
           if (!theme.id) continue;
 
           // Resolve display name from NLS if available
@@ -188,7 +190,7 @@ export class Stylize {
                 colors: theme.colors as Record<string, string>,
                 tokenColors: theme.tokenColors as TokenColor[],
               });
-              themes.push({
+              themesOut.push({
                 id: theme.id,
                 displayName,
                 themeData,
@@ -204,14 +206,14 @@ export class Stylize {
 
       // Move current editor theme to the top
       const id = this.app.vscodeapis.getActiveThemeId();
-      const theme = themes.find(t => t.id === id);
+      const theme = themesOut.find(t => t.id === id);
 
       if (theme) {
         // Move active theme to the top
-        const index = themes.indexOf(theme);
+        const index = themesOut.indexOf(theme);
         if (index > 0) {
-          themes.splice(index, 1);
-          themes.unshift(theme);
+          themesOut.splice(index, 1);
+          themesOut.unshift(theme);
         }
       } else {
         // If editor theme not in list, add it at the top
@@ -224,7 +226,7 @@ export class Stylize {
               colors: themeJson.colors as Record<string, string>,
               tokenColors: themeJson.tokenColors as TokenColor[],
             });
-            themes.unshift({
+            themesOut.unshift({
               id,
               displayName: id,
               themeData,
@@ -237,209 +239,11 @@ export class Stylize {
         }
       }
 
-      return themes;
+      return themesOut;
     } catch (err) {
       this.dx.out(`ERROR:getVSCodeThemes: Failed to get themes: ${String(err)}`);
       return [];
     }
-  }
-
-  // Internal converter class for styleToPdf logic
-  private Converter_StyleToPdf = class {
-    private app: App;
-    private dx: Diagnostics;
-
-    constructor(app: App) {
-      this.app = app;
-      this.dx = app.stylize.dx.sub('Converter_StyleToPdf');
-    }
-
-    private determineTheme(opts?: { theme?: string }): string {
-      this.dx.out(`determineTheme called with opts: ${JSON.stringify(opts)}`);
-      if (opts?.theme) {
-        this.dx.out(`Using specified theme: ${opts.theme}`);
-        return this.resolveSpecifiedTheme(opts.theme);
-      } else {
-        this.dx.out(`No theme specified, using active theme`);
-        return this.resolveActiveTheme();
-      }
-    }
-
-    private resolveSpecifiedTheme(themeId: string): string {
-      const allThemes = this.app.stylize.getThemes();
-      this.dx.out(
-        `Resolving specified theme '${themeId}' from ${allThemes.length} available themes`
-      );
-      this.dx.out(`Available theme IDs: ${allThemes.map(t => t.id).join(', ')}`);
-
-      const themeData = allThemes.find(theme => theme.id === themeId);
-
-      if (!themeData) {
-        // Theme not found - fallback to active editor theme
-        this.app.ui.showErrorMessage(
-          `Theme '${themeId}' not found. Using active editor theme instead.`
-        );
-        return this.resolveActiveTheme();
-      }
-
-      this.dx.out(
-        `Found theme data for '${themeId}': themeData is ${themeData.themeData ? 'converted' : 'null (pure Shiki)'}`
-      );
-
-      if (themeData.themeData === null) {
-        // Pure Shiki theme - use ID directly
-        return themeData.id;
-      } else {
-        // Pre-converted VS Code theme - use the Shiki theme name
-        return themeData.themeData.name || themeData.id;
-      }
-    }
-
-    private resolveActiveTheme(): string {
-      const activeThemeId = this.app.vscodeapis.getActiveThemeId();
-      this.dx.out(`Resolving active theme '${activeThemeId}'`);
-
-      const themeData = this.app.stylize.getThemes().find(theme => theme.id === activeThemeId);
-
-      this.dx.out(
-        `Active theme found: ${!!themeData}, themeData is ${themeData?.themeData ? 'converted' : 'null (pure Shiki)'}`
-      );
-
-      if (themeData) {
-        if (themeData.themeData === null) {
-          // Pure Shiki theme - use ID directly
-          return themeData.id;
-        } else {
-          // Pre-converted VS Code theme - use the Shiki theme name
-          return themeData.themeData.name || themeData.id;
-        }
-      } else {
-        // Active theme not found - fallback to first available theme
-        this.app.ui.showErrorMessage(
-          `Active theme '${activeThemeId}' not found. Using first available theme instead.`
-        );
-        return this.getFallbackTheme();
-      }
-    }
-
-    private getFallbackTheme(): string {
-      const themes = this.app.stylize.getThemes();
-      this.dx.out(`Getting fallback theme from ${themes.length} available themes`);
-      if (themes.length === 0) {
-        this.app.ui.showErrorMessage(
-          'No themes available - cannot generate PDF. Please check your theme configuration.'
-        );
-        throw new Error('No themes available - cannot generate PDF');
-      }
-      this.dx.out(`Using fallback theme: ${themes[0].id}`);
-      return themes[0].id;
-    }
-
-    private async ensureHighlighterReady(languageId: LanguageId_t): Promise<void> {
-      await this.app.stylize.validateHighlighter(languageId);
-    }
-
-    private tokenizeCode(
-      code: string,
-      languageId: LanguageId_t,
-      selectedTheme: string
-    ): ThemedToken[][] {
-      this.dx.out(`tokenizeCode called with theme: '${selectedTheme}'`);
-      this.dx.out(`Highlighter exists: ${!!this.app.stylize.highlighter}`);
-
-      try {
-        const tokenResult = this.app.stylize.highlighter?.codeToTokens(code, {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          lang: languageId as any,
-          theme: selectedTheme,
-        });
-        this.dx.out(`tokenizeCode result: ${tokenResult ? 'success' : 'failed'}`);
-        return tokenResult?.tokens || [];
-      } catch (error) {
-        this.dx.out(`tokenizeCode error: ${error}`);
-        throw error;
-      }
-    }
-
-    private extractFontInfo(
-      selectedTheme: string,
-      opts?: { fontSize?: number; lineHeight?: number }
-    ): {
-      fontFamily: string;
-      fontSizePx: number;
-      lineHeightPx: number;
-    } {
-      const themeData = this.app.stylize.getThemes().find(theme => theme.id === selectedTheme);
-      const fontFamily = themeData ? this.app.stylize.getFontFamilyFromTheme(themeData) : 'courier';
-
-      const editorTypo = this.app.vscodeapis.getEditorTypography();
-      const fontSizePx = typeof opts?.fontSize === 'number' ? opts.fontSize : editorTypo.fontSize;
-      const lineHeightPx =
-        typeof opts?.lineHeight === 'number' ? opts.lineHeight : editorTypo.lineHeight;
-
-      return { fontFamily, fontSizePx, lineHeightPx };
-    }
-
-    private async generatePdfDocument(
-      tokens: ThemedToken[][],
-      fontInfo: { fontFamily: string; fontSizePx: number; lineHeightPx: number },
-      title?: string
-    ): Promise<PDFDoc> {
-      return await this.app.pdf.generatePdfFromTokens(
-        tokens,
-        fontInfo.fontFamily,
-        fontInfo.fontSizePx,
-        fontInfo.lineHeightPx,
-        title
-      );
-    }
-
-    async convert(
-      code: string,
-      languageId: LanguageId_t,
-      opts?: {
-        fontSize?: number;
-        lineHeight?: number;
-        title?: string;
-        theme?: string;
-        marginPts?: number;
-      }
-    ): Promise<PDFDoc> {
-      const dx = this.dx.sub('Converter_StyleToPdf');
-      dx.require({ code, languageId }, ['code', 'languageId']);
-
-      try {
-        const selectedTheme = this.determineTheme(opts);
-        await this.ensureHighlighterReady(languageId);
-        const tokens = this.tokenizeCode(code, languageId, selectedTheme);
-        const fontInfo = this.extractFontInfo(selectedTheme, opts);
-        const pdfDoc = await this.generatePdfDocument(tokens, fontInfo, opts?.title);
-
-        dx.out(`PDF document generated successfully`);
-        return pdfDoc;
-      } catch (error) {
-        dx.out(`Error generating PDF: ${error}`);
-        throw error;
-      } finally {
-        dx.done();
-      }
-    }
-  };
-
-  // NEW: Generate PDF directly from code using theme font and user size
-  async styleToPdf(
-    code: string,
-    languageId: LanguageId_t,
-    opts?: {
-      fontSize?: number;
-      lineHeight?: number;
-      title?: string;
-      theme?: string;
-      marginPts?: number;
-    }
-  ): Promise<PDFDoc> {
-    const converter = new this.Converter_StyleToPdf(this.app);
-    return converter.convert(code, languageId, opts);
   }
 
   // Simple tokenization without PDF generation - render one page at a time
@@ -464,35 +268,23 @@ export class Stylize {
       });
       const tokens = tokenResult?.tokens || [];
 
-      // Apply page range filtering if specified
-      let filteredTokens = tokens;
-      if (pageBegin !== undefined && pageEnd !== undefined) {
-        if (pageBegin === 0 && pageEnd === 0) {
-          // 0,0 means everything - no filtering
-          filteredTokens = tokens;
-        } else if (pageEnd === 0) {
-          // pageBegin,0 means just that page
-          filteredTokens = tokens.slice(pageBegin - 1, pageBegin);
-        } else {
-          // pageBegin,pageEnd means range
-          filteredTokens = tokens.slice(pageBegin - 1, pageEnd);
-        }
-      }
+      // Page-based filtering removed here; paging is handled by the renderer.
+      const filteredTokens = tokens;
 
       // Call per-line handler if provided
       if (optPerLineHandler) {
-        for (let pageNum = pageBegin || 1; pageNum <= (pageEnd || 1); pageNum++) {
-          for (let lineNum = 0; lineNum < filteredTokens.length; lineNum++) {
-            const line = filteredTokens[lineNum];
-            // Convert line tokens to HTML (simplified)
-            const htmlData = line
-              .map(
-                (token: ThemedToken) =>
-                  `<span style="color: ${token.color || '#000000'}">${token.content}</span>`
-              )
-              .join('');
-            optPerLineHandler(pageNum, lineNum, htmlData);
-          }
+        // Process each line once - the callback will handle page breaks internally
+        for (let lineNum = 0; lineNum < filteredTokens.length; lineNum++) {
+          const line = filteredTokens[lineNum];
+          // Convert line tokens to HTML (simplified)
+          const htmlData = line
+            .map(
+              (token: ThemedToken) =>
+                `<span style="color: ${token.color || '#000000'}">${token.content}</span>`
+            )
+            .join('');
+          // Pass pageNum as 1 since we're processing all lines sequentially
+          optPerLineHandler(1, lineNum, htmlData);
         }
       }
 

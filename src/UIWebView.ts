@@ -1,6 +1,6 @@
 import type { App } from './App';
 import type { PageRender } from './types/PageRender_t';
-import type { WebviewPanelId } from './VSCodeAPIs';
+import type { WebviewPanelId_t } from './VSCodeAPIs';
 import type { PostMessage } from './types/UI_t';
 import { UIScrollView, type ScrollOptions } from './UIScrollView';
 import { UIMenuMgr } from './UIMenuMgr';
@@ -16,7 +16,7 @@ export class UIWebView {
   private dx: Diagnostics;
   private currentViewer: UIScrollView | null = null;
   private menuMgr: UIMenuMgr | null = null;
-  private panelId: WebviewPanelId | null = null;
+  private panelId: WebviewPanelId_t | null = null;
   private initialized: boolean = false;
   private handlersRegistered: boolean = false;
 
@@ -32,7 +32,7 @@ export class UIWebView {
   /**
    * Create webview panel with menus and scroll view
    */
-  async createPanel(pageRender: PageRender, options: ScrollOptions): Promise<WebviewPanelId> {
+  async createPanel(pageRender: PageRender, options: ScrollOptions): Promise<WebviewPanelId_t> {
     const dx = this.dx.sub('createPanel');
     dx.require({ pageRender, options }, ['pageRender', 'options']);
 
@@ -85,38 +85,10 @@ export class UIWebView {
     const dx = this.dx.sub('preRenderInitialPages');
 
     try {
-      // Get total pages
-      const pageTotal = await pageRender.getPageTotal();
-
-      // Pre-render first 5 pages or total pages, whichever is smaller
-      const pagesToRender = Math.min(5, pageTotal);
-      dx.out(`Pre-rendering ${pagesToRender} of ${pageTotal} pages`);
-
-      // Render each page and send to webview
-      for (let pageNumber = 1; pageNumber <= pagesToRender; pageNumber++) {
-        try {
-          const pageData = await pageRender.renderPage(pageNumber, {
-            fontFamily: options.fontFamily || 'Courier New',
-            fontSize: options.fontSizePx || 12,
-            lineHeight: options.lineHeightPx || 18,
-            theme: options.theme || 'github-light',
-            pageSizeId: options.pageSizeId || 'a4',
-            orient: options.orient || 'portrait',
-          });
-
-          // Send rendered page to webview
-          if (this.panelId) {
-            this.app.vscodeapis.postMessage(this.panelId, {
-              type: 'pageRenderResponse',
-              pageData: pageData,
-            });
-          }
-
-          dx.out(`Pre-rendered page ${pageNumber}`);
-        } catch (error) {
-          dx.out(`Failed to pre-render page ${pageNumber}: ${String(error)}`);
-        }
-      }
+      // Pre-render is no longer needed with unified approach
+      // The complete PDF is generated during tokenization
+      dx.out(`Pre-render not needed with unified approach`);
+      return;
     } catch (error) {
       dx.out(`Pre-render failed: ${String(error)}`);
     } finally {
@@ -142,7 +114,7 @@ export class UIWebView {
   /**
    * Create scroll view with PageRender content (for external use)
    */
-  async createScrollView(pageRender: PageRender, options: ScrollOptions): Promise<WebviewPanelId> {
+  async createScrollView(pageRender: PageRender, options: ScrollOptions): Promise<WebviewPanelId_t> {
     const dx = this.dx.sub('createScrollView');
     dx.require({ pageRender, options }, ['pageRender', 'options']);
 
@@ -236,7 +208,7 @@ export class UIWebView {
   /**
    * Get current panel ID
    */
-  getPanelId(): WebviewPanelId | null {
+  getPanelId(): WebviewPanelId_t | null {
     return this.panelId;
   }
 
@@ -310,17 +282,22 @@ export class UIWebView {
    * Handle menu item selection message
    */
   private async handleMenuItemSelected(msg: PostMessage): Promise<void> {
-    const dx = this.dx.sub('handleMenuItemSelected');
+    const dx = this.dx.sub('handleMenuItemSelected', true /* debugOn */);
+    dx.out(`Received menuItemSelected message: ${JSON.stringify(msg)}`);
 
     try {
       const { menuId, itemId } = msg;
       if (typeof menuId === 'string' && typeof itemId === 'string') {
+        dx.out(`Processing menu selection: menuId=${menuId}, itemId=${itemId}`);
         // Validate both menuId and itemId before proceeding
         if (isMenuId(menuId) && isMenuItemId(itemId)) {
+          dx.out(`Validation passed, calling menuMgr.handleMenuItemSelected`);
           // Handle menu item selection through menu manager
           if (this.menuMgr) {
             await this.menuMgr.handleMenuItemSelected(menuId, itemId);
             dx.out(`Menu item selected: ${menuId}.${itemId}`);
+          } else {
+            dx.out(`ERROR: menuMgr is null!`);
           }
         } else {
           const msg = `Invalid menu selection: ${menuId}.${itemId}`;
@@ -328,6 +305,8 @@ export class UIWebView {
           this.app.ui.showErrorMessage(msg);
           return;
         }
+      } else {
+        dx.out(`Invalid message format: menuId=${typeof menuId}, itemId=${typeof itemId}`);
       }
     } finally {
       dx.done();
@@ -356,14 +335,14 @@ export class UIWebView {
    * Handle diagnostic message from webview
    */
   private async handleDxMessage(msg: PostMessage): Promise<void> {
-    const dx = this.dx.sub('dx', true /* debugOn */);
+    const dx = this.dx.sub('dx'); // Every message has start/done if we debugOn here, too noisy.
     dx.require({ msg }, ['msg']);
 
     // Output webview diagnostic message via dx.out (forced debug on)
     if (msg.message) {
-      dx.out(`[Webview] ${msg.message}`);
+      dx.print(`[Webview] > ${msg.message}`); // Equivalent of dx.out() with debugOn
     } else {
-      dx.out('Received dx message without message content');
+      dx.print('Received dx message without message content');
     }
     dx.done();
   }

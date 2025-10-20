@@ -2,8 +2,8 @@ import type { App } from './App';
 import { Diagnostics } from './Diagnostics';
 import { UIMenu, type MenuId_t, type HandleSelection_t, type UIMenuItem_t } from './UIMenu';
 import { UIWebView } from './UIWebView';
-import type { PDFDoc } from './types/PDF_t';
-import type { PageRender } from './types/PageRender_t';
+import { DocInfo_PDF } from './DocInfo_PDF';
+import type { PageRender, RenderOptions } from './types/PageRender_t';
 import { DocInfo_PaperPrinter } from './DocInfo_PaperPrinter';
 import type { LanguageId_t } from './Stylize';
 import type { Persist_t } from './Persist';
@@ -17,6 +17,11 @@ import {
   kOrient,
   kMarginId,
   kFontSizeId,
+  kPageSizeId_alt,
+  kOrient_alt,
+  kMarginId_alt,
+  kFontSizeId_alt,
+  kTheme_alt,
 } from './types/PaperPrinter_t';
 
 /**
@@ -47,7 +52,7 @@ export class PaperPrinter {
   } as const;
 
   private app: App;
-  private pdfDoc: PDFDoc | null = null; // In-memory PDF document (PDFDoc abstraction)
+  private pdfDoc: DocInfo_PDF | null = null; // In-memory PDF document (DocInfo_PDF abstraction)
   private uiwebview: UIWebView | null = null;
   private dx: Diagnostics;
   private _yaml: Yaml<typeof PaperPrinter.kYaml>;
@@ -79,7 +84,7 @@ export class PaperPrinter {
   get lineHeightPx(): number {
     const editorTypo = this.app.vscodeapis.getEditorTypography();
     const fontSizeId = this.app.uimenumgr.getValueForSelectedByMenuId('fontSizeId');
-    return parseInt(fontSizeId || '12', 10) * editorTypo.sizeToHeightRatio;
+    return parseInt(fontSizeId || kFontSizeId_alt, 10) * editorTypo.sizeToHeightRatio;
   }
 
   /**
@@ -89,8 +94,11 @@ export class PaperPrinter {
     const dx = this.dx.sub('handlePrintRequest');
 
     try {
-      if (!this.pdfDoc) return;
-      void (await this.generatePdf());
+      await this.generatePdf();
+      if (!this.pdfDoc) {
+        this.app.ui.showErrorMessage('Failed to generate PDF');
+        return;
+      }
 
       if (printType === 'preview')
         await this.app.pdf.printWithPreview(this.pdfDoc, this.docInfo.printTitle || 'Print Output');
@@ -170,7 +178,8 @@ export class PaperPrinter {
 
       // Construct PageRender implementation
       const pageRender: PageRender = {
-        renderPage: (pageNumber, options) => this.app.pdf.renderPage(pageNumber, options),
+        renderContent: (pageNumber, lineBegin, lineEnd, options) =>
+          this.app.pdf.renderContent(pageNumber, lineBegin, lineEnd, options),
         getPageTotal: () => this.app.pdf.getPageTotal(),
         getPageSizePx: () => this.app.pdf.getPageSizePx(),
       };
@@ -179,18 +188,17 @@ export class PaperPrinter {
       const options = {
         title: `Print: ${tabName}`,
         pageSizeId: (this.app.uimenumgr.getValueForSelectedByMenuId('pageSizeId') ||
-          'a4') as PageSizeId_t,
-        orient: (this.app.uimenumgr.getValueForSelectedByMenuId('orient') || 'portrait') as
+          kPageSizeId_alt) as PageSizeId_t,
+        orient: (this.app.uimenumgr.getValueForSelectedByMenuId('orient') || kOrient_alt) as
           | 'portrait'
           | 'landscape',
         fontFamily: this.getCurrentFontFamily(),
         fontSizePx: parseInt(
-          this.app.uimenumgr.getValueForSelectedByMenuId('fontSizeId') || '12',
+          this.app.uimenumgr.getValueForSelectedByMenuId('fontSizeId') || kFontSizeId_alt,
           10
         ),
         lineHeightPx: this.lineHeightPx,
-        theme: (this.app.uimenumgr.getValueForSelectedByMenuId('theme') ||
-          'github-light') as string,
+        theme: (this.app.uimenumgr.getValueForSelectedByMenuId('theme') || kTheme_alt) as string,
       };
 
       // Create webview and initialize message handlers
@@ -218,13 +226,53 @@ export class PaperPrinter {
   }
 
   private async generatePdf(): Promise<void> {
-    // Store the new PDF document
-    this.pdfDoc = await this.app.stylize.styleToPdf(this.docInfo.rawCode, this.docInfo.languageId, {
-      fontSize: parseInt(this.app.uimenumgr.getValueForSelectedByMenuId('fontSizeId') || '12', 10),
-      lineHeight: this.lineHeightPx,
-      title: this.docInfo.printTitle,
-      theme: (this.app.uimenumgr.getValueForSelectedByMenuId('theme') || 'github-light') as string,
-    });
+    const dx = this.dx.sub('generatePdf');
+
+    try {
+      // Get current settings
+      const fontSizeValue = this.app.uimenumgr.getValueForSelectedByMenuId('fontSizeId');
+      const fontSize = parseInt(fontSizeValue || kFontSizeId_alt, 10);
+      dx.out(`PDF GENERATION: Using font size ${fontSize}px`);
+      const theme = (this.app.uimenumgr.getValueForSelectedByMenuId('theme') ||
+        kTheme_alt) as string;
+      const pageSizeId = (this.app.uimenumgr.getValueForSelectedByMenuId('pageSizeId') ||
+        kPageSizeId_alt) as PageSizeId_t;
+      const orient = (this.app.uimenumgr.getValueForSelectedByMenuId('orient') || kOrient_alt) as
+        | 'portrait'
+        | 'landscape';
+      const marginId = (this.app.uimenumgr.getValueForSelectedByMenuId('marginId') ||
+        kMarginId_alt) as MarginId_t;
+
+      // Create render options
+      const options: RenderOptions = {
+        fontFamily: this.getCurrentFontFamily(),
+        fontSizePx: fontSize,
+        lineHeightPx: this.lineHeightPx,
+        theme,
+        pageSizeId,
+        orient,
+        marginId,
+      };
+
+      // Generate complete PDF during tokenization (unified approach)
+      dx.out(`Generating complete PDF with unified tokenize + build approach`);
+
+      // Generate the complete PDF in one pass
+      this.pdfDoc = await this.app.pdf.generatePdf(
+        this.docInfo.rawCode,
+        this.docInfo.languageId,
+        options
+      );
+
+      dx.out(
+        `PDF generation complete: ${this.pdfDoc.getNumberOfPages()} pages using unified approach`
+      );
+    } catch (error) {
+      dx.out(`Error in generatePdf: ${error}`);
+      throw error;
+    } finally {
+      dx.done();
+    }
   }
 
   // Create menus when needed for the webview
@@ -415,46 +463,56 @@ export class PaperPrinter {
   /**
    * Regenerate PDF and update webview after any option change
    * This is the ONLY place that should regenerate PDFs for menu changes
+   *
+   * IN-PLACE REGENERATION STRATEGY:
+   * 1. Invalidate all PDF caches and reset state
+   * 2. Regenerate the PDF from scratch with new settings
+   * 3. Update the webview's PageRender with new PDF
+   * 4. Send clearAllPages to force webview to reload all pages
+   *
+   * This avoids the jarring flash of closing/reopening the webview.
+   * The key fix: clearAllPages now clears db.pdfDocs cache in webview.
    */
   private async regenerateAndUpdateWebview(): Promise<void> {
-    const dx = this.dx.sub('regenerateAndUpdateWebview');
-
+    const dx = this.dx.sub('regenerateAndUpdateWebview', true /* debugOn */);
+    dx.out('Starting PDF regeneration...');
     try {
+      // Invalidate all PDF caches and reset state
+      this.app.pdf.invalidateAllCaches();
+      dx.out('PDF caches invalidated');
+
       // Regenerate PDF with current settings
       await this.generatePdf();
+      dx.out('PDF regeneration complete');
 
-      // Update PageRender with regenerated PDF
-      const pageRender: PageRender = {
-        renderPage: this.app.pdf.renderPage.bind(this.app.pdf),
-        getPageTotal: this.app.pdf.getPageTotal.bind(this.app.pdf),
-        getPageSizePx: this.app.pdf.getPageSizePx.bind(this.app.pdf),
-      };
-
-      // Update webview if it exists
+      // Update webview with new PDF and clear all cached pages
       if (this.uiwebview) {
-        try {
-          await this.uiwebview.updatePageRender(pageRender);
-          await this.uiwebview.updateOptions({
-            theme: (this.app.uimenumgr.getValueForSelectedByMenuId('theme') ||
-              'github-light') as string,
-            fontSizePx: parseInt(
-              this.app.uimenumgr.getValueForSelectedByMenuId('fontSizeId') || '12',
-              10
-            ),
-            lineHeightPx: this.lineHeightPx,
-            pageSizeId: (this.app.uimenumgr.getValueForSelectedByMenuId('pageSizeId') ||
-              'a4') as PageSizeId_t,
-            orient: (this.app.uimenumgr.getValueForSelectedByMenuId('orient') || 'portrait') as
-              | 'portrait'
-              | 'landscape',
-          });
-          dx.out('Webview updated with new configuration');
-        } catch (error) {
-          this.app.ui.showErrorMessage(`Failed to update webview: ${String(error)}`);
-        }
-      }
+        dx.out('Updating webview with new PDF...');
 
-      dx.out('PDF regenerated successfully');
+        // Update PageRender with regenerated PDF
+        const pageRender: PageRender = {
+          renderContent: this.app.pdf.renderContent.bind(this.app.pdf),
+          getPageTotal: this.app.pdf.getPageTotal.bind(this.app.pdf),
+          getPageSizePx: this.app.pdf.getPageSizePx.bind(this.app.pdf),
+        };
+
+        // Update webview with new PageRender
+        await this.uiwebview.updatePageRender(pageRender);
+
+        // Clear all pages and update page total
+        if (this.uiwebview.getPanelId()) {
+          const newPageTotal = await this.app.pdf.getPageTotal();
+          this.app.vscodeapis.postMessage(this.uiwebview.getPanelId()!, {
+            type: 'clearAllPages',
+            pageTotal: newPageTotal,
+          });
+          dx.out(`Sent clearAllPages with pageTotal=${newPageTotal} to webview`);
+        }
+
+        dx.out('Webview updated successfully');
+      } else {
+        dx.out('No webview to update');
+      }
     } catch (error) {
       dx.out(`Error regenerating PDF: ${error}`);
       throw error;
@@ -470,8 +528,8 @@ export class PaperPrinter {
     if (selectedId === UIMenu.defaultId()) {
       // Print menu has no default selection
     } else {
+      await this.generatePdf();
       if (!this.pdfDoc) return { id, value };
-      void (await this.generatePdf());
       if (selectedId === 'preview')
         await this.app.pdf.printWithPreview(this.pdfDoc, this.docInfo.printTitle || 'Print Output');
       else if (selectedId === 'direct')
@@ -505,10 +563,11 @@ export class PaperPrinter {
       const menu = this.app.uimenumgr.getMenuById('theme');
       menu.persist.theme = selectedId;
 
-      // Regenerate everything (fire and forget)
-      void this.regenerateAndUpdateWebview();
       id = selectedId;
       value = id; // value is the theme ID
+
+      // Regenerate everything (fire and forget)
+      void this.regenerateAndUpdateWebview();
     }
 
     dx.done();
@@ -516,7 +575,7 @@ export class PaperPrinter {
   }
 
   private async handleSelection_Text(selectedId: string): Promise<HandleSelection_t> {
-    const dx = this.dx.sub('handleSelection_Text');
+    const dx = this.dx.sub('handleSelection_Text', true /* debugOn */);
     dx.out(`selectedId = ${selectedId}`);
 
     let id = '';
@@ -532,16 +591,24 @@ export class PaperPrinter {
       // Update font size
       const fontSize = parseInt(selectedId, 10);
       if (!isNaN(fontSize)) {
-        dx.out(`updating fontSize to ${fontSize}`);
+        dx.out(`FONT SIZE: Changing to ${fontSize}px`);
         const menu = this.app.uimenumgr.getMenuById('fontSizeId');
         if (menu) {
           (menu.persist as Persist_t).fontSizeId = String(fontSize);
+          dx.out(`FONT SIZE: Set persist.fontSizeId to ${String(fontSize)}`);
+
+          // Verify the value was set
+          const verifyValue = this.app.uimenumgr.getValueForSelectedByMenuId('fontSizeId');
+          dx.out(
+            `FONT SIZE: Verification - getValueForSelectedByMenuId('fontSizeId') = ${verifyValue}`
+          );
         }
+
+        id = selectedId;
+        value = id; // value is the font size ID
 
         // Regenerate everything (fire and forget)
         void this.regenerateAndUpdateWebview();
-        id = selectedId;
-        value = id; // value is the font size ID
       }
     }
 
@@ -579,10 +646,11 @@ export class PaperPrinter {
         (menu.persist as Persist_t).pageSizeId = selectedId;
       }
 
-      // Regenerate everything (fire and forget)
-      void this.regenerateAndUpdateWebview();
       id = selectedId;
       value = id; // value is the page size ID
+
+      // Regenerate everything (fire and forget)
+      void this.regenerateAndUpdateWebview();
     }
 
     dx.done();
@@ -609,10 +677,11 @@ export class PaperPrinter {
         (menu.persist as Persist_t).orient = selectedId;
       }
 
-      // Regenerate everything (fire and forget)
-      void this.regenerateAndUpdateWebview();
       id = selectedId;
       value = id; // value is the orientation
+
+      // Regenerate everything (fire and forget)
+      void this.regenerateAndUpdateWebview();
     }
 
     dx.done();
@@ -640,10 +709,11 @@ export class PaperPrinter {
         (menu.persist as Persist_t).marginId = selectedId as MarginId_t;
       }
 
-      // Regenerate everything (fire and forget)
-      void this.regenerateAndUpdateWebview();
       id = selectedId;
       value = id; // value is the margin ID
+
+      // Regenerate everything (fire and forget)
+      void this.regenerateAndUpdateWebview();
     } else {
       id = defaultMarginId;
       value = id;

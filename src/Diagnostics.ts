@@ -26,6 +26,9 @@ export class Diagnostics {
   static separator = ' > ';
 
   private static _debugOn = false; // Root level debug state
+  private static _lastMessageContent = ''; // Store last message content for truncation
+  private static _lastMessagePrefix = '';  // Store last prefix for robust truncation
+  private static _messageCounter = 0; // Global message counter
 
   private _name: string = '';
   private name_lineage: string = '';
@@ -80,6 +83,15 @@ export class Diagnostics {
   create(name: string, debugOn?: boolean): Diagnostics {
     const dx = new Diagnostics(name, debugOn, null);
     return dx;
+  }
+
+  /**
+   * Reset static state for testing purposes
+   */
+  static reset(): void {
+    Diagnostics._lastMessageContent = '';
+    Diagnostics._lastMessagePrefix = '';
+    Diagnostics._messageCounter = 0;
   }
 
   /**
@@ -168,6 +180,10 @@ export class Diagnostics {
    * @returns Formatted message string
    */
   private messageHeader(message: MessageRef): string {
+    // Increment and wrap the global counter
+    Diagnostics._messageCounter = (Diagnostics._messageCounter + 1) % 10000;
+    const counter = String(Diagnostics._messageCounter).padStart(4, '0');
+
     const now = new Date();
     const year = now.getFullYear();
     const month = String(now.getMonth() + 1).padStart(2, '0');
@@ -176,7 +192,7 @@ export class Diagnostics {
     const minutes = String(now.getMinutes()).padStart(2, '0');
     const seconds = String(now.getSeconds()).padStart(2, '0');
     const milliseconds = String(now.getMilliseconds()).padStart(3, '0');
-    const ampm = hours >= 12 ? 'pm' : 'am';
+    const ampm = hours >= 12 ? 'p' : 'a';
     const displayHours = hours % 12 || 12;
 
     const timestamp = `${year}-${month}-${day} ${displayHours}:${minutes}:${seconds}.${milliseconds}${ampm}`;
@@ -184,7 +200,23 @@ export class Diagnostics {
     // Show full context: lineage > current name > message
     const formattedMessage =
       typeof message === 'string' ? message : JSON.stringify(message, null, 2);
-    return `[${timestamp}] ${this.name} > ${formattedMessage}`;
+    const sep = Diagnostics.separator;
+    const prefix = `${this.name}${sep}`;
+    const messageContent = `${prefix}${formattedMessage}`;
+
+    // Default to full message with timestamp
+    let result = `${counter} | ${timestamp} | ${messageContent}`;
+
+    // Truncate only when prefixes match exactly
+    if (Diagnostics._lastMessageContent && Diagnostics._lastMessagePrefix === prefix) {
+      const currentMessage = messageContent.slice(prefix.length).trim();
+      result = `${counter} | ${currentMessage}`;
+    }
+
+    // Store this message content and prefix as the last message
+    Diagnostics._lastMessageContent = messageContent;
+    Diagnostics._lastMessagePrefix = prefix;
+    return result;
   }
 
   /**
@@ -232,7 +264,7 @@ export class Diagnostics {
       // Access the private field through appropriate methods
       let currentValue: T;
       if (fieldName === '_name') {
-        currentValue = current.name as T;
+        currentValue = (current as unknown as { _name: T })._name;
       } else if (fieldName === '_debugOn') {
         currentValue = current.debugOn() as T;
       } else {

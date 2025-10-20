@@ -92,13 +92,10 @@ describe('Diagnostics', () => {
   });
 
   test('should format error messages correctly', () => {
-    const dx = new Diagnostics('TestClass');
-    const methodDx = dx.sub('testMethod');
-
+    // Reset static state to ensure clean test
+    Diagnostics.reset();
+    
     const args = { content: 'test' };
-
-    // Enable debug mode to see the output
-    methodDx.debugOn(true);
 
     // Capture console.log output to verify message format
     const originalLog = console.log;
@@ -106,6 +103,12 @@ describe('Diagnostics', () => {
     console.log = (...args: unknown[]) => {
       logOutput += args.map(a => String(a)).join(' ') + '\n';
     };
+
+    // Create Diagnostics instance after capturing console.log
+    const dx = new Diagnostics('TestClass');
+    const methodDx = dx.sub('testMethod');
+    // Enable debug mode to see the output
+    methodDx.debugOn(true);
 
     methodDx.require(args, ['content', 'missingKey']);
 

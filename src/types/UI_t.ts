@@ -1,3 +1,5 @@
+import type { PageRender } from './PageRender_t';
+
 export interface UIMenuItem {
   id: string;
   displayName: string;
@@ -17,7 +19,8 @@ export type PostMessage = {
     | 'updatePdf'
     | 'pageRenderResponse'
     | 'pageRenderError'
-    | 'clearAllPages';
+    | 'clearAllPages'
+    | 'updatePageTotal';
   clientX?: number;
   left?: number;
   startLeft?: number;
@@ -33,6 +36,8 @@ export type PostMessage = {
   itemId?: string; // For menu item selection
   printType?: string; // For print messages
   pdfDataUrl?: string; // For PDF updates
+  pageTotal?: number; // For page total updates
+  pageRender?: PageRender; // For PageRender updates
   pageData?: {
     dataUrl: string;
     widthPx: number;

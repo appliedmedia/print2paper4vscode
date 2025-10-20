@@ -1,7 +1,7 @@
 import type { App } from './App';
 import type { PageRender, PageData } from './types/PageRender_t';
-import type { WebviewPanelId } from './VSCodeAPIs';
-import type { PageSizeId_t, Orient_t } from './types/PaperPrinter_t';
+import type { WebviewPanelId_t } from './VSCodeAPIs';
+import type { PageSizeId_t, Orient_t, MarginId_t } from './types/PaperPrinter_t';
 import { Diagnostics } from './Diagnostics';
 import { Yaml } from './Yaml';
 
@@ -14,6 +14,7 @@ export interface ScrollOptions {
   fontSizePx?: number; // fontSize in pixels
   lineHeightPx?: number; // lineHeight in pixels
   theme?: string;
+  marginId?: MarginId_t;
 }
 
 /**
@@ -54,7 +55,7 @@ export class UIScrollView {
   private dx: Diagnostics;
   private pageCache: Map<number, PageData> = new Map();
   private renderQueue: Set<number> = new Set();
-  private panelId: WebviewPanelId | null = null;
+  private panelId: WebviewPanelId_t | null = null;
   private _yaml: Yaml<typeof UIScrollView.kYaml>;
 
   constructor(app: App, pageRender: PageRender, options: ScrollOptions) {
@@ -105,7 +106,7 @@ export class UIScrollView {
   /**
    * Set the panel ID after panel creation
    */
-  setPanelId(panelId: WebviewPanelId): void {
+  setPanelId(panelId: WebviewPanelId_t): void {
     this.panelId = panelId;
   }
 
@@ -139,10 +140,16 @@ export class UIScrollView {
       this.pageCache.clear();
       this.renderQueue.clear();
 
-      // Notify webview to clear all rendered pages
+      // Notify webview to clear all rendered pages and update page total
       if (this.panelId) {
         this.app.vscodeapis.postMessage(this.panelId, {
           type: 'clearAllPages',
+        });
+
+        // Trigger a full PDF reload
+        this.app.vscodeapis.postMessage(this.panelId, {
+          type: 'updatePdf',
+          pdfDataUrl: '', // Empty to trigger reload
         });
       }
 
@@ -180,14 +187,15 @@ export class UIScrollView {
       this.renderQueue.add(pageNumber);
 
       try {
-        // Render the page
-        const pageData = await this.pageRender.renderPage(pageNumber, {
+        // Render the page content (unified approach doesn't need line ranges)
+        const pageData = await this.pageRender.renderContent(pageNumber, 0, 0, {
           fontFamily: this.options.fontFamily || 'Courier New',
-          fontSize: this.options.fontSizePx || 12, // fontSize in pixels - will be converted to points in PDF generation
-          lineHeight: this.options.lineHeightPx || 18, // lineHeight in pixels - will be converted to points in PDF generation
+          fontSizePx: this.options.fontSizePx || 12, // fontSize in pixels - will be converted to points in PDF generation
+          lineHeightPx: this.options.lineHeightPx || 18, // lineHeight in pixels - will be converted to points in PDF generation
           theme: this.options.theme || 'github-light',
           pageSizeId: this.options.pageSizeId || 'a4',
           orient: this.options.orient || 'portrait',
+          marginId: this.options.marginId || 'normal',
         });
 
         // Cache the result
@@ -236,6 +244,12 @@ export class UIScrollView {
 
     try {
       // Load PDF.js library
+      // ⚠️ CRITICAL: PDF.js COORDINATE SYSTEM ⚠️
+      // PDF.js has TWO coordinate systems:
+      // - PDF Content Rendering: Bottom-left origin (standard PDF)
+      // - Viewer Interface/Canvas: Top-left origin (web standard)
+      // We use the VIEWER INTERFACE system for canvas rendering
+      // This matches jsPDF's coordinate system (top-left origin, Y increases downward)
       const pdfJsContent = this.app.os.fileRead('src/lib/pdf.min.js');
       dx.out(
         `PDF.js library loaded: ${pdfJsContent ? `${pdfJsContent.length} characters` : 'failed'}`
@@ -247,6 +261,8 @@ export class UIScrollView {
         TOTAL_PAGES: pageTotal.toString(), // Also provide TOTAL_PAGES for HTML template
         MAX_CANVASES: this.CONFIG.MAX_CANVAS_POOL_SIZE.toString(),
         SCROLL_DEBOUNCE_MS: this.CONFIG.SCROLL_DEBOUNCE_MS.toString(),
+        LOAD_DISTANCE: '2', // Pages distance to start loading canvas
+        UNLOAD_DISTANCE: '3', // Pages distance to unload canvas
         PAGE_WIDTH_PX: pageSizePx.widthPx.toString(),
         PAGE_HEIGHT_PX: pageSizePx.heightPx.toString(),
         TOOLBAR: await this.generateToolbarHTML(),

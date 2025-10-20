@@ -81,12 +81,15 @@ export class Persist {
     return this;
   }
 
-  async validateDefault(name: string, computeFn: () => Promise<PersistValue_t>): Promise<PersistValue_t> {
+  async validateDefault(
+    name: string,
+    computeFn: () => Promise<PersistValue_t>
+  ): Promise<PersistValue_t> {
     const existing = this.default[name];
     if (existing !== undefined) {
       return existing;
     }
-    
+
     const computed = await computeFn();
     this.default[name] = computed;
     return computed;

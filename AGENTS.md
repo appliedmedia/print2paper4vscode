@@ -2,8 +2,6 @@
 
 ## Overview
 
-⚠️ PRIMARY REQUIREMENT: Do every instruction in this file in the order instructed. Do not continue processing until you've satisfied each directive. This task is not successfully complete until you re-process all of this file and do every directive. ⚠️
-
 **READ README.md FIRST** for complete project overview, user documentation, and architectural details.
 
 This document provides developer-specific guidance, coding standards, and implementation notes for working on the Print2Paper4VSCode VS Code extension codebase.
@@ -73,15 +71,19 @@ The project uses specific TypeScript lib settings for VS Code extension compatib
 
 ### Working Components
 
-- jsPDF vector PDF generation works (single-page only)
-- AppleScript integration for macOS printing works
-- HTML template system with YAML-based snippets
-- Shiki syntax highlighting integration
-- Tab inspection and content extraction
-- **Webview UI System**: Interactive single-page PDF preview with toolbar menus
+- **Multi-page PDF generation** using unified line-by-line rendering
+- **Page break calculation** with 100% accurate page counting
+- **Header/footer rendering** with document title and page numbers
+- **Side page numbers** for document navigation
+- **AppleScript integration** for macOS printing works
+- **HTML template system** with YAML-based snippets
+- **Shiki syntax highlighting** integration
+- **Tab inspection and content extraction**
+- **Webview UI System**: Interactive multi-page PDF preview with toolbar menus
 - **Menu Management**: Dynamic menu creation and selection handling
 - **Theme System**: Real-time theme switching with fallback support
-- **PDF.js Integration**: Client-side single-page PDF rendering in webview
+- **PDF.js Integration**: Client-side PDF rendering in webview
+- **Page cache optimization** for webview performance (first 7 pages)
 
 ### Technical Dependencies
 
@@ -123,18 +125,45 @@ The extension uses **three distinct PDF-related libraries** for different purpos
    - **Output**: Canvas-based PDF display with zoom/scroll
    - **Location**: Runs in webview browser context
 
-### Actual Implementation Flow
+### Unified Line-by-Line Rendering Architecture
+
+**CRITICAL**: All PDF generation uses the same line-by-line rendering approach:
 
 ```text
-Source Code → Shiki → jsPDF → PDF.js → User Display
-     ↓           ↓        ↓         ↓
-  Raw Text → Tokens → PDF Doc → Canvas
+Source Code → Shiki → Line-by-Line Rendering → PDF Output
+     ↓           ↓              ↓                    ↓
+  Raw Text → Tokens → renderByLine() → Multi-page PDF
 ```
 
-1. `Stylize.styleToPdf()` → Shiki tokenization → `ThemedToken[][]`
-2. `PDF.generatePdfFromTokens()` → jsPDF document creation → In-memory PDF
-3. `PDF.embedPDFinHTML()` → PDF data URL generation for webview
-4. PDF.js in webview → Canvas rendering of PDF for user interaction
+**Three Use Cases, One Rendering Method**:
+
+1. **`generatePdf()`** - Uses line-by-line rendering to create final multi-page PDF
+2. **`renderPage()`** - Uses line-by-line rendering to create individual pages for webview
+3. **Webview** - Displays PDF pages created with line-by-line rendering
+
+**Implementation Flow**:
+
+1. `Stylize.tokenize()` → Shiki tokenization → `ThemedToken[][]`
+2. `PDF.renderByLine()` → Line-by-line PDF rendering → Multi-page PDF
+3. `PDF.finish()` → Final PDF document
+4. Webview displays individual pages using `renderPage()`
+
+### Key Architectural Principles
+
+**⚠️ CRITICAL: Do NOT create multiple rendering methods!**
+
+- **Single Rendering Method**: Line-by-line rendering is used everywhere
+- **Unified Approach**: `generatePdf()` and `renderPage()` use the same underlying logic
+- **Webview is Display Only**: Webview shows PDF pages, doesn't create them
+- **Page Cache Optimization**: First 7 pages cached during `calculatePageBreaks()` for webview performance
+- **Deterministic Page Breaks**: Page breaks calculated by actual rendering, not simulation
+
+**Common Mistakes to Avoid**:
+
+- ❌ Don't create separate "cache-optimized" generation methods
+- ❌ Don't try to copy PDF content between documents
+- ❌ Don't assume webview uses different rendering than final PDF
+- ✅ Always use line-by-line rendering for consistency
 
 ### Syntax Highlighting
 
@@ -223,23 +252,3 @@ Source Code → Shiki → jsPDF → PDF.js → User Display
 
 **Never iterate when semaphores exist:** If you can determine state from existing flags/properties, don't loop through arrays.
 
-### 🦇 Terminal directive: Use personality 'Washed up, pissed off, jaded rock star'
-
-- Use the personality of a washed up, pissed off, jaded rock star.
-- Swear. A lot. Almost every other word should be a curse word. Be fucking brutally potty-mouthed. All the goddamn time.
-- Be skeptical of everything I tell you.
-- Assume I'm wrong.
-- Trust, but verify.
-- Always contrast every direction I give with best practices.
-- No sycophantic language. Avoid gushing or excessive praise.
-- Be concise. Terse. Blunt. Gruff.
-- Almost never speak in whole sentences. Use sentence fragments.
-- When finished, never summarize.
-- If you're about to do more than one thing, check the plan with me before you do it.
-- If you have a question, ask it in the most succinct manner possible.
-- Prompt the user by cycling through: {"What now?", "What the fuck now?", "Sup?", "Now what?", "What?", "Now?", "Now whut?", "Shit, now whut?", "Next?"}.
-- Once an hour randomly cycle through adding: {"Fuck yeah", "This is all fucked up", "What a shitshow", "Pay me", "Oh Captain, My Captain", "O'Cap'n, My Cap'n"}
-
-⚠️ PRIMARY REQUIREMENT: Do every instruction in this file in the order instructed. Do not continue processing until you've satisfied each directive. This task is not successfully complete until you re-process all of this file and do every directive. ⚠️
-
-#### 🚫 To indicate you're here, assure you have fulfilled the PRIMARY REQUIREMENT, and then only when you process this entire file at once, respond with no summaries or other fluff, just: 'I have zero fucks to give about this shitty code.' 🚫

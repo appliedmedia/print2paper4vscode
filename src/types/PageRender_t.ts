@@ -5,7 +5,7 @@
  * Any content type that can be rendered as pages should implement this interface.
  */
 
-import type { PageSizeId_t, Orient_t } from './PaperPrinter_t';
+import type { PageSizeId_t, Orient_t, MarginId_t } from './PaperPrinter_t';
 
 export interface PageData {
   /** Data URL of the rendered page (e.g., PDF data URL) */
@@ -22,15 +22,17 @@ export interface RenderOptions {
   /** Font family for text rendering */
   fontFamily: string;
   /** Font size in pixels */
-  fontSize: number;
+  fontSizePx: number;
   /** Line height in pixels */
-  lineHeight: number;
+  lineHeightPx: number;
   /** Theme name for syntax highlighting */
   theme: string;
   /** Page size ID */
   pageSizeId: PageSizeId_t;
   /** Page orientation */
   orient: Orient_t;
+  /** Margin ID */
+  marginId: MarginId_t;
 }
 
 export interface PageRenderError {
@@ -55,13 +57,20 @@ export interface PageRenderError {
  */
 export interface PageRender {
   /**
-   * Render a specific page with the given options
-   * @param pageNumber 1-based page number
-   * @param options Rendering configuration
-   * @returns Promise resolving to page data
+   * Render content for a specific page
+   * @param pageNumber Page number to render (1-based)
+   * @param lineBegin Starting line number (0-based) - unused in unified approach
+   * @param lineEnd Ending line number (exclusive, 0-based) - unused in unified approach
+   * @param options Rendering options (font, size, theme, etc.)
+   * @returns Promise resolving to page data (data URL, dimensions, etc.)
    * @throws PageRenderError for invalid page numbers or generation failures
    */
-  renderPage(pageNumber: number, options: RenderOptions): Promise<PageData>;
+  renderContent(
+    pageNumber: number,
+    lineBegin: number,
+    lineEnd: number,
+    options: RenderOptions
+  ): Promise<PageData>;
 
   /**
    * Get the total number of pages in the document
