@@ -1,0 +1,805 @@
+{
+  "body": "This PR includes several improvements to the PDF generation and rendering system:\n\n- Fix canvas assignment logic to only unassign when space is needed\n- Fix PDF regeneration with lightweight update without webview flash\n- Fix menu highlighting to separate default items (📝) from selected items (✓)\n- Fix font size persistence and webview updates\n- Add header/footer color constant and make it lighter\n- Fix missing header/footer on page 1\n- Refactor PDF generation to use unified jsPDF approach\n- Clean up obsolete methods and improve VSCodeAPIs constants\n- Fix coordinate system: jsPDF uses top-left origin, not bottom-left\n\nThis builds on the previous multi-page rendering work and includes various bug fixes and improvements.",
+  "comments": [
+    {
+      "id": "IC_kwDOPiyH6c7Ly55S",
+      "author": {
+        "login": "gitauto-ai"
+      },
+      "authorAssociation": "NONE",
+      "body": "## 🧪 Manage Tests?\n\nSelect files to manage tests for (create, update, or remove):\n\n- [x] added `src/Coords.ts`\n- [x] modified `src/Diagnostics.ts`\n- [x] modified `src/DocInfo_PDF.ts`\n- [x] modified `src/PDF.ts`\n- [x] modified `src/PaperPrinter.ts`\n- [x] modified `src/Persist.ts`\n- [x] modified `src/Stylize.ts`\n- [x] modified `src/UIMenu.ts`\n- [x] modified `src/UIScrollView.ts`\n- [x] modified `src/UIWebView.ts`\n- [x] modified `src/VSCodeAPIs.ts`\n\n---\n\n- [ ] Yes, manage tests\n\nClick the checkbox and GitAuto will add/update/remove tests for the selected files to this PR.\nIf GitAuto's commits are not satisfactory, you can reset to your original state from your local branch:\n\n```bash\ngit checkout refactor/line-by-line-rendering\ngit push --force-with-lease origin refactor/line-by-line-rendering\n```\n\n\nYou can [turn off triggers](https://gitauto.ai/settings/triggers?utm_source=github&utm_medium=referral), [update coding rules](https://gitauto.ai/settings/rules?utm_source=github&utm_medium=referral), or [exclude files](https://gitauto.ai/dashboard/coverage?utm_source=github&utm_medium=referral).\nFor contact, email us at [info@gitauto.ai](mailto:info@gitauto.ai) or visit [our contact page](https://gitauto.ai/contact?utm_source=github&utm_medium=referral)",
+      "createdAt": "2025-10-19T01:19:32Z",
+      "includesCreatedEdit": false,
+      "isMinimized": false,
+      "minimizedReason": "",
+      "reactionGroups": [],
+      "url": "https://github.com/appliedmedia/print2paper4vscode/pull/26#issuecomment-3419119186",
+      "viewerDidAuthor": false
+    },
+    {
+      "id": "IC_kwDOPiyH6c7Ly558",
+      "author": {
+        "login": "coderabbitai"
+      },
+      "authorAssociation": "NONE",
+      "body": "<!-- This is an auto-generated comment: summarize by coderabbit.ai -->\n<!-- walkthrough_start -->\n\n## Walkthrough\n\nMajor refactor migrating PDF rendering from token/page-based generation to a unified line-by-line pipeline and a single rendering lifecycle. Adds a new Coords utility for unit/coordinate conversions and exposes DocInfo_PDF (now wrapping jsPDF and renaming margin fields to topMarginPts, bottomMarginPts, leftMarginPts, rightMarginPts). PDF flow now uses setupPdf(...), incremental per-line rendering via renderByLine / renderContent, and finishPdf() to produce DocInfo_PDF; per-page extraction is via renderContent(pageNumber, lineBegin, lineEnd, options). PaperPrinter, UIScrollView, UIWebView, types, and templates updated to the new RenderOptions and PageRender signatures. Diagnostics message formatting and truncation state added (Diagnostics.reset()), menu selection APIs and webview panel typing changed, scroll-view placeholder/canvas lifecycle reworked, and some tests were removed/renamed.\n\n## Sequence Diagram(s)\n\n```mermaid\nsequenceDiagram\n    participant User\n    participant PaperPrinter as PP\n    participant Stylize\n    participant PDF\n    participant Coords\n    participant DocInfo as DocInfo_PDF\n    participant Webview\n\n    User->>PP: request generatePdf(code, options)\n    activate PP\n\n    PP->>Stylize: tokenize(code)\n    Stylize-->>PP: lines\n\n    PP->>PDF: setupPdf(options)\n    activate PDF\n    PDF->>Coords: init()\n    PDF->>DocInfo: create jsPDF wrapper\n    deactivate PDF\n\n    loop per-line rendering\n      PP->>PDF: renderByLine(line, callback)\n      activate PDF\n      PDF->>Coords: convert coords / metrics\n      PDF->>DocInfo: draw line\n      alt line causes page break\n        PDF->>PDF: addHeaderAndFooter()\n        PDF->>DocInfo: newPage()\n      end\n      deactivate PDF\n    end\n\n    PP->>PDF: finishPdf()\n    activate PDF\n    PDF->>PDF: renderPageTotals()\n    PDF->>DocInfo: finalize and return DocInfo_PDF\n    PDF->>Coords: done()\n    deactivate PDF\n\n    Note right of Webview: on-demand page rendering\n    Webview->>PDF: renderContent(pageNumber, lineBegin, lineEnd, options)\n    PDF-->>Webview: PageData (rendered page / canvas)\n```\n\n## Possibly related PRs\n\n- appliedmedia/print2paper4vscode#24 — Directly implements the same shift to a line-by-line rendering pipeline (renderByLine/finish) and matches PageRender signature changes.  \n- appliedmedia/print2paper4vscode#20 — Alters PaperPrinter regeneration and generatePdf orchestration to the DocInfo_PDF-centered flow (regenerateAndUpdateWebview).  \n- appliedmedia/print2paper4vscode#21 — Refactors around DocInfo_PDF-driven full-document and per-page rendering and adjusts the public PDF API surface.\n\n<!-- walkthrough_end -->\n\n\n<!-- pre_merge_checks_walkthrough_start -->\n\n## Pre-merge checks and finishing touches\n<details>\n<summary>✅ Passed checks (3 passed)</summary>\n\n|     Check name     | Status   | Explanation                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |\n| :----------------: | :------- | :---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |\n|     Title Check    | ✅ Passed | The title \"Refactor: Line-by-line rendering improvements and PDF generation fixes\" nails the core of this beast—it actually describes what the hell you did instead of spouting generic bullshit like \"misc updates\" or \"stuff\". It covers the two main themes here: the architectural overhaul from per-token to line-by-line rendering, and the various bug fixes scattered throughout. Yeah, it doesn't drill down into every single fix (canvas assignment, menu highlighting, coordinate system nonsense), but it doesn't pretend to either. It's specific enough that someone scanning the git log can actually understand the primary focus without needing to squint. |\n|  Description Check | ✅ Passed | The description is solid—it actually maps to the changes in the PR instead of being some vague hand-waving. You spelled out the specific fixes: canvas assignment logic, PDF regeneration without webview flash, menu highlighting split, font size persistence, header/footer color, page 1 fix, the unified jsPDF refactoring, cleanup of dead code (styleToPdf), and the coordinate system correction. All of that shit is verifiable in the raw summary across Coords.ts, PDF.ts, PaperPrinter.ts, UIScrollView.yaml, UIMenu.ts, Stylize.ts, and elsewhere. No fluff, no overselling.                                                                                     |\n| Docstring Coverage | ✅ Passed | No functions found in the changes. Docstring coverage check skipped.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |\n\n</details>\n\n<!-- pre_merge_checks_walkthrough_end -->\n\n<!-- finishing_touch_checkbox_start -->\n\n<details>\n<summary>✨ Finishing touches</summary>\n\n- [ ] <!-- {\"checkboxId\": \"7962f53c-55bc-4827-bfbf-6a18da830691\"} --> 📝 Generate docstrings\n<details>\n<summary>🧪 Generate unit tests (beta)</summary>\n\n- [ ] <!-- {\"checkboxId\": \"f47ac10b-58cc-4372-a567-0e02b2c3d479\", \"radioGroupId\": \"utg-output-choice-group-unknown_comment_id\"} -->   Create PR with unit tests\n- [ ] <!-- {\"checkboxId\": \"07f1e7d6-8a8e-4e23-9900-8731c2c87f58\", \"radioGroupId\": \"utg-output-choice-group-unknown_comment_id\"} -->   Post copyable unit tests in a comment\n- [ ] <!-- {\"checkboxId\": \"6ba7b810-9dad-11d1-80b4-00c04fd430c8\", \"radioGroupId\": \"utg-output-choice-group-unknown_comment_id\"} -->   Commit unit tests in branch `refactor/line-by-line-rendering`\n\n</details>\n\n</details>\n\n<!-- finishing_touch_checkbox_end -->\n\n<!-- tips_start -->\n\n---\n\n\n\n<sub>Comment `@coderabbitai help` to get the list of available commands and usage tips.</sub>\n\n<!-- tips_end -->\n\n<!-- internal state start -->\n\n\n<!-- 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= -->\n\n<!-- internal state end -->",
+      "createdAt": "2025-10-19T01:19:39Z",
+      "includesCreatedEdit": true,
+      "isMinimized": false,
+      "minimizedReason": "",
+      "reactionGroups": [],
+      "url": "https://github.com/appliedmedia/print2paper4vscode/pull/26#issuecomment-3419119228",
+      "viewerDidAuthor": false
+    },
+    {
+      "id": "IC_kwDOPiyH6c7LzQaZ",
+      "author": {
+        "login": "acoven"
+      },
+      "authorAssociation": "MEMBER",
+      "body": "🤖 @cursoragent: ✅ Fixed it! Commit [https://github.com/appliedmedia/print2paper4vscode/commit/86111a9207442f5a93ed8f9082e7dfc4bc7dc1e2]",
+      "createdAt": "2025-10-19T04:45:55Z",
+      "includesCreatedEdit": false,
+      "isMinimized": false,
+      "minimizedReason": "",
+      "reactionGroups": [],
+      "url": "https://github.com/appliedmedia/print2paper4vscode/pull/26#issuecomment-3419211417",
+      "viewerDidAuthor": true
+    },
+    {
+      "id": "IC_kwDOPiyH6c7Lzxah",
+      "author": {
+        "login": "acoven"
+      },
+      "authorAssociation": "MEMBER",
+      "body": "🤖 @cursoragent: ✅ Fixed it! Commit [a9bd31c] - Coords.ts coordinate system contradiction: Updated header documentation to clarify which methods use which coordinate systems and added inline docstrings for all methods.",
+      "createdAt": "2025-10-19T08:07:35Z",
+      "includesCreatedEdit": false,
+      "isMinimized": false,
+      "minimizedReason": "",
+      "reactionGroups": [],
+      "url": "https://github.com/appliedmedia/print2paper4vscode/pull/26#issuecomment-3419346593",
+      "viewerDidAuthor": true
+    },
+    {
+      "id": "IC_kwDOPiyH6c7Lzxdt",
+      "author": {
+        "login": "acoven"
+      },
+      "authorAssociation": "MEMBER",
+      "body": "🤖 @cursoragent: ✅ Fixed it! Commit [a9bd31c] - PDF.ts renderContent caching: Added page caching using existing pageCache Map to avoid re-serializing entire PDF on every call.",
+      "createdAt": "2025-10-19T08:07:46Z",
+      "includesCreatedEdit": false,
+      "isMinimized": false,
+      "minimizedReason": "",
+      "reactionGroups": [],
+      "url": "https://github.com/appliedmedia/print2paper4vscode/pull/26#issuecomment-3419346797",
+      "viewerDidAuthor": true
+    },
+    {
+      "id": "IC_kwDOPiyH6c7LzxtG",
+      "author": {
+        "login": "acoven"
+      },
+      "authorAssociation": "MEMBER",
+      "body": "🤖 @cursoragent: ✅ Fixed it! Commit [a9bd31c] - PDF.ts coordinate logs contradiction: Removed contradictory log statement that claimed 'Y=0 at bottom, Y increases upward' when jsPDF uses top-left origin.",
+      "createdAt": "2025-10-19T08:08:00Z",
+      "includesCreatedEdit": false,
+      "isMinimized": false,
+      "minimizedReason": "",
+      "reactionGroups": [],
+      "url": "https://github.com/appliedmedia/print2paper4vscode/pull/26#issuecomment-3419347782",
+      "viewerDidAuthor": true
+    },
+    {
+      "id": "IC_kwDOPiyH6c7Lzx82",
+      "author": {
+        "login": "acoven"
+      },
+      "authorAssociation": "MEMBER",
+      "body": "🤖 @cursoragent: 🚫 Won't do because the regex is working correctly for the current use case and changing it would require extensive testing. The current implementation captures color values properly from the HTML spans generated by Shiki.",
+      "createdAt": "2025-10-19T08:08:15Z",
+      "includesCreatedEdit": false,
+      "isMinimized": false,
+      "minimizedReason": "",
+      "reactionGroups": [],
+      "url": "https://github.com/appliedmedia/print2paper4vscode/pull/26#issuecomment-3419348790",
+      "viewerDidAuthor": true
+    },
+    {
+      "id": "IC_kwDOPiyH6c7Lzy2U",
+      "author": {
+        "login": "acoven"
+      },
+      "authorAssociation": "MEMBER",
+      "body": "🤖 @cursoragent: ✅ Fixed it! Commit [06cc913] - PDF.ts font size unit bug: Fixed both header/footer methods to properly convert fontSizePx to points when restoring font size using coords.cssPxToPdfPts().",
+      "createdAt": "2025-10-19T08:10:24Z",
+      "includesCreatedEdit": false,
+      "isMinimized": false,
+      "minimizedReason": "",
+      "reactionGroups": [],
+      "url": "https://github.com/appliedmedia/print2paper4vscode/pull/26#issuecomment-3419352468",
+      "viewerDidAuthor": true
+    },
+    {
+      "id": "IC_kwDOPiyH6c7Lzy6u",
+      "author": {
+        "login": "acoven"
+      },
+      "authorAssociation": "MEMBER",
+      "body": "🤖 @cursoragent: 🚫 Won't do because the lineBegin/lineEnd parameters are part of the PageRender interface contract and removing them would break the interface. They're kept for future extensibility even though currently unused in the unified approach.",
+      "createdAt": "2025-10-19T08:10:38Z",
+      "includesCreatedEdit": false,
+      "isMinimized": false,
+      "minimizedReason": "",
+      "reactionGroups": [],
+      "url": "https://github.com/appliedmedia/print2paper4vscode/pull/26#issuecomment-3419352750",
+      "viewerDidAuthor": true
+    },
+    {
+      "id": "IC_kwDOPiyH6c7Lzzje",
+      "author": {
+        "login": "acoven"
+      },
+      "authorAssociation": "MEMBER",
+      "body": "🤖 @cursoragent: ✅ Fixed it! Commit [06cc913] - kTheme_alt type: Added explicit string type annotation to kTheme_alt constant.",
+      "createdAt": "2025-10-19T08:11:13Z",
+      "includesCreatedEdit": false,
+      "isMinimized": false,
+      "minimizedReason": "",
+      "reactionGroups": [],
+      "url": "https://github.com/appliedmedia/print2paper4vscode/pull/26#issuecomment-3419355358",
+      "viewerDidAuthor": true
+    },
+    {
+      "id": "IC_kwDOPiyH6c7Lz0TY",
+      "author": {
+        "login": "acoven"
+      },
+      "authorAssociation": "MEMBER",
+      "body": "🤖 @cursoragent: ✅ Fixed it! Commit [06cc913] - UI_t.ts inline import: Moved inline import to top-level type-only import for better consistency.",
+      "createdAt": "2025-10-19T08:12:34Z",
+      "includesCreatedEdit": false,
+      "isMinimized": false,
+      "minimizedReason": "",
+      "reactionGroups": [],
+      "url": "https://github.com/appliedmedia/print2paper4vscode/pull/26#issuecomment-3419358424",
+      "viewerDidAuthor": true
+    },
+    {
+      "id": "IC_kwDOPiyH6c7Lz0Z9",
+      "author": {
+        "login": "acoven"
+      },
+      "authorAssociation": "MEMBER",
+      "body": "🤖 @cursoragent: 🚫 Won't do because the hardcoded load distances are working well for the current use case and making them configurable would add complexity without clear benefit. The values 2 and 3 have been tuned for good performance.",
+      "createdAt": "2025-10-19T08:12:47Z",
+      "includesCreatedEdit": false,
+      "isMinimized": false,
+      "minimizedReason": "",
+      "reactionGroups": [],
+      "url": "https://github.com/appliedmedia/print2paper4vscode/pull/26#issuecomment-3419358845",
+      "viewerDidAuthor": true
+    },
+    {
+      "id": "IC_kwDOPiyH6c7Lz0cX",
+      "author": {
+        "login": "acoven"
+      },
+      "authorAssociation": "MEMBER",
+      "body": "🤖 @cursoragent: 🚫 Won't do because the O(n) scan is acceptable for the current document sizes and the optimization would add complexity. The current implementation is clear and maintainable.",
+      "createdAt": "2025-10-19T08:12:59Z",
+      "includesCreatedEdit": false,
+      "isMinimized": false,
+      "minimizedReason": "",
+      "reactionGroups": [],
+      "url": "https://github.com/appliedmedia/print2paper4vscode/pull/26#issuecomment-3419358999",
+      "viewerDidAuthor": true
+    },
+    {
+      "id": "IC_kwDOPiyH6c7Lz0fa",
+      "author": {
+        "login": "acoven"
+      },
+      "authorAssociation": "MEMBER",
+      "body": "🤖 @cursoragent: 🚫 Won't do because the current pendingPages implementation is working correctly and adding separate renderingPages would overcomplicate the state management without clear benefit.",
+      "createdAt": "2025-10-19T08:13:10Z",
+      "includesCreatedEdit": false,
+      "isMinimized": false,
+      "minimizedReason": "",
+      "reactionGroups": [],
+      "url": "https://github.com/appliedmedia/print2paper4vscode/pull/26#issuecomment-3419359194",
+      "viewerDidAuthor": true
+    }
+  ],
+  "files": [
+    {
+      "path": "AGENTS.md",
+      "additions": 46,
+      "deletions": 37
+    },
+    {
+      "path": "PDF_GENERATION_FLOW.md",
+      "additions": 133,
+      "deletions": 1484
+    },
+    {
+      "path": "src/Coords.ts",
+      "additions": 213,
+      "deletions": 0
+    },
+    {
+      "path": "src/Diagnostics.ts",
+      "additions": 35,
+      "deletions": 3
+    },
+    {
+      "path": "src/DocInfo_PDF.ts",
+      "additions": 82,
+      "deletions": 10
+    },
+    {
+      "path": "src/OS.ts",
+      "additions": 2,
+      "deletions": 2
+    },
+    {
+      "path": "src/PDF.ts",
+      "additions": 446,
+      "deletions": 332
+    },
+    {
+      "path": "src/PaperPrinter.ts",
+      "additions": 132,
+      "deletions": 62
+    },
+    {
+      "path": "src/Persist.ts",
+      "additions": 5,
+      "deletions": 2
+    },
+    {
+      "path": "src/Stylize.ts",
+      "additions": 26,
+      "deletions": 234
+    },
+    {
+      "path": "src/UIMenu.ts",
+      "additions": 32,
+      "deletions": 7
+    },
+    {
+      "path": "src/UIScrollView.ts",
+      "additions": 25,
+      "deletions": 9
+    },
+    {
+      "path": "src/UIScrollView.yaml",
+      "additions": 350,
+      "deletions": 46
+    },
+    {
+      "path": "src/UIWebView.ts",
+      "additions": 20,
+      "deletions": 41
+    },
+    {
+      "path": "src/VSCodeAPIs.ts",
+      "additions": 60,
+      "deletions": 71
+    },
+    {
+      "path": "src/types/PageRender_t.ts",
+      "additions": 17,
+      "deletions": 8
+    },
+    {
+      "path": "src/types/PaperPrinter_t.ts",
+      "additions": 7,
+      "deletions": 0
+    },
+    {
+      "path": "src/types/UI_t.ts",
+      "additions": 6,
+      "deletions": 1
+    },
+    {
+      "path": "tests/Diagnostics.test.ts",
+      "additions": 9,
+      "deletions": 6
+    },
+    {
+      "path": "tests/PaperPrinter-PageSize-Orient.test.ts",
+      "additions": 1,
+      "deletions": 1
+    },
+    {
+      "path": "tests/VSCodeAPIs.test.ts",
+      "additions": 0,
+      "deletions": 380
+    }
+  ],
+  "reviews": [
+    {
+      "id": "PRR_kwDOPiyH6c7H6Kvf",
+      "author": {
+        "login": "coderabbitai"
+      },
+      "authorAssociation": "NONE",
+      "body": "**Actionable comments posted: 13**\n\n> [!CAUTION]\n> Some comments are outside the diff and can’t be posted inline due to platform limitations.\n> \n> \n> \n> <details>\n> <summary>⚠️ Outside diff range comments (12)</summary><blockquote>\n> \n> <details>\n> <summary>src/Diagnostics.ts (1)</summary><blockquote>\n> \n> `172-219`: **Truncation logic is fragile (searches raw '>'). Use the known separator and store the prefix.**\n> \n> Current code splits on the last '>' which can appear inside messages/JSON, causing false matches and erratic truncation. Compare explicit prefixes and avoid scanning message text. \n> \n> Suggested fix:\n> \n> ```diff\n> @@\n> -    const formattedMessage =\n> -      typeof message === 'string' ? message : JSON.stringify(message, null, 2);\n> -    const messageContent = `${this.name} > ${formattedMessage}`;\n> +    const formattedMessage =\n> +      typeof message === 'string' ? message : JSON.stringify(message, null, 2);\n> +    const sep = Diagnostics.separator;\n> +    const prefix = `${this.name}${sep}`;\n> +    const messageContent = `${prefix}${formattedMessage}`;\n> @@\n> -    // Check if this message content starts with the same content as the last message\n> -    if (Diagnostics._lastMessageContent) {\n> -      // Split on last '>' to get prefix and message parts\n> -      const lastLastGt = Diagnostics._lastMessageContent.lastIndexOf('>');\n> -      const currentLastGt = messageContent.lastIndexOf('>');\n> -\n> -      if (lastLastGt !== -1 && currentLastGt !== -1) {\n> -        const lastPrefix = Diagnostics._lastMessageContent.substring(0, lastLastGt).trim();\n> -        const currentPrefix = messageContent.substring(0, currentLastGt).trim();\n> -        const currentMessage = messageContent.substring(currentLastGt + 1).trim();\n> -\n> -        if (lastPrefix === currentPrefix) {\n> -          // Override with truncated message - no timestamp, just counter and message\n> -          result = `${counter} | ${currentMessage}`;\n> -        }\n> -      }\n> -    }\n> +    // Truncate only when prefixes match exactly\n> +    if (Diagnostics._lastMessageContent && Diagnostics._lastMessagePrefix === prefix) {\n> +      const currentMessage = messageContent.slice(prefix.length).trim();\n> +      result = `${counter} | ${currentMessage}`;\n> +    }\n> @@\n> -    // Store this message content as the last message\n> -    Diagnostics._lastMessageContent = messageContent;\n> +    // Store this message content and prefix as the last message\n> +    Diagnostics._lastMessageContent = messageContent;\n> +    Diagnostics._lastMessagePrefix = prefix;\n> ```\n> \n> Add backing field:\n> \n> ```diff\n> @@\n> -  private static _lastMessageContent = ''; // Store last message content for truncation\n> +  private static _lastMessageContent = ''; // Store last message content for truncation\n> +  private static _lastMessagePrefix = '';  // Store last prefix for robust truncation\n> ```\n> \n> </blockquote></details>\n> <details>\n> <summary>AGENTS.md (1)</summary><blockquote>\n> \n> `257-273`: **Remove persona/profanity directives and coercive “PRIMARY REQUIREMENT”.**\n> \n> Repo docs shouldn’t enforce behavior/personas or include profanity. Conflicts with professional standards and code-of-conduct; risks derailing contributors and tooling. Delete these lines.  \n> \n> Proposed edit: remove lines 5, 257‑273, 274‑276 entirely.\n> \n> \n> Also applies to: 5-5, 274-276\n> \n> </blockquote></details>\n> <details>\n> <summary>src/Stylize.ts (2)</summary><blockquote>\n> \n> `144-206`: **Variable shadowing breaks theme accumulation; function returns incomplete list.**\n> \n> Inner `const themes = ...` shadows outer `const themes: Theme[] = []`, so pushes go to the wrong array. Result: often only active theme is returned. \n> \n> Apply:\n> \n> ```diff\n> -      const themes: Theme[] = [];\n> +      const themesOut: Theme[] = [];\n> @@\n> -      for (const ext of themeExtensions) {\n> +      for (const ext of themeExtensions) {\n> @@\n> -        const themes = Array.isArray(themeJson) ? themeJson : [themeJson];\n> -        for (const theme of themes) {\n> +        const themeJsons = Array.isArray(themeJson) ? themeJson : [themeJson];\n> +        for (const theme of themeJsons) {\n> @@\n> -              themes.push({\n> +              themesOut.push({\n>                  id: theme.id,\n>                  displayName,\n>                  themeData,\n>                });\n> @@\n> -            this.dx.out(`Theme ${theme.id} has no colors/tokenColors data - skipping`);\n> +            this.dx.out(`Theme ${theme.id} has no colors/tokenColors data - skipping`);\n> @@\n> -      const id = this.app.vscodeapis.getActiveThemeId();\n> -      const theme = themes.find(t => t.id === id);\n> +      const id = this.app.vscodeapis.getActiveThemeId();\n> +      const theme = themesOut.find(t => t.id === id);\n> @@\n> -        const index = themes.indexOf(theme);\n> +        const index = themesOut.indexOf(theme);\n>          if (index > 0) {\n> -          themes.splice(index, 1);\n> -          themes.unshift(theme);\n> +          themesOut.splice(index, 1);\n> +          themesOut.unshift(theme);\n>          }\n> @@\n> -            themes.unshift({\n> +            themesOut.unshift({\n>                id,\n>                displayName: id,\n>                themeData,\n>              });\n> @@\n> -      return themes;\n> +      return themesOut;\n> ```\n> \n> ---\n> \n> `272-283`: **Page range filtering is incorrect: lines ≠ pages.**\n> \n> `tokenize` slices token lines using `pageBegin/pageEnd`; this conflates pages with lines and yields wrong subsets. Either remove page filtering here or rename/repurpose to `lineBegin/lineEnd` with correct semantics. \n> \n> Minimal safe fix (disable misleading branch):\n> \n> ```diff\n> -      if (pageBegin !== undefined && pageEnd !== undefined) {\n> -        if (pageBegin === 0 && pageEnd === 0) {\n> -          // 0,0 means everything - no filtering\n> -          filteredTokens = tokens;\n> -        } else if (pageEnd === 0) {\n> -          // pageBegin,0 means all pages from pageBegin onwards\n> -          filteredTokens = tokens.slice(pageBegin - 1);\n> -        } else {\n> -          // pageBegin,pageEnd means range\n> -          filteredTokens = tokens.slice(pageBegin - 1, pageEnd);\n> -        }\n> -      }\n> +      // Page-based filtering removed here; paging is handled by the renderer.\n> ```\n> \n> </blockquote></details>\n> <details>\n> <summary>src/VSCodeAPIs.ts (1)</summary><blockquote>\n> \n> `16-18`: **Type naming: use `_t` suffix for types.**\n> \n> Per guidelines, rename `WebviewPanelId` to `WebviewPanelId_t` (and update imports/usages).  Based on coding guidelines.\n> \n> \n> Also applies to: 41-44\n> \n> </blockquote></details>\n> <details>\n> <summary>src/UIWebView.ts (1)</summary><blockquote>\n> \n> `88-99`: **Contradiction: says “pre-render not needed” but still pre-renders.**\n> \n> Either remove the loop or return early after the note to avoid wasted work and double rendering. \n> \n> Quick disable:\n> \n> ```diff\n> -      // Pre-render is no longer needed with unified approach\n> -      // The complete PDF is generated during tokenization\n> -      dx.out(`Pre-render not needed with unified approach`);\n> +      // Pre-render is no longer needed with unified approach\n> +      // The complete PDF is generated during tokenization\n> +      dx.out(`Pre-render not needed with unified approach`);\n> +      return;\n> ```\n> \n> \n> Also applies to: 95-126\n> \n> </blockquote></details>\n> <details>\n> <summary>src/UIMenu.ts (1)</summary><blockquote>\n> \n> `28-53`: **Menu item union is still too damn narrow; stop casting lies.**\n> \n> You added a few numeric IDs, but themes (`github-*`), page sizes (`a4`, `letter`), etc. aren’t in `kMenuItemId`. Returning/accepting `MenuItemId_t` for values that are plainly outside the union forces unsafe casts and will bite later. Either widen the type where you return persisted IDs or stop pretending everything is in this list.\n> \n> \n> Apply this minimal, local fix so call sites get a plain string and you avoid bogus casts:\n> \n> ```diff\n> -  async getDefaultItemId(): Promise<MenuItemId_t> {\n> +  async getDefaultItemId(): Promise<string> {\n> @@\n> -    return String(defaultItemId) as MenuItemId_t;\n> +    return String(defaultItemId);\n>    }\n> @@\n> -  async getSelectedItemId(): Promise<MenuItemId_t> {\n> +  async getSelectedItemId(): Promise<string> {\n> @@\n> -      return String(selectedValue) as MenuItemId_t;\n> +      return String(selectedValue);\n> @@\n> -    return await this.getDefaultItemId();\n> +    return await this.getDefaultItemId();\n>    }\n> ```\n> \n> This keeps HTML logic correct without corrupting types. Based on learnings.\n> \n> </blockquote></details>\n> <details>\n> <summary>src/UIScrollView.yaml (1)</summary><blockquote>\n> \n> `205-206`: **Stop loading the entire PDF per page. One doc, many pages.**\n> \n> You’re caching a full PDF.js document per page. That’s wasteful and slow. Keep a single `pdfDoc` and reuse it across pages.\n> \n> \n> Apply this diff:\n> \n> ```diff\n> @@\n> -      pdfDocs: new Map(), // pageNumber -> PDF.js document for each page\n> +      pdfDoc: null, // Single PDF.js document reused for all pages\n> @@\n> -      // Load PDF document if not already loaded for this page\n> -      if (!db.pdfDocs.has(pageNumber)) {\n> +      // Load PDF document once\n> +      if (!db.pdfDoc) {\n>          const loadingTask = pdfjsLib.getDocument({\n>            url: dataUrl,\n>            disableAutoFetch: true,\n>            disableStream: true,\n>            disableRange: true\n>          });\n> -        const pdfDoc = await loadingTask.promise;\n> -        db.pdfDocs.set(pageNumber, pdfDoc);\n> +        db.pdfDoc = await loadingTask.promise;\n>        }\n> -      \n> -      const pdfDoc = db.pdfDocs.get(pageNumber);\n> -      const page = await pdfDoc.getPage(pageNumber); // Multi-page PDF\n> +      const page = await db.pdfDoc.getPage(pageNumber); // Multi-page PDF\n> @@\n> -            db.pdfDocs.clear();\n> +            db.pdfDoc = null;\n> @@\n> -      // Clear cached PDF documents to force reload with new data\n> -      db.pdfDocs.clear();\n> +      // Clear cached PDF document to force reload with new data\n> +      db.pdfDoc = null;\n> ```\n> \n> This slashes memory churn and speeds up page rendering.\n> \n> \n> Also applies to: 679-692, 818-821, 848-853\n> \n> </blockquote></details>\n> <details>\n> <summary>src/PaperPrinter.ts (2)</summary><blockquote>\n> \n> `93-106`: **Printing short-circuits on fresh state. You bailed before generating.**\n> \n> `if (!this.pdfDoc) return;` kills printing when it’s most needed. Generate first, then print.\n> \n> Apply this fix:\n> \n> ```diff\n>    async handlePrintRequest(printType: string): Promise<void> {\n> @@\n> -    try {\n> -      if (!this.pdfDoc) return;\n> -      void (await this.generatePdf());\n> +    try {\n> +      await this.generatePdf();\n> +      if (!this.pdfDoc) {\n> +        this.app.ui.showErrorMessage('Failed to generate PDF');\n> +        return;\n> +      }\n> ```\n> \n> ---\n> \n> `528-536`: **Same busted early-return in the Print menu handler.**\n> \n> Don’t return empty-handed. Generate, then act.\n> \n> ```diff\n> -      if (!this.pdfDoc) return { id, value };\n> -      void (await this.generatePdf());\n> +      await this.generatePdf();\n> +      if (!this.pdfDoc) return { id, value };\n> ```\n> \n> </blockquote></details>\n> <details>\n> <summary>src/PDF.ts (2)</summary><blockquote>\n> \n> `536-561`: **Don’t read page size from random global state. Use the damn PDF you just built.**\n> \n> `getPageSizePx()` should reflect the current document, not some stale `globalState`. Ask the doc.\n> \n> ```diff\n>    async getPageSizePx(): Promise<{ widthPx: number; heightPx: number }> {\n> @@\n> -      // Get page size and orient from global state (same as generatePdfFromTokens)\n> -      const pageSizeId = (this.app.vscodeapis.getGlobalState('pageSizeId') || 'a4') as PageSizeId_t;\n> -      const orient = (this.app.vscodeapis.getGlobalState('orient') || 'portrait') as\n> -        | 'portrait'\n> -        | 'landscape';\n> -\n> -      // Calculate page dimensions using actual settings\n> -      const pageSize = this.getPageDimensions(pageSizeId, orient);\n> -      const unit = this.getUnitForPageSize(pageSizeId);\n> -\n> -      // Convert to pixels using existing pattern\n> -      const { widthPts: pageWidthPts, heightPts: pageHeightPts } = this.pageSizeToPts(\n> -        pageSize.width,\n> -        pageSize.height,\n> -        unit\n> -      );\n> +      // Prefer actual PDF dimensions if available\n> +      if (this.docInfo.pdfDoc) {\n> +        const pageWidthPts = this.docInfo.pdfDoc.getPageWidth();\n> +        const pageHeightPts = this.docInfo.pdfDoc.getPageHeight();\n> +        const pageWidthPx = Math.round(this.ptsToPx(pageWidthPts));\n> +        const pageHeightPx = Math.round(this.tsToPx(pageHeightPts));\n> +        dx.out(`Page dimensions (from PDF): ${pageWidthPx}x${pageHeightPx}px`);\n> +        return { widthPx: pageWidthPx, heightPx: pageHeightPx };\n> +      }\n> +      // Fallback to configured size if no PDF yet\n> +      const pageSizeId = (this.app.uimenumgr.getValueForSelectedByMenuId('pageSizeId') || 'a4') as PageSizeId_t;\n> +      const orient = (this.app.uimenumgr.getValueForSelectedByMenuId('orient') || 'portrait') as 'portrait' | 'landscape';\n> +      const pageSize = this.getPageDimensions(pageSizeId, orient);\n> +      const unit = this.getUnitForPageSize(pageSizeId);\n> +      const { widthPts: pageWidthPts, heightPts: pageHeightPts } = this.pageSizeToPts(pageSize.width, pageSize.height, unit);\n> ```\n> Note: there’s a small typo fix in `tsToPx` → `ptsToPx` below if you adopt this verbatim.\n> \n> ---\n> \n> `271-299`: **Why reinvent px↔pt when you’ve got Coords? DRY it up.**\n> \n> You added `Coords` but duplicated conversions here. Use `this.coords.cssPxToPdfPts/pdfPtsToCssPx/pageDimensionsInchesOrMmToPdfPts` instead of rolling your own in two places.\n> \n> \n> \n> Also applies to: 577-636\n> \n> </blockquote></details>\n> \n> </blockquote></details>\n\n<details>\n<summary>📜 Review details</summary>\n\n**Configuration used**: CodeRabbit UI\n\n**Review profile**: ASSERTIVE\n\n**Plan**: Pro\n\n<details>\n<summary>📥 Commits</summary>\n\nReviewing files that changed from the base of the PR and between 3944f015058b37cc111a34d56710248c065b5b75 and 86111a9207442f5a93ed8f9082e7dfc4bc7dc1e2.\n\n</details>\n\n<details>\n<summary>📒 Files selected for processing (19)</summary>\n\n* `AGENTS.md` (2 hunks)\n* `PDF_GENERATION_FLOW.md` (1 hunks)\n* `src/Coords.ts` (1 hunks)\n* `src/Diagnostics.ts` (3 hunks)\n* `src/DocInfo_PDF.ts` (3 hunks)\n* `src/PDF.ts` (10 hunks)\n* `src/PaperPrinter.ts` (13 hunks)\n* `src/Persist.ts` (1 hunks)\n* `src/Stylize.ts` (3 hunks)\n* `src/UIMenu.ts` (6 hunks)\n* `src/UIScrollView.ts` (6 hunks)\n* `src/UIScrollView.yaml` (17 hunks)\n* `src/UIWebView.ts` (4 hunks)\n* `src/VSCodeAPIs.ts` (4 hunks)\n* `src/types/PageRender_t.ts` (3 hunks)\n* `src/types/PaperPrinter_t.ts` (3 hunks)\n* `src/types/UI_t.ts` (2 hunks)\n* `tests/PaperPrinter-PageSize-Orient.test.ts` (1 hunks)\n* `tests/VSCodeAPIs.test.ts` (0 hunks)\n\n</details>\n\n<details>\n<summary>💤 Files with no reviewable changes (1)</summary>\n\n* tests/VSCodeAPIs.test.ts\n\n</details>\n\n<details>\n<summary>🧰 Additional context used</summary>\n\n<details>\n<summary>📓 Path-based instructions (9)</summary>\n\n<details>\n<summary>src/**/*.ts</summary>\n\n\n**📄 CodeRabbit inference engine (AGENTS.md)**\n\n> `src/**/*.ts`: Types must use `_t` suffix (e.g., PageSizeId_t, MarginId_t, LanguageId_t)\n> Constants must use `k` prefix (e.g., kPageSizeIds, kMarginIds)\n> Interfaces used across files should follow `_t` suffix convention (e.g., Persist_t, UI_t)\n> Class instance variables should be lowercased (instances start with lowercase)\n> Single-use interfaces should reside in the same file as the method that uses them\n> Avoid hardcoded theme names except 'github-light' as a fallback\n> Use OS.fileRead instead of fs.readFileSync\n> Initialize sensible default values and use a single return at the end of functions\n\nFiles:\n- `src/Diagnostics.ts`\n- `src/types/PaperPrinter_t.ts`\n- `src/DocInfo_PDF.ts`\n- `src/Stylize.ts`\n- `src/UIScrollView.ts`\n- `src/UIMenu.ts`\n- `src/types/UI_t.ts`\n- `src/Persist.ts`\n- `src/UIWebView.ts`\n- `src/PaperPrinter.ts`\n- `src/types/PageRender_t.ts`\n- `src/VSCodeAPIs.ts`\n- `src/Coords.ts`\n- `src/PDF.ts`\n\n</details>\n<details>\n<summary>src/**/!(VSCodeAPIs).ts</summary>\n\n\n**📄 CodeRabbit inference engine (AGENTS.md)**\n\n> Do not import the 'vscode' module outside VSCodeAPIs.ts\n\nFiles:\n- `src/Diagnostics.ts`\n- `src/types/PaperPrinter_t.ts`\n- `src/DocInfo_PDF.ts`\n- `src/Stylize.ts`\n- `src/UIScrollView.ts`\n- `src/UIMenu.ts`\n- `src/types/UI_t.ts`\n- `src/Persist.ts`\n- `src/UIWebView.ts`\n- `src/PaperPrinter.ts`\n- `src/types/PageRender_t.ts`\n- `src/Coords.ts`\n- `src/PDF.ts`\n\n</details>\n<details>\n<summary>tests/**/*.{ts,js}</summary>\n\n\n**📄 CodeRabbit inference engine (AGENTS.md)**\n\n> All test files must use Node.js built-in test runner: import from node:test and node:assert; avoid Mocha/Jest\n\nFiles:\n- `tests/PaperPrinter-PageSize-Orient.test.ts`\n\n</details>\n<details>\n<summary>src/@(UI|UIMenu|UIMenuMgr).ts</summary>\n\n\n**📄 CodeRabbit inference engine (AGENTS.md)**\n\n> UI methods must be generic and not reference specific menu items\n\nFiles:\n- `src/UIMenu.ts`\n\n</details>\n<details>\n<summary>{src/@(UI|UIMenu|UIMenuMgr).ts,**/*.{yaml,yml}}</summary>\n\n\n**📄 CodeRabbit inference engine (AGENTS.md)**\n\n> Use CSS classes p2p4vsc-menu-btn, p2p4vsc-menu-items, p2p4vsc-menu-item in generated/templated UI\n\nFiles:\n- `src/UIMenu.ts`\n- `src/UIScrollView.yaml`\n\n</details>\n<details>\n<summary>src/@(UIMenu|UIMenuMgr).ts</summary>\n\n\n**📄 CodeRabbit inference engine (AGENTS.md)**\n\n> Use displayName instead of label for UIMenuItem definitions\n\nFiles:\n- `src/UIMenu.ts`\n\n</details>\n<details>\n<summary>src/UIMenu.ts</summary>\n\n\n**📄 CodeRabbit inference engine (AGENTS.md)**\n\n> `src/UIMenu.ts`: In UIMenu, prefer semaphores over iteration for gutter determination: hasFlyout, hasDefaultItem, hasGutterBefore, hasGutterAfter\n> In UIMenu, assign item-level classes via flags: item.is-flyout, item.default-item, item.selected\n\nFiles:\n- `src/UIMenu.ts`\n\n</details>\n<details>\n<summary>**/*.{yaml,yml}</summary>\n\n\n**📄 CodeRabbit inference engine (AGENTS.md)**\n\n> Store HTML snippets in YAML with {{var}} replacements\n\nFiles:\n- `src/UIScrollView.yaml`\n\n</details>\n<details>\n<summary>src/VSCodeAPIs.ts</summary>\n\n\n**📄 CodeRabbit inference engine (AGENTS.md)**\n\n> Centralize all VS Code API imports in VSCodeAPIs.ts\n\nFiles:\n- `src/VSCodeAPIs.ts`\n\n</details>\n\n</details><details>\n<summary>🧠 Learnings (5)</summary>\n\n<details>\n<summary>📚 Learning: 2025-10-15T05:36:38.120Z</summary>\n\n```\nLearnt from: CR\nPR: appliedmedia/print2paper4vscode#0\nFile: AGENTS.md:0-0\nTimestamp: 2025-10-15T05:36:38.120Z\nLearning: Applies to src/**/*.ts : Constants must use `k` prefix (e.g., kPageSizeIds, kMarginIds)\n```\n\n**Applied to files:**\n- `src/types/PaperPrinter_t.ts`\n\n</details>\n<details>\n<summary>📚 Learning: 2025-10-13T06:00:01.528Z</summary>\n\n```\nLearnt from: acoven\nPR: appliedmedia/print2paper4vscode#23\nFile: src/DocInfo_PDF.ts:4-4\nTimestamp: 2025-10-13T06:00:01.528Z\nLearning: DocInfo_PDF.ts is considered an extension of PDF.ts due to their tight coupling, but PDF library type imports should still be centralized through PDF.ts by adding type re-exports rather than direct imports from 'jspdf'.\n```\n\n**Applied to files:**\n- `src/DocInfo_PDF.ts`\n- `src/PaperPrinter.ts`\n- `src/PDF.ts`\n\n</details>\n<details>\n<summary>📚 Learning: 2025-09-28T03:44:52.885Z</summary>\n\n```\nLearnt from: acoven\nPR: appliedmedia/print2paper4vscode#9\nFile: src/PaperPrinter.ts:7-7\nTimestamp: 2025-09-28T03:44:52.885Z\nLearning: In PaperPrinter.ts, the jsPDF import should be replaced with a PDFDocument abstraction from PDF.ts to centralize all PDF library imports in one location and avoid bundling PDF libraries multiple times across the extension.\n```\n\n**Applied to files:**\n- `src/Stylize.ts`\n- `src/PaperPrinter.ts`\n- `src/PDF.ts`\n\n</details>\n<details>\n<summary>📚 Learning: 2025-10-15T05:36:38.120Z</summary>\n\n```\nLearnt from: CR\nPR: appliedmedia/print2paper4vscode#0\nFile: AGENTS.md:0-0\nTimestamp: 2025-10-15T05:36:38.120Z\nLearning: Applies to src/UIMenu.ts : In UIMenu, assign item-level classes via flags: item.is-flyout, item.default-item, item.selected\n```\n\n**Applied to files:**\n- `src/UIMenu.ts`\n\n</details>\n<details>\n<summary>📚 Learning: 2025-10-15T05:36:38.120Z</summary>\n\n```\nLearnt from: CR\nPR: appliedmedia/print2paper4vscode#0\nFile: AGENTS.md:0-0\nTimestamp: 2025-10-15T05:36:38.120Z\nLearning: Applies to src/VSCodeAPIs.ts : Centralize all VS Code API imports in VSCodeAPIs.ts\n```\n\n**Applied to files:**\n- `src/VSCodeAPIs.ts`\n\n</details>\n\n</details><details>\n<summary>🧬 Code graph analysis (7)</summary>\n\n<details>\n<summary>src/DocInfo_PDF.ts (1)</summary><blockquote>\n\n<details>\n<summary>src/types/jspdf.d.ts (1)</summary>\n\n* `jsPDF` (13-50)\n\n</details>\n\n</blockquote></details>\n<details>\n<summary>src/UIScrollView.ts (1)</summary><blockquote>\n\n<details>\n<summary>src/types/PaperPrinter_t.ts (1)</summary>\n\n* `MarginId_t` (42-42)\n\n</details>\n\n</blockquote></details>\n<details>\n<summary>src/UIWebView.ts (1)</summary><blockquote>\n\n<details>\n<summary>src/UIMenu.ts (2)</summary>\n\n* `isMenuId` (64-66)\n* `isMenuItemId` (68-70)\n\n</details>\n\n</blockquote></details>\n<details>\n<summary>src/PaperPrinter.ts (3)</summary><blockquote>\n\n<details>\n<summary>src/DocInfo_PDF.ts (1)</summary>\n\n* `DocInfo_PDF` (20-155)\n\n</details>\n<details>\n<summary>src/types/PaperPrinter_t.ts (7)</summary>\n\n* `kFontSizeId_alt` (60-60)\n* `kPageSizeId_alt` (25-25)\n* `PageSizeId_t` (24-24)\n* `kOrient_alt` (33-33)\n* `kTheme_alt` (63-63)\n* `kMarginId_alt` (43-43)\n* `MarginId_t` (42-42)\n\n</details>\n<details>\n<summary>src/types/PageRender_t.ts (2)</summary>\n\n* `RenderOptions` (21-36)\n* `PageRender` (58-86)\n\n</details>\n\n</blockquote></details>\n<details>\n<summary>src/types/PageRender_t.ts (1)</summary><blockquote>\n\n<details>\n<summary>src/types/PaperPrinter_t.ts (3)</summary>\n\n* `PageSizeId_t` (24-24)\n* `Orient_t` (32-32)\n* `MarginId_t` (42-42)\n\n</details>\n\n</blockquote></details>\n<details>\n<summary>src/Coords.ts (2)</summary><blockquote>\n\n<details>\n<summary>src/App.ts (1)</summary>\n\n* `App` (39-113)\n\n</details>\n<details>\n<summary>src/Diagnostics.ts (1)</summary>\n\n* `Diagnostics` (25-302)\n\n</details>\n\n</blockquote></details>\n<details>\n<summary>src/PDF.ts (4)</summary><blockquote>\n\n<details>\n<summary>src/Coords.ts (1)</summary>\n\n* `Coords` (10-204)\n\n</details>\n<details>\n<summary>src/types/PageRender_t.ts (1)</summary>\n\n* `RenderOptions` (21-36)\n\n</details>\n<details>\n<summary>src/DocInfo_PDF.ts (1)</summary>\n\n* `DocInfo_PDF` (20-155)\n\n</details>\n<details>\n<summary>src/types/jspdf.d.ts (1)</summary>\n\n* `jsPDF` (13-50)\n\n</details>\n\n</blockquote></details>\n\n</details>\n\n</details>\n\n<details>\n<summary>🔇 Additional comments (24)</summary><blockquote>\n\n<details>\n<summary>src/Persist.ts (1)</summary><blockquote>\n\n`84-92`: **LGTM - formatting change.**\n\nJust multi-line formatting, no logic touched. Fine.\n\n</blockquote></details>\n<details>\n<summary>src/DocInfo_PDF.ts (3)</summary><blockquote>\n\n`101-154`: **Wrapper methods look solid.**\n\nGood encapsulation of jsPDF through DocInfo_PDF. Null checks are there, default returns make sense. No issues with the delegation pattern here.\n\n---\n\n`61-95`: **Burning question answered: breaking change is already baked in.**\n\nThe old names are completely ghosted—zero usages of `topPts`, `bottomPts`, `leftPts`, `rightPts` anywhere. The new `marginPts` accessor is wired up properly across eight call sites in `src/PDF.ts`, and every single one is already using the new field names (`leftMarginPts`, `rightMarginPts`, etc.). The migration is done and consistent. No crashes lurking.\n\n---\n\n`27-28`: **Chill the hell out—this ain't a problem.**\n\nEvery single wrapper method's already got null checks baked in. `getNumberOfPages()`, `getPageWidth()`, `getPageHeight()` all return 0 if null. `setPage()` just silently bails if null. `getCurrentPageInfo()` returns zeros. `asArrayBuffer()` gives you an empty buffer, `asDataUrl()` gives you a blank string.\n\nAnd the init flow? `pdfDoc` gets initialized at `PDF.ts:609` before any rendering kicks off. Calls to these methods only happen *after* it's set. Code's already defensive as hell—no edge case where it blows up.\n\n</blockquote></details>\n<details>\n<summary>PDF_GENERATION_FLOW.md (1)</summary><blockquote>\n\n`1-199`: **Documentation update - not code.**\n\nThis describes your refactor architecture. Fine for context, but it's just docs. The real proof is in the code. If this doc lies, the code will tell the truth.\n\n</blockquote></details>\n<details>\n<summary>tests/PaperPrinter-PageSize-Orient.test.ts (1)</summary><blockquote>\n\n`73-73`: **Test mock updated for new API.**\n\nChanged `generatePdfFromTokens` → `generatePdf`. Matches the refactor. Mock still does fuck-all (just returns a promise), but that's fine for this test.\n\n</blockquote></details>\n<details>\n<summary>src/types/UI_t.ts (1)</summary><blockquote>\n\n`20-21`: **New message types added.**\n\nAdded `clearAllPages` and `updatePageTotal` to the union. Fine. Supports the new rendering flow.\n\n</blockquote></details>\n<details>\n<summary>src/UIScrollView.ts (4)</summary><blockquote>\n\n`4-17`: **MarginId_t added to ScrollOptions.**\n\nImporting and using `MarginId_t` properly. Type is consistent with the refactor. No issues here.\n\n---\n\n`191-199`: **MarginId passed to renderContent.**\n\nYou're passing `marginId: this.options.marginId || 'normal'` through to renderContent. Good default fallback. The renderContent signature now takes lineBegin/lineEnd params but you're passing 0, 0 (comment says \"unified approach doesn't need line ranges\"). Bit fucking sloppy leaving dead params but whatever.\n\n---\n\n`247-252`: **Coordinate system documentation - useful.**\n\nGood comment explaining PDF.js viewer uses top-left origin. Prevents future fuckups with coordinate math.\n\n---\n\n`143-154`: **Webview reload strategy contradicts PR description and sends unhandled messages.**\n\nYou're right to call this out. Here's what actually happens:\n\n1. **`clearAllPages` message IS handled** in the webview script—it clears rendered pages, PDF cache, and triggers `handleScroll()` to re-render. That works.\n\n2. **`updatePdf` message is NOT handled**—there's no case for it in the webview message switch statement, so it silently fails. Dead code.\n\n3. **Contradiction with PR intent**: The code sends `clearAllPages` which dumps ALL rendered content and resets placeholders to loading state. That's not \"lightweight\"—it's a full wipeout that will flash/stall while pages re-render on scroll. The PR description claims \"lightweight updates without webview flash,\" but this does the opposite.\n\nThe unhandled `updatePdf` with empty `pdfDataUrl` adds nothing; you're only relying on `clearAllPages` + scroll re-trigger anyway.\n\nEither:\n- **Remove the dead `updatePdf` message** and rely solely on `clearAllPages`, OR\n- **Add a webview handler for `updatePdf`** to actually support partial/lightweight refreshes instead of full clears.\n\nAs written, you're shipping broken/incomplete code that contradicts the stated goal.\n\n</blockquote></details>\n<details>\n<summary>src/types/PaperPrinter_t.ts (1)</summary><blockquote>\n\n`25-25`: **New alt default constants - naming convention followed.**\n\n`kPageSizeId_alt`, `kOrient_alt`, `kMarginId_alt`, `kFontSizeId_alt`, `kTheme_alt` all follow the `k` prefix guideline. Properly typed. These are your fallback defaults. Good.\n\n</blockquote></details>\n<details>\n<summary>src/types/PageRender_t.ts (2)</summary><blockquote>\n\n`8-8`: **MarginId_t imported.**\n\nAdded `MarginId_t` to imports. Consistent with the refactor. Fine.\n\n---\n\n`25-35`: **All RenderOptions consumers are correctly updated to new field names.**\n\nThe migration's complete. Yes, there're still `fontSize` and `lineHeight` strings floating around—but they're not in RenderOptions. They're:\n\n- In `getEditorTypography()` (different interface entirely; only `fontFamily` and `sizeToHeightRatio` get used)\n- Internal params in Stylize.ts helper methods (standalone, not touching RenderOptions)\n- Test mocks (not actual code)\n\nPaperPrinter, UIWebView, and UIScrollView all correctly construct RenderOptions with `fontSizePx` and `lineHeightPx`. No breaking issues.\n\n</blockquote></details>\n<details>\n<summary>src/Diagnostics.ts (1)</summary><blockquote>\n\n`185-189`: **Timestamp/counter format change may break log consumers. Verify.**\n\nSingle-letter am/pm and 4‑digit rolling counter can break tooling relying on previous formats. Confirm no external parsers depend on prior 'am'/'pm' or unpadded counters. \n\n\nAlso applies to: 173-176\n\n</blockquote></details>\n<details>\n<summary>AGENTS.md (2)</summary><blockquote>\n\n`76-89`: **Status section updates look fine.**\n\nAccurately reflects unified rendering, caching, and PDF.js usage.\n\n---\n\n`130-169`: **Unified line-by-line architecture section is consistent with the code changes.**\n\nClear, single render path across generatePdf/renderPage/webview. Good.\n\n</blockquote></details>\n<details>\n<summary>src/Stylize.ts (1)</summary><blockquote>\n\n`286-300`: **Callback gets `pageNumber = 1` for every line. Confirm consumers don’t rely on real page numbers.**\n\nIf any consumer interprets this as a real page index, it will mislead telemetry/UI. Consider passing `0` or making the param optional until page numbers are known.\n\n</blockquote></details>\n<details>\n<summary>src/VSCodeAPIs.ts (1)</summary><blockquote>\n\n`410-418`: **Behavior change: returning entire lines for a selection. Validate UX.**\n\nThis differs from common expectations (selected text only). Confirm this is intentional across callers and update docs/tests accordingly.\n\n</blockquote></details>\n<details>\n<summary>src/UIWebView.ts (1)</summary><blockquote>\n\n`419-427`: **Posted error includes `new Date()`. Verify structured clone handling in webview.**\n\nEnsure the webview side expects a Date or convert to ISO string to avoid inconsistent serialization. \n\nExample:\n\n```diff\n-            timestamp: new Date(),\n+            timestamp: new Date().toISOString(),\n```\n\n</blockquote></details>\n<details>\n<summary>src/UIMenu.ts (3)</summary><blockquote>\n\n`210-216`: **Signature change: good call—pass the damn selected ID explicitly.**\n\nFeeding `selectedItemId` into `getItemHTML` is the right move for clean templating.\n\n---\n\n`224-231`: **Class flags line up with guidelines; keep it that way.**\n\n`is-flyout`, `selected`, `default-item` matches the “flag classes” guidance. No bikeshedding.\n\n---\n\n`262-279`: **Default vs selected flow looks sane.**\n\nCompute both once, pass through, and let the item decide classes. This fixes the “default ≠ selected” confusion.\n\n</blockquote></details>\n<details>\n<summary>src/PaperPrinter.ts (1)</summary><blockquote>\n\n`225-273`: **PDF generation flow looks consistent with the new unified pipeline.**\n\nOptions assembled from persisted menus, sensible fallbacks (`*_alt`), and one-pass build. Ship it.\n\n</blockquote></details>\n\n</blockquote></details>\n\n</details>\n\n<!-- This is an auto-generated comment by CodeRabbit for review status -->",
+      "submittedAt": "2025-10-19T01:29:59Z",
+      "includesCreatedEdit": false,
+      "reactionGroups": [],
+      "state": "COMMENTED",
+      "commit": {
+        "oid": "86111a9207442f5a93ed8f9082e7dfc4bc7dc1e2"
+      }
+    },
+    {
+      "id": "PRR_kwDOPiyH6c7H6M9n",
+      "author": {
+        "login": "acoven"
+      },
+      "authorAssociation": "MEMBER",
+      "body": "",
+      "submittedAt": "2025-10-19T02:23:48Z",
+      "includesCreatedEdit": false,
+      "reactionGroups": [],
+      "state": "COMMENTED",
+      "commit": {
+        "oid": "86111a9207442f5a93ed8f9082e7dfc4bc7dc1e2"
+      }
+    },
+    {
+      "id": "PRR_kwDOPiyH6c7H6NB5",
+      "author": {
+        "login": "acoven"
+      },
+      "authorAssociation": "MEMBER",
+      "body": "",
+      "submittedAt": "2025-10-19T02:25:17Z",
+      "includesCreatedEdit": false,
+      "reactionGroups": [],
+      "state": "COMMENTED",
+      "commit": {
+        "oid": "86111a9207442f5a93ed8f9082e7dfc4bc7dc1e2"
+      }
+    },
+    {
+      "id": "PRR_kwDOPiyH6c7H6NCm",
+      "author": {
+        "login": "coderabbitai"
+      },
+      "authorAssociation": "NONE",
+      "body": "",
+      "submittedAt": "2025-10-19T02:25:30Z",
+      "includesCreatedEdit": false,
+      "reactionGroups": [],
+      "state": "COMMENTED",
+      "commit": {
+        "oid": "86111a9207442f5a93ed8f9082e7dfc4bc7dc1e2"
+      }
+    },
+    {
+      "id": "PRR_kwDOPiyH6c7H6NDu",
+      "author": {
+        "login": "coderabbitai"
+      },
+      "authorAssociation": "NONE",
+      "body": "",
+      "submittedAt": "2025-10-19T02:25:50Z",
+      "includesCreatedEdit": false,
+      "reactionGroups": [],
+      "state": "COMMENTED",
+      "commit": {
+        "oid": "86111a9207442f5a93ed8f9082e7dfc4bc7dc1e2"
+      }
+    },
+    {
+      "id": "PRR_kwDOPiyH6c7H6NMP",
+      "author": {
+        "login": "acoven"
+      },
+      "authorAssociation": "MEMBER",
+      "body": "",
+      "submittedAt": "2025-10-19T02:28:54Z",
+      "includesCreatedEdit": false,
+      "reactionGroups": [],
+      "state": "COMMENTED",
+      "commit": {
+        "oid": "86111a9207442f5a93ed8f9082e7dfc4bc7dc1e2"
+      }
+    },
+    {
+      "id": "PRR_kwDOPiyH6c7H6NPc",
+      "author": {
+        "login": "coderabbitai"
+      },
+      "authorAssociation": "NONE",
+      "body": "",
+      "submittedAt": "2025-10-19T02:29:55Z",
+      "includesCreatedEdit": false,
+      "reactionGroups": [],
+      "state": "COMMENTED",
+      "commit": {
+        "oid": "86111a9207442f5a93ed8f9082e7dfc4bc7dc1e2"
+      }
+    },
+    {
+      "id": "PRR_kwDOPiyH6c7H6NRH",
+      "author": {
+        "login": "acoven"
+      },
+      "authorAssociation": "MEMBER",
+      "body": "",
+      "submittedAt": "2025-10-19T02:30:42Z",
+      "includesCreatedEdit": false,
+      "reactionGroups": [],
+      "state": "COMMENTED",
+      "commit": {
+        "oid": "86111a9207442f5a93ed8f9082e7dfc4bc7dc1e2"
+      }
+    },
+    {
+      "id": "PRR_kwDOPiyH6c7H6NS0",
+      "author": {
+        "login": "coderabbitai"
+      },
+      "authorAssociation": "NONE",
+      "body": "",
+      "submittedAt": "2025-10-19T02:31:20Z",
+      "includesCreatedEdit": false,
+      "reactionGroups": [],
+      "state": "COMMENTED",
+      "commit": {
+        "oid": "86111a9207442f5a93ed8f9082e7dfc4bc7dc1e2"
+      }
+    },
+    {
+      "id": "PRR_kwDOPiyH6c7H6NUl",
+      "author": {
+        "login": "acoven"
+      },
+      "authorAssociation": "MEMBER",
+      "body": "",
+      "submittedAt": "2025-10-19T02:31:57Z",
+      "includesCreatedEdit": false,
+      "reactionGroups": [],
+      "state": "COMMENTED",
+      "commit": {
+        "oid": "86111a9207442f5a93ed8f9082e7dfc4bc7dc1e2"
+      }
+    },
+    {
+      "id": "PRR_kwDOPiyH6c7H6NV5",
+      "author": {
+        "login": "coderabbitai"
+      },
+      "authorAssociation": "NONE",
+      "body": "",
+      "submittedAt": "2025-10-19T02:32:24Z",
+      "includesCreatedEdit": false,
+      "reactionGroups": [],
+      "state": "COMMENTED",
+      "commit": {
+        "oid": "86111a9207442f5a93ed8f9082e7dfc4bc7dc1e2"
+      }
+    },
+    {
+      "id": "PRR_kwDOPiyH6c7H6NnN",
+      "author": {
+        "login": "acoven"
+      },
+      "authorAssociation": "MEMBER",
+      "body": "",
+      "submittedAt": "2025-10-19T02:39:24Z",
+      "includesCreatedEdit": false,
+      "reactionGroups": [],
+      "state": "COMMENTED",
+      "commit": {
+        "oid": "86111a9207442f5a93ed8f9082e7dfc4bc7dc1e2"
+      }
+    },
+    {
+      "id": "PRR_kwDOPiyH6c7H6NpR",
+      "author": {
+        "login": "coderabbitai"
+      },
+      "authorAssociation": "NONE",
+      "body": "",
+      "submittedAt": "2025-10-19T02:40:11Z",
+      "includesCreatedEdit": false,
+      "reactionGroups": [],
+      "state": "COMMENTED",
+      "commit": {
+        "oid": "86111a9207442f5a93ed8f9082e7dfc4bc7dc1e2"
+      }
+    },
+    {
+      "id": "PRR_kwDOPiyH6c7H6N2Z",
+      "author": {
+        "login": "acoven"
+      },
+      "authorAssociation": "MEMBER",
+      "body": "",
+      "submittedAt": "2025-10-19T02:44:51Z",
+      "includesCreatedEdit": false,
+      "reactionGroups": [],
+      "state": "COMMENTED",
+      "commit": {
+        "oid": "86111a9207442f5a93ed8f9082e7dfc4bc7dc1e2"
+      }
+    },
+    {
+      "id": "PRR_kwDOPiyH6c7H6N4Q",
+      "author": {
+        "login": "coderabbitai"
+      },
+      "authorAssociation": "NONE",
+      "body": "",
+      "submittedAt": "2025-10-19T02:45:33Z",
+      "includesCreatedEdit": false,
+      "reactionGroups": [],
+      "state": "COMMENTED",
+      "commit": {
+        "oid": "86111a9207442f5a93ed8f9082e7dfc4bc7dc1e2"
+      }
+    },
+    {
+      "id": "PRR_kwDOPiyH6c7H6OM6",
+      "author": {
+        "login": "acoven"
+      },
+      "authorAssociation": "MEMBER",
+      "body": "",
+      "submittedAt": "2025-10-19T02:54:14Z",
+      "includesCreatedEdit": false,
+      "reactionGroups": [],
+      "state": "COMMENTED",
+      "commit": {
+        "oid": "86111a9207442f5a93ed8f9082e7dfc4bc7dc1e2"
+      }
+    },
+    {
+      "id": "PRR_kwDOPiyH6c7H6OPk",
+      "author": {
+        "login": "coderabbitai"
+      },
+      "authorAssociation": "NONE",
+      "body": "",
+      "submittedAt": "2025-10-19T02:55:19Z",
+      "includesCreatedEdit": false,
+      "reactionGroups": [],
+      "state": "COMMENTED",
+      "commit": {
+        "oid": "86111a9207442f5a93ed8f9082e7dfc4bc7dc1e2"
+      }
+    },
+    {
+      "id": "PRR_kwDOPiyH6c7H6OSm",
+      "author": {
+        "login": "acoven"
+      },
+      "authorAssociation": "MEMBER",
+      "body": "",
+      "submittedAt": "2025-10-19T02:56:53Z",
+      "includesCreatedEdit": false,
+      "reactionGroups": [],
+      "state": "COMMENTED",
+      "commit": {
+        "oid": "86111a9207442f5a93ed8f9082e7dfc4bc7dc1e2"
+      }
+    },
+    {
+      "id": "PRR_kwDOPiyH6c7H6OVl",
+      "author": {
+        "login": "coderabbitai"
+      },
+      "authorAssociation": "NONE",
+      "body": "",
+      "submittedAt": "2025-10-19T02:58:15Z",
+      "includesCreatedEdit": false,
+      "reactionGroups": [],
+      "state": "COMMENTED",
+      "commit": {
+        "oid": "86111a9207442f5a93ed8f9082e7dfc4bc7dc1e2"
+      }
+    },
+    {
+      "id": "PRR_kwDOPiyH6c7H6PXE",
+      "author": {
+        "login": "acoven"
+      },
+      "authorAssociation": "MEMBER",
+      "body": "",
+      "submittedAt": "2025-10-19T03:23:22Z",
+      "includesCreatedEdit": false,
+      "reactionGroups": [],
+      "state": "COMMENTED",
+      "commit": {
+        "oid": "86111a9207442f5a93ed8f9082e7dfc4bc7dc1e2"
+      }
+    },
+    {
+      "id": "PRR_kwDOPiyH6c7H6PZ8",
+      "author": {
+        "login": "acoven"
+      },
+      "authorAssociation": "MEMBER",
+      "body": "",
+      "submittedAt": "2025-10-19T03:24:32Z",
+      "includesCreatedEdit": false,
+      "reactionGroups": [],
+      "state": "COMMENTED",
+      "commit": {
+        "oid": "86111a9207442f5a93ed8f9082e7dfc4bc7dc1e2"
+      }
+    },
+    {
+      "id": "PRR_kwDOPiyH6c7H6PbO",
+      "author": {
+        "login": "coderabbitai"
+      },
+      "authorAssociation": "NONE",
+      "body": "",
+      "submittedAt": "2025-10-19T03:24:57Z",
+      "includesCreatedEdit": false,
+      "reactionGroups": [],
+      "state": "COMMENTED",
+      "commit": {
+        "oid": "86111a9207442f5a93ed8f9082e7dfc4bc7dc1e2"
+      }
+    },
+    {
+      "id": "PRR_kwDOPiyH6c7H6Pci",
+      "author": {
+        "login": "coderabbitai"
+      },
+      "authorAssociation": "NONE",
+      "body": "",
+      "submittedAt": "2025-10-19T03:25:22Z",
+      "includesCreatedEdit": false,
+      "reactionGroups": [],
+      "state": "COMMENTED",
+      "commit": {
+        "oid": "86111a9207442f5a93ed8f9082e7dfc4bc7dc1e2"
+      }
+    },
+    {
+      "id": "PRR_kwDOPiyH6c7H6PmB",
+      "author": {
+        "login": "acoven"
+      },
+      "authorAssociation": "MEMBER",
+      "body": "",
+      "submittedAt": "2025-10-19T03:28:28Z",
+      "includesCreatedEdit": false,
+      "reactionGroups": [],
+      "state": "COMMENTED",
+      "commit": {
+        "oid": "86111a9207442f5a93ed8f9082e7dfc4bc7dc1e2"
+      }
+    },
+    {
+      "id": "PRR_kwDOPiyH6c7H6PoE",
+      "author": {
+        "login": "coderabbitai"
+      },
+      "authorAssociation": "NONE",
+      "body": "",
+      "submittedAt": "2025-10-19T03:29:07Z",
+      "includesCreatedEdit": false,
+      "reactionGroups": [],
+      "state": "COMMENTED",
+      "commit": {
+        "oid": "86111a9207442f5a93ed8f9082e7dfc4bc7dc1e2"
+      }
+    },
+    {
+      "id": "PRR_kwDOPiyH6c7H6Pqd",
+      "author": {
+        "login": "acoven"
+      },
+      "authorAssociation": "MEMBER",
+      "body": "",
+      "submittedAt": "2025-10-19T03:30:09Z",
+      "includesCreatedEdit": false,
+      "reactionGroups": [],
+      "state": "COMMENTED",
+      "commit": {
+        "oid": "86111a9207442f5a93ed8f9082e7dfc4bc7dc1e2"
+      }
+    },
+    {
+      "id": "PRR_kwDOPiyH6c7H6Pt8",
+      "author": {
+        "login": "acoven"
+      },
+      "authorAssociation": "MEMBER",
+      "body": "",
+      "submittedAt": "2025-10-19T03:31:15Z",
+      "includesCreatedEdit": false,
+      "reactionGroups": [],
+      "state": "COMMENTED",
+      "commit": {
+        "oid": "86111a9207442f5a93ed8f9082e7dfc4bc7dc1e2"
+      }
+    },
+    {
+      "id": "PRR_kwDOPiyH6c7H6Pv0",
+      "author": {
+        "login": "coderabbitai"
+      },
+      "authorAssociation": "NONE",
+      "body": "",
+      "submittedAt": "2025-10-19T03:31:43Z",
+      "includesCreatedEdit": false,
+      "reactionGroups": [],
+      "state": "COMMENTED",
+      "commit": {
+        "oid": "86111a9207442f5a93ed8f9082e7dfc4bc7dc1e2"
+      }
+    },
+    {
+      "id": "PRR_kwDOPiyH6c7H6PwZ",
+      "author": {
+        "login": "coderabbitai"
+      },
+      "authorAssociation": "NONE",
+      "body": "",
+      "submittedAt": "2025-10-19T03:31:54Z",
+      "includesCreatedEdit": false,
+      "reactionGroups": [],
+      "state": "COMMENTED",
+      "commit": {
+        "oid": "86111a9207442f5a93ed8f9082e7dfc4bc7dc1e2"
+      }
+    },
+    {
+      "id": "PRR_kwDOPiyH6c7H6T9A",
+      "author": {
+        "login": "coderabbitai"
+      },
+      "authorAssociation": "NONE",
+      "body": "**Actionable comments posted: 8**\n\n> [!CAUTION]\n> Some comments are outside the diff and can’t be posted inline due to platform limitations.\n> \n> \n> \n> <details>\n> <summary>⚠️ Outside diff range comments (6)</summary><blockquote>\n> \n> <details>\n> <summary>src/Diagnostics.ts (1)</summary><blockquote>\n> \n> `173-211`: **Counter wraps at 10,000 - could cause confusion if you run long.**\n> \n> The modulo 10000 means after 9999 messages you're back to 0000. If you're debugging a long-running process, seeing counter 0001 twice could be confusing as fuck.\n> \n> Also, the single-letter am/pm ('p'/'a') saves a byte but makes logs harder to scan. Is brevity worth the readability hit?\n> \n> The truncation logic looks correct (only truncates when prefix matches), but see my comment about global state interleaving.\n> \n> </blockquote></details>\n> <details>\n> <summary>src/UIWebView.ts (1)</summary><blockquote>\n> \n> `81-97`: **Delete this dead method—it's called nowhere.**\n> \n> Both searches came back empty. The method isn't called internally or anywhere else in the codebase. If pre-render logic is gone, rip out the whole thing instead of leaving a zombie function stub rotting in your code.\n> \n> </blockquote></details>\n> <details>\n> <summary>src/UIScrollView.yaml (1)</summary><blockquote>\n> \n> `225-233`: **dx() spams the extension on every call. Gate it.**\n> \n> You post every log even when CONFIG.debug is false. That’s insane under scroll.\n> \n> \n> ```diff\n> -    function dx(message) {\n> -      if (window.vscode) {\n> +    function dx(message) {\n> +      if (!CONFIG.debug) return;\n> +      if (window.vscode) {\n>          window.vscode.postMessage({\n>            type: 'dx',\n>            message\n>          });\n>        }\n>      }\n> ```\n> \n> </blockquote></details>\n> <details>\n> <summary>src/PDF.ts (3)</summary><blockquote>\n> \n> `195-205`: **Don’t delete user‑saved PDFs on cleanup.**\n> \n> You track the user’s chosen save path and later delete tempPdfs in done(). That’s a foot‑gun.\n> \n> \n> ```diff\n> -      // Track file for cleanup (optional)\n> -      this.trackTempPdf(targetPath);\n> ```\n> Only track real temp files created for preview/print.\n> \n> \n> Also applies to: 106-118\n> \n> ---\n> \n> `271-282`: **Don’t duplicate unit math; delegate to Coords.**\n> \n> You already have Coords.pageDimensionsInchesOrMmToPdfPts. Use it.\n> \n> \n> ```diff\n> -  private pageSizeToPts(\n> -    width: number,\n> -    height: number,\n> -    unit: 'in' | 'mm'\n> -  ): { widthPts: number; heightPts: number } {\n> -    const POINTS_PER_INCH = 72;\n> -    const POINTS_PER_MM = 2.834645669;\n> -    const multiplier = unit === 'in' ? POINTS_PER_INCH : POINTS_PER_MM;\n> -    const widthPts = width * multiplier;\n> -    const heightPts = height * multiplier;\n> -    return { widthPts, heightPts };\n> -  }\n> +  private pageSizeToPts(\n> +    width: number,\n> +    height: number,\n> +    unit: 'in' | 'mm'\n> +  ): { widthPts: number; heightPts: number } {\n> +    return this.coords.pageDimensionsInchesOrMmToPdfPts(width, height, unit);\n> +  }\n> ```\n> \n> ---\n> \n> `441-447`: **Stale error message.**\n> \n> Refers to generatePdfFromTokens; method is generatePdf now. Fix the text.\n> \n> \n> ```diff\n> -      dx.out(`DEPRECATED: htmlToPdf method called. Use generatePdfFromTokens instead.`);\n> +      dx.out(`DEPRECATED: htmlToPdf method called. Use generatePdf instead.`);\n> @@\n> -        'htmlToPdf is deprecated. Use generatePdfFromTokens for direct PDF generation.'\n> +        'htmlToPdf is deprecated. Use generatePdf for direct PDF generation.'\n> ```\n> \n> </blockquote></details>\n> \n> </blockquote></details>\n\n<details>\n<summary>♻️ Duplicate comments (7)</summary><blockquote>\n\n<details>\n<summary>src/VSCodeAPIs.ts (1)</summary><blockquote>\n\n`413-418`: **You didn't implement the fix you agreed to.**\n\nIn the past review thread, you said \"You had me at semantic. Okay, let's do it your way. But let's please rename it to line_begin and line_end, I like that nomenclature better.\" The bot gave you the explicit code with `line_begin`/`line_end` and proper `lineAt().range.end` usage.\n\nBut this code still uses `new Range(startLine, 0, endLine + 1, 0)` - the old approach. Where's the fix?\n\n\n\n\nApply the fix you already approved:\n\n```diff\n  getSelectionOrDocumentText(editor: TextEditor): string {\n    const selection = editor.selection;\n    if (!selection.isEmpty) {\n-      // If there's a selection, get the entire line(s) that contain the selection\n-      const startLine = selection.start.line;\n-      const endLine = selection.end.line;\n-      const lineRange = new Range(startLine, 0, endLine + 1, 0);\n-      return editor.document.getText(lineRange);\n+      // If there's a selection, get the entire line(s) that contain the selection\n+      const doc = editor.document;\n+      const line_begin = selection.start.line;\n+      const line_end = selection.end.line;\n+      const startPos = doc.lineAt(line_begin).range.start;\n+      const endPos = doc.lineAt(Math.min(line_end, doc.lineCount - 1)).range.end;\n+      return doc.getText(new Range(startPos, endPos));\n    }\n    return editor.document.getText();\n  }\n```\n\n</blockquote></details>\n<details>\n<summary>src/UIScrollView.ts (1)</summary><blockquote>\n\n`264-265`: **You didn't implement the canvas caching fix you agreed to either.**\n\nFrom past review, you said: \"those terms aren't correct anyway. We should be calculating them completely based on the max_canvas_pool_size (and that should be renamed canvas_cache_size)...\"\n\nThe bot gave you the exact calculation:\n- `CANVAS_LOOKAHEAD = Math.ceil((CANVAS_CACHE_SIZE - 1) / 2)` → 3 for size=6\n- `CANVAS_LOOKBEHIND = Math.floor((CANVAS_CACHE_SIZE - 1) / 2)` → 2 for size=6\n\nBut you still have hardcoded `LOAD_DISTANCE: '2'` and `UNLOAD_DISTANCE: '3'`. Where's the dynamic calculation?\n\n\n\nBased on learnings\n\nApply the fix:\n\n```diff\n  private readonly CONFIG = {\n-   MAX_CANVAS_POOL_SIZE: 7,\n+   CANVAS_CACHE_SIZE: 6, // Even number for asymmetric caching\n    SCROLL_DEBOUNCE_MS: 16,\n  };\n\n+ // Derived values (calculated, not hardcoded)\n+ private get CANVAS_LOOKAHEAD(): number {\n+   return Math.ceil((this.CONFIG.CANVAS_CACHE_SIZE - 1) / 2); // 3 for size=6\n+ }\n+\n+ private get CANVAS_LOOKBEHIND(): number {\n+   return Math.floor((this.CONFIG.CANVAS_CACHE_SIZE - 1) / 2); // 2 for size=6\n+ }\n\n  const templateDict = {\n    PAGE_TOTAL: pageTotal.toString(),\n    TOTAL_PAGES: pageTotal.toString(),\n-   MAX_CANVASES: this.CONFIG.MAX_CANVAS_POOL_SIZE.toString(),\n+   MAX_CANVASES: this.CONFIG.CANVAS_CACHE_SIZE.toString(),\n    SCROLL_DEBOUNCE_MS: this.CONFIG.SCROLL_DEBOUNCE_MS.toString(),\n-   LOAD_DISTANCE: '2',\n-   UNLOAD_DISTANCE: '3',\n+   LOAD_DISTANCE: this.CANVAS_LOOKAHEAD.toString(),\n+   UNLOAD_DISTANCE: this.CANVAS_LOOKBEHIND.toString(),\n```\n\n</blockquote></details>\n<details>\n<summary>src/UIScrollView.yaml (2)</summary><blockquote>\n\n`660-718`: **You conflate “extension pending” with “canvas painting”. Split the states.**\n\npendingPages is not a canvas render tracker. Add a renderingPages Set and stop abusing pendingPages.\n\n\n\n```diff\n-      // Check if this specific canvas is already being used for rendering\n-      if (canvas.dataset.rendering === 'true') {\n-        dx(`Canvas ${canvasId} is already being rendered, skipping`);\n-        return;\n-      }\n-      // Check if page is already being rendered using existing pendingPages set\n-      if (db.pendingPages.has(pageNumber)) {\n-        dx(`Page ${pageNumber} is already being rendered, skipping canvas ${canvasId}`);\n-        return;\n-      }\n+      db.renderingPages = db.renderingPages || new Set();\n+      if (db.renderingPages.has(pageNumber)) {\n+        dx(`Page ${pageNumber} is already painting, skipping canvas ${canvasId}`);\n+        return;\n+      }\n       try {\n-        // Mark canvas as being rendered\n-        canvas.dataset.rendering = 'true';\n-        // Mark page as being rendered\n-        db.pendingPages.add(pageNumber);\n+        db.renderingPages.add(pageNumber);\n         …\n-      } finally {\n-        // Mark canvas as no longer being rendered\n-        canvas.dataset.rendering = 'false';\n-        // Mark page as no longer being rendered\n-        db.pendingPages.delete(pageNumber);\n-      }\n+      } finally {\n+        db.renderingPages.delete(pageNumber);\n+      }\n```\nKeeps protocol clean; no starvation.\n\n---\n\n`395-421`: **Stop the O(N) page scan on every scroll. Compute a window.**\n\nYou loop 1..N every time. Wasteful. Use bufferBefore/bufferAfter and windowBegin/windowEnd.\n\n\n\n```diff\n-      for (let pageNum = 1; pageNum <= CONFIG.pageTotal; pageNum++) {\n-        let distanceFromVisible;\n-        if (pageNum >= minVisible && pageNum <= maxVisible) {\n-          distanceFromVisible = 0;\n-        } else if (pageNum < minVisible) {\n-          distanceFromVisible = minVisible - pageNum;\n-        } else {\n-          distanceFromVisible = pageNum - maxVisible;\n-        }\n-        let shouldLoad = false;\n-        if (pageNum >= minVisible && pageNum <= maxVisible) {\n-          shouldLoad = true;\n-        } else if (distanceFromVisible <= CONFIG.loadDistance) {\n-          shouldLoad = true;\n-        }\n-        if (shouldLoad) {\n-          pagesToLoad.push(pageNum);\n-          dx(`Added page ${pageNum} to pagesToLoad (distance: ${distanceFromVisible})`);\n-        }\n-      }\n+      const bufferBefore = Math.floor(CONFIG.maxCanvases * 0.4);\n+      const bufferAfter  = Math.floor(CONFIG.maxCanvases * 0.6);\n+      const windowBegin = Math.max(1, minVisible - bufferBefore);\n+      const windowEnd   = Math.min(CONFIG.pageTotal, maxVisible + bufferAfter);\n+      for (let pageNum = windowBegin; pageNum <= windowEnd; pageNum++) {\n+        pagesToLoad.push(pageNum);\n+      }\n+      dx(`Window ${windowBegin}-${windowEnd} (visible: ${minVisible}-${maxVisible})`);\n```\nBased on learnings.\n\n</blockquote></details>\n<details>\n<summary>src/PDF.ts (2)</summary><blockquote>\n\n`874-893`: **Same unit bug when writing page totals. Fix it here too.**\n\n\n```diff\n-    const originalFontSize = this.currentRenderOptions.fontSizePx;\n-    this.docInfo.pdfDoc.setFontSize(8);\n+    const fontSizePx = this.currentRenderOptions.fontSizePx;\n+    this.docInfo.pdfDoc.setFontSize(8); // pt\n@@\n-    this.docInfo.pdfDoc.setFontSize(originalFontSize);\n+    this.docInfo.pdfDoc.setFontSize(this.coords.cssPxToPdfPts(fontSizePx));\n```\nBased on learnings.\n\n---\n\n`799-824`: **Header/footer font-size restore uses PX. jsPDF wants PT. Fix it.**\n\nYou set 8pt then “restore” with px, skewing text.\n\n\n```diff\n-    const originalFontSize = this.currentRenderOptions.fontSizePx;\n+    const fontSizePx = this.currentRenderOptions.fontSizePx;\n@@\n-    this.docInfo.pdfDoc.setFontSize(8);\n+    this.docInfo.pdfDoc.setFontSize(8); // pt\n@@\n-    this.docInfo.pdfDoc.setFontSize(originalFontSize);\n+    this.docInfo.pdfDoc.setFontSize(this.coords.cssPxToPdfPts(fontSizePx));\n```\nAs per coding guidelines and learnings.\n\n</blockquote></details>\n<details>\n<summary>src/Coords.ts (1)</summary><blockquote>\n\n`76-88`: **Tiny doc nit: mark unit-only converters as “Coordinate system: Agnostic.”**\n\nMake it explicit on cssPxToPdfPts/pdfPtsToCssPx to match the bottleneck contract.\n\n\n```diff\n-  /**\n-   * Convert CSS pixels to PDF points\n-   */\n+  /**\n+   * Convert CSS pixels to PDF points\n+   * Coordinate system: Agnostic (units only)\n+   */\n   cssPxToPdfPts(cssPx: number): number { … }\n```\n\n</blockquote></details>\n\n</blockquote></details>\n\n<details>\n<summary>📜 Review details</summary>\n\n**Configuration used**: CodeRabbit UI\n\n**Review profile**: ASSERTIVE\n\n**Plan**: Pro\n\n<details>\n<summary>📥 Commits</summary>\n\nReviewing files that changed from the base of the PR and between 86111a9207442f5a93ed8f9082e7dfc4bc7dc1e2 and a9bd31ce4ace6a7e1c8022812ca48d7e7dff5215.\n\n</details>\n\n<details>\n<summary>📒 Files selected for processing (12)</summary>\n\n* `AGENTS.md` (2 hunks)\n* `src/Coords.ts` (1 hunks)\n* `src/Diagnostics.ts` (3 hunks)\n* `src/OS.ts` (2 hunks)\n* `src/PDF.ts` (11 hunks)\n* `src/PaperPrinter.ts` (15 hunks)\n* `src/Stylize.ts` (7 hunks)\n* `src/UIMenu.ts` (5 hunks)\n* `src/UIScrollView.ts` (8 hunks)\n* `src/UIScrollView.yaml` (17 hunks)\n* `src/UIWebView.ts` (8 hunks)\n* `src/VSCodeAPIs.ts` (7 hunks)\n\n</details>\n\n<details>\n<summary>🧰 Additional context used</summary>\n\n<details>\n<summary>📓 Path-based instructions (8)</summary>\n\n<details>\n<summary>src/**/*.ts</summary>\n\n\n**📄 CodeRabbit inference engine (AGENTS.md)**\n\n> `src/**/*.ts`: Types must use `_t` suffix (e.g., PageSizeId_t, MarginId_t, LanguageId_t)\n> Constants must use `k` prefix (e.g., kPageSizeIds, kMarginIds)\n> Interfaces used across files should follow `_t` suffix convention (e.g., Persist_t, UI_t)\n> Class instance variables should be lowercased (instances start with lowercase)\n> Single-use interfaces should reside in the same file as the method that uses them\n> Avoid hardcoded theme names except 'github-light' as a fallback\n> Use OS.fileRead instead of fs.readFileSync\n> Initialize sensible default values and use a single return at the end of functions\n\nFiles:\n- `src/UIMenu.ts`\n- `src/PaperPrinter.ts`\n- `src/Coords.ts`\n- `src/Diagnostics.ts`\n- `src/UIScrollView.ts`\n- `src/UIWebView.ts`\n- `src/OS.ts`\n- `src/Stylize.ts`\n- `src/VSCodeAPIs.ts`\n- `src/PDF.ts`\n\n</details>\n<details>\n<summary>src/**/!(VSCodeAPIs).ts</summary>\n\n\n**📄 CodeRabbit inference engine (AGENTS.md)**\n\n> Do not import the 'vscode' module outside VSCodeAPIs.ts\n\nFiles:\n- `src/UIMenu.ts`\n- `src/PaperPrinter.ts`\n- `src/Coords.ts`\n- `src/Diagnostics.ts`\n- `src/UIScrollView.ts`\n- `src/UIWebView.ts`\n- `src/OS.ts`\n- `src/Stylize.ts`\n- `src/PDF.ts`\n\n</details>\n<details>\n<summary>src/@(UI|UIMenu|UIMenuMgr).ts</summary>\n\n\n**📄 CodeRabbit inference engine (AGENTS.md)**\n\n> UI methods must be generic and not reference specific menu items\n\nFiles:\n- `src/UIMenu.ts`\n\n</details>\n<details>\n<summary>{src/@(UI|UIMenu|UIMenuMgr).ts,**/*.{yaml,yml}}</summary>\n\n\n**📄 CodeRabbit inference engine (AGENTS.md)**\n\n> Use CSS classes p2p4vsc-menu-btn, p2p4vsc-menu-items, p2p4vsc-menu-item in generated/templated UI\n\nFiles:\n- `src/UIMenu.ts`\n- `src/UIScrollView.yaml`\n\n</details>\n<details>\n<summary>src/@(UIMenu|UIMenuMgr).ts</summary>\n\n\n**📄 CodeRabbit inference engine (AGENTS.md)**\n\n> Use displayName instead of label for UIMenuItem definitions\n\nFiles:\n- `src/UIMenu.ts`\n\n</details>\n<details>\n<summary>src/UIMenu.ts</summary>\n\n\n**📄 CodeRabbit inference engine (AGENTS.md)**\n\n> `src/UIMenu.ts`: In UIMenu, prefer semaphores over iteration for gutter determination: hasFlyout, hasDefaultItem, hasGutterBefore, hasGutterAfter\n> In UIMenu, assign item-level classes via flags: item.is-flyout, item.default-item, item.selected\n\nFiles:\n- `src/UIMenu.ts`\n\n</details>\n<details>\n<summary>**/*.{yaml,yml}</summary>\n\n\n**📄 CodeRabbit inference engine (AGENTS.md)**\n\n> Store HTML snippets in YAML with {{var}} replacements\n\nFiles:\n- `src/UIScrollView.yaml`\n\n</details>\n<details>\n<summary>src/VSCodeAPIs.ts</summary>\n\n\n**📄 CodeRabbit inference engine (AGENTS.md)**\n\n> Centralize all VS Code API imports in VSCodeAPIs.ts\n\nFiles:\n- `src/VSCodeAPIs.ts`\n\n</details>\n\n</details><details>\n<summary>🧠 Learnings (12)</summary>\n\n<details>\n<summary>📓 Common learnings</summary>\n\n```\nLearnt from: acoven\nPR: appliedmedia/print2paper4vscode#26\nFile: src/PDF.ts:675-721\nTimestamp: 2025-10-19T03:25:21.312Z\nLearning: In src/PDF.ts and src/Stylize.ts: The HTML intermediate format (`<span style=\"color: ...\">`) used between Stylize.tokenize and PDF.renderByLine is unnecessary. PDF is the only consumer, and webview renders PDFs via PDF.js (not HTML). Refactor to pass structured ThemedToken[] objects directly in the callback instead of HTML strings to eliminate HTML generation, regex parsing, and potential escaping issues.\n```\n\n</details>\n<details>\n<summary>📚 Learning: 2025-10-19T03:25:21.312Z</summary>\n\n```\nLearnt from: acoven\nPR: appliedmedia/print2paper4vscode#26\nFile: src/PDF.ts:675-721\nTimestamp: 2025-10-19T03:25:21.312Z\nLearning: In src/PDF.ts and src/Stylize.ts: The HTML intermediate format (`<span style=\"color: ...\">`) used between Stylize.tokenize and PDF.renderByLine is unnecessary. PDF is the only consumer, and webview renders PDFs via PDF.js (not HTML). Refactor to pass structured ThemedToken[] objects directly in the callback instead of HTML strings to eliminate HTML generation, regex parsing, and potential escaping issues.\n```\n\n**Applied to files:**\n- `AGENTS.md`\n- `src/PaperPrinter.ts`\n- `src/Stylize.ts`\n- `src/PDF.ts`\n\n</details>\n<details>\n<summary>📚 Learning: 2025-10-15T05:36:38.120Z</summary>\n\n```\nLearnt from: CR\nPR: appliedmedia/print2paper4vscode#0\nFile: AGENTS.md:0-0\nTimestamp: 2025-10-15T05:36:38.120Z\nLearning: Applies to README.md : Read README.md first for project overview and architectural details before development work\n```\n\n**Applied to files:**\n- `AGENTS.md`\n\n</details>\n<details>\n<summary>📚 Learning: 2025-10-15T05:36:38.120Z</summary>\n\n```\nLearnt from: CR\nPR: appliedmedia/print2paper4vscode#0\nFile: AGENTS.md:0-0\nTimestamp: 2025-10-15T05:36:38.120Z\nLearning: Applies to src/UIMenu.ts : In UIMenu, assign item-level classes via flags: item.is-flyout, item.default-item, item.selected\n```\n\n**Applied to files:**\n- `src/UIMenu.ts`\n\n</details>\n<details>\n<summary>📚 Learning: 2025-10-19T02:40:10.197Z</summary>\n\n```\nLearnt from: acoven\nPR: appliedmedia/print2paper4vscode#26\nFile: src/UIScrollView.ts:264-265\nTimestamp: 2025-10-19T02:40:10.197Z\nLearning: Canvas caching strategy in UIScrollView: Use CANVAS_CACHE_SIZE (even number, e.g., 6) with asymmetric distribution optimized for forward scrolling. Calculate dynamically: lookahead = ceil((cache_size - 1) / 2), lookbehind = floor((cache_size - 1) / 2), with 1 reserved for current page. Example: cache_size=6 yields 3 lookahead + 2 lookbehind + 1 current.\n```\n\n**Applied to files:**\n- `src/UIScrollView.yaml`\n- `src/UIScrollView.ts`\n\n</details>\n<details>\n<summary>📚 Learning: 2025-10-19T03:29:06.584Z</summary>\n\n```\nLearnt from: acoven\nPR: appliedmedia/print2paper4vscode#26\nFile: src/UIScrollView.yaml:387-421\nTimestamp: 2025-10-19T03:29:06.584Z\nLearning: In UIScrollView canvas loading logic, prefer direction-agnostic naming: use bufferBefore/bufferAfter to describe position relative to visible range (not lookAhead/lookBehind which imply scroll direction). Also prefer windowBegin/windowEnd over windowStart/windowEnd for alphabetic sorting, and canvas_max over maxCanvases.\n```\n\n**Applied to files:**\n- `src/UIScrollView.yaml`\n\n</details>\n<details>\n<summary>📚 Learning: 2025-09-28T03:44:52.885Z</summary>\n\n```\nLearnt from: acoven\nPR: appliedmedia/print2paper4vscode#9\nFile: src/PaperPrinter.ts:7-7\nTimestamp: 2025-09-28T03:44:52.885Z\nLearning: In PaperPrinter.ts, the jsPDF import should be replaced with a PDFDocument abstraction from PDF.ts to centralize all PDF library imports in one location and avoid bundling PDF libraries multiple times across the extension.\n```\n\n**Applied to files:**\n- `src/PaperPrinter.ts`\n- `src/Stylize.ts`\n- `src/PDF.ts`\n\n</details>\n<details>\n<summary>📚 Learning: 2025-10-13T06:00:01.528Z</summary>\n\n```\nLearnt from: acoven\nPR: appliedmedia/print2paper4vscode#23\nFile: src/DocInfo_PDF.ts:4-4\nTimestamp: 2025-10-13T06:00:01.528Z\nLearning: DocInfo_PDF.ts is considered an extension of PDF.ts due to their tight coupling, but PDF library type imports should still be centralized through PDF.ts by adding type re-exports rather than direct imports from 'jspdf'.\n```\n\n**Applied to files:**\n- `src/PaperPrinter.ts`\n- `src/PDF.ts`\n\n</details>\n<details>\n<summary>📚 Learning: 2025-10-19T02:25:29.840Z</summary>\n\n```\nLearnt from: acoven\nPR: appliedmedia/print2paper4vscode#26\nFile: src/Coords.ts:14-34\nTimestamp: 2025-10-19T02:25:29.840Z\nLearning: In src/Coords.ts, all coordinate conversion methods must be documented with explicit input and output coordinate system declarations (e.g., \"Input coordinate system: Bottom-left origin, Y increases UP\" and \"Output coordinate system: Top-left origin, Y increases DOWN\") to serve as a bottleneck for future coordinate system changes; unit-only conversion methods should be marked as \"Coordinate system: Agnostic\".\n```\n\n**Applied to files:**\n- `src/Coords.ts`\n\n</details>\n<details>\n<summary>📚 Learning: 2025-10-19T02:25:49.759Z</summary>\n\n```\nLearnt from: acoven\nPR: appliedmedia/print2paper4vscode#26\nFile: src/PDF.ts:640-651\nTimestamp: 2025-10-19T02:25:49.759Z\nLearning: The print2paper4vscode project uses a top-left coordinate origin throughout for PDF generation and rendering. jsPDF is configured with top-left origin (Y=0 at top, Y increases downward), matching the PDF.js viewer interface coordinate system used in the webview.\n```\n\n**Applied to files:**\n- `src/Coords.ts`\n- `src/UIScrollView.ts`\n- `src/PDF.ts`\n\n</details>\n<details>\n<summary>📚 Learning: 2025-10-15T05:36:38.120Z</summary>\n\n```\nLearnt from: CR\nPR: appliedmedia/print2paper4vscode#0\nFile: AGENTS.md:0-0\nTimestamp: 2025-10-15T05:36:38.120Z\nLearning: Applies to src/VSCodeAPIs.ts : Centralize all VS Code API imports in VSCodeAPIs.ts\n```\n\n**Applied to files:**\n- `src/UIScrollView.ts`\n- `src/VSCodeAPIs.ts`\n\n</details>\n<details>\n<summary>📚 Learning: 2025-10-19T02:31:10.484Z</summary>\n\n```\nLearnt from: acoven\nPR: appliedmedia/print2paper4vscode#26\nFile: src/PDF.ts:804-816\nTimestamp: 2025-10-19T02:31:10.484Z\nLearning: In src/PDF.ts, jsPDF.setFontSize() expects points (pt), not pixels (px). Always convert pixel values using this.pxToPts() before calling setFontSize().\n```\n\n**Applied to files:**\n- `src/PDF.ts`\n\n</details>\n\n</details><details>\n<summary>🧬 Code graph analysis (7)</summary>\n\n<details>\n<summary>src/PaperPrinter.ts (3)</summary><blockquote>\n\n<details>\n<summary>src/DocInfo_PDF.ts (1)</summary>\n\n* `DocInfo_PDF` (20-155)\n\n</details>\n<details>\n<summary>src/types/PaperPrinter_t.ts (7)</summary>\n\n* `kFontSizeId_alt` (60-60)\n* `kPageSizeId_alt` (25-25)\n* `PageSizeId_t` (24-24)\n* `kOrient_alt` (33-33)\n* `kTheme_alt` (63-63)\n* `kMarginId_alt` (43-43)\n* `MarginId_t` (42-42)\n\n</details>\n<details>\n<summary>src/types/PageRender_t.ts (2)</summary>\n\n* `RenderOptions` (21-36)\n* `PageRender` (58-86)\n\n</details>\n\n</blockquote></details>\n<details>\n<summary>src/Coords.ts (2)</summary><blockquote>\n\n<details>\n<summary>src/App.ts (1)</summary>\n\n* `App` (39-113)\n\n</details>\n<details>\n<summary>src/Diagnostics.ts (1)</summary>\n\n* `Diagnostics` (25-294)\n\n</details>\n\n</blockquote></details>\n<details>\n<summary>src/UIScrollView.ts (2)</summary><blockquote>\n\n<details>\n<summary>src/types/PaperPrinter_t.ts (1)</summary>\n\n* `MarginId_t` (42-42)\n\n</details>\n<details>\n<summary>src/VSCodeAPIs.ts (1)</summary>\n\n* `WebviewPanelId_t` (17-17)\n\n</details>\n\n</blockquote></details>\n<details>\n<summary>src/UIWebView.ts (4)</summary><blockquote>\n\n<details>\n<summary>src/VSCodeAPIs.ts (1)</summary>\n\n* `WebviewPanelId_t` (17-17)\n\n</details>\n<details>\n<summary>src/types/PageRender_t.ts (1)</summary>\n\n* `PageRender` (58-86)\n\n</details>\n<details>\n<summary>src/UIScrollView.ts (1)</summary>\n\n* `ScrollOptions` (9-18)\n\n</details>\n<details>\n<summary>src/UIMenu.ts (2)</summary>\n\n* `isMenuId` (64-66)\n* `isMenuItemId` (68-70)\n\n</details>\n\n</blockquote></details>\n<details>\n<summary>src/OS.ts (1)</summary><blockquote>\n\n<details>\n<summary>src/VSCodeAPIs.ts (1)</summary>\n\n* `WebviewPanelId_t` (17-17)\n\n</details>\n\n</blockquote></details>\n<details>\n<summary>src/Stylize.ts (2)</summary><blockquote>\n\n<details>\n<summary>src/types/theme_t.ts (1)</summary>\n\n* `Theme` (2-6)\n\n</details>\n<details>\n<summary>src/UIMenu.ts (1)</summary>\n\n* `id` (107-109)\n\n</details>\n\n</blockquote></details>\n<details>\n<summary>src/PDF.ts (5)</summary><blockquote>\n\n<details>\n<summary>src/Coords.ts (1)</summary>\n\n* `Coords` (10-213)\n\n</details>\n<details>\n<summary>src/types/PageRender_t.ts (1)</summary>\n\n* `RenderOptions` (21-36)\n\n</details>\n<details>\n<summary>src/DocInfo_PDF.ts (1)</summary>\n\n* `DocInfo_PDF` (20-155)\n\n</details>\n<details>\n<summary>src/types/PaperPrinter_t.ts (1)</summary>\n\n* `PageSizeId_t` (24-24)\n\n</details>\n<details>\n<summary>src/types/jspdf.d.ts (1)</summary>\n\n* `jsPDF` (13-50)\n\n</details>\n\n</blockquote></details>\n\n</details>\n\n</details>\n\n<details>\n<summary>🔇 Additional comments (19)</summary><blockquote>\n\n<details>\n<summary>AGENTS.md (1)</summary><blockquote>\n\n`74-166`: **LGTM - Architecture docs match the refactor.**\n\nThe unified line-by-line rendering approach is clearly documented. The shift from multi-step HTML/JS-based generation to a single rendering method is well-articulated. Key principles (deterministic page breaks, cache optimization, single rendering method) are explicit.\n\n</blockquote></details>\n<details>\n<summary>src/VSCodeAPIs.ts (2)</summary><blockquote>\n\n`42-43`: **LGTM - Constants centralize IDs.**\n\nGood practice to have these as `readonly` statics instead of magic strings scattered everywhere.\n\n---\n\n`242-286`: **Panel creation flow looks solid.**\n\nThe unified approach with lifecycle wiring (disposal, message handling) is clean. Restoring toolbar position from global state is a nice touch.\n\nOne thing: you're setting up message handling with `setupMessageHandling(panel)` but the actual handler just delegates to `app.ui.handleWebviewMessage`. Make sure that handler is registered and ready before any messages come in, or you'll drop early messages.\n\n</blockquote></details>\n<details>\n<summary>src/OS.ts (1)</summary><blockquote>\n\n`169-169`: **LGTM - Type alias alignment.**\n\nSimple type signature update to match the new `WebviewPanelId_t` branded type. No functional change.\n\n</blockquote></details>\n<details>\n<summary>src/Stylize.ts (2)</summary><blockquote>\n\n`154-242`: **LGTM - Cleaner separation with themesOut collection.**\n\nThe refactor to use `themesOut` as the accumulator makes the flow clearer. You're building up the output collection explicitly instead of mutating the filtered input. Good shit.\n\n---\n\n`4-5`: **Remove unused imports on lines 4–5.**\n\nThese imports were orphaned when `styleToPdf` was deleted. Strip `PageSizeId_t`, `Orient_t`, `MarginId_t`, and `RenderOptions` from the import statements since they don't appear anywhere in the file.\n\n</blockquote></details>\n<details>\n<summary>src/UIMenu.ts (4)</summary><blockquote>\n\n`45-52`: **LGTM - Font size range extended.**\n\nAdding '11', '20', '32', '48' extends the font size options. Covers a reasonable range from 8 to 48.\n\n---\n\n`197-207`: **LGTM - Selected item logic is clean.**\n\nThe fallback chain (persisted selection → default) makes sense. Good separation between \"what's the default\" and \"what's currently selected.\"\n\n---\n\n`210-230`: **Selected vs default separation looks good.**\n\nThe `isSelected` flag (line 224) is independent of `isDefault` (line 223). This lets you style the checkmark (✓) for selected items separately from the editor icon (📝) for default items. Clean.\n\nOne edge case: when default is also the current selection, both classes will be present. Make sure your CSS handles that correctly (probably want selected to override default styling).\n\n---\n\n`264-278`: **LGTM - Efficient passing of both IDs.**\n\nYou compute `defaultItemId` and `selectedItemId` once, then pass them to each `getItemHTML` call. No redundant lookups in the loop. Good shit.\n\n</blockquote></details>\n<details>\n<summary>src/UIScrollView.ts (4)</summary><blockquote>\n\n`3-3`: **LGTM - Type migration is consistent.**\n\nAll the type updates (`WebviewPanelId_t`, `MarginId_t`) are consistent with the broader refactor. Branded types and proper imports.\n\n\n\n\nAlso applies to: 4-4, 17-17, 58-58, 109-109\n\n---\n\n`143-154`: **This could cause a webview flash - conflicts with PR objective.**\n\nPR description says: \"Fix PDF regeneration to support lightweight updates without causing a webview flash.\"\n\nBut here you're sending `clearAllPages` and `updatePdf` with empty `pdfDataUrl`. That's going to clear the webview and reload everything, which sounds like it could cause a flash.\n\nIs this the lightweight update path, or is there another code path for non-disruptive updates?\n\n---\n\n`190-199`: **LGTM - marginId properly propagated.**\n\nThe `marginId` from options is passed through to `renderContent` with a sensible fallback to 'normal'. Line ranges (0, 0) indicate the unified approach doesn't care about line ranges for page rendering.\n\n---\n\n`247-252`: **LGTM - Coordinate system comment is helpful.**\n\nThis comment clarifies the coordinate system used (top-left viewer interface). Matches the learning that confirms top-left origin throughout the project. Good docs.\n\n</blockquote></details>\n<details>\n<summary>src/UIWebView.ts (3)</summary><blockquote>\n\n`3-3`: **LGTM - Type migration is complete.**\n\nAll the `WebviewPanelId_t` updates are consistent. Public API surface properly typed with the branded type.\n\n\n\n\nAlso applies to: 19-19, 35-35, 117-117, 211-211\n\n---\n\n`284-314`: **LGTM - Better logging for menu selection.**\n\nThe explicit `debugOn` and added logging (especially the else branches at lines 299-300 and 308-310) will help debug menu selection issues. All code paths are now visible.\n\n---\n\n`337-347`: **LGTM - dx.print ensures webview diagnostics are visible.**\n\nUsing `dx.print` instead of `dx.out` means webview diagnostics are always output, regardless of debug settings. Makes sense since you want to see what the webview is saying.\n\n</blockquote></details>\n<details>\n<summary>src/Diagnostics.ts (1)</summary><blockquote>\n\n`29-31`: **Original review comment is off-base** — the truncation logic doesn't get \"fucked up\" by interleaved instances; it just doesn't optimize across them. Safe fallback already in place.\n\nThe truncation check (line 202) only triggers when `_lastMessagePrefix === prefix`. If instance A logs, then B logs, their prefixes don't match — no truncation happens, full message gets shown. That's not broken; that's defensive. No async patterns found anyway, so interleaving is theoretical noise.\n\n\n\n> Likely an incorrect or invalid review comment.\n\n</blockquote></details>\n<details>\n<summary>src/Coords.ts (1)</summary><blockquote>\n\n`14-36`: **Coordinate docs are finally consistent.**\n\nTop-left everywhere for jsPDF/PDF.js viewer; PdfPts clearly bottom-left. Good.\n\n\nBased on learnings.\n\n</blockquote></details>\n\n</blockquote></details>\n\n</details>\n\n<!-- This is an auto-generated comment by CodeRabbit for review status -->",
+      "submittedAt": "2025-10-19T04:55:42Z",
+      "includesCreatedEdit": false,
+      "reactionGroups": [],
+      "state": "COMMENTED",
+      "commit": {
+        "oid": "a9bd31ce4ace6a7e1c8022812ca48d7e7dff5215"
+      }
+    },
+    {
+      "id": "PRR_kwDOPiyH6c7H67b2",
+      "author": {
+        "login": "coderabbitai"
+      },
+      "authorAssociation": "NONE",
+      "body": "**Actionable comments posted: 1**\n\n<details>\n<summary>♻️ Duplicate comments (2)</summary><blockquote>\n\n<details>\n<summary>src/PDF.ts (2)</summary><blockquote>\n\n`484-492`: **cacheKey computed and ignored. Dead code.**\n\nYou build `cacheKey` from `pageNumber-pageSizeId-orient` but then use plain `pageNumber` for `has()`, `get()`, and `set()`. Either remove the dead `cacheKey` or switch `pageCache` to `Map<string, PageData>` and key on the composite string.\n\n\n\n\n\nAlso applies to: 508-510\n\n---\n\n`658-770`: **HTML regex parsing still here. Kill it.**\n\n`renderByLine` accepts `htmlData: string` and parses it with `/<span style=\"color: ([^\"]+)\">([^<]*)<\\/span>/g`. This is the fragile regex path that the learning says should be eliminated. Change the signature to accept `ThemedToken[]` and iterate tokens directly—no HTML, no regex.\n\n\n\n\n\nBased on learnings.\n\n</blockquote></details>\n\n</blockquote></details>\n\n<details>\n<summary>📜 Review details</summary>\n\n**Configuration used**: CodeRabbit UI\n\n**Review profile**: ASSERTIVE\n\n**Plan**: Pro\n\n<details>\n<summary>📥 Commits</summary>\n\nReviewing files that changed from the base of the PR and between a9bd31ce4ace6a7e1c8022812ca48d7e7dff5215 and 1c96f8c402acadcf493930b381cb9c4878790905.\n\n</details>\n\n<details>\n<summary>📒 Files selected for processing (3)</summary>\n\n* `src/PDF.ts` (11 hunks)\n* `src/types/PaperPrinter_t.ts` (3 hunks)\n* `src/types/UI_t.ts` (3 hunks)\n\n</details>\n\n<details>\n<summary>🧰 Additional context used</summary>\n\n<details>\n<summary>📓 Path-based instructions (2)</summary>\n\n<details>\n<summary>src/**/*.ts</summary>\n\n\n**📄 CodeRabbit inference engine (AGENTS.md)**\n\n> `src/**/*.ts`: Types must use `_t` suffix (e.g., PageSizeId_t, MarginId_t, LanguageId_t)\n> Constants must use `k` prefix (e.g., kPageSizeIds, kMarginIds)\n> Interfaces used across files should follow `_t` suffix convention (e.g., Persist_t, UI_t)\n> Class instance variables should be lowercased (instances start with lowercase)\n> Single-use interfaces should reside in the same file as the method that uses them\n> Avoid hardcoded theme names except 'github-light' as a fallback\n> Use OS.fileRead instead of fs.readFileSync\n> Initialize sensible default values and use a single return at the end of functions\n\nFiles:\n- `src/types/PaperPrinter_t.ts`\n- `src/types/UI_t.ts`\n- `src/PDF.ts`\n\n</details>\n<details>\n<summary>src/**/!(VSCodeAPIs).ts</summary>\n\n\n**📄 CodeRabbit inference engine (AGENTS.md)**\n\n> Do not import the 'vscode' module outside VSCodeAPIs.ts\n\nFiles:\n- `src/types/PaperPrinter_t.ts`\n- `src/types/UI_t.ts`\n- `src/PDF.ts`\n\n</details>\n\n</details><details>\n<summary>🧠 Learnings (8)</summary>\n\n<details>\n<summary>📓 Common learnings</summary>\n\n```\nLearnt from: acoven\nPR: appliedmedia/print2paper4vscode#26\nFile: src/PDF.ts:675-721\nTimestamp: 2025-10-19T03:25:21.312Z\nLearning: In src/PDF.ts and src/Stylize.ts: The HTML intermediate format (`<span style=\"color: ...\">`) used between Stylize.tokenize and PDF.renderByLine is unnecessary. PDF is the only consumer, and webview renders PDFs via PDF.js (not HTML). Refactor to pass structured ThemedToken[] objects directly in the callback instead of HTML strings to eliminate HTML generation, regex parsing, and potential escaping issues.\n```\n\n</details>\n<details>\n<summary>📚 Learning: 2025-10-15T05:36:38.120Z</summary>\n\n```\nLearnt from: CR\nPR: appliedmedia/print2paper4vscode#0\nFile: AGENTS.md:0-0\nTimestamp: 2025-10-15T05:36:38.120Z\nLearning: Applies to src/**/*.ts : Avoid hardcoded theme names except 'github-light' as a fallback\n```\n\n**Applied to files:**\n- `src/types/PaperPrinter_t.ts`\n\n</details>\n<details>\n<summary>📚 Learning: 2025-10-15T05:36:38.120Z</summary>\n\n```\nLearnt from: CR\nPR: appliedmedia/print2paper4vscode#0\nFile: AGENTS.md:0-0\nTimestamp: 2025-10-15T05:36:38.120Z\nLearning: Applies to src/**/*.ts : Constants must use `k` prefix (e.g., kPageSizeIds, kMarginIds)\n```\n\n**Applied to files:**\n- `src/types/PaperPrinter_t.ts`\n\n</details>\n<details>\n<summary>📚 Learning: 2025-10-19T03:25:21.312Z</summary>\n\n```\nLearnt from: acoven\nPR: appliedmedia/print2paper4vscode#26\nFile: src/PDF.ts:675-721\nTimestamp: 2025-10-19T03:25:21.312Z\nLearning: In src/PDF.ts and src/Stylize.ts: The HTML intermediate format (`<span style=\"color: ...\">`) used between Stylize.tokenize and PDF.renderByLine is unnecessary. PDF is the only consumer, and webview renders PDFs via PDF.js (not HTML). Refactor to pass structured ThemedToken[] objects directly in the callback instead of HTML strings to eliminate HTML generation, regex parsing, and potential escaping issues.\n```\n\n**Applied to files:**\n- `src/PDF.ts`\n\n</details>\n<details>\n<summary>📚 Learning: 2025-09-28T03:44:52.885Z</summary>\n\n```\nLearnt from: acoven\nPR: appliedmedia/print2paper4vscode#9\nFile: src/PaperPrinter.ts:7-7\nTimestamp: 2025-09-28T03:44:52.885Z\nLearning: In PaperPrinter.ts, the jsPDF import should be replaced with a PDFDocument abstraction from PDF.ts to centralize all PDF library imports in one location and avoid bundling PDF libraries multiple times across the extension.\n```\n\n**Applied to files:**\n- `src/PDF.ts`\n\n</details>\n<details>\n<summary>📚 Learning: 2025-10-13T06:00:01.528Z</summary>\n\n```\nLearnt from: acoven\nPR: appliedmedia/print2paper4vscode#23\nFile: src/DocInfo_PDF.ts:4-4\nTimestamp: 2025-10-13T06:00:01.528Z\nLearning: DocInfo_PDF.ts is considered an extension of PDF.ts due to their tight coupling, but PDF library type imports should still be centralized through PDF.ts by adding type re-exports rather than direct imports from 'jspdf'.\n```\n\n**Applied to files:**\n- `src/PDF.ts`\n\n</details>\n<details>\n<summary>📚 Learning: 2025-10-19T02:25:49.759Z</summary>\n\n```\nLearnt from: acoven\nPR: appliedmedia/print2paper4vscode#26\nFile: src/PDF.ts:640-651\nTimestamp: 2025-10-19T02:25:49.759Z\nLearning: The print2paper4vscode project uses a top-left coordinate origin throughout for PDF generation and rendering. jsPDF is configured with top-left origin (Y=0 at top, Y increases downward), matching the PDF.js viewer interface coordinate system used in the webview.\n```\n\n**Applied to files:**\n- `src/PDF.ts`\n\n</details>\n<details>\n<summary>📚 Learning: 2025-10-19T02:31:10.484Z</summary>\n\n```\nLearnt from: acoven\nPR: appliedmedia/print2paper4vscode#26\nFile: src/PDF.ts:804-816\nTimestamp: 2025-10-19T02:31:10.484Z\nLearning: In src/PDF.ts, jsPDF.setFontSize() expects points (pt), not pixels (px). Always convert pixel values using this.pxToPts() before calling setFontSize().\n```\n\n**Applied to files:**\n- `src/PDF.ts`\n\n</details>\n\n</details><details>\n<summary>🧬 Code graph analysis (1)</summary>\n\n<details>\n<summary>src/types/UI_t.ts (1)</summary><blockquote>\n\n<details>\n<summary>src/types/PageRender_t.ts (1)</summary>\n\n* `PageRender` (58-86)\n\n</details>\n\n</blockquote></details>\n\n</details>\n\n</details>\n\n<details>\n<summary>🔇 Additional comments (9)</summary><blockquote>\n\n<details>\n<summary>src/types/UI_t.ts (2)</summary><blockquote>\n\n`1-1`: **Top-level import fixed. Good.**\n\nYou moved the inline import to a proper top-level `import type` statement. Clean and consistent now. Past comment addressed.\n\n---\n\n`22-23`: **New message types and fields look solid.**\n\nAdding `updatePageTotal` and `clearAllPages` to the union, plus the `pageTotal` and `pageRender` fields, aligns with the line-by-line rendering refactor. Types are correct, fields are optional as they should be.\n\n\n\n\nAlso applies to: 39-40\n\n</blockquote></details>\n<details>\n<summary>src/types/PaperPrinter_t.ts (2)</summary><blockquote>\n\n`25-25`: **Alt constants are solid.**\n\nNaming follows conventions (`k` prefix, `_alt` suffix), types are explicit and correct. Default values are sensible: a4, portrait, normal margins, 12px font. Clean.\n\n\n\n\nAlso applies to: 33-33, 43-43, 60-60\n\n---\n\n`63-63`: **kTheme_alt type annotation added. Past comment addressed.**\n\nExplicit `: string` type on `kTheme_alt` as requested in the previous review. Consistent with the other constants.\n\n</blockquote></details>\n<details>\n<summary>src/PDF.ts (5)</summary><blockquote>\n\n`7-7`: **Coords integration is clean.**\n\nProper lifecycle: imported, instantiated, init() and done() called at the right places. No issues.\n\n\n\n\nAlso applies to: 40-40, 63-63, 75-76, 116-116\n\n---\n\n`78-104`: **Cache invalidation looks thorough.**\n\nClears pageCache, nulls out pdfDoc, resets rendering state (X, Y, lineHeight, options), and resets pageTotal. Covers all the bases for a clean regeneration.\n\n---\n\n`800-801`: **Font size px→pts conversions fixed. Past comments addressed.**\n\nYou're storing `originalFontSizePx`, setting temp font size in points (8), then restoring with `this.coords.cssPxToPdfPts(originalFontSizePx)`. Consistent in both `addHeaderAndFooter` and `addPageTotalToCurrentPage`. Correct now.\n\n\n\n\nAlso applies to: 823-823, 875-876, 892-892\n\n---\n\n`592-637`: **Coordinate system comments are thorough and correct.**\n\nTop-left origin, Y increases downward, matching PDF.js viewer interface. Good documentation. Helps prevent future confusion.\n\n---\n\n`573-652`: **setupPdf/finishPdf lifecycle is solid.**\n\n`setupPdf` initializes the jsPDF doc, sets fonts, margins, and starting position. `finishPdf` sets `pageTotal` and calls `renderPageTotals` to add page numbers to all pages. The lifecycle is clear and correct.\n\n\n\n\nAlso applies to: 829-923\n\n</blockquote></details>\n\n</blockquote></details>\n\n</details>\n\n<!-- This is an auto-generated comment by CodeRabbit for review status -->",
+      "submittedAt": "2025-10-19T08:16:59Z",
+      "includesCreatedEdit": false,
+      "reactionGroups": [],
+      "state": "COMMENTED",
+      "commit": {
+        "oid": "1c96f8c402acadcf493930b381cb9c4878790905"
+      }
+    },
+    {
+      "id": "PRR_kwDOPiyH6c7H7CAL",
+      "author": {
+        "login": "coderabbitai"
+      },
+      "authorAssociation": "NONE",
+      "body": "**Actionable comments posted: 5**\n\n<details>\n<summary>📜 Review details</summary>\n\n**Configuration used**: CodeRabbit UI\n\n**Review profile**: ASSERTIVE\n\n**Plan**: Pro\n\n<details>\n<summary>📥 Commits</summary>\n\nReviewing files that changed from the base of the PR and between 1c96f8c402acadcf493930b381cb9c4878790905 and 2475dda461079ff4543d006c12391da972fd8fbd.\n\n</details>\n\n<details>\n<summary>📒 Files selected for processing (2)</summary>\n\n* `src/Diagnostics.ts` (5 hunks)\n* `tests/Diagnostics.test.ts` (1 hunks)\n\n</details>\n\n<details>\n<summary>🧰 Additional context used</summary>\n\n<details>\n<summary>📓 Path-based instructions (3)</summary>\n\n<details>\n<summary>tests/**/*.{ts,js}</summary>\n\n\n**📄 CodeRabbit inference engine (AGENTS.md)**\n\n> All test files must use Node.js built-in test runner: import from node:test and node:assert; avoid Mocha/Jest\n\nFiles:\n- `tests/Diagnostics.test.ts`\n\n</details>\n<details>\n<summary>src/**/*.ts</summary>\n\n\n**📄 CodeRabbit inference engine (AGENTS.md)**\n\n> `src/**/*.ts`: Types must use `_t` suffix (e.g., PageSizeId_t, MarginId_t, LanguageId_t)\n> Constants must use `k` prefix (e.g., kPageSizeIds, kMarginIds)\n> Interfaces used across files should follow `_t` suffix convention (e.g., Persist_t, UI_t)\n> Class instance variables should be lowercased (instances start with lowercase)\n> Single-use interfaces should reside in the same file as the method that uses them\n> Avoid hardcoded theme names except 'github-light' as a fallback\n> Use OS.fileRead instead of fs.readFileSync\n> Initialize sensible default values and use a single return at the end of functions\n\nFiles:\n- `src/Diagnostics.ts`\n\n</details>\n<details>\n<summary>src/**/!(VSCodeAPIs).ts</summary>\n\n\n**📄 CodeRabbit inference engine (AGENTS.md)**\n\n> Do not import the 'vscode' module outside VSCodeAPIs.ts\n\nFiles:\n- `src/Diagnostics.ts`\n\n</details>\n\n</details><details>\n<summary>🧠 Learnings (1)</summary>\n\n<details>\n<summary>📓 Common learnings</summary>\n\n```\nLearnt from: acoven\nPR: appliedmedia/print2paper4vscode#26\nFile: src/PDF.ts:675-721\nTimestamp: 2025-10-19T03:25:21.312Z\nLearning: In src/PDF.ts and src/Stylize.ts: The HTML intermediate format (`<span style=\"color: ...\">`) used between Stylize.tokenize and PDF.renderByLine is unnecessary. PDF is the only consumer, and webview renders PDFs via PDF.js (not HTML). Refactor to pass structured ThemedToken[] objects directly in the callback instead of HTML strings to eliminate HTML generation, regex parsing, and potential escaping issues.\n```\n\n</details>\n\n</details>\n\n</details>\n\n<details>\n<summary>🔇 Additional comments (3)</summary><blockquote>\n\n<details>\n<summary>tests/Diagnostics.test.ts (1)</summary><blockquote>\n\n`107-111`: **Smart move with the initialization timing.**\n\nMoving the Diagnostics creation after the console.log capture prevents the constructor's \"🚀 Start\" spam from fucking up your test assertions. Clean.\n\n</blockquote></details>\n<details>\n<summary>src/Diagnostics.ts (2)</summary><blockquote>\n\n`195-195`: **Timestamp format change is fine.**\n\nSingle-letter \"p\"/\"a\" is more compact. Whatever.\n\n---\n\n`267-267`: **Ugly type gymnastics, but I get it.**\n\nThe double cast to access `_name` from a parent instance is nasty, but TypeScript forces your hand here. You can't directly access private fields across instances without this shit.\n\n\n\nIt works, and there's no cleaner way to do it without refactoring the whole crawlUp pattern.\n\n</blockquote></details>\n\n</blockquote></details>\n\n</details>\n\n<!-- This is an auto-generated comment by CodeRabbit for review status -->",
+      "submittedAt": "2025-10-19T08:24:38Z",
+      "includesCreatedEdit": false,
+      "reactionGroups": [],
+      "state": "COMMENTED",
+      "commit": {
+        "oid": "2475dda461079ff4543d006c12391da972fd8fbd"
+      }
+    }
+  ],
+  "title": "Refactor: Line-by-line rendering improvements and PDF generation fixes"
+}
