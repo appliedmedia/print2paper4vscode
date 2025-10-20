@@ -476,7 +476,7 @@ const kCBStatus = {
 
 // When requesting page render:
 function updateHudStatus(cbId, status, pgId) {
-  const cbIndex = parseInt(cbId.replace('cb', ''));
+  const cbIndex = canvasIndex(cbId);
   const hudElement = document.getElementById('canvas-assignments');
   if (!hudElement) return;
 
@@ -1104,7 +1104,7 @@ const kCBStatus = {
 
 // Update HUD with emoji status
 function updateHudStatus(cbId, status, pgIdOrPageNum) {
-  const cbIndex = parseInt(cbId.replace('cb', ''));
+  const cbIndex = canvasIndex(cbId);
   const hudElement = document.getElementById('canvas-assignments');
   if (!hudElement) return;
 
