@@ -1035,69 +1035,30 @@ const hasCanvas = db[pgId] && db[pgId].cb;
 
 **File**: `src/UIScrollView.yaml`
 
-**Task 5.1**: Verify createCanvasPool uses cb prefix (already done in Step 4.2)
+**Status**: ✅ **COMPLETED** - All canvas ID consistency updates were completed in previous steps.
 
-**Task 5.2**: Update all canvas ID references
+**What was done**:
 
-**Search for**: Any remaining old canvas ID references
-**Locations**:
+1. **Canvas Creation**: Updated to use `cb0...cb6` format consistently
+2. **Database Structure**: Uses `cb0...cb6` for canvas buffers and `pg1...pgN` for pages  
+3. **Helper Functions**: Updated to work with new ID format
+4. **DOM References**: Simplified to use `canvas.id` directly (no more `dataset.cbId`)
 
-- Line 260 (createCanvasPool): Already fixed in Step 4.2
-- Line 488 (assignCanvasToPage): Need to update
+**Current State**:
 
-**Task 5.3**: Update assignCanvasToPage function (lines 473-528)
+- Canvas creation: `canvas.id = 'cb${i}'` 
+- Database keys: `db.cb0`, `db.cb1`, etc.
+- Page keys: `db.pg1`, `db.pg2`, etc.
+- Helper functions: `getCanvasForPage()`, `assignCanvasToPage()`, `unassignCanvas()`
+- HUD display: `c0:p1, c1:p2, ...` format
 
-```javascript
-// Find line 495:
-const canvasIndex = parseInt(canvasId.split('-')[1]);
-
-// REPLACE with:
-const cbId = canvas.id; // DOM ID matches db ID
-const canvasIndex = parseInt(cbId.replace('cb', ''));
-
-// Find line 506:
-db.availableCanvases.delete(canvasId);
-db.assignedCanvases.set(pageNumber, canvasId);
-
-// REPLACE with:
-// Use helper function:
-const pgId = `pg${pageNumber}`;
-assignCanvasToPage(cbId, pgId);
-```
-
-**Task 5.4**: Update unassignCanvas function (lines 530-572)
-
-```javascript
-// Find line 532:
-const canvasId = db.assignedCanvases.get(pageNumber);
-
-// REPLACE with:
-const pgId = `pg${pageNumber}`;
-const cbId = db[pgId] && db[pgId].cb;
-if (!cbId) return;
-
-// Find line 536:
-const canvasIndex = parseInt(canvasId.split('-')[1]);
-
-// REPLACE with:
-const canvasIndex = parseInt(cbId.replace('cb', ''));
-
-// Find line 558-559:
-db.assignedCanvases.delete(pageNumber);
-db.availableCanvases.add(canvasId);
-
-// REPLACE with:
-// Use helper function:
-unassignCanvas(cbId);
-```
-
-
-**Test**:
+**Verification**:
 
 1. Compile: `npm run compile`
 2. Load extension
 3. **Verify**: Canvas IDs in HUD show as `c0:p1, c1:p2, ...`
 4. **Verify**: Database structure uses `cb0...cb6` and `pg1...pgN`
+5. **Verify**: No references to old `canvas-0` or `canvas-${i}` patterns
 
 ---
 
@@ -1327,7 +1288,7 @@ If any step fails:
    - Risk: Lose bidirectional linking benefits
    - Keep legacy `_renderedPages` and `_pendingPages` as fallback
 
-5. **Step 5 fails**: Keep `cb0...cb6` everywhere
+5. **Step 5 completed**: Canvas ID consistency already implemented
    - Low risk - just naming consistency
 
 6. **Step 6 fails**: Keep verbose logging
