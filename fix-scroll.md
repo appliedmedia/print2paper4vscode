@@ -475,7 +475,7 @@ const kCBStatus = {
 };
 
 // When requesting page render:
-function updateHudStatus(cbId, status, pageNumber) {
+function updateHudStatus(cbId, status, pgId) {
   const cbIndex = canvasIndex(cbId);
   const hudElement = document.getElementById('canvas-assignments');
   if (!hudElement) return;
@@ -485,7 +485,10 @@ function updateHudStatus(cbId, status, pageNumber) {
   
   if (statusInfo) {
     // Always use a valid page number - 0 for available, actual page number for others
-    const pageDisplay = status === 'available' ? 0 : (pageNumber || 0);
+    let pageDisplay = 0;
+    if (status !== 'available' && pgId) {
+      pageDisplay = pageNumber(pgId);
+    }
     assignments[cbIndex] = `c${cbIndex}${statusInfo.char}p${pageDisplay}`;
   }
 
@@ -496,10 +499,10 @@ function updateHudStatus(cbId, status, pageNumber) {
 
 #### Integrate into existing functions
 
-- Call `updateHudStatus(cbId, 'requesting', pageNumber)` in `assignCanvasToPage()`
-- Call `updateHudStatus(cbId, 'clearing', pageNumber)` in `unassignCanvas()`
-- Call `updateHudStatus(cbId, 'assigned', pageNumber)` after render completes
-- Call `updateHudStatus(cbId, 'available', 0)` when canvas freed
+- Call `updateHudStatus(cbId, 'requesting', pgId)` in `assignCanvasToPage()`
+- Call `updateHudStatus(cbId, 'clearing', pgId)` in `unassignCanvas()`
+- Call `updateHudStatus(cbId, 'assigned', pgId)` after render completes
+- Call `updateHudStatus(cbId, 'available', null)` when canvas freed
 
 **Impact**:
 
@@ -1121,7 +1124,7 @@ const kCBStatus = {
 };
 
 // Update HUD with emoji status
-function updateHudStatus(cbId, status, pageNumber) {
+function updateHudStatus(cbId, status, pgId) {
   const cbIndex = canvasIndex(cbId);
   const hudElement = document.getElementById('canvas-assignments');
   if (!hudElement) return;
@@ -1131,7 +1134,10 @@ function updateHudStatus(cbId, status, pageNumber) {
   
   if (statusInfo) {
     // Always use a valid page number - 0 for available, actual page number for others
-    const pageDisplay = status === 'available' ? 0 : (pageNumber || 0);
+    let pageDisplay = 0;
+    if (status !== 'available' && pgId) {
+      pageDisplay = pageNumber(pgId);
+    }
     assignments[cbIndex] = `c${cbIndex}${statusInfo.char}p${pageDisplay}`;
   }
 
