@@ -869,8 +869,13 @@ function canvasId(canvasNumber) {
   return `cb${canvasNumber}`;
 }
 
-// Parse canvas index from canvas ID
+// Parse canvas index from canvas ID (robust version using data-index)
 function canvasIndex(cbId) {
+  const canvas = db[cbId] && db[cbId].domElementRef;
+  if (canvas && canvas.dataset.index) {
+    return parseInt(canvas.dataset.index);
+  }
+  // Fallback to ID parsing if data-index not available
   return parseInt(cbId.replace('cb', ''));
 }
 
@@ -992,6 +997,7 @@ function createDOMElements_Canvas() {
 const placeholder = document.createElement('div');
 placeholder.id = `page-${i}`;
 placeholder.className = 'page-placeholder loading';
+placeholder.dataset.index = i; // Store page index for robust access
 placeholder.style.width = '{{PAGE_WIDTH_PX}}px';
 placeholder.style.height = '{{PAGE_HEIGHT_PX}}px';
 placeholder.innerHTML = `
