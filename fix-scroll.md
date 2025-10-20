@@ -1039,7 +1039,7 @@ const hasCanvas = db[pgId] && db[pgId].cb;
 
 **Task 5.2**: Update all canvas ID references
 
-**Search for**: `canvas-${i}` and `canvas.id` references
+**Search for**: Any remaining old canvas ID references
 **Locations**:
 
 - Line 260 (createCanvasPool): Already fixed in Step 4.2
