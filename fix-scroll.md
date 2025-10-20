@@ -970,6 +970,7 @@ function createDOMElements_Canvas() {
     const canvas = document.createElement('canvas');
     canvas.id = canvasId(i); // Use helper function
     canvas.className = 'page-canvas';
+    canvas.dataset.index = i; // Store canvas index for robust access
     canvasContainer.appendChild(canvas);
 
     // Store in db with cb prefix
