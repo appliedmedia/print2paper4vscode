@@ -323,9 +323,9 @@ const db = {
 
 - "canvas cache" → "canvas buffer"
 - "cached pages" → "buffered pages"
-- Canvas IDs: `canvas-0` → `cb0` (in db struct), `cb0` (for logging)
-- Page IDs: `pg1, pg2, ...` (in db struct), `pg1` (for logging)
-- Element IDs: Keep `canvas-0` in DOM for compatibility
+- Canvas IDs: `cb0...cb6` (in db struct and DOM)
+- Page IDs: `pg1, pg2, ...` (in db struct and DOM)
+- Element IDs: DOM everything as cb0…cb6 and pg1...pgN
 
 **Impact**:
 
@@ -457,6 +457,14 @@ function getAllPageIds() {
 #### Add Emoji Status Updates
 
 ```javascript
+// Canvas buffer status constants
+const kCBStatus = {
+  requesting: { key: 'requesting', char: '❓' },
+  clearing: { key: 'clearing', char: '❌' },
+  assigned: { key: 'assigned', char: ':' },
+  available: { key: 'available', char: ':' }
+};
+
 // When requesting page render:
 function updateHudStatus(cbId, status, pgId) {
   const cbIndex = parseInt(cbId.replace('cb', ''));
@@ -464,15 +472,11 @@ function updateHudStatus(cbId, status, pgId) {
   if (!hudElement) return;
 
   const assignments = hudElement.textContent.split(' ');
-
-  if (status === 'requesting') {
-    assignments[cbIndex] = `c${cbIndex}❓p${pgId}`;
-  } else if (status === 'clearing') {
-    assignments[cbIndex] = `c${cbIndex}❌p${pgId}`;
-  } else if (status === 'assigned') {
-    assignments[cbIndex] = `c${cbIndex}:p${pgId}`;
-  } else if (status === 'available') {
-    assignments[cbIndex] = `c${cbIndex}:p0`;
+  const statusInfo = kCBStatus[status];
+  
+  if (statusInfo) {
+    const pageDisplay = status === 'available' ? '0' : pgId;
+    assignments[cbIndex] = `c${cbIndex}${statusInfo.char}p${pageDisplay}`;
   }
 
   hudElement.textContent = assignments.join(' ');
@@ -527,7 +531,7 @@ for (let i = 0; i < CONFIG.canvasBuffersSize; i++) {
 
 **Impact**:
 
-- DOM compatibility maintained (`canvas-0`)
+- DOM uses consistent cb0...cb6 format
 - DB structure matches POC (`cb0`)
 - Clear distinction between DOM IDs and logical IDs
 
@@ -1115,6 +1119,14 @@ Now that the refactor is complete, rename:
 **Task 6.1**: Add updateHudStatus function (insert after helper functions, before dx function)
 
 ```javascript
+// Canvas buffer status constants
+const kCBStatus = {
+  requesting: { key: 'requesting', char: '❓' },
+  clearing: { key: 'clearing', char: '❌' },
+  assigned: { key: 'assigned', char: ':' },
+  available: { key: 'available', char: ':' }
+};
+
 // Update HUD with emoji status
 function updateHudStatus(cbId, status, pgIdOrPageNum) {
   const cbIndex = parseInt(cbId.replace('cb', ''));
@@ -1128,15 +1140,11 @@ function updateHudStatus(cbId, status, pgIdOrPageNum) {
   }
 
   const assignments = hudElement.textContent.split(' ');
-
-  if (status === 'requesting') {
-    assignments[cbIndex] = `c${cbIndex}❓p${pageNum}`;
-  } else if (status === 'clearing') {
-    assignments[cbIndex] = `c${cbIndex}❌p${pageNum}`;
-  } else if (status === 'assigned') {
-    assignments[cbIndex] = `c${cbIndex}:p${pageNum}`;
-  } else if (status === 'available') {
-    assignments[cbIndex] = `c${cbIndex}:p0`;
+  const statusInfo = kCBStatus[status];
+  
+  if (statusInfo) {
+    const pageDisplay = status === 'available' ? '0' : pageNum;
+    assignments[cbIndex] = `c${cbIndex}${statusInfo.char}p${pageDisplay}`;
   }
 
   hudElement.textContent = assignments.join(' ');
