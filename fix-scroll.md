@@ -131,7 +131,7 @@ const page = await db.pdfDoc.getPage(pageNumber);
 - Canvas management spread across multiple functions
 - Uses Map/Set instead of simple db object
 - HUD exists but only shows final states, not transitions
-- Canvas IDs use `canvas-0` instead of POC's `cb0` format
+- Canvas IDs use `cb0...cb6` format consistently
 - Missing: emoji status indicators (❓, ❌, etc.)
 - Missing: `getCanvasForPage()`, `assignCanvasToPage()` helper functions
 
@@ -200,7 +200,7 @@ const page = await db.pdfDoc.getPage(pageNumber);
 
 4. **Confusing Terminology** ❌
    - "Cache" instead of "buffer" (cache implies optional, buffer implies pooled resource)
-   - `canvas-0` instead of `cb0` (inconsistent with page `pg1` style)
+   - Consistent `cb0...cb6` format (matches page `pg1...pgN` style)
    - `elementRef` sometimes used, sometimes not
 
 5. **Verbose Logging** ❌
@@ -502,9 +502,9 @@ function updateHudStatus(cbId, status, pgId) {
 
 ### Fix 6: Canvas ID Consistency
 
-**Current Problem**: Production uses `canvas-0` everywhere; POC uses `cb0` for logging.
+**Current Problem**: Production uses inconsistent ID formats; POC uses `cb0...cb6` consistently.
 
-**Fix**: Use `cb0...cb6` in db struct, keep `canvas-0` in DOM.
+**Fix**: Use `cb0...cb6` in both db struct and DOM.
 
 **File**: `src/UIScrollView.yaml`
 
@@ -514,9 +514,8 @@ function updateHudStatus(cbId, status, pgId) {
 // Canvas creation:
 for (let i = 0; i < CONFIG.canvasBuffersSize; i++) {
   const canvas = document.createElement('canvas');
-  canvas.id = `canvas-${i}`; // DOM ID stays as-is
+  canvas.id = `cb${i}`; // Consistent DOM ID format
   canvas.className = 'page-canvas';
-  canvas.dataset.cbId = `cb${i}`; // Add db reference
   canvasPool.appendChild(canvas);
 
   // Store in db with cb prefix
@@ -934,7 +933,7 @@ const db = {
 function createCanvasPool() {
   for (let i = 0; i < CONFIG.maxCanvases; i++) {
     const canvas = document.createElement('canvas');
-    canvas.id = `canvas-${i}`;
+    canvas.id = `cb${i}`;
     canvas.className = 'page-canvas';
     canvasPool.appendChild(canvas);
     db.canvasPool.push(canvas);
@@ -946,9 +945,8 @@ function createCanvasPool() {
 function createDOMElements_Canvas() {
   for (let i = 0; i < CONFIG.canvasBuffersSize; i++) {
     const canvas = document.createElement('canvas');
-    canvas.id = `canvas-${i}`; // DOM ID stays as-is
+    canvas.id = `cb${i}`; // Consistent DOM ID format
     canvas.className = 'page-canvas';
-    canvas.dataset.cbId = `cb${i}`; // Add db reference
     canvasContainer.appendChild(canvas);
 
     // Store in db with cb prefix
@@ -1055,7 +1053,7 @@ const hasCanvas = db[pgId] && db[pgId].cb;
 const canvasIndex = parseInt(canvasId.split('-')[1]);
 
 // REPLACE with:
-const cbId = canvas.dataset.cbId; // Get db ID from data attribute
+const cbId = canvas.id; // DOM ID matches db ID
 const canvasIndex = parseInt(cbId.replace('cb', ''));
 
 // Find line 506:
@@ -1203,7 +1201,7 @@ await page.render({
 }).promise;
 
 // ADD AFTER render completes:
-const cbId = canvas.dataset.cbId;
+const cbId = canvas.id;
 const pgId = `pg${pageNumber}`;
 updateHudStatus(cbId, 'assigned', pgId);
 ```
@@ -1302,7 +1300,7 @@ updateHudStatus(cbId, 'assigned', pgId);
 3. ✅ **Canvas buffer terminology** (not "cache")
 4. ✅ **Helper functions** for clean abstraction
 5. ✅ **Compact HUD logging** with emoji status indicators
-6. ✅ **Canvas ID consistency** (cb0...cb6 in db, canvas-0 in DOM)
+6. ✅ **Canvas ID consistency** (cb0...cb6 in both db and DOM)
 
 ### Performance Goals
 
@@ -1336,7 +1334,7 @@ If any step fails:
    - Risk: Lose bidirectional linking benefits
    - Keep legacy `_renderedPages` and `_pendingPages` as fallback
 
-5. **Step 5 fails**: Keep `canvas-0` everywhere
+5. **Step 5 fails**: Keep `cb0...cb6` everywhere
    - Low risk - just naming consistency
 
 6. **Step 6 fails**: Keep verbose logging
@@ -1402,8 +1400,8 @@ If any step fails:
 
 ## Questions for User (if any arise during implementation)
 
-1. Should we keep DOM IDs as `canvas-0` for backward compatibility, or change to `cb0`?
-   - **Recommendation**: Keep `canvas-0` in DOM, use `cb0` in database
+1. Should we use consistent `cb0...cb6` format for both DOM and database?
+   - **Recommendation**: Use `cb0...cb6` consistently in both DOM and database
 2. Should HUD emoji status be configurable (e.g., disable for production)?
    - **Recommendation**: Keep always-on for debugging, but make HUD hideable
 3. Should we add telemetry for performance metrics (render times, memory usage)?
