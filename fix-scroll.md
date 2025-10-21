@@ -902,7 +902,6 @@ function pageNumber(pgId) {
 function calculatePageMemoryUsage(pgId) {
   const cbId = db[pgId]?.cb;
   if (!cbId || cbId === canvasId(kCanvasId_Reset)) return 0; // Page not rendered yet
-  if (!db[cbId].domElementRef) throw new Error(`Canvas ${cbId} has no DOM element`);
 
   const canvas = db[cbId].domElementRef;
   const canvasMemory = (canvas.width * canvas.height * 4) / (1024 * 1024); // RGBA bytes to MB
