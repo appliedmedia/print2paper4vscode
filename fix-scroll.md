@@ -468,41 +468,38 @@ function canvasId(canvasNumber) {
 ```javascript
 // Canvas buffer status constants
 const kCBStatus = {
-  requesting: { key: 'requesting', char: '❓' },
-  clearing: { key: 'clearing', char: '❌' },
-  assigned: { key: 'assigned', char: ':' },
-  available: { key: 'available', char: ':' }
+  requesting: '❓',
+  clearing: '❌',
+  assigned: ':',
+  available: ':'
 };
 
-// When requesting page render:
-function updateHudStatus(cbId, status, pgId) {
-  const cbIndex = canvasIndex(cbId);
+// Simple HUD display - just gather and report data when called
+function updateHudStatus() {
   const hudElement = document.getElementById('canvas-assignments');
   if (!hudElement) return;
 
-  const assignments = hudElement.textContent.split(' ');
-  const statusInfo = kCBStatus[status];
-  
-  if (statusInfo) {
-    // Always use a valid page number - 0 for available, actual page number for others
-    let pageDisplay = 0;
-    if (status !== 'available' && pgId) {
-      pageDisplay = pageNumber(pgId);
-    }
-    assignments[cbIndex] = `c${cbIndex}${statusInfo.char}p${pageDisplay}`;
+  // Canvas assignments (cb1, cb2, cb3, cb4, cb5, cb6)
+  const canvasLine = [];
+  for (let i = 1; i <= 6; i++) { // 1-based, cb0 reserved
+    const cbId = canvasId(i);
+    const cb = db[cbId];
+    const statusChar = kCBStatus[cb.status] || '?';
+    const pgId = cb.pg || pageId(0); // pageId(0) means null/unassigned
+    canvasLine.push(`${cbId}${statusChar}${pgId}`);
   }
 
-  hudElement.textContent = assignments.join(' ');
-  dx(`HUD: ${assignments.join(' ')}`);
+  hudElement.textContent = canvasLine.join(' ');
+  dx(`HUD: ${canvasLine.join(' ')}`);
 }
 ```
 
 #### Integrate into existing functions
 
-- Call `updateHudStatus(cbId, 'requesting', pgId)` in `assignCanvasToPage()`
-- Call `updateHudStatus(cbId, 'clearing', pgId)` in `unassignCanvas()`
-- Call `updateHudStatus(cbId, 'assigned', pgId)` after render completes
-- Call `updateHudStatus(cbId, 'available', null)` when canvas freed
+- Update `db[cbId].status = 'requesting'` in `assignCanvasToPage()`
+- Update `db[cbId].status = 'clearing'` in `unassignCanvas()`
+- Update `db[cbId].status = 'assigned'` after render completes
+- Update `db[cbId].status = 'available'` when canvas freed
 
 **Impact**:
 
