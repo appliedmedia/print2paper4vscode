@@ -904,18 +904,9 @@ function calculatePageMemoryUsage(pgId) {
   const canvas = db[cbId]?.domElementRef;
   const canvasSizeMB = (canvas?.width * canvas?.height * 4) / (1024 * 1024); // RGBA bytes to MB
 
-  // Add PDF data size (if available)
-  let pdfSizeMB = 0;
-  if (db.pdfDoc && canvas) {
-    // Get actual PDF page data size from PDF.js
-    const page = db.pdfDoc.getPage(pageNumber(pgId));
-    if (page) {
-      // PDF.js provides access to raw page data size
-      const pageData = page.getTextContent();
-      const textSize = JSON.stringify(pageData).length;
-      pdfSizeMB = textSize / (1024 * 1024); // Convert bytes to MB
-    }
-  }
+  // Add PDF data size (stored during initial render)
+  const pageNum = pageNumber(pgId);
+  const pdfSizeMB = db.pageSizes?.[pageNum] || 0; // Use stored size from initial render
 
   return canvasSizeMB + pdfSizeMB;
 }
@@ -1212,6 +1203,12 @@ await page.render({
   canvasContext: ctx,
   viewport: viewport,
 }).promise;
+
+// Store page size for memory calculations (capture once during render)
+if (!db.pageSizes) db.pageSizes = {};
+const pageData = await page.getTextContent();
+const pageSize = JSON.stringify(pageData).length;
+db.pageSizes[pageNumber] = pageSize / (1024 * 1024); // Store in MB
 
 // ADD AFTER render completes:
 const cbId = canvas.id;
