@@ -1308,7 +1308,7 @@ db[cbId].status = kCBStatus_Assigned;
 3. ✅ **Canvas buffer terminology** (not "cache")
 4. ✅ **Helper functions** for clean abstraction
 5. ✅ **Compact HUD logging** with emoji status indicators
-6. ✅ **Canvas ID consistency** (cb0...cb6 in both db and DOM)
+6. ✅ **Canvas ID consistency** (cb1...cb6 in both db and DOM)
 
 ### Performance Goals
 
