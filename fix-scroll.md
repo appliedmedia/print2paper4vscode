@@ -522,7 +522,7 @@ function updateHudStatus() {
 
 ```javascript
 // Canvas creation:
-for (let i = 0; i < CONFIG.canvasBuffersSize; i++) {
+for (let i = 0; i < 6; i++) { // CONFIG.canvasBuffersSize = 6
   const canvas = document.createElement('canvas');
   canvas.id = `cb${i}`; // Consistent DOM ID format
   canvas.className = 'page-canvas';
@@ -720,10 +720,10 @@ private pageBuffers: Map<number, PageData> = new Map();
 // - Include canvas memory overhead
 
 // Find line 751:
-const cachedPages = Math.min(renderedPages, CONFIG.canvasBuffersSize);
+const cachedPages = Math.min(renderedPages, 6); // CONFIG.canvasBuffersSize = 6
 
 // REPLACE with:
-const bufferedPageCount = Math.min(renderedPages, CONFIG.canvasBuffersSize);
+const bufferedPageCount = Math.min(renderedPages, 6); // CONFIG.canvasBuffersSize = 6
 
 // Find line 754:
 const cachedMemoryMB = cachedPages * 2; // 2MB per cached page
@@ -981,7 +981,7 @@ function createCanvasPool() {
 
 // AFTER:
 function createDOMElements_Canvas() {
-  for (let i = 0; i < CONFIG.canvasBuffersSize; i++) {
+  for (let i = 0; i < 6; i++) { // CONFIG.canvasBuffersSize = 6
     const canvas = document.createElement('canvas');
     canvas.id = canvasId(i); // Use helper function
     canvas.className = 'page-canvas';
@@ -996,7 +996,7 @@ function createDOMElements_Canvas() {
       renderTask: null,
     };
   }
-  dx(`Created canvas buffer pool with ${CONFIG.canvasBuffersSize} buffers`);
+  dx(`Created canvas buffer pool with 6 buffers`); // CONFIG.canvasBuffersSize = 6
 }
 ```
 
@@ -1114,32 +1114,29 @@ const hasCanvas = db[pgId] && db[pgId].cb;
 ```javascript
 // Canvas buffer status constants
 const kCBStatus = {
-  requesting: { key: 'requesting', char: '❓' },
-  clearing: { key: 'clearing', char: '❌' },
-  assigned: { key: 'assigned', char: ':' },
-  available: { key: 'available', char: ':' }
+  requesting: '❓',
+  clearing: '❌',
+  assigned: ':',
+  available: ':'
 };
 
-// Update HUD with emoji status
-function updateHudStatus(cbId, status, pgId) {
-  const cbIndex = canvasIndex(cbId);
+// Simple HUD display - just gather and report data when called
+function updateHudStatus() {
   const hudElement = document.getElementById('canvas-assignments');
   if (!hudElement) return;
 
-  const assignments = hudElement.textContent.split(' ');
-  const statusInfo = kCBStatus[status];
-  
-  if (statusInfo) {
-    // Always use a valid page number - 0 for available, actual page number for others
-    let pageDisplay = 0;
-    if (status !== 'available' && pgId) {
-      pageDisplay = pageNumber(pgId);
-    }
-    assignments[cbIndex] = `c${cbIndex}${statusInfo.char}p${pageDisplay}`;
+  // Canvas assignments (cb1, cb2, cb3, cb4, cb5, cb6)
+  const canvasLine = [];
+  for (let i = 1; i <= 6; i++) { // 1-based, cb0 reserved
+    const cbId = canvasId(i);
+    const cb = db[cbId];
+    const statusChar = kCBStatus[cb.status] || '?';
+    const pgId = cb.pg || pageId(0); // pageId(0) means null/unassigned
+    canvasLine.push(`${cbId}${statusChar}${pgId}`);
   }
 
-  hudElement.textContent = assignments.join(' ');
-  dx(`HUD: ${assignments.join(' ')}`);
+  hudElement.textContent = canvasLine.join(' ');
+  dx(`HUD: ${canvasLine.join(' ')}`);
 }
 ```
 
@@ -1182,7 +1179,8 @@ function unassignCanvas(cbId) {
   db[cbId].status = '';
 
   // ADD HERE (after clearing):
-  updateHudStatus(cbId, 'available', 0);
+  // Update canvas status in database
+  db[cbId].status = 'available';
 }
 ```
 
@@ -1198,13 +1196,14 @@ await page.render({
 // ADD AFTER render completes:
 const cbId = canvas.id;
 const pgId = pageId(pageNumber);
-updateHudStatus(cbId, 'assigned', pageNumber);
+// Update canvas status in database
+db[cbId].status = 'assigned';
 ```
 
 **Task 6.5**: Update existing HUD calls
 
 **Search for**: `hudElement.textContent = assignments.join(' ');`
-**Replace with**: Call to `updateHudStatus()` where appropriate
+**Replace with**: Update `db[cbId].status` where appropriate
 
 **Locations**:
 
