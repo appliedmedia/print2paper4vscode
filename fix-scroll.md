@@ -1158,7 +1158,8 @@ function assignCanvasToPage(cbId, pgId) {
   db[pgId].cb = cbId;
 
   // ADD HERE:
-  updateHudStatus(cbId, 'requesting', pageNumber);
+  // Update canvas status in database
+  db[cbId].status = 'requesting';
 }
 ```
 
@@ -1171,7 +1172,8 @@ function unassignCanvas(cbId) {
 
   // ADD HERE (before clearing):
   if (oldPgId) {
-    updateHudStatus(cbId, 'clearing', oldPageNumber);
+    // Update canvas status in database
+    db[cbId].status = 'clearing';
   }
 
   // ... existing unassign logic
