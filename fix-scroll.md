@@ -493,8 +493,8 @@ function updateHudStatus() {
   for (let i = 1; i <= 6; i++) { // 1-based, cb0 reserved
     const cbId = canvasId(i);
     const cb = db[cbId];
-    const statusChar = kCBStatus[cb.status] || '?';
-    const pgId = cb.pg || pageId(kPageId_Reset); // kPageId_Reset means unassigned
+    const statusChar = kCBStatus[cb.status];
+    const pgId = cb.pg;
     canvasLine.push(`${cbId}${statusChar}${pgId}`);
   }
 
@@ -1148,8 +1148,8 @@ function updateHudStatus() {
   for (let i = 1; i <= 6; i++) { // 1-based, cb0 reserved
     const cbId = canvasId(i);
     const cb = db[cbId];
-    const statusChar = kCBStatus[cb.status] || '?';
-    const pgId = cb.pg || pageId(kPageId_Reset); // kPageId_Reset means unassigned
+    const statusChar = kCBStatus[cb.status];
+    const pgId = cb.pg;
     canvasLine.push(`${cbId}${statusChar}${pgId}`);
   }
 
