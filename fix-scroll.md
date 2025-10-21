@@ -1195,7 +1195,7 @@ function unassignCanvas(cbId) {
 }
 ```
 
-**Task 6.4**: Capture page size during PDF generation and pass to webview
+**Task 6.4**: Capture page size during PDF generation
 
 ```javascript
 // In PDF generation code (jsPDF/Shiki tokenization):
@@ -1206,29 +1206,9 @@ const pageSizeMB = sourceCodeLength / (1024 * 1024);
 // Store on PDFDoc object (extension context):
 if (!pdfDoc.pageSizes) pdfDoc.pageSizes = {};
 pdfDoc.pageSizes[pageNumber] = pageSizeMB;
-
-// Pass to webview when sending PDF data:
-webview.postMessage({
-  type: 'pdfData',
-  pdfDataUrl: pdfDataUrl,
-  pageSizes: pdfDoc.pageSizes  // Include page sizes
-});
 ```
 
-**Note**: Page sizes are captured during PDF generation in the extension, then passed to the webview via the message system. The webview stores them in `db.pageSizes` for memory calculations.
-
-**Task 6.5**: Store page sizes in webview when received
-
-```javascript
-// In webview message handler:
-case 'pdfData':
-  // Store page sizes for memory calculations
-  if (message.pageSizes) {
-    db.pageSizes = message.pageSizes;
-  }
-  // ... rest of PDF data handling
-  break;
-```
+**Note**: Page sizes are captured during PDF generation and stored on the PDF document. They'll be included as part of the existing PDF data bundle when passed to the webview.
 const pgId = pageId(pageNumber);
 // Update canvas status in database
 db[cbId].status = kCBStatus_Assigned;
