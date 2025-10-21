@@ -150,7 +150,10 @@ pdf_js: |
       disableAutoFetch: true,
       disableStream: true,
       disableRange: true,
-      disableFontFace: false
+      cMapUrl: null,
+      standardFontDataUrl: null,
+      useSystemFonts: false,
+      disableFontFace: true
     });
     
     loadingTask.promise.then(onDocumentLoadSuccess, onDocumentLoadError);

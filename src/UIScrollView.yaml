@@ -865,7 +865,11 @@ scroll_js: |
             url: dataUrl,
             disableAutoFetch: true,
             disableStream: true,
-            disableRange: true
+            disableRange: true,
+            cMapUrl: null,
+            standardFontDataUrl: null,
+            useSystemFonts: false,
+            disableFontFace: true
           });
           db.pdfDoc = await loadingTask.promise;
         }
