@@ -471,7 +471,7 @@ const kCBStatus = {
   requesting: '❓',
   clearing: '❌',
   assigned: ':',
-  available: ':'
+  available: '.'
 };
 
 // Simple HUD display - just gather and report data when called
@@ -1117,7 +1117,7 @@ const kCBStatus = {
   requesting: '❓',
   clearing: '❌',
   assigned: ':',
-  available: ':'
+  available: '.'
 };
 
 // Simple HUD display - just gather and report data when called
