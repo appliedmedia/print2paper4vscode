@@ -114,7 +114,10 @@ export class UIWebView {
   /**
    * Create scroll view with PageRender content (for external use)
    */
-  async createScrollView(pageRender: PageRender, options: ScrollOptions): Promise<WebviewPanelId_t> {
+  async createScrollView(
+    pageRender: PageRender,
+    options: ScrollOptions
+  ): Promise<WebviewPanelId_t> {
     const dx = this.dx.sub('createScrollView');
     dx.require({ pageRender, options }, ['pageRender', 'options']);
 
@@ -282,8 +285,7 @@ export class UIWebView {
    * Handle menu item selection message
    */
   private async handleMenuItemSelected(msg: PostMessage): Promise<void> {
-    const dx = this.dx.sub('handleMenuItemSelected', true /* debugOn */);
-    dx.out(`Received menuItemSelected message: ${JSON.stringify(msg)}`);
+    const dx = this.dx.sub('handleMenuItemSelected');
 
     try {
       const { menuId, itemId } = msg;

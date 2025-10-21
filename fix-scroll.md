@@ -150,21 +150,38 @@ const page = await db.pdfDoc.getPage(pageNumber);
 
    ```javascript
    // POC approach - clean and direct
-   db[canvasId].page = pageId;
-   db[pageId].Cn = canvasId;
-   db[canvasId].domElementRef = canvas;
+   db.cb1 = { pg: 'pg5', status: 'assigned', domElementRef: canvasElement, renderTask: null };
+   db.pg5 = {
+     cb: 'cb1',
+     domElementRef: placeholderElement,
+     dataUrl: '...',
+     widthPx: 800,
+     heightPx: 1100,
+   };
    ```
 
 3. **Bidirectional Canvas↔Page Linking**
-   - Canvas knows which page it holds: `db[canvasId].page`
-   - Page knows which canvas holds it: `db[pageId].Cn`
+   - Canvas knows which page it holds: `db.cb1.pg`
+   - Page knows which canvas holds it: `db.pg5.cb`
    - Easy to query either direction
+   - **Consistent domElementRef**: Both canvases and pages store their DOM element reference
 
 4. **Clear Terminology**
-   - **Canvas buffers** (cb): Physical canvas elements (limited to 7)
+   - **Canvas buffers** (cb): Physical canvas elements (limited to 6)
    - **Pages** (pg): Logical document pages (unlimited)
-   - Canvas IDs: `cb1...cb6` (not `canvas-0`)
-   - Page IDs: `pg1...pgN`
+   - Canvas IDs: `cb1...cb6` (used for both db keys AND DOM element IDs)
+   - Page IDs: `pg1...pgN` (used for both db keys AND DOM element IDs)
+   - **Database structure**:
+     - `db.cb1 = { pg: 'pg5', status: 'requesting', domElementRef, renderTask }`
+     - `db.pg5 = { cb: 'cb1', domElementRef, dataUrl, widthPx, heightPx }`
+   - **DOM element IDs match database keys**:
+     - Canvas elements: `<canvas id="cb1">`, `<canvas id="cb2">`, etc.
+     - Page placeholders: `<div id="pg1">`, `<div id="pg2">`, etc.
+   - **Status-based availability**:
+     - Canvas available: `status === 'ready'` (or empty string '')
+     - Canvas assigned: `status !== 'ready'` (requesting, clearing, assigned)
+     - Page rendered: `dataUrl` property exists
+     - Page has canvas: `db[cbId].status` is truthy and not ready
 
 5. **Compact HUD Logging**
    - Shows transitions: `c0❓p1` (requesting), `c0❌p1` (clearing)
@@ -176,6 +193,46 @@ const page = await db.pdfDoc.getPage(pageNumber);
    - `assignCanvasToPage(canvasId, pageId)` - Bidirectional link
    - `unassignCanvas(canvasId)` - Clear both directions
    - `getAvailableCanvas()` - Get next free canvas
+
+7. **Directional Buffer Strategy (Leading/Trailing)**
+   - Center visible page always rendered (uses 1 canvas)
+   - Remaining canvases split 60/40 based on scroll direction
+   - **bufferSize_trailing**: 40% of remaining buffers opposite scroll direction
+   - **bufferSize_leading**: 60% of remaining buffers toward scroll direction
+
+   **Configuration (6 canvas buffers):**
+
+   ```javascript
+   const remainingBuffers = CANVAS_BUFFERS_SIZE - 1; // Subtract center page (6 - 1 = 5)
+   const bufferSize_trailing = Math.floor(remainingBuffers * 0.4); // 2 pages
+   const bufferSize_leading = remainingBuffers - bufferSize_trailing; // 3 pages
+   ```
+
+   **Initial Render (8-page document):**
+   - First 6 pages loaded immediately: cb1:pg1 cb2:pg2 cb3:pg3 cb4:pg4 cb5:pg5 cb6:pg6
+
+   **Scroll Down Scenario** (pages 3, 4, 5 visible, center = 4):
+   - Center: page 4 (always rendered)
+   - Trailing (before, 2 pages): pages 2, 3
+   - Leading (after, 3 pages): pages 5, 6, 7
+   - **Buffered**: pages 2-7 (all 6 canvases)
+   - **Action**: Eject pg1, load pg7
+
+   **Scroll Down Further** (page 7 visible, scrolling down):
+   - Center: page 7
+   - Trailing (before, 2 pages): pages 5, 6
+   - Leading (after, 3 pages): page 8 only (at end of document)
+   - **Buffered**: pages 5-8 (only 4 canvases needed, 2 available)
+   - **Action**: Eject pg2, pg3, pg4; load pg8
+
+   **Scroll Up Reversal** (page 5 visible, now scrolling up):
+   - Center: page 5
+   - Trailing (after, 2 pages): pages 6, 7
+   - Leading (before, 3 pages): pages 4, 3, 2
+   - **Buffered**: pages 2-7 (all 6 canvases)
+   - **Action**: Eject pg8, load pg2; eject pg7, load pg3; eject pg6, load pg4
+
+   This ensures smooth scrolling with optimal pre-rendering in the direction of user movement.
 
 ### What Production Does Wrong
 
@@ -1162,8 +1219,9 @@ function assignCanvasToPage(cbId, pgId) {
 
   // Update HUD display
   const hudElement = document.getElementById('canvas-assignments');
-  if (hudElement) hudElement.textContent = hud();
-  dx(`HUD: ${hud()}`);
+  const hud = hud();
+  if (hudElement) hudElement.textContent = hud;
+  dx(hud);
 }
 ```
 
@@ -1188,8 +1246,9 @@ function unassignCanvas(cbId) {
   // ADD HERE (after clearing):
   // Update HUD display
   const hudElement = document.getElementById('canvas-assignments');
-  if (hudElement) hudElement.textContent = hud();
-  dx(`HUD: ${hud()}`);
+  const hud = hud();
+  if (hudElement) hudElement.textContent = hud;
+  dx(hud);
 }
 ```
 
@@ -1245,13 +1304,13 @@ if (this.docInfo.pdfDoc.pageSizes) {
 
 **Task 6.5**: Replace all inline HUD building with hud() function calls
 
-**Search for**: `dx(\`HUD: ${assignments.join(' ')}\`)`and similar inline HUD building
-**Replace with**:`dx(\`HUD: ${hud()}\`)`
+**Search for**: `dx(\`${assignments.join(' ')}\`)`and similar inline HUD building
+**Replace with**:`dx(\`${hud()}\`)`
 
 **Locations**:
 
-- Line 681: `dx(\`HUD: ${assignments.join(' ')}\`)`→`dx(\`HUD: ${hud()}\`)`
-- Line 958: `dx(\`HUD: ${hudText}\`)`→`dx(\`HUD: ${hud()}\`)`
+- Line 681: `dx(\`HUD: ${assignments.join(' ')}\`)`→`dx(hud)`
+- Line 958: `dx(\`HUD: ${hudText}\`)`→`dx(hud)`
 - Any other inline HUD building should be replaced with `hud()` function calls
 
 **Test**:

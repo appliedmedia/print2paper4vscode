@@ -474,16 +474,13 @@ export class PaperPrinter {
    * The key fix: clearAllPages now clears db.pdfDocs cache in webview.
    */
   private async regenerateAndUpdateWebview(): Promise<void> {
-    const dx = this.dx.sub('regenerateAndUpdateWebview', true /* debugOn */);
-    dx.out('Starting PDF regeneration...');
+    const dx = this.dx.sub('regenerateAndUpdateWebview');
     try {
       // Invalidate all PDF caches and reset state
       this.app.pdf.invalidateAllCaches();
-      dx.out('PDF caches invalidated');
 
       // Regenerate PDF with current settings
       await this.generatePdf();
-      dx.out('PDF regeneration complete');
 
       // Update webview with new PDF and clear all cached pages
       if (this.uiwebview) {
@@ -544,7 +541,6 @@ export class PaperPrinter {
 
   private async handleSelection_Theme(selectedId: string): Promise<HandleSelection_t> {
     const dx = this.dx.sub('handleSelection_Theme');
-    dx.out(`selectedId = ${selectedId}`);
 
     let id = '';
     let value: string | number | boolean = '';
@@ -575,8 +571,7 @@ export class PaperPrinter {
   }
 
   private async handleSelection_Text(selectedId: string): Promise<HandleSelection_t> {
-    const dx = this.dx.sub('handleSelection_Text', true /* debugOn */);
-    dx.out(`selectedId = ${selectedId}`);
+    const dx = this.dx.sub('handleSelection_Text');
 
     let id = '';
     let value: string | number | boolean = '';
@@ -586,22 +581,13 @@ export class PaperPrinter {
       const editorTypo = this.app.vscodeapis.getEditorTypography();
       id = String(editorTypo.fontSize);
       value = id; // value is the font size ID
-      dx.out(`returning editor size: ${id}`);
     } else {
       // Update font size
       const fontSize = parseInt(selectedId, 10);
       if (!isNaN(fontSize)) {
-        dx.out(`FONT SIZE: Changing to ${fontSize}px`);
         const menu = this.app.uimenumgr.getMenuById('fontSizeId');
         if (menu) {
           (menu.persist as Persist_t).fontSizeId = String(fontSize);
-          dx.out(`FONT SIZE: Set persist.fontSizeId to ${String(fontSize)}`);
-
-          // Verify the value was set
-          const verifyValue = this.app.uimenumgr.getValueForSelectedByMenuId('fontSizeId');
-          dx.out(
-            `FONT SIZE: Verification - getValueForSelectedByMenuId('fontSizeId') = ${verifyValue}`
-          );
         }
 
         id = selectedId;
@@ -623,7 +609,6 @@ export class PaperPrinter {
 
   private async handleSelection_PageSizeId(selectedId: string): Promise<HandleSelection_t> {
     const dx = this.dx.sub('handleSelection_PageSizeId');
-    dx.out(`selectedId = ${selectedId}`);
 
     let id = '';
     let value: string | number | boolean = '';
@@ -659,7 +644,6 @@ export class PaperPrinter {
 
   private async handleSelection_Orient(selectedId: string): Promise<HandleSelection_t> {
     const dx = this.dx.sub('handleSelection_Orient');
-    dx.out(`selectedId = ${selectedId}`);
 
     let id = '';
     let value: string | number | boolean = '';
@@ -668,10 +652,8 @@ export class PaperPrinter {
       // Return the default orientation (always portrait)
       id = 'portrait';
       value = id; // value is the orientation
-      dx.out(`returning default orient: ${id}`);
     } else if (selectedId === 'portrait' || selectedId === 'landscape') {
       // Update orientation
-      dx.out(`updating orient to ${selectedId}`);
       const menu = this.app.uimenumgr.getMenuById('orient');
       if (menu) {
         (menu.persist as Persist_t).orient = selectedId;

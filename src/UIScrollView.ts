@@ -45,7 +45,7 @@ export class UIScrollView {
   } as const;
 
   private readonly CONFIG = {
-    CANVAS_BUFFERS_SIZE: 7, // Number of canvas buffer elements for virtual scrolling
+    CANVAS_BUFFERS_SIZE: 6, // Number of canvas buffer elements for virtual scrolling
     SCROLL_DEBOUNCE_MS: 16, // ~60fps, syncs with requestAnimationFrame
   };
 
@@ -258,11 +258,8 @@ export class UIScrollView {
       // Create template dictionary
       const templateDict = {
         PAGE_TOTAL: pageTotal.toString(),
-        TOTAL_PAGES: pageTotal.toString(), // Also provide TOTAL_PAGES for HTML template
         CANVAS_BUFFERS_SIZE: this.CONFIG.CANVAS_BUFFERS_SIZE.toString(),
         SCROLL_DEBOUNCE_MS: this.CONFIG.SCROLL_DEBOUNCE_MS.toString(),
-        LOAD_DISTANCE: '2', // Pages distance to start loading canvas
-        UNLOAD_DISTANCE: '3', // Pages distance to unload canvas
         PAGE_WIDTH_PX: pageSizePx.widthPx.toString(),
         PAGE_HEIGHT_PX: pageSizePx.heightPx.toString(),
         TOOLBAR: await this.generateToolbarHTML(),

@@ -27,8 +27,11 @@ export class Diagnostics {
 
   private static _debugOn = false; // Root level debug state
   private static _lastMessageContent = ''; // Store last message content for truncation
-  private static _lastMessagePrefix = '';  // Store last prefix for robust truncation
-  private static _messageCounter = 0; // Global message counter
+  private static _lastMessagePrefix = ''; // Store last prefix for robust truncation
+  private static _lastPartialMessage = ''; // Store last partial message for duplicate detection
+  private static _lastWasTruncated = false; // Track if last message was truncated
+  private static _messageCounter = 0; // Global message counter (starts at 0000)
+  private static _duplicateCount = 0; // Count of duplicates (0 = no duplicates yet)
 
   private _name: string = '';
   private name_lineage: string = '';
@@ -91,7 +94,10 @@ export class Diagnostics {
   static reset(): void {
     Diagnostics._lastMessageContent = '';
     Diagnostics._lastMessagePrefix = '';
+    Diagnostics._lastPartialMessage = '';
+    Diagnostics._lastWasTruncated = false;
     Diagnostics._messageCounter = 0;
+    Diagnostics._duplicateCount = 0;
   }
 
   /**
@@ -124,7 +130,9 @@ export class Diagnostics {
   out(message: MessageRef): this {
     if (this._debugOn) {
       const formattedMessage = this.messageHeader(message);
-      UI.out(formattedMessage);
+      if (formattedMessage) {
+        UI.out(formattedMessage);
+      }
     }
     return this;
   }
@@ -137,24 +145,18 @@ export class Diagnostics {
   done(message?: MessageRef): this {
     if (this._debugOn && this.startTime !== null) {
       const duration = OS.performance.now() - this.startTime;
-      let timeDisplay: string;
+      const timeUnits = [
+        { ms: 86400000, suffix: 'd' },
+        { ms: 3600000, suffix: 'h' },
+        { ms: 60000, suffix: 'm' },
+        { ms: 1000, suffix: 's' },
+        { ms: 1, suffix: 'ms' },
+      ];
 
-      if (duration >= 86400000) {
-        // 24 hours or more
-        timeDisplay = (duration / 86400000).toFixed(2) + 'd';
-      } else if (duration >= 3600000) {
-        // 1 hour or more
-        timeDisplay = (duration / 3600000).toFixed(2) + 'h';
-      } else if (duration >= 60000) {
-        // 1 minute or more
-        timeDisplay = (duration / 60000).toFixed(2) + 'm';
-      } else if (duration >= 1000) {
-        // 1 second or more
-        timeDisplay = (duration / 1000).toFixed(2) + 's';
-      } else {
-        // Less than 1 second - show milliseconds with 2 decimal places
-        timeDisplay = duration.toFixed(2) + 'ms';
-      }
+      let i = 0;
+      for (; i < timeUnits.length - 1 && duration < timeUnits[i].ms; i++);
+      const unit = timeUnits[i];
+      const timeDisplay = (duration / unit.ms).toFixed(2) + unit.suffix;
 
       const completionMsg = message ? ` - ${message}` : '';
       this.out(`🏁 Done in ${timeDisplay}${completionMsg}`);
@@ -170,20 +172,55 @@ export class Diagnostics {
    */
   print(message: MessageRef): this {
     const formattedMessage = this.messageHeader(message);
-    UI.out(formattedMessage);
+    if (formattedMessage) {
+      UI.out(formattedMessage);
+    }
     return this;
   }
 
   /**
+   * Increment and return formatted message counter
+   */
+  private messageHeader_incCounter(): string {
+    Diagnostics._messageCounter = (Diagnostics._messageCounter + 1) % 10000;
+    return String(Diagnostics._messageCounter).padStart(4, '0');
+  }
+
+  /**
+   * Return duplicate count indicator if needed (formatted to match previous message)
+   * @param timestamp - Optional timestamp for non-truncated format
+   */
+  private messageHeader_addForDupe(timestamp: string = ''): string {
+    let message = '';
+    if (Diagnostics._duplicateCount) {
+      const counter = this.messageHeader_incCounter();
+      const dupMsg = `↑ x${Diagnostics._duplicateCount + 1}`;
+
+      // Match format of duplicated message (truncated or full)
+      if (Diagnostics._lastWasTruncated) {
+        // Truncated format: just counter and dup indicator
+        message = `${counter} | ${dupMsg}\n`;
+      } else {
+        // Full format: counter | timestamp | prefix | dup indicator
+        const prefix = Diagnostics._lastMessagePrefix;
+        message = timestamp
+          ? `${counter} | ${timestamp}${prefix}${dupMsg}\n`
+          : `${counter} | ${prefix}${dupMsg}\n`;
+      }
+
+      Diagnostics._duplicateCount = 0; // Reset duplicate count
+    }
+    return message;
+  }
+
+  /**
    * Format a message with timestamp, class name, and method name
+   * Handles both truncation (same prefix) and deduplication (exact duplicate)
    * @param message - The message to format
-   * @returns Formatted message string
+   * @returns Formatted message string, or empty string if duplicate (caller should skip output)
    */
   private messageHeader(message: MessageRef): string {
-    // Increment and wrap the global counter
-    Diagnostics._messageCounter = (Diagnostics._messageCounter + 1) % 10000;
-    const counter = String(Diagnostics._messageCounter).padStart(4, '0');
-
+    let result = '';
     const now = new Date();
     const year = now.getFullYear();
     const month = String(now.getMonth() + 1).padStart(2, '0');
@@ -204,18 +241,39 @@ export class Diagnostics {
     const prefix = `${this.name}${sep}`;
     const messageContent = `${prefix}${formattedMessage}`;
 
-    // Default to full message with timestamp
-    let result = `${counter} | ${timestamp} | ${messageContent}`;
+    let partialMessage = formattedMessage;
+
+    let wasTruncated = false;
 
     // Truncate only when prefixes match exactly
     if (Diagnostics._lastMessageContent && Diagnostics._lastMessagePrefix === prefix) {
-      const currentMessage = messageContent.slice(prefix.length).trim();
-      result = `${counter} | ${currentMessage}`;
+      wasTruncated = true;
+      partialMessage = messageContent.slice(prefix.length).trim();
+
+      // Check for duplicate (same prefix AND same partial message)
+      if (partialMessage === Diagnostics._lastPartialMessage) {
+        Diagnostics._duplicateCount++;
+      } else {
+        // Different partial message - output dup count matching previous message format
+        result += this.messageHeader_addForDupe(`${timestamp} | `);
+        const counter = this.messageHeader_incCounter();
+        result += `${counter} | ${partialMessage}`;
+      }
+    } else {
+      // Different prefix - output dup count matching previous message format
+      result += this.messageHeader_addForDupe(`${timestamp} | `);
+      const counter = this.messageHeader_incCounter();
+      result += `${counter} | ${timestamp} | ${messageContent}`;
     }
 
-    // Store this message content and prefix as the last message
-    Diagnostics._lastMessageContent = messageContent;
-    Diagnostics._lastMessagePrefix = prefix;
+    // Store state for next message (only if not duplicate)
+    if (!Diagnostics._duplicateCount) {
+      Diagnostics._lastMessageContent = messageContent;
+      Diagnostics._lastMessagePrefix = prefix;
+      Diagnostics._lastPartialMessage = partialMessage;
+      Diagnostics._lastWasTruncated = wasTruncated;
+    }
+
     return result;
   }
 
