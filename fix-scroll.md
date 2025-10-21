@@ -900,7 +900,7 @@ function pageNumber(pgId) {
 
 // Helper: Calculate memory usage for a rendered page
 function calculatePageMemoryUsage(pgId) {
-  const cbId = db[pgId] && db[pgId].cb;
+  const cbId = db[pgId]?.cb;
   if (!cbId) throw new Error(`Page ${pgId} has no canvas assigned (cbId is ${cbId})`);
   if (!db[cbId].domElementRef) throw new Error(`Canvas ${cbId} has no DOM element`);
 
