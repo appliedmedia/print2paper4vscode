@@ -906,7 +906,7 @@ function calculatePageMemoryUsage(pgId) {
 
   // Add PDF data size (stored during PDF generation in jsPDF)
   const pageNum = pageNumber(pgId);
-  const pdfSizeMB = db.pageSizes?.[pageNum] || 0; // Captured during tokenization/jsPDF generation
+  const pdfSizeMB = pdfDoc.pageSizes?.[pageNum] || 0; // Get from PDFDoc, not db
 
   return canvasSizeMB + pdfSizeMB;
 }
@@ -1203,12 +1203,12 @@ function unassignCanvas(cbId) {
 const sourceCodeLength = sourceCode.length;
 const pageSizeMB = sourceCodeLength / (1024 * 1024);
 
-// Store in database for memory calculations:
-if (!db.pageSizes) db.pageSizes = {};
-db.pageSizes[pageNumber] = pageSizeMB;
+// Store on PDFDoc object (extension context):
+if (!pdfDoc.pageSizes) pdfDoc.pageSizes = {};
+pdfDoc.pageSizes[pageNumber] = pageSizeMB;
 ```
 
-**Note**: Page size should be captured during the actual PDF generation process (Shiki tokenization → jsPDF), not during webview rendering. This gives us the true content size of the processed code.
+**Note**: Page size should be captured during the actual PDF generation process (Shiki tokenization → jsPDF) in the extension context, then passed to the webview. The `db` lives in the webview, so we store page sizes on the `PDFDoc` object instead.
 const pgId = pageId(pageNumber);
 // Update canvas status in database
 db[cbId].status = kCBStatus_Assigned;
