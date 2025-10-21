@@ -362,7 +362,7 @@ function assignCanvasToPage(cbId, pgId) {
 
   const oldCbId = db[pgId] && db[pgId].cb;
   if (oldCbId && db[oldCbId]) {
-    db[oldCbId].pg = null;
+    db[oldCbId].pg = pageId(0);
     db[oldCbId].status = kCBStatus_Available;
   }
 
@@ -394,7 +394,7 @@ function unassignCanvas(cbId) {
     canvas.parentElement.removeChild(canvas);
   }
 
-  db[cbId].pg = null;
+  db[cbId].pg = pageId(0);
   db[cbId].status = kCBStatus_Available;
 }
 
@@ -792,7 +792,7 @@ function assignCanvasToPage(cbId, pgId) {
 
   const oldCbId = db[pgId] && db[pgId].cb;
   if (oldCbId && db[oldCbId]) {
-    db[oldCbId].pg = null;
+    db[oldCbId].pg = pageId(0);
     db[oldCbId].status = kCBStatus_Available;
   }
 
@@ -824,7 +824,7 @@ function unassignCanvas(cbId) {
     canvas.parentElement.removeChild(canvas);
   }
 
-  db[cbId].pg = null;
+  db[cbId].pg = pageId(0);
   db[cbId].status = kCBStatus_Available;
 }
 
@@ -1185,7 +1185,7 @@ function unassignCanvas(cbId) {
 
   // ... existing unassign logic
 
-  db[cbId].pg = null;
+  db[cbId].pg = pageId(0);
   db[cbId].status = kCBStatus_Available;
 
   // ADD HERE (after clearing):
