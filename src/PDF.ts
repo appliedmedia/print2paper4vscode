@@ -47,7 +47,6 @@ export class PDF implements PageRender {
   private currentY: number = 0;
   private currentLineHeight: number = 0;
   private currentRenderOptions: RenderOptions | null = null;
-  private currentPageSize: number = 0;
 
   // Header/footer styling
   private static readonly HEADER_FOOTER_COLOR = '#cccccc'; // Light gray
@@ -367,11 +366,6 @@ export class PDF implements PageRender {
         this.docInfo.pdfDoc!.setFontSize(this.coords.cssPxToPdfPts(options.fontSizePx));
       }
 
-      // Initialize first page size (will be updated as content is added)
-      if (this.docInfo.pdfDoc && this.docInfo.pdfDoc.pageSizes) {
-        this.docInfo.pdfDoc.pageSizes[1] = 0.001; // Start with minimum size
-      }
-
       // Tokenize and build complete PDF in one pass
       await this.app.stylize.tokenize(
         code,
@@ -617,11 +611,6 @@ export class PDF implements PageRender {
         format: [pageWidthPts, pageHeightPts],
       });
 
-      // Initialize pageSizes for memory tracking
-      if (this.docInfo.pdfDoc) {
-        this.docInfo.pdfDoc.pageSizes = {};
-      }
-
       // Map font family to jsPDF supported fonts
       const jsPdfFont = this.mapFontFamilyToJsPDF(options.fontFamily, this.docInfo.pdfDoc);
       this.docInfo.pdfDoc.setFont(jsPdfFont, 'normal');
@@ -641,10 +630,6 @@ export class PDF implements PageRender {
       // Start at the left margin for X position
       this.currentX = marginsPts.leftMarginPts;
       // Start at the top margin + line height for Y position to account for text baseline
-
-      // Initialize page size tracking
-      this.docInfo.pageSizes = {};
-      this.currentPageSize = 0;
       // Text is positioned by its baseline, so we need to add line height
       this.currentY = marginsPts.topMarginPts + this.currentLineHeight;
 
@@ -689,9 +674,6 @@ export class PDF implements PageRender {
       let match;
       let xPos = this.currentX;
       let yPos = this.currentY; // Start at current Y position for this line
-
-      // Accumulate page size for this line
-      this.currentPageSize += htmlData.length;
 
       dx.out(`Rendering line ${lineNumber} at Y position: ${yPos}`);
 
@@ -764,11 +746,6 @@ export class PDF implements PageRender {
 
       // jsPDF: Y increases downward, so we check if we've gone too far down
       if (this.currentY > pageHeightPtsForBreak - marginsPtsForBreak.bottomMarginPts) {
-        // Need a new page - store current page size first
-        const currentPageNumber = this.docInfo.pdfDoc.getNumberOfPages();
-        this.docInfo.pageSizes[currentPageNumber] = this.currentPageSize;
-        dx.out(`Stored page ${currentPageNumber} size: ${this.currentPageSize} bytes`);
-
         dx.out(
           `Page break at line ${lineNumber}: currentY=${this.currentY} > bottomMargin=${pageHeightPtsForBreak - marginsPtsForBreak.bottomMarginPts}`
         );
@@ -777,10 +754,6 @@ export class PDF implements PageRender {
         this.currentY = marginsPtsForBreak.topMarginPts + this.currentLineHeight;
         this.currentX = marginsPtsForBreak.leftMarginPts;
 
-        // Reset page size for new page
-        this.currentPageSize = 0;
-
-        // Page break added
         dx.out(`Added page break at line ${lineNumber + 1}`);
 
         // Add header and footer to new page
@@ -936,19 +909,6 @@ export class PDF implements PageRender {
       // Set page total from the generated PDF
       this.pageTotal = this.docInfo.pdfDoc.getNumberOfPages();
 
-      // Store final page size
-      this.docInfo.pageSizes[this.pageTotal] = this.currentPageSize;
-
-      // Set page sizes for all pages
-      if (this.docInfo.pdfDoc.pageSizes) {
-        for (let pageNum = 1; pageNum <= this.pageTotal; pageNum++) {
-          const pageSizeBytes = this.docInfo.pageSizes[pageNum] || 0;
-          const pageSizeMB = this.calculatePageSizeMB(pageSizeBytes);
-          this.docInfo.pdfDoc.pageSizes[pageNum] = pageSizeMB;
-          dx.out(`Set page ${pageNum} size: ${pageSizeMB}MB (${pageSizeBytes} bytes)`);
-        }
-      }
-
       // Add page totals to all pages now that we know the total
       this.renderPageTotals();
 
@@ -962,15 +922,6 @@ export class PDF implements PageRender {
     } finally {
       dx.done();
     }
-  }
-
-  /**
-   * Calculate page size in MB based on accumulated content
-   */
-  private calculatePageSizeMB(contentLength: number): number {
-    // Calculate page size based on content length
-    const pageSizeMB = contentLength / (1024 * 1024); // Convert bytes to MB
-    return Math.max(0.001, pageSizeMB); // Minimum 0.001MB to avoid zero
   }
 }
 

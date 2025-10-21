@@ -53,9 +53,6 @@ export class DocInfo_PDF {
   // Temporary file tracking
   public tempPdfs: string[] = [];
 
-  // Page size tracking for memory management
-  public pageSizes: { [pageNumber: number]: number } = {};
-
   constructor(app: App) {
     this.app = app;
   }

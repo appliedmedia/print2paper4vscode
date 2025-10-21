@@ -151,7 +151,7 @@ scroll_html: |
 
     <!-- Performance indicators -->
     <div class="performance-info" id="performance-info">
-      <div>Pages: <span id="page-count">0</span>/<span id="total-pages">{{TOTAL_PAGES}}</span> | Canvases: <span id="canvas-count">0</span>/<span id="max-canvases">{{MAX_CANVASES}}</span> | Memory: <span id="memory-usage">0MB</span></div>
+      <div>Pages: <span id="page-count">0</span>/<span id="total-pages">{{TOTAL_PAGES}}</span> | Canvases: <span id="canvas-count">0</span>/<span id="max-canvases">{{CANVAS_BUFFERS_SIZE}}</span></div>
       <div><span id="canvas-assignments">c1:p0 c2:p0 c3:p0 c4:p0 c5:p0 c6:p0 c7:p0</span></div>
     </div>
 
@@ -181,7 +181,7 @@ scroll_js: |
     // Configuration from template
     const CONFIG = {
       pageTotal: {{PAGE_TOTAL}},
-      maxCanvases: {{MAX_CANVASES}},
+      CANVAS_BUFFERS_SIZE: {{CANVAS_BUFFERS_SIZE}},
       scale: 1.0,
       pageGap: 20,
       scrollDebounceMs: Math.max({{SCROLL_DEBOUNCE_MS}}, 50), // Minimum 50ms debounce
@@ -262,24 +262,43 @@ scroll_js: |
 
     // Unassign canvas (clear both directions)
     function unassignCanvas(cbId) {
-      const oldPgId = db[cbId] && db[cbId].pg;
-      if (oldPgId && db[oldPgId]) {
+      if (!cbId || !db[cbId]) return; // Robust: handle cb0 or invalid canvas
+      
+      const oldPgId = db[cbId].pg;
+      if (!oldPgId || oldPgId === pageId(kPageId_Reset)) return; // Already unassigned
+      
+      const pageNum = pageNumber(oldPgId);
+      
+      // Clear canvas and move to pool
+      const canvas = db[cbId].domElementRef;
+      if (canvas) {
+        // Clear canvas pixels
+        const ctx = canvas.getContext('2d');
+        if (ctx) {
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+        }
+        
+        // Move back to pool
+        if (canvas.parentElement) {
+          canvasPool.appendChild(canvas);
+        }
+      }
+      
+      // Clear bidirectional link
+      if (db[oldPgId]) {
         db[oldPgId].cb = null;
-
-        // Show "Loading page X..." when canvas removed
+        
+        // Reset placeholder to loading state
         const placeholder = db[oldPgId].placeholder;
         if (placeholder) {
-          const loadingText = placeholder.querySelector('.loading-text');
-          if (loadingText) loadingText.style.display = 'block';
+          placeholder.className = 'page-placeholder loading';
+          placeholder.innerHTML = `
+            <div class="page-label">Page ${pageNum}</div>
+          `;
         }
       }
 
-      // Remove canvas from DOM
-      const canvas = db[cbId].domElementRef;
-      if (canvas && canvas.parentElement) {
-        canvas.parentElement.removeChild(canvas);
-      }
-
+      // Clear canvas assignment
       db[cbId].pg = pageId(kPageId_Reset);
       db[cbId].status = kCBStatus_Ready;
 
@@ -353,19 +372,6 @@ scroll_js: |
       }
       // Fallback to ID parsing if data-index not available
       return parseInt(pgId.replace('pg', ''));
-    }
-
-    // Helper: Calculate memory usage for a rendered page
-    function calculatePageMemoryUsage(pgId) {
-      const cbId = db[pgId]?.cb;
-      const canvas = db[cbId]?.domElementRef;
-      const canvasSizeMB = (canvas?.width * canvas?.height * 4) / (1024 * 1024); // RGBA bytes to MB
-
-      // Add PDF data size (passed from extension during PDF generation)
-      const pageNum = pageNumber(pgId);
-      const pdfSizeMB = db.pageSizes?.[pageNum] || 0; // Stored in webview db
-
-      return canvasSizeMB + pdfSizeMB;
     }
 
     // Simple HUD display - just gather and return data for display
@@ -634,122 +640,58 @@ scroll_js: |
         // Sort by distance (furthest first) and unassign what we need
         pagesToUnassign.sort((a, b) => b.distanceFromCenter - a.distanceFromCenter);
         for (let i = 0; i < Math.min(canvasesNeeded, pagesToUnassign.length); i++) {
-          const { pageNumber } = pagesToUnassign[i];
-          unassignCanvas(pageNumber);
-          dx(`Unassigned page ${pageNumber} to free up canvas (distance: ${pagesToUnassign[i].distanceFromCenter})`);
+          const { canvasId, pageNumber } = pagesToUnassign[i];
+          unassignCanvas(canvasId);
+          dx(`Unassigned canvas ${canvasId} from page ${pageNumber} (distance: ${pagesToUnassign[i].distanceFromCenter})`);
         }
       }
       
       // Step 4: Assign canvases to pages that need them
       dx(`Pages needing canvases: [${pagesNeedingCanvases.join(', ')}], available: ${getAllAvailableCanvasIds().length}`);
       for (const pageNum of pagesNeedingCanvases) {
-        if (getAllAvailableCanvasIds().length > 0) {
-          dx(`Assigning canvas to page ${pageNum}`);
-          assignCanvasToPage(pageNum);
-        } else {
+        const availableIds = getAllAvailableCanvasIds();
+        if (availableIds.length === 0) {
           dx(`No available canvases for page ${pageNum}`);
-        }
-      }
-    }
-
-    // Assign canvas to page
-    function assignCanvasToPage(pageNumber) {
-      dx(`assignCanvasToPage called for page ${pageNumber}`);
-      
-      if (getAllAvailableCanvasIds().length === 0) {
-        dx(`No available canvases for page ${pageNumber}`);
-        return;
-      }
-      
-      // Check if page already has a canvas assigned
-      const pgId = pageId(pageNumber);
-      if (db[pgId] && db[pgId].cb) {
-        dx(`Page ${pageNumber} already has canvas assigned, skipping`);
-        return;
-      }
-      
-      const availableIds = getAllAvailableCanvasIds();
-      const canvasId = availableIds[0];
-      const canvas = document.getElementById(canvasId);
-      if (!canvas) {
-        return;
-      }
-      
-      // Show attempting to assign indicator
-      const canvasIndex = parseInt(canvasId.split('-')[1]);
-      const hudElement = document.getElementById('canvas-assignments');
-      if (hudElement) {
-        const currentText = hudElement.textContent;
-        hudElement.textContent = hud();
-        dx(`HUD: ${hud()}`);
-      }
-      
-      // Assign canvas to page using helper function
-      assignCanvasToPage(canvasId, pgId);
-      
-      // Move canvas to page placeholder
-      const placeholder = document.getElementById(`page-${pageNumber}`);
-      if (placeholder) {
-        placeholder.innerHTML = '';
-        placeholder.className = 'page-container';
-        placeholder.appendChild(canvas);
-      }
-      
-      // Check if page already rendered
-      const pgId = pageId(pageNumber);
-      if (db[pgId] && db[pgId].pageData) {
-        const pageData = db[pgId].pageData;
-        dx(`Page ${pageNumber} already rendered, using buffered data`);
-        renderPageToCanvas(pageData, canvasId);
-      } else {
-        dx(`Page ${pageNumber} not rendered yet, requesting render`);
-        requestPageRender(pageNumber);
-      }
-      
-      updateCanvasAssignments();
-    }
-
-    // Unassign canvas from page
-    function unassignCanvas(pageNumber) {
-      const pgId = pageId(pageNumber);
-      const canvasId = db[pgId]?.cb;
-      if (!canvasId) return;
-      
-      // Show unassigning indicator in HUD
-      const canvasIndex = parseInt(canvasId.split('-')[1]);
-      const hudElement = document.getElementById('canvas-assignments');
-      if (hudElement) {
-        const currentText = hudElement.textContent;
-        const assignments = currentText.split(' ');
-        assignments[canvasIndex] = `c${canvasIndex}xp${pageNumber}`;
-        hudElement.textContent = assignments.join(' ');
-      }
-      
-      const canvas = document.getElementById(canvasId);
-      if (canvas) {
-        // Clear canvas
-        const ctx = canvas.getContext('2d');
-        if (ctx) {
-          ctx.clearRect(0, 0, canvas.width, canvas.height);
+          continue;
         }
         
-        // Move back to pool
-        canvasPool.appendChild(canvas);
+        const pgId = pageId(pageNum);
+        if (db[pgId] && db[pgId].cb) {
+          dx(`Page ${pageNum} already has canvas ${db[pgId].cb} assigned, skipping`);
+          continue;
+        }
+        
+        const cbId = availableIds[0];
+        const canvas = document.getElementById(cbId);
+        if (!canvas) {
+          dx(`Canvas ${cbId} not found in DOM`);
+          continue;
+        }
+        
+        dx(`Assigning canvas ${cbId} to page ${pageNum}`);
+        
+        // Assign canvas to page using helper function
+        assignCanvasToPage(cbId, pgId);
+        
+        // Move canvas to page placeholder
+        const placeholder = document.getElementById(`page-${pageNum}`);
+        if (placeholder) {
+          placeholder.innerHTML = '';
+          placeholder.className = 'page-container';
+          placeholder.appendChild(canvas);
+        }
+        
+        // Check if page already rendered
+        if (db[pgId] && db[pgId].pageData) {
+          const pageData = db[pgId].pageData;
+          dx(`Page ${pageNum} already rendered, using buffered data`);
+          renderPageToCanvas(pageData, cbId);
+        } else {
+          dx(`Page ${pageNum} not rendered yet, requesting render`);
+          requestPageRender(pageNum);
+        }
       }
       
-      // Update state using helper function
-      unassignCanvas(canvasId);
-      
-      // Reset placeholder
-      const placeholder = document.getElementById(`page-${pageNumber}`);
-      if (placeholder) {
-        placeholder.className = 'page-placeholder loading';
-        placeholder.innerHTML = `
-          <div class="page-label">Page ${pageNumber}</div>
-        `;
-      }
-      
-      dx(`Unassigned canvas ${canvasId} from page ${pageNumber}`);
       updateCanvasAssignments();
     }
 
@@ -921,29 +863,7 @@ scroll_js: |
       document.getElementById('page-count').textContent = pageCount;
       document.getElementById('canvas-count').textContent = canvasCount;
       
-      // Calculate and display memory usage
-      const memoryUsage = calculateMemoryUsage();
-      document.getElementById('memory-usage').textContent = memoryUsage;
-      
       updateCanvasAssignments();
-    }
-
-    // Calculate estimated memory usage for PDF pages
-    function calculateMemoryUsage() {
-      const totalPages = CONFIG.pageTotal;
-      const renderedPages = getAllPageIds().filter(pgId => db[pgId]?.cb).length;
-      
-      // Estimate memory usage:
-      // - Buffered pages (first 7): ~2MB per page (PDF data + canvas)
-      // - Additional pages: ~1MB per page (PDF data only)
-      const bufferedPageCount = Math.min(renderedPages, CONFIG.maxCanvases);
-      const additionalPages = Math.max(0, totalPages - CONFIG.maxCanvases);
-      
-      const bufferedMemoryMB = bufferedPageCount * 2; // 2MB per buffered page
-      const additionalMemoryMB = additionalPages * 1; // 1MB per additional page
-      const totalMemoryMB = bufferedMemoryMB + additionalMemoryMB;
-      
-      return `${totalMemoryMB}MB`;
     }
 
     // Update canvas assignments display
@@ -974,7 +894,9 @@ scroll_js: |
             // Unassign canvases for pages that will be hidden
             if (newPageTotal < oldPageTotal) {
               for (let i = newPageTotal + 1; i <= oldPageTotal; i++) {
-                unassignCanvas(i);
+                const pgId = pageId(i);
+                const cbId = db[pgId]?.cb;
+                unassignCanvas(cbId);
               }
             }
             
@@ -1034,9 +956,10 @@ scroll_js: |
     
     // Helper function for the actual clearing logic
     function handleClearAllPages() {
-      // Unassign all canvases
-      for (let i = 1; i <= CONFIG.pageTotal; i++) {
-        unassignCanvas(i);
+      // Unassign all canvases (iterate through canvas buffers, not pages!)
+      const allCanvasIds = getAllCanvasIds();
+      for (const cbId of allCanvasIds) {
+        unassignCanvas(cbId);
       }
       
       // Reset all placeholders to loading state
