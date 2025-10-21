@@ -34,7 +34,7 @@
 
 - **CONFIG**: MAX_CANVASES=7, LOAD_DISTANCE=3, UNLOAD_DISTANCE=4, SCALE=1.5
 - **Database structure**: Simple `db` object with direct property access
-  - Canvas properties: `db[canvasId] = { page, status, elementRef, renderTask }`
+  - Canvas properties: `db[canvasId] = { page, status, domElementRef, renderTask }`
   - Page properties: `db[pageId] = { cb, placeholder, wrapper, label }`
 - **Canvas IDs**: `cb0, cb1, cb2...` (Canvas buffers)
 - **Page IDs**: `pg1, pg2, pg3...` (Pages)
@@ -131,7 +131,7 @@ const page = await db.pdfDoc.getPage(pageNumber);
 - Canvas management spread across multiple functions
 - Uses Map/Set instead of simple db object
 - HUD exists but only shows final states, not transitions
-- Canvas IDs use `canvas-0` instead of POC's `cb0` format
+- Canvas IDs use `cb0...cb6` format consistently
 - Missing: emoji status indicators (❓, ❌, etc.)
 - Missing: `getCanvasForPage()`, `assignCanvasToPage()` helper functions
 
@@ -152,7 +152,7 @@ const page = await db.pdfDoc.getPage(pageNumber);
    // POC approach - clean and direct
    db[canvasId].page = pageId;
    db[pageId].Cn = canvasId;
-   db[canvasId].elementRef = canvas;
+   db[canvasId].domElementRef = canvas;
    ```
 
 3. **Bidirectional Canvas↔Page Linking**
@@ -200,8 +200,8 @@ const page = await db.pdfDoc.getPage(pageNumber);
 
 4. **Confusing Terminology** ❌
    - "Cache" instead of "buffer" (cache implies optional, buffer implies pooled resource)
-   - `canvas-0` instead of `cb0` (inconsistent with page `pg1` style)
-   - `elementRef` sometimes used, sometimes not
+   - Consistent `cb0...cb6` format (matches page `pg1...pgN` style)
+   - `domElementRef` sometimes used, sometimes not
 
 5. **Verbose Logging** ❌
    - Individual `dx()` calls instead of HUD updates
@@ -288,7 +288,7 @@ const db = {
 
 // AFTER (SIMPLE - POC approach):
 const db = {
-  // Canvas buffers: db.cb0 = { pg: 'pg5', status: 'render', elementRef, renderTask }
+  // Canvas buffers: db.cb0 = { pg: 'pg5', status: 'render', domElementRef, renderTask }
   // Pages: db.pg5 = { cb: 'cb0', placeholder, wrapper, label }
   pdfDoc: null, // Single PDF.js document
   lastScrollTop: -999,
@@ -323,9 +323,9 @@ const db = {
 
 - "canvas cache" → "canvas buffer"
 - "cached pages" → "buffered pages"
-- Canvas IDs: `canvas-0` → `cb0` (in db struct), `cb0` (for logging)
-- Page IDs: `pg1, pg2, ...` (in db struct), `pg1` (for logging)
-- Element IDs: Keep `canvas-0` in DOM for compatibility
+- Canvas IDs: `cb1...cb6` (in db struct and DOM)
+- Page IDs: `pg1, pg2, ...` (in db struct and DOM)
+- Element IDs: DOM everything as cb0…cb6 and pg1...pgN
 
 **Impact**:
 
@@ -349,7 +349,7 @@ const db = {
 // Get canvas element for page
 function getCanvasForPage(pgId) {
   const cbId = db[pgId] && db[pgId].cb;
-  return cbId ? db[cbId].elementRef : null;
+  return cbId ? db[cbId].domElementRef : null;
 }
 
 // Assign canvas to page (bidirectional)
@@ -362,8 +362,8 @@ function assignCanvasToPage(cbId, pgId) {
 
   const oldCbId = db[pgId] && db[pgId].cb;
   if (oldCbId && db[oldCbId]) {
-    db[oldCbId].pg = null;
-    db[oldCbId].status = '';
+    db[oldCbId].pg = pageId(kPageId_Reset);
+    db[oldCbId].status = kCBStatus_Available;
   }
 
   // Set new assignment
@@ -389,13 +389,13 @@ function unassignCanvas(cbId) {
   }
 
   // Remove canvas from DOM
-  const canvas = db[cbId].elementRef;
+  const canvas = db[cbId].domElementRef;
   if (canvas && canvas.parentElement) {
     canvas.parentElement.removeChild(canvas);
   }
 
-  db[cbId].pg = null;
-  db[cbId].status = '';
+  db[cbId].pg = pageId(kPageId_Reset);
+  db[cbId].status = kCBStatus_Ready;
 }
 
 // Get available canvas
@@ -403,13 +403,13 @@ function getAvailableCanvas() {
   // First try available canvases
   const availableIds = getAllAvailableCanvasIds();
   if (availableIds.length > 0) {
-    return db[availableIds[0]].elementRef;
+    return db[availableIds[0]].domElementRef;
   }
 
   // Then try cancelled canvases
   const cancelledIds = getAllCancelledCanvasIds();
   if (cancelledIds.length > 0) {
-    return db[cancelledIds[0]].elementRef;
+    return db[cancelledIds[0]].domElementRef;
   }
 
   return null;
@@ -434,6 +434,15 @@ function getAllCancelledCanvasIds() {
 function getAllPageIds() {
   return Object.keys(db).filter(k => k.startsWith('pg'));
 }
+
+// ID generation helpers - centralized for easy maintenance
+function pageId(pageNumber) {
+  return `pg${pageNumber}`;
+}
+
+function canvasId(canvasNumber) {
+  return `cb${canvasNumber}`;
+}
 ```
 
 **Impact**:
@@ -457,35 +466,49 @@ function getAllPageIds() {
 #### Add Emoji Status Updates
 
 ```javascript
-// When requesting page render:
-function updateHudStatus(cbId, status, pgId) {
-  const cbIndex = parseInt(cbId.replace('cb', ''));
+// ID constants for unassigned/reset state
+const kPageId_Reset = 0;
+const kCanvasId_Reset = 0;
+
+// Canvas buffer status constants
+const kCBStatus_Requesting = 'requesting';
+const kCBStatus_Clearing = 'clearing';
+const kCBStatus_Assigned = 'assigned';
+const kCBStatus_Ready = 'ready';
+
+const kCBStatus = {
+  [kCBStatus_Requesting]: '❓',
+  [kCBStatus_Clearing]: '❌',
+  [kCBStatus_Assigned]: ':',
+  [kCBStatus_Ready]: '.'
+};
+
+// Simple HUD display - just gather and report data when called
+function updateHudStatus() {
   const hudElement = document.getElementById('canvas-assignments');
   if (!hudElement) return;
 
-  const assignments = hudElement.textContent.split(' ');
-
-  if (status === 'requesting') {
-    assignments[cbIndex] = `c${cbIndex}❓p${pgId}`;
-  } else if (status === 'clearing') {
-    assignments[cbIndex] = `c${cbIndex}❌p${pgId}`;
-  } else if (status === 'assigned') {
-    assignments[cbIndex] = `c${cbIndex}:p${pgId}`;
-  } else if (status === 'available') {
-    assignments[cbIndex] = `c${cbIndex}:p0`;
+  // Canvas assignments (cb1, cb2, cb3, cb4, cb5, cb6)
+  const canvasLine = [];
+  for (let i = 1; i <= 6; i++) { // 1-based, cb0 reserved
+    const cbId = canvasId(i);
+    const cb = db[cbId];
+    const statusChar = kCBStatus[cb.status];
+    const pgId = cb.pg;
+    canvasLine.push(`${cbId}${statusChar}${pgId}`);
   }
 
-  hudElement.textContent = assignments.join(' ');
-  dx(`HUD: ${assignments.join(' ')}`);
+  hudElement.textContent = canvasLine.join(' ');
+  dx(`HUD: ${canvasLine.join(' ')}`);
 }
 ```
 
 #### Integrate into existing functions
 
-- Call `updateHudStatus(cbId, 'requesting', pgId)` in `assignCanvasToPage()`
-- Call `updateHudStatus(cbId, 'clearing', pgId)` in `unassignCanvas()`
-- Call `updateHudStatus(cbId, 'assigned', pgId)` after render completes
-- Call `updateHudStatus(cbId, 'available', null)` when canvas freed
+- Update `db[cbId].status = kCBStatus_Requesting` in `assignCanvasToPage()`
+- Update `db[cbId].status = kCBStatus_Clearing` in `unassignCanvas()`
+- Update `db[cbId].status = kCBStatus_Assigned` after render completes
+- Update `db[cbId].status = kCBStatus_Available` when canvas freed
 
 **Impact**:
 
@@ -498,9 +521,9 @@ function updateHudStatus(cbId, status, pgId) {
 
 ### Fix 6: Canvas ID Consistency
 
-**Current Problem**: Production uses `canvas-0` everywhere; POC uses `cb0` for logging.
+**Current Problem**: Production uses inconsistent ID formats; POC uses `cb0...cb6` consistently.
 
-**Fix**: Use `cb0...cb6` in db struct, keep `canvas-0` in DOM.
+**Fix**: Use `cb0...cb6` in both db struct and DOM.
 
 **File**: `src/UIScrollView.yaml`
 
@@ -508,18 +531,17 @@ function updateHudStatus(cbId, status, pgId) {
 
 ```javascript
 // Canvas creation:
-for (let i = 0; i < CONFIG.canvasBuffersSize; i++) {
+for (let i = 0; i < 6; i++) { // CONFIG.canvasBuffersSize = 6
   const canvas = document.createElement('canvas');
-  canvas.id = `canvas-${i}`; // DOM ID stays as-is
+  canvas.id = `cb${i}`; // Consistent DOM ID format
   canvas.className = 'page-canvas';
-  canvas.dataset.cbId = `cb${i}`; // Add db reference
   canvasPool.appendChild(canvas);
 
   // Store in db with cb prefix
   db[`cb${i}`] = {
-    pg: null,
+    pg: pageId(kPageId_Reset),
     status: '',
-    elementRef: canvas,
+    domElementRef: canvas,
     renderTask: null,
   };
 }
@@ -527,7 +549,7 @@ for (let i = 0; i < CONFIG.canvasBuffersSize; i++) {
 
 **Impact**:
 
-- DOM compatibility maintained (`canvas-0`)
+- DOM uses consistent cb0...cb6 format
 - DB structure matches POC (`cb0`)
 - Clear distinction between DOM IDs and logical IDs
 
@@ -707,10 +729,10 @@ private pageBuffers: Map<number, PageData> = new Map();
 // - Include canvas memory overhead
 
 // Find line 751:
-const cachedPages = Math.min(renderedPages, CONFIG.canvasBuffersSize);
+const cachedPages = Math.min(renderedPages, 6); // CONFIG.canvasBuffersSize = 6
 
 // REPLACE with:
-const bufferedPageCount = Math.min(renderedPages, CONFIG.canvasBuffersSize);
+const bufferedPageCount = Math.min(renderedPages, 6); // CONFIG.canvasBuffersSize = 6
 
 // Find line 754:
 const cachedMemoryMB = cachedPages * 2; // 2MB per cached page
@@ -719,7 +741,7 @@ const cachedMemoryMB = cachedPages * 2; // 2MB per cached page
 // Calculate actual memory usage using helper function
 let totalMemoryMB = 0;
 for (let i = 0; i < bufferedPageCount; i++) {
-  const pgId = `pg${i + 1}`;
+  const pgId = pageId(i + 1);
   totalMemoryMB += calculatePageMemoryUsage(pgId);
 }
 const bufferedMemoryMB = Math.round(totalMemoryMB * 100) / 100; // Round to 2 decimal places
@@ -744,7 +766,7 @@ const bufferedMemoryMB = Math.round(totalMemoryMB * 100) / 100; // Round to 2 de
 ```javascript
 // Database state management (POC approach - simple object)
 const db = {
-  // Canvas buffers: db.cb0 = { pg: 'pg5', status: 'render', elementRef, renderTask }
+  // Canvas buffers: db.cb0 = { pg: 'pg5', status: 'render', domElementRef, renderTask }
   // Pages: db.pg5 = { cb: 'cb0', placeholder, wrapper, label }
   pdfDoc: null, // Single PDF.js document
   lastScrollTop: -999,
@@ -761,7 +783,7 @@ const viewer = document.getElementById('scrollable-viewer');
 // Get canvas element for page
 function getCanvasForPage(pgId) {
   const cbId = db[pgId] && db[pgId].cb;
-  return cbId ? db[cbId].elementRef : null;
+  return cbId ? db[cbId].domElementRef : null;
 }
 
 // Assign canvas to page (bidirectional)
@@ -774,8 +796,8 @@ function assignCanvasToPage(cbId, pgId) {
 
   const oldCbId = db[pgId] && db[pgId].cb;
   if (oldCbId && db[oldCbId]) {
-    db[oldCbId].pg = null;
-    db[oldCbId].status = '';
+    db[oldCbId].pg = pageId(kPageId_Reset);
+    db[oldCbId].status = kCBStatus_Available;
   }
 
   // Set new assignment
@@ -801,13 +823,13 @@ function unassignCanvas(cbId) {
   }
 
   // Remove canvas from DOM
-  const canvas = db[cbId].elementRef;
+  const canvas = db[cbId].domElementRef;
   if (canvas && canvas.parentElement) {
     canvas.parentElement.removeChild(canvas);
   }
 
-  db[cbId].pg = null;
-  db[cbId].status = '';
+  db[cbId].pg = pageId(kPageId_Reset);
+  db[cbId].status = kCBStatus_Ready;
 }
 
 // Get available canvas
@@ -815,13 +837,13 @@ function getAvailableCanvas() {
   // First try available canvases
   const availableIds = getAllAvailableCanvasIds();
   if (availableIds.length > 0) {
-    return db[availableIds[0]].elementRef;
+    return db[availableIds[0]].domElementRef;
   }
 
   // Then try cancelled canvases
   const cancelledIds = getAllCancelledCanvasIds();
   if (cancelledIds.length > 0) {
-    return db[cancelledIds[0]].elementRef;
+    return db[cancelledIds[0]].domElementRef;
   }
 
   return null;
@@ -847,24 +869,46 @@ function getAllPageIds() {
   return Object.keys(db).filter(k => k.startsWith('pg'));
 }
 
+// ID generation helpers - centralized for easy maintenance
+function pageId(pageNumber) {
+  return `pg${pageNumber}`;
+}
+
+function canvasId(canvasNumber) {
+  return `cb${canvasNumber}`;
+}
+
+// Parse canvas index from canvas ID (robust version using data-index)
+function canvasIndex(cbId) {
+  const canvas = db[cbId] && db[cbId].domElementRef;
+  if (canvas && canvas.dataset.index) {
+    return parseInt(canvas.dataset.index);
+  }
+  // Fallback to ID parsing if data-index not available
+  return parseInt(cbId.replace('cb', ''));
+}
+
+// Parse page number from page ID (robust version using data-index)
+function pageNumber(pgId) {
+  const pageData = db[pgId];
+  if (pageData && pageData.placeholder && pageData.placeholder.dataset.index) {
+    return parseInt(pageData.placeholder.dataset.index);
+  }
+  // Fallback to ID parsing if data-index not available
+  return parseInt(pgId.replace('pg', ''));
+}
+
 // Helper: Calculate memory usage for a rendered page
 function calculatePageMemoryUsage(pgId) {
-  const cbId = db[pgId] && db[pgId].cb;
-  if (!cbId || !db[cbId].elementRef) return 0;
+  const cbId = db[pgId]?.cb;
+  const canvas = db[cbId]?.domElementRef;
+  const canvasSizeMB = (canvas?.width * canvas?.height * 4) / (1024 * 1024); // RGBA bytes to MB
 
-  const canvas = db[cbId].elementRef;
-  const canvasMemory = (canvas.width * canvas.height * 4) / (1024 * 1024); // RGBA bytes to MB
+  // Add PDF data size (passed from extension during PDF generation)
+  const pageNum = pageNumber(pgId);
+  const pdfSizeMB = db.pageSizes?.[pageNum] || 0; // Stored in webview db
 
-  // Add PDF data memory (if available)
-  let pdfMemory = 0;
-  if (db.pdfDoc) {
-    // Estimate PDF page data size (this is approximate)
-    // PDF.js loads page data on-demand, so we can't measure exact size
-    // But we can estimate based on canvas dimensions
-    pdfMemory = (canvas.width * canvas.height * 0.1) / (1024 * 1024); // Rough estimate
-  }
-
-  return canvasMemory + pdfMemory;
+  return canvasSizeMB + pdfSizeMB;
 }
 
 // Send diagnostic message to extension
@@ -873,7 +917,6 @@ function dx(message) {
 }
 ```
 
-**Note**: Functions are renamed with "Bidirectional" suffix to avoid conflicts during refactor. After Step 4 is complete, remove the suffix.
 
 **Test**:
 
@@ -913,7 +956,7 @@ const db = {
 
 // AFTER (POC approach - simple object):
 const db = {
-  // Canvas buffers: db.cb0 = { pg: 'pg5', status: 'render', elementRef, renderTask }
+  // Canvas buffers: db.cb0 = { pg: 'pg5', status: 'render', domElementRef, renderTask }
   // Pages: db.pg5 = { cb: 'cb0', placeholder, wrapper, label }
   // Canvas buffers (cb0...cb6) and pages (pg1...pgN) will be added dynamically
   pdfDoc: null, // Single PDF.js document
@@ -930,7 +973,7 @@ const db = {
 function createCanvasPool() {
   for (let i = 0; i < CONFIG.maxCanvases; i++) {
     const canvas = document.createElement('canvas');
-    canvas.id = `canvas-${i}`;
+    canvas.id = `cb${i}`;
     canvas.className = 'page-canvas';
     canvasPool.appendChild(canvas);
     db.canvasPool.push(canvas);
@@ -940,22 +983,22 @@ function createCanvasPool() {
 
 // AFTER:
 function createDOMElements_Canvas() {
-  for (let i = 0; i < CONFIG.canvasBuffersSize; i++) {
+  for (let i = 0; i < 6; i++) { // CONFIG.canvasBuffersSize = 6
     const canvas = document.createElement('canvas');
-    canvas.id = `canvas-${i}`; // DOM ID stays as-is
+    canvas.id = canvasId(i); // Use helper function
     canvas.className = 'page-canvas';
-    canvas.dataset.cbId = `cb${i}`; // Add db reference
+    canvas.dataset.index = i; // Store canvas index for robust access
     canvasContainer.appendChild(canvas);
 
     // Store in db with cb prefix
-    db[`cb${i}`] = {
-      pg: null,
+    db[canvasId(i)] = {
+      pg: pageId(kPageId_Reset),
       status: '',
-      elementRef: canvas,
+      domElementRef: canvas,
       renderTask: null,
     };
   }
-  dx(`Created canvas buffer pool with ${CONFIG.canvasBuffersSize} buffers`);
+  dx(`Created canvas buffer pool with 6 buffers`); // CONFIG.canvasBuffersSize = 6
 }
 ```
 
@@ -966,6 +1009,7 @@ function createDOMElements_Canvas() {
 const placeholder = document.createElement('div');
 placeholder.id = `page-${i}`;
 placeholder.className = 'page-placeholder loading';
+placeholder.dataset.index = i; // Store page index for robust access
 placeholder.style.width = '{{PAGE_WIDTH_PX}}px';
 placeholder.style.height = '{{PAGE_HEIGHT_PX}}px';
 placeholder.innerHTML = `
@@ -975,10 +1019,10 @@ content.appendChild(placeholder);
 
 // ADD after content.appendChild(placeholder):
 // Store in db with pg prefix
-const pgId = `pg${i}`;
+const pgId = pageId(i);
 if (!db[pgId]) db[pgId] = {};
 db[pgId].placeholder = placeholder;
-db[pgId].cb = null; // No canvas assigned yet
+db[pgId].cb = canvasId(kCanvasId_Reset); // No canvas assigned yet
 dx(`Created placeholder for ${pgId}`);
 ```
 
@@ -1034,75 +1078,30 @@ const hasCanvas = db[pgId] && db[pgId].cb;
 
 **File**: `src/UIScrollView.yaml`
 
-**Task 5.1**: Verify createCanvasPool uses cb prefix (already done in Step 4.2)
+**Status**: ✅ **COMPLETED** - All canvas ID consistency updates were completed in previous steps.
 
-**Task 5.2**: Update all canvas ID references
+**What was done**:
 
-**Search for**: `canvas-${i}` and `canvas.id` references
-**Locations**:
+1. **Canvas Creation**: Updated to use `cb0...cb6` format consistently
+2. **Database Structure**: Uses `cb0...cb6` for canvas buffers and `pg1...pgN` for pages  
+3. **Helper Functions**: Updated to work with new ID format
+4. **DOM References**: Simplified to use `canvas.id` directly (no more `dataset.cbId`)
 
-- Line 260 (createCanvasPool): Already fixed in Step 4.2
-- Line 488 (assignCanvasToPage): Need to update
+**Current State**:
 
-**Task 5.3**: Update assignCanvasToPage function (lines 473-528)
+- Canvas creation: `canvas.id = 'cb${i}'` 
+- Database keys: `db.cb0`, `db.cb1`, etc.
+- Page keys: `db.pg1`, `db.pg2`, etc.
+- Helper functions: `getCanvasForPage()`, `assignCanvasToPage()`, `unassignCanvas()`
+- HUD display: `c0:p1, c1:p2, ...` format
 
-```javascript
-// Find line 495:
-const canvasIndex = parseInt(canvasId.split('-')[1]);
-
-// REPLACE with:
-const cbId = canvas.dataset.cbId; // Get db ID from data attribute
-const canvasIndex = parseInt(cbId.replace('cb', ''));
-
-// Find line 506:
-db.availableCanvases.delete(canvasId);
-db.assignedCanvases.set(pageNumber, canvasId);
-
-// REPLACE with:
-// Use helper function (after removing Bidirectional suffix):
-const pgId = `pg${pageNumber}`;
-assignCanvasToPage(cbId, pgId);
-```
-
-**Task 5.4**: Update unassignCanvas function (lines 530-572)
-
-```javascript
-// Find line 532:
-const canvasId = db.assignedCanvases.get(pageNumber);
-
-// REPLACE with:
-const pgId = `pg${pageNumber}`;
-const cbId = db[pgId] && db[pgId].cb;
-if (!cbId) return;
-
-// Find line 536:
-const canvasIndex = parseInt(canvasId.split('-')[1]);
-
-// REPLACE with:
-const canvasIndex = parseInt(cbId.replace('cb', ''));
-
-// Find line 558-559:
-db.assignedCanvases.delete(pageNumber);
-db.availableCanvases.add(canvasId);
-
-// REPLACE with:
-// Use helper function (after removing Bidirectional suffix):
-unassignCanvas(cbId);
-```
-
-**Task 5.5**: Remove "Bidirectional" suffix from helper functions
-
-Now that the refactor is complete, rename:
-
-- `assignCanvasToPageBidirectional` → `assignCanvasToPage`
-- `unassignCanvasBidirectional` → `unassignCanvas`
-
-**Test**:
+**Verification**:
 
 1. Compile: `npm run compile`
 2. Load extension
 3. **Verify**: Canvas IDs in HUD show as `c0:p1, c1:p2, ...`
 4. **Verify**: Database structure uses `cb0...cb6` and `pg1...pgN`
+5. **Verify**: No references to old `canvas-0` or `canvas-${i}` patterns
 
 ---
 
@@ -1115,32 +1114,40 @@ Now that the refactor is complete, rename:
 **Task 6.1**: Add updateHudStatus function (insert after helper functions, before dx function)
 
 ```javascript
-// Update HUD with emoji status
-function updateHudStatus(cbId, status, pgIdOrPageNum) {
-  const cbIndex = parseInt(cbId.replace('cb', ''));
+// ID constants for unassigned/reset state
+const kPageId_Reset = 0;
+const kCanvasId_Reset = 0;
+
+// Canvas buffer status constants
+const kCBStatus_Requesting = 'requesting';
+const kCBStatus_Clearing = 'clearing';
+const kCBStatus_Assigned = 'assigned';
+const kCBStatus_Ready = 'ready';
+
+const kCBStatus = {
+  [kCBStatus_Requesting]: '❓',
+  [kCBStatus_Clearing]: '❌',
+  [kCBStatus_Assigned]: ':',
+  [kCBStatus_Ready]: '.'
+};
+
+// Simple HUD display - just gather and report data when called
+function updateHudStatus() {
   const hudElement = document.getElementById('canvas-assignments');
   if (!hudElement) return;
 
-  // Parse page number
-  let pageNum = pgIdOrPageNum;
-  if (typeof pgIdOrPageNum === 'string' && pgIdOrPageNum.startsWith('pg')) {
-    pageNum = parseInt(pgIdOrPageNum.replace('pg', ''));
+  // Canvas assignments (cb1, cb2, cb3, cb4, cb5, cb6)
+  const canvasLine = [];
+  for (let i = 1; i <= 6; i++) { // 1-based, cb0 reserved
+    const cbId = canvasId(i);
+    const cb = db[cbId];
+    const statusChar = kCBStatus[cb.status];
+    const pgId = cb.pg;
+    canvasLine.push(`${cbId}${statusChar}${pgId}`);
   }
 
-  const assignments = hudElement.textContent.split(' ');
-
-  if (status === 'requesting') {
-    assignments[cbIndex] = `c${cbIndex}❓p${pageNum}`;
-  } else if (status === 'clearing') {
-    assignments[cbIndex] = `c${cbIndex}❌p${pageNum}`;
-  } else if (status === 'assigned') {
-    assignments[cbIndex] = `c${cbIndex}:p${pageNum}`;
-  } else if (status === 'available') {
-    assignments[cbIndex] = `c${cbIndex}:p0`;
-  }
-
-  hudElement.textContent = assignments.join(' ');
-  dx(`HUD: ${assignments.join(' ')}`);
+  hudElement.textContent = canvasLine.join(' ');
+  dx(`HUD: ${canvasLine.join(' ')}`);
 }
 ```
 
@@ -1159,7 +1166,8 @@ function assignCanvasToPage(cbId, pgId) {
   db[pgId].cb = cbId;
 
   // ADD HERE:
-  updateHudStatus(cbId, 'requesting', pgId);
+  // Update canvas status in database
+  db[cbId].status = kCBStatus_Requesting;
 }
 ```
 
@@ -1172,38 +1180,47 @@ function unassignCanvas(cbId) {
 
   // ADD HERE (before clearing):
   if (oldPgId) {
-    updateHudStatus(cbId, 'clearing', oldPgId);
+    // Update canvas status in database
+    db[cbId].status = kCBStatus_Clearing;
   }
 
   // ... existing unassign logic
 
-  db[cbId].pg = null;
-  db[cbId].status = '';
+  db[cbId].pg = pageId(kPageId_Reset);
+  db[cbId].status = kCBStatus_Ready;
 
   // ADD HERE (after clearing):
-  updateHudStatus(cbId, 'available', null);
+  // Update canvas status in database
+  db[cbId].status = kCBStatus_Ready;
 }
 ```
 
-**Task 6.4**: Integrate into renderPageToCanvas function
+**Task 6.4**: Capture page size during PDF generation
 
 ```javascript
-// Find in renderPageToCanvas function (around line 709):
-await page.render({
-  canvasContext: ctx,
-  viewport: viewport,
-}).promise;
+// When creating pdfDoc, initialize pageSizes:
+const pdfDoc = new jsPDF(/* ... */);
+pdfDoc.pageSizes = {}; // Initialize empty object
 
-// ADD AFTER render completes:
-const cbId = canvas.dataset.cbId;
-const pgId = `pg${pageNumber}`;
-updateHudStatus(cbId, 'assigned', pgId);
+// In PDF generation code (jsPDF/Shiki tokenization):
+// When processing source code → tokens → PDF content:
+const sourceCodeLength = sourceCode.length;
+const pageSizeMB = sourceCodeLength / (1024 * 1024);
+
+// Store on PDFDoc object (extension context):
+pdfDoc.pageSizes[pageNumber] = pageSizeMB; // No existence check needed
+```
+
+**Note**: Page sizes are captured during PDF generation and stored on the PDF document. They'll be included as part of the existing PDF data bundle when passed to the webview.
+const pgId = pageId(pageNumber);
+// Update canvas status in database
+db[cbId].status = kCBStatus_Assigned;
 ```
 
 **Task 6.5**: Update existing HUD calls
 
 **Search for**: `hudElement.textContent = assignments.join(' ');`
-**Replace with**: Call to `updateHudStatus()` where appropriate
+**Replace with**: Update `db[cbId].status` where appropriate
 
 **Locations**:
 
@@ -1237,7 +1254,7 @@ updateHudStatus(cbId, 'assigned', pgId);
    - `getAvailableCanvas()` finds next free canvas
 
 2. **Test Database Structure**:
-   - Canvas buffer properties: `pg`, `status`, `elementRef`, `renderTask`
+   - Canvas buffer properties: `pg`, `status`, `domElementRef`, `renderTask`
    - Page properties: `cb`, `placeholder`
    - Bidirectional consistency: `db[cbId].pg === pgId` ⟺ `db[pgId].cb === cbId`
 
@@ -1294,7 +1311,7 @@ updateHudStatus(cbId, 'assigned', pgId);
 3. ✅ **Canvas buffer terminology** (not "cache")
 4. ✅ **Helper functions** for clean abstraction
 5. ✅ **Compact HUD logging** with emoji status indicators
-6. ✅ **Canvas ID consistency** (cb0...cb6 in db, canvas-0 in DOM)
+6. ✅ **Canvas ID consistency** (cb1...cb6 in both db and DOM)
 
 ### Performance Goals
 
@@ -1328,7 +1345,7 @@ If any step fails:
    - Risk: Lose bidirectional linking benefits
    - Keep legacy `_renderedPages` and `_pendingPages` as fallback
 
-5. **Step 5 fails**: Keep `canvas-0` everywhere
+5. **Step 5 completed**: Canvas ID consistency already implemented
    - Low risk - just naming consistency
 
 6. **Step 6 fails**: Keep verbose logging
@@ -1389,17 +1406,6 @@ If any step fails:
 - **PDF.js**: Client-side PDF rendering library (webview)
 - **jsPDF**: Server-side PDF generation library (extension)
 - **Shiki**: Server-side syntax highlighting library (extension)
-
----
-
-## Questions for User (if any arise during implementation)
-
-1. Should we keep DOM IDs as `canvas-0` for backward compatibility, or change to `cb0`?
-   - **Recommendation**: Keep `canvas-0` in DOM, use `cb0` in database
-2. Should HUD emoji status be configurable (e.g., disable for production)?
-   - **Recommendation**: Keep always-on for debugging, but make HUD hideable
-3. Should we add telemetry for performance metrics (render times, memory usage)?
-   - **Recommendation**: Add optional telemetry hook for future analytics
 
 ---
 
