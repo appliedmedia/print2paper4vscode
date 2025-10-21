@@ -323,7 +323,7 @@ const db = {
 
 - "canvas cache" → "canvas buffer"
 - "cached pages" → "buffered pages"
-- Canvas IDs: `cb0...cb6` (in db struct and DOM)
+- Canvas IDs: `cb1...cb6` (in db struct and DOM)
 - Page IDs: `pg1, pg2, ...` (in db struct and DOM)
 - Element IDs: DOM everything as cb0…cb6 and pg1...pgN
 
