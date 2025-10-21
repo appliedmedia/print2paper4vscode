@@ -363,7 +363,7 @@ function assignCanvasToPage(cbId, pgId) {
   const oldCbId = db[pgId] && db[pgId].cb;
   if (oldCbId && db[oldCbId]) {
     db[oldCbId].pg = null;
-    db[oldCbId].status = '';
+    db[oldCbId].status = kCBStatus_Empty;
   }
 
   // Set new assignment
@@ -395,7 +395,7 @@ function unassignCanvas(cbId) {
   }
 
   db[cbId].pg = null;
-  db[cbId].status = '';
+  db[cbId].status = kCBStatus_Empty;
 }
 
 // Get available canvas
@@ -467,11 +467,17 @@ function canvasId(canvasNumber) {
 
 ```javascript
 // Canvas buffer status constants
+const kCBStatus_Requesting = 'requesting';
+const kCBStatus_Clearing = 'clearing';
+const kCBStatus_Assigned = 'assigned';
+const kCBStatus_Available = 'available';
+const kCBStatus_Empty = '';
+
 const kCBStatus = {
-  requesting: '❓',
-  clearing: '❌',
-  assigned: ':',
-  available: '.'
+  [kCBStatus_Requesting]: '❓',
+  [kCBStatus_Clearing]: '❌',
+  [kCBStatus_Assigned]: ':',
+  [kCBStatus_Available]: '.'
 };
 
 // Simple HUD display - just gather and report data when called
@@ -496,10 +502,10 @@ function updateHudStatus() {
 
 #### Integrate into existing functions
 
-- Update `db[cbId].status = 'requesting'` in `assignCanvasToPage()`
-- Update `db[cbId].status = 'clearing'` in `unassignCanvas()`
-- Update `db[cbId].status = 'assigned'` after render completes
-- Update `db[cbId].status = 'available'` when canvas freed
+- Update `db[cbId].status = kCBStatus_Requesting` in `assignCanvasToPage()`
+- Update `db[cbId].status = kCBStatus_Clearing` in `unassignCanvas()`
+- Update `db[cbId].status = kCBStatus_Assigned` after render completes
+- Update `db[cbId].status = kCBStatus_Available` when canvas freed
 
 **Impact**:
 
@@ -788,7 +794,7 @@ function assignCanvasToPage(cbId, pgId) {
   const oldCbId = db[pgId] && db[pgId].cb;
   if (oldCbId && db[oldCbId]) {
     db[oldCbId].pg = null;
-    db[oldCbId].status = '';
+    db[oldCbId].status = kCBStatus_Empty;
   }
 
   // Set new assignment
@@ -820,7 +826,7 @@ function unassignCanvas(cbId) {
   }
 
   db[cbId].pg = null;
-  db[cbId].status = '';
+  db[cbId].status = kCBStatus_Empty;
 }
 
 // Get available canvas
@@ -1113,11 +1119,17 @@ const hasCanvas = db[pgId] && db[pgId].cb;
 
 ```javascript
 // Canvas buffer status constants
+const kCBStatus_Requesting = 'requesting';
+const kCBStatus_Clearing = 'clearing';
+const kCBStatus_Assigned = 'assigned';
+const kCBStatus_Available = 'available';
+const kCBStatus_Empty = '';
+
 const kCBStatus = {
-  requesting: '❓',
-  clearing: '❌',
-  assigned: ':',
-  available: '.'
+  [kCBStatus_Requesting]: '❓',
+  [kCBStatus_Clearing]: '❌',
+  [kCBStatus_Assigned]: ':',
+  [kCBStatus_Available]: '.'
 };
 
 // Simple HUD display - just gather and report data when called
@@ -1156,7 +1168,7 @@ function assignCanvasToPage(cbId, pgId) {
 
   // ADD HERE:
   // Update canvas status in database
-  db[cbId].status = 'requesting';
+  db[cbId].status = kCBStatus_Requesting;
 }
 ```
 
@@ -1170,17 +1182,17 @@ function unassignCanvas(cbId) {
   // ADD HERE (before clearing):
   if (oldPgId) {
     // Update canvas status in database
-    db[cbId].status = 'clearing';
+    db[cbId].status = kCBStatus_Clearing;
   }
 
   // ... existing unassign logic
 
   db[cbId].pg = null;
-  db[cbId].status = '';
+  db[cbId].status = kCBStatus_Empty;
 
   // ADD HERE (after clearing):
   // Update canvas status in database
-  db[cbId].status = 'available';
+  db[cbId].status = kCBStatus_Available;
 }
 ```
 
@@ -1197,7 +1209,7 @@ await page.render({
 const cbId = canvas.id;
 const pgId = pageId(pageNumber);
 // Update canvas status in database
-db[cbId].status = 'assigned';
+db[cbId].status = kCBStatus_Assigned;
 ```
 
 **Task 6.5**: Update existing HUD calls
