@@ -904,9 +904,9 @@ function calculatePageMemoryUsage(pgId) {
   const canvas = db[cbId]?.domElementRef;
   const canvasSizeMB = (canvas?.width * canvas?.height * 4) / (1024 * 1024); // RGBA bytes to MB
 
-  // Add PDF data size (stored during initial render)
+  // Add PDF data size (stored during PDF generation in jsPDF)
   const pageNum = pageNumber(pgId);
-  const pdfSizeMB = db.pageSizes?.[pageNum] || 0; // Use stored size from initial render
+  const pdfSizeMB = db.pageSizes?.[pageNum] || 0; // Captured during tokenization/jsPDF generation
 
   return canvasSizeMB + pdfSizeMB;
 }
@@ -1195,23 +1195,20 @@ function unassignCanvas(cbId) {
 }
 ```
 
-**Task 6.4**: Integrate into renderPageToCanvas function
+**Task 6.4**: Capture page size during PDF generation
 
 ```javascript
-// Find in renderPageToCanvas function (around line 709):
-await page.render({
-  canvasContext: ctx,
-  viewport: viewport,
-}).promise;
+// In PDF generation code (jsPDF/Shiki tokenization):
+// When processing source code → tokens → PDF content:
+const sourceCodeLength = sourceCode.length;
+const pageSizeMB = sourceCodeLength / (1024 * 1024);
 
-// Store page size for memory calculations (capture once during render)
+// Store in database for memory calculations:
 if (!db.pageSizes) db.pageSizes = {};
-const pageData = await page.getTextContent();
-const pageSize = JSON.stringify(pageData).length;
-db.pageSizes[pageNumber] = pageSize / (1024 * 1024); // Store in MB
+db.pageSizes[pageNumber] = pageSizeMB;
+```
 
-// ADD AFTER render completes:
-const cbId = canvas.id;
+**Note**: Page size should be captured during the actual PDF generation process (Shiki tokenization → jsPDF), not during webview rendering. This gives us the true content size of the processed code.
 const pgId = pageId(pageNumber);
 // Update canvas status in database
 db[cbId].status = kCBStatus_Assigned;
