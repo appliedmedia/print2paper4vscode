@@ -36,7 +36,7 @@
 - **Database structure**: Simple `db` object with direct property access
   - Canvas properties: `db[canvasId] = { page, status, domElementRef, renderTask }`
   - Page properties: `db[pageId] = { cb, placeholder, wrapper, label }`
-- **Canvas IDs**: `cb0, cb1, cb2...` (Canvas buffers)
+- **Canvas IDs**: `cb1, cb2, cb3...` (Canvas buffers)
 - **Page IDs**: `pg1, pg2, pg3...` (Pages)
 - **Element IDs**: `Ce1, Ce2, Ce3...` (Canvas elements), `Pd1, Pd2, Pd3...` (Placeholders)
 - **Single PDF.js document**: ONE `pdfDoc` reused for all pages
@@ -131,7 +131,7 @@ const page = await db.pdfDoc.getPage(pageNumber);
 - Canvas management spread across multiple functions
 - Uses Map/Set instead of simple db object
 - HUD exists but only shows final states, not transitions
-- Canvas IDs use `cb0...cb6` format consistently
+- Canvas IDs use `cb1...cb6` format consistently
 - Missing: emoji status indicators (❓, ❌, etc.)
 - Missing: `getCanvasForPage()`, `assignCanvasToPage()` helper functions
 
@@ -163,7 +163,7 @@ const page = await db.pdfDoc.getPage(pageNumber);
 4. **Clear Terminology**
    - **Canvas buffers** (cb): Physical canvas elements (limited to 7)
    - **Pages** (pg): Logical document pages (unlimited)
-   - Canvas IDs: `cb0...cb6` (not `canvas-0`)
+   - Canvas IDs: `cb1...cb6` (not `canvas-0`)
    - Page IDs: `pg1...pgN`
 
 5. **Compact HUD Logging**
@@ -200,7 +200,7 @@ const page = await db.pdfDoc.getPage(pageNumber);
 
 4. **Confusing Terminology** ❌
    - "Cache" instead of "buffer" (cache implies optional, buffer implies pooled resource)
-   - Consistent `cb0...cb6` format (matches page `pg1...pgN` style)
+   - Consistent `cb1...cb6` format (matches page `pg1...pgN` style)
    - `domElementRef` sometimes used, sometimes not
 
 5. **Verbose Logging** ❌
@@ -288,15 +288,15 @@ const db = {
 
 // AFTER (SIMPLE - POC approach):
 const db = {
-  // Canvas buffers: db.cb0 = { pg: 'pg5', status: 'render', domElementRef, renderTask }
-  // Pages: db.pg5 = { cb: 'cb0', placeholder, wrapper, label }
+  // Canvas buffers: db.cb1 = { pg: 'pg5', status: 'render', domElementRef, renderTask }
+  // Pages: db.pg5 = { cb: 'cb1', placeholder, wrapper, label }
   pdfDoc: null, // Single PDF.js document
   lastScrollTop: -999,
   scrollDirection: 'down',
   perfUpdateCounter: 0,
 };
 
-// Canvas buffers created as: db.cb0, db.cb1, ..., db.cb6 (7 total)
+// Canvas buffers created as: db.cb1, db.cb2, ..., db.cb6 (CONFIG.CANVAS_BUFFERS_SIZE total)
 // Pages created as: db.pg1, db.pg2, ..., db.pgN
 ```
 
@@ -325,7 +325,7 @@ const db = {
 - "cached pages" → "buffered pages"
 - Canvas IDs: `cb1...cb6` (in db struct and DOM)
 - Page IDs: `pg1, pg2, ...` (in db struct and DOM)
-- Element IDs: DOM everything as cb0…cb6 and pg1...pgN
+- Element IDs: DOM everything as cb1…cb6 and pg1...pgN
 
 **Impact**:
 
@@ -480,26 +480,21 @@ const kCBStatus = {
   [kCBStatus_Requesting]: '❓',
   [kCBStatus_Clearing]: '❌',
   [kCBStatus_Assigned]: ':',
-  [kCBStatus_Ready]: '.'
+  [kCBStatus_Ready]: '.',
 };
 
-// Simple HUD display - just gather and report data when called
-function updateHudStatus() {
-  const hudElement = document.getElementById('canvas-assignments');
-  if (!hudElement) return;
-
+// Simple HUD display - just gather and return data for display
+function hud() {
   // Canvas assignments (cb1, cb2, cb3, cb4, cb5, cb6)
   const canvasLine = [];
-  for (let i = 1; i <= 6; i++) { // 1-based, cb0 reserved
+  for (let i = 1; i <= CONFIG.CANVAS_BUFFERS_SIZE; i++) {
     const cbId = canvasId(i);
     const cb = db[cbId];
-    const statusChar = kCBStatus[cb.status];
-    const pgId = cb.pg;
+    const statusChar = kCBStatus[cb.status] || '?';
+    const pgId = cb.pg || 'null';
     canvasLine.push(`${cbId}${statusChar}${pgId}`);
   }
-
-  hudElement.textContent = canvasLine.join(' ');
-  dx(`HUD: ${canvasLine.join(' ')}`);
+  return canvasLine.join(' ');
 }
 ```
 
@@ -521,9 +516,9 @@ function updateHudStatus() {
 
 ### Fix 6: Canvas ID Consistency
 
-**Current Problem**: Production uses inconsistent ID formats; POC uses `cb0...cb6` consistently.
+**Current Problem**: Production uses inconsistent ID formats; POC uses `cb1...cb6` consistently.
 
-**Fix**: Use `cb0...cb6` in both db struct and DOM.
+**Fix**: Use `cb1...cb6` in both db struct and DOM.
 
 **File**: `src/UIScrollView.yaml`
 
@@ -531,7 +526,8 @@ function updateHudStatus() {
 
 ```javascript
 // Canvas creation:
-for (let i = 0; i < 6; i++) { // CONFIG.canvasBuffersSize = 6
+for (let i = 0; i < 6; i++) {
+  // CONFIG.canvasBuffersSize = 6
   const canvas = document.createElement('canvas');
   canvas.id = `cb${i}`; // Consistent DOM ID format
   canvas.className = 'page-canvas';
@@ -549,8 +545,8 @@ for (let i = 0; i < 6; i++) { // CONFIG.canvasBuffersSize = 6
 
 **Impact**:
 
-- DOM uses consistent cb0...cb6 format
-- DB structure matches POC (`cb0`)
+- DOM uses consistent cb1...cb6 format
+- DB structure matches POC (`cb1`)
 - Clear distinction between DOM IDs and logical IDs
 
 ---
@@ -766,8 +762,8 @@ const bufferedMemoryMB = Math.round(totalMemoryMB * 100) / 100; // Round to 2 de
 ```javascript
 // Database state management (POC approach - simple object)
 const db = {
-  // Canvas buffers: db.cb0 = { pg: 'pg5', status: 'render', domElementRef, renderTask }
-  // Pages: db.pg5 = { cb: 'cb0', placeholder, wrapper, label }
+  // Canvas buffers: db.cb1 = { pg: 'pg5', status: 'render', domElementRef, renderTask }
+  // Pages: db.pg5 = { cb: 'cb1', placeholder, wrapper, label }
   pdfDoc: null, // Single PDF.js document
   lastScrollTop: -999,
   scrollDirection: 'down',
@@ -906,7 +902,7 @@ function calculatePageMemoryUsage(pgId) {
 
   // Add PDF data size (passed from extension during PDF generation)
   const pageNum = pageNumber(pgId);
-  const pdfSizeMB = db.pageSizes?.[pageNum] || 0; // Stored in webview db
+  const pdfSizeMB = db.pdfDoc?.pageSizes?.[pageNum] || 0; // From PDF document
 
   return canvasSizeMB + pdfSizeMB;
 }
@@ -917,13 +913,12 @@ function dx(message) {
 }
 ```
 
-
 **Test**:
 
 1. Compile: `npm run compile`
 2. Load extension
 3. Test helper functions in browser console:
-   - `getAllCanvasIds()` should return `['cb0', 'cb1', ...]` (once Step 4 is done)
+   - `getAllCanvasIds()` should return `['cb1', 'cb2', ...]` (once Step 4 is done)
    - `getAvailableCanvasBuffer()` should return a canvas element
 
 ---
@@ -956,9 +951,9 @@ const db = {
 
 // AFTER (POC approach - simple object):
 const db = {
-  // Canvas buffers: db.cb0 = { pg: 'pg5', status: 'render', domElementRef, renderTask }
-  // Pages: db.pg5 = { cb: 'cb0', placeholder, wrapper, label }
-  // Canvas buffers (cb0...cb6) and pages (pg1...pgN) will be added dynamically
+  // Canvas buffers: db.cb1 = { pg: 'pg5', status: 'render', domElementRef, renderTask }
+  // Pages: db.pg5 = { cb: 'cb1', placeholder, wrapper, label }
+  // Canvas buffers (cb1...cb6) and pages (pg1...pgN) will be added dynamically
   pdfDoc: null, // Single PDF.js document
   lastScrollTop: -999,
   scrollDirection: 'down',
@@ -983,7 +978,8 @@ function createCanvasPool() {
 
 // AFTER:
 function createDOMElements_Canvas() {
-  for (let i = 0; i < 6; i++) { // CONFIG.canvasBuffersSize = 6
+  for (let i = 0; i < 6; i++) {
+    // CONFIG.canvasBuffersSize = 6
     const canvas = document.createElement('canvas');
     canvas.id = canvasId(i); // Use helper function
     canvas.className = 'page-canvas';
@@ -1082,15 +1078,15 @@ const hasCanvas = db[pgId] && db[pgId].cb;
 
 **What was done**:
 
-1. **Canvas Creation**: Updated to use `cb0...cb6` format consistently
-2. **Database Structure**: Uses `cb0...cb6` for canvas buffers and `pg1...pgN` for pages  
+1. **Canvas Creation**: Updated to use `cb1...cb6` format consistently
+2. **Database Structure**: Uses `cb1...cb6` for canvas buffers and `pg1...pgN` for pages
 3. **Helper Functions**: Updated to work with new ID format
 4. **DOM References**: Simplified to use `canvas.id` directly (no more `dataset.cbId`)
 
 **Current State**:
 
-- Canvas creation: `canvas.id = 'cb${i}'` 
-- Database keys: `db.cb0`, `db.cb1`, etc.
+- Canvas creation: `canvas.id = 'cb${i}'`
+- Database keys: `db.cb1`, `db.cb2`, etc.
 - Page keys: `db.pg1`, `db.pg2`, etc.
 - Helper functions: `getCanvasForPage()`, `assignCanvasToPage()`, `unassignCanvas()`
 - HUD display: `c0:p1, c1:p2, ...` format
@@ -1099,8 +1095,8 @@ const hasCanvas = db[pgId] && db[pgId].cb;
 
 1. Compile: `npm run compile`
 2. Load extension
-3. **Verify**: Canvas IDs in HUD show as `c0:p1, c1:p2, ...`
-4. **Verify**: Database structure uses `cb0...cb6` and `pg1...pgN`
+3. **Verify**: Canvas IDs in HUD show as `cb1:pg1, cb1:pg2, ...`
+4. **Verify**: Database structure uses `cb1...cb6` and `pg1...pgN`
 5. **Verify**: No references to old `canvas-0` or `canvas-${i}` patterns
 
 ---
@@ -1111,7 +1107,7 @@ const hasCanvas = db[pgId] && db[pgId].cb;
 
 **File**: `src/UIScrollView.yaml`
 
-**Task 6.1**: Add updateHudStatus function (insert after helper functions, before dx function)
+**Task 6.1**: Remove updateHudStatus function and add simple hud() function (insert after helper functions, before dx function)
 
 ```javascript
 // ID constants for unassigned/reset state
@@ -1128,30 +1124,25 @@ const kCBStatus = {
   [kCBStatus_Requesting]: '❓',
   [kCBStatus_Clearing]: '❌',
   [kCBStatus_Assigned]: ':',
-  [kCBStatus_Ready]: '.'
+  [kCBStatus_Ready]: '.',
 };
 
-// Simple HUD display - just gather and report data when called
-function updateHudStatus() {
-  const hudElement = document.getElementById('canvas-assignments');
-  if (!hudElement) return;
-
+// Simple HUD display - just gather and return data for display
+function hud() {
   // Canvas assignments (cb1, cb2, cb3, cb4, cb5, cb6)
   const canvasLine = [];
-  for (let i = 1; i <= 6; i++) { // 1-based, cb0 reserved
+  for (let i = 1; i <= CONFIG.CANVAS_BUFFERS_SIZE; i++) {
     const cbId = canvasId(i);
     const cb = db[cbId];
-    const statusChar = kCBStatus[cb.status];
-    const pgId = cb.pg;
+    const statusChar = kCBStatus[cb.status] || '?';
+    const pgId = cb.pg || 'null';
     canvasLine.push(`${cbId}${statusChar}${pgId}`);
   }
-
-  hudElement.textContent = canvasLine.join(' ');
-  dx(`HUD: ${canvasLine.join(' ')}`);
+  return canvasLine.join(' ');
 }
 ```
 
-**Task 6.2**: Integrate into assignCanvasToPage helper
+**Task 6.2**: Update assignCanvasToPage helper to use hud() function
 
 ```javascript
 // Find in assignCanvasToPage function:
@@ -1168,10 +1159,15 @@ function assignCanvasToPage(cbId, pgId) {
   // ADD HERE:
   // Update canvas status in database
   db[cbId].status = kCBStatus_Requesting;
+
+  // Update HUD display
+  const hudElement = document.getElementById('canvas-assignments');
+  if (hudElement) hudElement.textContent = hud();
+  dx(`HUD: ${hud()}`);
 }
 ```
 
-**Task 6.3**: Integrate into unassignCanvas helper
+**Task 6.3**: Update unassignCanvas helper to use hud() function
 
 ```javascript
 // Find in unassignCanvas function:
@@ -1190,43 +1186,73 @@ function unassignCanvas(cbId) {
   db[cbId].status = kCBStatus_Ready;
 
   // ADD HERE (after clearing):
-  // Update canvas status in database
-  db[cbId].status = kCBStatus_Ready;
+  // Update HUD display
+  const hudElement = document.getElementById('canvas-assignments');
+  if (hudElement) hudElement.textContent = hud();
+  dx(`HUD: ${hud()}`);
 }
 ```
 
 **Task 6.4**: Capture page size during PDF generation
 
 ```javascript
-// When creating pdfDoc, initialize pageSizes:
-const pdfDoc = new jsPDF(/* ... */);
-pdfDoc.pageSizes = {}; // Initialize empty object
+// 1. Add pageSizes property to DocInfo_PDF class:
+export class DocInfo_PDF {
+  // ... existing properties ...
+  public pageSizes: { [pageNumber: number]: number } = {};
+}
 
-// In PDF generation code (jsPDF/Shiki tokenization):
-// When processing source code → tokens → PDF content:
-const sourceCodeLength = sourceCode.length;
-const pageSizeMB = sourceCodeLength / (1024 * 1024);
+// 2. Add currentPageSize tracking to PDF class:
+export class PDF {
+  // ... existing properties ...
+  private currentPageSize: number = 0;
+}
 
-// Store on PDFDoc object (extension context):
-pdfDoc.pageSizes[pageNumber] = pageSizeMB; // No existence check needed
+// 3. Initialize in setupPdf():
+this.docInfo.pageSizes = {};
+this.currentPageSize = 0;
+
+// 4. Accumulate page size in renderByLine():
+this.currentPageSize += htmlData.length;
+
+// 5. Store page size at page break:
+if (this.currentY > pageHeightPtsForBreak - marginsPtsForBreak.bottomMarginPts) {
+  const currentPageNumber = this.docInfo.pdfDoc.getNumberOfPages();
+  this.docInfo.pageSizes[currentPageNumber] = this.currentPageSize;
+  // ... addPage() logic ...
+  this.currentPageSize = 0; // Reset for new page
+}
+
+// 6. Set final page size in finishPdf():
+this.docInfo.pageSizes[this.pageTotal] = this.currentPageSize;
+if (this.docInfo.pdfDoc.pageSizes) {
+  for (let pageNum = 1; pageNum <= this.pageTotal; pageNum++) {
+    const pageSizeBytes = this.docInfo.pageSizes[pageNum] || 0;
+    const pageSizeMB = this.calculatePageSizeMB(pageSizeBytes);
+    this.docInfo.pdfDoc.pageSizes[pageNum] = pageSizeMB;
+  }
+}
 ```
 
-**Note**: Page sizes are captured during PDF generation and stored on the PDF document. They'll be included as part of the existing PDF data bundle when passed to the webview.
-const pgId = pageId(pageNumber);
-// Update canvas status in database
-db[cbId].status = kCBStatus_Assigned;
-```
+**Note**: Page sizes are accumulated as content is built (`currentPageSize`), stored in `DocInfo_PDF.pageSizes` (bytes), and converted to MB in `pdfDoc.pageSizes` for the webview.
 
-**Task 6.5**: Update existing HUD calls
+**Page Size Tracking Architecture**:
 
-**Search for**: `hudElement.textContent = assignments.join(' ');`
-**Replace with**: Update `db[cbId].status` where appropriate
+- **`PDF.currentPageSize`**: Accumulates content length as each line is rendered
+- **`DocInfo_PDF.pageSizes`**: Stores final page sizes in bytes (extension context)
+- **`jsPDF.pageSizes`**: Stores page sizes in MB for webview consumption
+- **Flow**: `renderByLine()` → `currentPageSize` → `DocInfo_PDF.pageSizes` → `jsPDF.pageSizes`
+
+**Task 6.5**: Replace all inline HUD building with hud() function calls
+
+**Search for**: `dx(\`HUD: ${assignments.join(' ')}\`)`and similar inline HUD building
+**Replace with**:`dx(\`HUD: ${hud()}\`)`
 
 **Locations**:
 
-- Line 502: In assignCanvasToPage (already done in Task 6.2)
-- Line 542: In unassignCanvas (already done in Task 6.3)
-- Line 778: In updateCanvasAssignments (keep as-is for periodic full update)
+- Line 681: `dx(\`HUD: ${assignments.join(' ')}\`)`→`dx(\`HUD: ${hud()}\`)`
+- Line 958: `dx(\`HUD: ${hudText}\`)`→`dx(\`HUD: ${hud()}\`)`
+- Any other inline HUD building should be replaced with `hud()` function calls
 
 **Test**:
 
@@ -1409,7 +1435,7 @@ If any step fails:
 
 ---
 
-**Document Version**: 1.0  
-**Last Updated**: 2025-10-20  
-**Author**: AI Assistant (based on user research requirements)  
+**Document Version**: 1.0
+**Last Updated**: 2025-10-20
+**Author**: AI Assistant (based on user research requirements)
 **Status**: Ready for Implementation

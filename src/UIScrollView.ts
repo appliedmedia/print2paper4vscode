@@ -21,8 +21,8 @@ export interface ScrollOptions {
  * UIScrollView - Virtual scrolling document viewer with canvas pooling
  *
  * Renders multi-page documents using virtual scrolling and canvas pooling for
- * performance. Manages page cache, render queue, and scroll-synchronized canvas
- * updates. Generates HTML/CSS/JS for webview display from YAML templates.
+ * performance. Manages canvas buffers, render queue, and scroll-synchronized
+ * canvas updates. Generates HTML/CSS/JS for webview display from YAML templates.
  *
  * @input app - Application instance
  * @input pageRender - PageRender interface for page-by-page rendering
@@ -45,7 +45,7 @@ export class UIScrollView {
   } as const;
 
   private readonly CONFIG = {
-    MAX_CANVAS_POOL_SIZE: 7, // Number of canvas elements for virtual scrolling
+    CANVAS_BUFFERS_SIZE: 7, // Number of canvas buffer elements for virtual scrolling
     SCROLL_DEBOUNCE_MS: 16, // ~60fps, syncs with requestAnimationFrame
   };
 
@@ -53,7 +53,7 @@ export class UIScrollView {
   private pageRender: PageRender;
   private options: ScrollOptions;
   private dx: Diagnostics;
-  private pageCache: Map<number, PageData> = new Map();
+  private pageBuffers: Map<number, PageData> = new Map();
   private renderQueue: Set<number> = new Set();
   private panelId: WebviewPanelId_t | null = null;
   private _yaml: Yaml<typeof UIScrollView.kYaml>;
@@ -118,7 +118,7 @@ export class UIScrollView {
 
     try {
       this.pageRender = newPageRender;
-      this.pageCache.clear();
+      this.pageBuffers.clear();
       this.renderQueue.clear();
       dx.out('PageRender service updated');
     } finally {
@@ -137,7 +137,7 @@ export class UIScrollView {
       this.options = { ...this.options, ...newOptions };
 
       // Bust all cached pages since render options changed
-      this.pageCache.clear();
+      this.pageBuffers.clear();
       this.renderQueue.clear();
 
       // Notify webview to clear all rendered pages and update page total
@@ -168,9 +168,9 @@ export class UIScrollView {
 
     try {
       // Check cache first
-      if (this.pageCache.has(pageNumber)) {
+      if (this.pageBuffers.has(pageNumber)) {
         dx.out(`Page ${pageNumber} found in cache`);
-        return this.pageCache.get(pageNumber)!;
+        return this.pageBuffers.get(pageNumber)!;
       }
 
       // Check if already rendering
@@ -180,7 +180,7 @@ export class UIScrollView {
         while (this.renderQueue.has(pageNumber)) {
           await new Promise(resolve => setTimeout(resolve, 50));
         }
-        return this.pageCache.get(pageNumber)!;
+        return this.pageBuffers.get(pageNumber)!;
       }
 
       // Add to render queue
@@ -199,7 +199,7 @@ export class UIScrollView {
         });
 
         // Cache the result
-        this.pageCache.set(pageNumber, pageData);
+        this.pageBuffers.set(pageNumber, pageData);
         dx.out(`Page ${pageNumber} rendered and cached`);
 
         return pageData;
@@ -222,7 +222,7 @@ export class UIScrollView {
     const dx = this.dx.sub('done');
 
     try {
-      this.pageCache.clear();
+      this.pageBuffers.clear();
       this.renderQueue.clear();
       this.panelId = null;
       dx.out('Scroll view cleaned up');
@@ -259,7 +259,7 @@ export class UIScrollView {
       const templateDict = {
         PAGE_TOTAL: pageTotal.toString(),
         TOTAL_PAGES: pageTotal.toString(), // Also provide TOTAL_PAGES for HTML template
-        MAX_CANVASES: this.CONFIG.MAX_CANVAS_POOL_SIZE.toString(),
+        MAX_CANVASES: this.CONFIG.CANVAS_BUFFERS_SIZE.toString(),
         SCROLL_DEBOUNCE_MS: this.CONFIG.SCROLL_DEBOUNCE_MS.toString(),
         LOAD_DISTANCE: '2', // Pages distance to start loading canvas
         UNLOAD_DISTANCE: '3', // Pages distance to unload canvas

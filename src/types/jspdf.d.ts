@@ -47,6 +47,7 @@ declare module 'jspdf' {
         height: number;
       };
     };
+    pageSizes?: { [pageNumber: number]: number };
   }
 }
 
