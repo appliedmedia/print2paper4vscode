@@ -362,7 +362,7 @@ function assignCanvasToPage(cbId, pgId) {
 
   const oldCbId = db[pgId] && db[pgId].cb;
   if (oldCbId && db[oldCbId]) {
-    db[oldCbId].pg = pageId(0);
+    db[oldCbId].pg = pageId(kPageId_Reset);
     db[oldCbId].status = kCBStatus_Available;
   }
 
@@ -394,7 +394,7 @@ function unassignCanvas(cbId) {
     canvas.parentElement.removeChild(canvas);
   }
 
-  db[cbId].pg = pageId(0);
+  db[cbId].pg = pageId(kPageId_Reset);
   db[cbId].status = kCBStatus_Ready;
 }
 
@@ -466,6 +466,10 @@ function canvasId(canvasNumber) {
 #### Add Emoji Status Updates
 
 ```javascript
+// ID constants for unassigned/reset state
+const kPageId_Reset = 0;
+const kCanvasId_Reset = 0;
+
 // Canvas buffer status constants
 const kCBStatus_Requesting = 'requesting';
 const kCBStatus_Clearing = 'clearing';
@@ -490,7 +494,7 @@ function updateHudStatus() {
     const cbId = canvasId(i);
     const cb = db[cbId];
     const statusChar = kCBStatus[cb.status] || '?';
-    const pgId = cb.pg || pageId(0); // pageId(0) means null/unassigned
+    const pgId = cb.pg || pageId(kPageId_Reset); // kPageId_Reset means unassigned
     canvasLine.push(`${cbId}${statusChar}${pgId}`);
   }
 
@@ -535,7 +539,7 @@ for (let i = 0; i < 6; i++) { // CONFIG.canvasBuffersSize = 6
 
   // Store in db with cb prefix
   db[`cb${i}`] = {
-    pg: pageId(0),
+    pg: pageId(kPageId_Reset),
     status: '',
     domElementRef: canvas,
     renderTask: null,
@@ -792,7 +796,7 @@ function assignCanvasToPage(cbId, pgId) {
 
   const oldCbId = db[pgId] && db[pgId].cb;
   if (oldCbId && db[oldCbId]) {
-    db[oldCbId].pg = pageId(0);
+    db[oldCbId].pg = pageId(kPageId_Reset);
     db[oldCbId].status = kCBStatus_Available;
   }
 
@@ -824,7 +828,7 @@ function unassignCanvas(cbId) {
     canvas.parentElement.removeChild(canvas);
   }
 
-  db[cbId].pg = pageId(0);
+  db[cbId].pg = pageId(kPageId_Reset);
   db[cbId].status = kCBStatus_Ready;
 }
 
@@ -995,7 +999,7 @@ function createDOMElements_Canvas() {
 
     // Store in db with cb prefix
     db[canvasId(i)] = {
-      pg: pageId(0),
+      pg: pageId(kPageId_Reset),
       status: '',
       domElementRef: canvas,
       renderTask: null,
@@ -1025,7 +1029,7 @@ content.appendChild(placeholder);
 const pgId = pageId(i);
 if (!db[pgId]) db[pgId] = {};
 db[pgId].placeholder = placeholder;
-db[pgId].cb = canvasId(0); // No canvas assigned yet
+db[pgId].cb = canvasId(kCanvasId_Reset); // No canvas assigned yet
 dx(`Created placeholder for ${pgId}`);
 ```
 
@@ -1117,6 +1121,10 @@ const hasCanvas = db[pgId] && db[pgId].cb;
 **Task 6.1**: Add updateHudStatus function (insert after helper functions, before dx function)
 
 ```javascript
+// ID constants for unassigned/reset state
+const kPageId_Reset = 0;
+const kCanvasId_Reset = 0;
+
 // Canvas buffer status constants
 const kCBStatus_Requesting = 'requesting';
 const kCBStatus_Clearing = 'clearing';
@@ -1141,7 +1149,7 @@ function updateHudStatus() {
     const cbId = canvasId(i);
     const cb = db[cbId];
     const statusChar = kCBStatus[cb.status] || '?';
-    const pgId = cb.pg || pageId(0); // pageId(0) means null/unassigned
+    const pgId = cb.pg || pageId(kPageId_Reset); // kPageId_Reset means unassigned
     canvasLine.push(`${cbId}${statusChar}${pgId}`);
   }
 
@@ -1185,7 +1193,7 @@ function unassignCanvas(cbId) {
 
   // ... existing unassign logic
 
-  db[cbId].pg = pageId(0);
+  db[cbId].pg = pageId(kPageId_Reset);
   db[cbId].status = kCBStatus_Ready;
 
   // ADD HERE (after clearing):
