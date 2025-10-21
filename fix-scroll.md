@@ -904,9 +904,9 @@ function calculatePageMemoryUsage(pgId) {
   const canvas = db[cbId]?.domElementRef;
   const canvasSizeMB = (canvas?.width * canvas?.height * 4) / (1024 * 1024); // RGBA bytes to MB
 
-  // Add PDF data size (stored during PDF generation in jsPDF)
+  // Add PDF data size (passed from extension during PDF generation)
   const pageNum = pageNumber(pgId);
-  const pdfSizeMB = pdfDoc.pageSizes?.[pageNum] || 0; // Get from PDFDoc, not db
+  const pdfSizeMB = db.pageSizes?.[pageNum] || 0; // Stored in webview db
 
   return canvasSizeMB + pdfSizeMB;
 }
@@ -1195,7 +1195,7 @@ function unassignCanvas(cbId) {
 }
 ```
 
-**Task 6.4**: Capture page size during PDF generation
+**Task 6.4**: Capture page size during PDF generation and pass to webview
 
 ```javascript
 // In PDF generation code (jsPDF/Shiki tokenization):
@@ -1206,9 +1206,29 @@ const pageSizeMB = sourceCodeLength / (1024 * 1024);
 // Store on PDFDoc object (extension context):
 if (!pdfDoc.pageSizes) pdfDoc.pageSizes = {};
 pdfDoc.pageSizes[pageNumber] = pageSizeMB;
+
+// Pass to webview when sending PDF data:
+webview.postMessage({
+  type: 'pdfData',
+  pdfDataUrl: pdfDataUrl,
+  pageSizes: pdfDoc.pageSizes  // Include page sizes
+});
 ```
 
-**Note**: Page size should be captured during the actual PDF generation process (Shiki tokenization → jsPDF) in the extension context, then passed to the webview. The `db` lives in the webview, so we store page sizes on the `PDFDoc` object instead.
+**Note**: Page sizes are captured during PDF generation in the extension, then passed to the webview via the message system. The webview stores them in `db.pageSizes` for memory calculations.
+
+**Task 6.5**: Store page sizes in webview when received
+
+```javascript
+// In webview message handler:
+case 'pdfData':
+  // Store page sizes for memory calculations
+  if (message.pageSizes) {
+    db.pageSizes = message.pageSizes;
+  }
+  // ... rest of PDF data handling
+  break;
+```
 const pgId = pageId(pageNumber);
 // Update canvas status in database
 db[cbId].status = kCBStatus_Assigned;
