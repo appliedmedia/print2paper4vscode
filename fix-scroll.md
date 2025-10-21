@@ -1198,14 +1198,17 @@ function unassignCanvas(cbId) {
 **Task 6.4**: Capture page size during PDF generation
 
 ```javascript
+// When creating pdfDoc, initialize pageSizes:
+const pdfDoc = new jsPDF(/* ... */);
+pdfDoc.pageSizes = {}; // Initialize empty object
+
 // In PDF generation code (jsPDF/Shiki tokenization):
 // When processing source code → tokens → PDF content:
 const sourceCodeLength = sourceCode.length;
 const pageSizeMB = sourceCodeLength / (1024 * 1024);
 
 // Store on PDFDoc object (extension context):
-if (!pdfDoc.pageSizes) pdfDoc.pageSizes = {};
-pdfDoc.pageSizes[pageNumber] = pageSizeMB;
+pdfDoc.pageSizes[pageNumber] = pageSizeMB; // No existence check needed
 ```
 
 **Note**: Page sizes are captured during PDF generation and stored on the PDF document. They'll be included as part of the existing PDF data bundle when passed to the webview.
