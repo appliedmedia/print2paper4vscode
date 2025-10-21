@@ -363,7 +363,7 @@ function assignCanvasToPage(cbId, pgId) {
   const oldCbId = db[pgId] && db[pgId].cb;
   if (oldCbId && db[oldCbId]) {
     db[oldCbId].pg = null;
-    db[oldCbId].status = kCBStatus_Empty;
+    db[oldCbId].status = kCBStatus_Available;
   }
 
   // Set new assignment
@@ -395,7 +395,7 @@ function unassignCanvas(cbId) {
   }
 
   db[cbId].pg = null;
-  db[cbId].status = kCBStatus_Empty;
+  db[cbId].status = kCBStatus_Available;
 }
 
 // Get available canvas
@@ -471,7 +471,6 @@ const kCBStatus_Requesting = 'requesting';
 const kCBStatus_Clearing = 'clearing';
 const kCBStatus_Assigned = 'assigned';
 const kCBStatus_Available = 'available';
-const kCBStatus_Empty = '';
 
 const kCBStatus = {
   [kCBStatus_Requesting]: '❓',
@@ -794,7 +793,7 @@ function assignCanvasToPage(cbId, pgId) {
   const oldCbId = db[pgId] && db[pgId].cb;
   if (oldCbId && db[oldCbId]) {
     db[oldCbId].pg = null;
-    db[oldCbId].status = kCBStatus_Empty;
+    db[oldCbId].status = kCBStatus_Available;
   }
 
   // Set new assignment
@@ -826,7 +825,7 @@ function unassignCanvas(cbId) {
   }
 
   db[cbId].pg = null;
-  db[cbId].status = kCBStatus_Empty;
+  db[cbId].status = kCBStatus_Available;
 }
 
 // Get available canvas
@@ -1123,7 +1122,6 @@ const kCBStatus_Requesting = 'requesting';
 const kCBStatus_Clearing = 'clearing';
 const kCBStatus_Assigned = 'assigned';
 const kCBStatus_Available = 'available';
-const kCBStatus_Empty = '';
 
 const kCBStatus = {
   [kCBStatus_Requesting]: '❓',
@@ -1188,7 +1186,7 @@ function unassignCanvas(cbId) {
   // ... existing unassign logic
 
   db[cbId].pg = null;
-  db[cbId].status = kCBStatus_Empty;
+  db[cbId].status = kCBStatus_Available;
 
   // ADD HERE (after clearing):
   // Update canvas status in database
