@@ -901,21 +901,23 @@ function pageNumber(pgId) {
 // Helper: Calculate memory usage for a rendered page
 function calculatePageMemoryUsage(pgId) {
   const cbId = db[pgId]?.cb;
-  if (!cbId || cbId === canvasId(kCanvasId_Reset)) return 0; // Page not rendered yet
+  const canvas = db[cbId]?.domElementRef;
+  const canvasSizeMB = (canvas?.width * canvas?.height * 4) / (1024 * 1024); // RGBA bytes to MB
 
-  const canvas = db[cbId].domElementRef;
-  const canvasMemory = (canvas.width * canvas.height * 4) / (1024 * 1024); // RGBA bytes to MB
-
-  // Add PDF data memory (if available)
-  let pdfMemory = 0;
-  if (db.pdfDoc) {
-    // Estimate PDF page data size (this is approximate)
-    // PDF.js loads page data on-demand, so we can't measure exact size
-    // But we can estimate based on canvas dimensions
-    pdfMemory = (canvas.width * canvas.height * 0.1) / (1024 * 1024); // Rough estimate
+  // Add PDF data size (if available)
+  let pdfSizeMB = 0;
+  if (db.pdfDoc && canvas) {
+    // Get actual PDF page data size from PDF.js
+    const page = db.pdfDoc.getPage(pageNumber(pgId));
+    if (page) {
+      // PDF.js provides access to raw page data size
+      const pageData = page.getTextContent();
+      const textSize = JSON.stringify(pageData).length;
+      pdfSizeMB = textSize / (1024 * 1024); // Convert bytes to MB
+    }
   }
 
-  return canvasMemory + pdfMemory;
+  return canvasSizeMB + pdfSizeMB;
 }
 
 // Send diagnostic message to extension
