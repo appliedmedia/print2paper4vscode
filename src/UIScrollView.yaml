@@ -212,7 +212,12 @@ scroll_js: |
       initialPageTotal: {{PAGE_TOTAL}}, // Initial page count before PDF loads
       lastScrollTop: -999,
       scrollDirection: 'down',
-      perfUpdateCounter: 0,
+      isScrolling: false,
+      
+      // Performance tracking
+      renderStartTime: 0,
+      renderCount: 0,
+      perfUpdateCounter: 0
     };
 
     // Helper: Get page total from PDF or initial value
@@ -437,7 +442,7 @@ scroll_js: |
     function createCanvasBuffers() {
       for (let i = 1; i <= CONFIG.CANVAS_BUFFERS_SIZE; i++) {
         const canvas = document.createElement('canvas');
-        canvas.id = canvasId(i); // Use helper function
+        canvas.id = `canvas-${i}`;
         canvas.className = 'page-canvas';
         canvas.dataset.index = i; // Store canvas index for robust access
         canvasBufferContainer.appendChild(canvas);
@@ -624,7 +629,7 @@ scroll_js: |
       });
       
       // Step 2: Check if we have enough available canvases
-      const availableCanvasCount = getAllAvailableCanvasIds().length;
+      const availableCanvasCount = db.availableCanvases.size;
       const totalNeeded = pagesNeedingCanvases.length;
       
       // Step 3: Only unassign canvases if we need more space
@@ -633,20 +638,15 @@ scroll_js: |
         
         // Find pages that are furthest from center to unassign
         const pagesToUnassign = [];
-        const allPageIds = getAllPageIds();
-        for (const pgId of allPageIds) {
-          const pageNum = pageNumber(pgId);
-          const canvasId = db[pgId]?.cb;
-          if (!canvasId) continue; // Skip pages without canvases
-          
+        for (const [pageNumber, canvasId] of db.assignedCanvases) {
           // Don't unassign visible pages
-          if (pageNum >= minVisible && pageNum <= maxVisible) {
+          if (pageNumber >= minVisible && pageNumber <= maxVisible) {
             continue;
           }
           
           // Calculate distance from center for priority
-          const distanceFromCenter = Math.abs(pageNum - centerVisible);
-          pagesToUnassign.push({ pageNumber: pageNum, canvasId, distanceFromCenter });
+          const distanceFromCenter = Math.abs(pageNumber - centerVisible);
+          pagesToUnassign.push({ pageNumber, canvasId, distanceFromCenter });
         }
         
         // Sort by distance (furthest first) and unassign what we need
@@ -694,6 +694,112 @@ scroll_js: |
         } else {
           requestPageRender(pageNum);
         }
+      dx(`Pages needing canvases: [${pagesNeedingCanvases.join(', ')}], available: ${db.availableCanvases.size}`);
+      for (const pageNum of pagesNeedingCanvases) {
+        if (db.availableCanvases.size > 0) {
+          dx(`Assigning canvas to page ${pageNum}`);
+          assignCanvasToPage(pageNum);
+        } else {
+          dx(`No available canvases for page ${pageNum}`);
+        }
+      }
+    }
+
+    // Assign canvas to page
+    function assignCanvasToPage(pageNumber) {
+      dx(`assignCanvasToPage called for page ${pageNumber}`);
+      
+      if (db.availableCanvases.size === 0) {
+        dx(`No available canvases for page ${pageNumber}`);
+        return;
+      }
+      
+      // Check if page already has a canvas assigned
+      if (db.assignedCanvases.has(pageNumber)) {
+        dx(`Page ${pageNumber} already has canvas assigned, skipping`);
+        return;
+      }
+      
+      const canvasId = db.availableCanvases.values().next().value;
+      const canvas = document.getElementById(canvasId);
+      if (!canvas) {
+        return;
+      }
+      
+      // Show attempting to assign indicator
+      const canvasIndex = parseInt(canvasId.split('-')[1]);
+      const hudElement = document.getElementById('canvas-assignments');
+      if (hudElement) {
+        const currentText = hudElement.textContent;
+        const assignments = currentText.split(' ');
+        assignments[canvasIndex] = `c${canvasIndex}?p${pageNumber}`;
+        hudElement.textContent = assignments.join(' ');
+        dx(`HUD: ${assignments.join(' ')}`);
+      }
+      
+      // Remove from available pool
+      db.availableCanvases.delete(canvasId);
+      db.assignedCanvases.set(pageNumber, canvasId);
+      
+      // Move canvas to page placeholder
+      const placeholder = document.getElementById(`page-${pageNumber}`);
+      if (placeholder) {
+        placeholder.innerHTML = '';
+        placeholder.className = 'page-container';
+        placeholder.appendChild(canvas);
+      }
+      
+      // Check if page already rendered
+      if (db.renderedPages.has(pageNumber)) {
+        const pageData = db.renderedPages.get(pageNumber);
+        dx(`Page ${pageNumber} already rendered, using cached data`);
+        renderPageToCanvas(pageData, canvasId);
+      } else {
+        dx(`Page ${pageNumber} not rendered yet, requesting render`);
+        requestPageRender(pageNumber);
+      }
+      
+      updateCanvasAssignments();
+    }
+
+    // Unassign canvas from page
+    function unassignCanvas(pageNumber) {
+      const canvasId = db.assignedCanvases.get(pageNumber);
+      if (!canvasId) return;
+      
+      // Show unassigning indicator in HUD
+      const canvasIndex = parseInt(canvasId.split('-')[1]);
+      const hudElement = document.getElementById('canvas-assignments');
+      if (hudElement) {
+        const currentText = hudElement.textContent;
+        const assignments = currentText.split(' ');
+        assignments[canvasIndex] = `c${canvasIndex}xp${pageNumber}`;
+        hudElement.textContent = assignments.join(' ');
+      }
+      
+      const canvas = document.getElementById(canvasId);
+      if (canvas) {
+        // Clear canvas
+        const ctx = canvas.getContext('2d');
+        if (ctx) {
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+        }
+        
+        // Move back to pool
+        canvasPool.appendChild(canvas);
+      }
+      
+      // Update state
+      db.assignedCanvases.delete(pageNumber);
+      db.availableCanvases.add(canvasId);
+      
+      // Reset placeholder
+      const placeholder = document.getElementById(`page-${pageNumber}`);
+      if (placeholder) {
+        placeholder.className = 'page-placeholder loading';
+        placeholder.innerHTML = `
+          <div class="page-label">Page ${pageNumber}</div>
+        `;
       }
       
       updateHud();
@@ -731,7 +837,7 @@ scroll_js: |
       db[pgId].heightPx = heightPx;
       
       // Render to canvas
-      const canvasId = db[pgId]?.cb;
+      const canvasId = db.assignedCanvases.get(pageNumber);
       if (canvasId) {
         renderPageToCanvas(pageData, canvasId);
       }
@@ -792,9 +898,6 @@ scroll_js: |
         if (!db.pdfDoc) {
           const loadingTask = pdfjsLib.getDocument({
             url: dataUrl,
-            disableAutoFetch: true,
-            disableStream: true,
-            disableRange: true
           });
           db.pdfDoc = await loadingTask.promise;
         }
@@ -926,7 +1029,7 @@ scroll_js: |
         delete db[pgId].heightPx;
       }
       
-      // Clear buffered PDF document to force reload with new data
+      // Clear cached PDF document to force reload with new data
       db.pdfDoc = null;
       
       // Clear all pages
