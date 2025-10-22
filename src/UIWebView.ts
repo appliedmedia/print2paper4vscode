@@ -2,7 +2,7 @@ import type { App } from './App';
 import type { PageRender } from './types/PageRender_t';
 import type { WebviewPanelId_t } from './VSCodeAPIs';
 import type { PostMessage } from './types/UI_t';
-import { UIScrollView, type ScrollOptions } from './UIScrollView';
+import { UIScrollView, type ScrollOptions_t } from './UIScrollView';
 import { UIMenuMgr } from './UIMenuMgr';
 import { isMenuId, isMenuItemId } from './UIMenu';
 import { Diagnostics } from './Diagnostics';
@@ -32,7 +32,7 @@ export class UIWebView {
   /**
    * Create webview panel with menus and scroll view
    */
-  async createPanel(pageRender: PageRender, options: ScrollOptions): Promise<WebviewPanelId_t> {
+  async createPanel(pageRender: PageRender, options: ScrollOptions_t): Promise<WebviewPanelId_t> {
     const dx = this.dx.sub('createPanel');
     dx.require({ pageRender, options }, ['pageRender', 'options']);
 
@@ -80,7 +80,7 @@ export class UIWebView {
    */
   private async preRenderInitialPages(
     pageRender: PageRender,
-    options: ScrollOptions
+    options: ScrollOptions_t
   ): Promise<void> {
     const dx = this.dx.sub('preRenderInitialPages');
 
@@ -116,7 +116,7 @@ export class UIWebView {
    */
   async createScrollView(
     pageRender: PageRender,
-    options: ScrollOptions
+    options: ScrollOptions_t
   ): Promise<WebviewPanelId_t> {
     const dx = this.dx.sub('createScrollView');
     dx.require({ pageRender, options }, ['pageRender', 'options']);
@@ -176,7 +176,7 @@ export class UIWebView {
   /**
    * Update scroll view options (theme, font, page size, etc.)
    */
-  async updateOptions(options: ScrollOptions): Promise<void> {
+  async updateOptions(options: ScrollOptions_t): Promise<void> {
     const dx = this.dx.sub('updateOptions');
 
     try {
@@ -386,6 +386,7 @@ export class UIWebView {
       if (this.panelId) {
         this.app.vscodeapis.postMessage(this.panelId, {
           type: 'pageRenderError',
+          pageNumber: msg.pageNumber || 0, // ADD THIS LINE
           error: {
             message: String(error),
             pageNumber: msg.pageNumber || 0,

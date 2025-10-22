@@ -149,11 +149,7 @@ pdf_js: |
       url: pdfDataUrl,
       disableAutoFetch: true,
       disableStream: true,
-      disableRange: true,
-      cMapUrl: null,
-      standardFontDataUrl: null,
-      useSystemFonts: false,
-      disableFontFace: true
+      disableRange: true
     });
     
     loadingTask.promise.then(onDocumentLoadSuccess, onDocumentLoadError);

@@ -128,13 +128,13 @@ scroll_html: |
   <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{TITLE}}</title>
+    <title>{{title}}</title>
     <style>
-      {{BASE_CSS}}
-      {{SCROLL_CSS}}
+      {{baseCss}}
+      {{scrollCss}}
     </style>
     <script>
-      {{PDFJS_LIBRARY}}
+      {{pdfjsLibrary}}
     </script>
   </head>
   <body>
@@ -151,16 +151,16 @@ scroll_html: |
 
     <!-- Performance indicators -->
     <div class="performance-info" id="performance-info">
-      <div>Pages: <span id="page-count">0</span>/<span id="page-total">{{PAGE_TOTAL}}</span> | Canvases: <span id="canvas-count">0</span>/<span id="canvas-buffers-size">{{CANVAS_BUFFERS_SIZE}}</span></div>
+      <div>Pages: <span id="page-count">0</span>/<span id="page-total">{{pageTotal}}</span> | Canvases: <span id="canvas-count">0</span>/<span id="canvas-buffers-size">{{canvasBuffersSize}}</span></div>
       <div><span id="canvas-assignments">cb1:pg0 cb2:pg0 cb3:pg0 cb4:pg0 cb5:pg0 cb6:pg0</span></div>
     </div>
 
 
     <!-- Toolbar integration -->
-    {{TOOLBAR}}
+    {{toolbar}}
 
     <script>
-      {{SCROLL_JS}}
+      {{scrollJs}}
     </script>
   </body>
   </html>
@@ -189,17 +189,16 @@ scroll_js: |
     }
 
     // Configuration from template (static values only)
-    const CONFIG = {
-      CANVAS_BUFFERS_SIZE: {{CANVAS_BUFFERS_SIZE}},
+    const kConfig = {
+      canvasBuffersSize: {{canvasBuffersSize}},
       scale: 1.0,
       pageGap: 20,
-      scrollDebounceMs: Math.max({{SCROLL_DEBOUNCE_MS}}, 50), // Minimum 50ms debounce
       debug: false, // Set to true for debugging
     };
 
-    // Calculated values derived from CONFIG
+    // Calculated values derived from kConfig
     // Center visible page is always rendered, split remaining buffers 60/40
-    const remainingBuffers = CONFIG.CANVAS_BUFFERS_SIZE - 1; // Subtract 1 for center visible page
+    const remainingBuffers = kConfig.canvasBuffersSize - 1; // Subtract 1 for center visible page
     const bufferSize_trailing = Math.floor(remainingBuffers * 0.4); // 40% opposite scroll direction
     const bufferSize_leading = remainingBuffers - bufferSize_trailing; // Remainder toward scroll direction
 
@@ -209,7 +208,7 @@ scroll_js: |
       // Pages: db.pg5 = { cb: 'cb1', placeholder, wrapper, label }
       // Canvas buffers (cb1...cb6) and pages (pg1...pgN) will be added dynamically
       pdfDoc: null, // Single PDF.js document (canonical source for pageTotal via .numPages)
-      initialPageTotal: {{PAGE_TOTAL}}, // Initial page count before PDF loads
+      initialPageTotal: {{pageTotal}}, // Initial page count before PDF loads
       lastScrollTop: -999,
       scrollDirection: 'down',
       isScrolling: false,
@@ -335,11 +334,6 @@ scroll_js: |
         return db[availableIds[0]].domElementRef;
       }
 
-      // Then try cancelled canvases
-      const cancelledIds = getAllCancelledCanvasIds();
-      if (cancelledIds.length > 0) {
-        return db[cancelledIds[0]].domElementRef;
-      }
 
       return null;
     }
@@ -354,10 +348,6 @@ scroll_js: |
       return getAllCanvasIds().filter(cbId => db[cbId].status === kCBStatus_Ready);
     }
 
-    // Helper: Get cancelled canvas IDs
-    function getAllCancelledCanvasIds() {
-      return getAllCanvasIds().filter(cbId => db[cbId].status === 'cancel');
-    }
 
     // Helper: Get all page IDs
     function getAllPageIds() {
@@ -397,7 +387,7 @@ scroll_js: |
     function hud() {
       // Canvas assignments (cb1, cb2, cb3, cb4, cb5, cb6)
       const canvasLine = [];
-      for (let i = 1; i <= CONFIG.CANVAS_BUFFERS_SIZE; i++) {
+      for (let i = 1; i <= kConfig.canvasBuffersSize; i++) {
         const cbId = canvasId(i);
         const cb = db[cbId];
         const statusChar = kCBStatus[cb.status];
@@ -440,7 +430,7 @@ scroll_js: |
 
     // Create canvas buffers
     function createCanvasBuffers() {
-      for (let i = 1; i <= CONFIG.CANVAS_BUFFERS_SIZE; i++) {
+      for (let i = 1; i <= kConfig.canvasBuffersSize; i++) {
         const canvas = document.createElement('canvas');
         canvas.id = `canvas-${i}`;
         canvas.className = 'page-canvas';
@@ -482,8 +472,8 @@ scroll_js: |
           const pgId = pageId(i);
           placeholder.id = pgId;
           placeholder.className = 'page-placeholder loading';
-          placeholder.style.width = '{{PAGE_WIDTH_PX}}px';
-          placeholder.style.height = '{{PAGE_HEIGHT_PX}}px';
+          placeholder.style.width = '{{pageWidthPx}}px';
+          placeholder.style.height = '{{pageHeightPx}}px';
           placeholder.innerHTML = `
             <div class="page-label">Page ${i}</div>
           `;
@@ -564,17 +554,17 @@ scroll_js: |
     function getVisiblePageRange() {
       const scrollTop = viewer.scrollTop;
       const clientHeight = viewer.clientHeight;
-      const pageGap = CONFIG.pageGap;
+        const pageGap = kConfig.pageGap;
       
       // Use exact page dimensions from config
-      const pageHeightPx = {{PAGE_HEIGHT_PX}};
+      const pageHeightPx = {{pageHeightPx}};
       
-      const startPage = Math.max(1, Math.floor(scrollTop / (pageHeightPx + pageGap)) + 1);
-      const endPage = Math.min(getPageTotal(), Math.ceil((scrollTop + clientHeight) / (pageHeightPx + pageGap)) + 1);
+      const pageBegin = Math.max(1, Math.floor(scrollTop / (pageHeightPx + pageGap)) + 1); // +1 for prefetch before
+      const pageEnd = Math.min(getPageTotal(), Math.ceil((scrollTop + clientHeight) / (pageHeightPx + pageGap)) + 1); // +1 for prefetch after
       
-      // dx(`CANVAS:Visible range: scrollTop=${scrollTop}, clientHeight=${clientHeight}, pageHeightPx=${pageHeightPx}, startPage=${startPage}, endPage=${endPage}`);
+      // dx(`CANVAS:Visible range: scrollTop=${scrollTop}, clientHeight=${clientHeight}, pageHeightPx=${pageHeightPx}, pageBegin=${pageBegin}, pageEnd=${pageEnd}`);
       
-      return { start: startPage, end: endPage };
+      return { start: pageBegin, end: pageEnd };
     }
 
     // Assign canvases to pages
@@ -905,7 +895,7 @@ scroll_js: |
         const pdfDoc = db.pdfDoc;
         const page = await pdfDoc.getPage(pageNumber); // Multi-page PDF
         
-        const viewport = page.getViewport({ scale: CONFIG.scale });
+        const viewport = page.getViewport({ scale: kConfig.scale });
         canvas.width = viewport.width;
         canvas.height = viewport.height;
         
@@ -970,7 +960,7 @@ scroll_js: |
           handlePageRenderResponse(message.pageData);
           break;
         case 'pageRenderError':
-          handlePageRenderError(message.error, message.pageNumber);
+          handlePageRenderError(message.error, message.error.pageNumber ?? 0);
           break;
         case 'clearAllPages':
           if (message.pageTotal !== undefined) {
@@ -1083,9 +1073,9 @@ scroll_js: |
         const scrollBottom = currentScrollTop + viewerHeight;
         
         // Calculate the height of the new last page
-        // Each page is PAGE_HEIGHT_PX + pageGap, plus final pageGap
-        const pageHeight = {{PAGE_HEIGHT_PX}} || 800; // Fallback to 800px if not available
-        const lastPageHeight = (newPageTotal * (pageHeight + CONFIG.pageGap)) + CONFIG.pageGap;
+        // Each page is pageHeightPx + pageGap, plus final pageGap
+        const pageHeight = {{pageHeightPx}} || 800; // Fallback to 800px if not available
+        const lastPageHeight = (newPageTotal * (pageHeight + kConfig.pageGap)) + kConfig.pageGap;
         
         if (scrollBottom > lastPageHeight) {
           // We're viewing beyond the new page count - snap to bottom

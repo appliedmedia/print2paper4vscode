@@ -60,7 +60,7 @@ export class App {
 
   constructor(context: ExtensionContext, vscode: typeof import('vscode')) {
     // Create Diagnostics instance first
-    this.dx = new Diagnostics('App');
+    this.dx = new Diagnostics('App', undefined, null, this);
 
     // Create components - VSCodeAPIs first, then UI, then UIMenuMgr (needed by PaperPrinter), then others
     this.vscodeapis = new VSCodeAPIs(this, vscode, context);

@@ -28,14 +28,11 @@ export class Diagnostics {
   private static _debugOn = false; // Root level debug state
   private static _lastMessageContent = ''; // Store last message content for truncation
   private static _lastMessagePrefix = ''; // Store last prefix for robust truncation
-  private static _lastPartialMessage = ''; // Store last partial message for duplicate detection
-  private static _lastWasTruncated = false; // Track if last message was truncated
-  private static _messageCounter = 0; // Global message counter (starts at 0000)
-  private static _duplicateCount = 0; // Count of duplicates (0 = no duplicates yet)
 
   private _name: string = '';
   private name_lineage: string = '';
   private _displayName: string = '';
+  private app: any = null; // Store app reference on root instance only
 
   get name(): string {
     return (this._displayName ||= this.name_lineage
@@ -52,10 +49,15 @@ export class Diagnostics {
   private startTime: number | null = null;
   private _debugOn: boolean | undefined;
 
-  constructor(name: string, debugOn?: boolean, parent?: Diagnostics | null) {
+  constructor(name: string, debugOn?: boolean, parent?: Diagnostics | null, app?: any) {
     this._name = name;
     this.parent = parent || null;
     this.startTime = OS.performance.now();
+
+    // Store app reference on root instance only
+    if (app && !parent) {
+      this.app = app;
+    }
 
     // Build name lineage by crawling up parent tree
     this.name_lineage = this.buildNameLineage();
@@ -73,7 +75,7 @@ export class Diagnostics {
    * @returns New Diagnostics instance for the method
    */
   sub(name: string, debugOn?: boolean): Diagnostics {
-    const dx = new Diagnostics(name, debugOn, this);
+    const dx = new Diagnostics(name, debugOn, this, this.app);
     return dx;
   }
 
@@ -84,8 +86,95 @@ export class Diagnostics {
    * @returns New independent Diagnostics instance
    */
   create(name: string, debugOn?: boolean): Diagnostics {
-    const dx = new Diagnostics(name, debugOn, null);
+    const dx = new Diagnostics(name, debugOn, null, this.app);
     return dx;
+  }
+
+  /**
+   * Get the root app instance by crawling up the parent tree
+   * @returns The root app instance or null if not found
+   */
+  private getApp(): any {
+    let current: Diagnostics | null = this;
+    while (current !== null) {
+      if (current.app) {
+        return current.app;
+      }
+      current = current.parent;
+    }
+    return null;
+  }
+
+  /**
+   * Get the last partial message from the root app's dx state
+   */
+  private get lastPartialMessage(): string {
+    const app = this.getApp();
+    return app?.dx?._lastPartialMessage || '';
+  }
+
+  /**
+   * Set the last partial message in the root app's dx state
+   */
+  private set lastPartialMessage(value: string) {
+    const app = this.getApp();
+    if (app?.dx) {
+      app.dx._lastPartialMessage = value;
+    }
+  }
+
+  /**
+   * Get the last was truncated flag from the root app's dx state
+   */
+  private get lastWasTruncated(): boolean {
+    const app = this.getApp();
+    return app?.dx?._lastWasTruncated || false;
+  }
+
+  /**
+   * Set the last was truncated flag in the root app's dx state
+   */
+  private set lastWasTruncated(value: boolean) {
+    const app = this.getApp();
+    if (app?.dx) {
+      app.dx._lastWasTruncated = value;
+    }
+  }
+
+  /**
+   * Get the message counter from the root app's dx state
+   */
+  private get messageCounter(): number {
+    const app = this.getApp();
+    return app?.dx?._messageCounter || 0;
+  }
+
+  /**
+   * Set the message counter in the root app's dx state
+   */
+  private set messageCounter(value: number) {
+    const app = this.getApp();
+    if (app?.dx) {
+      app.dx._messageCounter = value;
+    }
+  }
+
+  /**
+   * Get the duplicate count from the root app's dx state
+   */
+  private get duplicateCount(): number {
+    const app = this.getApp();
+    return app?.dx?._duplicateCount || 0;
+  }
+
+  /**
+   * Set the duplicate count in the root app's dx state
+   */
+  private set duplicateCount(value: number) {
+    const app = this.getApp();
+    if (app?.dx) {
+      app.dx._duplicateCount = value;
+    }
   }
 
   /**
@@ -94,10 +183,7 @@ export class Diagnostics {
   static reset(): void {
     Diagnostics._lastMessageContent = '';
     Diagnostics._lastMessagePrefix = '';
-    Diagnostics._lastPartialMessage = '';
-    Diagnostics._lastWasTruncated = false;
-    Diagnostics._messageCounter = 0;
-    Diagnostics._duplicateCount = 0;
+    // Note: Instance-based state is reset through app.dx when needed
   }
 
   /**
@@ -182,8 +268,8 @@ export class Diagnostics {
    * Increment and return formatted message counter
    */
   private messageHeader_incCounter(): string {
-    Diagnostics._messageCounter = (Diagnostics._messageCounter + 1) % 10000;
-    return String(Diagnostics._messageCounter).padStart(4, '0');
+    this.messageCounter = (this.messageCounter + 1) % 10000;
+    return String(this.messageCounter).padStart(4, '0');
   }
 
   /**
@@ -192,12 +278,12 @@ export class Diagnostics {
    */
   private messageHeader_addForDupe(timestamp: string = ''): string {
     let message = '';
-    if (Diagnostics._duplicateCount) {
+    if (this.duplicateCount) {
       const counter = this.messageHeader_incCounter();
-      const dupMsg = `↑ x${Diagnostics._duplicateCount + 1}`;
+      const dupMsg = `↑ x${this.duplicateCount + 1}`;
 
       // Match format of duplicated message (truncated or full)
-      if (Diagnostics._lastWasTruncated) {
+      if (this.lastWasTruncated) {
         // Truncated format: just counter and dup indicator
         message = `${counter} | ${dupMsg}\n`;
       } else {
@@ -208,7 +294,7 @@ export class Diagnostics {
           : `${counter} | ${prefix}${dupMsg}\n`;
       }
 
-      Diagnostics._duplicateCount = 0; // Reset duplicate count
+      this.duplicateCount = 0; // Reset duplicate count
     }
     return message;
   }
@@ -251,8 +337,8 @@ export class Diagnostics {
       partialMessage = messageContent.slice(prefix.length).trim();
 
       // Check for duplicate (same prefix AND same partial message)
-      if (partialMessage === Diagnostics._lastPartialMessage) {
-        Diagnostics._duplicateCount++;
+      if (partialMessage === this.lastPartialMessage) {
+        this.duplicateCount++;
       } else {
         // Different partial message - output dup count matching previous message format
         result += this.messageHeader_addForDupe(`${timestamp} | `);
@@ -267,11 +353,11 @@ export class Diagnostics {
     }
 
     // Store state for next message (only if not duplicate)
-    if (!Diagnostics._duplicateCount) {
+    if (!this.duplicateCount) {
       Diagnostics._lastMessageContent = messageContent;
       Diagnostics._lastMessagePrefix = prefix;
-      Diagnostics._lastPartialMessage = partialMessage;
-      Diagnostics._lastWasTruncated = wasTruncated;
+      this.lastPartialMessage = partialMessage;
+      this.lastWasTruncated = wasTruncated;
     }
 
     return result;
