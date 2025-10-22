@@ -53,11 +53,7 @@ export class Diagnostics {
     this._name = name;
     this.parent = parent || null;
     this.startTime = OS.performance.now();
-
-    // Store app reference on root instance only
-    if (app && !parent) {
-      this.app = app;
-    }
+    this.app = app;
 
     // Build name lineage by crawling up parent tree
     this.name_lineage = this.buildNameLineage();
@@ -90,36 +86,20 @@ export class Diagnostics {
     return dx;
   }
 
-  /**
-   * Get the root app instance by crawling up the parent tree
-   * @returns The root app instance or null if not found
-   */
-  private getApp(): any {
-    let current: Diagnostics | null = this;
-    while (current !== null) {
-      if (current.app) {
-        return current.app;
-      }
-      current = current.parent;
-    }
-    return null;
-  }
 
   /**
    * Get the last partial message from the root app's dx state
    */
   private get lastPartialMessage(): string {
-    const app = this.getApp();
-    return app?.dx?._lastPartialMessage || '';
+    return this.app?.dx?._lastPartialMessage || '';
   }
 
   /**
    * Set the last partial message in the root app's dx state
    */
   private set lastPartialMessage(value: string) {
-    const app = this.getApp();
-    if (app?.dx) {
-      app.dx._lastPartialMessage = value;
+    if (this.app?.dx) {
+      this.app.dx._lastPartialMessage = value;
     }
   }
 
@@ -127,17 +107,15 @@ export class Diagnostics {
    * Get the last was truncated flag from the root app's dx state
    */
   private get lastWasTruncated(): boolean {
-    const app = this.getApp();
-    return app?.dx?._lastWasTruncated || false;
+    return this.app?.dx?._lastWasTruncated || false;
   }
 
   /**
    * Set the last was truncated flag in the root app's dx state
    */
   private set lastWasTruncated(value: boolean) {
-    const app = this.getApp();
-    if (app?.dx) {
-      app.dx._lastWasTruncated = value;
+    if (this.app?.dx) {
+      this.app.dx._lastWasTruncated = value;
     }
   }
 
@@ -145,17 +123,15 @@ export class Diagnostics {
    * Get the message counter from the root app's dx state
    */
   private get messageCounter(): number {
-    const app = this.getApp();
-    return app?.dx?._messageCounter || 0;
+    return this.app?.dx?._messageCounter || 0;
   }
 
   /**
    * Set the message counter in the root app's dx state
    */
   private set messageCounter(value: number) {
-    const app = this.getApp();
-    if (app?.dx) {
-      app.dx._messageCounter = value;
+    if (this.app?.dx) {
+      this.app.dx._messageCounter = value;
     }
   }
 
@@ -163,17 +139,15 @@ export class Diagnostics {
    * Get the duplicate count from the root app's dx state
    */
   private get duplicateCount(): number {
-    const app = this.getApp();
-    return app?.dx?._duplicateCount || 0;
+    return this.app?.dx?._duplicateCount || 0;
   }
 
   /**
    * Set the duplicate count in the root app's dx state
    */
   private set duplicateCount(value: number) {
-    const app = this.getApp();
-    if (app?.dx) {
-      app.dx._duplicateCount = value;
+    if (this.app?.dx) {
+      this.app.dx._duplicateCount = value;
     }
   }
 
