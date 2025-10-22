@@ -778,7 +778,6 @@ export class PDF implements PageRender {
     const pageInfo = this.docInfo.pdfDoc.getCurrentPageInfo();
     const currentPage = pageInfo.pageNumber;
     // Use pageTotal if available (set after complete generation), otherwise use current count
-    // const totalPages = this.getPageTotal() || this.docInfo.getPageTotal();
 
     // Get page dimensions and margins
     const pageSize = this.getPageDimensions(
