@@ -75,26 +75,6 @@ export class UIWebView {
     }
   }
 
-  /**
-   * Pre-render initial pages for faster display
-   */
-  private async preRenderInitialPages(
-    pageRender: PageRender,
-    options: ScrollOptions_t
-  ): Promise<void> {
-    const dx = this.dx.sub('preRenderInitialPages');
-
-    try {
-      // Pre-render is no longer needed with unified approach
-      // The complete PDF is generated during tokenization
-      dx.out(`Pre-render not needed with unified approach`);
-      return;
-    } catch (error) {
-      dx.out(`Pre-render failed: ${String(error)}`);
-    } finally {
-      dx.done();
-    }
-  }
 
   /**
    * Create and configure menu manager (for external use)

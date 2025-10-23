@@ -557,142 +557,89 @@ scroll_js: |
         const pageGap = kConfig.pageGap;
       
       // Use exact page dimensions from config
-      const pageHeightPx = {{pageHeightPx}};
+      const pageHeightPx = kConfig.pageHeightPx;
+      const totalHeight = kConfig.pageTotal * (pageHeightPx + pageGap) - pageGap;
       
-      const pageBegin = Math.max(1, Math.floor(scrollTop / (pageHeightPx + pageGap)) + 1); // +1 for prefetch before
-      const pageEnd = Math.min(getPageTotal(), Math.ceil((scrollTop + clientHeight) / (pageHeightPx + pageGap)) + 1); // +1 for prefetch after
+      const visiblePagesBegin = Math.max(1, Math.floor(scrollTop / (pageHeightPx + pageGap)) + 1);
+      const visiblePagesEnd = Math.min(
+        kConfig.pageTotal,
+        Math.ceil((scrollTop + clientHeight) / (pageHeightPx + pageGap))
+      );
       
-      // dx(`CANVAS:Visible range: scrollTop=${scrollTop}, clientHeight=${clientHeight}, pageHeightPx=${pageHeightPx}, pageBegin=${pageBegin}, pageEnd=${pageEnd}`);
-      
-      return { start: pageBegin, end: pageEnd };
+      return { start: visiblePagesBegin, end: visiblePagesEnd };
     }
 
     // Assign canvases to pages
     function assignCanvasesToPages(visibleRange) {
-      const { start, end } = visibleRange;
+      const { start: visiblePagesBegin, end: visiblePagesEnd } = visibleRange;
       
       // Calculate which pages need canvases based on visibility + buffer
+      const remainingBuffers = kConfig.canvasBuffersSize - 1;
+      const bufferSize_trailing = Math.floor(remainingBuffers * 0.4);
+      const bufferSize_leading = remainingBuffers - bufferSize_trailing;
+      
+      // Apply buffers based on scroll direction
+      const isScrollingDown = (db.scrollDirection === 'down');
+      const bufferBefore = isScrollingDown ? bufferSize_trailing : bufferSize_leading;
+      const bufferAfter = isScrollingDown ? bufferSize_leading : bufferSize_trailing;
+      
+      // Compute window bounds - ONLY scan this range
+      const windowBegin = Math.max(1, visiblePagesBegin - bufferBefore);
+      const windowEnd = Math.min(getPageTotal(), visiblePagesEnd + bufferAfter);
+      
       const pagesToLoad = [];
-      
-      // Always load visible pages + buffer around them
-      const minVisible = start;
-      const maxVisible = end;
-      const centerVisible = Math.round((minVisible + maxVisible) / 2);
-      
-      for (let pageNum = 1; pageNum <= getPageTotal(); pageNum++) {
-        let shouldLoad = false;
-        
-        // Always load visible pages (must have)
-        if (pageNum >= minVisible && pageNum <= maxVisible) {
-          shouldLoad = true;
-        } 
-        // Load buffer pages based on scroll direction
-        else if (pageNum < minVisible) {
-          // Pages before visible range
-          const distanceBefore = minVisible - pageNum;
-          // If scrolling up, these are leading edge (load more). If scrolling down, trailing edge (load less)
-          const bufferSize = (db.scrollDirection === 'up') ? bufferSize_leading : bufferSize_trailing;
-          if (distanceBefore <= bufferSize) {
-            shouldLoad = true;
-          }
-        } else {
-          // Pages after visible range
-          const distanceAfter = pageNum - maxVisible;
-          // If scrolling down, these are leading edge (load more). If scrolling up, trailing edge (load less)
-          const bufferSize = (db.scrollDirection === 'down') ? bufferSize_leading : bufferSize_trailing;
-          if (distanceAfter <= bufferSize) {
-            shouldLoad = true;
-          }
-        }
-        
-        if (shouldLoad) {
+      for (let pageNum = windowBegin; pageNum <= windowEnd; pageNum++) {
+        const pgId = pageId(pageNum);
+        // Check if page needs a canvas
+        if (!db[pgId] || !db[pgId].cb || db[pgId].cb === canvasId(kCanvasId_Reset)) {
           pagesToLoad.push(pageNum);
         }
       }
       
-      // Step 1: Find pages that need canvases (don't already have them)
-      const pagesNeedingCanvases = pagesToLoad.filter(pageNum => {
-        const pgId = pageId(pageNum);
-        const cbId = db[pgId]?.cb;
-        const hasCanvas = db[cbId]?.status && db[cbId].status !== kCBStatus_Ready;
-        return !hasCanvas;
-      });
-      
-      // Step 2: Check if we have enough available canvases
-      const availableCanvasCount = db.availableCanvases.size;
-      const totalNeeded = pagesNeedingCanvases.length;
-      
-      // Step 3: Only unassign canvases if we need more space
-      if (totalNeeded > availableCanvasCount) {
-        const canvasesNeeded = totalNeeded - availableCanvasCount;
-        
-        // Find pages that are furthest from center to unassign
-        const pagesToUnassign = [];
-        for (const [pageNumber, canvasId] of db.assignedCanvases) {
-          // Don't unassign visible pages
-          if (pageNumber >= minVisible && pageNumber <= maxVisible) {
-            continue;
-          }
-          
-          // Calculate distance from center for priority
-          const distanceFromCenter = Math.abs(pageNumber - centerVisible);
-          pagesToUnassign.push({ pageNumber, canvasId, distanceFromCenter });
-        }
-        
-        // Sort by distance (furthest first) and unassign what we need
-        pagesToUnassign.sort((a, b) => b.distanceFromCenter - a.distanceFromCenter);
-        for (let i = 0; i < Math.min(canvasesNeeded, pagesToUnassign.length); i++) {
-          const { canvasId } = pagesToUnassign[i];
-          unassignCanvas(canvasId);
-        }
-      }
-      
-      // Step 4: Assign canvases to pages that need them
-      for (const pageNum of pagesNeedingCanvases) {
+      // Assign canvases to pages that need them
+      for (const pageNum of pagesToLoad) {
         const availableIds = getAllAvailableCanvasIds();
-        if (availableIds.length === 0) {
-          continue;
-        }
-        
-        const pgId = pageId(pageNum);
-        const existingCbId = db[pgId]?.cb;
-        if (db[existingCbId]?.status && db[existingCbId].status !== kCBStatus_Ready) {
-          continue;
-        }
-        
+        if (availableIds.length === 0) break;
+
         const cbId = availableIds[0];
-        const canvas = document.getElementById(cbId);
-        if (!canvas) {
-          continue;
-        }
-        
-        // Assign canvas to page using helper function
+        const pgId = pageId(pageNum);
+        const canvas = db[cbId].domElementRef;
+
         assignCanvasToPage(cbId, pgId);
-        
-        // Move canvas to page placeholder
+
         const placeholder = db[pgId].domElementRef;
         if (placeholder) {
           placeholder.innerHTML = '';
           placeholder.className = 'page-container';
           placeholder.appendChild(canvas);
         }
-        
-        // Check if page already rendered
+
         if (db[pgId] && db[pgId].dataUrl) {
-          const pageData = { pageNumber: pageNum, dataUrl: db[pgId].dataUrl, widthPx: db[pgId].widthPx, heightPx: db[pgId].heightPx };
+          const pageData = {
+            pageNumber: pageNum,
+            dataUrl: db[pgId].dataUrl,
+            widthPx: db[pgId].widthPx,
+            heightPx: db[pgId].heightPx
+          };
           renderPageToCanvas(pageData, cbId);
         } else {
           requestPageRender(pageNum);
         }
-      dx(`Pages needing canvases: [${pagesNeedingCanvases.join(', ')}], available: ${db.availableCanvases.size}`);
-      for (const pageNum of pagesNeedingCanvases) {
-        if (db.availableCanvases.size > 0) {
-          dx(`Assigning canvas to page ${pageNum}`);
-          assignCanvasToPage(pageNum);
-        } else {
-          dx(`No available canvases for page ${pageNum}`);
+      }
+
+      // Unassign canvases outside the window
+      const allCanvasIds = getAllCanvasIds();
+      for (const cbId of allCanvasIds) {
+        const assignedPgId = db[cbId].pg;
+        if (assignedPgId && assignedPgId !== pageId(kPageId_Reset)) {
+          const assignedPageNum = pageNumber(assignedPgId);
+          if (assignedPageNum < windowBegin || assignedPageNum > windowEnd) {
+            unassignCanvas(cbId);
+          }
         }
       }
+
+      updateHud();
     }
 
     // Assign canvas to page
