@@ -900,7 +900,7 @@ scroll_js: |
 
 
     // Message handling from extension
-    function handleExtensionMessage(message) {
+    async function handleExtensionMessage(message) {
       const messageStr = JSON.stringify(message);
       switch (message.type) {
         case 'pageRenderResponse':
@@ -942,38 +942,35 @@ scroll_js: |
             clearAllRenderedPages();
           }
           break;
-        case 'updatePdf':
-          if (message.pdfDataUrl) {
-            const loadingTask = pdfjsLib.getDocument({
-              url: message.pdfDataUrl
-            });
-            db.pdfDoc = await loadingTask.promise;
-          }
-          if (typeof message.pageTotal === 'number') {
-            db.pageTotal = message.pageTotal;
-          }
-          
-          const allCanvasIds = getAllCanvasIds();
-          for (const cbId of allCanvasIds) {
-            const canvas = db[cbId].domElementRef;
-            if (canvas) {
-              const ctx = canvas.getContext('2d');
-              if (ctx) {
-                ctx.clearRect(0, 0, canvas.width, canvas.height);
-              }
+        case 'updatePdf': {
+          try {
+            let newDoc = null;
+            
+            // Load new doc first (don't destroy old yet)
+            if (message.pdfDataUrl) {
+              const loadingTask = pdfjsLib.getDocument({ url: message.pdfDataUrl });
+              newDoc = await loadingTask.promise;
             }
-          }
-          
-          const allPageIds = getAllPageIds();
-          for (const pgId of allPageIds) {
-            if (db[pgId]) {
-              db[pgId].dataUrl = null;
+            
+            // Use pageTotal from message (already calculated), only fall back to numPages if missing
+            const newTotal = (typeof message.pageTotal === 'number')
+              ? message.pageTotal
+              : (newDoc?.numPages ?? getPageTotal());
+            
+            // Now swap: destroy old doc, assign new
+            if (db.pdfDoc && typeof db.pdfDoc.destroy === 'function') {
+              db.pdfDoc.destroy();
             }
+            db.pdfDoc = newDoc;
+            
+            // Update using existing helpers (no manual canvas clearing)
+            updatePageTotal(newTotal);
+            handleClearAllPages();
+          } catch (e) {
+            dx(`updatePdf failed: ${e?.message || e}`);
           }
-          
-          db.lastScrollTop = -999;
-          handleScroll();
           break;
+        }
         case 'restorePosition':
           if (message.left !== undefined) {
             const toolbar = document.getElementById('p2p4vsc-toolbar');
