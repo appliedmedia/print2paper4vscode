@@ -953,7 +953,6 @@ scroll_js: |
             
             // Update using existing helpers (no manual canvas clearing)
             updatePageTotal(newTotal);
-            handleClearAllPages();
           } catch (e) {
             dx(`updatePdf failed: ${e?.message || e}`);
           }
