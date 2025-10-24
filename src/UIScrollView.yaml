@@ -909,59 +909,55 @@ scroll_js: |
         case 'pageRenderError':
           handlePageRenderError(message.error, message.error.pageNumber ?? 0);
           break;
-        case 'clearAllPages':
-          if (message.pageTotal !== undefined) {
-            const oldPageTotal = getPageTotal();
-            const newPageTotal = message.pageTotal;
-            
-            // Unassign canvases for pages that will be hidden
-            if (newPageTotal < oldPageTotal) {
-              for (let i = newPageTotal + 1; i <= oldPageTotal; i++) {
-                const pgId = pageId(i);
-                const cbId = db[pgId]?.cb;
-                unassignCanvas(cbId);
-              }
-            }
-            
-            // Update page total and UI, but don't clear everything
-            db.initialPageTotal = newPageTotal;
-            const pageTotalElement = document.getElementById('page-total');
-            if (pageTotalElement) {
-              pageTotalElement.textContent = newPageTotal.toString();
-            }
-            
-            // Handle scroll position if needed
-            if (newPageTotal < oldPageTotal) {
-              const currentScrollTop = viewer.scrollTop;
-              const viewerHeight = viewer.clientHeight;
-              const scrollBottom = currentScrollTop + viewerHeight;
-              const pageHeight = {{pageHeightPx}} || 800;
-              const lastPageHeight = (newPageTotal * (pageHeight + kConfig.pageGap)) + kConfig.pageGap;
-              
-              if (scrollBottom > lastPageHeight) {
-                viewer.scrollTop = Math.max(0, lastPageHeight - viewerHeight);
-              }
-            }
-            
-            // Clear data for remaining pages and trigger re-render
-            for (let i = 1; i <= newPageTotal; i++) {
+        case 'clearAllPages': {
+          const oldPageTotal = getPageTotal();
+          const newPageTotal = message.pageTotal ?? oldPageTotal; // Use provided or current
+          
+          // Unassign canvases for pages that will be hidden
+          if (newPageTotal < oldPageTotal) {
+            for (let i = newPageTotal + 1; i <= oldPageTotal; i++) {
               const pgId = pageId(i);
-              if (db[pgId]) {
-                delete db[pgId].dataUrl;
-                delete db[pgId].widthPx;
-                delete db[pgId].heightPx;
-              }
+              const cbId = db[pgId]?.cb;
+              unassignCanvas(cbId);
             }
-            db.pdfDoc = null;
-            
-            // Reset scroll tracking and trigger re-render
-            db.lastScrollTop = -999;
-            handleScroll();
-          } else {
-            // No page total provided - do full clear
-            clearAllRenderedPages();
           }
+          
+          // Update page total and UI
+          db.initialPageTotal = newPageTotal;
+          const pageTotalElement = document.getElementById('page-total');
+          if (pageTotalElement) {
+            pageTotalElement.textContent = newPageTotal.toString();
+          }
+          
+          // Handle scroll position if needed
+          if (newPageTotal < oldPageTotal) {
+            const currentScrollTop = viewer.scrollTop;
+            const viewerHeight = viewer.clientHeight;
+            const scrollBottom = currentScrollTop + viewerHeight;
+            const pageHeight = {{pageHeightPx}} || 800;
+            const lastPageHeight = (newPageTotal * (pageHeight + kConfig.pageGap)) + kConfig.pageGap;
+            
+            if (scrollBottom > lastPageHeight) {
+              viewer.scrollTop = Math.max(0, lastPageHeight - viewerHeight);
+            }
+          }
+          
+          // Clear data for all pages and trigger re-render
+          for (let i = 1; i <= newPageTotal; i++) {
+            const pgId = pageId(i);
+            if (db[pgId]) {
+              delete db[pgId].dataUrl;
+              delete db[pgId].widthPx;
+              delete db[pgId].heightPx;
+            }
+          }
+          db.pdfDoc = null;
+          
+          // Reset scroll tracking and trigger re-render
+          db.lastScrollTop = -999;
+          handleScroll();
           break;
+        }
         case 'updatePdf': {
           try {
             let newDoc = null;
@@ -983,8 +979,51 @@ scroll_js: |
             }
             db.pdfDoc = newDoc;
             
-            // Update using existing helpers (no manual canvas clearing)
-            updatePageTotal(newTotal);
+            // Use the same robust clearing logic as clearAllPages
+            const oldPageTotal = getPageTotal();
+            
+            // Unassign canvases for pages that will be hidden
+            if (newTotal < oldPageTotal) {
+              for (let i = newTotal + 1; i <= oldPageTotal; i++) {
+                const pgId = pageId(i);
+                const cbId = db[pgId]?.cb;
+                unassignCanvas(cbId);
+              }
+            }
+            
+            // Update page total and UI
+            db.initialPageTotal = newTotal;
+            const pageTotalElement = document.getElementById('page-total');
+            if (pageTotalElement) {
+              pageTotalElement.textContent = newTotal.toString();
+            }
+            
+            // Handle scroll position if needed
+            if (newTotal < oldPageTotal) {
+              const currentScrollTop = viewer.scrollTop;
+              const viewerHeight = viewer.clientHeight;
+              const scrollBottom = currentScrollTop + viewerHeight;
+              const pageHeight = {{pageHeightPx}} || 800;
+              const lastPageHeight = (newTotal * (pageHeight + kConfig.pageGap)) + kConfig.pageGap;
+              
+              if (scrollBottom > lastPageHeight) {
+                viewer.scrollTop = Math.max(0, lastPageHeight - viewerHeight);
+              }
+            }
+            
+            // Clear data for all pages and trigger re-render
+            for (let i = 1; i <= newTotal; i++) {
+              const pgId = pageId(i);
+              if (db[pgId]) {
+                delete db[pgId].dataUrl;
+                delete db[pgId].widthPx;
+                delete db[pgId].heightPx;
+              }
+            }
+            
+            // Reset scroll tracking and trigger re-render
+            db.lastScrollTop = -999;
+            handleScroll();
           } catch (e) {
             dx(`updatePdf failed: ${e?.message || e}`);
           }
@@ -1003,51 +1042,6 @@ scroll_js: |
       }
     }
 
-    // Clear all rendered pages and reset to loading state
-    function clearAllRenderedPages() {
-      
-      // Clear all rendered page data
-      const allPageIds = getAllPageIds();
-      for (const pgId of allPageIds) {
-        delete db[pgId].dataUrl;
-        delete db[pgId].widthPx;
-        delete db[pgId].heightPx;
-      }
-      
-      // Clear cached PDF document to force reload with new data
-      db.pdfDoc = null;
-      
-      // Clear all pages
-      handleClearAllPages();
-    }
-    
-    // Helper function for the actual clearing logic
-    function handleClearAllPages() {
-      // Unassign all canvases (iterate through canvas buffers, not pages!)
-      const allCanvasIds = getAllCanvasIds();
-      for (const cbId of allCanvasIds) {
-        unassignCanvas(cbId);
-      }
-      
-      // Reset all placeholders to loading state
-      for (let i = 1; i <= getPageTotal(); i++) {
-        const pgId = pageId(i);
-        const placeholder = db[pgId]?.domElementRef;
-        if (placeholder) {
-          placeholder.className = 'page-placeholder loading';
-          placeholder.innerHTML = `
-            <div class="page-label">Page ${i}</div>
-            <div class="page-number-box">Page ${i}</div>
-          `;
-        }
-      }
-      
-      // Force scroll handler to re-render by resetting lastScrollTop
-      db.lastScrollTop = -999;
-      
-      // Trigger initial render
-      handleScroll();
-    }
 
     // Update page total and re-render
     function updatePageTotal(newPageTotal) {
