@@ -923,20 +923,8 @@ scroll_js: |
               }
             }
             
-            // Update page total
+            // Update page total (this will handle all clearing and re-rendering)
             updatePageTotal(newPageTotal);
-            
-            // Configure placeholders
-            configurePlaceholders(oldPageTotal, newPageTotal);
-            
-            // Invalidate all pages to force re-render with fresh data
-            const allPageIds = getAllPageIds();
-            for (const pgId of allPageIds) {
-              delete db[pgId].dataUrl;
-              delete db[pgId].widthPx;
-              delete db[pgId].heightPx;
-            }
-            db.pdfDoc = null;
           } else {
             // No page total provided - do full clear
             clearAllRenderedPages();

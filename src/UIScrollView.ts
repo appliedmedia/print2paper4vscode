@@ -146,9 +146,11 @@ export class UIScrollView {
         });
 
         // Trigger a full PDF reload
+        const pageTotal = await this.pageRender.getPageTotal();
         this.app.vscodeapis.postMessage(this.panelId, {
           type: 'updatePdf',
           pdfDataUrl: '', // Empty to trigger reload
+          pageTotal: pageTotal,
         });
       }
 
