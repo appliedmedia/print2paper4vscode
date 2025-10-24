@@ -942,6 +942,38 @@ scroll_js: |
             clearAllRenderedPages();
           }
           break;
+        case 'updatePdf':
+          if (message.pdfDataUrl) {
+            const loadingTask = pdfjsLib.getDocument({
+              url: message.pdfDataUrl
+            });
+            db.pdfDoc = await loadingTask.promise;
+          }
+          if (typeof message.pageTotal === 'number') {
+            db.pageTotal = message.pageTotal;
+          }
+          
+          const allCanvasIds = getAllCanvasIds();
+          for (const cbId of allCanvasIds) {
+            const canvas = db[cbId].domElementRef;
+            if (canvas) {
+              const ctx = canvas.getContext('2d');
+              if (ctx) {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+              }
+            }
+          }
+          
+          const allPageIds = getAllPageIds();
+          for (const pgId of allPageIds) {
+            if (db[pgId]) {
+              db[pgId].dataUrl = null;
+            }
+          }
+          
+          db.lastScrollTop = -999;
+          handleScroll();
+          break;
         case 'restorePosition':
           if (message.left !== undefined) {
             const toolbar = document.getElementById('p2p4vsc-toolbar');
