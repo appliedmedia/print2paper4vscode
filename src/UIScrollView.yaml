@@ -923,8 +923,40 @@ scroll_js: |
               }
             }
             
-            // Update page total (this will handle all clearing and re-rendering)
-            updatePageTotal(newPageTotal);
+            // Update page total and UI, but don't clear everything
+            db.initialPageTotal = newPageTotal;
+            const pageTotalElement = document.getElementById('page-total');
+            if (pageTotalElement) {
+              pageTotalElement.textContent = newPageTotal.toString();
+            }
+            
+            // Handle scroll position if needed
+            if (newPageTotal < oldPageTotal) {
+              const currentScrollTop = viewer.scrollTop;
+              const viewerHeight = viewer.clientHeight;
+              const scrollBottom = currentScrollTop + viewerHeight;
+              const pageHeight = {{pageHeightPx}} || 800;
+              const lastPageHeight = (newPageTotal * (pageHeight + kConfig.pageGap)) + kConfig.pageGap;
+              
+              if (scrollBottom > lastPageHeight) {
+                viewer.scrollTop = Math.max(0, lastPageHeight - viewerHeight);
+              }
+            }
+            
+            // Clear data for remaining pages and trigger re-render
+            for (let i = 1; i <= newPageTotal; i++) {
+              const pgId = pageId(i);
+              if (db[pgId]) {
+                delete db[pgId].dataUrl;
+                delete db[pgId].widthPx;
+                delete db[pgId].heightPx;
+              }
+            }
+            db.pdfDoc = null;
+            
+            // Reset scroll tracking and trigger re-render
+            db.lastScrollTop = -999;
+            handleScroll();
           } else {
             // No page total provided - do full clear
             clearAllRenderedPages();
