@@ -5,8 +5,8 @@ import type { PageSizeId_t, Orient_t, MarginId_t } from './types/PaperPrinter_t'
 import { Diagnostics } from './Diagnostics';
 import { Yaml } from './Yaml';
 
-// ScrollOptions interface - uses centralized types from PaperPrinter_t.ts
-export interface ScrollOptions {
+// ScrollOptions_t interface - uses centralized types from PaperPrinter_t.ts
+export interface ScrollOptions_t {
   title?: string;
   pageSizeId?: PageSizeId_t;
   orient?: Orient_t;
@@ -44,21 +44,20 @@ export class UIScrollView {
     scroll_js: '',
   } as const;
 
-  private readonly CONFIG = {
-    CANVAS_BUFFERS_SIZE: 6, // Number of canvas buffer elements for virtual scrolling
-    SCROLL_DEBOUNCE_MS: 16, // ~60fps, syncs with requestAnimationFrame
+  private readonly kConfig = {
+    canvasBuffersSize: 6, // Number of canvas buffer elements for virtual scrolling
   };
 
   private app: App;
   private pageRender: PageRender;
-  private options: ScrollOptions;
+  private options: ScrollOptions_t;
   private dx: Diagnostics;
   private pageCache: Map<number, PageData> = new Map();
   private renderQueue: Set<number> = new Set();
   private panelId: WebviewPanelId_t | null = null;
   private _yaml: Yaml<typeof UIScrollView.kYaml>;
 
-  constructor(app: App, pageRender: PageRender, options: ScrollOptions) {
+  constructor(app: App, pageRender: PageRender, options: ScrollOptions_t) {
     this.app = app;
     this.pageRender = pageRender;
     this.options = options;
@@ -129,7 +128,7 @@ export class UIScrollView {
   /**
    * Update scroll view options and bust cache
    */
-  async updateOptions(newOptions: Partial<ScrollOptions>): Promise<void> {
+  async updateOptions(newOptions: Partial<ScrollOptions_t>): Promise<void> {
     const dx = this.dx.sub('updateOptions');
 
     try {
@@ -142,14 +141,10 @@ export class UIScrollView {
 
       // Notify webview to clear all rendered pages and update page total
       if (this.panelId) {
+        const pageTotal = await this.pageRender.getPageTotal();
         this.app.vscodeapis.postMessage(this.panelId, {
           type: 'clearAllPages',
-        });
-
-        // Trigger a full PDF reload
-        this.app.vscodeapis.postMessage(this.panelId, {
-          type: 'updatePdf',
-          pdfDataUrl: '', // Empty to trigger reload
+          pageTotal: pageTotal,
         });
       }
 
@@ -257,13 +252,12 @@ export class UIScrollView {
 
       // Create template dictionary
       const templateDict = {
-        PAGE_TOTAL: pageTotal.toString(),
-        CANVAS_BUFFERS_SIZE: this.CONFIG.CANVAS_BUFFERS_SIZE.toString(),
-        SCROLL_DEBOUNCE_MS: this.CONFIG.SCROLL_DEBOUNCE_MS.toString(),
-        PAGE_WIDTH_PX: pageSizePx.widthPx.toString(),
-        PAGE_HEIGHT_PX: pageSizePx.heightPx.toString(),
-        TOOLBAR: await this.generateToolbarHTML(),
-        PDFJS_LIBRARY: pdfJsContent || '',
+        pageTotal: pageTotal.toString(),
+        canvasBuffersSize: this.kConfig.canvasBuffersSize.toString(),
+        pageWidthPx: pageSizePx.widthPx.toString(),
+        pageHeightPx: pageSizePx.heightPx.toString(),
+        toolbar: await this.generateToolbarHTML(),
+        pdfjsLibrary: pdfJsContent || '',
       };
 
       // Replace placeholders in templates
@@ -272,10 +266,10 @@ export class UIScrollView {
 
       // Use the scroll_html template instead of hardcoded HTML
       return this.app.templateDictReplace(templates.scroll_html, {
-        TITLE: this.options.title || 'Scrollable Document',
-        BASE_CSS: templates.base_css,
-        SCROLL_CSS: css,
-        SCROLL_JS: js,
+        title: this.options.title || 'Scrollable Document',
+        baseCss: templates.base_css,
+        scrollCss: css,
+        scrollJs: js,
         ...templateDict, // Include all template variables
       });
     } finally {
@@ -302,11 +296,11 @@ export class UIScrollView {
 
       // Generate full toolbar HTML with CSS and JS
       return this.app.templateDictReplace(templates.toolbar_html, {
-        TOOLBAR_CSS: templates.toolbar_css + '\n' + uiMenuCss, // Include UIMenu CSS
-        CSS: templates.base_css, // Use base_css from templates
-        HTML: menuHtml, // This matches {{HTML}} in toolbar_html
-        TOOLBAR_JS: templates.toolbar_js + '\n' + uiMenuJs, // Include UIMenu JS
-        JS: '', // No additional JS needed for scrollable viewer
+        toolbarCss: templates.toolbar_css + '\n' + uiMenuCss, // Include UIMenu CSS
+        css: templates.base_css, // Use base_css from templates
+        html: menuHtml, // This matches {{html}} in toolbar_html
+        toolbarJs: templates.toolbar_js + '\n' + uiMenuJs, // Include UIMenu JS
+        js: '', // No additional JS needed for scrollable viewer
       });
     } finally {
       dx.done();

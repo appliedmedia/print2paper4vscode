@@ -265,7 +265,7 @@ export class PaperPrinter {
       );
 
       dx.out(
-        `PDF generation complete: ${this.pdfDoc.getNumberOfPages()} pages using unified approach`
+        `PDF generation complete: ${this.pdfDoc.getPageTotal()} pages using unified approach`
       );
     } catch (error) {
       dx.out(`Error in generatePdf: ${error}`);
@@ -671,7 +671,7 @@ export class PaperPrinter {
   }
 
   private async handleSelection_MarginId(selectedId: string): Promise<HandleSelection_t> {
-    const dx = this.dx.sub('handleSelection_Margin');
+    const dx = this.dx.sub('handleSelection_MarginId');
     const defaultMarginId: MarginId_t = 'normal';
 
     let id = '';
