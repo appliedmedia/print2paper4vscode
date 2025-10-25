@@ -23,20 +23,29 @@ import { OS } from './OS';
  * sub.done();
  */
 export class Diagnostics {
-  static separator = ' > ';
+  private static _shared = {
+    separator: ' > ',
+    debugOn: false,
+    lastMessageContent: '',
+    lastMessagePrefix: '',
+    lastPartialMessage: '',
+    lastWasTruncated: false,
+    messageCounter: 0,
+    duplicateCount: 0
+  };
 
-  private static _debugOn = false; // Root level debug state
-  private static _lastMessageContent = ''; // Store last message content for truncation
-  private static _lastMessagePrefix = '';  // Store last prefix for robust truncation
-  private static _messageCounter = 0; // Global message counter
+  private get shared() {
+    return Diagnostics._shared;
+  }
 
   private _name: string = '';
   private name_lineage: string = '';
   private _displayName: string = '';
+  private app: any = null; // Store app reference on root instance only
 
   get name(): string {
     return (this._displayName ||= this.name_lineage
-      ? `${this.name_lineage}${Diagnostics.separator}${this._name}`
+      ? `${this.name_lineage}${this.shared.separator}${this._name}`
       : this._name);
   }
 
@@ -49,10 +58,11 @@ export class Diagnostics {
   private startTime: number | null = null;
   private _debugOn: boolean | undefined;
 
-  constructor(name: string, debugOn?: boolean, parent?: Diagnostics | null) {
+  constructor(name: string, debugOn?: boolean, parent?: Diagnostics | null, app?: any) {
     this._name = name;
     this.parent = parent || null;
     this.startTime = OS.performance.now();
+    this.app = app;
 
     // Build name lineage by crawling up parent tree
     this.name_lineage = this.buildNameLineage();
@@ -70,7 +80,7 @@ export class Diagnostics {
    * @returns New Diagnostics instance for the method
    */
   sub(name: string, debugOn?: boolean): Diagnostics {
-    const dx = new Diagnostics(name, debugOn, this);
+    const dx = new Diagnostics(name, debugOn, this, this.app);
     return dx;
   }
 
@@ -81,18 +91,12 @@ export class Diagnostics {
    * @returns New independent Diagnostics instance
    */
   create(name: string, debugOn?: boolean): Diagnostics {
-    const dx = new Diagnostics(name, debugOn, null);
+    const dx = new Diagnostics(name, debugOn, null, this.app);
     return dx;
   }
 
-  /**
-   * Reset static state for testing purposes
-   */
-  static reset(): void {
-    Diagnostics._lastMessageContent = '';
-    Diagnostics._lastMessagePrefix = '';
-    Diagnostics._messageCounter = 0;
-  }
+
+
 
   /**
    * Validate that required arguments are present in the args object
@@ -124,7 +128,9 @@ export class Diagnostics {
   out(message: MessageRef): this {
     if (this._debugOn) {
       const formattedMessage = this.messageHeader(message);
-      UI.out(formattedMessage);
+      if (formattedMessage) {
+        UI.out(formattedMessage);
+      }
     }
     return this;
   }
@@ -137,24 +143,18 @@ export class Diagnostics {
   done(message?: MessageRef): this {
     if (this._debugOn && this.startTime !== null) {
       const duration = OS.performance.now() - this.startTime;
-      let timeDisplay: string;
+      const timeUnits = [
+        { ms: 86400000, suffix: 'd' },
+        { ms: 3600000, suffix: 'h' },
+        { ms: 60000, suffix: 'm' },
+        { ms: 1000, suffix: 's' },
+        { ms: 1, suffix: 'ms' },
+      ];
 
-      if (duration >= 86400000) {
-        // 24 hours or more
-        timeDisplay = (duration / 86400000).toFixed(2) + 'd';
-      } else if (duration >= 3600000) {
-        // 1 hour or more
-        timeDisplay = (duration / 3600000).toFixed(2) + 'h';
-      } else if (duration >= 60000) {
-        // 1 minute or more
-        timeDisplay = (duration / 60000).toFixed(2) + 'm';
-      } else if (duration >= 1000) {
-        // 1 second or more
-        timeDisplay = (duration / 1000).toFixed(2) + 's';
-      } else {
-        // Less than 1 second - show milliseconds with 2 decimal places
-        timeDisplay = duration.toFixed(2) + 'ms';
-      }
+      let i = 0;
+      for (; i < timeUnits.length - 1 && duration < timeUnits[i].ms; i++);
+      const unit = timeUnits[i];
+      const timeDisplay = (duration / unit.ms).toFixed(2) + unit.suffix;
 
       const completionMsg = message ? ` - ${message}` : '';
       this.out(`🏁 Done in ${timeDisplay}${completionMsg}`);
@@ -170,20 +170,55 @@ export class Diagnostics {
    */
   print(message: MessageRef): this {
     const formattedMessage = this.messageHeader(message);
-    UI.out(formattedMessage);
+    if (formattedMessage) {
+      UI.out(formattedMessage);
+    }
     return this;
   }
 
   /**
+   * Increment and return formatted message counter
+   */
+  private messageHeader_incCounter(): string {
+    this.shared.messageCounter = (this.shared.messageCounter + 1) % 10000;
+    return String(this.shared.messageCounter).padStart(4, '0');
+  }
+
+  /**
+   * Return duplicate count indicator if needed (formatted to match previous message)
+   * @param timestamp - Optional timestamp for non-truncated format
+   */
+  private messageHeader_addForDupe(timestamp: string = ''): string {
+    let message = '';
+    if (this.shared.duplicateCount) {
+      const counter = this.messageHeader_incCounter();
+      const dupMsg = `↑ x${this.shared.duplicateCount + 1}`;
+
+      // Match format of duplicated message (truncated or full)
+      if (this.shared.lastWasTruncated) {
+        // Truncated format: just counter and dup indicator
+        message = `${counter} | ${dupMsg}\n`;
+      } else {
+        // Full format: counter | timestamp | prefix | dup indicator
+        const prefix = this.shared.lastMessagePrefix;
+        message = timestamp
+          ? `${counter} | ${timestamp}${prefix}${dupMsg}\n`
+          : `${counter} | ${prefix}${dupMsg}\n`;
+      }
+
+      this.shared.duplicateCount = 0; // Reset duplicate count
+    }
+    return message;
+  }
+
+  /**
    * Format a message with timestamp, class name, and method name
+   * Handles both truncation (same prefix) and deduplication (exact duplicate)
    * @param message - The message to format
-   * @returns Formatted message string
+   * @returns Formatted message string, or empty string if duplicate (caller should skip output)
    */
   private messageHeader(message: MessageRef): string {
-    // Increment and wrap the global counter
-    Diagnostics._messageCounter = (Diagnostics._messageCounter + 1) % 10000;
-    const counter = String(Diagnostics._messageCounter).padStart(4, '0');
-
+    let result = '';
     const now = new Date();
     const year = now.getFullYear();
     const month = String(now.getMonth() + 1).padStart(2, '0');
@@ -200,22 +235,43 @@ export class Diagnostics {
     // Show full context: lineage > current name > message
     const formattedMessage =
       typeof message === 'string' ? message : JSON.stringify(message, null, 2);
-    const sep = Diagnostics.separator;
+    const sep = this.shared.separator;
     const prefix = `${this.name}${sep}`;
     const messageContent = `${prefix}${formattedMessage}`;
 
-    // Default to full message with timestamp
-    let result = `${counter} | ${timestamp} | ${messageContent}`;
+    let partialMessage = formattedMessage;
+
+    let wasTruncated = false;
 
     // Truncate only when prefixes match exactly
-    if (Diagnostics._lastMessageContent && Diagnostics._lastMessagePrefix === prefix) {
-      const currentMessage = messageContent.slice(prefix.length).trim();
-      result = `${counter} | ${currentMessage}`;
+    if (this.shared.lastMessageContent && this.shared.lastMessagePrefix === prefix) {
+      wasTruncated = true;
+      partialMessage = messageContent.slice(prefix.length).trim();
+
+      // Check for duplicate (same prefix AND same partial message)
+      if (partialMessage === this.shared.lastPartialMessage) {
+        this.shared.duplicateCount++;
+      } else {
+        // Different partial message - output dup count matching previous message format
+        result += this.messageHeader_addForDupe(`${timestamp} | `);
+        const counter = this.messageHeader_incCounter();
+        result += `${counter} | ${partialMessage}`;
+      }
+    } else {
+      // Different prefix - output dup count matching previous message format
+      result += this.messageHeader_addForDupe(`${timestamp} | `);
+      const counter = this.messageHeader_incCounter();
+      result += `${counter} | ${timestamp} | ${messageContent}`;
     }
 
-    // Store this message content and prefix as the last message
-    Diagnostics._lastMessageContent = messageContent;
-    Diagnostics._lastMessagePrefix = prefix;
+    // Store state for next message (only if not duplicate)
+    if (!this.shared.duplicateCount) {
+      this.shared.lastMessageContent = messageContent;
+      this.shared.lastMessagePrefix = prefix;
+      this.shared.lastPartialMessage = partialMessage;
+      this.shared.lastWasTruncated = wasTruncated;
+    }
+
     return result;
   }
 
@@ -246,9 +302,9 @@ export class Diagnostics {
    */
   static debugOn(enabled?: boolean): boolean {
     if (enabled !== undefined) {
-      Diagnostics._debugOn = enabled;
+      Diagnostics._shared.debugOn = enabled;
     }
-    return Diagnostics._debugOn;
+    return Diagnostics._shared.debugOn;
   }
 
   /**
@@ -289,7 +345,7 @@ export class Diagnostics {
    */
   private buildNameLineage(): string {
     const lineage = this.crawlUp<string>('_name');
-    return lineage.join(Diagnostics.separator);
+    return lineage.join(this.shared.separator);
   }
 
   /**
@@ -298,7 +354,7 @@ export class Diagnostics {
    */
   private buildDebugOnLineage(): boolean {
     const debugStates = this.crawlUp<boolean>('_debugOn');
-    return debugStates.length > 0 ? debugStates[debugStates.length - 1] : Diagnostics.debugOn();
+    return debugStates.length > 0 ? debugStates[debugStates.length - 1] : this.shared.debugOn;
   }
 }
 

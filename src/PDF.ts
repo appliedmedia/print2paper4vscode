@@ -40,7 +40,6 @@ export class PDF implements PageRender {
   private coords: Coords;
 
   // PageRender implementation state
-  public pageTotal: number = 0;
 
   // Line-by-line rendering state - jsPDF now managed through docInfo.pdfDoc
   private currentX: number = 0;
@@ -71,8 +70,14 @@ export class PDF implements PageRender {
 
   init(): void {
     this.tempPdfs = [];
-    this.pageTotal = 0;
     this.coords.init();
+  }
+
+  /**
+   * Get the total number of pages in the document (async for PageRender interface)
+   */
+  async getPageTotal(): Promise<number> {
+    return this.docInfo.getPageTotal();
   }
 
   /**
@@ -93,11 +98,6 @@ export class PDF implements PageRender {
       this.currentY = 0;
       this.currentLineHeight = 0;
       this.currentRenderOptions = null;
-
-      // Reset page total
-      this.pageTotal = 0;
-
-      dx.out('All PDF caches invalidated and state reset');
     } finally {
       dx.done();
     }
@@ -522,14 +522,6 @@ export class PDF implements PageRender {
     }
   }
 
-  async getPageTotal(): Promise<number> {
-    const dx = this.dx.sub('getPageTotal');
-    const total = this.pageTotal;
-    dx.out(`WEBVIEW: Requesting page total = ${total}`);
-    dx.done();
-    return total;
-  }
-
   async getPageSizePx(): Promise<{ widthPx: number; heightPx: number }> {
     const dx = this.dx.sub('getPageSizePx');
 
@@ -743,7 +735,6 @@ export class PDF implements PageRender {
 
       // jsPDF: Y increases downward, so we check if we've gone too far down
       if (this.currentY > pageHeightPtsForBreak - marginsPtsForBreak.bottomMarginPts) {
-        // Need a new page
         dx.out(
           `Page break at line ${lineNumber}: currentY=${this.currentY} > bottomMargin=${pageHeightPtsForBreak - marginsPtsForBreak.bottomMarginPts}`
         );
@@ -751,7 +742,6 @@ export class PDF implements PageRender {
         this.currentY = marginsPtsForBreak.topMarginPts + this.currentLineHeight;
         this.currentX = marginsPtsForBreak.leftMarginPts;
 
-        // Page break added
         dx.out(`Added page break at line ${lineNumber + 1}`);
 
         // Add header and footer to new page
@@ -784,7 +774,6 @@ export class PDF implements PageRender {
     const pageInfo = this.docInfo.pdfDoc.getCurrentPageInfo();
     const currentPage = pageInfo.pageNumber;
     // Use pageTotal if available (set after complete generation), otherwise use current count
-    // const totalPages = this.pageTotal || this.docInfo.pdfDoc.getNumberOfPages();
 
     // Get page dimensions and margins
     const pageSize = this.getPageDimensions(
@@ -878,7 +867,7 @@ export class PDF implements PageRender {
 
     // Add page total right after "Page N of " text
     const footerY = heightPts - margins.bottomMarginPts + 5;
-    const pageTotalText = `${this.pageTotal}`;
+    const pageTotalText = `${this.docInfo.getPageTotal()}`;
 
     // Position it right after the "Page N of " text
     const footerText = `Page ${currentPage} of `;
@@ -904,14 +893,11 @@ export class PDF implements PageRender {
         throw new Error('No PDF document to finish');
       }
 
-      // Set page total from the generated PDF
-      this.pageTotal = this.docInfo.pdfDoc.getNumberOfPages();
-
       // Add page totals to all pages now that we know the total
       this.renderPageTotals();
 
       dx.out(
-        `PDF FINALIZED: ${this.pageTotal} pages with ${this.currentRenderOptions?.fontSizePx}px font`
+        `PDF FINALIZED: ${this.docInfo.getPageTotal()} pages with ${this.currentRenderOptions?.fontSizePx}px font`
       );
       return this.docInfo;
     } catch (error) {

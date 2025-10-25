@@ -2,7 +2,7 @@ import type { App } from './App';
 import type { PageRender } from './types/PageRender_t';
 import type { WebviewPanelId_t } from './VSCodeAPIs';
 import type { PostMessage } from './types/UI_t';
-import { UIScrollView, type ScrollOptions } from './UIScrollView';
+import { UIScrollView, type ScrollOptions_t } from './UIScrollView';
 import { UIMenuMgr } from './UIMenuMgr';
 import { isMenuId, isMenuItemId } from './UIMenu';
 import { Diagnostics } from './Diagnostics';
@@ -32,7 +32,7 @@ export class UIWebView {
   /**
    * Create webview panel with menus and scroll view
    */
-  async createPanel(pageRender: PageRender, options: ScrollOptions): Promise<WebviewPanelId_t> {
+  async createPanel(pageRender: PageRender, options: ScrollOptions_t): Promise<WebviewPanelId_t> {
     const dx = this.dx.sub('createPanel');
     dx.require({ pageRender, options }, ['pageRender', 'options']);
 
@@ -75,26 +75,6 @@ export class UIWebView {
     }
   }
 
-  /**
-   * Pre-render initial pages for faster display
-   */
-  private async preRenderInitialPages(
-    pageRender: PageRender,
-    options: ScrollOptions
-  ): Promise<void> {
-    const dx = this.dx.sub('preRenderInitialPages');
-
-    try {
-      // Pre-render is no longer needed with unified approach
-      // The complete PDF is generated during tokenization
-      dx.out(`Pre-render not needed with unified approach`);
-      return;
-    } catch (error) {
-      dx.out(`Pre-render failed: ${String(error)}`);
-    } finally {
-      dx.done();
-    }
-  }
 
   /**
    * Create and configure menu manager (for external use)
@@ -114,7 +94,10 @@ export class UIWebView {
   /**
    * Create scroll view with PageRender content (for external use)
    */
-  async createScrollView(pageRender: PageRender, options: ScrollOptions): Promise<WebviewPanelId_t> {
+  async createScrollView(
+    pageRender: PageRender,
+    options: ScrollOptions_t
+  ): Promise<WebviewPanelId_t> {
     const dx = this.dx.sub('createScrollView');
     dx.require({ pageRender, options }, ['pageRender', 'options']);
 
@@ -173,7 +156,7 @@ export class UIWebView {
   /**
    * Update scroll view options (theme, font, page size, etc.)
    */
-  async updateOptions(options: ScrollOptions): Promise<void> {
+  async updateOptions(options: ScrollOptions_t): Promise<void> {
     const dx = this.dx.sub('updateOptions');
 
     try {
@@ -282,8 +265,7 @@ export class UIWebView {
    * Handle menu item selection message
    */
   private async handleMenuItemSelected(msg: PostMessage): Promise<void> {
-    const dx = this.dx.sub('handleMenuItemSelected', true /* debugOn */);
-    dx.out(`Received menuItemSelected message: ${JSON.stringify(msg)}`);
+    const dx = this.dx.sub('handleMenuItemSelected');
 
     try {
       const { menuId, itemId } = msg;
@@ -384,6 +366,7 @@ export class UIWebView {
       if (this.panelId) {
         this.app.vscodeapis.postMessage(this.panelId, {
           type: 'pageRenderError',
+          pageNumber: msg.pageNumber || 0, // ADD THIS LINE
           error: {
             message: String(error),
             pageNumber: msg.pageNumber || 0,

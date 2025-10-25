@@ -146,11 +146,7 @@ pdf_js: |
     
     // Load the data URL directly
     const loadingTask = pdfjsLib.getDocument({
-      url: pdfDataUrl,
-      disableAutoFetch: true,
-      disableStream: true,
-      disableRange: true,
-      disableFontFace: false
+      url: pdfDataUrl
     });
     
     loadingTask.promise.then(onDocumentLoadSuccess, onDocumentLoadError);

@@ -96,10 +96,18 @@ export class DocInfo_PDF {
 
   // PDF interface methods - expose jsPDF functionality through docInfo
   /**
-   * Get the number of pages in the document
+   * Get the total number of pages in the document
+   */
+  getPageTotal(): number {
+    return this.pdfDoc ? this.pdfDoc.getNumberOfPages() : 0;
+  }
+
+  /**
+   * Get the number of pages in the document (alias for getPageTotal)
+   * @deprecated Use getPageTotal() for consistency
    */
   getNumberOfPages(): number {
-    return this.pdfDoc ? this.pdfDoc.getNumberOfPages() : 0;
+    return this.getPageTotal();
   }
 
   /**
