@@ -961,7 +961,7 @@ scroll_js: |
         case 'updatePdf': {
           // Validate that pdfDataUrl is provided
           if (!message.pdfDataUrl) {
-            dx('updatePdf requires pdfDataUrl - use clearAllPages for clearing/reloading');
+            console.error('updatePdf requires pdfDataUrl - use clearAllPages for clearing/reloading');
             break;
           }
           
