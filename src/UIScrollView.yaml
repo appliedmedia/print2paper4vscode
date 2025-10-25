@@ -959,6 +959,12 @@ scroll_js: |
           break;
         }
         case 'updatePdf': {
+          // Validate that pdfDataUrl is provided
+          if (!message.pdfDataUrl) {
+            dx('updatePdf requires pdfDataUrl - use clearAllPages for clearing/reloading');
+            break;
+          }
+          
           try {
             let newDoc = null;
             
