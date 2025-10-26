@@ -35,10 +35,12 @@ This document outlines a step-by-step plan to simplify the current complex page 
 ## Migration Checklist
 
 ### PageRender Interface Dependencies
-- [ ] **UIScrollView.ts**: `renderContent()` calls (line 189)
-- [ ] **UIWebView.ts**: PageRender interface usage (lines 180-185)
-- [ ] **PaperPrinter.ts**: PageRender interface usage (lines 180-185)
-- [ ] **PDF.ts**: `renderContent()` method implementation (line 459)
+- [ ] **UIScrollView.ts**: `renderContent()` calls (line 189) - `this.pageRender.renderContent()`
+- [ ] **UIWebView.ts**: PageRender interface usage (lines 35, 100, 141, 146, 238, 338, 354) - `createPanel(pageRender)`, `createScrollView(pageRender)`, `updatePageRender(pageRender)`, `handlePageRenderRequest()`
+- [ ] **PaperPrinter.ts**: PageRender interface usage (lines 180-185, 488-495) - `pageRender` object creation and `updatePageRender(pageRender)`
+- [ ] **PDF.ts**: `renderContent()` method implementation (line 459) - `async renderContent()` method
+- [ ] **types/PageRender_t.ts**: PageRender interface definition (line 58) - `export interface PageRender`
+- [ ] **types/UI_t.ts**: PageRender type imports and usage (lines 1, 40) - `import type { PageRender }`, `pageRender?: PageRender`
 
 ### Migration Order (Critical)
 1. **First**: Create new UIPDFScrollView with PDF.js streaming
@@ -57,7 +59,32 @@ This document outlines a step-by-step plan to simplify the current complex page 
 
 ### Phase 1: Foundation Changes
 
-#### Step 1: Create New PDF.js Full Document Handler
+#### Step 1: Add PDF Data Properties to PDF.ts (Keep renderContent() as Shim)
+- **File**: `src/PDF.ts`
+- **Changes**:
+  - Keep existing `renderByLine()` as single rendering method
+  - Add `pdfDataUrl` property that returns complete PDF as data URL
+  - Add `pageTotal` property for total pages
+  - Add `pageSizePx` property for page dimensions in CSS pixels
+  - **KEEP** `renderContent()` method as shim for existing callers
+  - **KEEP** PageRender interface implementation
+
+**Shim Implementation**:
+```typescript
+// Keep existing renderContent() method working during migration
+async renderContent(
+  pageNumber: number,
+  lineBegin: number,
+  lineEnd: number,
+  options: RenderOptions
+): Promise<PageData> {
+  // This method continues to work for existing callers
+  // It will be removed only after all callers are migrated
+  // Implementation remains unchanged during migration
+}
+```
+
+#### Step 2: Create New PDF.js Full Document Handler
 - **File**: `src/UIPDFScrollView.ts` (new file)
 - **Purpose**: Simplified webview that accepts full PDF and lets PDF.js handle everything
 - **Key Features**:
@@ -66,26 +93,7 @@ This document outlines a step-by-step plan to simplify the current complex page 
   - Minimal state management
   - Simple scroll handling
 
-#### Step 2: Consolidate PDF.ts Rendering Methods
-- **File**: `src/PDF.ts`
-- **Changes**:
-  - Keep existing `renderByLine()` as single rendering method
-  - Add `pdfDataUrl` property that returns complete PDF as data URL
-  - Add `pageTotal` property for total pages
-  - Add `pageSizePx` property for page dimensions in CSS pixels
-  - **DO NOT REMOVE** `renderContent()` yet - wait for migration checklist
-
-#### Step 3: Create Migration Checklist
-- **File**: `src/types/PageRender_t.ts`
-- **Changes**:
-  - **DO NOT REMOVE** PageRender interface yet
-  - Create migration checklist for all PageRender usages
-  - Track all callers of `renderContent()` method
-  - Document replacement steps before removal
-
-### Phase 2: Webview Implementation
-
-#### Step 4: Create Full Document YAML Templates
+#### Step 3: Create Full Document YAML Templates
 - **File**: `src/UIPDFScrollView.yaml` (new file)
 - **Purpose**: Simplified HTML/CSS/JS templates for full PDF display
 - **Key Features**:
@@ -94,18 +102,9 @@ This document outlines a step-by-step plan to simplify the current complex page 
   - Minimal custom JavaScript
   - Clean, simple UI
 
-#### Step 5: Implement Full Document Scroll View
-- **File**: `src/UIPDFScrollView.ts`
-- **Key Properties**:
-  - `pdfDataUrl: string` - Direct PDF data URL
-  - `pageTotal: number` - Total pages from PDF.js
-  - `pageSizePx: {widthPx: number, heightPx: number}` - Page dimensions in CSS pixels (for webview)
-- **Key Methods**:
-  - `generateContent()`: Create HTML with full PDF
-  - `updatePdf()`: Replace PDF document
-  - No canvas pooling, no page caching, no complex state
+### Phase 2: Migration (Critical Order)
 
-#### Step 6: Update UIWebView to Use New System (After UIPDFScrollView is Ready)
+#### Step 4: Update UIWebView to Use New System (After UIPDFScrollView is Ready)
 - **File**: `src/UIWebView.ts`
 - **Changes**:
   - Replace `UIScrollView` with `UIPDFScrollView`
@@ -114,9 +113,7 @@ This document outlines a step-by-step plan to simplify the current complex page 
   - Remove complex page render request handling
   - **CRITICAL**: Only do this after UIPDFScrollView is fully working
 
-### Phase 3: Integration and Testing
-
-#### Step 7: Update PaperPrinter to Use New System (After UIWebView is Updated)
+#### Step 5: Update PaperPrinter to Use New System (After UIWebView is Updated)
 - **File**: `src/PaperPrinter.ts`
 - **Changes**:
   - Update `openWebView()` to pass PDF data directly to UIPDFScrollView
@@ -124,17 +121,17 @@ This document outlines a step-by-step plan to simplify the current complex page 
   - Simplify PDF generation workflow
   - **CRITICAL**: Only do this after UIWebView is updated and working
 
-#### Step 8: Implement PDF Chunk Provider
-- **File**: `src/PDF.ts`
-- **Changes**:
-  - Add `pdfDataUrl` property that returns complete PDF as data URL
-  - Add `pageTotal` property for total pages
-  - Add `pageSizePx` property for page dimensions in CSS pixels (converted from PDF points)
-  - Implement custom `PDFDataRangeTransport` for chunk serving
-  - Add message handlers for chunk requests from webview
-  - Remove PageRender interface implementation
+### Phase 3: Implementation and Testing
 
-#### Step 9: Implement Chunk Request Handling
+#### Step 6: Implement Custom PDFDataRangeTransport
+- **File**: `src/UIPDFScrollView.ts`
+- **Changes**:
+  - Implement custom `PDFDataRangeTransport` that uses message-based chunking
+  - Handle chunk requests via webview messages
+  - Integrate with PDF.js streaming API
+  - Add error handling for out-of-memory conditions
+
+#### Step 7: Implement Chunk Request Handling
 - **File**: `src/UIWebView.ts`
 - **Changes**:
   - Add message handler for `requestPdfChunk` from webview
@@ -144,17 +141,7 @@ This document outlines a step-by-step plan to simplify the current complex page 
   - Remove complex page render request handling
   - Simplify message routing
 
-### Phase 4: Optimization and Cleanup
-
-#### Step 10: Implement Custom PDFDataRangeTransport
-- **File**: `src/UIPDFScrollView.ts`
-- **Changes**:
-  - Implement custom `PDFDataRangeTransport` that uses message-based chunking
-  - Handle chunk requests via webview messages
-  - Integrate with PDF.js streaming API
-  - Add error handling for out-of-memory conditions
-
-#### Step 11: Performance Testing
+#### Step 8: Performance Testing
 - **Test Cases**:
   - Small documents (1-10 pages) - verify streaming works
   - Large documents (50+ pages) - verify chunking efficiency
@@ -163,7 +150,21 @@ This document outlines a step-by-step plan to simplify the current complex page 
   - Font size changes - verify chunk regeneration
   - Scroll performance - verify on-demand loading
 
-#### Step 12: Remove Old System (After All Migration is Complete)
+### Phase 4: Pre-Removal Checklist (CRITICAL)
+
+#### Step 9: Verify All Callers Migrated
+**MUST COMPLETE BEFORE REMOVING ANY APIs**
+
+- [ ] **UIScrollView.ts**: Verify no longer uses `renderContent()` or PageRender
+- [ ] **UIWebView.ts**: Verify no longer uses PageRender interface
+- [ ] **PaperPrinter.ts**: Verify no longer uses PageRender interface
+- [ ] **PDF.ts**: Verify `renderContent()` is no longer called by any caller
+- [ ] **Unit Tests**: All tests pass with new system
+- [ ] **Integration Tests**: All integration tests pass
+- [ ] **Manual Testing**: All features work with new system
+- [ ] **Regression Testing**: No functionality lost
+
+#### Step 10: Remove Old System (After All Migration is Complete)
 - **Files to Remove/Simplify**:
   - `src/UIScrollView.ts` (replace with UIPDFScrollView)
   - `src/UIScrollView.yaml` (replace with UIPDFScrollView.yaml)
