@@ -38,6 +38,18 @@ export class Diagnostics {
     return Diagnostics._shared;
   }
 
+  /**
+   * Reset static state for testing purposes
+   */
+  static reset(): void {
+    Diagnostics._shared.lastMessageContent = '';
+    Diagnostics._shared.lastMessagePrefix = '';
+    Diagnostics._shared.lastPartialMessage = '';
+    Diagnostics._shared.lastWasTruncated = false;
+    Diagnostics._shared.messageCounter = 0;
+    Diagnostics._shared.duplicateCount = 0;
+  }
+
   private _name: string = '';
   private name_lineage: string = '';
   private _displayName: string = '';
@@ -68,7 +80,9 @@ export class Diagnostics {
     this.name_lineage = this.buildNameLineage();
 
     // Set debug state before calling out()
-    this.debugOn(debugOn);
+    if (debugOn !== undefined) {
+      this._debugOn = debugOn;
+    }
 
     this.out(`🚀 Start`);
   }
@@ -126,7 +140,7 @@ export class Diagnostics {
    * @returns this for method chaining
    */
   out(message: MessageRef): this {
-    if (this._debugOn) {
+    if (this._debugOn !== undefined ? this._debugOn : this.shared.debugOn) {
       const formattedMessage = this.messageHeader(message);
       if (formattedMessage) {
         UI.out(formattedMessage);
@@ -141,7 +155,7 @@ export class Diagnostics {
    * @returns this for method chaining
    */
   done(message?: MessageRef): this {
-    if (this._debugOn && this.startTime !== null) {
+    if ((this._debugOn !== undefined ? this._debugOn : this.shared.debugOn) && this.startTime !== null) {
       const duration = OS.performance.now() - this.startTime;
       const timeUnits = [
         { ms: 86400000, suffix: 'd' },

@@ -33,7 +33,8 @@ export class UIWebView {
    * Create webview panel with menus and scroll view
    */
   async createPanel(pageRender: PageRender, options: ScrollOptions_t): Promise<WebviewPanelId_t> {
-    const dx = this.dx.sub('createPanel');
+    const dx = this.dx.sub('createPanel', true);
+    dx.out(`🚀 DEBUG: UIWebView.createPanel starting`);
     dx.require({ pageRender, options }, ['pageRender', 'options']);
 
     try {
@@ -48,7 +49,9 @@ export class UIWebView {
       this.currentViewer = new UIScrollView(this.app, pageRender, options);
 
       // Generate HTML content from scroll view
+      dx.out(`🚀 DEBUG: About to call generateContent`);
       const html = await this.currentViewer.generateContent();
+      dx.out(`🚀 DEBUG: generateContent completed, HTML length: ${html.length}`);
 
       // Create or reuse webview panel
       const panelId = await this.app.vscodeapis.getOrCreateWebviewPanel(

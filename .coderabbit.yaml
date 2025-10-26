@@ -1,0 +1,45 @@
+# CodeRabbit configuration for Print2Paper4VSCode
+repository:
+  # The repository URL (CodeRabbit should auto-detect this, but we can specify it)
+  url: "https://github.com/appliedmedia/print2paper4vscode"
+
+# Project-specific settings
+project:
+  # This is a VS Code extension project
+  type: "vscode-extension"
+  
+  # Main language
+  language: "typescript"
+  
+  # Key directories
+  source_directories:
+    - "src/"
+    - "tests/"
+  
+  # Configuration files
+  config_files:
+    - "package.json"
+    - "tsconfig.json"
+    - "eslint.config.mjs"
+
+# CodeRabbit behavior settings
+code_review:
+  # Enable/disable specific features
+  enable_suggestions: true
+  enable_explanations: true
+  
+  # Focus on TypeScript/JavaScript files
+  file_patterns:
+    - "**/*.ts"
+    - "**/*.js"
+    - "**/*.json"
+    - "**/*.yaml"
+    - "**/*.yml"
+
+# Ignore certain files/directories
+ignore:
+  - "node_modules/"
+  - "out/"
+  - "build/"
+  - "*.log"
+  - ".git/"

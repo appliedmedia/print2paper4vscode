@@ -2,16 +2,16 @@ pdf_html: |
   <!DOCTYPE html>
   <html>
   <head>
-    <title>{{TITLE}}</title>
+    <title>{{title}}</title>
     <style>
-      {{PDF_CSS}}
+      {{pdfCss}}
     </style>
     <script>
-      {{PDFJS_LIBRARY}}
+      {{pdfjsLibrary}}
     </script>
   </head>
   <body>
-    {{TOOLBAR}}
+    {{toolbar}}
     <div class="pdf-container">
       <div id="loading" style="display: block; text-align: center; padding: 50px;">
         Loading PDF...
@@ -22,16 +22,16 @@ pdf_html: |
       <canvas id="pdf-canvas" style="display: none;"></canvas>
     </div>
     <script>
-      {{PDF_JS}}
+      {{pdfJs}}
       
       // Initialize PDF viewer with embedded data
-      initPdfViewer('{{PDF_DATA_URL}}');
+      initPdfViewer('{{pdfDataUrl}}');
     </script>
   </body>
   </html>
 
 pdf_css: |
-  {{BASE_CSS}}
+  {{baseCss}}
 
   .pdf-container {
     position: relative;

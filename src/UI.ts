@@ -128,12 +128,14 @@ export class UI {
 
       // Inject toolbar into HTML using template
       const toolbarHtml = this.app.templateDictReplace(templates.toolbar_html, {
-        TOOLBAR_CSS: templates.toolbar_css,
-        TOOLBAR_JS: templates.toolbar_js,
-        MENU_HTML: menuHtml,
+        toolbarCss: templates.toolbar_css,
+        baseCss: templates.base_css,
+        menuHtml: menuHtml,
+        toolbarJs: templates.toolbar_js,
+        additionalJs: '',
       });
 
-      const htmlWithToolbar = html.replace('{{TOOLBAR}}', toolbarHtml);
+      const htmlWithToolbar = html.replace('{{toolbar}}', toolbarHtml);
 
       dx.out('Toolbar added to HTML');
       return htmlWithToolbar;

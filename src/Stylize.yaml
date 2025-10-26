@@ -16,35 +16,35 @@ stylize_html: |
           margin: 0; 
         }
         code { 
-          font-size: {{FONTSIZE_PX}}px; 
+          font-size: {{fontSizePx}}px; 
           display: block; 
           margin: 0; 
           white-space: normal; 
         }
         pre.shiki code { 
-          line-height: {{LINEHEIGHT_PX}}px; 
+          line-height: {{lineHeightPx}}px; 
         }
         pre.shiki .line { 
           display: block; 
-          line-height: {{LINEHEIGHT_PX}}px; 
-          min-height: {{LINEHEIGHT_PX}}px; 
+          line-height: {{lineHeightPx}}px; 
+          min-height: {{lineHeightPx}}px; 
           margin: 0; 
           padding: 0; 
           white-space: pre; 
         }
       </style>
-      <title>{{VAR_TITLE}}</title>
+      <title>{{varTitle}}</title>
     </head>
     <body>
-      {{CODE}}
+      {{code}}
     </body>
   </html>
 
 stylize_token_pre: |
-  <pre style="font-size: {{FONTSIZE}}px; line-height: {{LINEHEIGHT}}px; margin: 0; white-space: pre;">{{LINES}}</pre>
+  <pre style="font-size: {{fontSize}}px; line-height: {{lineHeight}}px; margin: 0; white-space: pre;">{{lines}}</pre>
 
 stylize_token_line: |
-  <div class="line" style="line-height: {{LINEHEIGHT}}px; min-height: {{LINEHEIGHT}}px; margin: 0; padding: 0; white-space: pre;">{{TOKENS}}</div>
+  <div class="line" style="line-height: {{lineHeight}}px; min-height: {{lineHeight}}px; margin: 0; padding: 0; white-space: pre;">{{tokens}}</div>
 
 stylize_token_span: |
-  <span style="{{STYLE}}">{{TEXT}}</span>
+  <span style="{{style}}">{{text}}</span>

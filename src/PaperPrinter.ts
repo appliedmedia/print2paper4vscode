@@ -170,7 +170,8 @@ export class PaperPrinter {
    * Open webview (handles both single and multiple pages)
    */
   private async openWebView(tabName: string): Promise<void> {
-    const dx = this.dx.sub('openWebView');
+    const dx = this.dx.sub('openWebView', true);
+    dx.out(`🚀 DEBUG: Starting openWebView for ${tabName}`);
 
     try {
       // Generate PDF (styleToPdf already sets tokens internally)
@@ -206,7 +207,9 @@ export class PaperPrinter {
       this.uiwebview.init();
 
       // Create webview panel with page renderer and options
+      dx.out(`🚀 DEBUG: About to create webview panel`);
       await this.uiwebview.createPanel(pageRender, options);
+      dx.out(`🚀 DEBUG: Webview panel created successfully`);
 
       dx.out(`Opened webview for ${tabName}`);
     } catch (error) {
@@ -264,9 +267,7 @@ export class PaperPrinter {
         options
       );
 
-      dx.out(
-        `PDF generation complete: ${this.pdfDoc.getPageTotal()} pages using unified approach`
-      );
+      dx.out(`PDF generation complete: ${this.pdfDoc.getPageTotal()} pages using unified approach`);
     } catch (error) {
       dx.out(`Error in generatePdf: ${error}`);
       throw error;

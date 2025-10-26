@@ -121,10 +121,10 @@ ui_menu_css: |
   }
 
 ui_menu_html: |
-  <div class="p2p4vsc-menu {{MENU_CLASSES}}" id="{{MENU_ID}}">
-    <button class="p2p4vsc-menu-btn" title="{{DISPLAY_NAME}}">{{ICON}}</button>
-    <div class="p2p4vsc-menu-items" id="{{MENU_ID}}-items">
-      {{MENU_ITEMS}}
+  <div class="p2p4vsc-menu {{menuClasses}}" id="{{menuId}}">
+    <button class="p2p4vsc-menu-btn" title="{{displayName}}">{{icon}}</button>
+    <div class="p2p4vsc-menu-items" id="{{menuId}}-items">
+      {{menuItems}}
     </div>
   </div>
 
@@ -249,9 +249,9 @@ ui_menu_generic_handlers: |
   });
 
 ui_menu_item: |
-  <div class="p2p4vsc-menu-item {{ITEM_CLASSES}}" id="{{ITEM_ID}}"{{FLYOUT_MENU_ID_REF}}>
-    <div class="gutter-before">{{CONTENT_GUTTER_BEFORE}}</div>
-    <div class="menu-item-text">{{ITEM_DISPLAY_NAME}}</div>
-    <div class="gutter-after">{{CONTENT_GUTTER_AFTER}}</div>
-    {{FLYOUT}}
+  <div class="p2p4vsc-menu-item {{itemClasses}}" id="{{itemId}}"{{flyoutMenuIdRef}}>
+    <div class="gutter-before">{{contentGutterBefore}}</div>
+    <div class="menu-item-text">{{itemDisplayName}}</div>
+    <div class="gutter-after">{{contentGutterAfter}}</div>
+    {{flyout}}
   </div>
