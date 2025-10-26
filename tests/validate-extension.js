@@ -101,7 +101,7 @@ try {
     }
     
 } catch (error) {
-    console.log(`   ❌ Failed to read tsconfig.json: ${error.message}`);
+    console.log(`   ❌ Failed to read .config/tsconfig.json: ${error.message}`);
     allFilesExist = false;
 }
 

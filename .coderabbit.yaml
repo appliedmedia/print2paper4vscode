@@ -15,8 +15,8 @@ project:
     - "tests/"
   config_files:
     - "package.json"
-    - "tsconfig.json"
-    - "eslint.config.mjs"
+    - ".config/tsconfig.json"
+    - ".config/eslint.config.mjs"
 
 # CodeRabbit behavior settings
 code_review:
