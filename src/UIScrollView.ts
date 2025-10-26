@@ -73,7 +73,8 @@ export class UIScrollView {
    * Generate HTML content for the scroll view
    */
   async generateContent(): Promise<string> {
-    const dx = this.dx.sub('generateContent');
+    const dx = this.dx.sub('generateContent', true);
+    dx.out(`🚀 DEBUG: Starting generateContent`);
 
     try {
       // Get page total and dimensions
@@ -90,7 +91,9 @@ export class UIScrollView {
       const templatesWithBaseCss = { ...templates, base_css: baseCss };
 
       // Generate HTML with scroll view
+      dx.out(`🚀 DEBUG: About to generate scroll view HTML`);
       const html = await this.generateScrollViewHTML(templatesWithBaseCss, pageTotal, dimensions);
+      dx.out(`🚀 DEBUG: Generated HTML length: ${html.length} characters`);
 
       dx.out(`Generated scroll view content with ${pageTotal} pages`);
       return html;
@@ -297,10 +300,10 @@ export class UIScrollView {
       // Generate full toolbar HTML with CSS and JS
       return this.app.templateDictReplace(templates.toolbar_html, {
         toolbarCss: templates.toolbar_css + '\n' + uiMenuCss, // Include UIMenu CSS
-        css: templates.base_css, // Use base_css from templates
-        html: menuHtml, // This matches {{html}} in toolbar_html
+        baseCss: templates.base_css, // Use base_css from templates
+        menuHtml, // This matches {{menuHtml}} in toolbar_html
         toolbarJs: templates.toolbar_js + '\n' + uiMenuJs, // Include UIMenu JS
-        js: '', // No additional JS needed for scrollable viewer
+        additionalJs: '', // No additional JS needed for scrollable viewer
       });
     } finally {
       dx.done();

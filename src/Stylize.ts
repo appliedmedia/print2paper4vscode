@@ -1,8 +1,5 @@
 import type { App } from './App';
 import type { FileRead_t } from './OS';
-import type { PDFDoc } from './types/PDF_t';
-import type { PageSizeId_t, Orient_t, MarginId_t } from './types/PaperPrinter_t';
-import type { RenderOptions } from './types/PageRender_t';
 import {
   getSingletonHighlighter,
   bundledThemesInfo,
@@ -322,7 +319,7 @@ export class Stylize {
 
   // Helper: Generate HTML directly from tokens
   private generateHtmlFromTokens(
-    tokens: ThemedToken[][],
+    tokenLines: ThemedToken[][],
     fontSize: number,
     lineHeight: number
   ): string {
@@ -339,14 +336,14 @@ export class Stylize {
     }
 
     // Generate lines
-    const lines = tokens
+    const lines = tokenLines
       .map(line => {
         // Generate tokens for this line
-        const tokenSpans = line
+        const tokens = line
           .map(token => {
-            const text = token.content;
-            if (!text) return '';
+            if (!token.content) return '';
 
+            const text = this.escapeHtml(token.content);
             const color = token.color || '#000000';
             const fontStyle = token.fontStyle || 0;
 
@@ -357,27 +354,24 @@ export class Stylize {
             const style = styleParts.join('; ') + ';';
 
             return this.app.templateDictReplace(yaml.stylize_token_span, {
-              STYLE: style,
-              TEXT: this.escapeHtml(text),
+              style,
+              text,
             });
           })
           .join('');
 
         return this.app.templateDictReplace(yaml.stylize_token_line, {
-          LINEHEIGHT: lineHeight.toString(),
-          LINEHEIGHT_PX: lineHeight.toString(),
-          TOKENS: tokenSpans,
+          lineHeight: lineHeight.toString(),
+          tokens,
         });
       })
       .join('');
 
     // Generate final pre element
     return this.app.templateDictReplace(yaml.stylize_token_pre, {
-      FONTSIZE: fontSize.toString(),
-      FONTSIZE_PX: fontSize.toString(),
-      LINEHEIGHT: lineHeight.toString(),
-      LINEHEIGHT_PX: lineHeight.toString(),
-      LINES: lines,
+      fontSize: fontSize.toString(),
+      lineHeight: lineHeight.toString(),
+      lines,
     });
   }
 
@@ -402,7 +396,7 @@ export class Stylize {
   }
 
   // Helper: Escape HTML characters
-  private escapeHtml(text: string): string {
+  private escapeHtml(text: string = ''): string {
     return text
       .replace(/&/g, '&amp;')
       .replace(/</g, '&lt;')

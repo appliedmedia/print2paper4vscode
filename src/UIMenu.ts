@@ -238,13 +238,13 @@ export class UIMenu {
     const processedDisplayName = item.displayName;
 
     const replacementDict = {
-      ITEM_ID: itemId,
-      ITEM_DISPLAY_NAME: processedDisplayName,
-      ITEM_CLASSES: itemClasses,
-      CONTENT_GUTTER_BEFORE: '', // Content handled by CSS
-      CONTENT_GUTTER_AFTER: '', // Content handled by CSS
-      FLYOUT: flyout,
-      FLYOUT_MENU_ID_REF: flyoutMenuIdRef,
+      itemId,
+      itemDisplayName: processedDisplayName,
+      itemClasses,
+      contentGutterBefore: '', // Content handled by CSS
+      contentGutterAfter: '', // Content handled by CSS
+      flyout,
+      flyoutMenuIdRef,
     };
 
     dx.done();
@@ -260,7 +260,7 @@ export class UIMenu {
     this.dx.out(`YAML loaded, ui_menu_html length: ${yaml.ui_menu_html.length}`);
 
     // Generate menu items HTML using the new getItemHTML function
-    const menuItems = this.getMenuItems();
+    const menuItemsList = this.getMenuItems();
     const defaultItemId = await this.getDefaultItemId(); // Get default item for 📝 icon
     const selectedItemId = await this.getSelectedItemId(); // Get selected item for ✓ highlighting
     const hasDefaultItem = !!defaultItemId;
@@ -273,11 +273,11 @@ export class UIMenu {
     const hasGutterBefore = hasDefaultItem; // Only if there's a default item
     const hasGutterAfter = hasFlyout || hasDefaultItem; // Menus with flyout items OR default items get gutter-after
     const processedMenuItemsHtml = await Promise.all(
-      menuItems.map(item =>
+      menuItemsList.map(item =>
         this.getItemHTML(item, flyoutCache[item.id] || '', defaultItemId, selectedItemId)
       )
     );
-    const menuItemsHtml = processedMenuItemsHtml.join('\n');
+    const menuItems = processedMenuItemsHtml.join('\n');
 
     // Build CSS classes for menu container - only what we need
     const menuClasses = [
@@ -291,12 +291,11 @@ export class UIMenu {
     const template = yaml.ui_menu_html;
 
     const replacementDict = {
-      MENU_ID: this.getId_Menu(),
-      BUTTON_ID: this.getId_Button(),
-      DISPLAY_NAME: this.displayName,
-      ICON: this.icon,
-      MENU_ITEMS: menuItemsHtml,
-      MENU_CLASSES: menuClasses,
+      menuId: this.getId_Menu(),
+      displayName: this.displayName,
+      icon: this.icon,
+      menuItems,
+      menuClasses,
     };
 
     const result = this.app.templateDictReplace(template, replacementDict);

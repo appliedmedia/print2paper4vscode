@@ -11,7 +11,7 @@ toolbar_css: |
   #p2p4vsc-toolbar {
     position: fixed;
     top: 12px;
-    left: {{TOOLBAR_POS}}px;
+    left: {{toolbarPos}}px;
     z-index: 9999;
     display: inline-flex;
     flex-direction: column;
@@ -170,16 +170,16 @@ toolbar_js: |
 
 toolbar_html: |
   <style>
-    {{TOOLBAR_CSS}}
-    {{CSS}}
+    {{toolbarCss}}
+    {{baseCss}}
   </style>
   <div id="p2p4vsc-toolbar" role="toolbar" aria-label="Print2Paper toolbar">
     <div class="p2p4vsc-toolbar-grip" id="p2p4vsc-toolbar-grip" title="Click and hold to drag left and right" aria-label="Drag toolbar" tabindex="0"></div>
     <div class="p2p4vsc-toolbar-menubar" role="menubar">
-      {{HTML}}
+      {{menuHtml}}
     </div>
   </div>
   <script>
-    {{TOOLBAR_JS}}
-    {{JS}}
+    {{toolbarJs}}
+    {{additionalJs}}
   </script>

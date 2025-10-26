@@ -264,9 +264,7 @@ export class PaperPrinter {
         options
       );
 
-      dx.out(
-        `PDF generation complete: ${this.pdfDoc.getPageTotal()} pages using unified approach`
-      );
+      dx.out(`PDF generation complete: ${this.pdfDoc.getPageTotal()} pages using unified approach`);
     } catch (error) {
       dx.out(`Error in generatePdf: ${error}`);
       throw error;
