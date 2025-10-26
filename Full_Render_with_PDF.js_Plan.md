@@ -48,12 +48,12 @@ This document outlines a step-by-step plan to simplify the current complex page 
   - Remove existing `renderContent()` method (no longer needed)
   - Simplify to full-document mode only
 
-#### Step 3: Create New PageRender Interface for Full Document
+#### Step 3: Remove PageRender Interface Dependency
 - **File**: `src/types/PageRender_t.ts`
 - **Changes**:
-  - Add `FullDocumentPageRender` interface
-  - Methods: `pdfDataUrl()`, `getPageTotal()`, `getPageSizePx()`
-  - Simpler than current `PageRender` interface
+  - Remove `PageRender` interface entirely
+  - Use direct class variables instead of interface methods
+  - Simplify to direct property access
 
 ### Phase 2: Webview Implementation
 
@@ -68,16 +68,20 @@ This document outlines a step-by-step plan to simplify the current complex page 
 
 #### Step 5: Implement Full Document Scroll View
 - **File**: `src/UIPDFScrollView.ts`
+- **Key Properties**:
+  - `pdfDataUrl: string` - Direct PDF data URL
+  - `pageTotal: number` - Total pages from PDF.js
+  - `pageSizePx: {widthPx: number, heightPx: number}` - Page dimensions
 - **Key Methods**:
   - `generateContent()`: Create HTML with full PDF
   - `updatePdf()`: Replace PDF document
-  - `getPageTotal()`: Get from PDF.js document
   - No canvas pooling, no page caching, no complex state
 
 #### Step 6: Update UIWebView to Use New System
 - **File**: `src/UIWebView.ts`
 - **Changes**:
   - Replace `UIScrollView` with `UIPDFScrollView`
+  - Pass PDF data directly instead of PageRender interface
   - Simplify `createPanel()` method
   - Remove complex page render request handling
 
@@ -86,16 +90,17 @@ This document outlines a step-by-step plan to simplify the current complex page 
 #### Step 7: Update PaperPrinter to Use New System
 - **File**: `src/PaperPrinter.ts`
 - **Changes**:
-  - Update `openWebView()` to use UIPDFScrollView
-  - Remove complex page render logic
+  - Update `openWebView()` to pass PDF data directly to UIPDFScrollView
+  - Remove PageRender interface usage
   - Simplify PDF generation workflow
 
-#### Step 8: Create Full Document PageRender Implementation
+#### Step 8: Simplify PDF Class
 - **File**: `src/PDF.ts`
 - **Changes**:
-  - Implement `FullDocumentPageRender` interface
-  - Add `pdfDataUrl()` method
-  - Ensure PDF generation works for full document mode
+  - Add `pdfDataUrl` property that returns complete PDF as data URL
+  - Add `pageTotal` property for total pages
+  - Add `pageSizePx` property for page dimensions
+  - Remove PageRender interface implementation
 
 #### Step 9: Update Message Handling
 - **File**: `src/UIWebView.ts`
@@ -118,6 +123,7 @@ This document outlines a step-by-step plan to simplify the current complex page 
 - **Files to Remove/Simplify**:
   - `src/UIScrollView.ts` (replace with UIPDFScrollView)
   - `src/UIScrollView.yaml` (replace with UIPDFScrollView.yaml)
+  - `src/types/PageRender_t.ts` (remove PageRender interface)
   - Complex canvas pooling logic
   - Page caching system
   - Individual page render requests
@@ -134,8 +140,15 @@ This document outlines a step-by-step plan to simplify the current complex page 
 ### New UIPDFScrollView.ts Structure
 ```typescript
 export class UIPDFScrollView {
-  private pdfDataUrl: string | null = null;
-  private pageTotal: number = 0;
+  public pdfDataUrl: string;
+  public pageTotal: number;
+  public pageSizePx: { widthPx: number; heightPx: number };
+  
+  constructor(pdfDataUrl: string, pageTotal: number, pageSizePx: { widthPx: number; heightPx: number }) {
+    this.pdfDataUrl = pdfDataUrl;
+    this.pageTotal = pageTotal;
+    this.pageSizePx = pageSizePx;
+  }
   
   async generateContent(): Promise<string> {
     // Simple HTML with PDF.js viewer
