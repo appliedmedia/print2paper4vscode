@@ -108,7 +108,7 @@ This document outlines a step-by-step plan to simplify the current complex page 
 - **File**: `src/UIWebView.ts`
 - **Changes**:
   - Add message handler for `requestPdfChunk` from webview
-  - Implement chunk serving logic that extracts byte ranges from PDF
+  - Implement `requestPdfChunk()` method that extracts byte ranges from PDF
   - Add message handler for `receivePdfChunk` to webview
   - Remove complex page render request handling
   - Simplify message routing
@@ -239,7 +239,7 @@ class CustomPDFDataRangeTransport {
     this.webviewPanelId = webviewPanelId;
   }
   
-  requestDataRange(begin: number, end: number) {
+  requestPdfChunk(begin: number, end: number) {
     // Extract chunk from PDF ArrayBuffer
     const chunk = this.pdfArrayBuffer.slice(begin, end);
     
@@ -258,7 +258,7 @@ class CustomPDFDataRangeTransport {
   private chunks: Map<string, ArrayBuffer> = new Map();
   private pendingRequests: Map<string, (chunk: ArrayBuffer) => void> = new Map();
   
-  requestDataRange(begin: number, end: number) {
+  requestPdfChunk(begin: number, end: number) {
     const key = `${begin}-${end}`;
     
     if (this.chunks.has(key)) {
@@ -279,7 +279,7 @@ class CustomPDFDataRangeTransport {
     });
   }
   
-  onReceivePdfChunk(begin: number, end: number, chunk: ArrayBuffer) {
+  receivePdfChunk(begin: number, end: number, chunk: ArrayBuffer) {
     const key = `${begin}-${end}`;
     this.chunks.set(key, chunk);
     
