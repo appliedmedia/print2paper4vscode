@@ -357,6 +357,8 @@ Implement unified PDF.js streaming architecture with custom chunk provider. Each
 
 **Goal**: Replace old system with new streaming system
 
+**Critical Dependency Order**: Step 5.2 (UIWebView) must be validated before proceeding to Step 5.3 (PaperPrinter integration) to avoid cascading failures. UIWebView provides the webview infrastructure that PaperPrinter depends on.
+
 ### 5.1 Update PaperPrinter
 
 - [ ] Update `openWebView()` to use `UIPDFScrollView`
