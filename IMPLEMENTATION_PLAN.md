@@ -6,6 +6,14 @@ Implement unified PDF.js streaming architecture with custom chunk provider. Each
 
 **Architectural Constraint**: This implementation maintains the single rendering method principle from AGENTS.md. We continue to use line-by-line rendering everywhere for PDF generation. The chunking strategy only changes PDF delivery to the webview, not the underlying rendering method. The extension still generates the complete PDF using `renderByLine()` before sending it in chunks to PDF.js.
 
+**Stage Completion Requirements**: Each stage must include:
+- All existing tests pass
+- New tests added for new functionality
+- Thorough JSDoc comments added to class headers
+- All linter errors fixed (MD, HTML, JS, CSS, TS, YAML)
+- Successful compilation with no TypeScript errors
+- Complete documentation of changes
+
 ---
 
 ## Stage 1: Foundation Setup
@@ -23,12 +31,15 @@ Implement unified PDF.js streaming architecture with custom chunk provider. Each
 
 **Test**:
 
+- [ ] All existing tests pass
 - [ ] UIPDFScrollView can be instantiated
 - [ ] `generateContent()` returns valid HTML
 - [ ] HTML includes PDF.js library loading
+- [ ] Add new tests for UIPDFScrollView functionality
 
 **Documentation**:
 
+- [ ] Add thorough JSDoc comments to class headers
 - [ ] Document class interface
 - [ ] Document constructor parameters
 - [ ] Document expected HTML output
@@ -49,13 +60,16 @@ Implement unified PDF.js streaming architecture with custom chunk provider. Each
 
 **Test**:
 
+- [ ] All existing tests pass
 - [ ] PDF.js loads successfully
 - [ ] PDF document loads from data URL
 - [ ] Basic error handling works
 - [ ] Console logs show expected flow
+- [ ] Add new tests for PDF.js integration
 
 **Documentation**:
 
+- [ ] Add thorough JSDoc comments to class headers
 - [ ] Document PDF.js integration approach
 - [ ] Document error handling strategy
 - [ ] Document debugging approach
@@ -76,13 +90,16 @@ Implement unified PDF.js streaming architecture with custom chunk provider. Each
 
 **Test**:
 
+- [ ] All existing tests pass
 - [ ] Both classes can be instantiated
 - [ ] Methods exist and can be called
 - [ ] Message handling infrastructure works
 - [ ] Logging shows expected output
+- [ ] Add new tests for CustomPDFDataRangeTransport classes
 
 **Documentation**:
 
+- [ ] Add thorough JSDoc comments to class headers
 - [ ] Document class interfaces
 - [ ] Document message flow
 - [ ] Document logging strategy
@@ -110,14 +127,17 @@ Implement unified PDF.js streaming architecture with custom chunk provider. Each
 
 **Test**:
 
+- [ ] All existing tests pass
 - [ ] Can extract chunks from PDF ArrayBuffer
 - [ ] Chunks are correct size and content
 - [ ] Messages are sent to webview
 - [ ] Error handling works for invalid ranges
 - [ ] Logging shows chunk extraction details
+- [ ] Add new tests for chunk extraction functionality
 
 **Documentation**:
 
+- [ ] Add thorough JSDoc comments to class headers
 - [ ] Document chunk extraction algorithm
 - [ ] Document error handling cases
 - [ ] Document message format
