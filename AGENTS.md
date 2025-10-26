@@ -251,4 +251,3 @@ Source Code → Shiki → Line-by-Line Rendering → PDF Output
   - `item.selected` → when `item.id === defaultItemId` → shows checkmark (✓) in gutter-before
 
 **Never iterate when semaphores exist:** If you can determine state from existing flags/properties, don't loop through arrays.
-

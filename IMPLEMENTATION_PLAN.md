@@ -1,6 +1,7 @@
 # PDF.js Streaming Implementation Plan
 
 ## Overview
+
 Implement unified PDF.js streaming architecture with custom chunk provider. Each stage must be fully tested and documented before proceeding to the next.
 
 **Architectural Constraint**: This implementation maintains the single rendering method principle from AGENTS.md. We continue to use line-by-line rendering everywhere for PDF generation. The chunking strategy only changes PDF delivery to the webview, not the underlying rendering method. The extension still generates the complete PDF using `renderByLine()` before sending it in chunks to PDF.js.
@@ -8,56 +9,66 @@ Implement unified PDF.js streaming architecture with custom chunk provider. Each
 ---
 
 ## Stage 1: Foundation Setup
+
 **Goal**: Create basic infrastructure and prove chunking works
 
 **Critical**: This stage maintains the single line-by-line rendering method from AGENTS.md. We render the complete PDF first using `renderByLine()`, then deliver it in chunks. No changes to the core rendering logic.
 
 ### 1.1 Create UIPDFScrollView Skeleton
+
 - [ ] Create `src/UIPDFScrollView.ts` with basic class structure
 - [ ] Create `src/UIPDFScrollView.yaml` with minimal HTML template
 - [ ] Add constructor that accepts `pdfDataUrl`, `pageTotal`, `pageSizePx`
 - [ ] Add `generateContent()` method that returns basic HTML
 
-**Test**: 
+**Test**:
+
 - [ ] UIPDFScrollView can be instantiated
 - [ ] `generateContent()` returns valid HTML
 - [ ] HTML includes PDF.js library loading
 
 **Documentation**:
+
 - [ ] Document class interface
 - [ ] Document constructor parameters
 - [ ] Document expected HTML output
 
 ### 1.2 Implement Basic PDF.js Integration
+
 - [ ] Add PDF.js document loading in `generateContent()`
 - [ ] Use simple data URL approach (no chunking yet)
 - [ ] Add basic error handling
 - [ ] Add console logging for debugging
 
 **Test**:
+
 - [ ] PDF.js loads successfully
 - [ ] PDF document loads from data URL
 - [ ] Basic error handling works
 - [ ] Console logs show expected flow
 
 **Documentation**:
+
 - [ ] Document PDF.js integration approach
 - [ ] Document error handling strategy
 - [ ] Document debugging approach
 
 ### 1.3 Create Custom PDFDataRangeTransport Skeleton
+
 - [ ] Create `CustomPDFDataRangeTransport` class on both sides
 - [ ] Add `requestPdfChunk()` and `receivePdfChunk()` methods
 - [ ] Add message handling infrastructure
 - [ ] Add basic logging
 
 **Test**:
+
 - [ ] Both classes can be instantiated
 - [ ] Methods exist and can be called
 - [ ] Message handling infrastructure works
 - [ ] Logging shows expected output
 
 **Documentation**:
+
 - [ ] Document class interfaces
 - [ ] Document message flow
 - [ ] Document logging strategy
@@ -65,9 +76,11 @@ Implement unified PDF.js streaming architecture with custom chunk provider. Each
 ---
 
 ## Stage 2: Chunking Implementation
+
 **Goal**: Implement working chunk-based PDF serving
 
 ### 2.1 Extension-Side Chunk Provider
+
 - [ ] Implement `requestPdfChunk()` in extension
 - [ ] Add PDF ArrayBuffer storage
 - [ ] Add chunk extraction logic using `ArrayBuffer.slice()`
@@ -75,6 +88,7 @@ Implement unified PDF.js streaming architecture with custom chunk provider. Each
 - [ ] Add error handling for invalid ranges
 
 **Test**:
+
 - [ ] Can extract chunks from PDF ArrayBuffer
 - [ ] Chunks are correct size and content
 - [ ] Messages are sent to webview
@@ -82,12 +96,14 @@ Implement unified PDF.js streaming architecture with custom chunk provider. Each
 - [ ] Logging shows chunk extraction details
 
 **Documentation**:
+
 - [ ] Document chunk extraction algorithm
 - [ ] Document error handling cases
 - [ ] Document message format
 - [ ] Document performance characteristics
 
 ### 2.2 Webview-Side Chunk Consumer
+
 - [ ] Implement `requestPdfChunk()` in webview
 - [ ] Add chunk caching with Map
 - [ ] Add pending request tracking
@@ -95,6 +111,7 @@ Implement unified PDF.js streaming architecture with custom chunk provider. Each
 - [ ] Add `receivePdfChunk()` to handle incoming chunks
 
 **Test**:
+
 - [ ] Can request chunks from extension
 - [ ] Chunks are cached correctly
 - [ ] Pending requests are tracked properly
@@ -102,12 +119,14 @@ Implement unified PDF.js streaming architecture with custom chunk provider. Each
 - [ ] Duplicate requests are handled efficiently
 
 **Documentation**:
+
 - [ ] Document caching strategy
 - [ ] Document request tracking
 - [ ] Document message handling
 - [ ] Document performance optimizations
 
 ### 2.3 Message Handling Integration
+
 - [ ] Add message handlers in `UIWebView.ts`
 - [ ] Connect `requestPdfChunk` messages to extension logic
 - [ ] Connect `receivePdfChunk` messages to webview logic
@@ -115,6 +134,7 @@ Implement unified PDF.js streaming architecture with custom chunk provider. Each
 - [ ] Add comprehensive logging
 
 **Test**:
+
 - [ ] Messages flow correctly between extension and webview
 - [ ] Invalid messages are handled gracefully
 - [ ] Error cases are logged appropriately
@@ -122,6 +142,7 @@ Implement unified PDF.js streaming architecture with custom chunk provider. Each
 - [ ] Performance is acceptable for small documents
 
 **Documentation**:
+
 - [ ] Document message protocol
 - [ ] Document error handling
 - [ ] Document debugging approach
@@ -130,9 +151,11 @@ Implement unified PDF.js streaming architecture with custom chunk provider. Each
 ---
 
 ## Stage 3: PDF.js Integration
+
 **Goal**: Integrate custom chunk provider with PDF.js streaming
 
 ### 3.1 PDF.js Streaming Integration
+
 - [ ] Integrate `CustomPDFDataRangeTransport` with PDF.js
 - [ ] Use `pdfjsLib.getDocument({ range: transport })`
 - [ ] Configure appropriate `rangeChunkSize`
@@ -140,6 +163,7 @@ Implement unified PDF.js streaming architecture with custom chunk provider. Each
 - [ ] Add progress tracking
 
 **Test**:
+
 - [ ] PDF.js loads document using custom transport
 - [ ] Chunks are requested as expected
 - [ ] PDF renders correctly
@@ -147,12 +171,14 @@ Implement unified PDF.js streaming architecture with custom chunk provider. Each
 - [ ] Error handling works for PDF.js errors
 
 **Documentation**:
+
 - [ ] Document PDF.js integration approach
 - [ ] Document chunk size configuration
 - [ ] Document event handling
 - [ ] Document error scenarios
 
 ### 3.2 Canvas Rendering
+
 - [ ] Add canvas element to HTML template
 - [ ] Implement page rendering to canvas
 - [ ] Add viewport management
@@ -160,6 +186,7 @@ Implement unified PDF.js streaming architecture with custom chunk provider. Each
 - [ ] Add page navigation
 
 **Test**:
+
 - [ ] Pages render correctly on canvas
 - [ ] Zoom functionality works
 - [ ] Scroll functionality works
@@ -167,15 +194,18 @@ Implement unified PDF.js streaming architecture with custom chunk provider. Each
 - [ ] Rendering performance is acceptable
 
 **Documentation**:
+
 - [ ] Document canvas rendering approach
 - [ ] Document viewport management
 - [ ] Document zoom/scroll implementation
 - [ ] Document performance considerations
 
 ### 3.3 Error Handling and User Feedback
+
 **Goal**: Catch out-of-memory errors and report them to users instead of trying to predict or prevent them
 
 #### 3.3.1 Out-of-Memory Error Detection
+
 **Owner**: TBD
 **Config**: None (use browser error detection)
 
@@ -186,6 +216,7 @@ Implement unified PDF.js streaming architecture with custom chunk provider. Each
 - [ ] Log all memory-related errors with context
 
 **Test Plan**:
+
 - [ ] Simulate memory pressure by loading very large PDFs
 - [ ] Verify error detection works across different browsers
 - [ ] Verify error detection works in extension context
@@ -193,6 +224,7 @@ Implement unified PDF.js streaming architecture with custom chunk provider. Each
 - [ ] **Fail**: Memory errors crash the application silently
 
 #### 3.3.2 User Error Reporting
+
 **Owner**: TBD
 **Config**: None (use VS Code UI APIs)
 
@@ -203,6 +235,7 @@ Implement unified PDF.js streaming architecture with custom chunk provider. Each
 - [ ] Log error details for debugging
 
 **Test Plan**:
+
 - [ ] Trigger OOM error in controlled environment
 - [ ] Verify user sees helpful error message
 - [ ] Verify retry functionality works
@@ -210,6 +243,7 @@ Implement unified PDF.js streaming architecture with custom chunk provider. Each
 - [ ] **Fail**: User sees technical error or no feedback
 
 #### 3.3.3 Graceful Degradation
+
 **Owner**: TBD
 **Config**: None (use error-driven fallbacks)
 
@@ -219,6 +253,7 @@ Implement unified PDF.js streaming architecture with custom chunk provider. Each
 - [ ] Prevent cascading memory errors
 
 **Test Plan**:
+
 - [ ] Trigger OOM, verify cleanup occurs
 - [ ] Verify user can retry after cleanup
 - [ ] Verify no memory leaks after cleanup
@@ -226,6 +261,7 @@ Implement unified PDF.js streaming architecture with custom chunk provider. Each
 - [ ] **Fail**: System remains in broken state after OOM
 
 **Documentation**:
+
 - [ ] Document error handling approach
 - [ ] Document user-facing error messages
 - [ ] Document recovery procedures
@@ -234,9 +270,11 @@ Implement unified PDF.js streaming architecture with custom chunk provider. Each
 ---
 
 ## Stage 4: Integration Testing
+
 **Goal**: Test complete system with real documents
 
 ### 4.1 Small Document Testing
+
 - [ ] Test with 1-5 page documents
 - [ ] Test with different content types (code, text, mixed)
 - [ ] Test with different themes
@@ -245,6 +283,7 @@ Implement unified PDF.js streaming architecture with custom chunk provider. Each
 - [ ] Test font size changes
 
 **Test**:
+
 - [ ] All document types render correctly
 - [ ] Theme switching works without errors
 - [ ] Font size changes work correctly
@@ -253,6 +292,7 @@ Implement unified PDF.js streaming architecture with custom chunk provider. Each
 - [ ] No memory leaks detected
 
 **Documentation**:
+
 - [ ] Document supported document types
 - [ ] Document theme switching behavior
 - [ ] Document font size behavior
@@ -260,6 +300,7 @@ Implement unified PDF.js streaming architecture with custom chunk provider. Each
 - [ ] Document known limitations
 
 ### 4.2 Medium Document Testing
+
 - [ ] Test with 10-50 page documents
 - [ ] Test scroll performance
 - [ ] Test page loading performance
@@ -268,6 +309,7 @@ Implement unified PDF.js streaming architecture with custom chunk provider. Each
 - [ ] Test error recovery
 
 **Test**:
+
 - [ ] Scroll performance is smooth
 - [ ] Page loading is fast enough
 - [ ] Memory usage is stable
@@ -276,6 +318,7 @@ Implement unified PDF.js streaming architecture with custom chunk provider. Each
 - [ ] No performance degradation over time
 
 **Documentation**:
+
 - [ ] Document performance characteristics
 - [ ] Document memory usage patterns
 - [ ] Document chunk request patterns
@@ -283,6 +326,7 @@ Implement unified PDF.js streaming architecture with custom chunk provider. Each
 - [ ] Document performance guidelines
 
 ### 4.3 Large Document Testing
+
 - [ ] Test with 100+ page documents
 - [ ] Test memory limits
 - [ ] Test chunking efficiency
@@ -291,6 +335,7 @@ Implement unified PDF.js streaming architecture with custom chunk provider. Each
 - [ ] Test fallback scenarios
 
 **Test**:
+
 - [ ] Large documents load successfully
 - [ ] Memory usage stays within limits
 - [ ] Chunking is efficient
@@ -299,6 +344,7 @@ Implement unified PDF.js streaming architecture with custom chunk provider. Each
 - [ ] Fallback scenarios work
 
 **Documentation**:
+
 - [ ] Document large document handling
 - [ ] Document memory limits
 - [ ] Document chunking efficiency
@@ -308,9 +354,11 @@ Implement unified PDF.js streaming architecture with custom chunk provider. Each
 ---
 
 ## Stage 5: System Integration
+
 **Goal**: Replace old system with new streaming system
 
 ### 5.1 Update PaperPrinter
+
 - [ ] Update `openWebView()` to use `UIPDFScrollView`
 - [ ] Remove old `UIScrollView` usage
 - [ ] Update PDF generation to work with chunking
@@ -318,6 +366,7 @@ Implement unified PDF.js streaming architecture with custom chunk provider. Each
 - [ ] Add error handling
 
 **Test**:
+
 - [ ] PaperPrinter works with new system
 - [ ] PDF generation works correctly
 - [ ] Chunk provider is initialized correctly
@@ -325,6 +374,7 @@ Implement unified PDF.js streaming architecture with custom chunk provider. Each
 - [ ] Performance is acceptable
 
 **Documentation**:
+
 - [ ] Document PaperPrinter changes
 - [ ] Document PDF generation changes
 - [ ] Document chunk provider initialization
@@ -332,6 +382,7 @@ Implement unified PDF.js streaming architecture with custom chunk provider. Each
 - [ ] Document performance impact
 
 ### 5.2 Update UIWebView
+
 - [ ] Replace `UIScrollView` with `UIPDFScrollView`
 - [ ] Update message handling
 - [ ] Remove old page render logic
@@ -339,6 +390,7 @@ Implement unified PDF.js streaming architecture with custom chunk provider. Each
 - [ ] Update error handling
 
 **Test**:
+
 - [ ] UIWebView works with new system
 - [ ] Message handling works correctly
 - [ ] Old logic is removed
@@ -346,6 +398,7 @@ Implement unified PDF.js streaming architecture with custom chunk provider. Each
 - [ ] Error handling works
 
 **Documentation**:
+
 - [ ] Document UIWebView changes
 - [ ] Document message handling changes
 - [ ] Document removed functionality
@@ -353,6 +406,7 @@ Implement unified PDF.js streaming architecture with custom chunk provider. Each
 - [ ] Document error handling
 
 ### 5.3 Update PDF.ts
+
 - [ ] Add chunk provider implementation
 - [ ] Add message handling
 - [ ] Remove old `renderContent()` method
@@ -360,6 +414,7 @@ Implement unified PDF.js streaming architecture with custom chunk provider. Each
 - [ ] Update error handling
 
 **Test**:
+
 - [ ] PDF.ts works with new system
 - [ ] Chunk provider works correctly
 - [ ] Message handling works
@@ -367,6 +422,7 @@ Implement unified PDF.js streaming architecture with custom chunk provider. Each
 - [ ] New methods work correctly
 
 **Documentation**:
+
 - [ ] Document PDF.ts changes
 - [ ] Document chunk provider implementation
 - [ ] Document message handling
@@ -376,9 +432,11 @@ Implement unified PDF.js streaming architecture with custom chunk provider. Each
 ---
 
 ## Stage 6: Cleanup and Optimization
+
 **Goal**: Remove old system and optimize new system
 
 ### 6.1 Remove Old System
+
 - [ ] Delete `src/UIScrollView.ts`
 - [ ] Delete `src/UIScrollView.yaml`
 - [ ] Remove `src/types/PageRender_t.ts`
@@ -386,6 +444,7 @@ Implement unified PDF.js streaming architecture with custom chunk provider. Each
 - [ ] Remove old imports
 
 **Test**:
+
 - [ ] Old files are removed
 - [ ] No references to old system remain
 - [ ] New system works without old dependencies
@@ -393,6 +452,7 @@ Implement unified PDF.js streaming architecture with custom chunk provider. Each
 - [ ] No runtime errors
 
 **Documentation**:
+
 - [ ] Document removed files
 - [ ] Document removed functionality
 - [ ] Document migration notes
@@ -400,6 +460,7 @@ Implement unified PDF.js streaming architecture with custom chunk provider. Each
 - [ ] Document new system benefits
 
 ### 6.2 Performance Optimization
+
 - [ ] Optimize chunk size
 - [ ] Optimize caching strategy
 - [ ] Optimize memory management
@@ -407,6 +468,7 @@ Implement unified PDF.js streaming architecture with custom chunk provider. Each
 - [ ] Add performance monitoring
 
 **Test**:
+
 - [ ] Performance is optimal
 - [ ] Memory usage is efficient
 - [ ] Rendering is smooth
@@ -414,6 +476,7 @@ Implement unified PDF.js streaming architecture with custom chunk provider. Each
 - [ ] Monitoring works correctly
 
 **Documentation**:
+
 - [ ] Document performance optimizations
 - [ ] Document memory management
 - [ ] Document rendering optimizations
@@ -421,6 +484,7 @@ Implement unified PDF.js streaming architecture with custom chunk provider. Each
 - [ ] Document monitoring approach
 
 ### 6.3 Final Testing
+
 - [ ] End-to-end testing with all document types
 - [ ] Performance testing with large documents
 - [ ] Memory testing with extended usage
@@ -428,6 +492,7 @@ Implement unified PDF.js streaming architecture with custom chunk provider. Each
 - [ ] User acceptance testing
 
 **Test**:
+
 - [ ] All functionality works correctly
 - [ ] Performance meets requirements
 - [ ] Memory usage is acceptable
@@ -435,6 +500,7 @@ Implement unified PDF.js streaming architecture with custom chunk provider. Each
 - [ ] User experience is good
 
 **Documentation**:
+
 - [ ] Document final system architecture
 - [ ] Document performance characteristics
 - [ ] Document memory usage
@@ -446,6 +512,7 @@ Implement unified PDF.js streaming architecture with custom chunk provider. Each
 ## Success Criteria
 
 ### Technical Success
+
 - [ ] All tests pass
 - [ ] Performance meets requirements
 - [ ] Memory usage is acceptable
@@ -453,6 +520,7 @@ Implement unified PDF.js streaming architecture with custom chunk provider. Each
 - [ ] Code is well-documented
 
 ### User Success
+
 - [ ] PDFs render correctly
 - [ ] Performance is smooth
 - [ ] Memory usage is reasonable
@@ -460,6 +528,7 @@ Implement unified PDF.js streaming architecture with custom chunk provider. Each
 - [ ] User experience is intuitive
 
 ### Maintenance Success
+
 - [ ] Code is maintainable
 - [ ] Documentation is complete
 - [ ] Testing is comprehensive
@@ -471,12 +540,14 @@ Implement unified PDF.js streaming architecture with custom chunk provider. Each
 ## Risk Mitigation
 
 ### Technical Risks
+
 - **PDF.js Integration Issues**: Test thoroughly with different document types
 - **Memory Management Problems**: Monitor memory usage continuously
 - **Performance Issues**: Profile and optimize at each stage
 - **Error Handling Gaps**: Test error scenarios extensively
 
 ### Process Risks
+
 - **Scope Creep**: Stick to stage goals, defer enhancements
 - **Testing Gaps**: Require tests before stage completion
 - **Documentation Gaps**: Require documentation before stage completion
@@ -487,7 +558,7 @@ Implement unified PDF.js streaming architecture with custom chunk provider. Each
 ## Timeline Estimate
 
 - **Stage 1**: 2-3 days
-- **Stage 2**: 3-4 days  
+- **Stage 2**: 3-4 days
 - **Stage 3**: 3-4 days
 - **Stage 4**: 2-3 days
 - **Stage 5**: 2-3 days

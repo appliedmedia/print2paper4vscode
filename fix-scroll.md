@@ -537,7 +537,7 @@ const kCBStatus = {
   [kCBStatus_Requesting]: '❓',
   [kCBStatus_Clearing]: '❌',
   [kCBStatus_Assigned]: ':',
-  [kCBStatus_Ready]: '.'
+  [kCBStatus_Ready]: '.',
 };
 
 // Simple HUD display - just gather and report data when called
@@ -547,7 +547,8 @@ function updateHudStatus() {
 
   // Canvas assignments (cb1, cb2, cb3, cb4, cb5, cb6)
   const canvasLine = [];
-  for (let i = 1; i <= 6; i++) { // 1-based, cb0 reserved
+  for (let i = 1; i <= 6; i++) {
+    // 1-based, cb0 reserved
     const cbId = canvasId(i);
     const cb = db[cbId];
     const statusChar = kCBStatus[cb.status];
@@ -588,7 +589,8 @@ function updateHudStatus() {
 
 ```javascript
 // Canvas creation:
-for (let i = 0; i < 6; i++) { // CONFIG.canvasBuffersSize = 6
+for (let i = 0; i < 6; i++) {
+  // CONFIG.canvasBuffersSize = 6
   const canvas = document.createElement('canvas');
   canvas.id = `cb${i}`; // Consistent DOM ID format
   canvas.className = 'page-canvas';
@@ -974,7 +976,6 @@ function dx(message) {
 }
 ```
 
-
 **Test**:
 
 1. Compile: `npm run compile`
@@ -1040,7 +1041,8 @@ function createCanvasPool() {
 
 // AFTER:
 function createDOMElements_Canvas() {
-  for (let i = 0; i < 6; i++) { // CONFIG.canvasBuffersSize = 6
+  for (let i = 0; i < 6; i++) {
+    // CONFIG.canvasBuffersSize = 6
     const canvas = document.createElement('canvas');
     canvas.id = canvasId(i); // Use helper function
     canvas.className = 'page-canvas';
@@ -1140,13 +1142,13 @@ const hasCanvas = db[pgId] && db[pgId].cb;
 **What was done**:
 
 1. **Canvas Creation**: Updated to use `cb0...cb6` format consistently
-2. **Database Structure**: Uses `cb0...cb6` for canvas buffers and `pg1...pgN` for pages  
+2. **Database Structure**: Uses `cb0...cb6` for canvas buffers and `pg1...pgN` for pages
 3. **Helper Functions**: Updated to work with new ID format
 4. **DOM References**: Simplified to use `canvas.id` directly (no more `dataset.cbId`)
 
 **Current State**:
 
-- Canvas creation: `canvas.id = 'cb${i}'` 
+- Canvas creation: `canvas.id = 'cb${i}'`
 - Database keys: `db.cb0`, `db.cb1`, etc.
 - Page keys: `db.pg1`, `db.pg2`, etc.
 - Helper functions: `getCanvasForPage()`, `assignCanvasToPage()`, `unassignCanvas()`
@@ -1185,7 +1187,7 @@ const kCBStatus = {
   [kCBStatus_Requesting]: '❓',
   [kCBStatus_Clearing]: '❌',
   [kCBStatus_Assigned]: ':',
-  [kCBStatus_Ready]: '.'
+  [kCBStatus_Ready]: '.',
 };
 
 // Simple HUD display - just gather and report data when called
@@ -1195,7 +1197,8 @@ function updateHudStatus() {
 
   // Canvas assignments (cb1, cb2, cb3, cb4, cb5, cb6)
   const canvasLine = [];
-  for (let i = 1; i <= 6; i++) { // 1-based, cb0 reserved
+  for (let i = 1; i <= 6; i++) {
+    // 1-based, cb0 reserved
     const cbId = canvasId(i);
     const cb = db[cbId];
     const statusChar = kCBStatus[cb.status];
@@ -1281,7 +1284,8 @@ pdfDoc.pageSizes[pageNumber] = pageSizeMB; // No existence check needed
 const pgId = pageId(pageNumber);
 // Update canvas status in database
 db[cbId].status = kCBStatus_Assigned;
-```
+
+```javascript
 
 **Task 6.5**: Update existing HUD calls
 
@@ -1475,7 +1479,8 @@ If any step fails:
 
 ---
 
-**Document Version**: 1.0  
-**Last Updated**: 2025-10-20  
-**Author**: AI Assistant (based on user research requirements)  
+**Document Version**: 1.0
+**Last Updated**: 2025-10-20
+**Author**: AI Assistant (based on user research requirements)
 **Status**: Ready for Implementation
+```
