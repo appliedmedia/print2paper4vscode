@@ -172,25 +172,64 @@ Implement unified PDF.js streaming architecture with custom chunk provider. Each
 - [ ] Document zoom/scroll implementation
 - [ ] Document performance considerations
 
-### 3.3 Memory Management
-- [ ] Add chunk cleanup for unused chunks
-- [ ] Add memory usage monitoring
-- [ ] Add garbage collection hints
-- [ ] Add memory usage logging
-- [ ] Add memory limit warnings
+### 3.3 Error Handling and User Feedback
+**Goal**: Catch out-of-memory errors and report them to users instead of trying to predict or prevent them
 
-**Test**:
-- [ ] Unused chunks are cleaned up
-- [ ] Memory usage stays within limits
-- [ ] Garbage collection works effectively
-- [ ] Memory warnings appear when appropriate
-- [ ] Performance doesn't degrade over time
+#### 3.3.1 Out-of-Memory Error Detection
+**Owner**: TBD
+**Config**: None (use browser error detection)
+
+- [ ] Wrap PDF.js operations in try-catch blocks
+- [ ] Detect "out of memory" errors from PDF.js
+- [ ] Detect "out of memory" errors from browser
+- [ ] Detect "out of memory" errors from extension
+- [ ] Log all memory-related errors with context
+
+**Test Plan**:
+- [ ] Simulate memory pressure by loading very large PDFs
+- [ ] Verify error detection works across different browsers
+- [ ] Verify error detection works in extension context
+- [ ] **Pass**: All memory errors are caught and logged
+- [ ] **Fail**: Memory errors crash the application silently
+
+#### 3.3.2 User Error Reporting
+**Owner**: TBD
+**Config**: None (use VS Code UI APIs)
+
+- [ ] Show user-friendly error message when OOM occurs
+- [ ] Include suggestion to try smaller document or restart VS Code
+- [ ] Add "Retry" button for transient errors
+- [ ] Add "Report Issue" button for persistent errors
+- [ ] Log error details for debugging
+
+**Test Plan**:
+- [ ] Trigger OOM error in controlled environment
+- [ ] Verify user sees helpful error message
+- [ ] Verify retry functionality works
+- [ ] **Pass**: User gets clear feedback and recovery options
+- [ ] **Fail**: User sees technical error or no feedback
+
+#### 3.3.3 Graceful Degradation
+**Owner**: TBD
+**Config**: None (use error-driven fallbacks)
+
+- [ ] Clear all cached chunks when OOM occurs
+- [ ] Reset PDF.js document state
+- [ ] Allow user to try again with clean state
+- [ ] Prevent cascading memory errors
+
+**Test Plan**:
+- [ ] Trigger OOM, verify cleanup occurs
+- [ ] Verify user can retry after cleanup
+- [ ] Verify no memory leaks after cleanup
+- [ ] **Pass**: System recovers cleanly from OOM
+- [ ] **Fail**: System remains in broken state after OOM
 
 **Documentation**:
-- [ ] Document memory management strategy
-- [ ] Document cleanup algorithms
-- [ ] Document monitoring approach
-- [ ] Document performance guidelines
+- [ ] Document error handling approach
+- [ ] Document user-facing error messages
+- [ ] Document recovery procedures
+- [ ] Document debugging information
 
 ---
 

@@ -152,13 +152,13 @@ This document outlines a step-by-step plan to simplify the current complex page 
   - Implement custom `PDFDataRangeTransport` that uses message-based chunking
   - Handle chunk requests via webview messages
   - Integrate with PDF.js streaming API
-  - Remove memory management complexity (PDF.js handles it)
+  - Add error handling for out-of-memory conditions
 
 #### Step 11: Performance Testing
 - **Test Cases**:
   - Small documents (1-10 pages) - verify streaming works
   - Large documents (50+ pages) - verify chunking efficiency
-  - Very large documents (200+ pages) - verify memory management
+  - Very large documents (200+ pages) - verify error handling
   - Theme switching performance - verify chunk regeneration
   - Font size changes - verify chunk regeneration
   - Scroll performance - verify on-demand loading
@@ -257,7 +257,7 @@ export class UIPDFScrollView {
   async generateContent(): Promise<string> {
     // Always use PDF.js streaming with custom chunk provider
     // No memory checks, no fallbacks, no dual systems
-    // PDF.js handles all memory management internally
+    // Catch out-of-memory errors and report to user
     return this.generateStreamingContent();
   }
 }
@@ -487,7 +487,7 @@ scroll_js: |
 - **Extension Chunk Server**: Extension serves PDF chunks via message handling
 - **No Size Limits**: Works for any size document - small or massive
 - **No Fallback Modes**: One consistent approach for all documents
-- **No Memory-Based Fallbacks**: PDF.js handles all memory management
+- **No Memory-Based Fallbacks**: Catch OOM errors and report to user
 - **No Dual Systems**: Remove old UIScrollView completely
 
 ### How It Works
@@ -533,7 +533,7 @@ scroll_js: |
 
 - **No fallbacks** - PDF.js streaming handles all document sizes
 - **No dual systems** - Single UIPDFScrollView for everything  
-- **No memory checks** - PDF.js manages memory internally
+- **No memory checks** - Catch OOM errors and report to user
 - **No chunked content generation** - Only unified streaming approach
 - **No rollback options** - Commit to single system completely
 
@@ -547,9 +547,9 @@ PDF.js streaming with custom chunk provider handles all document sizes and use c
 - [ ] All current features still work (PDF.js native features)
 - [ ] Better user experience (faster, smoother, more features)
 - [ ] **Zero fallback complexity** (single system for all document sizes)
-- [ ] **Zero memory management complexity** (PDF.js handles everything)
+- [ ] **Zero memory management complexity** (catch OOM errors and report to user)
 - [ ] **Zero dual rendering modes** (one unified streaming approach)
-- [ ] **Zero memory checks** (PDF.js handles all memory management)
+- [ ] **Zero memory checks** (catch OOM errors and report to user)
 - [ ] **Single rendering method maintained** (line-by-line rendering everywhere per AGENTS.md)
 - [ ] **Render-first-then-chunk approach** (complete PDF generated before chunking begins)
 
