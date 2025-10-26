@@ -181,13 +181,9 @@ scroll_js: |
         }
       }
 
-      // DEBUG: Test if JavaScript is executing
-      dx('🚀 DEBUG: UIScrollView JavaScript starting execution');
-
     // Initialize PDF.js
     if (typeof pdfjsLib !== 'undefined') {
       pdfjsLib.GlobalWorkerOptions.workerSrc = '{{as_uri:src/lib/pdf.worker.min.js}}';
-      dx('🚀 DEBUG: PDF.js library loaded successfully');
     } else {
       dx('ERROR: PDF.js library not loaded!');
     }

@@ -5,7 +5,6 @@ enabled: true
 # Repository information
 repository:
   url: "https://github.com/appliedmedia/print2paper4vscode"
-  path: "/Users/acoven/print2paper4vscode"
 
 # Project-specific settings
 project:
