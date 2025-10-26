@@ -22,12 +22,34 @@ This document outlines a step-by-step plan to simplify the current complex page 
 
 ## Proposed Simplified Architecture
 
-### New Architecture - Single Rendering System
+### New Architecture - Single Line-by-Line Rendering System
 - **PDF Generation**: jsPDF creates complete multi-page PDF (unchanged)
+- **Line-by-Line Rendering**: Maintain existing `renderByLine()` as single rendering method
 - **Custom Chunk Provider**: Extension serves PDF chunks via message handling
 - **PDF.js Streaming**: PDF.js handles all rendering with our custom transport
 - **No Fallbacks**: One rendering system for all document sizes
-- **Simplified State**: Minimal state management, PDF.js handles the rest
+- **Consolidated Rendering**: Remove `renderContent()` and PageRender interface
+
+## Migration Checklist
+
+### PageRender Interface Dependencies
+- [ ] **UIScrollView.ts**: `renderContent()` calls (line 189)
+- [ ] **UIWebView.ts**: PageRender interface usage (lines 180-185)
+- [ ] **PaperPrinter.ts**: PageRender interface usage (lines 180-185)
+- [ ] **PDF.ts**: `renderContent()` method implementation (line 459)
+
+### Migration Order (Critical)
+1. **First**: Create new UIPDFScrollView with PDF.js streaming
+2. **Second**: Update UIWebView to use UIPDFScrollView
+3. **Third**: Update PaperPrinter to use UIPDFScrollView
+4. **Fourth**: Remove PageRender interface and `renderContent()` method
+5. **Fifth**: Remove old UIScrollView completely
+
+### Breaking Change Prevention
+- **DO NOT** remove `renderContent()` until all callers are updated
+- **DO NOT** remove PageRender interface until all users are migrated
+- **DO NOT** remove UIScrollView until UIPDFScrollView is fully working
+- **DO** maintain working system throughout migration
 
 ## Refactor Steps (In Order)
 
@@ -42,19 +64,22 @@ This document outlines a step-by-step plan to simplify the current complex page 
   - Minimal state management
   - Simple scroll handling
 
-#### Step 2: Update PDF.ts to Support Full Document Mode
+#### Step 2: Consolidate PDF.ts Rendering Methods
 - **File**: `src/PDF.ts`
 - **Changes**:
-  - Add `pdfDataUrl()` method that returns complete PDF as data URL
-  - Remove existing `renderContent()` method (no longer needed)
-  - Simplify to full-document mode only
+  - Keep existing `renderByLine()` as single rendering method
+  - Add `pdfDataUrl` property that returns complete PDF as data URL
+  - Add `pageTotal` property for total pages
+  - Add `pageSizePx` property for page dimensions in CSS pixels
+  - **DO NOT REMOVE** `renderContent()` yet - wait for migration checklist
 
-#### Step 3: Remove PageRender Interface Dependency
+#### Step 3: Create Migration Checklist
 - **File**: `src/types/PageRender_t.ts`
 - **Changes**:
-  - Remove `PageRender` interface entirely
-  - Use direct class variables instead of interface methods
-  - Simplify to direct property access
+  - **DO NOT REMOVE** PageRender interface yet
+  - Create migration checklist for all PageRender usages
+  - Track all callers of `renderContent()` method
+  - Document replacement steps before removal
 
 ### Phase 2: Webview Implementation
 
@@ -78,22 +103,24 @@ This document outlines a step-by-step plan to simplify the current complex page 
   - `updatePdf()`: Replace PDF document
   - No canvas pooling, no page caching, no complex state
 
-#### Step 6: Update UIWebView to Use New System
+#### Step 6: Update UIWebView to Use New System (After UIPDFScrollView is Ready)
 - **File**: `src/UIWebView.ts`
 - **Changes**:
   - Replace `UIScrollView` with `UIPDFScrollView`
   - Pass PDF data directly instead of PageRender interface
   - Simplify `createPanel()` method
   - Remove complex page render request handling
+  - **CRITICAL**: Only do this after UIPDFScrollView is fully working
 
 ### Phase 3: Integration and Testing
 
-#### Step 7: Update PaperPrinter to Use New System
+#### Step 7: Update PaperPrinter to Use New System (After UIWebView is Updated)
 - **File**: `src/PaperPrinter.ts`
 - **Changes**:
   - Update `openWebView()` to pass PDF data directly to UIPDFScrollView
   - Remove PageRender interface usage
   - Simplify PDF generation workflow
+  - **CRITICAL**: Only do this after UIWebView is updated and working
 
 #### Step 8: Implement PDF Chunk Provider
 - **File**: `src/PDF.ts`
