@@ -15,8 +15,8 @@
         },
         "eslint.workingDirectories": ["."],
         "typescript.preferences.includePackageJsonAutoImports": "on",
-        "coderabbit.repositoryPath": ".",
-        "coderabbit.enabled": true,
+        "coderabbit.enabled": false,
+        "coderabbit.disableForWorkspace": true,
     },
     "extensions": {
         "recommendations": ["esbenp.prettier-vscode", "dbaeumer.vscode-eslint", "davidanson.vscode-markdownlint"],

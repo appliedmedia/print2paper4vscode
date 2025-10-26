@@ -1,45 +1,30 @@
 # CodeRabbit configuration for Print2Paper4VSCode
+# Disable CodeRabbit for this workspace due to path issues
+enabled: false
+
+# Repository information (for reference)
 repository:
-  # The repository URL (CodeRabbit should auto-detect this, but we can specify it)
   url: "https://github.com/appliedmedia/print2paper4vscode"
+  path: "."
 
 # Project-specific settings
 project:
-  # This is a VS Code extension project
   type: "vscode-extension"
-  
-  # Main language
   language: "typescript"
-  
-  # Key directories
   source_directories:
     - "src/"
     - "tests/"
-  
-  # Configuration files
   config_files:
     - "package.json"
     - "tsconfig.json"
     - "eslint.config.mjs"
 
-# CodeRabbit behavior settings
+# Disable all CodeRabbit features
 code_review:
-  # Enable/disable specific features
-  enable_suggestions: true
-  enable_explanations: true
-  
-  # Focus on TypeScript/JavaScript files
-  file_patterns:
-    - "**/*.ts"
-    - "**/*.js"
-    - "**/*.json"
-    - "**/*.yaml"
-    - "**/*.yml"
+  enable_suggestions: false
+  enable_explanations: false
+  enabled: false
 
-# Ignore certain files/directories
+# Ignore all files (since disabled)
 ignore:
-  - "node_modules/"
-  - "out/"
-  - "build/"
-  - "*.log"
-  - ".git/"
+  - "**/*"
