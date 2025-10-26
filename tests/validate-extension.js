@@ -77,7 +77,7 @@ try {
 // Test 3: Check TypeScript configuration
 console.log('\n3. Checking TypeScript configuration...');
 try {
-    const tsConfig = JSON.parse(readFileSync('tsconfig.json', 'utf8'));
+    const tsConfig = JSON.parse(readFileSync('.config/tsconfig.json', 'utf8'));
     
     if (tsConfig.compilerOptions.module === 'ESNext') {
         console.log('   ✅ Module: ESNext');
