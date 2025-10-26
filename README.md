@@ -4,7 +4,6 @@ A VS Code extension that captures content from the active editor, applies syntax
 
 ## Quick Links
 
-- **[Installation Guide](docs/INSTALL.md)** - Setup and installation
 - **[Developer Guide](docs/AGENTS.md)** - Complete developer documentation
 - **[VSCode APIs](docs/VSCodeAPIs.md)** - API integration details
 
@@ -342,8 +341,8 @@ Error Recovery:
 
 ## Documentation
 
-- **[Installation Guide](docs/INSTALL.md)** - Detailed setup and installation instructions
 - **[Developer Guide](docs/AGENTS.md)** - Complete developer documentation and architecture
+- **[Developer Installation](docs/INSTALL.md)** - Developer setup and installation instructions
 - **[VSCode APIs](docs/VSCodeAPIs.md)** - VS Code API integration details
 - **[Implementation Plan](docs/IMPLEMENTATION_PLAN.md)** - Development roadmap and plans
 - **[PDF Generation Flow](docs/PDF_GENERATION_FLOW.md)** - PDF creation process documentation
