@@ -22,10 +22,11 @@ This document outlines a step-by-step plan to simplify the current complex page 
 
 ## Proposed Simplified Architecture
 
-### New Architecture
+### New Architecture - Single Rendering System
 - **PDF Generation**: jsPDF creates complete multi-page PDF (unchanged)
-- **Single PDF Pass**: Pass entire PDF data URL to webview once
-- **PDF.js Native Rendering**: Let PDF.js handle all page rendering and virtual scrolling
+- **Custom Chunk Provider**: Extension serves PDF chunks via message handling
+- **PDF.js Streaming**: PDF.js handles all rendering with our custom transport
+- **No Fallbacks**: One rendering system for all document sizes
 - **Simplified State**: Minimal state management, PDF.js handles the rest
 
 ## Refactor Steps (In Order)
@@ -208,23 +209,13 @@ export class UIPDFScrollView {
 }
 ```
 
-#### Fallback Strategy
+#### Single Rendering Strategy
 ```typescript
 async generateContent(): Promise<string> {
-  const memoryStatus = this.checkMemoryLimits(this.pdfDataUrl, this.pageTotal);
-  
-  switch (memoryStatus.status) {
-    case 'exceeded':
-      // Fall back to page-by-page rendering for very large documents
-      return this.generateChunkedContent();
-    case 'warning':
-      // Show warning but proceed with full PDF
-      this.showMemoryWarning(memoryStatus);
-      return this.generateFullContent();
-    case 'ok':
-    default:
-      return this.generateFullContent();
-  }
+  // Always use PDF.js streaming with custom chunk provider
+  // No fallbacks, no memory checks, no dual systems
+  // PDF.js handles all memory management internally
+  return this.generateStreamingContent();
 }
 ```
 
@@ -336,11 +327,13 @@ scroll_js: |
 
 ## Unified Streaming Architecture
 
-### Single Rendering Mode
+### Single Rendering Mode - No Fallbacks
 - **PDF.js Streaming**: Always use PDF.js with custom chunk provider
 - **Extension Chunk Server**: Extension serves PDF chunks via message handling
 - **No Size Limits**: Works for any size document - small or massive
 - **No Fallback Modes**: One consistent approach for all documents
+- **No Memory-Based Fallbacks**: PDF.js handles all memory management
+- **No Dual Systems**: Remove old UIScrollView completely
 
 ### How It Works
 1. **PDF Generation**: Extension generates complete PDF in memory (jsPDF)
@@ -376,21 +369,19 @@ scroll_js: |
 - [ ] User experience testing
 - [ ] Edge case handling
 
-## Rollback Plan
+## No Rollback Plan
 
-If the new system doesn't work well:
-1. Keep both systems available via configuration
-2. Default to old system until new system is proven
-3. Gradual migration with A/B testing
-4. Easy switch back via menu option
+**One rendering system to rule them all.** No fallbacks, no dual systems, no rollback options. PDF.js streaming with custom chunk provider handles all document sizes and use cases.
 
 ## Success Criteria
 
-- [ ] 50% reduction in webview JavaScript code
-- [ ] Equal or better performance than current system
-- [ ] Simplified maintenance and debugging
-- [ ] All current features still work
-- [ ] Better user experience (faster, smoother)
+- [ ] 70% reduction in webview JavaScript code (single system vs dual system)
+- [ ] Better performance than current system (PDF.js optimization)
+- [ ] Simplified maintenance and debugging (one rendering path)
+- [ ] All current features still work (PDF.js native features)
+- [ ] Better user experience (faster, smoother, more features)
+- [ ] No fallback complexity (single system for all document sizes)
+- [ ] No memory management complexity (PDF.js handles everything)
 
 ## Timeline Estimate
 
@@ -406,4 +397,4 @@ If the new system doesn't work well:
 2. Implement basic PDF.js integration
 3. Test with simple PDF documents
 4. Iterate and improve based on results
-5. Gradually replace old system once new system is proven
+5. Replace old system completely - no gradual migration needed
