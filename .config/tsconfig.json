@@ -6,7 +6,7 @@
     "outDir": "../out",
     "baseUrl": "..",
     "paths": {
-      "*": ["src/types/*", "node_modules/@types/*"]
+      "*": ["../src/types/*", "../node_modules/@types/*"]
     },
     "lib": ["ES2020", "DOM"],
     "sourceMap": true,
