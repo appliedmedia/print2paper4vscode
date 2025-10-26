@@ -1,0 +1,238 @@
+# PDF.js Full Document Refactor Plan
+
+## Overview
+
+This document outlines a step-by-step plan to simplify the current complex page buffer system by passing the entire PDF document to PDF.js and letting it handle all rendering internally. This approach eliminates the need for individual page rendering, caching, and canvas pooling.
+
+## Current System Analysis
+
+### Current Architecture
+- **PDF Generation**: jsPDF creates complete multi-page PDF in memory
+- **Page Extraction**: `PDF.renderContent()` returns entire PDF as data URL for each page request
+- **Webview Rendering**: Complex canvas pooling system with 6 canvas buffers
+- **Page Management**: Virtual scrolling with individual page requests and caching
+- **State Management**: Complex database tracking canvas assignments and page states
+
+### Current Pain Points
+1. **Over-engineering**: 6 canvas buffers for virtual scrolling when PDF.js can handle this
+2. **Redundant Rendering**: Each page request returns the same full PDF data URL
+3. **Complex State**: Canvas assignment, page caching, render queues
+4. **Performance Overhead**: Multiple PDF.js document loads and page extractions
+5. **Memory Usage**: Caching individual page data when we have the full PDF
+
+## Proposed Simplified Architecture
+
+### New Architecture
+- **PDF Generation**: jsPDF creates complete multi-page PDF (unchanged)
+- **Single PDF Pass**: Pass entire PDF data URL to webview once
+- **PDF.js Native Rendering**: Let PDF.js handle all page rendering and virtual scrolling
+- **Simplified State**: Minimal state management, PDF.js handles the rest
+
+## Refactor Steps (In Order)
+
+### Phase 1: Foundation Changes
+
+#### Step 1: Create New PDF.js Full Document Handler
+- **File**: `src/UIScrollViewFull.ts` (new file)
+- **Purpose**: Simplified webview that accepts full PDF and lets PDF.js handle everything
+- **Key Features**:
+  - Accept single PDF data URL
+  - Use PDF.js native viewer capabilities
+  - Minimal state management
+  - Simple scroll handling
+
+#### Step 2: Update PDF.ts to Support Full Document Mode
+- **File**: `src/PDF.ts`
+- **Changes**:
+  - Add `getFullPdfDataUrl()` method that returns complete PDF as data URL
+  - Keep existing `renderContent()` for backward compatibility during transition
+  - Add flag to switch between page-by-page and full-document modes
+
+#### Step 3: Create New PageRender Interface for Full Document
+- **File**: `src/types/PageRender_t.ts`
+- **Changes**:
+  - Add `FullDocumentPageRender` interface
+  - Methods: `getFullPdfDataUrl()`, `getPageTotal()`, `getPageSizePx()`
+  - Simpler than current `PageRender` interface
+
+### Phase 2: Webview Implementation
+
+#### Step 4: Create Full Document YAML Templates
+- **File**: `src/UIScrollViewFull.yaml` (new file)
+- **Purpose**: Simplified HTML/CSS/JS templates for full PDF display
+- **Key Features**:
+  - Single PDF.js document load
+  - Native PDF.js page navigation
+  - Minimal custom JavaScript
+  - Clean, simple UI
+
+#### Step 5: Implement Full Document Scroll View
+- **File**: `src/UIScrollViewFull.ts`
+- **Key Methods**:
+  - `generateContent()`: Create HTML with full PDF
+  - `updatePdf()`: Replace PDF document
+  - `getPageTotal()`: Get from PDF.js document
+  - No canvas pooling, no page caching, no complex state
+
+#### Step 6: Update UIWebView to Support Both Modes
+- **File**: `src/UIWebView.ts`
+- **Changes**:
+  - Add mode parameter to `createPanel()`
+  - Support both `UIScrollView` (current) and `UIScrollViewFull` (new)
+  - Add method to switch between modes
+
+### Phase 3: Integration and Testing
+
+#### Step 7: Add Mode Selection to PaperPrinter
+- **File**: `src/PaperPrinter.ts`
+- **Changes**:
+  - Add configuration option for rendering mode
+  - Update `openWebView()` to use new full document mode
+  - Add menu option to switch between modes (for testing)
+
+#### Step 8: Create Full Document PageRender Implementation
+- **File**: `src/PDF.ts`
+- **Changes**:
+  - Implement `FullDocumentPageRender` interface
+  - Add `getFullPdfDataUrl()` method
+  - Ensure PDF generation works for both modes
+
+#### Step 9: Update Message Handling
+- **File**: `src/UIWebView.ts`
+- **Changes**:
+  - Remove complex page render request handling for full document mode
+  - Add simple PDF update message handling
+  - Simplify message routing
+
+### Phase 4: Optimization and Cleanup
+
+#### Step 10: Performance Testing
+- **Test Cases**:
+  - Large documents (50+ pages)
+  - Theme switching performance
+  - Font size changes
+  - Memory usage comparison
+  - Scroll performance
+
+#### Step 11: Remove Old System (If New System Works Well)
+- **Files to Remove/Simplify**:
+  - `src/UIScrollView.ts` (replace with full document version)
+  - `src/UIScrollView.yaml` (replace with simplified version)
+  - Complex canvas pooling logic
+  - Page caching system
+  - Individual page render requests
+
+#### Step 12: Update Documentation
+- **Files**:
+  - `AGENTS.md` - Update architecture documentation
+  - `README.md` - Update user documentation
+  - Remove references to page buffer system
+
+## Implementation Details
+
+### New UIScrollViewFull.ts Structure
+```typescript
+export class UIScrollViewFull {
+  private pdfDataUrl: string | null = null;
+  private pageTotal: number = 0;
+  
+  async generateContent(): Promise<string> {
+    // Simple HTML with PDF.js viewer
+  }
+  
+  async updatePdf(newPdfDataUrl: string): Promise<void> {
+    // Update PDF and refresh viewer
+  }
+  
+  // Minimal state management
+}
+```
+
+### New YAML Template Structure
+```yaml
+scroll_html: |
+  <!DOCTYPE html>
+  <html>
+  <head>
+    <script>{{pdfjsLibrary}}</script>
+  </head>
+  <body>
+    <div id="pdf-viewer">
+      <canvas id="pdf-canvas"></canvas>
+    </div>
+    <script>{{scrollJs}}</script>
+  </body>
+  </html>
+
+scroll_js: |
+  // Simple PDF.js implementation
+  // Load full PDF once
+  // Handle page navigation natively
+  // Minimal custom logic
+```
+
+### Benefits of New Approach
+1. **Simplified Code**: ~70% reduction in webview JavaScript code
+2. **Better Performance**: PDF.js handles optimization internally
+3. **Reduced Memory**: Single PDF document instead of cached pages
+4. **Easier Maintenance**: Less complex state management
+5. **Native Features**: PDF.js provides zoom, search, etc. for free
+
+### Risks and Mitigation
+1. **PDF.js Learning Curve**: Team needs to understand PDF.js API
+   - *Mitigation*: Start with simple implementation, iterate
+2. **Customization Limits**: Less control over rendering
+   - *Mitigation*: PDF.js is highly customizable
+3. **Browser Compatibility**: PDF.js has specific requirements
+   - *Mitigation*: PDF.js is well-tested across browsers
+
+## Testing Strategy
+
+### Phase 1 Testing
+- [ ] New UIScrollViewFull loads and displays PDF
+- [ ] Page navigation works correctly
+- [ ] Theme switching updates PDF
+- [ ] Font size changes work
+
+### Phase 2 Testing
+- [ ] Large document performance (100+ pages)
+- [ ] Memory usage comparison
+- [ ] Scroll performance
+- [ ] Print functionality
+
+### Phase 3 Testing
+- [ ] Side-by-side comparison with old system
+- [ ] User experience testing
+- [ ] Edge case handling
+
+## Rollback Plan
+
+If the new system doesn't work well:
+1. Keep both systems available via configuration
+2. Default to old system until new system is proven
+3. Gradual migration with A/B testing
+4. Easy switch back via menu option
+
+## Success Criteria
+
+- [ ] 50% reduction in webview JavaScript code
+- [ ] Equal or better performance than current system
+- [ ] Simplified maintenance and debugging
+- [ ] All current features still work
+- [ ] Better user experience (faster, smoother)
+
+## Timeline Estimate
+
+- **Phase 1**: 2-3 days (foundation)
+- **Phase 2**: 3-4 days (webview implementation)
+- **Phase 3**: 2-3 days (integration)
+- **Phase 4**: 2-3 days (optimization)
+- **Total**: 9-13 days
+
+## Next Steps
+
+1. Start with Step 1: Create `UIScrollViewFull.ts` skeleton
+2. Implement basic PDF.js integration
+3. Test with simple PDF documents
+4. Iterate and improve based on results
+5. Gradually replace old system once new system is proven
