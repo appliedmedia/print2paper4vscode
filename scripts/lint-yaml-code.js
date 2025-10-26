@@ -9,6 +9,7 @@ const fs = require('fs');
 const path = require('path');
 const yaml = require('js-yaml');
 const { execSync } = require('child_process');
+const { Parser } = require('htmlparser2');
 
 // ANSI color codes
 const colors = {
@@ -161,25 +162,33 @@ function lintJS(jsContent, fileName) {
 
 function lintHTML(htmlContent, fileName) {
   try {
-    // For template-based HTML, we'll do minimal validation
-    // Template HTML often has unbalanced tags due to template variables
-    const errors = [];
-    const lines = htmlContent.split('\n');
+    // Preprocess HTML to handle template variables
+    const processedHTML = htmlContent
+      .replace(/\{\{[^}]+\}\}/g, '<!-- template-var -->') // Replace {{var}} with comment
+      .replace(/\{\%[^%]+\%\}/g, '<!-- template-var -->'); // Replace {%var%} with comment
     
-    lines.forEach((line, index) => {
-      // Skip empty lines and comments
-      if (line.trim() === '' || line.trim().startsWith('<!--')) {
-        return;
+    const errors = [];
+    
+    // Use htmlparser2 to validate HTML structure
+    const parser = new Parser({
+      onerror: (error) => {
+        errors.push(`Parse error: ${error.message}`);
+      },
+      onend: () => {
+        // Parser completed successfully
       }
-      
-      // Only check for obvious syntax errors
-      if (line.includes('<') && !line.includes('>')) {
-        errors.push(`Line ${index + 1}: Unclosed HTML tag`);
-      }
-      if (line.includes('>') && !line.includes('<')) {
-        errors.push(`Line ${index + 1}: Unmatched closing angle bracket`);
-      }
+    }, {
+      decodeEntities: false, // Don't decode entities to preserve template syntax
+      lowerCaseAttributeNames: false, // Preserve case for template variables
+      recognizeSelfClosing: true // Handle self-closing tags properly
     });
+    
+    try {
+      parser.write(processedHTML);
+      parser.end();
+    } catch (parseError) {
+      errors.push(`Parser exception: ${parseError.message}`);
+    }
     
     return { success: errors.length === 0, errors };
   } catch (error) {

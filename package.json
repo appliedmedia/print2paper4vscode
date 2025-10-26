@@ -60,6 +60,7 @@
     "@typescript-eslint/eslint-plugin": "latest",
     "@typescript-eslint/parser": "latest",
     "eslint": "latest",
+    "htmlparser2": "^10.0.0",
     "js-yaml": "^4.1.0",
     "markdownlint-cli": "latest",
     "prettier": "latest",
