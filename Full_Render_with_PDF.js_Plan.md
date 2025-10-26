@@ -44,15 +44,15 @@ This document outlines a step-by-step plan to simplify the current complex page 
 #### Step 2: Update PDF.ts to Support Full Document Mode
 - **File**: `src/PDF.ts`
 - **Changes**:
-  - Add `getFullPdfDataUrl()` method that returns complete PDF as data URL
-  - Keep existing `renderContent()` for backward compatibility during transition
-  - Add flag to switch between page-by-page and full-document modes
+  - Add `pdfDataUrl()` method that returns complete PDF as data URL
+  - Remove existing `renderContent()` method (no longer needed)
+  - Simplify to full-document mode only
 
 #### Step 3: Create New PageRender Interface for Full Document
 - **File**: `src/types/PageRender_t.ts`
 - **Changes**:
   - Add `FullDocumentPageRender` interface
-  - Methods: `getFullPdfDataUrl()`, `getPageTotal()`, `getPageSizePx()`
+  - Methods: `pdfDataUrl()`, `getPageTotal()`, `getPageSizePx()`
   - Simpler than current `PageRender` interface
 
 ### Phase 2: Webview Implementation
@@ -74,33 +74,33 @@ This document outlines a step-by-step plan to simplify the current complex page 
   - `getPageTotal()`: Get from PDF.js document
   - No canvas pooling, no page caching, no complex state
 
-#### Step 6: Update UIWebView to Support Both Modes
+#### Step 6: Update UIWebView to Use New System
 - **File**: `src/UIWebView.ts`
 - **Changes**:
-  - Add mode parameter to `createPanel()`
-  - Support both `UIScrollView` (current) and `UIPDFScrollView` (new)
-  - Add method to switch between modes
+  - Replace `UIScrollView` with `UIPDFScrollView`
+  - Simplify `createPanel()` method
+  - Remove complex page render request handling
 
 ### Phase 3: Integration and Testing
 
-#### Step 7: Add Mode Selection to PaperPrinter
+#### Step 7: Update PaperPrinter to Use New System
 - **File**: `src/PaperPrinter.ts`
 - **Changes**:
-  - Add configuration option for rendering mode
-  - Update `openWebView()` to use new full document mode
-  - Add menu option to switch between modes (for testing)
+  - Update `openWebView()` to use UIPDFScrollView
+  - Remove complex page render logic
+  - Simplify PDF generation workflow
 
 #### Step 8: Create Full Document PageRender Implementation
 - **File**: `src/PDF.ts`
 - **Changes**:
   - Implement `FullDocumentPageRender` interface
-  - Add `getFullPdfDataUrl()` method
-  - Ensure PDF generation works for both modes
+  - Add `pdfDataUrl()` method
+  - Ensure PDF generation works for full document mode
 
 #### Step 9: Update Message Handling
 - **File**: `src/UIWebView.ts`
 - **Changes**:
-  - Remove complex page render request handling for full document mode
+  - Remove complex page render request handling
   - Add simple PDF update message handling
   - Simplify message routing
 
@@ -114,13 +114,14 @@ This document outlines a step-by-step plan to simplify the current complex page 
   - Memory usage comparison
   - Scroll performance
 
-#### Step 11: Remove Old System (If New System Works Well)
+#### Step 11: Remove Old System
 - **Files to Remove/Simplify**:
-  - `src/UIScrollView.ts` (replace with full document version)
-  - `src/UIScrollView.yaml` (replace with simplified version)
+  - `src/UIScrollView.ts` (replace with UIPDFScrollView)
+  - `src/UIScrollView.yaml` (replace with UIPDFScrollView.yaml)
   - Complex canvas pooling logic
   - Page caching system
   - Individual page render requests
+  - `renderContent()` method from PDF.ts
 
 #### Step 12: Update Documentation
 - **Files**:
