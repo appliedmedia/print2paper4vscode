@@ -33,7 +33,7 @@ This document outlines a step-by-step plan to simplify the current complex page 
 ### Phase 1: Foundation Changes
 
 #### Step 1: Create New PDF.js Full Document Handler
-- **File**: `src/UIScrollViewFull.ts` (new file)
+- **File**: `src/UIPDFScrollView.ts` (new file)
 - **Purpose**: Simplified webview that accepts full PDF and lets PDF.js handle everything
 - **Key Features**:
   - Accept single PDF data URL
@@ -58,7 +58,7 @@ This document outlines a step-by-step plan to simplify the current complex page 
 ### Phase 2: Webview Implementation
 
 #### Step 4: Create Full Document YAML Templates
-- **File**: `src/UIScrollViewFull.yaml` (new file)
+- **File**: `src/UIPDFScrollView.yaml` (new file)
 - **Purpose**: Simplified HTML/CSS/JS templates for full PDF display
 - **Key Features**:
   - Single PDF.js document load
@@ -67,7 +67,7 @@ This document outlines a step-by-step plan to simplify the current complex page 
   - Clean, simple UI
 
 #### Step 5: Implement Full Document Scroll View
-- **File**: `src/UIScrollViewFull.ts`
+- **File**: `src/UIPDFScrollView.ts`
 - **Key Methods**:
   - `generateContent()`: Create HTML with full PDF
   - `updatePdf()`: Replace PDF document
@@ -78,7 +78,7 @@ This document outlines a step-by-step plan to simplify the current complex page 
 - **File**: `src/UIWebView.ts`
 - **Changes**:
   - Add mode parameter to `createPanel()`
-  - Support both `UIScrollView` (current) and `UIScrollViewFull` (new)
+  - Support both `UIScrollView` (current) and `UIPDFScrollView` (new)
   - Add method to switch between modes
 
 ### Phase 3: Integration and Testing
@@ -130,9 +130,9 @@ This document outlines a step-by-step plan to simplify the current complex page 
 
 ## Implementation Details
 
-### New UIScrollViewFull.ts Structure
+### New UIPDFScrollView.ts Structure
 ```typescript
-export class UIScrollViewFull {
+export class UIPDFScrollView {
   private pdfDataUrl: string | null = null;
   private pageTotal: number = 0;
   
@@ -189,7 +189,7 @@ scroll_js: |
 ## Testing Strategy
 
 ### Phase 1 Testing
-- [ ] New UIScrollViewFull loads and displays PDF
+- [ ] New UIPDFScrollView loads and displays PDF
 - [ ] Page navigation works correctly
 - [ ] Theme switching updates PDF
 - [ ] Font size changes work
@@ -231,7 +231,7 @@ If the new system doesn't work well:
 
 ## Next Steps
 
-1. Start with Step 1: Create `UIScrollViewFull.ts` skeleton
+1. Start with Step 1: Create `UIPDFScrollView.ts` skeleton
 2. Implement basic PDF.js integration
 3. Test with simple PDF documents
 4. Iterate and improve based on results
