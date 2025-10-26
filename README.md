@@ -2,6 +2,12 @@
 
 A VS Code extension that captures content from the active editor, applies syntax highlighting, generates a vector PDF, and provides multiple printing options through an interactive webview interface.
 
+## Quick Links
+
+- **[Installation Guide](docs/INSTALL.md)** - Setup and installation
+- **[Developer Guide](docs/AGENTS.md)** - Complete developer documentation
+- **[VSCode APIs](docs/VSCodeAPIs.md)** - API integration details
+
 ## How It Actually Works
 
 The extension follows this workflow:
@@ -334,13 +340,20 @@ Error Recovery:
 - **Font Support**: Limited to jsPDF-supported fonts (Courier, Helvetica, Times)
 - **No Multi-Page Support**: Current PDF generation creates only single-page output
 
+## Documentation
+
+- **[Installation Guide](docs/INSTALL.md)** - Detailed setup and installation instructions
+- **[Developer Guide](docs/AGENTS.md)** - Complete developer documentation and architecture
+- **[VSCode APIs](docs/VSCodeAPIs.md)** - VS Code API integration details
+- **[Implementation Plan](docs/IMPLEMENTATION_PLAN.md)** - Development roadmap and plans
+- **[PDF Generation Flow](docs/PDF_GENERATION_FLOW.md)** - PDF creation process documentation
+
 ## Development
 
 - **Source**: TypeScript files in `src/` directory
 - **Build Output**: Compiled JavaScript in `out/` directory
 - **Package Config**: `package.json` with extension manifest
 - **Test Files**: Test suite in `tests/` directory
-- **Documentation**: AGENTS.md for developer guide, README.md for user documentation
 
 ## Testing
 
