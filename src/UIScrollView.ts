@@ -301,7 +301,7 @@ export class UIScrollView {
       return this.app.templateDictReplace(templates.toolbar_html, {
         toolbarCss: templates.toolbar_css + '\n' + uiMenuCss, // Include UIMenu CSS
         baseCss: templates.base_css, // Use base_css from templates
-        menuHtml: menuHtml, // This matches {{menuHtml}} in toolbar_html
+        menuHtml, // This matches {{menuHtml}} in toolbar_html
         toolbarJs: templates.toolbar_js + '\n' + uiMenuJs, // Include UIMenu JS
         additionalJs: '', // No additional JS needed for scrollable viewer
       });

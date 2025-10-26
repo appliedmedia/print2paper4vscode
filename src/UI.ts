@@ -130,7 +130,7 @@ export class UI {
       const toolbarHtml = this.app.templateDictReplace(templates.toolbar_html, {
         toolbarCss: templates.toolbar_css,
         baseCss: templates.base_css,
-        menuHtml: menuHtml,
+        menuHtml,
         toolbarJs: templates.toolbar_js,
         additionalJs: '',
       });
