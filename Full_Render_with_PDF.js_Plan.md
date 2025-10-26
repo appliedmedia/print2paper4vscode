@@ -109,7 +109,7 @@ This document outlines a step-by-step plan to simplify the current complex page 
 - **Changes**:
   - Add message handler for `requestPdfChunk` from webview
   - Implement chunk serving logic that extracts byte ranges from PDF
-  - Add message handler for `pdfChunkResponse` to webview
+  - Add message handler for `receivePdfChunk` to webview
   - Remove complex page render request handling
   - Simplify message routing
 
@@ -245,7 +245,7 @@ class CustomPDFDataRangeTransport {
     
     // Send chunk to webview
     this.app.vscodeapis.postMessage(this.webviewPanelId, {
-      type: 'pdfChunkResponse',
+      type: 'receivePdfChunk',
       begin: begin,
       end: end,
       chunk: chunk
@@ -279,7 +279,7 @@ class CustomPDFDataRangeTransport {
     });
   }
   
-  onChunkReceived(begin: number, end: number, chunk: ArrayBuffer) {
+  onReceivePdfChunk(begin: number, end: number, chunk: ArrayBuffer) {
     const key = `${begin}-${end}`;
     this.chunks.set(key, chunk);
     
