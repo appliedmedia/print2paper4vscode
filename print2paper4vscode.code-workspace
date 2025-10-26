@@ -15,8 +15,8 @@
         },
         "eslint.workingDirectories": ["."],
         "typescript.preferences.includePackageJsonAutoImports": "on",
-        "coderabbit.enabled": false,
-        "coderabbit.disableForWorkspace": true,
+        "coderabbit.enabled": true,
+        "coderabbit.repositoryPath": "/Users/acoven/print2paper4vscode",
     },
     "extensions": {
         "recommendations": ["esbenp.prettier-vscode", "dbaeumer.vscode-eslint", "davidanson.vscode-markdownlint"],
