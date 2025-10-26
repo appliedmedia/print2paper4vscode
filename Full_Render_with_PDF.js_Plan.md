@@ -71,7 +71,7 @@ This document outlines a step-by-step plan to simplify the current complex page 
 - **Key Properties**:
   - `pdfDataUrl: string` - Direct PDF data URL
   - `pageTotal: number` - Total pages from PDF.js
-  - `pageSizePx: {widthPx: number, heightPx: number}` - Page dimensions
+  - `pageSizePx: {widthPx: number, heightPx: number}` - Page dimensions in CSS pixels (for webview)
 - **Key Methods**:
   - `generateContent()`: Create HTML with full PDF
   - `updatePdf()`: Replace PDF document
@@ -99,8 +99,9 @@ This document outlines a step-by-step plan to simplify the current complex page 
 - **Changes**:
   - Add `pdfDataUrl` property that returns complete PDF as data URL
   - Add `pageTotal` property for total pages
-  - Add `pageSizePx` property for page dimensions
+  - Add `pageSizePx` property for page dimensions in CSS pixels (converted from PDF points)
   - Remove PageRender interface implementation
+  - Keep existing `coords.pdfPtsToCssPx()` conversion for UI display
 
 #### Step 9: Update Message Handling
 - **File**: `src/UIWebView.ts`
@@ -142,12 +143,12 @@ This document outlines a step-by-step plan to simplify the current complex page 
 export class UIPDFScrollView {
   public pdfDataUrl: string;
   public pageTotal: number;
-  public pageSizePx: { widthPx: number; heightPx: number };
+  public pageSizePx: { widthPx: number; heightPx: number }; // CSS pixels for webview
   
   constructor(pdfDataUrl: string, pageTotal: number, pageSizePx: { widthPx: number; heightPx: number }) {
     this.pdfDataUrl = pdfDataUrl;
     this.pageTotal = pageTotal;
-    this.pageSizePx = pageSizePx;
+    this.pageSizePx = pageSizePx; // Already converted from PDF points to CSS pixels
   }
   
   async generateContent(): Promise<string> {
