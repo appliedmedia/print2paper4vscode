@@ -94,40 +94,43 @@ This document outlines a step-by-step plan to simplify the current complex page 
   - Remove PageRender interface usage
   - Simplify PDF generation workflow
 
-#### Step 8: Simplify PDF Class
+#### Step 8: Implement PDF Chunk Provider
 - **File**: `src/PDF.ts`
 - **Changes**:
   - Add `pdfDataUrl` property that returns complete PDF as data URL
   - Add `pageTotal` property for total pages
   - Add `pageSizePx` property for page dimensions in CSS pixels (converted from PDF points)
+  - Implement custom `PDFDataRangeTransport` for chunk serving
+  - Add message handlers for chunk requests from webview
   - Remove PageRender interface implementation
-  - Keep existing `coords.pdfPtsToCssPx()` conversion for UI display
 
-#### Step 9: Update Message Handling
+#### Step 9: Implement Chunk Request Handling
 - **File**: `src/UIWebView.ts`
 - **Changes**:
+  - Add message handler for `requestPdfChunk` from webview
+  - Implement chunk serving logic that extracts byte ranges from PDF
+  - Add message handler for `pdfChunkResponse` to webview
   - Remove complex page render request handling
-  - Add simple PDF update message handling
   - Simplify message routing
 
 ### Phase 4: Optimization and Cleanup
 
-#### Step 10: Implement Memory Management
+#### Step 10: Implement Custom PDFDataRangeTransport
 - **File**: `src/UIPDFScrollView.ts`
 - **Changes**:
-  - Add memory monitoring for PDF data URL size
-  - Implement chunked loading for large PDFs
-  - Add fallback to page-by-page rendering for very large documents
-  - Add user warnings for memory-intensive operations
+  - Implement custom `PDFDataRangeTransport` that uses message-based chunking
+  - Handle chunk requests via webview messages
+  - Integrate with PDF.js streaming API
+  - Remove memory management complexity (PDF.js handles it)
 
 #### Step 11: Performance Testing
 - **Test Cases**:
-  - Large documents (50+ pages)
-  - Very large documents (200+ pages)
-  - Memory usage monitoring
-  - Theme switching performance
-  - Font size changes
-  - Scroll performance
+  - Small documents (1-10 pages) - verify streaming works
+  - Large documents (50+ pages) - verify chunking efficiency
+  - Very large documents (200+ pages) - verify memory management
+  - Theme switching performance - verify chunk regeneration
+  - Font size changes - verify chunk regeneration
+  - Scroll performance - verify on-demand loading
 
 #### Step 12: Remove Old System
 - **Files to Remove/Simplify**:
@@ -224,25 +227,75 @@ async generateContent(): Promise<string> {
 }
 ```
 
-#### Chunked Loading Implementation
+#### Custom PDFDataRangeTransport Implementation
 ```typescript
-private async generateChunkedContent(): Promise<string> {
-  // PDF.js handles chunking automatically for data URLs
-  // No temp files needed - all in-memory streaming
-  // Use PDF.js rangeChunkSize for memory control
-  const loadingTask = pdfjsLib.getDocument({
-    data: this.pdfDataUrl,
-    rangeChunkSize: 32768,  // 32KB chunks for memory control
-    disableAutoFetch: false,
-    disableStream: false
-  });
+// Extension side - PDF.ts
+class CustomPDFDataRangeTransport {
+  private pdfArrayBuffer: ArrayBuffer;
+  private webviewPanelId: string;
   
-  // PDF.js will automatically:
-  // - Load PDF in chunks
-  // - Render pages on-demand
-  // - Free memory for unused pages
-  // - Handle progressive loading
+  constructor(pdfArrayBuffer: ArrayBuffer, webviewPanelId: string) {
+    this.pdfArrayBuffer = pdfArrayBuffer;
+    this.webviewPanelId = webviewPanelId;
+  }
+  
+  requestDataRange(begin: number, end: number) {
+    // Extract chunk from PDF ArrayBuffer
+    const chunk = this.pdfArrayBuffer.slice(begin, end);
+    
+    // Send chunk to webview
+    this.app.vscodeapis.postMessage(this.webviewPanelId, {
+      type: 'pdfChunkResponse',
+      begin: begin,
+      end: end,
+      chunk: chunk
+    });
+  }
 }
+
+// Webview side - UIPDFScrollView.ts
+class CustomPDFDataRangeTransport {
+  private chunks: Map<string, ArrayBuffer> = new Map();
+  private pendingRequests: Map<string, (chunk: ArrayBuffer) => void> = new Map();
+  
+  requestDataRange(begin: number, end: number) {
+    const key = `${begin}-${end}`;
+    
+    if (this.chunks.has(key)) {
+      // Chunk already loaded
+      return Promise.resolve(this.chunks.get(key)!);
+    }
+    
+    // Request chunk from extension
+    window.vscode.postMessage({
+      type: 'requestPdfChunk',
+      begin: begin,
+      end: end
+    });
+    
+    // Return promise that resolves when chunk arrives
+    return new Promise(resolve => {
+      this.pendingRequests.set(key, resolve);
+    });
+  }
+  
+  onChunkReceived(begin: number, end: number, chunk: ArrayBuffer) {
+    const key = `${begin}-${end}`;
+    this.chunks.set(key, chunk);
+    
+    const resolver = this.pendingRequests.get(key);
+    if (resolver) {
+      resolver(chunk);
+      this.pendingRequests.delete(key);
+    }
+  }
+}
+
+// Usage in webview
+const loadingTask = pdfjsLib.getDocument({
+  range: new CustomPDFDataRangeTransport(),
+  rangeChunkSize: 32768  // 32KB chunks
+});
 ```
 
 ### New YAML Template Structure
@@ -275,20 +328,20 @@ scroll_js: |
 4. **Easier Maintenance**: Less complex state management
 5. **Native Features**: PDF.js provides zoom, search, etc. for free
 
-## Memory Management Strategy
+## Unified Streaming Architecture
 
-### Memory Detection
-- **PDF Size Monitoring**: Track PDF data URL size before passing to webview
-- **Browser Memory Limits**: Monitor webview memory usage
-- **Page Count Thresholds**: Set limits based on page count and content density
+### Single Rendering Mode
+- **PDF.js Streaming**: Always use PDF.js with custom chunk provider
+- **Extension Chunk Server**: Extension serves PDF chunks via message handling
+- **No Size Limits**: Works for any size document - small or massive
+- **No Fallback Modes**: One consistent approach for all documents
 
-### Memory Mitigation Options
-1. **PDF.js Chunked Loading**: Use `rangeChunkSize` to control memory usage (32KB chunks)
-2. **Progressive Rendering**: PDF.js automatically renders pages on-demand as user scrolls
-3. **Memory Cleanup**: PDF.js automatically frees memory for pages that scroll out of view
-4. **Fallback Mode**: Switch to current page-by-page rendering for extremely large documents
-5. **User Warnings**: Alert users about memory usage for large documents
-6. **No Temp Files**: PDF.js handles everything in-memory with streaming - no disk storage needed
+### How It Works
+1. **PDF Generation**: Extension generates complete PDF in memory (jsPDF)
+2. **Chunk Provider**: Extension implements custom PDFDataRangeTransport
+3. **Message-Based Chunks**: Webview requests specific byte ranges via messages
+4. **PDF.js Streaming**: PDF.js handles all rendering with our chunk provider
+5. **Memory Efficient**: Only loads chunks as needed, frees unused chunks
 
 ### Risks and Mitigation
 1. **PDF.js Learning Curve**: Team needs to understand PDF.js API
