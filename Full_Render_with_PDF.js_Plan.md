@@ -161,7 +161,7 @@ This document outlines a step-by-step plan to simplify the current complex page 
   - Font size changes - verify chunk regeneration
   - Scroll performance - verify on-demand loading
 
-#### Step 12: Remove Old System
+#### Step 12: Remove Old System (After All Migration is Complete)
 - **Files to Remove/Simplify**:
   - `src/UIScrollView.ts` (replace with UIPDFScrollView)
   - `src/UIScrollView.yaml` (replace with UIPDFScrollView.yaml)
@@ -170,6 +170,7 @@ This document outlines a step-by-step plan to simplify the current complex page 
   - Page caching system
   - Individual page render requests
   - `renderContent()` method from PDF.ts
+- **CRITICAL**: Only do this after all migration steps are complete and tested
 
 #### Step 13: Update Documentation
 - **Files**:
