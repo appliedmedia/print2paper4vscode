@@ -109,7 +109,8 @@ This document outlines a step-by-step plan to simplify the current complex page 
 - **Changes**:
   - Add message handler for `requestPdfChunk` from webview
   - Implement `requestPdfChunk()` method that extracts byte ranges from PDF
-  - Add message handler for `receivePdfChunk` to webview
+  - Add message handler for `receivePdfChunk` to webview  
+  - Implement `receivePdfChunk()` method for interface consistency
   - Remove complex page render request handling
   - Simplify message routing
 
@@ -250,6 +251,11 @@ class CustomPDFDataRangeTransport {
       end: end,
       chunk: chunk
     });
+  }
+  
+  receivePdfChunk(begin: number, end: number, chunk: ArrayBuffer) {
+    // Extension doesn't receive chunks, only sends them
+    // This method exists for interface consistency
   }
 }
 
