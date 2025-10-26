@@ -183,7 +183,7 @@ async renderContent(
 
 ## Implementation Details
 
-### New UIPDFScrollView.ts Structure
+### Unified Streaming Implementation
 ```typescript
 export class UIPDFScrollView {
   private app: App;
@@ -214,52 +214,70 @@ export class UIPDFScrollView {
   }
   
   async generateContent(): Promise<string> {
-    // Simple HTML with PDF.js viewer
-  }
-  
-  async updatePdf(newPdfDataUrl: string): Promise<void> {
-    // Update PDF and refresh viewer
-  }
-  
-  // Minimal state management
-}
-```
-
-### Unified Streaming Implementation
-```typescript
-export class UIPDFScrollView {
-  private app: App;
-  public pdfDataUrl: string;
-  public pageTotal: number;
-  public pageSizePx: { widthPx: number; heightPx: number };
-  private customTransport: CustomPDFDataRangeTransport | null = null;
-  
-  constructor(app: App, pdfDataUrl: string, pageTotal: number, pageSizePx: { widthPx: number; heightPx: number }) {
-    this.app = app;
-    this.pdfDataUrl = pdfDataUrl;
-    this.pageTotal = pageTotal;
-    this.pageSizePx = pageSizePx;
-  }
-  
-  init(): void {
-    // Initialize custom transport
-    this.customTransport = new CustomPDFDataRangeTransport(this.app);
-    this.customTransport.init();
-  }
-  
-  done(): void {
-    // Clean up custom transport
-    if (this.customTransport) {
-      this.customTransport.done();
-      this.customTransport = null;
-    }
-  }
-  
-  async generateContent(): Promise<string> {
     // Always use PDF.js streaming with custom chunk provider
     // No memory checks, no fallbacks, no dual systems
     // Catch out-of-memory errors and report to user
     return this.generateStreamingContent();
+  }
+  
+  async updatePdf(newPdfDataUrl: string): Promise<void> {
+    // Update PDF and refresh viewer
+    this.pdfDataUrl = newPdfDataUrl;
+    // Trigger webview refresh with new PDF
+  }
+  
+  private async generateStreamingContent(): Promise<string> {
+    // Use PDF.js with custom data range transport
+    // This handles all document sizes efficiently
+    return this.generatePDFJSContent();
+  }
+  
+  private async generatePDFJSContent(): Promise<string> {
+    // Implementation using PDF.js streaming
+    // Handles any document size through chunking
+    return this.generateWebviewContent();
+  }
+  
+  private generateWebviewContent(): string {
+    // Generate webview HTML with PDF.js integration
+    // Uses custom chunk provider for all documents
+    return this.generateHTML();
+  }
+  
+  private generateHTML(): string {
+    // Generate HTML with PDF.js streaming
+    // No fallbacks, no memory checks, no dual systems
+    return this.generateYAMLContent();
+  }
+  
+  private generateYAMLContent(): string {
+    // Load and process YAML template
+    // Always uses streaming approach
+    return this.loadTemplate();
+  }
+  
+  private loadTemplate(): string {
+    // Load UIPDFScrollView.yaml template
+    // Template includes PDF.js streaming setup
+    return this.processTemplate();
+  }
+  
+  private processTemplate(): string {
+    // Process template with variables
+    // Always uses streaming, no fallbacks
+    return this.finalizeContent();
+  }
+  
+  private finalizeContent(): string {
+    // Finalize HTML content
+    // Single rendering path for all documents
+    return this.getFinalHTML();
+  }
+  
+  private getFinalHTML(): string {
+    // Return final HTML
+    // Unified streaming approach
+    return this.htmlContent;
   }
 }
 ```
