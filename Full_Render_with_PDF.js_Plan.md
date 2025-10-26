@@ -183,14 +183,31 @@ This document outlines a step-by-step plan to simplify the current complex page 
 ### New UIPDFScrollView.ts Structure
 ```typescript
 export class UIPDFScrollView {
+  private app: App;
   public pdfDataUrl: string;
   public pageTotal: number;
   public pageSizePx: { widthPx: number; heightPx: number }; // CSS pixels for webview
+  private customTransport: CustomPDFDataRangeTransport | null = null;
   
-  constructor(pdfDataUrl: string, pageTotal: number, pageSizePx: { widthPx: number; heightPx: number }) {
+  constructor(app: App, pdfDataUrl: string, pageTotal: number, pageSizePx: { widthPx: number; heightPx: number }) {
+    this.app = app;
     this.pdfDataUrl = pdfDataUrl;
     this.pageTotal = pageTotal;
     this.pageSizePx = pageSizePx; // Already converted from PDF points to CSS pixels
+  }
+  
+  init(): void {
+    // Initialize custom transport
+    this.customTransport = new CustomPDFDataRangeTransport(this.app);
+    this.customTransport.init();
+  }
+  
+  done(): void {
+    // Clean up custom transport
+    if (this.customTransport) {
+      this.customTransport.done();
+      this.customTransport = null;
+    }
   }
   
   async generateContent(): Promise<string> {
@@ -208,14 +225,31 @@ export class UIPDFScrollView {
 ### Unified Streaming Implementation
 ```typescript
 export class UIPDFScrollView {
+  private app: App;
   public pdfDataUrl: string;
   public pageTotal: number;
   public pageSizePx: { widthPx: number; heightPx: number };
+  private customTransport: CustomPDFDataRangeTransport | null = null;
   
-  constructor(pdfDataUrl: string, pageTotal: number, pageSizePx: { widthPx: number; heightPx: number }) {
+  constructor(app: App, pdfDataUrl: string, pageTotal: number, pageSizePx: { widthPx: number; heightPx: number }) {
+    this.app = app;
     this.pdfDataUrl = pdfDataUrl;
     this.pageTotal = pageTotal;
     this.pageSizePx = pageSizePx;
+  }
+  
+  init(): void {
+    // Initialize custom transport
+    this.customTransport = new CustomPDFDataRangeTransport(this.app);
+    this.customTransport.init();
+  }
+  
+  done(): void {
+    // Clean up custom transport
+    if (this.customTransport) {
+      this.customTransport.done();
+      this.customTransport = null;
+    }
   }
   
   async generateContent(): Promise<string> {
@@ -232,28 +266,75 @@ export class UIPDFScrollView {
 ```typescript
 // Extension side - PDF.ts
 class CustomPDFDataRangeTransport {
+  private app: App;
   private pdfArrayBuffer: ArrayBuffer;
   private webviewPanelId: string;
+  private pendingRequests: Map<string, { resolve: (chunk: ArrayBuffer) => void; reject: (error: Error) => void; timeout: NodeJS.Timeout }> = new Map();
+  private static readonly REQUEST_TIMEOUT_MS = 30000; // 30 seconds
   
-  constructor(pdfArrayBuffer: ArrayBuffer, webviewPanelId: string) {
+  constructor(app: App, pdfArrayBuffer: ArrayBuffer, webviewPanelId: string) {
+    this.app = app;
     this.pdfArrayBuffer = pdfArrayBuffer;
     this.webviewPanelId = webviewPanelId;
   }
   
-  requestPdfChunk(begin: number, end: number) {
-    // Extract chunk from PDF ArrayBuffer
-    const chunk = this.pdfArrayBuffer.slice(begin, end);
+  init(): void {
+    // Register message handler for chunk requests
+    this.app.ui.registerMessageHandler('requestPdfChunk', this.handleChunkRequest.bind(this));
+  }
+  
+  done(): void {
+    // Clean up all pending requests
+    for (const [key, request] of this.pendingRequests) {
+      clearTimeout(request.timeout);
+      request.reject(new Error('Transport disposed'));
+    }
+    this.pendingRequests.clear();
     
-    // Send chunk to webview
+    // Unregister message handler
+    this.app.ui.unregisterMessageHandler('requestPdfChunk', this.handleChunkRequest.bind(this));
+  }
+  
+  private async handleChunkRequest(msg: PostMessage): Promise<void> {
+    const { begin, end, requestId } = msg;
+    
+    try {
+      // Validate range
+      if (typeof begin !== 'number' || typeof end !== 'number' || begin < 0 || end <= begin || end > this.pdfArrayBuffer.byteLength) {
+        await this.sendChunkResponse(requestId, begin, end, null, `Invalid range: ${begin}-${end}, buffer length: ${this.pdfArrayBuffer.byteLength}`);
+        return;
+      }
+      
+      // Extract chunk from PDF ArrayBuffer
+      const chunk = this.pdfArrayBuffer.slice(begin, end);
+      
+      // Send success response
+      await this.sendChunkResponse(requestId, begin, end, chunk, null);
+      
+    } catch (error) {
+      // Send error response
+      await this.sendChunkResponse(requestId, begin, end, null, `Chunk extraction failed: ${error.message}`);
+    }
+  }
+  
+  private async sendChunkResponse(requestId: string, begin: number, end: number, chunk: ArrayBuffer | null, error: string | null): Promise<void> {
     this.app.vscodeapis.postMessage(this.webviewPanelId, {
       type: 'receivePdfChunk',
+      requestId: requestId,
       begin: begin,
       end: end,
-      chunk: chunk
+      chunk: chunk,
+      error: error,
+      success: error === null
     });
   }
   
-  receivePdfChunk(begin: number, end: number, chunk: ArrayBuffer) {
+  requestPdfChunk(begin: number, end: number): Promise<ArrayBuffer> {
+    // This method exists for interface consistency but is not used on extension side
+    return Promise.reject(new Error('requestPdfChunk not implemented on extension side'));
+  }
+  
+  receivePdfChunk(begin: number, end: number, chunk: ArrayBuffer): void {
     // Extension doesn't receive chunks, only sends them
     // This method exists for interface consistency
   }
@@ -261,10 +342,35 @@ class CustomPDFDataRangeTransport {
 
 // Webview side - UIPDFScrollView.ts
 class CustomPDFDataRangeTransport {
+  private app: App;
   private chunks: Map<string, ArrayBuffer> = new Map();
-  private pendingRequests: Map<string, (chunk: ArrayBuffer) => void> = new Map();
+  private pendingRequests: Map<string, { resolve: (chunk: ArrayBuffer) => void; reject: (error: Error) => void; timeout: number }> = new Map();
+  private requestIdCounter: number = 0;
+  private static readonly REQUEST_TIMEOUT_MS = 30000; // 30 seconds
   
-  requestPdfChunk(begin: number, end: number) {
+  constructor(app: App) {
+    this.app = app;
+  }
+  
+  init(): void {
+    // Register message handler for chunk responses
+    this.app.ui.registerMessageHandler('receivePdfChunk', this.handleChunkResponse.bind(this));
+  }
+  
+  done(): void {
+    // Clean up all pending requests
+    for (const [key, request] of this.pendingRequests) {
+      clearTimeout(request.timeout);
+      request.reject(new Error('Transport disposed'));
+    }
+    this.pendingRequests.clear();
+    this.chunks.clear();
+    
+    // Unregister message handler
+    this.app.ui.unregisterMessageHandler('receivePdfChunk', this.handleChunkResponse.bind(this));
+  }
+  
+  requestPdfChunk(begin: number, end: number): Promise<ArrayBuffer> {
     const key = `${begin}-${end}`;
     
     if (this.chunks.has(key)) {
@@ -272,36 +378,74 @@ class CustomPDFDataRangeTransport {
       return Promise.resolve(this.chunks.get(key)!);
     }
     
+    // Check if request is already pending
+    if (this.pendingRequests.has(key)) {
+      return Promise.reject(new Error(`Request already pending for range ${begin}-${end}`));
+    }
+    
+    // Generate unique request ID
+    const requestId = `req_${++this.requestIdCounter}_${Date.now()}`;
+    
     // Request chunk from extension
-    window.vscode.postMessage({
+    this.app.vscodeapis.postMessage({
       type: 'requestPdfChunk',
       begin: begin,
-      end: end
+      end: end,
+      requestId: requestId
     });
     
     // Return promise that resolves when chunk arrives
-    return new Promise(resolve => {
-      this.pendingRequests.set(key, resolve);
+    return new Promise((resolve, reject) => {
+      const timeout = setTimeout(() => {
+        this.pendingRequests.delete(key);
+        reject(new Error(`Request timeout for range ${begin}-${end}`));
+      }, CustomPDFDataRangeTransport.REQUEST_TIMEOUT_MS);
+      
+      this.pendingRequests.set(key, { resolve, reject, timeout });
     });
   }
   
-  receivePdfChunk(begin: number, end: number, chunk: ArrayBuffer) {
+  private handleChunkResponse(msg: PostMessage): void {
+    const { requestId, begin, end, chunk, error, success } = msg;
     const key = `${begin}-${end}`;
-    this.chunks.set(key, chunk);
     
-    const resolver = this.pendingRequests.get(key);
-    if (resolver) {
-      resolver(chunk);
-      this.pendingRequests.delete(key);
+    const request = this.pendingRequests.get(key);
+    if (!request) {
+      // Request not found (may have timed out)
+      return;
     }
+    
+    // Clear timeout
+    clearTimeout(request.timeout);
+    this.pendingRequests.delete(key);
+    
+    if (success && chunk) {
+      // Cache the chunk
+      this.chunks.set(key, chunk);
+      request.resolve(chunk);
+    } else {
+      // Handle error
+      request.reject(new Error(error || 'Unknown error'));
+    }
+  }
+  
+  receivePdfChunk(begin: number, end: number, chunk: ArrayBuffer): void {
+    // This method is not used on webview side - responses come via message handler
+    // This method exists for interface consistency
   }
 }
 
 // Usage in webview
+const customTransport = new CustomPDFDataRangeTransport(this.app);
+customTransport.init();
+
 const loadingTask = pdfjsLib.getDocument({
-  range: new CustomPDFDataRangeTransport(),
+  range: customTransport,
   rangeChunkSize: 32768  // 32KB chunks
 });
+
+// Clean up when done
+customTransport.done();
 ```
 
 ### New YAML Template Structure
