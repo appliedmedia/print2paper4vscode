@@ -4,6 +4,8 @@
 
 This document outlines a step-by-step plan to simplify the current complex page buffer system by passing the entire PDF document to PDF.js and letting it handle all rendering internally. This approach eliminates the need for individual page rendering, caching, and canvas pooling.
 
+**Architectural Constraint**: This plan maintains the single rendering method principle from AGENTS.md. We continue to use line-by-line rendering everywhere for PDF generation. The chunking strategy only changes PDF delivery to the webview, not the underlying rendering method. The extension still generates the complete PDF using `renderByLine()` before sending it in chunks to PDF.js.
+
 ## Current System Analysis
 
 ### Current Architecture
@@ -489,11 +491,14 @@ scroll_js: |
 - **No Dual Systems**: Remove old UIScrollView completely
 
 ### How It Works
-1. **PDF Generation**: Extension generates complete PDF in memory (jsPDF)
-2. **Chunk Provider**: Extension implements custom PDFDataRangeTransport
-3. **Message-Based Chunks**: Webview requests specific byte ranges via messages
-4. **PDF.js Streaming**: PDF.js handles all rendering with our chunk provider
-5. **Memory Efficient**: Only loads chunks as needed, frees unused chunks
+1. **PDF Generation**: Extension generates complete PDF in memory using line-by-line rendering (jsPDF + `renderByLine()`)
+2. **Complete PDF Ready**: Full PDF document is created before any chunking begins
+3. **Chunk Provider**: Extension implements custom PDFDataRangeTransport to serve byte ranges
+4. **Message-Based Chunks**: Webview requests specific byte ranges via messages
+5. **PDF.js Streaming**: PDF.js handles all display rendering with our chunk provider
+6. **Memory Efficient**: Only loads chunks as needed, frees unused chunks
+
+**Key Point**: We render everything first using the single line-by-line method, then deliver it in chunks. No fallbacks, no dual rendering methods.
 
 ### Risks and Mitigation
 1. **PDF.js Learning Curve**: Team needs to understand PDF.js API
@@ -545,6 +550,8 @@ PDF.js streaming with custom chunk provider handles all document sizes and use c
 - [ ] **Zero memory management complexity** (PDF.js handles everything)
 - [ ] **Zero dual rendering modes** (one unified streaming approach)
 - [ ] **Zero memory checks** (PDF.js handles all memory management)
+- [ ] **Single rendering method maintained** (line-by-line rendering everywhere per AGENTS.md)
+- [ ] **Render-first-then-chunk approach** (complete PDF generated before chunking begins)
 
 ## Timeline Estimate
 

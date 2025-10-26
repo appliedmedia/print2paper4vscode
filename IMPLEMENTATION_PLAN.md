@@ -3,10 +3,14 @@
 ## Overview
 Implement unified PDF.js streaming architecture with custom chunk provider. Each stage must be fully tested and documented before proceeding to the next.
 
+**Architectural Constraint**: This implementation maintains the single rendering method principle from AGENTS.md. We continue to use line-by-line rendering everywhere for PDF generation. The chunking strategy only changes PDF delivery to the webview, not the underlying rendering method. The extension still generates the complete PDF using `renderByLine()` before sending it in chunks to PDF.js.
+
 ---
 
 ## Stage 1: Foundation Setup
 **Goal**: Create basic infrastructure and prove chunking works
+
+**Critical**: This stage maintains the single line-by-line rendering method from AGENTS.md. We render the complete PDF first using `renderByLine()`, then deliver it in chunks. No changes to the core rendering logic.
 
 ### 1.1 Create UIPDFScrollView Skeleton
 - [ ] Create `src/UIPDFScrollView.ts` with basic class structure
