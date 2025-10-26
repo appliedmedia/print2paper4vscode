@@ -33,6 +33,13 @@ Implement unified PDF.js streaming architecture with custom chunk provider. Each
 - [ ] Document constructor parameters
 - [ ] Document expected HTML output
 
+**Linting & Compilation**:
+
+- [ ] Fix all linter errors (MD, HTML, JS, CSS, TS, YAML)
+- [ ] Run `npm run compile` successfully
+- [ ] Verify no TypeScript compilation errors
+- [ ] Verify no ESLint errors
+
 ### 1.2 Implement Basic PDF.js Integration
 
 - [ ] Add PDF.js document loading in `generateContent()`
@@ -53,6 +60,13 @@ Implement unified PDF.js streaming architecture with custom chunk provider. Each
 - [ ] Document error handling strategy
 - [ ] Document debugging approach
 
+**Linting & Compilation**:
+
+- [ ] Fix all linter errors (MD, HTML, JS, CSS, TS, YAML)
+- [ ] Run `npm run compile` successfully
+- [ ] Verify no TypeScript compilation errors
+- [ ] Verify no ESLint errors
+
 ### 1.3 Create Custom PDFDataRangeTransport Skeleton
 
 - [ ] Create `CustomPDFDataRangeTransport` class on both sides
@@ -72,6 +86,13 @@ Implement unified PDF.js streaming architecture with custom chunk provider. Each
 - [ ] Document class interfaces
 - [ ] Document message flow
 - [ ] Document logging strategy
+
+**Linting & Compilation**:
+
+- [ ] Fix all linter errors (MD, HTML, JS, CSS, TS, YAML)
+- [ ] Run `npm run compile` successfully
+- [ ] Verify no TypeScript compilation errors
+- [ ] Verify no ESLint errors
 
 ---
 
@@ -102,6 +123,13 @@ Implement unified PDF.js streaming architecture with custom chunk provider. Each
 - [ ] Document message format
 - [ ] Document performance characteristics
 
+**Linting & Compilation**:
+
+- [ ] Fix all linter errors (MD, HTML, JS, CSS, TS, YAML)
+- [ ] Run `npm run compile` successfully
+- [ ] Verify no TypeScript compilation errors
+- [ ] Verify no ESLint errors
+
 ### 2.2 Webview-Side Chunk Consumer
 
 - [ ] Implement `requestPdfChunk()` in webview
@@ -125,6 +153,13 @@ Implement unified PDF.js streaming architecture with custom chunk provider. Each
 - [ ] Document message handling
 - [ ] Document performance optimizations
 
+**Linting & Compilation**:
+
+- [ ] Fix all linter errors (MD, HTML, JS, CSS, TS, YAML)
+- [ ] Run `npm run compile` successfully
+- [ ] Verify no TypeScript compilation errors
+- [ ] Verify no ESLint errors
+
 ### 2.3 Message Handling Integration
 
 - [ ] Add message handlers in `UIWebView.ts`
@@ -147,6 +182,13 @@ Implement unified PDF.js streaming architecture with custom chunk provider. Each
 - [ ] Document error handling
 - [ ] Document debugging approach
 - [ ] Document performance expectations
+
+**Linting & Compilation**:
+
+- [ ] Fix all linter errors (MD, HTML, JS, CSS, TS, YAML)
+- [ ] Run `npm run compile` successfully
+- [ ] Verify no TypeScript compilation errors
+- [ ] Verify no ESLint errors
 
 ---
 
@@ -177,6 +219,13 @@ Implement unified PDF.js streaming architecture with custom chunk provider. Each
 - [ ] Document event handling
 - [ ] Document error scenarios
 
+**Linting & Compilation**:
+
+- [ ] Fix all linter errors (MD, HTML, JS, CSS, TS, YAML)
+- [ ] Run `npm run compile` successfully
+- [ ] Verify no TypeScript compilation errors
+- [ ] Verify no ESLint errors
+
 ### 3.2 Canvas Rendering
 
 - [ ] Add canvas element to HTML template
@@ -199,6 +248,13 @@ Implement unified PDF.js streaming architecture with custom chunk provider. Each
 - [ ] Document viewport management
 - [ ] Document zoom/scroll implementation
 - [ ] Document performance considerations
+
+**Linting & Compilation**:
+
+- [ ] Fix all linter errors (MD, HTML, JS, CSS, TS, YAML)
+- [ ] Run `npm run compile` successfully
+- [ ] Verify no TypeScript compilation errors
+- [ ] Verify no ESLint errors
 
 ### 3.3 Error Handling and User Feedback
 
@@ -267,6 +323,13 @@ Implement unified PDF.js streaming architecture with custom chunk provider. Each
 - [ ] Document recovery procedures
 - [ ] Document debugging information
 
+**Linting & Compilation**:
+
+- [ ] Fix all linter errors (MD, HTML, JS, CSS, TS, YAML)
+- [ ] Run `npm run compile` successfully
+- [ ] Verify no TypeScript compilation errors
+- [ ] Verify no ESLint errors
+
 ---
 
 ## Stage 4: Integration Testing
@@ -299,6 +362,13 @@ Implement unified PDF.js streaming architecture with custom chunk provider. Each
 - [ ] Document performance characteristics
 - [ ] Document known limitations
 
+**Linting & Compilation**:
+
+- [ ] Fix all linter errors (MD, HTML, JS, CSS, TS, YAML)
+- [ ] Run `npm run compile` successfully
+- [ ] Verify no TypeScript compilation errors
+- [ ] Verify no ESLint errors
+
 ### 4.2 Medium Document Testing
 
 - [ ] Test with 10-50 page documents
@@ -325,6 +395,13 @@ Implement unified PDF.js streaming architecture with custom chunk provider. Each
 - [ ] Document error recovery
 - [ ] Document performance guidelines
 
+**Linting & Compilation**:
+
+- [ ] Fix all linter errors (MD, HTML, JS, CSS, TS, YAML)
+- [ ] Run `npm run compile` successfully
+- [ ] Verify no TypeScript compilation errors
+- [ ] Verify no ESLint errors
+
 ### 4.3 Large Document Testing
 
 - [ ] Test with 100+ page documents
@@ -350,6 +427,13 @@ Implement unified PDF.js streaming architecture with custom chunk provider. Each
 - [ ] Document chunking efficiency
 - [ ] Document performance characteristics
 - [ ] Document fallback scenarios
+
+**Linting & Compilation**:
+
+- [ ] Fix all linter errors (MD, HTML, JS, CSS, TS, YAML)
+- [ ] Run `npm run compile` successfully
+- [ ] Verify no TypeScript compilation errors
+- [ ] Verify no ESLint errors
 
 ---
 
@@ -383,6 +467,13 @@ Implement unified PDF.js streaming architecture with custom chunk provider. Each
 - [ ] Document error handling
 - [ ] Document performance impact
 
+**Linting & Compilation**:
+
+- [ ] Fix all linter errors (MD, HTML, JS, CSS, TS, YAML)
+- [ ] Run `npm run compile` successfully
+- [ ] Verify no TypeScript compilation errors
+- [ ] Verify no ESLint errors
+
 ### 5.2 Update UIWebView
 
 - [ ] Replace `UIScrollView` with `UIPDFScrollView`
@@ -407,6 +498,13 @@ Implement unified PDF.js streaming architecture with custom chunk provider. Each
 - [ ] Document new functionality
 - [ ] Document error handling
 
+**Linting & Compilation**:
+
+- [ ] Fix all linter errors (MD, HTML, JS, CSS, TS, YAML)
+- [ ] Run `npm run compile` successfully
+- [ ] Verify no TypeScript compilation errors
+- [ ] Verify no ESLint errors
+
 ### 5.3 Update PDF.ts
 
 - [ ] Add chunk provider implementation
@@ -430,6 +528,13 @@ Implement unified PDF.js streaming architecture with custom chunk provider. Each
 - [ ] Document message handling
 - [ ] Document removed methods
 - [ ] Document new methods
+
+**Linting & Compilation**:
+
+- [ ] Fix all linter errors (MD, HTML, JS, CSS, TS, YAML)
+- [ ] Run `npm run compile` successfully
+- [ ] Verify no TypeScript compilation errors
+- [ ] Verify no ESLint errors
 
 ---
 
@@ -461,6 +566,13 @@ Implement unified PDF.js streaming architecture with custom chunk provider. Each
 - [ ] Document breaking changes
 - [ ] Document new system benefits
 
+**Linting & Compilation**:
+
+- [ ] Fix all linter errors (MD, HTML, JS, CSS, TS, YAML)
+- [ ] Run `npm run compile` successfully
+- [ ] Verify no TypeScript compilation errors
+- [ ] Verify no ESLint errors
+
 ### 6.2 Performance Optimization
 
 - [ ] Optimize chunk size
@@ -485,6 +597,13 @@ Implement unified PDF.js streaming architecture with custom chunk provider. Each
 - [ ] Document chunking optimizations
 - [ ] Document monitoring approach
 
+**Linting & Compilation**:
+
+- [ ] Fix all linter errors (MD, HTML, JS, CSS, TS, YAML)
+- [ ] Run `npm run compile` successfully
+- [ ] Verify no TypeScript compilation errors
+- [ ] Verify no ESLint errors
+
 ### 6.3 Final Testing
 
 - [ ] End-to-end testing with all document types
@@ -508,6 +627,13 @@ Implement unified PDF.js streaming architecture with custom chunk provider. Each
 - [ ] Document memory usage
 - [ ] Document error handling
 - [ ] Document user experience
+
+**Linting & Compilation**:
+
+- [ ] Fix all linter errors (MD, HTML, JS, CSS, TS, YAML)
+- [ ] Run `npm run compile` successfully
+- [ ] Verify no TypeScript compilation errors
+- [ ] Verify no ESLint errors
 
 ---
 
