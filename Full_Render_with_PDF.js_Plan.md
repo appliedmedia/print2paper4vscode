@@ -1,4 +1,4 @@
-# PDF.js Full Document Refactor Plan
+# Full Render with PDF.js Plan
 
 ## Overview
 
