@@ -227,9 +227,21 @@ async generateContent(): Promise<string> {
 #### Chunked Loading Implementation
 ```typescript
 private async generateChunkedContent(): Promise<string> {
-  // Use PDF.js streaming for large documents
-  // Load PDF in chunks, render pages on-demand
-  // Fall back to current UIScrollView approach for very large docs
+  // PDF.js handles chunking automatically for data URLs
+  // No temp files needed - all in-memory streaming
+  // Use PDF.js rangeChunkSize for memory control
+  const loadingTask = pdfjsLib.getDocument({
+    data: this.pdfDataUrl,
+    rangeChunkSize: 32768,  // 32KB chunks for memory control
+    disableAutoFetch: false,
+    disableStream: false
+  });
+  
+  // PDF.js will automatically:
+  // - Load PDF in chunks
+  // - Render pages on-demand
+  // - Free memory for unused pages
+  // - Handle progressive loading
 }
 ```
 
@@ -271,11 +283,12 @@ scroll_js: |
 - **Page Count Thresholds**: Set limits based on page count and content density
 
 ### Memory Mitigation Options
-1. **Chunked Loading**: Load PDF in chunks using PDF.js streaming
-2. **Progressive Rendering**: Render pages on-demand as user scrolls
-3. **Memory Cleanup**: Clear unused PDF data when switching documents
-4. **Fallback Mode**: Switch to page-by-page rendering for very large documents
+1. **PDF.js Chunked Loading**: Use `rangeChunkSize` to control memory usage (32KB chunks)
+2. **Progressive Rendering**: PDF.js automatically renders pages on-demand as user scrolls
+3. **Memory Cleanup**: PDF.js automatically frees memory for pages that scroll out of view
+4. **Fallback Mode**: Switch to current page-by-page rendering for extremely large documents
 5. **User Warnings**: Alert users about memory usage for large documents
+6. **No Temp Files**: PDF.js handles everything in-memory with streaming - no disk storage needed
 
 ### Risks and Mitigation
 1. **PDF.js Learning Curve**: Team needs to understand PDF.js API
