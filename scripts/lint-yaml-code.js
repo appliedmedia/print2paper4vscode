@@ -92,27 +92,31 @@ function lintCSS(cssContent, fileName) {
     
     // Use stylelint if available, otherwise just validate syntax
     try {
-      execSync(`npx stylelint "${tempFile}"`, { stdio: 'pipe' });
+      execSync(`npx stylelint "${tempFile}"`, { stdio: 'pipe', timeout: 30000 });
       return { success: true, errors: [] };
     } catch (error) {
       // stylelint not available, do basic validation
       const errors = [];
-      const lines = processedCSS.split('\n');
       
+      // Check for balanced braces across the entire CSS content
+      const openBraces = (processedCSS.match(/\{/g) || []).length;
+      const closeBraces = (processedCSS.match(/\}/g) || []).length;
+      
+      if (openBraces !== closeBraces) {
+        errors.push(`CSS has unbalanced braces: ${openBraces} opening, ${closeBraces} closing`);
+      }
+      
+      // Check for basic syntax issues
+      const lines = processedCSS.split('\n');
       lines.forEach((line, index) => {
         // Skip empty lines and comments
         if (line.trim() === '' || line.trim().startsWith('/*') || line.trim().startsWith('//')) {
           return;
         }
         
-        // Basic CSS validation - check for balanced braces
-        const openBraces = (line.match(/\{/g) || []).length;
-        const closeBraces = (line.match(/\}/g) || []).length;
-        
-        // This is a simplified check - in real CSS, braces can span multiple lines
-        // For now, we'll just check for obvious syntax errors
-        if (line.includes('{') && line.includes('}') && openBraces !== closeBraces) {
-          errors.push(`Line ${index + 1}: Unbalanced braces in CSS rule`);
+        // Check for obvious syntax errors
+        if (line.includes('{') && line.includes('}') && line.trim().endsWith('{')) {
+          errors.push(`Line ${index + 1}: Rule declaration missing closing brace`);
         }
       });
       
