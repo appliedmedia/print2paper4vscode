@@ -81,6 +81,7 @@ function extractCodeBlocks(yamlContent) {
 }
 
 function lintCSS(cssContent, fileName) {
+  let tempFile = null;
   try {
     // Preprocess CSS to handle template variables
     const processedCSS = cssContent
@@ -88,7 +89,7 @@ function lintCSS(cssContent, fileName) {
       .replace(/\{\%[^%]+\%\}/g, '/* template-var */'); // Replace {%var%} with comment
     
     // Create a temporary CSS file
-    const tempFile = path.join(__dirname, '..', 'temp', `${fileName}.css`);
+    tempFile = path.join(__dirname, '..', 'temp', `${fileName}.css`);
     fs.writeFileSync(tempFile, processedCSS);
     
     // Use stylelint if available, otherwise just validate syntax
@@ -125,6 +126,15 @@ function lintCSS(cssContent, fileName) {
     }
   } catch (error) {
     return { success: false, errors: [`CSS linting failed: ${error.message}`] };
+  } finally {
+    // Clean up temp file
+    if (tempFile && fs.existsSync(tempFile)) {
+      try {
+        fs.unlinkSync(tempFile);
+      } catch (cleanupError) {
+        // Ignore cleanup errors
+      }
+    }
   }
 }
 
@@ -249,7 +259,9 @@ function lintYamlFile(filePath) {
     
     // Clean up temp files
     try {
-      execSync(`rm -rf "${tempDir}"`, { stdio: 'pipe' });
+      if (fs.existsSync(tempDir)) {
+        fs.rmSync(tempDir, { recursive: true, force: true });
+      }
     } catch (error) {
       // Ignore cleanup errors
     }
