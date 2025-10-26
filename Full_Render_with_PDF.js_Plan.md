@@ -112,15 +112,24 @@ This document outlines a step-by-step plan to simplify the current complex page 
 
 ### Phase 4: Optimization and Cleanup
 
-#### Step 10: Performance Testing
+#### Step 10: Implement Memory Management
+- **File**: `src/UIPDFScrollView.ts`
+- **Changes**:
+  - Add memory monitoring for PDF data URL size
+  - Implement chunked loading for large PDFs
+  - Add fallback to page-by-page rendering for very large documents
+  - Add user warnings for memory-intensive operations
+
+#### Step 11: Performance Testing
 - **Test Cases**:
   - Large documents (50+ pages)
+  - Very large documents (200+ pages)
+  - Memory usage monitoring
   - Theme switching performance
   - Font size changes
-  - Memory usage comparison
   - Scroll performance
 
-#### Step 11: Remove Old System
+#### Step 12: Remove Old System
 - **Files to Remove/Simplify**:
   - `src/UIScrollView.ts` (replace with UIPDFScrollView)
   - `src/UIScrollView.yaml` (replace with UIPDFScrollView.yaml)
@@ -130,7 +139,7 @@ This document outlines a step-by-step plan to simplify the current complex page 
   - Individual page render requests
   - `renderContent()` method from PDF.ts
 
-#### Step 12: Update Documentation
+#### Step 13: Update Documentation
 - **Files**:
   - `AGENTS.md` - Update architecture documentation
   - `README.md` - Update user documentation
@@ -163,6 +172,67 @@ export class UIPDFScrollView {
 }
 ```
 
+### Memory Management Implementation
+
+#### Memory Detection
+```typescript
+export class UIPDFScrollView {
+  private static readonly MEMORY_LIMITS = {
+    PDF_SIZE_MB: 50,        // 50MB PDF data URL limit
+    PAGE_COUNT_LIMIT: 100,  // 100 pages limit for full rendering
+    MEMORY_WARNING_MB: 25   // Warn at 25MB
+  };
+
+  private checkMemoryLimits(pdfDataUrl: string, pageCount: number): MemoryStatus {
+    const pdfSizeMB = this.estimateDataUrlSize(pdfDataUrl);
+    
+    if (pdfSizeMB > this.MEMORY_LIMITS.PDF_SIZE_MB || pageCount > this.MEMORY_LIMITS.PAGE_COUNT_LIMIT) {
+      return { status: 'exceeded', sizeMB: pdfSizeMB, pageCount };
+    }
+    
+    if (pdfSizeMB > this.MEMORY_LIMITS.MEMORY_WARNING_MB) {
+      return { status: 'warning', sizeMB: pdfSizeMB, pageCount };
+    }
+    
+    return { status: 'ok', sizeMB: pdfSizeMB, pageCount };
+  }
+
+  private estimateDataUrlSize(dataUrl: string): number {
+    // Estimate size: dataUrl length * 0.75 (base64 encoding overhead)
+    return (dataUrl.length * 0.75) / (1024 * 1024);
+  }
+}
+```
+
+#### Fallback Strategy
+```typescript
+async generateContent(): Promise<string> {
+  const memoryStatus = this.checkMemoryLimits(this.pdfDataUrl, this.pageTotal);
+  
+  switch (memoryStatus.status) {
+    case 'exceeded':
+      // Fall back to page-by-page rendering for very large documents
+      return this.generateChunkedContent();
+    case 'warning':
+      // Show warning but proceed with full PDF
+      this.showMemoryWarning(memoryStatus);
+      return this.generateFullContent();
+    case 'ok':
+    default:
+      return this.generateFullContent();
+  }
+}
+```
+
+#### Chunked Loading Implementation
+```typescript
+private async generateChunkedContent(): Promise<string> {
+  // Use PDF.js streaming for large documents
+  // Load PDF in chunks, render pages on-demand
+  // Fall back to current UIScrollView approach for very large docs
+}
+```
+
 ### New YAML Template Structure
 ```yaml
 scroll_html: |
@@ -192,6 +262,20 @@ scroll_js: |
 3. **Reduced Memory**: Single PDF document instead of cached pages
 4. **Easier Maintenance**: Less complex state management
 5. **Native Features**: PDF.js provides zoom, search, etc. for free
+
+## Memory Management Strategy
+
+### Memory Detection
+- **PDF Size Monitoring**: Track PDF data URL size before passing to webview
+- **Browser Memory Limits**: Monitor webview memory usage
+- **Page Count Thresholds**: Set limits based on page count and content density
+
+### Memory Mitigation Options
+1. **Chunked Loading**: Load PDF in chunks using PDF.js streaming
+2. **Progressive Rendering**: Render pages on-demand as user scrolls
+3. **Memory Cleanup**: Clear unused PDF data when switching documents
+4. **Fallback Mode**: Switch to page-by-page rendering for very large documents
+5. **User Warnings**: Alert users about memory usage for large documents
 
 ### Risks and Mitigation
 1. **PDF.js Learning Curve**: Team needs to understand PDF.js API
