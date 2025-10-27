@@ -6,7 +6,7 @@
   },
   "eslint": {
     "enabled": true,
-    "configFile": "./eslint.config.mjs"
+    "configFile": "./.config/eslint.config.mjs"
   },
   "prettier": {
     "enabled": true,

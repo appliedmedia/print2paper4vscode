@@ -3,6 +3,6 @@
   "compilerOptions": {
     "module": "CommonJS",
     "moduleResolution": "node",
-    "outDir": "out-deploy"
+    "outDir": "../out-deploy"
   }
 }
