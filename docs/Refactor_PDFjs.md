@@ -10,12 +10,15 @@ Implement unified PDF.js integration architecture that delivers complete PDF doc
 
 1. **Tokenization** (Shiki) → produces styled tokens
 2. **PDF Generation** (jsPDF) → produces a single complete PDF document from those tokens using line-by-line rendering
-3. **PDF Usage** - That single PDF is used for:
-   - Webview display (entire PDF ArrayBuffer delivered to PDF.js, which handles internal streaming and page rendering)
-   - Print operations (save as temp file, send to OS printer)
-   - Save as PDF (user chooses location via VS Code save dialog)
+3. **PDF Conversion** → PDF document converted to ArrayBuffer for reuse
+4. **PDF Usage** - That single PDF ArrayBuffer is used for:
+   - **Webview display**: Convert ArrayBuffer to base64 data URL, embed in HTML, PDF.js loads from data URL
+   - **Print operations**: Same ArrayBuffer saved as temp file, sent to OS printer
+   - **Save as PDF**: Same ArrayBuffer saved to user's chosen location via VS Code save dialog
 
-**Key Simplification**: There is no longer a separation between "PDF for webview" and "PDF for printing/saving". One complete PDF is generated and serves all purposes. PDF.js receives the entire PDF ArrayBuffer and uses its built-in streaming mechanism to handle file delivery and page rendering internally. The extension generates the complete PDF using line-by-line rendering, then serves that same PDF object to all consumers (webview, printer, save dialog).
+**Key Simplification**: There is no longer a separation between "PDF for webview" and "PDF for printing/saving". One complete PDF is generated and serves all purposes. For webview display, VS Code's messaging limitations require converting the PDF ArrayBuffer to a base64 data URL that gets embedded in the HTML. PDF.js then loads from this data URL and handles all page rendering internally. For printing and saving, the same original ArrayBuffer is used directly.
+
+**Technical Constraint**: VS Code's `postMessage` API cannot pass ArrayBuffer or binary data between extension and webview. Therefore, the PDF ArrayBuffer must be converted to a base64 data URL and embedded in the HTML string that initializes the webview. This is a one-time conversion - the PDF is still generated once and reused.
 
 **Error Handling Philosophy**: Because this is a highly constrained VSCode Plug-in, if any core variable or piece doesn't have a reasonable representation of the data it embodies, we choose to display an error to the user over trying to coerce or fallback. This approach makes debugging much easier and ensures data integrity throughout the system.
 

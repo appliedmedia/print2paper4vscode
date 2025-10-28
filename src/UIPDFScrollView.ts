@@ -87,12 +87,28 @@ export class UIPDFScrollView {
 
   /**
    * Generate HTML content for the PDF viewer
+   *
+   * Returns complete HTML that includes:
+   * 1. PDF.js library embedded in <script> tag
+   * 2. PDF data embedded as base64 data URL in the page
+   * 3. JavaScript initialization code that tells PDF.js to render the PDF
+   *
+   * **Why base64 data URL?** VS Code's postMessage API cannot pass ArrayBuffer
+   * or binary data between extension and webview. The PDF ArrayBuffer must be
+   * converted to a base64 data URL and embedded in the HTML string. This is a
+   * one-time conversion - the PDF is still generated once from tokenization and
+   * this same ArrayBuffer is used for printing and saving.
+   *
+   * This HTML is what gets displayed in the VS Code webview. The webview receives
+   * a complete self-contained HTML document that has everything it needs to render
+   * the PDF client-side without additional requests to the extension host.
    */
   async generateContent(): Promise<string> {
     const dx = this.dx.sub('generateContent');
     
     try {
-      // Convert ArrayBuffer to base64 data URL for embedding
+      // Convert ArrayBuffer to base64 data URL for embedding in HTML
+      // This allows the PDF data to be embedded directly in the HTML string
       const base64 = Buffer.from(this.pdfData.arrayBuffer).toString('base64');
       const pdfDataUrl = `data:application/pdf;base64,${base64}`;
 
