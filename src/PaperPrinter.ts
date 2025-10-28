@@ -176,37 +176,29 @@ export class PaperPrinter {
       // Generate PDF (styleToPdf already sets tokens internally)
       await this.generatePdf();
 
-      // Construct PageRender implementation
-      const pageRender: PageRender = {
-        renderContent: (pageNumber, lineBegin, lineEnd, options) =>
-          this.app.pdf.renderContent(pageNumber, lineBegin, lineEnd, options),
-        getPageTotal: () => this.app.pdf.getPageTotal(),
-        getPageSizePx: () => this.app.pdf.getPageSizePx(),
-      };
+      // Validate we have a PDF document
+      if (!this.pdfDoc) {
+        throw new Error('PDF document not generated');
+      }
 
-      // ScrollView options
-      const options = {
+      // Get page information from the PDF
+      const pageTotal = this.pdfDoc.getNumberOfPages();
+      const pageSizePx = await this.app.pdf.getPageSizePx();
+
+      // Create PDF data for webview display
+      const pdfData = {
+        arrayBuffer: this.pdfDoc.asArrayBuffer(),
+        pageTotal,
+        pageSizePx,
         title: `Print: ${tabName}`,
-        pageSizeId: (this.app.uimenumgr.getValueForSelectedByMenuId('pageSizeId') ||
-          kPageSizeId_alt) as PageSizeId_t,
-        orient: (this.app.uimenumgr.getValueForSelectedByMenuId('orient') || kOrient_alt) as
-          | 'portrait'
-          | 'landscape',
-        fontFamily: this.getCurrentFontFamily(),
-        fontSizePx: parseInt(
-          this.app.uimenumgr.getValueForSelectedByMenuId('fontSizeId') || kFontSizeId_alt,
-          10
-        ),
-        lineHeightPx: this.lineHeightPx,
-        theme: (this.app.uimenumgr.getValueForSelectedByMenuId('theme') || kTheme_alt) as string,
       };
 
       // Create webview and initialize message handlers
       this.uiwebview = new UIWebView(this.app);
       this.uiwebview.init();
 
-      // Create webview panel with page renderer and options
-      await this.uiwebview.createPanel(pageRender, options);
+      // Create webview panel with PDF data
+      await this.uiwebview.createPDFPanel(pdfData);
 
       dx.out(`Opened webview for ${tabName}`);
     } catch (error) {
