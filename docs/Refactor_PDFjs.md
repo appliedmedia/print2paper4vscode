@@ -247,7 +247,7 @@ Before making changes, understand these critical principles:
 - ✅ Test error handling with invalid ArrayBuffer and page data
 - ✅ Test multi-page PDF support (up to 10 pages)
 - ✅ Test different page sizes (A4, Letter, Legal)
-- ✅ Test very large PDFs with substantial content
+- ✅ Test moderate-size multi-page PDFs (10 pages with 50 lines each closely packed)
 
 **Test Results**:
 
@@ -256,7 +256,7 @@ Before making changes, understand these critical principles:
 - ✅ Error handling displays messages for invalid data (5 tests)
 - ✅ Multi-page PDF support works correctly (2 tests)
 - ✅ Different page sizes supported (1 test)
-- ✅ Large PDFs handled properly (1 test)
+- ✅ Moderate multi-page PDFs handled properly (1 test - 10 pages, ~500 lines of content)
 - ✅ Total: 15 tests, all passing
 
 **Documentation**:

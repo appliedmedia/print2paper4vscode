@@ -49,11 +49,7 @@ describe('UIWebView PDF.js Integration', () => {
         },
       },
       vscodeapis: {
-        getOrCreateWebviewPanel: async (
-          title: string,
-          html: string,
-          panelId?: string
-        ) => {
+        getOrCreateWebviewPanel: async (title: string, html: string, panelId?: string) => {
           return `panel_${Date.now()}`;
         },
       },
@@ -104,7 +100,10 @@ describe('UIWebView PDF.js Integration', () => {
       const base64 = Buffer.from(arrayBuffer).toString('base64');
       const dataUrl = `data:application/pdf;base64,${base64}`;
 
-      assert.ok(dataUrl.startsWith('data:application/pdf;base64,'), 'Data URL should have correct format');
+      assert.ok(
+        dataUrl.startsWith('data:application/pdf;base64,'),
+        'Data URL should have correct format'
+      );
       assert.ok(base64.length > 0, 'Base64 string should not be empty');
     });
 
@@ -174,10 +173,7 @@ describe('UIWebView PDF.js Integration', () => {
         await uiWebView.createPDFPanel(invalidPdfData);
       } catch (error) {
         errorCaught = true;
-        assert.ok(
-          String(error).includes('pageTotal'),
-          'Error should mention invalid pageTotal'
-        );
+        assert.ok(String(error).includes('pageTotal'), 'Error should mention invalid pageTotal');
       }
 
       assert.ok(errorCaught, 'Should throw error for invalid pageTotal');
@@ -202,10 +198,7 @@ describe('UIWebView PDF.js Integration', () => {
         await uiWebView.createPDFPanel(invalidPdfData);
       } catch (error) {
         errorCaught = true;
-        assert.ok(
-          String(error).includes('pageSizePx'),
-          'Error should mention invalid pageSizePx'
-        );
+        assert.ok(String(error).includes('pageSizePx'), 'Error should mention invalid pageSizePx');
       }
 
       assert.ok(errorCaught, 'Should throw error for invalid pageSizePx');
@@ -236,7 +229,8 @@ describe('UIWebView PDF.js Integration', () => {
       // Override the mock to return proper YAML content
       const originalReadYaml = mockApp.os.readExtensionYaml;
       mockApp.os.readExtensionYaml = () => ({
-        webview_html: '<html><head>{{base_css}}{{webview_css}}</head><body><div id="toolbar">{{toolbar}}</div><div id="pdfContainer"></div><script>{{pdfjs_library}}</script><script>{{webview_js}}</script></body></html>',
+        webview_html:
+          '<html><head>{{base_css}}{{webview_css}}</head><body><div id="toolbar">{{toolbar}}</div><div id="pdfContainer"></div><script>{{pdfjs_library}}</script><script>{{webview_js}}</script></body></html>',
         webview_css: `<style>
           #pdfContainer { margin: 20px; }
           canvas { border: 1px solid #ccc; }
@@ -259,14 +253,14 @@ describe('UIWebView PDF.js Integration', () => {
   describe('Multi-Page PDF Support', () => {
     test('should handle PDFs with multiple pages', async () => {
       const doc = new jsPDF();
-      
+
       // Add first page content
       doc.text('Page 1 Content', 10, 10);
-      
+
       // Add second page
       doc.addPage();
       doc.text('Page 2 Content', 10, 10);
-      
+
       const arrayBuffer = doc.output('arraybuffer') as ArrayBuffer;
 
       const pdfData: PDFData_t = {
@@ -288,7 +282,7 @@ describe('UIWebView PDF.js Integration', () => {
       doc.text('Page 1', 10, 10);
       doc.addPage();
       doc.text('Page 2', 10, 10);
-      
+
       const arrayBuffer = doc.output('arraybuffer') as ArrayBuffer;
 
       const pdfData: PDFData_t = {
@@ -312,4 +306,3 @@ describe('UIWebView PDF.js Integration', () => {
     });
   });
 });
-

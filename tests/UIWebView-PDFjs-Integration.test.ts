@@ -237,7 +237,7 @@ window.pdfjsLib = {
       }
     });
 
-    test('should handle very large ArrayBuffer', async () => {
+    test('should handle moderate-size multi-page PDF', async () => {
       const mockApp = buildMockApp();
       const uiWebView = new UIWebView(mockApp);
 
@@ -263,8 +263,9 @@ window.pdfjsLib = {
 
       const panelId = await uiWebView.createPDFPanel(pdfData);
 
-      assert.ok(panelId, 'Panel should be created for large PDF');
-      assert.ok(arrayBuffer.byteLength > 10000, 'ArrayBuffer should be substantial');
+      assert.ok(panelId, 'Panel should be created for moderate-size PDF');
+      // A 10-page PDF with ~50 lines each should be at least 10KB
+      assert.ok(arrayBuffer.byteLength > 10000, 'ArrayBuffer should be substantial (>10KB)');
     });
   });
 
