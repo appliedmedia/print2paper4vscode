@@ -5,6 +5,7 @@ import {
   type MenuItemId_t,
   type HandleSelection_t,
   type UIMenuItem_t,
+  isMenuItemId,
 } from './UIMenu';
 import { Diagnostics } from './Diagnostics';
 
@@ -103,6 +104,59 @@ export class UIMenuMgr {
       throw new Error(msg);
     }
     return menu;
+  }
+
+  /**
+   * Validate menu item ID with proper fallthrough logic:
+   * 1. Check static kMenuItemId list (all known compile-time items)
+   * 2. If not found and itemId is numeric, check if it exists in fontSizeId menu
+   * 3. If not found and not numeric, check if it exists in theme menu
+   */
+  isValidMenuItemId(menuId: MenuId_t, itemId: string): boolean {
+    const dx = this.dx.sub('isValidMenuItemId');
+    
+    // First check static list
+    if (isMenuItemId(itemId)) {
+      dx.done();
+      return true;
+    }
+
+    // Check if it's a custom font size (numeric string)
+    const asNumber = parseInt(itemId, 10);
+    if (!isNaN(asNumber) && itemId === String(asNumber)) {
+      // It's a number - check if it's in the font size menu
+      try {
+        const fontMenu = this.getMenuById('fontSizeId');
+        const fontMenuItems = fontMenu.getMenuItems();
+        const isValidFontSize = fontMenuItems.some(item => item.id === itemId);
+        if (isValidFontSize) {
+          dx.done();
+          return true;
+        }
+        dx.out(`Font size "${itemId}" not found in fontSizeId menu`);
+      } catch {
+        dx.out(`fontSizeId menu not found`);
+      }
+      dx.done();
+      return false;
+    }
+
+    // Not static, not a font size - check if it's a valid theme ID
+    try {
+      const themeMenu = this.getMenuById('theme');
+      const themeMenuItems = themeMenu.getMenuItems();
+      const isValidTheme = themeMenuItems.some(item => item.id === itemId);
+      if (isValidTheme) {
+        dx.done();
+        return true;
+      }
+      dx.out(`Theme ID "${itemId}" not found in theme menu`);
+    } catch {
+      dx.out(`theme menu not found`);
+    }
+
+    dx.done();
+    return false;
   }
 
   // Get the selected value for a menu

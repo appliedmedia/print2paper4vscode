@@ -393,7 +393,8 @@ export class UIWebView {
       const { menuId, itemId } = msg;
       if (typeof menuId === 'string' && typeof itemId === 'string') {
         dx.out(`Processing menu selection: menuId=${menuId}, itemId=${itemId}`);
-        // Only validate menuId - itemId is dynamic (themes, page sizes, font sizes)
+        
+        // Validate menuId
         if (!isMenuId(menuId)) {
           const msg = `Invalid menu ID: ${menuId}`;
           dx.out(msg);
@@ -401,8 +402,16 @@ export class UIWebView {
           return;
         }
 
-        // Let the menu handler validate the itemId and handle it appropriately
+        // Validate itemId with proper fallthrough logic
         if (this.menuMgr) {
+          const isValid = this.menuMgr.isValidMenuItemId(menuId, itemId);
+          if (!isValid) {
+            const msg = `Invalid menu item: ${menuId}.${itemId}`;
+            dx.out(msg);
+            this.app.ui.showErrorMessage(msg);
+            return;
+          }
+
           await this.menuMgr.handleMenuItemSelected(menuId, itemId);
           dx.out(`Menu item selected: ${menuId}.${itemId}`);
         } else {

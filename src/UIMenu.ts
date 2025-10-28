@@ -25,20 +25,32 @@ export const kMenuId = [
 export type MenuId_t = (typeof kMenuId)[number];
 
 // Menu Item ID types - Individual menu item identifiers
+// Includes all static/known menu items at compile time
 export const kMenuItemId = [
   'default', // Special sentinel for requesting default selection
+  // Print menu items
   'preview',
   'direct',
   'save',
+  // Page menu items (flyout references)
   'size',
   'orient',
   'margin',
+  // Orientation items
   'portrait',
   'landscape',
+  // Margin items
   'none',
   'minimal',
   'normal',
   'wide',
+  // Page size items (all known page sizes)
+  'a4',
+  'letter',
+  'legal',
+  'a3',
+  'a5',
+  // Font size items (common sizes)
   '8',
   '9',
   '10',
