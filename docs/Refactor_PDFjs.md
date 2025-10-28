@@ -2,9 +2,22 @@
 
 ## Overview
 
-Implement unified PDF.js streaming architecture with custom chunk provider. Each stage must be fully tested and documented before proceeding to the next.
+Implement unified PDF.js integration architecture that delivers complete PDF documents to PDF.js for rendering. PDF.js handles internal streaming and page rendering automatically. Each stage must be fully tested and documented before proceeding to the next.
 
-**Architectural Constraint**: This implementation maintains the single rendering method principle from AGENTS.md. We continue to use line-by-line rendering everywhere for PDF generation. The chunking strategy only changes PDF delivery to the webview, not the underlying rendering method. The extension still generates the complete PDF using `renderByLine()` before sending it in chunks to PDF.js.
+**Critical Error Handling Principle**: This is a highly constrained VS Code extension. If any core variable or piece of data doesn't have a reasonable representation, we choose to display an error to the user rather than coerce or fallback. This makes debugging much, much easier and prevents silent failures that would be nearly impossible to track down in the extension environment.
+
+**Architectural Constraint**: This implementation simplifies the PDF generation architecture by eliminating the previous handle/state separation between tokenization and PDF rendering. We now have a single unified path:
+
+1. **Tokenization** (Shiki) → produces styled tokens
+2. **PDF Generation** (jsPDF) → produces a single complete PDF document from those tokens using line-by-line rendering
+3. **PDF Usage** - That single PDF is used for:
+   - Webview display (entire PDF ArrayBuffer delivered to PDF.js, which handles internal streaming and page rendering)
+   - Print operations (save as temp file, send to OS printer)
+   - Save as PDF (user chooses location via VS Code save dialog)
+
+**Key Simplification**: There is no longer a separation between "PDF for webview" and "PDF for printing/saving". One complete PDF is generated and serves all purposes. PDF.js receives the entire PDF ArrayBuffer and uses its built-in streaming mechanism to handle file delivery and page rendering internally. The extension generates the complete PDF using line-by-line rendering, then serves that same PDF object to all consumers (webview, printer, save dialog).
+
+**Error Handling Philosophy**: Because this is a highly constrained VSCode Plug-in, if any core variable or piece doesn't have a reasonable representation of the data it embodies, we choose to display an error to the user over trying to coerce or fallback. This approach makes debugging much easier and ensures data integrity throughout the system.
 
 **Stage Completion Requirements**: Each stage must include:
 
@@ -17,11 +30,135 @@ Implement unified PDF.js streaming architecture with custom chunk provider. Each
 
 ---
 
+## Stage 0: Required Reading
+
+**Goal**: Familiarize yourself with the codebase architecture, conventions, and key files before starting implementation work.
+
+### Essential Documentation
+
+Read these files to understand the project:
+
+1. **[AGENTS.md](AGENTS.md)** - Complete developer guide with:
+   - Three-library PDF architecture (Shiki, jsPDF, PDF.js)
+   - Unified line-by-line rendering principles
+   - Memory management and state handling
+   - Webview UI system architecture
+   - Debugging and development guidelines
+
+2. **[README.md](../README.md)** - Project overview with:
+   - Execution flow architecture
+   - Component interaction diagrams
+   - Technical implementation details
+   - Testing framework information
+
+3. **[INSTALL.md](INSTALL.md)** - Development setup and installation
+
+### Core Source Files
+
+**Entry Point:**
+
+- `src/-entrypoint.ts` - Extension activation and App initialization
+
+**Main Orchestrator:**
+
+- `src/App.ts` - Coordinates all components and handles init/done lifecycle
+
+**Core PDF Generation:**
+
+- `src/PDF.ts` - PDF generation using jsPDF with line-by-line rendering
+- `src/PDF.yaml` - PDF HTML template snippets
+- `src/Stylize.ts` - Syntax highlighting with Shiki integration
+- `src/Stylize.yaml` - Stylize template snippets
+
+**User Interface:**
+
+- `src/UI.ts` - Webview panel management
+- `src/UI.yaml` - UI HTML template snippets
+- `src/UIWebView.ts` - Webview-specific functionality
+- `src/UIScrollView.ts` - Current PDF display implementation
+- `src/UIScrollView.yaml` - ScrollView HTML template
+- `src/UIMenu.ts` - Generic menu system implementation
+- `src/UIMenu.yaml` - Menu HTML template snippets
+- `src/UIMenuMgr.ts` - Menu management and orchestration
+
+**Printing & Workflow:**
+
+- `src/PaperPrinter.ts` - Core printing workflow and PDF coordination
+- `src/PaperPrinter.yaml` - PaperPrinter template snippets
+- `src/TabInspector.ts` - Tab inspection and content extraction
+
+**Platform & Utilities:**
+
+- `src/VSCodeAPIs.ts` - All VS Code API interactions (single import point)
+- `src/OS.ts` - Cross-platform OS operations
+- `src/OSMac.ts` - macOS-specific operations
+- `src/OSMac.yaml` - macOS template snippets
+- `src/OSLinux.ts` - Linux platform support
+- `src/OSWin.ts` - Windows platform support
+- `src/Diagnostics.ts` - Hierarchical logging system
+- `src/Persist.ts` - Global state management
+- `src/Yaml.ts` - YAML template loading utilities
+
+**Type Definitions:**
+
+- `src/types/PDF_t.ts` - PDF-related types
+- `src/types/PageRender_t.ts` - Page rendering types
+- `src/types/PaperPrinter_t.ts` - PaperPrinter types
+- `src/types/theme_t.ts` - Theme-related types
+- `src/types/UI_t.ts` - UI component types
+- `src/types/jspdf.d.ts` - jsPDF type definitions
+
+**External Libraries:**
+
+- `src/lib/pdf.min.js` - PDF.js library for client-side PDF rendering
+- `src/lib/pdf.worker.min.js` - PDF.js worker for async operations
+
+### Key Architectural Principles
+
+Before making changes, understand these critical principles:
+
+1. **Single PDF Path**: One PDF is generated from tokenization and used for all purposes (webview display, printing, saving). No separate "for webview" and "for printing" paths.
+
+2. **Line-by-Line Rendering**: PDF generation uses line-by-line rendering via `PDF.renderByLine()` - DO NOT create alternative rendering methods or handle-based approaches.
+
+3. **PDF Object Reuse**: The same jsPDF document object that's generated from tokenization is:
+   - Converted to ArrayBuffer for webview streaming
+   - Converted to temp file for printing operations
+   - Converted to user-specified file for save operations
+
+4. **No Handle/State Separation**: Remove the previous handle-based architecture that separated tokenization from PDF generation. Tokenization directly feeds into PDF generation with no intermediate state management.
+
+5. **VS Code API Isolation**: All VS Code API imports must be in `VSCodeAPIs.ts` only - no other files should import directly from 'vscode'
+
+6. **HTML Template System**: All HTML snippets are stored in YAML files with `{{var}}` replacements - UI methods are generic and don't reference specific menu items
+
+7. **Project Conventions**:
+   - Types: suffix with `_t`
+   - Constants: prefix with `k`
+   - Logging: use `this.dx.out` (not `console.log` or `dx.print`)
+   - Path parameters: use generic `path: string` name
+   - Never use `any` type - use predefined typedefs
+
+8. **Testing**: Tests use Node.js built-in test runner (`node:test`) with `node:assert` - not third-party frameworks
+
+9. **Error Handling Philosophy**: Because this is a highly constrained VSCode Plug-in, if any core variable or piece doesn't have a reasonable representation of the data it embodies, we choose to display an error to the user over trying to coerce or fallback. This approach makes debugging much easier and ensures data integrity throughout the system.
+
+### Success Criteria for Stage 0
+
+- ✅ All documentation files read and understood
+- ✅ Core source files reviewed for architecture
+- ✅ YAML template system understood
+- ✅ Type definitions familiar
+- ✅ Architectural principles understood
+- ✅ Ready to proceed to Stage 1
+
+---
+
 ## Stage 1: Foundation Setup
 
 **Goal**: Create basic infrastructure and prove chunking works
 
-**Critical**: This stage maintains the single line-by-line rendering method from AGENTS.md. We render the complete PDF first using `renderByLine()`, then deliver it in chunks. No changes to the core rendering logic.
+**Critical**: This stage implements the simplified single-PDF architecture. We generate one PDF from tokenization using line-by-line rendering, then deliver that same PDF in chunks to the webview. The PDF generation logic remains unchanged - this is purely about how we deliver the completed PDF to the webview in chunks.
 
 ### 1.1 Create UIPDFScrollView Skeleton
 
@@ -55,15 +192,15 @@ Implement unified PDF.js streaming architecture with custom chunk provider. Each
 ### 1.2 Implement Basic PDF.js Integration
 
 - 🔲 Add PDF.js document loading in `generateContent()`
-- 🔲 Use simple data URL approach (no chunking yet)
-- 🔲 Add basic error handling
+- 🔲 Pass complete PDF ArrayBuffer to PDF.js
+- 🔲 Add basic error handling (remember: Because this is a highly constrained VSCode Plug-in, if any core variable or piece doesn't have a reasonable representation of the data it embodies, we choose to display an error to the user over trying to coerce or fallback. This makes debugging much easier.)
 - 🔲 Add console logging for debugging
 
 **Test**:
 
 - 🔲 All existing tests pass
 - 🔲 PDF.js loads successfully
-- 🔲 PDF document loads from data URL
+- 🔲 PDF document loads from ArrayBuffer
 - 🔲 Basic error handling works
 - 🔲 Console logs show expected flow
 - 🔲 Add new tests for PDF.js integration
@@ -82,153 +219,25 @@ Implement unified PDF.js streaming architecture with custom chunk provider. Each
 - 🔲 Verify no TypeScript compilation errors
 - 🔲 Verify no ESLint errors
 
-### 1.3 Create Custom PDFDataRangeTransport Skeleton
-
-- 🔲 Create `CustomPDFDataRangeTransport` class on both sides
-- 🔲 Add `requestPdfChunk()` and `receivePdfChunk()` methods
-- 🔲 Add message handling infrastructure
-- 🔲 Add basic logging
-
-**Test**:
-
-- 🔲 All existing tests pass
-- 🔲 Both classes can be instantiated
-- 🔲 Methods exist and can be called
-- 🔲 Message handling infrastructure works
-- 🔲 Logging shows expected output
-- 🔲 Add new tests for CustomPDFDataRangeTransport classes
-
-**Documentation**:
-
-- 🔲 Add thorough JSDoc comments to class headers
-- 🔲 Document class interfaces
-- 🔲 Document message flow
-- 🔲 Document logging strategy
-
-**Linting & Compilation**:
-
-- 🔲 Fix all linter errors (MD, HTML, JS, CSS, TS, YAML)
-- 🔲 Run `npm run compile` successfully
-- 🔲 Verify no TypeScript compilation errors
-- 🔲 Verify no ESLint errors
-
 ---
 
-## Stage 2: Chunking Implementation
+## Stage 2: PDF.js Integration
 
-**Goal**: Implement working chunk-based PDF serving
+**Goal**: Deliver complete PDF to PDF.js and let it handle rendering
 
-### 2.1 Extension-Side Chunk Provider
+### 2.1 PDF.js Integration
 
-- 🔲 Implement `requestPdfChunk()` in extension
-- 🔲 Add PDF ArrayBuffer storage
-- 🔲 Add chunk extraction logic using `ArrayBuffer.slice()`
-- 🔲 Add message sending to webview
-- 🔲 Add error handling for invalid ranges
-
-**Test**:
-
-- 🔲 All existing tests pass
-- 🔲 Can extract chunks from PDF ArrayBuffer
-- 🔲 Chunks are correct size and content
-- 🔲 Messages are sent to webview
-- 🔲 Error handling works for invalid ranges
-- 🔲 Logging shows chunk extraction details
-- 🔲 Add new tests for chunk extraction functionality
-
-**Documentation**:
-
-- 🔲 Add thorough JSDoc comments to class headers
-- 🔲 Document chunk extraction algorithm
-- 🔲 Document error handling cases
-- 🔲 Document message format
-- 🔲 Document performance characteristics
-
-**Linting & Compilation**:
-
-- 🔲 Fix all linter errors (MD, HTML, JS, CSS, TS, YAML)
-- 🔲 Run `npm run compile` successfully
-- 🔲 Verify no TypeScript compilation errors
-- 🔲 Verify no ESLint errors
-
-### 2.2 Webview-Side Chunk Consumer
-
-- 🔲 Implement `requestPdfChunk()` in webview
-- 🔲 Add chunk caching with Map
-- 🔲 Add pending request tracking
-- 🔲 Add message sending to extension
-- 🔲 Add `receivePdfChunk()` to handle incoming chunks
+- 🔲 Pass complete PDF ArrayBuffer to PDF.js
+- 🔲 Use `pdfjsLib.getDocument({ data: pdfArrayBuffer })`
+- 🔲 Add PDF.js event handling (load, progress, error)
+- 🔲 Add progress tracking for document loading
+- 🔲 Handle PDF.js initialization
+- 🔲 Validate ArrayBuffer exists and is valid (Because this is a highly constrained VSCode Plug-in, if any core variable or piece doesn't have a reasonable representation of the data it embodies, we choose to display an error to the user over trying to coerce or fallback. This makes debugging much easier.)
 
 **Test**:
 
-- 🔲 Can request chunks from extension
-- 🔲 Chunks are cached correctly
-- 🔲 Pending requests are tracked properly
-- 🔲 Incoming chunks are handled correctly
-- 🔲 Duplicate requests are handled efficiently
-
-**Documentation**:
-
-- 🔲 Document caching strategy
-- 🔲 Document request tracking
-- 🔲 Document message handling
-- 🔲 Document performance optimizations
-
-**Linting & Compilation**:
-
-- 🔲 Fix all linter errors (MD, HTML, JS, CSS, TS, YAML)
-- 🔲 Run `npm run compile` successfully
-- 🔲 Verify no TypeScript compilation errors
-- 🔲 Verify no ESLint errors
-
-### 2.3 Message Handling Integration
-
-- 🔲 Add message handlers in `UIWebView.ts`
-- 🔲 Connect `requestPdfChunk` messages to extension logic
-- 🔲 Connect `receivePdfChunk` messages to webview logic
-- 🔲 Add message validation and error handling
-- 🔲 Add comprehensive logging
-
-**Test**:
-
-- 🔲 Messages flow correctly between extension and webview
-- 🔲 Invalid messages are handled gracefully
-- 🔲 Error cases are logged appropriately
-- 🔲 Message flow is traceable in logs
-- 🔲 Performance is acceptable for small documents
-
-**Documentation**:
-
-- 🔲 Document message protocol
-- 🔲 Document error handling
-- 🔲 Document debugging approach
-- 🔲 Document performance expectations
-
-**Linting & Compilation**:
-
-- 🔲 Fix all linter errors (MD, HTML, JS, CSS, TS, YAML)
-- 🔲 Run `npm run compile` successfully
-- 🔲 Verify no TypeScript compilation errors
-- 🔲 Verify no ESLint errors
-
----
-
-## Stage 3: PDF.js Integration
-
-**Goal**: Integrate custom chunk provider with PDF.js streaming
-
-### 3.1 PDF.js Streaming Integration
-
-- 🔲 Integrate `CustomPDFDataRangeTransport` with PDF.js
-- 🔲 Use `pdfjsLib.getDocument({ range: transport })`
-- 🔲 Configure appropriate `rangeChunkSize`
-- 🔲 Add PDF.js event handling
-- 🔲 Add progress tracking
-
-**Test**:
-
-- 🔲 PDF.js loads document using custom transport
-- 🔲 Chunks are requested as expected
+- 🔲 PDF.js loads complete PDF document from ArrayBuffer
+- 🔲 Document loads successfully
 - 🔲 PDF renders correctly
 - 🔲 Progress events fire appropriately
 - 🔲 Error handling works for PDF.js errors
@@ -236,7 +245,7 @@ Implement unified PDF.js streaming architecture with custom chunk provider. Each
 **Documentation**:
 
 - 🔲 Document PDF.js integration approach
-- 🔲 Document chunk size configuration
+- 🔲 Document ArrayBuffer delivery method
 - 🔲 Document event handling
 - 🔲 Document error scenarios
 
@@ -247,7 +256,7 @@ Implement unified PDF.js streaming architecture with custom chunk provider. Each
 - 🔲 Verify no TypeScript compilation errors
 - 🔲 Verify no ESLint errors
 
-### 3.2 Canvas Rendering
+### 2.2 Canvas Rendering
 
 - 🔲 Add canvas element to HTML template
 - 🔲 Implement page rendering to canvas
@@ -277,11 +286,13 @@ Implement unified PDF.js streaming architecture with custom chunk provider. Each
 - 🔲 Verify no TypeScript compilation errors
 - 🔲 Verify no ESLint errors
 
-### 3.3 Error Handling and User Feedback
+### 2.3 Error Handling and User Feedback
 
 **Goal**: Catch out-of-memory errors and report them to users instead of trying to predict or prevent them
 
-#### 3.3.1 Out-of-Memory Error Detection
+**Error Handling Philosophy**: Because this is a highly constrained VSCode Plug-in, if any core variable or piece doesn't have a reasonable representation of the data it embodies, we choose to display an error to the user over trying to coerce or fallback. This makes debugging much easier.
+
+#### 2.3.1 Out-of-Memory Error Detection
 
 **Owner**: TBD
 **Config**: None (use browser error detection)
@@ -300,10 +311,12 @@ Implement unified PDF.js streaming architecture with custom chunk provider. Each
 - 🔲 **Pass**: All memory errors are caught and logged
 - 🔲 **Fail**: Memory errors crash the application silently
 
-#### 3.3.2 User Error Reporting
+#### 2.3.2 User Error Reporting
 
 **Owner**: TBD
 **Config**: None (use VS Code UI APIs)
+
+**Error Handling Philosophy**: Because this is a highly constrained VSCode Plug-in, if any core variable or piece doesn't have a reasonable representation of the data it embodies, we choose to display an error to the user over trying to coerce or fallback. This makes debugging much easier.
 
 - 🔲 Show user-friendly error message when OOM occurs
 - 🔲 Include suggestion to try smaller document or restart VS Code
@@ -319,7 +332,7 @@ Implement unified PDF.js streaming architecture with custom chunk provider. Each
 - 🔲 **Pass**: User gets clear feedback and recovery options
 - 🔲 **Fail**: User sees technical error or no feedback
 
-#### 3.3.3 Graceful Degradation
+#### 2.3.3 Graceful Degradation
 
 **Owner**: TBD
 **Config**: None (use error-driven fallbacks)
@@ -353,11 +366,11 @@ Implement unified PDF.js streaming architecture with custom chunk provider. Each
 
 ---
 
-## Stage 4: Integration Testing
+## Stage 3: Integration Testing
 
 **Goal**: Test complete system with real documents
 
-### 4.1 Small Document Testing
+### 3.1 Small Document Testing
 
 - 🔲 Test with 1-5 page documents
 - 🔲 Test with different content types (code, text, mixed)
@@ -390,7 +403,7 @@ Implement unified PDF.js streaming architecture with custom chunk provider. Each
 - 🔲 Verify no TypeScript compilation errors
 - 🔲 Verify no ESLint errors
 
-### 4.2 Medium Document Testing
+### 3.2 Medium Document Testing
 
 - 🔲 Test with 10-50 page documents
 - 🔲 Test scroll performance
@@ -423,11 +436,11 @@ Implement unified PDF.js streaming architecture with custom chunk provider. Each
 - 🔲 Verify no TypeScript compilation errors
 - 🔲 Verify no ESLint errors
 
-### 4.3 Large Document Testing
+### 3.3 Large Document Testing
 
 - 🔲 Test with 100+ page documents
 - 🔲 Test memory limits
-- 🔲 Test chunking efficiency
+- 🔲 Test PDF delivery efficiency
 - 🔲 Test rendering performance
 - 🔲 Test error handling
 - 🔲 Test fallback scenarios
@@ -436,7 +449,7 @@ Implement unified PDF.js streaming architecture with custom chunk provider. Each
 
 - 🔲 Large documents load successfully
 - 🔲 Memory usage stays within limits
-- 🔲 Chunking is efficient
+- 🔲 PDF delivery is efficient
 - 🔲 Rendering performance is acceptable
 - 🔲 Error handling works correctly
 - 🔲 Fallback scenarios work
@@ -445,7 +458,7 @@ Implement unified PDF.js streaming architecture with custom chunk provider. Each
 
 - 🔲 Document large document handling
 - 🔲 Document memory limits
-- 🔲 Document chunking efficiency
+- 🔲 Document PDF delivery efficiency
 - 🔲 Document performance characteristics
 - 🔲 Document fallback scenarios
 
@@ -458,35 +471,41 @@ Implement unified PDF.js streaming architecture with custom chunk provider. Each
 
 ---
 
-## Stage 5: System Integration
+## Stage 4: System Integration
 
-**Goal**: Replace old system with new streaming system
+**Goal**: Replace old system with new PDF delivery system
 
-**Critical Dependency Order**: Step 5.2 (UIWebView) must be validated before proceeding to Step 5.3 (PaperPrinter integration) to avoid cascading failures. UIWebView provides the webview infrastructure that PaperPrinter depends on.
+**Critical Dependency Order**: Step 4.2 (UIWebView) must be validated before proceeding to Step 4.3 (PaperPrinter integration) to avoid cascading failures. UIWebView provides the webview infrastructure that PaperPrinter depends on.
 
-### 5.1 Update PaperPrinter
+**Simplification Note**: Under the new single-PDF architecture, we're not changing how PDFs are generated. The PDF generation logic in `PDF.ts` remains unchanged - it still uses line-by-line rendering to produce a single PDF object. What we're changing is:
+
+- How that PDF is delivered to the webview (ArrayBuffer instead of data URL)
+- How the same PDF is reused for printing and saving (no separate generation paths)
+
+### 4.1 Update PaperPrinter
 
 - 🔲 Update `openWebView()` to use `UIPDFScrollView`
 - 🔲 Remove old `UIScrollView` usage
-- 🔲 Update PDF generation to work with chunking
-- 🔲 Add chunk provider initialization
-- 🔲 Add error handling
+- 🔲 Update webview opening to pass PDF ArrayBuffer instead of data URL
+- 🔲 Ensure same PDF object is used for both webview and print/save operations
+- 🔲 Add error handling (Because this is a highly constrained VSCode Plug-in, if any core variable or piece doesn't have a reasonable representation of the data it embodies, we choose to display an error to the user over trying to coerce or fallback. This makes debugging much easier.)
 
 **Test**:
 
 - 🔲 PaperPrinter works with new system
-- 🔲 PDF generation works correctly
-- 🔲 Chunk provider is initialized correctly
+- 🔲 PDF generation works correctly (unchanged)
+- 🔲 Same PDF used for webview display and print/save
+- 🔲 ArrayBuffer conversion works correctly
 - 🔲 Error handling works
 - 🔲 Performance is acceptable
 
 **Documentation**:
 
 - 🔲 Document PaperPrinter changes
-- 🔲 Document PDF generation changes
-- 🔲 Document chunk provider initialization
+- 🔲 Document that PDF generation is unchanged
+- 🔲 Document ArrayBuffer delivery
+- 🔲 Document single-PDF reuse pattern
 - 🔲 Document error handling
-- 🔲 Document performance impact
 
 **Linting & Compilation**:
 
@@ -495,12 +514,12 @@ Implement unified PDF.js streaming architecture with custom chunk provider. Each
 - 🔲 Verify no TypeScript compilation errors
 - 🔲 Verify no ESLint errors
 
-### 5.2 Update UIWebView
+### 4.2 Update UIWebView
 
 - 🔲 Replace `UIScrollView` with `UIPDFScrollView`
 - 🔲 Update message handling
 - 🔲 Remove old page render logic
-- 🔲 Add new chunk handling
+- 🔲 Update PDF delivery to pass ArrayBuffer
 - 🔲 Update error handling
 
 **Test**:
@@ -508,7 +527,7 @@ Implement unified PDF.js streaming architecture with custom chunk provider. Each
 - 🔲 UIWebView works with new system
 - 🔲 Message handling works correctly
 - 🔲 Old logic is removed
-- 🔲 New chunk handling works
+- 🔲 New PDF delivery works (ArrayBuffer)
 - 🔲 Error handling works
 
 **Documentation**:
@@ -516,7 +535,7 @@ Implement unified PDF.js streaming architecture with custom chunk provider. Each
 - 🔲 Document UIWebView changes
 - 🔲 Document message handling changes
 - 🔲 Document removed functionality
-- 🔲 Document new functionality
+- 🔲 Document new ArrayBuffer delivery
 - 🔲 Document error handling
 
 **Linting & Compilation**:
@@ -526,29 +545,33 @@ Implement unified PDF.js streaming architecture with custom chunk provider. Each
 - 🔲 Verify no TypeScript compilation errors
 - 🔲 Verify no ESLint errors
 
-### 5.3 Update PDF.ts
+### 4.3 Verify PDF Object Reuse
 
-- 🔲 Add chunk provider implementation
-- 🔲 Add message handling
-- 🔲 Remove old `renderContent()` method
-- 🔲 Add new streaming methods
-- 🔲 Update error handling
+**Note**: Verify that the single PDF object generated from tokenization is properly reused for all purposes (webview, printing, saving). No chunking or separate rendering is needed.
+
+- 🔲 Verify same jsPDF object is used for webview ArrayBuffer conversion
+- 🔲 Verify same jsPDF object is used for temp file creation (printing)
+- 🔲 Verify same jsPDF object is used for save-to-file (save as PDF)
+- 🔲 Add logging to confirm no duplicate PDF generation occurs
+- 🔲 Verify no intermediate state between tokenization and PDF generation
+
+**Error Handling**: Validate that the PDF object exists and has valid data. Because this is a highly constrained VSCode Plug-in, if any core variable or piece doesn't have a reasonable representation of the data it embodies, we choose to display an error to the user over trying to coerce or fallback. This makes debugging much easier.
 
 **Test**:
 
-- 🔲 PDF.ts works with new system
-- 🔲 Chunk provider works correctly
-- 🔲 Message handling works
-- 🔲 Old methods are removed
-- 🔲 New methods work correctly
+- 🔲 Single PDF generation called once per user action
+- 🔲 Webview receives ArrayBuffer from same PDF object
+- 🔲 Print operations use same PDF object
+- 🔲 Save operations use same PDF object
+- 🔲 Invalid or missing PDF objects trigger clear error messages
+- 🔲 No changes to existing PDF generation tests (they should all still pass)
 
 **Documentation**:
 
-- 🔲 Document PDF.ts changes
-- 🔲 Document chunk provider implementation
-- 🔲 Document message handling
-- 🔲 Document removed methods
-- 🔲 Document new methods
+- 🔲 Document single-PDF reuse pattern
+- 🔲 Document ArrayBuffer conversion process
+- 🔲 Document that PDF.ts generation logic is unchanged
+- 🔲 Document integration with webview, printing, and saving
 
 **Linting & Compilation**:
 
@@ -559,33 +582,44 @@ Implement unified PDF.js streaming architecture with custom chunk provider. Each
 
 ---
 
-## Stage 6: Cleanup and Optimization
+## Stage 5: Cleanup and Optimization
 
 **Goal**: Remove old system and optimize new system
 
-### 6.1 Remove Old System
+### 5.1 Remove Old System Components
 
-- 🔲 Delete `src/UIScrollView.ts`
-- 🔲 Delete `src/UIScrollView.yaml`
-- 🔲 Remove `src/types/PageRender_t.ts`
-- 🔲 Remove old message handlers
-- 🔲 Remove old imports
+**Removal Rationale**: With the single-PDF architecture, we no longer need:
+
+- Separate page rendering for webview (old UIScrollView that rendered individual pages)
+- The PageRender interface (designed for on-demand page rendering separate from PDF generation)
+- Separate message handlers for page-based rendering
+
+**Error Handling During Cleanup**: When removing old code, validate that no dependencies remain. Because this is a highly constrained VSCode Plug-in, if any core variable or piece doesn't have a reasonable representation of the data it embodies, we choose to display an error to the user over trying to coerce or fallback. This makes debugging much easier.
+
+- 🔲 Delete `src/UIScrollView.ts` (replaced by `UIPDFScrollView.ts`)
+- 🔲 Delete `src/UIScrollView.yaml` (replaced by `UIPDFScrollView.yaml`)
+- 🔲 Delete `src/types/PageRender_t.ts` (no longer needed - no separate page rendering interface)
+- 🔲 Remove `renderContent()` method from `PDF.ts` (was used for individual page rendering)
+- 🔲 Remove old message handlers for page requests
+- 🔲 Remove old imports and dependencies
+- 🔲 Clean up any handle/state management code that separated tokenization from PDF generation
 
 **Test**:
 
 - 🔲 Old files are removed
 - 🔲 No references to old system remain
-- 🔲 New system works without old dependencies
+- 🔲 New single-PDF system works without old dependencies
 - 🔲 No compilation errors
 - 🔲 No runtime errors
+- 🔲 All existing PDF generation tests still pass (confirming no regressions)
 
 **Documentation**:
 
-- 🔲 Document removed files
-- 🔲 Document removed functionality
-- 🔲 Document migration notes
-- 🔲 Document breaking changes
-- 🔲 Document new system benefits
+- 🔲 Document removed files and rationale
+- 🔲 Document removed functionality (individual page rendering)
+- 🔲 Document migration from old to new architecture
+- 🔲 Document benefits of single-PDF approach
+- 🔲 Update AGENTS.md if it still references old architecture
 
 **Linting & Compilation**:
 
@@ -594,12 +628,12 @@ Implement unified PDF.js streaming architecture with custom chunk provider. Each
 - 🔲 Verify no TypeScript compilation errors
 - 🔲 Verify no ESLint errors
 
-### 6.2 Performance Optimization
+### 5.2 Performance Optimization
 
-- 🔲 Optimize chunk size
-- 🔲 Optimize caching strategy
+- 🔲 Optimize PDF generation performance
+- 🔲 Optimize ArrayBuffer conversion
 - 🔲 Optimize memory management
-- 🔲 Optimize rendering performance
+- 🔲 Optimize PDF.js rendering performance
 - 🔲 Add performance monitoring
 
 **Test**:
@@ -607,7 +641,7 @@ Implement unified PDF.js streaming architecture with custom chunk provider. Each
 - 🔲 Performance is optimal
 - 🔲 Memory usage is efficient
 - 🔲 Rendering is smooth
-- 🔲 Chunking is efficient
+- 🔲 PDF delivery is efficient
 - 🔲 Monitoring works correctly
 
 **Documentation**:
@@ -615,7 +649,7 @@ Implement unified PDF.js streaming architecture with custom chunk provider. Each
 - 🔲 Document performance optimizations
 - 🔲 Document memory management
 - 🔲 Document rendering optimizations
-- 🔲 Document chunking optimizations
+- 🔲 Document PDF delivery optimizations
 - 🔲 Document monitoring approach
 
 **Linting & Compilation**:
@@ -625,7 +659,7 @@ Implement unified PDF.js streaming architecture with custom chunk provider. Each
 - 🔲 Verify no TypeScript compilation errors
 - 🔲 Verify no ESLint errors
 
-### 6.3 Final Testing
+### 5.3 Final Testing
 
 - 🔲 End-to-end testing with all document types
 - 🔲 Performance testing with large documents
@@ -665,7 +699,7 @@ Implement unified PDF.js streaming architecture with custom chunk provider. Each
 - 🔲 All tests pass
 - 🔲 Performance meets requirements
 - 🔲 Memory usage is acceptable
-- 🔲 Error handling works correctly
+- 🔲 Error handling works correctly (Because this is a highly constrained VSCode Plug-in, if any core variable or piece doesn't have a reasonable representation of the data it embodies, we choose to display an error to the user over trying to coerce or fallback. This makes debugging much easier.)
 - 🔲 Code is well-documented
 
 ### User Success
@@ -701,18 +735,36 @@ Implement unified PDF.js streaming architecture with custom chunk provider. Each
 - **Testing Gaps**: Require tests before stage completion
 - **Documentation Gaps**: Require documentation before stage completion
 - **Integration Issues**: Test integration at each stage
+- **Silent Failures**: Always validate data and display errors instead of falling back (Because this is a highly constrained VSCode Plug-in, if any core variable or piece doesn't have a reasonable representation of the data it embodies, we choose to display an error to the user over trying to coerce or fallback. This makes debugging much easier.)
 
 ---
 
 ## Timeline Estimate
 
+- **Stage 0**: 0.5 days (reading and understanding)
 - **Stage 1**: 2-3 days
-- **Stage 2**: 3-4 days
-- **Stage 3**: 3-4 days
+- **Stage 2**: 2-3 days
+- **Stage 3**: 2-3 days
 - **Stage 4**: 2-3 days
 - **Stage 5**: 2-3 days
-- **Stage 6**: 2-3 days
-- **Total**: 14-20 days
+- **Total**: 11-17 days
+
+---
+
+## Future Considerations
+
+### Streaming Tokenization for Very Large Documents
+
+**Current Approach**: Complete PDF is generated in memory from tokenization and then delivered to PDF.js.
+
+**Future Enhancement**: If memory issues occur with very large documents (100+ pages), we could implement true streaming:
+
+1. **Stream Tokenization to PDF to Disk**: Instead of keeping the entire PDF in memory, stream the tokenization process directly to a temporary PDF file on disk
+2. **Stream from Disk to PDF.js**: PDF.js can stream from a file path, allowing it to load and render pages incrementally without loading the entire PDF into memory
+
+**Why Not Now**: This adds significant complexity (file I/O, error recovery, cleanup) for an edge case (printing 100+ page source files). The current approach handles typical use cases efficiently, and the browser's PDF.js implementation is well-optimized for document rendering. We should implement this only if actual memory issues are observed with large documents.
+
+**Implementation Note**: PDF.js already supports streaming from file sources via its `getDocument()` API. The main work would be in modifying the PDF generation pipeline to write incrementally to disk instead of building the PDF in memory.
 
 ---
 
