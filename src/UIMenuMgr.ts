@@ -105,27 +105,6 @@ export class UIMenuMgr {
     return menu;
   }
 
-  // Validate if a menu item ID exists in any registered menu
-  // Returns true if the item ID exists in the specified menu
-  isValidMenuItemId(menuId: MenuId_t, itemId: string): boolean {
-    try {
-      const menu = this.getMenuById(menuId);
-      const menuItems = menu.getMenuItems();
-      
-      // Check if itemId matches any menu item's id
-      const isValid = menuItems.some(item => item.id === itemId);
-      
-      if (!isValid) {
-        this.dx.out(`Menu item ID "${itemId}" not found in menu "${menuId}". Available items: ${menuItems.map(item => item.id).join(', ')}`);
-      }
-      
-      return isValid;
-    } catch {
-      // Menu not found
-      return false;
-    }
-  }
-
   // Get the selected value for a menu
   getValueForSelectedByMenuId(menuId: MenuId_t): string | undefined {
     const menu = this.getMenuById(menuId);
