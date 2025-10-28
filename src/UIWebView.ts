@@ -404,7 +404,7 @@ export class UIWebView {
 
         // Validate itemId with proper fallthrough logic
         if (this.menuMgr) {
-          const isValid = this.menuMgr.isValidMenuItemId(menuId, itemId);
+          const isValid = this.menuMgr.isValidMenuItemId(itemId);
           if (!isValid) {
             const msg = `Invalid menu item: ${menuId}.${itemId}`;
             dx.out(msg);

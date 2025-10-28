@@ -112,7 +112,7 @@ export class UIMenuMgr {
    * 2. If not found and itemId is numeric, check if it exists in fontSizeId menu
    * 3. If not found and not numeric, check if it exists in theme menu
    */
-  isValidMenuItemId(menuId: MenuId_t, itemId: string): boolean {
+  isValidMenuItemId(itemId: string): boolean {
     const dx = this.dx.sub('isValidMenuItemId');
     
     // First check static list
