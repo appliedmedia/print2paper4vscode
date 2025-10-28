@@ -129,7 +129,7 @@ Before making changes, understand these critical principles:
    - Converted to temp file for printing operations
    - Converted to user-specified file for save operations
 
-4. **No Handle/State Separation**: Remove the previous handle-based architecture that separated tokenization from PDF generation. Tokenization directly feeds into PDF generation with no intermediate state management.
+4. **No Intermediate Steps**: Tokenization flows directly to PDF generation. Tokens → jsPDF rendering → complete PDF document. NO HTML intermediate, NO page break tracking during tokenization, NO state management separation. The jsPDF document provides the final page count when rendering is complete.
 
 5. **VS Code API Isolation**: All VS Code API imports must be in `VSCodeAPIs.ts` only - no other files should import directly from 'vscode'
 
