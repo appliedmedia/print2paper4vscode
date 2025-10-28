@@ -393,21 +393,29 @@ export class UIWebView {
       const { menuId, itemId } = msg;
       if (typeof menuId === 'string' && typeof itemId === 'string') {
         dx.out(`Processing menu selection: menuId=${menuId}, itemId=${itemId}`);
-        // Validate menuId (itemId is dynamic and can be any string - themes, page sizes, etc.)
-        if (isMenuId(menuId)) {
-          dx.out(`Validation passed, calling menuMgr.handleMenuItemSelected`);
-          // Handle menu item selection through menu manager
-          if (this.menuMgr) {
-            await this.menuMgr.handleMenuItemSelected(menuId, itemId);
-            dx.out(`Menu item selected: ${menuId}.${itemId}`);
-          } else {
-            dx.out(`ERROR: menuMgr is null!`);
-          }
-        } else {
+        // Validate menuId first
+        if (!isMenuId(menuId)) {
           const msg = `Invalid menu ID: ${menuId}`;
           dx.out(msg);
           this.app.ui.showErrorMessage(msg);
           return;
+        }
+
+        // Validate menu item ID against registered menus
+        if (this.menuMgr) {
+          const isValidItem = this.menuMgr.isValidMenuItemId(menuId, itemId);
+          if (!isValidItem) {
+            const msg = `Invalid menu item: ${menuId}.${itemId}`;
+            dx.out(msg);
+            this.app.ui.showErrorMessage(msg);
+            return;
+          }
+
+          dx.out(`Validation passed, calling menuMgr.handleMenuItemSelected`);
+          await this.menuMgr.handleMenuItemSelected(menuId, itemId);
+          dx.out(`Menu item selected: ${menuId}.${itemId}`);
+        } else {
+          dx.out(`ERROR: menuMgr is null!`);
         }
       } else {
         dx.out(`Invalid message format: menuId=${typeof menuId}, itemId=${typeof itemId}`);

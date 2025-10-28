@@ -1,6 +1,6 @@
 import { describe, it, before } from 'node:test';
 import * as assert from 'node:assert';
-import { createMockApp } from './test-entrypoint';
+import { App } from '../src/App.js';
 
 /**
  * Stage 3.1 Integration Tests: Small Document Testing
@@ -14,10 +14,25 @@ import { createMockApp } from './test-entrypoint';
  * - Performance validation
  */
 describe('Stage 3.1: Small Document Integration Tests', () => {
-  let app: ReturnType<typeof createMockApp>;
+  let app: App;
 
   before(async () => {
-    app = createMockApp();
+    // Create minimal mock context (same pattern as Integration.test.ts)
+    const mockContext = {
+      subscriptions: [],
+      extensionPath: process.cwd(),
+      globalState: {
+        get: () => undefined,
+        update: () => Promise.resolve(),
+      },
+      workspaceState: {
+        get: () => undefined,
+        update: () => Promise.resolve(),
+      },
+    } as any;
+
+    // Create App instance
+    app = new App(mockContext);
     await app.init();
   });
 
