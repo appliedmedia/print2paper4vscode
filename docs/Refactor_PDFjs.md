@@ -146,7 +146,7 @@ Before making changes, understand these critical principles:
 
 9. **Error Handling Philosophy**: Because this is a highly constrained VSCode Plug-in, if any core variable or piece doesn't have a reasonable representation of the data it embodies, we choose to display an error to the user over trying to coerce or fallback. This approach makes debugging much easier and ensures data integrity throughout the system.
 
-### Success Criteria for Stage 0 [Add checkmarks with dates after ea
+### Success Criteria for Stage 0 [Add checkmarks with dates after each time you do it]
 
 - ✅ All documentation files read and understood
 - ✅ Core source files reviewed for architecture
@@ -274,6 +274,7 @@ Before making changes, understand these critical principles:
 ### 2.2 Canvas Rendering (Already in Template) ✅
 
 **Note**: Canvas rendering is already implemented in UIWebView.yaml webview_js template:
+
 - ✅ Page rendering to canvas (`renderPage()`)
 - ✅ Viewport management with proper scaling
 - ✅ Basic page rendering for all pages
