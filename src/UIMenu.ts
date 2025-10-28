@@ -116,7 +116,7 @@ export class UIMenu {
     private _isFlyout: boolean = false,
     private _menuItems: () => UIMenuItem_t[],
     private _flyoutMenuItemIds: string[] = [],
-    private _selectionHandler: (id: MenuItemId_t) => Promise<HandleSelection_t>
+    private _selectionHandler: (id: string) => Promise<HandleSelection_t>
   ) {
     this.persist = new Persist(app) as Persist & Persist_t;
     this.dx = this.app.dx.create('UIMenu');
@@ -180,7 +180,8 @@ export class UIMenu {
   }
 
   // Dispatch a selection to this menu's handler
-  async dispatchSelection(id: MenuItemId_t): Promise<HandleSelection_t> {
+  // Note: id is string (not MenuItemId_t) because it can be dynamic (theme IDs, page sizes, etc.)
+  async dispatchSelection(id: string): Promise<HandleSelection_t> {
     return this._selectionHandler(id);
   }
 

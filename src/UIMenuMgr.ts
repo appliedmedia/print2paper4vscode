@@ -72,7 +72,8 @@ export class UIMenuMgr {
   }
 
   // Handle menu item selection
-  async handleMenuItemSelected(menuId: MenuId_t, itemId: MenuItemId_t): Promise<void> {
+  // Note: itemId is string (not MenuItemId_t) because it can be dynamic (theme IDs, page sizes, etc.)
+  async handleMenuItemSelected(menuId: MenuId_t, itemId: string): Promise<void> {
     const dx = this.dx.sub('handleMenuItemSelected');
 
     try {
