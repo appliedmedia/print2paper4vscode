@@ -257,7 +257,8 @@ Before making changes, understand these critical principles:
 - ✅ Multi-page PDF support works correctly (2 tests)
 - ✅ Different page sizes supported (1 test)
 - ✅ Moderate multi-page PDFs handled properly (1 test - 10 pages, ~500 lines of content)
-- ✅ Total: 15 tests, all passing
+- ✅ Very large PDFs handled properly (1 test - 500 pages, ~15,000 lines, >1MB ArrayBuffer)
+- ✅ Total: 16 tests, all passing
 
 **Documentation**:
 
