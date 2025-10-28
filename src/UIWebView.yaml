@@ -1,11 +1,11 @@
-pdfscroll_html: |
+webview_html: |
   <!DOCTYPE html>
   <html>
   <head>
     <title>{{title}}</title>
     <style>
-      {{baseCss}}
-      {{pdfscrollCss}}
+      {{base_css}}
+      {{webview_css}}
     </style>
   </head>
   <body>
@@ -22,18 +22,18 @@ pdfscroll_html: |
       </div>
     </div>
     <script>
-      {{pdfjsLibrary}}
+      {{pdfjs_library}}
     </script>
     <script>
-      {{pdfscrollJs}}
+      {{webview_js}}
       
       // Initialize PDF viewer with embedded PDF data
-      initPdfViewer('{{pdfDataUrl}}', {{pageTotal}}, {{pageWidthPx}}, {{pageHeightPx}});
+      initPdfViewer('{{pdf_data_url}}', {{page_total}});
     </script>
   </body>
   </html>
 
-pdfscroll_css: |
+webview_css: |
   .pdfviewer-container {
     position: relative;
     width: 100%;
@@ -60,23 +60,18 @@ pdfscroll_css: |
     margin-bottom: 10px;
   }
 
-pdfscroll_js: |
-  // PDF Viewer JavaScript
+webview_js: |
+  // PDF Viewer JavaScript - Minimal skeleton for PDF.js to render into
   let pdfDoc = null;
-  let pageNum = 1;
-  let pageRendering = false;
-  let pageNumPending = null;
   const scale = 1.0;
 
   /**
    * Initialize PDF viewer with PDF data
    * @param {string} pdfDataUrl - Base64 data URL of the PDF
    * @param {number} pageTotal - Total number of pages
-   * @param {number} pageWidthPx - Page width in pixels
-   * @param {number} pageHeightPx - Page height in pixels
    */
-  function initPdfViewer(pdfDataUrl, pageTotal, pageWidthPx, pageHeightPx) {
-    console.log('Initializing PDF viewer:', { pageTotal, pageWidthPx, pageHeightPx });
+  function initPdfViewer(pdfDataUrl, pageTotal) {
+    console.log('Initializing PDF viewer with', pageTotal, 'pages');
 
     if (typeof pdfjsLib === 'undefined') {
       onDocumentLoadError(new Error('PDF.js library not loaded'));
@@ -111,7 +106,7 @@ pdfscroll_js: |
     
     console.log('PDF loaded successfully, total pages:', pdf.numPages);
     
-    // Render all pages
+    // Render all pages - PDF.js handles everything
     renderAllPages();
   }
 
@@ -126,7 +121,7 @@ pdfscroll_js: |
   }
 
   /**
-   * Render all pages in the PDF
+   * Render all pages in the PDF - just create canvases and let PDF.js render
    */
   function renderAllPages() {
     if (!pdfDoc) return;
@@ -134,17 +129,16 @@ pdfscroll_js: |
     const viewer = document.getElementById('pdf-viewer');
     viewer.innerHTML = ''; // Clear existing content
 
+    // Render each page as a separate canvas
     for (let pageNum = 1; pageNum <= pdfDoc.numPages; pageNum++) {
       renderPage(pageNum, viewer);
     }
   }
 
   /**
-   * Render a single page
+   * Render a single page - PDF.js does all the work
    */
   function renderPage(pageNum, container) {
-    pageRendering = true;
-
     pdfDoc.getPage(pageNum).then(function(page) {
       const viewport = page.getViewport({ scale: scale });
       
@@ -171,4 +165,3 @@ pdfscroll_js: |
       console.error('Error rendering page', pageNum, ':', error);
     });
   }
-
