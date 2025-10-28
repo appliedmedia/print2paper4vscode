@@ -123,15 +123,19 @@ export class UI {
       // Get menu HTML from UIMenuMgr
       const menuHtml = await this.app.uimenumgr.getAllUIMenuHTML();
 
+      // Get menu CSS and JS
+      const uiMenuCss = this.app.uimenumgr.getAllUIMenuCSS();
+      const uiMenuJs = this.app.uimenumgr.getAllUIMenuJS();
+
       // Get toolbar templates from yaml getter
       const templates = this.yaml;
 
       // Inject toolbar into HTML using template
       const toolbarHtml = this.app.templateDictReplace(templates.toolbar_html, {
-        toolbarCss: templates.toolbar_css,
+        toolbarCss: templates.toolbar_css + '\n' + uiMenuCss,
         baseCss: templates.base_css,
         menuHtml,
-        toolbarJs: templates.toolbar_js,
+        toolbarJs: templates.toolbar_js + '\n' + uiMenuJs,
         additionalJs: '',
       });
 
