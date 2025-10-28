@@ -2,7 +2,7 @@
     "folders": [
         {
             "name": "Print2Paper4VSCode",
-            "path": ".",
+            "path": "..",
         },
     ],
     "settings": {
@@ -13,7 +13,7 @@
                 "tables": false,
             },
         },
-        "eslint.workingDirectories": ["."],
+        "eslint.workingDirectories": [".."],
         "typescript.preferences.includePackageJsonAutoImports": "on"
     },
     "extensions": {

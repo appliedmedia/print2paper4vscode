@@ -3,10 +3,10 @@
     "module": "CommonJS",
     "moduleResolution": "node",
     "target": "ES2020",
-    "outDir": "./out",
-    "baseUrl": ".",
+    "outDir": "../out",
+    "baseUrl": "..",
     "paths": {
-      "*": ["src/types/*", "node_modules/@types/*"]
+      "*": ["../src/types/*", "../node_modules/@types/*"]
     },
     "lib": ["ES2020", "DOM"],
     "sourceMap": true,
@@ -17,7 +17,7 @@
     "forceConsistentCasingInFileNames": true,
     
   },
-  "include": ["src/**/*.ts", "tests/**/*.ts"],
-  "rootDir": "src",
+  "include": ["../src/**/*.ts", "../tests/**/*.ts"],
+  "rootDir": "../src",
   "exclude": ["node_modules", ".vscode-test"]
 }
