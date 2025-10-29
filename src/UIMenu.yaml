@@ -1,4 +1,4 @@
-ui_menu_css: |
+uimenu_css: |
   .p2p4vsc-menu-btn:hover { background: #e9e9e9; }
   .p2p4vsc-menu {
     position: relative;
@@ -120,7 +120,7 @@ ui_menu_css: |
     display: block !important;
   }
 
-ui_menu_html: |
+uimenu_html: |
   <div class="p2p4vsc-menu {{menuClasses}}" id="{{menuId}}">
     <button class="p2p4vsc-menu-btn" title="{{displayName}}">{{icon}}</button>
     <div class="p2p4vsc-menu-items" id="{{menuId}}-items">
@@ -128,7 +128,7 @@ ui_menu_html: |
     </div>
   </div>
 
-ui_menu_generic_handlers: |
+uimenu_generic_handlers: |
   // Generic handlers for all menus - just pass events to extension
   document.addEventListener('click', (e) => {
     // Safety checks
@@ -250,7 +250,7 @@ ui_menu_generic_handlers: |
     }
   });
 
-ui_menu_item: |
+uimenu_item: |
   <div class="p2p4vsc-menu-item {{itemClasses}}" id="{{itemId}}"{{flyoutMenuIdRef}}>
     <div class="gutter-before">{{contentGutterBefore}}</div>
     <div class="menu-item-text">{{itemDisplayName}}</div>

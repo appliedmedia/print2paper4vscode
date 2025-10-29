@@ -57,7 +57,14 @@ webview_css: |
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
     border: 1px solid #ddd;
     background: white;
-    margin-bottom: 10px;
+    margin-left: var(--page-gutter-horizontal, 8px);
+    margin-right: var(--page-gutter-horizontal, 8px);
+    margin-bottom: var(--page-gutter-vertical, 4px);
+  }
+  
+  :root {
+    --page-gutter-horizontal: 8px;
+    --page-gutter-vertical: 4px;
   }
 
 webview_js: |

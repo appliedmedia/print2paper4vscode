@@ -84,7 +84,7 @@ export class PDF implements PageRender {
    * Invalidate all PDF caches and reset state
    * Called when regenerating PDF after menu changes
    */
-  invalidateAllCaches(): void {
+  resetCaches(): void {
     const dx = this.dx.sub('invalidateAllCaches');
     try {
       // Clear page cache
@@ -280,7 +280,6 @@ export class PDF implements PageRender {
     const heightPts = height * multiplier;
     return { widthPts, heightPts };
   }
-
 
   /**
    * Set text color in jsPDF from web color (hex or named color)
@@ -483,7 +482,7 @@ export class PDF implements PageRender {
 
       // Create cache key based on page number and relevant options
       const cacheKey = `${pageNumber}-${options.pageSizeId}-${options.orient}`;
-      
+
       // Check if we have cached data for this page
       if (this.pageCache.has(pageNumber)) {
         const cachedData = this.pageCache.get(pageNumber)!;
@@ -528,20 +527,27 @@ export class PDF implements PageRender {
     try {
       // Prefer actual PDF dimensions if available
       if (this.docInfo.pdfDoc) {
-        const pageWidthPts = this.docInfo.pdfDoc.getPageWidth();
-        const pageHeightPts = this.docInfo.pdfDoc.getPageHeight();
+        const pageWidthPts = (this.docInfo.pdfDoc as any).getPageWidth();
+        const pageHeightPts = (this.docInfo.pdfDoc as any).getPageHeight();
         const pageWidthPx = Math.round(this.coords.pdfPtsToCssPx(pageWidthPts));
         const pageHeightPx = Math.round(this.coords.pdfPtsToCssPx(pageHeightPts));
         dx.out(`Page dimensions (from PDF): ${pageWidthPx}x${pageHeightPx}px`);
         return { widthPx: pageWidthPx, heightPx: pageHeightPx };
       }
-      
+
       // Fallback to configured size if no PDF yet
-      const pageSizeId = (this.app.uimenumgr.getValueForSelectedByMenuId('pageSizeId') || 'a4') as PageSizeId_t;
-      const orient = (this.app.uimenumgr.getValueForSelectedByMenuId('orient') || 'portrait') as 'portrait' | 'landscape';
+      const pageSizeId = (this.app.uimenumgr.getValueForSelectedByMenuId('pageSizeId') ||
+        'a4') as PageSizeId_t;
+      const orient = (this.app.uimenumgr.getValueForSelectedByMenuId('orient') || 'portrait') as
+        | 'portrait'
+        | 'landscape';
       const pageSize = this.getPageDimensions(pageSizeId, orient);
       const unit = this.getUnitForPageSize(pageSizeId);
-      const { widthPts: pageWidthPts, heightPts: pageHeightPts } = this.pageSizeToPts(pageSize.width, pageSize.height, unit);
+      const { widthPts: pageWidthPts, heightPts: pageHeightPts } = this.pageSizeToPts(
+        pageSize.width,
+        pageSize.height,
+        unit
+      );
       const pageWidthPx = Math.round(this.coords.pdfPtsToCssPx(pageWidthPts));
       const pageHeightPx = Math.round(this.coords.pdfPtsToCssPx(pageHeightPts));
       dx.out(`Page dimensions (from config): ${pageWidthPx}x${pageHeightPx}px`);

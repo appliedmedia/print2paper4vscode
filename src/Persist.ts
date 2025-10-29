@@ -94,6 +94,30 @@ export class Persist {
     this.default[name] = computed;
     return computed;
   }
+
+  /**
+   * Clear all persist state
+   */
+  async clear(): Promise<void> {
+    const { kMenuId } = require('./UIMenu');
+
+    // Clear all menu-related state
+    const keysToReset: GlobalStateKey_t[] = [...kMenuId, 'toolbar_pos'];
+
+    for (const key of keysToReset) {
+      await this.app.vscodeapis.updateGlobalState(
+        key as GlobalStateKey_t,
+        undefined as unknown as GlobalStateValue_t
+      );
+    }
+
+    // Clear in-memory caches
+    this.value = {};
+    this.default = {};
+
+    // Inform user
+    this.app.ui.showInfoMessage('Print2Paper state reset - reopen print view to see defaults');
+  }
 }
 
 // end, Persist.ts

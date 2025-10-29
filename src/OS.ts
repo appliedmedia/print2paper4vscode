@@ -82,6 +82,12 @@ export abstract class OS {
   abstract filePrint(path: string): Promise<void>;
   abstract fileOpenPrintDialog(path: string): Promise<void>;
 
+  // Get system locale with region (e.g., "en-US", "fr-FR")
+  // Uses Intl API which actually provides region codes unlike vscode.env.language
+  getLocale(): string {
+    return Intl.DateTimeFormat().resolvedOptions().locale || '';
+  }
+
   // Platform-agnostic home directory
   getDir_Home(): string {
     return homedir();

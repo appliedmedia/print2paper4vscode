@@ -60,11 +60,18 @@ export class VSCodeAPIs {
     dx.require({ vscode: this.vscode, context: this.context }, ['vscode', 'context']);
 
     // Register VS Code commands
-    const printCommand = this.vscode.commands.registerCommand('p2p4vsc.print2paper', () => {
+    const command_Print2Paper = this.vscode.commands.registerCommand('p2p4vsc.print2paper', () => {
       this.app.paperprinter.handlePrintCommandFromVSCode();
     });
 
-    this.context.subscriptions.push(printCommand);
+    const command_PersistClear = this.vscode.commands.registerCommand(
+      'p2p4vsc.persistClear',
+      async () => {
+        await this.app.ui.persist.clear();
+      }
+    );
+
+    this.context.subscriptions.push(command_Print2Paper, command_PersistClear);
     dx.done();
   }
 
@@ -539,10 +546,17 @@ export class VSCodeAPIs {
 
   /**
    * Gets the current VS Code locale
+   *
+   * CAVEAT: Both vscode.env.language and navigator.language often return just "en"
+   * without region codes (not "en-US" as documented). They are unreliable for
+   * region detection. Use OS.getLocale() instead which uses Intl API.
+   *
+   * Examples of what these APIs actually return:
+   * - vscode.env.language → "en" (just language, no region)
+   * - navigator.language → "en" (browser API, also unreliable)
+   *
+   * @deprecated Use OS.getLocale() for actual locale with region
    */
-  getLocale(): string {
-    return this.vscode.env.language;
-  }
 }
 
 // end, VSCodeAPIs.ts

@@ -9,7 +9,7 @@ import {
   kMenuItemId,
 } from './UIMenu';
 import { Diagnostics } from './Diagnostics';
-import { kPageSizeId } from './types/PaperPrinter_t';
+import { kFontSizeId } from './types/PaperPrinter_t';
 
 /**
  * UIMenuMgr - Menu manager for webview toolbar system
@@ -28,31 +28,6 @@ import { kPageSizeId } from './types/PaperPrinter_t';
  * const html = await uimenumgr.getAllUIMenuHTML();
  */
 export class UIMenuMgr {
-  // Type guards for runtime validation
-  static isMenuId(id: string): id is MenuId_t {
-    return kMenuId.includes(id as MenuId_t);
-  }
-
-  static isMenuItemId(id: string): id is MenuItemId_t {
-    let isValid = false;
-
-    // 1. Check against static kMenuItemId list (includes page sizes, font sizes, actions)
-    if (kMenuItemId.includes(id as MenuItemId_t)) {
-      isValid = true;
-    }
-    // 2. Check if it's a number - could be custom font size
-    else if (!isNaN(Number(id))) {
-      // Accept numeric IDs as potential custom font sizes (e.g., editor size of 13)
-      isValid = true;
-    }
-    // 3. Otherwise could be a theme ID - accept it, handler will validate
-    else {
-      isValid = true;
-    }
-
-    return isValid;
-  }
-
   private app: App;
   private menus: UIMenu[] = [];
   private dx: Diagnostics;
@@ -67,13 +42,37 @@ export class UIMenuMgr {
     // No initialization needed - menus are created on-demand by PaperPrinter
   }
 
-  // Instance methods that delegate to static methods
+  // Instance methods with full validation using this.app
   isMenuId(id: string): id is MenuId_t {
-    return UIMenuMgr.isMenuId(id);
+    return kMenuId.includes(id as MenuId_t);
   }
 
   isMenuItemId(id: string): id is MenuItemId_t {
-    return UIMenuMgr.isMenuItemId(id);
+    let isValid = false;
+
+    // 1. Check against static kMenuItemId list
+    if ((kMenuItemId as readonly string[]).includes(id)) {
+      isValid = true;
+    }
+    // 2. Check if it's a number - validate against font size menu items
+    else if (!isNaN(Number(id))) {
+      try {
+        const fontMenu = this.getMenuById('fontSizeId');
+        const fontMenuItems = fontMenu.getMenuItems();
+        isValid = fontMenuItems.some(item => item.id === id);
+      } catch {
+        // Menu doesn't exist yet, fallback to static list
+        const validFontSizes = Object.keys(kFontSizeId);
+        isValid = validFontSizes.includes(id);
+      }
+    }
+    // 3. Check against theme IDs
+    else {
+      const validThemes = this.app.stylize.getThemes().map(t => t.id);
+      isValid = validThemes.includes(id);
+    }
+
+    return isValid;
   }
 
   done(): void {
@@ -89,7 +88,7 @@ export class UIMenuMgr {
     isFlyout: boolean = false,
     menuItems: () => UIMenuItem_t[],
     flyoutMenuItemIds: string[] = [],
-    selectionHandler: (selectedId: string) => Promise<HandleSelection_t>
+    selectionHandler: (selectedId: MenuItemId_t) => Promise<HandleSelection_t>
   ): UIMenu {
     return new UIMenu(
       this.app,
@@ -135,6 +134,12 @@ export class UIMenuMgr {
       throw new Error(`Menu not found: ${id}`);
     }
     return menu;
+  }
+
+  // Set persist value for a menu
+  setPersistForMenuId(menuId: MenuId_t, selectedId: MenuItemId_t): void {
+    const menu = this.getMenuById(menuId);
+    (menu.persist as unknown as Record<string, string | number | boolean>)[menuId] = selectedId;
   }
 
   // Get the selected value for a menu
@@ -205,7 +210,7 @@ export class UIMenuMgr {
     }
 
     // Get the generic handlers - yaml getter handles loading automatically
-    const js: string = anyMenu.yaml.ui_menu_generic_handlers;
+    const js: string = anyMenu.yaml.uimenu_generic_handlers;
     if (!js) {
       this.dx.out(
         'getAllUIMenuJS: JS is undefined/empty, YAML loading failed or no handlers present'
@@ -225,7 +230,7 @@ export class UIMenuMgr {
     }
 
     // Get the CSS - yaml getter handles loading automatically
-    const css: string = anyMenu.yaml.ui_menu_css;
+    const css: string = anyMenu.yaml.uimenu_css;
     if (!css) {
       this.dx.out('getAllUIMenuCSS: CSS is undefined, YAML loading failed');
       return '';
@@ -233,47 +238,6 @@ export class UIMenuMgr {
     this.dx.out(`getAllUIMenuCSS: Generated ${css.length} characters of CSS`);
 
     return css;
-  }
-
-  // Get all template variable mappings
-  async getTemplateVariableMappings(): Promise<Record<string, string>> {
-    const mappings: Record<string, string> = {};
-
-    // Add the main UIMenu placeholders
-    mappings['UIMENU_HTML'] = await this.getAllUIMenuHTML();
-    mappings['UIMENU_JS'] = this.getAllUIMenuJS();
-    mappings['UIMENU_CSS'] = this.getAllUIMenuCSS();
-
-    return mappings;
-  }
-
-  // Get menu components for generic toolbar integration
-  async getMenuComponents(): Promise<{ html: string; css: string; js: string }> {
-    this.dx.out('UIMenuMgr.getMenuComponents: Getting menu components for toolbar integration');
-
-    const html = await this.getAllUIMenuHTML();
-    const css = this.getAllUIMenuCSS();
-    const js = this.getAllUIMenuJS();
-
-    this.dx.out(
-      `UIMenuMgr.getMenuComponents: HTML=${html.length}, CSS=${css.length}, JS=${js.length} characters`
-    );
-    return { html, css, js };
-  }
-
-  // Get menu configuration for debugging
-  getMenuConfiguration(): Array<{
-    id: string;
-    icon: string;
-    displayName: string;
-    templateVariable: string;
-  }> {
-    return this.getAllMenus().map(menu => ({
-      id: menu.id,
-      icon: menu.icon,
-      displayName: menu.displayName,
-      templateVariable: menu.getTemplateVariableName(),
-    }));
   }
 }
 
