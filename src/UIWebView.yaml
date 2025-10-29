@@ -62,6 +62,17 @@ webview_css: |
 
 webview_js: |
   // PDF Viewer JavaScript - Minimal skeleton for PDF.js to render into
+  
+  // Send diagnostic message to extension
+  function dx(message) {
+    if (window.vscode) {
+      window.vscode.postMessage({
+        type: 'dx',
+        message
+      });
+    }
+  }
+  
   let pdfDoc = null;
   const scale = 1.0;
 
@@ -71,9 +82,9 @@ webview_js: |
    * @param {number} pageTotal - Total number of pages
    */
   function initPdfViewer(pdfDataUrl, pageTotal) {
-    console.log('Initializing PDF viewer with', pageTotal, 'pages');
 
     if (typeof pdfjsLib === 'undefined') {
+      dx('❌ PDF.js library not loaded');
       onDocumentLoadError(new Error('PDF.js library not loaded'));
       return;
     }
@@ -104,7 +115,6 @@ webview_js: |
     document.getElementById('loading').style.display = 'none';
     document.getElementById('pdf-viewer').style.display = 'block';
     
-    console.log('PDF loaded successfully, total pages:', pdf.numPages);
     
     // Render all pages - PDF.js handles everything
     renderAllPages();
@@ -114,10 +124,10 @@ webview_js: |
    * Handle PDF document load error
    */
   function onDocumentLoadError(error) {
+    dx(`❌ PDF load error: ${error.message}`);
     document.getElementById('loading').style.display = 'none';
     document.getElementById('error').style.display = 'block';
     document.getElementById('error').textContent = 'Error loading PDF: ' + error.message;
-    console.error('PDF load error:', error);
   }
 
   /**
@@ -159,9 +169,8 @@ webview_js: |
 
       renderTask.promise.then(function() {
         container.appendChild(canvas);
-        console.log('Page', pageNum, 'rendered');
       });
     }).catch(function(error) {
-      console.error('Error rendering page', pageNum, ':', error);
+      dx(`❌ Error rendering page ${pageNum}: ${error.message}`);
     });
   }

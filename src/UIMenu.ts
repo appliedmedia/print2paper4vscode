@@ -197,13 +197,11 @@ export class UIMenu {
   // Get the currently selected item ID for this menu (for highlighting ✓)
   async getSelectedItemId(): Promise<string> {
     // Get the current persisted value (user's selection)
-    const selectedValue = this.persist[this._id as keyof typeof this.persist];
-    if (selectedValue !== undefined) {
-      return String(selectedValue);
+    let id = this.persist[this._id as keyof typeof this.persist] || '';
+    if (!id) {
+      id = await this.getDefaultItemId();
     }
-
-    // Fall back to default if no selection made yet
-    return await this.getDefaultItemId();
+    return String(id);
   }
 
   // Generate a single menu item HTML

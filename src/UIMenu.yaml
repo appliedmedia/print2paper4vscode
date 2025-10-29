@@ -177,9 +177,7 @@ ui_menu_generic_handlers: |
         
         // Find the flyout menu for this item by checking flyout-menu-id-ref attribute
         const flyoutMenuId = itemEl.getAttribute('flyout-menu-id-ref');
-        console.log('Flyout menu ID:', flyoutMenuId);
         const flyoutMenu = flyoutMenuId ? document.getElementById(flyoutMenuId) : null;
-        console.log('Found flyout menu:', flyoutMenu);
         if (flyoutMenu) {
           // Close all other flyouts
           document.querySelectorAll('.p2p4vsc-menu.is-flyout').forEach(menu => {

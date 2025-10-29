@@ -2,10 +2,11 @@ import type { App } from './App';
 import type { PostMessage, MessageHandler } from './types/UI_t';
 import { Diagnostics } from './Diagnostics';
 import { Yaml } from './Yaml';
+import { Persist, type Persist_t } from './Persist';
 import { kMenuId } from './UIMenu';
 
 // UI persist keys - union of menu IDs and toolbar position
-export const kUI = [...kMenuId, 'toolbarPosPx'] as const;
+export const kUI = [...kMenuId, 'toolbar_pos'] as const;
 
 export type UI_t = (typeof kUI)[number];
 
@@ -33,15 +34,23 @@ export class UI {
     toolbar_html: '',
   } as const;
 
+  // Toolbar positioning constants
+  private static readonly kToolbarMinLeftPx = 8;
+
   private app: App;
   private messageHandlers: Map<string, MessageHandler[]> = new Map();
   private dx: Diagnostics;
   private _yaml: Yaml<typeof UI.kYaml>;
+  public persist: Persist & Persist_t;
 
   constructor(app: App) {
     this.app = app;
     this.dx = app.dx.create('UI');
     this._yaml = new Yaml(app, 'src/UI.yaml', UI.kYaml);
+    
+    // Initialize persist for toolbar position
+    this.persist = new Persist(app) as Persist & Persist_t;
+    this.persist.register('toolbar_pos');
   }
 
   init(): void {}
@@ -130,12 +139,21 @@ export class UI {
       // Get toolbar templates from yaml getter
       const templates = this.yaml;
 
+      // Get saved toolbar position from persist, validate default if needed
+      const toolbarPos = await this.persist.validateDefault('toolbar_pos', async () => UI.kToolbarMinLeftPx) as number;
+
+      // Replace toolbar_pos in toolbar_css before combining with menu CSS
+      const toolbarCssWithPos = templates.toolbar_css.replace('{{toolbar_pos}}', toolbarPos.toString());
+
+      // Replace toolbar_min_left_px in toolbar_js
+      const toolbarJsWithConstants = templates.toolbar_js.replace(/\{\{toolbar_min_left_px\}\}/g, UI.kToolbarMinLeftPx.toString());
+
       // Inject toolbar into HTML using template
       const toolbarHtml = this.app.templateDictReplace(templates.toolbar_html, {
-        toolbarCss: templates.toolbar_css + '\n' + uiMenuCss,
+        toolbarCss: toolbarCssWithPos + '\n' + uiMenuCss,
         baseCss: templates.base_css,
         menuHtml,
-        toolbarJs: templates.toolbar_js + '\n' + uiMenuJs,
+        toolbarJs: toolbarJsWithConstants + '\n' + uiMenuJs,
         additionalJs: '',
       });
 

@@ -509,21 +509,41 @@ export class PaperPrinter {
   }
 
   private async handleSelection_Print(selectedId: string): Promise<HandleSelection_t> {
+    const dx = this.dx.sub('handleSelection_Print');
     let id = '';
     let value: string | number | boolean = '';
+    // defaultId will return empty id, empty value,
 
-    if (selectedId === UIMenu.defaultId()) {
-      // Print menu has no default selection
-    } else {
+    if (selectedId !== UIMenu.defaultId()) {
+      dx.out(`Print action: ${selectedId}`);
       await this.generatePdf();
-      if (!this.pdfDoc) return { id, value };
-      if (selectedId === 'preview')
-        await this.app.pdf.printWithPreview(this.pdfDoc, this.docInfo.printTitle || 'Print Output');
-      else if (selectedId === 'direct')
-        await this.app.pdf.printDirectly(this.pdfDoc, this.docInfo.printTitle || 'Print Output');
-      else if (selectedId === 'save')
-        await this.app.pdf.saveAsPDF(this.pdfDoc, this.docInfo.printTitle || 'Print Output');
-      // TODO: Re-render webview - need access to panel
+
+      if (this.pdfDoc) {
+        try {
+          if (selectedId === 'preview') {
+            dx.out('Printing with preview...');
+            await this.app.pdf.printWithPreview(
+              this.pdfDoc,
+              this.docInfo.printTitle || 'Print Output'
+            );
+          } else if (selectedId === 'direct') {
+            dx.out('Printing directly...');
+            await this.app.pdf.printDirectly(
+              this.pdfDoc,
+              this.docInfo.printTitle || 'Print Output'
+            );
+          } else if (selectedId === 'save') {
+            dx.out('Saving as PDF...');
+            await this.app.pdf.saveAsPDF(this.pdfDoc, this.docInfo.printTitle || 'Print Output');
+          }
+          dx.out(`Print action ${selectedId} completed successfully`);
+        } catch (error) {
+          dx.out(`Print action ${selectedId} failed: ${error}`);
+          this.app.ui.showErrorMessage(`Print failed: ${String(error)}`);
+        }
+      } else {
+        dx.out('No PDF document available for printing');
+      }
     }
 
     return { id, value };

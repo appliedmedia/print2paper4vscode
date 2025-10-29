@@ -281,8 +281,9 @@ Before making changes, understand these critical principles:
 - ✅ Page rendering to canvas (`renderPage()`)
 - ✅ Viewport management with proper scaling
 - ✅ Basic page rendering for all pages
-- ⏭️ Zoom and scroll handling (future enhancement)
-- ⏭️ Page navigation (future enhancement)
+- ⏭️ Zoom and scroll handling (Stage 6: User Experience)
+- ⏭️ Page navigation controls (Stage 6: User Experience)
+- ⏭️ Page layout options (1-up, 2-up, 4-up, etc.) (Stage 6: User Experience)
 
 **Current Implementation Test**:
 
@@ -488,13 +489,17 @@ Before making changes, understand these critical principles:
 - How that PDF is delivered to the webview (ArrayBuffer instead of data URL)
 - How the same PDF is reused for printing and saving (no separate generation paths)
 
-### 4.1 Update PaperPrinter
+### 4.1 Update PaperPrinter ✅
 
-- 🔲 Update `openWebView()` to use `UIPDFScrollView`
-- 🔲 Remove old `UIScrollView` usage
-- 🔲 Update webview opening to pass PDF ArrayBuffer instead of data URL
-- 🔲 Ensure same PDF object is used for both webview and print/save operations
-- 🔲 Add error handling (Because this is a highly constrained VSCode Plug-in, if any core variable or piece doesn't have a reasonable representation of the data it embodies, we choose to display an error to the user over trying to coerce or fallback. This makes debugging much easier.)
+**Status**: Complete. PaperPrinter integration successful.
+
+**Implementation**:
+
+- ✅ Updated `openWebView()` to use `createPDFPanel()` instead of old `UIScrollView`
+- ✅ Removed old `PageRender` interface usage
+- ✅ PDF ArrayBuffer extracted from `DocInfo_PDF` and passed to webview
+- ✅ Same PDF object (`this.pdfDoc`) used for webview display and print/save operations
+- ✅ Error handling with validation and clear error messages
 
 **Test**:
 
@@ -520,13 +525,17 @@ Before making changes, understand these critical principles:
 - 🔲 Verify no TypeScript compilation errors
 - 🔲 Verify no ESLint errors
 
-### 4.2 Update UIWebView
+### 4.2 Update UIWebView ✅
 
-- 🔲 Replace `UIScrollView` with `UIPDFScrollView`
-- 🔲 Update message handling
-- 🔲 Remove old page render logic
-- 🔲 Update PDF delivery to pass ArrayBuffer
-- 🔲 Update error handling
+**Status**: Complete. UIWebView updated for PDF.js integration.
+
+**Implementation**:
+
+- ✅ Replaced old scroll view with PDF.js-based rendering
+- ✅ Updated message handling for toolbar interactions
+- ✅ Removed old page render logic (no longer needed)
+- ✅ PDF delivery via ArrayBuffer → base64 data URL for webview
+- ✅ Error handling with validation of PDFData_t structure
 
 **Test**:
 
@@ -585,6 +594,91 @@ Before making changes, understand these critical principles:
 - 🔲 Run `npm run compile` successfully
 - 🔲 Verify no TypeScript compilation errors
 - 🔲 Verify no ESLint errors
+
+---
+
+## Stage 6: User Experience Enhancements
+
+**Goal**: Add zoom controls, page layout options, and navigation features for better PDF viewing experience
+
+**Status**: Ready to begin after Stage 5 cleanup is complete.
+
+### 6.1 Zoom Controls
+
+**Goal**: Allow users to zoom in/out of PDF pages for better readability
+
+- 🔲 Add zoom controls to toolbar (zoom in, zoom out, fit width, fit page, actual size)
+- 🔲 Implement zoom state management in webview JavaScript
+- 🔲 Update PDF.js rendering to respect zoom level
+- 🔲 Persist zoom level in user preferences
+- 🔲 Add keyboard shortcuts (Cmd/Ctrl + Plus/Minus, Cmd/Ctrl + 0)
+
+**Implementation Notes**:
+
+- PDF.js already supports zoom via `viewport.scale` parameter
+- Need to add zoom buttons to toolbar YAML template
+- Store zoom level in `ui.persist.pdf_zoom_level`
+- Default zoom should be "fit width" or 100%
+
+### 6.2 Page Layout Options
+
+**Goal**: Allow users to choose how many pages to display simultaneously (1-up, 2-up, 4-up, etc.)
+
+- 🔲 Add page layout menu to toolbar (1-up, 2-up, 4-up, 6-up options)
+- 🔲 Update CSS grid layout in webview to support multiple columns
+- 🔲 Adjust page sizing based on layout choice (smaller pages for n-up views)
+- 🔲 Persist layout preference in user settings
+- 🔲 Ensure proper page ordering (left-to-right, top-to-bottom)
+
+**Implementation Notes**:
+
+- Current implementation shows all pages in single column (essentially n-up)
+- Need to add CSS grid with configurable columns
+- Page size should scale down for multi-page layouts
+- Consider responsive layout for different window sizes
+
+### 6.3 Page Navigation
+
+**Goal**: Add navigation controls for large documents
+
+- 🔲 Add page navigation controls (first, previous, next, last page)
+- 🔲 Add page number input/display ("Page X of Y")
+- 🔲 Add thumbnail/outline view for quick navigation
+- 🔲 Keyboard navigation (Page Up/Down, Home/End)
+- 🔲 Scroll-to-page functionality
+
+**Implementation Notes**:
+
+- PDF.js provides built-in navigation APIs
+- Can implement as overlay controls or toolbar buttons
+- Consider mini-map or thumbnail strip for long documents
+- Integrate with existing PDF.js viewer controls
+
+### 6.4 View Options
+
+**Goal**: Additional viewing preferences for user comfort
+
+- 🔲 Page spacing controls (tight, normal, wide)
+- 🔲 Continuous scroll vs. discrete pages
+- 🔲 Full-screen mode
+- 🔲 Print preview mode (show page breaks, margins)
+
+**Test Plan**:
+
+- 🔲 Test zoom at various levels (25%, 50%, 100%, 150%, 200%, fit-width)
+- 🔲 Test page layouts with different document sizes (1-page, 4-page, 20-page)
+- 🔲 Test navigation with large documents (100+ pages)
+- 🔲 Test keyboard shortcuts work correctly
+- 🔲 Test preferences persist across sessions
+- 🔲 Test responsive behavior on different window sizes
+
+**Documentation**:
+
+- 🔲 Document zoom control usage
+- 🔲 Document page layout options
+- 🔲 Document keyboard shortcuts
+- 🔲 Document navigation features
+- 🔲 Update user README with new features
 
 ---
 
