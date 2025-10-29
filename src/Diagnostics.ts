@@ -198,7 +198,9 @@ export class Diagnostics {
    */
   error(message: MessageRef): this {
     // Format error message with diagnostic header
-    const formattedMessage = this.messageHeader(`❌ ERROR: ${typeof message === 'string' ? message : JSON.stringify(message)}`);
+    const formattedMessage = this.messageHeader(
+      `❌ ERROR: ${typeof message === 'string' ? message : JSON.stringify(message)}`
+    );
     if (formattedMessage) {
       UI.out(formattedMessage);
     }
