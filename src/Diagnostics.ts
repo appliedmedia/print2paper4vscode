@@ -137,11 +137,9 @@ export class Diagnostics {
    * @returns this for method chaining
    */
   out(message: MessageRef): this {
-    if (this._debugOn !== undefined ? this._debugOn : this.shared.debugOn) {
+    if (message && (this._debugOn !== undefined ? this._debugOn : this.shared.debugOn)) {
       const formattedMessage = this.messageHeader(message);
-      if (formattedMessage) {
-        UI.out(formattedMessage);
-      }
+      UI.out(formattedMessage);
     }
     return this;
   }
