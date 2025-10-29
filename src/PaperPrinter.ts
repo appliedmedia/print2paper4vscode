@@ -96,7 +96,7 @@ export class PaperPrinter {
     try {
       await this.generatePdf();
       if (!this.pdfDoc) {
-        this.app.ui.showErrorMessage('Failed to generate PDF');
+        dx.error('Failed to generate PDF');
         return;
       }
 
@@ -122,15 +122,13 @@ export class PaperPrinter {
       if (category === 'preview') {
         // TODO: Handle preview tab capture - need to extract raw code from HTML
         // or implement HTML-to-PDF conversion for preview tabs
-        this.app.ui.showErrorMessage(
-          'Printing from preview tabs is not yet supported with the new PDF architecture'
-        );
+        this.dx.error('Printing from preview tabs is not yet supported with the new PDF architecture');
         return;
       }
 
       const info = this.app.tabinspector.getEditorSelectionOrAll();
       if (!info || !info.text || !info.languageId) {
-        this.app.ui.showErrorMessage('No active editor or content found');
+        this.dx.error('No active editor or content found');
         return;
       }
 
@@ -159,10 +157,7 @@ export class PaperPrinter {
       // Open webview (fire and forget)
       void this.openWebView(printableLabel);
     } catch (error) {
-      this.dx.out(`Error handling print: ${error}`);
-      this.app.ui.showErrorMessage(
-        `Print failed: ${error instanceof Error ? error.message : String(error)}`
-      );
+      this.dx.error(`Print failed: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
 
@@ -202,7 +197,7 @@ export class PaperPrinter {
 
       dx.out(`Opened webview for ${tabName}`);
     } catch (error) {
-      this.app.ui.showErrorMessage(`Failed to open webview: ${String(error)}`);
+      dx.error(`Failed to open webview: ${String(error)}`);
       throw error;
     } finally {
       dx.done();
@@ -538,8 +533,7 @@ export class PaperPrinter {
           }
           dx.out(`Print action ${selectedId} completed successfully`);
         } catch (error) {
-          dx.out(`Print action ${selectedId} failed: ${error}`);
-          this.app.ui.showErrorMessage(`Print failed: ${String(error)}`);
+          dx.error(`Print action ${selectedId} failed: ${error}`);
         }
       } else {
         dx.out('No PDF document available for printing');

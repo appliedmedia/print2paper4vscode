@@ -39,6 +39,14 @@ export const kMenuItemId = [
   'minimal',
   'normal',
   'wide',
+  // Page sizes (deterministic, known ahead of time)
+  'a3',
+  'a4',
+  'a5',
+  'letter',
+  'legal',
+  'tabloid',
+  // Font sizes
   '8',
   '9',
   '10',
@@ -58,15 +66,6 @@ export type MenuItemId_t = (typeof kMenuItemId)[number];
 export interface HandleSelection_t {
   id: string;
   value: string | number | boolean;
-}
-
-// Type guards for runtime validation
-export function isMenuId(id: string): id is MenuId_t {
-  return kMenuId.includes(id as MenuId_t);
-}
-
-export function isMenuItemId(id: string): id is MenuItemId_t {
-  return kMenuItemId.includes(id as MenuItemId_t);
 }
 
 /**

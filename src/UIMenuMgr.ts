@@ -5,8 +5,11 @@ import {
   type MenuItemId_t,
   type HandleSelection_t,
   type UIMenuItem_t,
+  kMenuId,
+  kMenuItemId,
 } from './UIMenu';
 import { Diagnostics } from './Diagnostics';
+import { kPageSizeId } from './types/PaperPrinter_t';
 
 /**
  * UIMenuMgr - Menu manager for webview toolbar system
@@ -19,12 +22,37 @@ import { Diagnostics } from './Diagnostics';
  * @output Aggregated menu HTML/CSS/JS, menu item selection routing, menu lookup
  *
  * @example
- * const mgr = new UIMenuMgr(app);
- * const menu = mgr.createMenu('print', 'Print', '🖨️', false, ...);
- * mgr.addMenu(menu);
- * const html = await mgr.getAllUIMenuHTML();
+ * const uimenumgr = new UIMenuMgr(app);
+ * const menu = uimenumgr.createMenu('print', 'Print', '🖨️', false, ...);
+ * uimenumgr.addMenu(menu);
+ * const html = await uimenumgr.getAllUIMenuHTML();
  */
 export class UIMenuMgr {
+  // Type guards for runtime validation
+  static isMenuId(id: string): id is MenuId_t {
+    return kMenuId.includes(id as MenuId_t);
+  }
+
+  static isMenuItemId(id: string): id is MenuItemId_t {
+    let isValid = false;
+
+    // 1. Check against static kMenuItemId list (includes page sizes, font sizes, actions)
+    if (kMenuItemId.includes(id as MenuItemId_t)) {
+      isValid = true;
+    }
+    // 2. Check if it's a number - could be custom font size
+    else if (!isNaN(Number(id))) {
+      // Accept numeric IDs as potential custom font sizes (e.g., editor size of 13)
+      isValid = true;
+    }
+    // 3. Otherwise could be a theme ID - accept it, handler will validate
+    else {
+      isValid = true;
+    }
+
+    return isValid;
+  }
+
   private app: App;
   private menus: UIMenu[] = [];
   private dx: Diagnostics;
@@ -37,6 +65,15 @@ export class UIMenuMgr {
 
   init(): void {
     // No initialization needed - menus are created on-demand by PaperPrinter
+  }
+
+  // Instance methods that delegate to static methods
+  isMenuId(id: string): id is MenuId_t {
+    return UIMenuMgr.isMenuId(id);
+  }
+
+  isMenuItemId(id: string): id is MenuItemId_t {
+    return UIMenuMgr.isMenuItemId(id);
   }
 
   done(): void {
@@ -81,9 +118,7 @@ export class UIMenuMgr {
         await menu.dispatchSelection(itemId);
         dx.out(`Menu item selected: ${menuId}.${itemId}`);
       } else {
-        const msg = `Invalid menu: ${menuId}`;
-        dx.out(msg);
-        this.app.ui.showErrorMessage(msg);
+        dx.error(`Invalid menu: ${menuId}`);
         return;
       }
     } finally {
@@ -96,10 +131,8 @@ export class UIMenuMgr {
   getMenuById(id: string): UIMenu {
     const menu = this.getAllMenus().find(menu => menu.id === id);
     if (!menu) {
-      const msg = `Menu not found: ${id}`;
-      this.dx.out(msg);
-      this.app.ui.showErrorMessage(msg);
-      throw new Error(msg);
+      this.dx.error(`Menu not found: ${id}`);
+      throw new Error(`Menu not found: ${id}`);
     }
     return menu;
   }

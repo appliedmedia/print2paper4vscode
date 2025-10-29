@@ -389,7 +389,7 @@ export class PDF implements PageRender {
       dx.out(`Generated complete PDF with ${pdfDoc.getNumberOfPages()} pages`);
       return pdfDoc;
     } catch (error) {
-      this.app.ui.showErrorMessage(`Failed to generate complete PDF: ${String(error)}`);
+      dx.error(`Failed to generate complete PDF: ${String(error)}`);
       throw error;
     } finally {
       dx.done();
@@ -445,7 +445,7 @@ export class PDF implements PageRender {
         'htmlToPdf is deprecated. Use generatePdfFromTokens for direct PDF generation.'
       );
     } catch (error) {
-      this.app.ui.showErrorMessage(`Failed to generate PDF: ${String(error)}`);
+      dx.error(`Failed to generate PDF: ${String(error)}`);
       throw error;
     } finally {
       dx.done();
@@ -547,7 +547,7 @@ export class PDF implements PageRender {
       dx.out(`Page dimensions (from config): ${pageWidthPx}x${pageHeightPx}px`);
       return { widthPx: pageWidthPx, heightPx: pageHeightPx };
     } catch (error) {
-      this.app.ui.showErrorMessage(`Failed to get page dimensions: ${String(error)}`);
+      dx.error(`Failed to get page dimensions: ${String(error)}`);
       throw error;
     } finally {
       dx.done();

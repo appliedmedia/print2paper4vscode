@@ -4,9 +4,9 @@ import type { WebviewPanelId_t } from './VSCodeAPIs';
 import type { PostMessage } from './types/UI_t';
 import { UIScrollView, type ScrollOptions_t } from './UIScrollView';
 import { UIMenuMgr } from './UIMenuMgr';
-import { isMenuId, isMenuItemId } from './UIMenu';
 import { Diagnostics } from './Diagnostics';
 import { Yaml } from './Yaml';
+import { kPageSizeId, kFontSizeId } from './types/PaperPrinter_t';
 
 /**
  * PDF Data for webview display
@@ -35,7 +35,6 @@ export class UIWebView {
   private app: App;
   private dx: Diagnostics;
   private currentViewer: UIScrollView | null = null;
-  private menuMgr: UIMenuMgr | null = null;
   private panelId: WebviewPanelId_t | null = null;
   private initialized: boolean = false;
   private handlersRegistered: boolean = false;
@@ -68,9 +67,6 @@ export class UIWebView {
         throw new Error('UIWebView already initialized');
       }
 
-      // Set menu manager from app
-      this.menuMgr = this.app.uimenumgr;
-
       // Create scroll view
       this.currentViewer = new UIScrollView(this.app, pageRender, options);
 
@@ -97,7 +93,7 @@ export class UIWebView {
       dx.out(`Created webview panel: ${options.title || 'Document Viewer'}`);
       return panelId;
     } catch (error) {
-      this.app.ui.showErrorMessage(`Failed to create webview panel: ${String(error)}`);
+      dx.error(`Failed to create webview panel: ${String(error)}`);
       throw error;
     } finally {
       dx.done();
@@ -106,14 +102,15 @@ export class UIWebView {
 
   /**
    * Create and configure menu manager (for external use)
+   * @deprecated Menu manager should be accessed via this.app.uimenumgr
    */
   createMenus(): UIMenuMgr {
     const dx = this.dx.sub('createMenus');
 
     try {
-      this.menuMgr = new UIMenuMgr(this.app);
-      dx.out('Created menu manager');
-      return this.menuMgr;
+      // Menu manager is always available via this.app.uimenumgr
+      dx.out('Returning app menu manager');
+      return this.app.uimenumgr;
     } finally {
       dx.done();
     }
@@ -130,10 +127,6 @@ export class UIWebView {
     dx.require({ pageRender, options }, ['pageRender', 'options']);
 
     try {
-      if (!this.menuMgr) {
-        throw new Error('Menu manager not created. Call createMenus() first.');
-      }
-
       this.currentViewer = new UIScrollView(this.app, pageRender, options);
 
       // Generate HTML content from scroll view
@@ -153,7 +146,7 @@ export class UIWebView {
       dx.out(`Created scroll view: ${options.title || 'Document Viewer'}`);
       return panelId;
     } catch (error) {
-      this.app.ui.showErrorMessage(`Failed to create scroll view: ${String(error)}`);
+      dx.error(`Failed to create scroll view: ${String(error)}`);
       throw error;
     } finally {
       dx.done();
@@ -174,7 +167,7 @@ export class UIWebView {
         dx.out('No active scroll view to update');
       }
     } catch (error) {
-      this.app.ui.showErrorMessage(`Failed to update PageRender: ${String(error)}`);
+      dx.error(`Failed to update PageRender: ${String(error)}`);
       throw error;
     } finally {
       dx.done();
@@ -195,7 +188,7 @@ export class UIWebView {
         dx.out('No active scroll view to update');
       }
     } catch (error) {
-      this.app.ui.showErrorMessage(`Failed to update scroll view options: ${String(error)}`);
+      dx.error(`Failed to update scroll view options: ${String(error)}`);
       throw error;
     } finally {
       dx.done();
@@ -204,9 +197,10 @@ export class UIWebView {
 
   /**
    * Get the menu manager
+   * @deprecated Use this.app.uimenumgr directly
    */
-  getMenus(): UIMenuMgr | null {
-    return this.menuMgr;
+  getMenus(): UIMenuMgr {
+    return this.app.uimenumgr;
   }
 
   /**
@@ -252,7 +246,7 @@ export class UIWebView {
       dx.out(`Created PDF panel: "${pdfData.title}" with ${pdfData.pageTotal} pages`);
       return panelId;
     } catch (error) {
-      this.app.ui.showErrorMessage(`Failed to create PDF panel: ${String(error)}`);
+      dx.error(`Failed to create PDF panel: ${String(error)}`);
       throw error;
     } finally {
       dx.done();
@@ -334,7 +328,6 @@ export class UIWebView {
         this.app.vscodeapis.removePanel(this.panelId);
       }
 
-      this.menuMgr = null;
       this.panelId = null;
       this.initialized = false;
       dx.out('Webview cleaned up');
@@ -393,24 +386,25 @@ export class UIWebView {
       const { menuId, itemId } = msg;
       if (typeof menuId === 'string' && typeof itemId === 'string') {
         dx.out(`Processing menu selection: menuId=${menuId}, itemId=${itemId}`);
-        // Validate both menuId and itemId before proceeding
-        if (isMenuId(menuId) && isMenuItemId(itemId)) {
-          dx.out(`Validation passed, calling menuMgr.handleMenuItemSelected`);
-          // Handle menu item selection through menu manager
-          if (this.menuMgr) {
-            await this.menuMgr.handleMenuItemSelected(menuId, itemId);
-            dx.out(`Menu item selected: ${menuId}.${itemId}`);
-          } else {
-            dx.out(`ERROR: menuMgr is null!`);
-          }
-        } else {
-          const msg = `Invalid menu selection: ${menuId}.${itemId}`;
-          dx.out(msg);
-          this.app.ui.showErrorMessage(msg);
+
+        // Validate menuId
+        if (!this.app.uimenumgr.isMenuId(menuId)) {
+          dx.error(`Invalid menu ID: ${menuId}`);
           return;
         }
+
+        // Validate itemId using comprehensive validation function
+        if (!this.app.uimenumgr.isMenuItemId(itemId)) {
+          dx.error(`Invalid menu item ID: ${menuId}.${itemId}`);
+          return;
+        }
+
+        dx.out(`Validation passed, calling app.uimenumgr.handleMenuItemSelected`);
+        // Handle menu item selection through menu manager
+        await this.app.uimenumgr.handleMenuItemSelected(menuId, itemId);
+        dx.out(`Menu item selected: ${menuId}.${itemId}`);
       } else {
-        dx.out(`Invalid message format: menuId=${typeof menuId}, itemId=${typeof itemId}`);
+        dx.error(`Invalid message format: menuId=${typeof menuId}, itemId=${typeof itemId}`);
       }
     } finally {
       dx.done();

@@ -130,7 +130,7 @@ export abstract class OS {
         : path;
 
       if (!absPath || !fs.existsSync(absPath)) {
-        this.app.ui.showErrorMessage(`Failed to load ${path}: file not found`);
+        this.dx.error(`Failed to load ${path}: file not found`);
         return undefined;
       }
 
@@ -160,7 +160,7 @@ export abstract class OS {
 
       return parsed as T;
     } catch (err) {
-      this.app.ui.showErrorMessage(`Failed to load ${path}: ${err}`);
+      this.dx.error(`Failed to load ${path}: ${err}`);
       return undefined;
     }
   };
