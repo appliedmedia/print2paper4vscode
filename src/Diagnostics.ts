@@ -197,8 +197,11 @@ export class Diagnostics {
    * @returns this for method chaining
    */
   error(message: MessageRef): this {
-    // Always print error to diagnostics log
-    this.print(`❌ ERROR: ${typeof message === 'string' ? message : JSON.stringify(message)}`);
+    // Format error message with diagnostic header
+    const formattedMessage = this.messageHeader(`❌ ERROR: ${typeof message === 'string' ? message : JSON.stringify(message)}`);
+    if (formattedMessage) {
+      UI.out(formattedMessage);
+    }
 
     // Also display error to user via UI
     const errorText = typeof message === 'string' ? message : JSON.stringify(message, null, 2);
