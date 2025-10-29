@@ -140,7 +140,17 @@ export class UI {
       const templates = this.yaml;
 
       // Get saved toolbar position from persist, validate default if needed
-      const toolbarPos = await this.persist.validateDefault('toolbar_pos', async () => UI.kToolbarMinLeftPx) as number;
+      // Prefer existing value, migrate legacy key if present, then clamp
+      let toolbarPos = await this.persist.validateDefault<number>('toolbar_pos', async () => {
+        // Check for legacy key first
+        const legacyPos = this.app.vscodeapis.getGlobalState('toolbarPosPx');
+        if (typeof legacyPos === 'number' && Number.isFinite(legacyPos)) {
+          return legacyPos;
+        }
+        return UI.kToolbarMinLeftPx;
+      });
+      if (!Number.isFinite(toolbarPos)) toolbarPos = UI.kToolbarMinLeftPx;
+      if (toolbarPos < UI.kToolbarMinLeftPx) toolbarPos = UI.kToolbarMinLeftPx;
 
       // Replace toolbar_pos in toolbar_css before combining with menu CSS
       const toolbarCssWithPos = templates.toolbar_css.replace('{{toolbar_pos}}', toolbarPos.toString());
