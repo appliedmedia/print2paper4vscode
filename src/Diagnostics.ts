@@ -116,7 +116,7 @@ export class Diagnostics {
    * @returns true if all required arguments are present, false otherwise
    */
   require(args: Record<string, unknown>, requiredKeys: string[]): boolean {
-    let missingKeys = [];
+    let missingKeys: string[] = [];
     for (const key of requiredKeys) {
       if (!(key in args) || args[key] === undefined) {
         missingKeys.push(key);
