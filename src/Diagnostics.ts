@@ -183,10 +183,11 @@ export class Diagnostics {
    * @returns this for method chaining
    */
   print(message: MessageRef): this {
-    const formattedMessage = this.messageHeader(message);
-    if (formattedMessage) {
+    if (message) {
+      const formattedMessage = this.messageHeader(message);
       UI.out(formattedMessage);
     }
+
     return this;
   }
 
@@ -198,14 +199,12 @@ export class Diagnostics {
    */
   error(message: MessageRef): this {
     // Format and print error message (messageHeader handles string vs JSON)
-    let formattedMessage = this.messageHeader(message);
-    if (formattedMessage) {
-      formattedMessage = `❌ ERROR: ${formattedMessage}`;
+    if (message) {
+      message = `❌ ERROR: ${message}`;
+      const formattedMessage = this.messageHeader(message);
       UI.out(formattedMessage);
+      this.app?.ui?.showErrorMessage(formattedMessage);
     }
-
-    // Also display error to user via UI (messageHeader already converted if needed)
-    this.app?.ui?.showErrorMessage(formattedMessage);
 
     return this;
   }
