@@ -231,7 +231,7 @@ export abstract class OS {
     const mm = String(ts.getMinutes()).padStart(2, '0');
     const ss = String(ts.getSeconds()).padStart(2, '0');
     const ms = String(ts.getMilliseconds()).padStart(3, '0');
-    const ampm = hh < 12 ? 'am' : 'pm';
+    const ampm = hh < 12 ? 'a' : 'p';
 
     // Convert to 12-hour format
     const hour12 = hh === 0 ? 12 : hh > 12 ? hh - 12 : hh;
