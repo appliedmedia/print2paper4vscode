@@ -197,15 +197,13 @@ export class Diagnostics {
    * @returns this for method chaining
    */
   error(message: MessageRef): this {
-    // Format error message with diagnostic header
-    const formattedMessage = this.messageHeader(
-      `❌ ERROR: ${typeof message === 'string' ? message : JSON.stringify(message)}`
-    );
+    // Format and print error message (messageHeader handles string vs JSON)
+    const formattedMessage = this.messageHeader(message);
     if (formattedMessage) {
-      UI.out(formattedMessage);
+      UI.out(`❌ ERROR: ${formattedMessage}`);
     }
 
-    // Also display error to user via UI
+    // Also display error to user via UI (messageHeader already converted if needed)
     const errorText = typeof message === 'string' ? message : JSON.stringify(message, null, 2);
     this.app?.ui?.showErrorMessage(errorText);
 
