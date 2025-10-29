@@ -31,7 +31,7 @@ export class Diagnostics {
     lastPartialMessage: '',
     lastWasTruncated: false,
     messageCounter: 0,
-    duplicateCount: 0
+    duplicateCount: 0,
   };
 
   private get shared() {
@@ -109,9 +109,6 @@ export class Diagnostics {
     return dx;
   }
 
-
-
-
   /**
    * Validate that required arguments are present in the args object
    * @param args - The arguments object to validate
@@ -155,7 +152,10 @@ export class Diagnostics {
    * @returns this for method chaining
    */
   done(message?: MessageRef): this {
-    if ((this._debugOn !== undefined ? this._debugOn : this.shared.debugOn) && this.startTime !== null) {
+    if (
+      (this._debugOn !== undefined ? this._debugOn : this.shared.debugOn) &&
+      this.startTime !== null
+    ) {
       const duration = OS.performance.now() - this.startTime;
       const timeUnits = [
         { ms: 86400000, suffix: 'd' },
@@ -199,13 +199,11 @@ export class Diagnostics {
   error(message: MessageRef): this {
     // Always print error to diagnostics log
     this.print(`❌ ERROR: ${typeof message === 'string' ? message : JSON.stringify(message)}`);
-    
+
     // Also display error to user via UI
-    if (this.app && this.app.ui) {
-      const errorText = typeof message === 'string' ? message : JSON.stringify(message, null, 2);
-      this.app.ui.showErrorMessage(errorText);
-    }
-    
+    const errorText = typeof message === 'string' ? message : JSON.stringify(message, null, 2);
+    this.app?.ui?.showErrorMessage(errorText);
+
     return this;
   }
 
