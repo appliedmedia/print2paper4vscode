@@ -142,7 +142,7 @@ describe('UIWebView PDF.js Integration', () => {
 
       let errorCaught = false;
       try {
-        await uiWebView.createPDFPanel(invalidPdfData);
+        await uiWebView.displayPdfPanel(invalidPdfData);
       } catch (error) {
         errorCaught = true;
         assert.ok(
@@ -170,7 +170,7 @@ describe('UIWebView PDF.js Integration', () => {
 
       let errorCaught = false;
       try {
-        await uiWebView.createPDFPanel(invalidPdfData);
+        await uiWebView.displayPdfPanel(invalidPdfData);
       } catch (error) {
         errorCaught = true;
         assert.ok(String(error).includes('pageTotal'), 'Error should mention invalid pageTotal');
@@ -195,7 +195,7 @@ describe('UIWebView PDF.js Integration', () => {
 
       let errorCaught = false;
       try {
-        await uiWebView.createPDFPanel(invalidPdfData);
+        await uiWebView.displayPdfPanel(invalidPdfData);
       } catch (error) {
         errorCaught = true;
         assert.ok(String(error).includes('pageSizePx'), 'Error should mention invalid pageSizePx');

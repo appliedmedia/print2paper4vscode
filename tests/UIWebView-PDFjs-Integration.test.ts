@@ -7,7 +7,7 @@ import jsPDF from 'jspdf';
 /**
  * Integration test for UIWebView PDF panel creation
  * 
- * This test verifies that the createPDFPanel() method works correctly
+ * This test verifies that the displayPdfPanel() method works correctly
  * with actual PDF data and validates the complete flow from PDF generation
  * to panel creation.
  * 
@@ -128,8 +128,8 @@ window.pdfjsLib = {
         title: 'Test Document',
       };
 
-      // Step 4: Call createPDFPanel
-      const panelId = await uiWebView.createPDFPanel(pdfData);
+      // Step 4: Call displayPdfPanel
+      const panelId = await uiWebView.displayPdfPanel(pdfData);
 
       // Step 5: Verify panel was created
       assert.ok(panelId, 'Panel ID should be returned');
@@ -160,7 +160,7 @@ window.pdfjsLib = {
         title: 'Multi-Page Test',
       };
 
-      const panelId = await uiWebView.createPDFPanel(pdfData);
+      const panelId = await uiWebView.displayPdfPanel(pdfData);
 
       assert.strictEqual(pdfData.pageTotal, 3, 'Should have 3 pages');
       assert.ok(panelId, 'Panel should be created successfully');
@@ -179,7 +179,7 @@ window.pdfjsLib = {
       };
 
       try {
-        await uiWebView.createPDFPanel(invalidPdfData);
+        await uiWebView.displayPdfPanel(invalidPdfData);
         assert.fail('Should have thrown an error for invalid data');
       } catch (error) {
         assert.ok(String(error).includes('arrayBuffer'), 'Error should mention arrayBuffer');
@@ -201,8 +201,8 @@ window.pdfjsLib = {
         title: 'Base64 Test',
       };
 
-      // The createPDFPanel method should handle conversion internally
-      const panelId = await uiWebView.createPDFPanel(pdfData);
+      // The displayPdfPanel method should handle conversion internally
+      const panelId = await uiWebView.displayPdfPanel(pdfData);
 
       // Verify conversion was successful by checking panel was created
       assert.ok(panelId, 'Panel creation should succeed after base64 conversion');
@@ -232,7 +232,7 @@ window.pdfjsLib = {
           title: `${size.name} Test`,
         };
 
-        const panelId = await uiWebView.createPDFPanel(pdfData);
+        const panelId = await uiWebView.displayPdfPanel(pdfData);
         assert.ok(panelId, `Panel should be created for ${size.name} size`);
       }
     });
@@ -261,7 +261,7 @@ window.pdfjsLib = {
         title: 'Large PDF Test',
       };
 
-      const panelId = await uiWebView.createPDFPanel(pdfData);
+      const panelId = await uiWebView.displayPdfPanel(pdfData);
 
       assert.ok(panelId, 'Panel should be created for moderate-size PDF');
       // A 10-page PDF with ~50 lines each should be at least 10KB
@@ -315,7 +315,7 @@ window.pdfjsLib = {
 
       // Test that the panel can be created with this large PDF
       const panelStartTime = Date.now();
-      const panelId = await uiWebView.createPDFPanel(pdfData);
+      const panelId = await uiWebView.displayPdfPanel(pdfData);
       const panelTime = Date.now() - panelStartTime;
       
       console.log(`Panel creation took ${panelTime}ms`);
@@ -352,7 +352,7 @@ window.pdfjsLib = {
       };
 
       try {
-        await uiWebView.createPDFPanel(invalidPdfData);
+        await uiWebView.displayPdfPanel(invalidPdfData);
         assert.fail('Should have thrown an error');
       } catch (error) {
         // Error should be displayed
@@ -383,7 +383,7 @@ window.pdfjsLib = {
       };
 
       try {
-        await uiWebView.createPDFPanel(invalidPdfData);
+        await uiWebView.displayPdfPanel(invalidPdfData);
         assert.fail('Should have thrown an error');
       } catch (error) {
         assert.ok(errorDisplayed || String(error).includes('pageSizePx'), 

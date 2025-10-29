@@ -122,7 +122,9 @@ export class PaperPrinter {
       if (category === 'preview') {
         // TODO: Handle preview tab capture - need to extract raw code from HTML
         // or implement HTML-to-PDF conversion for preview tabs
-        this.dx.error('Printing from preview tabs is not yet supported with the new PDF architecture');
+        this.dx.error(
+          'Printing from preview tabs is not yet supported with the new PDF architecture'
+        );
         return;
       }
 
@@ -154,21 +156,7 @@ export class PaperPrinter {
         themeMenu.persist.theme = this.app.vscodeapis.getActiveThemeId();
       }
 
-      // Open webview (fire and forget)
-      void this.openWebView(printableLabel);
-    } catch (error) {
-      this.dx.error(`Print failed: ${error instanceof Error ? error.message : String(error)}`);
-    }
-  }
-
-  /**
-   * Open webview (handles both single and multiple pages)
-   */
-  private async openWebView(tabName: string): Promise<void> {
-    const dx = this.dx.sub('openWebView');
-
-    try {
-      // Generate PDF (styleToPdf already sets tokens internally)
+      // Generate PDF
       await this.generatePdf();
 
       // Validate we have a PDF document
@@ -176,31 +164,16 @@ export class PaperPrinter {
         throw new Error('PDF document not generated');
       }
 
-      // Get page information from the PDF
-      const pageTotal = this.pdfDoc.getNumberOfPages();
-      const pageSizePx = await this.app.pdf.getPageSizePx();
-
-      // Create PDF data for webview display
-      const pdfData = {
-        arrayBuffer: this.pdfDoc.asArrayBuffer(),
-        pageTotal,
-        pageSizePx,
-        title: `Print: ${tabName}`,
-      };
-
       // Create webview and initialize message handlers
       this.uiwebview = new UIWebView(this.app);
       this.uiwebview.init();
 
-      // Create webview panel with PDF data
-      await this.uiwebview.createPDFPanel(pdfData);
+      // Display PDF in webview panel (passes DocInfo_PDF, UIWebView extracts data)
+      await this.uiwebview.displayPdfPanel(this.pdfDoc, `Print: ${printableLabel}`);
 
-      dx.out(`Opened webview for ${tabName}`);
+      this.dx.out(`Opened webview for ${printableLabel}`);
     } catch (error) {
-      dx.error(`Failed to open webview: ${String(error)}`);
-      throw error;
-    } finally {
-      dx.done();
+      this.dx.error(`Print failed: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
 

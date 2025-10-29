@@ -98,30 +98,40 @@ export class DocInfo_PDF {
   /**
    * Get the total number of pages in the document
    */
-  getPageTotal(): number {
+  get pageTotal(): number {
     return this.pdfDoc ? this.pdfDoc.getNumberOfPages() : 0;
   }
 
   /**
+   * Get the total number of pages in the document (method version)
+   * @deprecated Use pageTotal property instead
+   */
+  getPageTotal(): number {
+    return this.pageTotal;
+  }
+
+  /**
    * Get the number of pages in the document (alias for getPageTotal)
-   * @deprecated Use getPageTotal() for consistency
+   * @deprecated Use pageTotal property instead
    */
   getNumberOfPages(): number {
-    return this.getPageTotal();
+    return this.pageTotal;
   }
 
   /**
    * Get the width of the current page in points
    */
   getPageWidth(): number {
-    return this.pdfDoc ? this.pdfDoc.getPageWidth() : 0;
+    if (!this.pdfDoc) return 0;
+    return this.pdfDoc.getPageWidth();
   }
 
   /**
    * Get the height of the current page in points
    */
   getPageHeight(): number {
-    return this.pdfDoc ? this.pdfDoc.getPageHeight() : 0;
+    if (!this.pdfDoc) return 0;
+    return this.pdfDoc.getPageHeight();
   }
 
   /**
@@ -144,6 +154,27 @@ export class DocInfo_PDF {
     return {
       pageNumber: this.pdfDoc.getCurrentPageInfo().pageNumber,
       pageCount: this.pdfDoc.getNumberOfPages(),
+    };
+  }
+
+  /**
+   * Get page dimensions in pixels (UI native format)
+   * PDF layer uses points internally but exposes pixels for UI consumption
+   */
+  get pageSizePx(): { widthPx: number; heightPx: number } {
+    if (!this.pdfDoc) {
+      return { widthPx: 0, heightPx: 0 };
+    }
+
+    const { Coords } = require('./Coords');
+    const coords = new Coords(this.app);
+    
+    const pageWidthPts = this.getPageWidth();
+    const pageHeightPts = this.getPageHeight();
+
+    return {
+      widthPx: Math.round(coords.pdfPtsToCssPx(pageWidthPts)),
+      heightPx: Math.round(coords.pdfPtsToCssPx(pageHeightPts)),
     };
   }
 

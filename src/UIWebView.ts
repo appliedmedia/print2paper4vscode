@@ -204,13 +204,38 @@ export class UIWebView {
   }
 
   /**
-   * Create webview panel with PDF (new simplified architecture)
+   * Display PDF in webview panel (new simplified architecture)
    *
-   * Takes PDF ArrayBuffer and generates HTML for PDF.js rendering.
+   * Accepts either PDFData_t or DocInfo_PDF - extracts data and converts on the fly.
+   * Creates new panel on first call, updates existing panel on subsequent calls.
    * The PDF is embedded as base64 data URL due to VS Code postMessage limitations.
    */
-  async createPDFPanel(pdfData: PDFData_t): Promise<WebviewPanelId_t> {
-    const dx = this.dx.sub('createPDFPanel');
+  async displayPdfPanel(pdfDocOrData: any, title?: string): Promise<WebviewPanelId_t> {
+    const dx = this.dx.sub('displayPdfPanel');
+    
+    let pdfData: PDFData_t;
+    
+    // Check if we got DocInfo_PDF or already-prepared PDFData_t
+    if ('asArrayBuffer' in pdfDocOrData && 'pageTotal' in pdfDocOrData) {
+      // It's a DocInfo_PDF - extract and convert
+      const { Coords } = require('./Coords');
+      const coords = new Coords(this.app);
+      const pageSizePts = pdfDocOrData.pageSizePts;
+      
+      pdfData = {
+        arrayBuffer: pdfDocOrData.asArrayBuffer(),
+        pageTotal: pdfDocOrData.pageTotal,
+        pageSizePx: {
+          widthPx: Math.round(coords.pdfPtsToCssPx(pageSizePts.widthPts)),
+          heightPx: Math.round(coords.pdfPtsToCssPx(pageSizePts.heightPts))
+        },
+        title: title || 'PDF Document'
+      };
+    } else {
+      // It's already PDFData_t
+      pdfData = pdfDocOrData;
+    }
+    
     dx.require({ pdfData }, ['pdfData']);
 
     try {
