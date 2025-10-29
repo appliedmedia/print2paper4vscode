@@ -210,7 +210,7 @@ export class UIWebView {
    * Creates new panel on first call, updates existing panel on subsequent calls.
    * The PDF is embedded as base64 data URL due to VS Code postMessage limitations.
    */
-  async displayPdfPanel(pdfDocOrData: any, title?: string): Promise<WebviewPanelId_t> {
+  async displayPdfPanel(pdfDocOrData: PDFData_t | { asArrayBuffer(): ArrayBuffer; pageTotal: number; pageSizePx: { widthPx: number; heightPx: number } }, title?: string): Promise<WebviewPanelId_t> {
     const dx = this.dx.sub('displayPdfPanel');
     
     let pdfData: PDFData_t;
