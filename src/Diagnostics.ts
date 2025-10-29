@@ -198,14 +198,14 @@ export class Diagnostics {
    */
   error(message: MessageRef): this {
     // Format and print error message (messageHeader handles string vs JSON)
-    const formattedMessage = this.messageHeader(message);
+    let formattedMessage = this.messageHeader(message);
     if (formattedMessage) {
-      UI.out(`❌ ERROR: ${formattedMessage}`);
+      formattedMessage = `❌ ERROR: ${formattedMessage}`;
+      UI.out(formattedMessage);
     }
 
     // Also display error to user via UI (messageHeader already converted if needed)
-    const errorText = typeof message === 'string' ? message : JSON.stringify(message, null, 2);
-    this.app?.ui?.showErrorMessage(errorText);
+    this.app?.ui?.showErrorMessage(formattedMessage);
 
     return this;
   }

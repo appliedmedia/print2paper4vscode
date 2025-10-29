@@ -207,12 +207,16 @@ ui_menu_generic_handlers: |
       }
       
       // Regular menu item selection (works for both main menu and flyout items)
-      // Remove selected class from all items in this menu
-      const menuItems = menu.querySelectorAll('.p2p4vsc-menu-item');
-      menuItems.forEach(item => item.classList.remove('selected'));
-      
-      // Add selected class to clicked item
-      itemEl.classList.add('selected');
+      // Only add selected class if this menu has gutter-before (state-based menus)
+      // Action-only menus (like Print) have no gutter-before and shouldn't show selection
+      if (menu.classList.contains('has-gutter-before')) {
+        // Remove selected class from all items in this menu
+        const menuItems = menu.querySelectorAll('.p2p4vsc-menu-item');
+        menuItems.forEach(item => item.classList.remove('selected'));
+        
+        // Add selected class to clicked item
+        itemEl.classList.add('selected');
+      }
 
       // Send minimal selection data to extension
       window.vscode.postMessage({
