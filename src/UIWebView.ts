@@ -217,18 +217,11 @@ export class UIWebView {
     
     // Check if we got DocInfo_PDF or already-prepared PDFData_t
     if ('asArrayBuffer' in pdfDocOrData && 'pageTotal' in pdfDocOrData) {
-      // It's a DocInfo_PDF - extract and convert
-      const { Coords } = require('./Coords');
-      const coords = new Coords(this.app);
-      const pageSizePts = pdfDocOrData.pageSizePts;
-      
+      // It's a DocInfo_PDF - extract data (DocInfo_PDF already provides pixels)
       pdfData = {
         arrayBuffer: pdfDocOrData.asArrayBuffer(),
         pageTotal: pdfDocOrData.pageTotal,
-        pageSizePx: {
-          widthPx: Math.round(coords.pdfPtsToCssPx(pageSizePts.widthPts)),
-          heightPx: Math.round(coords.pdfPtsToCssPx(pageSizePts.heightPts))
-        },
+        pageSizePx: pdfDocOrData.pageSizePx,
         title: title || 'PDF Document'
       };
     } else {
