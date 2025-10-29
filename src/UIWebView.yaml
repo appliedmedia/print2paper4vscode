@@ -163,6 +163,10 @@ webview_js: |
       const canvas = document.createElement('canvas');
       canvas.id = 'pdf-canvas-' + pageNum;
       const ctx = canvas.getContext('2d');
+      if (!ctx) {
+        dx('❌ 2D canvas context not available');
+        return;
+      }
 
       canvas.height = viewport.height;
       canvas.width = viewport.width;
