@@ -123,7 +123,7 @@ export class DocInfo_PDF {
    */
   getPageWidth(): number {
     if (!this.pdfDoc) return 0;
-    return this.pdfDoc.getPageWidth();
+    return (this.pdfDoc as any).getPageWidth();
   }
 
   /**
@@ -131,7 +131,7 @@ export class DocInfo_PDF {
    */
   getPageHeight(): number {
     if (!this.pdfDoc) return 0;
-    return this.pdfDoc.getPageHeight();
+    return (this.pdfDoc as any).getPageHeight();
   }
 
   /**
@@ -168,7 +168,7 @@ export class DocInfo_PDF {
 
     const { Coords } = require('./Coords');
     const coords = new Coords(this.app);
-    
+
     const pageWidthPts = this.getPageWidth();
     const pageHeightPts = this.getPageHeight();
 
