@@ -191,6 +191,25 @@ export class Diagnostics {
   }
 
   /**
+   * Output an error message and display to user
+   * Forces print regardless of debug settings and shows error dialog
+   * @param message - The error message to output and display
+   * @returns this for method chaining
+   */
+  error(message: MessageRef): this {
+    // Always print error to diagnostics log
+    this.print(`❌ ERROR: ${typeof message === 'string' ? message : JSON.stringify(message)}`);
+    
+    // Also display error to user via UI
+    if (this.app && this.app.ui) {
+      const errorText = typeof message === 'string' ? message : JSON.stringify(message, null, 2);
+      this.app.ui.showErrorMessage(errorText);
+    }
+    
+    return this;
+  }
+
+  /**
    * Increment and return formatted message counter
    */
   private messageHeader_incCounter(): string {
