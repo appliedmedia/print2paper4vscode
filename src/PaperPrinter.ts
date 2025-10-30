@@ -261,7 +261,7 @@ export class PaperPrinter {
         icon: '📄',
         isFlyout: false,
         menuItems: this.menuItems_Page.bind(this),
-        flyoutMenuItemIds: ['pageSizeId', 'orient', 'marginId', 'header', 'footer'],
+        flyoutMenuItemIds: ['pageSizeId', 'orient', 'marginId', 'headerTitle', 'headerPage', 'headerTotal', 'footerTitle', 'footerPage', 'footerTotal'],
         selectionHandler: this.handleSelection_Page.bind(this),
       },
       {
@@ -290,24 +290,6 @@ export class PaperPrinter {
         menuItems: this.menuItems_MarginId.bind(this),
         flyoutMenuItemIds: [],
         selectionHandler: this.handleSelection_MarginId.bind(this),
-      },
-      {
-        id: 'header',
-        displayName: 'Header',
-        icon: '', // submenu indicated by no icon, see Page > Header
-        isFlyout: true,
-        menuItems: this.menuItems_Header.bind(this),
-        flyoutMenuItemIds: ['headerTitle', 'headerPage', 'headerTotal'],
-        selectionHandler: this.handleSelection_Header.bind(this),
-      },
-      {
-        id: 'footer',
-        displayName: 'Footer',
-        icon: '', // submenu indicated by no icon, see Page > Footer
-        isFlyout: true,
-        menuItems: this.menuItems_Footer.bind(this),
-        flyoutMenuItemIds: ['footerTitle', 'footerPage', 'footerTotal'],
-        selectionHandler: this.handleSelection_Footer.bind(this),
       },
       {
         id: 'headerTitle',
@@ -467,9 +449,14 @@ export class PaperPrinter {
       { id: 'orient', displayName: 'Orient' },
       // Margin submenu reference (id must match the actual menu id)
       { id: 'marginId', displayName: 'Margin' },
-      // Header and Footer submenu references
-      { id: 'header', displayName: 'Header' },
-      { id: 'footer', displayName: 'Footer' },
+      // Header positioning flyouts
+      { id: 'headerTitle', displayName: 'Header > Title' },
+      { id: 'headerPage', displayName: 'Header > Page' },
+      { id: 'headerTotal', displayName: 'Header > Total' },
+      // Footer positioning flyouts
+      { id: 'footerTitle', displayName: 'Footer > Title' },
+      { id: 'footerPage', displayName: 'Footer > Page' },
+      { id: 'footerTotal', displayName: 'Footer > Total' },
     ];
   }
 
@@ -495,22 +482,6 @@ export class PaperPrinter {
       id,
       displayName: this.app.templateDictReplace(kMarginId[id].displayName, this.yaml),
     }));
-  }
-
-  private menuItems_Header(): UIMenuItem_t[] {
-    return [
-      { id: 'headerTitle', displayName: 'Title' },
-      { id: 'headerPage', displayName: 'Page' },
-      { id: 'headerTotal', displayName: 'Total' },
-    ];
-  }
-
-  private menuItems_Footer(): UIMenuItem_t[] {
-    return [
-      { id: 'footerTitle', displayName: 'Title' },
-      { id: 'footerPage', displayName: 'Page' },
-      { id: 'footerTotal', displayName: 'Total' },
-    ];
   }
 
   private menuItems_HeaderFooterPos(): UIMenuItem_t[] {

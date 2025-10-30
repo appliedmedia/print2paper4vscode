@@ -18,8 +18,6 @@ export const kMenuId = [
   'pageSizeId',
   'orient',
   'marginId',
-  'header',
-  'footer',
   'headerTitle',
   'headerPage',
   'headerTotal',
