@@ -15,7 +15,7 @@ export class DocInfo_PDF {
   private app: App;
 
   // Base margin constant: 0.4 inch = 28.8 points (minimum safe printing margin)
-  private static readonly BASE_MARGIN_PTS = 0.4 * 72; // 28.8 points
+  private static readonly kMarginBasePts = 0.4 * 72; // 28.8 points
 
   // PDF document state
   public currentPdfDoc: jsPDF | null = null;
@@ -77,9 +77,9 @@ export class DocInfo_PDF {
   } {
     // Get margin setting from kMarginId (this is ADDED to base)
     const marginSettingPts = kMarginId[this.marginId].marginPts;
-    
+
     // Total margin = base + setting
-    const totalMarginPts = DocInfo_PDF.BASE_MARGIN_PTS + marginSettingPts;
+    const totalMarginPts = DocInfo_PDF.kMarginBasePts + marginSettingPts;
 
     return {
       topMarginPts: totalMarginPts,
