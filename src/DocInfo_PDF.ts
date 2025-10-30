@@ -1,6 +1,7 @@
 import type { App } from './App';
 import type { MarginId_t, PageSizeId_t, Orient_t } from './types/PaperPrinter_t';
 import { kMarginId } from './types/PaperPrinter_t';
+import { Coords } from './Coords';
 import type { ThemedToken } from 'shiki';
 import type jsPDF from 'jspdf';
 import type { LanguageId_t } from './Stylize';
@@ -13,9 +14,6 @@ import type { LanguageId_t } from './Stylize';
  */
 export class DocInfo_PDF {
   private app: App;
-
-  // Base margin constant: 0.4 inch = 28.8 points (minimum safe printing margin)
-  private static readonly kMarginBasePts = 0.4 * 72; // 28.8 points
 
   // PDF document state
   public currentPdfDoc: jsPDF | null = null;
@@ -79,7 +77,7 @@ export class DocInfo_PDF {
     const marginSettingPts = kMarginId[this.marginId].marginPts;
 
     // Total margin = base + setting
-    const totalMarginPts = DocInfo_PDF.kMarginBasePts + marginSettingPts;
+    const totalMarginPts = Coords.kMarginBasePts + marginSettingPts;
 
     return {
       topMarginPts: totalMarginPts,

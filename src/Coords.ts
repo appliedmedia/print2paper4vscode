@@ -39,6 +39,9 @@ export class Coords {
   private static readonly POINTS_PER_MM = 2.834645669;
   private static readonly PX_TO_PTS_RATIO = 0.75; // 72 DPI / 96 DPI
 
+  // Base margin constant: 0.4 inch gutter required for all non-full-bleed printers
+  public static readonly kMarginBasePts = 0.4 * Coords.POINTS_PER_INCH;
+
   constructor(app: App) {
     this.app = app;
     this.dx = app.dx.create('Coords');
