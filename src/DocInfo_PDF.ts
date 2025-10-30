@@ -1,16 +1,9 @@
 import type { App } from './App';
 import type { MarginId_t, PageSizeId_t, Orient_t } from './types/PaperPrinter_t';
+import { kMarginId } from './types/PaperPrinter_t';
 import type { ThemedToken } from 'shiki';
 import type jsPDF from 'jspdf';
 import type { LanguageId_t } from './Stylize';
-
-// Margin ID to points conversion
-const MARGIN_ID_TO_PTS: { [key in MarginId_t]: number } = {
-  none: 0, // 0pts
-  minimal: 5, // 5pts
-  normal: 15, // 15pts
-  wide: 30, // 30pts
-} as const;
 
 /**
  * PDF_DocInfo - Document information and configuration for PDF
@@ -77,8 +70,8 @@ export class DocInfo_PDF {
     leftMarginPts: number;
     rightMarginPts: number;
   } {
-    // Use marginId from docInfo instead of reading from menu
-    const marginPts = MARGIN_ID_TO_PTS[this.marginId];
+    // Use marginId from docInfo and get marginPts from kMarginId
+    const marginPts = kMarginId[this.marginId].marginPts;
 
     return {
       topMarginPts: marginPts,

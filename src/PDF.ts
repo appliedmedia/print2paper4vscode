@@ -363,13 +363,9 @@ export class PDF implements PageRender {
         this.docInfo.pdfDoc!.setFontSize(titleFontSizePts);
         this.setTextColorFromWebColor(this.docInfo.pdfDoc!, 'black');
         const titleY = marginsPts.topMarginPts + 20;
-        this.docInfo.pdfDoc!.text(
-          this.docInfo.title,
-          marginsPts.leftMarginPts,
-          titleY
-        );
+        this.docInfo.pdfDoc!.text(this.docInfo.title, marginsPts.leftMarginPts, titleY);
         this.docInfo.pdfDoc!.setFontSize(this.coords.cssPxToPdfPts(this.docInfo.fontSizePx));
-        
+
         // Update currentY to start below the title
         // Title is at topMargin + 20pt, add title font size + some spacing
         const titleHeight = titleFontSizePts;

@@ -32,12 +32,12 @@ export const kOrient = {
 export type Orient_t = keyof typeof kOrient;
 export const kOrient_alt: Orient_t = 'portrait';
 
-// Margin level: id → metadata (displayName with embedded SVG template)
+// Margin level: id → metadata (displayName with embedded SVG template, marginPts)
 export const kMarginId = {
-  none: { displayName: '{{icon_margin_none_svg}} None' },
-  minimal: { displayName: '{{icon_margin_minimal_svg}} Minimal' },
-  normal: { displayName: '{{icon_margin_normal_svg}} Normal' },
-  wide: { displayName: '{{icon_margin_wide_svg}} Wide' },
+  none: { displayName: '{{icon_margin_none_svg}} None', marginPts: 0 },
+  minimal: { displayName: '{{icon_margin_minimal_svg}} Minimal', marginPts: 5 },
+  normal: { displayName: '{{icon_margin_normal_svg}} Normal', marginPts: 15 },
+  wide: { displayName: '{{icon_margin_wide_svg}} Wide', marginPts: 30 },
 } as const;
 export type MarginId_t = keyof typeof kMarginId;
 export const kMarginId_alt: MarginId_t = 'normal';
