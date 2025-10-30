@@ -59,6 +59,14 @@ export const kFontSizeId = {
 export type FontSizeId_t = keyof typeof kFontSizeId;
 export const kFontSizeId_alt: FontSizeId_t = '12';
 
+// Page menu submenu labels: id → metadata (displayName)
+export const kPageMenuSubmenu = {
+  pageSizeId: { displayName: 'Size' },
+  orient: { displayName: 'Orient' },
+  marginId: { displayName: 'Margin' },
+} as const;
+export type PageMenuSubmenu_t = keyof typeof kPageMenuSubmenu;
+
 // Header/Footer location: id → metadata (displayName)
 export const kHeaderFooterLocation = {
   header: { displayName: 'Header' },

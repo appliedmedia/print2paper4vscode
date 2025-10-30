@@ -28,6 +28,7 @@ import {
   kHeaderFooterPos,
   kHeaderFooterLocation,
   kHeaderFooterElement,
+  kPageMenuSubmenu,
   kFontSizeId,
   kPageSizeId_alt,
   kOrient_alt,
@@ -282,7 +283,7 @@ export class PaperPrinter {
       },
       {
         id: 'pageSizeId',
-        displayName: 'Size',
+        displayName: kPageMenuSubmenu.pageSizeId.displayName,
         icon: '', // submenu indicated by no icon, see Page > Size
         isFlyout: true,
         menuItems: this.menuItems_pageSizeId.bind(this),
@@ -291,7 +292,7 @@ export class PaperPrinter {
       },
       {
         id: 'orient',
-        displayName: 'Orient',
+        displayName: kPageMenuSubmenu.orient.displayName,
         icon: '', // submenu indicated by no icon, see Page > Orient
         isFlyout: true,
         menuItems: this.menuItems_Orient.bind(this),
@@ -300,7 +301,7 @@ export class PaperPrinter {
       },
       {
         id: 'marginId',
-        displayName: 'Margin',
+        displayName: kPageMenuSubmenu.marginId.displayName,
         icon: '', // submenu indicated by no icon, see Page > Margin
         isFlyout: true,
         menuItems: this.menuItems_MarginId.bind(this),
@@ -460,11 +461,11 @@ export class PaperPrinter {
   private menuItems_Page(): UIMenuItem_t[] {
     return [
       // Size submenu reference (id must match the actual menu id)
-      { id: 'pageSizeId', displayName: 'Size' },
+      { id: 'pageSizeId', displayName: kPageMenuSubmenu.pageSizeId.displayName },
       // Orientation submenu reference
-      { id: 'orient', displayName: 'Orient' },
+      { id: 'orient', displayName: kPageMenuSubmenu.orient.displayName },
       // Margin submenu reference (id must match the actual menu id)
-      { id: 'marginId', displayName: 'Margin' },
+      { id: 'marginId', displayName: kPageMenuSubmenu.marginId.displayName },
       // Header positioning flyouts - use constants for display names
       {
         id: 'headerTitle',
