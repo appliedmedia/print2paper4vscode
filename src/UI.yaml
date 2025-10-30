@@ -66,9 +66,8 @@ toolbar_js: |
   const toolbar = document.getElementById('p2p4vsc-toolbar');
   const drag = document.getElementById('p2p4vsc-toolbar-grip');
   
-  // Toolbar positioning constants from server
+  // Toolbar positioning constant from server
   const toolbar_pos_min_px = {{toolbar_pos_min_px}};
-  const toolbar_pos_max_px = {{toolbar_pos_max_px}};
 
   // Generic flyout hover handler
   function handleFlyoutHover() {

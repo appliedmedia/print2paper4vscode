@@ -151,9 +151,8 @@ export class UI {
       // Replace toolbar_pos in toolbar_css before combining with menu CSS
       const toolbarCssWithPos = templates.toolbar_css.replace('{{toolbar_pos}}', toolbar_pos.toString());
 
-      // Replace toolbar positioning constants in toolbar_js
-      let toolbarJsWithConstants = templates.toolbar_js.replace(/\{\{toolbar_pos_min_px\}\}/g, UI.kToolbar_pos_min_px.toString());
-      toolbarJsWithConstants = toolbarJsWithConstants.replace(/\{\{toolbar_pos_max_px\}\}/g, UI.kToolbar_pos_max_px.toString());
+      // Replace toolbar positioning constant in toolbar_js
+      const toolbarJsWithConstants = templates.toolbar_js.replace(/\{\{toolbar_pos_min_px\}\}/g, UI.kToolbar_pos_min_px.toString());
 
       // Inject toolbar into HTML using template
       const toolbarHtml = this.app.templateDictReplace(templates.toolbar_html, {
