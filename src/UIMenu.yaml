@@ -1,4 +1,4 @@
-ui_menu_css: |
+uimenu_css: |
   .p2p4vsc-menu-btn:hover { background: #e9e9e9; }
   .p2p4vsc-menu {
     position: relative;
@@ -120,7 +120,7 @@ ui_menu_css: |
     display: block !important;
   }
 
-ui_menu_html: |
+uimenu_html: |
   <div class="p2p4vsc-menu {{menuClasses}}" id="{{menuId}}">
     <button class="p2p4vsc-menu-btn" title="{{displayName}}">{{icon}}</button>
     <div class="p2p4vsc-menu-items" id="{{menuId}}-items">
@@ -128,7 +128,7 @@ ui_menu_html: |
     </div>
   </div>
 
-ui_menu_generic_handlers: |
+uimenu_generic_handlers: |
   // Generic handlers for all menus - just pass events to extension
   document.addEventListener('click', (e) => {
     // Safety checks
@@ -177,9 +177,7 @@ ui_menu_generic_handlers: |
         
         // Find the flyout menu for this item by checking flyout-menu-id-ref attribute
         const flyoutMenuId = itemEl.getAttribute('flyout-menu-id-ref');
-        console.log('Flyout menu ID:', flyoutMenuId);
         const flyoutMenu = flyoutMenuId ? document.getElementById(flyoutMenuId) : null;
-        console.log('Found flyout menu:', flyoutMenu);
         if (flyoutMenu) {
           // Close all other flyouts
           document.querySelectorAll('.p2p4vsc-menu.is-flyout').forEach(menu => {
@@ -209,12 +207,16 @@ ui_menu_generic_handlers: |
       }
       
       // Regular menu item selection (works for both main menu and flyout items)
-      // Remove selected class from all items in this menu
-      const menuItems = menu.querySelectorAll('.p2p4vsc-menu-item');
-      menuItems.forEach(item => item.classList.remove('selected'));
-      
-      // Add selected class to clicked item
-      itemEl.classList.add('selected');
+      // Only add selected class if this menu has gutter-before (state-based menus)
+      // Action-only menus (like Print) have no gutter-before and shouldn't show selection
+      if (menu.classList.contains('has-gutter-before')) {
+        // Remove selected class from all items in this menu
+        const menuItems = menu.querySelectorAll('.p2p4vsc-menu-item');
+        menuItems.forEach(item => item.classList.remove('selected'));
+        
+        // Add selected class to clicked item
+        itemEl.classList.add('selected');
+      }
 
       // Send minimal selection data to extension
       window.vscode.postMessage({
@@ -248,7 +250,7 @@ ui_menu_generic_handlers: |
     }
   });
 
-ui_menu_item: |
+uimenu_item: |
   <div class="p2p4vsc-menu-item {{itemClasses}}" id="{{itemId}}"{{flyoutMenuIdRef}}>
     <div class="gutter-before">{{contentGutterBefore}}</div>
     <div class="menu-item-text">{{itemDisplayName}}</div>

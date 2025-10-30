@@ -82,6 +82,12 @@ export abstract class OS {
   abstract filePrint(path: string): Promise<void>;
   abstract fileOpenPrintDialog(path: string): Promise<void>;
 
+  // Get system locale with region (e.g., "en-US", "fr-FR")
+  // Uses Intl API which actually provides region codes unlike vscode.env.language
+  getLocale(): string {
+    return Intl.DateTimeFormat().resolvedOptions().locale || '';
+  }
+
   // Platform-agnostic home directory
   getDir_Home(): string {
     return homedir();
@@ -130,7 +136,7 @@ export abstract class OS {
         : path;
 
       if (!absPath || !fs.existsSync(absPath)) {
-        this.app.ui.showErrorMessage(`Failed to load ${path}: file not found`);
+        this.dx.error(`Failed to load ${path}: file not found`);
         return undefined;
       }
 
@@ -160,7 +166,7 @@ export abstract class OS {
 
       return parsed as T;
     } catch (err) {
-      this.app.ui.showErrorMessage(`Failed to load ${path}: ${err}`);
+      this.dx.error(`Failed to load ${path}: ${err}`);
       return undefined;
     }
   };
@@ -231,7 +237,7 @@ export abstract class OS {
     const mm = String(ts.getMinutes()).padStart(2, '0');
     const ss = String(ts.getSeconds()).padStart(2, '0');
     const ms = String(ts.getMilliseconds()).padStart(3, '0');
-    const ampm = hh < 12 ? 'am' : 'pm';
+    const ampm = hh < 12 ? 'a' : 'p';
 
     // Convert to 12-hour format
     const hour12 = hh === 0 ? 12 : hh > 12 ? hh - 12 : hh;

@@ -20,6 +20,11 @@
         "command": "p2p4vsc.print2paper",
         "title": "Print2Paper",
         "category": "Print"
+      },
+      {
+        "command": "p2p4vsc.persistClear",
+        "title": "Clear State",
+        "category": "Print"
       }
     ],
     "menus": {
@@ -27,6 +32,12 @@
         {
           "command": "p2p4vsc.print2paper",
           "group": "navigation"
+        }
+      ],
+      "menuBar/file": [
+        {
+          "command": "p2p4vsc.print2paper",
+          "group": "6_print"
         }
       ]
     },

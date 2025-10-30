@@ -98,7 +98,7 @@ export class UIScrollView {
       dx.out(`Generated scroll view content with ${pageTotal} pages`);
       return html;
     } catch (error) {
-      this.app.ui.showErrorMessage(`Failed to generate scroll view content: ${String(error)}`);
+      dx.error(`Failed to generate scroll view content: ${String(error)}`);
       throw error;
     } finally {
       dx.done();

@@ -1,0 +1,187 @@
+webview_html: |
+  <!DOCTYPE html>
+  <html>
+  <head>
+    <title>{{title}}</title>
+    <style>
+      {{base_css}}
+      {{webview_css}}
+    </style>
+  </head>
+  <body>
+    {{toolbar}}
+    <div class="pdfviewer-container">
+      <div id="loading" style="display: block; text-align: center; padding: 50px;">
+        Loading PDF...
+      </div>
+      <div id="error" style="display: none; text-align: center; padding: 50px; color: red;">
+        Error loading PDF
+      </div>
+      <div id="pdf-viewer" style="display: none;">
+        <!-- PDF pages will be rendered here by PDF.js -->
+      </div>
+    </div>
+    <script>
+      {{pdfjs_library}}
+    </script>
+    <script>
+      {{webview_js}}
+      
+      // Initialize PDF viewer with embedded PDF data
+      initPdfViewer('{{pdf_data_url}}', {{page_total}});
+    </script>
+  </body>
+  </html>
+
+webview_css: |
+  .pdfviewer-container {
+    position: relative;
+    width: 100%;
+    height: 100vh;
+    overflow: auto;
+    background: #f5f5f5;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    padding: 20px;
+  }
+
+  #pdf-viewer {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    align-items: center;
+  }
+
+  #pdf-viewer canvas {
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    border: 1px solid #ddd;
+    background: white;
+    margin-left: var(--page-gutter-horizontal, 8px);
+    margin-right: var(--page-gutter-horizontal, 8px);
+    margin-bottom: var(--page-gutter-vertical, 4px);
+  }
+  
+  :root {
+    --page-gutter-horizontal: 8px;
+    --page-gutter-vertical: 4px;
+  }
+
+webview_js: |
+  // PDF Viewer JavaScript - Minimal skeleton for PDF.js to render into
+  
+  // Send diagnostic message to extension
+  function dx(message) {
+    if (window.vscode) {
+      window.vscode.postMessage({
+        type: 'dx',
+        message
+      });
+    }
+  }
+  
+  let pdfDoc = null;
+  const scale = 1.0;
+
+  /**
+   * Initialize PDF viewer with PDF data
+   * @param {string} pdfDataUrl - Base64 data URL of the PDF
+   * @param {number} pageTotal - Total number of pages
+   */
+  function initPdfViewer(pdfDataUrl, pageTotal) {
+
+    if (typeof pdfjsLib === 'undefined') {
+      dx('❌ PDF.js library not loaded');
+      onDocumentLoadError(new Error('PDF.js library not loaded'));
+      return;
+    }
+
+    // Set worker source
+    pdfjsLib.GlobalWorkerOptions.workerSrc = '{{as_uri:src/lib/pdf.worker.min.js}}';
+
+    // Load PDF document
+    const loadingTask = pdfjsLib.getDocument({
+      url: pdfDataUrl
+    });
+
+    loadingTask.promise.then(
+      function(pdf) {
+        onDocumentLoadSuccess(pdf);
+      },
+      function(error) {
+        onDocumentLoadError(error);
+      }
+    );
+  }
+
+  /**
+   * Handle successful PDF document load
+   */
+  function onDocumentLoadSuccess(pdf) {
+    pdfDoc = pdf;
+    document.getElementById('loading').style.display = 'none';
+    document.getElementById('pdf-viewer').style.display = 'block';
+    
+    
+    // Render all pages - PDF.js handles everything
+    renderAllPages();
+  }
+
+  /**
+   * Handle PDF document load error
+   */
+  function onDocumentLoadError(error) {
+    dx(`❌ PDF load error: ${error.message}`);
+    document.getElementById('loading').style.display = 'none';
+    document.getElementById('error').style.display = 'block';
+    document.getElementById('error').textContent = 'Error loading PDF: ' + error.message;
+  }
+
+  /**
+   * Render all pages in the PDF - just create canvases and let PDF.js render
+   */
+  function renderAllPages() {
+    if (!pdfDoc) return;
+
+    const viewer = document.getElementById('pdf-viewer');
+    viewer.innerHTML = ''; // Clear existing content
+
+    // Render each page as a separate canvas
+    for (let pageNum = 1; pageNum <= pdfDoc.numPages; pageNum++) {
+      renderPage(pageNum, viewer);
+    }
+  }
+
+  /**
+   * Render a single page - PDF.js does all the work
+   */
+  function renderPage(pageNum, container) {
+    pdfDoc.getPage(pageNum).then(function(page) {
+      const viewport = page.getViewport({ scale: scale });
+      
+      // Create canvas for this page
+      const canvas = document.createElement('canvas');
+      canvas.id = 'pdf-canvas-' + pageNum;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) {
+        dx('❌ 2D canvas context not available');
+        return;
+      }
+
+      canvas.height = viewport.height;
+      canvas.width = viewport.width;
+
+      const renderContext = {
+        canvasContext: ctx,
+        viewport: viewport
+      };
+      
+      const renderTask = page.render(renderContext);
+
+      renderTask.promise.then(function() {
+        container.appendChild(canvas);
+      });
+    }).catch(function(error) {
+      dx(`❌ Error rendering page ${pageNum}: ${error.message}`);
+    });
+  }
