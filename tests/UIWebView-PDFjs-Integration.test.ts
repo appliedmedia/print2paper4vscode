@@ -271,11 +271,13 @@ window.pdfjsLib = {
     test('should handle very large PDF (500 pages)', async function() {
       // Gate this slow test behind an environment variable
       if (process.env.RUN_LARGE_PDF_TEST !== '1') {
+        // @ts-ignore - Mocha Context
         this.skip();
         return;
       }
 
       // This test generates a 500-page PDF, so it may take longer
+      // @ts-ignore - Mocha Context
       this.timeout(300000); // 5 minute timeout for CI stability
       
       const mockApp = buildMockApp();
@@ -326,9 +328,14 @@ window.pdfjsLib = {
         
         for (let j = 0; j < paragraphsToUse; j++) {
           const paragraph = loremParagraphs[(i + j) % loremParagraphs.length];
-          const lines = doc.splitTextToSize(paragraph, 180);
-          doc.text(lines, 10, yPos);
-          yPos += lines.length * 5 + 8; // Space between paragraphs
+          // Type assertion for splitTextToSize which exists but isn't in our type def
+          const lines = (doc as any).splitTextToSize(paragraph, 180) as string[];
+          // Draw each line separately
+          for (let k = 0; k < lines.length; k++) {
+            doc.text(lines[k], 10, yPos);
+            yPos += 5;
+          }
+          yPos += 8; // Space between paragraphs
           
           if (yPos > 270) break; // Don't overflow page
         }
