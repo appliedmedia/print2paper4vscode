@@ -57,6 +57,15 @@ export class DocInfo_PDF {
   public languageId: LanguageId_t = 'typescript';
   public title: string = '';
 
+  // Header/Footer positioning settings
+  // Position options: 'left' | 'center' | 'right' | 'none'
+  public headerTitlePos: 'left' | 'center' | 'right' | 'none' = 'center';
+  public headerPagePos: 'left' | 'center' | 'right' | 'none' = 'none';
+  public headerTotalPos: 'left' | 'center' | 'right' | 'none' = 'none';
+  public footerTitlePos: 'left' | 'center' | 'right' | 'none' = 'none';
+  public footerPagePos: 'left' | 'center' | 'right' | 'none' = 'center';
+  public footerTotalPos: 'left' | 'center' | 'right' | 'none' = 'center';
+
   // Temporary file tracking
   public tempPdfs: string[] = [];
 

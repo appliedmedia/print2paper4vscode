@@ -845,6 +845,8 @@ export class PDF implements PageRender {
 
   /**
    * Add header and footer to current page
+   * Uses positioning settings from docInfo to place elements at left, center, or right
+   * Combines elements at the same position with " | " separator
    */
   private addHeaderAndFooter(): void {
     if (!this.docInfo.pdfDoc) {
@@ -857,7 +859,7 @@ export class PDF implements PageRender {
     // Get current page info
     const pageInfo = this.docInfo.pdfDoc.getCurrentPageInfo();
     const currentPage = pageInfo.pageNumber;
-    // Use pageTotal if available (set after complete generation), otherwise use current count
+    const pageTotal = this.docInfo.getPageTotal();
 
     // Get page dimensions and margins
     const pageSize = this.getPageDimensions(this.docInfo.pageSizeId, this.docInfo.orient);
@@ -866,38 +868,97 @@ export class PDF implements PageRender {
     const margins = this.docInfo.marginPts;
 
     // Set small font for header/footer
-    // Store current font size in points (jsPDF expects points)
     const originalFontSizePx = this.docInfo.fontSizePx;
     this.docInfo.pdfDoc.setFontSize(8); // points
     this.setTextColorFromWebColor(this.docInfo.pdfDoc, PDF.HEADER_FOOTER_COLOR);
 
-    // Header - positioned within top margin area
-    // With base 0.4 inch margin, header is always safely positioned
-    const headerFontSizePts = 8;
-    const headerY = margins.topMarginPts - 5; // Position header within margin (5pts from top edge of margin)
-    const headerText = docTitle;
-    const headerWidth = this.docInfo.pdfDoc.getTextWidth(headerText);
-    const headerX = (widthPts - headerWidth) / 2;
-    this.docInfo.pdfDoc.text(headerText, headerX, headerY);
+    // Build header elements by position
+    const headerElements: { left: string[]; center: string[]; right: string[] } = {
+      left: [],
+      center: [],
+      right: [],
+    };
 
-    // Footer - positioned within bottom margin area
-    // With base 0.4 inch margin, footer is always safely positioned
-    const footerFontSizePts = 8;
-    const footerY = heightPts - margins.bottomMarginPts + 5; // Position footer within margin (5pts from bottom edge of margin)
-    // Just show "Page N of " - page total will be added later
-    const footerText = `Page ${currentPage} of `;
-    const footerWidth = this.docInfo.pdfDoc.getTextWidth(footerText);
-    const footerX = (widthPts - footerWidth) / 2;
-    this.docInfo.pdfDoc.text(footerText, footerX, footerY);
+    if (this.docInfo.headerTitlePos !== 'none') {
+      headerElements[this.docInfo.headerTitlePos].push(docTitle);
+    }
+    if (this.docInfo.headerPagePos !== 'none') {
+      headerElements[this.docInfo.headerPagePos].push(`Page ${currentPage}`);
+    }
+    if (this.docInfo.headerTotalPos !== 'none' && pageTotal > 0) {
+      headerElements[this.docInfo.headerTotalPos].push(`${pageTotal} Pages`);
+    }
 
-    // Side page number removed - only show in footer
+    // Build footer elements by position
+    const footerElements: { left: string[]; center: string[]; right: string[] } = {
+      left: [],
+      center: [],
+      right: [],
+    };
 
-    // Restore original font size (convert px to pts)
+    if (this.docInfo.footerTitlePos !== 'none') {
+      footerElements[this.docInfo.footerTitlePos].push(docTitle);
+    }
+    if (this.docInfo.footerPagePos !== 'none') {
+      footerElements[this.docInfo.footerPagePos].push(`Page ${currentPage}`);
+    }
+    if (this.docInfo.footerTotalPos !== 'none' && pageTotal > 0) {
+      footerElements[this.docInfo.footerTotalPos].push(`${pageTotal} Pages`);
+    }
+
+    // Render header
+    const headerY = margins.topMarginPts - 5;
+    this.renderHeaderFooterElements(headerElements, headerY, widthPts, margins);
+
+    // Render footer
+    const footerY = heightPts - margins.bottomMarginPts + 5;
+    this.renderHeaderFooterElements(footerElements, footerY, widthPts, margins);
+
+    // Restore original font size
     this.docInfo.pdfDoc.setFontSize(this.coords.cssPxToPdfPts(originalFontSizePx));
   }
 
   /**
-   * Add page totals to all pages after PDF generation is complete
+   * Render header or footer elements at their positions
+   */
+  private renderHeaderFooterElements(
+    elements: { left: string[]; center: string[]; right: string[] },
+    y: number,
+    widthPts: number,
+    margins: { leftMarginPts: number; rightMarginPts: number }
+  ): void {
+    if (!this.docInfo.pdfDoc) {
+      return;
+    }
+
+    // Combine elements at each position with " | " separator
+    const leftText = elements.left.join(' | ');
+    const centerText = elements.center.join(' | ');
+    const rightText = elements.right.join(' | ');
+
+    // Render left position
+    if (leftText) {
+      this.docInfo.pdfDoc.text(leftText, margins.leftMarginPts, y);
+    }
+
+    // Render center position
+    if (centerText) {
+      const centerWidth = this.docInfo.pdfDoc.getTextWidth(centerText);
+      const centerX = (widthPts - centerWidth) / 2;
+      this.docInfo.pdfDoc.text(centerText, centerX, y);
+    }
+
+    // Render right position
+    if (rightText) {
+      const rightWidth = this.docInfo.pdfDoc.getTextWidth(rightText);
+      const rightX = widthPts - margins.rightMarginPts - rightWidth;
+      this.docInfo.pdfDoc.text(rightText, rightX, y);
+    }
+  }
+
+  /**
+   * Add header/footer to all pages after PDF generation is complete
+   * Called after page total is known, so we can render totals correctly
    */
   private renderPageTotals(): void {
     const dx = this.dx.sub('renderPageTotals');
@@ -909,57 +970,18 @@ export class PDF implements PageRender {
 
       const totalPages = this.docInfo.pdfDoc.getNumberOfPages();
 
-      // Add page total to each page as the last content
+      // Re-render headers and footers on all pages now that we know the total
       for (let pageNum = 1; pageNum <= totalPages; pageNum++) {
         this.docInfo.pdfDoc.setPage(pageNum);
-        this.addPageTotalToCurrentPage();
+        this.addHeaderAndFooter();
       }
 
-      dx.out(`Added page totals to ${totalPages} pages`);
+      dx.out(`Added headers/footers to ${totalPages} pages`);
     } catch (error) {
-      dx.out(`Error adding page totals: ${error}`);
+      dx.out(`Error adding headers/footers: ${error}`);
     } finally {
       dx.done();
     }
-  }
-
-  /**
-   * Add page total as the last content on the current page
-   */
-  private addPageTotalToCurrentPage(): void {
-    if (!this.docInfo.pdfDoc) {
-      return;
-    }
-
-    // Get page dimensions and margins
-    const pageSize = this.getPageDimensions(this.docInfo.pageSizeId, this.docInfo.orient);
-    const unit = this.getUnitForPageSize(this.docInfo.pageSizeId);
-    const { widthPts, heightPts } = this.pageSizeToPts(pageSize.width, pageSize.height, unit);
-    const margins = this.docInfo.marginPts;
-
-    // Get current page info
-    const pageInfo = this.docInfo.pdfDoc.getCurrentPageInfo();
-    const currentPage = pageInfo.pageNumber;
-
-    // Set small font for page total
-    const originalFontSizePx = this.docInfo.fontSizePx;
-    this.docInfo.pdfDoc.setFontSize(8); // points
-    this.setTextColorFromWebColor(this.docInfo.pdfDoc, PDF.HEADER_FOOTER_COLOR);
-
-    // Add page total right after "Page N of " text
-    const footerY = heightPts - margins.bottomMarginPts + 5;
-    const pageTotalText = `${this.docInfo.getPageTotal()}`;
-
-    // Position it right after the "Page N of " text
-    const footerText = `Page ${currentPage} of `;
-    const footerWidth = this.docInfo.pdfDoc.getTextWidth(footerText);
-    const footerX = (widthPts - footerWidth) / 2;
-    const pageTotalX = footerX + footerWidth;
-
-    this.docInfo.pdfDoc.text(pageTotalText, pageTotalX, footerY);
-
-    // Restore original font size (convert px to pts)
-    this.docInfo.pdfDoc.setFontSize(this.coords.cssPxToPdfPts(originalFontSizePx));
   }
 
   /**

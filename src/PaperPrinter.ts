@@ -261,7 +261,7 @@ export class PaperPrinter {
         icon: '📄',
         isFlyout: false,
         menuItems: this.menuItems_Page.bind(this),
-        flyoutMenuItemIds: ['pageSizeId', 'orient', 'marginId'],
+        flyoutMenuItemIds: ['pageSizeId', 'orient', 'marginId', 'header', 'footer'],
         selectionHandler: this.handleSelection_Page.bind(this),
       },
       {
@@ -290,6 +290,78 @@ export class PaperPrinter {
         menuItems: this.menuItems_MarginId.bind(this),
         flyoutMenuItemIds: [],
         selectionHandler: this.handleSelection_MarginId.bind(this),
+      },
+      {
+        id: 'header',
+        displayName: 'Header',
+        icon: '', // submenu indicated by no icon, see Page > Header
+        isFlyout: true,
+        menuItems: this.menuItems_Header.bind(this),
+        flyoutMenuItemIds: ['headerTitle', 'headerPage', 'headerTotal'],
+        selectionHandler: this.handleSelection_Header.bind(this),
+      },
+      {
+        id: 'footer',
+        displayName: 'Footer',
+        icon: '', // submenu indicated by no icon, see Page > Footer
+        isFlyout: true,
+        menuItems: this.menuItems_Footer.bind(this),
+        flyoutMenuItemIds: ['footerTitle', 'footerPage', 'footerTotal'],
+        selectionHandler: this.handleSelection_Footer.bind(this),
+      },
+      {
+        id: 'headerTitle',
+        displayName: 'Title',
+        icon: '', // flyout submenu
+        isFlyout: true,
+        menuItems: this.menuItems_HeaderFooterPos.bind(this),
+        flyoutMenuItemIds: [],
+        selectionHandler: this.handleSelection_HeaderTitle.bind(this),
+      },
+      {
+        id: 'headerPage',
+        displayName: 'Page',
+        icon: '', // flyout submenu
+        isFlyout: true,
+        menuItems: this.menuItems_HeaderFooterPos.bind(this),
+        flyoutMenuItemIds: [],
+        selectionHandler: this.handleSelection_HeaderPage.bind(this),
+      },
+      {
+        id: 'headerTotal',
+        displayName: 'Total',
+        icon: '', // flyout submenu
+        isFlyout: true,
+        menuItems: this.menuItems_HeaderFooterPos.bind(this),
+        flyoutMenuItemIds: [],
+        selectionHandler: this.handleSelection_HeaderTotal.bind(this),
+      },
+      {
+        id: 'footerTitle',
+        displayName: 'Title',
+        icon: '', // flyout submenu
+        isFlyout: true,
+        menuItems: this.menuItems_HeaderFooterPos.bind(this),
+        flyoutMenuItemIds: [],
+        selectionHandler: this.handleSelection_FooterTitle.bind(this),
+      },
+      {
+        id: 'footerPage',
+        displayName: 'Page',
+        icon: '', // flyout submenu
+        isFlyout: true,
+        menuItems: this.menuItems_HeaderFooterPos.bind(this),
+        flyoutMenuItemIds: [],
+        selectionHandler: this.handleSelection_FooterPage.bind(this),
+      },
+      {
+        id: 'footerTotal',
+        displayName: 'Total',
+        icon: '', // flyout submenu
+        isFlyout: true,
+        menuItems: this.menuItems_HeaderFooterPos.bind(this),
+        flyoutMenuItemIds: [],
+        selectionHandler: this.handleSelection_FooterTotal.bind(this),
       },
       {
         id: 'theme',
@@ -395,6 +467,9 @@ export class PaperPrinter {
       { id: 'orient', displayName: 'Orient' },
       // Margin submenu reference (id must match the actual menu id)
       { id: 'marginId', displayName: 'Margin' },
+      // Header and Footer submenu references
+      { id: 'header', displayName: 'Header' },
+      { id: 'footer', displayName: 'Footer' },
     ];
   }
 
@@ -420,6 +495,31 @@ export class PaperPrinter {
       id,
       displayName: this.app.templateDictReplace(kMarginId[id].displayName, this.yaml),
     }));
+  }
+
+  private menuItems_Header(): UIMenuItem_t[] {
+    return [
+      { id: 'headerTitle', displayName: 'Title' },
+      { id: 'headerPage', displayName: 'Page' },
+      { id: 'headerTotal', displayName: 'Total' },
+    ];
+  }
+
+  private menuItems_Footer(): UIMenuItem_t[] {
+    return [
+      { id: 'footerTitle', displayName: 'Title' },
+      { id: 'footerPage', displayName: 'Page' },
+      { id: 'footerTotal', displayName: 'Total' },
+    ];
+  }
+
+  private menuItems_HeaderFooterPos(): UIMenuItem_t[] {
+    return [
+      { id: 'left', displayName: '←' },
+      { id: 'center', displayName: '⟺' },
+      { id: 'right', displayName: '→' },
+      { id: 'none', displayName: '✕' },
+    ];
   }
 
   // Selection handler methods for each menu type
@@ -504,6 +604,88 @@ export class PaperPrinter {
         dx.out('No PDF document available for printing');
       }
     }
+
+    return { id, value };
+  }
+
+  private async handleSelection_Header(/* selectedId: string */): Promise<HandleSelection_t> {
+    // Header menu doesn't have direct selections, just opens flyouts
+    return { id: '', value: '' };
+  }
+
+  private async handleSelection_Footer(/* selectedId: string */): Promise<HandleSelection_t> {
+    // Footer menu doesn't have direct selections, just opens flyouts
+    return { id: '', value: '' };
+  }
+
+  private async handleSelection_HeaderTitle(selectedId: MenuItemId_t): Promise<HandleSelection_t> {
+    const dx = this.dx.sub('handleSelection_HeaderTitle');
+    const id = String(selectedId);
+    const value = id as 'left' | 'center' | 'right' | 'none';
+
+    this.app.pdf.docInfo.headerTitlePos = value;
+    dx.out(`Selected header title position: ${value}`);
+    await this.regenerateAndUpdateWebview();
+
+    return { id, value };
+  }
+
+  private async handleSelection_HeaderPage(selectedId: MenuItemId_t): Promise<HandleSelection_t> {
+    const dx = this.dx.sub('handleSelection_HeaderPage');
+    const id = String(selectedId);
+    const value = id as 'left' | 'center' | 'right' | 'none';
+
+    this.app.pdf.docInfo.headerPagePos = value;
+    dx.out(`Selected header page position: ${value}`);
+    await this.regenerateAndUpdateWebview();
+
+    return { id, value };
+  }
+
+  private async handleSelection_HeaderTotal(selectedId: MenuItemId_t): Promise<HandleSelection_t> {
+    const dx = this.dx.sub('handleSelection_HeaderTotal');
+    const id = String(selectedId);
+    const value = id as 'left' | 'center' | 'right' | 'none';
+
+    this.app.pdf.docInfo.headerTotalPos = value;
+    dx.out(`Selected header total position: ${value}`);
+    await this.regenerateAndUpdateWebview();
+
+    return { id, value };
+  }
+
+  private async handleSelection_FooterTitle(selectedId: MenuItemId_t): Promise<HandleSelection_t> {
+    const dx = this.dx.sub('handleSelection_FooterTitle');
+    const id = String(selectedId);
+    const value = id as 'left' | 'center' | 'right' | 'none';
+
+    this.app.pdf.docInfo.footerTitlePos = value;
+    dx.out(`Selected footer title position: ${value}`);
+    await this.regenerateAndUpdateWebview();
+
+    return { id, value };
+  }
+
+  private async handleSelection_FooterPage(selectedId: MenuItemId_t): Promise<HandleSelection_t> {
+    const dx = this.dx.sub('handleSelection_FooterPage');
+    const id = String(selectedId);
+    const value = id as 'left' | 'center' | 'right' | 'none';
+
+    this.app.pdf.docInfo.footerPagePos = value;
+    dx.out(`Selected footer page position: ${value}`);
+    await this.regenerateAndUpdateWebview();
+
+    return { id, value };
+  }
+
+  private async handleSelection_FooterTotal(selectedId: MenuItemId_t): Promise<HandleSelection_t> {
+    const dx = this.dx.sub('handleSelection_FooterTotal');
+    const id = String(selectedId);
+    const value = id as 'left' | 'center' | 'right' | 'none';
+
+    this.app.pdf.docInfo.footerTotalPos = value;
+    dx.out(`Selected footer total position: ${value}`);
+    await this.regenerateAndUpdateWebview();
 
     return { id, value };
   }
