@@ -887,7 +887,12 @@ export class PDF implements PageRender {
     // Handle Page and Total - combine if at same position
     const headerPagePos = this.docInfo.headerPagePos;
     const headerTotalPos = this.docInfo.headerTotalPos;
-    if (headerPagePos !== 'none' && headerTotalPos !== 'none' && headerPagePos === headerTotalPos && pageTotal > 0) {
+    if (
+      headerPagePos !== 'none' &&
+      headerTotalPos !== 'none' &&
+      headerPagePos === headerTotalPos &&
+      pageTotal > 0
+    ) {
       // Combine: "Page X of Y"
       headerElements[headerPagePos].push(`Page ${currentPage} of ${pageTotal}`);
     } else {
@@ -915,7 +920,12 @@ export class PDF implements PageRender {
     // Handle Page and Total - combine if at same position
     const footerPagePos = this.docInfo.footerPagePos;
     const footerTotalPos = this.docInfo.footerTotalPos;
-    if (footerPagePos !== 'none' && footerTotalPos !== 'none' && footerPagePos === footerTotalPos && pageTotal > 0) {
+    if (
+      footerPagePos !== 'none' &&
+      footerTotalPos !== 'none' &&
+      footerPagePos === footerTotalPos &&
+      pageTotal > 0
+    ) {
       // Combine: "Page X of Y"
       footerElements[footerPagePos].push(`Page ${currentPage} of ${pageTotal}`);
     } else {

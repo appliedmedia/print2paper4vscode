@@ -193,6 +193,11 @@ export class UIMenuMgr {
       }
     }
 
+    // Append all flyout menus to the result so they're in the DOM
+    for (const [flyoutId, flyoutHtml] of Object.entries(flyoutCache)) {
+      result += '\n' + flyoutHtml;
+    }
+
     this.dx.out(`Total generated HTML length: ${result.length}`);
     this.dx.out(`Final HTML preview: ${result.substring(0, 200)}...`);
     return result;
