@@ -140,9 +140,10 @@ export class UI {
       const templates = this.yaml;
 
       // Get toolbar position, validate it's a number and within reasonable bounds, else use default
+      // Client-side code will clamp to actual window width, we just validate it's reasonable here
       const toolbar_pos_raw = this.persist.toolbar_pos;
       let toolbar_pos: number;
-      if (typeof toolbar_pos_raw === 'number' && toolbar_pos_raw >= UI.kToolbarMinLeftPx && toolbar_pos_raw <= 10000) {
+      if (typeof toolbar_pos_raw === 'number' && toolbar_pos_raw >= UI.kToolbarMinLeftPx) {
         toolbar_pos = toolbar_pos_raw;
       } else {
         toolbar_pos = UI.kToolbarMinLeftPx;
