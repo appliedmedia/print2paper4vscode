@@ -139,11 +139,11 @@ export class UI {
       // Get toolbar templates from yaml getter
       const templates = this.yaml;
 
-      // Seed default, then read actual stored value via getter
-      await this.persist.validateDefault('toolbar_pos', async () => UI.kToolbarMinLeftPx);
+      // Get toolbar position, validate it's a number and within bounds, else use default
       let toolbar_pos = this.persist.toolbar_pos as unknown as number;
-      if (!Number.isFinite(toolbar_pos)) toolbar_pos = UI.kToolbarMinLeftPx;
-      if (toolbar_pos < UI.kToolbarMinLeftPx) toolbar_pos = UI.kToolbarMinLeftPx;
+      if (!Number.isFinite(toolbar_pos) || toolbar_pos < UI.kToolbarMinLeftPx) {
+        toolbar_pos = UI.kToolbarMinLeftPx;
+      }
 
       // Replace toolbar_pos in toolbar_css before combining with menu CSS
       const toolbarCssWithPos = templates.toolbar_css.replace('{{toolbar_pos}}', toolbar_pos.toString());
