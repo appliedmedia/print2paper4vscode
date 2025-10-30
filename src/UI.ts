@@ -36,6 +36,7 @@ export class UI {
 
   // Toolbar positioning constants
   private static readonly kToolbarMinLeftPx = 8;
+  private static readonly kMaxWindowWidthPx = 5120; // Reasonable max for 5K displays
 
   private app: App;
   private messageHandlers: Map<string, MessageHandler[]> = new Map();
@@ -142,9 +143,8 @@ export class UI {
       // Get toolbar position, validate it's within bounds, else use default
       // Note: VS Code extensions run in Node.js and don't have access to window dimensions.
       // Client-side code in toolbar_js/yaml dynamically clamps to actual window.innerWidth.
-      const windowRight = 5120; // Reasonable max screen width (5K displays)
       let toolbar_pos = Number(this.persist.toolbar_pos);
-      if (isNaN(toolbar_pos) || toolbar_pos < UI.kToolbarMinLeftPx || toolbar_pos >= windowRight) {
+      if (isNaN(toolbar_pos) || toolbar_pos < UI.kToolbarMinLeftPx || toolbar_pos >= UI.kMaxWindowWidthPx) {
         toolbar_pos = UI.kToolbarMinLeftPx;
       }
 
