@@ -14,6 +14,9 @@ import type { LanguageId_t } from './Stylize';
 export class DocInfo_PDF {
   private app: App;
 
+  // Base margin constant: 0.4 inch = 28.8 points (minimum safe printing margin)
+  private static readonly BASE_MARGIN_PTS = 0.4 * 72; // 28.8 points
+
   // PDF document state
   public currentPdfDoc: jsPDF | null = null;
   public currentTokens: ThemedToken[][] | null = null;
@@ -72,14 +75,11 @@ export class DocInfo_PDF {
     leftMarginPts: number;
     rightMarginPts: number;
   } {
-    // Base margin: 0.4 inch = 28.8 points (safe printing margin)
-    const BASE_MARGIN_PTS = 0.4 * 72; // 28.8 points
-    
     // Get margin setting from kMarginId (this is ADDED to base)
     const marginSettingPts = kMarginId[this.marginId].marginPts;
     
     // Total margin = base + setting
-    const totalMarginPts = BASE_MARGIN_PTS + marginSettingPts;
+    const totalMarginPts = DocInfo_PDF.BASE_MARGIN_PTS + marginSettingPts;
 
     return {
       topMarginPts: totalMarginPts,
