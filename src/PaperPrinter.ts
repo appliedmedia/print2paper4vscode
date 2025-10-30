@@ -304,7 +304,7 @@ export class PaperPrinter {
         icon: '', // flyout submenu
         isFlyout: true,
         menuItems: this.menuItems_Header.bind(this),
-        flyoutMenuItemIds: [],
+        flyoutMenuItemIds: ['headerTitle', 'headerPage', 'headerTotal'],
         selectionHandler: this.handleSelection_Header.bind(this),
       },
       {
@@ -313,14 +313,14 @@ export class PaperPrinter {
         icon: '', // flyout submenu
         isFlyout: true,
         menuItems: this.menuItems_Footer.bind(this),
-        flyoutMenuItemIds: [],
+        flyoutMenuItemIds: ['footerTitle', 'footerPage', 'footerTotal'],
         selectionHandler: this.handleSelection_Footer.bind(this),
       },
       {
         id: 'headerTitle',
         displayName: kHeaderFooterElement.title.displayName,
-        icon: '', // regular menu list
-        isFlyout: false,
+        icon: '', // flyout submenu
+        isFlyout: true,
         menuItems: this.menuItems_HeaderFooterPos.bind(this),
         flyoutMenuItemIds: [],
         selectionHandler: this.handleSelection_HeaderTitle.bind(this),
@@ -328,8 +328,8 @@ export class PaperPrinter {
       {
         id: 'headerPage',
         displayName: kHeaderFooterElement.page.displayName,
-        icon: '', // regular menu list
-        isFlyout: false,
+        icon: '', // flyout submenu
+        isFlyout: true,
         menuItems: this.menuItems_HeaderFooterPos.bind(this),
         flyoutMenuItemIds: [],
         selectionHandler: this.handleSelection_HeaderPage.bind(this),
@@ -337,8 +337,8 @@ export class PaperPrinter {
       {
         id: 'headerTotal',
         displayName: kHeaderFooterElement.total.displayName,
-        icon: '', // regular menu list
-        isFlyout: false,
+        icon: '', // flyout submenu
+        isFlyout: true,
         menuItems: this.menuItems_HeaderFooterPos.bind(this),
         flyoutMenuItemIds: [],
         selectionHandler: this.handleSelection_HeaderTotal.bind(this),
@@ -346,8 +346,8 @@ export class PaperPrinter {
       {
         id: 'footerTitle',
         displayName: kHeaderFooterElement.title.displayName,
-        icon: '', // regular menu list
-        isFlyout: false,
+        icon: '', // flyout submenu
+        isFlyout: true,
         menuItems: this.menuItems_HeaderFooterPos.bind(this),
         flyoutMenuItemIds: [],
         selectionHandler: this.handleSelection_FooterTitle.bind(this),
@@ -355,8 +355,8 @@ export class PaperPrinter {
       {
         id: 'footerPage',
         displayName: kHeaderFooterElement.page.displayName,
-        icon: '', // regular menu list
-        isFlyout: false,
+        icon: '', // flyout submenu
+        isFlyout: true,
         menuItems: this.menuItems_HeaderFooterPos.bind(this),
         flyoutMenuItemIds: [],
         selectionHandler: this.handleSelection_FooterPage.bind(this),
@@ -364,8 +364,8 @@ export class PaperPrinter {
       {
         id: 'footerTotal',
         displayName: kHeaderFooterElement.total.displayName,
-        icon: '', // regular menu list
-        isFlyout: false,
+        icon: '', // flyout submenu
+        isFlyout: true,
         menuItems: this.menuItems_HeaderFooterPos.bind(this),
         flyoutMenuItemIds: [],
         selectionHandler: this.handleSelection_FooterTotal.bind(this),
@@ -511,31 +511,23 @@ export class PaperPrinter {
   }
 
   private menuItems_Header(): UIMenuItem_t[] {
-    // For each element (Title, Page, Total), show all position options directly
-    const items: UIMenuItem_t[] = [];
-    for (const elementId of Object.keys(kHeaderFooterElement) as Array<keyof typeof kHeaderFooterElement>) {
-      for (const posId of Object.keys(kHeaderFooterPos) as Array<keyof typeof kHeaderFooterPos>) {
-        items.push({
-          id: `header_${elementId}_${posId}` as MenuItemId_t,
-          displayName: `${kHeaderFooterElement[elementId].displayName} > ${kHeaderFooterPos[posId].displayName}`,
-        });
-      }
-    }
-    return items;
+    // Return Title, Page, Total as menu items (each opens a position flyout)
+    return (Object.keys(kHeaderFooterElement) as Array<keyof typeof kHeaderFooterElement>).map(
+      id => ({
+        id: `header${id.charAt(0).toUpperCase() + id.slice(1)}` as MenuItemId_t,
+        displayName: kHeaderFooterElement[id].displayName,
+      })
+    );
   }
 
   private menuItems_Footer(): UIMenuItem_t[] {
-    // For each element (Title, Page, Total), show all position options directly
-    const items: UIMenuItem_t[] = [];
-    for (const elementId of Object.keys(kHeaderFooterElement) as Array<keyof typeof kHeaderFooterElement>) {
-      for (const posId of Object.keys(kHeaderFooterPos) as Array<keyof typeof kHeaderFooterPos>) {
-        items.push({
-          id: `footer_${elementId}_${posId}` as MenuItemId_t,
-          displayName: `${kHeaderFooterElement[elementId].displayName} > ${kHeaderFooterPos[posId].displayName}`,
-        });
-      }
-    }
-    return items;
+    // Return Title, Page, Total as menu items (each opens a position flyout)
+    return (Object.keys(kHeaderFooterElement) as Array<keyof typeof kHeaderFooterElement>).map(
+      id => ({
+        id: `footer${id.charAt(0).toUpperCase() + id.slice(1)}` as MenuItemId_t,
+        displayName: kHeaderFooterElement[id].displayName,
+      })
+    );
   }
 
   private menuItems_HeaderFooterPos(): UIMenuItem_t[] {
@@ -631,56 +623,14 @@ export class PaperPrinter {
     return { id, value };
   }
 
-  private async handleSelection_Header(selectedId: MenuItemId_t): Promise<HandleSelection_t> {
-    const dx = this.dx.sub('handleSelection_Header');
-    const id = String(selectedId);
-    
-    // Parse the ID: header_title_left, header_page_center, etc.
-    const parts = id.split('_');
-    if (parts.length === 3 && parts[0] === 'header') {
-      const elementId = parts[1] as keyof typeof kHeaderFooterElement;
-      const posId = parts[2] as HeaderFooterPos_t;
-      
-      // Update the appropriate property
-      if (elementId === 'title') {
-        this.app.pdf.docInfo.headerTitlePos = posId;
-      } else if (elementId === 'page') {
-        this.app.pdf.docInfo.headerPagePos = posId;
-      } else if (elementId === 'total') {
-        this.app.pdf.docInfo.headerTotalPos = posId;
-      }
-      
-      dx.out(`Selected header ${elementId} position: ${posId}`);
-      await this.regenerateAndUpdateWebview();
-    }
-
-    return { id, value: id };
+  private async handleSelection_Header(/* selectedId: MenuItemId_t */): Promise<HandleSelection_t> {
+    // Header menu doesn't have direct selections, just opens flyouts
+    return { id: '', value: '' };
   }
 
-  private async handleSelection_Footer(selectedId: MenuItemId_t): Promise<HandleSelection_t> {
-    const dx = this.dx.sub('handleSelection_Footer');
-    const id = String(selectedId);
-    
-    // Parse the ID: footer_title_left, footer_page_center, etc.
-    const parts = id.split('_');
-    if (parts.length === 3 && parts[0] === 'footer') {
-      const elementId = parts[1] as keyof typeof kHeaderFooterElement;
-      const posId = parts[2] as HeaderFooterPos_t;
-      
-      // Update the appropriate property
-      if (elementId === 'title') {
-        this.app.pdf.docInfo.footerTitlePos = posId;
-      } else if (elementId === 'page') {
-        this.app.pdf.docInfo.footerPagePos = posId;
-      } else if (elementId === 'total') {
-        this.app.pdf.docInfo.footerTotalPos = posId;
-      }
-      
-      dx.out(`Selected footer ${elementId} position: ${posId}`);
-      await this.regenerateAndUpdateWebview();
-    }
-
-    return { id, value: id };
+  private async handleSelection_Footer(/* selectedId: MenuItemId_t */): Promise<HandleSelection_t> {
+    // Footer menu doesn't have direct selections, just opens flyouts
+    return { id: '', value: '' };
   }
 
   private async handleSelection_HeaderTitle(selectedId: MenuItemId_t): Promise<HandleSelection_t> {
