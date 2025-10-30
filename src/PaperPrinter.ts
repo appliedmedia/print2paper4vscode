@@ -20,10 +20,14 @@ import {
   type MarginId_t,
   type FontSizeId_t,
   type HeaderFooterPos_t,
+  type HeaderFooterLocation_t,
+  type HeaderFooterElement_t,
   kPageSizeId,
   kOrient,
   kMarginId,
   kHeaderFooterPos,
+  kHeaderFooterLocation,
+  kHeaderFooterElement,
   kFontSizeId,
   kPageSizeId_alt,
   kOrient_alt,
@@ -305,7 +309,7 @@ export class PaperPrinter {
       },
       {
         id: 'headerTitle',
-        displayName: 'Title',
+        displayName: kHeaderFooterElement.title.displayName,
         icon: '', // flyout submenu
         isFlyout: true,
         menuItems: this.menuItems_HeaderFooterPos.bind(this),
@@ -314,7 +318,7 @@ export class PaperPrinter {
       },
       {
         id: 'headerPage',
-        displayName: 'Page',
+        displayName: kHeaderFooterElement.page.displayName,
         icon: '', // flyout submenu
         isFlyout: true,
         menuItems: this.menuItems_HeaderFooterPos.bind(this),
@@ -323,7 +327,7 @@ export class PaperPrinter {
       },
       {
         id: 'headerTotal',
-        displayName: 'Total',
+        displayName: kHeaderFooterElement.total.displayName,
         icon: '', // flyout submenu
         isFlyout: true,
         menuItems: this.menuItems_HeaderFooterPos.bind(this),
@@ -332,7 +336,7 @@ export class PaperPrinter {
       },
       {
         id: 'footerTitle',
-        displayName: 'Title',
+        displayName: kHeaderFooterElement.title.displayName,
         icon: '', // flyout submenu
         isFlyout: true,
         menuItems: this.menuItems_HeaderFooterPos.bind(this),
@@ -341,7 +345,7 @@ export class PaperPrinter {
       },
       {
         id: 'footerPage',
-        displayName: 'Page',
+        displayName: kHeaderFooterElement.page.displayName,
         icon: '', // flyout submenu
         isFlyout: true,
         menuItems: this.menuItems_HeaderFooterPos.bind(this),
@@ -350,7 +354,7 @@ export class PaperPrinter {
       },
       {
         id: 'footerTotal',
-        displayName: 'Total',
+        displayName: kHeaderFooterElement.total.displayName,
         icon: '', // flyout submenu
         isFlyout: true,
         menuItems: this.menuItems_HeaderFooterPos.bind(this),
@@ -461,14 +465,32 @@ export class PaperPrinter {
       { id: 'orient', displayName: 'Orient' },
       // Margin submenu reference (id must match the actual menu id)
       { id: 'marginId', displayName: 'Margin' },
-      // Header positioning flyouts
-      { id: 'headerTitle', displayName: 'Header > Title' },
-      { id: 'headerPage', displayName: 'Header > Page' },
-      { id: 'headerTotal', displayName: 'Header > Total' },
-      // Footer positioning flyouts
-      { id: 'footerTitle', displayName: 'Footer > Title' },
-      { id: 'footerPage', displayName: 'Footer > Page' },
-      { id: 'footerTotal', displayName: 'Footer > Total' },
+      // Header positioning flyouts - use constants for display names
+      {
+        id: 'headerTitle',
+        displayName: kHeaderFooterElement.title.displayName,
+      },
+      {
+        id: 'headerPage',
+        displayName: kHeaderFooterElement.page.displayName,
+      },
+      {
+        id: 'headerTotal',
+        displayName: kHeaderFooterElement.total.displayName,
+      },
+      // Footer positioning flyouts - use constants for display names
+      {
+        id: 'footerTitle',
+        displayName: kHeaderFooterElement.title.displayName,
+      },
+      {
+        id: 'footerPage',
+        displayName: kHeaderFooterElement.page.displayName,
+      },
+      {
+        id: 'footerTotal',
+        displayName: kHeaderFooterElement.total.displayName,
+      },
     ];
   }
 

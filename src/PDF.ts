@@ -879,8 +879,13 @@ export class PDF implements PageRender {
       right: [],
     };
 
+    // Helper function to check if position is valid (not 'none')
+    const isValidPos = (pos: string): pos is 'left' | 'center' | 'right' => {
+      return pos === 'left' || pos === 'center' || pos === 'right';
+    };
+
     // Handle Title
-    if (this.docInfo.headerTitlePos !== 'none') {
+    if (isValidPos(this.docInfo.headerTitlePos)) {
       headerElements[this.docInfo.headerTitlePos].push(docTitle);
     }
 
@@ -888,8 +893,8 @@ export class PDF implements PageRender {
     const headerPagePos = this.docInfo.headerPagePos;
     const headerTotalPos = this.docInfo.headerTotalPos;
     if (
-      headerPagePos !== 'none' &&
-      headerTotalPos !== 'none' &&
+      isValidPos(headerPagePos) &&
+      isValidPos(headerTotalPos) &&
       headerPagePos === headerTotalPos &&
       pageTotal > 0
     ) {
@@ -897,10 +902,10 @@ export class PDF implements PageRender {
       headerElements[headerPagePos].push(`Page ${currentPage} of ${pageTotal}`);
     } else {
       // Separate handling
-      if (headerPagePos !== 'none') {
+      if (isValidPos(headerPagePos)) {
         headerElements[headerPagePos].push(`Page ${currentPage}`);
       }
-      if (headerTotalPos !== 'none' && pageTotal > 0) {
+      if (isValidPos(headerTotalPos) && pageTotal > 0) {
         headerElements[headerTotalPos].push(`${pageTotal} Pages`);
       }
     }
@@ -913,7 +918,7 @@ export class PDF implements PageRender {
     };
 
     // Handle Title
-    if (this.docInfo.footerTitlePos !== 'none') {
+    if (isValidPos(this.docInfo.footerTitlePos)) {
       footerElements[this.docInfo.footerTitlePos].push(docTitle);
     }
 
@@ -921,8 +926,8 @@ export class PDF implements PageRender {
     const footerPagePos = this.docInfo.footerPagePos;
     const footerTotalPos = this.docInfo.footerTotalPos;
     if (
-      footerPagePos !== 'none' &&
-      footerTotalPos !== 'none' &&
+      isValidPos(footerPagePos) &&
+      isValidPos(footerTotalPos) &&
       footerPagePos === footerTotalPos &&
       pageTotal > 0
     ) {
@@ -930,10 +935,10 @@ export class PDF implements PageRender {
       footerElements[footerPagePos].push(`Page ${currentPage} of ${pageTotal}`);
     } else {
       // Separate handling
-      if (footerPagePos !== 'none') {
+      if (isValidPos(footerPagePos)) {
         footerElements[footerPagePos].push(`Page ${currentPage}`);
       }
-      if (footerTotalPos !== 'none' && pageTotal > 0) {
+      if (isValidPos(footerTotalPos) && pageTotal > 0) {
         footerElements[footerTotalPos].push(`${pageTotal} Pages`);
       }
     }
