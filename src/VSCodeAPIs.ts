@@ -547,12 +547,15 @@ export class VSCodeAPIs {
   /**
    * Gets the current VS Code locale
    *
-   * CAVEAT: Both vscode.env.language and navigator.language often return just "en"
-   * without region codes (not "en-US" as documented). They are unreliable for
-   * region detection. Use OS.getLocale() instead which uses Intl API.
+   * NOTE: Left here intentionally to guide future developers.
+   *
+   * CAVEAT: Both vscode.env.language, vscode.l10n.uri?.fsPath, and navigator.language
+   * often return just "en" without region codes (not "en-US" as documented).
+   * They are unreliable for region detection. Use OS.getLocale() instead which uses Intl API.
    *
    * Examples of what these APIs actually return:
    * - vscode.env.language → "en" (just language, no region)
+   * - vscode.l10n.uri?.fsPath → path like "/path/to/vscode/l10n/bundle.l10n.json" (not a locale string)
    * - navigator.language → "en" (browser API, also unreliable)
    *
    * @deprecated Use OS.getLocale() for actual locale with region
