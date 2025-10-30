@@ -59,6 +59,31 @@ export const kFontSizeId = {
 export type FontSizeId_t = keyof typeof kFontSizeId;
 export const kFontSizeId_alt: FontSizeId_t = '12';
 
+// Header/Footer location: id → metadata (displayName)
+export const kHeaderFooterLocation = {
+  header: { displayName: 'Header' },
+  footer: { displayName: 'Footer' },
+} as const;
+export type HeaderFooterLocation_t = keyof typeof kHeaderFooterLocation;
+
+// Header/Footer element type: id → metadata (displayName)
+export const kHeaderFooterElement = {
+  title: { displayName: 'Title' },
+  page: { displayName: 'Page' },
+  total: { displayName: 'Total' },
+} as const;
+export type HeaderFooterElement_t = keyof typeof kHeaderFooterElement;
+
+// Header/Footer position: id → metadata (displayName with symbol)
+export const kHeaderFooterPos = {
+  left: { displayName: '←' },
+  center: { displayName: '⟺' },
+  right: { displayName: '→' },
+  none: { displayName: '✕' },
+} as const;
+export type HeaderFooterPos_t = keyof typeof kHeaderFooterPos;
+export const kHeaderFooterPos_alt: HeaderFooterPos_t = 'center';
+
 // Theme alternative (not part of a const object, so separate)
 export const kTheme_alt: string = 'github-light';
 

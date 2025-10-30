@@ -1,5 +1,5 @@
 import type { App } from './App';
-import type { MarginId_t, PageSizeId_t, Orient_t } from './types/PaperPrinter_t';
+import type { MarginId_t, PageSizeId_t, Orient_t, HeaderFooterPos_t } from './types/PaperPrinter_t';
 import { kMarginId } from './types/PaperPrinter_t';
 import { Coords } from './Coords';
 import type { ThemedToken } from 'shiki';
@@ -59,12 +59,12 @@ export class DocInfo_PDF {
 
   // Header/Footer positioning settings
   // Position options: 'left' | 'center' | 'right' | 'none'
-  public headerTitlePos: 'left' | 'center' | 'right' | 'none' = 'center';
-  public headerPagePos: 'left' | 'center' | 'right' | 'none' = 'none';
-  public headerTotalPos: 'left' | 'center' | 'right' | 'none' = 'none';
-  public footerTitlePos: 'left' | 'center' | 'right' | 'none' = 'none';
-  public footerPagePos: 'left' | 'center' | 'right' | 'none' = 'center';
-  public footerTotalPos: 'left' | 'center' | 'right' | 'none' = 'center';
+  public headerTitlePos: HeaderFooterPos_t = 'center';
+  public headerPagePos: HeaderFooterPos_t = 'none';
+  public headerTotalPos: HeaderFooterPos_t = 'none';
+  public footerTitlePos: HeaderFooterPos_t = 'none';
+  public footerPagePos: HeaderFooterPos_t = 'center';
+  public footerTotalPos: HeaderFooterPos_t = 'center';
 
   // Temporary file tracking
   public tempPdfs: string[] = [];

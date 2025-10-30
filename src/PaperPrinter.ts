@@ -217,7 +217,7 @@ export class PaperPrinter {
       this.app.pdf.docInfo.pageSizeId = pageSizeId;
       this.app.pdf.docInfo.orient = orient;
       this.app.pdf.docInfo.marginId = marginId;
-      
+
       // Set document content
       this.app.pdf.docInfo.code = this.docInfo.rawCode;
       this.app.pdf.docInfo.languageId = this.docInfo.languageId;
@@ -261,7 +261,17 @@ export class PaperPrinter {
         icon: '📄',
         isFlyout: false,
         menuItems: this.menuItems_Page.bind(this),
-        flyoutMenuItemIds: ['pageSizeId', 'orient', 'marginId', 'headerTitle', 'headerPage', 'headerTotal', 'footerTitle', 'footerPage', 'footerTotal'],
+        flyoutMenuItemIds: [
+          'pageSizeId',
+          'orient',
+          'marginId',
+          'headerTitle',
+          'headerPage',
+          'headerTotal',
+          'footerTitle',
+          'footerPage',
+          'footerTotal',
+        ],
         selectionHandler: this.handleSelection_Page.bind(this),
       },
       {
@@ -485,12 +495,10 @@ export class PaperPrinter {
   }
 
   private menuItems_HeaderFooterPos(): UIMenuItem_t[] {
-    return [
-      { id: 'left', displayName: '←' },
-      { id: 'center', displayName: '⟺' },
-      { id: 'right', displayName: '→' },
-      { id: 'none', displayName: '✕' },
-    ];
+    return (Object.keys(kHeaderFooterPos) as HeaderFooterPos_t[]).map(id => ({
+      id,
+      displayName: kHeaderFooterPos[id].displayName,
+    }));
   }
 
   // Selection handler methods for each menu type
@@ -592,7 +600,7 @@ export class PaperPrinter {
   private async handleSelection_HeaderTitle(selectedId: MenuItemId_t): Promise<HandleSelection_t> {
     const dx = this.dx.sub('handleSelection_HeaderTitle');
     const id = String(selectedId);
-    const value = id as 'left' | 'center' | 'right' | 'none';
+    const value = id as HeaderFooterPos_t;
 
     this.app.pdf.docInfo.headerTitlePos = value;
     dx.out(`Selected header title position: ${value}`);
@@ -604,7 +612,7 @@ export class PaperPrinter {
   private async handleSelection_HeaderPage(selectedId: MenuItemId_t): Promise<HandleSelection_t> {
     const dx = this.dx.sub('handleSelection_HeaderPage');
     const id = String(selectedId);
-    const value = id as 'left' | 'center' | 'right' | 'none';
+    const value = id as HeaderFooterPos_t;
 
     this.app.pdf.docInfo.headerPagePos = value;
     dx.out(`Selected header page position: ${value}`);
@@ -616,7 +624,7 @@ export class PaperPrinter {
   private async handleSelection_HeaderTotal(selectedId: MenuItemId_t): Promise<HandleSelection_t> {
     const dx = this.dx.sub('handleSelection_HeaderTotal');
     const id = String(selectedId);
-    const value = id as 'left' | 'center' | 'right' | 'none';
+    const value = id as HeaderFooterPos_t;
 
     this.app.pdf.docInfo.headerTotalPos = value;
     dx.out(`Selected header total position: ${value}`);
@@ -628,7 +636,7 @@ export class PaperPrinter {
   private async handleSelection_FooterTitle(selectedId: MenuItemId_t): Promise<HandleSelection_t> {
     const dx = this.dx.sub('handleSelection_FooterTitle');
     const id = String(selectedId);
-    const value = id as 'left' | 'center' | 'right' | 'none';
+    const value = id as HeaderFooterPos_t;
 
     this.app.pdf.docInfo.footerTitlePos = value;
     dx.out(`Selected footer title position: ${value}`);
@@ -640,7 +648,7 @@ export class PaperPrinter {
   private async handleSelection_FooterPage(selectedId: MenuItemId_t): Promise<HandleSelection_t> {
     const dx = this.dx.sub('handleSelection_FooterPage');
     const id = String(selectedId);
-    const value = id as 'left' | 'center' | 'right' | 'none';
+    const value = id as HeaderFooterPos_t;
 
     this.app.pdf.docInfo.footerPagePos = value;
     dx.out(`Selected footer page position: ${value}`);
@@ -652,7 +660,7 @@ export class PaperPrinter {
   private async handleSelection_FooterTotal(selectedId: MenuItemId_t): Promise<HandleSelection_t> {
     const dx = this.dx.sub('handleSelection_FooterTotal');
     const id = String(selectedId);
-    const value = id as 'left' | 'center' | 'right' | 'none';
+    const value = id as HeaderFooterPos_t;
 
     this.app.pdf.docInfo.footerTotalPos = value;
     dx.out(`Selected footer total position: ${value}`);
