@@ -16,7 +16,7 @@ This directory contains TypeScript type definitions for our project.
 ### Reference Type Definitions
 
 - **`vscode.d.ts`** - VS Code Extension API type definitions (for reference)
-  - Source: https://github.com/microsoft/vscode/blob/main/src/vscode-dts/vscode.d.ts
+  - Source: [https://github.com/microsoft/vscode/blob/main/src/vscode-dts/vscode.d.ts](https://github.com/microsoft/vscode/blob/main/src/vscode-dts/vscode.d.ts)
   - Version: VS Code 1.103 API
   - Purpose: Local reference copy for API research and documentation
   - Note: The actual types used by our code come from `@types/vscode` npm package
