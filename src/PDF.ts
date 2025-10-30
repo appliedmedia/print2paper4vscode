@@ -879,14 +879,25 @@ export class PDF implements PageRender {
       right: [],
     };
 
+    // Handle Title
     if (this.docInfo.headerTitlePos !== 'none') {
       headerElements[this.docInfo.headerTitlePos].push(docTitle);
     }
-    if (this.docInfo.headerPagePos !== 'none') {
-      headerElements[this.docInfo.headerPagePos].push(`Page ${currentPage}`);
-    }
-    if (this.docInfo.headerTotalPos !== 'none' && pageTotal > 0) {
-      headerElements[this.docInfo.headerTotalPos].push(`${pageTotal} Pages`);
+
+    // Handle Page and Total - combine if at same position
+    const headerPagePos = this.docInfo.headerPagePos;
+    const headerTotalPos = this.docInfo.headerTotalPos;
+    if (headerPagePos !== 'none' && headerTotalPos !== 'none' && headerPagePos === headerTotalPos && pageTotal > 0) {
+      // Combine: "Page X of Y"
+      headerElements[headerPagePos].push(`Page ${currentPage} of ${pageTotal}`);
+    } else {
+      // Separate handling
+      if (headerPagePos !== 'none') {
+        headerElements[headerPagePos].push(`Page ${currentPage}`);
+      }
+      if (headerTotalPos !== 'none' && pageTotal > 0) {
+        headerElements[headerTotalPos].push(`${pageTotal} Pages`);
+      }
     }
 
     // Build footer elements by position
@@ -896,14 +907,25 @@ export class PDF implements PageRender {
       right: [],
     };
 
+    // Handle Title
     if (this.docInfo.footerTitlePos !== 'none') {
       footerElements[this.docInfo.footerTitlePos].push(docTitle);
     }
-    if (this.docInfo.footerPagePos !== 'none') {
-      footerElements[this.docInfo.footerPagePos].push(`Page ${currentPage}`);
-    }
-    if (this.docInfo.footerTotalPos !== 'none' && pageTotal > 0) {
-      footerElements[this.docInfo.footerTotalPos].push(`${pageTotal} Pages`);
+
+    // Handle Page and Total - combine if at same position
+    const footerPagePos = this.docInfo.footerPagePos;
+    const footerTotalPos = this.docInfo.footerTotalPos;
+    if (footerPagePos !== 'none' && footerTotalPos !== 'none' && footerPagePos === footerTotalPos && pageTotal > 0) {
+      // Combine: "Page X of Y"
+      footerElements[footerPagePos].push(`Page ${currentPage} of ${pageTotal}`);
+    } else {
+      // Separate handling
+      if (footerPagePos !== 'none') {
+        footerElements[footerPagePos].push(`Page ${currentPage}`);
+      }
+      if (footerTotalPos !== 'none' && pageTotal > 0) {
+        footerElements[footerTotalPos].push(`${pageTotal} Pages`);
+      }
     }
 
     // Render header
