@@ -35,8 +35,8 @@ export class UI {
   } as const;
 
   // Toolbar positioning constants
-  private static readonly kToolbarPosMinPx = 8;
-  private static readonly kToolbarPosMaxPx = 5120; // Reasonable max for 5K displays
+  private static readonly kToolbar_pos_min_px = 8;
+  private static readonly kToolbar_pos_max_px = 5120; // Reasonable max for 5K displays
 
   private app: App;
   private messageHandlers: Map<string, MessageHandler[]> = new Map();
@@ -144,15 +144,16 @@ export class UI {
       // Note: VS Code extensions run in Node.js and don't have access to window dimensions.
       // Client-side code in toolbar_js/yaml dynamically clamps to actual window.innerWidth.
       let toolbar_pos = Number(this.persist.toolbar_pos);
-      if (isNaN(toolbar_pos) || toolbar_pos < UI.kToolbarPosMinPx || toolbar_pos >= UI.kToolbarPosMaxPx) {
-        toolbar_pos = UI.kToolbarPosMinPx;
+      if (isNaN(toolbar_pos) || toolbar_pos < UI.kToolbar_pos_min_px || toolbar_pos >= UI.kToolbar_pos_max_px) {
+        toolbar_pos = UI.kToolbar_pos_min_px;
       }
 
       // Replace toolbar_pos in toolbar_css before combining with menu CSS
       const toolbarCssWithPos = templates.toolbar_css.replace('{{toolbar_pos}}', toolbar_pos.toString());
 
-      // Replace toolbar_min_left_px in toolbar_js
-      const toolbarJsWithConstants = templates.toolbar_js.replace(/\{\{toolbar_min_left_px\}\}/g, UI.kToolbarPosMinPx.toString());
+      // Replace toolbar positioning constants in toolbar_js
+      let toolbarJsWithConstants = templates.toolbar_js.replace(/\{\{toolbar_pos_min_px\}\}/g, UI.kToolbar_pos_min_px.toString());
+      toolbarJsWithConstants = toolbarJsWithConstants.replace(/\{\{toolbar_pos_max_px\}\}/g, UI.kToolbar_pos_max_px.toString());
 
       // Inject toolbar into HTML using template
       const toolbarHtml = this.app.templateDictReplace(templates.toolbar_html, {

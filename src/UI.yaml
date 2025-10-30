@@ -65,6 +65,10 @@ toolbar_js: |
   window.vscode = acquireVsCodeApi();
   const toolbar = document.getElementById('p2p4vsc-toolbar');
   const drag = document.getElementById('p2p4vsc-toolbar-grip');
+  
+  // Toolbar positioning constants from server
+  const toolbar_pos_min_px = {{toolbar_pos_min_px}};
+  const toolbar_pos_max_px = {{toolbar_pos_max_px}};
 
   // Generic flyout hover handler
   function handleFlyoutHover() {
@@ -112,8 +116,8 @@ toolbar_js: |
   window.addEventListener('resize', ()=>{
     const rawLeft = getComputedStyle(toolbar).left;
     let left = parseFloat(rawLeft);
-    if (Number.isNaN(left)) left = {{toolbar_min_left_px}};
-    const maxLeft = Math.max({{toolbar_min_left_px}}, window.innerWidth - toolbar.offsetWidth - {{toolbar_min_left_px}});
+    if (Number.isNaN(left)) left = toolbar_pos_min_px;
+    const maxLeft = Math.max(toolbar_pos_min_px, window.innerWidth - toolbar.offsetWidth - toolbar_pos_min_px);
     toolbar.style.left = Math.min(left, maxLeft) + 'px';
   });
 
@@ -124,7 +128,7 @@ toolbar_js: |
     
     // Save position to extension's global state
     const rawLeft = getComputedStyle(toolbar).left;
-    const left = Number.isNaN(parseFloat(rawLeft)) ? {{toolbar_min_left_px}} : parseFloat(rawLeft);
+    const left = Number.isNaN(parseFloat(rawLeft)) ? toolbar_pos_min_px : parseFloat(rawLeft);
     
     // Notify extension that drag ended
     vscode.postMessage({
@@ -146,7 +150,7 @@ toolbar_js: |
     isDragging = true;
     dragStartX = e.clientX;
     const rawLeft = getComputedStyle(toolbar).left;
-    dragStartLeft = Number.isNaN(parseFloat(rawLeft)) ? {{toolbar_min_left_px}} : parseFloat(rawLeft);
+    dragStartLeft = Number.isNaN(parseFloat(rawLeft)) ? toolbar_pos_min_px : parseFloat(rawLeft);
     document.body.style.cursor = 'grabbing';
   });
 
@@ -155,8 +159,8 @@ toolbar_js: |
       if (e.buttons > 0) { // Mouse button is still down - continue dragging
         e.preventDefault();
         const dx = e.clientX - dragStartX;
-        const maxLeft = Math.max({{toolbar_min_left_px}}, window.innerWidth - toolbar.offsetWidth - {{toolbar_min_left_px}});
-        const newLeft = Math.min(Math.max({{toolbar_min_left_px}}, dragStartLeft + dx), maxLeft);
+        const maxLeft = Math.max(toolbar_pos_min_px, window.innerWidth - toolbar.offsetWidth - toolbar_pos_min_px);
+        const newLeft = Math.min(Math.max(toolbar_pos_min_px, dragStartLeft + dx), maxLeft);
         toolbar.style.left = newLeft + 'px';
       } else { // Mouse button released - stop dragging
         postDragEnd();
