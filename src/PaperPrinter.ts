@@ -272,12 +272,8 @@ export class PaperPrinter {
           'pageSizeId',
           'orient',
           'marginId',
-          'headerTitle',
-          'headerPage',
-          'headerTotal',
-          'footerTitle',
-          'footerPage',
-          'footerTotal',
+          'header',
+          'footer',
         ],
         selectionHandler: this.handleSelection_Page.bind(this),
       },
@@ -309,58 +305,22 @@ export class PaperPrinter {
         selectionHandler: this.handleSelection_MarginId.bind(this),
       },
       {
-        id: 'headerTitle',
-        displayName: kHeaderFooterElement.title.displayName,
+        id: 'header',
+        displayName: kHeaderFooterLocation.header.displayName,
         icon: '', // flyout submenu
         isFlyout: true,
-        menuItems: this.menuItems_HeaderFooterPos.bind(this),
-        flyoutMenuItemIds: [],
-        selectionHandler: this.handleSelection_HeaderTitle.bind(this),
+        menuItems: this.menuItems_Header.bind(this),
+        flyoutMenuItemIds: ['headerTitle', 'headerPage', 'headerTotal'],
+        selectionHandler: this.handleSelection_Header.bind(this),
       },
       {
-        id: 'headerPage',
-        displayName: kHeaderFooterElement.page.displayName,
+        id: 'footer',
+        displayName: kHeaderFooterLocation.footer.displayName,
         icon: '', // flyout submenu
         isFlyout: true,
-        menuItems: this.menuItems_HeaderFooterPos.bind(this),
-        flyoutMenuItemIds: [],
-        selectionHandler: this.handleSelection_HeaderPage.bind(this),
-      },
-      {
-        id: 'headerTotal',
-        displayName: kHeaderFooterElement.total.displayName,
-        icon: '', // flyout submenu
-        isFlyout: true,
-        menuItems: this.menuItems_HeaderFooterPos.bind(this),
-        flyoutMenuItemIds: [],
-        selectionHandler: this.handleSelection_HeaderTotal.bind(this),
-      },
-      {
-        id: 'footerTitle',
-        displayName: kHeaderFooterElement.title.displayName,
-        icon: '', // flyout submenu
-        isFlyout: true,
-        menuItems: this.menuItems_HeaderFooterPos.bind(this),
-        flyoutMenuItemIds: [],
-        selectionHandler: this.handleSelection_FooterTitle.bind(this),
-      },
-      {
-        id: 'footerPage',
-        displayName: kHeaderFooterElement.page.displayName,
-        icon: '', // flyout submenu
-        isFlyout: true,
-        menuItems: this.menuItems_HeaderFooterPos.bind(this),
-        flyoutMenuItemIds: [],
-        selectionHandler: this.handleSelection_FooterPage.bind(this),
-      },
-      {
-        id: 'footerTotal',
-        displayName: kHeaderFooterElement.total.displayName,
-        icon: '', // flyout submenu
-        isFlyout: true,
-        menuItems: this.menuItems_HeaderFooterPos.bind(this),
-        flyoutMenuItemIds: [],
-        selectionHandler: this.handleSelection_FooterTotal.bind(this),
+        menuItems: this.menuItems_Footer.bind(this),
+        flyoutMenuItemIds: ['footerTitle', 'footerPage', 'footerTotal'],
+        selectionHandler: this.handleSelection_Footer.bind(this),
       },
       {
         id: 'theme',
@@ -467,22 +427,15 @@ export class PaperPrinter {
       displayName: kPageMenuSubmenu[id].displayName,
     }));
 
-    // Header/Footer positioning flyouts - iterate over locations and elements
-    const headerFooterItems: UIMenuItem_t[] = [];
-    for (const locationId of Object.keys(kHeaderFooterLocation) as Array<
-      keyof typeof kHeaderFooterLocation
-    >) {
-      for (const elementId of Object.keys(kHeaderFooterElement) as Array<
-        keyof typeof kHeaderFooterElement
-      >) {
-        headerFooterItems.push({
-          id: `${locationId}${elementId.charAt(0).toUpperCase() + elementId.slice(1)}` as MenuItemId_t,
-          displayName: `${kHeaderFooterLocation[locationId].displayName} > ${kHeaderFooterElement[elementId].displayName}`,
-        });
-      }
-    }
+    // Header and Footer menus (which have their own flyouts)
+    const headerFooterMenus = (
+      Object.keys(kHeaderFooterLocation) as Array<keyof typeof kHeaderFooterLocation>
+    ).map(id => ({
+      id,
+      displayName: kHeaderFooterLocation[id].displayName,
+    }));
 
-    return [...pageSubmenus, ...headerFooterItems];
+    return [...pageSubmenus, ...headerFooterMenus];
   }
 
   private menuItems_pageSizeId(): UIMenuItem_t[] {
@@ -506,6 +459,20 @@ export class PaperPrinter {
     return (Object.keys(kMarginId) as MarginId_t[]).map(id => ({
       id,
       displayName: this.app.templateDictReplace(kMarginId[id].displayName, this.yaml),
+    }));
+  }
+
+  private menuItems_Header(): UIMenuItem_t[] {
+    return (Object.keys(kHeaderFooterElement) as Array<keyof typeof kHeaderFooterElement>).map(id => ({
+      id: `header${id.charAt(0).toUpperCase() + id.slice(1)}` as MenuItemId_t,
+      displayName: kHeaderFooterElement[id].displayName,
+    }));
+  }
+
+  private menuItems_Footer(): UIMenuItem_t[] {
+    return (Object.keys(kHeaderFooterElement) as Array<keyof typeof kHeaderFooterElement>).map(id => ({
+      id: `footer${id.charAt(0).toUpperCase() + id.slice(1)}` as MenuItemId_t,
+      displayName: kHeaderFooterElement[id].displayName,
     }));
   }
 
