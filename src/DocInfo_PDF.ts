@@ -64,20 +64,28 @@ export class DocInfo_PDF {
   }
 
   // Margin getter - calculates from current marginId
+  // Always includes base 0.4 inch (28.8 pts) minimum margin for safe printing
+  // Margin settings (none/minimal/normal/wide) are ADDED to this base
   get marginPts(): {
     topMarginPts: number;
     bottomMarginPts: number;
     leftMarginPts: number;
     rightMarginPts: number;
   } {
-    // Use marginId from docInfo and get marginPts from kMarginId
-    const marginPts = kMarginId[this.marginId].marginPts;
+    // Base margin: 0.4 inch = 28.8 points (safe printing margin)
+    const BASE_MARGIN_PTS = 0.4 * 72; // 28.8 points
+    
+    // Get margin setting from kMarginId (this is ADDED to base)
+    const marginSettingPts = kMarginId[this.marginId].marginPts;
+    
+    // Total margin = base + setting
+    const totalMarginPts = BASE_MARGIN_PTS + marginSettingPts;
 
     return {
-      topMarginPts: marginPts,
-      bottomMarginPts: marginPts,
-      leftMarginPts: marginPts,
-      rightMarginPts: marginPts,
+      topMarginPts: totalMarginPts,
+      bottomMarginPts: totalMarginPts,
+      leftMarginPts: totalMarginPts,
+      rightMarginPts: totalMarginPts,
     };
   }
 

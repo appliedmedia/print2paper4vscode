@@ -615,11 +615,10 @@ export class PDF implements PageRender {
       // Start at the left margin for X position
       this.currentX = marginsPts.leftMarginPts;
 
-      // Header - always reserve space even when margins are "none"
-      // Header is positioned at Math.max(10, topMarginPts - 5) with 8pt font
+      // Header - positioned within top margin area
+      // With base 0.4 inch margin, header is always safely positioned
       const headerFontSizePts = 8;
-      const headerReservedSpace = 10; // Always reserve 10pts from top
-      const headerY = Math.max(headerReservedSpace, marginsPts.topMarginPts - 5);
+      const headerY = marginsPts.topMarginPts - 5; // Position header within margin (5pts from top edge of margin)
       const headerBottom = headerY + headerFontSizePts;
       const headerSpacing = 3; // Small spacing between header and content
       this.currentY = headerBottom + headerSpacing + this.currentLineHeight;
@@ -747,13 +746,9 @@ export class PDF implements PageRender {
               const marginsPtsForBreak = this.docInfo.marginPts;
 
               // Check if wrapped line would overlap footer
-              // Footer - always reserve space even when margins are "none"
+              // Footer - positioned within bottom margin area
               const footerFontSizePtsWrap = 8;
-              const footerReservedSpaceWrap = 10; // Always reserve 10pts from bottom
-              const footerYWrap = Math.min(
-                pageHeightPtsForBreak - footerReservedSpaceWrap,
-                pageHeightPtsForBreak - marginsPtsForBreak.bottomMarginPts + 5
-              );
+              const footerYWrap = pageHeightPtsForBreak - marginsPtsForBreak.bottomMarginPts + 5;
               const footerTopWrap = footerYWrap - footerFontSizePtsWrap;
               const footerSpacingWrap = 3;
               const maxContentYWrap = footerTopWrap - footerSpacingWrap - this.currentLineHeight;
@@ -764,10 +759,9 @@ export class PDF implements PageRender {
                 );
                 this.docInfo.pdfDoc!.addPage();
                 // Use same header spacing logic as setupPdf
-                // Header - always reserve space even when margins are "none"
+                // Header - positioned within top margin area
                 const headerFontSizePtsWrap = 8;
-                const headerReservedSpaceWrap = 10; // Always reserve 10pts from top
-                const headerYWrap = Math.max(headerReservedSpaceWrap, marginsPtsForBreak.topMarginPts - 5);
+                const headerYWrap = marginsPtsForBreak.topMarginPts - 5;
                 const headerBottomWrap = headerYWrap + headerFontSizePtsWrap;
                 const headerSpacingWrap = 3;
                 this.currentY = headerBottomWrap + headerSpacingWrap + this.currentLineHeight;
@@ -827,14 +821,10 @@ export class PDF implements PageRender {
       );
       const marginsPtsForBreak = this.docInfo.marginPts;
 
-      // Footer - always reserve space even when margins are "none"
-      // Footer is positioned at Math.min(heightPts - 10, heightPts - bottomMarginPts + 5) with 8pt font
+      // Footer - positioned within bottom margin area
+      // With base 0.4 inch margin, footer is always safely positioned
       const footerFontSizePts = 8;
-      const footerReservedSpace = 10; // Always reserve 10pts from bottom
-      const footerY = Math.min(
-        pageHeightPtsForBreak - footerReservedSpace,
-        pageHeightPtsForBreak - marginsPtsForBreak.bottomMarginPts + 5
-      );
+      const footerY = pageHeightPtsForBreak - marginsPtsForBreak.bottomMarginPts + 5; // Position footer within margin
       const footerTop = footerY - footerFontSizePts;
       const footerSpacing = 3; // Small spacing between content and footer
       const maxContentY = footerTop - footerSpacing - this.currentLineHeight;
@@ -846,10 +836,9 @@ export class PDF implements PageRender {
         );
         this.docInfo.pdfDoc!.addPage();
         // Use same header spacing logic as setupPdf
-        // Header - always reserve space even when margins are "none"
+        // Header - positioned within top margin area
         const headerFontSizePtsNew = 8;
-        const headerReservedSpaceNew = 10; // Always reserve 10pts from top
-        const headerYNew = Math.max(headerReservedSpaceNew, marginsPtsForBreak.topMarginPts - 5);
+        const headerYNew = marginsPtsForBreak.topMarginPts - 5;
         const headerBottomNew = headerYNew + headerFontSizePtsNew;
         const headerSpacingNew = 3;
         this.currentY = headerBottomNew + headerSpacingNew + this.currentLineHeight;
@@ -898,21 +887,19 @@ export class PDF implements PageRender {
     this.docInfo.pdfDoc.setFontSize(8); // points
     this.setTextColorFromWebColor(this.docInfo.pdfDoc, PDF.HEADER_FOOTER_COLOR);
 
-    // Header - always positioned at fixed distance from top, regardless of margin
-    // Reserve space for header even when margins are "none"
+    // Header - positioned within top margin area
+    // With base 0.4 inch margin, header is always safely positioned
     const headerFontSizePts = 8;
-    const headerReservedSpace = 10; // Always reserve 10pts from top for header
-    const headerY = Math.max(headerReservedSpace, margins.topMarginPts - 5);
+    const headerY = margins.topMarginPts - 5; // Position header within margin (5pts from top edge of margin)
     const headerText = docTitle;
     const headerWidth = this.docInfo.pdfDoc.getTextWidth(headerText);
     const headerX = (widthPts - headerWidth) / 2;
     this.docInfo.pdfDoc.text(headerText, headerX, headerY);
 
-    // Footer - always positioned at fixed distance from bottom, regardless of margin
-    // Reserve space for footer even when margins are "none"
+    // Footer - positioned within bottom margin area
+    // With base 0.4 inch margin, footer is always safely positioned
     const footerFontSizePts = 8;
-    const footerReservedSpace = 10; // Always reserve 10pts from bottom for footer
-    const footerY = Math.min(heightPts - footerReservedSpace, heightPts - margins.bottomMarginPts + 5);
+    const footerY = heightPts - margins.bottomMarginPts + 5; // Position footer within margin (5pts from bottom edge of margin)
     // Just show "Page N of " - page total will be added later
     const footerText = `Page ${currentPage} of `;
     const footerWidth = this.docInfo.pdfDoc.getTextWidth(footerText);
