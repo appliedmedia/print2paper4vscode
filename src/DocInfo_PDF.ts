@@ -77,7 +77,7 @@ export class DocInfo_PDF {
     const marginSettingPts = kMarginId[this.marginId].marginPts;
 
     // Total margin = base + setting
-    const totalMarginPts = Coords.kMarginBasePts + marginSettingPts;
+    const totalMarginPts = Coords.kMarginGutterMinPts + marginSettingPts;
 
     return {
       topMarginPts: totalMarginPts,
