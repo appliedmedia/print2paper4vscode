@@ -356,22 +356,6 @@ export class PDF implements PageRender {
       // Add header and footer to first page
       this.addHeaderAndFooter();
 
-      // Add title if provided
-      if (this.docInfo.title) {
-        const marginsPts = this.docInfo.marginPts;
-        const titleFontSizePts = this.coords.cssPxToPdfPts(this.docInfo.fontSizePx) * 1.25;
-        this.docInfo.pdfDoc!.setFontSize(titleFontSizePts);
-        this.setTextColorFromWebColor(this.docInfo.pdfDoc!, 'black');
-        const titleY = marginsPts.topMarginPts + 20;
-        this.docInfo.pdfDoc!.text(this.docInfo.title, marginsPts.leftMarginPts, titleY);
-        this.docInfo.pdfDoc!.setFontSize(this.coords.cssPxToPdfPts(this.docInfo.fontSizePx));
-
-        // Update currentY to start below the title
-        // Title is at topMargin + 20pt, add title font size + some spacing
-        const titleHeight = titleFontSizePts;
-        this.currentY = titleY + titleHeight + this.currentLineHeight;
-      }
-
       // Tokenize and build complete PDF in one pass
       await this.app.stylize.tokenize(
         this.docInfo.code,
