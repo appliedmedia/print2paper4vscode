@@ -459,40 +459,24 @@ export class PaperPrinter {
   }
 
   private menuItems_Page(): UIMenuItem_t[] {
-    return [
-      // Size submenu reference (id must match the actual menu id)
-      { id: 'pageSizeId', displayName: kPageMenuSubmenu.pageSizeId.displayName },
-      // Orientation submenu reference
-      { id: 'orient', displayName: kPageMenuSubmenu.orient.displayName },
-      // Margin submenu reference (id must match the actual menu id)
-      { id: 'marginId', displayName: kPageMenuSubmenu.marginId.displayName },
-      // Header positioning flyouts - use constants for display names
-      {
-        id: 'headerTitle',
-        displayName: kHeaderFooterElement.title.displayName,
-      },
-      {
-        id: 'headerPage',
-        displayName: kHeaderFooterElement.page.displayName,
-      },
-      {
-        id: 'headerTotal',
-        displayName: kHeaderFooterElement.total.displayName,
-      },
-      // Footer positioning flyouts - use constants for display names
-      {
-        id: 'footerTitle',
-        displayName: kHeaderFooterElement.title.displayName,
-      },
-      {
-        id: 'footerPage',
-        displayName: kHeaderFooterElement.page.displayName,
-      },
-      {
-        id: 'footerTotal',
-        displayName: kHeaderFooterElement.total.displayName,
-      },
-    ];
+    // Page submenu references (Size, Orient, Margin)
+    const pageSubmenus = (Object.keys(kPageMenuSubmenu) as Array<keyof typeof kPageMenuSubmenu>).map(id => ({
+      id,
+      displayName: kPageMenuSubmenu[id].displayName,
+    }));
+
+    // Header/Footer positioning flyouts - iterate over locations and elements
+    const headerFooterItems: UIMenuItem_t[] = [];
+    for (const locationId of Object.keys(kHeaderFooterLocation) as Array<keyof typeof kHeaderFooterLocation>) {
+      for (const elementId of Object.keys(kHeaderFooterElement) as Array<keyof typeof kHeaderFooterElement>) {
+        headerFooterItems.push({
+          id: `${locationId}${elementId.charAt(0).toUpperCase() + elementId.slice(1)}` as MenuItemId_t,
+          displayName: kHeaderFooterElement[elementId].displayName,
+        });
+      }
+    }
+
+    return [...pageSubmenus, ...headerFooterItems];
   }
 
   private menuItems_pageSizeId(): UIMenuItem_t[] {
