@@ -139,14 +139,14 @@ export class UI {
       // Get toolbar templates from yaml getter
       const templates = this.yaml;
 
-      // Get toolbar position, validate it's within bounds, else use default
+      // Get toolbar position, clamp to reasonable bounds, else use default
       // Note: VS Code extensions run in Node.js and don't have access to window dimensions.
       // Client-side code in toolbar_js/yaml dynamically clamps to actual window.innerWidth.
       const windowRight = 5120; // Reasonable max screen width (5K displays)
       let toolbar_pos = Number(this.persist.toolbar_pos);
-      if (isNaN(toolbar_pos) || toolbar_pos < UI.kToolbarMinLeftPx || toolbar_pos >= windowRight) {
-        toolbar_pos = UI.kToolbarMinLeftPx;
-      }
+      toolbar_pos = isNaN(toolbar_pos) 
+        ? UI.kToolbarMinLeftPx 
+        : Math.max(UI.kToolbarMinLeftPx, Math.min(toolbar_pos, windowRight - 1));
 
       // Replace toolbar_pos in toolbar_css before combining with menu CSS
       const toolbarCssWithPos = templates.toolbar_css.replace('{{toolbar_pos}}', toolbar_pos.toString());
