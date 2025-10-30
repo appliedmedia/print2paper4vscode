@@ -564,19 +564,44 @@ namespace vscode.window {
 
 interface WindowState {
   readonly focused: boolean;  // Whether window is focused
+  readonly active: boolean;   // Whether window has been recently interacted with
   // That's it - no dimensions, no size, no position
+}
+
+interface ExtensionContext {
+  // Available at activation time - also has no dimension info
+  readonly subscriptions: Disposable[];
+  readonly workspaceState: Memento;
+  readonly globalState: Memento;
+  readonly secrets: SecretStorage;
+  readonly extensionUri: Uri;
+  readonly extensionPath: string;
+  readonly environmentVariableCollection: GlobalEnvironmentVariableCollection;
+  readonly storageUri: Uri | undefined;
+  readonly storagePath: string | undefined;
+  readonly globalStorageUri: Uri;
+  readonly logUri: Uri;
+  readonly extensionMode: ExtensionMode;
+  // No window dimensions here either
 }
 ```
 
-**What it provides:** ✅ Window focus state
+**What it provides:** ✅ Window focus state, ✅ Extension context (storage, paths, subscriptions)
 
 **What it doesn't provide:** ❌ Window dimensions, ❌ Window size, ❌ Window position, ❌ Screen dimensions
+
+**Checked at activation time:** When `activate(context: ExtensionContext)` is called:
+- ❌ `context` has no dimension properties
+- ❌ `vscode.window.state` only has `focused` and `active` booleans
+- ❌ `vscode.window.*` has no dimension-related properties
+- ❌ `vscode.env.*` has no dimension-related properties
 
 **Why no dimensions?**
 
 - VS Code extensions run in Node.js (extension host process), not in the browser
 - The extension host has no access to the UI layer or window dimensions
 - Window dimensions are only available in webview contexts via `window.innerWidth`/`window.innerHeight`
+- Even at activation time, there's no way to query window dimensions from the extension host
 
 **Workaround for dimension-dependent features:**
 
