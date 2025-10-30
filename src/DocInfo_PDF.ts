@@ -77,14 +77,8 @@ export class DocInfo_PDF {
     leftMarginPts: number;
     rightMarginPts: number;
   } {
-    // Get current margin ID from menu's persistent state
-    const menu = this.app.uimenumgr.getMenuById('marginId');
-    const rawMarginId = menu.persist.marginId;
-    const marginId: MarginId_t =
-      typeof rawMarginId === 'string' && rawMarginId in MARGIN_ID_TO_PTS
-        ? (rawMarginId as MarginId_t)
-        : 'normal';
-    const marginPts = MARGIN_ID_TO_PTS[marginId];
+    // Use marginId from docInfo instead of reading from menu
+    const marginPts = MARGIN_ID_TO_PTS[this.marginId];
 
     return {
       topMarginPts: marginPts,
