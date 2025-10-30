@@ -139,21 +139,14 @@ export class UI {
       // Get toolbar templates from yaml getter
       const templates = this.yaml;
 
-      // Get saved toolbar position from persist, validate default if needed
-      // Prefer existing value, migrate legacy key if present, then clamp
-      let toolbarPos = await this.persist.validateDefault<number>('toolbar_pos', async () => {
-        // Check for legacy key first
-        const legacyPos = this.app.vscodeapis.getGlobalState('toolbarPosPx');
-        if (typeof legacyPos === 'number' && Number.isFinite(legacyPos)) {
-          return legacyPos;
-        }
-        return UI.kToolbarMinLeftPx;
-      });
-      if (!Number.isFinite(toolbarPos)) toolbarPos = UI.kToolbarMinLeftPx;
-      if (toolbarPos < UI.kToolbarMinLeftPx) toolbarPos = UI.kToolbarMinLeftPx;
+      // Seed default, then read actual stored value via getter
+      await this.persist.validateDefault('toolbar_pos', async () => UI.kToolbarMinLeftPx);
+      let toolbar_pos = this.persist.toolbar_pos as unknown as number;
+      if (!Number.isFinite(toolbar_pos)) toolbar_pos = UI.kToolbarMinLeftPx;
+      if (toolbar_pos < UI.kToolbarMinLeftPx) toolbar_pos = UI.kToolbarMinLeftPx;
 
       // Replace toolbar_pos in toolbar_css before combining with menu CSS
-      const toolbarCssWithPos = templates.toolbar_css.replace('{{toolbar_pos}}', toolbarPos.toString());
+      const toolbarCssWithPos = templates.toolbar_css.replace('{{toolbar_pos}}', toolbar_pos.toString());
 
       // Replace toolbar_min_left_px in toolbar_js
       const toolbarJsWithConstants = templates.toolbar_js.replace(/\{\{toolbar_min_left_px\}\}/g, UI.kToolbarMinLeftPx.toString());
