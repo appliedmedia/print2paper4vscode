@@ -9,7 +9,7 @@ import {
 } from './UIMenu';
 import { UIWebView } from './UIWebView';
 import { DocInfo_PDF } from './DocInfo_PDF';
-import type { PageRender, RenderOptions } from './types/PageRender_t';
+import type { PageRender } from './types/PageRender_t';
 import { DocInfo_PaperPrinter } from './DocInfo_PaperPrinter';
 import type { LanguageId_t } from './Stylize';
 import type { Persist_t } from './Persist';
@@ -209,26 +209,25 @@ export class PaperPrinter {
       const marginId = (this.app.uimenumgr.getValueForSelectedByMenuId('marginId') ||
         kMarginId_alt) as MarginId_t;
 
-      // Create render options
-      const options: RenderOptions = {
-        fontFamily: this.getCurrentFontFamily(),
-        fontSizePx: fontSize,
-        lineHeightPx: this.lineHeightPx,
-        theme,
-        pageSizeId,
-        orient,
-        marginId,
-      };
+      // Set properties on PDF's docInfo
+      this.app.pdf.docInfo.fontFamily = this.getCurrentFontFamily();
+      this.app.pdf.docInfo.fontSizePx = fontSize;
+      this.app.pdf.docInfo.lineHeightPx = this.lineHeightPx;
+      this.app.pdf.docInfo.theme = theme;
+      this.app.pdf.docInfo.pageSizeId = pageSizeId;
+      this.app.pdf.docInfo.orient = orient;
+      this.app.pdf.docInfo.marginId = marginId;
+      
+      // Set document content
+      this.app.pdf.docInfo.code = this.docInfo.rawCode;
+      this.app.pdf.docInfo.languageId = this.docInfo.languageId;
+      this.app.pdf.docInfo.title = this.docInfo.printTitle;
 
       // Generate complete PDF during tokenization (unified approach)
       dx.out(`Generating complete PDF with unified tokenize + build approach`);
 
       // Generate the complete PDF in one pass
-      this.pdfDoc = await this.app.pdf.generatePdf(
-        this.docInfo.rawCode,
-        this.docInfo.languageId,
-        options
-      );
+      this.pdfDoc = await this.app.pdf.generatePdf();
 
       dx.out(`PDF generation complete: ${this.pdfDoc.getPageTotal()} pages using unified approach`);
     } catch (error) {

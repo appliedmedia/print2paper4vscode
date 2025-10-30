@@ -1,7 +1,8 @@
 import type { App } from './App';
-import type { MarginId_t } from './types/PaperPrinter_t';
+import type { MarginId_t, PageSizeId_t, Orient_t } from './types/PaperPrinter_t';
 import type { ThemedToken } from 'shiki';
 import type jsPDF from 'jspdf';
+import type { LanguageId_t } from './Stylize';
 
 // Margin ID to points conversion
 const MARGIN_ID_TO_PTS: { [key in MarginId_t]: number } = {
@@ -44,11 +45,23 @@ export class DocInfo_PDF {
 
   // Font settings
   public fontSizePts: number = 0;
+  public fontSizePx: number = 12; // Font size in pixels (source value)
   public lineHeightPts: number = 0;
+  public lineHeightPx: number = 18; // Line height in pixels (source value)
   public fontFamily: string = 'Courier';
 
   // Theme and styling
   public theme: string = 'github-light';
+
+  // Page settings
+  public pageSizeId: PageSizeId_t = 'a4';
+  public orient: Orient_t = 'portrait';
+  public marginId: MarginId_t = 'normal';
+
+  // Document content (set by caller before generatePdf)
+  public code: string = '';
+  public languageId: LanguageId_t = 'typescript';
+  public title: string = '';
 
   // Temporary file tracking
   public tempPdfs: string[] = [];
