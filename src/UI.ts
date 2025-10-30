@@ -139,9 +139,12 @@ export class UI {
       // Get toolbar templates from yaml getter
       const templates = this.yaml;
 
-      // Get toolbar position, validate it's a number and within bounds, else use default
-      let toolbar_pos = this.persist.toolbar_pos as unknown as number;
-      if (!Number.isFinite(toolbar_pos) || toolbar_pos < UI.kToolbarMinLeftPx) {
+      // Get toolbar position, validate it's a number and within reasonable bounds, else use default
+      const toolbar_pos_raw = this.persist.toolbar_pos;
+      let toolbar_pos: number;
+      if (typeof toolbar_pos_raw === 'number' && toolbar_pos_raw >= UI.kToolbarMinLeftPx && toolbar_pos_raw <= 10000) {
+        toolbar_pos = toolbar_pos_raw;
+      } else {
         toolbar_pos = UI.kToolbarMinLeftPx;
       }
 
