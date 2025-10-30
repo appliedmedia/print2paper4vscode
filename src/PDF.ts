@@ -690,17 +690,18 @@ export class PDF implements PageRender {
         throw new Error('PDF document not initialized. Call setupPdf() first.');
       }
 
-      let xPos = this.currentX;
-      let yPos = this.currentY; // Start at current Y position for this line
-
-      dx.out(`Rendering line ${lineNumber} at Y position: ${yPos}`);
-
       // Get available width for line wrapping using docInfo
       const pageSize = this.getPageDimensions(this.docInfo.pageSizeId, this.docInfo.orient);
       const unit = this.getUnitForPageSize(this.docInfo.pageSizeId);
       const { widthPts: pageWidthPts } = this.pageSizeToPts(pageSize.width, pageSize.height, unit);
       const marginsPts = this.docInfo.marginPts;
       const availableWidth = pageWidthPts - marginsPts.leftMarginPts - marginsPts.rightMarginPts;
+
+      // Each line starts at left margin, same Y position
+      let xPos = marginsPts.leftMarginPts;
+      let yPos = this.currentY; // Start at current Y position for this line
+
+      dx.out(`Rendering line ${lineNumber} at Y position: ${yPos}`);
 
       // Process each token in the line
       for (const token of tokens) {
@@ -777,13 +778,16 @@ export class PDF implements PageRender {
       }
 
       // Update current position to reflect actual end position after wrapping
-      this.currentX = xPos;
+      // Note: We don't update currentX here because each line starts at left margin
       this.currentY = yPos;
 
-      // Advance y position by lineHeight for next line (only if we haven't wrapped)
+      // Advance y position by lineHeight for next line
       // jsPDF: Y increases downward, so we move DOWN by adding
       const oldY = this.currentY;
       this.currentY = this.currentY + this.currentLineHeight;
+      
+      // Reset X to left margin for next line
+      this.currentX = marginsPts.leftMarginPts;
       dx.out(
         `Line ${lineNumber} complete: Y moved from ${oldY} to ${this.currentY} (down by ${this.currentLineHeight})`
       );
