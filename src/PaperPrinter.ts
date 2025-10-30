@@ -460,18 +460,24 @@ export class PaperPrinter {
 
   private menuItems_Page(): UIMenuItem_t[] {
     // Page submenu references (Size, Orient, Margin)
-    const pageSubmenus = (Object.keys(kPageMenuSubmenu) as Array<keyof typeof kPageMenuSubmenu>).map(id => ({
+    const pageSubmenus = (
+      Object.keys(kPageMenuSubmenu) as Array<keyof typeof kPageMenuSubmenu>
+    ).map(id => ({
       id,
       displayName: kPageMenuSubmenu[id].displayName,
     }));
 
     // Header/Footer positioning flyouts - iterate over locations and elements
     const headerFooterItems: UIMenuItem_t[] = [];
-    for (const locationId of Object.keys(kHeaderFooterLocation) as Array<keyof typeof kHeaderFooterLocation>) {
-      for (const elementId of Object.keys(kHeaderFooterElement) as Array<keyof typeof kHeaderFooterElement>) {
+    for (const locationId of Object.keys(kHeaderFooterLocation) as Array<
+      keyof typeof kHeaderFooterLocation
+    >) {
+      for (const elementId of Object.keys(kHeaderFooterElement) as Array<
+        keyof typeof kHeaderFooterElement
+      >) {
         headerFooterItems.push({
           id: `${locationId}${elementId.charAt(0).toUpperCase() + elementId.slice(1)}` as MenuItemId_t,
-          displayName: kHeaderFooterElement[elementId].displayName,
+          displayName: `${kHeaderFooterLocation[locationId].displayName} > ${kHeaderFooterElement[elementId].displayName}`,
         });
       }
     }
