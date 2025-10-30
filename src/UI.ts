@@ -140,7 +140,9 @@ export class UI {
       const templates = this.yaml;
 
       // Get toolbar position, validate it's within bounds, else use default
-      const windowRight = 5120; // Reasonable max screen width
+      // Note: VS Code extensions run in Node.js and don't have access to window dimensions.
+      // Client-side code in toolbar_js/yaml dynamically clamps to actual window.innerWidth.
+      const windowRight = 5120; // Reasonable max screen width (5K displays)
       let toolbar_pos = Number(this.persist.toolbar_pos);
       if (isNaN(toolbar_pos) || toolbar_pos < UI.kToolbarMinLeftPx || toolbar_pos >= windowRight) {
         toolbar_pos = UI.kToolbarMinLeftPx;
