@@ -42,7 +42,7 @@ export interface PDFDoc {
 }
 
 /**
- * PDF generation options
+ * PDF generation options [NOTE (Ace, 2025-10-30): Do we even use this?]
  */
 export interface PDFGenOptions {
   title?: string;

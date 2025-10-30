@@ -169,6 +169,26 @@ export class PaperPrinter {
         this.app.uimenumgr.setPersistForMenuId('theme', this.app.vscodeapis.getActiveThemeId());
       }
 
+      // Initialize header/footer position defaults from docInfo if not persisted
+      if (!this.app.uimenumgr.getValueForSelectedByMenuId('headerTitle')) {
+        this.app.uimenumgr.setPersistForMenuId('headerTitle', this.app.pdf.docInfo.headerTitlePos);
+      }
+      if (!this.app.uimenumgr.getValueForSelectedByMenuId('headerPage')) {
+        this.app.uimenumgr.setPersistForMenuId('headerPage', this.app.pdf.docInfo.headerPagePos);
+      }
+      if (!this.app.uimenumgr.getValueForSelectedByMenuId('headerTotal')) {
+        this.app.uimenumgr.setPersistForMenuId('headerTotal', this.app.pdf.docInfo.headerTotalPos);
+      }
+      if (!this.app.uimenumgr.getValueForSelectedByMenuId('footerTitle')) {
+        this.app.uimenumgr.setPersistForMenuId('footerTitle', this.app.pdf.docInfo.footerTitlePos);
+      }
+      if (!this.app.uimenumgr.getValueForSelectedByMenuId('footerPage')) {
+        this.app.uimenumgr.setPersistForMenuId('footerPage', this.app.pdf.docInfo.footerPagePos);
+      }
+      if (!this.app.uimenumgr.getValueForSelectedByMenuId('footerTotal')) {
+        this.app.uimenumgr.setPersistForMenuId('footerTotal', this.app.pdf.docInfo.footerTotalPos);
+      }
+
       // Generate PDF
       await this.generatePdf();
 
@@ -402,14 +422,6 @@ export class PaperPrinter {
         config.selectionHandler
       );
       this.app.uimenumgr.addMenu(menu);
-      this.dx.out(`Added menu: ${config.id}`);
-    });
-
-    // Debug: show what menus were created
-    const allMenus = this.app.uimenumgr.getAllMenus();
-    this.dx.out(`Total menus created: ${allMenus.length}`);
-    allMenus.forEach(menu => {
-      this.dx.out(`Menu: ${menu.id}, Icon: ${menu.icon}, DisplayName: ${menu.displayName}`);
     });
   }
 
@@ -531,10 +543,14 @@ export class PaperPrinter {
   }
 
   private menuItems_HeaderFooterPos(): UIMenuItem_t[] {
-    return (Object.keys(kHeaderFooterPos) as HeaderFooterPos_t[]).map(id => ({
+    const items = (Object.keys(kHeaderFooterPos) as HeaderFooterPos_t[]).map(id => ({
       id,
       displayName: kHeaderFooterPos[id].displayName,
     }));
+    this.dx.out(
+      `menuItems_HeaderFooterPos: Returning ${items.length} items: ${items.map(i => i.id).join(', ')}`
+    );
+    return items;
   }
 
   // Selection handler methods for each menu type
@@ -639,8 +655,9 @@ export class PaperPrinter {
     const value = id as HeaderFooterPos_t;
 
     this.app.pdf.docInfo.headerTitlePos = value;
+    this.app.uimenumgr.setPersistForMenuId('headerTitle', selectedId);
     dx.out(`Selected header title position: ${value}`);
-    await this.regenerateAndUpdateWebview();
+    void this.regenerateAndUpdateWebview();
 
     return { id, value };
   }
@@ -651,8 +668,9 @@ export class PaperPrinter {
     const value = id as HeaderFooterPos_t;
 
     this.app.pdf.docInfo.headerPagePos = value;
+    this.app.uimenumgr.setPersistForMenuId('headerPage', selectedId);
     dx.out(`Selected header page position: ${value}`);
-    await this.regenerateAndUpdateWebview();
+    void this.regenerateAndUpdateWebview();
 
     return { id, value };
   }
@@ -663,8 +681,9 @@ export class PaperPrinter {
     const value = id as HeaderFooterPos_t;
 
     this.app.pdf.docInfo.headerTotalPos = value;
+    this.app.uimenumgr.setPersistForMenuId('headerTotal', selectedId);
     dx.out(`Selected header total position: ${value}`);
-    await this.regenerateAndUpdateWebview();
+    void this.regenerateAndUpdateWebview();
 
     return { id, value };
   }
@@ -675,8 +694,9 @@ export class PaperPrinter {
     const value = id as HeaderFooterPos_t;
 
     this.app.pdf.docInfo.footerTitlePos = value;
+    this.app.uimenumgr.setPersistForMenuId('footerTitle', selectedId);
     dx.out(`Selected footer title position: ${value}`);
-    await this.regenerateAndUpdateWebview();
+    void this.regenerateAndUpdateWebview();
 
     return { id, value };
   }
@@ -687,8 +707,9 @@ export class PaperPrinter {
     const value = id as HeaderFooterPos_t;
 
     this.app.pdf.docInfo.footerPagePos = value;
+    this.app.uimenumgr.setPersistForMenuId('footerPage', selectedId);
     dx.out(`Selected footer page position: ${value}`);
-    await this.regenerateAndUpdateWebview();
+    void this.regenerateAndUpdateWebview();
 
     return { id, value };
   }
@@ -699,8 +720,9 @@ export class PaperPrinter {
     const value = id as HeaderFooterPos_t;
 
     this.app.pdf.docInfo.footerTotalPos = value;
+    this.app.uimenumgr.setPersistForMenuId('footerTotal', selectedId);
     dx.out(`Selected footer total position: ${value}`);
-    await this.regenerateAndUpdateWebview();
+    void this.regenerateAndUpdateWebview();
 
     return { id, value };
   }
