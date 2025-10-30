@@ -59,12 +59,12 @@ export class DocInfo_PDF {
 
   // Header/Footer positioning settings
   // Position options: 'left' | 'center' | 'right' | 'none'
-  public headerTitlePos: HeaderFooterPos_t = 'center';
-  public headerPagePos: HeaderFooterPos_t = 'none';
-  public headerTotalPos: HeaderFooterPos_t = 'none';
-  public footerTitlePos: HeaderFooterPos_t = 'none';
-  public footerPagePos: HeaderFooterPos_t = 'center';
-  public footerTotalPos: HeaderFooterPos_t = 'center';
+  public header_title: HeaderFooterPos_t = 'center';
+  public header_page: HeaderFooterPos_t = 'none';
+  public header_total: HeaderFooterPos_t = 'none';
+  public footer_title: HeaderFooterPos_t = 'none';
+  public footer_page: HeaderFooterPos_t = 'center';
+  public footer_total: HeaderFooterPos_t = 'center';
 
   // Temporary file tracking
   public tempPdfs: string[] = [];

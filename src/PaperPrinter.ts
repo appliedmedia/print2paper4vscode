@@ -170,23 +170,29 @@ export class PaperPrinter {
       }
 
       // Initialize header/footer position defaults from docInfo if not persisted
-      if (!this.app.uimenumgr.getValueForSelectedByMenuId('headerTitle')) {
-        this.app.uimenumgr.setPersistForMenuId('headerTitle', this.app.pdf.docInfo.headerTitlePos);
-      }
-      if (!this.app.uimenumgr.getValueForSelectedByMenuId('headerPage')) {
-        this.app.uimenumgr.setPersistForMenuId('headerPage', this.app.pdf.docInfo.headerPagePos);
-      }
-      if (!this.app.uimenumgr.getValueForSelectedByMenuId('headerTotal')) {
-        this.app.uimenumgr.setPersistForMenuId('headerTotal', this.app.pdf.docInfo.headerTotalPos);
-      }
-      if (!this.app.uimenumgr.getValueForSelectedByMenuId('footerTitle')) {
-        this.app.uimenumgr.setPersistForMenuId('footerTitle', this.app.pdf.docInfo.footerTitlePos);
-      }
-      if (!this.app.uimenumgr.getValueForSelectedByMenuId('footerPage')) {
-        this.app.uimenumgr.setPersistForMenuId('footerPage', this.app.pdf.docInfo.footerPagePos);
-      }
-      if (!this.app.uimenumgr.getValueForSelectedByMenuId('footerTotal')) {
-        this.app.uimenumgr.setPersistForMenuId('footerTotal', this.app.pdf.docInfo.footerTotalPos);
+      // Also sync docInfo from persisted values if they differ
+      type HeaderFooterMenuId_t =
+        `${keyof typeof kHeaderFooterLocation & string}_${keyof typeof kHeaderFooterElement & string}`;
+      const headerFooterMenuIds = Object.keys(kHeaderFooterLocation).flatMap(location =>
+        Object.keys(kHeaderFooterElement).map(element => `${location}_${element}`)
+      ) as HeaderFooterMenuId_t[];
+
+      for (const menuId of headerFooterMenuIds) {
+        const persistedValue = this.app.uimenumgr.getValueForSelectedByMenuId(menuId);
+        const docInfoValue = this.app.pdf.docInfo[menuId as keyof typeof this.app.pdf.docInfo] as
+          | HeaderFooterPos_t
+          | undefined;
+
+        if (!persistedValue) {
+          // Initialize persistence from docInfo
+          if (docInfoValue) {
+            this.app.uimenumgr.setPersistForMenuId(menuId, docInfoValue);
+          }
+        } else if (docInfoValue !== persistedValue) {
+          // Sync docInfo from persisted value (cast needed since persistedValue is string)
+          (this.app.pdf.docInfo as unknown as Record<string, HeaderFooterPos_t>)[menuId] =
+            persistedValue as HeaderFooterPos_t;
+        }
       }
 
       // Generate PDF
@@ -324,7 +330,7 @@ export class PaperPrinter {
         icon: '', // flyout submenu
         isFlyout: true,
         menuItems: this.menuItems_Header.bind(this),
-        flyoutMenuItemIds: ['headerTitle', 'headerPage', 'headerTotal'],
+        flyoutMenuItemIds: ['header_title', 'header_page', 'header_total'],
         selectionHandler: this.handleSelection_Header.bind(this),
       },
       {
@@ -333,11 +339,11 @@ export class PaperPrinter {
         icon: '', // flyout submenu
         isFlyout: true,
         menuItems: this.menuItems_Footer.bind(this),
-        flyoutMenuItemIds: ['footerTitle', 'footerPage', 'footerTotal'],
+        flyoutMenuItemIds: ['footer_title', 'footer_page', 'footer_total'],
         selectionHandler: this.handleSelection_Footer.bind(this),
       },
       {
-        id: 'headerTitle',
+        id: 'header_title',
         displayName: kHeaderFooterElement.title.displayName,
         icon: '', // flyout submenu
         isFlyout: true,
@@ -346,7 +352,7 @@ export class PaperPrinter {
         selectionHandler: this.handleSelection_HeaderTitle.bind(this),
       },
       {
-        id: 'headerPage',
+        id: 'header_page',
         displayName: kHeaderFooterElement.page.displayName,
         icon: '', // flyout submenu
         isFlyout: true,
@@ -355,7 +361,7 @@ export class PaperPrinter {
         selectionHandler: this.handleSelection_HeaderPage.bind(this),
       },
       {
-        id: 'headerTotal',
+        id: 'header_total',
         displayName: kHeaderFooterElement.total.displayName,
         icon: '', // flyout submenu
         isFlyout: true,
@@ -364,7 +370,7 @@ export class PaperPrinter {
         selectionHandler: this.handleSelection_HeaderTotal.bind(this),
       },
       {
-        id: 'footerTitle',
+        id: 'footer_title',
         displayName: kHeaderFooterElement.title.displayName,
         icon: '', // flyout submenu
         isFlyout: true,
@@ -373,7 +379,7 @@ export class PaperPrinter {
         selectionHandler: this.handleSelection_FooterTitle.bind(this),
       },
       {
-        id: 'footerPage',
+        id: 'footer_page',
         displayName: kHeaderFooterElement.page.displayName,
         icon: '', // flyout submenu
         isFlyout: true,
@@ -382,7 +388,7 @@ export class PaperPrinter {
         selectionHandler: this.handleSelection_FooterPage.bind(this),
       },
       {
-        id: 'footerTotal',
+        id: 'footer_total',
         displayName: kHeaderFooterElement.total.displayName,
         icon: '', // flyout submenu
         isFlyout: true,
@@ -526,7 +532,7 @@ export class PaperPrinter {
     // Return Title, Page, Total as menu items (each opens a position flyout)
     return (Object.keys(kHeaderFooterElement) as Array<keyof typeof kHeaderFooterElement>).map(
       id => ({
-        id: `header${id.charAt(0).toUpperCase() + id.slice(1)}` as MenuItemId_t,
+        id: `header_${id}` as MenuItemId_t,
         displayName: kHeaderFooterElement[id].displayName,
       })
     );
@@ -536,7 +542,7 @@ export class PaperPrinter {
     // Return Title, Page, Total as menu items (each opens a position flyout)
     return (Object.keys(kHeaderFooterElement) as Array<keyof typeof kHeaderFooterElement>).map(
       id => ({
-        id: `footer${id.charAt(0).toUpperCase() + id.slice(1)}` as MenuItemId_t,
+        id: `footer_${id}` as MenuItemId_t,
         displayName: kHeaderFooterElement[id].displayName,
       })
     );
@@ -636,6 +642,7 @@ export class PaperPrinter {
       }
     }
 
+    dx.done();
     return { id, value };
   }
 
@@ -649,82 +656,58 @@ export class PaperPrinter {
     return { id: '', value: '' };
   }
 
-  private async handleSelection_HeaderTitle(selectedId: MenuItemId_t): Promise<HandleSelection_t> {
-    const dx = this.dx.sub('handleSelection_HeaderTitle');
-    const id = String(selectedId);
-    const value = id as HeaderFooterPos_t;
-
-    this.app.pdf.docInfo.headerTitlePos = value;
-    this.app.uimenumgr.setPersistForMenuId('headerTitle', selectedId);
-    dx.out(`Selected header title position: ${value}`);
+  private async handleSelection_HeaderFooterHelper(
+    menuId: MenuId_t,
+    id: MenuItemId_t,
+    value: HeaderFooterPos_t
+  ): Promise<HandleSelection_t> {
+    (this.app.pdf.docInfo as unknown as Record<string, HeaderFooterPos_t>)[menuId] = value;
+    this.app.uimenumgr.setPersistForMenuId(menuId, id);
     void this.regenerateAndUpdateWebview();
 
     return { id, value };
+  }
+
+  private async handleSelection_HeaderTitle(selectedId: MenuItemId_t): Promise<HandleSelection_t> {
+    const id = String(selectedId);
+    const value = id as HeaderFooterPos_t;
+
+    return await this.handleSelection_HeaderFooterHelper('header_title', selectedId, value);
   }
 
   private async handleSelection_HeaderPage(selectedId: MenuItemId_t): Promise<HandleSelection_t> {
-    const dx = this.dx.sub('handleSelection_HeaderPage');
     const id = String(selectedId);
     const value = id as HeaderFooterPos_t;
 
-    this.app.pdf.docInfo.headerPagePos = value;
-    this.app.uimenumgr.setPersistForMenuId('headerPage', selectedId);
-    dx.out(`Selected header page position: ${value}`);
-    void this.regenerateAndUpdateWebview();
-
-    return { id, value };
+    return await this.handleSelection_HeaderFooterHelper('header_page', selectedId, value);
   }
 
   private async handleSelection_HeaderTotal(selectedId: MenuItemId_t): Promise<HandleSelection_t> {
-    const dx = this.dx.sub('handleSelection_HeaderTotal');
     const id = String(selectedId);
     const value = id as HeaderFooterPos_t;
 
-    this.app.pdf.docInfo.headerTotalPos = value;
-    this.app.uimenumgr.setPersistForMenuId('headerTotal', selectedId);
-    dx.out(`Selected header total position: ${value}`);
-    void this.regenerateAndUpdateWebview();
-
-    return { id, value };
+    return await this.handleSelection_HeaderFooterHelper('header_total', selectedId, value);
   }
 
   private async handleSelection_FooterTitle(selectedId: MenuItemId_t): Promise<HandleSelection_t> {
-    const dx = this.dx.sub('handleSelection_FooterTitle');
     const id = String(selectedId);
     const value = id as HeaderFooterPos_t;
 
-    this.app.pdf.docInfo.footerTitlePos = value;
-    this.app.uimenumgr.setPersistForMenuId('footerTitle', selectedId);
-    dx.out(`Selected footer title position: ${value}`);
-    void this.regenerateAndUpdateWebview();
-
-    return { id, value };
+    return await this.handleSelection_HeaderFooterHelper('footer_title', selectedId, value);
   }
 
   private async handleSelection_FooterPage(selectedId: MenuItemId_t): Promise<HandleSelection_t> {
-    const dx = this.dx.sub('handleSelection_FooterPage');
     const id = String(selectedId);
     const value = id as HeaderFooterPos_t;
 
-    this.app.pdf.docInfo.footerPagePos = value;
-    this.app.uimenumgr.setPersistForMenuId('footerPage', selectedId);
-    dx.out(`Selected footer page position: ${value}`);
-    void this.regenerateAndUpdateWebview();
-
-    return { id, value };
+    return await this.handleSelection_HeaderFooterHelper('footer_page', selectedId, value);
   }
 
   private async handleSelection_FooterTotal(selectedId: MenuItemId_t): Promise<HandleSelection_t> {
-    const dx = this.dx.sub('handleSelection_FooterTotal');
     const id = String(selectedId);
     const value = id as HeaderFooterPos_t;
 
-    this.app.pdf.docInfo.footerTotalPos = value;
-    this.app.uimenumgr.setPersistForMenuId('footerTotal', selectedId);
-    dx.out(`Selected footer total position: ${value}`);
-    void this.regenerateAndUpdateWebview();
-
-    return { id, value };
+    return await this.handleSelection_HeaderFooterHelper('footer_total', selectedId, value);
   }
 
   private async handleSelection_Theme(selectedId: MenuItemId_t): Promise<HandleSelection_t> {

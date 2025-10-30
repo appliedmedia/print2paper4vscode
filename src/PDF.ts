@@ -885,13 +885,13 @@ export class PDF implements PageRender {
     };
 
     // Handle Title
-    if (isValidPos(this.docInfo.headerTitlePos)) {
-      headerElements[this.docInfo.headerTitlePos].push(docTitle);
+    if (isValidPos(this.docInfo.header_title)) {
+      headerElements[this.docInfo.header_title].push(docTitle);
     }
 
     // Handle Page and Total - combine if at same position
-    const headerPagePos = this.docInfo.headerPagePos;
-    const headerTotalPos = this.docInfo.headerTotalPos;
+    const headerPagePos = this.docInfo.header_page;
+    const headerTotalPos = this.docInfo.header_total;
     if (
       isValidPos(headerPagePos) &&
       isValidPos(headerTotalPos) &&
@@ -918,13 +918,13 @@ export class PDF implements PageRender {
     };
 
     // Handle Title
-    if (isValidPos(this.docInfo.footerTitlePos)) {
-      footerElements[this.docInfo.footerTitlePos].push(docTitle);
+    if (isValidPos(this.docInfo.footer_title)) {
+      footerElements[this.docInfo.footer_title].push(docTitle);
     }
 
     // Handle Page and Total - combine if at same position
-    const footerPagePos = this.docInfo.footerPagePos;
-    const footerTotalPos = this.docInfo.footerTotalPos;
+    const footerPagePos = this.docInfo.footer_page;
+    const footerTotalPos = this.docInfo.footer_total;
     if (
       isValidPos(footerPagePos) &&
       isValidPos(footerTotalPos) &&

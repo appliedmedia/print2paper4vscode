@@ -48,9 +48,7 @@ export const kMenuId = [
   kFooter_id,
   // Composed from kHeaderFooterLocation + kHeaderFooterElement
   ...Object.keys(kHeaderFooterLocation).flatMap(location =>
-    Object.keys(kHeaderFooterElement).map(
-      element => `${location}${element.charAt(0).toUpperCase() + element.slice(1)}`
-    )
+    Object.keys(kHeaderFooterElement).map(element => `${location}_${element}`)
   ),
 ] as const;
 
