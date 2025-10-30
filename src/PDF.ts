@@ -614,9 +614,14 @@ export class PDF implements PageRender {
       const marginsPts = this.docInfo.marginPts;
       // Start at the left margin for X position
       this.currentX = marginsPts.leftMarginPts;
-      // Start at the top margin + line height for Y position to account for text baseline
-      // Text is positioned by its baseline, so we need to add line height
-      this.currentY = marginsPts.topMarginPts + this.currentLineHeight;
+      
+      // Header is at topMarginPts - 5 with 8pt font
+      // Header baseline is at topMarginPts - 5, text extends above baseline
+      // Start content below header: topMarginPts - 5 + 8pt (header font) + some spacing
+      const headerFontSizePts = 8;
+      const headerBottom = marginsPts.topMarginPts - 5 + headerFontSizePts;
+      const headerSpacing = 3; // Small spacing between header and content
+      this.currentY = headerBottom + headerSpacing + this.currentLineHeight;
 
       dx.out(
         `Initial position: (${this.currentX}, ${this.currentY}) (leftMargin=${marginsPts.leftMarginPts}, topMargin=${marginsPts.topMarginPts})`
@@ -740,12 +745,22 @@ export class PDF implements PageRender {
               );
               const marginsPtsForBreak = this.docInfo.marginPts;
 
-              if (yPos > pageHeightPtsForBreak - marginsPtsForBreak.bottomMarginPts) {
+              // Check if wrapped line would overlap footer
+              const footerFontSizePtsWrap = 8;
+              const footerTopWrap = pageHeightPtsForBreak - marginsPtsForBreak.bottomMarginPts + 5 - footerFontSizePtsWrap;
+              const footerSpacingWrap = 3;
+              const maxContentYWrap = footerTopWrap - footerSpacingWrap - this.currentLineHeight;
+              
+              if (yPos > maxContentYWrap) {
                 dx.out(
                   `Page break during wrapping at line ${lineNumber}: yPos=${yPos} > bottomMargin=${pageHeightPtsForBreak - marginsPtsForBreak.bottomMarginPts}`
                 );
                 this.docInfo.pdfDoc!.addPage();
-                this.currentY = marginsPtsForBreak.topMarginPts + this.currentLineHeight;
+                // Use same header spacing logic as setupPdf
+                const headerFontSizePtsWrap = 8;
+                const headerBottomWrap = marginsPtsForBreak.topMarginPts - 5 + headerFontSizePtsWrap;
+                const headerSpacingWrap = 3;
+                this.currentY = headerBottomWrap + headerSpacingWrap + this.currentLineHeight;
                 this.currentX = marginsPtsForBreak.leftMarginPts;
                 yPos = this.currentY;
                 xPos = this.currentX;
@@ -785,7 +800,7 @@ export class PDF implements PageRender {
       // jsPDF: Y increases downward, so we move DOWN by adding
       const oldY = this.currentY;
       this.currentY = this.currentY + this.currentLineHeight;
-      
+
       // Reset X to left margin for next line
       this.currentX = marginsPts.leftMarginPts;
       dx.out(
@@ -802,13 +817,25 @@ export class PDF implements PageRender {
       );
       const marginsPtsForBreak = this.docInfo.marginPts;
 
+      // Footer is at heightPts - bottomMarginPts + 5 with 8pt font
+      // Footer baseline is at heightPts - bottomMarginPts + 5, text extends above baseline
+      // Stop content before footer: heightPts - bottomMarginPts + 5 - 8pt (footer font) - lineHeight - spacing
+      const footerFontSizePts = 8;
+      const footerTop = pageHeightPtsForBreak - marginsPtsForBreak.bottomMarginPts + 5 - footerFontSizePts;
+      const footerSpacing = 3; // Small spacing between content and footer
+      const maxContentY = footerTop - footerSpacing - this.currentLineHeight;
+      
       // jsPDF: Y increases downward, so we check if we've gone too far down
-      if (this.currentY > pageHeightPtsForBreak - marginsPtsForBreak.bottomMarginPts) {
+      if (this.currentY > maxContentY) {
         dx.out(
           `Page break at line ${lineNumber}: currentY=${this.currentY} > bottomMargin=${pageHeightPtsForBreak - marginsPtsForBreak.bottomMarginPts}`
         );
         this.docInfo.pdfDoc!.addPage();
-        this.currentY = marginsPtsForBreak.topMarginPts + this.currentLineHeight;
+        // Use same header spacing logic as setupPdf
+        const headerFontSizePtsNew = 8;
+        const headerBottomNew = marginsPtsForBreak.topMarginPts - 5 + headerFontSizePtsNew;
+        const headerSpacingNew = 3;
+        this.currentY = headerBottomNew + headerSpacingNew + this.currentLineHeight;
         this.currentX = marginsPtsForBreak.leftMarginPts;
 
         dx.out(`Added page break at line ${lineNumber + 1}`);
