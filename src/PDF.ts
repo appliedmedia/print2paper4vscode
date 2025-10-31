@@ -1,5 +1,5 @@
 import type { App } from './App';
-import type { PageSizeId_t, Orient_t } from './types/PaperPrinter_t';
+import type { PageSizeId_t, Orient_t, MarginId_t, HeaderFooterPos_t } from './types/PaperPrinter_t';
 import { kPageSizeId } from './types/PaperPrinter_t';
 import type { PageRender, PageData, PageRenderError } from './types/PageRender_t';
 import { Diagnostics } from './Diagnostics';
@@ -9,7 +9,8 @@ import jsPDF from 'jspdf';
 import { DocInfo_PDF } from './DocInfo_PDF';
 import type { LanguageId_t } from './Stylize';
 import type { ThemedToken } from 'shiki';
-import type { MarginId_t } from './types/PaperPrinter_t';
+
+type HeaderFooterRenderablePos = Exclude<HeaderFooterPos_t, 'none'>;
 
 /**
  * PDF - Vector PDF generation and page rendering
