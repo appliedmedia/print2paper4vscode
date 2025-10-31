@@ -196,11 +196,6 @@ export class UIMenuMgr {
       }
     }
 
-    // Append all flyout menus to the result so they're in the DOM
-    for (const [flyoutId, flyoutHtml] of Object.entries(flyoutCache)) {
-      result += '\n' + flyoutHtml;
-    }
-
     return result;
   }
 
