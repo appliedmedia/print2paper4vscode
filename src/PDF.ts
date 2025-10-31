@@ -47,6 +47,7 @@ export class PDF implements PageRender {
   private currentX: number = 0;
   private currentY: number = 0;
   private currentLineHeight: number = 0;
+  private lastPageBreakMetrics: { maxContentY: number; bottomMarginY: number } | null = null;
 
   // Header/footer styling
   private static readonly HEADER_FOOTER_COLOR = '#cccccc'; // Light gray
@@ -396,7 +397,7 @@ export class PDF implements PageRender {
     pageSize: PageSizeId_t,
     orient: Orient_t
   ): { width: number; height: number } {
-    // Get dimensions from centralized const object (id → metadata)
+    // Get dimensions from centralized const object (id ? metadata)
     const metadata = kPageSizeId[pageSize];
 
     // Swap width/height for landscape
@@ -559,7 +560,7 @@ export class PDF implements PageRender {
       );
 
       // Create PDF document
-      // ⚠️ CRITICAL: COORDINATE SYSTEM WARNING ⚠️
+      // ?? CRITICAL: COORDINATE SYSTEM WARNING ??
       // jsPDF uses TOP-LEFT origin: Y=0 at TOP, Y increases DOWNWARD
       // This is DIFFERENT from standard PDF coordinate system!
       // - Y=0 is at the TOP of the page
@@ -716,45 +717,14 @@ export class PDF implements PageRender {
               yPos += this.currentLineHeight;
               xPos = marginsPts.leftMarginPts;
 
-              // Check if we need a new page
-              const pageSizeForBreak = this.getPageDimensions(
-                this.docInfo.pageSizeId,
-                this.docInfo.orient
-              );
-              const unitForBreak = this.getUnitForPageSize(this.docInfo.pageSizeId);
-              const { heightPts: pageHeightPtsForBreak } = this.pageSizeToPts(
-                pageSizeForBreak.width,
-                pageSizeForBreak.height,
-                unitForBreak
-              );
-              const marginsPtsForBreak = this.docInfo.marginPts;
-
-              // Check if wrapped line would overlap footer
-              // Footer - positioned within bottom margin area
-              const footerFontSizePtsWrap = 8;
-              const footerYWrap = pageHeightPtsForBreak - marginsPtsForBreak.bottomMarginPts + 5;
-              const footerTopWrap = footerYWrap - footerFontSizePtsWrap;
-              const footerSpacingWrap = 3;
-              const maxContentYWrap = footerTopWrap - footerSpacingWrap - this.currentLineHeight;
-
-              if (yPos > maxContentYWrap) {
+              if (this.shouldBreakPage(yPos)) {
+                const bottomMargin = this.lastPageBreakMetrics?.bottomMarginY ?? 0;
                 dx.out(
-                  `Page break during wrapping at line ${lineNumber}: yPos=${yPos} > bottomMargin=${pageHeightPtsForBreak - marginsPtsForBreak.bottomMarginPts}`
+                  `Page break during wrapping at line ${lineNumber}: yPos=${yPos} > bottomMargin=${bottomMargin}`
                 );
-                this.docInfo.pdfDoc!.addPage();
-                // Use same header spacing logic as setupPdf
-                // Header - positioned within top margin area
-                const headerFontSizePtsWrap = 8;
-                const headerYWrap = marginsPtsForBreak.topMarginPts - 5;
-                const headerBottomWrap = headerYWrap + headerFontSizePtsWrap;
-                const headerSpacingWrap = 3;
-                this.currentY = headerBottomWrap + headerSpacingWrap + this.currentLineHeight;
-                this.currentX = marginsPtsForBreak.leftMarginPts;
+                this.addPageBreak();
                 yPos = this.currentY;
                 xPos = this.currentX;
-
-                // Add header and footer to new page
-                this.addHeaderAndFooter();
               }
               continue; // Try again with new line position
             }
