@@ -821,6 +821,8 @@ export class PDF implements PageRender {
       return;
     }
 
+    this.lastPageBreakMetrics = null;
+
     const margins = this.docInfo.marginPts;
 
     this.docInfo.pdfDoc.addPage();
