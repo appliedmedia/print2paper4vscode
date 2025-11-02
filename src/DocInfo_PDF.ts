@@ -58,7 +58,7 @@ export class DocInfo_PDF {
   public title: string = '';
 
   // Header/Footer positioning settings
-  // Position options: 'left' | 'center' | 'right' | 'none'
+  // Position options: 'begin' | 'center' | 'end' | 'none'
   public header_title: HeaderFooterPos_t = 'center';
   public header_page: HeaderFooterPos_t = 'none';
   public header_total: HeaderFooterPos_t = 'none';

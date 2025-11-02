@@ -1,5 +1,5 @@
 import type { App } from './App';
-import type { PageSizeId_t, Orient_t } from './types/PaperPrinter_t';
+import type { PageSizeId_t, Orient_t, HeaderFooterPos_t } from './types/PaperPrinter_t';
 import { kPageSizeId } from './types/PaperPrinter_t';
 import type { PageRender, PageData, PageRenderError } from './types/PageRender_t';
 import { Diagnostics } from './Diagnostics';
@@ -9,7 +9,8 @@ import jsPDF from 'jspdf';
 import { DocInfo_PDF } from './DocInfo_PDF';
 import type { LanguageId_t } from './Stylize';
 import type { ThemedToken } from 'shiki';
-import type { MarginId_t } from './types/PaperPrinter_t';
+
+type HeaderFooterRenderablePos = Exclude<HeaderFooterPos_t, 'none'>;
 
 /**
  * PDF - Vector PDF generation and page rendering
@@ -47,6 +48,7 @@ export class PDF implements PageRender {
   private currentX: number = 0;
   private currentY: number = 0;
   private currentLineHeight: number = 0;
+  private lastPageBreakMetrics: { maxContentY: number; bottomMarginY: number } | null = null;
 
   // Header/footer styling
   private static readonly HEADER_FOOTER_COLOR = '#cccccc'; // Light gray
@@ -396,7 +398,7 @@ export class PDF implements PageRender {
     pageSize: PageSizeId_t,
     orient: Orient_t
   ): { width: number; height: number } {
-    // Get dimensions from centralized const object (id → metadata)
+    // Get dimensions from centralized const object (id ? metadata)
     const metadata = kPageSizeId[pageSize];
 
     // Swap width/height for landscape
@@ -559,7 +561,7 @@ export class PDF implements PageRender {
       );
 
       // Create PDF document
-      // ⚠️ CRITICAL: COORDINATE SYSTEM WARNING ⚠️
+      // ?? CRITICAL: COORDINATE SYSTEM WARNING ??
       // jsPDF uses TOP-LEFT origin: Y=0 at TOP, Y increases DOWNWARD
       // This is DIFFERENT from standard PDF coordinate system!
       // - Y=0 is at the TOP of the page
@@ -716,45 +718,14 @@ export class PDF implements PageRender {
               yPos += this.currentLineHeight;
               xPos = marginsPts.leftMarginPts;
 
-              // Check if we need a new page
-              const pageSizeForBreak = this.getPageDimensions(
-                this.docInfo.pageSizeId,
-                this.docInfo.orient
-              );
-              const unitForBreak = this.getUnitForPageSize(this.docInfo.pageSizeId);
-              const { heightPts: pageHeightPtsForBreak } = this.pageSizeToPts(
-                pageSizeForBreak.width,
-                pageSizeForBreak.height,
-                unitForBreak
-              );
-              const marginsPtsForBreak = this.docInfo.marginPts;
-
-              // Check if wrapped line would overlap footer
-              // Footer - positioned within bottom margin area
-              const footerFontSizePtsWrap = 8;
-              const footerYWrap = pageHeightPtsForBreak - marginsPtsForBreak.bottomMarginPts + 5;
-              const footerTopWrap = footerYWrap - footerFontSizePtsWrap;
-              const footerSpacingWrap = 3;
-              const maxContentYWrap = footerTopWrap - footerSpacingWrap - this.currentLineHeight;
-
-              if (yPos > maxContentYWrap) {
+              if (this.shouldBreakPage(yPos)) {
+                const bottomMargin = this.lastPageBreakMetrics?.bottomMarginY ?? 0;
                 dx.out(
-                  `Page break during wrapping at line ${lineNumber}: yPos=${yPos} > bottomMargin=${pageHeightPtsForBreak - marginsPtsForBreak.bottomMarginPts}`
+                  `Page break during wrapping at line ${lineNumber}: yPos=${yPos} > bottomMargin=${bottomMargin}`
                 );
-                this.docInfo.pdfDoc!.addPage();
-                // Use same header spacing logic as setupPdf
-                // Header - positioned within top margin area
-                const headerFontSizePtsWrap = 8;
-                const headerYWrap = marginsPtsForBreak.topMarginPts - 5;
-                const headerBottomWrap = headerYWrap + headerFontSizePtsWrap;
-                const headerSpacingWrap = 3;
-                this.currentY = headerBottomWrap + headerSpacingWrap + this.currentLineHeight;
-                this.currentX = marginsPtsForBreak.leftMarginPts;
+                this.addPageBreak();
                 yPos = this.currentY;
                 xPos = this.currentX;
-
-                // Add header and footer to new page
-                this.addHeaderAndFooter();
               }
               continue; // Try again with new line position
             }
@@ -795,43 +766,13 @@ export class PDF implements PageRender {
         `Line ${lineNumber} complete: Y moved from ${oldY} to ${this.currentY} (down by ${this.currentLineHeight})`
       );
 
-      // Check if we need a new page
-      const pageSizeForBreak = this.getPageDimensions(this.docInfo.pageSizeId, this.docInfo.orient);
-      const unitForBreak = this.getUnitForPageSize(this.docInfo.pageSizeId);
-      const { heightPts: pageHeightPtsForBreak } = this.pageSizeToPts(
-        pageSizeForBreak.width,
-        pageSizeForBreak.height,
-        unitForBreak
-      );
-      const marginsPtsForBreak = this.docInfo.marginPts;
-
-      // Footer - positioned within bottom margin area
-      // With base 0.4 inch margin, footer is always safely positioned
-      const footerFontSizePts = 8;
-      const footerY = pageHeightPtsForBreak - marginsPtsForBreak.bottomMarginPts + 5; // Position footer within margin
-      const footerTop = footerY - footerFontSizePts;
-      const footerSpacing = 3; // Small spacing between content and footer
-      const maxContentY = footerTop - footerSpacing - this.currentLineHeight;
-
-      // jsPDF: Y increases downward, so we check if we've gone too far down
-      if (this.currentY > maxContentY) {
+      if (this.shouldBreakPage(this.currentY)) {
+        const bottomMargin = this.lastPageBreakMetrics?.bottomMarginY ?? 0;
         dx.out(
-          `Page break at line ${lineNumber}: currentY=${this.currentY} > bottomMargin=${pageHeightPtsForBreak - marginsPtsForBreak.bottomMarginPts}`
+          `Page break at line ${lineNumber}: currentY=${this.currentY} > bottomMargin=${bottomMargin}`
         );
-        this.docInfo.pdfDoc!.addPage();
-        // Use same header spacing logic as setupPdf
-        // Header - positioned within top margin area
-        const headerFontSizePtsNew = 8;
-        const headerYNew = marginsPtsForBreak.topMarginPts - 5;
-        const headerBottomNew = headerYNew + headerFontSizePtsNew;
-        const headerSpacingNew = 3;
-        this.currentY = headerBottomNew + headerSpacingNew + this.currentLineHeight;
-        this.currentX = marginsPtsForBreak.leftMarginPts;
-
+        this.addPageBreak();
         dx.out(`Added page break at line ${lineNumber + 1}`);
-
-        // Add header and footer to new page
-        this.addHeaderAndFooter();
       }
 
       dx.out(`Rendered line ${lineNumber}`);
@@ -841,6 +782,60 @@ export class PDF implements PageRender {
     } finally {
       dx.done();
     }
+  }
+
+  private computePageBreakMetrics(): { maxContentY: number; bottomMarginY: number } {
+    const pageSize = this.getPageDimensions(this.docInfo.pageSizeId, this.docInfo.orient);
+    const unit = this.getUnitForPageSize(this.docInfo.pageSizeId);
+    const { heightPts } = this.pageSizeToPts(pageSize.width, pageSize.height, unit);
+    const margins = this.docInfo.marginPts;
+
+    const footerFontSizePts = 8;
+    const footerY = heightPts - margins.bottomMarginPts + 5;
+    const footerTop = footerY - footerFontSizePts;
+    const footerSpacing = 3;
+
+    const maxContentY = footerTop - footerSpacing - this.currentLineHeight;
+    const bottomMarginY = heightPts - margins.bottomMarginPts;
+
+    return { maxContentY, bottomMarginY };
+  }
+
+  private shouldBreakPage(yPos: number): boolean {
+    if (!this.docInfo.pdfDoc) {
+      return false;
+    }
+
+    if (this.currentLineHeight <= 0) {
+      return false;
+    }
+
+    const metrics = this.computePageBreakMetrics();
+    this.lastPageBreakMetrics = metrics;
+
+    return yPos > metrics.maxContentY;
+  }
+
+  private addPageBreak(): void {
+    if (!this.docInfo.pdfDoc) {
+      return;
+    }
+
+    this.lastPageBreakMetrics = null;
+
+    const margins = this.docInfo.marginPts;
+
+    this.docInfo.pdfDoc.addPage();
+
+    const headerFontSizePts = 8;
+    const headerY = margins.topMarginPts - 5;
+    const headerBottom = headerY + headerFontSizePts;
+    const headerSpacing = 3;
+
+    this.currentY = headerBottom + headerSpacing + this.currentLineHeight;
+    this.currentX = margins.leftMarginPts;
+
+    this.addHeaderAndFooter();
   }
 
   /**
@@ -873,21 +868,33 @@ export class PDF implements PageRender {
     this.setTextColorFromWebColor(this.docInfo.pdfDoc, PDF.HEADER_FOOTER_COLOR);
 
     // Build header elements by position
-    const headerElements: { left: string[]; center: string[]; right: string[] } = {
-      left: [],
+    const headerElements: Record<HeaderFooterRenderablePos, string[]> = {
+      begin: [],
       center: [],
-      right: [],
+      end: [],
     };
 
-    // Helper function to check if position is valid (not 'none')
-    const isValidPos = (pos: string): pos is 'left' | 'center' | 'right' => {
-      return pos === 'left' || pos === 'center' || pos === 'right';
+    // Helper functions to validate positions
+    const isValidPos = (pos: string): pos is HeaderFooterPos_t => {
+      return pos === 'begin' || pos === 'center' || pos === 'end' || pos === 'none';
+    };
+
+    const isRenderablePos = (pos: HeaderFooterPos_t): pos is HeaderFooterRenderablePos => {
+      return pos !== 'none';
+    };
+
+    const pushElement = (
+      elements: Record<HeaderFooterRenderablePos, string[]>,
+      pos: HeaderFooterPos_t,
+      text: string
+    ): void => {
+      if (isValidPos(pos) && isRenderablePos(pos)) {
+        elements[pos].push(text);
+      }
     };
 
     // Handle Title
-    if (isValidPos(this.docInfo.header_title)) {
-      headerElements[this.docInfo.header_title].push(docTitle);
-    }
+    pushElement(headerElements, this.docInfo.header_title, docTitle);
 
     // Handle Page and Total - combine if at same position
     const headerPagePos = this.docInfo.header_page;
@@ -896,31 +903,28 @@ export class PDF implements PageRender {
       isValidPos(headerPagePos) &&
       isValidPos(headerTotalPos) &&
       headerPagePos === headerTotalPos &&
+      isRenderablePos(headerPagePos) &&
       pageTotal > 0
     ) {
       // Combine: "Page X of Y"
-      headerElements[headerPagePos].push(`Page ${currentPage} of ${pageTotal}`);
+      pushElement(headerElements, headerPagePos, `Page ${currentPage} of ${pageTotal}`);
     } else {
       // Separate handling
-      if (isValidPos(headerPagePos)) {
-        headerElements[headerPagePos].push(`Page ${currentPage}`);
-      }
-      if (isValidPos(headerTotalPos) && pageTotal > 0) {
-        headerElements[headerTotalPos].push(`${pageTotal} Pages`);
+      pushElement(headerElements, headerPagePos, `Page ${currentPage}`);
+      if (pageTotal > 0) {
+        pushElement(headerElements, headerTotalPos, `${pageTotal} Pages`);
       }
     }
 
     // Build footer elements by position
-    const footerElements: { left: string[]; center: string[]; right: string[] } = {
-      left: [],
+    const footerElements: Record<HeaderFooterRenderablePos, string[]> = {
+      begin: [],
       center: [],
-      right: [],
+      end: [],
     };
 
     // Handle Title
-    if (isValidPos(this.docInfo.footer_title)) {
-      footerElements[this.docInfo.footer_title].push(docTitle);
-    }
+    pushElement(footerElements, this.docInfo.footer_title, docTitle);
 
     // Handle Page and Total - combine if at same position
     const footerPagePos = this.docInfo.footer_page;
@@ -929,17 +933,16 @@ export class PDF implements PageRender {
       isValidPos(footerPagePos) &&
       isValidPos(footerTotalPos) &&
       footerPagePos === footerTotalPos &&
+      isRenderablePos(footerPagePos) &&
       pageTotal > 0
     ) {
       // Combine: "Page X of Y"
-      footerElements[footerPagePos].push(`Page ${currentPage} of ${pageTotal}`);
+      pushElement(footerElements, footerPagePos, `Page ${currentPage} of ${pageTotal}`);
     } else {
       // Separate handling
-      if (isValidPos(footerPagePos)) {
-        footerElements[footerPagePos].push(`Page ${currentPage}`);
-      }
-      if (isValidPos(footerTotalPos) && pageTotal > 0) {
-        footerElements[footerTotalPos].push(`${pageTotal} Pages`);
+      pushElement(footerElements, footerPagePos, `Page ${currentPage}`);
+      if (pageTotal > 0) {
+        pushElement(footerElements, footerTotalPos, `${pageTotal} Pages`);
       }
     }
 
@@ -959,7 +962,7 @@ export class PDF implements PageRender {
    * Render header or footer elements at their positions
    */
   private renderHeaderFooterElements(
-    elements: { left: string[]; center: string[]; right: string[] },
+    elements: Record<HeaderFooterRenderablePos, string[]>,
     y: number,
     widthPts: number,
     margins: { leftMarginPts: number; rightMarginPts: number }
@@ -969,13 +972,13 @@ export class PDF implements PageRender {
     }
 
     // Combine elements at each position with " | " separator
-    const leftText = elements.left.join(' | ');
+    const beginText = elements.begin.join(' | ');
     const centerText = elements.center.join(' | ');
-    const rightText = elements.right.join(' | ');
+    const endText = elements.end.join(' | ');
 
-    // Render left position
-    if (leftText) {
-      this.docInfo.pdfDoc.text(leftText, margins.leftMarginPts, y);
+    // Render begin (left) position
+    if (beginText) {
+      this.docInfo.pdfDoc.text(beginText, margins.leftMarginPts, y);
     }
 
     // Render center position
@@ -985,11 +988,11 @@ export class PDF implements PageRender {
       this.docInfo.pdfDoc.text(centerText, centerX, y);
     }
 
-    // Render right position
-    if (rightText) {
-      const rightWidth = this.docInfo.pdfDoc.getTextWidth(rightText);
-      const rightX = widthPts - margins.rightMarginPts - rightWidth;
-      this.docInfo.pdfDoc.text(rightText, rightX, y);
+    // Render end (right) position
+    if (endText) {
+      const endWidth = this.docInfo.pdfDoc.getTextWidth(endText);
+      const endX = widthPts - margins.rightMarginPts - endWidth;
+      this.docInfo.pdfDoc.text(endText, endX, y);
     }
   }
 
