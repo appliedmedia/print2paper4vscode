@@ -18,23 +18,6 @@ export interface PageData {
   pageNumber: number;
 }
 
-export interface RenderOptions {
-  /** Font family for text rendering */
-  fontFamily: string;
-  /** Font size in pixels */
-  fontSizePx: number;
-  /** Line height in pixels */
-  lineHeightPx: number;
-  /** Theme name for syntax highlighting */
-  theme: string;
-  /** Page size ID */
-  pageSizeId: PageSizeId_t;
-  /** Page orientation */
-  orient: Orient_t;
-  /** Margin ID */
-  marginId: MarginId_t;
-}
-
 export interface PageRenderError {
   /** Error message */
   message: string;
@@ -61,15 +44,13 @@ export interface PageRender {
    * @param pageNumber Page number to render (1-based)
    * @param lineBegin Starting line number (0-based) - unused in unified approach
    * @param lineEnd Ending line number (exclusive, 0-based) - unused in unified approach
-   * @param options Rendering options (font, size, theme, etc.)
    * @returns Promise resolving to page data (data URL, dimensions, etc.)
    * @throws PageRenderError for invalid page numbers or generation failures
    */
   renderContent(
     pageNumber: number,
     lineBegin: number,
-    lineEnd: number,
-    options: RenderOptions
+    lineEnd: number
   ): Promise<PageData>;
 
   /**

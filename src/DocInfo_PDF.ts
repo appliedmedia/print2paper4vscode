@@ -1,15 +1,10 @@
 import type { App } from './App';
-import type { MarginId_t } from './types/PaperPrinter_t';
+import type { MarginId_t, PageSizeId_t, Orient_t, HeaderFooterPos_t } from './types/PaperPrinter_t';
+import { kMarginId } from './types/PaperPrinter_t';
+import { Coords } from './Coords';
 import type { ThemedToken } from 'shiki';
 import type jsPDF from 'jspdf';
-
-// Margin ID to points conversion
-const MARGIN_ID_TO_PTS: { [key in MarginId_t]: number } = {
-  none: 0, // 0pts
-  minimal: 5, // 5pts
-  normal: 15, // 15pts
-  wide: 30, // 30pts
-} as const;
+import type { LanguageId_t } from './Stylize';
 
 /**
  * PDF_DocInfo - Document information and configuration for PDF
@@ -44,11 +39,32 @@ export class DocInfo_PDF {
 
   // Font settings
   public fontSizePts: number = 0;
+  public fontSizePx: number = 12; // Font size in pixels (source value)
   public lineHeightPts: number = 0;
+  public lineHeightPx: number = 18; // Line height in pixels (source value)
   public fontFamily: string = 'Courier';
 
   // Theme and styling
   public theme: string = 'github-light';
+
+  // Page settings
+  public pageSizeId: PageSizeId_t = 'a4';
+  public orient: Orient_t = 'portrait';
+  public marginId: MarginId_t = 'normal';
+
+  // Document content (set by caller before generatePdf)
+  public code: string = '';
+  public languageId: LanguageId_t = 'typescript';
+  public title: string = '';
+
+  // Header/Footer positioning settings
+  // Position options: 'begin' | 'center' | 'end' | 'none'
+  public header_title: HeaderFooterPos_t = 'center';
+  public header_page: HeaderFooterPos_t = 'none';
+  public header_total: HeaderFooterPos_t = 'none';
+  public footer_title: HeaderFooterPos_t = 'none';
+  public footer_page: HeaderFooterPos_t = 'center';
+  public footer_total: HeaderFooterPos_t = 'center';
 
   // Temporary file tracking
   public tempPdfs: string[] = [];
@@ -58,26 +74,25 @@ export class DocInfo_PDF {
   }
 
   // Margin getter - calculates from current marginId
+  // Always includes base 0.4 inch (28.8 pts) minimum margin for safe printing
+  // Margin settings (none/minimal/normal/wide) are ADDED to this base
   get marginPts(): {
     topMarginPts: number;
     bottomMarginPts: number;
     leftMarginPts: number;
     rightMarginPts: number;
   } {
-    // Get current margin ID from menu's persistent state
-    const menu = this.app.uimenumgr.getMenuById('marginId');
-    const rawMarginId = menu.persist.marginId;
-    const marginId: MarginId_t =
-      typeof rawMarginId === 'string' && rawMarginId in MARGIN_ID_TO_PTS
-        ? (rawMarginId as MarginId_t)
-        : 'normal';
-    const marginPts = MARGIN_ID_TO_PTS[marginId];
+    // Get margin setting from kMarginId (this is ADDED to base)
+    const marginSettingPts = kMarginId[this.marginId].marginPts;
+
+    // Total margin = base + setting
+    const totalMarginPts = Coords.kMarginGutterMinPts + marginSettingPts;
 
     return {
-      topMarginPts: marginPts,
-      bottomMarginPts: marginPts,
-      leftMarginPts: marginPts,
-      rightMarginPts: marginPts,
+      topMarginPts: totalMarginPts,
+      bottomMarginPts: totalMarginPts,
+      leftMarginPts: totalMarginPts,
+      rightMarginPts: totalMarginPts,
     };
   }
 

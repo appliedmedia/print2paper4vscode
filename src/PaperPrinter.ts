@@ -9,7 +9,7 @@ import {
 } from './UIMenu';
 import { UIWebView } from './UIWebView';
 import { DocInfo_PDF } from './DocInfo_PDF';
-import type { PageRender, RenderOptions } from './types/PageRender_t';
+import type { PageRender } from './types/PageRender_t';
 import { DocInfo_PaperPrinter } from './DocInfo_PaperPrinter';
 import type { LanguageId_t } from './Stylize';
 import type { Persist_t } from './Persist';
@@ -19,9 +19,16 @@ import {
   type Orient_t,
   type MarginId_t,
   type FontSizeId_t,
+  type HeaderFooterPos_t,
+  type HeaderFooterLocation_t,
+  type HeaderFooterElement_t,
   kPageSizeId,
   kOrient,
   kMarginId,
+  kHeaderFooterPos,
+  kHeaderFooterLocation,
+  kHeaderFooterElement,
+  kPageMenuSubmenu,
   kFontSizeId,
   kPageSizeId_alt,
   kOrient_alt,
@@ -162,6 +169,32 @@ export class PaperPrinter {
         this.app.uimenumgr.setPersistForMenuId('theme', this.app.vscodeapis.getActiveThemeId());
       }
 
+      // Initialize header/footer position defaults from docInfo if not persisted
+      // Also sync docInfo from persisted values if they differ
+      type HeaderFooterMenuId_t =
+        `${keyof typeof kHeaderFooterLocation & string}_${keyof typeof kHeaderFooterElement & string}`;
+      const headerFooterMenuIds = Object.keys(kHeaderFooterLocation).flatMap(location =>
+        Object.keys(kHeaderFooterElement).map(element => `${location}_${element}`)
+      ) as HeaderFooterMenuId_t[];
+
+      for (const menuId of headerFooterMenuIds) {
+        const persistedValue = this.app.uimenumgr.getValueForSelectedByMenuId(menuId);
+        const docInfoValue = this.app.pdf.docInfo[menuId as keyof typeof this.app.pdf.docInfo] as
+          | HeaderFooterPos_t
+          | undefined;
+
+        if (!persistedValue) {
+          // Initialize persistence from docInfo
+          if (docInfoValue) {
+            this.app.uimenumgr.setPersistForMenuId(menuId, docInfoValue);
+          }
+        } else if (docInfoValue !== persistedValue) {
+          // Sync docInfo from persisted value (cast needed since persistedValue is string)
+          (this.app.pdf.docInfo as unknown as Record<string, HeaderFooterPos_t>)[menuId] =
+            persistedValue as HeaderFooterPos_t;
+        }
+      }
+
       // Generate PDF
       await this.generatePdf();
 
@@ -209,26 +242,25 @@ export class PaperPrinter {
       const marginId = (this.app.uimenumgr.getValueForSelectedByMenuId('marginId') ||
         kMarginId_alt) as MarginId_t;
 
-      // Create render options
-      const options: RenderOptions = {
-        fontFamily: this.getCurrentFontFamily(),
-        fontSizePx: fontSize,
-        lineHeightPx: this.lineHeightPx,
-        theme,
-        pageSizeId,
-        orient,
-        marginId,
-      };
+      // Set properties on PDF's docInfo
+      this.app.pdf.docInfo.fontFamily = this.getCurrentFontFamily();
+      this.app.pdf.docInfo.fontSizePx = fontSize;
+      this.app.pdf.docInfo.lineHeightPx = this.lineHeightPx;
+      this.app.pdf.docInfo.theme = theme;
+      this.app.pdf.docInfo.pageSizeId = pageSizeId;
+      this.app.pdf.docInfo.orient = orient;
+      this.app.pdf.docInfo.marginId = marginId;
+
+      // Set document content
+      this.app.pdf.docInfo.code = this.docInfo.rawCode;
+      this.app.pdf.docInfo.languageId = this.docInfo.languageId;
+      this.app.pdf.docInfo.title = this.docInfo.printTitle;
 
       // Generate complete PDF during tokenization (unified approach)
       dx.out(`Generating complete PDF with unified tokenize + build approach`);
 
       // Generate the complete PDF in one pass
-      this.pdfDoc = await this.app.pdf.generatePdf(
-        this.docInfo.rawCode,
-        this.docInfo.languageId,
-        options
-      );
+      this.pdfDoc = await this.app.pdf.generatePdf();
 
       dx.out(`PDF generation complete: ${this.pdfDoc.getPageTotal()} pages using unified approach`);
     } catch (error) {
@@ -262,12 +294,12 @@ export class PaperPrinter {
         icon: '📄',
         isFlyout: false,
         menuItems: this.menuItems_Page.bind(this),
-        flyoutMenuItemIds: ['pageSizeId', 'orient', 'marginId'],
+        flyoutMenuItemIds: ['pageSizeId', 'orient', 'marginId', 'header', 'footer'],
         selectionHandler: this.handleSelection_Page.bind(this),
       },
       {
         id: 'pageSizeId',
-        displayName: 'Size',
+        displayName: kPageMenuSubmenu.pageSizeId.displayName,
         icon: '', // submenu indicated by no icon, see Page > Size
         isFlyout: true,
         menuItems: this.menuItems_pageSizeId.bind(this),
@@ -276,7 +308,7 @@ export class PaperPrinter {
       },
       {
         id: 'orient',
-        displayName: 'Orient',
+        displayName: kPageMenuSubmenu.orient.displayName,
         icon: '', // submenu indicated by no icon, see Page > Orient
         isFlyout: true,
         menuItems: this.menuItems_Orient.bind(this),
@@ -285,12 +317,84 @@ export class PaperPrinter {
       },
       {
         id: 'marginId',
-        displayName: 'Margin',
+        displayName: kPageMenuSubmenu.marginId.displayName,
         icon: '', // submenu indicated by no icon, see Page > Margin
         isFlyout: true,
         menuItems: this.menuItems_MarginId.bind(this),
         flyoutMenuItemIds: [],
         selectionHandler: this.handleSelection_MarginId.bind(this),
+      },
+      {
+        id: 'header',
+        displayName: kHeaderFooterLocation.header.displayName,
+        icon: '', // flyout submenu
+        isFlyout: true,
+        menuItems: this.menuItems_Header.bind(this),
+        flyoutMenuItemIds: ['header_title', 'header_page', 'header_total'],
+        selectionHandler: this.handleSelection_Header.bind(this),
+      },
+      {
+        id: 'footer',
+        displayName: kHeaderFooterLocation.footer.displayName,
+        icon: '', // flyout submenu
+        isFlyout: true,
+        menuItems: this.menuItems_Footer.bind(this),
+        flyoutMenuItemIds: ['footer_title', 'footer_page', 'footer_total'],
+        selectionHandler: this.handleSelection_Footer.bind(this),
+      },
+      {
+        id: 'header_title',
+        displayName: kHeaderFooterElement.title.displayName,
+        icon: '', // flyout submenu
+        isFlyout: true,
+        menuItems: this.menuItems_HeaderFooterPos.bind(this),
+        flyoutMenuItemIds: [],
+        selectionHandler: this.handleSelection_HeaderTitle.bind(this),
+      },
+      {
+        id: 'header_page',
+        displayName: kHeaderFooterElement.page.displayName,
+        icon: '', // flyout submenu
+        isFlyout: true,
+        menuItems: this.menuItems_HeaderFooterPos.bind(this),
+        flyoutMenuItemIds: [],
+        selectionHandler: this.handleSelection_HeaderPage.bind(this),
+      },
+      {
+        id: 'header_total',
+        displayName: kHeaderFooterElement.total.displayName,
+        icon: '', // flyout submenu
+        isFlyout: true,
+        menuItems: this.menuItems_HeaderFooterPos.bind(this),
+        flyoutMenuItemIds: [],
+        selectionHandler: this.handleSelection_HeaderTotal.bind(this),
+      },
+      {
+        id: 'footer_title',
+        displayName: kHeaderFooterElement.title.displayName,
+        icon: '', // flyout submenu
+        isFlyout: true,
+        menuItems: this.menuItems_HeaderFooterPos.bind(this),
+        flyoutMenuItemIds: [],
+        selectionHandler: this.handleSelection_FooterTitle.bind(this),
+      },
+      {
+        id: 'footer_page',
+        displayName: kHeaderFooterElement.page.displayName,
+        icon: '', // flyout submenu
+        isFlyout: true,
+        menuItems: this.menuItems_HeaderFooterPos.bind(this),
+        flyoutMenuItemIds: [],
+        selectionHandler: this.handleSelection_FooterPage.bind(this),
+      },
+      {
+        id: 'footer_total',
+        displayName: kHeaderFooterElement.total.displayName,
+        icon: '', // flyout submenu
+        isFlyout: true,
+        menuItems: this.menuItems_HeaderFooterPos.bind(this),
+        flyoutMenuItemIds: [],
+        selectionHandler: this.handleSelection_FooterTotal.bind(this),
       },
       {
         id: 'theme',
@@ -324,14 +428,6 @@ export class PaperPrinter {
         config.selectionHandler
       );
       this.app.uimenumgr.addMenu(menu);
-      this.dx.out(`Added menu: ${config.id}`);
-    });
-
-    // Debug: show what menus were created
-    const allMenus = this.app.uimenumgr.getAllMenus();
-    this.dx.out(`Total menus created: ${allMenus.length}`);
-    allMenus.forEach(menu => {
-      this.dx.out(`Menu: ${menu.id}, Icon: ${menu.icon}, DisplayName: ${menu.displayName}`);
     });
   }
 
@@ -389,14 +485,23 @@ export class PaperPrinter {
   }
 
   private menuItems_Page(): UIMenuItem_t[] {
-    return [
-      // Size submenu reference (id must match the actual menu id)
-      { id: 'pageSizeId', displayName: 'Size' },
-      // Orientation submenu reference
-      { id: 'orient', displayName: 'Orient' },
-      // Margin submenu reference (id must match the actual menu id)
-      { id: 'marginId', displayName: 'Margin' },
-    ];
+    // Page submenu references (Size, Orient, Margin)
+    const pageSubmenus = (
+      Object.keys(kPageMenuSubmenu) as Array<keyof typeof kPageMenuSubmenu>
+    ).map(id => ({
+      id,
+      displayName: kPageMenuSubmenu[id].displayName,
+    }));
+
+    // Header and Footer menus (which have their own flyouts)
+    const headerFooterMenus = (
+      Object.keys(kHeaderFooterLocation) as Array<keyof typeof kHeaderFooterLocation>
+    ).map(id => ({
+      id,
+      displayName: kHeaderFooterLocation[id].displayName,
+    }));
+
+    return [...pageSubmenus, ...headerFooterMenus];
   }
 
   private menuItems_pageSizeId(): UIMenuItem_t[] {
@@ -421,6 +526,37 @@ export class PaperPrinter {
       id,
       displayName: this.app.templateDictReplace(kMarginId[id].displayName, this.yaml),
     }));
+  }
+
+  private menuItems_Header(): UIMenuItem_t[] {
+    // Return Title, Page, Total as menu items (each opens a position flyout)
+    return (Object.keys(kHeaderFooterElement) as Array<keyof typeof kHeaderFooterElement>).map(
+      id => ({
+        id: `header_${id}` as MenuItemId_t,
+        displayName: kHeaderFooterElement[id].displayName,
+      })
+    );
+  }
+
+  private menuItems_Footer(): UIMenuItem_t[] {
+    // Return Title, Page, Total as menu items (each opens a position flyout)
+    return (Object.keys(kHeaderFooterElement) as Array<keyof typeof kHeaderFooterElement>).map(
+      id => ({
+        id: `footer_${id}` as MenuItemId_t,
+        displayName: kHeaderFooterElement[id].displayName,
+      })
+    );
+  }
+
+  private menuItems_HeaderFooterPos(): UIMenuItem_t[] {
+    const items = (Object.keys(kHeaderFooterPos) as HeaderFooterPos_t[]).map(id => ({
+      id,
+      displayName: kHeaderFooterPos[id].displayName,
+    }));
+    this.dx.out(
+      `menuItems_HeaderFooterPos: Returning ${items.length} items: ${items.map(i => i.id).join(', ')}`
+    );
+    return items;
   }
 
   // Selection handler methods for each menu type
@@ -506,7 +642,72 @@ export class PaperPrinter {
       }
     }
 
+    dx.done();
     return { id, value };
+  }
+
+  private async handleSelection_Header(/* selectedId: MenuItemId_t */): Promise<HandleSelection_t> {
+    // Header menu doesn't have direct selections, just opens flyouts
+    return { id: '', value: '' };
+  }
+
+  private async handleSelection_Footer(/* selectedId: MenuItemId_t */): Promise<HandleSelection_t> {
+    // Footer menu doesn't have direct selections, just opens flyouts
+    return { id: '', value: '' };
+  }
+
+  private async handleSelection_HeaderFooterHelper(
+    menuId: MenuId_t,
+    id: MenuItemId_t,
+    value: HeaderFooterPos_t
+  ): Promise<HandleSelection_t> {
+    (this.app.pdf.docInfo as unknown as Record<string, HeaderFooterPos_t>)[menuId] = value;
+    this.app.uimenumgr.setPersistForMenuId(menuId, id);
+    void this.regenerateAndUpdateWebview();
+
+    return { id, value };
+  }
+
+  private async handleSelection_HeaderTitle(selectedId: MenuItemId_t): Promise<HandleSelection_t> {
+    const id = String(selectedId);
+    const value = id as HeaderFooterPos_t;
+
+    return await this.handleSelection_HeaderFooterHelper('header_title', selectedId, value);
+  }
+
+  private async handleSelection_HeaderPage(selectedId: MenuItemId_t): Promise<HandleSelection_t> {
+    const id = String(selectedId);
+    const value = id as HeaderFooterPos_t;
+
+    return await this.handleSelection_HeaderFooterHelper('header_page', selectedId, value);
+  }
+
+  private async handleSelection_HeaderTotal(selectedId: MenuItemId_t): Promise<HandleSelection_t> {
+    const id = String(selectedId);
+    const value = id as HeaderFooterPos_t;
+
+    return await this.handleSelection_HeaderFooterHelper('header_total', selectedId, value);
+  }
+
+  private async handleSelection_FooterTitle(selectedId: MenuItemId_t): Promise<HandleSelection_t> {
+    const id = String(selectedId);
+    const value = id as HeaderFooterPos_t;
+
+    return await this.handleSelection_HeaderFooterHelper('footer_title', selectedId, value);
+  }
+
+  private async handleSelection_FooterPage(selectedId: MenuItemId_t): Promise<HandleSelection_t> {
+    const id = String(selectedId);
+    const value = id as HeaderFooterPos_t;
+
+    return await this.handleSelection_HeaderFooterHelper('footer_page', selectedId, value);
+  }
+
+  private async handleSelection_FooterTotal(selectedId: MenuItemId_t): Promise<HandleSelection_t> {
+    const id = String(selectedId);
+    const value = id as HeaderFooterPos_t;
+
+    return await this.handleSelection_HeaderFooterHelper('footer_total', selectedId, value);
   }
 
   private async handleSelection_Theme(selectedId: MenuItemId_t): Promise<HandleSelection_t> {
