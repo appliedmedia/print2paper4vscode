@@ -184,10 +184,50 @@ class PaperPrinter {
 - Can request entire classes when needed
 
 **Class ID Requirement**:
-- Every class must have an `id` property/getter returning the short name (e.g., `'dx'`, `'ui'`, `'pdf'`)
-- **Recommended**: `public readonly id = "dx"` - simplest, fastest access, clear intent
-- **Alternative**: `get id(): string { return "dx" }` - no instance property (slightly more memory-efficient for many instances)
-- Use getter only if the value needs to be computed dynamically
+- Every class must have `public readonly id: string` returning the short name (e.g., `'dx'`, `'ui'`, `'pdf'`)
+- **Standard**: `public readonly id = "dx"` - can be typed as `Id_t` (see below)
+- **Alternative**: `get id(): string { return "dx" }` - no instance property, but cannot be typed as `Id_t`
+- **Decision**: Use `readonly id` because it enables type-safe ID constants and typedefs
+
+**ID Type Definition**:
+Create a `kId` constant object with all component IDs, then derive `Id_t` type from it:
+
+```typescript
+// src/types/Id_t.ts
+export const kId = {
+  dx: 'dx',
+  vscodeapis: 'vscodeapis',
+  ui: 'ui',
+  os: 'os',
+  pdf: 'pdf',
+  stylize: 'stylize',
+  tabinspector: 'tabinspector',
+  uimenumgr: 'uimenumgr',
+  paperprinter: 'paperprinter',
+  coords: 'coords',
+  persist: 'persist',
+  yaml: 'yaml',
+  // ... all component IDs
+} as const;
+
+// Derive type from kId values
+export type Id_t = typeof kId[keyof typeof kId];
+
+// Usage in classes:
+class Diagnostics {
+  public readonly id: Id_t = kId.dx;
+}
+
+class UI {
+  public readonly id: Id_t = kId.ui;
+}
+```
+
+This provides:
+- Single source of truth for all IDs (`kId`)
+- Type safety (`Id_t` ensures only valid IDs are used)
+- Autocomplete support
+- Refactoring safety (renaming `kId.dx` updates all references)
 
 ## Migration Stages
 
@@ -208,6 +248,9 @@ class PaperPrinter {
 
 #### 0.3: Add Type Definitions
 - [ ] Create `src/types/Registry_t.ts` for Registry type definitions
+- [ ] Create `src/types/Id_t.ts` with:
+  - `kId` constant object containing all component IDs
+  - `Id_t` type derived from `kId` values
 - [ ] Define `DependencyRequest` interface
 - [ ] Define `DependencyResponse` interfaces per component
 - [ ] Export types for use in components
@@ -265,17 +308,18 @@ class PaperPrinter {
 
 **Note**: 
 - Diagnostics is owned by Registry and created immediately at Registry construction. All components request Diagnostics via Registry.
-- **Critical**: Every migrated class must add `public readonly id: string` returning the short name (e.g., `public readonly id = "dx"`)
+- **Critical**: Every migrated class must add `public readonly id: Id_t = kId.xxx` (using the appropriate ID from `kId`)
 
 #### 2.1: Migrate OS Classes
 - [ ] Update OS base class constructor to accept App
 - [ ] Remove `app` parameter
+- [ ] Add `public readonly id: Id_t = kId.os` (or appropriate ID)
 - [ ] Request dependencies via Registry:
   - `Diagnostics` (for logging)
   - `VSCodeAPIs` (for extension path)
 - [ ] Move `init()` logic into constructor
 - [ ] Update OS factory method to use Registry
-- [ ] Update OSMac, OSWin, OSLinux constructors
+- [ ] Update OSMac, OSWin, OSLinux constructors (each adds `id` property)
 
 #### 2.3: Migrate Yaml
 - [ ] Update Yaml constructor to accept App
