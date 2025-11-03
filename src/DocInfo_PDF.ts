@@ -164,8 +164,9 @@ export class DocInfo_PDF {
 
   /**
    * Get information about the current page
+   * Returns pageNumber and pageContext from jsPDF, plus pageCount computed from pageTotal
    */
-  getCurrentPageInfo(): { pageNumber: number; pageCount: number } {
+  getCurrentPageInfo(): { pageNumber: number; pageCount: number; pageContext?: any } {
     if (!this.pdfDoc) {
       return { pageNumber: 0, pageCount: 0 };
     }
@@ -173,6 +174,7 @@ export class DocInfo_PDF {
     return {
       pageNumber: info.pageNumber,
       pageCount: this.pageTotal, // Use pageTotal which wraps getNumberOfPages()
+      pageContext: info.pageContext,
     };
   }
 
