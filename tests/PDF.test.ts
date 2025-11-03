@@ -62,15 +62,11 @@ describe('PDF', () => {
     const originalOpenPrintDialog = app.os.fileOpenPrintDialog;
     app.os.fileOpenPrintDialog = async () => {};
 
-    try {
-      await pdf.printWithPreview(pdf.docInfo, 'test');
-      assert.ok(true); // If we get here, it worked
-    } catch (error) {
-      // Expected if OS methods aren't fully mocked
-      assert.ok(true);
-    } finally {
-      app.os.fileOpenPrintDialog = originalOpenPrintDialog;
-    }
+    await pdf.printWithPreview(pdf.docInfo, 'test');
+    // If we get here without throwing, it worked
+    assert.ok(true);
+    
+    app.os.fileOpenPrintDialog = originalOpenPrintDialog;
   });
 
   it('should print directly', async () => {
@@ -82,15 +78,11 @@ describe('PDF', () => {
     const originalFilePrint = app.os.filePrint;
     app.os.filePrint = async () => {};
 
-    try {
-      await pdf.printDirectly(pdf.docInfo, 'test');
-      assert.ok(true);
-    } catch (error) {
-      // Expected if OS methods aren't fully mocked
-      assert.ok(true);
-    } finally {
-      app.os.filePrint = originalFilePrint;
-    }
+    await pdf.printDirectly(pdf.docInfo, 'test');
+    // If we get here without throwing, it worked
+    assert.ok(true);
+    
+    app.os.filePrint = originalFilePrint;
   });
 
   it('should save as PDF', async () => {
@@ -102,14 +94,10 @@ describe('PDF', () => {
     const originalChooseSaveLocation = app.ui.chooseSaveLocation;
     app.ui.chooseSaveLocation = async () => null;
 
-    try {
-      await pdf.saveAsPDF(pdf.docInfo, 'test');
-      assert.ok(true); // Should handle cancellation gracefully
-    } catch (error) {
-      assert.ok(true);
-    } finally {
-      app.ui.chooseSaveLocation = originalChooseSaveLocation;
-    }
+    await pdf.saveAsPDF(pdf.docInfo, 'test');
+    // Should handle cancellation gracefully without throwing
+    
+    app.ui.chooseSaveLocation = originalChooseSaveLocation;
   });
 
   it('should handle done cleanup', () => {
@@ -161,15 +149,10 @@ describe('PDF', () => {
     ];
     pdf.docInfo.theme = 'github-light';
 
-    try {
-      const pageData = await pdf.renderContent(0, 0, 0);
-      assert.ok(pageData);
-      assert.ok(typeof pageData.dataUrl === 'string');
-      assert.ok(pageData.dataUrl.startsWith('data:application/pdf'));
-    } catch (error) {
-      // May fail if full setup isn't complete
-      assert.ok(true);
-    }
+    const pageData = await pdf.renderContent(0, 0, 0);
+    assert.ok(pageData);
+    assert.ok(typeof pageData.dataUrl === 'string');
+    assert.ok(pageData.dataUrl.startsWith('data:application/pdf'));
   });
 
   it('should setup PDF document', () => {
@@ -180,13 +163,8 @@ describe('PDF', () => {
     pdf.docInfo.fontFamily = 'Courier';
     pdf.docInfo.theme = 'github-light';
 
-    try {
-      pdf.setupPdf();
-      assert.ok(pdf.docInfo.pdfDoc !== null);
-    } catch (error) {
-      // May fail if menu setup isn't complete
-      assert.ok(true);
-    }
+    pdf.setupPdf();
+    assert.ok(pdf.docInfo.pdfDoc !== null);
   });
 
   it('should render tokenized line', () => {
@@ -198,20 +176,16 @@ describe('PDF', () => {
     pdf.docInfo.fontFamily = 'Courier';
     pdf.docInfo.theme = 'github-light';
 
-    try {
-      pdf.setupPdf();
-      const tokens = [
-        { content: 'const', color: '#0000ff', offset: 0 },
-        { content: ' x', color: '#000000', offset: 5 },
-        { content: ' =', color: '#000000', offset: 7 },
-        { content: ' 42', color: '#008000', offset: 9 },
-      ];
-      pdf.renderTokenizedLine(0, tokens);
-      assert.ok(true); // Should not throw
-    } catch (error) {
-      // May fail if setup isn't complete
-      assert.ok(true);
-    }
+    pdf.setupPdf();
+    const tokens = [
+      { content: 'const', color: '#0000ff', offset: 0 },
+      { content: ' x', color: '#000000', offset: 5 },
+      { content: ' =', color: '#000000', offset: 7 },
+      { content: ' 42', color: '#008000', offset: 9 },
+    ];
+    pdf.renderTokenizedLine(0, tokens);
+    // Should not throw
+    assert.ok(true);
   });
 
   it('should convert hex color to RGB', () => {

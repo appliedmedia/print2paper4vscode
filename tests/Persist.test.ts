@@ -156,17 +156,24 @@ describe('Persist', () => {
   });
 
   it('should clear persist state', async () => {
-    persist.register('testKey1');
-    persist.register('testKey2');
-    persist['testKey1'] = 'value1';
-    persist['testKey2'] = 'value2';
+    // Import kMenuId to know what keys clear() actually clears
+    const { kMenuId } = await import('../src/UIMenu.js');
     
-    assert.strictEqual(mockGlobalState['testKey1'], 'value1');
+    // Register actual menu keys that clear() will remove
+    const menuKey1 = kMenuId[0];
+    const menuKey2 = kMenuId.length > 1 ? kMenuId[1] : 'toolbar_pos';
+    
+    persist.register(menuKey1);
+    persist.register(menuKey2);
+    persist[menuKey1] = 'value1';
+    persist[menuKey2] = 'value2';
+    
+    assert.strictEqual(mockGlobalState[menuKey1], 'value1');
     
     await persist.clear();
     
-    // State should be cleared from memory
-    assert.strictEqual(persist['testKey1'], undefined);
-    assert.strictEqual(persist['testKey2'], undefined);
+    // State should be cleared from memory for menu keys
+    assert.strictEqual(persist[menuKey1], undefined);
+    assert.strictEqual(persist[menuKey2], undefined);
   });
 });

@@ -3,15 +3,20 @@ import * as assert from 'node:assert';
 import { App } from '../src/App.js';
 import type { ExtensionContext } from 'vscode';
 
-// Mock VS Code context and APIs
+// Mock VS Code context and APIs with state tracking
+let mockGlobalState: Record<string, any> = {};
+
 const mockContext = {
   subscriptions: [],
   globalState: {
-    get: (key: string) => {
-      if (key === 'toolbarPosPx') return 100;
-      return undefined;
+    get: (key: string) => mockGlobalState[key],
+    update: async (key: string, value: any) => {
+      if (value === undefined) {
+        delete mockGlobalState[key];
+      } else {
+        mockGlobalState[key] = value;
+      }
     },
-    update: (key: string, value: any) => {},
   },
   globalStorageUri: { fsPath: '/tmp' },
 } as unknown as ExtensionContext;
@@ -22,6 +27,9 @@ const mockVSCode = {
     showErrorMessage: () => {},
     showInformationMessage: () => {},
     showWarningMessage: () => {},
+    setStatusBarMessage: (text: string, timeoutMs?: number) => {
+      return { dispose: () => {} };
+    },
     activeTextEditor: {
       document: {
         uri: { fsPath: '/test/file.js' },
@@ -77,6 +85,7 @@ describe('VSCodeAPIs', () => {
   let app: App;
 
   beforeEach(() => {
+    mockGlobalState = {}; // Reset state before each test
     app = new App(mockContext, mockVSCode);
     app.init();
   });

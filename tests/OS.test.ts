@@ -254,17 +254,14 @@ describe('OS Base Class', () => {
   });
 
   describe('htmlSrcPathToURI', () => {
-    it('should convert src attributes to webview URIs', () => {
+    it('should convert src attributes to webview URIs', async () => {
       const html = '<img src="test.png">';
-      const panelId = 'test-panel' as any;
-      // This may fail if panel doesn't exist, but should not throw
-      try {
-        const result = os.htmlSrcPathToURI(html, panelId);
-        assert.ok(typeof result === 'string');
-      } catch {
-        // Expected if panel doesn't exist
-        assert.ok(true);
-      }
+      // Create a panel first so htmlSrcPathToURI can find it
+      const panelId = await app.vscodeapis.getOrCreateWebviewPanel('Test Panel', '<html></html>');
+      const result = os.htmlSrcPathToURI(html, panelId);
+      assert.ok(typeof result === 'string');
+      // Should have converted the src path
+      assert.ok(result.includes('vscode-webview') || result.includes('test.png'));
     });
   });
 });

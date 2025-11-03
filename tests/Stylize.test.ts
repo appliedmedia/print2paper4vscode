@@ -197,9 +197,8 @@ describe('Stylize', () => {
       ],
     };
 
-    // Access private method through type assertion
-    const stylizeInstance = stylize as any;
-    const converted = stylizeInstance.convertVSCodeThemeToShiki(vscodeTheme);
+    // Test public method directly
+    const converted = stylize.convertVSCodeThemeToShiki(vscodeTheme);
     
     assert.ok(converted);
     assert.strictEqual(converted.name, 'test-theme');
@@ -211,8 +210,7 @@ describe('Stylize', () => {
     await stylize.init();
     const invalidTheme = null as any;
 
-    const stylizeInstance = stylize as any;
-    const converted = stylizeInstance.convertVSCodeThemeToShiki(invalidTheme);
+    const converted = stylize.convertVSCodeThemeToShiki(invalidTheme);
     
     // Should return default theme instead of null
     assert.ok(converted);
@@ -233,19 +231,17 @@ describe('Stylize', () => {
 
   it('should get font family from theme', async () => {
     await stylize.init();
-    const stylizeInstance = stylize as any;
     const themes = stylize.getThemes();
     
     if (themes.length > 0) {
-      const fontFamily = stylizeInstance.getFontFamilyFromTheme(themes[0]);
+      const fontFamily = stylize.getFontFamilyFromTheme(themes[0]);
       assert.ok(typeof fontFamily === 'string');
     }
   });
 
   it('should resolve active theme', async () => {
     await stylize.init();
-    const stylizeInstance = stylize as any;
-    const theme = stylizeInstance.resolveActiveTheme();
+    const theme = stylize.resolveActiveTheme();
     assert.ok(typeof theme === 'string');
     assert.ok(theme.length > 0);
   });

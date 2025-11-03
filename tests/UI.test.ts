@@ -66,15 +66,11 @@ describe('UI', () => {
     const originalShowSaveDialog = app.vscodeapis.showSaveDialog;
     app.vscodeapis.showSaveDialog = async () => ({ fsPath: '/test/save.pdf' } as any);
 
-    try {
-      const path = await ui.chooseSaveLocation('test.pdf');
-      assert.ok(path !== null);
-    } catch (error) {
-      // Expected if dialog isn't fully mocked
-      assert.ok(true);
-    } finally {
-      app.vscodeapis.showSaveDialog = originalShowSaveDialog;
-    }
+    const path = await ui.chooseSaveLocation('test.pdf');
+    assert.ok(path !== null);
+    assert.strictEqual(path, '/test/save.pdf');
+    
+    app.vscodeapis.showSaveDialog = originalShowSaveDialog;
   });
 
   it('should return null when save dialog is cancelled', async () => {
@@ -92,14 +88,9 @@ describe('UI', () => {
   it('should add toolbar to HTML', async () => {
     const html = '<html><body>{{toolbar}}</body></html>';
     
-    try {
-      const result = await ui.addToolbar(html);
-      assert.ok(typeof result === 'string');
-      assert.ok(result.includes('toolbar') || result.length > 0);
-    } catch (error) {
-      // May fail if menus aren't initialized
-      assert.ok(true);
-    }
+    const result = await ui.addToolbar(html);
+    assert.ok(typeof result === 'string');
+    assert.ok(result.includes('toolbar') || result.length > 0);
   });
 
   it('should have static out method', () => {

@@ -288,7 +288,7 @@ export class Stylize {
   /**
    * Resolve active theme for token generation
    */
-  private resolveActiveTheme(): string {
+  public resolveActiveTheme(): string {
     const activeThemeId = this.app.vscodeapis.getActiveThemeId();
     const themeData = this.getThemes().find(theme => theme.id === activeThemeId);
 
@@ -396,13 +396,13 @@ export class Stylize {
   }
 
   // Helper: Get font family from theme
-  private getFontFamilyFromTheme(themeData: Theme): string {
+  public getFontFamilyFromTheme(themeData: Theme): string {
     const et = this.app.vscodeapis.getEditorTypography();
     return themeData?.themeData?.fonts?.editor || et?.fontFamily || 'courier';
   }
 
   // Convert VS Code theme JSON to Shiki-compatible CSS variables format
-  private convertVSCodeThemeToShiki(vscodeTheme: VSCodeTheme): ThemeData {
+  public convertVSCodeThemeToShiki(vscodeTheme: VSCodeTheme): ThemeData {
     // Derive theme type early so both success and error paths agree
     const derivedType: 'light' | 'dark' =
       (vscodeTheme as unknown as { type?: string })?.type === 'dark' ? 'dark' : 'light';
