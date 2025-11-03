@@ -184,9 +184,10 @@ class PaperPrinter {
 - Can request entire classes when needed
 
 **Class ID Requirement**:
-- Every class must have `public readonly id: string` returning the short name (e.g., `'dx'`, `'ui'`, `'pdf'`)
-- Use `public readonly id = "dx"` for constant values (best practice)
-- Use `get id(): string { return "dx" }` only if the value needs to be computed dynamically
+- Every class must have an `id` property/getter returning the short name (e.g., `'dx'`, `'ui'`, `'pdf'`)
+- **Recommended**: `public readonly id = "dx"` - simplest, fastest access, clear intent
+- **Alternative**: `get id(): string { return "dx" }` - no instance property (slightly more memory-efficient for many instances)
+- Use getter only if the value needs to be computed dynamically
 
 ## Migration Stages
 
