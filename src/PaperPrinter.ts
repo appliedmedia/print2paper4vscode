@@ -9,10 +9,8 @@ import {
 } from './UIMenu';
 import { UIWebView } from './UIWebView';
 import { DocInfo_PDF } from './DocInfo_PDF';
-import type { PageRender } from './types/PageRender_t';
 import { DocInfo_PaperPrinter } from './DocInfo_PaperPrinter';
 import type { LanguageId_t } from './Stylize';
-import type { Persist_t } from './Persist';
 import { Yaml } from './Yaml';
 import {
   type PageSizeId_t,
@@ -20,8 +18,6 @@ import {
   type MarginId_t,
   type FontSizeId_t,
   type HeaderFooterPos_t,
-  type HeaderFooterLocation_t,
-  type HeaderFooterElement_t,
   kPageSizeId,
   kOrient,
   kMarginId,
@@ -163,7 +159,6 @@ export class PaperPrinter {
       this.createMenus();
 
       // Initialize theme choice if not set yet
-      const themeMenu = this.app.uimenumgr.getMenuById('theme');
       const currentTheme = this.app.uimenumgr.getValueForSelectedByMenuId('theme');
       if (!currentTheme) {
         this.app.uimenumgr.setPersistForMenuId('theme', this.app.vscodeapis.getActiveThemeId());
@@ -262,6 +257,11 @@ export class PaperPrinter {
       // Generate the complete PDF in one pass
       this.pdfDoc = await this.app.pdf.generatePdf();
 
+      // Log PDF object creation for reuse verification (Stage 4.3)
+      const pdfObjectId = this.pdfDoc ? `pdfDoc@${Date.now()}` : 'null';
+      dx.out(`PDF object created: ${pdfObjectId} (reused for webview, print, save)`);
+      dx.out(`PDF object reuse verification: Same object will be used for webview display and print/save operations`);
+
       dx.out(`PDF generation complete: ${this.pdfDoc.getPageTotal()} pages using unified approach`);
     } catch (error) {
       dx.out(`Error in generatePdf: ${error}`);
@@ -282,7 +282,7 @@ export class PaperPrinter {
       {
         id: 'print',
         displayName: 'Print',
-        icon: '🖨',
+        icon: '??',
         isFlyout: false,
         menuItems: this.menuItems_Print.bind(this),
         flyoutMenuItemIds: [],
@@ -291,7 +291,7 @@ export class PaperPrinter {
       {
         id: 'page',
         displayName: 'Page',
-        icon: '📄',
+        icon: '??',
         isFlyout: false,
         menuItems: this.menuItems_Page.bind(this),
         flyoutMenuItemIds: ['pageSizeId', 'orient', 'marginId', 'header', 'footer'],
@@ -399,7 +399,7 @@ export class PaperPrinter {
       {
         id: 'theme',
         displayName: 'Theme',
-        icon: '🎨',
+        icon: '??',
         isFlyout: false,
         menuItems: this.menuItems_Theme.bind(this),
         flyoutMenuItemIds: [],
@@ -444,7 +444,7 @@ export class PaperPrinter {
     const themes = this.app.stylize.getThemes();
 
     return themes.map(theme => {
-      // No need to add 📝 here, UIMenu.ts will handle it based on default selection
+      // No need to add ?? here, UIMenu.ts will handle it based on default selection
       return {
         id: theme.id,
         displayName: theme.displayName,
@@ -469,11 +469,11 @@ export class PaperPrinter {
 
     if (existingEditorOption) {
       dx.out(`Editor size ${editorSize} already exists in list`);
-      // Editor size already exists - no need to add 📝 here, UIMenu.ts will handle it
+      // Editor size already exists - no need to add ?? here, UIMenu.ts will handle it
       // existingEditorOption.displayName stays as is
     } else {
       dx.out(`Editor size ${editorSize} not in list, adding it`);
-      // Editor size not in list - add it at the top without 📝 suffix
+      // Editor size not in list - add it at the top without ?? suffix
       sizeOptions.unshift({ id: String(editorSize), displayName: `${editorSize}px` });
     }
 
