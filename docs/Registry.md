@@ -89,11 +89,18 @@ class PDF {
   async renderPage(pageNum: number): Promise<void> {
     const subDx = this.deps.dx.sub('renderPage');
     
-    // Use requested methods - access via component name (organized by Registry)
-    const tokens = await this.deps.stylize.getTokens('code', 'javascript', 'theme');
-    this.deps.ui.showInfoMessage(`Rendering page ${pageNum}`);
-    
-    const content = this.deps.os.fileRead('template.html');
+    try {
+      // Use requested methods - access via component name (organized by Registry)
+      const tokens = await this.deps.stylize.getTokens('code', 'javascript', 'theme');
+      this.deps.ui.showInfoMessage(`Rendering page ${pageNum}`);
+      
+      const content = this.deps.os.fileRead('template.html');
+    } catch (err) {
+      // Error handling: log via Diagnostics and show user-friendly error
+      subDx.out(`Failed to render page ${pageNum}: ${err instanceof Error ? err.message : String(err)}`);
+      this.deps.ui.showErrorMessage(`Failed to render page ${pageNum}. Please try again.`);
+      throw err; // Re-throw to allow caller to handle
+    }
   }
 }
 
@@ -117,9 +124,18 @@ class UI {
   }
   
   showError(msg: string): void {
-    // Access methods via component organization
-    this.deps.vscodeapis.showErrorMessage(msg);
-    this.deps.dx.out(`Error: ${msg}`);
+    try {
+      // Access methods via component organization
+      // Check dependencies are available before using
+      if (!this.deps.vscodeapis || !this.deps.dx) {
+        throw new Error('Required dependencies not available');
+      }
+      this.deps.vscodeapis.showErrorMessage(msg);
+      this.deps.dx.out(`Error: ${msg}`);
+    } catch (err) {
+      // Fallback: log to console if diagnostics unavailable
+      console.error(`UI.showError failed: ${err instanceof Error ? err.message : String(err)}`);
+    }
   }
 }
 
@@ -156,12 +172,26 @@ class PaperPrinter {
   }
   
   async handlePrint(): Promise<void> {
-    const content = this.deps.tabinspector.getActiveTabContent();
-    const lang = this.deps.tabinspector.getLanguageId();
-    const tokens = await this.deps.stylize.getTokens(content, lang, 'github-light');
+    const subDx = this.deps.dx.sub('handlePrint');
     
-    this.deps.pdf.setTokensForPageRender(tokens, 'github-light');
-    await this.deps.pdf.renderPage(0);
+    try {
+      // Check dependencies are available
+      if (!this.deps.tabinspector || !this.deps.stylize || !this.deps.pdf) {
+        throw new Error('Required dependencies not available for printing');
+      }
+      
+      const content = this.deps.tabinspector.getActiveTabContent();
+      const lang = this.deps.tabinspector.getLanguageId();
+      const tokens = await this.deps.stylize.getTokens(content, lang, 'github-light');
+      
+      this.deps.pdf.setTokensForPageRender(tokens, 'github-light');
+      await this.deps.pdf.renderPage(0);
+    } catch (err) {
+      // Error handling: log and show user-friendly message
+      subDx.out(`Print failed: ${err instanceof Error ? err.message : String(err)}`);
+      this.deps.ui.showErrorMessage('Failed to print document. Please check your selection and try again.');
+      // Don't re-throw - gracefully degrade
+    }
   }
 }
 ```
@@ -182,6 +212,13 @@ class PaperPrinter {
 - Only disambiguate when truly needed (rare)
 - Return format matches current access pattern (`app.dx.out()`, `app.ui.showErrorMessage()`, etc.)
 - Can request entire classes when needed
+
+**Method Name Ambiguity Resolution**:
+- **Build-time detection**: During `buildMethodMap()`, Registry scans all components and detects method name collisions
+- **Fail-fast**: If ambiguous methods exist without explicit prefixes, Registry construction fails with clear error message listing all conflicts
+- **Explicit prefixes required**: For any method name that exists in multiple components, callers must use `'componentName.methodName'` format
+- **Example**: If both `UI` and `VSCodeAPIs` have `showErrorMessage`, request as `'ui.showErrorMessage'` or `'vscodeapis.showErrorMessage'`
+- This prevents silent failures and undefined behavior in production
 
 **Class ID Requirement**:
 - Every class must have `public readonly id: string` returning the short name (e.g., `'dx'`, `'ui'`, `'pdf'`)
@@ -273,14 +310,15 @@ This provides:
   - Reads each component's `id` property or calls `id()` getter to get short name
   - Scans all methods on each component
   - Builds mapping: methodName -> componentId (e.g., 'out' -> 'dx')
+  - **Detects method name collisions** at build-time and fails hard if ambiguous methods exist without explicit prefix
 - [ ] Implement `use()` method that:
   - Handles class name requests (e.g., `Diagnostics: []`, `dx: []`) - returns entire instance
   - Handles method name requests - uses methodMap to resolve to component
   - Returns Diagnostics immediately (always available, created at Registry construction)
   - Checks cache for existing instances
-  - Creates instances lazily if not cached
+  - Creates instances lazily if not cached with error handling (see Error Handling section)
   - Returns scoped object with only requested methods/instances, or entire instance if requested
-- [ ] Add circular dependency detection
+- [ ] Add circular dependency detection (see algorithm below)
 
 #### 1.2: Implement Method Scoping
 - [ ] Create proxy objects that expose only requested methods
@@ -512,6 +550,69 @@ This provides:
 
 ---
 
+## Error Handling Strategy
+
+### Error Handling During Lazy Initialization
+
+Registry factories may throw errors during component construction. The Registry must handle these gracefully:
+
+**Error Boundary in Registry.use()**:
+```typescript
+use<T>(request: DependencyRequest): T {
+  // ... resolve method names to components ...
+  
+  for (const [componentName, methods] of componentMethods) {
+    if (componentName === 'dx') {
+      result.dx = this.createScopedAccess(this.diagnostics, Array.from(methods));
+    } else {
+      // Get or create component instance lazily with error handling
+      if (!this.instances.has(componentName)) {
+        try {
+          const factory = this.factories.get(componentName);
+          if (!factory) throw new Error(`No factory for component: ${componentName}`);
+          this.instances.set(componentName, factory(this.app));
+        } catch (err) {
+          // Log error via Diagnostics
+          this.diagnostics.out(`Failed to create component '${componentName}': ${err instanceof Error ? err.message : String(err)}`);
+          
+          // Circuit breaker: mark component as failed, don't retry
+          this.failedComponents.add(componentName);
+          
+          // Throw meaningful error to caller
+          throw new Error(
+            `Failed to initialize component '${componentName}': ${err instanceof Error ? err.message : String(err)}. ` +
+            `Extension may need to be restarted.`
+          );
+        }
+      }
+      
+      // Check if component previously failed
+      if (this.failedComponents.has(componentName)) {
+        throw new Error(`Component '${componentName}' failed to initialize and is unavailable`);
+      }
+      
+      const instance = this.instances.get(componentName);
+      result[componentName] = this.createScopedAccess(instance, Array.from(methods));
+    }
+  }
+  
+  return result as T;
+}
+```
+
+**Fallback Strategy**:
+- Components should check for missing dependencies before use (null/undefined guards)
+- Use try/catch blocks around Registry.use() calls in constructors
+- Log errors via Diagnostics when available
+- Degrade gracefully - return early or use fallback values where possible
+
+**Circuit Breaker**:
+- Track failed component initializations
+- Don't retry failed factories on subsequent requests
+- Provide clear error messages indicating component is unavailable
+
+---
+
 ### Stage 8: Optimization and Enhancement
 
 **Goal**: Optimize Registry and add advanced features
@@ -686,15 +787,51 @@ class Registry {
 
 ## Rollback Plan
 
-### Per-Stage Rollback
-- Each stage should be atomic and reversible
-- Keep old code commented out during migration
-- Use feature flags if needed
+### Feature Flag Strategy (Recommended)
+
+Use feature flags instead of commented-out code or multiple branches:
+
+**Implementation**:
+```typescript
+// Feature flag configuration
+const USE_REGISTRY = process.env.USE_REGISTRY === 'true' || false;
+
+class App {
+  constructor(context: ExtensionContext, vscode: typeof import('vscode')) {
+    if (USE_REGISTRY) {
+      this.registry = new Registry(vscode, context, this);
+      // Use Registry pattern
+    } else {
+      // Legacy pattern: eager initialization
+      this.vscodeapis = new VSCodeAPIs(this, vscode, context);
+      this.ui = new UI(this);
+      // ... etc
+    }
+  }
+}
+```
+
+**Rollout Strategy**:
+- **Stage 0-1**: Infrastructure only (no flag needed, no user-facing changes)
+- **Stage 2+**: Feature flag enables Registry for that component tier
+  - Start with `USE_REGISTRY=false` (default)
+  - Enable flag for specific components: `USE_REGISTRY=pdf,ui`
+  - Gradually expand: `USE_REGISTRY=pdf,ui,os`
+  - Full rollout: `USE_REGISTRY=true`
+- **Rollback**: Flip flag to `false`, revert single commit if needed
+- **Parallel deployment**: Gradual rollout (50% to 100%) with monitoring
+
+**Benefits**:
+- Clean codebase (no commented-out code)
+- Single branch to maintain
+- Instant rollback via flag flip
+- Gradual rollout reduces risk
+- Easy A/B testing
 
 ### Emergency Rollback
-- Git branch for each stage
-- Tag stable points
-- Quick revert to previous stage if critical issues found
+- Feature flag flip (instant)
+- Git revert to last stable commit if needed
+- Tag stable points for reference
 
 ## Migration Checklist
 
@@ -720,8 +857,71 @@ class Registry {
 ## Risks and Mitigations
 
 ### Risk: Circular Dependencies
-- **Mitigation**: Registry detects and reports circular dependencies
+- **Mitigation**: Registry detects and reports circular dependencies (see algorithm below)
 - **Mitigation**: Careful stage ordering (leaf components first)
+
+### Circular Dependency Detection Algorithm
+
+Registry uses **lazy detection** (on-demand during `use()` calls) to detect circular dependencies:
+
+```typescript
+class Registry {
+  private constructionStack: string[] = []; // Track components being constructed
+  
+  use<T>(request: DependencyRequest): T {
+    const result: any = {};
+    const componentMethods: Map<string, Set<string>> = new Map();
+    
+    // Resolve method names to components...
+    
+    for (const [componentName, methods] of componentMethods) {
+      // Check for circular dependency
+      if (this.constructionStack.includes(componentName)) {
+        const cycle = [...this.constructionStack, componentName].join(' -> ');
+        throw new Error(
+          `Circular dependency detected: ${cycle}. ` +
+          `Components cannot depend on each other directly or indirectly.`
+        );
+      }
+      
+      if (componentName === 'dx') {
+        result.dx = this.createScopedAccess(this.diagnostics, Array.from(methods));
+      } else {
+        if (!this.instances.has(componentName)) {
+          // Push component onto construction stack
+          this.constructionStack.push(componentName);
+          
+          try {
+            const factory = this.factories.get(componentName);
+            if (!factory) throw new Error(`No factory for component: ${componentName}`);
+            const instance = factory(this.app);
+            
+            // If factory calls app.use() internally, it will detect cycles
+            this.instances.set(componentName, instance);
+          } finally {
+            // Pop component from stack when done (even if error occurred)
+            this.constructionStack.pop();
+          }
+        }
+        
+        const instance = this.instances.get(componentName);
+        result[componentName] = this.createScopedAccess(instance, Array.from(methods));
+      }
+    }
+    
+    return result as T;
+  }
+}
+```
+
+**How it works**:
+1. Track construction stack: List of components currently being constructed
+2. Before creating a component, check if it's already in the stack
+3. If found, throw error with full cycle path
+4. Push component onto stack before factory call
+5. Pop component from stack after factory call (use try/finally to ensure cleanup)
+
+**Performance**: Minimal overhead - only tracks stack during lazy initialization, no upfront graph building needed.
 
 ### Risk: Breaking Changes
 - **Mitigation**: Incremental migration with tests at each stage
@@ -742,7 +942,7 @@ class Registry {
 4. ? Explicit dependency declarations in constructors
 5. ? All tests passing
 6. ? No performance regressions
-7. ? Code is cleaner and more maintainable
+7. ? Code is cleaner and more maintainable.
 
 ## Timeline Estimate
 
