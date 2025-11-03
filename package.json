@@ -33,12 +33,6 @@
           "command": "p2p4vsc.print2paper",
           "group": "navigation"
         }
-      ],
-      "menuBar/file": [
-        {
-          "command": "p2p4vsc.print2paper",
-          "group": "6_print"
-        }
       ]
     },
     "keybindings": [
