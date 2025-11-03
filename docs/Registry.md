@@ -67,7 +67,7 @@ class PDF {
   
   constructor(registry: Registry) {
     // Request specific methods from specific components
-    this.deps = registry.deps({
+    this.deps = registry.use({
       stylize: ['getTokens', 'getThemes'],
       ui: ['showErrorMessage', 'showInfoMessage'],
       os: ['fileRead', 'fileWrite'],
@@ -97,7 +97,7 @@ class UI {
   private deps: UIDependencies;
   
   constructor(registry: Registry) {
-    this.deps = registry.deps({
+    this.deps = registry.use({
       dx: ['create', 'sub', 'out'],
       os: ['fileRead'],
       vscodeapis: ['showErrorMessage', 'showInfoMessage', 'showWarningMessage']
@@ -118,7 +118,7 @@ class PaperPrinter {
   private deps: PaperPrinterDependencies;
   
   constructor(registry: Registry) {
-    this.deps = registry.deps({
+    this.deps = registry.use({
       pdf: ['renderPage', 'getCurrentPdfDoc', 'setTokensForPageRender'],
       stylize: ['getTokens', 'getThemes'],
       tabinspector: ['getActiveTabContent', 'getLanguageId'],
@@ -144,11 +144,14 @@ class PaperPrinter {
 
 ### How Dependency Access Works
 
-1. **Request Phase**: In constructor, call `registry.deps({ componentName: ['method1', 'method2'] })`
-2. **Registry Returns**: An object with only the requested methods, properly bound
-3. **Access Phase**: Use `this.deps.componentName.methodName()` throughout the class
-4. **Type Safety**: Each component's dependency object is typed based on what was requested
-5. **Class References**: For class references (like `Coords`), request `'ClassName'` as string, Registry returns constructor function
+1. **Request Phase**: In constructor, call `registry.use({ componentName: ['method1', 'method2'] })`
+2. **Registry Validates**: Registry checks that requested methods actually exist on the component (throws error if not found)
+3. **Registry Returns**: An object with only the requested methods, properly bound
+4. **Access Phase**: Use `this.deps.componentName.methodName()` throughout the class
+5. **Type Safety**: Each component's dependency object is typed based on what was requested
+6. **Class References**: For class references (like `Coords`), request `'ClassName'` as string, Registry returns constructor function
+
+**Important**: You cannot request methods from the wrong component. Registry validates that each requested method actually exists on that component. For example, `ui: ['out']` would fail because `out` is a method on Diagnostics (`dx`), not UI. This prevents typos and enforces proper dependency boundaries.
 
 ## Migration Stages
 
@@ -186,7 +189,7 @@ class PaperPrinter {
 - [ ] Store Diagnostics instance in Registry's internal cache immediately
 - [ ] Implement lazy instantiation cache in Registry for other components
 - [ ] Add component factory functions mapping (e.g., `VSCodeAPIs`, `UI`, `PDF`, etc.)
-- [ ] Implement `deps()` method that:
+- [ ] Implement `use()` method that:
   - Returns Diagnostics immediately (always available, created at Registry construction)
   - Checks cache for existing instances
   - Creates instances lazily if not cached
@@ -425,7 +428,7 @@ class PaperPrinter {
 
 #### 8.1: Add Type Safety
 - [ ] Create strong types for each component's dependency requests
-- [ ] Ensure Registry `require()` returns properly typed objects
+- [ ] Ensure Registry `use()` returns properly typed objects
 - [ ] Add TypeScript generics for better type inference
 
 #### 8.2: Add Dependency Validation
@@ -447,6 +450,43 @@ class PaperPrinter {
 
 ---
 
+## Architecture Decision: Registry Exposure
+
+### Why Pass Registry as Constructor Parameter?
+
+Two approaches were considered:
+
+**Option A: Explicit Registry Parameter** (chosen)
+```typescript
+class PDF {
+  constructor(registry: Registry) {
+    this.deps = registry.use({ ... });
+  }
+}
+```
+
+**Option B: Registry via App**
+```typescript
+class PDF {
+  constructor(app: App) {
+    this.deps = app.registry.use({ ... });
+  }
+}
+```
+
+**Why Option A was chosen:**
+1. **True decoupling**: Components don't need App at all - only Registry
+2. **Testing**: Easier to mock/test - just pass a Registry mock, no App needed
+3. **Explicit dependencies**: Constructor signature shows exactly what's needed (Registry)
+4. **Smaller interface**: Components only see Registry, not the entire App API
+5. **Future flexibility**: Registry could be swapped or extended without touching App
+
+**Tradeoffs:**
+- Slightly more verbose (explicit `registry` parameter)
+- But clearer intent and better separation of concerns
+
+If you prefer Option B for simplicity, it's still viable - components would be `constructor(app: App)` and use `app.registry.use()`. The Registry pattern benefits still apply.
+
 ## Registry Implementation Details
 
 ```typescript
@@ -466,7 +506,7 @@ class Registry {
     this.registerFactories();
   }
   
-  deps<T>(request: DependencyRequest): T {
+  use<T>(request: DependencyRequest): T {
     const result: any = {};
     
     for (const [componentName, methods] of Object.entries(request)) {
@@ -499,6 +539,13 @@ class Registry {
   private createScopedAccess(instance: any, methods: string[]): any {
     const scoped: any = {};
     for (const method of methods) {
+      // Validate method exists on component
+      if (!(method in instance)) {
+        throw new Error(
+          `Method '${method}' not found on component. Available methods: ${Object.getOwnPropertyNames(instance).filter(m => typeof instance[m] === 'function').join(', ')}`
+        );
+      }
+      
       if (typeof instance[method] === 'function') {
         scoped[method] = instance[method].bind(instance);
       } else {
