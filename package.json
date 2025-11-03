@@ -34,10 +34,12 @@
           "group": "navigation"
         }
       ],
-      "menuBar/file": [
+      "editor/title": [
         {
           "command": "p2p4vsc.print2paper",
-          "group": "6_print"
+          "group": "navigation",
+          "when": "editorTextFocus",
+          "title": "???"
         }
       ]
     },

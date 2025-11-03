@@ -1482,3 +1482,133 @@ This gives us the knowledge to handle edge cases and debug issues when they aris
 6. **Error Handling** - Implement robust error handling for cases where theme or grammar files can't be loaded.
 
 This approach gives us the exact VS Code syntax highlighting without trying to recreate it, making our solution generic and future-proof.
+
+## Menu Contribution System
+
+### Menu Contribution Points
+
+VS Code extensions can contribute menu items to specific locations using the `contributes.menus` section in `package.json`. Each menu has a unique identifier and supports conditional display using `when` clauses.
+
+**Valid Menu Identifiers:**
+
+- `editor/context` - Editor context menu (right-click menu)
+- `editor/title` - Editor title menu bar (buttons/actions shown in editor tab)
+- `editor/title/context` - Editor title context menu
+- `explorer/context` - File Explorer context menu
+- `scm/title` - Source Control title menu
+- `scm/resourceGroup/context` - SCM resource group context menu
+- `scm/resourceState/context` - SCM resource state context menu
+- `file/newFile` - New File item in File menu and Welcome page
+- `view/title` - View title menu
+- `view/item/context` - View item context menu
+- `commandPalette` - Command Palette (commands are automatically added here)
+
+**Menu Bar Menu Contributions:**
+
+VS Code does NOT support adding arbitrary items to the top-level menu bar (File, Edit, View, etc.) using `menuBar/*` identifiers. The top-level menu bar is controlled by VS Code internally and extensions cannot add items directly to it.
+
+**What Works:**
+
+- ✅ `editor/context` - Add items to editor right-click menu
+- ✅ `editor/title` - Add items to editor title bar (shown as buttons/actions in the editor tab)
+- ✅ `file/newFile` - Replace/modify the New File menu item
+- ✅ Context menus for specific views (explorer, scm, etc.)
+- ✅ Command Palette - All commands automatically appear here
+
+**What Doesn't Work:**
+
+- ❌ `menuBar/file` - Not a valid menu identifier
+- ❌ `menuBar/edit` - Not a valid menu identifier
+- ❌ `menuBar/view` - Not a valid menu identifier
+- ❌ Adding arbitrary items to top-level menu bar menus
+- ❌ `menuBar/*` - General menu bar contributions are not supported
+
+**Current Implementation:**
+
+Our extension uses:
+```json
+"menus": {
+  "editor/context": [
+    {
+      "command": "p2p4vsc.print2paper",
+      "group": "navigation"
+    }
+  ],
+  "editor/title": [
+    {
+      "command": "p2p4vsc.print2paper",
+      "group": "navigation",
+      "when": "editorTextFocus"
+    }
+  ]
+}
+```
+
+This adds the command to:
+- Editor context menu (right-click)
+- Editor title bar (as a button/action when editor has focus)
+
+**Alternative Solutions:**
+
+1. **Command Palette** - Commands are automatically available via Command Palette (`Cmd+Shift+P` / `Ctrl+Shift+P`)
+2. **Keyboard Shortcuts** - Use `contributes.keybindings` to assign keyboard shortcuts
+3. **Editor Context Menu** - Add to right-click menu (already implemented)
+4. **Editor Title Menu** - Add to editor title bar menu using `editor/title` (already implemented)
+
+#### Example: Adding to Editor Title Menu
+
+```json
+"menus": {
+  "editor/title": [
+    {
+      "command": "p2p4vsc.print2paper",
+      "group": "navigation",
+      "when": "editorTextFocus"
+    }
+  ]
+}
+```
+
+This adds a button to the editor title bar when an editor has focus. The `when` clause ensures it only appears when text is focused.
+
+**What the Editor Title Button Looks Like:**
+
+When you add a command to `editor/title`, VS Code displays it as:
+- A clickable button/action in the editor tab area (top-right of the editor, near the tab)
+- Shows the command's `title` property as the button label (e.g., "Print2Paper")
+- By default, no icon is shown unless you specify one
+
+**Overriding Menu Display Text:**
+
+You can override the displayed text for a specific menu location while keeping the command's original title for the Command Palette:
+
+```json
+"menus": {
+  "editor/title": [
+    {
+      "command": "p2p4vsc.print2paper",
+      "group": "navigation",
+      "when": "editorTextFocus",
+      "title": "🖨️"
+    }
+  ]
+}
+```
+
+This shows:
+- **Editor title bar**: 🖨️ emoji button
+- **Command Palette**: "Print2Paper" (from the command's `title` property)
+- **Context menu**: "Print2Paper" (from the command's `title` property)
+
+The `title` property in the menu entry overrides the display text for that specific menu location only.
+
+**Menu Groups:**
+
+Menu items can be organized into groups. Common groups include:
+- `navigation` - Navigation items (first position)
+- `1_modification` - Modification items
+- `2_cutcopypaste` - Cut/Copy/Paste items
+- `9_core` - Core items
+- `z_commands` - Command items (last position)
+
+Groups can be prefixed with numbers or letters to control ordering, where lower numbers/letters appear first.
