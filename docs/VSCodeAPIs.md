@@ -1578,46 +1578,29 @@ When you add a command to `editor/title`, VS Code displays it as:
 - Shows the command's `title` property as the button label (e.g., "Print2Paper")
 - By default, no icon is shown unless you specify one
 
-**Adding an Icon to the Title Button:**
+**Overriding Menu Display Text:**
 
-You can customize the button appearance by adding an icon to the command definition:
+You can override the displayed text for a specific menu location while keeping the command's original title for the Command Palette:
 
 ```json
-"commands": [
-  {
-    "command": "p2p4vsc.print2paper",
-    "title": "Print2Paper",
-    "category": "Print",
-    "icon": {
-      "light": "path/to/light-icon.svg",
-      "dark": "path/to/dark-icon.svg"
+"menus": {
+  "editor/title": [
+    {
+      "command": "p2p4vsc.print2paper",
+      "group": "navigation",
+      "when": "editorTextFocus",
+      "title": "🖨️"
     }
-  }
-]
+  ]
+}
 ```
 
-Or use a VS Code ThemeIcon (recommended):
-```json
-"commands": [
-  {
-    "command": "p2p4vsc.print2paper",
-    "title": "Print2Paper",
-    "category": "Print",
-    "icon": "$(printer)"
-  }
-]
-```
+This shows:
+- **Editor title bar**: 🖨️ emoji button
+- **Command Palette**: "Print2Paper" (from the command's `title` property)
+- **Context menu**: "Print2Paper" (from the command's `title` property)
 
-ThemeIcon names can be found at: https://code.visualstudio.com/api/references/icons-in-labels#icon-listing
-
-Common print-related icons: `$(printer)`, `$(file-pdf)`, `$(print-preview)`
-
-**Visual Appearance:**
-
-- Without icon: Shows as a text button with "Print2Paper" label
-- With icon: Shows as an icon button (icon only) or icon + text depending on VS Code's UI
-- Appears in the editor tab area, typically grouped with other editor actions
-- Only visible when `editorTextFocus` condition is met (when you're focused on a text editor)
+The `title` property in the menu entry overrides the display text for that specific menu location only.
 
 **Menu Groups:**
 
