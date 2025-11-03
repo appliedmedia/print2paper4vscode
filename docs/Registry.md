@@ -11,7 +11,7 @@ This document outlines a comprehensive migration plan to replace the current dep
 3. **Explicit dependencies**: Each class constructor explicitly declares what it needs via a Registry
 4. **Remove init() methods**: Eliminate the need for separate initialization routines
 5. **Type safety**: Maintain strong typing throughout the migration
-6. **Minimal startup overhead**: Only construct App, Registry, and Diagnostics at startup (Diagnostics needed for debugging)
+6. **Minimal startup overhead**: Only construct App and Registry at startup (Registry creates Diagnostics internally)
 
 ## Current Architecture Problems
 
@@ -51,12 +51,12 @@ class PDF {
 
 ### Core Concepts
 
-1. **Registry Class**: Central registry that manages lazy instantiation and dependency resolution
+1. **Registry Class**: Central registry that manages lazy instantiation and dependency resolution, owns Diagnostics
 2. **Dependency Declaration**: Components declare needed dependencies in their constructors
-3. **Lazy Construction**: Components are created on-demand when first requested (except Diagnostics, which is immediate)
+3. **Lazy Construction**: Components are created on-demand when first requested (except Diagnostics, which Registry creates immediately)
 4. **Scoped Access**: Registry returns objects containing only requested methods/instances
 5. **No Init Required**: Construction handles all initialization
-6. **Diagnostics Always Available**: Diagnostics is created immediately at App startup for debugging purposes
+6. **Registry Owns Diagnostics**: Registry creates and manages Diagnostics internally for debugging and error reporting
 
 ### Target Usage Pattern
 
@@ -98,10 +98,9 @@ class PDF {
 
 #### 0.2: Create Registry Integration Points
 - [ ] Add `Registry` instance to App class (constructed in App constructor)
-- [ ] Create Diagnostics instance immediately in App constructor (before Registry)
-- [ ] Pass Diagnostics to Registry constructor so it's always available
+- [ ] Registry constructor creates Diagnostics instance immediately internally
 - [ ] Create minimal Registry that wraps existing App pattern
-- [ ] Ensure Registry can access existing App components during transition
+- [ ] Registry can access existing App components during transition (including app.dx for backward compatibility)
 
 #### 0.3: Add Type Definitions
 - [ ] Create `src/types/Registry_t.ts` for Registry type definitions
@@ -118,11 +117,12 @@ class PDF {
 **Goal**: Build complete Registry implementation with lazy loading
 
 #### 1.1: Implement Registry Core
-- [ ] Store Diagnostics instance in Registry (created immediately, not lazy)
-- [ ] Implement lazy instantiation cache in Registry
+- [ ] Registry constructor creates Diagnostics instance immediately (not lazy, needed for debugging)
+- [ ] Store Diagnostics instance in Registry's internal cache immediately
+- [ ] Implement lazy instantiation cache in Registry for other components
 - [ ] Add component factory functions mapping (e.g., `VSCodeAPIs`, `UI`, `PDF`, etc.)
 - [ ] Implement `require()` method that:
-  - Returns Diagnostics immediately (no lazy loading)
+  - Returns Diagnostics immediately (always available, created at Registry construction)
   - Checks cache for existing instances
   - Creates instances lazily if not cached
   - Returns scoped object with only requested methods/instances
@@ -135,11 +135,10 @@ class PDF {
 
 #### 1.3: Update App Constructor
 - [ ] Remove eager component construction from App constructor
-- [ ] Create Diagnostics instance immediately (needed for debugging)
-- [ ] Create Registry instance with Diagnostics passed in
+- [ ] Create Registry instance (Registry creates Diagnostics internally)
 - [ ] Register component factories with Registry
 - [ ] Update App to use Registry for accessing components
-- [ ] Keep Diagnostics accessible via `app.dx` for backward compatibility during migration
+- [ ] Optionally keep `app.dx` as a convenience property that delegates to Registry (for backward compatibility during migration)
 
 **Testing**: 
 - Registry can lazy-load components
@@ -153,7 +152,7 @@ class PDF {
 
 **Goal**: Migrate components with no dependencies or minimal dependencies
 
-**Note**: Diagnostics is NOT migrated here - it's created immediately at App startup and always available via Registry
+**Note**: Diagnostics is owned by Registry and created immediately at Registry construction. All components request Diagnostics via Registry.
 
 #### 2.1: Migrate OS Classes
 - [ ] Update OS base class constructor to accept Registry
@@ -324,9 +323,9 @@ class PDF {
 #### 7.1: Remove App Component Properties
 - [ ] Remove `vscodeapis`, `ui`, `pdf`, etc. properties from App class
 - [ ] Remove `componentOrder` array
-- [ ] Keep only `Registry` and `Diagnostics` in App (Diagnostics created immediately)
+- [ ] Keep only `Registry` property in App (Registry owns Diagnostics internally)
 - [ ] Update App to use Registry for component access
-- [ ] Keep `app.dx` property for backward compatibility if needed, or remove if all access via Registry
+- [ ] Remove `app.dx` property if present (all access via Registry now)
 
 #### 7.2: Remove Init Methods
 - [ ] Remove all `init()` method implementations
@@ -397,28 +396,33 @@ type DependencyRequest = {
 class Registry {
   private instances: Map<string, any> = new Map();
   private factories: Map<string, (registry: Registry) => any> = new Map();
-  private diagnostics: Diagnostics; // Created immediately, not lazy
+  private diagnostics: Diagnostics; // Created immediately, owned by Registry
   
   constructor(
-    private diagnostics: Diagnostics, // Created at App startup
     private vscode: any, 
     private context: any
   ) {
-    // Store Diagnostics immediately (not lazy)
-    this.instances.set('dx', diagnostics);
+    // Create Diagnostics immediately (needed for debugging during construction)
+    this.diagnostics = new Diagnostics('Registry', undefined, null, null);
+    this.instances.set('dx', this.diagnostics);
     this.registerFactories();
   }
   
   require<T>(request: DependencyRequest): T {
     // Implementation:
-    // 1. Handle Diagnostics specially (always available immediately)
+    // 1. Handle Diagnostics specially (always available immediately, owned by Registry)
     // 2. For each other requested component:
     //    - Check cache, create if needed
     //    - Return scoped object with only requested methods
   }
   
   private registerFactories(): void {
-    // Register factory functions for each component (except Diagnostics)
+    // Register factory functions for each component (except Diagnostics, which Registry owns)
+  }
+  
+  // Optional: Get Diagnostics instance directly (for App convenience property during migration)
+  getDiagnostics(): Diagnostics {
+    return this.diagnostics;
   }
 }
 ```
@@ -543,20 +547,21 @@ private createScopedAccess(instance: any, requestedMethods: string[]): any {
 
 ## Special Considerations
 
-### Diagnostics Immediate Availability
+### Registry Owns Diagnostics
 
-Diagnostics is the only component that is **not** lazy-loaded. It must be created immediately at App startup because:
+Registry creates and manages Diagnostics internally. This simplifies the architecture:
 
-1. **Debugging needs**: Components need Diagnostics for logging during their own construction
-2. **Early error reporting**: If Registry or other components fail during construction, Diagnostics should be available to report the error
-3. **Dependency chain**: Nearly all components depend on Diagnostics for logging, so it's a foundational dependency
+1. **Single Responsibility**: Registry is the dependency manager, so it manages all dependencies including Diagnostics
+2. **Simplified App**: App only needs to create Registry, Registry handles Diagnostics
+3. **Early Availability**: Registry creates Diagnostics immediately in its constructor, before any components are created
+4. **Centralized Ownership**: One place manages Diagnostics lifecycle
 
 **Implementation approach**:
-- Diagnostics is created in App constructor before Registry
-- Diagnostics is passed to Registry constructor
-- Registry stores Diagnostics instance immediately (not in lazy cache)
+- Registry constructor creates Diagnostics instance immediately (first thing)
+- Registry stores Diagnostics in its instance cache immediately
 - Registry's `require()` method returns Diagnostics immediately when requested
 - All components request Diagnostics via Registry: `registry.require({ dx: ['create', 'sub', 'out'] })`
+- App can optionally expose `app.dx` as a convenience property that delegates to Registry's Diagnostics during migration
 
 ## Notes
 
