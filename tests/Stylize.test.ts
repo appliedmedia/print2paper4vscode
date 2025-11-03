@@ -182,4 +182,85 @@ describe('Stylize', () => {
     assert.ok(Array.isArray(tokens));
     assert.ok(tokens.length > 0);
   });
+
+  it('should get all themes including VS Code themes', async () => {
+    await stylize.init();
+    const allThemes = stylize.getThemes();
+    
+    assert.ok(allThemes.length > 0, 'Should have themes');
+    // Should include Shiki themes
+    const shikiThemes = allThemes.filter(t => !t.themeData);
+    assert.ok(shikiThemes.length > 0, 'Should have Shiki themes');
+  });
+
+  it('should convert VS Code theme to Shiki format', async () => {
+    await stylize.init();
+    const vscodeTheme = {
+      name: 'test-theme',
+      colors: {
+        'editor.background': '#ffffff',
+        'editor.foreground': '#000000',
+      },
+      tokenColors: [
+        {
+          scope: 'keyword',
+          settings: {
+            foreground: '#0000ff',
+          },
+        },
+      ],
+    };
+
+    // Access private method through type assertion
+    const stylizeInstance = stylize as any;
+    const converted = stylizeInstance.convertVSCodeThemeToShiki(vscodeTheme);
+    
+    assert.ok(converted);
+    assert.strictEqual(converted.name, 'test-theme');
+    assert.ok(converted.colors);
+    assert.ok(Array.isArray(converted.tokenColors));
+  });
+
+  it('should handle VS Code theme conversion error gracefully', async () => {
+    await stylize.init();
+    const invalidTheme = null as any;
+
+    const stylizeInstance = stylize as any;
+    const converted = stylizeInstance.convertVSCodeThemeToShiki(invalidTheme);
+    
+    // Should return default theme instead of null
+    assert.ok(converted);
+    assert.ok(converted.name);
+  });
+
+  it('should escape HTML characters', async () => {
+    await stylize.init();
+    const stylizeInstance = stylize as any;
+    
+    assert.strictEqual(stylizeInstance.escapeHtml('&'), '&amp;');
+    assert.strictEqual(stylizeInstance.escapeHtml('<'), '&lt;');
+    assert.strictEqual(stylizeInstance.escapeHtml('>'), '&gt;');
+    assert.strictEqual(stylizeInstance.escapeHtml('"'), '&quot;');
+    assert.strictEqual(stylizeInstance.escapeHtml("'"), '&#39;');
+    assert.strictEqual(stylizeInstance.escapeHtml('test & < > " \''), 'test &amp; &lt; &gt; &quot; &#39;');
+  });
+
+  it('should get font family from theme', async () => {
+    await stylize.init();
+    const stylizeInstance = stylize as any;
+    const themes = stylize.getThemes();
+    
+    if (themes.length > 0) {
+      const fontFamily = stylizeInstance.getFontFamilyFromTheme(themes[0]);
+      assert.ok(typeof fontFamily === 'string');
+    }
+  });
+
+  it('should resolve active theme', async () => {
+    await stylize.init();
+    const stylizeInstance = stylize as any;
+    const theme = stylizeInstance.resolveActiveTheme();
+    assert.ok(typeof theme === 'string');
+    assert.ok(theme.length > 0);
+  });
 });
