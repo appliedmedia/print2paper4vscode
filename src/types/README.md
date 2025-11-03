@@ -7,7 +7,6 @@ This directory contains TypeScript type definitions for our project.
 ### Custom Type Definitions
 
 - **`jspdf.d.ts`** - Type definitions for jsPDF library
-- **`PageRender_t.ts`** - Page rendering types
 - **`PaperPrinter_t.ts`** - Paper printer configuration types
 - **`PDF_t.ts`** - PDF data structure types
 - **`theme_t.ts`** - Theme and syntax highlighting types

@@ -34,10 +34,12 @@
           "group": "navigation"
         }
       ],
-      "menuBar/file": [
+      "editor/title": [
         {
           "command": "p2p4vsc.print2paper",
-          "group": "6_print"
+          "group": "navigation",
+          "when": "editorTextFocus",
+          "title": "???"
         }
       ]
     },
@@ -82,7 +84,7 @@
   },
   "dependencies": {
     "@shikijs/vscode-textmate": "^10.0.2",
-    "jspdf": "^2.5.1",
+    "jspdf": "^3.0.3",
     "shiki": "^3.11.0",
     "vscode-oniguruma": "^2.0.1",
     "yaml": "latest"

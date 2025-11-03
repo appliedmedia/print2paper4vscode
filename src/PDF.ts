@@ -1,13 +1,11 @@
 import type { App } from './App';
 import type { PageSizeId_t, Orient_t, HeaderFooterPos_t } from './types/PaperPrinter_t';
 import { kPageSizeId } from './types/PaperPrinter_t';
-import type { PageRender, PageData, PageRenderError } from './types/PageRender_t';
 import { Diagnostics } from './Diagnostics';
 import { Yaml } from './Yaml';
 import { Coords } from './Coords';
 import jsPDF from 'jspdf';
 import { DocInfo_PDF } from './DocInfo_PDF';
-import type { LanguageId_t } from './Stylize';
 import type { ThemedToken } from 'shiki';
 
 type HeaderFooterRenderablePos = Exclude<HeaderFooterPos_t, 'none'>;
@@ -15,21 +13,18 @@ type HeaderFooterRenderablePos = Exclude<HeaderFooterPos_t, 'none'>;
 /**
  * PDF - Vector PDF generation and page rendering
  *
- * Creates vector PDFs from Shiki-highlighted tokens using jsPDF. Implements
- * PageRender interface for multi-page document rendering. Handles font sizing,
+ * Creates vector PDFs from Shiki-highlighted tokens using jsPDF. Handles font sizing,
  * line wrapping, page breaks, margins, and theme-based color rendering.
  * Manages temporary PDF files and provides save/print/preview operations.
  *
  * @input app - Application instance
- * @output PDF documents (ArrayBuffer/DataURL), page-by-page rendering, file operations
+ * @output PDF documents (ArrayBuffer/DataURL), file operations
  *
  * @example
  * const pdf = new PDF(app);
- * pdf.setTokensForPageRender(tokens, 'github-light');
- * const pageData = await pdf.renderPage(0);
- * const pdfDoc = await pdf.getCurrentPdfDoc();
+ * const pdfDoc = await pdf.generatePdf();
  */
-export class PDF implements PageRender {
+export class PDF {
   private static readonly kYaml = {
     pdf_html: '',
     pdf_css: '',
@@ -42,8 +37,6 @@ export class PDF implements PageRender {
   private _yaml: Yaml<typeof PDF.kYaml>;
   private coords: Coords;
 
-  // PageRender implementation state
-
   // Line-by-line rendering state - jsPDF now managed through docInfo.pdfDoc
   private currentX: number = 0;
   private currentY: number = 0;
@@ -52,9 +45,6 @@ export class PDF implements PageRender {
 
   // Header/footer styling
   private static readonly HEADER_FOOTER_COLOR = '#cccccc'; // Light gray
-
-  // Page cache for reusing rendered pages
-  private pageCache: Map<number, PageData> = new Map();
 
   // PDF document information
   public docInfo: DocInfo_PDF;
@@ -77,10 +67,10 @@ export class PDF implements PageRender {
   }
 
   /**
-   * Get the total number of pages in the document (async for PageRender interface)
+   * Get the total number of pages in the document
    */
   async getPageTotal(): Promise<number> {
-    return this.docInfo.getPageTotal();
+    return this.docInfo.pageTotal;
   }
 
   /**
@@ -90,9 +80,6 @@ export class PDF implements PageRender {
   resetCaches(): void {
     const dx = this.dx.sub('invalidateAllCaches');
     try {
-      // Clear page cache
-      this.pageCache.clear();
-
       // Reset PDF document
       this.docInfo.pdfDoc = null;
 
@@ -124,6 +111,10 @@ export class PDF implements PageRender {
     dx.require({ pdfDoc }, ['pdfDoc']);
 
     try {
+      // Log PDF object usage for printing (Stage 4.3)
+      const pdfBuffer = pdfDoc.asArrayBuffer();
+      dx.out(`PDF object usage: Using PDF ArrayBuffer for printWithPreview (${pdfBuffer.byteLength} bytes)`);
+
       // Generate filename with timestamp
       const timestamp = this.app.os.dateAsYYYYMMDDHHMMSS();
       const safeName = this.app.os.sanitizeFileName(descriptiveName || 'print_output');
@@ -135,7 +126,6 @@ export class PDF implements PageRender {
       const tempPdfPath = this.app.os.pathJoin(tempDir, filename);
 
       // Write PDF document to temp file
-      const pdfBuffer = pdfDoc.asArrayBuffer();
       this.app.os.fileWrite(tempPdfPath, Buffer.from(new Uint8Array(pdfBuffer)));
 
       this.trackTempPdf(tempPdfPath);
@@ -149,7 +139,12 @@ export class PDF implements PageRender {
   }
 
   async printDirectly(pdfDoc: DocInfo_PDF, descriptiveName?: string): Promise<void> {
+    const dx = this.dx.sub('printDirectly');
     try {
+      // Log PDF object usage for printing (Stage 4.3)
+      const pdfBuffer = pdfDoc.asArrayBuffer();
+      dx.out(`PDF object usage: Using PDF ArrayBuffer for printDirectly (${pdfBuffer.byteLength} bytes)`);
+
       // Generate filename with timestamp
       const timestamp = this.app.os.dateAsYYYYMMDDHHMMSS();
       const safeName = this.app.os.sanitizeFileName(descriptiveName || 'print_output');
@@ -161,13 +156,12 @@ export class PDF implements PageRender {
       const tempPdfPath = this.app.os.pathJoin(tempDir, filename);
 
       // Write PDF document to temp file
-      const pdfBuffer = pdfDoc.asArrayBuffer();
       this.app.os.fileWrite(tempPdfPath, Buffer.from(new Uint8Array(pdfBuffer)));
 
       this.trackTempPdf(tempPdfPath);
       // Send PDF to printer
       await this.app.os.filePrint(tempPdfPath);
-      this.dx.out('Sent PDF to printer');
+      dx.out('Sent PDF to printer');
     } catch (error) {
       this.app.ui.showErrorMessage(`Failed to print PDF: ${String(error)}`);
       throw error;
@@ -175,7 +169,12 @@ export class PDF implements PageRender {
   }
 
   async saveAsPDF(pdfDoc: DocInfo_PDF, descriptiveName?: string): Promise<void> {
+    const dx = this.dx.sub('saveAsPDF');
     try {
+      // Log PDF object usage for saving (Stage 4.3)
+      const pdfBuffer = pdfDoc.asArrayBuffer();
+      dx.out(`PDF object usage: Using PDF ArrayBuffer for saveAsPDF (${pdfBuffer.byteLength} bytes)`);
+
       // Generate default filename with timestamp
       const timestamp = this.app.os.dateAsYYYYMMDDHHMMSS();
       const safeName = this.app.os.sanitizeFileName(descriptiveName || 'print_output');
@@ -185,7 +184,7 @@ export class PDF implements PageRender {
       const targetPath = await this.app.ui.chooseSaveLocation(defaultFilename);
 
       if (!targetPath) {
-        this.dx.out('Save cancelled by user');
+        dx.out('Save cancelled by user');
         return;
       }
 
@@ -194,7 +193,6 @@ export class PDF implements PageRender {
       this.app.os.ensureDir(targetDir);
 
       // Save PDF document directly to chosen location
-      const pdfBuffer = pdfDoc.asArrayBuffer();
       this.app.os.fileWrite(targetPath, Buffer.from(new Uint8Array(pdfBuffer)));
 
       // Track file for cleanup (optional)
@@ -203,7 +201,7 @@ export class PDF implements PageRender {
       // Reveal file in file explorer
       await this.app.os.fileReveal(targetPath);
 
-      this.dx.out(`Saved PDF document to ${targetPath}`);
+      dx.out(`Saved PDF document to ${targetPath}`);
     } catch (error) {
       this.app.ui.showErrorMessage(`Failed to save PDF: ${String(error)}`);
       throw error;
@@ -374,7 +372,7 @@ export class PDF implements PageRender {
       // Note: pdfDoc is a DocInfo_PDF wrapper, but we need the raw jsPDF for renderContent
       // We'll store it in a separate property
 
-      dx.out(`Generated complete PDF with ${pdfDoc.getNumberOfPages()} pages`);
+      dx.out(`Generated complete PDF with ${pdfDoc.pageTotal} pages`);
       return pdfDoc;
     } catch (error) {
       dx.error(`Failed to generate complete PDF: ${String(error)}`);
@@ -407,97 +405,6 @@ export class PDF implements PageRender {
     }
 
     return { width: metadata.width, height: metadata.height };
-  }
-
-  // Helper: Convert hex color to RGB
-  private hexToRgb(hex: string): { r: number; g: number; b: number } {
-    const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-    return result
-      ? {
-          r: parseInt(result[1], 16),
-          g: parseInt(result[2], 16),
-          b: parseInt(result[3], 16),
-        }
-      : { r: 0, g: 0, b: 0 };
-  }
-
-  private async htmlToPdf(inputHtmlPath: string, outputPdfPath: string): Promise<void> {
-    const dx = this.dx.sub('htmlToPdf');
-    dx.require({ inputHtmlPath, outputPdfPath }, ['inputHtmlPath', 'outputPdfPath']);
-
-    try {
-      // For now, this method is deprecated in favor of direct PDF generation
-      // This will be removed once we fully migrate to jsPDF approach
-      dx.out(`DEPRECATED: htmlToPdf method called. Use generatePdfFromTokens instead.`);
-      throw new Error(
-        'htmlToPdf is deprecated. Use generatePdfFromTokens for direct PDF generation.'
-      );
-    } catch (error) {
-      dx.error(`Failed to generate PDF: ${String(error)}`);
-      throw error;
-    } finally {
-      dx.done();
-    }
-  }
-
-  // ============================================================================
-  // PageRender Interface Implementation
-  // ============================================================================
-
-  async renderContent(pageNumber: number, lineBegin: number, lineEnd: number): Promise<PageData> {
-    const dx = this.dx.sub('renderContent');
-    dx.require({ pageNumber, lineBegin, lineEnd }, ['pageNumber', 'lineBegin', 'lineEnd']);
-
-    try {
-      if (!this.docInfo.pdfDoc) {
-        const error: PageRenderError = {
-          message: 'No complete PDF available. Call generatePdf() first.',
-          pageNumber: 0,
-          type: 'generation',
-          timestamp: new Date(),
-        };
-        throw error;
-      }
-
-      // Create cache key based on page number
-      const cacheKey = `${pageNumber}-${this.docInfo.pageSizeId}-${this.docInfo.orient}`;
-
-      // Check if we have cached data for this page
-      if (this.pageCache.has(pageNumber)) {
-        const cachedData = this.pageCache.get(pageNumber)!;
-        dx.out(`Returning cached page data for page ${pageNumber}`);
-        return cachedData;
-      }
-
-      // Get page dimensions
-      const pageSize = this.getPageDimensions(this.docInfo.pageSizeId, this.docInfo.orient);
-      const unit = this.getUnitForPageSize(this.docInfo.pageSizeId);
-      const { widthPts, heightPts } = this.pageSizeToPts(pageSize.width, pageSize.height, unit);
-
-      // For now, return the complete PDF data URL
-      // TODO: Implement proper page extraction when jsPDF supports it
-      const pageData: PageData = {
-        pageNumber: pageNumber,
-        dataUrl: this.docInfo.pdfDoc.output('dataurlstring') as string,
-        widthPx: this.coords.pdfPtsToCssPx(widthPts),
-        heightPx: this.coords.pdfPtsToCssPx(heightPts),
-      };
-
-      // Cache the page data
-      this.pageCache.set(pageNumber, pageData);
-      dx.out(`Rendered and cached content from complete PDF for page ${pageNumber}`);
-      return pageData;
-    } catch (error) {
-      const pageError: PageRenderError = {
-        message: `Failed to render content lines ${lineBegin}-${lineEnd}: ${String(error)}`,
-        pageNumber: 0,
-        type: 'generation',
-        timestamp: new Date(),
-      };
-      throw pageError;
-    } finally {
-      dx.done();
-    }
   }
 
   async getPageSizePx(): Promise<{ widthPx: number; heightPx: number }> {
@@ -854,7 +761,7 @@ export class PDF implements PageRender {
     // Get current page info
     const pageInfo = this.docInfo.pdfDoc.getCurrentPageInfo();
     const currentPage = pageInfo.pageNumber;
-    const pageTotal = this.docInfo.getPageTotal();
+    const pageTotal = this.docInfo.pageTotal;
 
     // Get page dimensions and margins
     const pageSize = this.getPageDimensions(this.docInfo.pageSizeId, this.docInfo.orient);
@@ -1008,7 +915,7 @@ export class PDF implements PageRender {
         return;
       }
 
-      const totalPages = this.docInfo.pdfDoc.getNumberOfPages();
+      const totalPages = this.docInfo.pageTotal;
 
       // Re-render headers and footers on all pages now that we know the total
       for (let pageNum = 1; pageNum <= totalPages; pageNum++) {
@@ -1040,7 +947,7 @@ export class PDF implements PageRender {
       this.renderPageTotals();
 
       dx.out(
-        `PDF FINALIZED: ${this.docInfo.getPageTotal()} pages with ${this.docInfo.fontSizePx}px font`
+        `PDF FINALIZED: ${this.docInfo.pageTotal} pages with ${this.docInfo.fontSizePx}px font`
       );
       return this.docInfo;
     } catch (error) {

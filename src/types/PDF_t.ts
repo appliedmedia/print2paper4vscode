@@ -28,7 +28,7 @@ export interface PDFDoc {
   /**
    * Get information about the current page
    */
-  getCurrentPageInfo(): { pageNumber: number; pageCount: number };
+  getCurrentPageInfo(): { pageNumber: number; pageContext: any };
 
   /**
    * Get the PDF as an ArrayBuffer
