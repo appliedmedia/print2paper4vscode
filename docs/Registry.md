@@ -151,7 +151,9 @@ class PaperPrinter {
 5. **Type Safety**: Each component's dependency object is typed based on what was requested
 6. **Class References**: For class references (like `Coords`), request `'ClassName'` as string, Registry returns constructor function
 
-**Important**: You cannot request methods from the wrong component. Registry validates that each requested method actually exists on that component. For example, `ui: ['out']` would fail because `out` is a method on Diagnostics (`dx`), not UI. This prevents typos and enforces proper dependency boundaries.
+**Important**: 
+- Registry uses **short names** (like `dx`, `ui`, `vscodeapis`), not class names. These match the current App property names.
+- Registry validates that requested methods actually exist on that component. For example, `ui: ['out']` would fail because `out` is a method on Diagnostics (`dx`), not UI. This prevents typos and enforces proper dependency boundaries.
 
 ## Migration Stages
 
@@ -489,6 +491,31 @@ If you prefer Option B for simplicity, it's still viable - components would be `
 
 ## Registry Implementation Details
 
+### Component Naming Convention
+
+Registry uses **short names/aliases** (not class names) for consistency with the current App pattern:
+
+- `dx` ? Diagnostics class
+- `vscodeapis` ? VSCodeAPIs class  
+- `ui` ? UI class
+- `os` ? OS class
+- `pdf` ? PDF class
+- `stylize` ? Stylize class
+- `tabinspector` ? TabInspector class
+- `uimenumgr` ? UIMenuMgr class
+- etc.
+
+When requesting dependencies, use these short names:
+```typescript
+registry.use({
+  dx: ['create', 'sub', 'out'],  // Not 'diagnostics' or 'Diagnostics'
+  ui: ['showErrorMessage'],
+  vscodeapis: ['getActiveTextEditor']
+})
+```
+
+This matches the current `app.dx`, `app.ui`, `app.vscodeapis` pattern for easy migration.
+
 ```typescript
 type DependencyRequest = {
   [componentName: string]: string[] | string; // Methods array or 'ClassName' string
@@ -556,6 +583,9 @@ class Registry {
   }
   
   private registerFactories(): void {
+    // Register factories using short names (aliases), not class names
+    // This matches the current app.dx, app.ui pattern for consistency
+    
     this.factories.set('vscodeapis', (registry) => {
       return new VSCodeAPIs(registry, this.vscode, this.context);
     });
@@ -568,7 +598,15 @@ class Registry {
       return OS.create(registry);
     });
     
-    // ... register all other components
+    this.factories.set('pdf', (registry) => {
+      return new PDF(registry);
+    });
+    
+    this.factories.set('stylize', (registry) => {
+      return new Stylize(registry);
+    });
+    
+    // ... register all other components with their short names
   }
 }
 ```
