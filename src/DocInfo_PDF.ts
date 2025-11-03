@@ -168,7 +168,7 @@ export class DocInfo_PDF {
     }
     return {
       pageNumber: this.pdfDoc.getCurrentPageInfo().pageNumber,
-      pageCount: this.pdfDoc.getNumberOfPages(),
+      pageCount: this.pageTotal,
     };
   }
 

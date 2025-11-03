@@ -70,7 +70,7 @@ export class PDF {
    * Get the total number of pages in the document
    */
   async getPageTotal(): Promise<number> {
-    return this.docInfo.getPageTotal();
+    return this.docInfo.pageTotal;
   }
 
   /**
@@ -372,7 +372,7 @@ export class PDF {
       // Note: pdfDoc is a DocInfo_PDF wrapper, but we need the raw jsPDF for renderContent
       // We'll store it in a separate property
 
-      dx.out(`Generated complete PDF with ${pdfDoc.getNumberOfPages()} pages`);
+      dx.out(`Generated complete PDF with ${pdfDoc.pageTotal} pages`);
       return pdfDoc;
     } catch (error) {
       dx.error(`Failed to generate complete PDF: ${String(error)}`);
@@ -405,37 +405,6 @@ export class PDF {
     }
 
     return { width: metadata.width, height: metadata.height };
-  }
-
-  // Helper: Convert hex color to RGB
-  private hexToRgb(hex: string): { r: number; g: number; b: number } {
-    const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-    return result
-      ? {
-          r: parseInt(result[1], 16),
-          g: parseInt(result[2], 16),
-          b: parseInt(result[3], 16),
-        }
-      : { r: 0, g: 0, b: 0 };
-  }
-
-  private async htmlToPdf(inputHtmlPath: string, outputPdfPath: string): Promise<void> {
-    const dx = this.dx.sub('htmlToPdf');
-    dx.require({ inputHtmlPath, outputPdfPath }, ['inputHtmlPath', 'outputPdfPath']);
-
-    try {
-      // For now, this method is deprecated in favor of direct PDF generation
-      // This will be removed once we fully migrate to jsPDF approach
-      dx.out(`DEPRECATED: htmlToPdf method called. Use generatePdfFromTokens instead.`);
-      throw new Error(
-        'htmlToPdf is deprecated. Use generatePdfFromTokens for direct PDF generation.'
-      );
-    } catch (error) {
-      dx.error(`Failed to generate PDF: ${String(error)}`);
-      throw error;
-    } finally {
-      dx.done();
-    }
   }
 
   async getPageSizePx(): Promise<{ widthPx: number; heightPx: number }> {
@@ -792,7 +761,7 @@ export class PDF {
     // Get current page info
     const pageInfo = this.docInfo.pdfDoc.getCurrentPageInfo();
     const currentPage = pageInfo.pageNumber;
-    const pageTotal = this.docInfo.getPageTotal();
+    const pageTotal = this.docInfo.pageTotal;
 
     // Get page dimensions and margins
     const pageSize = this.getPageDimensions(this.docInfo.pageSizeId, this.docInfo.orient);
@@ -946,7 +915,7 @@ export class PDF {
         return;
       }
 
-      const totalPages = this.docInfo.pdfDoc.getNumberOfPages();
+      const totalPages = this.docInfo.pageTotal;
 
       // Re-render headers and footers on all pages now that we know the total
       for (let pageNum = 1; pageNum <= totalPages; pageNum++) {
@@ -978,7 +947,7 @@ export class PDF {
       this.renderPageTotals();
 
       dx.out(
-        `PDF FINALIZED: ${this.docInfo.getPageTotal()} pages with ${this.docInfo.fontSizePx}px font`
+        `PDF FINALIZED: ${this.docInfo.pageTotal} pages with ${this.docInfo.fontSizePx}px font`
       );
       return this.docInfo;
     } catch (error) {

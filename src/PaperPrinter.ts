@@ -262,7 +262,7 @@ export class PaperPrinter {
       dx.out(`PDF object created: ${pdfObjectId} (reused for webview, print, save)`);
       dx.out(`PDF object reuse verification: Same object will be used for webview display and print/save operations`);
 
-      dx.out(`PDF generation complete: ${this.pdfDoc.getPageTotal()} pages using unified approach`);
+      dx.out(`PDF generation complete: ${this.pdfDoc.pageTotal} pages using unified approach`);
     } catch (error) {
       dx.out(`Error in generatePdf: ${error}`);
       throw error;
