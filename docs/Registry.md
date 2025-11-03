@@ -65,26 +65,31 @@ class PDF {
 class PDF {
   private deps: PDFDependencies;
   
-  constructor(registry: Registry) {
-    // Request specific methods from specific components
-    this.deps = registry.use({
-      stylize: ['getTokens', 'getThemes'],
-      ui: ['showErrorMessage', 'showInfoMessage'],
-      os: ['fileRead', 'fileWrite'],
-      dx: ['create', 'sub', 'out']
+  constructor(app: App) {
+    // Request by method names - Registry figures out which component has each method
+    this.deps = app.registry.use({
+      getTokens: [],           // Registry finds this in Stylize
+      getThemes: [],           // Registry finds this in Stylize
+      showErrorMessage: [],    // Registry finds this in UI
+      showInfoMessage: [],     // Registry finds this in UI
+      fileRead: [],            // Registry finds this in OS
+      fileWrite: [],           // Registry finds this in OS
+      create: [],              // Registry finds this in Diagnostics (dx)
+      sub: [],                 // Registry finds this in Diagnostics (dx)
+      out: []                  // Registry finds this in Diagnostics (dx)
     });
     
     // Create Diagnostics instance for this class
     this.dx = this.deps.dx.create('PDF');
     
-    // Create Coords instance (class reference requested)
-    this.coords = new Coords(registry);
+    // Create Coords instance (request class reference)
+    this.coords = new Coords(app);
   }
   
   async renderPage(pageNum: number): Promise<void> {
     const subDx = this.deps.dx.sub('renderPage');
     
-    // Use requested methods directly
+    // Use requested methods - access via component name (organized by Registry)
     const tokens = await this.deps.stylize.getTokens('code', 'javascript', 'theme');
     this.deps.ui.showInfoMessage(`Rendering page ${pageNum}`);
     
@@ -96,36 +101,53 @@ class PDF {
 class UI {
   private deps: UIDependencies;
   
-  constructor(registry: Registry) {
-    this.deps = registry.use({
-      dx: ['create', 'sub', 'out'],
-      os: ['fileRead'],
-      vscodeapis: ['showErrorMessage', 'showInfoMessage', 'showWarningMessage']
+  constructor(app: App) {
+    this.deps = app.registry.use({
+      create: [],              // Registry finds this in Diagnostics
+      sub: [],                 // Registry finds this in Diagnostics
+      out: [],                 // Registry finds this in Diagnostics
+      fileRead: [],            // Registry finds this in OS
+      showErrorMessage: [],    // Registry finds this in VSCodeAPIs
+      showInfoMessage: [],     // Registry finds this in VSCodeAPIs
+      showWarningMessage: []  // Registry finds this in VSCodeAPIs
     });
     
     this.dx = this.deps.dx.create('UI');
   }
   
   showError(msg: string): void {
-    // Access methods directly from deps object
+    // Access methods via component organization
     this.deps.vscodeapis.showErrorMessage(msg);
     this.deps.dx.out(`Error: ${msg}`);
   }
 }
 
-// PaperPrinter class example (orchestrator with many dependencies)
+// Example with ambiguous method names (use component prefix)
 class PaperPrinter {
   private deps: PaperPrinterDependencies;
   
-  constructor(registry: Registry) {
-    this.deps = registry.use({
-      pdf: ['renderPage', 'getCurrentPdfDoc', 'setTokensForPageRender'],
-      stylize: ['getTokens', 'getThemes'],
-      tabinspector: ['getActiveTabContent', 'getLanguageId'],
-      ui: ['showErrorMessage', 'showInfoMessage'],
-      uimenumgr: ['getValueForSelectedByMenuId', 'createMenu'],
-      vscodeapis: ['getActiveTextEditor', 'postMessage'],
-      dx: ['create', 'sub', 'out']
+  constructor(app: App) {
+    this.deps = app.registry.use({
+      // If method names are unique across all components, just use method name
+      renderPage: [],
+      getCurrentPdfDoc: [],
+      setTokensForPageRender: [],
+      getTokens: [],
+      getThemes: [],
+      getActiveTabContent: [],
+      getLanguageId: [],
+      showErrorMessage: [],
+      showInfoMessage: [],
+      getValueForSelectedByMenuId: [],
+      createMenu: [],
+      getActiveTextEditor: [],
+      postMessage: [],
+      create: [],
+      sub: [],
+      out: [],
+      
+      // If there's ambiguity (same method name in multiple components), use prefix
+      // 'diagnostics.out': [],  // Only needed if 'out' exists in multiple components
     });
     
     this.dx = this.deps.dx.create('PaperPrinter');
@@ -144,16 +166,18 @@ class PaperPrinter {
 
 ### How Dependency Access Works
 
-1. **Request Phase**: In constructor, call `registry.use({ componentName: ['method1', 'method2'] })`
-2. **Registry Validates**: Registry checks that requested methods actually exist on the component (throws error if not found)
-3. **Registry Returns**: An object with only the requested methods, properly bound
-4. **Access Phase**: Use `this.deps.componentName.methodName()` throughout the class
-5. **Type Safety**: Each component's dependency object is typed based on what was requested
-6. **Class References**: For class references (like `Coords`), request `'ClassName'` as string, Registry returns constructor function
+1. **Request Phase**: Request by method names in constructor: `app.registry.use({ getTokens: [], showErrorMessage: [] })`
+2. **Registry Resolution**: Registry automatically finds which component has each method
+3. **Ambiguity Handling**: If same method name exists in multiple components, use `'componentName.methodName'` format
+4. **Return Format**: Registry returns object organized by component: `{ dx: { create, sub, out }, ui: { showErrorMessage }, stylize: { getTokens } }`
+5. **Access Phase**: Use `this.deps.componentName.methodName()` - same access pattern as current `app.componentName.methodName()`
+6. **Class References**: For class references, use special syntax like `Coords: []` or similar
 
-**Important**: 
-- Registry uses **short names** (like `dx`, `ui`, `vscodeapis`), not class names. These match the current App property names.
-- Registry validates that requested methods actually exist on that component. For example, `ui: ['out']` would fail because `out` is a method on Diagnostics (`dx`), not UI. This prevents typos and enforces proper dependency boundaries.
+**Key Benefits**:
+- Don't need to know component names - just request methods you need
+- Registry handles the mapping automatically
+- Only disambiguate when truly needed (rare)
+- Return format matches current access pattern (`app.dx.out()`, `app.ui.showErrorMessage()`, etc.)
 
 ## Migration Stages
 
@@ -164,7 +188,7 @@ class PaperPrinter {
 #### 0.1: Create Registry Class Skeleton
 - [ ] Create `src/Registry.ts` with basic structure
 - [ ] Define `DependencyRequest` type for dependency declarations
-- [ ] Add basic `deps()` method that returns `any` initially
+- [ ] Add basic `use()` method that returns `any` initially
 
 #### 0.2: Create Registry Integration Points
 - [ ] Add `Registry` instance to App class (constructed in App constructor)
@@ -224,7 +248,7 @@ class PaperPrinter {
 **Note**: Diagnostics is owned by Registry and created immediately at Registry construction. All components request Diagnostics via Registry.
 
 #### 2.1: Migrate OS Classes
-- [ ] Update OS base class constructor to accept Registry
+- [ ] Update OS base class constructor to accept App
 - [ ] Remove `app` parameter
 - [ ] Request dependencies via Registry:
   - `Diagnostics` (for logging)
@@ -234,7 +258,7 @@ class PaperPrinter {
 - [ ] Update OSMac, OSWin, OSLinux constructors
 
 #### 2.3: Migrate Yaml
-- [ ] Update Yaml constructor to accept Registry
+- [ ] Update Yaml constructor to accept App
 - [ ] Request `OS` dependency for file reading
 - [ ] Request `Diagnostics` dependency (via Registry) for logging
 - [ ] Remove `app` parameter
@@ -249,7 +273,7 @@ class PaperPrinter {
 **Goal**: Migrate foundational components that others depend on
 
 #### 3.1: Migrate VSCodeAPIs
-- [ ] Update VSCodeAPIs constructor to accept Registry + vscode + context
+- [ ] Update VSCodeAPIs constructor to accept App + vscode + context
 - [ ] Remove `app` parameter
 - [ ] Request Diagnostics via Registry
 - [ ] Move `init()` logic (command registration) into constructor
@@ -257,7 +281,7 @@ class PaperPrinter {
 - [ ] Update App to construct VSCodeAPIs via Registry
 
 #### 3.2: Migrate UI
-- [ ] Update UI constructor to accept Registry
+- [ ] Update UI constructor to accept App
 - [ ] Remove `app` parameter
 - [ ] Request dependencies: `Diagnostics`, `OS` (for file reading), `Persist`
 - [ ] Move `init()` logic into constructor
@@ -265,7 +289,7 @@ class PaperPrinter {
 - [ ] Update all references to `app.ui` to use Registry
 
 #### 3.3: Migrate Persist
-- [ ] Update Persist constructor to accept Registry
+- [ ] Update Persist constructor to accept App
 - [ ] Remove `app` parameter
 - [ ] Request `VSCodeAPIs` for global state access
 - [ ] Move initialization into constructor
@@ -279,7 +303,7 @@ class PaperPrinter {
 **Goal**: Migrate components with moderate dependencies
 
 #### 4.1: Migrate TabInspector
-- [ ] Update TabInspector constructor to accept Registry
+- [ ] Update TabInspector constructor to accept App
 - [ ] Remove `app` parameter
 - [ ] Request dependencies: `VSCodeAPIs`, `Diagnostics`
 - [ ] Move `init()` logic into constructor
@@ -287,7 +311,7 @@ class PaperPrinter {
 - [ ] Update all `app.tabinspector` references
 
 #### 4.2: Migrate Stylize
-- [ ] Update Stylize constructor to accept Registry
+- [ ] Update Stylize constructor to accept App
 - [ ] Remove `app` parameter
 - [ ] Request dependencies: `Diagnostics` (for logging)
 - [ ] Move async `init()` logic into constructor (may need lazy initialization pattern)
@@ -295,7 +319,7 @@ class PaperPrinter {
 - [ ] Update all `app.stylize` references
 
 #### 4.3: Migrate UIMenuMgr
-- [ ] Update UIMenuMgr constructor to accept Registry
+- [ ] Update UIMenuMgr constructor to accept App
 - [ ] Remove `app` parameter
 - [ ] Request dependencies: `UI`, `VSCodeAPIs`, `Diagnostics`
 - [ ] Move `init()` logic into constructor
@@ -311,14 +335,14 @@ class PaperPrinter {
 **Goal**: Migrate components with many dependencies
 
 #### 5.1: Migrate Coords
-- [ ] Update Coords constructor to accept Registry
+- [ ] Update Coords constructor to accept App
 - [ ] Remove `app` parameter
 - [ ] Request dependencies: `PDF` (for docInfo), `Diagnostics`
 - [ ] Move `init()` logic into constructor
 - [ ] Update all Coords instantiations
 
 #### 5.2: Migrate PDF
-- [ ] Update PDF constructor to accept Registry
+- [ ] Update PDF constructor to accept App
 - [ ] Remove `app` parameter
 - [ ] Request dependencies:
   - `Stylize` (for getTokens)
@@ -326,14 +350,14 @@ class PaperPrinter {
   - `OS` (for file operations)
   - `Diagnostics`
   - `Coords` (class reference)
-- [ ] Update DocInfo_PDF constructor to accept Registry
+- [ ] Update DocInfo_PDF constructor to accept App
 - [ ] Move `init()` logic into constructor
 - [ ] Update Registry factory
 - [ ] Update all `app.pdf` references
 
 #### 5.3: Migrate DocInfo Classes
-- [ ] Update DocInfo_PDF constructor to accept Registry
-- [ ] Update DocInfo_PaperPrinter constructor to accept Registry
+- [ ] Update DocInfo_PDF constructor to accept App
+- [ ] Update DocInfo_PaperPrinter constructor to accept App
 - [ ] Request necessary dependencies in each
 - [ ] Remove `app` parameters
 
@@ -358,7 +382,7 @@ class PaperPrinter {
 - [ ] Update all instantiations
 
 #### 6.2: Migrate UIScrollView
-- [ ] Update UIScrollView constructor to accept Registry
+- [ ] Update UIScrollView constructor to accept App
 - [ ] Remove `app` parameter
 - [ ] Request dependencies via Registry
 - [ ] Move `init()` logic into constructor
@@ -452,42 +476,9 @@ class PaperPrinter {
 
 ---
 
-## Architecture Decision: Registry Exposure
+## Architecture Decision: Registry via App
 
-### Why Pass Registry as Constructor Parameter?
-
-Two approaches were considered:
-
-**Option A: Explicit Registry Parameter** (chosen)
-```typescript
-class PDF {
-  constructor(registry: Registry) {
-    this.deps = registry.use({ ... });
-  }
-}
-```
-
-**Option B: Registry via App**
-```typescript
-class PDF {
-  constructor(app: App) {
-    this.deps = app.registry.use({ ... });
-  }
-}
-```
-
-**Why Option A was chosen:**
-1. **True decoupling**: Components don't need App at all - only Registry
-2. **Testing**: Easier to mock/test - just pass a Registry mock, no App needed
-3. **Explicit dependencies**: Constructor signature shows exactly what's needed (Registry)
-4. **Smaller interface**: Components only see Registry, not the entire App API
-5. **Future flexibility**: Registry could be swapped or extended without touching App
-
-**Tradeoffs:**
-- Slightly more verbose (explicit `registry` parameter)
-- But clearer intent and better separation of concerns
-
-If you prefer Option B for simplicity, it's still viable - components would be `constructor(app: App)` and use `app.registry.use()`. The Registry pattern benefits still apply.
+Registry is accessed via App: `app.registry.use()`. This keeps it simple - components receive App and access Registry through it.
 
 ## Registry Implementation Details
 
