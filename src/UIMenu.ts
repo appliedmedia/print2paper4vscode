@@ -2,6 +2,26 @@ import type { App } from './App';
 import { Diagnostics } from './Diagnostics';
 import { Persist, type Persist_t } from './Persist';
 import { Yaml } from './Yaml';
+import {
+  kPageSizeId,
+  kOrient,
+  kMarginId,
+  kFontSizeId,
+  kPageMenuSubmenu,
+  kHeaderFooterLocation,
+  kHeaderFooterElement,
+  kHeaderFooterPos,
+  kPrint,
+  kPrint_id,
+  kPage_id,
+  kTheme_id,
+  kFontSizeId_id,
+  kPageSizeId_id,
+  kOrient_id,
+  kMarginId_id,
+  kHeader_id,
+  kFooter_id,
+} from './types/PaperPrinter_t';
 
 // UIMenuItem type - menu item structure
 export interface UIMenuItem_t {
@@ -12,61 +32,55 @@ export interface UIMenuItem_t {
 }
 
 // Menu ID types - UI component identifiers
+// Auto-constructed from PaperPrinter_t.ts _id constants
 export const kMenuId = [
-  'print',
-  'page',
-  'pageSizeId',
-  'orient',
-  'marginId',
-  'theme',
-  'fontSizeId',
+  // Top-level menus
+  kPrint_id,
+  kPage_id,
+  kTheme_id,
+  kFontSizeId_id,
+  // Page submenus
+  kPageSizeId_id,
+  kOrient_id,
+  kMarginId_id,
+  // Header/Footer locations
+  kHeader_id,
+  kFooter_id,
+  // Composed from kHeaderFooterLocation + kHeaderFooterElement
+  ...Object.keys(kHeaderFooterLocation).flatMap(location =>
+    Object.keys(kHeaderFooterElement).map(element => `${location}_${element}`)
+  ),
 ] as const;
 
 export type MenuId_t = (typeof kMenuId)[number];
 
 // Menu Item ID types - Individual menu item identifiers
+// Auto-constructed from PaperPrinter_t.ts constants
 export const kMenuItemId = [
-  'default', // Special sentinel for requesting default selection
-  'preview',
-  'direct',
-  'save',
-  'size',
-  'orient',
-  'margin',
-  'portrait',
-  'landscape',
-  'none',
-  'minimal',
-  'normal',
-  'wide',
-  '8',
-  '9',
-  '10',
-  '11',
-  '12',
-  '14',
-  '18',
-  '20',
-  '24',
-  '32',
-  '48',
+  // System sentinel
+  'default',
+  // Print actions
+  ...Object.values(kPrint),
+  // From kPageMenuSubmenu keys (menu item IDs match menu IDs)
+  ...(Object.keys(kPageMenuSubmenu) as Array<keyof typeof kPageMenuSubmenu>),
+  // From kOrient
+  ...(Object.keys(kOrient) as Array<keyof typeof kOrient>),
+  // From kHeaderFooterPos
+  ...(Object.keys(kHeaderFooterPos) as Array<keyof typeof kHeaderFooterPos>),
+  // From kMarginId
+  ...(Object.keys(kMarginId) as Array<keyof typeof kMarginId>),
+  // From kPageSizeId
+  ...(Object.keys(kPageSizeId) as Array<keyof typeof kPageSizeId>),
+  // From kFontSizeId
+  ...(Object.keys(kFontSizeId) as Array<keyof typeof kFontSizeId>),
 ] as const;
 
-export type MenuItemId_t = (typeof kMenuItemId)[number];
+export type MenuItemId_t = (typeof kMenuItemId)[number] | string;
 
 // Selection handler return type - id is what's selected, value is what to use
 export interface HandleSelection_t {
   id: string;
   value: string | number | boolean;
-}
-
-// Type guards for runtime validation
-export function isMenuId(id: string): id is MenuId_t {
-  return kMenuId.includes(id as MenuId_t);
-}
-
-export function isMenuItemId(id: string): id is MenuItemId_t {
-  return kMenuItemId.includes(id as MenuItemId_t);
 }
 
 /**
@@ -92,11 +106,11 @@ export function isMenuItemId(id: string): id is MenuItemId_t {
  */
 export class UIMenu {
   private static readonly kYaml = {
-    ui_menu_html: '',
-    ui_menu_item: '',
-    ui_flyout: '',
-    ui_menu_generic_handlers: '',
-    ui_menu_css: '',
+    uimenu_html: '',
+    uimenu_item: '',
+    uimenu_flyout: '',
+    uimenu_generic_handlers: '',
+    uimenu_css: '',
   } as const;
 
   private dx: Diagnostics;
@@ -197,13 +211,11 @@ export class UIMenu {
   // Get the currently selected item ID for this menu (for highlighting ✓)
   async getSelectedItemId(): Promise<string> {
     // Get the current persisted value (user's selection)
-    const selectedValue = this.persist[this._id as keyof typeof this.persist];
-    if (selectedValue !== undefined) {
-      return String(selectedValue);
+    let id = this.persist[this._id as keyof typeof this.persist] || '';
+    if (!id) {
+      id = await this.getDefaultItemId();
     }
-
-    // Fall back to default if no selection made yet
-    return await this.getDefaultItemId();
+    return String(id);
   }
 
   // Generate a single menu item HTML
@@ -248,19 +260,18 @@ export class UIMenu {
     };
 
     dx.done();
-    return this.app.templateDictReplace(yaml.ui_menu_item, replacementDict);
+    return this.app.templateDictReplace(yaml.uimenu_item, replacementDict);
   }
 
   // Generate the complete HTML for this menu using YAML template
   async getHTML(flyoutCache: Record<string, string> = {}): Promise<string> {
-    this.dx.out(`UIMenu.getHTML called for ${this.id}`);
-    this.dx.out(`Icon: "${this.icon}", DisplayName: "${this.displayName}"`);
-
     const yaml = this.yaml; // This will load and validate automatically
-    this.dx.out(`YAML loaded, ui_menu_html length: ${yaml.ui_menu_html.length}`);
 
     // Generate menu items HTML using the new getItemHTML function
     const menuItemsList = this.getMenuItems();
+    if (this.isFlyout) {
+      this.dx.out(`Flyout ${this.id}: Got ${menuItemsList.length} menu items`);
+    }
     const defaultItemId = await this.getDefaultItemId(); // Get default item for 📝 icon
     const selectedItemId = await this.getSelectedItemId(); // Get selected item for ✓ highlighting
     const hasDefaultItem = !!defaultItemId;
@@ -288,7 +299,7 @@ export class UIMenu {
       .filter(Boolean)
       .join(' ');
     // Use the main template for all menus
-    const template = yaml.ui_menu_html;
+    const template = yaml.uimenu_html;
 
     const replacementDict = {
       menuId: this.getId_Menu(),
@@ -300,7 +311,6 @@ export class UIMenu {
 
     const result = this.app.templateDictReplace(template, replacementDict);
 
-    this.dx.out(`Generated HTML for ${this.id}: ${result.substring(0, 100)}...`);
     return result;
   }
 

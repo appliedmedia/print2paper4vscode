@@ -53,11 +53,11 @@ export class OSMac extends OS {
   }
 
   async filePrint(path: string): Promise<void> {
-    await this.executeAppleScript('apple_script_print_via_finder', { FILE_PATH: path });
+    await this.executeAppleScript('apple_script_print_via_finder', { file_path: path });
   }
 
   async fileOpenPrintDialog(path: string): Promise<void> {
-    await this.executeAppleScript('apple_script_open_preview_print_dialog', { FILE_PATH: path });
+    await this.executeAppleScript('apple_script_open_preview_print_dialog', { file_path: path });
   }
 
   done(): void {

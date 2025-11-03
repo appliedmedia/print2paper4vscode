@@ -551,19 +551,103 @@ try {
 }
 ```
 
+### 10. Window State API (Limited)
+
+**URL:** [VS Code Window API](https://code.visualstudio.com/api/references/vscode-api#window)
+
+**API Signature:**
+
+```typescript
+namespace vscode.window {
+  readonly state: WindowState;
+}
+
+interface WindowState {
+  readonly focused: boolean;  // Whether window is focused
+  readonly active: boolean;   // Whether window has been recently interacted with
+  // That's it - no dimensions, no size, no position
+}
+
+interface ExtensionContext {
+  // Available at activation time - also has no dimension info
+  readonly subscriptions: Disposable[];
+  readonly workspaceState: Memento;
+  readonly globalState: Memento;
+  readonly secrets: SecretStorage;
+  readonly extensionUri: Uri;
+  readonly extensionPath: string;
+  readonly environmentVariableCollection: GlobalEnvironmentVariableCollection;
+  readonly storageUri: Uri | undefined;
+  readonly storagePath: string | undefined;
+  readonly globalStorageUri: Uri;
+  readonly logUri: Uri;
+  readonly extensionMode: ExtensionMode;
+  // No window dimensions here either
+}
+```
+
+**What it provides:** ✅ Window focus state, ✅ Extension context (storage, paths, subscriptions)
+
+**What it doesn't provide:** ❌ Window dimensions, ❌ Window size, ❌ Window position, ❌ Screen dimensions
+
+**Checked at activation time:** When `activate(context: ExtensionContext)` is called:
+- ❌ `context` has no dimension properties
+- ❌ `vscode.window.state` only has `focused` and `active` booleans
+- ❌ `vscode.window.*` has no dimension-related properties
+- ❌ `vscode.env.*` has no dimension-related properties
+
+**Why no dimensions?**
+
+- VS Code extensions run in Node.js (extension host process), not in the browser
+- The extension host has no access to the UI layer or window dimensions
+- Window dimensions are only available in webview contexts via `window.innerWidth`/`window.innerHeight`
+- Even at activation time, there's no way to query window dimensions from the extension host
+
+**Workaround for dimension-dependent features:**
+
+```typescript
+// Server-side (extension host) - No access to window dimensions
+// Must use reasonable defaults or pass from client
+const windowRight = 5120; // Reasonable max for 5K displays
+
+// Client-side (webview JavaScript) - Has access to actual dimensions
+const actualWidth = window.innerWidth;
+const actualHeight = window.innerHeight;
+
+// Dynamically clamp values to actual window size
+const maxLeft = Math.max(minLeft, window.innerWidth - elementWidth - padding);
+element.style.left = Math.min(savedPosition, maxLeft) + 'px';
+```
+
+**ViewColumn is NOT window width:**
+
+- `ViewColumn` refers to editor split columns (left, center, right)
+- It's for positioning editor panes, not measuring window dimensions
+- Values: `ViewColumn.One`, `ViewColumn.Two`, `ViewColumn.Beside`, etc.
+
 ## What VS Code APIs DON'T Provide
 
-### ❌ VS Code Installation Directory
+### ❌ Window Dimensions and Display Information
 
-- No API to get `/Applications/Cursor.app/Contents/Resources/app/`
-- No API to get the root extensions directory
-- No API to get built-in theme locations
+- No API to get window width/height
+- No API to get screen dimensions  
+- No API to get window position
+- Extensions run in Node.js extension host with no UI access
+- Only webview contexts (browser) have `window.innerWidth`/`innerHeight`
 
-### ❌ Built-in Extension File Paths
+### ~~❌ VS Code Installation Directory~~ ✅ AVAILABLE
 
-- Built-in extensions (like `theme-defaults`) are bundled into VS Code's app bundle
-- They don't expose their file paths via the extension API
-- This is by design for security and packaging reasons
+- ~~No API to get `/Applications/Cursor.app/Contents/Resources/app/`~~
+- ~~No API to get the root extensions directory~~
+- ~~No API to get built-in theme locations~~
+- **CORRECTED:** Use `vscode.env.appRoot` to get installation directory
+
+### ~~❌ Built-in Extension File Paths~~ ✅ AVAILABLE
+
+- ~~Built-in extensions (like `theme-defaults`) are bundled into VS Code's app bundle~~
+- ~~They don't expose their file paths via the extension API~~
+- ~~This is by design for security and packaging reasons~~
+- **CORRECTED:** Use `vscode.extensions.all` to get all extensions with paths
 
 ### ❌ TextMate Tokenization
 
@@ -576,6 +660,13 @@ try {
 - VS Code editors are native UI components, not HTML/CSS
 - No API to access editor DOM or rendered HTML
 - No API to capture syntax highlighting as it appears in the editor
+
+### ❌ Reliable Locale with Region Code
+
+- `vscode.env.language` returns language WITHOUT region (e.g., "en" not "en-US")
+- `vscode.l10n` provides translation functions but no locale detection
+- `navigator.language` (in webviews) is also unreliable
+- **SOLUTION:** Use Node.js `Intl.DateTimeFormat().resolvedOptions().locale`
 
 ## Initial API Learnings
 
@@ -620,7 +711,7 @@ namespace vscode.env {
     readonly clipboard: Clipboard;
     readonly isNewAppInstall: boolean;
     readonly isTelemetryEnabled: boolean;
-    readonly language: string;
+    readonly language: string;           // ⚠️ UNRELIABLE - see note below
     readonly logLevel: LogLevel;
     readonly machineId: string;
     readonly remoteName: string | undefined;
@@ -633,7 +724,7 @@ namespace vscode.env {
 
 **What it provides:** ✅ **VS Code installation root directory!**
 
-**What it doesn't provide:** ❌ Direct paths to specific extensions
+**What it doesn't provide:** ❌ Direct paths to specific extensions, ❌ Window dimensions, ❌ Reliable locale with region
 
 **Key Discovery - `vscode.env.appRoot`:**
 
@@ -672,11 +763,65 @@ const grammarData = JSON.parse(fs.readFileSync(grammarPath, 'utf8'));
 
 - **`appHost`:** Hosting environment ("desktop", "github.dev", "codespaces", "web")
 - **`appName`:** Application name ("VS Code", "Cursor", etc.)
-- **`language`:** User language preference ("en-US", "de-CH", etc.)
+- **`language`:** User language preference - ⚠️ **UNRELIABLE** (see Language/Locale section below)
 - **`machineId`:** Unique machine identifier
 - **`sessionId`:** Unique session identifier
 - **`shell`:** Default shell path
 - **`uriScheme`:** URI scheme for the application
+
+### 9. Language and Locale APIs ⚠️ **IMPORTANT CAVEATS**
+
+**NOTE: Left here intentionally to guide future developers.**
+
+**The Problem:** VS Code's language/locale APIs are unreliable for region detection.
+
+**What's Available:**
+
+```typescript
+// 1. vscode.env.language - Returns language WITHOUT region code
+vscode.env.language;  // ❌ Returns "en" (not "en-US" as documented)
+
+// 2. vscode.l10n namespace - Translation functions, NOT locale detection
+namespace vscode.l10n {
+  function t(message: string, ...args: Array<string | number | boolean>): string;
+  readonly uri: Uri | undefined;  // Path to bundle.l10n.json file (NOT a locale string)
+}
+
+// 3. navigator.language - Browser API (webview only), also unreliable
+navigator.language;  // ❌ Also returns "en" without region
+```
+
+**Examples of what these APIs actually return:**
+
+- `vscode.env.language` → `"en"` (just language, no region)
+- `vscode.l10n.uri?.fsPath` → `"/path/to/vscode/l10n/bundle.l10n.json"` (file path, not a locale string)
+- `navigator.language` → `"en"` (browser API in webview, also unreliable)
+
+**✅ CORRECT SOLUTION - Use Node.js Intl API:**
+
+```typescript
+// OS.getLocale() - Uses Intl API which actually provides region codes
+getLocale(): string {
+  return Intl.DateTimeFormat().resolvedOptions().locale || '';
+}
+
+// Returns proper locale with region: "en-US", "en-GB", "fr-FR", etc.
+const locale = Intl.DateTimeFormat().resolvedOptions().locale;
+console.log(locale);  // "en-US" ✅
+```
+
+**Why Intl API works:**
+
+- Part of Node.js/JavaScript standard library
+- Queries the actual OS locale settings
+- Returns proper BCP 47 language tags with region codes
+- Reliable across all platforms (Windows, macOS, Linux)
+
+**Implementation in our codebase:**
+
+- See `src/OS.ts` - `getLocale()` method
+- See `src/VSCodeAPIs.ts` - Comment block explaining why not to use `vscode.env.language`
+- See `src/PaperPrinter.ts` - Using `this.app.os.getLocale()` for region-based defaults
 
 **Complete Solution for Finding All Extensions:**
 

@@ -3,14 +3,25 @@
  *
  * Single source of truth for all document configuration and business logic types.
  * All page size, orientation, margin, and font types are defined here.
+ * Also includes UI menu structure definitions.
  *
  * Naming convention:
  * - Constants: kFoo (singular with k prefix) - object with id as key, metadata as value
  * - Types: Foo_t (singular with _t suffix) - derived using `keyof typeof kFoo`
+ * - Menu ID constants: kFoo_id = 'foo' - the menu ID string
  *
  * Each const object contains ALL metadata (displayName, dimensions, etc.) in ONE place.
  * This eliminates duplicate lookups and keeps everything in sync.
  */
+
+// Print action menu item IDs
+export const kPrint = {
+  preview: 'preview',
+  direct: 'direct',
+  save: 'save',
+} as const;
+export type Print_t = keyof typeof kPrint;
+export const kPrint_id = 'print';
 
 // Page size: id → metadata (displayName, dimensions, unit)
 export const kPageSizeId = {
@@ -22,6 +33,7 @@ export const kPageSizeId = {
   a5: { displayName: 'A5 (148mm × 210mm)', width: 148, height: 210, unit: 'mm' as const },
 } as const;
 export type PageSizeId_t = keyof typeof kPageSizeId;
+export const kPageSizeId_id = 'pageSizeId';
 export const kPageSizeId_alt: PageSizeId_t = 'a4';
 
 // Page orientation: id → metadata (displayName with embedded SVG template)
@@ -30,16 +42,18 @@ export const kOrient = {
   landscape: { displayName: '{{icon_orient_landscape_svg}} Landscape' },
 } as const;
 export type Orient_t = keyof typeof kOrient;
+export const kOrient_id = 'orient';
 export const kOrient_alt: Orient_t = 'portrait';
 
-// Margin level: id → metadata (displayName with embedded SVG template)
+// Margin level: id → metadata (displayName with embedded SVG template, marginPts)
 export const kMarginId = {
-  none: { displayName: '{{icon_margin_none_svg}} None' },
-  minimal: { displayName: '{{icon_margin_minimal_svg}} Minimal' },
-  normal: { displayName: '{{icon_margin_normal_svg}} Normal' },
-  wide: { displayName: '{{icon_margin_wide_svg}} Wide' },
+  none: { displayName: '{{icon_margin_none_svg}} None', marginPts: 0 },
+  minimal: { displayName: '{{icon_margin_minimal_svg}} Minimal', marginPts: 5 },
+  normal: { displayName: '{{icon_margin_normal_svg}} Normal', marginPts: 15 },
+  wide: { displayName: '{{icon_margin_wide_svg}} Wide', marginPts: 30 },
 } as const;
 export type MarginId_t = keyof typeof kMarginId;
+export const kMarginId_id = 'marginId';
 export const kMarginId_alt: MarginId_t = 'normal';
 
 // Font size: id → metadata (displayName in pixels)
@@ -57,7 +71,45 @@ export const kFontSizeId = {
   '48': { displayName: '48px' },
 } as const;
 export type FontSizeId_t = keyof typeof kFontSizeId;
+export const kFontSizeId_id = 'fontSizeId';
 export const kFontSizeId_alt: FontSizeId_t = '12';
+
+// Page menu submenu labels: id → metadata (displayName)
+export const kPageMenuSubmenu = {
+  pageSizeId: { displayName: 'Size' },
+  orient: { displayName: 'Orient' },
+  marginId: { displayName: 'Margin' },
+} as const;
+export type PageMenuSubmenu_t = keyof typeof kPageMenuSubmenu;
+export const kPage_id = 'page';
+export const kTheme_id = 'theme';
+
+// Header/Footer location: id → metadata (displayName)
+export const kHeaderFooterLocation = {
+  header: { displayName: 'Header' },
+  footer: { displayName: 'Footer' },
+} as const;
+export type HeaderFooterLocation_t = keyof typeof kHeaderFooterLocation;
+export const kHeader_id = 'header';
+export const kFooter_id = 'footer';
+
+// Header/Footer element type: id → metadata (displayName)
+export const kHeaderFooterElement = {
+  title: { displayName: 'Title' },
+  page: { displayName: 'Page' },
+  total: { displayName: 'Total' },
+} as const;
+export type HeaderFooterElement_t = keyof typeof kHeaderFooterElement;
+
+// Header/Footer position: id → metadata (displayName with symbol)
+export const kHeaderFooterPos = {
+  begin: { displayName: '←' },
+  center: { displayName: '↔' },
+  end: { displayName: '→' },
+  none: { displayName: '✕' },
+} as const;
+export type HeaderFooterPos_t = keyof typeof kHeaderFooterPos;
+export const kHeaderFooterPos_alt: HeaderFooterPos_t = 'center';
 
 // Theme alternative (not part of a const object, so separate)
 export const kTheme_alt: string = 'github-light';

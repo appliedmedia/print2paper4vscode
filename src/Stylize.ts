@@ -243,14 +243,13 @@ export class Stylize {
     }
   }
 
-  // Simple tokenization without PDF generation - render one page at a time
+  // Tokenize code and optionally render directly to PDF
   async tokenize(
     code: string,
     languageId: LanguageId_t,
     theme?: string,
     pageBegin?: number,
-    pageEnd?: number,
-    optPerLineHandler?: (pageNumber: number, lineNumber: number, htmlData: string) => void
+    pageEnd?: number
   ): Promise<ThemedToken[][]> {
     const dx = this.dx.sub('tokenize');
 
@@ -268,20 +267,11 @@ export class Stylize {
       // Page-based filtering removed here; paging is handled by the renderer.
       const filteredTokens = tokens;
 
-      // Call per-line handler if provided
-      if (optPerLineHandler) {
-        // Process each line once - the callback will handle page breaks internally
+      // Render directly to PDF if PDF is initialized and ready
+      if (this.app.pdf.docInfo.pdfDoc) {
         for (let lineNum = 0; lineNum < filteredTokens.length; lineNum++) {
           const line = filteredTokens[lineNum];
-          // Convert line tokens to HTML (simplified)
-          const htmlData = line
-            .map(
-              (token: ThemedToken) =>
-                `<span style="color: ${token.color || '#000000'}">${token.content}</span>`
-            )
-            .join('');
-          // Pass pageNum as 1 since we're processing all lines sequentially
-          optPerLineHandler(1, lineNum, htmlData);
+          this.app.pdf.renderTokenizedLine(lineNum, line);
         }
       }
 
@@ -298,7 +288,7 @@ export class Stylize {
   /**
    * Resolve active theme for token generation
    */
-  private resolveActiveTheme(): string {
+  public resolveActiveTheme(): string {
     const activeThemeId = this.app.vscodeapis.getActiveThemeId();
     const themeData = this.getThemes().find(theme => theme.id === activeThemeId);
 
@@ -406,13 +396,13 @@ export class Stylize {
   }
 
   // Helper: Get font family from theme
-  private getFontFamilyFromTheme(themeData: Theme): string {
+  public getFontFamilyFromTheme(themeData: Theme): string {
     const et = this.app.vscodeapis.getEditorTypography();
     return themeData?.themeData?.fonts?.editor || et?.fontFamily || 'courier';
   }
 
   // Convert VS Code theme JSON to Shiki-compatible CSS variables format
-  private convertVSCodeThemeToShiki(vscodeTheme: VSCodeTheme): ThemeData {
+  public convertVSCodeThemeToShiki(vscodeTheme: VSCodeTheme): ThemeData {
     // Derive theme type early so both success and error paths agree
     const derivedType: 'light' | 'dark' =
       (vscodeTheme as unknown as { type?: string })?.type === 'dark' ? 'dark' : 'light';

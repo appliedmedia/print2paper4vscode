@@ -98,7 +98,7 @@ export class UIScrollView {
       dx.out(`Generated scroll view content with ${pageTotal} pages`);
       return html;
     } catch (error) {
-      this.app.ui.showErrorMessage(`Failed to generate scroll view content: ${String(error)}`);
+      dx.error(`Failed to generate scroll view content: ${String(error)}`);
       throw error;
     } finally {
       dx.done();
@@ -186,15 +186,7 @@ export class UIScrollView {
 
       try {
         // Render the page content (unified approach doesn't need line ranges)
-        const pageData = await this.pageRender.renderContent(pageNumber, 0, 0, {
-          fontFamily: this.options.fontFamily || 'Courier New',
-          fontSizePx: this.options.fontSizePx || 12, // fontSize in pixels - will be converted to points in PDF generation
-          lineHeightPx: this.options.lineHeightPx || 18, // lineHeight in pixels - will be converted to points in PDF generation
-          theme: this.options.theme || 'github-light',
-          pageSizeId: this.options.pageSizeId || 'a4',
-          orient: this.options.orient || 'portrait',
-          marginId: this.options.marginId || 'normal',
-        });
+        const pageData = await this.pageRender.renderContent(pageNumber, 0, 0);
 
         // Cache the result
         this.pageCache.set(pageNumber, pageData);

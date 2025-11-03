@@ -31,7 +31,7 @@ export class Diagnostics {
     lastPartialMessage: '',
     lastWasTruncated: false,
     messageCounter: 0,
-    duplicateCount: 0
+    duplicateCount: 0,
   };
 
   private get shared() {
@@ -109,9 +109,6 @@ export class Diagnostics {
     return dx;
   }
 
-
-
-
   /**
    * Validate that required arguments are present in the args object
    * @param args - The arguments object to validate
@@ -119,7 +116,7 @@ export class Diagnostics {
    * @returns true if all required arguments are present, false otherwise
    */
   require(args: Record<string, unknown>, requiredKeys: string[]): boolean {
-    let missingKeys = [];
+    let missingKeys: string[] = [];
     for (const key of requiredKeys) {
       if (!(key in args) || args[key] === undefined) {
         missingKeys.push(key);
@@ -140,11 +137,9 @@ export class Diagnostics {
    * @returns this for method chaining
    */
   out(message: MessageRef): this {
-    if (this._debugOn !== undefined ? this._debugOn : this.shared.debugOn) {
+    if (message && (this._debugOn !== undefined ? this._debugOn : this.shared.debugOn)) {
       const formattedMessage = this.messageHeader(message);
-      if (formattedMessage) {
-        UI.out(formattedMessage);
-      }
+      UI.out(formattedMessage);
     }
     return this;
   }
@@ -155,7 +150,10 @@ export class Diagnostics {
    * @returns this for method chaining
    */
   done(message?: MessageRef): this {
-    if ((this._debugOn !== undefined ? this._debugOn : this.shared.debugOn) && this.startTime !== null) {
+    if (
+      (this._debugOn !== undefined ? this._debugOn : this.shared.debugOn) &&
+      this.startTime !== null
+    ) {
       const duration = OS.performance.now() - this.startTime;
       const timeUnits = [
         { ms: 86400000, suffix: 'd' },
@@ -183,10 +181,29 @@ export class Diagnostics {
    * @returns this for method chaining
    */
   print(message: MessageRef): this {
-    const formattedMessage = this.messageHeader(message);
-    if (formattedMessage) {
+    if (message) {
+      const formattedMessage = this.messageHeader(message);
       UI.out(formattedMessage);
     }
+
+    return this;
+  }
+
+  /**
+   * Output an error message and display to user
+   * Forces print regardless of debug settings and shows error dialog
+   * @param message - The error message to output and display
+   * @returns this for method chaining
+   */
+  error(message: MessageRef): this {
+    // Format and print error message (messageHeader handles string vs JSON)
+    if (message) {
+      message = `❌ ERROR: ${message}`;
+      const formattedMessage = this.messageHeader(message);
+      UI.out(formattedMessage);
+      this.app?.ui?.showErrorMessage(formattedMessage);
+    }
+
     return this;
   }
 
