@@ -67,7 +67,7 @@ class PDF {
   
   constructor(app: App) {
     // Request by method names - Registry figures out which component has each method
-    this.deps = app.registry.use({
+    this.deps = app.use({
       getTokens: [],           // Registry finds this in Stylize
       getThemes: [],           // Registry finds this in Stylize
       showErrorMessage: [],    // Registry finds this in UI
@@ -100,9 +100,10 @@ class PDF {
 // UI class example
 class UI {
   private deps: UIDependencies;
+  public readonly id = 'ui'; // Every class must have id property or id() getter
   
   constructor(app: App) {
-    this.deps = app.registry.use({
+    this.deps = app.use({
       create: [],              // Registry finds this in Diagnostics
       sub: [],                 // Registry finds this in Diagnostics
       out: [],                 // Registry finds this in Diagnostics
@@ -125,9 +126,10 @@ class UI {
 // Example with ambiguous method names (use component prefix)
 class PaperPrinter {
   private deps: PaperPrinterDependencies;
+  public readonly id = 'paperprinter'; // Every class must have id property or id() getter
   
   constructor(app: App) {
-    this.deps = app.registry.use({
+    this.deps = app.use({
       // If method names are unique across all components, just use method name
       renderPage: [],
       getCurrentPdfDoc: [],
@@ -171,13 +173,20 @@ class PaperPrinter {
 3. **Ambiguity Handling**: If same method name exists in multiple components, use `'componentName.methodName'` format
 4. **Return Format**: Registry returns object organized by component: `{ dx: { create, sub, out }, ui: { showErrorMessage }, stylize: { getTokens } }`
 5. **Access Phase**: Use `this.deps.componentName.methodName()` - same access pattern as current `app.componentName.methodName()`
-6. **Class References**: For class references, use special syntax like `Coords: []` or similar
+6. **Request Entire Class**: Request entire class instance by class name or short name: `app.use({ Diagnostics: [] })` or `app.use({ dx: [] })`
+7. **Class References**: For class constructors, use special syntax like `Coords: []` or similar
 
 **Key Benefits**:
 - Don't need to know component names - just request methods you need
 - Registry handles the mapping automatically
 - Only disambiguate when truly needed (rare)
 - Return format matches current access pattern (`app.dx.out()`, `app.ui.showErrorMessage()`, etc.)
+- Can request entire classes when needed
+
+**Class ID Requirement**:
+- Every class must have either `public readonly id: string` or `public get id(): string`
+- Returns the short name (e.g., `'dx'`, `'ui'`, `'pdf'`)
+- Registry uses this for organization and method mapping
 
 ## Migration Stages
 
@@ -215,17 +224,25 @@ class PaperPrinter {
 - [ ] Store Diagnostics instance in Registry's internal cache immediately
 - [ ] Implement lazy instantiation cache in Registry for other components
 - [ ] Add component factory functions mapping (e.g., `VSCodeAPIs`, `UI`, `PDF`, etc.)
+- [ ] Implement `buildMethodMap()` that:
+  - Creates instances of all registered components (or uses prototypes)
+  - Reads each component's `id` property or calls `id()` getter to get short name
+  - Scans all methods on each component
+  - Builds mapping: methodName -> componentId (e.g., 'out' -> 'dx')
 - [ ] Implement `use()` method that:
+  - Handles class name requests (e.g., `Diagnostics: []`, `dx: []`) - returns entire instance
+  - Handles method name requests - uses methodMap to resolve to component
   - Returns Diagnostics immediately (always available, created at Registry construction)
   - Checks cache for existing instances
   - Creates instances lazily if not cached
-  - Returns scoped object with only requested methods/instances
+  - Returns scoped object with only requested methods/instances, or entire instance if requested
 - [ ] Add circular dependency detection
 
 #### 1.2: Implement Method Scoping
 - [ ] Create proxy objects that expose only requested methods
 - [ ] Ensure method binding preserves `this` context
 - [ ] Add type-safe wrappers for each component's public API
+- [ ] Implement class name to short name mapping (Diagnostics -> dx, VSCodeAPIs -> vscodeapis, etc.)
 
 #### 1.3: Update App Constructor
 - [ ] Remove eager component construction from App constructor
@@ -245,7 +262,9 @@ class PaperPrinter {
 
 **Goal**: Migrate components with no dependencies or minimal dependencies
 
-**Note**: Diagnostics is owned by Registry and created immediately at Registry construction. All components request Diagnostics via Registry.
+**Note**: 
+- Diagnostics is owned by Registry and created immediately at Registry construction. All components request Diagnostics via Registry.
+- **Critical**: Every migrated class must add `public readonly id: string` or `public get id(): string` returning the short name
 
 #### 2.1: Migrate OS Classes
 - [ ] Update OS base class constructor to accept App
