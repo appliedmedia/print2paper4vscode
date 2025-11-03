@@ -61,28 +61,94 @@ class PDF {
 ### Target Usage Pattern
 
 ```typescript
-// Target pattern
+// Target pattern - PDF class example
 class PDF {
-  private dependencies: PDFDependencies;
+  private deps: PDFDependencies;
   
   constructor(registry: Registry) {
-    this.dependencies = registry.require({
+    // Request specific methods from specific components
+    this.deps = registry.deps({
       stylize: ['getTokens', 'getThemes'],
       ui: ['showErrorMessage', 'showInfoMessage'],
-      coords: ['Coords'],
-      dx: ['create']
+      os: ['fileRead', 'fileWrite'],
+      dx: ['create', 'sub', 'out']
     });
     
-    this.dx = this.dependencies.dx.create('PDF');
-    this.coords = new this.dependencies.coords(registry);
+    // Create Diagnostics instance for this class
+    this.dx = this.deps.dx.create('PDF');
+    
+    // Create Coords instance (class reference requested)
+    this.coords = new Coords(registry);
   }
   
-  someMethod() {
-    const tokens = this.dependencies.stylize.getTokens(...);
-    this.dependencies.ui.showErrorMessage(...);
+  async renderPage(pageNum: number): Promise<void> {
+    const subDx = this.deps.dx.sub('renderPage');
+    
+    // Use requested methods directly
+    const tokens = await this.deps.stylize.getTokens('code', 'javascript', 'theme');
+    this.deps.ui.showInfoMessage(`Rendering page ${pageNum}`);
+    
+    const content = this.deps.os.fileRead('template.html');
+  }
+}
+
+// UI class example
+class UI {
+  private deps: UIDependencies;
+  
+  constructor(registry: Registry) {
+    this.deps = registry.deps({
+      dx: ['create', 'sub', 'out'],
+      os: ['fileRead'],
+      vscodeapis: ['showErrorMessage', 'showInfoMessage', 'showWarningMessage']
+    });
+    
+    this.dx = this.deps.dx.create('UI');
+  }
+  
+  showError(msg: string): void {
+    // Access methods directly from deps object
+    this.deps.vscodeapis.showErrorMessage(msg);
+    this.deps.dx.out(`Error: ${msg}`);
+  }
+}
+
+// PaperPrinter class example (orchestrator with many dependencies)
+class PaperPrinter {
+  private deps: PaperPrinterDependencies;
+  
+  constructor(registry: Registry) {
+    this.deps = registry.deps({
+      pdf: ['renderPage', 'getCurrentPdfDoc', 'setTokensForPageRender'],
+      stylize: ['getTokens', 'getThemes'],
+      tabinspector: ['getActiveTabContent', 'getLanguageId'],
+      ui: ['showErrorMessage', 'showInfoMessage'],
+      uimenumgr: ['getValueForSelectedByMenuId', 'createMenu'],
+      vscodeapis: ['getActiveTextEditor', 'postMessage'],
+      dx: ['create', 'sub', 'out']
+    });
+    
+    this.dx = this.deps.dx.create('PaperPrinter');
+  }
+  
+  async handlePrint(): Promise<void> {
+    const content = this.deps.tabinspector.getActiveTabContent();
+    const lang = this.deps.tabinspector.getLanguageId();
+    const tokens = await this.deps.stylize.getTokens(content, lang, 'github-light');
+    
+    this.deps.pdf.setTokensForPageRender(tokens, 'github-light');
+    await this.deps.pdf.renderPage(0);
   }
 }
 ```
+
+### How Dependency Access Works
+
+1. **Request Phase**: In constructor, call `registry.deps({ componentName: ['method1', 'method2'] })`
+2. **Registry Returns**: An object with only the requested methods, properly bound
+3. **Access Phase**: Use `this.deps.componentName.methodName()` throughout the class
+4. **Type Safety**: Each component's dependency object is typed based on what was requested
+5. **Class References**: For class references (like `Coords`), request `'ClassName'` as string, Registry returns constructor function
 
 ## Migration Stages
 
@@ -93,14 +159,13 @@ class PDF {
 #### 0.1: Create Registry Class Skeleton
 - [ ] Create `src/Registry.ts` with basic structure
 - [ ] Define `DependencyRequest` type for dependency declarations
-- [ ] Implement singleton pattern for Registry instance
-- [ ] Add basic `require()` method that returns `any` initially
+- [ ] Add basic `deps()` method that returns `any` initially
 
 #### 0.2: Create Registry Integration Points
 - [ ] Add `Registry` instance to App class (constructed in App constructor)
 - [ ] Registry constructor creates Diagnostics instance immediately internally
 - [ ] Create minimal Registry that wraps existing App pattern
-- [ ] Registry can access existing App components during transition (including app.dx for backward compatibility)
+- [ ] Registry can access existing App components during transition
 
 #### 0.3: Add Type Definitions
 - [ ] Create `src/types/Registry_t.ts` for Registry type definitions
@@ -121,7 +186,7 @@ class PDF {
 - [ ] Store Diagnostics instance in Registry's internal cache immediately
 - [ ] Implement lazy instantiation cache in Registry for other components
 - [ ] Add component factory functions mapping (e.g., `VSCodeAPIs`, `UI`, `PDF`, etc.)
-- [ ] Implement `require()` method that:
+- [ ] Implement `deps()` method that:
   - Returns Diagnostics immediately (always available, created at Registry construction)
   - Checks cache for existing instances
   - Creates instances lazily if not cached
@@ -138,7 +203,6 @@ class PDF {
 - [ ] Create Registry instance (Registry creates Diagnostics internally)
 - [ ] Register component factories with Registry
 - [ ] Update App to use Registry for accessing components
-- [ ] Optionally keep `app.dx` as a convenience property that delegates to Registry (for backward compatibility during migration)
 
 **Testing**: 
 - Registry can lazy-load components
@@ -159,7 +223,7 @@ class PDF {
 - [ ] Remove `app` parameter
 - [ ] Request dependencies via Registry:
   - `Diagnostics` (for logging)
-  - `VSCodeAPIs` (for extension path - may need to access via old app pattern during transition)
+  - `VSCodeAPIs` (for extension path)
 - [ ] Move `init()` logic into constructor
 - [ ] Update OS factory method to use Registry
 - [ ] Update OSMac, OSWin, OSLinux constructors
@@ -325,7 +389,6 @@ class PDF {
 - [ ] Remove `componentOrder` array
 - [ ] Keep only `Registry` property in App (Registry owns Diagnostics internally)
 - [ ] Update App to use Registry for component access
-- [ ] Remove `app.dx` property if present (all access via Registry now)
 
 #### 7.2: Remove Init Methods
 - [ ] Remove all `init()` method implementations
@@ -386,69 +449,80 @@ class PDF {
 
 ## Registry Implementation Details
 
-### Registry Class Structure
-
 ```typescript
 type DependencyRequest = {
-  [componentName: string]: string[] | string; // Methods or 'ClassName' for class references
+  [componentName: string]: string[] | string; // Methods array or 'ClassName' string
 };
 
 class Registry {
   private instances: Map<string, any> = new Map();
   private factories: Map<string, (registry: Registry) => any> = new Map();
-  private diagnostics: Diagnostics; // Created immediately, owned by Registry
+  private diagnostics: Diagnostics;
   
-  constructor(
-    private vscode: any, 
-    private context: any
-  ) {
+  constructor(private vscode: any, private context: any) {
     // Create Diagnostics immediately (needed for debugging during construction)
     this.diagnostics = new Diagnostics('Registry', undefined, null, null);
     this.instances.set('dx', this.diagnostics);
     this.registerFactories();
   }
   
-  require<T>(request: DependencyRequest): T {
-    // Implementation:
-    // 1. Handle Diagnostics specially (always available immediately, owned by Registry)
-    // 2. For each other requested component:
-    //    - Check cache, create if needed
-    //    - Return scoped object with only requested methods
+  deps<T>(request: DependencyRequest): T {
+    const result: any = {};
+    
+    for (const [componentName, methods] of Object.entries(request)) {
+      if (componentName === 'dx') {
+        // Diagnostics is always available
+        result.dx = this.createScopedAccess(this.diagnostics, methods as string[]);
+      } else {
+        // Get or create component instance lazily
+        if (!this.instances.has(componentName)) {
+          const factory = this.factories.get(componentName);
+          if (!factory) throw new Error(`No factory for component: ${componentName}`);
+          this.instances.set(componentName, factory(this));
+        }
+        
+        const instance = this.instances.get(componentName);
+        
+        // Handle class reference requests
+        if (methods === 'ClassName' || methods === componentName) {
+          result[componentName] = instance.constructor;
+        } else {
+          // Return scoped access to requested methods
+          result[componentName] = this.createScopedAccess(instance, methods as string[]);
+        }
+      }
+    }
+    
+    return result as T;
+  }
+  
+  private createScopedAccess(instance: any, methods: string[]): any {
+    const scoped: any = {};
+    for (const method of methods) {
+      if (typeof instance[method] === 'function') {
+        scoped[method] = instance[method].bind(instance);
+      } else {
+        scoped[method] = instance[method];
+      }
+    }
+    return scoped;
   }
   
   private registerFactories(): void {
-    // Register factory functions for each component (except Diagnostics, which Registry owns)
+    this.factories.set('vscodeapis', (registry) => {
+      return new VSCodeAPIs(registry, this.vscode, this.context);
+    });
+    
+    this.factories.set('ui', (registry) => {
+      return new UI(registry);
+    });
+    
+    this.factories.set('os', (registry) => {
+      return OS.create(registry);
+    });
+    
+    // ... register all other components
   }
-  
-  // Optional: Get Diagnostics instance directly (for App convenience property during migration)
-  getDiagnostics(): Diagnostics {
-    return this.diagnostics;
-  }
-}
-```
-
-### Component Factory Pattern
-
-```typescript
-// In Registry.registerFactories()
-this.factories.set('vscodeapis', (registry) => {
-  return new VSCodeAPIs(registry, this.vscode, this.context);
-});
-
-this.factories.set('ui', (registry) => {
-  return new UI(registry);
-});
-```
-
-### Method Scoping Pattern
-
-```typescript
-private createScopedAccess(instance: any, requestedMethods: string[]): any {
-  const scoped: any = {};
-  for (const method of requestedMethods) {
-    scoped[method] = instance[method].bind(instance);
-  }
-  return scoped;
 }
 ```
 
@@ -511,7 +585,6 @@ private createScopedAccess(instance: any, requestedMethods: string[]): any {
 
 ### Risk: Breaking Changes
 - **Mitigation**: Incremental migration with tests at each stage
-- **Mitigation**: Keep old pattern working during transition
 
 ### Risk: Performance Degradation
 - **Mitigation**: Profile lazy loading overhead
@@ -559,9 +632,8 @@ Registry creates and manages Diagnostics internally. This simplifies the archite
 **Implementation approach**:
 - Registry constructor creates Diagnostics instance immediately (first thing)
 - Registry stores Diagnostics in its instance cache immediately
-- Registry's `require()` method returns Diagnostics immediately when requested
-- All components request Diagnostics via Registry: `registry.require({ dx: ['create', 'sub', 'out'] })`
-- App can optionally expose `app.dx` as a convenience property that delegates to Registry's Diagnostics during migration
+- Registry's `deps()` method returns Diagnostics immediately when requested
+- All components request Diagnostics via Registry: `registry.deps({ dx: ['create', 'sub', 'out'] })`
 
 ## Notes
 
