@@ -155,4 +155,30 @@ describe('Diagnostics', () => {
     Diagnostics.debugOn(false);
     assert.strictEqual(Diagnostics.debugOn(), false);
   });
+
+  test('should output messages with print method', () => {
+    const dx = new Diagnostics('TestClass');
+    const result = dx.print('Test message');
+    assert.strictEqual(result, dx); // Should return this for chaining
+  });
+
+  test('should handle done with message', () => {
+    const dx = new Diagnostics('TestClass', true);
+    dx.sub('testMethod');
+    const result = dx.done('completed');
+    assert.strictEqual(result, dx); // Should return this for chaining
+  });
+
+  test('should handle done without message', () => {
+    const dx = new Diagnostics('TestClass', true);
+    dx.sub('testMethod');
+    const result = dx.done();
+    assert.strictEqual(result, dx); // Should return this for chaining
+  });
+
+  test('should handle error method', () => {
+    const dx = new Diagnostics('TestClass');
+    const result = dx.error('Error message');
+    assert.strictEqual(result, dx); // Should return this for chaining
+  });
 });

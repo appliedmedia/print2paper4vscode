@@ -129,4 +129,65 @@ describe('VSCodeAPIs', () => {
     const panelId2 = await app.vscodeapis.getOrCreateWebviewPanel('Test', '<html></html>', panelId1);
     assert.strictEqual(panelId1, panelId2);
   });
+
+  it('should get selection or document text', () => {
+    const editor = app.vscodeapis.getActiveTextEditor();
+    if (editor) {
+      const text = app.vscodeapis.getSelectionOrDocumentText(editor);
+      assert.ok(typeof text === 'string');
+    }
+  });
+
+  it('should get active language ID', () => {
+    const languageId = app.vscodeapis.getActiveLanguageId();
+    assert.ok(typeof languageId === 'string');
+  });
+
+  it('should check if active selection exists', () => {
+    const hasSelection = app.vscodeapis.hasActiveSelection();
+    assert.ok(typeof hasSelection === 'boolean');
+  });
+
+  it('should get active tab name', () => {
+    const tabName = app.vscodeapis.getActiveTabName();
+    assert.ok(typeof tabName === 'string');
+  });
+
+  it('should get descriptive name from document', () => {
+    const editor = app.vscodeapis.getActiveTextEditor();
+    if (editor) {
+      const name = app.vscodeapis.getDescriptiveName(editor.document);
+      assert.ok(typeof name === 'string');
+    }
+  });
+
+  it('should set status bar message', () => {
+    const disposable = app.vscodeapis.setStatusBarMessage('Test message');
+    assert.ok(disposable);
+    disposable.dispose();
+  });
+
+  it('should set status bar message with timeout', () => {
+    const disposable = app.vscodeapis.setStatusBarMessage('Test message', 1000);
+    assert.ok(disposable);
+    disposable.dispose();
+  });
+
+  it('should get temp directory', () => {
+    const tempDir = app.vscodeapis.getDir_Temp();
+    assert.ok(typeof tempDir === 'string');
+    assert.ok(tempDir.includes('temp'));
+  });
+
+  it('should convert URI from path', () => {
+    const uri = app.vscodeapis.uriFromPath('/test/path');
+    assert.ok(uri);
+    assert.strictEqual(uri.fsPath, '/test/path');
+  });
+
+  it('should convert URI to path', () => {
+    const uri = app.vscodeapis.uriFromPath('/test/path');
+    const path = app.vscodeapis.uriToPath(uri);
+    assert.strictEqual(path, '/test/path');
+  });
 });
