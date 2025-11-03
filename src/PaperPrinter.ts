@@ -258,7 +258,7 @@ export class PaperPrinter {
       this.pdfDoc = await this.app.pdf.generatePdf();
 
       // Log PDF object creation for reuse verification (Stage 4.3)
-      const pdfObjectId = this.pdfDoc ? `pdfDoc@${Date.now()}` : 'null';
+      const pdfObjectId = this.pdfDoc ? `pdfDoc@${this.pdfDoc.instanceId}` : 'null';
       dx.out(`PDF object created: ${pdfObjectId} (reused for webview, print, save)`);
       dx.out(`PDF object reuse verification: Same object will be used for webview display and print/save operations`);
 
@@ -444,7 +444,7 @@ export class PaperPrinter {
     const themes = this.app.stylize.getThemes();
 
     return themes.map(theme => {
-      // No need to add ?? here, UIMenu.ts will handle it based on default selection
+      // UIMenu.ts will handle default selection marker in displayName
       return {
         id: theme.id,
         displayName: theme.displayName,
@@ -469,11 +469,11 @@ export class PaperPrinter {
 
     if (existingEditorOption) {
       dx.out(`Editor size ${editorSize} already exists in list`);
-      // Editor size already exists - no need to add ?? here, UIMenu.ts will handle it
+      // Editor size already exists - UIMenu.ts will handle default selection marker in displayName
       // existingEditorOption.displayName stays as is
     } else {
       dx.out(`Editor size ${editorSize} not in list, adding it`);
-      // Editor size not in list - add it at the top without ?? suffix
+      // Editor size not in list - add it at the top without default selection marker
       sizeOptions.unshift({ id: String(editorSize), displayName: `${editorSize}px` });
     }
 

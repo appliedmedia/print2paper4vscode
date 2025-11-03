@@ -111,9 +111,9 @@ export class PDF {
     dx.require({ pdfDoc }, ['pdfDoc']);
 
     try {
-      // Log PDF object reuse for printing (Stage 4.3)
+      // Log PDF object usage for printing (Stage 4.3)
       const pdfBuffer = pdfDoc.asArrayBuffer();
-      dx.out(`PDF object reuse: Using same PDF ArrayBuffer for printWithPreview (${pdfBuffer.byteLength} bytes)`);
+      dx.out(`PDF object usage: Using PDF ArrayBuffer for printWithPreview (${pdfBuffer.byteLength} bytes)`);
 
       // Generate filename with timestamp
       const timestamp = this.app.os.dateAsYYYYMMDDHHMMSS();
@@ -141,9 +141,9 @@ export class PDF {
   async printDirectly(pdfDoc: DocInfo_PDF, descriptiveName?: string): Promise<void> {
     const dx = this.dx.sub('printDirectly');
     try {
-      // Log PDF object reuse for printing (Stage 4.3)
+      // Log PDF object usage for printing (Stage 4.3)
       const pdfBuffer = pdfDoc.asArrayBuffer();
-      dx.out(`PDF object reuse: Using same PDF ArrayBuffer for printDirectly (${pdfBuffer.byteLength} bytes)`);
+      dx.out(`PDF object usage: Using PDF ArrayBuffer for printDirectly (${pdfBuffer.byteLength} bytes)`);
 
       // Generate filename with timestamp
       const timestamp = this.app.os.dateAsYYYYMMDDHHMMSS();
@@ -171,9 +171,9 @@ export class PDF {
   async saveAsPDF(pdfDoc: DocInfo_PDF, descriptiveName?: string): Promise<void> {
     const dx = this.dx.sub('saveAsPDF');
     try {
-      // Log PDF object reuse for saving (Stage 4.3)
+      // Log PDF object usage for saving (Stage 4.3)
       const pdfBuffer = pdfDoc.asArrayBuffer();
-      dx.out(`PDF object reuse: Using same PDF ArrayBuffer for saveAsPDF (${pdfBuffer.byteLength} bytes)`);
+      dx.out(`PDF object usage: Using PDF ArrayBuffer for saveAsPDF (${pdfBuffer.byteLength} bytes)`);
 
       // Generate default filename with timestamp
       const timestamp = this.app.os.dateAsYYYYMMDDHHMMSS();

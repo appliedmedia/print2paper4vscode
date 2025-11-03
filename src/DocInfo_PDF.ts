@@ -15,6 +15,10 @@ import type { LanguageId_t } from './Stylize';
 export class DocInfo_PDF {
   private app: App;
 
+  // Stable instance identifier for tracking PDF object reuse
+  private static nextInstanceId = 1;
+  public readonly instanceId: number;
+
   // PDF document state
   public currentPdfDoc: jsPDF | null = null;
   public currentTokens: ThemedToken[][] | null = null;
@@ -71,6 +75,7 @@ export class DocInfo_PDF {
 
   constructor(app: App) {
     this.app = app;
+    this.instanceId = DocInfo_PDF.nextInstanceId++;
   }
 
   // Margin getter - calculates from current marginId

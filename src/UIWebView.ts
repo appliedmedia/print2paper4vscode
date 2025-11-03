@@ -116,8 +116,8 @@ export class UIWebView {
       const base64 = Buffer.from(pdfData.arrayBuffer).toString('base64');
       const pdf_data_url = `data:application/pdf;base64,${base64}`;
 
-      // Log PDF object reuse for webview (Stage 4.3)
-      dx.out(`PDF object reuse: Using same PDF ArrayBuffer for webview display (${pdfData.arrayBuffer.byteLength} bytes)`);
+      // Log PDF object usage for webview (Stage 4.3)
+      dx.out(`PDF object usage: Using PDF ArrayBuffer for webview display (${pdfData.arrayBuffer.byteLength} bytes)`);
 
       // Generate HTML for PDF viewer
       const html = await this.generatePDFHTML(pdf_data_url, pdfData);
