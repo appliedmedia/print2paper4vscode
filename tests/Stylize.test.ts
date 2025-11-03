@@ -153,4 +153,33 @@ describe('Stylize', () => {
       assert.ok(theme.displayName.includes(' '), 'Theme displayName should contain spaces');
     });
   });
+
+  it('should get all themes (Shiki + VS Code)', async () => {
+    await stylize.init();
+    const allThemes = stylize.getThemes();
+    
+    assert.ok(allThemes.length > 0, 'Should have themes');
+    // Should include Shiki themes
+    const shikiThemes = allThemes.filter(t => !t.themeData);
+    assert.ok(shikiThemes.length > 0, 'Should have Shiki themes');
+  });
+
+  it('should handle tokenize with theme', async () => {
+    await stylize.init();
+    const code = 'const x = 42;';
+    const tokens = await stylize.tokenize(code, 'javascript', 'github-light');
+    
+    assert.ok(Array.isArray(tokens));
+    assert.ok(tokens.length > 0);
+    assert.ok(Array.isArray(tokens[0]));
+  });
+
+  it('should handle tokenize without theme (uses active theme)', async () => {
+    await stylize.init();
+    const code = 'function test() { return 1; }';
+    const tokens = await stylize.tokenize(code, 'javascript');
+    
+    assert.ok(Array.isArray(tokens));
+    assert.ok(tokens.length > 0);
+  });
 });
