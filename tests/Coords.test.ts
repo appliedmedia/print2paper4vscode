@@ -2,33 +2,7 @@ import { describe, it, beforeEach, afterEach } from 'node:test';
 import * as assert from 'node:assert';
 import { Coords } from '../src/Coords.js';
 import { App } from '../src/App.js';
-import type { ExtensionContext } from 'vscode';
-
-// Mock VS Code context and APIs
-const mockContext = {
-  subscriptions: [],
-  globalState: {
-    get: () => undefined,
-    update: () => {},
-  },
-  globalStorageUri: { fsPath: '/tmp' },
-} as unknown as ExtensionContext;
-
-const mockVSCode = {
-  commands: { registerCommand: () => ({}) },
-  window: {
-    showErrorMessage: () => {},
-    showInformationMessage: () => {},
-    showWarningMessage: () => {},
-  },
-  workspace: {
-    getConfiguration: () => ({
-      get: () => undefined,
-    }),
-  },
-  Uri: { file: (path: string) => ({ fsPath: path }) },
-  Range: class Range {},
-} as any;
+import { mockContext, mockVSCode } from './test-utils.js';
 
 describe('Coords', () => {
   let app: App;
@@ -195,23 +169,4 @@ describe('Coords', () => {
     });
   });
 
-  describe('debugCoords', () => {
-    it('should output debug information', () => {
-      // Test that debugCoords doesn't throw
-      coords.debugCoords(
-        595, // pageWidthPts
-        842, // pageHeightPts
-        {
-          topMarginPts: 72,
-          bottomMarginPts: 72,
-          leftMarginPts: 72,
-          rightMarginPts: 72,
-        },
-        500 // currentPdfY
-      );
-      
-      // If we get here without throwing, the method executed successfully
-      assert.ok(true);
-    });
-  });
 });

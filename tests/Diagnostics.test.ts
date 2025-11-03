@@ -157,28 +157,72 @@ describe('Diagnostics', () => {
   });
 
   test('should output messages with print method', () => {
+    const originalLog = console.log;
+    let capturedOutput = '';
+    console.log = (message: string) => {
+      capturedOutput += message;
+    };
+
     const dx = new Diagnostics('TestClass');
-    const result = dx.print('Test message');
-    assert.strictEqual(result, dx); // Should return this for chaining
+    dx.print('Test message');
+
+    assert.ok(capturedOutput.includes('Test message'), 'print() should output the message');
+    assert.ok(capturedOutput.includes('TestClass'), 'print() should include class name');
+    assert.strictEqual(dx.print('Another message'), dx); // Should return this for chaining
+
+    console.log = originalLog;
   });
 
   test('should handle done with message', () => {
+    const originalLog = console.log;
+    let capturedOutput = '';
+    console.log = (message: string) => {
+      capturedOutput += message;
+    };
+
     const dx = new Diagnostics('TestClass', true);
-    dx.sub('testMethod');
-    const result = dx.done('completed');
-    assert.strictEqual(result, dx); // Should return this for chaining
+    const subDx = dx.sub('testMethod');
+    subDx.done('completed');
+
+    assert.ok(capturedOutput.includes('Done'), 'done() should output completion message');
+    assert.ok(capturedOutput.includes('completed'), 'done() should include the provided message');
+    assert.strictEqual(subDx.done('completed'), subDx); // Should return this for chaining
+
+    console.log = originalLog;
   });
 
   test('should handle done without message', () => {
+    const originalLog = console.log;
+    let capturedOutput = '';
+    console.log = (message: string) => {
+      capturedOutput += message;
+    };
+
     const dx = new Diagnostics('TestClass', true);
-    dx.sub('testMethod');
-    const result = dx.done();
-    assert.strictEqual(result, dx); // Should return this for chaining
+    const subDx = dx.sub('testMethod');
+    subDx.done();
+
+    assert.ok(capturedOutput.includes('Done'), 'done() should output completion message');
+    assert.strictEqual(subDx.done(), subDx); // Should return this for chaining
+
+    console.log = originalLog;
   });
 
   test('should handle error method', () => {
+    const originalLog = console.log;
+    let capturedOutput = '';
+    console.log = (message: string) => {
+      capturedOutput += message;
+    };
+
     const dx = new Diagnostics('TestClass');
-    const result = dx.error('Error message');
-    assert.strictEqual(result, dx); // Should return this for chaining
+    dx.error('Error message');
+
+    assert.ok(capturedOutput.includes('ERROR'), 'error() should include ERROR prefix');
+    assert.ok(capturedOutput.includes('Error message'), 'error() should output the error message');
+    assert.ok(capturedOutput.includes('TestClass'), 'error() should include class name');
+    assert.strictEqual(dx.error('Another error'), dx); // Should return this for chaining
+
+    console.log = originalLog;
   });
 });
