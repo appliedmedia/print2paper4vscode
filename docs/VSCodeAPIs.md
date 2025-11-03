@@ -1571,6 +1571,54 @@ This adds the command to:
 
 This adds a button to the editor title bar when an editor has focus. The `when` clause ensures it only appears when text is focused.
 
+**What the Editor Title Button Looks Like:**
+
+When you add a command to `editor/title`, VS Code displays it as:
+- A clickable button/action in the editor tab area (top-right of the editor, near the tab)
+- Shows the command's `title` property as the button label (e.g., "Print2Paper")
+- By default, no icon is shown unless you specify one
+
+**Adding an Icon to the Title Button:**
+
+You can customize the button appearance by adding an icon to the command definition:
+
+```json
+"commands": [
+  {
+    "command": "p2p4vsc.print2paper",
+    "title": "Print2Paper",
+    "category": "Print",
+    "icon": {
+      "light": "path/to/light-icon.svg",
+      "dark": "path/to/dark-icon.svg"
+    }
+  }
+]
+```
+
+Or use a VS Code ThemeIcon (recommended):
+```json
+"commands": [
+  {
+    "command": "p2p4vsc.print2paper",
+    "title": "Print2Paper",
+    "category": "Print",
+    "icon": "$(printer)"
+  }
+]
+```
+
+ThemeIcon names can be found at: https://code.visualstudio.com/api/references/icons-in-labels#icon-listing
+
+Common print-related icons: `$(printer)`, `$(file-pdf)`, `$(print-preview)`
+
+**Visual Appearance:**
+
+- Without icon: Shows as a text button with "Print2Paper" label
+- With icon: Shows as an icon button (icon only) or icon + text depending on VS Code's UI
+- Appears in the editor tab area, typically grouped with other editor actions
+- Only visible when `editorTextFocus` condition is met (when you're focused on a text editor)
+
 **Menu Groups:**
 
 Menu items can be organized into groups. Common groups include:
