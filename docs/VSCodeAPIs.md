@@ -1555,7 +1555,7 @@ This adds the command to:
 3. **Editor Context Menu** - Add to right-click menu (already implemented)
 4. **Editor Title Menu** - Add to editor title bar menu using `editor/title` (already implemented)
 
-**Example: Adding to Editor Title Menu**
+#### Example: Adding to Editor Title Menu
 
 ```json
 "menus": {
