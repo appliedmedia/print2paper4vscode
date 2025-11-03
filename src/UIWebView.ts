@@ -1,12 +1,8 @@
 import type { App } from './App';
-import type { PageRender } from './types/PageRender_t';
 import type { WebviewPanelId_t } from './VSCodeAPIs';
 import type { PostMessage } from './types/UI_t';
-import { UIScrollView, type ScrollOptions_t } from './UIScrollView';
-import { UIMenuMgr } from './UIMenuMgr';
 import { Diagnostics } from './Diagnostics';
 import { Yaml } from './Yaml';
-import { kPageSizeId, kFontSizeId } from './types/PaperPrinter_t';
 
 /**
  * PDF Data for webview display
@@ -34,9 +30,7 @@ export class UIWebView {
 
   private app: App;
   private dx: Diagnostics;
-  private currentViewer: UIScrollView | null = null;
   private panelId: WebviewPanelId_t | null = null;
-  private initialized: boolean = false;
   private handlersRegistered: boolean = false;
   private _yaml: Yaml<typeof UIWebView.kYaml>;
 
@@ -55,56 +49,10 @@ export class UIWebView {
   }
 
   /**
-   * Create webview panel with menus and scroll view
-   */
-  async createPanel(pageRender: PageRender, options: ScrollOptions_t): Promise<WebviewPanelId_t> {
-    const dx = this.dx.sub('createPanel', true);
-    dx.out(`🚀 DEBUG: UIWebView.createPanel starting`);
-    dx.require({ pageRender, options }, ['pageRender', 'options']);
-
-    try {
-      if (this.initialized) {
-        throw new Error('UIWebView already initialized');
-      }
-
-      // Create scroll view
-      this.currentViewer = new UIScrollView(this.app, pageRender, options);
-
-      // Generate HTML content from scroll view
-      dx.out(`🚀 DEBUG: About to call generateContent`);
-      const html = await this.currentViewer.generateContent();
-      dx.out(`🚀 DEBUG: generateContent completed, HTML length: ${html.length}`);
-
-      // Create or reuse webview panel
-      const panelId = await this.app.vscodeapis.getOrCreateWebviewPanel(
-        options.title || 'Document Viewer',
-        html,
-        this.panelId || undefined
-      );
-      this.panelId = panelId;
-
-      // Set panel ID in scroll view
-      this.currentViewer.setPanelId(panelId);
-
-      // Note: Pre-rendering disabled - let scroll handler render pages on demand
-      // This avoids coordinate transform issues and ensures fresh data
-
-      this.initialized = true;
-      dx.out(`Created webview panel: ${options.title || 'Document Viewer'}`);
-      return panelId;
-    } catch (error) {
-      dx.error(`Failed to create webview panel: ${String(error)}`);
-      throw error;
-    } finally {
-      dx.done();
-    }
-  }
-
-  /**
    * Create and configure menu manager (for external use)
    * @deprecated Menu manager should be accessed via this.app.uimenumgr
    */
-  createMenus(): UIMenuMgr {
+  createMenus() {
     const dx = this.dx.sub('createMenus');
 
     try {
@@ -117,89 +65,10 @@ export class UIWebView {
   }
 
   /**
-   * Create scroll view with PageRender content (for external use)
-   */
-  async createScrollView(
-    pageRender: PageRender,
-    options: ScrollOptions_t
-  ): Promise<WebviewPanelId_t> {
-    const dx = this.dx.sub('createScrollView');
-    dx.require({ pageRender, options }, ['pageRender', 'options']);
-
-    try {
-      this.currentViewer = new UIScrollView(this.app, pageRender, options);
-
-      // Generate HTML content from scroll view
-      const html = await this.currentViewer.generateContent();
-
-      // Create or reuse webview panel
-      const panelId = await this.app.vscodeapis.getOrCreateWebviewPanel(
-        options.title || 'Document Viewer',
-        html,
-        this.panelId || undefined
-      );
-      this.panelId = panelId;
-
-      // Set panel ID in scroll view
-      this.currentViewer.setPanelId(panelId);
-
-      dx.out(`Created scroll view: ${options.title || 'Document Viewer'}`);
-      return panelId;
-    } catch (error) {
-      dx.error(`Failed to create scroll view: ${String(error)}`);
-      throw error;
-    } finally {
-      dx.done();
-    }
-  }
-
-  /**
-   * Update scroll view content with new PageRender
-   */
-  async updatePageRender(newPageRender: PageRender): Promise<void> {
-    const dx = this.dx.sub('updatePageRender');
-
-    try {
-      if (this.currentViewer) {
-        await this.currentViewer.updatePageRender(newPageRender);
-        dx.out('Updated PageRender in scroll view');
-      } else {
-        dx.out('No active scroll view to update');
-      }
-    } catch (error) {
-      dx.error(`Failed to update PageRender: ${String(error)}`);
-      throw error;
-    } finally {
-      dx.done();
-    }
-  }
-
-  /**
-   * Update scroll view options (theme, font, page size, etc.)
-   */
-  async updateOptions(options: ScrollOptions_t): Promise<void> {
-    const dx = this.dx.sub('updateOptions');
-
-    try {
-      if (this.currentViewer) {
-        await this.currentViewer.updateOptions(options);
-        dx.out('Updated scroll view options');
-      } else {
-        dx.out('No active scroll view to update');
-      }
-    } catch (error) {
-      dx.error(`Failed to update scroll view options: ${String(error)}`);
-      throw error;
-    } finally {
-      dx.done();
-    }
-  }
-
-  /**
    * Get the menu manager
    * @deprecated Use this.app.uimenumgr directly
    */
-  getMenus(): UIMenuMgr {
+  getMenus() {
     return this.app.uimenumgr;
   }
 
@@ -246,6 +115,9 @@ export class UIWebView {
       // Convert ArrayBuffer to base64 data URL (required for VS Code webview)
       const base64 = Buffer.from(pdfData.arrayBuffer).toString('base64');
       const pdf_data_url = `data:application/pdf;base64,${base64}`;
+
+      // Log PDF object usage for webview (Stage 4.3)
+      dx.out(`PDF object usage: Using PDF ArrayBuffer for webview display (${pdfData.arrayBuffer.byteLength} bytes)`);
 
       // Generate HTML for PDF viewer
       const html = await this.generatePDFHTML(pdf_data_url, pdfData);
@@ -319,7 +191,7 @@ export class UIWebView {
    * Check if webview is currently active
    */
   isActive(): boolean {
-    return this.currentViewer !== null && this.panelId !== null;
+    return this.panelId !== null;
   }
 
   /**
@@ -336,18 +208,12 @@ export class UIWebView {
     const dx = this.dx.sub('done');
 
     try {
-      if (this.currentViewer) {
-        this.currentViewer.done();
-        this.currentViewer = null;
-      }
-
       // Remove panel from VSCodeAPIs map
       if (this.panelId) {
         this.app.vscodeapis.removePanel(this.panelId);
       }
 
       this.panelId = null;
-      this.initialized = false;
       dx.out('Webview cleaned up');
     } finally {
       dx.done();
@@ -365,7 +231,6 @@ export class UIWebView {
       { type: 'menuItemSelected', handler: this.handleMenuItemSelected.bind(this) },
       { type: 'print', handler: this.handlePrintMessage.bind(this) },
       { type: 'dx', handler: this.handleDxMessage.bind(this) },
-      { type: 'requestPageRender', handler: this.handlePageRenderRequest.bind(this) },
     ];
 
     messageHandlers.forEach(({ type, handler }) => {
@@ -461,57 +326,6 @@ export class UIWebView {
       dx.print('Received dx message without message content');
     }
     dx.done();
-  }
-
-  /**
-   * Handle page render request from scroll view
-   */
-  private async handlePageRenderRequest(msg: PostMessage): Promise<void> {
-    const dx = this.dx.sub('handlePageRenderRequest');
-
-    try {
-      const pageNumber = msg.pageNumber;
-      dx.out(`Received page render request for page ${pageNumber}`);
-
-      if (typeof pageNumber !== 'number') {
-        throw new Error('Invalid page number');
-      }
-
-      if (!this.currentViewer) {
-        throw new Error('No active scroll view');
-      }
-
-      // Request page render through current viewer
-      const pageData = await this.currentViewer.requestPageRender(pageNumber);
-
-      // Send response back to webview
-      if (this.panelId) {
-        this.app.vscodeapis.postMessage(this.panelId, {
-          type: 'pageRenderResponse',
-          pageData: pageData,
-        });
-      }
-
-      dx.out(`Page ${pageNumber} rendered and sent to webview`);
-    } catch (error) {
-      dx.out(`Error handling page render request: ${String(error)}`);
-
-      // Send error response
-      if (this.panelId) {
-        this.app.vscodeapis.postMessage(this.panelId, {
-          type: 'pageRenderError',
-          pageNumber: msg.pageNumber || 0, // ADD THIS LINE
-          error: {
-            message: String(error),
-            pageNumber: msg.pageNumber || 0,
-            type: 'generation',
-            timestamp: new Date(),
-          },
-        });
-      }
-    } finally {
-      dx.done();
-    }
   }
 }
 

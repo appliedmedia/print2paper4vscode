@@ -169,7 +169,7 @@ Before making changes, understand these critical principles:
 
 - ✅ Add PDF viewer functionality to `src/UIWebView.ts`
 - ✅ Create `src/UIWebView.yaml` with PDF.js HTML template
-- ✅ Add `createPDFPanel()` method that takes `PDFData_t` (ArrayBuffer, pageTotal, pageSizePx, title)
+- ✅ Add `displayPdfPanel()` method that takes `PDFData_t` (ArrayBuffer, pageTotal, pageSizePx, title) or `DocInfo_PDF`
 - ✅ Add `generatePDFHTML()` private method that returns HTML for webview
 - ✅ Use consistent underscore_case naming throughout (webview_css, pdf_data_url, etc.)
 - ✅ Use ES6 shorthand object notation
@@ -243,7 +243,7 @@ Before making changes, understand these critical principles:
 - ✅ Created test suite for PDF ArrayBuffer generation (tests/UIWebView-PDFjs.test.ts)
 - ✅ Created integration test suite for complete PDF panel creation flow (tests/UIWebView-PDFjs-Integration.test.ts)
 - ✅ Test PDF generation using jsPDF with sample content
-- ✅ Test `UIWebView.createPDFPanel()` with complete PDF data
+- ✅ Test `UIWebView.displayPdfPanel()` with complete PDF data
 - ✅ Test error handling with invalid ArrayBuffer and page data
 - ✅ Test multi-page PDF support (up to 10 pages)
 - ✅ Test different page sizes (A4, Letter, Legal)
@@ -252,7 +252,7 @@ Before making changes, understand these critical principles:
 **Test Results**:
 
 - ✅ Can generate sample PDF ArrayBuffer (3 tests)
-- ✅ Can call `createPDFPanel()` successfully (4 tests)
+- ✅ Can call `displayPdfPanel()` successfully (4 tests)
 - ✅ Error handling displays messages for invalid data (5 tests)
 - ✅ Multi-page PDF support works correctly (2 tests)
 - ✅ Different page sizes supported (1 test)
@@ -295,7 +295,7 @@ Before making changes, understand these critical principles:
 
 **Goal**: Catch out-of-memory errors and report them to users instead of trying to predict or prevent them
 
-**Status**: Error handling is implemented in UIWebView.createPDFPanel() with validation and error messages. Tests verify error handling for invalid data.
+**Status**: Error handling is implemented in UIWebView.displayPdfPanel() with validation and error messages. Tests verify error handling for invalid data.
 
 **Error Handling Philosophy**: Because this is a highly constrained VSCode Plug-in, if any core variable or piece doesn't have a reasonable representation of the data it embodies, we choose to display an error to the user over trying to coerce or fallback. This makes debugging much easier.
 
@@ -306,7 +306,7 @@ Before making changes, understand these critical principles:
 **Implementation**:
 
 - ✅ PDF.js operations wrapped in try-catch blocks (webview_js template)
-- ✅ Error handling in `createPDFPanel()` with validation
+- ✅ Error handling in `displayPdfPanel()` with validation
 - ✅ Invalid data errors caught and displayed to user
 - ✅ Browser errors handled via PDF.js error callback
 - ✅ Extension errors logged via Diagnostics system
@@ -495,11 +495,12 @@ Before making changes, understand these critical principles:
 
 **Implementation**:
 
-- ✅ Updated `openWebView()` to use `createPDFPanel()` instead of old `UIScrollView`
-- ✅ Removed old `PageRender` interface usage
-- ✅ PDF ArrayBuffer extracted from `DocInfo_PDF` and passed to webview
+- ✅ Updated `handlePrintCommandFromVSCode()` to use `displayPdfPanel()` instead of old `UIScrollView`
+- ✅ PaperPrinter now calls `uiwebview.displayPdfPanel(this.pdfDoc, title)` after PDF generation
+- ✅ PDF ArrayBuffer extracted from `DocInfo_PDF` and passed to webview via `displayPdfPanel()`
 - ✅ Same PDF object (`this.pdfDoc`) used for webview display and print/save operations
 - ✅ Error handling with validation and clear error messages
+- ⚠️ Note: Old `PageRender` interface still exists but is not used by PaperPrinter (cleanup needed in Stage 5)
 
 **Test**:
 
@@ -531,11 +532,11 @@ Before making changes, understand these critical principles:
 
 **Implementation**:
 
-- ✅ Replaced old scroll view with PDF.js-based rendering
-- ✅ Updated message handling for toolbar interactions
-- ✅ Removed old page render logic (no longer needed)
+- ✅ Added `displayPdfPanel()` method with PDF.js-based rendering
 - ✅ PDF delivery via ArrayBuffer → base64 data URL for webview
 - ✅ Error handling with validation of PDFData_t structure
+- ✅ Accepts both `PDFData_t` and `DocInfo_PDF` objects (flexible input)
+- ⚠️ Note: Old `createPanel()` method with `UIScrollView` still exists but is not used by PaperPrinter (cleanup needed in Stage 5)
 
 **Test**:
 
@@ -560,14 +561,24 @@ Before making changes, understand these critical principles:
 - 🔲 Verify no TypeScript compilation errors
 - 🔲 Verify no ESLint errors
 
-### 4.3 Verify PDF Object Reuse
+### 4.3 Verify PDF Object Reuse ⚠️
+
+**Status**: Implementation appears correct, but needs verification
 
 **Note**: Verify that the single PDF object generated from tokenization is properly reused for all purposes (webview, printing, saving). No chunking or separate rendering is needed.
 
+**Current Implementation**:
+- ✅ PaperPrinter stores single `pdfDoc` (DocInfo_PDF) after generation
+- ✅ Same `pdfDoc` passed to `displayPdfPanel()` for webview
+- ✅ Same `pdfDoc` passed to `printWithPreview()`, `printDirectly()`, `saveAsPDF()` for operations
+- ⚠️ Needs verification: Add logging to confirm no duplicate PDF generation occurs
+- ⚠️ Needs verification: Verify same underlying jsPDF object is reused (not regenerated)
+
+**Remaining Tasks**:
+- 🔲 Add logging to confirm no duplicate PDF generation occurs
 - 🔲 Verify same jsPDF object is used for webview ArrayBuffer conversion
 - 🔲 Verify same jsPDF object is used for temp file creation (printing)
 - 🔲 Verify same jsPDF object is used for save-to-file (save as PDF)
-- 🔲 Add logging to confirm no duplicate PDF generation occurs
 - 🔲 Verify no intermediate state between tokenization and PDF generation
 
 **Error Handling**: Validate that the PDF object exists and has valid data. Because this is a highly constrained VSCode Plug-in, if any core variable or piece doesn't have a reasonable representation of the data it embodies, we choose to display an error to the user over trying to coerce or fallback. This makes debugging much easier.
@@ -686,7 +697,9 @@ Before making changes, understand these critical principles:
 
 **Goal**: Remove old system and optimize new system
 
-### 5.1 Remove Old System Components
+### 5.1 Remove Old System Components ⏭️ **NEXT PRIORITY**
+
+**Status**: Not started. Old system components still exist but are not used by PaperPrinter.
 
 **Removal Rationale**: With the single-PDF architecture, we no longer need:
 
@@ -694,13 +707,28 @@ Before making changes, understand these critical principles:
 - The PageRender interface (designed for on-demand page rendering separate from PDF generation)
 - Separate message handlers for page-based rendering
 
+**Current State**:
+- ⚠️ `src/UIScrollView.ts` still exists (used by `UIWebView.createPanel()` but not called by PaperPrinter)
+- ⚠️ `src/UIScrollView.yaml` still exists
+- ⚠️ `src/types/PageRender_t.ts` still exists (PDF.ts still implements PageRender interface)
+- ⚠️ `renderContent()` method still exists in `PDF.ts` (but not used by PaperPrinter)
+- ⚠️ `UIWebView.createPanel()` method still exists but is not used
+- ⚠️ Message handlers for `requestPageRender` still exist in UIWebView
+
 **Error Handling During Cleanup**: When removing old code, validate that no dependencies remain. Because this is a highly constrained VSCode Plug-in, if any core variable or piece doesn't have a reasonable representation of the data it embodies, we choose to display an error to the user over trying to coerce or fallback. This makes debugging much easier.
 
-- 🔲 Delete `src/UIScrollView.ts` (replaced by `UIPDFScrollView.ts`)
-- 🔲 Delete `src/UIScrollView.yaml` (replaced by `UIPDFScrollView.yaml`)
-- 🔲 Delete `src/types/PageRender_t.ts` (no longer needed - no separate page rendering interface)
+**Cleanup Tasks**:
+- 🔲 Verify no code paths call `UIWebView.createPanel()` (search codebase)
+- 🔲 Delete `src/UIScrollView.ts` (replaced by PDF.js-based displayPdfPanel)
+- 🔲 Delete `src/UIScrollView.yaml` (replaced by UIWebView.yaml)
+- 🔲 Remove `createPanel()` method from `UIWebView.ts`
+- 🔲 Remove `updatePageRender()` method from `UIWebView.ts`
+- 🔲 Remove `updateOptions()` method from `UIWebView.ts`
+- 🔲 Remove `handlePageRenderRequest()` message handler from `UIWebView.ts`
+- 🔲 Remove `requestPageRender` message type from `src/types/UI_t.ts`
+- 🔲 Remove `PageRender` interface usage from `PDF.ts` (remove `implements PageRender`)
 - 🔲 Remove `renderContent()` method from `PDF.ts` (was used for individual page rendering)
-- 🔲 Remove old message handlers for page requests
+- 🔲 Consider removing `src/types/PageRender_t.ts` (verify no other dependencies first)
 - 🔲 Remove old imports and dependencies
 - 🔲 Clean up any handle/state management code that separated tokenization from PDF generation
 
@@ -870,8 +898,45 @@ Before making changes, understand these critical principles:
 
 ## Next Steps
 
-1. **Start with Stage 1.1**: Create UIPDFScrollView skeleton
-2. **Complete all tests** before moving to next stage
-3. **Document everything** as you go
-4. **Get feedback** at each stage completion
-5. **Adjust plan** based on learnings
+### Immediate Priority: Stage 5.1 - Remove Old System Components
+
+**Status**: Stages 1-4 are functionally complete. PaperPrinter successfully uses the new PDF.js-based system. Old system components still exist but are not used.
+
+**Next Actions**:
+
+1. **Verify old system is not used**:
+   - Search codebase for any calls to `UIWebView.createPanel()`
+   - Search for any imports or uses of `UIScrollView`
+   - Verify no test files depend on old `PageRender` interface
+
+2. **Remove old system components** (Stage 5.1):
+   - Delete `src/UIScrollView.ts` and `src/UIScrollView.yaml`
+   - Remove `createPanel()`, `updatePageRender()`, `updateOptions()` from `UIWebView.ts`
+   - Remove `PageRender` interface from `PDF.ts`
+   - Remove `renderContent()` method from `PDF.ts`
+   - Remove old message handlers and types
+
+3. **Verify PDF object reuse** (Stage 4.3):
+   - Add logging to confirm single PDF generation per user action
+   - Verify same jsPDF object reused for webview, print, and save operations
+
+4. **Complete testing**:
+   - Run full test suite after cleanup
+   - Verify all existing tests still pass
+   - Fix any test failures
+
+5. **Future enhancements** (Stage 6):
+   - Zoom controls
+   - Page layout options
+   - Page navigation controls
+   - View options
+
+### Current Implementation Status Summary
+
+- ✅ **Stage 1**: Complete - PDF viewer infrastructure with PDF.js
+- ✅ **Stage 2**: Complete - PDF.js integration tests
+- ✅ **Stage 3**: Complete - PaperPrinter integration (small documents tested)
+- ✅ **Stage 4.1-4.2**: Complete - PaperPrinter and UIWebView updated
+- ⚠️ **Stage 4.3**: Needs verification - PDF object reuse appears correct but needs logging/verification
+- ⏭️ **Stage 5**: Not started - Old system cleanup needed
+- ⏭️ **Stage 6**: Not started - User experience enhancements

@@ -15,6 +15,10 @@ import type { LanguageId_t } from './Stylize';
 export class DocInfo_PDF {
   private app: App;
 
+  // Stable instance identifier for tracking PDF object reuse
+  private static nextInstanceId = 1;
+  public readonly instanceId: number;
+
   // PDF document state
   public currentPdfDoc: jsPDF | null = null;
   public currentTokens: ThemedToken[][] | null = null;
@@ -71,6 +75,7 @@ export class DocInfo_PDF {
 
   constructor(app: App) {
     this.app = app;
+    this.instanceId = DocInfo_PDF.nextInstanceId++;
   }
 
   // Margin getter - calculates from current marginId
@@ -112,9 +117,12 @@ export class DocInfo_PDF {
   // PDF interface methods - expose jsPDF functionality through docInfo
   /**
    * Get the total number of pages in the document
+   * Uses getNumberOfPages() - this is the current jsPDF API (not deprecated in actual library)
    */
   get pageTotal(): number {
-    return this.pdfDoc ? this.pdfDoc.getNumberOfPages() : 0;
+    if (!this.pdfDoc) return 0;
+    // getNumberOfPages() is the correct API - not actually deprecated in jsPDF 2.5.2
+    return this.pdfDoc.getNumberOfPages();
   }
 
   /**
@@ -161,14 +169,17 @@ export class DocInfo_PDF {
 
   /**
    * Get information about the current page
+   * Returns pageNumber and pageContext from jsPDF, plus pageCount computed from pageTotal
    */
-  getCurrentPageInfo(): { pageNumber: number; pageCount: number } {
+  getCurrentPageInfo(): { pageNumber: number; pageCount: number; pageContext?: any } {
     if (!this.pdfDoc) {
       return { pageNumber: 0, pageCount: 0 };
     }
+    const info = this.pdfDoc.getCurrentPageInfo();
     return {
-      pageNumber: this.pdfDoc.getCurrentPageInfo().pageNumber,
-      pageCount: this.pdfDoc.getNumberOfPages(),
+      pageNumber: info.pageNumber,
+      pageCount: this.pageTotal, // Use pageTotal which wraps getNumberOfPages()
+      pageContext: info.pageContext,
     };
   }
 
