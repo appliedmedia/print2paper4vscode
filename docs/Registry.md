@@ -184,9 +184,9 @@ class PaperPrinter {
 - Can request entire classes when needed
 
 **Class ID Requirement**:
-- Every class must have either `public readonly id: string` or `public get id(): string`
-- Returns the short name (e.g., `'dx'`, `'ui'`, `'pdf'`)
-- Registry uses this for organization and method mapping
+- Every class must have `public readonly id: string` returning the short name (e.g., `'dx'`, `'ui'`, `'pdf'`)
+- Use `public readonly id = "dx"` for constant values (best practice)
+- Use `get id(): string { return "dx" }` only if the value needs to be computed dynamically
 
 ## Migration Stages
 
@@ -264,7 +264,7 @@ class PaperPrinter {
 
 **Note**: 
 - Diagnostics is owned by Registry and created immediately at Registry construction. All components request Diagnostics via Registry.
-- **Critical**: Every migrated class must add `public readonly id: string` or `public get id(): string` returning the short name
+- **Critical**: Every migrated class must add `public readonly id: string` returning the short name (e.g., `public readonly id = "dx"`)
 
 #### 2.1: Migrate OS Classes
 - [ ] Update OS base class constructor to accept App
