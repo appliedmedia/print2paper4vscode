@@ -33,6 +33,13 @@
           "command": "p2p4vsc.print2paper",
           "group": "navigation"
         }
+      ],
+      "editor/title": [
+        {
+          "command": "p2p4vsc.print2paper",
+          "group": "navigation",
+          "when": "editorTextFocus"
+        }
       ]
     },
     "keybindings": [

@@ -1492,7 +1492,7 @@ VS Code extensions can contribute menu items to specific locations using the `co
 **Valid Menu Identifiers:**
 
 - `editor/context` - Editor context menu (right-click menu)
-- `editor/title` - Editor title menu bar
+- `editor/title` - Editor title menu bar (buttons/actions shown in editor tab)
 - `editor/title/context` - Editor title context menu
 - `explorer/context` - File Explorer context menu
 - `scm/title` - Source Control title menu
@@ -1501,22 +1501,26 @@ VS Code extensions can contribute menu items to specific locations using the `co
 - `file/newFile` - New File item in File menu and Welcome page
 - `view/title` - View title menu
 - `view/item/context` - View item context menu
+- `commandPalette` - Command Palette (commands are automatically added here)
 
 **Menu Bar Menu Contributions:**
 
-VS Code does NOT support adding arbitrary items to the File menu bar using `menuBar/file`. The File menu bar is controlled by VS Code internally and extensions cannot add items directly to it.
+VS Code does NOT support adding arbitrary items to the top-level menu bar (File, Edit, View, etc.) using `menuBar/*` identifiers. The top-level menu bar is controlled by VS Code internally and extensions cannot add items directly to it.
 
 **What Works:**
 
 - ✅ `editor/context` - Add items to editor right-click menu
+- ✅ `editor/title` - Add items to editor title bar (shown as buttons/actions in the editor tab)
 - ✅ `file/newFile` - Replace/modify the New File menu item
-- ✅ `editor/title` - Add items to editor title bar menu
 - ✅ Context menus for specific views (explorer, scm, etc.)
+- ✅ Command Palette - All commands automatically appear here
 
 **What Doesn't Work:**
 
 - ❌ `menuBar/file` - Not a valid menu identifier
-- ❌ Adding arbitrary items to File menu bar
+- ❌ `menuBar/edit` - Not a valid menu identifier
+- ❌ `menuBar/view` - Not a valid menu identifier
+- ❌ Adding arbitrary items to top-level menu bar menus
 - ❌ `menuBar/*` - General menu bar contributions are not supported
 
 **Current Implementation:**
@@ -1529,18 +1533,27 @@ Our extension uses:
       "command": "p2p4vsc.print2paper",
       "group": "navigation"
     }
+  ],
+  "editor/title": [
+    {
+      "command": "p2p4vsc.print2paper",
+      "group": "navigation",
+      "when": "editorTextFocus"
+    }
   ]
 }
 ```
 
-This successfully adds the command to the editor context menu. However, attempts to add it to the File menu bar using `menuBar/file` will not work because VS Code does not expose that menu for extension contributions.
+This adds the command to:
+- Editor context menu (right-click)
+- Editor title bar (as a button/action when editor has focus)
 
 **Alternative Solutions:**
 
 1. **Command Palette** - Commands are automatically available via Command Palette (`Cmd+Shift+P` / `Ctrl+Shift+P`)
 2. **Keyboard Shortcuts** - Use `contributes.keybindings` to assign keyboard shortcuts
 3. **Editor Context Menu** - Add to right-click menu (already implemented)
-4. **Editor Title Menu** - Add to editor title bar menu using `editor/title`
+4. **Editor Title Menu** - Add to editor title bar menu using `editor/title` (already implemented)
 
 **Example: Adding to Editor Title Menu**
 
@@ -1556,7 +1569,7 @@ This successfully adds the command to the editor context menu. However, attempts
 }
 ```
 
-This would add a button to the editor title bar when an editor has focus.
+This adds a button to the editor title bar when an editor has focus. The `when` clause ensures it only appears when text is focused.
 
 **Menu Groups:**
 
