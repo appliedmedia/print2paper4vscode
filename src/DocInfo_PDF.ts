@@ -112,9 +112,12 @@ export class DocInfo_PDF {
   // PDF interface methods - expose jsPDF functionality through docInfo
   /**
    * Get the total number of pages in the document
+   * Uses getNumberOfPages() - this is the current jsPDF API (not deprecated in actual library)
    */
   get pageTotal(): number {
-    return this.pdfDoc ? this.pdfDoc.getNumberOfPages() : 0;
+    if (!this.pdfDoc) return 0;
+    // getNumberOfPages() is the correct API - not actually deprecated in jsPDF 2.5.2
+    return this.pdfDoc.getNumberOfPages();
   }
 
   /**
@@ -166,9 +169,10 @@ export class DocInfo_PDF {
     if (!this.pdfDoc) {
       return { pageNumber: 0, pageCount: 0 };
     }
+    const info = this.pdfDoc.getCurrentPageInfo();
     return {
-      pageNumber: this.pdfDoc.getCurrentPageInfo().pageNumber,
-      pageCount: this.pageTotal,
+      pageNumber: info.pageNumber,
+      pageCount: this.pageTotal, // Use pageTotal which wraps getNumberOfPages()
     };
   }
 
