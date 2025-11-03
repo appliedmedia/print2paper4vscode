@@ -166,7 +166,7 @@ class PaperPrinter {
 
 ### How Dependency Access Works
 
-1. **Request Phase**: Request by method names in constructor: `app.registry.use({ getTokens: [], showErrorMessage: [] })`
+1. **Request Phase**: Request by method names in constructor: `app.use({ getTokens: [], showErrorMessage: [] })`
 2. **Registry Resolution**: Registry automatically finds which component has each method
 3. **Ambiguity Handling**: If same method name exists in multiple components, use `'componentName.methodName'` format
 4. **Return Format**: Registry returns object organized by component: `{ dx: { create, sub, out }, ui: { showErrorMessage }, stylize: { getTokens } }`
@@ -476,9 +476,9 @@ class PaperPrinter {
 
 ---
 
-## Architecture Decision: Registry via App
+## Architecture Decision: Registry Integrated into App
 
-Registry is accessed via App: `app.registry.use()`. This keeps it simple - components receive App and access Registry through it.
+Registry functionality is exposed directly on App: `app.use()`. Registry is still a separate internal class that handles the dependency management, but App delegates to it. This keeps the API simple - components just call `app.use()` without needing to know about Registry.
 
 ## Registry Implementation Details
 
