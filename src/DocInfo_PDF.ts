@@ -96,7 +96,9 @@ export class DocInfo_PDF {
     rightMarginPts: number;
   } {
     // Get margin setting from kMarginIdById (this is ADDED to base)
-    const marginSettingPts = kMarginIdById[this.marginId].marginPts;
+    const marginEntry =
+      kMarginIdById[this.marginId] ?? kMarginIdById['normal'];
+    const marginSettingPts = marginEntry.marginPts;
 
     // Total margin = base + setting
     const totalMarginPts = Coords.kMarginGutterMinPts + marginSettingPts;
