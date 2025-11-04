@@ -4,7 +4,7 @@ import { Diagnostics } from './Diagnostics';
 import { Yaml } from './Yaml';
 import { Persist, type Persist_t } from './Persist';
 import { kMenuId } from './UIMenu';
-import { kZoomLevelLimits } from './types/PaperPrinter_t';
+import { kZoomLevel } from './types/PaperPrinter_t';
 
 // UI persist keys - union of menu IDs, toolbar position, and PDF zoom level
 export const kUI = [...kMenuId, 'toolbar_pos', 'pdf_zoom_level'] as const;
@@ -61,8 +61,8 @@ export class UI {
     // Set default zoom level if not already set or invalid
     const zoomLevel = this.persist.pdf_zoom_level;
     const numZoomLevel = Number(zoomLevel);
-    if (!(numZoomLevel && numZoomLevel > kZoomLevelLimits.min && numZoomLevel <= kZoomLevelLimits.max)) {
-      this.persist.pdf_zoom_level = kZoomLevelLimits.default;
+    if (!(numZoomLevel && numZoomLevel > kZoomLevel.min && numZoomLevel <= kZoomLevel.max)) {
+      this.persist.pdf_zoom_level = Number(kZoomLevel.alt);
     }
   }
 

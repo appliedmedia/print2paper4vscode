@@ -874,12 +874,12 @@ export class PaperPrinter {
       } else {
         // Parse zoom level (e.g., "1.00" -> 1.0)
         const scale = parseFloat(zoomValue);
-        // Validate scale is within valid range (0.25 - 3.0)
-        if (!isNaN(scale) && scale >= 0.25 && scale <= 3.0) {
+        // Validate scale is within valid range
+        if (!isNaN(scale) && scale >= kZoomLevel.min && scale <= kZoomLevel.max) {
           value = scale;
         } else {
           dx.out(`Invalid zoom scale: ${scale}, ignoring`);
-          value = 1.0; // Default to 100%
+          value = Number(kZoomLevel.alt); // Default to alt value
         }
       }
       // Persist zoom level - webview will handle the actual zoom change via menuItemSelected message

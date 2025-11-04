@@ -284,6 +284,8 @@ export const kZoomLevel = {
   methodName: 'ZoomLevel',
   isFlyout: false,
   flyoutMenuItemIds: [] as const,
+  min: 0.25,
+  max: 3.0,
   menuItems: [
     { id: '0.25', displayName: '25%' },
     { id: '0.50', displayName: '50%' },
@@ -300,12 +302,7 @@ export const kZoomLevel = {
 } as const;
 export type ZoomLevelMenuItems_t = (typeof kZoomLevel.menuItems)[number]['id'];
 
-// Zoom level constants
-export const kZoomLevelLimits = {
-  min: 0.25,
-  max: 3.0,
-  default: 1.0,
-} as const;
+// end, PaperPrinter_t.ts
 
 // end, PaperPrinter_t.ts
 
