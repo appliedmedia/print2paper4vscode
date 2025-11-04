@@ -279,7 +279,7 @@ export const kZoomIn = {
 export const kZoomLevel = {
   id: 'zoomLevel',
   displayName: 'Zoom Level',
-  icon: '↓',
+  icon: '▼',
   alt: '1.0',
   methodName: 'ZoomLevel',
   isFlyout: false,
