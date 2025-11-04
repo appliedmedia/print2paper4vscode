@@ -116,16 +116,10 @@ export class UIMenuMgr {
     const dx = this.dx.sub('handleMenuItemSelected');
 
     try {
-      // Strip any composed prefixes (e.g., "headerTitle.left" -> "left")
-      // This handles cases where IDs might be composed in the DOM
-      const baseItemId = (
-        itemId.includes('.') ? itemId.split('.').pop() || itemId : itemId
-      ) as MenuItemId_t;
-
       const menu = this.getAllMenus().find(menu => menu.id === menuId);
       if (menu) {
-        await menu.dispatchSelection(baseItemId);
-        dx.out(`Menu item selected: ${menuId}.${baseItemId}`);
+        await menu.dispatchSelection(itemId);
+        dx.out(`Menu item selected: ${menuId}.${itemId}`);
       } else {
         dx.error(`Invalid menu: ${menuId}`);
         return;
