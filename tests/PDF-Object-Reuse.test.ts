@@ -23,7 +23,11 @@ describe('PDF Object Reuse Tests', () => {
   } as unknown as ExtensionContext;
 
   const mockVSCode = {
-    commands: { registerCommand: () => ({}) },
+    commands: {
+      registerCommand: () => ({
+        dispose: () => {},
+      }),
+    },
     window: {
       showErrorMessage: () => {},
       showInformationMessage: () => {},
