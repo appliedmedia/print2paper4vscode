@@ -5,8 +5,8 @@ import { Yaml } from './Yaml';
 import { Persist, type Persist_t } from './Persist';
 import { kMenuId } from './UIMenu';
 
-// UI persist keys - union of menu IDs and toolbar position
-export const kUI = [...kMenuId, 'toolbar_pos'] as const;
+// UI persist keys - union of menu IDs, toolbar position, and PDF zoom level
+export const kUI = [...kMenuId, 'toolbar_pos', 'pdf_zoom_level'] as const;
 
 export type UI_t = (typeof kUI)[number];
 
@@ -54,7 +54,14 @@ export class UI {
     this.persist.register('toolbar_pos');
   }
 
-  init(): void {}
+  init(): void {
+    // Register persist for PDF zoom level (default: 1.0 = 100%)
+    this.persist.register('pdf_zoom_level');
+    // Set default zoom level if not already set
+    if (this.persist.pdf_zoom_level === undefined) {
+      this.persist.pdf_zoom_level = 1.0;
+    }
+  }
 
   done(): void {
     this.dx.done();

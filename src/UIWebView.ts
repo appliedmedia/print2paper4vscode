@@ -160,6 +160,10 @@ export class UIWebView {
       const base_css = this.app.ui.yaml.base_css;
       const templates = this.yaml;
 
+      // Get zoom level from persistence (default: 1.0 = 100%)
+      const zoomLevel = this.app.ui.persist.pdf_zoom_level;
+      const pdf_zoom_level = typeof zoomLevel === 'number' ? zoomLevel : 1.0;
+
       // Create template dictionary
       const templateDict = {
         title: pdfData.title,
@@ -168,6 +172,7 @@ export class UIWebView {
         page_height_px: pdfData.pageSizePx.heightPx.toString(),
         pdf_data_url,
         pdfjs_library,
+        pdf_zoom_level: pdf_zoom_level.toString(),
         toolbar: '{{toolbar}}', // Placeholder for UI.addToolbar()
       };
 
@@ -231,6 +236,7 @@ export class UIWebView {
       { type: 'menuItemSelected', handler: this.handleMenuItemSelected.bind(this) },
       { type: 'print', handler: this.handlePrintMessage.bind(this) },
       { type: 'dx', handler: this.handleDxMessage.bind(this) },
+      { type: 'zoom', handler: this.handleZoomMessage.bind(this) },
     ];
 
     messageHandlers.forEach(({ type, handler }) => {
@@ -326,6 +332,23 @@ export class UIWebView {
       dx.print('Received dx message without message content');
     }
     dx.done();
+  }
+
+  /**
+   * Handle zoom message from webview
+   */
+  private async handleZoomMessage(msg: PostMessage): Promise<void> {
+    const dx = this.dx.sub('handleZoomMessage');
+
+    try {
+      if (typeof msg.zoomLevel === 'number') {
+        // Save zoom level to persistence
+        this.app.ui.persist.pdf_zoom_level = msg.zoomLevel;
+        dx.out(`Zoom level saved: ${msg.zoomLevel}`);
+      }
+    } finally {
+      dx.done();
+    }
   }
 }
 

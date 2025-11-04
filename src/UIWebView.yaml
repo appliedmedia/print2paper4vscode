@@ -20,6 +20,14 @@ webview_html: |
       <div id="pdf-viewer" style="display: none;">
         <!-- PDF pages will be rendered here by PDF.js -->
       </div>
+      <div id="pdf-zoom-controls" class="pdf-zoom-controls" style="display: none;">
+        <button id="zoom-out" class="zoom-btn" title="Zoom Out (Ctrl/Cmd + -)" aria-label="Zoom Out">−</button>
+        <span id="zoom-level" class="zoom-level">100%</span>
+        <button id="zoom-in" class="zoom-btn" title="Zoom In (Ctrl/Cmd + +)" aria-label="Zoom In">+</button>
+        <button id="zoom-fit-width" class="zoom-btn" title="Fit Width" aria-label="Fit Width">↔</button>
+        <button id="zoom-fit-page" class="zoom-btn" title="Fit Page" aria-label="Fit Page">⤢</button>
+        <button id="zoom-actual-size" class="zoom-btn" title="Actual Size (Ctrl/Cmd + 0)" aria-label="Actual Size">1:1</button>
+      </div>
     </div>
     <script>
       {{pdfjs_library}}
@@ -67,6 +75,54 @@ webview_css: |
     --page-gutter-vertical: 4px;
   }
 
+  .pdf-zoom-controls {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    background: rgba(255, 255, 255, 0.95);
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 6px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    z-index: 1000;
+  }
+
+  .zoom-btn {
+    background: #f7f7f7;
+    border: 1px solid #d0d0d0;
+    border-radius: 4px;
+    cursor: pointer;
+    width: 32px;
+    height: 32px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    line-height: 1;
+    padding: 0;
+    color: #333;
+  }
+
+  .zoom-btn:hover {
+    background: #e8e8e8;
+  }
+
+  .zoom-btn:active {
+    background: #d0d0d0;
+  }
+
+  .zoom-level {
+    min-width: 50px;
+    text-align: center;
+    font-size: 12px;
+    font-weight: 500;
+    color: #333;
+    padding: 0 8px;
+  }
+
 webview_js: |
   // PDF Viewer JavaScript - Minimal skeleton for PDF.js to render into
   
@@ -81,7 +137,31 @@ webview_js: |
   }
   
   let pdfDoc = null;
-  const scale = 1.0;
+  let currentScale = {{pdf_zoom_level}} || 1.0; // Dynamic zoom level from persistence
+  let pageWidthPx = {{page_width_px}} || 0;
+  let pageHeightPx = {{page_height_px}} || 0;
+  
+  // Zoom constants
+  const ZOOM_MIN = 0.25;
+  const ZOOM_MAX = 3.0;
+  const ZOOM_STEP = 0.1;
+  
+  // Use existing vscode API from toolbar (or create if not available)
+  const vscode = window.vscode || (typeof acquireVsCodeApi !== 'undefined' ? acquireVsCodeApi() : null);
+  
+  // Listen for zoom messages from extension
+  if (vscode) {
+    window.addEventListener('message', event => {
+      const message = event.data;
+      if (message.type === 'zoom') {
+        if (message.zoomLevel !== undefined) {
+          setZoom(message.zoomLevel);
+        } else if (message.zoomAction) {
+          handleZoomAction(message.zoomAction);
+        }
+      }
+    });
+  }
 
   /**
    * Initialize PDF viewer with PDF data
@@ -121,9 +201,120 @@ webview_js: |
     pdfDoc = pdf;
     document.getElementById('loading').style.display = 'none';
     document.getElementById('pdf-viewer').style.display = 'block';
+    document.getElementById('pdf-zoom-controls').style.display = 'flex';
     
+    // Get first page dimensions for fit calculations
+    pdf.getPage(1).then(function(page) {
+      const viewport = page.getViewport({ scale: 1.0 });
+      pageWidthPx = viewport.width;
+      pageHeightPx = viewport.height;
+      
+      // Initialize zoom controls
+      initZoomControls();
+      
+      // Update zoom level display to match current scale
+      const zoomLevelEl = document.getElementById('zoom-level');
+      if (zoomLevelEl) {
+        zoomLevelEl.textContent = Math.round(currentScale * 100) + '%';
+      }
+      
+      // Render all pages with initial zoom level
+      renderAllPages();
+    }).catch(function(error) {
+      dx(`❌ Error getting page dimensions: ${error.message}`);
+      renderAllPages();
+    });
+  }
+  
+  /**
+   * Initialize zoom control buttons and keyboard shortcuts
+   */
+  function initZoomControls() {
+    // Zoom buttons
+    document.getElementById('zoom-in').addEventListener('click', () => handleZoomAction('in'));
+    document.getElementById('zoom-out').addEventListener('click', () => handleZoomAction('out'));
+    document.getElementById('zoom-fit-width').addEventListener('click', () => handleZoomAction('fitWidth'));
+    document.getElementById('zoom-fit-page').addEventListener('click', () => handleZoomAction('fitPage'));
+    document.getElementById('zoom-actual-size').addEventListener('click', () => handleZoomAction('actualSize'));
     
-    // Render all pages - PDF.js handles everything
+    // Keyboard shortcuts
+    document.addEventListener('keydown', function(e) {
+      // Check for Cmd/Ctrl modifier
+      const isModifier = e.metaKey || e.ctrlKey;
+      
+      if (isModifier) {
+        if (e.key === '=' || e.key === '+') {
+          e.preventDefault();
+          handleZoomAction('in');
+        } else if (e.key === '-' || e.key === '_') {
+          e.preventDefault();
+          handleZoomAction('out');
+        } else if (e.key === '0') {
+          e.preventDefault();
+          handleZoomAction('actualSize');
+        }
+      }
+    });
+  }
+  
+  /**
+   * Handle zoom actions
+   */
+  function handleZoomAction(action) {
+    let newScale = currentScale;
+    
+    switch (action) {
+      case 'in':
+        newScale = Math.min(currentScale + ZOOM_STEP, ZOOM_MAX);
+        break;
+      case 'out':
+        newScale = Math.max(currentScale - ZOOM_STEP, ZOOM_MIN);
+        break;
+      case 'fitWidth':
+        if (pageWidthPx > 0) {
+          const containerWidth = window.innerWidth - 40; // Account for padding
+          newScale = containerWidth / pageWidthPx;
+        }
+        break;
+      case 'fitPage':
+        if (pageWidthPx > 0 && pageHeightPx > 0) {
+          const containerWidth = window.innerWidth - 40;
+          const containerHeight = window.innerHeight - 120; // Account for toolbar and padding
+          const scaleX = containerWidth / pageWidthPx;
+          const scaleY = containerHeight / pageHeightPx;
+          newScale = Math.min(scaleX, scaleY);
+        }
+        break;
+      case 'actualSize':
+        newScale = 1.0;
+        break;
+    }
+    
+    setZoom(newScale);
+  }
+  
+  /**
+   * Set zoom level and re-render pages
+   */
+  function setZoom(scale) {
+    // Clamp scale to valid range
+    currentScale = Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, scale));
+    
+    // Update zoom level display
+    const zoomLevelEl = document.getElementById('zoom-level');
+    if (zoomLevelEl) {
+      zoomLevelEl.textContent = Math.round(currentScale * 100) + '%';
+    }
+    
+    // Save zoom level to extension
+    if (vscode) {
+      vscode.postMessage({
+        type: 'zoom',
+        zoomLevel: currentScale
+      });
+    }
+    
+    // Re-render all pages with new scale
     renderAllPages();
   }
 
@@ -157,7 +348,7 @@ webview_js: |
    */
   function renderPage(pageNum, container) {
     pdfDoc.getPage(pageNum).then(function(page) {
-      const viewport = page.getViewport({ scale: scale });
+      const viewport = page.getViewport({ scale: currentScale });
       
       // Create canvas for this page
       const canvas = document.createElement('canvas');
