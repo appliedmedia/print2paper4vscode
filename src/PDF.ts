@@ -1,6 +1,15 @@
 import type { App } from './App';
-import type { PageSizeId_t, Orient_t, HeaderFooterPos_t } from './types/PaperPrinter_t';
-import { kPageSizeId } from './types/PaperPrinter_t';
+import type {
+  PageSizeIdMenuItems_t,
+  OrientMenuItems_t,
+  HeaderFooterPos_t,
+  HeaderFooterSubmenu_t,
+} from './types/PaperPrinter_t';
+import {
+  kPageSizeIdById,
+  kHeaderFooterSubmenuById,
+  kHeaderFooter,
+} from './types/PaperPrinter_t';
 import { Diagnostics } from './Diagnostics';
 import { Yaml } from './Yaml';
 import { Coords } from './Coords';
@@ -8,7 +17,7 @@ import jsPDF from 'jspdf';
 import { DocInfo_PDF } from './DocInfo_PDF';
 import type { ThemedToken } from 'shiki';
 
-type HeaderFooterRenderablePos = Exclude<HeaderFooterPos_t, 'none'>;
+type HeaderFooterRenderablePos = HeaderFooterPos_t;
 
 /**
  * PDF - Vector PDF generation and page rendering
@@ -384,20 +393,20 @@ export class PDF {
 
   // Helper: Get unit based on page size
   // Uses centralized unit from PaperPrinter_t.ts
-  private getUnitForPageSize(pageSize: PageSizeId_t): 'mm' | 'in' {
+  private getUnitForPageSize(pageSize: PageSizeIdMenuItems_t): 'mm' | 'in' {
     // Get unit from centralized constant (single source of truth)
-    const unit = kPageSizeId[pageSize].unit;
+    const unit = kPageSizeIdById[pageSize].unit;
     return unit === 'inches' ? 'in' : 'mm';
   }
 
   // Helper: Get page dimensions based on size and orient
   // Uses centralized dimensions from PaperPrinter_t.ts - single source of truth
   private getPageDimensions(
-    pageSize: PageSizeId_t,
-    orient: Orient_t
+    pageSize: PageSizeIdMenuItems_t,
+    orient: OrientMenuItems_t
   ): { width: number; height: number } {
     // Get dimensions from centralized const object (id ? metadata)
-    const metadata = kPageSizeId[pageSize];
+    const metadata = kPageSizeIdById[pageSize];
 
     // Swap width/height for landscape
     if (orient === 'landscape') {
@@ -423,7 +432,7 @@ export class PDF {
 
       // Fallback to configured size if no PDF yet
       const pageSizeId = (this.app.uimenumgr.getValueForSelectedByMenuId('pageSizeId') ||
-        'a4') as PageSizeId_t;
+        'a4') as PageSizeIdMenuItems_t;
       const orient = (this.app.uimenumgr.getValueForSelectedByMenuId('orient') || 'portrait') as
         | 'portrait'
         | 'landscape';
@@ -747,8 +756,8 @@ export class PDF {
 
   /**
    * Add header and footer to current page
-   * Uses positioning settings from docInfo to place elements at left, center, or right
-   * Combines elements at the same position with " | " separator
+   * Uses position-based content settings from docInfo
+   * Each position (left, center, right) can have: title, page, total, pageTotal, or null
    */
   private addHeaderAndFooter(): void {
     if (!this.docInfo.pdfDoc) {
@@ -774,84 +783,70 @@ export class PDF {
     this.docInfo.pdfDoc.setFontSize(8); // points
     this.setTextColorFromWebColor(this.docInfo.pdfDoc, PDF.HEADER_FOOTER_COLOR);
 
+    // Helper function to format content based on element type using templates
+    const formatContent = (
+      element: HeaderFooterSubmenu_t | typeof kHeaderFooter.none | null,
+      position: 'begin' | 'middle' | 'end'
+    ): string | null => {
+      if (!element || element === kHeaderFooter.none) return null;
+
+      // Validate element is a valid key in kHeaderFooterSubmenuById
+      if (!(element in kHeaderFooterSubmenuById)) {
+        this.dx.error(`Invalid header/footer element: ${element}`);
+        return null;
+      }
+
+      const template = kHeaderFooterSubmenuById[element].template;
+      const templateDict: Record<string, string> = {
+        title: docTitle,
+        '#': String(currentPage),
+        pageTotal: String(pageTotal),
+      };
+
+      // Replace template variables
+      const formatted = this.app.templateDictReplace(template, templateDict);
+
+      // Return null if pageTotal is needed but is 0
+      if ((element === 'total' || element === 'pageTotal') && pageTotal === 0) {
+        return null;
+      }
+
+      return formatted;
+    };
+
     // Build header elements by position
     const headerElements: Record<HeaderFooterRenderablePos, string[]> = {
       begin: [],
-      center: [],
+      middle: [],
       end: [],
     };
 
-    // Helper functions to validate positions
-    const isValidPos = (pos: string): pos is HeaderFooterPos_t => {
-      return pos === 'begin' || pos === 'center' || pos === 'end' || pos === 'none';
-    };
+    // Process header positions
+    const headerBeginContent = formatContent(this.docInfo.header_begin, 'begin');
+    if (headerBeginContent) headerElements.begin.push(headerBeginContent);
 
-    const isRenderablePos = (pos: HeaderFooterPos_t): pos is HeaderFooterRenderablePos => {
-      return pos !== 'none';
-    };
+    const headerMiddleContent = formatContent(this.docInfo.header_middle, 'middle');
+    if (headerMiddleContent) headerElements.middle.push(headerMiddleContent);
 
-    const pushElement = (
-      elements: Record<HeaderFooterRenderablePos, string[]>,
-      pos: HeaderFooterPos_t,
-      text: string
-    ): void => {
-      if (isValidPos(pos) && isRenderablePos(pos)) {
-        elements[pos].push(text);
-      }
-    };
-
-    // Handle Title
-    pushElement(headerElements, this.docInfo.header_title, docTitle);
-
-    // Handle Page and Total - combine if at same position
-    const headerPagePos = this.docInfo.header_page;
-    const headerTotalPos = this.docInfo.header_total;
-    if (
-      isValidPos(headerPagePos) &&
-      isValidPos(headerTotalPos) &&
-      headerPagePos === headerTotalPos &&
-      isRenderablePos(headerPagePos) &&
-      pageTotal > 0
-    ) {
-      // Combine: "Page X of Y"
-      pushElement(headerElements, headerPagePos, `Page ${currentPage} of ${pageTotal}`);
-    } else {
-      // Separate handling
-      pushElement(headerElements, headerPagePos, `Page ${currentPage}`);
-      if (pageTotal > 0) {
-        pushElement(headerElements, headerTotalPos, `${pageTotal} Pages`);
-      }
-    }
+    const headerEndContent = formatContent(this.docInfo.header_end, 'end');
+    if (headerEndContent) headerElements.end.push(headerEndContent);
 
     // Build footer elements by position
     const footerElements: Record<HeaderFooterRenderablePos, string[]> = {
       begin: [],
-      center: [],
+      middle: [],
       end: [],
     };
 
-    // Handle Title
-    pushElement(footerElements, this.docInfo.footer_title, docTitle);
+    // Process footer positions
+    const footerBeginContent = formatContent(this.docInfo.footer_begin, 'begin');
+    if (footerBeginContent) footerElements.begin.push(footerBeginContent);
 
-    // Handle Page and Total - combine if at same position
-    const footerPagePos = this.docInfo.footer_page;
-    const footerTotalPos = this.docInfo.footer_total;
-    if (
-      isValidPos(footerPagePos) &&
-      isValidPos(footerTotalPos) &&
-      footerPagePos === footerTotalPos &&
-      isRenderablePos(footerPagePos) &&
-      pageTotal > 0
-    ) {
-      // Combine: "Page X of Y"
-      pushElement(footerElements, footerPagePos, `Page ${currentPage} of ${pageTotal}`);
-    } else {
-      // Separate handling
-      pushElement(footerElements, footerPagePos, `Page ${currentPage}`);
-      if (pageTotal > 0) {
-        pushElement(footerElements, footerTotalPos, `${pageTotal} Pages`);
-      }
-    }
+    const footerMiddleContent = formatContent(this.docInfo.footer_middle, 'middle');
+    if (footerMiddleContent) footerElements.middle.push(footerMiddleContent);
+
+    const footerEndContent = formatContent(this.docInfo.footer_end, 'end');
+    if (footerEndContent) footerElements.end.push(footerEndContent);
 
     // Render header
     const headerY = margins.topMarginPts - 5;
@@ -880,7 +875,7 @@ export class PDF {
 
     // Combine elements at each position with " | " separator
     const beginText = elements.begin.join(' | ');
-    const centerText = elements.center.join(' | ');
+    const middleText = elements.middle.join(' | ');
     const endText = elements.end.join(' | ');
 
     // Render begin (left) position
@@ -888,11 +883,11 @@ export class PDF {
       this.docInfo.pdfDoc.text(beginText, margins.leftMarginPts, y);
     }
 
-    // Render center position
-    if (centerText) {
-      const centerWidth = this.docInfo.pdfDoc.getTextWidth(centerText);
-      const centerX = (widthPts - centerWidth) / 2;
-      this.docInfo.pdfDoc.text(centerText, centerX, y);
+    // Render middle position
+    if (middleText) {
+      const middleWidth = this.docInfo.pdfDoc.getTextWidth(middleText);
+      const middleX = (widthPts - middleWidth) / 2;
+      this.docInfo.pdfDoc.text(middleText, middleX, y);
     }
 
     // Render end (right) position

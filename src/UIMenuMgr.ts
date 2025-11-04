@@ -92,7 +92,7 @@ export class UIMenuMgr {
     isFlyout: boolean = false,
     menuItems: () => UIMenuItem_t[],
     flyoutMenuItemIds: string[] = [],
-    selectionHandler: (selectedId: MenuItemId_t) => Promise<HandleSelection_t>
+    selectionHandler: (menuId: MenuId_t, menuItemId: MenuItemId_t) => Promise<HandleSelection_t>
   ): UIMenu {
     return new UIMenu(
       this.app,
@@ -147,9 +147,9 @@ export class UIMenuMgr {
   }
 
   // Set persist value for a menu
-  setPersistForMenuId(menuId: MenuId_t, selectedId: MenuItemId_t): void {
+  setPersistForMenuId(menuId: MenuId_t, menuItemId: MenuItemId_t): void {
     const menu = this.getMenuById(menuId);
-    (menu.persist as unknown as Record<string, string | number | boolean>)[menuId] = selectedId;
+    (menu.persist as unknown as Record<string, string | number | boolean>)[menuId] = menuItemId;
   }
 
   // Get the selected value for a menu
@@ -167,28 +167,16 @@ export class UIMenuMgr {
     this.menus.push(menu);
   }
 
-  // Generate all HTML at once using two-pass flyout strategy
+  // Generate all HTML at once using recursive flyout strategy
   async getAllUIMenuHTML(): Promise<string> {
     const allMenus = this.getAllMenus();
-    const flyoutCache: Record<string, string> = {};
-
-    // Process flyout menus first
-    for (const menu of allMenus.filter(menu => !menu.icon?.length)) {
-      // flyout menus only (don't have an icon)
-      try {
-        const html = await menu.getHTML();
-        flyoutCache[menu.id] = html;
-      } catch (error) {
-        this.dx.out(`ERROR generating flyout for ${menu.id}: ${String(error)}`);
-        flyoutCache[menu.id] = `<!-- ERROR: ${error} -->`;
-      }
-    }
-
-    // Rest of menus
+    const visited = new Set<string>(); // Prevent infinite loops
     let result = '';
-    for (const menu of allMenus.filter(menu => menu.icon?.length)) {
+
+    // Generate only main menus (those that are not flyouts) - flyouts will be generated recursively
+    for (const menu of allMenus.filter(menu => !menu.isFlyout)) {
       try {
-        const html = await menu.getHTML(flyoutCache);
+        const html = await menu.getHTML(visited);
         result += (result ? '\n' : '') + html;
       } catch (error) {
         this.dx.out(`ERROR generating HTML for menu ${menu.id}: ${String(error)}`);

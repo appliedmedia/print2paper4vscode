@@ -1,6 +1,14 @@
 import type { App } from './App';
-import type { MarginId_t, PageSizeId_t, Orient_t, HeaderFooterPos_t } from './types/PaperPrinter_t';
-import { kMarginId } from './types/PaperPrinter_t';
+import type {
+  MarginIdMenuItems_t,
+  PageSizeIdMenuItems_t,
+  OrientMenuItems_t,
+  HeaderFooterSubmenu_t,
+} from './types/PaperPrinter_t';
+import {
+  kMarginIdById,
+  kHeaderFooter,
+} from './types/PaperPrinter_t';
 import { Coords } from './Coords';
 import type { ThemedToken } from 'shiki';
 import type jsPDF from 'jspdf';
@@ -52,23 +60,23 @@ export class DocInfo_PDF {
   public theme: string = 'github-light';
 
   // Page settings
-  public pageSizeId: PageSizeId_t = 'a4';
-  public orient: Orient_t = 'portrait';
-  public marginId: MarginId_t = 'normal';
+  public pageSizeId: PageSizeIdMenuItems_t = 'a4';
+  public orient: OrientMenuItems_t = 'portrait';
+  public marginId: MarginIdMenuItems_t = 'normal';
 
   // Document content (set by caller before generatePdf)
   public code: string = '';
   public languageId: LanguageId_t = 'typescript';
   public title: string = '';
 
-  // Header/Footer positioning settings
-  // Position options: 'begin' | 'center' | 'end' | 'none'
-  public header_title: HeaderFooterPos_t = 'center';
-  public header_page: HeaderFooterPos_t = 'none';
-  public header_total: HeaderFooterPos_t = 'none';
-  public footer_title: HeaderFooterPos_t = 'none';
-  public footer_page: HeaderFooterPos_t = 'center';
-  public footer_total: HeaderFooterPos_t = 'center';
+  // Header/Footer content settings (position-based)
+  // Each position stores what content appears there: 'title' | 'page' | 'total' | 'pageTotal' | kHeaderFooter.none
+  public header_begin: HeaderFooterSubmenu_t | typeof kHeaderFooter.none = kHeaderFooter.none;
+  public header_middle: HeaderFooterSubmenu_t | typeof kHeaderFooter.none = 'title';
+  public header_end: HeaderFooterSubmenu_t | typeof kHeaderFooter.none = kHeaderFooter.none;
+  public footer_begin: HeaderFooterSubmenu_t | typeof kHeaderFooter.none = kHeaderFooter.none;
+  public footer_middle: HeaderFooterSubmenu_t | typeof kHeaderFooter.none = 'pageTotal';
+  public footer_end: HeaderFooterSubmenu_t | typeof kHeaderFooter.none = kHeaderFooter.none;
 
   // Temporary file tracking
   public tempPdfs: string[] = [];
@@ -87,8 +95,8 @@ export class DocInfo_PDF {
     leftMarginPts: number;
     rightMarginPts: number;
   } {
-    // Get margin setting from kMarginId (this is ADDED to base)
-    const marginSettingPts = kMarginId[this.marginId].marginPts;
+    // Get margin setting from kMarginIdById (this is ADDED to base)
+    const marginSettingPts = kMarginIdById[this.marginId].marginPts;
 
     // Total margin = base + setting
     const totalMarginPts = Coords.kMarginGutterMinPts + marginSettingPts;

@@ -12,25 +12,32 @@ import { DocInfo_PDF } from './DocInfo_PDF';
 import { DocInfo_PaperPrinter } from './DocInfo_PaperPrinter';
 import type { LanguageId_t } from './Stylize';
 import { Yaml } from './Yaml';
+import { kEmptyNoPersist } from './Persist';
 import {
-  type PageSizeId_t,
-  type Orient_t,
-  type MarginId_t,
-  type FontSizeId_t,
+  type PageSizeIdMenuItems_t,
+  type OrientMenuItems_t,
+  type MarginIdMenuItems_t,
+  type FontSizeIdMenuItems_t,
   type HeaderFooterPos_t,
+  type HeaderFooterSubmenu_t,
+  type PrintMenuItems_t,
+  type PageMenuItems_t,
   kPageSizeId,
   kOrient,
   kMarginId,
-  kHeaderFooterPos,
-  kHeaderFooterLocation,
-  kHeaderFooterElement,
-  kPageMenuSubmenu,
+  kHeaderFooter,
+  kHeaderFooterMenuIds,
   kFontSizeId,
-  kPageSizeId_alt,
-  kOrient_alt,
-  kMarginId_alt,
-  kFontSizeId_alt,
-  kTheme_alt,
+  kPrint,
+  kPageSizeIdById,
+  kMarginIdById,
+  kHeaderFooterSubmenuById,
+  kPageMenuItemsById,
+  kHeaderFooterMenuItemsById,
+  kHeader,
+  kFooter,
+  kPage,
+  kTheme,
 } from './types/PaperPrinter_t';
 
 /**
@@ -92,8 +99,8 @@ export class PaperPrinter {
   // Computed line height from font size
   get lineHeightPx(): number {
     const editorTypo = this.app.vscodeapis.getEditorTypography();
-    const fontSizeId = this.app.uimenumgr.getValueForSelectedByMenuId('fontSizeId');
-    return parseInt(fontSizeId || kFontSizeId_alt, 10) * editorTypo.sizeToHeightRatio;
+    const fontSizeId = this.app.uimenumgr.getValueForSelectedByMenuId(kFontSizeId.id);
+    return parseInt(fontSizeId || kFontSizeId.alt, 10) * editorTypo.sizeToHeightRatio;
   }
 
   /**
@@ -159,34 +166,52 @@ export class PaperPrinter {
       this.createMenus();
 
       // Initialize theme choice if not set yet
-      const currentTheme = this.app.uimenumgr.getValueForSelectedByMenuId('theme');
+      const currentTheme = this.app.uimenumgr.getValueForSelectedByMenuId(kTheme.id);
       if (!currentTheme) {
-        this.app.uimenumgr.setPersistForMenuId('theme', this.app.vscodeapis.getActiveThemeId());
+        this.app.uimenumgr.setPersistForMenuId(kTheme.id, this.app.vscodeapis.getActiveThemeId());
       }
 
-      // Initialize header/footer position defaults from docInfo if not persisted
+      // Initialize header/footer content defaults from docInfo if not persisted
       // Also sync docInfo from persisted values if they differ
-      type HeaderFooterMenuId_t =
-        `${keyof typeof kHeaderFooterLocation & string}_${keyof typeof kHeaderFooterElement & string}`;
-      const headerFooterMenuIds = Object.keys(kHeaderFooterLocation).flatMap(location =>
-        Object.keys(kHeaderFooterElement).map(element => `${location}_${element}`)
-      ) as HeaderFooterMenuId_t[];
-
-      for (const menuId of headerFooterMenuIds) {
+      for (const menuId of kHeaderFooterMenuIds) {
         const persistedValue = this.app.uimenumgr.getValueForSelectedByMenuId(menuId);
         const docInfoValue = this.app.pdf.docInfo[menuId as keyof typeof this.app.pdf.docInfo] as
-          | HeaderFooterPos_t
+          | HeaderFooterSubmenu_t
+          | typeof kHeaderFooter.none
           | undefined;
 
-        if (!persistedValue) {
-          // Initialize persistence from docInfo
-          if (docInfoValue) {
+        if (persistedValue === undefined) {
+          // No persisted value - initialize from docInfo if it has a value
+          if (docInfoValue && docInfoValue !== kHeaderFooter.none) {
             this.app.uimenumgr.setPersistForMenuId(menuId, docInfoValue);
+          } else {
+            // Default to 'none' if no value set
+            this.app.uimenumgr.setPersistForMenuId(menuId, kHeaderFooter.none);
+            (
+              this.app.pdf.docInfo as unknown as Record<
+                string,
+                HeaderFooterSubmenu_t | typeof kHeaderFooter.none
+              >
+            )[menuId] = kHeaderFooter.none;
+          }
+        } else if (persistedValue === kHeaderFooter.none) {
+          // Persisted value is 'none' - sync docInfo to 'none'
+          if (docInfoValue !== kHeaderFooter.none) {
+            (
+              this.app.pdf.docInfo as unknown as Record<
+                string,
+                HeaderFooterSubmenu_t | typeof kHeaderFooter.none
+              >
+            )[menuId] = kHeaderFooter.none;
           }
         } else if (docInfoValue !== persistedValue) {
           // Sync docInfo from persisted value (cast needed since persistedValue is string)
-          (this.app.pdf.docInfo as unknown as Record<string, HeaderFooterPos_t>)[menuId] =
-            persistedValue as HeaderFooterPos_t;
+          (
+            this.app.pdf.docInfo as unknown as Record<
+              string,
+              HeaderFooterSubmenu_t | typeof kHeaderFooter.none
+            >
+          )[menuId] = persistedValue as HeaderFooterSubmenu_t;
         }
       }
 
@@ -224,18 +249,32 @@ export class PaperPrinter {
 
     try {
       // Get current settings
-      const fontSizeValue = this.app.uimenumgr.getValueForSelectedByMenuId('fontSizeId');
-      const fontSize = parseInt(fontSizeValue || kFontSizeId_alt, 10);
+      const fontSizeValue = this.app.uimenumgr.getValueForSelectedByMenuId(kFontSizeId.id);
+      const fontSize = parseInt(fontSizeValue || kFontSizeId.alt, 10);
       dx.out(`PDF GENERATION: Using font size ${fontSize}px`);
-      const theme = (this.app.uimenumgr.getValueForSelectedByMenuId('theme') ||
-        kTheme_alt) as string;
-      const pageSizeId = (this.app.uimenumgr.getValueForSelectedByMenuId('pageSizeId') ||
-        kPageSizeId_alt) as PageSizeId_t;
-      const orient = (this.app.uimenumgr.getValueForSelectedByMenuId('orient') || kOrient_alt) as
+      const theme = (this.app.uimenumgr.getValueForSelectedByMenuId(kTheme.id) ||
+        kTheme.alt) as string;
+      const pageSizeId = (this.app.uimenumgr.getValueForSelectedByMenuId(kPageSizeId.id) ||
+        kPageSizeId.alt) as PageSizeIdMenuItems_t;
+      const orient = (this.app.uimenumgr.getValueForSelectedByMenuId(kOrient.id) || kOrient.alt) as
         | 'portrait'
         | 'landscape';
-      const marginId = (this.app.uimenumgr.getValueForSelectedByMenuId('marginId') ||
-        kMarginId_alt) as MarginId_t;
+      const marginId = (this.app.uimenumgr.getValueForSelectedByMenuId(kMarginId.id) ||
+        kMarginId.alt) as MarginIdMenuItems_t;
+
+      // Sync header/footer content from persistence
+      for (const menuId of kHeaderFooterMenuIds) {
+        const persistedValue = this.app.uimenumgr.getValueForSelectedByMenuId(menuId);
+        // Only sync if there's a persisted value - otherwise keep docInfo defaults
+        if (persistedValue !== undefined) {
+          (
+            this.app.pdf.docInfo as unknown as Record<
+              string,
+              HeaderFooterSubmenu_t | typeof kHeaderFooter.none
+            >
+          )[menuId] = persistedValue as HeaderFooterSubmenu_t | typeof kHeaderFooter.none;
+        }
+      }
 
       // Set properties on PDF's docInfo
       this.app.pdf.docInfo.fontFamily = this.getCurrentFontFamily();
@@ -260,7 +299,9 @@ export class PaperPrinter {
       // Log PDF object creation for reuse verification (Stage 4.3)
       const pdfObjectId = this.pdfDoc ? `pdfDoc@${this.pdfDoc.instanceId}` : 'null';
       dx.out(`PDF object created: ${pdfObjectId} (reused for webview, print, save)`);
-      dx.out(`PDF object reuse verification: Same object will be used for webview display and print/save operations`);
+      dx.out(
+        `PDF object reuse verification: Same object will be used for webview display and print/save operations`
+      );
 
       dx.out(`PDF generation complete: ${this.pdfDoc.pageTotal} pages using unified approach`);
     } catch (error) {
@@ -280,151 +321,152 @@ export class PaperPrinter {
 
     const menuConfigs = [
       {
-        id: 'print',
-        displayName: 'Print',
-        icon: '??',
-        isFlyout: false,
+        id: kPrint.id,
+        displayName: kPrint.displayName,
+        icon: kPrint.icon,
+        isFlyout: kPrint.isFlyout,
         menuItems: this.menuItems_Print.bind(this),
-        flyoutMenuItemIds: [],
+        flyoutMenuItemIds: kPrint.flyoutMenuItemIds,
         selectionHandler: this.handleSelection_Print.bind(this),
       },
       {
-        id: 'page',
-        displayName: 'Page',
-        icon: '??',
-        isFlyout: false,
+        id: kPage.id,
+        displayName: kPage.displayName,
+        icon: kPage.icon,
+        isFlyout: kPage.isFlyout,
         menuItems: this.menuItems_Page.bind(this),
-        flyoutMenuItemIds: ['pageSizeId', 'orient', 'marginId', 'header', 'footer'],
+        flyoutMenuItemIds: kPage.flyoutMenuItemIds,
         selectionHandler: this.handleSelection_Page.bind(this),
       },
       {
-        id: 'pageSizeId',
-        displayName: kPageMenuSubmenu.pageSizeId.displayName,
+        id: kPageSizeId.id,
+        displayName: kPageSizeId.displayName,
         icon: '', // submenu indicated by no icon, see Page > Size
-        isFlyout: true,
+        isFlyout: kPageSizeId.isFlyout,
         menuItems: this.menuItems_pageSizeId.bind(this),
-        flyoutMenuItemIds: [],
+        flyoutMenuItemIds: kPageSizeId.flyoutMenuItemIds,
         selectionHandler: this.handleSelection_PageSizeId.bind(this),
       },
       {
-        id: 'orient',
-        displayName: kPageMenuSubmenu.orient.displayName,
+        id: kOrient.id,
+        displayName: kOrient.displayName,
         icon: '', // submenu indicated by no icon, see Page > Orient
-        isFlyout: true,
+        isFlyout: kOrient.isFlyout,
         menuItems: this.menuItems_Orient.bind(this),
-        flyoutMenuItemIds: [],
+        flyoutMenuItemIds: kOrient.flyoutMenuItemIds,
         selectionHandler: this.handleSelection_Orient.bind(this),
       },
       {
-        id: 'marginId',
-        displayName: kPageMenuSubmenu.marginId.displayName,
+        id: kMarginId.id,
+        displayName: kMarginId.displayName,
         icon: '', // submenu indicated by no icon, see Page > Margin
-        isFlyout: true,
+        isFlyout: kMarginId.isFlyout,
         menuItems: this.menuItems_MarginId.bind(this),
-        flyoutMenuItemIds: [],
+        flyoutMenuItemIds: kMarginId.flyoutMenuItemIds,
         selectionHandler: this.handleSelection_MarginId.bind(this),
       },
       {
-        id: 'header',
-        displayName: kHeaderFooterLocation.header.displayName,
+        id: kHeader.id,
+        displayName: kHeader.displayName,
         icon: '', // flyout submenu
-        isFlyout: true,
+        isFlyout: kHeader.isFlyout,
         menuItems: this.menuItems_Header.bind(this),
-        flyoutMenuItemIds: ['header_title', 'header_page', 'header_total'],
+        flyoutMenuItemIds: kHeader.flyoutMenuItemIds,
         selectionHandler: this.handleSelection_Header.bind(this),
       },
       {
-        id: 'footer',
-        displayName: kHeaderFooterLocation.footer.displayName,
+        id: kFooter.id,
+        displayName: kFooter.displayName,
         icon: '', // flyout submenu
-        isFlyout: true,
+        isFlyout: kFooter.isFlyout,
         menuItems: this.menuItems_Footer.bind(this),
-        flyoutMenuItemIds: ['footer_title', 'footer_page', 'footer_total'],
+        flyoutMenuItemIds: kFooter.flyoutMenuItemIds,
         selectionHandler: this.handleSelection_Footer.bind(this),
       },
       {
-        id: 'header_title',
-        displayName: kHeaderFooterElement.title.displayName,
+        id: 'header_begin',
+        displayName: kHeaderFooterMenuItemsById['begin'].displayName,
         icon: '', // flyout submenu
         isFlyout: true,
-        menuItems: this.menuItems_HeaderFooterPos.bind(this),
+        menuItems: this.menuItems_HeaderFooterContent.bind(this),
         flyoutMenuItemIds: [],
-        selectionHandler: this.handleSelection_HeaderTitle.bind(this),
+        selectionHandler: this.handleSelection_HeaderFooter.bind(this),
       },
       {
-        id: 'header_page',
-        displayName: kHeaderFooterElement.page.displayName,
+        id: 'header_middle',
+        displayName: kHeaderFooterMenuItemsById['middle'].displayName,
         icon: '', // flyout submenu
         isFlyout: true,
-        menuItems: this.menuItems_HeaderFooterPos.bind(this),
+        menuItems: this.menuItems_HeaderFooterContent.bind(this),
         flyoutMenuItemIds: [],
-        selectionHandler: this.handleSelection_HeaderPage.bind(this),
+        selectionHandler: this.handleSelection_HeaderFooter.bind(this),
       },
       {
-        id: 'header_total',
-        displayName: kHeaderFooterElement.total.displayName,
+        id: 'header_end',
+        displayName: kHeaderFooterMenuItemsById['end'].displayName,
         icon: '', // flyout submenu
         isFlyout: true,
-        menuItems: this.menuItems_HeaderFooterPos.bind(this),
+        menuItems: this.menuItems_HeaderFooterContent.bind(this),
         flyoutMenuItemIds: [],
-        selectionHandler: this.handleSelection_HeaderTotal.bind(this),
+        selectionHandler: this.handleSelection_HeaderFooter.bind(this),
       },
       {
-        id: 'footer_title',
-        displayName: kHeaderFooterElement.title.displayName,
+        id: 'footer_begin',
+        displayName: kHeaderFooterMenuItemsById['begin'].displayName,
         icon: '', // flyout submenu
         isFlyout: true,
-        menuItems: this.menuItems_HeaderFooterPos.bind(this),
+        menuItems: this.menuItems_HeaderFooterContent.bind(this),
         flyoutMenuItemIds: [],
-        selectionHandler: this.handleSelection_FooterTitle.bind(this),
+        selectionHandler: this.handleSelection_HeaderFooter.bind(this),
       },
       {
-        id: 'footer_page',
-        displayName: kHeaderFooterElement.page.displayName,
+        id: 'footer_middle',
+        displayName: kHeaderFooterMenuItemsById['middle'].displayName,
         icon: '', // flyout submenu
         isFlyout: true,
-        menuItems: this.menuItems_HeaderFooterPos.bind(this),
+        menuItems: this.menuItems_HeaderFooterContent.bind(this),
         flyoutMenuItemIds: [],
-        selectionHandler: this.handleSelection_FooterPage.bind(this),
+        selectionHandler: this.handleSelection_HeaderFooter.bind(this),
       },
       {
-        id: 'footer_total',
-        displayName: kHeaderFooterElement.total.displayName,
+        id: 'footer_end',
+        displayName: kHeaderFooterMenuItemsById['end'].displayName,
         icon: '', // flyout submenu
         isFlyout: true,
-        menuItems: this.menuItems_HeaderFooterPos.bind(this),
+        menuItems: this.menuItems_HeaderFooterContent.bind(this),
         flyoutMenuItemIds: [],
-        selectionHandler: this.handleSelection_FooterTotal.bind(this),
+        selectionHandler: this.handleSelection_HeaderFooter.bind(this),
       },
       {
-        id: 'theme',
-        displayName: 'Theme',
-        icon: '??',
-        isFlyout: false,
+        id: kTheme.id,
+        displayName: kTheme.displayName,
+        icon: kTheme.icon,
+        isFlyout: kTheme.isFlyout,
         menuItems: this.menuItems_Theme.bind(this),
-        flyoutMenuItemIds: [],
+        flyoutMenuItemIds: kTheme.flyoutMenuItemIds,
         selectionHandler: this.handleSelection_Theme.bind(this),
       },
       {
-        id: 'fontSizeId',
-        displayName: 'Text',
-        icon: 'Tt',
-        isFlyout: false,
+        id: kFontSizeId.id,
+        displayName: kFontSizeId.displayName,
+        icon: kFontSizeId.icon,
+        isFlyout: kFontSizeId.isFlyout,
         menuItems: this.menuItems_Text.bind(this),
-        flyoutMenuItemIds: [],
+        flyoutMenuItemIds: kFontSizeId.flyoutMenuItemIds,
         selectionHandler: this.handleSelection_Text.bind(this),
       },
     ];
 
     menuConfigs.forEach(config => {
       this.dx.out(`Creating menu: ${config.id} with icon: ${config.icon}`);
+
       const menu = this.app.uimenumgr.createMenu(
         config.id as MenuId_t,
         config.displayName,
         config.icon,
         config.isFlyout,
         config.menuItems,
-        config.flyoutMenuItemIds,
+        [...config.flyoutMenuItemIds],
         config.selectionHandler
       );
       this.app.uimenumgr.addMenu(menu);
@@ -433,11 +475,10 @@ export class PaperPrinter {
 
   // Build list methods for each menu type
   private menuItems_Print(): UIMenuItem_t[] {
-    return [
-      { id: 'preview', displayName: 'Print with Preview' },
-      { id: 'direct', displayName: 'Print' },
-      { id: 'save', displayName: 'Save as PDF' },
-    ];
+    return kPrint.menuItems.map(item => ({
+      id: item.id as MenuItemId_t,
+      displayName: item.displayName,
+    }));
   }
 
   private menuItems_Theme(): UIMenuItem_t[] {
@@ -459,9 +500,9 @@ export class PaperPrinter {
     dx.out(`editorSize = ${editorSize}`);
 
     // Use centralized const as base - single source of truth for font sizes
-    const sizeOptions: UIMenuItem_t[] = (Object.keys(kFontSizeId) as FontSizeId_t[]).map(id => ({
-      id,
-      displayName: kFontSizeId[id].displayName,
+    const sizeOptions: UIMenuItem_t[] = kFontSizeId.menuItems.map(item => ({
+      id: item.id as MenuItemId_t,
+      displayName: item.displayName,
     }));
 
     // Check if editor size already exists in the list
@@ -485,78 +526,70 @@ export class PaperPrinter {
   }
 
   private menuItems_Page(): UIMenuItem_t[] {
+    // Header and Footer menus (which have their own flyouts) - now first
+    const headerFooterMenus = [kHeader.id, kFooter.id].map(id => ({
+      id: id as MenuItemId_t,
+      displayName: id === kHeader.id ? kHeader.displayName : kFooter.displayName,
+    }));
+
     // Page submenu references (Size, Orient, Margin)
-    const pageSubmenus = (
-      Object.keys(kPageMenuSubmenu) as Array<keyof typeof kPageMenuSubmenu>
-    ).map(id => ({
-      id,
-      displayName: kPageMenuSubmenu[id].displayName,
-    }));
+    const pageSubmenus = [kPageSizeId.id, kOrient.id, kMarginId.id].map(id => {
+      if (id === kPageSizeId.id)
+        return { id: id as MenuItemId_t, displayName: kPageSizeId.displayName };
+      if (id === kOrient.id) return { id: id as MenuItemId_t, displayName: kOrient.displayName };
+      return { id: id as MenuItemId_t, displayName: kMarginId.displayName };
+    });
 
-    // Header and Footer menus (which have their own flyouts)
-    const headerFooterMenus = (
-      Object.keys(kHeaderFooterLocation) as Array<keyof typeof kHeaderFooterLocation>
-    ).map(id => ({
-      id,
-      displayName: kHeaderFooterLocation[id].displayName,
-    }));
-
-    return [...pageSubmenus, ...headerFooterMenus];
+    return [...headerFooterMenus, ...pageSubmenus] as UIMenuItem_t[];
   }
 
   private menuItems_pageSizeId(): UIMenuItem_t[] {
     // Use centralized const - single source of truth for page sizes
-    return (Object.keys(kPageSizeId) as PageSizeId_t[]).map(id => ({
-      id,
-      displayName: kPageSizeId[id].displayName,
+    return kPageSizeId.menuItems.map(item => ({
+      id: item.id as MenuItemId_t,
+      displayName: item.displayName,
     }));
   }
 
   private menuItems_Orient(): UIMenuItem_t[] {
     // Use centralized const with template replacement for SVG icons
-    return (Object.keys(kOrient) as Orient_t[]).map(id => ({
-      id,
-      displayName: this.app.templateDictReplace(kOrient[id].displayName, this.yaml),
+    return kOrient.menuItems.map(item => ({
+      id: item.id as MenuItemId_t,
+      displayName: this.app.templateDictReplace(item.displayName, this.yaml),
     }));
   }
 
   private menuItems_MarginId(): UIMenuItem_t[] {
     // Use centralized const with template replacement for SVG icons
-    return (Object.keys(kMarginId) as MarginId_t[]).map(id => ({
-      id,
-      displayName: this.app.templateDictReplace(kMarginId[id].displayName, this.yaml),
+    return kMarginId.menuItems.map(item => ({
+      id: item.id as MenuItemId_t,
+      displayName: this.app.templateDictReplace(item.displayName, this.yaml),
     }));
   }
 
   private menuItems_Header(): UIMenuItem_t[] {
-    // Return Title, Page, Total as menu items (each opens a position flyout)
-    return (Object.keys(kHeaderFooterElement) as Array<keyof typeof kHeaderFooterElement>).map(
-      id => ({
-        id: `header_${id}` as MenuItemId_t,
-        displayName: kHeaderFooterElement[id].displayName,
-      })
-    );
+    // Return position flyouts: ←, ↔, →
+    return kHeaderFooter.menuItems.map(item => ({
+      id: `header_${item.id}` as MenuItemId_t,
+      displayName: item.displayName,
+    })) as UIMenuItem_t[];
   }
 
   private menuItems_Footer(): UIMenuItem_t[] {
-    // Return Title, Page, Total as menu items (each opens a position flyout)
-    return (Object.keys(kHeaderFooterElement) as Array<keyof typeof kHeaderFooterElement>).map(
-      id => ({
-        id: `footer_${id}` as MenuItemId_t,
-        displayName: kHeaderFooterElement[id].displayName,
-      })
-    );
+    // Return position flyouts: ←, ↔, →
+    return kHeaderFooter.menuItems.map(item => ({
+      id: `footer_${item.id}` as MenuItemId_t,
+      displayName: item.displayName,
+    })) as UIMenuItem_t[];
   }
 
-  private menuItems_HeaderFooterPos(): UIMenuItem_t[] {
-    const items = (Object.keys(kHeaderFooterPos) as HeaderFooterPos_t[]).map(id => ({
-      id,
-      displayName: kHeaderFooterPos[id].displayName,
+  private menuItems_HeaderFooterContent(): UIMenuItem_t[] {
+    // Return content choices: title, #, total, #+total
+    // Note: No "None" option - clicking the selected item again will deselect it
+    return kHeaderFooter.subMenuItems.map(item => ({
+      id: item.id as MenuItemId_t,
+      displayName: item.displayName,
     }));
-    this.dx.out(
-      `menuItems_HeaderFooterPos: Returning ${items.length} items: ${items.map(i => i.id).join(', ')}`
-    );
-    return items;
   }
 
   // Selection handler methods for each menu type
@@ -605,37 +638,40 @@ export class PaperPrinter {
     }
   }
 
-  private async handleSelection_Print(selectedId: MenuItemId_t): Promise<HandleSelection_t> {
+  private async handleSelection_Print(
+    menuId: MenuId_t,
+    menuItemId: MenuItemId_t
+  ): Promise<HandleSelection_t> {
     const dx = this.dx.sub('handleSelection_Print');
-    let id = '';
-    let value: string | number | boolean = '';
+    let id = kEmptyNoPersist;
+    let value: string | number | boolean = kEmptyNoPersist;
     // defaultId will return empty id, empty value,
 
-    if (selectedId !== UIMenu.defaultId()) {
-      dx.out(`Print action: ${selectedId}`);
+    if (menuItemId !== UIMenu.defaultId()) {
+      dx.out(`Print action: ${String(menuItemId)}`);
       await this.generatePdf();
 
       if (this.pdfDoc) {
         try {
-          if (selectedId === 'preview') {
+          if (menuItemId === 'preview') {
             dx.out('Printing with preview...');
             await this.app.pdf.printWithPreview(
               this.pdfDoc,
               this.docInfo.printTitle || 'Print Output'
             );
-          } else if (selectedId === 'direct') {
+          } else if (menuItemId === 'direct') {
             dx.out('Printing directly...');
             await this.app.pdf.printDirectly(
               this.pdfDoc,
               this.docInfo.printTitle || 'Print Output'
             );
-          } else if (selectedId === 'save') {
+          } else if (menuItemId === 'save') {
             dx.out('Saving as PDF...');
             await this.app.pdf.saveAsPDF(this.pdfDoc, this.docInfo.printTitle || 'Print Output');
           }
-          dx.out(`Print action ${selectedId} completed successfully`);
+          dx.out(`Print action ${String(menuItemId)} completed successfully`);
         } catch (error) {
-          dx.error(`Print action ${selectedId} failed: ${error}`);
+          dx.error(`Print action ${String(menuItemId)} failed: ${error}`);
         }
       } else {
         dx.out('No PDF document available for printing');
@@ -646,88 +682,89 @@ export class PaperPrinter {
     return { id, value };
   }
 
-  private async handleSelection_Header(/* selectedId: MenuItemId_t */): Promise<HandleSelection_t> {
+  private async handleSelection_Header() /* menuId: MenuId_t, menuItemId: MenuItemId_t */
+  : Promise<HandleSelection_t> {
     // Header menu doesn't have direct selections, just opens flyouts
-    return { id: '', value: '' };
+    return { id: kEmptyNoPersist, value: kEmptyNoPersist };
   }
 
-  private async handleSelection_Footer(/* selectedId: MenuItemId_t */): Promise<HandleSelection_t> {
+  private async handleSelection_Footer() /* menuId: MenuId_t, menuItemId: MenuItemId_t */
+  : Promise<HandleSelection_t> {
     // Footer menu doesn't have direct selections, just opens flyouts
-    return { id: '', value: '' };
+    return { id: kEmptyNoPersist, value: kEmptyNoPersist };
   }
 
-  private async handleSelection_HeaderFooterHelper(
+  private async handleSelection_HeaderFooter(
     menuId: MenuId_t,
-    id: MenuItemId_t,
-    value: HeaderFooterPos_t
+    menuItemId: MenuItemId_t
   ): Promise<HandleSelection_t> {
-    (this.app.pdf.docInfo as unknown as Record<string, HeaderFooterPos_t>)[menuId] = value;
-    this.app.uimenumgr.setPersistForMenuId(menuId, id);
-    void this.regenerateAndUpdateWebview();
+    const dx = this.dx.sub('handleSelection_HeaderFooter');
 
+    // Default return values
+    let id: string = kEmptyNoPersist;
+    let value: string | number | boolean = kEmptyNoPersist;
+
+    // Only handle header/footer position menus
+    if (menuId.startsWith('header_') || menuId.startsWith('footer_')) {
+      // Handle default case - return calculated default value based on position
+      if (menuItemId === UIMenu.defaultId()) {
+        // Calculate default based on DocInfo_PDF defaults:
+        // header_middle: 'title', footer_middle: 'pageTotal', all others: kHeaderFooter.none
+        if (menuId === 'header_middle') {
+          id = 'title';
+        } else if (menuId === 'footer_middle') {
+          id = 'pageTotal';
+        } else {
+          id = kHeaderFooter.none;
+        }
+        value = id;
+      } else {
+        // Get current value for this position
+        const currentValue = this.app.pdf.docInfo[menuId as keyof typeof this.app.pdf.docInfo] as
+          | HeaderFooterSubmenu_t
+          | typeof kHeaderFooter.none
+          | undefined;
+
+        // Toggle behavior: if clicking the same item that's already selected, deselect it (set to 'none')
+        if (currentValue === menuItemId) {
+          id = kHeaderFooter.none;
+          value = kHeaderFooter.none;
+        } else {
+          id = String(menuItemId);
+          value = menuItemId as HeaderFooterSubmenu_t;
+        }
+
+        // Persist the value (including 'none') - docInfo will be synced in generatePdf()
+        this.app.uimenumgr.setPersistForMenuId(menuId, value);
+        void this.regenerateAndUpdateWebview();
+      }
+    }
+
+    dx.done();
     return { id, value };
   }
 
-  private async handleSelection_HeaderTitle(selectedId: MenuItemId_t): Promise<HandleSelection_t> {
-    const id = String(selectedId);
-    const value = id as HeaderFooterPos_t;
-
-    return await this.handleSelection_HeaderFooterHelper('header_title', selectedId, value);
-  }
-
-  private async handleSelection_HeaderPage(selectedId: MenuItemId_t): Promise<HandleSelection_t> {
-    const id = String(selectedId);
-    const value = id as HeaderFooterPos_t;
-
-    return await this.handleSelection_HeaderFooterHelper('header_page', selectedId, value);
-  }
-
-  private async handleSelection_HeaderTotal(selectedId: MenuItemId_t): Promise<HandleSelection_t> {
-    const id = String(selectedId);
-    const value = id as HeaderFooterPos_t;
-
-    return await this.handleSelection_HeaderFooterHelper('header_total', selectedId, value);
-  }
-
-  private async handleSelection_FooterTitle(selectedId: MenuItemId_t): Promise<HandleSelection_t> {
-    const id = String(selectedId);
-    const value = id as HeaderFooterPos_t;
-
-    return await this.handleSelection_HeaderFooterHelper('footer_title', selectedId, value);
-  }
-
-  private async handleSelection_FooterPage(selectedId: MenuItemId_t): Promise<HandleSelection_t> {
-    const id = String(selectedId);
-    const value = id as HeaderFooterPos_t;
-
-    return await this.handleSelection_HeaderFooterHelper('footer_page', selectedId, value);
-  }
-
-  private async handleSelection_FooterTotal(selectedId: MenuItemId_t): Promise<HandleSelection_t> {
-    const id = String(selectedId);
-    const value = id as HeaderFooterPos_t;
-
-    return await this.handleSelection_HeaderFooterHelper('footer_total', selectedId, value);
-  }
-
-  private async handleSelection_Theme(selectedId: MenuItemId_t): Promise<HandleSelection_t> {
+  private async handleSelection_Theme(
+    menuId: MenuId_t,
+    menuItemId: MenuItemId_t
+  ): Promise<HandleSelection_t> {
     const dx = this.dx.sub('handleSelection_Theme');
 
-    let id = selectedId;
+    let id = menuItemId;
     let value: string | number | boolean = id; // value is the theme ID
 
-    if (selectedId === UIMenu.defaultId()) {
+    if (menuItemId === UIMenu.defaultId()) {
       // Return the current editor theme ID as the default
       const currentEditorTheme = this.app.vscodeapis.getActiveThemeId();
       const availableThemes = this.app.stylize.getThemes();
-      const fallbackTheme = availableThemes[0]?.id || kTheme_alt;
+      const fallbackTheme = availableThemes[0]?.id || kTheme.alt;
       id = currentEditorTheme || fallbackTheme;
       value = id; // value is the theme ID
       dx.out(`returning editor theme: ${id}`);
     } else {
       // Update theme
-      dx.out(`updating theme to ${selectedId}`);
-      this.app.uimenumgr.setPersistForMenuId('theme', selectedId);
+      dx.out(`updating theme to ${menuItemId}`);
+      this.app.uimenumgr.setPersistForMenuId(kTheme.id, menuItemId);
       // Regenerate everything (fire and forget)
       void this.regenerateAndUpdateWebview();
     }
@@ -736,19 +773,22 @@ export class PaperPrinter {
     return { id, value };
   }
 
-  private async handleSelection_Text(selectedId: MenuItemId_t): Promise<HandleSelection_t> {
+  private async handleSelection_Text(
+    menuId: MenuId_t,
+    menuItemId: MenuItemId_t
+  ): Promise<HandleSelection_t> {
     const dx = this.dx.sub('handleSelection_Text');
 
-    let id = selectedId; // If we're here, someone picked a valid menu item, we don't need to be so overly checking
+    let id = menuItemId; // If we're here, someone picked a valid menu item, we don't need to be so overly checking
     let value: string | number | boolean = id; // In this case, the value is the fontSizePx which happens to be the id
 
-    if (selectedId === UIMenu.defaultId()) {
+    if (menuItemId === UIMenu.defaultId()) {
       // Return the actual editor font size for default selection
       const editorTypo = this.app.vscodeapis.getEditorTypography();
       id = String(editorTypo.fontSize);
       value = id;
     } else {
-      this.app.uimenumgr.setPersistForMenuId('fontSizeId', selectedId);
+      this.app.uimenumgr.setPersistForMenuId(kFontSizeId.id, menuItemId);
       void this.regenerateAndUpdateWebview();
     }
 
@@ -756,18 +796,22 @@ export class PaperPrinter {
     return { id, value };
   }
 
-  private async handleSelection_Page(/* selectedId: string */): Promise<HandleSelection_t> {
+  private async handleSelection_Page() /* menuId: MenuId_t, menuItemId: MenuItemId_t */
+  : Promise<HandleSelection_t> {
     // Page menu is just a flyout parent - no default selection
-    return { id: '', value: '' };
+    return { id: kEmptyNoPersist, value: kEmptyNoPersist };
   }
 
-  private async handleSelection_PageSizeId(selectedId: MenuItemId_t): Promise<HandleSelection_t> {
+  private async handleSelection_PageSizeId(
+    menuId: MenuId_t,
+    menuItemId: MenuItemId_t
+  ): Promise<HandleSelection_t> {
     const dx = this.dx.sub('handleSelection_PageSizeId');
 
-    let id = selectedId;
+    let id = menuItemId;
     let value: string | number | boolean = id; // value is the page size ID
 
-    if (selectedId === UIMenu.defaultId()) {
+    if (menuItemId === UIMenu.defaultId()) {
       // Return locale-based default page size (letter for US/CA/MX, a4 for rest)
       const locale = this.app.os.getLocale();
       dx.out(`Locale detected: ${locale}`);
@@ -784,7 +828,7 @@ export class PaperPrinter {
       value = id; // value is the page size ID
       dx.out(`Returning locale-based default page size: ${id}`);
     } else {
-      this.app.uimenumgr.setPersistForMenuId('pageSizeId', selectedId);
+      this.app.uimenumgr.setPersistForMenuId(kPageSizeId.id, menuItemId);
       void this.regenerateAndUpdateWebview();
     }
 
@@ -792,19 +836,22 @@ export class PaperPrinter {
     return { id, value };
   }
 
-  private async handleSelection_Orient(selectedId: MenuItemId_t): Promise<HandleSelection_t> {
+  private async handleSelection_Orient(
+    menuId: MenuId_t,
+    menuItemId: MenuItemId_t
+  ): Promise<HandleSelection_t> {
     const dx = this.dx.sub('handleSelection_Orient');
 
-    let id = selectedId;
+    let id = menuItemId;
     let value: string | number | boolean = id; // value is the orient ID
 
-    if (selectedId === UIMenu.defaultId()) {
+    if (menuItemId === UIMenu.defaultId()) {
       // Return the default orientation (always portrait)
       id = 'portrait';
       value = id; // value is the orientation
     } else {
       // Update orientation
-      this.app.uimenumgr.setPersistForMenuId('orient', selectedId);
+      this.app.uimenumgr.setPersistForMenuId(kOrient.id, menuItemId);
       void this.regenerateAndUpdateWebview();
     }
 
@@ -812,20 +859,23 @@ export class PaperPrinter {
     return { id, value };
   }
 
-  private async handleSelection_MarginId(selectedId: MenuItemId_t): Promise<HandleSelection_t> {
+  private async handleSelection_MarginId(
+    menuId: MenuId_t,
+    menuItemId: MenuItemId_t
+  ): Promise<HandleSelection_t> {
     const dx = this.dx.sub('handleSelection_MarginId');
-    const defaultMarginId: MarginId_t = 'normal';
+    const defaultMarginId: MarginIdMenuItems_t = 'normal';
 
-    let id = selectedId;
+    let id = menuItemId;
     let value: string | number | boolean = id; // value is the margin ID
 
-    if (selectedId === UIMenu.defaultId()) {
+    if (menuItemId === UIMenu.defaultId()) {
       // Return the default margin (always normal)
       id = defaultMarginId;
       value = id; // value is the margin ID
       dx.out(`returning default margin: ${id}`);
     } else {
-      this.app.uimenumgr.setPersistForMenuId('marginId', selectedId);
+      this.app.uimenumgr.setPersistForMenuId(kMarginId.id, menuItemId);
       void this.regenerateAndUpdateWebview();
     }
 

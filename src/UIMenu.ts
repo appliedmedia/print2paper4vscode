@@ -7,20 +7,13 @@ import {
   kOrient,
   kMarginId,
   kFontSizeId,
-  kPageMenuSubmenu,
-  kHeaderFooterLocation,
-  kHeaderFooterElement,
-  kHeaderFooterPos,
+  kHeaderFooter,
+  kHeaderFooterMenuIds,
   kPrint,
-  kPrint_id,
-  kPage_id,
-  kTheme_id,
-  kFontSizeId_id,
-  kPageSizeId_id,
-  kOrient_id,
-  kMarginId_id,
-  kHeader_id,
-  kFooter_id,
+  kPage,
+  kTheme,
+  kHeader,
+  kFooter,
 } from './types/PaperPrinter_t';
 
 // UIMenuItem type - menu item structure
@@ -35,21 +28,19 @@ export interface UIMenuItem_t {
 // Auto-constructed from PaperPrinter_t.ts _id constants
 export const kMenuId = [
   // Top-level menus
-  kPrint_id,
-  kPage_id,
-  kTheme_id,
-  kFontSizeId_id,
+  kPrint.id,
+  kPage.id,
+  kTheme.id,
+  kFontSizeId.id,
   // Page submenus
-  kPageSizeId_id,
-  kOrient_id,
-  kMarginId_id,
+  kPageSizeId.id,
+  kOrient.id,
+  kMarginId.id,
   // Header/Footer locations
-  kHeader_id,
-  kFooter_id,
-  // Composed from kHeaderFooterLocation + kHeaderFooterElement
-  ...Object.keys(kHeaderFooterLocation).flatMap(location =>
-    Object.keys(kHeaderFooterElement).map(element => `${location}_${element}`)
-  ),
+  kHeader.id,
+  kFooter.id,
+  // Composed from header/footer + kHeaderFooter positions
+  ...kHeaderFooterMenuIds,
 ] as const;
 
 export type MenuId_t = (typeof kMenuId)[number];
@@ -60,19 +51,21 @@ export const kMenuItemId = [
   // System sentinel
   'default',
   // Print actions
-  ...Object.values(kPrint),
-  // From kPageMenuSubmenu keys (menu item IDs match menu IDs)
-  ...(Object.keys(kPageMenuSubmenu) as Array<keyof typeof kPageMenuSubmenu>),
-  // From kOrient
-  ...(Object.keys(kOrient) as Array<keyof typeof kOrient>),
-  // From kHeaderFooterPos
-  ...(Object.keys(kHeaderFooterPos) as Array<keyof typeof kHeaderFooterPos>),
-  // From kMarginId
-  ...(Object.keys(kMarginId) as Array<keyof typeof kMarginId>),
-  // From kPageSizeId
-  ...(Object.keys(kPageSizeId) as Array<keyof typeof kPageSizeId>),
-  // From kFontSizeId
-  ...(Object.keys(kFontSizeId) as Array<keyof typeof kFontSizeId>),
+  ...kPrint.menuItems.map(item => item.id),
+  // From kPage menuItems
+  ...kPage.menuItems.map(item => item.id),
+  // From kOrient menuItems
+  ...kOrient.menuItems.map(item => item.id),
+  // From kHeaderFooter (for header/footer position menus)
+  ...kHeaderFooterMenuIds,
+  // From kHeaderFooter.subMenuItems (for header/footer content selections)
+  ...kHeaderFooter.subMenuItems.map(item => item.id),
+  // From kMarginId menuItems
+  ...kMarginId.menuItems.map(item => item.id),
+  // From kPageSizeId menuItems
+  ...kPageSizeId.menuItems.map(item => item.id),
+  // From kFontSizeId menuItems
+  ...kFontSizeId.menuItems.map(item => item.id),
 ] as const;
 
 export type MenuItemId_t = (typeof kMenuItemId)[number] | string;
@@ -130,7 +123,10 @@ export class UIMenu {
     private _isFlyout: boolean = false,
     private _menuItems: () => UIMenuItem_t[],
     private _flyoutMenuItemIds: string[] = [],
-    private _selectionHandler: (id: MenuItemId_t) => Promise<HandleSelection_t>
+    private _selectionHandler: (
+      menuId: MenuId_t,
+      menuItemId: MenuItemId_t
+    ) => Promise<HandleSelection_t>
   ) {
     this.persist = new Persist(app) as Persist & Persist_t;
     this.dx = this.app.dx.create('UIMenu');
@@ -162,21 +158,6 @@ export class UIMenu {
     return this._isFlyout;
   }
 
-  // Get the menu element ID for JavaScript
-  getId_Menu(): string {
-    return this.id;
-  }
-
-  // Get the button ID for JavaScript
-  getId_Button(): string {
-    return `${this.id}-btn`;
-  }
-
-  // Get the template variable name for this menu's items
-  getTemplateVariableName(): string {
-    return `${this.id.toUpperCase()}_MENU_ITEMS`;
-  }
-
   // Get the menu items from the injected listBuilder
   getMenuItems(): UIMenuItem_t[] {
     return this._menuItems();
@@ -194,8 +175,8 @@ export class UIMenu {
   }
 
   // Dispatch a selection to this menu's handler
-  async dispatchSelection(id: MenuItemId_t): Promise<HandleSelection_t> {
-    return this._selectionHandler(id);
+  async dispatchSelection(menuItemId: MenuItemId_t): Promise<HandleSelection_t> {
+    return this._selectionHandler(this._id, menuItemId);
   }
 
   // Get the default item ID for this menu (for default icon 📝)
@@ -211,11 +192,11 @@ export class UIMenu {
   // Get the currently selected item ID for this menu (for highlighting ✓)
   async getSelectedItemId(): Promise<string> {
     // Get the current persisted value (user's selection)
-    let id = this.persist[this._id as keyof typeof this.persist] || '';
-    if (!id) {
-      id = await this.getDefaultItemId();
+    let menuItemId = this.persist[this._id as keyof typeof this.persist] || '';
+    if (!menuItemId) {
+      menuItemId = await this.getDefaultItemId();
     }
-    return String(id);
+    return String(menuItemId);
   }
 
   // Generate a single menu item HTML
@@ -229,11 +210,11 @@ export class UIMenu {
     const yaml = this.yaml; // This will load and validate automatically
 
     // Check if this item has a flyout by checking if its ID is in flyoutMenuItemIds
-    const id = item.id;
-    const isFlyout = this.flyoutMenuItemIds.includes(id);
-    const flyoutMenuIdRef = isFlyout ? ` flyout-menu-id-ref="${id}"` : '';
-    const isDefault = id === defaultItemId;
-    const isSelected = id === selectedItemId;
+    const menuItemId = item.id;
+    const isFlyout = this.flyoutMenuItemIds.includes(menuItemId);
+    const flyoutMenuIdRef = isFlyout ? ` flyout-menu-id-ref="${menuItemId}"` : '';
+    const isDefault = menuItemId === defaultItemId;
+    const isSelected = menuItemId === selectedItemId;
 
     // Individual items only need these classes
     const itemClasses = [
@@ -244,7 +225,7 @@ export class UIMenu {
       .filter(Boolean)
       .join(' ');
 
-    const itemId = isFlyout ? `flyout-${id}` : id;
+    const itemId = isFlyout ? `flyout-${menuItemId}` : menuItemId;
 
     // DisplayName already contains processed SVG content from PaperPrinter
     const processedDisplayName = item.displayName;
@@ -264,54 +245,82 @@ export class UIMenu {
   }
 
   // Generate the complete HTML for this menu using YAML template
-  async getHTML(flyoutCache: Record<string, string> = {}): Promise<string> {
-    const yaml = this.yaml; // This will load and validate automatically
-
-    // Generate menu items HTML using the new getItemHTML function
-    const menuItemsList = this.getMenuItems();
-    if (this.isFlyout) {
-      this.dx.out(`Flyout ${this.id}: Got ${menuItemsList.length} menu items`);
+  // Recursively generates flyouts on-demand
+  async getHTML(visited: Set<string> = new Set()): Promise<string> {
+    // Prevent infinite loops
+    if (visited.has(this._id)) {
+      this.dx.out(`Cycle detected for menu ${this._id}, skipping`);
+      return `<!-- Cycle detected: ${this._id} -->`;
     }
-    const defaultItemId = await this.getDefaultItemId(); // Get default item for 📝 icon
-    const selectedItemId = await this.getSelectedItemId(); // Get selected item for ✓ highlighting
-    const hasDefaultItem = !!defaultItemId;
+    visited.add(this._id);
 
-    // Use explicit properties instead of calculated values
-    const isFlyout = this.isFlyout;
-    const hasFlyout = this.flyoutMenuItemIds.length > 0;
+    try {
+      const yaml = this.yaml; // This will load and validate automatically
 
-    // Determine gutter states upfront - this is all we need for CSS
-    const hasGutterBefore = hasDefaultItem; // Only if there's a default item
-    const hasGutterAfter = hasFlyout || hasDefaultItem; // Menus with flyout items OR default items get gutter-after
-    const processedMenuItemsHtml = await Promise.all(
-      menuItemsList.map(item =>
-        this.getItemHTML(item, flyoutCache[item.id] || '', defaultItemId, selectedItemId)
-      )
-    );
-    const menuItems = processedMenuItemsHtml.join('\n');
+      // Generate flyout HTML for any menu items that have flyouts
+      const flyoutCache: Record<string, string> = {};
+      for (const flyoutMenuItemId of this.flyoutMenuItemIds) {
+        try {
+          const flyoutMenu = this.app.uimenumgr.getMenuById(flyoutMenuItemId);
+          const flyoutHtml = await flyoutMenu.getHTML(visited);
+          flyoutCache[flyoutMenuItemId] = flyoutHtml;
+        } catch (error) {
+          this.dx.out(
+            `ERROR generating flyout ${flyoutMenuItemId} for menu ${this._id}: ${String(error)}`
+          );
+          flyoutCache[flyoutMenuItemId] = `<!-- ERROR: ${error} -->`;
+        }
+      }
 
-    // Build CSS classes for menu container - only what we need
-    const menuClasses = [
-      isFlyout ? 'is-flyout' : '',
-      hasGutterBefore ? 'has-gutter-before' : '',
-      hasGutterAfter ? 'has-gutter-after' : '',
-    ]
-      .filter(Boolean)
-      .join(' ');
-    // Use the main template for all menus
-    const template = yaml.uimenu_html;
+      // Generate menu items HTML using the new getItemHTML function
+      const menuItemsList = this.getMenuItems();
+      if (this.isFlyout) {
+        this.dx.out(`Flyout ${this._id}: Got ${menuItemsList.length} menu items`);
+      }
+      const defaultItemId = await this.getDefaultItemId(); // Get default item for 📝 icon
+      const selectedItemId = await this.getSelectedItemId(); // Get selected item for ✓ highlighting
+      const hasDefaultItem = !!defaultItemId;
 
-    const replacementDict = {
-      menuId: this.getId_Menu(),
-      displayName: this.displayName,
-      icon: this.icon,
-      menuItems,
-      menuClasses,
-    };
+      // Use explicit properties instead of calculated values
+      const isFlyout = this.isFlyout;
+      const hasFlyout = this.flyoutMenuItemIds.length > 0;
 
-    const result = this.app.templateDictReplace(template, replacementDict);
+      // Determine gutter states upfront - this is all we need for CSS
+      const hasGutterBefore = hasDefaultItem; // Only if there's a default item
+      const hasGutterAfter = hasFlyout || hasDefaultItem; // Menus with flyout items OR default items get gutter-after
+      const processedMenuItemsHtml = await Promise.all(
+        menuItemsList.map(item =>
+          this.getItemHTML(item, flyoutCache[item.id] || '', defaultItemId, selectedItemId)
+        )
+      );
+      const menuItems = processedMenuItemsHtml.join('\n');
 
-    return result;
+      // Build CSS classes for menu container - only what we need
+      const menuClasses = [
+        isFlyout ? 'is-flyout' : '',
+        hasGutterBefore ? 'has-gutter-before' : '',
+        hasGutterAfter ? 'has-gutter-after' : '',
+      ]
+        .filter(Boolean)
+        .join(' ');
+      // Use the main template for all menus
+      const template = yaml.uimenu_html;
+
+      const replacementDict = {
+        menuId: this._id,
+        displayName: this.displayName,
+        icon: this.icon,
+        menuItems,
+        menuClasses,
+      };
+
+      const result = this.app.templateDictReplace(template, replacementDict);
+      visited.delete(this._id); // Remove from visited set after successful generation
+      return result;
+    } catch (error) {
+      visited.delete(this._id); // Always remove from visited set on error
+      throw error;
+    }
   }
 
   done(): void {

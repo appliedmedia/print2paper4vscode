@@ -5,6 +5,9 @@ import type { GlobalStateKey_t, GlobalStateValue_t } from './VSCodeAPIs';
 // Persist value types - what we store locally
 export type PersistValue_t = string | number | boolean;
 
+// Empty value: intentionally not persisted (for flyout-only parent menus)
+export const kEmptyNoPersist = '';
+
 // Type for dynamically created properties on Persist instances
 export type Persist_t = Record<UI_t, PersistValue_t>;
 
@@ -67,7 +70,7 @@ export class Persist {
         if (value !== this.value[name]) {
           this.value[name] = value;
           // Skip global state update if value is empty string (non-persistent menus like 'print'/'page')
-          if (value !== '') {
+          if (value !== kEmptyNoPersist) {
             this.app.vscodeapis.updateGlobalState(
               name as GlobalStateKey_t,
               value as GlobalStateValue_t

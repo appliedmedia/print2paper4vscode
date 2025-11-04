@@ -5,7 +5,7 @@
  * Any content type that can be rendered as pages should implement this interface.
  */
 
-import type { PageSizeId_t, Orient_t, MarginId_t } from './PaperPrinter_t';
+import type { PageSizeIdMenuItems_t, OrientMenuItems_t, MarginIdMenuItems_t } from './PaperPrinter_t';
 
 export interface PageData {
   /** Data URL of the rendered page (e.g., PDF data URL) */

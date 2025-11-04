@@ -1,6 +1,12 @@
 import { describe, it } from 'node:test';
 import * as assert from 'node:assert';
-import { UIMenu, type HandleSelection_t, type UIMenuItem_t } from '../src/UIMenu.js';
+import {
+  UIMenu,
+  type HandleSelection_t,
+  type UIMenuItem_t,
+  type MenuId_t,
+  type MenuItemId_t,
+} from '../src/UIMenu.js';
 
 // Mock App for testing
 const mockApp = {
@@ -34,8 +40,10 @@ const mockListBuilder = (): UIMenuItem_t[] => [
   { id: 'default', displayName: 'Default' },
   { id: 'test', displayName: 'Test Item' },
 ];
-const mockSelectionHandler = async (id: string): Promise<HandleSelection_t> =>
-  Promise.resolve({ id: '', value: '' });
+const mockSelectionHandler = async (
+  menuId: MenuId_t,
+  menuItemId: MenuItemId_t
+): Promise<HandleSelection_t> => Promise.resolve({ id: '', value: '' });
 
 describe('UIMenu', () => {
   // Helper function to create fresh menu for each test
@@ -80,12 +88,7 @@ describe('UIMenu', () => {
   describe('ID Generation Methods', () => {
     it('should generate correct menu ID', () => {
       const menu = createMenu();
-      assert.strictEqual(menu.getId_Menu(), 'theme');
-    });
-
-    it('should generate correct button ID', () => {
-      const menu = createMenu();
-      assert.strictEqual(menu.getId_Button(), 'theme-btn');
+      assert.strictEqual(menu.id, 'theme');
     });
 
     it('should handle special characters in ID', () => {
@@ -99,56 +102,14 @@ describe('UIMenu', () => {
         [],
         mockSelectionHandler
       );
-      assert.strictEqual(specialMenu.getId_Menu(), 'fontSizeId');
-      assert.strictEqual(specialMenu.getId_Button(), 'fontSizeId-btn');
-    });
-  });
-
-  describe('Template Variable Names', () => {
-    it('should generate correct template variable name', () => {
-      const menu = createMenu();
-      assert.strictEqual(menu.getTemplateVariableName(), 'THEME_MENU_ITEMS');
-    });
-
-    it('should handle single character ID', () => {
-      const singleMenu = new UIMenu(
-        mockApp,
-        'theme', // Use valid GlobalStateKey
-        'Single',
-        '🔧',
-        false,
-        mockListBuilder,
-        [],
-        mockSelectionHandler
-      );
-      assert.strictEqual(singleMenu.getTemplateVariableName(), 'THEME_MENU_ITEMS');
-    });
-
-    it('should handle ID starting with number', () => {
-      const numMenu = new UIMenu(
-        mockApp,
-        'theme', // Use valid GlobalStateKey
-        'Number',
-        '🔧',
-        false,
-        mockListBuilder,
-        [],
-        mockSelectionHandler
-      );
-      assert.strictEqual(numMenu.getTemplateVariableName(), 'THEME_MENU_ITEMS');
+      assert.strictEqual(specialMenu.id, 'fontSizeId');
     });
   });
 
   describe('HTML Generation', () => {
-    it('should provide correct template variable names', () => {
+    it('should provide correct menu ID', () => {
       const menu = createMenu();
-      assert.strictEqual(menu.getTemplateVariableName(), 'THEME_MENU_ITEMS');
-    });
-
-    it('should provide correct menu and button IDs', () => {
-      const menu = createMenu();
-      assert.strictEqual(menu.getId_Menu(), 'theme');
-      assert.strictEqual(menu.getId_Button(), 'theme-btn');
+      assert.strictEqual(menu.id, 'theme');
     });
   });
 
@@ -176,8 +137,7 @@ describe('UIMenu', () => {
         mockSelectionHandler
       );
 
-      assert.strictEqual(longMenu.getId_Menu(), 'theme');
-      assert.strictEqual(longMenu.getId_Button(), 'theme-btn');
+      assert.strictEqual(longMenu.id, 'theme');
     });
 
     it('should handle ID with special characters', () => {
@@ -192,8 +152,7 @@ describe('UIMenu', () => {
         mockSelectionHandler
       );
 
-      assert.strictEqual(specialMenu.getId_Menu(), 'fontSizeId');
-      assert.strictEqual(specialMenu.getId_Button(), 'fontSizeId-btn');
+      assert.strictEqual(specialMenu.id, 'fontSizeId');
     });
 
     it('should handle unicode characters in ID', () => {
@@ -208,8 +167,7 @@ describe('UIMenu', () => {
         mockSelectionHandler
       );
 
-      assert.strictEqual(unicodeMenu.getId_Menu(), 'theme');
-      assert.strictEqual(unicodeMenu.getId_Button(), 'theme-btn');
+      assert.strictEqual(unicodeMenu.id, 'theme');
     });
   });
 });
