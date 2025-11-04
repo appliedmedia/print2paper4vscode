@@ -117,17 +117,16 @@ webview_js: |
           handleZoomAction('in');
         } else if (menuId === 'zoomLevel') {
           // Zoom level menu item selected
-          // Extension should send cleaned value, but strip prefixes as fallback
-          const cleanZoomValue = itemId.replace(/^(flyout-|zoomLevel-)+/g, '');
+          // itemId should be the menu item ID directly (e.g., '1.00', 'fitPage', 'fitWidth', 'actualSize')
           
-          if (cleanZoomValue === 'fitPage') {
+          if (itemId === 'fitPage') {
             handleZoomAction('fitPage');
-          } else if (cleanZoomValue === 'fitWidth') {
+          } else if (itemId === 'fitWidth') {
             handleZoomAction('fitWidth');
-          } else if (cleanZoomValue === 'actualSize') {
+          } else if (itemId === 'actualSize') {
             handleZoomAction('actualSize');
           } else {
-            const scale = parseFloat(cleanZoomValue);
+            const scale = parseFloat(itemId);
             if (!isNaN(scale)) {
               setZoom(scale);
             }
@@ -318,12 +317,12 @@ webview_js: |
     const items = zoomLevelMenu.querySelectorAll('.p2p4vsc-menu-item');
     items.forEach(item => {
       item.classList.remove('selected');
-      const itemId = item.id.replace('flyout-', '').replace('zoomLevel-', '');
+      const itemId = item.id;
       
       // Check if this item matches current zoom
       if (itemId === 'actualSize' && currentScale === 1.0) {
         item.classList.add('selected');
-      } else if (itemId !== 'fitPage' && itemId !== 'actualSize') {
+      } else if (itemId !== 'fitPage' && itemId !== 'actualSize' && itemId !== 'fitWidth') {
         const scale = parseFloat(itemId);
         if (!isNaN(scale) && Math.abs(scale - currentScale) < 0.01) {
           item.classList.add('selected');
