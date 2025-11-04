@@ -254,13 +254,27 @@ export class PaperPrinter {
       dx.out(`PDF GENERATION: Using font size ${fontSize}px`);
       const theme = (this.app.uimenumgr.getValueForSelectedByMenuId(kTheme.id) ||
         kTheme.alt) as string;
-      const pageSizeId = (this.app.uimenumgr.getValueForSelectedByMenuId(kPageSizeId.id) ||
-        kPageSizeId.alt) as PageSizeIdMenuItems_t;
-      const orient = (this.app.uimenumgr.getValueForSelectedByMenuId(kOrient.id) || kOrient.alt) as
-        | 'portrait'
-        | 'landscape';
-      const marginId = (this.app.uimenumgr.getValueForSelectedByMenuId(kMarginId.id) ||
-        kMarginId.alt) as MarginIdMenuItems_t;
+
+      // Validate and normalize pageSizeId - use lookup table, fall back to default if invalid
+      const rawPageSizeId = this.app.uimenumgr.getValueForSelectedByMenuId(kPageSizeId.id);
+      const pageSizeId: PageSizeIdMenuItems_t =
+        rawPageSizeId && rawPageSizeId in kPageSizeIdById
+          ? (rawPageSizeId as PageSizeIdMenuItems_t)
+          : (kPageSizeId.alt as PageSizeIdMenuItems_t);
+
+      // Validate and normalize orient - clamp to valid values, fall back to default if invalid
+      const rawOrient = this.app.uimenumgr.getValueForSelectedByMenuId(kOrient.id);
+      const orient: 'portrait' | 'landscape' =
+        rawOrient === 'portrait' || rawOrient === 'landscape'
+          ? rawOrient
+          : (kOrient.alt as 'portrait' | 'landscape');
+
+      // Validate and normalize marginId - use lookup table, fall back to default if invalid
+      const rawMarginId = this.app.uimenumgr.getValueForSelectedByMenuId(kMarginId.id);
+      const marginId: MarginIdMenuItems_t =
+        rawMarginId && rawMarginId in kMarginIdById
+          ? (rawMarginId as MarginIdMenuItems_t)
+          : (kMarginId.alt as MarginIdMenuItems_t);
 
       // Sync header/footer content from persistence
       for (const menuId of kHeaderFooterMenuIds) {
