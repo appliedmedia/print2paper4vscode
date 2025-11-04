@@ -61,6 +61,48 @@ toolbar_css: |
     padding: 0;
   }
 
+  .p2p4vsc-zoom-controls {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    margin-left: 4px;
+    padding-left: 4px;
+    border-left: 1px solid #d0d0d0;
+  }
+
+  .p2p4vsc-zoom-btn {
+    border: 1px solid #d0d0d0;
+    background: #f7f7f7;
+    color: #333;
+    border-radius: 6px;
+    cursor: pointer;
+    width: 32px;
+    height: 32px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+    font-size: 18px;
+    padding: 0;
+  }
+
+  .p2p4vsc-zoom-btn:hover {
+    background: #e8e8e8;
+  }
+
+  .p2p4vsc-zoom-btn:active {
+    background: #d0d0d0;
+  }
+
+  .p2p4vsc-zoom-level {
+    min-width: 50px;
+    text-align: center;
+    font-size: 12px;
+    font-weight: 500;
+    color: #333;
+    padding: 0 4px;
+  }
+
 toolbar_js: |
   window.vscode = acquireVsCodeApi();
   const toolbar = document.getElementById('p2p4vsc-toolbar');
@@ -180,6 +222,14 @@ toolbar_html: |
     <div class="p2p4vsc-toolbar-grip" id="p2p4vsc-toolbar-grip" title="Click and hold to drag left and right" aria-label="Drag toolbar" tabindex="0"></div>
     <div class="p2p4vsc-toolbar-menubar" role="menubar">
       {{menuHtml}}
+      <div id="p2p4vsc-zoom-controls" class="p2p4vsc-zoom-controls" style="display: none;">
+        <button id="zoom-out" class="p2p4vsc-zoom-btn" title="Zoom Out (Ctrl/Cmd + -)" aria-label="Zoom Out">−</button>
+        <span id="zoom-level" class="p2p4vsc-zoom-level">100%</span>
+        <button id="zoom-in" class="p2p4vsc-zoom-btn" title="Zoom In (Ctrl/Cmd + +)" aria-label="Zoom In">+</button>
+        <button id="zoom-fit-width" class="p2p4vsc-zoom-btn" title="Fit Width" aria-label="Fit Width">↔</button>
+        <button id="zoom-fit-page" class="p2p4vsc-zoom-btn" title="Fit Page" aria-label="Fit Page">⤢</button>
+        <button id="zoom-actual-size" class="p2p4vsc-zoom-btn" title="Actual Size (Ctrl/Cmd + 0)" aria-label="Actual Size">1:1</button>
+      </div>
     </div>
   </div>
   <script>

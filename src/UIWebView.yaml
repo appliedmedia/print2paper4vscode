@@ -20,14 +20,6 @@ webview_html: |
       <div id="pdf-viewer" style="display: none;">
         <!-- PDF pages will be rendered here by PDF.js -->
       </div>
-      <div id="pdf-zoom-controls" class="pdf-zoom-controls" style="display: none;">
-        <button id="zoom-out" class="zoom-btn" title="Zoom Out (Ctrl/Cmd + -)" aria-label="Zoom Out">−</button>
-        <span id="zoom-level" class="zoom-level">100%</span>
-        <button id="zoom-in" class="zoom-btn" title="Zoom In (Ctrl/Cmd + +)" aria-label="Zoom In">+</button>
-        <button id="zoom-fit-width" class="zoom-btn" title="Fit Width" aria-label="Fit Width">↔</button>
-        <button id="zoom-fit-page" class="zoom-btn" title="Fit Page" aria-label="Fit Page">⤢</button>
-        <button id="zoom-actual-size" class="zoom-btn" title="Actual Size (Ctrl/Cmd + 0)" aria-label="Actual Size">1:1</button>
-      </div>
     </div>
     <script>
       {{pdfjs_library}}
@@ -73,54 +65,6 @@ webview_css: |
   :root {
     --page-gutter-horizontal: 8px;
     --page-gutter-vertical: 4px;
-  }
-
-  .pdf-zoom-controls {
-    position: fixed;
-    bottom: 20px;
-    right: 20px;
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    background: rgba(255, 255, 255, 0.95);
-    border: 1px solid #ddd;
-    border-radius: 8px;
-    padding: 6px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-    z-index: 1000;
-  }
-
-  .zoom-btn {
-    background: #f7f7f7;
-    border: 1px solid #d0d0d0;
-    border-radius: 4px;
-    cursor: pointer;
-    width: 32px;
-    height: 32px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 18px;
-    line-height: 1;
-    padding: 0;
-    color: #333;
-  }
-
-  .zoom-btn:hover {
-    background: #e8e8e8;
-  }
-
-  .zoom-btn:active {
-    background: #d0d0d0;
-  }
-
-  .zoom-level {
-    min-width: 50px;
-    text-align: center;
-    font-size: 12px;
-    font-weight: 500;
-    color: #333;
-    padding: 0 8px;
   }
 
 webview_js: |
@@ -201,7 +145,12 @@ webview_js: |
     pdfDoc = pdf;
     document.getElementById('loading').style.display = 'none';
     document.getElementById('pdf-viewer').style.display = 'block';
-    document.getElementById('pdf-zoom-controls').style.display = 'flex';
+    
+    // Show zoom controls in toolbar
+    const zoomControls = document.getElementById('p2p4vsc-zoom-controls');
+    if (zoomControls) {
+      zoomControls.style.display = 'flex';
+    }
     
     // Get first page dimensions for fit calculations
     pdf.getPage(1).then(function(page) {
