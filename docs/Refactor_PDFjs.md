@@ -375,19 +375,21 @@ Before making changes, understand these critical principles:
 
 **Goal**: Add essential zoom and scroll functionality so users can actually read PDFs. This is critical for usability and should be implemented before other enhancements.
 
-**Status**: Not started. PDFs currently render at fixed scale (1.0) with no zoom controls, making them difficult to read.
+**Status**: Stage 3.1 complete. Zoom controls implemented with UIMenu buttons, editable percentage display, and dropdown menu. Stage 3.2 (Enhanced Scroll Controls) not started.
 
 **Why This is Priority**: The current PDF viewer renders at a fixed scale with no zoom or scroll controls beyond basic browser scrolling. Users are having difficulty reading PDFs without the ability to zoom in/out. This basic functionality is essential before other enhancements.
 
-### 3.1 Zoom Controls (Critical)
+### 3.1 Zoom Controls (Critical) ✅
 
 **Goal**: Allow users to zoom in/out of PDF pages for better readability
 
-- 🔲 Add zoom controls to toolbar (zoom in, zoom out, fit width, fit page, actual size)
-- 🔲 Implement zoom state management in webview JavaScript
-- 🔲 Update PDF.js rendering to respect zoom level (change `scale` variable in UIWebView.yaml)
-- 🔲 Persist zoom level in user preferences (`ui.persist.pdf_zoom_level`)
-- 🔲 Add keyboard shortcuts (Cmd/Ctrl + Plus/Minus, Cmd/Ctrl + 0)
+- ✅ Add zoom controls to toolbar (zoom in, zoom out, fit width, fit page, actual size)
+- ✅ Implement zoom state management in webview JavaScript
+- ✅ Update PDF.js rendering to respect zoom level (change `scale` variable in UIWebView.yaml)
+- ✅ Persist zoom level in user preferences (`ui.persist.pdf_zoom_level`)
+- ✅ Add keyboard shortcuts (Cmd/Ctrl + Plus/Minus, Cmd/Ctrl + 0)
+- ✅ Add editable zoom percentage display (click to type, snaps to 10% increments)
+- ✅ Add zoom level dropdown menu (▼) with preset zoom levels
 
 **Implementation Notes**:
 
@@ -405,13 +407,15 @@ Before making changes, understand these critical principles:
 
 **Test**:
 
-- 🔲 Zoom controls appear in toolbar
-- 🔲 Zoom in/out buttons work correctly
-- 🔲 Fit width/fit page buttons work correctly
-- 🔲 Keyboard shortcuts work (Cmd/Ctrl + Plus/Minus, Cmd/Ctrl + 0)
-- 🔲 Zoom level persists across sessions
-- 🔲 Pages re-render correctly when zoom changes
-- 🔲 Multi-page PDFs maintain zoom across all pages
+- ✅ Zoom controls appear in toolbar
+- ✅ Zoom in/out buttons work correctly (UIMenu buttons)
+- ✅ Fit width/fit page buttons work correctly (in dropdown menu)
+- ✅ Keyboard shortcuts work (Cmd/Ctrl + Plus/Minus, Cmd/Ctrl + 0)
+- ✅ Zoom level persists across sessions
+- ✅ Pages re-render correctly when zoom changes
+- ✅ Multi-page PDFs maintain zoom across all pages
+- ✅ Editable zoom percentage input works (snaps to 10% increments, 10%-300% range)
+- ✅ Zoom level dropdown menu works with preset options
 
 **Documentation**:
 
