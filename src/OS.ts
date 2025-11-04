@@ -93,6 +93,35 @@ export abstract class OS {
     return homedir();
   }
 
+  /**
+   * Get platform-specific keyboard shortcut key mappings
+   * Returns a dictionary of common shortcut keys for template replacement
+   * @returns Dictionary with keys like 'os-ctrl-cmd', 'os-ctrl-cmd-plus', etc.
+   */
+  specificKeys(): Record<string, string> {
+    const platform = process?.platform;
+    if (platform === 'win32') {
+      return {
+        'os-ctrl-cmd': 'Ctrl',
+        'os-ctrl-cmd-plus': 'Ctrl+',
+        'os-ctrl-cmd-symbol': 'Ctrl',
+      };
+    } else if (platform === 'darwin') {
+      return {
+        'os-ctrl-cmd': '⌘',
+        'os-ctrl-cmd-plus': '⌘+',
+        'os-ctrl-cmd-symbol': '⌘',
+      };
+    } else {
+      // Linux
+      return {
+        'os-ctrl-cmd': 'Ctrl',
+        'os-ctrl-cmd-plus': 'Ctrl+',
+        'os-ctrl-cmd-symbol': 'Ctrl',
+      };
+    }
+  }
+
   // Common filesystem helpers consolidated here
   ensureDir(dirPath: string): void {
     fs.mkdirSync(dirPath, { recursive: true });

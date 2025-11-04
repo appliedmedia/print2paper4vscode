@@ -531,15 +531,17 @@ export class PaperPrinter {
   }
 
   private menuItems_ZoomLevel(): UIMenuItem_t[] {
-    // Format shortcuts - displays Mac-style shortcuts (⌘ symbol)
-    // The webview will show platform-specific shortcuts in tooltips
+    // Format shortcuts using OS-specific key mappings
+    const osKeys = this.app.os.specificKeys();
     return kZoomLevel.menuItems.map(item => {
       let displayName: string = item.displayName;
       
       // Add shortcut to displayName if it exists
-      // Displays Mac-style shortcuts (⌘ symbol)
+      // Use template replacement for platform-specific key display
       if ('shortcut' in item && item.shortcut) {
-        const shortcut = item.shortcut.replace('Ctrl/Cmd +', '⌘').replace('Ctrl/Cmd', '⌘');
+        // Replace "Ctrl/Cmd +" with template variable for OS-specific replacement
+        const shortcutTemplate = item.shortcut.replace(/Ctrl\/Cmd\s*\+\s*/g, '{{os-ctrl-cmd-plus}}');
+        const shortcut = this.app.templateDictReplace(shortcutTemplate, osKeys);
         displayName = `${displayName} ${shortcut}`;
       }
       
