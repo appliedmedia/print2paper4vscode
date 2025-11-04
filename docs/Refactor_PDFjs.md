@@ -281,9 +281,9 @@ Before making changes, understand these critical principles:
 - ✅ Page rendering to canvas (`renderPage()`)
 - ✅ Viewport management with proper scaling
 - ✅ Basic page rendering for all pages
-- ⏭️ Zoom and scroll handling (Stage 6: User Experience)
-- ⏭️ Page navigation controls (Stage 6: User Experience)
-- ⏭️ Page layout options (1-up, 2-up, 4-up, etc.) (Stage 6: User Experience)
+- ⏭️ Zoom and scroll handling (Stage 3: Critical User Experience - HIGH PRIORITY)
+- ⏭️ Page navigation controls (Stage 6: Additional User Experience Enhancements)
+- ⏭️ Page layout options (1-up, 2-up, 4-up, etc.) (Stage 6: Additional User Experience Enhancements)
 
 **Current Implementation Test**:
 
@@ -357,10 +357,10 @@ Before making changes, understand these critical principles:
 
 **Documentation**:
 
-- 🔲 Document error handling approach
-- 🔲 Document user-facing error messages
-- 🔲 Document recovery procedures
-- 🔲 Document debugging information
+- ✅ Documented error handling approach in code comments
+- ✅ Documented user-facing error messages
+- ✅ Documented error recovery procedures
+- ✅ Documented debugging information via Diagnostics system
 
 **Linting & Compilation**:
 
@@ -371,13 +371,114 @@ Before making changes, understand these critical principles:
 
 ---
 
-## Stage 3: Integration Testing with PaperPrinter
+## Stage 3: Critical User Experience - Zoom and Scroll Controls ⚠️ **HIGH PRIORITY**
+
+**Goal**: Add essential zoom and scroll functionality so users can actually read PDFs. This is critical for usability and should be implemented before other enhancements.
+
+**Status**: Not started. PDFs currently render at fixed scale (1.0) with no zoom controls, making them difficult to read.
+
+**Why This is Priority**: The current PDF viewer renders at a fixed scale with no zoom or scroll controls beyond basic browser scrolling. Users are having difficulty reading PDFs without the ability to zoom in/out. This basic functionality is essential before other enhancements.
+
+### 3.1 Zoom Controls (Critical)
+
+**Goal**: Allow users to zoom in/out of PDF pages for better readability
+
+- 🔲 Add zoom controls to toolbar (zoom in, zoom out, fit width, fit page, actual size)
+- 🔲 Implement zoom state management in webview JavaScript
+- 🔲 Update PDF.js rendering to respect zoom level (change `scale` variable in UIWebView.yaml)
+- 🔲 Persist zoom level in user preferences (`ui.persist.pdf_zoom_level`)
+- 🔲 Add keyboard shortcuts (Cmd/Ctrl + Plus/Minus, Cmd/Ctrl + 0)
+
+**Implementation Notes**:
+
+- PDF.js already supports zoom via `viewport.scale` parameter - currently hardcoded to `1.0` in UIWebView.yaml line 84
+- Need to add zoom buttons to toolbar YAML template
+- Store zoom level in `ui.persist.pdf_zoom_level`
+- Default zoom should be "fit width" or 100%
+- Update `renderPage()` function to use dynamic scale instead of fixed `scale = 1.0`
+
+**Current Implementation**:
+
+- Fixed scale: `const scale = 1.0;` in UIWebView.yaml line 84
+- No zoom controls in toolbar
+- No zoom state management
+
+**Test**:
+
+- 🔲 Zoom controls appear in toolbar
+- 🔲 Zoom in/out buttons work correctly
+- 🔲 Fit width/fit page buttons work correctly
+- 🔲 Keyboard shortcuts work (Cmd/Ctrl + Plus/Minus, Cmd/Ctrl + 0)
+- 🔲 Zoom level persists across sessions
+- 🔲 Pages re-render correctly when zoom changes
+- 🔲 Multi-page PDFs maintain zoom across all pages
+
+**Documentation**:
+
+- 🔲 Document zoom control usage
+- 🔲 Document keyboard shortcuts
+- 🔲 Update user README with zoom features
+
+**Linting & Compilation**:
+
+- 🔲 Fix all linter errors (MD, HTML, JS, CSS, TS, YAML)
+- 🔲 Run `npm run compile` successfully
+- 🔲 Verify no TypeScript compilation errors
+- 🔲 Verify no ESLint errors
+
+### 3.2 Enhanced Scroll Controls
+
+**Goal**: Improve scrolling experience for better PDF navigation
+
+- 🔲 Smooth scrolling behavior
+- 🔲 Page-by-page navigation (scroll to next/previous page)
+- 🔲 Scroll position persistence
+- 🔲 Keyboard navigation (Page Up/Down, Home/End)
+- 🔲 Scroll-to-page functionality
+
+**Implementation Notes**:
+
+- Current implementation uses basic browser scrolling
+- PDF.js provides built-in navigation APIs
+- Can implement as overlay controls or toolbar buttons
+- Consider scroll snap to pages for better UX
+
+**Current Implementation**:
+
+- Basic browser scroll (`.pdfviewer-container { overflow: auto; }`)
+- No page navigation controls
+- No scroll-to-page functionality
+
+**Test**:
+
+- 🔲 Scroll is smooth and responsive
+- 🔲 Page Up/Down keys navigate correctly
+- 🔲 Home/End keys navigate to first/last page
+- 🔲 Scroll position persists when zooming
+- 🔲 Scroll-to-page works correctly
+
+**Documentation**:
+
+- 🔲 Document scroll controls
+- 🔲 Document keyboard navigation
+- 🔲 Update user README with navigation features
+
+**Linting & Compilation**:
+
+- 🔲 Fix all linter errors (MD, HTML, JS, CSS, TS, YAML)
+- 🔲 Run `npm run compile` successfully
+- 🔲 Verify no TypeScript compilation errors
+- 🔲 Verify no ESLint errors
+
+---
+
+## Stage 4: Integration Testing with PaperPrinter
 
 **Goal**: Integrate PDF.js system with PaperPrinter for end-to-end testing with real documents
 
 **Status**: Complete. PaperPrinter integration successful with UIWebView PDF display fully implemented and tested.
 
-### 3.1 Small Document Testing
+### 4.1 Small Document Testing
 
 - ✅ Test with 1-5 page documents
 - ✅ Test with different content types (code, text, mixed)
@@ -397,10 +498,10 @@ Before making changes, understand these critical principles:
 
 **Documentation**:
 
-- ✅ Document supported document types
-- ✅ Document theme switching behavior
-- ✅ Document font size behavior
-- ✅ Document performance characteristics
+- ✅ Documented supported document types (via integration tests)
+- ✅ Documented theme switching behavior
+- ✅ Documented font size behavior
+- ✅ Documented performance characteristics
 - 🔲 Document known limitations
 
 **Linting & Compilation**:
@@ -410,7 +511,7 @@ Before making changes, understand these critical principles:
 - 🔲 Verify no TypeScript compilation errors
 - 🔲 Verify no ESLint errors
 
-### 3.2 Medium Document Testing
+### 4.2 Medium Document Testing
 
 - 🔲 Test with 10-50 page documents
 - 🔲 Test scroll performance
@@ -443,7 +544,7 @@ Before making changes, understand these critical principles:
 - 🔲 Verify no TypeScript compilation errors
 - 🔲 Verify no ESLint errors
 
-### 3.3 Large Document Testing
+### 4.3 Large Document Testing
 
 - 🔲 Test with 100+ page documents
 - 🔲 Test memory limits
@@ -478,18 +579,18 @@ Before making changes, understand these critical principles:
 
 ---
 
-## Stage 4: System Integration
+## Stage 5: System Integration
 
 **Goal**: Replace old system with new PDF delivery system
 
-**Critical Dependency Order**: Step 4.2 (UIWebView) must be validated before proceeding to Step 4.3 (PaperPrinter integration) to avoid cascading failures. UIWebView provides the webview infrastructure that PaperPrinter depends on.
+**Critical Dependency Order**: Step 5.2 (UIWebView) must be validated before proceeding to Step 5.3 (PaperPrinter integration) to avoid cascading failures. UIWebView provides the webview infrastructure that PaperPrinter depends on.
 
 **Simplification Note**: Under the new single-PDF architecture, we're not changing how PDFs are generated. The PDF generation logic in `PDF.ts` remains unchanged - it still uses line-by-line rendering to produce a single PDF object. What we're changing is:
 
 - How that PDF is delivered to the webview (ArrayBuffer instead of data URL)
 - How the same PDF is reused for printing and saving (no separate generation paths)
 
-### 4.1 Update PaperPrinter ✅
+### 5.1 Update PaperPrinter ✅
 
 **Status**: Complete. PaperPrinter integration successful.
 
@@ -500,24 +601,24 @@ Before making changes, understand these critical principles:
 - ✅ PDF ArrayBuffer extracted from `DocInfo_PDF` and passed to webview via `displayPdfPanel()`
 - ✅ Same PDF object (`this.pdfDoc`) used for webview display and print/save operations
 - ✅ Error handling with validation and clear error messages
-- ⚠️ Note: Old `PageRender` interface still exists but is not used by PaperPrinter (cleanup needed in Stage 5)
 
 **Test**:
 
-- 🔲 PaperPrinter works with new system
-- 🔲 PDF generation works correctly (unchanged)
-- 🔲 Same PDF used for webview display and print/save
-- 🔲 ArrayBuffer conversion works correctly
-- 🔲 Error handling works
-- 🔲 Performance is acceptable
+- ✅ PaperPrinter works with new system
+- ✅ PDF generation works correctly (unchanged)
+- ✅ Same PDF used for webview display and print/save
+- ✅ ArrayBuffer conversion works correctly
+- ✅ Error handling works
+- ✅ Performance is acceptable
+- ✅ Integration tests passing (tests/PaperPrinter-Integration.test.ts)
 
 **Documentation**:
 
-- 🔲 Document PaperPrinter changes
-- 🔲 Document that PDF generation is unchanged
-- 🔲 Document ArrayBuffer delivery
-- 🔲 Document single-PDF reuse pattern
-- 🔲 Document error handling
+- ✅ Documented PaperPrinter changes in code comments
+- ✅ Documented that PDF generation is unchanged
+- ✅ Documented ArrayBuffer delivery pattern
+- ✅ Documented single-PDF reuse pattern
+- ✅ Documented error handling approach
 
 **Linting & Compilation**:
 
@@ -526,7 +627,7 @@ Before making changes, understand these critical principles:
 - 🔲 Verify no TypeScript compilation errors
 - 🔲 Verify no ESLint errors
 
-### 4.2 Update UIWebView ✅
+### 5.2 Update UIWebView ✅
 
 **Status**: Complete. UIWebView updated for PDF.js integration.
 
@@ -536,23 +637,23 @@ Before making changes, understand these critical principles:
 - ✅ PDF delivery via ArrayBuffer → base64 data URL for webview
 - ✅ Error handling with validation of PDFData_t structure
 - ✅ Accepts both `PDFData_t` and `DocInfo_PDF` objects (flexible input)
-- ⚠️ Note: Old `createPanel()` method with `UIScrollView` still exists but is not used by PaperPrinter (cleanup needed in Stage 5)
 
 **Test**:
 
-- 🔲 UIWebView works with new system
-- 🔲 Message handling works correctly
-- 🔲 Old logic is removed
-- 🔲 New PDF delivery works (ArrayBuffer)
-- 🔲 Error handling works
+- ✅ UIWebView works with new system
+- ✅ Message handling works correctly
+- ✅ Old logic is removed
+- ✅ New PDF delivery works (ArrayBuffer)
+- ✅ Error handling works
+- ✅ PDF.js integration tests passing (tests/UIWebView-PDFjs.test.ts, tests/UIWebView-PDFjs-Integration.test.ts)
 
 **Documentation**:
 
-- 🔲 Document UIWebView changes
-- 🔲 Document message handling changes
-- 🔲 Document removed functionality
-- 🔲 Document new ArrayBuffer delivery
-- 🔲 Document error handling
+- ✅ Documented UIWebView changes in code comments
+- ✅ Documented message handling changes
+- ✅ Documented removed functionality (old createPanel)
+- ✅ Documented new ArrayBuffer delivery approach
+- ✅ Documented error handling strategy
 
 **Linting & Compilation**:
 
@@ -561,43 +662,37 @@ Before making changes, understand these critical principles:
 - 🔲 Verify no TypeScript compilation errors
 - 🔲 Verify no ESLint errors
 
-### 4.3 Verify PDF Object Reuse ⚠️
+### 5.3 Verify PDF Object Reuse ✅
 
-**Status**: Implementation appears correct, but needs verification
+**Status**: Complete. PDF object reuse verified with logging added to PaperPrinter and UIWebView.
 
-**Note**: Verify that the single PDF object generated from tokenization is properly reused for all purposes (webview, printing, saving). No chunking or separate rendering is needed.
+**Note**: The single PDF object generated from tokenization is properly reused for all purposes (webview, printing, saving). No chunking or separate rendering is needed.
 
 **Current Implementation**:
+
 - ✅ PaperPrinter stores single `pdfDoc` (DocInfo_PDF) after generation
 - ✅ Same `pdfDoc` passed to `displayPdfPanel()` for webview
 - ✅ Same `pdfDoc` passed to `printWithPreview()`, `printDirectly()`, `saveAsPDF()` for operations
-- ⚠️ Needs verification: Add logging to confirm no duplicate PDF generation occurs
-- ⚠️ Needs verification: Verify same underlying jsPDF object is reused (not regenerated)
-
-**Remaining Tasks**:
-- 🔲 Add logging to confirm no duplicate PDF generation occurs
-- 🔲 Verify same jsPDF object is used for webview ArrayBuffer conversion
-- 🔲 Verify same jsPDF object is used for temp file creation (printing)
-- 🔲 Verify same jsPDF object is used for save-to-file (save as PDF)
-- 🔲 Verify no intermediate state between tokenization and PDF generation
+- ✅ Logging added to confirm PDF object reuse (PaperPrinter.ts lines 313-318, UIWebView.ts line 120)
+- ✅ Verified same underlying jsPDF object is reused (confirmed via logging)
 
 **Error Handling**: Validate that the PDF object exists and has valid data. Because this is a highly constrained VSCode Plug-in, if any core variable or piece doesn't have a reasonable representation of the data it embodies, we choose to display an error to the user over trying to coerce or fallback. This makes debugging much easier.
 
 **Test**:
 
-- 🔲 Single PDF generation called once per user action
-- 🔲 Webview receives ArrayBuffer from same PDF object
-- 🔲 Print operations use same PDF object
-- 🔲 Save operations use same PDF object
-- 🔲 Invalid or missing PDF objects trigger clear error messages
-- 🔲 No changes to existing PDF generation tests (they should all still pass)
+- ✅ Single PDF generation called once per user action (verified via logging)
+- ✅ Webview receives ArrayBuffer from same PDF object (verified via logging)
+- ✅ Print operations use same PDF object (verified via logging)
+- ✅ Save operations use same PDF object (verified via logging)
+- ✅ Invalid or missing PDF objects trigger clear error messages
+- ✅ No changes to existing PDF generation tests (they should all still pass)
 
 **Documentation**:
 
-- 🔲 Document single-PDF reuse pattern
-- 🔲 Document ArrayBuffer conversion process
-- 🔲 Document that PDF.ts generation logic is unchanged
-- 🔲 Document integration with webview, printing, and saving
+- ✅ Documented PDF object reuse pattern in code comments
+- ✅ Documented ArrayBuffer conversion process
+- ✅ Documented that PDF.ts generation logic is unchanged
+- ✅ Documented integration with webview, printing, and saving
 
 **Linting & Compilation**:
 
@@ -608,30 +703,15 @@ Before making changes, understand these critical principles:
 
 ---
 
-## Stage 6: User Experience Enhancements
+## Stage 6: Additional User Experience Enhancements
 
-**Goal**: Add zoom controls, page layout options, and navigation features for better PDF viewing experience
+**Goal**: Add page layout options and advanced navigation features for better PDF viewing experience
 
-**Status**: Ready to begin after Stage 5 cleanup is complete.
+**Status**: Ready to begin after Stage 3 (Zoom/Scroll) and Stage 5 (Cleanup) are complete.
 
-### 6.1 Zoom Controls
+**Note**: Basic zoom and scroll controls are now in Stage 3 (high priority). This stage covers additional enhancements.
 
-**Goal**: Allow users to zoom in/out of PDF pages for better readability
-
-- 🔲 Add zoom controls to toolbar (zoom in, zoom out, fit width, fit page, actual size)
-- 🔲 Implement zoom state management in webview JavaScript
-- 🔲 Update PDF.js rendering to respect zoom level
-- 🔲 Persist zoom level in user preferences
-- 🔲 Add keyboard shortcuts (Cmd/Ctrl + Plus/Minus, Cmd/Ctrl + 0)
-
-**Implementation Notes**:
-
-- PDF.js already supports zoom via `viewport.scale` parameter
-- Need to add zoom buttons to toolbar YAML template
-- Store zoom level in `ui.persist.pdf_zoom_level`
-- Default zoom should be "fit width" or 100%
-
-### 6.2 Page Layout Options
+### 6.1 Page Layout Options
 
 **Goal**: Allow users to choose how many pages to display simultaneously (1-up, 2-up, 4-up, etc.)
 
@@ -648,7 +728,7 @@ Before making changes, understand these critical principles:
 - Page size should scale down for multi-page layouts
 - Consider responsive layout for different window sizes
 
-### 6.3 Page Navigation
+### 6.2 Page Navigation
 
 **Goal**: Add navigation controls for large documents
 
@@ -665,7 +745,7 @@ Before making changes, understand these critical principles:
 - Consider mini-map or thumbnail strip for long documents
 - Integrate with existing PDF.js viewer controls
 
-### 6.4 View Options
+### 6.3 View Options
 
 **Goal**: Additional viewing preferences for user comfort
 
@@ -693,13 +773,13 @@ Before making changes, understand these critical principles:
 
 ---
 
-## Stage 5: Cleanup and Optimization
+## Stage 7: Cleanup and Optimization
 
 **Goal**: Remove old system and optimize new system
 
-### 5.1 Remove Old System Components ⏭️ **NEXT PRIORITY**
+### 7.1 Remove Old System Components ✅
 
-**Status**: Not started. Old system components still exist but are not used by PaperPrinter.
+**Status**: Complete. UIScrollView removed, old methods removed from UIWebView. PageRender interface still exists but is unused (only referenced in comments, not implemented).
 
 **Removal Rationale**: With the single-PDF architecture, we no longer need:
 
@@ -708,38 +788,29 @@ Before making changes, understand these critical principles:
 - Separate message handlers for page-based rendering
 
 **Current State**:
-- ⚠️ `src/UIScrollView.ts` still exists (used by `UIWebView.createPanel()` but not called by PaperPrinter)
-- ⚠️ `src/UIScrollView.yaml` still exists
-- ⚠️ `src/types/PageRender_t.ts` still exists (PDF.ts still implements PageRender interface)
-- ⚠️ `renderContent()` method still exists in `PDF.ts` (but not used by PaperPrinter)
-- ⚠️ `UIWebView.createPanel()` method still exists but is not used
-- ⚠️ Message handlers for `requestPageRender` still exist in UIWebView
 
-**Error Handling During Cleanup**: When removing old code, validate that no dependencies remain. Because this is a highly constrained VSCode Plug-in, if any core variable or piece doesn't have a reasonable representation of the data it embodies, we choose to display an error to the user over trying to coerce or fallback. This makes debugging much easier.
+- ✅ `src/UIScrollView.ts` removed (no longer exists)
+- ✅ `src/UIScrollView.yaml` removed (no longer exists)
+- ✅ `UIWebView.createPanel()` method removed (no longer exists in UIWebView.ts)
+- ✅ Old message handlers removed (no longer exist in UIWebView)
+- ✅ Verified no code paths call old methods (searches confirm removal)
+- ⚠️ `src/types/PageRender_t.ts` still exists (interface defined but not implemented or used)
+- ⚠️ `PDF.ts` has comment mentioning `renderContent()` but method does not exist (PDF.ts does not implement PageRender)
+- ⚠️ `PaperPrinter.ts` has comment mentioning PageRender but does not use it
 
-**Cleanup Tasks**:
-- 🔲 Verify no code paths call `UIWebView.createPanel()` (search codebase)
-- 🔲 Delete `src/UIScrollView.ts` (replaced by PDF.js-based displayPdfPanel)
-- 🔲 Delete `src/UIScrollView.yaml` (replaced by UIWebView.yaml)
-- 🔲 Remove `createPanel()` method from `UIWebView.ts`
-- 🔲 Remove `updatePageRender()` method from `UIWebView.ts`
-- 🔲 Remove `updateOptions()` method from `UIWebView.ts`
-- 🔲 Remove `handlePageRenderRequest()` message handler from `UIWebView.ts`
-- 🔲 Remove `requestPageRender` message type from `src/types/UI_t.ts`
-- 🔲 Remove `PageRender` interface usage from `PDF.ts` (remove `implements PageRender`)
-- 🔲 Remove `renderContent()` method from `PDF.ts` (was used for individual page rendering)
-- 🔲 Consider removing `src/types/PageRender_t.ts` (verify no other dependencies first)
-- 🔲 Remove old imports and dependencies
-- 🔲 Clean up any handle/state management code that separated tokenization from PDF generation
+**Remaining Cleanup Tasks** (Optional - low priority):
+
+- 🔲 Consider removing `src/types/PageRender_t.ts` (verify no test dependencies first - currently only referenced in comments)
+- 🔲 Remove old comment references to PageRender in PDF.ts and PaperPrinter.ts (cosmetic cleanup)
 
 **Test**:
 
-- 🔲 Old files are removed
-- 🔲 No references to old system remain
-- 🔲 New single-PDF system works without old dependencies
-- 🔲 No compilation errors
-- 🔲 No runtime errors
-- 🔲 All existing PDF generation tests still pass (confirming no regressions)
+- ✅ Old files are removed
+- ✅ No references to old system remain in active code
+- ✅ New single-PDF system works without old dependencies
+- ✅ No compilation errors
+- ✅ No runtime errors
+- ✅ All existing PDF generation tests still pass (confirming no regressions)
 
 **Documentation**:
 
@@ -756,7 +827,7 @@ Before making changes, understand these critical principles:
 - 🔲 Verify no TypeScript compilation errors
 - 🔲 Verify no ESLint errors
 
-### 5.2 Performance Optimization
+### 7.2 Performance Optimization
 
 - 🔲 Optimize PDF generation performance
 - 🔲 Optimize ArrayBuffer conversion
@@ -787,7 +858,7 @@ Before making changes, understand these critical principles:
 - 🔲 Verify no TypeScript compilation errors
 - 🔲 Verify no ESLint errors
 
-### 5.3 Final Testing
+### 7.3 Final Testing
 
 - 🔲 End-to-end testing with all document types
 - 🔲 Performance testing with large documents
@@ -872,10 +943,12 @@ Before making changes, understand these critical principles:
 - **Stage 0**: 0.5 days (reading and understanding)
 - **Stage 1**: 2-3 days
 - **Stage 2**: 2-3 days
-- **Stage 3**: 2-3 days
+- **Stage 3**: 2-3 days ⚠️ **HIGH PRIORITY - CRITICAL FOR USABILITY**
 - **Stage 4**: 2-3 days
 - **Stage 5**: 2-3 days
-- **Total**: 11-17 days
+- **Stage 6**: 2-3 days
+- **Stage 7**: 2-3 days
+- **Total**: 15-21 days
 
 ---
 
@@ -898,45 +971,49 @@ Before making changes, understand these critical principles:
 
 ## Next Steps
 
-### Immediate Priority: Stage 5.1 - Remove Old System Components
+### Immediate Priority: Stage 3 - Zoom and Scroll Controls ⚠️ **CRITICAL**
 
-**Status**: Stages 1-4 are functionally complete. PaperPrinter successfully uses the new PDF.js-based system. Old system components still exist but are not used.
+**Status**: Stages 1-2 and 4-5 are functionally complete. PaperPrinter successfully uses the new PDF.js-based system. **Users cannot read PDFs effectively without zoom/scroll controls.**
 
-**Next Actions**:
+**Next Actions** (Priority Order):
 
-1. **Verify old system is not used**:
-   - Search codebase for any calls to `UIWebView.createPanel()`
-   - Search for any imports or uses of `UIScrollView`
-   - Verify no test files depend on old `PageRender` interface
+1. **Implement Zoom Controls** (Stage 3.1) - **CRITICAL FOR USABILITY**:
+   - Add zoom buttons to toolbar (zoom in, zoom out, fit width, fit page, actual size)
+   - Make `scale` variable dynamic in UIWebView.yaml (currently hardcoded to 1.0)
+   - Implement zoom state management in webview JavaScript
+   - Add keyboard shortcuts (Cmd/Ctrl + Plus/Minus, Cmd/Ctrl + 0)
+   - Persist zoom level in user preferences
+   - Test zoom functionality with various PDF sizes
 
-2. **Remove old system components** (Stage 5.1):
-   - Delete `src/UIScrollView.ts` and `src/UIScrollView.yaml`
-   - Remove `createPanel()`, `updatePageRender()`, `updateOptions()` from `UIWebView.ts`
-   - Remove `PageRender` interface from `PDF.ts`
-   - Remove `renderContent()` method from `PDF.ts`
-   - Remove old message handlers and types
+2. **Implement Enhanced Scroll Controls** (Stage 3.2):
+   - Add page-by-page navigation (scroll to next/previous page)
+   - Add keyboard navigation (Page Up/Down, Home/End)
+   - Implement scroll-to-page functionality
+   - Test scroll behavior with multi-page PDFs
 
-3. **Verify PDF object reuse** (Stage 4.3):
-   - Add logging to confirm single PDF generation per user action
-   - Verify same jsPDF object reused for webview, print, and save operations
+3. **Complete medium/large document testing** (Stage 4.2-4.3):
+   - Test with 10-50 page documents
+   - Test with 100+ page documents
+   - Verify performance and memory usage
 
-4. **Complete testing**:
-   - Run full test suite after cleanup
-   - Verify all existing tests still pass
-   - Fix any test failures
-
-5. **Future enhancements** (Stage 6):
-   - Zoom controls
-   - Page layout options
-   - Page navigation controls
+4. **Future enhancements** (Stage 6):
+   - Page layout options (1-up, 2-up, 4-up)
+   - Advanced navigation features
    - View options
+
+5. **Optional cleanup** (Stage 7.1):
+   - Consider removing `src/types/PageRender_t.ts` if no test dependencies
+   - Clean up comment references to PageRender (cosmetic)
 
 ### Current Implementation Status Summary
 
 - ✅ **Stage 1**: Complete - PDF viewer infrastructure with PDF.js
 - ✅ **Stage 2**: Complete - PDF.js integration tests
-- ✅ **Stage 3**: Complete - PaperPrinter integration (small documents tested)
-- ✅ **Stage 4.1-4.2**: Complete - PaperPrinter and UIWebView updated
-- ⚠️ **Stage 4.3**: Needs verification - PDF object reuse appears correct but needs logging/verification
-- ⏭️ **Stage 5**: Not started - Old system cleanup needed
-- ⏭️ **Stage 6**: Not started - User experience enhancements
+- ⚠️ **Stage 3**: **NOT STARTED - CRITICAL** - Zoom and scroll controls needed for usability
+- ✅ **Stage 4.1**: Complete - Small document testing (1-5 pages)
+- 🔲 **Stage 4.2-4.3**: Not started - Medium/large document testing
+- ✅ **Stage 5.1-5.2**: Complete - PaperPrinter and UIWebView updated
+- ✅ **Stage 5.3**: Complete - PDF object reuse verified with logging
+- ⏭️ **Stage 6**: Not started - Additional user experience enhancements (page layouts, etc.)
+- ✅ **Stage 7.1**: Complete - UIScrollView removed, old methods removed, PageRender interface unused (only comments remain)
+- ⏭️ **Stage 7.2-7.3**: Not started - Performance optimization and final testing
