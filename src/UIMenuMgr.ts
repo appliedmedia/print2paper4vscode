@@ -50,30 +50,26 @@ export class UIMenuMgr {
   isMenuItemId(id: string): id is MenuItemId_t {
     let isValid = false;
 
-    // Strip any composed prefixes (e.g., "headerTitle.left" -> "left")
-    // This handles cases where IDs might be composed in the DOM
-    const baseId = id.includes('.') ? id.split('.').pop() || id : id;
-
     // 1. Check against static kMenuItemId list (now auto-constructed from PaperPrinter_t.ts)
-    if ((kMenuItemId as readonly string[]).includes(baseId)) {
+    if ((kMenuItemId as readonly string[]).includes(id)) {
       isValid = true;
     }
     // 2. Check if it's a number - validate against font size menu items
-    else if (!isNaN(Number(baseId))) {
+    else if (!isNaN(Number(id))) {
       try {
         const fontMenu = this.getMenuById('fontSizeId');
         const fontMenuItems = fontMenu.getMenuItems();
-        isValid = fontMenuItems.some(item => item.id === baseId);
+        isValid = fontMenuItems.some(item => item.id === id);
       } catch {
         // Menu doesn't exist yet, fallback to static list
         const validFontSizes = Object.keys(kFontSizeId);
-        isValid = validFontSizes.includes(baseId);
+        isValid = validFontSizes.includes(id);
       }
     }
     // 3. Check against theme IDs
     else {
       const validThemes = this.app.stylize.getThemes().map(t => t.id);
-      isValid = validThemes.includes(baseId);
+      isValid = validThemes.includes(id);
     }
 
     return isValid;
