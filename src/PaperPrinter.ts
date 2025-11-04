@@ -38,6 +38,8 @@ import {
   kFooter,
   kPage,
   kTheme,
+  kZoomOut,
+  kZoomIn,
   kZoomLevel,
 } from './types/PaperPrinter_t';
 
@@ -345,6 +347,8 @@ export class PaperPrinter {
       kFooter,
       kTheme,
       kFontSizeId,
+      kZoomOut,
+      kZoomIn,
       kZoomLevel,
     ];
 
@@ -545,6 +549,16 @@ export class PaperPrinter {
         displayName: displayName as string,
       };
     });
+  }
+
+  private menuItems_ZoomOut(): UIMenuItem_t[] {
+    // Zoom out has no menu items - it's just a button
+    return [];
+  }
+
+  private menuItems_ZoomIn(): UIMenuItem_t[] {
+    // Zoom in has no menu items - it's just a button
+    return [];
   }
 
   // Selection handler methods for each menu type
@@ -870,6 +884,26 @@ export class PaperPrinter {
 
     dx.done();
     return { id, value };
+  }
+
+  private async handleSelection_ZoomOut(
+    menuId: MenuId_t,
+    menuItemId: MenuItemId_t
+  ): Promise<HandleSelection_t> {
+    const dx = this.dx.sub('handleSelection_ZoomOut');
+    // Zoom out button clicked - webview will handle via menuItemSelected message
+    dx.done();
+    return { id: 'zoomOut', value: 'zoomOut' };
+  }
+
+  private async handleSelection_ZoomIn(
+    menuId: MenuId_t,
+    menuItemId: MenuItemId_t
+  ): Promise<HandleSelection_t> {
+    const dx = this.dx.sub('handleSelection_ZoomIn');
+    // Zoom in button clicked - webview will handle via menuItemSelected message
+    dx.done();
+    return { id: 'zoomIn', value: 'zoomIn' };
   }
 
   // Removed CSS hacks; rely on theme overrides

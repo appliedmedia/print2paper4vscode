@@ -14,6 +14,8 @@ import {
   kTheme,
   kHeader,
   kFooter,
+  kZoomOut,
+  kZoomIn,
   kZoomLevel,
 } from './types/PaperPrinter_t';
 
@@ -40,7 +42,9 @@ export const kMenuId = [
   // Header/Footer locations
   kHeader.id,
   kFooter.id,
-  // Zoom menu
+  // Zoom menus
+  kZoomOut.id,
+  kZoomIn.id,
   kZoomLevel.id,
   // Composed from header/footer + kHeaderFooter positions
   ...kHeaderFooterMenuIds,

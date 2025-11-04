@@ -103,28 +103,31 @@ webview_js: |
         } else if (message.zoomAction) {
           handleZoomAction(message.zoomAction);
         }
-      } else if (message.type === 'menuItemSelected' && message.menuId === 'zoomLevel') {
-        // Handle zoom level menu selection
-        const zoomValue = message.itemId;
-        // Remove 'flyout-' prefix if present
-        const cleanZoomValue = zoomValue.replace('flyout-', '');
+      } else if (message.type === 'menuItemSelected') {
+        // Handle menu item selections for zoom controls
+        const menuId = message.menuId;
+        const itemId = message.itemId;
         
-        if (cleanZoomValue === 'fitPage') {
-          handleZoomAction('fitPage');
-        } else if (cleanZoomValue === 'actualSize') {
-          handleZoomAction('actualSize');
-        } else {
-          const scale = parseFloat(cleanZoomValue);
-          if (!isNaN(scale)) {
-            setZoom(scale);
-          }
-        }
-        // Close menu
-        const zoomLevelMenu = document.getElementById('zoomLevel');
-        if (zoomLevelMenu) {
-          const menuItems = zoomLevelMenu.querySelector('.p2p4vsc-menu-items');
-          if (menuItems) {
-            menuItems.style.display = 'none';
+        if (menuId === 'zoomOut') {
+          // Zoom out button clicked (button-only menu)
+          handleZoomAction('out');
+        } else if (menuId === 'zoomIn') {
+          // Zoom in button clicked (button-only menu)
+          handleZoomAction('in');
+        } else if (menuId === 'zoomLevel') {
+          // Zoom level menu item selected
+          const zoomValue = itemId.replace('flyout-', '');
+          const cleanZoomValue = zoomValue.replace('zoomLevel-', '');
+          
+          if (cleanZoomValue === 'fitPage') {
+            handleZoomAction('fitPage');
+          } else if (cleanZoomValue === 'actualSize') {
+            handleZoomAction('actualSize');
+          } else {
+            const scale = parseFloat(cleanZoomValue);
+            if (!isNaN(scale)) {
+              setZoom(scale);
+            }
           }
         }
       }
@@ -203,62 +206,11 @@ webview_js: |
    * Initialize zoom control buttons and keyboard shortcuts
    */
   function initZoomControls() {
-    // Zoom buttons
-    document.getElementById('zoom-in').addEventListener('click', () => handleZoomAction('in'));
-    document.getElementById('zoom-out').addEventListener('click', () => handleZoomAction('out'));
-    document.getElementById('zoom-fit-width').addEventListener('click', () => handleZoomAction('fitWidth'));
-    document.getElementById('zoom-fit-page').addEventListener('click', () => handleZoomAction('fitPage'));
-    document.getElementById('zoom-actual-size').addEventListener('click', () => handleZoomAction('actualSize'));
-    
-    // Zoom level dropdown - use UIMenu zoomLevel flyout
-    const zoomLevelEl = document.getElementById('zoom-level');
-    if (!zoomLevelEl) {
-      dx('❌ Zoom level element not found in DOM');
-      return;
+    // Show zoom controls in toolbar
+    const zoomControls = document.getElementById('p2p4vsc-zoom-controls');
+    if (zoomControls) {
+      zoomControls.style.display = 'flex';
     }
-    
-    // Click zoom percentage to open zoomLevel menu
-    zoomLevelEl.addEventListener('click', (e) => {
-      e.stopPropagation();
-      
-      // Find the zoomLevel menu (it's a regular menu, but button is hidden)
-      const zoomLevelMenu = document.getElementById('zoomLevel');
-      if (!zoomLevelMenu) {
-        dx('❌ ZoomLevel menu not found');
-        return;
-      }
-      
-      // Close all other menus/dropdowns
-      document.querySelectorAll('.p2p4vsc-menu-items').forEach(items => {
-        if (items.id !== 'zoomLevel-items') {
-          items.style.display = 'none';
-        }
-      });
-      document.querySelectorAll('.p2p4vsc-menu.is-flyout').forEach(flyout => {
-        flyout.style.display = 'none';
-      });
-      
-      // Toggle zoomLevel menu
-      const menuItems = zoomLevelMenu.querySelector('.p2p4vsc-menu-items');
-      if (menuItems) {
-        const isVisible = menuItems.style.display === 'block';
-        if (isVisible) {
-          menuItems.style.display = 'none';
-        } else {
-          // Position menu below zoom level display
-          const rect = zoomLevelEl.getBoundingClientRect();
-          menuItems.style.position = 'absolute';
-          menuItems.style.left = (rect.left + rect.width / 2) + 'px';
-          menuItems.style.top = (rect.bottom + 4) + 'px';
-          menuItems.style.transform = 'translateX(-50%)';
-          menuItems.style.zIndex = '1000';
-          menuItems.style.display = 'block';
-          
-          // Update selection highlight
-          updateZoomMenuSelection();
-        }
-      }
-    });
     
     // Keyboard shortcuts
     document.addEventListener('keydown', function(e) {

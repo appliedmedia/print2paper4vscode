@@ -253,14 +253,36 @@ export const kTheme = {
   menuItems: [], // Themes are dynamically loaded from Shiki
 } as const;
 
-// Zoom level flyout menu definition  
+// Zoom menu definitions
+export const kZoomOut = {
+  id: 'zoomOut',
+  displayName: 'Zoom Out',
+  icon: '−',
+  alt: '',
+  methodName: 'ZoomOut',
+  isFlyout: false,
+  flyoutMenuItemIds: [] as const,
+  menuItems: [],
+} as const;
+
+export const kZoomIn = {
+  id: 'zoomIn',
+  displayName: 'Zoom In',
+  icon: '+',
+  alt: '',
+  methodName: 'ZoomIn',
+  isFlyout: false,
+  flyoutMenuItemIds: [] as const,
+  menuItems: [],
+} as const;
+
 export const kZoomLevel = {
   id: 'zoomLevel',
   displayName: 'Zoom Level',
-  icon: '',
+  icon: '↓',
   alt: '1.0',
   methodName: 'ZoomLevel',
-  isFlyout: false, // Regular menu, but button will be hidden
+  isFlyout: false,
   flyoutMenuItemIds: [] as const,
   menuItems: [
     { id: '0.25', displayName: '25%' },
