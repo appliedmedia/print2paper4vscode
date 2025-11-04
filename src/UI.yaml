@@ -100,11 +100,28 @@ toolbar_css: |
     font-size: 12px;
     font-weight: 500;
     color: #333;
-    padding: 0 4px;
+    padding: 2px 4px;
     user-select: none;
     display: inline-flex;
     align-items: center;
     justify-content: center;
+    cursor: text;
+    border-radius: 4px;
+  }
+
+  .p2p4vsc-zoom-level:hover {
+    background: #e8e8e8;
+  }
+
+  .p2p4vsc-zoom-level:focus {
+    outline: 1px solid #007acc;
+    background: #fff;
+    user-select: text;
+  }
+
+  #zoom-level-value {
+    min-width: 40px;
+    display: inline-block;
   }
 
 toolbar_js: |
@@ -227,7 +244,7 @@ toolbar_html: |
     <div class="p2p4vsc-toolbar-menubar" role="menubar">
       {{menuHtml}}
       <div id="p2p4vsc-zoom-controls" class="p2p4vsc-zoom-controls" style="display: none;">
-        <span id="zoom-level" class="p2p4vsc-zoom-level">
+        <span id="zoom-level" class="p2p4vsc-zoom-level" contenteditable="true" role="textbox" tabindex="0">
           <span id="zoom-level-value">100%</span>
         </span>
       </div>
