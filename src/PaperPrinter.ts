@@ -532,7 +532,6 @@ export class PaperPrinter {
 
   private menuItems_ZoomLevel(): UIMenuItem_t[] {
     // Format shortcuts using OS-specific key mappings
-    const osKeys = this.app.os.specificKeys();
     return kZoomLevel.menuItems.map(item => {
       let displayName: string = item.displayName;
       
@@ -540,8 +539,8 @@ export class PaperPrinter {
       // Use template replacement for platform-specific key display
       if ('shortcut' in item && item.shortcut) {
         // Replace "Ctrl/Cmd +" with template variable for OS-specific replacement
-        const shortcutTemplate = item.shortcut.replace(/Ctrl\/Cmd\s*\+\s*/g, '{{os-ctrl-cmd-plus}}');
-        const shortcut = this.app.templateDictReplace(shortcutTemplate, osKeys);
+        const shortcutTemplate = item.shortcut.replace(/Ctrl\/Cmd\s*\+\s*/g, '{{os-ctrl-cmd}}+');
+        const shortcut = this.app.os.dictReplace(shortcutTemplate);
         displayName = `${displayName} ${shortcut}`;
       }
       

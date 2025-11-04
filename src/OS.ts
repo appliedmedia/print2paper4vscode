@@ -94,32 +94,29 @@ export abstract class OS {
   }
 
   /**
-   * Get platform-specific keyboard shortcut key mappings
-   * Returns a dictionary of common shortcut keys for template replacement
-   * @returns Dictionary with keys like 'os-ctrl-cmd', 'os-ctrl-cmd-plus', etc.
+   * Replace OS-specific template variables in a string
+   * Composes template variables with OS-specific replacements and calls templateDictReplace
+   * @param source - String containing template variables like {{os-ctrl-cmd}}
+   * @returns String with all template variables replaced with OS-specific values
+   * 
+   * @example
+   * os.dictReplace('{{os-ctrl-cmd}}+0') // Returns '⌘+0' on Mac, 'Ctrl+0' on Win/Linux
    */
-  specificKeys(): Record<string, string> {
+  dictReplace(source: string): string {
     const platform = process?.platform;
+    const osKeys: Record<string, string> = {};
+    
     if (platform === 'win32') {
-      return {
-        'os-ctrl-cmd': 'Ctrl',
-        'os-ctrl-cmd-plus': 'Ctrl+',
-        'os-ctrl-cmd-symbol': 'Ctrl',
-      };
+      osKeys['os-ctrl-cmd'] = 'Ctrl';
     } else if (platform === 'darwin') {
-      return {
-        'os-ctrl-cmd': '⌘',
-        'os-ctrl-cmd-plus': '⌘+',
-        'os-ctrl-cmd-symbol': '⌘',
-      };
+      osKeys['os-ctrl-cmd'] = '⌘';
     } else {
       // Linux
-      return {
-        'os-ctrl-cmd': 'Ctrl',
-        'os-ctrl-cmd-plus': 'Ctrl+',
-        'os-ctrl-cmd-symbol': 'Ctrl',
-      };
+      osKeys['os-ctrl-cmd'] = 'Ctrl';
     }
+    
+    // Use the app's templateDictReplace method
+    return this.app.templateDictReplace(source, osKeys);
   }
 
   // Common filesystem helpers consolidated here
