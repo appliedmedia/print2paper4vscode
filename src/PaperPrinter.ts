@@ -319,143 +319,61 @@ export class PaperPrinter {
       return;
     }
 
-    const menuConfigs = [
-      {
-        id: kPrint.id,
-        displayName: kPrint.displayName,
-        icon: kPrint.icon,
-        isFlyout: kPrint.isFlyout,
-        menuItems: this.menuItems_Print.bind(this),
-        flyoutMenuItemIds: kPrint.flyoutMenuItemIds,
-        selectionHandler: this.handleSelection_Print.bind(this),
-      },
-      {
-        id: kPage.id,
-        displayName: kPage.displayName,
-        icon: kPage.icon,
-        isFlyout: kPage.isFlyout,
-        menuItems: this.menuItems_Page.bind(this),
-        flyoutMenuItemIds: kPage.flyoutMenuItemIds,
-        selectionHandler: this.handleSelection_Page.bind(this),
-      },
-      {
-        id: kPageSizeId.id,
-        displayName: kPageSizeId.displayName,
-        icon: '', // submenu indicated by no icon, see Page > Size
-        isFlyout: kPageSizeId.isFlyout,
-        menuItems: this.menuItems_pageSizeId.bind(this),
-        flyoutMenuItemIds: kPageSizeId.flyoutMenuItemIds,
-        selectionHandler: this.handleSelection_PageSizeId.bind(this),
-      },
-      {
-        id: kOrient.id,
-        displayName: kOrient.displayName,
-        icon: '', // submenu indicated by no icon, see Page > Orient
-        isFlyout: kOrient.isFlyout,
-        menuItems: this.menuItems_Orient.bind(this),
-        flyoutMenuItemIds: kOrient.flyoutMenuItemIds,
-        selectionHandler: this.handleSelection_Orient.bind(this),
-      },
-      {
-        id: kMarginId.id,
-        displayName: kMarginId.displayName,
-        icon: '', // submenu indicated by no icon, see Page > Margin
-        isFlyout: kMarginId.isFlyout,
-        menuItems: this.menuItems_MarginId.bind(this),
-        flyoutMenuItemIds: kMarginId.flyoutMenuItemIds,
-        selectionHandler: this.handleSelection_MarginId.bind(this),
-      },
-      {
-        id: kHeader.id,
-        displayName: kHeader.displayName,
-        icon: '', // flyout submenu
-        isFlyout: kHeader.isFlyout,
-        menuItems: this.menuItems_Header.bind(this),
-        flyoutMenuItemIds: kHeader.flyoutMenuItemIds,
-        selectionHandler: this.handleSelection_Header.bind(this),
-      },
-      {
-        id: kFooter.id,
-        displayName: kFooter.displayName,
-        icon: '', // flyout submenu
-        isFlyout: kFooter.isFlyout,
-        menuItems: this.menuItems_Footer.bind(this),
-        flyoutMenuItemIds: kFooter.flyoutMenuItemIds,
-        selectionHandler: this.handleSelection_Footer.bind(this),
-      },
-      {
-        id: 'header_begin',
-        displayName: kHeaderFooterMenuItemsById['begin'].displayName,
-        icon: '', // flyout submenu
-        isFlyout: true,
-        menuItems: this.menuItems_HeaderFooterContent.bind(this),
-        flyoutMenuItemIds: [],
-        selectionHandler: this.handleSelection_HeaderFooter.bind(this),
-      },
-      {
-        id: 'header_middle',
-        displayName: kHeaderFooterMenuItemsById['middle'].displayName,
-        icon: '', // flyout submenu
-        isFlyout: true,
-        menuItems: this.menuItems_HeaderFooterContent.bind(this),
-        flyoutMenuItemIds: [],
-        selectionHandler: this.handleSelection_HeaderFooter.bind(this),
-      },
-      {
-        id: 'header_end',
-        displayName: kHeaderFooterMenuItemsById['end'].displayName,
-        icon: '', // flyout submenu
-        isFlyout: true,
-        menuItems: this.menuItems_HeaderFooterContent.bind(this),
-        flyoutMenuItemIds: [],
-        selectionHandler: this.handleSelection_HeaderFooter.bind(this),
-      },
-      {
-        id: 'footer_begin',
-        displayName: kHeaderFooterMenuItemsById['begin'].displayName,
-        icon: '', // flyout submenu
-        isFlyout: true,
-        menuItems: this.menuItems_HeaderFooterContent.bind(this),
-        flyoutMenuItemIds: [],
-        selectionHandler: this.handleSelection_HeaderFooter.bind(this),
-      },
-      {
-        id: 'footer_middle',
-        displayName: kHeaderFooterMenuItemsById['middle'].displayName,
-        icon: '', // flyout submenu
-        isFlyout: true,
-        menuItems: this.menuItems_HeaderFooterContent.bind(this),
-        flyoutMenuItemIds: [],
-        selectionHandler: this.handleSelection_HeaderFooter.bind(this),
-      },
-      {
-        id: 'footer_end',
-        displayName: kHeaderFooterMenuItemsById['end'].displayName,
-        icon: '', // flyout submenu
-        isFlyout: true,
-        menuItems: this.menuItems_HeaderFooterContent.bind(this),
-        flyoutMenuItemIds: [],
-        selectionHandler: this.handleSelection_HeaderFooter.bind(this),
-      },
-      {
-        id: kTheme.id,
-        displayName: kTheme.displayName,
-        icon: kTheme.icon,
-        isFlyout: kTheme.isFlyout,
-        menuItems: this.menuItems_Theme.bind(this),
-        flyoutMenuItemIds: kTheme.flyoutMenuItemIds,
-        selectionHandler: this.handleSelection_Theme.bind(this),
-      },
-      {
-        id: kFontSizeId.id,
-        displayName: kFontSizeId.displayName,
-        icon: kFontSizeId.icon,
-        isFlyout: kFontSizeId.isFlyout,
-        menuItems: this.menuItems_Text.bind(this),
-        flyoutMenuItemIds: kFontSizeId.flyoutMenuItemIds,
-        selectionHandler: this.handleSelection_Text.bind(this),
-      },
+    // Menu configs - array of menu constants
+    const menus = [
+      kPrint,
+      kPage,
+      kPageSizeId,
+      kOrient,
+      kMarginId,
+      kHeader,
+      kFooter,
+      kTheme,
+      kFontSizeId,
     ];
+
+    // Build menu configs from constants
+    const menuConfigs: Array<{
+      id: MenuId_t | string;
+      displayName: string;
+      icon: string;
+      isFlyout: boolean;
+      menuItems: () => UIMenuItem_t[];
+      flyoutMenuItemIds: readonly string[];
+      selectionHandler: (menuId: MenuId_t, menuItemId: MenuItemId_t) => Promise<HandleSelection_t>;
+    }> = menus.map(menuConst => {
+      const methodName = menuConst.methodName || menuConst.displayName;
+      return {
+        id: menuConst.id,
+        displayName: menuConst.displayName,
+        icon: menuConst.icon,
+        isFlyout: menuConst.isFlyout,
+        menuItems: (this[`menuItems_${methodName}` as keyof this] as () => UIMenuItem_t[]).bind(
+          this
+        ),
+        flyoutMenuItemIds: menuConst.flyoutMenuItemIds,
+        selectionHandler: (
+          this[`handleSelection_${methodName}` as keyof this] as (
+            menuId: MenuId_t,
+            menuItemId: MenuItemId_t
+          ) => Promise<HandleSelection_t>
+        ).bind(this),
+      };
+    });
+
+    // Add header/footer position menus (these don't have constants)
+    kHeaderFooterMenuIds.forEach(menuId => {
+      const [, pos] = menuId.split('_') as [string, HeaderFooterPos_t];
+      menuConfigs.push({
+        id: menuId as MenuId_t,
+        displayName: kHeaderFooterMenuItemsById[pos].displayName as string,
+        icon: '',
+        isFlyout: true,
+        menuItems: this.menuItems_HeaderFooterContent.bind(this),
+        flyoutMenuItemIds: [],
+        selectionHandler: this.handleSelection_HeaderFooter.bind(this),
+      });
+    });
 
     menuConfigs.forEach(config => {
       this.dx.out(`Creating menu: ${config.id} with icon: ${config.icon}`);
@@ -543,7 +461,7 @@ export class PaperPrinter {
     return [...headerFooterMenus, ...pageSubmenus] as UIMenuItem_t[];
   }
 
-  private menuItems_pageSizeId(): UIMenuItem_t[] {
+  private menuItems_PageSizeId(): UIMenuItem_t[] {
     // Use centralized const - single source of truth for page sizes
     return kPageSizeId.menuItems.map(item => ({
       id: item.id as MenuItemId_t,

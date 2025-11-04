@@ -20,6 +20,7 @@ export const kPrint = {
   displayName: 'Print',
   icon: '🖨',
   alt: '',
+  methodName: '',
   isFlyout: false,
   flyoutMenuItemIds: [] as const,
   menuItems: [
@@ -36,6 +37,7 @@ export const kPageSizeId = {
   displayName: 'Size',
   icon: '',
   alt: 'a4',
+  methodName: 'PageSizeId',
   isFlyout: true,
   flyoutMenuItemIds: [] as const,
   menuItems: [
@@ -80,6 +82,7 @@ export const kOrient = {
   displayName: 'Orient',
   icon: '',
   alt: 'portrait',
+  methodName: '',
   isFlyout: true,
   flyoutMenuItemIds: [] as const,
   menuItems: [
@@ -95,6 +98,7 @@ export const kMarginId = {
   displayName: 'Margin',
   icon: '',
   alt: 'normal',
+  methodName: 'MarginId',
   isFlyout: true,
   flyoutMenuItemIds: [] as const,
   menuItems: [
@@ -116,6 +120,7 @@ export const kFontSizeId = {
   displayName: 'Text',
   icon: 'Tt',
   alt: '12',
+  methodName: '',
   isFlyout: false,
   flyoutMenuItemIds: [] as const,
   menuItems: [
@@ -149,7 +154,7 @@ export const kHeaderFooter = {
   none: 'none',
   menuItems: [
     { id: 'begin', displayName: '←' },
-    { id: 'middle', displayName: '↔' },
+    { id: 'middle', displayName: '◇' },
     { id: 'end', displayName: '→' },
   ],
   subMenuItems: [
@@ -172,6 +177,7 @@ export const kHeader = {
   displayName: kHeaderFooter.displayName.header,
   icon: '',
   alt: '',
+  methodName: '',
   isFlyout: true,
   flyoutMenuItemIds: kHeaderFooter.menuItems.map(
     item => `${kHeaderFooter.id.header}_${item.id}`
@@ -188,6 +194,7 @@ export const kFooter = {
   displayName: kHeaderFooter.displayName.footer,
   icon: '',
   alt: '',
+  methodName: '',
   isFlyout: true,
   flyoutMenuItemIds: kHeaderFooter.menuItems.map(
     item => `${kHeaderFooter.id.footer}_${item.id}`
@@ -204,6 +211,7 @@ export const kPage = {
   displayName: 'Page',
   icon: '📄',
   alt: '',
+  methodName: '',
   isFlyout: false,
   flyoutMenuItemIds: [kPageSizeId.id, kOrient.id, kMarginId.id, kHeader.id, kFooter.id] as const,
   menuItems: [
@@ -239,6 +247,7 @@ export const kTheme = {
   displayName: 'Theme',
   icon: '🎨',
   alt: 'github-light',
+  methodName: '',
   isFlyout: false,
   flyoutMenuItemIds: [] as const,
   menuItems: [], // Themes are dynamically loaded from Shiki
