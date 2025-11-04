@@ -531,15 +531,14 @@ export class PaperPrinter {
   }
 
   private menuItems_ZoomLevel(): UIMenuItem_t[] {
-    // Format shortcuts - use generic format that works for both Mac and Windows/Linux
+    // Format shortcuts - displays Mac-style shortcuts (⌘ symbol)
     // The webview will show platform-specific shortcuts in tooltips
     return kZoomLevel.menuItems.map(item => {
       let displayName: string = item.displayName;
       
-      // Add shortcut to displayName if it exists (format: "100% ⌘0" or "100% Ctrl+0")
-      // Use generic format - webview can customize if needed
+      // Add shortcut to displayName if it exists
+      // Displays Mac-style shortcuts (⌘ symbol)
       if ('shortcut' in item && item.shortcut) {
-        // Replace Ctrl/Cmd with ⌘ for display (Mac-style, common convention)
         const shortcut = item.shortcut.replace('Ctrl/Cmd +', '⌘').replace('Ctrl/Cmd', '⌘');
         displayName = `${displayName} ${shortcut}`;
       }
@@ -868,14 +867,18 @@ export class PaperPrinter {
     } else {
       // Parse zoom level for persistence
       const zoomValue = menuItemId;
-      if (zoomValue === 'fitPage' || zoomValue === 'actualSize') {
+      if (zoomValue === 'fitPage' || zoomValue === 'fitWidth' || zoomValue === 'actualSize') {
         // Special actions - persist as-is
         value = zoomValue;
       } else {
         // Parse zoom level (e.g., "1.00" -> 1.0)
         const scale = parseFloat(zoomValue);
-        if (!isNaN(scale)) {
+        // Validate scale is within valid range (0.25 - 3.0)
+        if (!isNaN(scale) && scale >= 0.25 && scale <= 3.0) {
           value = scale;
+        } else {
+          dx.out(`Invalid zoom scale: ${scale}, ignoring`);
+          value = 1.0; // Default to 100%
         }
       }
       // Persist zoom level - webview will handle the actual zoom change via menuItemSelected message

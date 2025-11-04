@@ -162,7 +162,7 @@ export class UIWebView {
 
       // Get zoom level from persistence (default: 1.0 = 100%)
       const zoomLevel = this.app.ui.persist.pdf_zoom_level;
-      const pdf_zoom_level = typeof zoomLevel === 'number' ? zoomLevel : 1.0;
+      const pdf_zoom_level = typeof zoomLevel === 'number' && zoomLevel > 0 && zoomLevel <= 10 && !isNaN(zoomLevel) ? zoomLevel : 1.0;
 
       // Create template dictionary
       const templateDict = {
@@ -341,10 +341,18 @@ export class UIWebView {
     const dx = this.dx.sub('handleZoomMessage');
 
     try {
-      if (typeof msg.zoomLevel === 'number') {
+      if (typeof msg.zoomLevel === 'number' && !isNaN(msg.zoomLevel) && msg.zoomLevel > 0 && msg.zoomLevel <= 10) {
         // Save zoom level to persistence
         this.app.ui.persist.pdf_zoom_level = msg.zoomLevel;
         dx.out(`Zoom level saved: ${msg.zoomLevel}`);
+      } else if (typeof msg.zoomLevel === 'number') {
+        dx.error(`Invalid zoom level received: ${msg.zoomLevel} (must be between 0 and 10)`);
+      }
+      
+      // Handle zoom actions if present
+      if (msg.zoomAction) {
+        dx.out(`Zoom action received: ${msg.zoomAction}`);
+        // Zoom actions are handled by the webview itself
       }
     } finally {
       dx.done();

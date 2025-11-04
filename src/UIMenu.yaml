@@ -150,7 +150,7 @@ uimenu_generic_handlers: |
       const menuId = menu?.getAttribute('id');
 
       // Check if this menu has no items (button-only menu like zoomOut/zoomIn)
-      const hasNoItems = menuItems && menuItems.children.length === 0;
+      const hasNoItems = menuItems && menuItems.children?.length === 0;
       
       if (hasNoItems) {
         // Button-only menu - trigger selection handler directly

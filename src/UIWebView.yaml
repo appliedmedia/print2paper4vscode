@@ -81,9 +81,10 @@ webview_js: |
   }
   
   let pdfDoc = null;
-  let currentScale = {{pdf_zoom_level}} || 1.0; // Dynamic zoom level from persistence
-  let pageWidthPx = {{page_width_px}} || 0;
-  let pageHeightPx = {{page_height_px}} || 0;
+  // Parse zoom level from template, fallback to 1.0 if invalid
+  let currentScale = parseFloat('{{pdf_zoom_level}}') || 1.0;
+  let pageWidthPx = parseFloat('{{page_width_px}}') || 0;
+  let pageHeightPx = parseFloat('{{page_height_px}}') || 0;
   
   // Zoom constants
   const ZOOM_MIN = 0.25;
@@ -116,11 +117,13 @@ webview_js: |
           handleZoomAction('in');
         } else if (menuId === 'zoomLevel') {
           // Zoom level menu item selected
-          const zoomValue = itemId.replace('flyout-', '');
-          const cleanZoomValue = zoomValue.replace('zoomLevel-', '');
+          // Extension should send cleaned value, but strip prefixes as fallback
+          const cleanZoomValue = itemId.replace(/^(flyout-|zoomLevel-)+/g, '');
           
           if (cleanZoomValue === 'fitPage') {
             handleZoomAction('fitPage');
+          } else if (cleanZoomValue === 'fitWidth') {
+            handleZoomAction('fitWidth');
           } else if (cleanZoomValue === 'actualSize') {
             handleZoomAction('actualSize');
           } else {

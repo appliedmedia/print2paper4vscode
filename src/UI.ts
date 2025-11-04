@@ -57,8 +57,9 @@ export class UI {
   init(): void {
     // Register persist for PDF zoom level (default: 1.0 = 100%)
     this.persist.register('pdf_zoom_level');
-    // Set default zoom level if not already set
-    if (this.persist.pdf_zoom_level === undefined) {
+    // Set default zoom level if not already set or invalid
+    const zoomLevel = this.persist.pdf_zoom_level;
+    if (typeof zoomLevel !== 'number' || isNaN(zoomLevel) || zoomLevel <= 0 || zoomLevel > 10) {
       this.persist.pdf_zoom_level = 1.0;
     }
   }

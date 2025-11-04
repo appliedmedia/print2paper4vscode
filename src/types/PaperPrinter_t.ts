@@ -294,7 +294,8 @@ export const kZoomLevel = {
     { id: '2.50', displayName: '250%' },
     { id: '3.00', displayName: '300%' },
     { id: 'fitPage', displayName: 'Fit Page' },
-    { id: 'actualSize', displayName: '1:1', shortcut: 'Ctrl/Cmd + 0' },
+    { id: 'fitWidth', displayName: 'Fit Width' },
+    { id: 'actualSize', displayName: '1:1' },
   ],
 } as const;
 export type ZoomLevelMenuItems_t = (typeof kZoomLevel.menuItems)[number]['id'];
