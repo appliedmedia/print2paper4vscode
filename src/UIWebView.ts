@@ -3,6 +3,7 @@ import type { WebviewPanelId_t } from './VSCodeAPIs';
 import type { PostMessage } from './types/UI_t';
 import { Diagnostics } from './Diagnostics';
 import { Yaml } from './Yaml';
+import { kZoomLevelLimits } from './types/PaperPrinter_t';
 
 /**
  * PDF Data for webview display
@@ -162,7 +163,8 @@ export class UIWebView {
 
       // Get zoom level from persistence (default: 1.0 = 100%)
       const zoomLevel = this.app.ui.persist.pdf_zoom_level;
-      const pdf_zoom_level = typeof zoomLevel === 'number' && zoomLevel > 0 && zoomLevel <= 10 && !isNaN(zoomLevel) ? zoomLevel : 1.0;
+      const numZoomLevel = Number(zoomLevel);
+      const pdf_zoom_level = numZoomLevel && numZoomLevel > kZoomLevelLimits.min && numZoomLevel <= kZoomLevelLimits.max ? numZoomLevel : kZoomLevelLimits.default;
 
       // Create template dictionary
       const templateDict = {
@@ -341,12 +343,13 @@ export class UIWebView {
     const dx = this.dx.sub('handleZoomMessage');
 
     try {
-      if (typeof msg.zoomLevel === 'number' && !isNaN(msg.zoomLevel) && msg.zoomLevel > 0 && msg.zoomLevel <= 10) {
+      const zoomLevel = Number(msg.zoomLevel);
+      if (zoomLevel && zoomLevel > kZoomLevelLimits.min && zoomLevel <= kZoomLevelLimits.max) {
         // Save zoom level to persistence
-        this.app.ui.persist.pdf_zoom_level = msg.zoomLevel;
-        dx.out(`Zoom level saved: ${msg.zoomLevel}`);
-      } else if (typeof msg.zoomLevel === 'number') {
-        dx.error(`Invalid zoom level received: ${msg.zoomLevel} (must be between 0 and 10)`);
+        this.app.ui.persist.pdf_zoom_level = zoomLevel;
+        dx.out(`Zoom level saved: ${zoomLevel}`);
+      } else if (msg.zoomLevel !== undefined) {
+        dx.error(`Invalid zoom level received: ${msg.zoomLevel} (must be between ${kZoomLevelLimits.min} and ${kZoomLevelLimits.max})`);
       }
       
       // Handle zoom actions if present
