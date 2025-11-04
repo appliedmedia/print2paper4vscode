@@ -2,6 +2,7 @@ import { describe, it, beforeEach, afterEach } from 'node:test';
 import * as assert from 'node:assert';
 import { UIMenuMgr } from '../src/UIMenuMgr.js';
 import { App } from '../src/App.js';
+import type { MenuId_t } from '../src/UIMenu.js';
 import type { ExtensionContext } from 'vscode';
 
 // Mock VS Code context and APIs
@@ -78,7 +79,7 @@ describe('UIMenuMgr', () => {
 
   it('should add menu', () => {
     const menu = menuMgr.createMenu(
-      'test',
+      'test' as MenuId_t,
       'Test Menu',
       'T',
       false,
@@ -94,7 +95,7 @@ describe('UIMenuMgr', () => {
 
   it('should not add duplicate menus', () => {
     const menu = menuMgr.createMenu(
-      'test',
+      'test' as MenuId_t,
       'Test Menu',
       'T',
       false,
@@ -111,7 +112,7 @@ describe('UIMenuMgr', () => {
 
   it('should get menu by ID', () => {
     const menu = menuMgr.createMenu(
-      'test',
+      'test' as MenuId_t,
       'Test Menu',
       'T',
       false,

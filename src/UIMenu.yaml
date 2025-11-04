@@ -34,6 +34,7 @@ uimenu_css: |
     gap: 0;
     user-select: none;
     -webkit-user-select: none;
+    position: relative; /* Required for absolutely positioned flyout children */
   }
   .p2p4vsc-menu-item:hover, .p2p4vsc-menu-item.selected {
     background: #444;
@@ -184,19 +185,31 @@ uimenu_generic_handlers: |
         e.preventDefault();
         e.stopPropagation();
         
-        // Find the flyout menu for this item by checking flyout-menu-id-ref attribute
+        // Find the flyout menu for this item
+        // Flyouts are embedded as children of menu items, so search within the item
         const flyoutMenuId = itemEl.getAttribute('flyout-menu-id-ref');
-        const flyoutMenu = flyoutMenuId ? document.getElementById(flyoutMenuId) : null;
+        let flyoutMenu = flyoutMenuId ? itemEl.querySelector(`#${flyoutMenuId}`) : null;
+        
+        // If not found within item, try document-wide search (for backwards compatibility)
+        if (!flyoutMenu && flyoutMenuId) {
+          flyoutMenu = document.getElementById(flyoutMenuId);
+        }
+        
         if (flyoutMenu) {
-          // Find parent flyouts - the menu variable is the flyout menu that contains this item
-          const parentFlyouts = [];
-          if (menu && menu.classList.contains('is-flyout') && menu !== flyoutMenu) {
-            parentFlyouts.push(menu);
+          // Build ancestor chain: collect all flyout menus that contain this item
+          const ancestorFlyouts = [];
+          let currentMenu = menu;
+          while (currentMenu) {
+            if (currentMenu.classList.contains('is-flyout') && currentMenu !== flyoutMenu) {
+              ancestorFlyouts.push(currentMenu);
+            }
+            // Move up to parent menu
+            currentMenu = currentMenu.parentElement?.closest('.p2p4vsc-menu.is-flyout') || null;
           }
           
-          // Close all other flyouts except the one being opened and its parents
+          // Close all other flyouts except the one being opened and its ancestors
           document.querySelectorAll('.p2p4vsc-menu.is-flyout').forEach(flyout => {
-            if (flyout !== flyoutMenu && !parentFlyouts.includes(flyout)) {
+            if (flyout !== flyoutMenu && !ancestorFlyouts.includes(flyout)) {
               flyout.style.display = 'none';
             }
           });
@@ -206,23 +219,31 @@ uimenu_generic_handlers: |
           if (wasVisible) {
             flyoutMenu.style.display = 'none';
           } else {
-            // Position flyout relative to the clicked menu item
-            // Make the flyout a child of the clicked menu item for relative positioning
+            // Ensure flyout is positioned correctly
+            // Flyouts should already be children of menu items from HTML generation
             if (flyoutMenu.parentElement !== itemEl) {
               itemEl.appendChild(flyoutMenu);
             }
             
             flyoutMenu.style.position = 'absolute';
             flyoutMenu.style.left = '97%';
-            flyoutMenu.style.top = '3%';
-            flyoutMenu.style.zIndex = '1001';
+            const itemRect = itemEl.getBoundingClientRect();
+            const mouseY = e.clientY;
+            // Get the actual text element to find the line position
+            const textElement = itemEl.querySelector('.menu-item-text');
+            let lineY = mouseY - itemRect.top; // Fallback to mouse position
+            if (textElement) {
+              const textRect = textElement.getBoundingClientRect();
+              // Use the text element's top position relative to the item
+              lineY = textRect.top - itemRect.top;
+            }
+            flyoutMenu.style.top = `${lineY}px`;
+            flyoutMenu.style.zIndex = String(1000 + ancestorFlyouts.length + 1);
             flyoutMenu.style.display = 'block';
             
-            // CRITICAL: Ensure the menu items inside the flyout are visible
-            // The flyout menu container has display:block, but menu-items might still be hidden
+            // Ensure menu items inside the flyout are visible
             const flyoutMenuItems = flyoutMenu.querySelector('.p2p4vsc-menu-items');
             if (flyoutMenuItems) {
-              // Force visibility - override any CSS that might be hiding it
               flyoutMenuItems.style.display = 'block';
               flyoutMenuItems.style.visibility = 'visible';
               flyoutMenuItems.style.opacity = '1';

@@ -135,24 +135,23 @@ describe('PDF', () => {
     assert.ok(pageSize.heightPx > 0);
   });
 
-  it('should render content for a page', async () => {
-    // Set up basic PDF document
-    const pdfDoc = new jsPDF();
-    pdfDoc.text('Test content', 10, 10);
-    pdf.docInfo.pdfDoc = pdfDoc;
-    pdf.docInfo.pageWidthPts = 595;
-    pdf.docInfo.pageHeightPts = 842;
-
-    // Set up tokens
-    pdf.docInfo.currentTokens = [
-      [{ content: 'test', color: '#000000', offset: 0 }],
-    ];
+  it('should generate complete PDF document', async () => {
+    // Set up PDF document properties
+    pdf.docInfo.pageSizeId = 'a4';
+    pdf.docInfo.orient = 'portrait';
+    pdf.docInfo.fontSizePx = 12;
+    pdf.docInfo.lineHeightPx = 18;
+    pdf.docInfo.fontFamily = 'Courier';
     pdf.docInfo.theme = 'github-light';
+    pdf.docInfo.code = 'console.log("test");';
+    pdf.docInfo.languageId = 'javascript';
 
-    const pageData = await pdf.renderContent(0, 0, 0);
-    assert.ok(pageData);
-    assert.ok(typeof pageData.dataUrl === 'string');
-    assert.ok(pageData.dataUrl.startsWith('data:application/pdf'));
+    // Generate PDF using the unified approach
+    const pdfDoc = await pdf.generatePdf();
+    assert.ok(pdfDoc);
+    assert.ok(pdfDoc.pageTotal > 0);
+    assert.ok(pdfDoc.asArrayBuffer() instanceof ArrayBuffer);
+    assert.ok(pdfDoc.asArrayBuffer().byteLength > 0);
   });
 
   it('should setup PDF document', () => {

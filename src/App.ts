@@ -102,8 +102,9 @@ export class App {
     const iter_max = 4;
 
     // Keep replacing until no more {{...}} patterns or hit max iterations
+    // Updated regex to allow # and other non-word characters in variable names
     while (result.includes('{{') && ++iter < iter_max) {
-      result = result.replace(/\{\{(\w+)\}\}/g, (match, key) => {
+      result = result.replace(/\{\{([^}]+)\}\}/g, (match, key) => {
         return key in dictionary ? dictionary[key] : match; // Return value even if empty string
       });
     }
