@@ -162,9 +162,9 @@ webview_js: |
       initZoomControls();
       
       // Update zoom level display to match current scale
-      const zoomLevelEl = document.getElementById('zoom-level');
-      if (zoomLevelEl) {
-        zoomLevelEl.textContent = Math.round(currentScale * 100) + '%';
+      const zoomLevelValueEl = document.getElementById('zoom-level-value');
+      if (zoomLevelValueEl) {
+        zoomLevelValueEl.textContent = Math.round(currentScale * 100) + '%';
       }
       
       // Render all pages with initial zoom level
@@ -186,6 +186,64 @@ webview_js: |
     document.getElementById('zoom-fit-page').addEventListener('click', () => handleZoomAction('fitPage'));
     document.getElementById('zoom-actual-size').addEventListener('click', () => handleZoomAction('actualSize'));
     
+    // Zoom level dropdown
+    const zoomLevelEl = document.getElementById('zoom-level');
+    const zoomDropdown = document.getElementById('zoom-dropdown');
+    
+    if (!zoomLevelEl || !zoomDropdown) {
+      dx('❌ Zoom controls not found in DOM');
+      return;
+    }
+    
+    const zoomDropdownItems = zoomDropdown.querySelectorAll('.p2p4vsc-zoom-dropdown-item');
+    
+    // Toggle dropdown on click
+    zoomLevelEl.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const isVisible = zoomDropdown.classList.contains('show');
+      
+      // Close all other menus/dropdowns
+      document.querySelectorAll('.p2p4vsc-menu-items').forEach(items => {
+        items.style.display = 'none';
+      });
+      document.querySelectorAll('.p2p4vsc-menu.is-flyout').forEach(flyout => {
+        flyout.style.display = 'none';
+      });
+      
+      if (isVisible) {
+        zoomDropdown.classList.remove('show');
+      } else {
+        zoomDropdown.classList.add('show');
+        updateZoomDropdownSelection();
+      }
+    });
+    
+    // Handle dropdown item clicks
+    zoomDropdownItems.forEach(item => {
+      item.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const zoomValue = item.getAttribute('data-zoom');
+        if (zoomValue === 'fitPage') {
+          handleZoomAction('fitPage');
+        } else if (zoomValue === 'actualSize') {
+          handleZoomAction('actualSize');
+        } else {
+          const scale = parseFloat(zoomValue);
+          if (!isNaN(scale)) {
+            setZoom(scale);
+          }
+        }
+        zoomDropdown.classList.remove('show');
+      });
+    });
+    
+    // Close dropdown when clicking outside
+    document.addEventListener('click', (e) => {
+      if (zoomDropdown && !zoomLevelEl.contains(e.target) && !zoomDropdown.contains(e.target)) {
+        zoomDropdown.classList.remove('show');
+      }
+    });
+    
     // Keyboard shortcuts
     document.addEventListener('keydown', function(e) {
       // Check for Cmd/Ctrl modifier
@@ -201,6 +259,30 @@ webview_js: |
         } else if (e.key === '0') {
           e.preventDefault();
           handleZoomAction('actualSize');
+        }
+      }
+    });
+  }
+  
+  /**
+   * Update zoom dropdown to show current selection
+   */
+  function updateZoomDropdownSelection() {
+    const zoomDropdown = document.getElementById('zoom-dropdown');
+    if (!zoomDropdown) return;
+    
+    const items = zoomDropdown.querySelectorAll('.p2p4vsc-zoom-dropdown-item');
+    items.forEach(item => {
+      item.classList.remove('selected');
+      const zoomValue = item.getAttribute('data-zoom');
+      
+      // Check if this item matches current zoom
+      if (zoomValue === 'actualSize' && currentScale === 1.0) {
+        item.classList.add('selected');
+      } else if (zoomValue !== 'fitPage' && zoomValue !== 'actualSize') {
+        const scale = parseFloat(zoomValue);
+        if (!isNaN(scale) && Math.abs(scale - currentScale) < 0.01) {
+          item.classList.add('selected');
         }
       }
     });
@@ -250,10 +332,13 @@ webview_js: |
     currentScale = Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, scale));
     
     // Update zoom level display
-    const zoomLevelEl = document.getElementById('zoom-level');
-    if (zoomLevelEl) {
-      zoomLevelEl.textContent = Math.round(currentScale * 100) + '%';
+    const zoomLevelValueEl = document.getElementById('zoom-level-value');
+    if (zoomLevelValueEl) {
+      zoomLevelValueEl.textContent = Math.round(currentScale * 100) + '%';
     }
+    
+    // Update dropdown selection
+    updateZoomDropdownSelection();
     
     // Save zoom level to extension
     if (vscode) {

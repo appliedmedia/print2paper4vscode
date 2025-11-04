@@ -101,6 +101,67 @@ toolbar_css: |
     font-weight: 500;
     color: #333;
     padding: 0 4px;
+    cursor: pointer;
+    user-select: none;
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+  }
+
+  .p2p4vsc-zoom-level:hover {
+    background: #e8e8e8;
+    border-radius: 4px;
+  }
+
+  .p2p4vsc-zoom-level .zoom-arrow {
+    font-size: 10px;
+    opacity: 0.7;
+  }
+
+  .p2p4vsc-zoom-dropdown {
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    margin-top: 4px;
+    background: #222;
+    color: #fff;
+    border-radius: 6px;
+    box-shadow: 0 6px 18px rgba(0,0,0,.3);
+    padding: 4px 3px;
+    display: none;
+    z-index: 1000;
+    min-width: 120px;
+  }
+
+  .p2p4vsc-zoom-dropdown.show {
+    display: block;
+  }
+
+  .p2p4vsc-zoom-dropdown-item {
+    padding: 6px 12px;
+    cursor: pointer;
+    white-space: nowrap;
+    font-size: 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+  }
+
+  .p2p4vsc-zoom-dropdown-item:hover {
+    background: #444;
+  }
+
+  .p2p4vsc-zoom-dropdown-item.selected {
+    background: #555;
+  }
+
+  .p2p4vsc-zoom-dropdown-item .shortcut {
+    opacity: 0.7;
+    font-size: 10px;
   }
 
 toolbar_js: |
@@ -224,11 +285,48 @@ toolbar_html: |
       {{menuHtml}}
       <div id="p2p4vsc-zoom-controls" class="p2p4vsc-zoom-controls" style="display: none;">
         <button id="zoom-out" class="p2p4vsc-zoom-btn" title="Zoom Out (Ctrl/Cmd + -)" aria-label="Zoom Out">−</button>
-        <span id="zoom-level" class="p2p4vsc-zoom-level">100%</span>
+        <span id="zoom-level" class="p2p4vsc-zoom-level" title="Click to select zoom level">
+          <span id="zoom-level-value">100%</span>
+          <span class="zoom-arrow">▼</span>
+        </span>
         <button id="zoom-in" class="p2p4vsc-zoom-btn" title="Zoom In (Ctrl/Cmd + +)" aria-label="Zoom In">+</button>
         <button id="zoom-fit-width" class="p2p4vsc-zoom-btn" title="Fit Width" aria-label="Fit Width">↔</button>
         <button id="zoom-fit-page" class="p2p4vsc-zoom-btn" title="Fit Page" aria-label="Fit Page">⤢</button>
         <button id="zoom-actual-size" class="p2p4vsc-zoom-btn" title="Actual Size (Ctrl/Cmd + 0)" aria-label="Actual Size">1:1</button>
+        <div id="zoom-dropdown" class="p2p4vsc-zoom-dropdown">
+          <div class="p2p4vsc-zoom-dropdown-item" data-zoom="0.25" title="25% zoom">
+            <span>25%</span>
+          </div>
+          <div class="p2p4vsc-zoom-dropdown-item" data-zoom="0.50" title="50% zoom">
+            <span>50%</span>
+          </div>
+          <div class="p2p4vsc-zoom-dropdown-item" data-zoom="1.00" title="100% zoom (Ctrl/Cmd + 0)">
+            <span>100%</span>
+            <span class="shortcut">⌘0</span>
+          </div>
+          <div class="p2p4vsc-zoom-dropdown-item" data-zoom="1.25" title="125% zoom">
+            <span>125%</span>
+          </div>
+          <div class="p2p4vsc-zoom-dropdown-item" data-zoom="1.50" title="150% zoom">
+            <span>150%</span>
+          </div>
+          <div class="p2p4vsc-zoom-dropdown-item" data-zoom="2.00" title="200% zoom">
+            <span>200%</span>
+          </div>
+          <div class="p2p4vsc-zoom-dropdown-item" data-zoom="2.50" title="250% zoom">
+            <span>250%</span>
+          </div>
+          <div class="p2p4vsc-zoom-dropdown-item" data-zoom="3.00" title="300% zoom">
+            <span>300%</span>
+          </div>
+          <div class="p2p4vsc-zoom-dropdown-item" data-zoom="fitPage" title="Fit Page">
+            <span>Fit Page</span>
+          </div>
+          <div class="p2p4vsc-zoom-dropdown-item" data-zoom="actualSize" title="Actual Size (Ctrl/Cmd + 0)">
+            <span>1:1</span>
+            <span class="shortcut">⌘0</span>
+          </div>
+        </div>
       </div>
     </div>
   </div>
