@@ -14,6 +14,7 @@ import {
   kTheme,
   kHeader,
   kFooter,
+  kZoomLevel,
 } from './types/PaperPrinter_t';
 
 // UIMenuItem type - menu item structure
@@ -39,6 +40,8 @@ export const kMenuId = [
   // Header/Footer locations
   kHeader.id,
   kFooter.id,
+  // Zoom menu
+  kZoomLevel.id,
   // Composed from header/footer + kHeaderFooter positions
   ...kHeaderFooterMenuIds,
 ] as const;
@@ -66,6 +69,8 @@ export const kMenuItemId = [
   ...kPageSizeId.menuItems.map(item => item.id),
   // From kFontSizeId menuItems
   ...kFontSizeId.menuItems.map(item => item.id),
+  // From kZoomLevel menuItems
+  ...kZoomLevel.menuItems.map(item => item.id),
 ] as const;
 
 export type MenuItemId_t = (typeof kMenuItemId)[number] | string;

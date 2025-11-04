@@ -38,6 +38,7 @@ import {
   kFooter,
   kPage,
   kTheme,
+  kZoomLevel,
 } from './types/PaperPrinter_t';
 
 /**
@@ -344,6 +345,7 @@ export class PaperPrinter {
       kFooter,
       kTheme,
       kFontSizeId,
+      kZoomLevel,
     ];
 
     // Build menu configs from constants
@@ -522,6 +524,27 @@ export class PaperPrinter {
       id: item.id as MenuItemId_t,
       displayName: item.displayName,
     }));
+  }
+
+  private menuItems_ZoomLevel(): UIMenuItem_t[] {
+    // Format shortcuts - use generic format that works for both Mac and Windows/Linux
+    // The webview will show platform-specific shortcuts in tooltips
+    return kZoomLevel.menuItems.map(item => {
+      let displayName: string = item.displayName;
+      
+      // Add shortcut to displayName if it exists (format: "100% ⌘0" or "100% Ctrl+0")
+      // Use generic format - webview can customize if needed
+      if ('shortcut' in item && item.shortcut) {
+        // Replace Ctrl/Cmd with ⌘ for display (Mac-style, common convention)
+        const shortcut = item.shortcut.replace('Ctrl/Cmd +', '⌘').replace('Ctrl/Cmd', '⌘');
+        displayName = `${displayName} ${shortcut}`;
+      }
+      
+      return {
+        id: item.id as MenuItemId_t,
+        displayName: displayName as string,
+      };
+    });
   }
 
   // Selection handler methods for each menu type
@@ -809,6 +832,40 @@ export class PaperPrinter {
     } else {
       this.app.uimenumgr.setPersistForMenuId(kMarginId.id, menuItemId);
       void this.regenerateAndUpdateWebview();
+    }
+
+    dx.done();
+    return { id, value };
+  }
+
+  private async handleSelection_ZoomLevel(
+    menuId: MenuId_t,
+    menuItemId: MenuItemId_t
+  ): Promise<HandleSelection_t> {
+    const dx = this.dx.sub('handleSelection_ZoomLevel');
+
+    let id = menuItemId;
+    let value: string | number | boolean = menuItemId;
+
+    if (menuItemId === UIMenu.defaultId()) {
+      // Return default zoom level (100% = 1.0)
+      id = '1.00';
+      value = 1.0;
+    } else {
+      // Parse zoom level for persistence
+      const zoomValue = menuItemId;
+      if (zoomValue === 'fitPage' || zoomValue === 'actualSize') {
+        // Special actions - persist as-is
+        value = zoomValue;
+      } else {
+        // Parse zoom level (e.g., "1.00" -> 1.0)
+        const scale = parseFloat(zoomValue);
+        if (!isNaN(scale)) {
+          value = scale;
+        }
+      }
+      // Persist zoom level - webview will handle the actual zoom change via menuItemSelected message
+      this.app.uimenumgr.setPersistForMenuId(kZoomLevel.id, menuItemId);
     }
 
     dx.done();

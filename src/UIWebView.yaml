@@ -103,6 +103,30 @@ webview_js: |
         } else if (message.zoomAction) {
           handleZoomAction(message.zoomAction);
         }
+      } else if (message.type === 'menuItemSelected' && message.menuId === 'zoomLevel') {
+        // Handle zoom level menu selection
+        const zoomValue = message.itemId;
+        // Remove 'flyout-' prefix if present
+        const cleanZoomValue = zoomValue.replace('flyout-', '');
+        
+        if (cleanZoomValue === 'fitPage') {
+          handleZoomAction('fitPage');
+        } else if (cleanZoomValue === 'actualSize') {
+          handleZoomAction('actualSize');
+        } else {
+          const scale = parseFloat(cleanZoomValue);
+          if (!isNaN(scale)) {
+            setZoom(scale);
+          }
+        }
+        // Close menu
+        const zoomLevelMenu = document.getElementById('zoomLevel');
+        if (zoomLevelMenu) {
+          const menuItems = zoomLevelMenu.querySelector('.p2p4vsc-menu-items');
+          if (menuItems) {
+            menuItems.style.display = 'none';
+          }
+        }
       }
     });
   }
@@ -186,61 +210,53 @@ webview_js: |
     document.getElementById('zoom-fit-page').addEventListener('click', () => handleZoomAction('fitPage'));
     document.getElementById('zoom-actual-size').addEventListener('click', () => handleZoomAction('actualSize'));
     
-    // Zoom level dropdown
+    // Zoom level dropdown - use UIMenu zoomLevel flyout
     const zoomLevelEl = document.getElementById('zoom-level');
-    const zoomDropdown = document.getElementById('zoom-dropdown');
-    
-    if (!zoomLevelEl || !zoomDropdown) {
-      dx('❌ Zoom controls not found in DOM');
+    if (!zoomLevelEl) {
+      dx('❌ Zoom level element not found in DOM');
       return;
     }
     
-    const zoomDropdownItems = zoomDropdown.querySelectorAll('.p2p4vsc-zoom-dropdown-item');
-    
-    // Toggle dropdown on click
+    // Click zoom percentage to open zoomLevel menu
     zoomLevelEl.addEventListener('click', (e) => {
       e.stopPropagation();
-      const isVisible = zoomDropdown.classList.contains('show');
+      
+      // Find the zoomLevel menu (it's a regular menu, but button is hidden)
+      const zoomLevelMenu = document.getElementById('zoomLevel');
+      if (!zoomLevelMenu) {
+        dx('❌ ZoomLevel menu not found');
+        return;
+      }
       
       // Close all other menus/dropdowns
       document.querySelectorAll('.p2p4vsc-menu-items').forEach(items => {
-        items.style.display = 'none';
+        if (items.id !== 'zoomLevel-items') {
+          items.style.display = 'none';
+        }
       });
       document.querySelectorAll('.p2p4vsc-menu.is-flyout').forEach(flyout => {
         flyout.style.display = 'none';
       });
       
-      if (isVisible) {
-        zoomDropdown.classList.remove('show');
-      } else {
-        zoomDropdown.classList.add('show');
-        updateZoomDropdownSelection();
-      }
-    });
-    
-    // Handle dropdown item clicks
-    zoomDropdownItems.forEach(item => {
-      item.addEventListener('click', (e) => {
-        e.stopPropagation();
-        const zoomValue = item.getAttribute('data-zoom');
-        if (zoomValue === 'fitPage') {
-          handleZoomAction('fitPage');
-        } else if (zoomValue === 'actualSize') {
-          handleZoomAction('actualSize');
+      // Toggle zoomLevel menu
+      const menuItems = zoomLevelMenu.querySelector('.p2p4vsc-menu-items');
+      if (menuItems) {
+        const isVisible = menuItems.style.display === 'block';
+        if (isVisible) {
+          menuItems.style.display = 'none';
         } else {
-          const scale = parseFloat(zoomValue);
-          if (!isNaN(scale)) {
-            setZoom(scale);
-          }
+          // Position menu below zoom level display
+          const rect = zoomLevelEl.getBoundingClientRect();
+          menuItems.style.position = 'absolute';
+          menuItems.style.left = (rect.left + rect.width / 2) + 'px';
+          menuItems.style.top = (rect.bottom + 4) + 'px';
+          menuItems.style.transform = 'translateX(-50%)';
+          menuItems.style.zIndex = '1000';
+          menuItems.style.display = 'block';
+          
+          // Update selection highlight
+          updateZoomMenuSelection();
         }
-        zoomDropdown.classList.remove('show');
-      });
-    });
-    
-    // Close dropdown when clicking outside
-    document.addEventListener('click', (e) => {
-      if (zoomDropdown && !zoomLevelEl.contains(e.target) && !zoomDropdown.contains(e.target)) {
-        zoomDropdown.classList.remove('show');
       }
     });
     
@@ -265,22 +281,22 @@ webview_js: |
   }
   
   /**
-   * Update zoom dropdown to show current selection
+   * Update zoom menu to show current selection
    */
-  function updateZoomDropdownSelection() {
-    const zoomDropdown = document.getElementById('zoom-dropdown');
-    if (!zoomDropdown) return;
+  function updateZoomMenuSelection() {
+    const zoomLevelMenu = document.getElementById('zoomLevel');
+    if (!zoomLevelMenu) return;
     
-    const items = zoomDropdown.querySelectorAll('.p2p4vsc-zoom-dropdown-item');
+    const items = zoomLevelMenu.querySelectorAll('.p2p4vsc-menu-item');
     items.forEach(item => {
       item.classList.remove('selected');
-      const zoomValue = item.getAttribute('data-zoom');
+      const itemId = item.id.replace('flyout-', '').replace('zoomLevel-', '');
       
       // Check if this item matches current zoom
-      if (zoomValue === 'actualSize' && currentScale === 1.0) {
+      if (itemId === 'actualSize' && currentScale === 1.0) {
         item.classList.add('selected');
-      } else if (zoomValue !== 'fitPage' && zoomValue !== 'actualSize') {
-        const scale = parseFloat(zoomValue);
+      } else if (itemId !== 'fitPage' && itemId !== 'actualSize') {
+        const scale = parseFloat(itemId);
         if (!isNaN(scale) && Math.abs(scale - currentScale) < 0.01) {
           item.classList.add('selected');
         }
@@ -337,8 +353,8 @@ webview_js: |
       zoomLevelValueEl.textContent = Math.round(currentScale * 100) + '%';
     }
     
-    // Update dropdown selection
-    updateZoomDropdownSelection();
+    // Update menu selection if menu is open
+    updateZoomMenuSelection();
     
     // Save zoom level to extension
     if (vscode) {
