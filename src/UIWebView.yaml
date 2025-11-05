@@ -92,7 +92,7 @@ webview_js: |
   const ZOOM_MAX = parseFloat('{{zoom_max}}') || 0;
   const ZOOM_STEP = 0.1;
   
-  if (ZOOM_MIN === 0 || ZOOM_MAX === 0) {
+  if (ZOOM_MIN === 0 || ZOOM_MAX === 0 || isNaN(ZOOM_MIN) || isNaN(ZOOM_MAX)) {
     dx('❌ ERROR: zoom_min or zoom_max template variables not injected correctly');
     throw new Error('Zoom constants not initialized - template injection failed');
   }
