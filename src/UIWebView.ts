@@ -359,7 +359,11 @@ export class UIWebView {
         this.app.ui.persist.pdf_zoom_level = zoomLevel;
         dx.out(`Zoom level saved: ${zoomLevel}`);
       } else if (msg.zoomLevel !== undefined) {
-        dx.error(`Invalid zoom level received: ${msg.zoomLevel} (must be between ${kZoomLevel.min} and ${kZoomLevel.max})`);
+        // Invalid zoom level - show error to user immediately and fail
+        const errorMsg = `Invalid zoom level received: ${msg.zoomLevel} (must be between ${kZoomLevel.min} and ${kZoomLevel.max})`;
+        dx.error(errorMsg);
+        this.app.ui.showErrorMessage(errorMsg);
+        throw new Error(errorMsg);
       }
       
       // Handle zoom actions if present

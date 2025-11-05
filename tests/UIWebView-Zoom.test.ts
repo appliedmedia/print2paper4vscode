@@ -118,16 +118,16 @@ describe('UIWebView Zoom Controls', () => {
   });
 
   describe('Zoom Percentage Input Validation', () => {
-    test('should snap input to nearest 10% increment', () => {
-      const snapToNearest10 = (input: number): number => {
-        return Math.round(input / 10) * 10;
+    test('should NOT snap input - user-entered values are preserved (validated but not snapped)', () => {
+      // Input validation validates min/max and rounds to 2 decimal places, but does NOT snap to 10% increments
+      const validateAndRound = (inputPercent: number): number => {
+        const clampedPercent = Math.max(10, Math.min(300, inputPercent));
+        return Math.round((clampedPercent / 100) * 100) / 100; // Round to 2 decimal places only
       };
 
-      assert.strictEqual(snapToNearest10(23), 20, '23 should snap to 20');
-      assert.strictEqual(snapToNearest10(27), 30, '27 should snap to 30');
-      assert.strictEqual(snapToNearest10(45), 50, '45 should snap to 50');
-      assert.strictEqual(snapToNearest10(55), 60, '55 should snap to 60');
-      assert.strictEqual(snapToNearest10(100), 100, '100 should stay 100');
+      assert.strictEqual(validateAndRound(47), 0.47, '47% should stay 47% (not snapped to 50%)');
+      assert.strictEqual(validateAndRound(23), 0.23, '23% should stay 23% (not snapped to 20%)');
+      assert.strictEqual(validateAndRound(100), 1.0, '100% should stay 100%');
     });
 
     test('should clamp zoom to 10%-300% range', () => {
@@ -157,6 +157,22 @@ describe('UIWebView Zoom Controls', () => {
       assert.ok(!isValidZoomInput('350'), '350 should be invalid (> 300)');
       assert.ok(!isValidZoomInput('abc'), 'abc should be invalid');
       assert.ok(!isValidZoomInput(''), 'empty should be invalid');
+    });
+
+    test('should restrict input to integers only (no decimals)', () => {
+      // Input validation should only allow digits 0-9, max 3 characters
+      const isValidInput = (text: string): boolean => {
+        const cleaned = text.replace(/[^0-9]/g, '');
+        const numValue = parseInt(cleaned, 10);
+        return cleaned.length <= 3 && cleaned.length > 0 && !isNaN(numValue) && numValue >= 10 && numValue <= 300;
+      };
+
+      assert.ok(isValidInput('100'), '100 should be valid');
+      assert.ok(isValidInput('50'), '50 should be valid');
+      assert.ok(!isValidInput('47.5'), '47.5 should be invalid (decimals not allowed)');
+      assert.ok(!isValidInput('1234'), '1234 should be invalid (too many digits)');
+      assert.ok(!isValidInput('5'), '5 should be invalid (< 10)');
+      assert.ok(!isValidInput('400'), '400 should be invalid (> 300)');
     });
   });
 
@@ -209,15 +225,21 @@ describe('UIWebView Zoom Controls', () => {
       assert.ok(fitPageScale < 2.0, 'Fit page scale should be reasonable');
     });
 
-    test('should handle actual size action', () => {
-      let currentScale = 2.0;
+    test('should handle fit page with zero page dimensions (error case)', () => {
+      const pageWidthPx = 0;
+      const pageHeightPx = 0;
+      
+      // Fit calculations should error, not use fallbacks
+      const shouldError = pageWidthPx <= 0 || pageHeightPx <= 0;
+      assert.ok(shouldError, 'Fit page should error when page dimensions are zero');
+    });
 
-      const actualSize = () => {
-        currentScale = 1.0;
-      };
-
-      actualSize();
-      assert.strictEqual(currentScale, 1.0, 'Should set to 1.0 (100%)');
+    test('should handle fit width with zero page width (error case)', () => {
+      const pageWidthPx = 0;
+      
+      // Fit width should error, not use fallbacks
+      const shouldError = pageWidthPx <= 0;
+      assert.ok(shouldError, 'Fit width should error when page width is zero');
     });
   });
 

@@ -574,5 +574,59 @@ describe('Extension↔Webview Integration Tests', () => {
       assert.strictEqual(app.ui.persist.pdf_zoom_level, 1.5, 'Zoom level should be updated by real handler');
     });
   });
+
+  describe('Error Handling', () => {
+    test('should error on invalid zoom level from webview', async () => {
+      // Create panel to set up routing
+      const doc = new jsPDF();
+      doc.text('Test', 10, 10);
+      const pdfData: PDFData_t = {
+        arrayBuffer: doc.output('arraybuffer') as ArrayBuffer,
+        pageTotal: 1,
+        pageSizePx: { widthPx: 595, heightPx: 842 },
+        title: 'Test',
+      };
+      await uiWebView.displayPdfPanel(pdfData);
+
+      // Send invalid zoom level (out of range)
+      const invalidMessage: PostMessage = {
+        type: 'zoom',
+        zoomLevel: 999, // Invalid - too high
+      };
+
+      const callback = (global as any).__webviewMessageCallback;
+      assert.ok(callback, 'Message callback should be set up');
+
+      // Should throw error (handleZoomMessage shows error and throws)
+      let errorThrown = false;
+      try {
+        await callback(invalidMessage);
+      } catch (error) {
+        errorThrown = true;
+        assert.ok(error instanceof Error, 'Should throw Error');
+        assert.ok(String(error).includes('Invalid zoom level'), 'Error message should mention invalid zoom level');
+      }
+      assert.ok(errorThrown, 'Should throw error for invalid zoom level');
+    });
+
+    test('should validate persisted zoom level on init', async () => {
+      // Set corrupted persisted value (string that can't be parsed)
+      mockGlobalState = {
+        'p2p4vsc.pdf_zoom_level': 'invalid_string',
+      };
+
+      const newApp = new App(mockContext, mockVSCode);
+      newApp.init();
+
+      // Should be sanitized to valid default on init
+      const zoomLevel = Number(newApp.ui.persist.pdf_zoom_level);
+      assert.ok(
+        zoomLevel >= kZoomLevel.min && zoomLevel <= kZoomLevel.max,
+        'Corrupted persisted value should be sanitized to valid default'
+      );
+
+      newApp.done();
+    });
+  });
 });
 

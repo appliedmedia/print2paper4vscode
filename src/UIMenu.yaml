@@ -149,11 +149,13 @@ uimenu_generic_handlers: |
       const menuItems = menu?.querySelector?.('.p2p4vsc-menu-items');
       const menuId = menu?.getAttribute('id');
 
-      // Check if this menu has no items (button-only menu like zoomOut/zoomIn)
+      // If menu has no items, treat button click as menu item selection
+      // This is generic - any menu with no items will post menuItemSelected with itemId = menuId
+      // The selection handler will receive menuId and itemId (both same value) and handle it
       const hasNoItems = menuItems && menuItems.children?.length === 0;
       
       if (hasNoItems) {
-        // Button-only menu - trigger selection handler directly
+        // Generic handling - post selection message, selection handler processes it
         if (window.vscode && menuId) {
           window.vscode.postMessage({
             type: 'menuItemSelected',
@@ -164,6 +166,7 @@ uimenu_generic_handlers: |
         return;
       }
 
+      // Menu has items - show/hide dropdown as normal
       // Close all other menus first
       document.querySelectorAll('.p2p4vsc-menu-items').forEach(items => {
         if (items !== menuItems) {

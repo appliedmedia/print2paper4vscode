@@ -123,10 +123,10 @@ webview_js: |
         const itemId = message.itemId;
         
         if (menuId === 'zoomOut') {
-          // Zoom out button clicked (button-only menu)
+          // Zoom out menu clicked (menu with no items - handled generically by UIMenu)
           handleZoomAction('out');
         } else if (menuId === 'zoomIn') {
-          // Zoom in button clicked (button-only menu)
+          // Zoom in menu clicked (menu with no items - handled generically by UIMenu)
           handleZoomAction('in');
         } else if (menuId === 'zoomLevel') {
           // Zoom level menu item selected
@@ -203,10 +203,10 @@ webview_js: |
       // Initialize zoom controls
       initZoomControls();
       
-      // Update zoom level display to match current scale
+      // Update zoom level display to match current scale (% is static in HTML)
       const zoomLevelValueEl = document.getElementById('zoom-level-value');
       if (zoomLevelValueEl) {
-        zoomLevelValueEl.textContent = Math.round(currentScale * 100) + '%';
+        zoomLevelValueEl.textContent = Math.round(currentScale * 100).toString();
       }
       
       // Render all pages with initial zoom level
@@ -246,32 +246,45 @@ webview_js: |
         }
       });
       
-      // Handle input/typing
+      // Handle input/typing - restrict to numbers only (10-300), max 3 characters
+      // % sign is static and not editable
       zoomLevelEl.addEventListener('input', (e) => {
         e.stopPropagation();
         let text = zoomLevelValueEl.textContent || '';
-        // Remove non-numeric characters except %
-        text = text.replace(/[^0-9%]/g, '');
+        // Remove non-numeric characters (no decimals, no % sign in input)
+        text = text.replace(/[^0-9]/g, '');
+        // Limit to 3 characters max (300 is max)
+        text = text.slice(0, 3);
+        // Ensure value is within valid range (10-300)
+        const numValue = parseInt(text, 10);
+        if (text && !isNaN(numValue)) {
+          if (numValue < 10) {
+            text = '10';
+          } else if (numValue > 300) {
+            text = '300';
+          }
+        }
         zoomLevelValueEl.textContent = text;
       });
       
       // Handle blur or Enter key to apply zoom
+      // Input is already validated to be 10-300 integer, so it should be valid
       const applyZoomFromInput = () => {
         let text = zoomLevelValueEl.textContent || '';
-        // Remove % sign if present
-        text = text.replace(/%/g, '').trim();
+        // Remove any non-numeric (shouldn't be any, but be safe)
+        text = text.replace(/[^0-9]/g, '').trim();
         
         if (text === '') {
-          // Restore current zoom if empty
-          zoomLevelValueEl.textContent = Math.round(currentScale * 100) + '%';
+          // Restore current zoom if empty (% is static in HTML)
+          zoomLevelValueEl.textContent = Math.round(currentScale * 100).toString();
           return;
         }
         
-        const inputPercent = parseFloat(text);
+        const inputPercent = parseInt(text, 10);
         // Validate input is within kZoomLevel.minPercent-kZoomLevel.maxPercent range
         if (isNaN(inputPercent) || inputPercent < kZoomLevel.minPercent || inputPercent > kZoomLevel.maxPercent) {
-          // Invalid input, restore current zoom
-          zoomLevelValueEl.textContent = Math.round(currentScale * 100) + '%';
+          // Invalid input, restore current zoom (% is static in HTML)
+          zoomLevelValueEl.textContent = Math.round(currentScale * 100).toString();
           return;
         }
         
@@ -293,14 +306,17 @@ webview_js: |
         } else if (e.key === 'Escape') {
           e.preventDefault();
           e.stopPropagation();
-          // Restore current zoom on Escape
-          zoomLevelValueEl.textContent = Math.round(currentScale * 100) + '%';
+          // Restore current zoom on Escape (% is static in HTML)
+          zoomLevelValueEl.textContent = Math.round(currentScale * 100).toString();
           zoomLevelEl.blur();
         }
       });
     }
     
-    // Keyboard shortcuts
+    // Keyboard shortcuts for zoom controls
+    // These work globally when webview has focus, regardless of dropdown state
+    // ⌘/Ctrl+0 → actualSize (100%), ⌘/Ctrl++ → zoom in, ⌘/Ctrl+- → zoom out
+    // Shortcuts are also displayed in menu items (e.g., "100% ⌘0") via PaperPrinter.menuItems_ZoomLevel()
     document.addEventListener('keydown', function(e) {
       // Check for Cmd/Ctrl modifier
       const isModifier = e.metaKey || e.ctrlKey;
@@ -358,18 +374,22 @@ webview_js: |
         newScale = Math.round(Math.max(currentScale - kZoomLevel.stepAmount, kZoomLevel.min) * 100) / 100;
         break;
       case 'fitWidth':
-        if (pageWidthPx > 0) {
-          const container = getAvailableContainerSize();
-          newScale = Math.round((container.width / pageWidthPx) * 100) / 100;
+        if (pageWidthPx <= 0) {
+          dx('❌ ERROR: Cannot calculate fitWidth - page dimensions not loaded. PDF may have failed to load or first page is invalid.');
+          throw new Error('Page width must be greater than 0 for fitWidth calculation');
         }
+        const containerWidth = getAvailableContainerSize();
+        newScale = Math.round((containerWidth.width / pageWidthPx) * 100) / 100;
         break;
       case 'fitPage':
-        if (pageWidthPx > 0 && pageHeightPx > 0) {
-          const container = getAvailableContainerSize();
-          const scaleX = container.width / pageWidthPx;
-          const scaleY = container.height / pageHeightPx;
-          newScale = Math.round(Math.min(scaleX, scaleY) * 100) / 100;
+        if (pageWidthPx <= 0 || pageHeightPx <= 0) {
+          dx('❌ ERROR: Cannot calculate fitPage - page dimensions not loaded. PDF may have failed to load or first page is invalid.');
+          throw new Error('Page width and height must be greater than 0 for fitPage calculation');
         }
+        const containerPage = getAvailableContainerSize();
+        const scaleX = containerPage.width / pageWidthPx;
+        const scaleY = containerPage.height / pageHeightPx;
+        newScale = Math.round(Math.min(scaleX, scaleY) * 100) / 100;
         break;
       case 'actualSize':
         newScale = 1.0;
@@ -400,10 +420,10 @@ webview_js: |
     // Clamp scale to valid range and round to 2 decimal places
     currentScale = Math.round(Math.max(kZoomLevel.min, Math.min(kZoomLevel.max, scale)) * 100) / 100;
     
-    // Update zoom level display
+    // Update zoom level display (only the number, % is static in HTML)
     const zoomLevelValueEl = document.getElementById('zoom-level-value');
     if (zoomLevelValueEl) {
-      zoomLevelValueEl.textContent = Math.round(currentScale * 100) + '%';
+      zoomLevelValueEl.textContent = Math.round(currentScale * 100).toString();
     }
     
     // Update menu selection if menu is open
@@ -417,7 +437,14 @@ webview_js: |
       });
     }
     
-    // Re-render all pages with new scale
+    // ⚠️NOTE⚠️ PERFORMANCE: Re-rendering all pages on zoom change
+    // For large PDFs (10+ pages), this can cause noticeable delays.
+    // PDF.js is our rendering system - we're keeping this simple and not using
+    // CSS transforms or progressive rendering tricks.
+    // If performance becomes an issue, consider:
+    // - Adding a progress indicator during re-render
+    // - Implementing lazy rendering (only visible pages first)
+    // - Using CSS transforms for instant visual feedback, then re-render at higher quality
     renderAllPages();
   }
 

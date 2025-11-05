@@ -108,6 +108,12 @@ export class UIMenuMgr {
   }
 
   // Handle menu item selection
+  // NOTE: All menu IDs and menu item IDs are static and known at compile time.
+  // They are defined in PaperPrinter_t.ts constants and compiled into kMenuId/kMenuItemId.
+  // There is no "random DOM code" that generates IDs - all IDs come from these constants.
+  // Therefore, we don't need ID normalization, prefix stripping, or other bulletproofing.
+  // If an invalid ID appears, it's a bug that should be fixed, not silently handled.
+  // Future: HTML IDs will be completely reworked, so this validation is temporary.
   async handleMenuItemSelected(menuId: MenuId_t, itemId: MenuItemId_t): Promise<void> {
     const dx = this.dx.sub('handleMenuItemSelected');
 
