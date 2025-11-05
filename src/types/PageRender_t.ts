@@ -5,7 +5,11 @@
  * Any content type that can be rendered as pages should implement this interface.
  */
 
-import type { PageSizeIdMenuItems_t, OrientMenuItems_t, MarginIdMenuItems_t } from './PaperPrinter_t';
+import type {
+  PageSizeIdMenuItems_t,
+  OrientMenuItems_t,
+  MarginIdMenuItems_t,
+} from './PaperPrinter_t';
 
 export interface PageData {
   /** Data URL of the rendered page (e.g., PDF data URL) */
@@ -47,11 +51,7 @@ export interface PageRender {
    * @returns Promise resolving to page data (data URL, dimensions, etc.)
    * @throws PageRenderError for invalid page numbers or generation failures
    */
-  renderContent(
-    pageNumber: number,
-    lineBegin: number,
-    lineEnd: number
-  ): Promise<PageData>;
+  renderContent(pageNumber: number, lineBegin: number, lineEnd: number): Promise<PageData>;
 
   /**
    * Get the total number of pages in the document

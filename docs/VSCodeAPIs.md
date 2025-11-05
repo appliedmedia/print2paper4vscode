@@ -591,6 +591,7 @@ interface ExtensionContext {
 **What it doesn't provide:** ❌ Window dimensions, ❌ Window size, ❌ Window position, ❌ Screen dimensions
 
 **Checked at activation time:** When `activate(context: ExtensionContext)` is called:
+
 - ❌ `context` has no dimension properties
 - ❌ `vscode.window.state` only has `focused` and `active` booleans
 - ❌ `vscode.window.*` has no dimension-related properties
@@ -630,7 +631,7 @@ element.style.left = Math.min(savedPosition, maxLeft) + 'px';
 ### ❌ Window Dimensions and Display Information
 
 - No API to get window width/height
-- No API to get screen dimensions  
+- No API to get screen dimensions
 - No API to get window position
 - Extensions run in Node.js extension host with no UI access
 - Only webview contexts (browser) have `window.innerWidth`/`innerHeight`
@@ -1526,6 +1527,7 @@ VS Code does NOT support adding arbitrary items to the top-level menu bar (File,
 **Current Implementation:**
 
 Our extension uses:
+
 ```json
 "menus": {
   "editor/context": [
@@ -1545,6 +1547,7 @@ Our extension uses:
 ```
 
 This adds the command to:
+
 - Editor context menu (right-click)
 - Editor title bar (as a button/action when editor has focus)
 
@@ -1574,6 +1577,7 @@ This adds a button to the editor title bar when an editor has focus. The `when` 
 **What the Editor Title Button Looks Like:**
 
 When you add a command to `editor/title`, VS Code displays it as:
+
 - A clickable button/action in the editor tab area (top-right of the editor, near the tab)
 - Shows the command's `title` property as the button label (e.g., "Print2Paper")
 - By default, no icon is shown unless you specify one
@@ -1596,6 +1600,7 @@ You can override the displayed text for a specific menu location while keeping t
 ```
 
 This shows:
+
 - **Editor title bar**: 🖨️ emoji button
 - **Command Palette**: "Print2Paper" (from the command's `title` property)
 - **Context menu**: "Print2Paper" (from the command's `title` property)
@@ -1605,6 +1610,7 @@ The `title` property in the menu entry overrides the display text for that speci
 **Menu Groups:**
 
 Menu items can be organized into groups. Common groups include:
+
 - `navigation` - Navigation items (first position)
 - `1_modification` - Modification items
 - `2_cutcopypaste` - Cut/Copy/Paste items
