@@ -289,22 +289,18 @@ export const kZoomLevel = {
   min: 0.10,
   max: 3.0,
   stepAmount: 0.1,
-  actualSize: {
-    shortcutCode: 'Digit0', // KeyboardEvent.code for 0 key
-  },
   menuItems: [
-    { id: '0.10', displayName: '10%' },
-    { id: '0.25', displayName: '25%' },
-    { id: '0.50', displayName: '50%' },
-    { id: '1.00', displayName: '100%', shortcut: 'Ctrl/Cmd + 0', shortcutCode: 'Digit0' },
-    { id: '1.25', displayName: '125%' },
-    { id: '1.50', displayName: '150%' },
-    { id: '2.00', displayName: '200%' },
-    { id: '2.50', displayName: '250%' },
-    { id: '3.00', displayName: '300%' },
+    { id: '0.10', displayName: '10%', value: 0.10 },
+    { id: '0.25', displayName: '25%', value: 0.25 },
+    { id: '0.50', displayName: '50%', value: 0.50 },
+    { id: '1.00', displayName: '100% (1:1)', shortcut: 'Ctrl/Cmd + 0', shortcutCode: 'Digit0', value: 1.00 },
+    { id: '1.25', displayName: '125%', value: 1.25 },
+    { id: '1.50', displayName: '150%', value: 1.50 },
+    { id: '2.00', displayName: '200%', value: 2.00 },
+    { id: '2.50', displayName: '250%', value: 2.50 },
+    { id: '3.00', displayName: '300%', value: 3.00 },
     { id: 'fitPage', displayName: 'Fit Page' },
     { id: 'fitWidth', displayName: 'Fit Width' },
-    { id: 'actualSize', displayName: '1:1', shortcutCode: 'Digit0' },
   ],
 } as const;
 export type ZoomLevelMenuItems_t = (typeof kZoomLevel.menuItems)[number]['id'];
