@@ -67,6 +67,9 @@ webview_css: |
     --page-gutter-vertical: 4px;
     /* Container padding for fit calculations - matches .pdfviewer-container padding */
     --container-padding-horizontal: 20px;
+    /* Toolbar dimensions for fit calculations */
+    --toolbar-padding: 24px;
+    --toolbar-default-height: 60px;
   }
 
 webview_js: |
@@ -416,7 +419,23 @@ webview_js: |
    */
   function getAvailableContainerSize() {
     const toolbar = document.getElementById('p2p4vsc-toolbar');
-    const toolbarHeight = toolbar ? toolbar.getBoundingClientRect().height + 24 : 60; // Toolbar height + padding
+    
+    // Get toolbar padding from CSS custom property
+    const toolbarPaddingStr = getComputedStyle(document.documentElement)
+      .getPropertyValue('--toolbar-padding')
+      .trim();
+    const toolbarPaddingPx = toolbarPaddingStr ? parseFloat(toolbarPaddingStr) : 24; // Fallback to 24px
+    
+    // Get default toolbar height from CSS custom property (used when toolbar is missing)
+    const toolbarDefaultHeightStr = getComputedStyle(document.documentElement)
+      .getPropertyValue('--toolbar-default-height')
+      .trim();
+    const toolbarDefaultHeightPx = toolbarDefaultHeightStr ? parseFloat(toolbarDefaultHeightStr) : 60; // Fallback to 60px
+    
+    // Calculate toolbar height: toolbar height + padding if toolbar exists, otherwise use default
+    const toolbarHeight = toolbar 
+      ? toolbar.getBoundingClientRect().height + toolbarPaddingPx
+      : toolbarDefaultHeightPx;
     
     // Get horizontal padding from CSS custom property (matches .pdfviewer-container padding)
     const containerPadding = getComputedStyle(document.documentElement)
