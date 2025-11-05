@@ -1,6 +1,6 @@
 import { test, describe } from 'node:test';
 import * as assert from 'node:assert';
-import { ZOOM_MIN, ZOOM_MAX } from '../src/types/PaperPrinter_t';
+import { kZoomLevel } from '../src/types/PaperPrinter_t';
 
 describe('UIWebView Zoom Controls', () => {
   describe('Zoom Level Persistence', () => {
@@ -144,6 +144,7 @@ describe('UIWebView Zoom Controls', () => {
     test('should handle zoom in action', () => {
       let currentScale = 1.0;
       const ZOOM_STEP = 0.1;
+      const ZOOM_MAX = kZoomLevel.max;
 
       const zoomIn = () => {
         currentScale = Math.min(currentScale + ZOOM_STEP, ZOOM_MAX);
@@ -160,6 +161,7 @@ describe('UIWebView Zoom Controls', () => {
     test('should handle zoom out action', () => {
       let currentScale = 1.0;
       const ZOOM_STEP = 0.1;
+      const ZOOM_MIN = kZoomLevel.min;
 
       const zoomOut = () => {
         currentScale = Math.max(currentScale - ZOOM_STEP, ZOOM_MIN);
@@ -170,7 +172,7 @@ describe('UIWebView Zoom Controls', () => {
 
       currentScale = 0.15;
       zoomOut();
-      assert.strictEqual(currentScale, ZOOM_MIN, `Should cap at ${ZOOM_MIN}`);
+      assert.strictEqual(currentScale, kZoomLevel.min, `Should cap at ${kZoomLevel.min}`);
     });
 
     test('should handle fit page action', () => {

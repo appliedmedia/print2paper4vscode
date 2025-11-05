@@ -300,12 +300,6 @@ export const kZoomLevel = {
     { id: 'actualSize', displayName: '1:1' },
   ],
 } as const;
-
-// Export zoom constants for easy access - single source of truth
-export const ZOOM_MIN = kZoomLevel.min;
-export const ZOOM_MAX = kZoomLevel.max;
-export const ZOOM_MIN_PERCENT = ZOOM_MIN * 100;
-export const ZOOM_MAX_PERCENT = ZOOM_MAX * 100;
 export type ZoomLevelMenuItems_t = (typeof kZoomLevel.menuItems)[number]['id'];
 
 // end, PaperPrinter_t.ts
