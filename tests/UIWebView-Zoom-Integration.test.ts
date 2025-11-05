@@ -99,7 +99,7 @@ describe('UIWebView Zoom Integration Tests', () => {
       // Set persisted zoom level
       app.ui.persist.pdf_zoom_level = 1.5;
 
-      // Generate PDF and create webview HTML
+      // Generate PDF and create webview panel (which generates HTML)
       const doc = new jsPDF();
       doc.text('Test', 10, 10);
       
@@ -110,13 +110,13 @@ describe('UIWebView Zoom Integration Tests', () => {
         title: 'Test',
       };
 
-      const html = await uiWebView.generatePDFHTML('data:application/pdf;base64,', pdfData);
+      await uiWebView.displayPdfPanel(pdfData);
 
-      // Verify template variables are injected
-      assert.ok(html.includes('1.5'), 'HTML should contain persisted zoom level');
-      assert.ok(html.includes('zoomLevel_min'), 'HTML should contain zoomLevel_min template variable');
-      assert.ok(html.includes('zoomLevel_max'), 'HTML should contain zoomLevel_max template variable');
-      assert.ok(html.includes('zoomLevel_stepAmount'), 'HTML should contain zoomLevel_stepAmount template variable');
+      // Verify template variables are injected in captured HTML
+      assert.ok(capturedWebviewHTML.includes('1.5'), 'HTML should contain persisted zoom level');
+      assert.ok(capturedWebviewHTML.includes('zoomLevel_min'), 'HTML should contain zoomLevel_min template variable');
+      assert.ok(capturedWebviewHTML.includes('zoomLevel_max'), 'HTML should contain zoomLevel_max template variable');
+      assert.ok(capturedWebviewHTML.includes('zoomLevel_stepAmount'), 'HTML should contain zoomLevel_stepAmount template variable');
     });
 
     test('should inject zoom constants (min/max/stepAmount) into webview template', async () => {
@@ -130,16 +130,16 @@ describe('UIWebView Zoom Integration Tests', () => {
         title: 'Test',
       };
 
-      const html = await uiWebView.generatePDFHTML('data:application/pdf;base64,', pdfData);
+      await uiWebView.displayPdfPanel(pdfData);
 
       // Verify zoom constants are injected with correct values
       const minValue = kZoomLevel.min.toString();
       const maxValue = kZoomLevel.max.toString();
       const stepValue = kZoomLevel.stepAmount.toString();
 
-      assert.ok(html.includes(minValue), `HTML should contain zoomLevel_min=${minValue}`);
-      assert.ok(html.includes(maxValue), `HTML should contain zoomLevel_max=${maxValue}`);
-      assert.ok(html.includes(stepValue), `HTML should contain zoomLevel_stepAmount=${stepValue}`);
+      assert.ok(capturedWebviewHTML.includes(minValue), `HTML should contain zoomLevel_min=${minValue}`);
+      assert.ok(capturedWebviewHTML.includes(maxValue), `HTML should contain zoomLevel_max=${maxValue}`);
+      assert.ok(capturedWebviewHTML.includes(stepValue), `HTML should contain zoomLevel_stepAmount=${stepValue}`);
     });
 
     test('should handle undefined/null zoom level gracefully', async () => {
@@ -157,8 +157,8 @@ describe('UIWebView Zoom Integration Tests', () => {
       };
 
       // Should not throw - should use default (1.0)
-      const html = await uiWebView.generatePDFHTML('data:application/pdf;base64,', pdfData);
-      assert.ok(html.includes('1.0'), 'Should default to 1.0 when zoom level is undefined');
+      await uiWebView.displayPdfPanel(pdfData);
+      assert.ok(capturedWebviewHTML.includes('1.0'), 'Should default to 1.0 when zoom level is undefined');
     });
 
     test('should handle invalid zoom level values', async () => {
@@ -176,8 +176,8 @@ describe('UIWebView Zoom Integration Tests', () => {
       };
 
       // Should clamp to valid range (default to alt value)
-      const html = await uiWebView.generatePDFHTML('data:application/pdf;base64,', pdfData);
-      assert.ok(html.includes(kZoomLevel.alt), `Should use default alt value (${kZoomLevel.alt}) for invalid zoom`);
+      await uiWebView.displayPdfPanel(pdfData);
+      assert.ok(capturedWebviewHTML.includes(kZoomLevel.alt), `Should use default alt value (${kZoomLevel.alt}) for invalid zoom`);
     });
   });
 
@@ -305,14 +305,11 @@ describe('UIWebView Zoom Integration Tests', () => {
       };
 
       // Should not throw - should handle null gracefully
-      const html = await uiWebView.generatePDFHTML('data:application/pdf;base64,', pdfData);
-      assert.ok(typeof html === 'string', 'Should generate HTML even with null zoom level');
+      await uiWebView.displayPdfPanel(pdfData);
+      assert.ok(typeof capturedWebviewHTML === 'string' && capturedWebviewHTML.length > 0, 'Should generate HTML even with null zoom level');
     });
 
     test('should validate zoom level range in template injection', async () => {
-      // Set zoom level at minimum boundary
-      app.ui.persist.pdf_zoom_level = kZoomLevel.min;
-
       const doc = new jsPDF();
       doc.text('Test', 10, 10);
       
@@ -323,13 +320,16 @@ describe('UIWebView Zoom Integration Tests', () => {
         title: 'Test',
       };
 
-      const html = await uiWebView.generatePDFHTML('data:application/pdf;base64,', pdfData);
-      assert.ok(html.includes(kZoomLevel.min.toString()), 'Should accept minimum zoom level');
+      // Set zoom level at minimum boundary
+      app.ui.persist.pdf_zoom_level = kZoomLevel.min;
+      await uiWebView.displayPdfPanel(pdfData);
+      assert.ok(capturedWebviewHTML.includes(kZoomLevel.min.toString()), 'Should accept minimum zoom level');
 
       // Set zoom level at maximum boundary
+      capturedWebviewHTML = ''; // Reset
       app.ui.persist.pdf_zoom_level = kZoomLevel.max;
-      const html2 = await uiWebView.generatePDFHTML('data:application/pdf;base64,', pdfData);
-      assert.ok(html2.includes(kZoomLevel.max.toString()), 'Should accept maximum zoom level');
+      await uiWebView.displayPdfPanel(pdfData);
+      assert.ok(capturedWebviewHTML.includes(kZoomLevel.max.toString()), 'Should accept maximum zoom level');
     });
   });
 });
