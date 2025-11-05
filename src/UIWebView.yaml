@@ -90,6 +90,8 @@ webview_js: |
   const ZOOM_MIN = 0.25;
   const ZOOM_MAX = 3.0;
   const ZOOM_STEP = 0.1;
+  const ZOOM_MIN_PERCENT = ZOOM_MIN * 100;
+  const ZOOM_MAX_PERCENT = ZOOM_MAX * 100;
   
   // Use existing vscode API from toolbar (or create if not available)
   const vscode = window.vscode || (typeof acquireVsCodeApi !== 'undefined' ? acquireVsCodeApi() : null);
@@ -255,15 +257,16 @@ webview_js: |
         }
         
         const inputPercent = parseFloat(text);
-        if (isNaN(inputPercent) || inputPercent < 10 || inputPercent > 300) {
+        // Validate input is within ZOOM_MIN%-ZOOM_MAX% range
+        if (isNaN(inputPercent) || inputPercent < ZOOM_MIN_PERCENT || inputPercent > ZOOM_MAX_PERCENT) {
           // Invalid input, restore current zoom
           zoomLevelValueEl.textContent = Math.round(currentScale * 100) + '%';
           return;
         }
         
-        // Snap to nearest 10% increment
+        // Snap to nearest 10% increment for consistency with preset levels
         const snappedPercent = Math.round(inputPercent / 10) * 10;
-        const clampedPercent = Math.max(10, Math.min(300, snappedPercent));
+        const clampedPercent = Math.max(ZOOM_MIN_PERCENT, Math.min(ZOOM_MAX_PERCENT, snappedPercent));
         const newScale = clampedPercent / 100;
         
         setZoom(newScale);

@@ -244,7 +244,7 @@ toolbar_html: |
     <div class="p2p4vsc-toolbar-menubar" role="menubar">
       {{menuHtml}}
       <div id="p2p4vsc-zoom-controls" class="p2p4vsc-zoom-controls" style="display: none;">
-        <span id="zoom-level" class="p2p4vsc-zoom-level" contenteditable="true" role="textbox" tabindex="0">
+        <span id="zoom-level" class="p2p4vsc-zoom-level" contenteditable="true" role="textbox" aria-label="Zoom level percentage" tabindex="0">
           <span id="zoom-level-value">100%</span>
         </span>
       </div>

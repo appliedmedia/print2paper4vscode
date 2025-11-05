@@ -163,8 +163,13 @@ export class UIWebView {
 
       // Get zoom level from persistence (default: 1.0 = 100%)
       const zoomLevel = this.app.ui.persist.pdf_zoom_level;
-      const numZoomLevel = Number(zoomLevel);
-      const pdf_zoom_level = numZoomLevel && numZoomLevel > kZoomLevel.min && numZoomLevel <= kZoomLevel.max ? numZoomLevel : Number(kZoomLevel.alt);
+      const parsedZoom = Number(zoomLevel);
+      const pdf_zoom_level =
+        Number.isFinite(parsedZoom) &&
+        parsedZoom >= kZoomLevel.min &&
+        parsedZoom <= kZoomLevel.max
+          ? parsedZoom
+          : Number(kZoomLevel.alt);
 
       // Create template dictionary
       const templateDict = {
@@ -344,7 +349,11 @@ export class UIWebView {
 
     try {
       const zoomLevel = Number(msg.zoomLevel);
-      if (zoomLevel && zoomLevel > kZoomLevel.min && zoomLevel <= kZoomLevel.max) {
+      if (
+        Number.isFinite(zoomLevel) &&
+        zoomLevel >= kZoomLevel.min &&
+        zoomLevel <= kZoomLevel.max
+      ) {
         // Save zoom level to persistence
         this.app.ui.persist.pdf_zoom_level = zoomLevel;
         dx.out(`Zoom level saved: ${zoomLevel}`);

@@ -103,7 +103,7 @@ export abstract class OS {
    * os.dictReplace('{{os-ctrl-cmd}}+0') // Returns '⌘+0' on Mac, 'Ctrl+0' on Win/Linux
    */
   dictReplace(source: string): string {
-    const platform = process?.platform;
+    const platform = process.platform;
     const osKeys: Record<string, string> = {};
     
     if (platform === 'win32') {
@@ -111,7 +111,7 @@ export abstract class OS {
     } else if (platform === 'darwin') {
       osKeys['os-ctrl-cmd'] = '⌘';
     } else {
-      // Linux
+      // Default to Ctrl for Linux and other platforms
       osKeys['os-ctrl-cmd'] = 'Ctrl';
     }
     

@@ -61,9 +61,13 @@ export class UI {
     // Set default zoom level if not already set or invalid
     const zoomLevel = this.persist.pdf_zoom_level;
     const numZoomLevel = Number(zoomLevel);
-    if (!(numZoomLevel && numZoomLevel > kZoomLevel.min && numZoomLevel <= kZoomLevel.max)) {
-      this.persist.pdf_zoom_level = Number(kZoomLevel.alt);
-    }
+    const safeZoom =
+      Number.isFinite(numZoomLevel) &&
+      numZoomLevel >= kZoomLevel.min &&
+      numZoomLevel <= kZoomLevel.max
+        ? numZoomLevel
+        : Number(kZoomLevel.alt);
+    this.persist.pdf_zoom_level = safeZoom;
   }
 
   done(): void {
