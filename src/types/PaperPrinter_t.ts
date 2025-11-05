@@ -153,9 +153,9 @@ export const kHeaderFooter = {
   alt: '',
   none: 'none',
   menuItems: [
-    { id: 'begin', displayName: '←' },
+    { id: 'begin', displayName: '⇤' },
     { id: 'middle', displayName: '◇' },
-    { id: 'end', displayName: '→' },
+    { id: 'end', displayName: '⇥' },
   ],
   subMenuItems: [
     { id: 'title', displayName: 'Title', template: '{{title}}' },

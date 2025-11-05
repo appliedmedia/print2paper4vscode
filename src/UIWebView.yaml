@@ -257,20 +257,20 @@ webview_js: |
         text = text.replace(/[^0-9]/g, '');
         // Limit to 3 characters max (300 is max)
         text = text.slice(0, 3);
-        // Ensure value is within valid range (10-300)
+        // Ensure value is within valid range (kZoomLevel.minPercent-kZoomLevel.maxPercent)
         const numValue = parseInt(text, 10);
         if (text && !isNaN(numValue)) {
-          if (numValue < 10) {
-            text = '10';
-          } else if (numValue > 300) {
-            text = '300';
+          if (numValue < kZoomLevel.minPercent) {
+            text = kZoomLevel.minPercent.toString();
+          } else if (numValue > kZoomLevel.maxPercent) {
+            text = kZoomLevel.maxPercent.toString();
           }
         }
         zoomLevelValueEl.textContent = text;
       });
       
       // Handle blur or Enter key to apply zoom
-      // Input is already validated to be 10-300 integer, so it should be valid
+      // Input is already validated to be within kZoomLevel.minPercent-kZoomLevel.maxPercent range
       const applyZoomFromInput = () => {
         let text = zoomLevelValueEl.textContent || '';
         // Remove any non-numeric (shouldn't be any, but be safe)
