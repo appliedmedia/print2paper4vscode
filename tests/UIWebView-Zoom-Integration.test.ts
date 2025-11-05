@@ -575,6 +575,148 @@ describe('Extension↔Webview Integration Tests', () => {
     });
   });
 
+  describe('Race Condition Tests', () => {
+    test('should handle rapid zoom changes correctly (race condition test)', async () => {
+      // Create panel to set up routing
+      const doc = new jsPDF();
+      doc.text('Test', 10, 10);
+      const pdfData: PDFData_t = {
+        arrayBuffer: doc.output('arraybuffer') as ArrayBuffer,
+        pageTotal: 3, // Multiple pages to simulate slow render
+        pageSizePx: { widthPx: 595, heightPx: 842 },
+        title: 'Test',
+      };
+      await uiWebView.displayPdfPanel(pdfData);
+
+      app.ui.persist.pdf_zoom_level = 1.0;
+
+      const callback = (global as any).__webviewMessageCallback;
+      assert.ok(callback, 'Message callback should be set up');
+
+      // Simulate rapid zoom changes (user clicking zoom in/out rapidly)
+      // This tests what happens if multiple zoom messages arrive before previous renders complete
+      const rapidZoomMessages: PostMessage[] = [
+        { type: 'zoom', zoomAction: 'in' },    // 1.0 -> 1.1
+        { type: 'zoom', zoomAction: 'in' },    // 1.1 -> 1.2
+        { type: 'zoom', zoomAction: 'in' },    // 1.2 -> 1.3
+        { type: 'zoom', zoomAction: 'out' },   // 1.3 -> 1.2
+        { type: 'zoom', zoomAction: 'out' },   // 1.2 -> 1.1
+        { type: 'zoom', zoomLevel: 2.0 },      // Direct set to 2.0
+        { type: 'zoom', zoomLevel: 1.5 },      // Direct set to 1.5
+      ];
+
+      // Send all messages rapidly without awaiting each one (simulating race condition)
+      const promises = rapidZoomMessages.map(msg => callback(msg));
+      
+      // Wait for all messages to be processed
+      await Promise.all(promises);
+
+      // Verify final state is consistent - should match the last zoom message (1.5)
+      assert.strictEqual(
+        app.ui.persist.pdf_zoom_level,
+        1.5,
+        'Final zoom level should match last zoom message after rapid changes'
+      );
+
+      // Verify zoom level is within valid range
+      assert.ok(
+        app.ui.persist.pdf_zoom_level >= kZoomLevel.min && app.ui.persist.pdf_zoom_level <= kZoomLevel.max,
+        'Final zoom level should be within valid range after rapid changes'
+      );
+    });
+
+    test('should handle rapid zoom level changes without state corruption', async () => {
+      // Create panel to set up routing
+      const doc = new jsPDF();
+      doc.text('Test', 10, 10);
+      const pdfData: PDFData_t = {
+        arrayBuffer: doc.output('arraybuffer') as ArrayBuffer,
+        pageTotal: 1,
+        pageSizePx: { widthPx: 595, heightPx: 842 },
+        title: 'Test',
+      };
+      await uiWebView.displayPdfPanel(pdfData);
+
+      app.ui.persist.pdf_zoom_level = 1.0;
+
+      const callback = (global as any).__webviewMessageCallback;
+      assert.ok(callback, 'Message callback should be set up');
+
+      // Rapidly send zoom level changes (simulating user typing quickly in zoom input)
+      const rapidZoomLevels = [1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7, 1.8, 1.9, 2.0];
+      const messages = rapidZoomLevels.map(level => ({
+        type: 'zoom' as const,
+        zoomLevel: level,
+      }));
+
+      // Send all messages rapidly (without awaiting individually)
+      const promises = messages.map(msg => callback(msg));
+      await Promise.all(promises);
+
+      // Verify final state matches last message
+      assert.strictEqual(
+        app.ui.persist.pdf_zoom_level,
+        2.0,
+        'Final zoom level should match last rapid zoom level change'
+      );
+    });
+
+    test('should handle rapid zoom action messages without state corruption', async () => {
+      // Create panel to set up routing
+      const doc = new jsPDF();
+      doc.text('Test', 10, 10);
+      const pdfData: PDFData_t = {
+        arrayBuffer: doc.output('arraybuffer') as ArrayBuffer,
+        pageTotal: 1,
+        pageSizePx: { widthPx: 595, heightPx: 842 },
+        title: 'Test',
+      };
+      await uiWebView.displayPdfPanel(pdfData);
+
+      app.ui.persist.pdf_zoom_level = 1.0;
+
+      const callback = (global as any).__webviewMessageCallback;
+      assert.ok(callback, 'Message callback should be set up');
+
+      // Rapidly send zoom in actions (simulating user clicking zoom in button rapidly)
+      const zoomInActions: PostMessage[] = Array.from({ length: 10 }, () => ({
+        type: 'zoom' as const,
+        zoomAction: 'in' as const,
+      }));
+      
+      // Send all messages rapidly
+      const promises = zoomInActions.map(msg => callback(msg));
+      await Promise.all(promises);
+
+      // Verify final zoom level is correct (1.0 + 10 * 0.1 = 2.0, capped at max)
+      const expectedZoom = Math.min(1.0 + (10 * kZoomLevel.stepAmount), kZoomLevel.max);
+      assert.strictEqual(
+        app.ui.persist.pdf_zoom_level,
+        expectedZoom,
+        `Final zoom level should be ${expectedZoom} after 10 rapid zoom in actions`
+      );
+    });
+
+    /**
+     * NOTE: This test covers the extension-side race condition handling.
+     * 
+     * The webview-side race condition (multiple renderAllPages() calls queued
+     * when user rapidly clicks zoom while renderPage is in progress) would require
+     * browser-based testing or headless browser automation to fully verify.
+     * 
+     * The webview JavaScript code should handle this by:
+     * - Ensuring renderAllPages() clears previous content before starting
+     * - Using currentScale state that updates immediately (before render completes)
+     * - Each renderPage() uses the current currentScale value, so final render
+     *   reflects the most recent zoom level
+     * 
+     * To fully test webview-side race conditions, consider:
+     * - Browser automation tests (Playwright, Puppeteer)
+     * - Mocking PDF.js render promises to simulate slow rendering
+     * - Verifying canvas elements are created with correct dimensions
+     */
+  });
+
   describe('Error Handling', () => {
     test('should error on invalid zoom level from webview', async () => {
       // Create panel to set up routing
