@@ -178,8 +178,7 @@ uimenu_generic_handlers: |
     const menuId = menu?.getAttribute('id');
     const menuItems = menu?.querySelector('.p2p4vsc-menu-items');
     
-    // If menu has no items container, treat button click as menu item selection
-    // This is the key insight: no items = handle like a menuItemSelected click
+    // Does this menu have items to show? If no, treat click as selection. Otherwise, toggle dropdown.
     if (!menuItems) {
       postMenuItemSelected(menuId, menuId);
       return;
@@ -289,15 +288,13 @@ uimenu_generic_handlers: |
 
   /**
    * Handle menu item click - either toggle flyout or select item
-   * Single return point - checks flyout-menu-id-ref attribute (set from static flyoutMenuItemIds)
    */
   function handleMenuItemClick(e, itemEl) {
     const menu = itemEl.closest('.p2p4vsc-menu');
     const menuId = menu?.getAttribute('id');
     const flyoutMenuId = itemEl.getAttribute('flyout-menu-id-ref');
     
-    // Check if item has flyout by checking flyout-menu-id-ref attribute (set from static flyoutMenuItemIds)
-    // This is more reliable than classList.contains() - uses data attribute from source of truth
+    // Does this item have a flyout? If yes, toggle it. Otherwise, select it.
     if (flyoutMenuId) {
       handleFlyoutToggle(e, itemEl, menu);
     } else {
