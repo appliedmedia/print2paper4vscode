@@ -288,6 +288,7 @@ export const kZoomLevel = {
   max: 3.0,
   stepAmount: 0.1,
   menuItems: [
+    { id: '0.10', displayName: '10%' },
     { id: '0.25', displayName: '25%' },
     { id: '0.50', displayName: '50%' },
     { id: '1.00', displayName: '100%', shortcut: 'Ctrl/Cmd + 0' },
