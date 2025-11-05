@@ -3,7 +3,7 @@ import type { WebviewPanelId_t } from './VSCodeAPIs';
 import type { PostMessage } from './types/UI_t';
 import { Diagnostics } from './Diagnostics';
 import { Yaml } from './Yaml';
-import { kZoomLevel } from './types/PaperPrinter_t';
+import { kZoomLevel, kZoomIn, kZoomOut } from './types/PaperPrinter_t';
 
 /**
  * PDF Data for webview display
@@ -182,8 +182,8 @@ export class UIWebView {
         zoomLevel_min: kZoomLevel.min.toString(),
         zoomLevel_max: kZoomLevel.max.toString(),
         zoomLevel_stepAmount: kZoomLevel.stepAmount.toString(),
-        zoomLevel_in_shortcutCode: kZoomLevel.in.shortcutCode,
-        zoomLevel_out_shortcutCode: kZoomLevel.out.shortcutCode,
+        zoomLevel_in_shortcutCode: kZoomIn.shortcutCode,
+        zoomLevel_out_shortcutCode: kZoomOut.shortcutCode,
         zoomLevel_actualSize_shortcutCode: kZoomLevel.actualSize.shortcutCode,
         toolbar: '{{toolbar}}', // Placeholder for UI.addToolbar()
       };
