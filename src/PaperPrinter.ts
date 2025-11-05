@@ -868,7 +868,7 @@ export class PaperPrinter {
     } else {
       // Parse zoom level for persistence
       const zoomValue = menuItemId;
-      if (zoomValue === 'fitPage' || zoomValue === 'fitWidth' || zoomValue === 'actualSize') {
+      if (zoomValue === 'fitPage' || zoomValue === 'fitWidth') {
         // Special actions - persist as-is
         value = zoomValue;
       } else {

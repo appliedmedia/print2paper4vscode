@@ -184,7 +184,6 @@ export class UIWebView {
         zoomLevel_stepAmount: kZoomLevel.stepAmount.toString(),
         zoomLevel_in_shortcutCode: (kZoomIn as any).shortcutCode,
         zoomLevel_out_shortcutCode: (kZoomOut as any).shortcutCode,
-        zoomLevel_actualSize_shortcutCode: '', // actualSize doesn't have shortcutCode - only '1.00' (100%) uses Digit0
         toolbar: '{{toolbar}}', // Placeholder for UI.addToolbar()
       };
 

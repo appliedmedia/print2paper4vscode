@@ -103,7 +103,6 @@ webview_js: |
   const kZoomShortcutCodes = {
     in: '{{zoomLevel_in_shortcutCode}}',
     out: '{{zoomLevel_out_shortcutCode}}',
-    actualSize: '{{zoomLevel_actualSize_shortcutCode}}',
   };
   
   if (kZoomLevel.min === 0 || kZoomLevel.max === 0 || kZoomLevel.stepAmount === 0 || 
@@ -142,14 +141,12 @@ webview_js: |
           handleZoomAction('in');
         } else if (menuId === 'zoomLevel') {
           // Zoom level menu item selected
-          // itemId should be the menu item ID directly (e.g., '1.00', 'fitPage', 'fitWidth', 'actualSize')
+          // itemId should be the menu item ID directly (e.g., '1.00', 'fitPage', 'fitWidth')
           
           if (itemId === 'fitPage') {
             handleZoomAction('fitPage');
           } else if (itemId === 'fitWidth') {
             handleZoomAction('fitWidth');
-          } else if (itemId === 'actualSize') {
-            handleZoomAction('actualSize');
           } else {
             const scale = parseFloat(itemId);
             if (!isNaN(scale)) {
@@ -336,8 +333,8 @@ webview_js: |
     
     // Keyboard shortcuts for zoom controls
     // These work globally when webview has focus, regardless of dropdown state
-    // ⌘/Ctrl+0 → actualSize (100%), ⌘/Ctrl++ → zoom in, ⌘/Ctrl+- → zoom out
-    // Shortcuts are also displayed in menu items (e.g., "100% ⌘0") via PaperPrinter.menuItems_ZoomLevel()
+    // ⌘/Ctrl+0 → 100% (1:1), ⌘/Ctrl++ → zoom in, ⌘/Ctrl+- → zoom out
+    // Shortcuts are also displayed in menu items (e.g., "100% (1:1) ⌘0") via PaperPrinter.menuItems_ZoomLevel()
     // Uses KeyboardEvent.code for language-independent key detection
     document.addEventListener('keydown', function(e) {
       // Check for Cmd/Ctrl modifier
@@ -351,9 +348,13 @@ webview_js: |
         } else if (e.code === kZoomShortcutCodes.out) {
           e.preventDefault();
           handleZoomAction('out');
-        } else if (kZoomShortcutCodes.actualSize && e.code === kZoomShortcutCodes.actualSize) {
-          e.preventDefault();
-          handleZoomAction('actualSize');
+        } else {
+          // Check if any menu item has this shortcutCode
+          const menuItem = kZoomLevel.menuItems.find(item => item.shortcutCode === e.code);
+          if (menuItem && menuItem.value !== undefined) {
+            e.preventDefault();
+            setZoom(menuItem.value);
+          }
         }
       }
     });
@@ -372,9 +373,7 @@ webview_js: |
       const itemId = item.id;
       
       // Check if this item matches current zoom
-      if (itemId === 'actualSize' && Math.abs(currentScale - 1.0) < 0.01) {
-        item.classList.add('selected');
-      } else if (itemId !== 'fitPage' && itemId !== 'actualSize' && itemId !== 'fitWidth') {
+      if (itemId !== 'fitPage' && itemId !== 'fitWidth') {
         const scale = parseFloat(itemId);
         if (!isNaN(scale) && Math.abs(scale - currentScale) < 0.01) {
           item.classList.add('selected');
@@ -413,9 +412,6 @@ webview_js: |
         const scaleX = containerPage.width / pageWidthPx;
         const scaleY = containerPage.height / pageHeightPx;
         newScale = Math.round(Math.min(scaleX, scaleY) * 100) / 100;
-        break;
-      case 'actualSize':
-        newScale = 1.0;
         break;
     }
     
