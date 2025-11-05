@@ -339,7 +339,7 @@ uimenu_generic_handlers: |
   });
 
 uimenu_item: |
-  <div class="p2p4vsc-menu-item {{itemClasses}}" id="{{itemId}}">
+  <div class="p2p4vsc-menu-item {{itemClasses}}" id="{{itemId}}"{{flyoutMenuIdRef}}>
     <div class="gutter-before">{{contentGutterBefore}}</div>
     <div class="menu-item-text">{{itemDisplayName}}</div>
     <div class="gutter-after">{{contentGutterAfter}}</div>

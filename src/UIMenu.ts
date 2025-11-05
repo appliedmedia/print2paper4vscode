@@ -221,6 +221,7 @@ export class UIMenu {
     // Check if this item has a flyout by checking if its ID is in flyoutMenuItemIds
     const menuItemId = item.id;
     const isFlyout = this.flyoutMenuItemIds.includes(menuItemId);
+    const flyoutMenuIdRef = isFlyout ? ` flyout-menu-id-ref="${menuItemId}"` : ''; // Keep for backwards compatibility
     const isDefault = menuItemId === defaultItemId;
     const isSelected = menuItemId === selectedItemId;
 
@@ -245,6 +246,7 @@ export class UIMenu {
       contentGutterBefore: '', // Content handled by CSS
       contentGutterAfter: '', // Content handled by CSS
       flyout,
+      flyoutMenuIdRef, // Keep for backwards compatibility - will be removed in future
     };
 
     dx.done();
