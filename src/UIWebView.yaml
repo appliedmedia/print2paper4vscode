@@ -65,6 +65,8 @@ webview_css: |
   :root {
     --page-gutter-horizontal: 8px;
     --page-gutter-vertical: 4px;
+    /* Container padding for fit calculations - matches .pdfviewer-container padding */
+    --container-padding-horizontal: 20px;
   }
 
 webview_js: |
@@ -401,11 +403,18 @@ webview_js: |
   
   /**
    * Get available container dimensions accounting for toolbar and padding
+   * Uses CSS custom properties for padding values (from webview_css)
    */
   function getAvailableContainerSize() {
     const toolbar = document.getElementById('p2p4vsc-toolbar');
     const toolbarHeight = toolbar ? toolbar.getBoundingClientRect().height + 24 : 60; // Toolbar height + padding
-    const horizontalPadding = 40; // Horizontal padding (left + right)
+    
+    // Get horizontal padding from CSS custom property (matches .pdfviewer-container padding)
+    const containerPadding = getComputedStyle(document.documentElement)
+      .getPropertyValue('--container-padding-horizontal')
+      .trim();
+    const horizontalPaddingPx = containerPadding ? parseFloat(containerPadding) : 20; // Fallback to 20px if CSS var not found
+    const horizontalPadding = horizontalPaddingPx * 2; // Left + right padding
     
     return {
       width: Math.max(0, window.innerWidth - horizontalPadding),
