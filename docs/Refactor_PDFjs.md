@@ -375,9 +375,9 @@ Before making changes, understand these critical principles:
 
 **Goal**: Add essential zoom and scroll functionality so users can actually read PDFs. This is critical for usability and should be implemented before other enhancements.
 
-**Status**: Stage 3.1 complete. Zoom controls implemented with UIMenu buttons, editable percentage display, and dropdown menu. Stage 3.2 (Enhanced Scroll Controls) not started.
+**Status**: Stage 3.1 complete. Zoom controls fully implemented with UIMenu buttons, editable percentage display, dropdown menu, keyboard shortcuts, persistence, and comprehensive tests. Stage 3.2 (Enhanced Scroll Controls) not started.
 
-**Why This is Priority**: The current PDF viewer renders at a fixed scale with no zoom or scroll controls beyond basic browser scrolling. Users are having difficulty reading PDFs without the ability to zoom in/out. This basic functionality is essential before other enhancements.
+**Why This is Priority**: Users need scroll controls (page-by-page navigation, keyboard shortcuts) for effective PDF navigation, especially with multi-page documents. Zoom controls are complete, but scroll controls are still needed.
 
 ### 3.1 Zoom Controls (Critical) ✅
 
@@ -393,17 +393,22 @@ Before making changes, understand these critical principles:
 
 **Implementation Notes**:
 
-- PDF.js already supports zoom via `viewport.scale` parameter - currently hardcoded to `1.0` in UIWebView.yaml line 84
-- Need to add zoom buttons to toolbar YAML template
-- Store zoom level in `ui.persist.pdf_zoom_level`
-- Default zoom should be "fit width" or 100%
-- Update `renderPage()` function to use dynamic scale instead of fixed `scale = 1.0`
+- PDF.js zoom implemented via `viewport.scale` parameter using dynamic `currentScale` variable
+- Zoom buttons added to toolbar via UIMenu system (zoomIn, zoomOut, zoomLevel menus)
+- Zoom level persisted in `ui.persist.pdf_zoom_level`
+- Default zoom uses persisted value or falls back to `kZoomLevel.alt` (1.0)
+- `renderPage()` function uses dynamic `currentScale` variable from JavaScript state
+- Zoom controls implemented in UIWebView.yaml with full keyboard shortcut support
+- Comprehensive test suites: `tests/UIWebView-Zoom.test.ts` and `tests/UIWebView-Zoom-Integration.test.ts`
 
 **Current Implementation**:
 
-- Fixed scale: `const scale = 1.0;` in UIWebView.yaml line 84
-- No zoom controls in toolbar
-- No zoom state management
+- ✅ Dynamic scale: `const currentScale = parseFloat('{{pdf_zoom_level}}') || 1.0` in UIWebView.yaml
+- ✅ Zoom controls in toolbar (zoomIn, zoomOut, zoomLevel menus)
+- ✅ Full zoom state management with persistence
+- ✅ Keyboard shortcuts (Cmd/Ctrl + Plus/Minus/0) implemented
+- ✅ Editable zoom percentage input with validation
+- ✅ Zoom dropdown menu with preset levels (25%, 50%, 100%, etc.)
 
 **Test**:
 
@@ -419,16 +424,15 @@ Before making changes, understand these critical principles:
 
 **Documentation**:
 
-- 🔲 Document zoom control usage
-- 🔲 Document keyboard shortcuts
-- 🔲 Update user README with zoom features
+- ✅ Zoom controls documented in code (JSDoc comments)
+- ✅ Keyboard shortcuts documented in code and menu items
+- 🔲 Update user README with zoom features (pending user documentation update)
 
 **Linting & Compilation**:
 
-- 🔲 Fix all linter errors (MD, HTML, JS, CSS, TS, YAML)
-- 🔲 Run `npm run compile` successfully
-- 🔲 Verify no TypeScript compilation errors
-- 🔲 Verify no ESLint errors
+- ✅ Code compiles successfully
+- ✅ Tests pass (UIWebView-Zoom.test.ts, UIWebView-Zoom-Integration.test.ts)
+- 🔲 Verify no ESLint errors (if any exist, should be fixed)
 
 ### 3.2 Enhanced Scroll Controls
 
@@ -975,37 +979,31 @@ Before making changes, understand these critical principles:
 
 ## Next Steps
 
-### Immediate Priority: Stage 3 - Zoom and Scroll Controls ⚠️ **CRITICAL**
+### Immediate Priority: Stage 3.2 - Enhanced Scroll Controls ⚠️ **HIGH PRIORITY**
 
-**Status**: Stages 1-2 and 4-5 are functionally complete. PaperPrinter successfully uses the new PDF.js-based system. **Users cannot read PDFs effectively without zoom/scroll controls.**
+**Status**: Stages 1-2, 3.1, 4.1, and 5 are functionally complete. Zoom controls are fully implemented and tested. **Users need scroll controls for effective PDF navigation, especially with multi-page documents.**
 
 **Next Actions** (Priority Order):
 
-1. **Implement Zoom Controls** (Stage 3.1) - **CRITICAL FOR USABILITY**:
-   - Add zoom buttons to toolbar (zoom in, zoom out, fit width, fit page, actual size)
-   - Make `scale` variable dynamic in UIWebView.yaml (currently hardcoded to 1.0)
-   - Implement zoom state management in webview JavaScript
-   - Add keyboard shortcuts (Cmd/Ctrl + Plus/Minus, Cmd/Ctrl + 0)
-   - Persist zoom level in user preferences
-   - Test zoom functionality with various PDF sizes
-
-2. **Implement Enhanced Scroll Controls** (Stage 3.2):
+1. **Implement Enhanced Scroll Controls** (Stage 3.2) - **HIGH PRIORITY FOR NAVIGATION**:
    - Add page-by-page navigation (scroll to next/previous page)
    - Add keyboard navigation (Page Up/Down, Home/End)
    - Implement scroll-to-page functionality
+   - Consider scroll snap to pages for better UX
    - Test scroll behavior with multi-page PDFs
+   - Add page number display/input ("Page X of Y") if desired
 
-3. **Complete medium/large document testing** (Stage 4.2-4.3):
+2. **Complete medium/large document testing** (Stage 4.2-4.3):
    - Test with 10-50 page documents
    - Test with 100+ page documents
    - Verify performance and memory usage
 
-4. **Future enhancements** (Stage 6):
+3. **Future enhancements** (Stage 6):
    - Page layout options (1-up, 2-up, 4-up)
    - Advanced navigation features
    - View options
 
-5. **Optional cleanup** (Stage 7.1):
+4. **Optional cleanup** (Stage 7.1):
    - Consider removing `src/types/PageRender_t.ts` if no test dependencies
    - Clean up comment references to PageRender (cosmetic)
 
@@ -1013,7 +1011,8 @@ Before making changes, understand these critical principles:
 
 - ✅ **Stage 1**: Complete - PDF viewer infrastructure with PDF.js
 - ✅ **Stage 2**: Complete - PDF.js integration tests
-- ⚠️ **Stage 3**: **NOT STARTED - CRITICAL** - Zoom and scroll controls needed for usability
+- ✅ **Stage 3.1**: Complete - Zoom controls fully implemented with tests
+- 🔲 **Stage 3.2**: Not started - Enhanced scroll controls needed for navigation
 - ✅ **Stage 4.1**: Complete - Small document testing (1-5 pages)
 - 🔲 **Stage 4.2-4.3**: Not started - Medium/large document testing
 - ✅ **Stage 5.1-5.2**: Complete - PaperPrinter and UIWebView updated

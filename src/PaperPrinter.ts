@@ -6,6 +6,7 @@ import {
   type MenuItemId_t,
   type HandleSelection_t,
   type UIMenuItem_t,
+  type iconSlotTriad_t,
 } from './UIMenu';
 import { UIWebView } from './UIWebView';
 import { DocInfo_PDF } from './DocInfo_PDF';
@@ -41,6 +42,7 @@ import {
   kZoomOut,
   kZoomIn,
   kZoomLevel,
+  kMenus,
 } from './types/PaperPrinter_t';
 
 /**
@@ -336,27 +338,14 @@ export class PaperPrinter {
       return;
     }
 
-    // Menu configs - array of menu constants
-    const menus = [
-      kPrint,
-      kPage,
-      kPageSizeId,
-      kOrient,
-      kMarginId,
-      kHeader,
-      kFooter,
-      kTheme,
-      kFontSizeId,
-      kZoomOut,
-      kZoomIn,
-      kZoomLevel,
-    ];
+    // Menu configs - use shared kMenus array
+    const menus = kMenus;
 
     // Build menu configs from constants
     const menuConfigs: Array<{
       id: MenuId_t | string;
       displayName: string;
-      icon: string;
+      iconSlot: string;
       isFlyout: boolean;
       menuItems: () => UIMenuItem_t[];
       flyoutMenuItemIds: readonly string[];
@@ -366,7 +355,7 @@ export class PaperPrinter {
       return {
         id: menuConst.id,
         displayName: menuConst.displayName,
-        icon: menuConst.icon,
+        iconSlot: menuConst.icon,
         isFlyout: menuConst.isFlyout,
         menuItems: (this[`menuItems_${methodName}` as keyof this] as () => UIMenuItem_t[]).bind(
           this
@@ -387,7 +376,7 @@ export class PaperPrinter {
       menuConfigs.push({
         id: menuId as MenuId_t,
         displayName: kHeaderFooterMenuItemsById[pos].displayName as string,
-        icon: '',
+        iconSlot: '',
         isFlyout: true,
         menuItems: this.menuItems_HeaderFooterContent.bind(this),
         flyoutMenuItemIds: [],
@@ -396,12 +385,34 @@ export class PaperPrinter {
     });
 
     menuConfigs.forEach(config => {
-      this.dx.out(`Creating menu: ${config.id} with icon: ${config.icon}`);
+      this.dx.out(`Creating menu: ${config.id} with iconSlot: ${config.iconSlot}`);
+
+      // Special handling for zoomLevel menu - add text_edit widget
+      let iconSlotTriad: iconSlotTriad_t;
+      if (config.id === 'zoomLevel') {
+        iconSlotTriad = {
+          begin: ` `,
+          main: `text_edit: {"width": "3ch", "constraints_regex": "^\\\\d+$", "value_min": ${kZoomLevel.min * 100}, "value_max": ${kZoomLevel.max * 100}}`,
+          end: `▼`,
+        };
+      } else if (config.id === 'zoomOut') {
+        iconSlotTriad = {
+          begin: ` `,
+          main: config.iconSlot,
+          end: ``,
+        };
+      } else {
+        iconSlotTriad = {
+          begin: ``,
+          main: config.iconSlot,
+          end: ``,
+        };
+      }
 
       const menu = this.app.uimenumgr.createMenu(
         config.id as MenuId_t,
         config.displayName,
-        config.icon,
+        iconSlotTriad,
         config.isFlyout,
         config.menuItems,
         [...config.flyoutMenuItemIds],
@@ -416,6 +427,9 @@ export class PaperPrinter {
     return kPrint.menuItems.map(item => ({
       id: item.id as MenuItemId_t,
       displayName: item.displayName,
+      iconSlot: ``,
+      iconSlot_prefix: ``,
+      iconSlot_suffix: ``,
     }));
   }
 
@@ -427,6 +441,9 @@ export class PaperPrinter {
       return {
         id: theme.id,
         displayName: theme.displayName,
+        iconSlot: ``,
+        iconSlot_prefix: ``,
+        iconSlot_suffix: ``,
       };
     });
   }
@@ -441,6 +458,9 @@ export class PaperPrinter {
     const sizeOptions: UIMenuItem_t[] = kFontSizeId.menuItems.map(item => ({
       id: item.id as MenuItemId_t,
       displayName: item.displayName,
+      iconSlot: ``,
+      iconSlot_prefix: ``,
+      iconSlot_suffix: ``,
     }));
 
     // Check if editor size already exists in the list
@@ -453,7 +473,7 @@ export class PaperPrinter {
     } else {
       dx.out(`Editor size ${editorSize} not in list, adding it`);
       // Editor size not in list - add it at the top without default selection marker
-      sizeOptions.unshift({ id: String(editorSize), displayName: `${editorSize}px` });
+      sizeOptions.unshift({ id: String(editorSize), displayName: `${editorSize}px`, iconSlot: ``, iconSlot_prefix: ``, iconSlot_suffix: `` });
     }
 
     dx.out(
@@ -468,14 +488,17 @@ export class PaperPrinter {
     const headerFooterMenus = [kHeader.id, kFooter.id].map(id => ({
       id: id as MenuItemId_t,
       displayName: id === kHeader.id ? kHeader.displayName : kFooter.displayName,
+      iconSlot: ``,
+      iconSlot_prefix: ``,
+      iconSlot_suffix: ``,
     }));
 
     // Page submenu references (Size, Orient, Margin)
     const pageSubmenus = [kPageSizeId.id, kOrient.id, kMarginId.id].map(id => {
       if (id === kPageSizeId.id)
-        return { id: id as MenuItemId_t, displayName: kPageSizeId.displayName };
-      if (id === kOrient.id) return { id: id as MenuItemId_t, displayName: kOrient.displayName };
-      return { id: id as MenuItemId_t, displayName: kMarginId.displayName };
+        return { id: id as MenuItemId_t, displayName: kPageSizeId.displayName, iconSlot: ``, iconSlot_prefix: ``, iconSlot_suffix: `` };
+      if (id === kOrient.id) return { id: id as MenuItemId_t, displayName: kOrient.displayName, iconSlot: ``, iconSlot_prefix: ``, iconSlot_suffix: `` };
+      return { id: id as MenuItemId_t, displayName: kMarginId.displayName, iconSlot: ``, iconSlot_prefix: ``, iconSlot_suffix: `` };
     });
 
     return [...headerFooterMenus, ...pageSubmenus] as UIMenuItem_t[];
@@ -486,6 +509,9 @@ export class PaperPrinter {
     return kPageSizeId.menuItems.map(item => ({
       id: item.id as MenuItemId_t,
       displayName: item.displayName,
+      iconSlot: ``,
+      iconSlot_prefix: ``,
+      iconSlot_suffix: ``,
     }));
   }
 
@@ -494,6 +520,9 @@ export class PaperPrinter {
     return kOrient.menuItems.map(item => ({
       id: item.id as MenuItemId_t,
       displayName: this.app.templateDictReplace(item.displayName, this.yaml),
+      iconSlot: ``,
+      iconSlot_prefix: ``,
+      iconSlot_suffix: ``,
     }));
   }
 
@@ -502,6 +531,9 @@ export class PaperPrinter {
     return kMarginId.menuItems.map(item => ({
       id: item.id as MenuItemId_t,
       displayName: this.app.templateDictReplace(item.displayName, this.yaml),
+      iconSlot: ``,
+      iconSlot_prefix: ``,
+      iconSlot_suffix: ``,
     }));
   }
 
@@ -510,6 +542,9 @@ export class PaperPrinter {
     return kHeaderFooter.menuItems.map(item => ({
       id: `header_${item.id}` as MenuItemId_t,
       displayName: item.displayName,
+      iconSlot: ``,
+      iconSlot_prefix: ``,
+      iconSlot_suffix: ``,
     })) as UIMenuItem_t[];
   }
 
@@ -518,6 +553,9 @@ export class PaperPrinter {
     return kHeaderFooter.menuItems.map(item => ({
       id: `footer_${item.id}` as MenuItemId_t,
       displayName: item.displayName,
+      iconSlot: ``,
+      iconSlot_prefix: ``,
+      iconSlot_suffix: ``,
     })) as UIMenuItem_t[];
   }
 
@@ -527,6 +565,9 @@ export class PaperPrinter {
     return kHeaderFooter.subMenuItems.map(item => ({
       id: item.id as MenuItemId_t,
       displayName: item.displayName,
+      iconSlot: ``,
+      iconSlot_prefix: ``,
+      iconSlot_suffix: ``,
     }));
   }
 
@@ -547,6 +588,9 @@ export class PaperPrinter {
       const menuItem: UIMenuItem_t = {
         id: item.id as MenuItemId_t,
         displayName: displayName as string,
+        iconSlot: ``,
+        iconSlot_prefix: ``,
+        iconSlot_suffix: ``,
       };
       
       // Add value property if it exists (for numeric zoom levels)

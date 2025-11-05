@@ -2,7 +2,7 @@ import { describe, it, beforeEach, afterEach } from 'node:test';
 import * as assert from 'node:assert';
 import { UIMenuMgr } from '../src/UIMenuMgr.js';
 import { App } from '../src/App.js';
-import type { MenuId_t } from '../src/UIMenu.js';
+import type { MenuId_t, UIMenuItem_t, iconSlotTriad_t } from '../src/UIMenu.js';
 import type { ExtensionContext } from 'vscode';
 
 // Mock VS Code context and APIs
@@ -58,12 +58,13 @@ describe('UIMenuMgr', () => {
 
   it('should validate numeric menu item IDs (font sizes)', () => {
     // Create a font size menu first
+    const iconSlotTriad: iconSlotTriad_t = { begin: ``, main: `A`, end: `` };
     const fontMenu = menuMgr.createMenu(
       'fontSizeId',
       'Font Size',
-      'A',
+      iconSlotTriad,
       false,
-      () => [{ id: '12', displayName: '12' }],
+      () => [{ id: '12', displayName: '12', iconSlot: ``, iconSlot_prefix: ``, iconSlot_suffix: `` }],
       [],
       async (id) => ({ id, value: id })
     );
@@ -78,10 +79,11 @@ describe('UIMenuMgr', () => {
   });
 
   it('should add menu', () => {
+    const iconSlotTriad: iconSlotTriad_t = { begin: ``, main: `T`, end: `` };
     const menu = menuMgr.createMenu(
       'test' as MenuId_t,
       'Test Menu',
-      'T',
+      iconSlotTriad,
       false,
       () => [],
       [],
@@ -94,10 +96,11 @@ describe('UIMenuMgr', () => {
   });
 
   it('should not add duplicate menus', () => {
+    const iconSlotTriad: iconSlotTriad_t = { begin: ``, main: `T`, end: `` };
     const menu = menuMgr.createMenu(
       'test' as MenuId_t,
       'Test Menu',
-      'T',
+      iconSlotTriad,
       false,
       () => [],
       [],
@@ -111,10 +114,11 @@ describe('UIMenuMgr', () => {
   });
 
   it('should get menu by ID', () => {
+    const iconSlotTriad: iconSlotTriad_t = { begin: ``, main: `T`, end: `` };
     const menu = menuMgr.createMenu(
       'test' as MenuId_t,
       'Test Menu',
-      'T',
+      iconSlotTriad,
       false,
       () => [],
       [],

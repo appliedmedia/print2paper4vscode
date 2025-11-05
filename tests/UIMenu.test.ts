@@ -6,6 +6,7 @@ import {
   type UIMenuItem_t,
   type MenuId_t,
   type MenuItemId_t,
+  type iconSlotTriad_t,
 } from '../src/UIMenu.js';
 
 // Mock App for testing
@@ -37,8 +38,8 @@ const mockApp = {
 
 // Mock list builder and selection handler
 const mockListBuilder = (): UIMenuItem_t[] => [
-  { id: 'default', displayName: 'Default' },
-  { id: 'test', displayName: 'Test Item' },
+  { id: 'default', displayName: 'Default', iconSlot: ``, iconSlot_prefix: ``, iconSlot_suffix: `` },
+  { id: 'test', displayName: 'Test Item', iconSlot: ``, iconSlot_prefix: ``, iconSlot_suffix: `` },
 ];
 const mockSelectionHandler = async (
   menuId: MenuId_t,
@@ -48,11 +49,12 @@ const mockSelectionHandler = async (
 describe('UIMenu', () => {
   // Helper function to create fresh menu for each test
   const createMenu = () => {
+    const iconSlotTriad: iconSlotTriad_t = { begin: ``, main: `🔧`, end: `` };
     return new UIMenu(
       mockApp,
       'theme', // Use a valid GlobalStateKey
       'Test Menu',
-      '🔧',
+      iconSlotTriad,
       false,
       mockListBuilder,
       [],
@@ -64,23 +66,22 @@ describe('UIMenu', () => {
     it('should create menu with correct properties', () => {
       const menu = createMenu();
       assert.strictEqual(menu.id, 'theme');
-      assert.strictEqual(menu.icon, '🔧');
       assert.strictEqual(menu.displayName, 'Test Menu');
     });
 
     it('should handle empty string properties', () => {
+      const iconSlotTriad: iconSlotTriad_t = { begin: ``, main: ``, end: `` };
       const emptyMenu = new UIMenu(
         mockApp,
         'theme', // Use valid GlobalStateKey
         '',
-        '',
+        iconSlotTriad,
         false,
         mockListBuilder,
         [],
         mockSelectionHandler
       );
       assert.strictEqual(emptyMenu.id, 'theme');
-      assert.strictEqual(emptyMenu.icon, '');
       assert.strictEqual(emptyMenu.displayName, '');
     });
   });
@@ -92,11 +93,12 @@ describe('UIMenu', () => {
     });
 
     it('should handle special characters in ID', () => {
+      const iconSlotTriad: iconSlotTriad_t = { begin: ``, main: `🔧`, end: `` };
       const specialMenu = new UIMenu(
         mockApp,
         'fontSizeId', // Use valid GlobalStateKey
         'Special Menu',
-        '🔧',
+        iconSlotTriad,
         false,
         mockListBuilder,
         [],
@@ -126,11 +128,12 @@ describe('UIMenu', () => {
 
   describe('Edge Cases', () => {
     it('should handle very long ID', () => {
+      const iconSlotTriad: iconSlotTriad_t = { begin: ``, main: `🔧`, end: `` };
       const longMenu = new UIMenu(
         mockApp,
         'theme', // Use valid GlobalStateKey
         'Long Menu',
-        '🔧',
+        iconSlotTriad,
         false,
         mockListBuilder,
         [],
@@ -141,11 +144,12 @@ describe('UIMenu', () => {
     });
 
     it('should handle ID with special characters', () => {
+      const iconSlotTriad: iconSlotTriad_t = { begin: ``, main: `🔧`, end: `` };
       const specialMenu = new UIMenu(
         mockApp,
         'fontSizeId', // Use valid GlobalStateKey
         'Special',
-        '🔧',
+        iconSlotTriad,
         false,
         mockListBuilder,
         [],
@@ -156,11 +160,12 @@ describe('UIMenu', () => {
     });
 
     it('should handle unicode characters in ID', () => {
+      const iconSlotTriad: iconSlotTriad_t = { begin: ``, main: `🔧`, end: `` };
       const unicodeMenu = new UIMenu(
         mockApp,
         'theme', // Use valid GlobalStateKey
         'Unicode',
-        '🔧',
+        iconSlotTriad,
         false,
         mockListBuilder,
         [],

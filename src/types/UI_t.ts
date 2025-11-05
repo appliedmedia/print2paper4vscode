@@ -1,8 +1,9 @@
 export interface UIMenuItem {
   id: string;
   displayName: string;
-  icon?: string;
-  attributes?: Record<string, string>;
+  iconSlot: string; // Button content: icon, text_edit widget (e.g., "text_edit: {...}"), or empty for non-button
+  iconSlot_prefix: string; // Text before iconSlot (e.g., for spacing)
+  iconSlot_suffix: string; // Text after iconSlot (e.g., "%" for zoom percentage)
 }
 
 // PostMessage types - defines messages sent via postMessage API

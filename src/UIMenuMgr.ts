@@ -5,6 +5,7 @@ import {
   type MenuItemId_t,
   type HandleSelection_t,
   type UIMenuItem_t,
+  type iconSlotTriad_t,
   kMenuId,
   kMenuItemId,
 } from './UIMenu';
@@ -84,7 +85,7 @@ export class UIMenuMgr {
   createMenu(
     id: MenuId_t,
     displayName: string,
-    icon: string,
+    iconSlotTriad: iconSlotTriad_t,
     isFlyout: boolean = false,
     menuItems: () => UIMenuItem_t[],
     flyoutMenuItemIds: string[] = [],
@@ -94,7 +95,7 @@ export class UIMenuMgr {
       this.app,
       id,
       displayName,
-      icon,
+      iconSlotTriad,
       isFlyout,
       menuItems,
       flyoutMenuItemIds,

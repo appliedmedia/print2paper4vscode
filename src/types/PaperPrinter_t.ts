@@ -310,4 +310,20 @@ export const kZoomLevel = {
 } as const;
 export type ZoomLevelMenuItems_t = (typeof kZoomLevel.menuItems)[number]['id'];
 
+// All menu constants - shared across PaperPrinter and UIMenu
+export const kMenus = [
+  kPrint,
+  kPage,
+  kPageSizeId,
+  kOrient,
+  kMarginId,
+  kHeader,
+  kFooter,
+  kTheme,
+  kFontSizeId,
+  kZoomOut,
+  kZoomIn,
+  kZoomLevel,
+] as const;
+
 // end, PaperPrinter_t.ts

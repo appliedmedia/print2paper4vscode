@@ -378,14 +378,14 @@ webview_js: |
     
     const items = zoomLevelMenu.querySelectorAll('.p2p4vsc-menu-item');
     items.forEach(item => {
-      item.classList.remove('selected');
+      item.classList.remove('isSelected');
       const itemId = item.id;
       
       // Check if this item matches current zoom
       if (itemId !== 'fitPage' && itemId !== 'fitWidth') {
         const scale = parseFloat(itemId);
         if (!isNaN(scale) && Math.abs(scale - currentScale) < 0.01) {
-          item.classList.add('selected');
+          item.classList.add('isSelected');
         }
       }
     });

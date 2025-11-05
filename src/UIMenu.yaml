@@ -42,7 +42,7 @@ uimenu_css: |
     -webkit-user-select: none;
     position: relative; /* Required for absolutely positioned flyout children */
   }
-  .p2p4vsc-menu-item:hover, .p2p4vsc-menu-item.selected {
+  .p2p4vsc-menu-item:hover, .p2p4vsc-menu-item.isSelected {
     background: #444;
   }
 
@@ -74,32 +74,67 @@ uimenu_css: |
     display: inline-block;
   }
 
-  /* Ensure only items with is-flyout class get flyout arrows */
-  .p2p4vsc-menu-item.is-flyout .gutter-after::after {
+  /* Ensure only items with isFlyout class get flyout arrows */
+  .p2p4vsc-menu-item.isFlyout .gutter-after::after {
     content: "▶" !important;
   }
 
-  /* Ensure only items with default-item class get editor icons */
-  .p2p4vsc-menu-item.default-item .gutter-after::after {
+  /* Ensure only items with isDefault class get editor icons */
+  .p2p4vsc-menu-item.isDefault .gutter-after::after {
     content: "📝" !important;
   }
 
   /* Explicitly clear content for items without special classes */
-  .p2p4vsc-menu-item:not(.is-flyout):not(.default-item) .gutter-after::after {
+  .p2p4vsc-menu-item:not(.isFlyout):not(.isDefault) .gutter-after::after {
     content: "" !important;
   }
 
-  .p2p4vsc-menu-item.selected {
+  .p2p4vsc-menu-item.isSelected {
     /* Keep the same grid structure as default */
   }
 
 
-  .p2p4vsc-menu-item.selected .gutter-before::before {
+  .p2p4vsc-menu-item.isSelected .gutter-before::before {
     content: "✓";
     display: inline-block;
     width: 100%;
     vertical-align: baseline;
     line-height: 1;
+  }
+
+  /* Non-button items (spacers, static text) - no hover/click behavior */
+  .p2p4vsc-menu-item.noButton {
+    cursor: default;
+    pointer-events: none;
+  }
+  .p2p4vsc-menu-item.noButton:hover {
+    background: transparent;
+  }
+
+  /* Icon slot prefix/suffix styling */
+  .p2p4vsc-menu-item .icon-slot-prefix,
+  .p2p4vsc-menu-item .icon-slot-suffix {
+    display: inline-block;
+    white-space: nowrap;
+  }
+
+  /* Text edit widget styling */
+  .p2p4vsc-menu-item .text-edit-wrapper {
+    display: inline-block;
+  }
+  .p2p4vsc-menu-item .p2p4vsc-text-edit {
+    border: 1px solid #555;
+    background: #333;
+    color: #fff;
+    padding: 2px 4px;
+    border-radius: 3px;
+    font-size: 14px;
+    font-weight: 500;
+    text-align: center;
+  }
+  .p2p4vsc-menu-item .p2p4vsc-text-edit:focus {
+    outline: 1px solid #007acc;
+    border-color: #007acc;
   }
 
   .p2p4vsc-menu.has-gutter-before .p2p4vsc-menu-item {
@@ -113,22 +148,22 @@ uimenu_css: |
   .p2p4vsc-group { position: relative; }
 
   /* Hide button for flyout menus */
-  .p2p4vsc-menu.is-flyout .p2p4vsc-menu-btn {
+  .p2p4vsc-menu.isFlyout .p2p4vsc-menu-btn {
     display: none;
   }
 
   /* Hide flyout menus by default */
-  .p2p4vsc-menu.is-flyout {
+  .p2p4vsc-menu.isFlyout {
     display: none;
   }
 
   /* Show menu items inside flyout menus when the flyout is visible */
-  .p2p4vsc-menu.is-flyout[style*="display: block"] .p2p4vsc-menu-items {
+  .p2p4vsc-menu.isFlyout[style*="display: block"] .p2p4vsc-menu-items {
     display: block !important;
   }
 
   /* When flyout menu is visible, ensure menu items are shown */
-  .p2p4vsc-menu.is-flyout:not([style*="display: none"]) .p2p4vsc-menu-items {
+  .p2p4vsc-menu.isFlyout:not([style*="display: none"]) .p2p4vsc-menu-items {
     display: block !important;
   }
 
@@ -148,7 +183,7 @@ uimenu_generic_handlers: |
     document.querySelectorAll('.p2p4vsc-menu-items').forEach(items => {
       items.style.display = 'none';
     });
-    document.querySelectorAll('.p2p4vsc-menu.is-flyout').forEach(flyout => {
+    document.querySelectorAll('.p2p4vsc-menu.isFlyout').forEach(flyout => {
       flyout.style.display = 'none';
     });
   }
@@ -157,7 +192,7 @@ uimenu_generic_handlers: |
    * Close all flyout menus (but keep dropdowns open)
    */
   function closeAllFlyouts() {
-    document.querySelectorAll('.p2p4vsc-menu.is-flyout').forEach(flyout => {
+    document.querySelectorAll('.p2p4vsc-menu.isFlyout').forEach(flyout => {
       flyout.style.display = 'none';
     });
   }
@@ -221,10 +256,10 @@ uimenu_generic_handlers: |
     const ancestorFlyouts = [];
     let currentMenu = menu;
     while (currentMenu) {
-      if (currentMenu.classList.contains('is-flyout') && currentMenu !== excludeFlyout) {
+      if (currentMenu.classList.contains('isFlyout') && currentMenu !== excludeFlyout) {
         ancestorFlyouts.push(currentMenu);
       }
-      currentMenu = currentMenu.parentElement?.closest('.p2p4vsc-menu.is-flyout') || null;
+      currentMenu = currentMenu.parentElement?.closest('.p2p4vsc-menu.isFlyout') || null;
     }
     return ancestorFlyouts;
   }
@@ -281,7 +316,7 @@ uimenu_generic_handlers: |
       const wasVisible = flyoutMenu.style.display === 'block';
       
       // Close all other flyouts except the one being toggled and its ancestors
-      document.querySelectorAll('.p2p4vsc-menu.is-flyout').forEach(flyout => {
+      document.querySelectorAll('.p2p4vsc-menu.isFlyout').forEach(flyout => {
         if (flyout !== flyoutMenu && !ancestorFlyouts.includes(flyout)) {
           flyout.style.display = 'none';
         }
@@ -297,15 +332,20 @@ uimenu_generic_handlers: |
 
   /**
    * Handle menu item click - either toggle flyout or select item
-   * Uses is-flyout class which is set from static flyoutMenuItemIds list
+   * Uses isFlyout class which is set from static flyoutMenuItemIds list
    */
   function handleMenuItemClick(e, itemEl) {
+    // Skip non-button items (spacers, static text)
+    if (itemEl.classList.contains('noButton')) {
+      return;
+    }
+
     const menu = itemEl.closest('.p2p4vsc-menu');
     const menuId = menu?.getAttribute('id');
     
-    // Check if item has flyout using is-flyout class (set from static flyoutMenuItemIds)
+    // Check if item has flyout using isFlyout class (set from static flyoutMenuItemIds)
     // This uses the source of truth: the static list from kFoo constants
-    if (itemEl.classList.contains('is-flyout')) {
+    if (itemEl.classList.contains('isFlyout')) {
       // Get flyout menu ID from flyout-menu-id-ref attribute (set from static flyoutMenuItemIds)
       const flyoutMenuId = itemEl.getAttribute('flyout-menu-id-ref');
       if (flyoutMenuId) {
@@ -315,9 +355,9 @@ uimenu_generic_handlers: |
       // Terminal selection - update UI and post message
       if (menu.classList.contains('has-gutter-before')) {
         menu.querySelectorAll('.p2p4vsc-menu-item').forEach(item => {
-          item.classList.remove('selected');
+          item.classList.remove('isSelected');
         });
-        itemEl.classList.add('selected');
+        itemEl.classList.add('isSelected');
       }
       
       postMenuItemSelected(menuId, itemEl.id);
@@ -347,10 +387,91 @@ uimenu_generic_handlers: |
     closeAllMenus();
   });
 
+  /**
+   * Handle text edit widget keydown events
+   * Validates input against constraints_regex on every keydown
+   */
+  function handleTextEditKeydown(e) {
+    const input = e.target;
+    if (!input.classList.contains('p2p4vsc-text-edit')) return;
+    
+    const configStr = input.getAttribute('data-config');
+    if (!configStr) return;
+    
+    try {
+      const config = JSON.parse(configStr);
+      if (!config.constraints_regex) return;
+      
+      // Test the regex against the new character(s) that would be entered
+      const currentValue = input.value;
+      const selectionStart = input.selectionStart;
+      const selectionEnd = input.selectionEnd;
+      
+      // Get the key that was pressed
+      const key = e.key;
+      
+      // Build what the value would be after this keydown
+      let newValue = currentValue;
+      if (key === 'Backspace') {
+        if (selectionStart === selectionEnd && selectionStart > 0) {
+          newValue = currentValue.slice(0, selectionStart - 1) + currentValue.slice(selectionStart);
+        } else if (selectionStart !== selectionEnd) {
+          newValue = currentValue.slice(0, selectionStart) + currentValue.slice(selectionEnd);
+        }
+      } else if (key === 'Delete') {
+        if (selectionStart === selectionEnd && selectionStart < currentValue.length) {
+          newValue = currentValue.slice(0, selectionStart) + currentValue.slice(selectionStart + 1);
+        } else if (selectionStart !== selectionEnd) {
+          newValue = currentValue.slice(0, selectionStart) + currentValue.slice(selectionEnd);
+        }
+      } else if (key.length === 1) {
+        // Regular character - insert at cursor position
+        const before = currentValue.slice(0, selectionStart);
+        const after = currentValue.slice(selectionEnd);
+        newValue = before + key + after;
+      } else {
+        // Other keys (Arrow, Home, End, etc.) - allow them
+        return;
+      }
+      
+      // Test regex against the new value
+      const regex = new RegExp(config.constraints_regex);
+      if (!regex.test(newValue)) {
+        e.preventDefault();
+        e.stopPropagation();
+        return;
+      }
+      
+      // Also validate min/max if provided
+      if (config.value_min !== undefined || config.value_max !== undefined) {
+        const numValue = parseFloat(newValue);
+        if (!isNaN(numValue)) {
+          if (config.value_min !== undefined && numValue < config.value_min) {
+            e.preventDefault();
+            e.stopPropagation();
+            return;
+          }
+          if (config.value_max !== undefined && numValue > config.value_max) {
+            e.preventDefault();
+            e.stopPropagation();
+            return;
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Error validating text edit input:', error);
+    }
+  }
+
+  // Register text edit keydown handler
+  document.addEventListener('keydown', handleTextEditKeydown, true);
+
 uimenu_item: |
-  <div class="p2p4vsc-menu-item {{itemClasses}}" id="{{itemId}}"{{flyoutMenuIdRef}}>
+  <div class="p2p4vsc-menu-item {{itemClasses}}" id="{{itemId}}"{{flyoutMenuIdRef}}{{textEditConfigAttr}}>
     <div class="gutter-before">{{contentGutterBefore}}</div>
-    <div class="menu-item-text">{{itemDisplayName}}</div>
+    <div class="menu-item-text">
+      {{iconSlotWithPrefixSuffix}}{{itemDisplayName}}
+    </div>
     <div class="gutter-after">{{contentGutterAfter}}</div>
     {{flyout}}
   </div>
