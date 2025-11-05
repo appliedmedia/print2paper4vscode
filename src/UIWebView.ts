@@ -180,9 +180,9 @@ export class UIWebView {
         pdf_data_url,
         pdfjs_library,
         pdf_zoom_level: pdf_zoom_level.toString(),
-        zoom_min: kZoomLevel.min.toString(),
-        zoom_max: kZoomLevel.max.toString(),
-        zoom_step_amount: kZoomLevel.stepAmount.toString(),
+        zoomLevel_min: kZoomLevel.min.toString(),
+        zoomLevel_max: kZoomLevel.max.toString(),
+        zoomLevel_stepAmount: kZoomLevel.stepAmount.toString(),
         toolbar: '{{toolbar}}', // Placeholder for UI.addToolbar()
       };
 

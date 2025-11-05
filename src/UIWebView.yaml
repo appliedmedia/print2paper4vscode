@@ -89,14 +89,14 @@ webview_js: |
   // Zoom constants - use values from extension (kZoomLevel.min/max/stepAmount)
   // These must be injected via template variables - error if missing
   const kZoomLevel = {
-    min: parseFloat('{{zoom_min}}') || 0,
-    max: parseFloat('{{zoom_max}}') || 0,
-    stepAmount: parseFloat('{{zoom_step_amount}}') || 0,
+    min: parseFloat('{{zoomLevel_min}}') || 0,
+    max: parseFloat('{{zoomLevel_max}}') || 0,
+    stepAmount: parseFloat('{{zoomLevel_stepAmount}}') || 0,
   };
   
   if (kZoomLevel.min === 0 || kZoomLevel.max === 0 || kZoomLevel.stepAmount === 0 || 
       isNaN(kZoomLevel.min) || isNaN(kZoomLevel.max) || isNaN(kZoomLevel.stepAmount)) {
-    dx('❌ ERROR: zoom_min, zoom_max, or zoom_step_amount template variables not injected correctly');
+    dx('❌ ERROR: zoomLevel_min, zoomLevel_max, or zoomLevel_stepAmount template variables not injected correctly');
     throw new Error('Zoom constants not initialized - template injection failed');
   }
   
