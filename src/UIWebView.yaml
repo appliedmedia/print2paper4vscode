@@ -88,17 +88,19 @@ webview_js: |
   
   // Zoom constants - use values from extension (kZoomLevel.min/max)
   // These must be injected via template variables - error if missing
-  const ZOOM_MIN = parseFloat('{{zoom_min}}') || 0;
-  const ZOOM_MAX = parseFloat('{{zoom_max}}') || 0;
-  const ZOOM_STEP = 0.1;
+  const kZoomLevel = {
+    min: parseFloat('{{zoom_min}}') || 0,
+    max: parseFloat('{{zoom_max}}') || 0,
+  };
   
-  if (ZOOM_MIN === 0 || ZOOM_MAX === 0 || isNaN(ZOOM_MIN) || isNaN(ZOOM_MAX)) {
+  if (kZoomLevel.min === 0 || kZoomLevel.max === 0 || isNaN(kZoomLevel.min) || isNaN(kZoomLevel.max)) {
     dx('❌ ERROR: zoom_min or zoom_max template variables not injected correctly');
     throw new Error('Zoom constants not initialized - template injection failed');
   }
   
-  const ZOOM_MIN_PERCENT = ZOOM_MIN * 100;
-  const ZOOM_MAX_PERCENT = ZOOM_MAX * 100;
+  // Compute percent values
+  kZoomLevel.minPercent = kZoomLevel.min * 100;
+  kZoomLevel.maxPercent = kZoomLevel.max * 100;
   
   // Use existing vscode API from toolbar (or create if not available)
   const vscode = window.vscode || (typeof acquireVsCodeApi !== 'undefined' ? acquireVsCodeApi() : null);
@@ -264,8 +266,8 @@ webview_js: |
         }
         
         const inputPercent = parseFloat(text);
-        // Validate input is within ZOOM_MIN%-ZOOM_MAX% range
-        if (isNaN(inputPercent) || inputPercent < ZOOM_MIN_PERCENT || inputPercent > ZOOM_MAX_PERCENT) {
+        // Validate input is within kZoomLevel.minPercent-kZoomLevel.maxPercent range
+        if (isNaN(inputPercent) || inputPercent < kZoomLevel.minPercent || inputPercent > kZoomLevel.maxPercent) {
           // Invalid input, restore current zoom
           zoomLevelValueEl.textContent = Math.round(currentScale * 100) + '%';
           return;
@@ -273,7 +275,7 @@ webview_js: |
         
         // Snap to nearest 10% increment for consistency with preset levels
         const snappedPercent = Math.round(inputPercent / 10) * 10;
-        const clampedPercent = Math.max(ZOOM_MIN_PERCENT, Math.min(ZOOM_MAX_PERCENT, snappedPercent));
+        const clampedPercent = Math.max(kZoomLevel.minPercent, Math.min(kZoomLevel.maxPercent, snappedPercent));
         const newScale = clampedPercent / 100;
         
         setZoom(newScale);
@@ -347,12 +349,14 @@ webview_js: |
   function handleZoomAction(action) {
     let newScale = currentScale;
     
+    const ZOOM_STEP = 0.1;
+    
     switch (action) {
       case 'in':
-        newScale = Math.min(currentScale + ZOOM_STEP, ZOOM_MAX);
+        newScale = Math.min(currentScale + ZOOM_STEP, kZoomLevel.max);
         break;
       case 'out':
-        newScale = Math.max(currentScale - ZOOM_STEP, ZOOM_MIN);
+        newScale = Math.max(currentScale - ZOOM_STEP, kZoomLevel.min);
         break;
       case 'fitWidth':
         if (pageWidthPx > 0) {
@@ -382,7 +386,7 @@ webview_js: |
    */
   function setZoom(scale) {
     // Clamp scale to valid range
-    currentScale = Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, scale));
+    currentScale = Math.max(kZoomLevel.min, Math.min(kZoomLevel.max, scale));
     
     // Update zoom level display
     const zoomLevelValueEl = document.getElementById('zoom-level-value');
