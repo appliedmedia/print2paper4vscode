@@ -87,9 +87,16 @@ webview_js: |
   let pageHeightPx = parseFloat('{{page_height_px}}') || 0;
   
   // Zoom constants - use values from extension (kZoomLevel.min/max)
-  const ZOOM_MIN = parseFloat('{{zoom_min}}') || 0.10;
-  const ZOOM_MAX = parseFloat('{{zoom_max}}') || 3.0;
+  // These must be injected via template variables - error if missing
+  const ZOOM_MIN = parseFloat('{{zoom_min}}') || 0;
+  const ZOOM_MAX = parseFloat('{{zoom_max}}') || 0;
   const ZOOM_STEP = 0.1;
+  
+  if (ZOOM_MIN === 0 || ZOOM_MAX === 0) {
+    dx('❌ ERROR: zoom_min or zoom_max template variables not injected correctly');
+    throw new Error('Zoom constants not initialized - template injection failed');
+  }
+  
   const ZOOM_MIN_PERCENT = ZOOM_MIN * 100;
   const ZOOM_MAX_PERCENT = ZOOM_MAX * 100;
   
