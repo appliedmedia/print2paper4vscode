@@ -284,7 +284,7 @@ export const kZoomLevel = {
   methodName: 'ZoomLevel',
   isFlyout: false,
   flyoutMenuItemIds: [] as const,
-  min: 0.25,
+  min: 0.10,
   max: 3.0,
   menuItems: [
     { id: '0.25', displayName: '25%' },

@@ -86,9 +86,9 @@ webview_js: |
   let pageWidthPx = parseFloat('{{page_width_px}}') || 0;
   let pageHeightPx = parseFloat('{{page_height_px}}') || 0;
   
-  // Zoom constants
-  const ZOOM_MIN = 0.25;
-  const ZOOM_MAX = 3.0;
+  // Zoom constants - use values from extension (kZoomLevel.min/max)
+  const ZOOM_MIN = parseFloat('{{zoom_min}}') || 0.10;
+  const ZOOM_MAX = parseFloat('{{zoom_max}}') || 3.0;
   const ZOOM_STEP = 0.1;
   const ZOOM_MIN_PERCENT = ZOOM_MIN * 100;
   const ZOOM_MAX_PERCENT = ZOOM_MAX * 100;

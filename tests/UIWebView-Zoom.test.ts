@@ -160,7 +160,7 @@ describe('UIWebView Zoom Controls', () => {
     test('should handle zoom out action', () => {
       let currentScale = 1.0;
       const ZOOM_STEP = 0.1;
-      const ZOOM_MIN = 0.25;
+      const ZOOM_MIN = 0.10; // Use kZoomLevel.min value
 
       const zoomOut = () => {
         currentScale = Math.max(currentScale - ZOOM_STEP, ZOOM_MIN);
@@ -169,9 +169,9 @@ describe('UIWebView Zoom Controls', () => {
       zoomOut();
       assert.strictEqual(currentScale, 0.9, 'Should zoom out by 0.1');
 
-      currentScale = 0.3;
+      currentScale = 0.15;
       zoomOut();
-      assert.strictEqual(currentScale, 0.25, 'Should cap at 0.25');
+      assert.strictEqual(currentScale, 0.10, 'Should cap at 0.10');
     });
 
     test('should handle fit page action', () => {
