@@ -253,42 +253,29 @@ export const kTheme = {
   menuItems: [], // Themes are dynamically loaded from Shiki
 } as const;
 
-// Zoom menu definitions with shortcutCode
-export type ZoomMenuWithShortcut = {
-  readonly id: string;
-  readonly displayName: string;
-  readonly icon: string;
-  readonly alt: string;
-  readonly methodName: string;
-  readonly isFlyout: boolean;
-  readonly flyoutMenuItemIds: readonly never[];
-  readonly menuItems: readonly never[];
-  readonly shortcutCode: string;
-};
-
-export const kZoomOut: ZoomMenuWithShortcut = {
+export const kZoomOut = {
   id: 'zoomOut',
   displayName: 'Zoom Out',
   icon: '−',
   alt: '',
   methodName: 'ZoomOut',
   isFlyout: false,
-  flyoutMenuItemIds: [],
+  flyoutMenuItemIds: [] as const,
   menuItems: [],
-  shortcutCode: 'Minus', // KeyboardEvent.code for minus key
-};
+  shortcutCode: 'Minus' as const, // KeyboardEvent.code for minus key
+} as const;
 
-export const kZoomIn: ZoomMenuWithShortcut = {
+export const kZoomIn = {
   id: 'zoomIn',
   displayName: 'Zoom In',
   icon: '+',
   alt: '',
   methodName: 'ZoomIn',
   isFlyout: false,
-  flyoutMenuItemIds: [],
+  flyoutMenuItemIds: [] as const,
   menuItems: [],
-  shortcutCode: 'Equal', // KeyboardEvent.code for =/+ key (main keyboard)
-};
+  shortcutCode: 'Equal' as const, // KeyboardEvent.code for =/+ key (main keyboard)
+} as const;
 
 export const kZoomLevel = {
   id: 'zoomLevel',
