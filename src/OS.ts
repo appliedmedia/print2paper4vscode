@@ -72,8 +72,11 @@ export abstract class OS {
       return new OSWin(app);
     } else if (process?.platform === 'linux') {
       return new OSLinux(app);
-    } else {
+    } else if (process?.platform === 'darwin') {
       return new OSMac(app);
+    } else {
+      // Default to Linux for unknown platforms (most common server platform)
+      return new OSLinux(app);
     }
   }
 
