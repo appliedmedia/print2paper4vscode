@@ -258,6 +258,7 @@ uimenu_generic_handlers: |
 
   /**
    * Handle flyout menu toggle (open/close flyout)
+   * Single return point - returns early only if flyout menu not found
    */
   function handleFlyoutToggle(e, itemEl, menu) {
     e.preventDefault();
@@ -265,48 +266,52 @@ uimenu_generic_handlers: |
     
     const flyoutMenuId = itemEl.getAttribute('flyout-menu-id-ref');
     const flyoutMenu = findFlyoutMenu(itemEl, flyoutMenuId);
-    if (!flyoutMenu) return;
     
-    const ancestorFlyouts = getAncestorFlyouts(menu, flyoutMenu);
-    const wasVisible = flyoutMenu.style.display === 'block';
-    
-    // Close all other flyouts except the one being toggled and its ancestors
-    document.querySelectorAll('.p2p4vsc-menu.is-flyout').forEach(flyout => {
-      if (flyout !== flyoutMenu && !ancestorFlyouts.includes(flyout)) {
-        flyout.style.display = 'none';
+    if (flyoutMenu) {
+      const ancestorFlyouts = getAncestorFlyouts(menu, flyoutMenu);
+      const wasVisible = flyoutMenu.style.display === 'block';
+      
+      // Close all other flyouts except the one being toggled and its ancestors
+      document.querySelectorAll('.p2p4vsc-menu.is-flyout').forEach(flyout => {
+        if (flyout !== flyoutMenu && !ancestorFlyouts.includes(flyout)) {
+          flyout.style.display = 'none';
+        }
+      });
+      
+      if (wasVisible) {
+        flyoutMenu.style.display = 'none';
+      } else {
+        showFlyoutMenu(flyoutMenu, itemEl, e, ancestorFlyouts);
       }
-    });
-    
-    if (wasVisible) {
-      flyoutMenu.style.display = 'none';
-    } else {
-      showFlyoutMenu(flyoutMenu, itemEl, e, ancestorFlyouts);
     }
+    // Single return point - early return only for missing flyout (guard clause)
   }
 
   /**
    * Handle menu item click - either toggle flyout or select item
+   * Single return point - checks flyout-menu-id-ref attribute (set from static flyoutMenuItemIds)
    */
   function handleMenuItemClick(e, itemEl) {
     const menu = itemEl.closest('.p2p4vsc-menu');
     const menuId = menu?.getAttribute('id');
+    const flyoutMenuId = itemEl.getAttribute('flyout-menu-id-ref');
     
-    // If item has flyout, toggle it instead of selecting
-    if (itemEl.classList.contains('is-flyout')) {
+    // Check if item has flyout by checking flyout-menu-id-ref attribute (set from static flyoutMenuItemIds)
+    // This is more reliable than classList.contains() - uses data attribute from source of truth
+    if (flyoutMenuId) {
       handleFlyoutToggle(e, itemEl, menu);
-      return;
+    } else {
+      // Terminal selection - update UI and post message
+      if (menu.classList.contains('has-gutter-before')) {
+        menu.querySelectorAll('.p2p4vsc-menu-item').forEach(item => {
+          item.classList.remove('selected');
+        });
+        itemEl.classList.add('selected');
+      }
+      
+      postMenuItemSelected(menuId, itemEl.id);
+      closeAllMenus();
     }
-    
-    // Terminal selection - update UI and post message
-    if (menu.classList.contains('has-gutter-before')) {
-      menu.querySelectorAll('.p2p4vsc-menu-item').forEach(item => {
-        item.classList.remove('selected');
-      });
-      itemEl.classList.add('selected');
-    }
-    
-    postMenuItemSelected(menuId, itemEl.id);
-    closeAllMenus();
   }
 
   // Main event handler - single entry point
