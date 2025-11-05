@@ -221,7 +221,6 @@ export class UIMenu {
     // Check if this item has a flyout by checking if its ID is in flyoutMenuItemIds
     const menuItemId = item.id;
     const isFlyout = this.flyoutMenuItemIds.includes(menuItemId);
-    const flyoutMenuIdRef = isFlyout ? ` flyout-menu-id-ref="${menuItemId}"` : '';
     const isDefault = menuItemId === defaultItemId;
     const isSelected = menuItemId === selectedItemId;
 
@@ -246,7 +245,6 @@ export class UIMenu {
       contentGutterBefore: '', // Content handled by CSS
       contentGutterAfter: '', // Content handled by CSS
       flyout,
-      flyoutMenuIdRef,
     };
 
     dx.done();
@@ -316,6 +314,11 @@ export class UIMenu {
       // Use the main template for all menus
       const template = yaml.uimenu_html;
 
+      // Set data attribute with flyout item IDs (from static flyoutMenuItemIds list)
+      const flyoutItemsAttr = this.flyoutMenuItemIds.length > 0 
+        ? ` data-flyout-items="${this.flyoutMenuItemIds.join(',')}"`
+        : '';
+      
       const replacementDict = {
         menuId: this._id,
         displayName: this.displayName,
@@ -323,6 +326,7 @@ export class UIMenu {
         menuItems: hasItems ? menuItems : '', // Empty string if no items
         menuItemsContainer: hasItems ? `<div class="p2p4vsc-menu-items" id="${this._id}-items">${menuItems}</div>` : '', // Only create container if there are items
         menuClasses,
+        flyoutItemsAttr, // Data attribute with flyout item IDs from static list
       };
 
       const result = this.app.templateDictReplace(template, replacementDict);

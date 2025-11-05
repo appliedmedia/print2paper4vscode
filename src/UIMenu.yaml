@@ -127,7 +127,7 @@ uimenu_css: |
   }
 
 uimenu_html: |
-  <div class="p2p4vsc-menu {{menuClasses}}" id="{{menuId}}">
+  <div class="p2p4vsc-menu {{menuClasses}}" id="{{menuId}}"{{flyoutItemsAttr}}>
     <button class="p2p4vsc-menu-btn" title="{{displayName}}">{{icon}}</button>
     {{menuItemsContainer}}
   </div>
@@ -205,7 +205,7 @@ uimenu_generic_handlers: |
     let flyoutMenu = itemEl.querySelector(`#${flyoutMenuId}`);
     if (flyoutMenu) return flyoutMenu;
     
-    // Fallback: search document-wide (shouldn't be needed with current structure)
+    // Fallback: search document-wide (flyout menu may be elsewhere in DOM)
     return document.getElementById(flyoutMenuId);
   }
 
@@ -261,11 +261,10 @@ uimenu_generic_handlers: |
    * Handle flyout menu toggle (open/close flyout)
    * Single return point - returns early only if flyout menu not found
    */
-  function handleFlyoutToggle(e, itemEl, menu) {
+  function handleFlyoutToggle(e, itemEl, menu, flyoutMenuId) {
     e.preventDefault();
     e.stopPropagation();
     
-    const flyoutMenuId = itemEl.getAttribute('flyout-menu-id-ref');
     const flyoutMenu = findFlyoutMenu(itemEl, flyoutMenuId);
     
     if (flyoutMenu) {
@@ -290,15 +289,19 @@ uimenu_generic_handlers: |
 
   /**
    * Handle menu item click - either toggle flyout or select item
+   * Uses is-flyout class which is set from static flyoutMenuItemIds list
    */
   function handleMenuItemClick(e, itemEl) {
     const menu = itemEl.closest('.p2p4vsc-menu');
     const menuId = menu?.getAttribute('id');
-    const flyoutMenuId = itemEl.getAttribute('flyout-menu-id-ref');
     
-    // Does this item have a flyout? If yes, toggle it. Otherwise, select it.
-    if (flyoutMenuId) {
-      handleFlyoutToggle(e, itemEl, menu);
+    // Check if item has flyout using is-flyout class (set from static flyoutMenuItemIds)
+    // This uses the source of truth: the static list from kFoo constants
+    if (itemEl.classList.contains('is-flyout')) {
+      // Get flyout menu ID - strip 'flyout-' prefix if present, or use item ID directly
+      const itemId = itemEl.id.startsWith('flyout-') ? itemEl.id.substring(7) : itemEl.id;
+      const flyoutMenuId = itemId; // Flyout menu ID matches the item ID
+      handleFlyoutToggle(e, itemEl, menu, flyoutMenuId);
     } else {
       // Terminal selection - update UI and post message
       if (menu.classList.contains('has-gutter-before')) {
@@ -336,7 +339,7 @@ uimenu_generic_handlers: |
   });
 
 uimenu_item: |
-  <div class="p2p4vsc-menu-item {{itemClasses}}" id="{{itemId}}"{{flyoutMenuIdRef}}>
+  <div class="p2p4vsc-menu-item {{itemClasses}}" id="{{itemId}}">
     <div class="gutter-before">{{contentGutterBefore}}</div>
     <div class="menu-item-text">{{itemDisplayName}}</div>
     <div class="gutter-after">{{contentGutterAfter}}</div>
