@@ -263,7 +263,6 @@ export const kZoomOut = {
   isFlyout: false,
   flyoutMenuItemIds: [] as const,
   menuItems: [],
-  shortcutCode: 'Minus', // KeyboardEvent.code for minus key
 } as const;
 
 export const kZoomIn = {
@@ -275,7 +274,6 @@ export const kZoomIn = {
   isFlyout: false,
   flyoutMenuItemIds: [] as const,
   menuItems: [],
-  shortcutCode: 'Equal', // KeyboardEvent.code for =/+ key (main keyboard)
 } as const;
 
 export const kZoomLevel = {
@@ -289,6 +287,15 @@ export const kZoomLevel = {
   min: 0.10,
   max: 3.0,
   stepAmount: 0.1,
+  in: {
+    shortcutCode: 'Equal', // KeyboardEvent.code for =/+ key (main keyboard)
+  },
+  out: {
+    shortcutCode: 'Minus', // KeyboardEvent.code for minus key
+  },
+  actualSize: {
+    shortcutCode: 'Digit0', // KeyboardEvent.code for 0 key
+  },
   menuItems: [
     { id: '0.10', displayName: '10%' },
     { id: '0.25', displayName: '25%' },

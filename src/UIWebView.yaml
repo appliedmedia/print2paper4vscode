@@ -101,9 +101,9 @@ webview_js: |
   
   // Keyboard shortcut codes from extension constants
   const kZoomShortcutCodes = {
-    in: '{{zoomShortcutCode_in}}',
-    out: '{{zoomShortcutCode_out}}',
-    actualSize: '{{zoomShortcutCode_actualSize}}',
+    in: '{{zoomLevel_in_shortcutCode}}',
+    out: '{{zoomLevel_out_shortcutCode}}',
+    actualSize: '{{zoomLevel_actualSize_shortcutCode}}',
   };
   
   if (kZoomLevel.min === 0 || kZoomLevel.max === 0 || kZoomLevel.stepAmount === 0 || 
