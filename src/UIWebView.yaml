@@ -99,6 +99,13 @@ webview_js: |
     stepAmount: parseFloat('{{zoomLevel_stepAmount}}') || 0,
   };
   
+  // Keyboard shortcut codes from extension constants
+  const kZoomShortcutCodes = {
+    in: '{{zoomShortcutCode_in}}',
+    out: '{{zoomShortcutCode_out}}',
+    actualSize: '{{zoomShortcutCode_actualSize}}',
+  };
+  
   if (kZoomLevel.min === 0 || kZoomLevel.max === 0 || kZoomLevel.stepAmount === 0 || 
       isNaN(kZoomLevel.min) || isNaN(kZoomLevel.max) || isNaN(kZoomLevel.stepAmount)) {
     dx('❌ ERROR: zoomLevel_min, zoomLevel_max, or zoomLevel_stepAmount template variables not injected correctly');
@@ -331,18 +338,21 @@ webview_js: |
     // These work globally when webview has focus, regardless of dropdown state
     // ⌘/Ctrl+0 → actualSize (100%), ⌘/Ctrl++ → zoom in, ⌘/Ctrl+- → zoom out
     // Shortcuts are also displayed in menu items (e.g., "100% ⌘0") via PaperPrinter.menuItems_ZoomLevel()
+    // Uses KeyboardEvent.code for language-independent key detection
     document.addEventListener('keydown', function(e) {
       // Check for Cmd/Ctrl modifier
       const isModifier = e.metaKey || e.ctrlKey;
       
       if (isModifier) {
-        if (e.key === '=' || e.key === '+') {
+        // Use e.code for language-independent key detection
+        // For Plus key: check both Equal (main keyboard =/+ key) and NumpadAdd (numeric keypad +)
+        if (e.code === kZoomShortcutCodes.in || e.code === 'NumpadAdd') {
           e.preventDefault();
           handleZoomAction('in');
-        } else if (e.key === '-' || e.key === '_') {
+        } else if (e.code === kZoomShortcutCodes.out) {
           e.preventDefault();
           handleZoomAction('out');
-        } else if (e.key === '0') {
+        } else if (e.code === kZoomShortcutCodes.actualSize) {
           e.preventDefault();
           handleZoomAction('actualSize');
         }

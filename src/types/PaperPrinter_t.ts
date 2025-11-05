@@ -263,6 +263,7 @@ export const kZoomOut = {
   isFlyout: false,
   flyoutMenuItemIds: [] as const,
   menuItems: [],
+  shortcutCode: 'Minus', // KeyboardEvent.code for minus key
 } as const;
 
 export const kZoomIn = {
@@ -274,6 +275,7 @@ export const kZoomIn = {
   isFlyout: false,
   flyoutMenuItemIds: [] as const,
   menuItems: [],
+  shortcutCode: 'Equal', // KeyboardEvent.code for =/+ key (standard code; also check NumpadAdd for numeric keypad +)
 } as const;
 
 export const kZoomLevel = {
@@ -291,7 +293,7 @@ export const kZoomLevel = {
     { id: '0.10', displayName: '10%' },
     { id: '0.25', displayName: '25%' },
     { id: '0.50', displayName: '50%' },
-    { id: '1.00', displayName: '100%', shortcut: 'Ctrl/Cmd + 0' },
+    { id: '1.00', displayName: '100%', shortcut: 'Ctrl/Cmd + 0', shortcutCode: 'Digit0' },
     { id: '1.25', displayName: '125%' },
     { id: '1.50', displayName: '150%' },
     { id: '2.00', displayName: '200%' },
@@ -299,7 +301,7 @@ export const kZoomLevel = {
     { id: '3.00', displayName: '300%' },
     { id: 'fitPage', displayName: 'Fit Page' },
     { id: 'fitWidth', displayName: 'Fit Width' },
-    { id: 'actualSize', displayName: '1:1' },
+    { id: 'actualSize', displayName: '1:1', shortcutCode: 'Digit0' },
   ],
 } as const;
 export type ZoomLevelMenuItems_t = (typeof kZoomLevel.menuItems)[number]['id'];
