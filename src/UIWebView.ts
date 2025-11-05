@@ -165,7 +165,6 @@ export class UIWebView {
       const zoomLevel = this.app.ui.persist.pdf_zoom_level;
       const parsedZoom = Number(zoomLevel);
       const pdf_zoom_level =
-        Number.isFinite(parsedZoom) &&
         parsedZoom >= kZoomLevel.min &&
         parsedZoom <= kZoomLevel.max
           ? parsedZoom
@@ -353,7 +352,6 @@ export class UIWebView {
     try {
       const zoomLevel = Number(msg.zoomLevel);
       if (
-        Number.isFinite(zoomLevel) &&
         zoomLevel >= kZoomLevel.min &&
         zoomLevel <= kZoomLevel.max
       ) {

@@ -62,7 +62,6 @@ export class UI {
     const zoomLevel = this.persist.pdf_zoom_level;
     const numZoomLevel = Number(zoomLevel);
     const safeZoom =
-      Number.isFinite(numZoomLevel) &&
       numZoomLevel >= kZoomLevel.min &&
       numZoomLevel <= kZoomLevel.max
         ? numZoomLevel
