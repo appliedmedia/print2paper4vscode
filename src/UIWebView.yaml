@@ -97,6 +97,7 @@ webview_js: |
     min: parseFloat('{{zoomLevel_min}}') || 0,
     max: parseFloat('{{zoomLevel_max}}') || 0,
     stepAmount: parseFloat('{{zoomLevel_stepAmount}}') || 0,
+    menuItems: {{zoomLevel_menuItems}}, // Menu items with id, displayName, value, shortcutCode
   };
   
   // Keyboard shortcut codes from extension constants
@@ -148,9 +149,17 @@ webview_js: |
           } else if (itemId === 'fitWidth') {
             handleZoomAction('fitWidth');
           } else {
-            const scale = parseFloat(itemId);
-            if (!isNaN(scale)) {
-              setZoom(scale);
+            // Find menu item to get its value property
+            const menuItem = kZoomLevel.menuItems.find(item => item.id === itemId);
+            if (menuItem && 'value' in menuItem && menuItem.value !== undefined) {
+              // Use value property from menu item
+              setZoom(menuItem.value);
+            } else {
+              // Fallback: parse from id (for backwards compatibility)
+              const scale = parseFloat(itemId);
+              if (!isNaN(scale)) {
+                setZoom(scale);
+              }
             }
           }
         }

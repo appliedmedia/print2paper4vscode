@@ -184,6 +184,14 @@ export class UIWebView {
         zoomLevel_stepAmount: kZoomLevel.stepAmount.toString(),
         zoomLevel_in_shortcutCode: (kZoomIn as any).shortcutCode,
         zoomLevel_out_shortcutCode: (kZoomOut as any).shortcutCode,
+        zoomLevel_menuItems: JSON.stringify(
+          kZoomLevel.menuItems.map(item => ({
+            id: item.id,
+            displayName: item.displayName,
+            value: 'value' in item ? item.value : undefined,
+            shortcutCode: 'shortcutCode' in item ? item.shortcutCode : undefined,
+          }))
+        ),
         toolbar: '{{toolbar}}', // Placeholder for UI.addToolbar()
       };
 

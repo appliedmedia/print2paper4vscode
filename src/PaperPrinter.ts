@@ -544,10 +544,17 @@ export class PaperPrinter {
         displayName = `${displayName} ${shortcut}`;
       }
       
-      return {
+      const menuItem: UIMenuItem_t = {
         id: item.id as MenuItemId_t,
         displayName: displayName as string,
       };
+      
+      // Add value property if it exists (for numeric zoom levels)
+      if ('value' in item && item.value !== undefined) {
+        (menuItem as any).value = item.value;
+      }
+      
+      return menuItem;
     });
   }
 
@@ -866,20 +873,25 @@ export class PaperPrinter {
       id = '1.00';
       value = 1.0;
     } else {
-      // Parse zoom level for persistence
-      const zoomValue = menuItemId;
-      if (zoomValue === 'fitPage' || zoomValue === 'fitWidth') {
+      // Find the menu item to get its value property
+      const menuItem = kZoomLevel.menuItems.find(item => item.id === menuItemId);
+      
+      if (menuItemId === 'fitPage' || menuItemId === 'fitWidth') {
         // Special actions - persist as-is
-        value = zoomValue;
+        value = menuItemId;
+      } else if (menuItem && 'value' in menuItem && menuItem.value !== undefined) {
+        // Use value property from menu item
+        value = menuItem.value as number;
       } else {
-        // Parse zoom level (e.g., "1.00" -> 1.0)
-        const scale = parseFloat(zoomValue);
+        // Fallback: parse zoom level from id (e.g., "1.00" -> 1.0)
+        const scale = parseFloat(menuItemId);
         // Validate scale is within valid range
         if (!isNaN(scale) && scale >= kZoomLevel.min && scale <= kZoomLevel.max) {
           value = scale;
         } else {
           dx.out(`Invalid zoom scale: ${scale}, ignoring`);
           value = Number(kZoomLevel.alt); // Default to alt value
+          id = kZoomLevel.alt;
         }
       }
       // Persist zoom level - webview will handle the actual zoom change via menuItemSelected message
