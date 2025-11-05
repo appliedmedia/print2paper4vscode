@@ -91,6 +91,7 @@ webview_js: |
   const kZoomLevel = {
     min: parseFloat('{{zoom_min}}') || 0,
     max: parseFloat('{{zoom_max}}') || 0,
+    stepAmount: 0.1,
   };
   
   if (kZoomLevel.min === 0 || kZoomLevel.max === 0 || isNaN(kZoomLevel.min) || isNaN(kZoomLevel.max)) {
@@ -349,14 +350,12 @@ webview_js: |
   function handleZoomAction(action) {
     let newScale = currentScale;
     
-    const ZOOM_STEP = 0.1;
-    
     switch (action) {
       case 'in':
-        newScale = Math.min(currentScale + ZOOM_STEP, kZoomLevel.max);
+        newScale = Math.min(currentScale + kZoomLevel.stepAmount, kZoomLevel.max);
         break;
       case 'out':
-        newScale = Math.max(currentScale - ZOOM_STEP, kZoomLevel.min);
+        newScale = Math.max(currentScale - kZoomLevel.stepAmount, kZoomLevel.min);
         break;
       case 'fitWidth':
         if (pageWidthPx > 0) {
