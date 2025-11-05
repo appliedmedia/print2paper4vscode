@@ -220,6 +220,28 @@ webview_js: |
   }
   
   /**
+   * Sanitize zoom input text: strip non-numeric, limit to 3 chars, clamp to valid range
+   * @param {string} text - Raw input text
+   * @returns {string} - Sanitized text within valid range
+   */
+  function sanitizeZoomInput(text) {
+    // Remove non-numeric characters (no decimals, no % sign in input)
+    let sanitized = text.replace(/[^0-9]/g, '');
+    // Limit to 3 characters max (300 is max)
+    sanitized = sanitized.slice(0, 3);
+    // Ensure value is within valid range (kZoomLevel.minPercent-kZoomLevel.maxPercent)
+    const numValue = parseInt(sanitized, 10);
+    if (sanitized && !isNaN(numValue)) {
+      if (numValue < kZoomLevel.minPercent) {
+        sanitized = kZoomLevel.minPercent.toString();
+      } else if (numValue > kZoomLevel.maxPercent) {
+        sanitized = kZoomLevel.maxPercent.toString();
+      }
+    }
+    return sanitized;
+  }
+
+  /**
    * Initialize zoom control buttons and keyboard shortcuts
    */
   function initZoomControls() {
@@ -248,33 +270,20 @@ webview_js: |
         }
       });
       
-      // Handle input/typing - restrict to numbers only (10-300), max 3 characters
+      // Handle input/typing - sanitize on every input (including paste events)
       // % sign is static and not editable
       zoomLevelEl.addEventListener('input', (e) => {
         e.stopPropagation();
-        let text = zoomLevelValueEl.textContent || '';
-        // Remove non-numeric characters (no decimals, no % sign in input)
-        text = text.replace(/[^0-9]/g, '');
-        // Limit to 3 characters max (300 is max)
-        text = text.slice(0, 3);
-        // Ensure value is within valid range (kZoomLevel.minPercent-kZoomLevel.maxPercent)
-        const numValue = parseInt(text, 10);
-        if (text && !isNaN(numValue)) {
-          if (numValue < kZoomLevel.minPercent) {
-            text = kZoomLevel.minPercent.toString();
-          } else if (numValue > kZoomLevel.maxPercent) {
-            text = kZoomLevel.maxPercent.toString();
-          }
-        }
-        zoomLevelValueEl.textContent = text;
+        const text = zoomLevelValueEl.textContent || '';
+        const sanitized = sanitizeZoomInput(text);
+        zoomLevelValueEl.textContent = sanitized;
       });
       
       // Handle blur or Enter key to apply zoom
-      // Input is already validated to be within kZoomLevel.minPercent-kZoomLevel.maxPercent range
       const applyZoomFromInput = () => {
         let text = zoomLevelValueEl.textContent || '';
-        // Remove any non-numeric (shouldn't be any, but be safe)
-        text = text.replace(/[^0-9]/g, '').trim();
+        // Sanitize input defensively (handles paste, drag-and-drop, etc.)
+        text = sanitizeZoomInput(text);
         
         if (text === '') {
           // Restore current zoom if empty (% is static in HTML)
