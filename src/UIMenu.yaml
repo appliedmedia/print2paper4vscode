@@ -306,10 +306,11 @@ uimenu_generic_handlers: |
     // Check if item has flyout using is-flyout class (set from static flyoutMenuItemIds)
     // This uses the source of truth: the static list from kFoo constants
     if (itemEl.classList.contains('is-flyout')) {
-      // Get flyout menu ID - strip 'flyout-' prefix if present, or use item ID directly
-      const itemId = itemEl.id.startsWith('flyout-') ? itemEl.id.substring(7) : itemEl.id;
-      const flyoutMenuId = itemId; // Flyout menu ID matches the item ID
-      handleFlyoutToggle(e, itemEl, menu, flyoutMenuId);
+      // Get flyout menu ID from flyout-menu-id-ref attribute (set from static flyoutMenuItemIds)
+      const flyoutMenuId = itemEl.getAttribute('flyout-menu-id-ref');
+      if (flyoutMenuId) {
+        handleFlyoutToggle(e, itemEl, menu, flyoutMenuId);
+      }
     } else {
       // Terminal selection - update UI and post message
       if (menu.classList.contains('has-gutter-before')) {
