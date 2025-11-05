@@ -178,13 +178,15 @@ uimenu_generic_handlers: |
     const menuId = menu?.getAttribute('id');
     const menuItems = menu?.querySelector('.p2p4vsc-menu-items');
     
-    // Does this menu have items to show? If no, treat click as selection. Otherwise, toggle dropdown.
+    // Does this menu have menu items to show in a dropdown?
+    // (Menu items can be regular items OR items with flyouts - both require a dropdown)
+    // If no items, treat button click as direct selection
     if (!menuItems) {
       postMenuItemSelected(menuId, menuId);
       return;
     }
     
-    // Menu has items - toggle dropdown
+    // Menu has items - toggle dropdown (items may or may not have flyouts)
     closeAllMenus();
     
     const btn = e.target;
