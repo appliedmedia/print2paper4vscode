@@ -275,7 +275,7 @@ export const kZoomIn = {
   isFlyout: false,
   flyoutMenuItemIds: [] as const,
   menuItems: [],
-  shortcutCode: 'Equal', // KeyboardEvent.code for =/+ key (standard code; also check NumpadAdd for numeric keypad +)
+  shortcutCode: 'Equal', // KeyboardEvent.code for =/+ key (main keyboard)
 } as const;
 
 export const kZoomLevel = {

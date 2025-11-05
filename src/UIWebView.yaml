@@ -345,8 +345,7 @@ webview_js: |
       
       if (isModifier) {
         // Use e.code for language-independent key detection
-        // For Plus key: check both Equal (main keyboard =/+ key) and NumpadAdd (numeric keypad +)
-        if (e.code === kZoomShortcutCodes.in || e.code === 'NumpadAdd') {
+        if (e.code === kZoomShortcutCodes.in) {
           e.preventDefault();
           handleZoomAction('in');
         } else if (e.code === kZoomShortcutCodes.out) {
