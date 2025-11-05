@@ -25,6 +25,12 @@ export class OSLinux extends OS {
     this.dx = app.dx.create('OSLinux');
   }
 
+  protected getOSKeys(): Record<string, string> {
+    return {
+      'os-ctrl-cmd': 'Ctrl',
+    };
+  }
+
   async fileOpenInDefaultApp(path: string): Promise<void> {
     await this.execAsync(`xdg-open "${path}"`);
   }

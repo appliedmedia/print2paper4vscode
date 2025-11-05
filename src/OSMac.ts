@@ -26,6 +26,12 @@ export class OSMac extends OS {
     this.dx = app.dx.create('OSMac');
   }
 
+  protected getOSKeys(): Record<string, string> {
+    return {
+      'os-ctrl-cmd': '⌘',
+    };
+  }
+
   // Centralized AppleScript execution helper
   private async executeAppleScript(
     templateKey: string,

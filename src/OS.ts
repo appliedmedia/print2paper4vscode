@@ -94,6 +94,13 @@ export abstract class OS {
   }
 
   /**
+   * Get OS-specific template variable replacements
+   * Subclasses must implement this to return platform-specific key-value pairs
+   * @returns Record of template variable names to their OS-specific values
+   */
+  protected abstract getOSKeys(): Record<string, string>;
+
+  /**
    * Replace OS-specific template variables in a string
    * Composes template variables with OS-specific replacements and calls templateDictReplace
    * @param source - String containing template variables like {{os-ctrl-cmd}}
@@ -103,18 +110,7 @@ export abstract class OS {
    * os.dictReplace('{{os-ctrl-cmd}}+0') // Returns '⌘+0' on Mac, 'Ctrl+0' on Win/Linux
    */
   dictReplace(source: string): string {
-    const platform = process.platform;
-    const osKeys: Record<string, string> = {};
-    
-    if (platform === 'win32') {
-      osKeys['os-ctrl-cmd'] = 'Ctrl';
-    } else if (platform === 'darwin') {
-      osKeys['os-ctrl-cmd'] = '⌘';
-    } else {
-      // Default to Ctrl for Linux and other platforms
-      osKeys['os-ctrl-cmd'] = 'Ctrl';
-    }
-    
+    const osKeys = this.getOSKeys();
     // Use the app's templateDictReplace method
     return this.app.templateDictReplace(source, osKeys);
   }
