@@ -448,8 +448,9 @@ describe('Extension↔Webview Integration Tests', () => {
       newApp.init();
 
       // Should be sanitized to valid default
-      const zoomLevel = newApp.ui.persist.pdf_zoom_level;
+      const zoomLevel = Number(newApp.ui.persist.pdf_zoom_level);
       assert.ok(
+        Number.isFinite(zoomLevel) &&
         zoomLevel >= kZoomLevel.min && zoomLevel <= kZoomLevel.max,
         'Invalid persisted value should be sanitized on reload'
       );
