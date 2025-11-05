@@ -5,8 +5,11 @@ import {
   type MenuItemId_t,
   type HandleSelection_t,
   type UIMenuItem_t,
+  kMenuId,
+  kMenuItemId,
 } from './UIMenu';
 import { Diagnostics } from './Diagnostics';
+import { kFontSizeId } from './types/PaperPrinter_t';
 
 /**
  * UIMenuMgr - Menu manager for webview toolbar system
@@ -19,10 +22,10 @@ import { Diagnostics } from './Diagnostics';
  * @output Aggregated menu HTML/CSS/JS, menu item selection routing, menu lookup
  *
  * @example
- * const mgr = new UIMenuMgr(app);
- * const menu = mgr.createMenu('print', 'Print', '🖨️', false, ...);
- * mgr.addMenu(menu);
- * const html = await mgr.getAllUIMenuHTML();
+ * const uimenumgr = new UIMenuMgr(app);
+ * const menu = uimenumgr.createMenu('print', 'Print', '🖨️', false, ...);
+ * uimenumgr.addMenu(menu);
+ * const html = await uimenumgr.getAllUIMenuHTML();
  */
 export class UIMenuMgr {
   private app: App;
@@ -39,6 +42,39 @@ export class UIMenuMgr {
     // No initialization needed - menus are created on-demand by PaperPrinter
   }
 
+  // Instance methods with full validation using this.app
+  isMenuId(id: string): id is MenuId_t {
+    return kMenuId.includes(id as MenuId_t);
+  }
+
+  isMenuItemId(id: string): id is MenuItemId_t {
+    let isValid = false;
+
+    // 1. Check against static kMenuItemId list (now auto-constructed from PaperPrinter_t.ts)
+    if ((kMenuItemId as readonly string[]).includes(id)) {
+      isValid = true;
+    }
+    // 2. Check if it's a number - validate against font size menu items
+    else if (!isNaN(Number(id))) {
+      try {
+        const fontMenu = this.getMenuById('fontSizeId');
+        const fontMenuItems = fontMenu.getMenuItems();
+        isValid = fontMenuItems.some(item => item.id === id);
+      } catch {
+        // Menu doesn't exist yet, fallback to static list
+        const validFontSizes = Object.keys(kFontSizeId);
+        isValid = validFontSizes.includes(id);
+      }
+    }
+    // 3. Check against theme IDs
+    else {
+      const validThemes = this.app.stylize.getThemes().map(t => t.id);
+      isValid = validThemes.includes(id);
+    }
+
+    return isValid;
+  }
+
   done(): void {
     // Cleanup any resources if needed
     this.menus = [];
@@ -52,7 +88,7 @@ export class UIMenuMgr {
     isFlyout: boolean = false,
     menuItems: () => UIMenuItem_t[],
     flyoutMenuItemIds: string[] = [],
-    selectionHandler: (selectedId: string) => Promise<HandleSelection_t>
+    selectionHandler: (menuId: MenuId_t, menuItemId: MenuItemId_t) => Promise<HandleSelection_t>
   ): UIMenu {
     return new UIMenu(
       this.app,
@@ -72,6 +108,12 @@ export class UIMenuMgr {
   }
 
   // Handle menu item selection
+  // NOTE: All menu IDs and menu item IDs are static and known at compile time.
+  // They are defined in PaperPrinter_t.ts constants and compiled into kMenuId/kMenuItemId.
+  // There is no "random DOM code" that generates IDs - all IDs come from these constants.
+  // Therefore, we don't need ID normalization, prefix stripping, or other bulletproofing.
+  // If an invalid ID appears, it's a bug that should be fixed, not silently handled.
+  // Future: HTML IDs will be completely reworked, so this validation is temporary.
   async handleMenuItemSelected(menuId: MenuId_t, itemId: MenuItemId_t): Promise<void> {
     const dx = this.dx.sub('handleMenuItemSelected');
 
@@ -81,9 +123,7 @@ export class UIMenuMgr {
         await menu.dispatchSelection(itemId);
         dx.out(`Menu item selected: ${menuId}.${itemId}`);
       } else {
-        const msg = `Invalid menu: ${menuId}`;
-        dx.out(msg);
-        this.app.ui.showErrorMessage(msg);
+        dx.error(`Invalid menu: ${menuId}`);
         return;
       }
     } finally {
@@ -96,12 +136,16 @@ export class UIMenuMgr {
   getMenuById(id: string): UIMenu {
     const menu = this.getAllMenus().find(menu => menu.id === id);
     if (!menu) {
-      const msg = `Menu not found: ${id}`;
-      this.dx.out(msg);
-      this.app.ui.showErrorMessage(msg);
-      throw new Error(msg);
+      this.dx.error(`Menu not found: ${id}`);
+      throw new Error(`Menu not found: ${id}`);
     }
     return menu;
+  }
+
+  // Set persist value for a menu
+  setPersistForMenuId(menuId: MenuId_t, menuItemId: MenuItemId_t): void {
+    const menu = this.getMenuById(menuId);
+    (menu.persist as unknown as Record<string, string | number | boolean>)[menuId] = menuItemId;
   }
 
   // Get the selected value for a menu
@@ -114,40 +158,21 @@ export class UIMenuMgr {
   // Add a menu to the list (called by PaperPrinter)
   addMenu(menu: UIMenu): void {
     if (this.menus.some(m => m.id === menu.id)) {
-      this.dx.out(`addMenu: Duplicate id ${menu.id} ignored`);
       return;
     }
     this.menus.push(menu);
-    this.dx.out(`addMenu: Added menu ${menu.id}, total menus: ${this.menus.length}`);
   }
 
-  // Generate all HTML at once using two-pass flyout strategy
+  // Generate all HTML at once using recursive flyout strategy
   async getAllUIMenuHTML(): Promise<string> {
     const allMenus = this.getAllMenus();
-    this.dx.out(`getAllUIMenuHTML: Found ${allMenus.length} menus`);
-    const flyoutCache: Record<string, string> = {};
-
-    // Process flyout menus first
-    for (const menu of allMenus.filter(menu => !menu.icon?.length)) {
-      // flyout menus only (don't have an icon)
-      this.dx.out(`Caching flyout HTML for: ${menu.id}`);
-      try {
-        const html = await menu.getHTML();
-        flyoutCache[menu.id] = html;
-        this.dx.out(`Cached flyout for ${menu.id}: ${html.substring(0, 100)}...`);
-      } catch (error) {
-        this.dx.out(`ERROR generating flyout for ${menu.id}: ${String(error)}`);
-        flyoutCache[menu.id] = `<!-- ERROR: ${error} -->`;
-      }
-    }
-
-    // Rest of menus
+    const visited = new Set<string>(); // Prevent infinite loops
     let result = '';
-    for (const menu of allMenus.filter(menu => menu.icon?.length)) {
-      this.dx.out(`Generating HTML for menu: ${menu.id}`);
+
+    // Generate only main menus (those that are not flyouts) - flyouts will be generated recursively
+    for (const menu of allMenus.filter(menu => !menu.isFlyout)) {
       try {
-        const html = await menu.getHTML(flyoutCache);
-        this.dx.out(`Generated HTML for menu ${menu.id}: ${html.substring(0, 100)}...`);
+        const html = await menu.getHTML(visited);
         result += (result ? '\n' : '') + html;
       } catch (error) {
         this.dx.out(`ERROR generating HTML for menu ${menu.id}: ${String(error)}`);
@@ -155,8 +180,6 @@ export class UIMenuMgr {
       }
     }
 
-    this.dx.out(`Total generated HTML length: ${result.length}`);
-    this.dx.out(`Final HTML preview: ${result.substring(0, 200)}...`);
     return result;
   }
 
@@ -164,22 +187,16 @@ export class UIMenuMgr {
   getAllUIMenuJS(): string {
     // All menus share the same generic handlers - get from any menu's cached YAML
     const allMenus = this.getAllMenus();
-    this.dx.out(`getAllUIMenuJS: Found ${allMenus.length} menus`);
     const anyMenu = allMenus[0];
     if (!anyMenu) {
-      this.dx.out('getAllUIMenuJS: No menus available, returning empty JS');
       return '';
     }
 
     // Get the generic handlers - yaml getter handles loading automatically
-    const js: string = anyMenu.yaml.ui_menu_generic_handlers;
+    const js: string = anyMenu.yaml.uimenu_generic_handlers;
     if (!js) {
-      this.dx.out(
-        'getAllUIMenuJS: JS is undefined/empty, YAML loading failed or no handlers present'
-      );
       return '';
     }
-    this.dx.out(`getAllUIMenuJS: Generated ${js.length} characters of JS`);
     return js;
   }
 
@@ -187,60 +204,16 @@ export class UIMenuMgr {
   getAllUIMenuCSS(): string {
     const anyMenu = this.getAllMenus()[0];
     if (!anyMenu) {
-      this.dx.out('getAllUIMenuCSS: No menus available');
       return '';
     }
 
     // Get the CSS - yaml getter handles loading automatically
-    const css: string = anyMenu.yaml.ui_menu_css;
+    const css: string = anyMenu.yaml.uimenu_css;
     if (!css) {
-      this.dx.out('getAllUIMenuCSS: CSS is undefined, YAML loading failed');
       return '';
     }
-    this.dx.out(`getAllUIMenuCSS: Generated ${css.length} characters of CSS`);
 
     return css;
-  }
-
-  // Get all template variable mappings
-  async getTemplateVariableMappings(): Promise<Record<string, string>> {
-    const mappings: Record<string, string> = {};
-
-    // Add the main UIMenu placeholders
-    mappings['UIMENU_HTML'] = await this.getAllUIMenuHTML();
-    mappings['UIMENU_JS'] = this.getAllUIMenuJS();
-    mappings['UIMENU_CSS'] = this.getAllUIMenuCSS();
-
-    return mappings;
-  }
-
-  // Get menu components for generic toolbar integration
-  async getMenuComponents(): Promise<{ html: string; css: string; js: string }> {
-    this.dx.out('UIMenuMgr.getMenuComponents: Getting menu components for toolbar integration');
-
-    const html = await this.getAllUIMenuHTML();
-    const css = this.getAllUIMenuCSS();
-    const js = this.getAllUIMenuJS();
-
-    this.dx.out(
-      `UIMenuMgr.getMenuComponents: HTML=${html.length}, CSS=${css.length}, JS=${js.length} characters`
-    );
-    return { html, css, js };
-  }
-
-  // Get menu configuration for debugging
-  getMenuConfiguration(): Array<{
-    id: string;
-    icon: string;
-    displayName: string;
-    templateVariable: string;
-  }> {
-    return this.getAllMenus().map(menu => ({
-      id: menu.id,
-      icon: menu.icon,
-      displayName: menu.displayName,
-      templateVariable: menu.getTemplateVariableName(),
-    }));
   }
 }
 

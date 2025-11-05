@@ -100,43 +100,6 @@ describe('System Integration Tests', () => {
     );
   });
 
-  test('should handle UIMenu system integration', async () => {
-    // This test validates that the UIMenu system integrates properly
-    // We'll test the template variable mapping and menu generation
-
-    // Create minimal mock app with UIMenuMgr
-    const mockApp = {
-      ui: { debugOut: () => {} },
-      vscodeapis: {
-        getEditorTypography: () => ({ fontSize: 14, lineHeight: 20 }),
-        getActiveTheme: () => 'github-light', // Use a real Shiki theme name
-        templateDictReplace: (source: string, dict: Record<string, string>) => {
-          return source.replace(/\{\{(\w+)\}\}/g, (match, key) => dict[key] || match);
-        },
-      },
-      os: { readExtensionYaml: () => ({ stylize_html: '<div>{{CODE}}</div>' }) },
-      templateDictReplace: (source: string, dict: Record<string, string>) => {
-        return source.replace(/\{\{(\w+)\}\}/g, (match, key) => dict[key] || match);
-      },
-      uimenumgr: {
-        getTemplateVariableMappings: () => ({
-          UIMENU_HTML: '<div>Menu HTML</div>',
-          UIMENU_JS: '<div>Menu JS</div>',
-          MENUPRINT_PICKER_LIST: '<div>Print options</div>',
-          MENUTHEMES_PICKER_LIST: '<div>Theme options</div>',
-          MENUTEXT_PICKER_LIST: '<div>Text options</div>',
-        }),
-      },
-    } as any;
-
-    // Test that template mappings work
-    const mappings = mockApp.uimenumgr.getTemplateVariableMappings();
-    assert.ok(mappings.UIMENU_HTML, 'Should have UIMENU_HTML');
-    assert.ok(mappings.UIMENU_JS, 'Should have UIMENU_JS');
-    assert.ok(mappings.MENUPRINT_PICKER_LIST, 'Should have print picker list');
-    assert.ok(mappings.MENUTHEMES_PICKER_LIST, 'Should have themes picker list');
-    assert.ok(mappings.MENUTEXT_PICKER_LIST, 'Should have text picker list');
-  });
 
   test('should handle error conditions properly', async () => {
     // TODO: Fix this test - needs proper VSCode theme object handling

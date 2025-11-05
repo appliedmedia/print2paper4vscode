@@ -1,5 +1,3 @@
-import type { PageRender } from './PageRender_t';
-
 export interface UIMenuItem {
   id: string;
   displayName: string;
@@ -15,12 +13,12 @@ export type PostMessage = {
     | 'print'
     | 'menuItemSelected'
     | 'dx'
-    | 'requestPageRender'
     | 'updatePdf'
     | 'pageRenderResponse'
     | 'pageRenderError'
     | 'clearAllPages'
-    | 'updatePageTotal';
+    | 'updatePageTotal'
+    | 'zoom';
   clientX?: number;
   left?: number;
   startLeft?: number;
@@ -35,9 +33,10 @@ export type PostMessage = {
   menuId?: string; // For menu item selection
   itemId?: string; // For menu item selection
   printType?: string; // For print messages
+  zoomLevel?: number; // For zoom messages
+  zoomAction?: 'in' | 'out' | 'fitWidth' | 'fitPage' | 'actualSize'; // For zoom actions
   pdfDataUrl?: string; // For PDF updates
   pageTotal?: number; // For page total updates
-  pageRender?: PageRender; // For PageRender updates
   pageData?: {
     dataUrl: string;
     widthPx: number;

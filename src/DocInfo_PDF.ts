@@ -1,15 +1,18 @@
 import type { App } from './App';
-import type { MarginId_t } from './types/PaperPrinter_t';
+import type {
+  MarginIdMenuItems_t,
+  PageSizeIdMenuItems_t,
+  OrientMenuItems_t,
+  HeaderFooterSubmenu_t,
+} from './types/PaperPrinter_t';
+import {
+  kMarginIdById,
+  kHeaderFooter,
+} from './types/PaperPrinter_t';
+import { Coords } from './Coords';
 import type { ThemedToken } from 'shiki';
 import type jsPDF from 'jspdf';
-
-// Margin ID to points conversion
-const MARGIN_ID_TO_PTS: { [key in MarginId_t]: number } = {
-  none: 0, // 0pts
-  minimal: 5, // 5pts
-  normal: 15, // 15pts
-  wide: 30, // 30pts
-} as const;
+import type { LanguageId_t } from './Stylize';
 
 /**
  * PDF_DocInfo - Document information and configuration for PDF
@@ -19,6 +22,10 @@ const MARGIN_ID_TO_PTS: { [key in MarginId_t]: number } = {
  */
 export class DocInfo_PDF {
   private app: App;
+
+  // Stable instance identifier for tracking PDF object reuse
+  private static nextInstanceId = 1;
+  public readonly instanceId: number;
 
   // PDF document state
   public currentPdfDoc: jsPDF | null = null;
@@ -44,40 +51,63 @@ export class DocInfo_PDF {
 
   // Font settings
   public fontSizePts: number = 0;
+  public fontSizePx: number = 12; // Font size in pixels (source value)
   public lineHeightPts: number = 0;
+  public lineHeightPx: number = 18; // Line height in pixels (source value)
   public fontFamily: string = 'Courier';
 
   // Theme and styling
   public theme: string = 'github-light';
+
+  // Page settings
+  public pageSizeId: PageSizeIdMenuItems_t = 'a4';
+  public orient: OrientMenuItems_t = 'portrait';
+  public marginId: MarginIdMenuItems_t = 'normal';
+
+  // Document content (set by caller before generatePdf)
+  public code: string = '';
+  public languageId: LanguageId_t = 'typescript';
+  public title: string = '';
+
+  // Header/Footer content settings (position-based)
+  // Each position stores what content appears there: 'title' | 'page' | 'total' | 'pageTotal' | kHeaderFooter.none
+  public header_begin: HeaderFooterSubmenu_t | typeof kHeaderFooter.none = kHeaderFooter.none;
+  public header_middle: HeaderFooterSubmenu_t | typeof kHeaderFooter.none = 'title';
+  public header_end: HeaderFooterSubmenu_t | typeof kHeaderFooter.none = kHeaderFooter.none;
+  public footer_begin: HeaderFooterSubmenu_t | typeof kHeaderFooter.none = kHeaderFooter.none;
+  public footer_middle: HeaderFooterSubmenu_t | typeof kHeaderFooter.none = 'pageTotal';
+  public footer_end: HeaderFooterSubmenu_t | typeof kHeaderFooter.none = kHeaderFooter.none;
 
   // Temporary file tracking
   public tempPdfs: string[] = [];
 
   constructor(app: App) {
     this.app = app;
+    this.instanceId = DocInfo_PDF.nextInstanceId++;
   }
 
   // Margin getter - calculates from current marginId
+  // Always includes base 0.4 inch (28.8 pts) minimum margin for safe printing
+  // Margin settings (none/minimal/normal/wide) are ADDED to this base
   get marginPts(): {
     topMarginPts: number;
     bottomMarginPts: number;
     leftMarginPts: number;
     rightMarginPts: number;
   } {
-    // Get current margin ID from menu's persistent state
-    const menu = this.app.uimenumgr.getMenuById('marginId');
-    const rawMarginId = menu.persist.marginId;
-    const marginId: MarginId_t =
-      typeof rawMarginId === 'string' && rawMarginId in MARGIN_ID_TO_PTS
-        ? (rawMarginId as MarginId_t)
-        : 'normal';
-    const marginPts = MARGIN_ID_TO_PTS[marginId];
+    // Get margin setting from kMarginIdById (this is ADDED to base)
+    const marginEntry =
+      kMarginIdById[this.marginId] ?? kMarginIdById['normal'];
+    const marginSettingPts = marginEntry.marginPts;
+
+    // Total margin = base + setting
+    const totalMarginPts = Coords.kMarginGutterMinPts + marginSettingPts;
 
     return {
-      topMarginPts: marginPts,
-      bottomMarginPts: marginPts,
-      leftMarginPts: marginPts,
-      rightMarginPts: marginPts,
+      topMarginPts: totalMarginPts,
+      bottomMarginPts: totalMarginPts,
+      leftMarginPts: totalMarginPts,
+      rightMarginPts: totalMarginPts,
     };
   }
 
@@ -97,31 +127,44 @@ export class DocInfo_PDF {
   // PDF interface methods - expose jsPDF functionality through docInfo
   /**
    * Get the total number of pages in the document
+   * Uses getNumberOfPages() - this is the current jsPDF API (not deprecated in actual library)
+   */
+  get pageTotal(): number {
+    if (!this.pdfDoc) return 0;
+    // getNumberOfPages() is the correct API - not actually deprecated in jsPDF 2.5.2
+    return this.pdfDoc.getNumberOfPages();
+  }
+
+  /**
+   * Get the total number of pages in the document (method version)
+   * @deprecated Use pageTotal property instead
    */
   getPageTotal(): number {
-    return this.pdfDoc ? this.pdfDoc.getNumberOfPages() : 0;
+    return this.pageTotal;
   }
 
   /**
    * Get the number of pages in the document (alias for getPageTotal)
-   * @deprecated Use getPageTotal() for consistency
+   * @deprecated Use pageTotal property instead
    */
   getNumberOfPages(): number {
-    return this.getPageTotal();
+    return this.pageTotal;
   }
 
   /**
    * Get the width of the current page in points
    */
   getPageWidth(): number {
-    return this.pdfDoc ? this.pdfDoc.getPageWidth() : 0;
+    if (!this.pdfDoc) return 0;
+    return (this.pdfDoc as any).getPageWidth();
   }
 
   /**
    * Get the height of the current page in points
    */
   getPageHeight(): number {
-    return this.pdfDoc ? this.pdfDoc.getPageHeight() : 0;
+    if (!this.pdfDoc) return 0;
+    return (this.pdfDoc as any).getPageHeight();
   }
 
   /**
@@ -136,14 +179,38 @@ export class DocInfo_PDF {
 
   /**
    * Get information about the current page
+   * Returns pageNumber and pageContext from jsPDF, plus pageCount computed from pageTotal
    */
-  getCurrentPageInfo(): { pageNumber: number; pageCount: number } {
+  getCurrentPageInfo(): { pageNumber: number; pageCount: number; pageContext?: any } {
     if (!this.pdfDoc) {
       return { pageNumber: 0, pageCount: 0 };
     }
+    const info = this.pdfDoc.getCurrentPageInfo();
     return {
-      pageNumber: this.pdfDoc.getCurrentPageInfo().pageNumber,
-      pageCount: this.pdfDoc.getNumberOfPages(),
+      pageNumber: info.pageNumber,
+      pageCount: this.pageTotal, // Use pageTotal which wraps getNumberOfPages()
+      pageContext: info.pageContext,
+    };
+  }
+
+  /**
+   * Get page dimensions in pixels (UI native format)
+   * PDF layer uses points internally but exposes pixels for UI consumption
+   */
+  get pageSizePx(): { widthPx: number; heightPx: number } {
+    if (!this.pdfDoc) {
+      return { widthPx: 0, heightPx: 0 };
+    }
+
+    const { Coords } = require('./Coords');
+    const coords = new Coords(this.app);
+
+    const pageWidthPts = this.getPageWidth();
+    const pageHeightPts = this.getPageHeight();
+
+    return {
+      widthPx: Math.round(coords.pdfPtsToCssPx(pageWidthPts)),
+      heightPx: Math.round(coords.pdfPtsToCssPx(pageHeightPts)),
     };
   }
 

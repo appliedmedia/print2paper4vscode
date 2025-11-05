@@ -84,9 +84,12 @@ function lintCSS(cssContent, fileName) {
   let tempFile = null;
   try {
     // Preprocess CSS to handle template variables
+    // Replace template variables with valid CSS identifiers for linting
     const processedCSS = cssContent
-      .replace(/\{\{[^}]+\}\}/g, '/* template-var */') // Replace {{var}} with comment
-      .replace(/\{\%[^%]+\%\}/g, '/* template-var */'); // Replace {%var%} with comment
+      .replace(/\{\{ns\}\}/g, 'p2p4vsc') // Replace {{ns}} with actual namespace value
+      .replace(/\{\{ns_\}\}/g, 'p2p4vsc_') // Replace {{ns_}} with actual namespace prefix
+      .replace(/\{\{[^}]+\}\}/g, 'template-var') // Replace other {{var}} with valid identifier
+      .replace(/\{\%[^%]+\%\}/g, 'template-var'); // Replace {%var%} with valid identifier
     
     // Create a temporary CSS file
     tempFile = path.join(__dirname, '..', 'temp', `${fileName}.css`);
@@ -94,35 +97,12 @@ function lintCSS(cssContent, fileName) {
     
     // Use stylelint if available, otherwise just validate syntax
     try {
-      execSync(`npx stylelint "${tempFile}"`, { stdio: 'pipe', timeout: 30000 });
+      execSync(`npx stylelint "${tempFile}" --config .stylelintrc.json`, { stdio: 'pipe', timeout: 30000 });
       return { success: true, errors: [] };
     } catch (error) {
-      // stylelint not available, do basic validation
-      const errors = [];
-      
-      // Check for balanced braces across the entire CSS content
-      const openBraces = (processedCSS.match(/\{/g) || []).length;
-      const closeBraces = (processedCSS.match(/\}/g) || []).length;
-      
-      if (openBraces !== closeBraces) {
-        errors.push(`CSS has unbalanced braces: ${openBraces} opening, ${closeBraces} closing`);
-      }
-      
-      // Check for basic syntax issues
-      const lines = processedCSS.split('\n');
-      lines.forEach((line, index) => {
-        // Skip empty lines and comments
-        if (line.trim() === '' || line.trim().startsWith('/*') || line.trim().startsWith('//')) {
-          return;
-        }
-        
-        // Check for obvious syntax errors
-        if (line.includes('{') && line.includes('}') && line.trim().endsWith('{')) {
-          errors.push(`Line ${index + 1}: Rule declaration missing closing brace`);
-        }
-      });
-      
-      return { success: errors.length === 0, errors };
+      // stylelint failed, extract error message
+      const errorMessage = error.stdout?.toString() || error.stderr?.toString() || error.message;
+      return { success: false, errors: [`Stylelint error: ${errorMessage}`] };
     }
   } catch (error) {
     return { success: false, errors: [`CSS linting failed: ${error.message}`] };

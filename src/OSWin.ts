@@ -24,6 +24,12 @@ export class OSWin extends OS {
     super(app);
     this.dx = app.dx.create('OSWin');
   }
+
+  protected getOSKeys(): Record<string, string> {
+    return {
+      'os-ctrl-cmd': 'Ctrl',
+    };
+  }
   async fileOpenInDefaultApp(path: string): Promise<void> {
     await this.execAsync(`start "" "${path}"`);
   }

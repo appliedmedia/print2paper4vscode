@@ -11,7 +11,7 @@ toolbar_css: |
   #p2p4vsc-toolbar {
     position: fixed;
     top: 12px;
-    left: {{toolbarPos}}px;
+    left: {{toolbar_pos}}px;
     z-index: 9999;
     display: inline-flex;
     flex-direction: column;
@@ -61,10 +61,76 @@ toolbar_css: |
     padding: 0;
   }
 
+  .p2p4vsc-zoom-controls {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    margin-left: 4px;
+    padding-left: 4px;
+    border-left: 1px solid #d0d0d0;
+  }
+
+  .p2p4vsc-zoom-btn {
+    border: 1px solid #d0d0d0;
+    background: #f7f7f7;
+    color: #333;
+    border-radius: 6px;
+    cursor: pointer;
+    width: 32px;
+    height: 32px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+    font-size: 18px;
+    padding: 0;
+  }
+
+  .p2p4vsc-zoom-btn:hover {
+    background: #e8e8e8;
+  }
+
+  .p2p4vsc-zoom-btn:active {
+    background: #d0d0d0;
+  }
+
+  .p2p4vsc-zoom-level {
+    min-width: 50px;
+    text-align: center;
+    font-size: 12px;
+    font-weight: 500;
+    color: #333;
+    padding: 2px 4px;
+    user-select: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: text;
+    border-radius: 4px;
+  }
+
+  .p2p4vsc-zoom-level:hover {
+    background: #e8e8e8;
+  }
+
+  .p2p4vsc-zoom-level:focus {
+    outline: 1px solid #007acc;
+    background: #fff;
+    user-select: text;
+  }
+
+  #zoom-level-value {
+    min-width: 40px;
+    display: inline-block;
+  }
+
 toolbar_js: |
   window.vscode = acquireVsCodeApi();
   const toolbar = document.getElementById('p2p4vsc-toolbar');
   const drag = document.getElementById('p2p4vsc-toolbar-grip');
+  
+  // Toolbar positioning constant from server
+  const toolbar_pos_min_px = {{toolbar_pos_min_px}};
 
   // Generic flyout hover handler
   function handleFlyoutHover() {
@@ -112,8 +178,8 @@ toolbar_js: |
   window.addEventListener('resize', ()=>{
     const rawLeft = getComputedStyle(toolbar).left;
     let left = parseFloat(rawLeft);
-    if (Number.isNaN(left)) left = 8;
-    const maxLeft = Math.max(8, window.innerWidth - toolbar.offsetWidth - 8);
+    if (Number.isNaN(left)) left = toolbar_pos_min_px;
+    const maxLeft = Math.max(toolbar_pos_min_px, window.innerWidth - toolbar.offsetWidth - toolbar_pos_min_px);
     toolbar.style.left = Math.min(left, maxLeft) + 'px';
   });
 
@@ -124,7 +190,7 @@ toolbar_js: |
     
     // Save position to extension's global state
     const rawLeft = getComputedStyle(toolbar).left;
-    const left = Number.isNaN(parseFloat(rawLeft)) ? 8 : parseFloat(rawLeft);
+    const left = Number.isNaN(parseFloat(rawLeft)) ? toolbar_pos_min_px : parseFloat(rawLeft);
     
     // Notify extension that drag ended
     vscode.postMessage({
@@ -146,7 +212,7 @@ toolbar_js: |
     isDragging = true;
     dragStartX = e.clientX;
     const rawLeft = getComputedStyle(toolbar).left;
-    dragStartLeft = Number.isNaN(parseFloat(rawLeft)) ? 8 : parseFloat(rawLeft);
+    dragStartLeft = Number.isNaN(parseFloat(rawLeft)) ? toolbar_pos_min_px : parseFloat(rawLeft);
     document.body.style.cursor = 'grabbing';
   });
 
@@ -155,8 +221,8 @@ toolbar_js: |
       if (e.buttons > 0) { // Mouse button is still down - continue dragging
         e.preventDefault();
         const dx = e.clientX - dragStartX;
-        const maxLeft = Math.max(8, window.innerWidth - toolbar.offsetWidth - 8);
-        const newLeft = Math.min(Math.max(8, dragStartLeft + dx), maxLeft);
+        const maxLeft = Math.max(toolbar_pos_min_px, window.innerWidth - toolbar.offsetWidth - toolbar_pos_min_px);
+        const newLeft = Math.min(Math.max(toolbar_pos_min_px, dragStartLeft + dx), maxLeft);
         toolbar.style.left = newLeft + 'px';
       } else { // Mouse button released - stop dragging
         postDragEnd();
@@ -177,6 +243,11 @@ toolbar_html: |
     <div class="p2p4vsc-toolbar-grip" id="p2p4vsc-toolbar-grip" title="Click and hold to drag left and right" aria-label="Drag toolbar" tabindex="0"></div>
     <div class="p2p4vsc-toolbar-menubar" role="menubar">
       {{menuHtml}}
+      <div id="p2p4vsc-zoom-controls" class="p2p4vsc-zoom-controls" style="display: none;">
+        <span id="zoom-level" class="p2p4vsc-zoom-level" contenteditable="true" role="textbox" aria-label="Zoom level percentage" tabindex="0">
+          <span id="zoom-level-value">100</span>%
+        </span>
+      </div>
     </div>
   </div>
   <script>

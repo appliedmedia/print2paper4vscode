@@ -1,28 +1,48 @@
 import type { App } from './App';
-import type { PageRender } from './types/PageRender_t';
 import type { WebviewPanelId_t } from './VSCodeAPIs';
 import type { PostMessage } from './types/UI_t';
-import { UIScrollView, type ScrollOptions_t } from './UIScrollView';
-import { UIMenuMgr } from './UIMenuMgr';
-import { isMenuId, isMenuItemId } from './UIMenu';
 import { Diagnostics } from './Diagnostics';
+import { Yaml } from './Yaml';
+import { kZoomLevel, kZoomIn, kZoomOut } from './types/PaperPrinter_t';
+
+/**
+ * PDF Data for webview display
+ */
+export interface PDFData_t {
+  arrayBuffer: ArrayBuffer;
+  pageTotal: number;
+  pageSizePx: {
+    widthPx: number;
+    heightPx: number;
+  };
+  title: string;
+}
 
 /**
  * UIWebView - Lightweight webview container that can create and manage different components
  * Acts as a flexible orchestrator for webview-related functionality
  */
 export class UIWebView {
+  private static readonly kYaml = {
+    webview_html: '',
+    webview_css: '',
+    webview_js: '',
+  } as const;
+
   private app: App;
   private dx: Diagnostics;
-  private currentViewer: UIScrollView | null = null;
-  private menuMgr: UIMenuMgr | null = null;
   private panelId: WebviewPanelId_t | null = null;
-  private initialized: boolean = false;
   private handlersRegistered: boolean = false;
+  private _yaml: Yaml<typeof UIWebView.kYaml>;
 
   constructor(app: App) {
     this.app = app;
     this.dx = app.dx.create('UIWebView');
+    this._yaml = new Yaml(app, 'src/UIWebView.yaml', UIWebView.kYaml);
+  }
+
+  get yaml() {
+    return this._yaml.get();
   }
 
   init(): void {
@@ -30,148 +50,16 @@ export class UIWebView {
   }
 
   /**
-   * Create webview panel with menus and scroll view
-   */
-  async createPanel(pageRender: PageRender, options: ScrollOptions_t): Promise<WebviewPanelId_t> {
-    const dx = this.dx.sub('createPanel', true);
-    dx.out(`🚀 DEBUG: UIWebView.createPanel starting`);
-    dx.require({ pageRender, options }, ['pageRender', 'options']);
-
-    try {
-      if (this.initialized) {
-        throw new Error('UIWebView already initialized');
-      }
-
-      // Set menu manager from app
-      this.menuMgr = this.app.uimenumgr;
-
-      // Create scroll view
-      this.currentViewer = new UIScrollView(this.app, pageRender, options);
-
-      // Generate HTML content from scroll view
-      dx.out(`🚀 DEBUG: About to call generateContent`);
-      const html = await this.currentViewer.generateContent();
-      dx.out(`🚀 DEBUG: generateContent completed, HTML length: ${html.length}`);
-
-      // Create or reuse webview panel
-      const panelId = await this.app.vscodeapis.getOrCreateWebviewPanel(
-        options.title || 'Document Viewer',
-        html,
-        this.panelId || undefined
-      );
-      this.panelId = panelId;
-
-      // Set panel ID in scroll view
-      this.currentViewer.setPanelId(panelId);
-
-      // Note: Pre-rendering disabled - let scroll handler render pages on demand
-      // This avoids coordinate transform issues and ensures fresh data
-
-      this.initialized = true;
-      dx.out(`Created webview panel: ${options.title || 'Document Viewer'}`);
-      return panelId;
-    } catch (error) {
-      this.app.ui.showErrorMessage(`Failed to create webview panel: ${String(error)}`);
-      throw error;
-    } finally {
-      dx.done();
-    }
-  }
-
-
-  /**
    * Create and configure menu manager (for external use)
+   * @deprecated Menu manager should be accessed via this.app.uimenumgr
    */
-  createMenus(): UIMenuMgr {
+  createMenus() {
     const dx = this.dx.sub('createMenus');
 
     try {
-      this.menuMgr = new UIMenuMgr(this.app);
-      dx.out('Created menu manager');
-      return this.menuMgr;
-    } finally {
-      dx.done();
-    }
-  }
-
-  /**
-   * Create scroll view with PageRender content (for external use)
-   */
-  async createScrollView(
-    pageRender: PageRender,
-    options: ScrollOptions_t
-  ): Promise<WebviewPanelId_t> {
-    const dx = this.dx.sub('createScrollView');
-    dx.require({ pageRender, options }, ['pageRender', 'options']);
-
-    try {
-      if (!this.menuMgr) {
-        throw new Error('Menu manager not created. Call createMenus() first.');
-      }
-
-      this.currentViewer = new UIScrollView(this.app, pageRender, options);
-
-      // Generate HTML content from scroll view
-      const html = await this.currentViewer.generateContent();
-
-      // Create or reuse webview panel
-      const panelId = await this.app.vscodeapis.getOrCreateWebviewPanel(
-        options.title || 'Document Viewer',
-        html,
-        this.panelId || undefined
-      );
-      this.panelId = panelId;
-
-      // Set panel ID in scroll view
-      this.currentViewer.setPanelId(panelId);
-
-      dx.out(`Created scroll view: ${options.title || 'Document Viewer'}`);
-      return panelId;
-    } catch (error) {
-      this.app.ui.showErrorMessage(`Failed to create scroll view: ${String(error)}`);
-      throw error;
-    } finally {
-      dx.done();
-    }
-  }
-
-  /**
-   * Update scroll view content with new PageRender
-   */
-  async updatePageRender(newPageRender: PageRender): Promise<void> {
-    const dx = this.dx.sub('updatePageRender');
-
-    try {
-      if (this.currentViewer) {
-        await this.currentViewer.updatePageRender(newPageRender);
-        dx.out('Updated PageRender in scroll view');
-      } else {
-        dx.out('No active scroll view to update');
-      }
-    } catch (error) {
-      this.app.ui.showErrorMessage(`Failed to update PageRender: ${String(error)}`);
-      throw error;
-    } finally {
-      dx.done();
-    }
-  }
-
-  /**
-   * Update scroll view options (theme, font, page size, etc.)
-   */
-  async updateOptions(options: ScrollOptions_t): Promise<void> {
-    const dx = this.dx.sub('updateOptions');
-
-    try {
-      if (this.currentViewer) {
-        await this.currentViewer.updateOptions(options);
-        dx.out('Updated scroll view options');
-      } else {
-        dx.out('No active scroll view to update');
-      }
-    } catch (error) {
-      this.app.ui.showErrorMessage(`Failed to update scroll view options: ${String(error)}`);
-      throw error;
+      // Menu manager is always available via this.app.uimenumgr
+      dx.out('Returning app menu manager');
+      return this.app.uimenumgr;
     } finally {
       dx.done();
     }
@@ -179,16 +67,155 @@ export class UIWebView {
 
   /**
    * Get the menu manager
+   * @deprecated Use this.app.uimenumgr directly
    */
-  getMenus(): UIMenuMgr | null {
-    return this.menuMgr;
+  getMenus() {
+    return this.app.uimenumgr;
+  }
+
+  /**
+   * Display PDF in webview panel (new simplified architecture)
+   *
+   * Accepts either PDFData_t or DocInfo_PDF - extracts data and converts on the fly.
+   * Creates new panel on first call, updates existing panel on subsequent calls.
+   * The PDF is embedded as base64 data URL due to VS Code postMessage limitations.
+   */
+  async displayPdfPanel(pdfDocOrData: PDFData_t | { asArrayBuffer(): ArrayBuffer; pageTotal: number; pageSizePx: { widthPx: number; heightPx: number } }, title?: string): Promise<WebviewPanelId_t> {
+    const dx = this.dx.sub('displayPdfPanel');
+    
+    let pdfData: PDFData_t;
+    
+    // Check if we got DocInfo_PDF or already-prepared PDFData_t
+    if ('asArrayBuffer' in pdfDocOrData && 'pageTotal' in pdfDocOrData) {
+      // It's a DocInfo_PDF - extract data (DocInfo_PDF already provides pixels)
+      pdfData = {
+        arrayBuffer: pdfDocOrData.asArrayBuffer(),
+        pageTotal: pdfDocOrData.pageTotal,
+        pageSizePx: pdfDocOrData.pageSizePx,
+        title: title || 'PDF Document'
+      };
+    } else {
+      // It's already PDFData_t
+      pdfData = pdfDocOrData;
+    }
+    
+    dx.require({ pdfData }, ['pdfData']);
+
+    try {
+      // Validate PDF data - display error if invalid instead of falling back
+      if (!pdfData.arrayBuffer) {
+        throw new Error('pdfData.arrayBuffer is required');
+      }
+      if (!pdfData.pageTotal || pdfData.pageTotal < 1) {
+        throw new Error(`pdfData.pageTotal must be at least 1, got ${pdfData.pageTotal}`);
+      }
+      if (!pdfData.pageSizePx?.widthPx || !pdfData.pageSizePx?.heightPx) {
+        throw new Error(`pdfData.pageSizePx.widthPx and .heightPx are required`);
+      }
+
+      // Convert ArrayBuffer to base64 data URL (required for VS Code webview)
+      const base64 = Buffer.from(pdfData.arrayBuffer).toString('base64');
+      const pdf_data_url = `data:application/pdf;base64,${base64}`;
+
+      // Log PDF object usage for webview (Stage 4.3)
+      dx.out(`PDF object usage: Using PDF ArrayBuffer for webview display (${pdfData.arrayBuffer.byteLength} bytes)`);
+
+      // Generate HTML for PDF viewer
+      const html = await this.generatePDFHTML(pdf_data_url, pdfData);
+
+      // Add toolbar
+      const htmlWithToolbar = await this.app.ui.addToolbar(html);
+
+      // Create or reuse webview panel
+      const panelId = await this.app.vscodeapis.getOrCreateWebviewPanel(
+        pdfData.title,
+        htmlWithToolbar,
+        this.panelId || undefined
+      );
+      this.panelId = panelId;
+
+      dx.out(`Created PDF panel: "${pdfData.title}" with ${pdfData.pageTotal} pages`);
+      return panelId;
+    } catch (error) {
+      dx.error(`Failed to create PDF panel: ${String(error)}`);
+      throw error;
+    } finally {
+      dx.done();
+    }
+  }
+
+  /**
+   * Generate HTML for PDF viewer with embedded PDF
+   */
+  private async generatePDFHTML(pdf_data_url: string, pdfData: PDFData_t): Promise<string> {
+    const dx = this.dx.sub('generatePDFHTML');
+
+    try {
+      // Load PDF.js library
+      const pdfjs_library = this.app.os.fileRead('src/lib/pdf.min.js');
+      if (!pdfjs_library) {
+        throw new Error('Failed to load PDF.js library');
+      }
+
+      // Get templates
+      const base_css = this.app.ui.yaml.base_css;
+      const templates = this.yaml;
+
+      // Get zoom level from persistence (default: 1.0 = 100%)
+      const zoomLevel = this.app.ui.persist.pdf_zoom_level;
+      const parsedZoom = Number(zoomLevel);
+      const pdf_zoom_level =
+        parsedZoom >= kZoomLevel.min &&
+        parsedZoom <= kZoomLevel.max
+          ? parsedZoom
+          : Number(kZoomLevel.alt);
+
+      // Create template dictionary
+      const templateDict = {
+        title: pdfData.title,
+        page_total: pdfData.pageTotal.toString(),
+        page_width_px: pdfData.pageSizePx.widthPx.toString(),
+        page_height_px: pdfData.pageSizePx.heightPx.toString(),
+        pdf_data_url,
+        pdfjs_library,
+        pdf_zoom_level: pdf_zoom_level.toString(),
+        zoomLevel_min: kZoomLevel.min.toString(),
+        zoomLevel_max: kZoomLevel.max.toString(),
+        zoomLevel_stepAmount: kZoomLevel.stepAmount.toString(),
+        zoomLevel_in_shortcutCode: (kZoomIn as typeof kZoomIn & { shortcutCode: string }).shortcutCode,
+        zoomLevel_out_shortcutCode: (kZoomOut as typeof kZoomOut & { shortcutCode: string }).shortcutCode,
+        zoomLevel_menuItems: JSON.stringify(
+          kZoomLevel.menuItems.map(item => ({
+            id: item.id,
+            displayName: item.displayName,
+            value: 'value' in item ? item.value : undefined,
+            shortcutCode: 'shortcutCode' in item ? item.shortcutCode : undefined,
+          }))
+        ),
+        toolbar: '{{toolbar}}', // Placeholder for UI.addToolbar()
+      };
+
+      // Replace placeholders
+      const webview_css = this.app.templateDictReplace(templates.webview_css, templateDict);
+      const webview_js = this.app.templateDictReplace(templates.webview_js, templateDict);
+
+      // Generate HTML
+      return this.app.templateDictReplace(templates.webview_html, {
+        base_css,
+        webview_css,
+        webview_js,
+        ...templateDict,
+      });
+    } finally {
+      dx.done();
+    }
   }
 
   /**
    * Check if webview is currently active
    */
   isActive(): boolean {
-    return this.currentViewer !== null && this.panelId !== null;
+    return this.panelId !== null;
   }
 
   /**
@@ -205,19 +232,12 @@ export class UIWebView {
     const dx = this.dx.sub('done');
 
     try {
-      if (this.currentViewer) {
-        this.currentViewer.done();
-        this.currentViewer = null;
-      }
-
       // Remove panel from VSCodeAPIs map
       if (this.panelId) {
         this.app.vscodeapis.removePanel(this.panelId);
       }
 
-      this.menuMgr = null;
       this.panelId = null;
-      this.initialized = false;
       dx.out('Webview cleaned up');
     } finally {
       dx.done();
@@ -235,7 +255,7 @@ export class UIWebView {
       { type: 'menuItemSelected', handler: this.handleMenuItemSelected.bind(this) },
       { type: 'print', handler: this.handlePrintMessage.bind(this) },
       { type: 'dx', handler: this.handleDxMessage.bind(this) },
-      { type: 'requestPageRender', handler: this.handlePageRenderRequest.bind(this) },
+      { type: 'zoom', handler: this.handleZoomMessage.bind(this) },
     ];
 
     messageHandlers.forEach(({ type, handler }) => {
@@ -255,8 +275,8 @@ export class UIWebView {
     try {
       const left = msg.left;
       if (typeof left === 'number') {
-        // Save toolbar position to global state
-        this.app.vscodeapis.updateGlobalState('toolbarPosPx', left);
+        // Save toolbar position via persist
+        this.app.ui.persist.toolbar_pos = left;
         dx.out(`Toolbar position saved: ${left}px`);
       }
     } finally {
@@ -274,24 +294,25 @@ export class UIWebView {
       const { menuId, itemId } = msg;
       if (typeof menuId === 'string' && typeof itemId === 'string') {
         dx.out(`Processing menu selection: menuId=${menuId}, itemId=${itemId}`);
-        // Validate both menuId and itemId before proceeding
-        if (isMenuId(menuId) && isMenuItemId(itemId)) {
-          dx.out(`Validation passed, calling menuMgr.handleMenuItemSelected`);
-          // Handle menu item selection through menu manager
-          if (this.menuMgr) {
-            await this.menuMgr.handleMenuItemSelected(menuId, itemId);
-            dx.out(`Menu item selected: ${menuId}.${itemId}`);
-          } else {
-            dx.out(`ERROR: menuMgr is null!`);
-          }
-        } else {
-          const msg = `Invalid menu selection: ${menuId}.${itemId}`;
-          dx.out(msg);
-          this.app.ui.showErrorMessage(msg);
+
+        // Validate menuId
+        if (!this.app.uimenumgr.isMenuId(menuId)) {
+          dx.error(`Invalid menu ID: ${menuId}`);
           return;
         }
+
+        // Validate itemId using comprehensive validation function
+        if (!this.app.uimenumgr.isMenuItemId(itemId)) {
+          dx.error(`Invalid menu item ID: ${menuId}.${itemId}`);
+          return;
+        }
+
+        dx.out(`Validation passed, calling app.uimenumgr.handleMenuItemSelected`);
+        // Handle menu item selection through menu manager
+        await this.app.uimenumgr.handleMenuItemSelected(menuId, itemId);
+        dx.out(`Menu item selected: ${menuId}.${itemId}`);
       } else {
-        dx.out(`Invalid message format: menuId=${typeof menuId}, itemId=${typeof itemId}`);
+        dx.error(`Invalid message format: menuId=${typeof menuId}, itemId=${typeof itemId}`);
       }
     } finally {
       dx.done();
@@ -333,50 +354,32 @@ export class UIWebView {
   }
 
   /**
-   * Handle page render request from scroll view
+   * Handle zoom message from webview
    */
-  private async handlePageRenderRequest(msg: PostMessage): Promise<void> {
-    const dx = this.dx.sub('handlePageRenderRequest');
+  private async handleZoomMessage(msg: PostMessage): Promise<void> {
+    const dx = this.dx.sub('handleZoomMessage');
 
     try {
-      const pageNumber = msg.pageNumber;
-      dx.out(`Received page render request for page ${pageNumber}`);
-
-      if (typeof pageNumber !== 'number') {
-        throw new Error('Invalid page number');
+      const zoomLevel = Number(msg.zoomLevel);
+      if (
+        zoomLevel >= kZoomLevel.min &&
+        zoomLevel <= kZoomLevel.max
+      ) {
+        // Save zoom level to persistence
+        this.app.ui.persist.pdf_zoom_level = zoomLevel;
+        dx.out(`Zoom level saved: ${zoomLevel}`);
+      } else if (msg.zoomLevel !== undefined) {
+        // Invalid zoom level - show error to user immediately and fail
+        const errorMsg = `Invalid zoom level received: ${msg.zoomLevel} (must be between ${kZoomLevel.min} and ${kZoomLevel.max})`;
+        dx.error(errorMsg);
+        this.app.ui.showErrorMessage(errorMsg);
+        throw new Error(errorMsg);
       }
-
-      if (!this.currentViewer) {
-        throw new Error('No active scroll view');
-      }
-
-      // Request page render through current viewer
-      const pageData = await this.currentViewer.requestPageRender(pageNumber);
-
-      // Send response back to webview
-      if (this.panelId) {
-        this.app.vscodeapis.postMessage(this.panelId, {
-          type: 'pageRenderResponse',
-          pageData: pageData,
-        });
-      }
-
-      dx.out(`Page ${pageNumber} rendered and sent to webview`);
-    } catch (error) {
-      dx.out(`Error handling page render request: ${String(error)}`);
-
-      // Send error response
-      if (this.panelId) {
-        this.app.vscodeapis.postMessage(this.panelId, {
-          type: 'pageRenderError',
-          pageNumber: msg.pageNumber || 0, // ADD THIS LINE
-          error: {
-            message: String(error),
-            pageNumber: msg.pageNumber || 0,
-            type: 'generation',
-            timestamp: new Date(),
-          },
-        });
+      
+      // Handle zoom actions if present
+      if (msg.zoomAction) {
+        dx.out(`Zoom action received: ${msg.zoomAction}`);
+        // Zoom actions are handled by the webview itself
       }
     } finally {
       dx.done();

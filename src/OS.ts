@@ -72,8 +72,14 @@ export abstract class OS {
       return new OSWin(app);
     } else if (process?.platform === 'linux') {
       return new OSLinux(app);
-    } else {
+    } else if (process?.platform === 'darwin') {
       return new OSMac(app);
+    } else {
+      const platform = process?.platform || 'unknown';
+      throw new Error(
+        `Cannot determine operating system. Platform "${platform}" is not supported. ` +
+        `Supported platforms: win32, linux, darwin.`
+      );
     }
   }
 
@@ -82,9 +88,37 @@ export abstract class OS {
   abstract filePrint(path: string): Promise<void>;
   abstract fileOpenPrintDialog(path: string): Promise<void>;
 
+  // Get system locale with region (e.g., "en-US", "fr-FR")
+  // Uses Intl API which actually provides region codes unlike vscode.env.language
+  getLocale(): string {
+    return Intl.DateTimeFormat().resolvedOptions().locale || '';
+  }
+
   // Platform-agnostic home directory
   getDir_Home(): string {
     return homedir();
+  }
+
+  /**
+   * Get OS-specific template variable replacements
+   * Subclasses must implement this to return platform-specific key-value pairs
+   * @returns Record of template variable names to their OS-specific values
+   */
+  protected abstract getOSKeys(): Record<string, string>;
+
+  /**
+   * Replace OS-specific template variables in a string
+   * Composes template variables with OS-specific replacements and calls templateDictReplace
+   * @param source - String containing template variables like {{os-ctrl-cmd}}
+   * @returns String with all template variables replaced with OS-specific values
+   * 
+   * @example
+   * os.dictReplace('{{os-ctrl-cmd}}+0') // Returns '⌘+0' on Mac, 'Ctrl+0' on Win/Linux
+   */
+  dictReplace(source: string): string {
+    const osKeys = this.getOSKeys();
+    // Use the app's templateDictReplace method
+    return this.app.templateDictReplace(source, osKeys);
   }
 
   // Common filesystem helpers consolidated here
@@ -130,7 +164,7 @@ export abstract class OS {
         : path;
 
       if (!absPath || !fs.existsSync(absPath)) {
-        this.app.ui.showErrorMessage(`Failed to load ${path}: file not found`);
+        this.dx.error(`Failed to load ${path}: file not found`);
         return undefined;
       }
 
@@ -160,7 +194,7 @@ export abstract class OS {
 
       return parsed as T;
     } catch (err) {
-      this.app.ui.showErrorMessage(`Failed to load ${path}: ${err}`);
+      this.dx.error(`Failed to load ${path}: ${err}`);
       return undefined;
     }
   };
@@ -231,7 +265,7 @@ export abstract class OS {
     const mm = String(ts.getMinutes()).padStart(2, '0');
     const ss = String(ts.getSeconds()).padStart(2, '0');
     const ms = String(ts.getMilliseconds()).padStart(3, '0');
-    const ampm = hh < 12 ? 'am' : 'pm';
+    const ampm = hh < 12 ? 'a' : 'p';
 
     // Convert to 12-hour format
     const hour12 = hh === 0 ? 12 : hh > 12 ? hh - 12 : hh;
