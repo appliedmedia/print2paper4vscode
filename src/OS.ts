@@ -75,8 +75,11 @@ export abstract class OS {
     } else if (process?.platform === 'darwin') {
       return new OSMac(app);
     } else {
-      // Default to Linux for unknown platforms (most common server platform)
-      return new OSLinux(app);
+      const platform = process?.platform || 'unknown';
+      throw new Error(
+        `Cannot determine operating system. Platform "${platform}" is not supported. ` +
+        `Supported platforms: win32, linux, darwin.`
+      );
     }
   }
 
