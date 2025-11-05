@@ -129,184 +129,206 @@ uimenu_css: |
 uimenu_html: |
   <div class="p2p4vsc-menu {{menuClasses}}" id="{{menuId}}">
     <button class="p2p4vsc-menu-btn" title="{{displayName}}">{{icon}}</button>
-    <div class="p2p4vsc-menu-items" id="{{menuId}}-items">
-      {{menuItems}}
-    </div>
+    {{menuItemsContainer}}
   </div>
 
 uimenu_generic_handlers: |
-  // Generic handlers for all menus - just pass events to extension
-  document.addEventListener('click', (e) => {
-    // Safety checks
-    if (!e) return;
-    if (!e.target) return;
-    if (!e.target.closest) return;
-    
-    // Handle menu button clicks to show/hide dropdowns
-    if (e?.target?.matches?.('.p2p4vsc-menu-btn')) {
-      e.preventDefault();
-      const menu = e.target?.closest?.('.p2p4vsc-menu');
-      const menuItems = menu?.querySelector?.('.p2p4vsc-menu-items');
-      const menuId = menu?.getAttribute('id');
+  // Generic handlers for all menus - refactored into focused functions
 
-      // If menu has no items, treat button click as menu item selection
-      // This is generic - any menu with no items will post menuItemSelected with itemId = menuId
-      // The selection handler will receive menuId and itemId (both same value) and handle it
-      const hasNoItems = menuItems && menuItems.children?.length === 0;
-      
-      if (hasNoItems) {
-        // Generic handling - post selection message, selection handler processes it
-        if (window.vscode && menuId) {
-          window.vscode.postMessage({
-            type: 'menuItemSelected',
-            itemId: menuId,
-            menuId: menuId
-          });
-        }
-        return;
-      }
-
-      // Menu has items - show/hide dropdown as normal
-      // Close all other menus first
-      document.querySelectorAll('.p2p4vsc-menu-items').forEach(items => {
-        if (items !== menuItems) {
-          items.style.display = 'none';
-        }
-      });
-
-      // Close all flyout menus when switching to a different main menu
-      document.querySelectorAll('.p2p4vsc-menu.is-flyout').forEach(flyout => {
-        flyout.style.display = 'none';
-      });
-
-      // Toggle this menu
-      const btn = e.target;
-      if (menuItems.style.display === 'block') {
-        menuItems.style.display = 'none';
-        btn.setAttribute('aria-expanded', 'false');
-      } else {
-        menuItems.style.display = 'block';
-        btn.setAttribute('aria-expanded', 'true');
-      }
-      return;
-    }
-
-    // Handle menu item clicks
-    const itemEl = e.target?.closest?.('.p2p4vsc-menu-item');
-    if (itemEl) {
-      // Find the menu that contains this item BEFORE any DOM manipulation
-      // This is the menu that the item is actually in (parent flyout)
-      const menu = itemEl.closest('.p2p4vsc-menu');
-      
-      // Check if this item has a flyout (not a terminal selection)
-      if (itemEl.classList.contains('is-flyout')) {
-        // This item has a flyout - toggle it instead of selecting
-        e.preventDefault();
-        e.stopPropagation();
-        
-        // Find the flyout menu for this item
-        // Flyouts are embedded as children of menu items, so search within the item
-        const flyoutMenuId = itemEl.getAttribute('flyout-menu-id-ref');
-        let flyoutMenu = flyoutMenuId ? itemEl.querySelector(`#${flyoutMenuId}`) : null;
-        
-        // If not found within item, try document-wide search (for backwards compatibility)
-        if (!flyoutMenu && flyoutMenuId) {
-          flyoutMenu = document.getElementById(flyoutMenuId);
-        }
-        
-        if (flyoutMenu) {
-          // Build ancestor chain: collect all flyout menus that contain this item
-          const ancestorFlyouts = [];
-          let currentMenu = menu;
-          while (currentMenu) {
-            if (currentMenu.classList.contains('is-flyout') && currentMenu !== flyoutMenu) {
-              ancestorFlyouts.push(currentMenu);
-            }
-            // Move up to parent menu
-            currentMenu = currentMenu.parentElement?.closest('.p2p4vsc-menu.is-flyout') || null;
-          }
-          
-          // Close all other flyouts except the one being opened and its ancestors
-          document.querySelectorAll('.p2p4vsc-menu.is-flyout').forEach(flyout => {
-            if (flyout !== flyoutMenu && !ancestorFlyouts.includes(flyout)) {
-              flyout.style.display = 'none';
-            }
-          });
-          
-          // Toggle this flyout
-          const wasVisible = flyoutMenu.style.display === 'block';
-          if (wasVisible) {
-            flyoutMenu.style.display = 'none';
-          } else {
-            // Ensure flyout is positioned correctly
-            // Flyouts should already be children of menu items from HTML generation
-            if (flyoutMenu.parentElement !== itemEl) {
-              itemEl.appendChild(flyoutMenu);
-            }
-            
-            flyoutMenu.style.position = 'absolute';
-            flyoutMenu.style.left = '97%';
-            const itemRect = itemEl.getBoundingClientRect();
-            const mouseY = e.clientY;
-            // Get the actual text element to find the line position
-            const textElement = itemEl.querySelector('.menu-item-text');
-            let lineY = mouseY - itemRect.top; // Fallback to mouse position
-            if (textElement) {
-              const textRect = textElement.getBoundingClientRect();
-              // Use the text element's top position relative to the item
-              lineY = textRect.top - itemRect.top;
-            }
-            flyoutMenu.style.top = `${lineY}px`;
-            flyoutMenu.style.zIndex = String(1000 + ancestorFlyouts.length + 1);
-            flyoutMenu.style.display = 'block';
-            
-            // Ensure menu items inside the flyout are visible
-            const flyoutMenuItems = flyoutMenu.querySelector('.p2p4vsc-menu-items');
-            if (flyoutMenuItems) {
-              flyoutMenuItems.style.display = 'block';
-              flyoutMenuItems.style.visibility = 'visible';
-              flyoutMenuItems.style.opacity = '1';
-            }
-          }
-        }
-        return; // Don't close menus, just toggle flyout
-      }
-      
-      // Terminal selection - not a flyout trigger, process the selection
-      // Only add selected class if this menu has gutter-before (state-based menus)
-      if (menu.classList.contains('has-gutter-before')) {
-        // Remove selected class from all items in this menu
-        const menuItems = menu.querySelectorAll('.p2p4vsc-menu-item');
-        menuItems.forEach(item => item.classList.remove('selected'));
-        
-        // Add selected class to clicked item
-        itemEl.classList.add('selected');
-      }
-
-      // Send minimal selection data to extension
-      window.vscode.postMessage({
-        type: 'menuItemSelected',
-        itemId: itemEl.id,
-        menuId: menu?.getAttribute('id')
-      });
-
-      // Close all menus after terminal selection
-      document.querySelectorAll('.p2p4vsc-menu-items').forEach(items => {
-        items.style.display = 'none';
-      });
-      document.querySelectorAll('.p2p4vsc-menu.is-flyout').forEach(flyout => {
-        flyout.style.display = 'none';
-      });
-      return;
-    }
-
-    // Close all menus when clicking outside any menu item
+  /**
+   * Close all dropdown menus and flyout menus
+   */
+  function closeAllMenus() {
     document.querySelectorAll('.p2p4vsc-menu-items').forEach(items => {
       items.style.display = 'none';
     });
     document.querySelectorAll('.p2p4vsc-menu.is-flyout').forEach(flyout => {
       flyout.style.display = 'none';
     });
+  }
+
+  /**
+   * Close all flyout menus (but keep dropdowns open)
+   */
+  function closeAllFlyouts() {
+    document.querySelectorAll('.p2p4vsc-menu.is-flyout').forEach(flyout => {
+      flyout.style.display = 'none';
+    });
+  }
+
+  /**
+   * Post menu item selection message to extension
+   */
+  function postMenuItemSelected(menuId, itemId) {
+    if (window.vscode && menuId && itemId) {
+      window.vscode.postMessage({
+        type: 'menuItemSelected',
+        itemId: itemId,
+        menuId: menuId
+      });
+    }
+  }
+
+  /**
+   * Handle menu button click - either show dropdown or trigger selection if no items
+   */
+  function handleMenuButtonClick(e) {
+    e.preventDefault();
+    const menu = e.target?.closest?.('.p2p4vsc-menu');
+    const menuId = menu?.getAttribute('id');
+    const menuItems = menu?.querySelector('.p2p4vsc-menu-items');
+    
+    // If menu has no items container, treat button click as menu item selection
+    // This is the key insight: no items = handle like a menuItemSelected click
+    if (!menuItems) {
+      postMenuItemSelected(menuId, menuId);
+      return;
+    }
+    
+    // Menu has items - toggle dropdown
+    closeAllMenus();
+    
+    const btn = e.target;
+    const isOpen = menuItems.style.display === 'block';
+    menuItems.style.display = isOpen ? 'none' : 'block';
+    btn.setAttribute('aria-expanded', isOpen ? 'false' : 'true');
+  }
+
+  /**
+   * Find flyout menu element by ID, searching within item first, then document-wide
+   */
+  function findFlyoutMenu(itemEl, flyoutMenuId) {
+    if (!flyoutMenuId) return null;
+    
+    // Flyouts are embedded as children of menu items - search within item first
+    let flyoutMenu = itemEl.querySelector(`#${flyoutMenuId}`);
+    if (flyoutMenu) return flyoutMenu;
+    
+    // Fallback: search document-wide (shouldn't be needed with current structure)
+    return document.getElementById(flyoutMenuId);
+  }
+
+  /**
+   * Get ancestor flyout menus (for proper z-index and closing logic)
+   */
+  function getAncestorFlyouts(menu, excludeFlyout) {
+    const ancestorFlyouts = [];
+    let currentMenu = menu;
+    while (currentMenu) {
+      if (currentMenu.classList.contains('is-flyout') && currentMenu !== excludeFlyout) {
+        ancestorFlyouts.push(currentMenu);
+      }
+      currentMenu = currentMenu.parentElement?.closest('.p2p4vsc-menu.is-flyout') || null;
+    }
+    return ancestorFlyouts;
+  }
+
+  /**
+   * Position and show flyout menu relative to item
+   */
+  function showFlyoutMenu(flyoutMenu, itemEl, e, ancestorFlyouts) {
+    // Ensure flyout is child of item (should already be from HTML generation)
+    if (flyoutMenu.parentElement !== itemEl) {
+      itemEl.appendChild(flyoutMenu);
+    }
+    
+    // Position flyout
+    const itemRect = itemEl.getBoundingClientRect();
+    const textElement = itemEl.querySelector('.menu-item-text');
+    let lineY = e.clientY - itemRect.top; // Fallback to mouse position
+    if (textElement) {
+      const textRect = textElement.getBoundingClientRect();
+      lineY = textRect.top - itemRect.top;
+    }
+    
+    flyoutMenu.style.position = 'absolute';
+    flyoutMenu.style.left = '97%';
+    flyoutMenu.style.top = `${lineY}px`;
+    flyoutMenu.style.zIndex = String(1000 + ancestorFlyouts.length + 1);
+    flyoutMenu.style.display = 'block';
+    
+    // Ensure menu items inside flyout are visible
+    const flyoutMenuItems = flyoutMenu.querySelector('.p2p4vsc-menu-items');
+    if (flyoutMenuItems) {
+      flyoutMenuItems.style.display = 'block';
+      flyoutMenuItems.style.visibility = 'visible';
+      flyoutMenuItems.style.opacity = '1';
+    }
+  }
+
+  /**
+   * Handle flyout menu toggle (open/close flyout)
+   */
+  function handleFlyoutToggle(e, itemEl, menu) {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    const flyoutMenuId = itemEl.getAttribute('flyout-menu-id-ref');
+    const flyoutMenu = findFlyoutMenu(itemEl, flyoutMenuId);
+    if (!flyoutMenu) return;
+    
+    const ancestorFlyouts = getAncestorFlyouts(menu, flyoutMenu);
+    const wasVisible = flyoutMenu.style.display === 'block';
+    
+    // Close all other flyouts except the one being toggled and its ancestors
+    document.querySelectorAll('.p2p4vsc-menu.is-flyout').forEach(flyout => {
+      if (flyout !== flyoutMenu && !ancestorFlyouts.includes(flyout)) {
+        flyout.style.display = 'none';
+      }
+    });
+    
+    if (wasVisible) {
+      flyoutMenu.style.display = 'none';
+    } else {
+      showFlyoutMenu(flyoutMenu, itemEl, e, ancestorFlyouts);
+    }
+  }
+
+  /**
+   * Handle menu item click - either toggle flyout or select item
+   */
+  function handleMenuItemClick(e, itemEl) {
+    const menu = itemEl.closest('.p2p4vsc-menu');
+    const menuId = menu?.getAttribute('id');
+    
+    // If item has flyout, toggle it instead of selecting
+    if (itemEl.classList.contains('is-flyout')) {
+      handleFlyoutToggle(e, itemEl, menu);
+      return;
+    }
+    
+    // Terminal selection - update UI and post message
+    if (menu.classList.contains('has-gutter-before')) {
+      menu.querySelectorAll('.p2p4vsc-menu-item').forEach(item => {
+        item.classList.remove('selected');
+      });
+      itemEl.classList.add('selected');
+    }
+    
+    postMenuItemSelected(menuId, itemEl.id);
+    closeAllMenus();
+  }
+
+  // Main event handler - single entry point
+  document.addEventListener('click', (e) => {
+    // Safety checks
+    if (!e || !e.target || !e.target.closest) return;
+    
+    // Handle menu button clicks
+    if (e.target.matches('.p2p4vsc-menu-btn')) {
+      handleMenuButtonClick(e);
+      return;
+    }
+    
+    // Handle menu item clicks
+    const itemEl = e.target.closest('.p2p4vsc-menu-item');
+    if (itemEl) {
+      handleMenuItemClick(e, itemEl);
+      return;
+    }
+    
+    // Click outside any menu - close everything
+    closeAllMenus();
   });
 
 uimenu_item: |

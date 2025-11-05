@@ -303,6 +303,7 @@ export class UIMenu {
         )
       );
       const menuItems = processedMenuItemsHtml.join('\n');
+      const hasItems = menuItemsList.length > 0;
 
       // Build CSS classes for menu container - only what we need
       const menuClasses = [
@@ -319,7 +320,8 @@ export class UIMenu {
         menuId: this._id,
         displayName: this.displayName,
         icon: this.icon,
-        menuItems,
+        menuItems: hasItems ? menuItems : '', // Empty string if no items
+        menuItemsContainer: hasItems ? `<div class="p2p4vsc-menu-items" id="${this._id}-items">${menuItems}</div>` : '', // Only create container if there are items
         menuClasses,
       };
 
