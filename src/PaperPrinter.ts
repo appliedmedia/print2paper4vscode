@@ -390,11 +390,6 @@ export class PaperPrinter {
         `Creating menu: ${config.id} with iconSlotTriad: ${JSON.stringify(config.iconSlotTriad)}`
       );
 
-      if (!config.iconSlotTriad) {
-        this.dx.error(`Menu ${config.id} has no iconSlotTriad!`);
-        throw new Error(`Menu ${config.id} is missing iconSlotTriad`);
-      }
-
       const menu = this.app.uimenumgr.createMenu(
         config.id as MenuId_t,
         config.displayName,

@@ -289,9 +289,7 @@ export class UIMenu {
     const end = this._iconSlotTriad.end
       ? `<span class="icon-slot-suffix">${this._iconSlotTriad.end}</span>`
       : ``;
-    const buttonContent = begin + content + end;
-    // Ensure button always has content (even if just a non-breaking space) so it's clickable
-    return buttonContent || '&nbsp;';
+    return begin + content + end;
   }
 
   /**
