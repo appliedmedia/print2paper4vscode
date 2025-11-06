@@ -958,6 +958,19 @@ export class PaperPrinter {
 
           // Persist as scale string with 2 decimals
           this.app.uimenumgr.setPersistForMenuId(kZoomLevel.id, roundedScale.toFixed(2));
+          
+          // Refresh menu to show custom value in dropdown
+          if (this.uiwebview) {
+            const panelId = this.uiwebview.getPanelId();
+            if (panelId) {
+              const menuHTML = await this.app.uimenumgr.getUIMenu_HTML(kZoomLevel.id);
+              this.app.vscodeapis.postMessage(panelId, {
+                type: 'refreshMenu',
+                menuId: kZoomLevel.id,
+                menuHTML,
+              });
+            }
+          }
         } else {
           dx.out(`Invalid zoom value: ${menuItemId}, using default`);
           value = Number(kZoomLevel.alt);
@@ -988,6 +1001,19 @@ export class PaperPrinter {
     // Persist the new zoom level
     this.app.uimenumgr.setPersistForMenuId(kZoomLevel.id, newZoom.toFixed(2));
 
+    // Refresh menu to show new value (may be custom)
+    if (this.uiwebview) {
+      const panelId = this.uiwebview.getPanelId();
+      if (panelId) {
+        const menuHTML = await this.app.uimenumgr.getUIMenu_HTML(kZoomLevel.id);
+        this.app.vscodeapis.postMessage(panelId, {
+          type: 'refreshMenu',
+          menuId: kZoomLevel.id,
+          menuHTML,
+        });
+      }
+    }
+
     dx.done();
     return { id: 'zoomOut', value: newZoom };
   }
@@ -1009,6 +1035,19 @@ export class PaperPrinter {
 
     // Persist the new zoom level
     this.app.uimenumgr.setPersistForMenuId(kZoomLevel.id, newZoom.toFixed(2));
+
+    // Refresh menu to show new value (may be custom)
+    if (this.uiwebview) {
+      const panelId = this.uiwebview.getPanelId();
+      if (panelId) {
+        const menuHTML = await this.app.uimenumgr.getUIMenu_HTML(kZoomLevel.id);
+        this.app.vscodeapis.postMessage(panelId, {
+          type: 'refreshMenu',
+          menuId: kZoomLevel.id,
+          menuHTML,
+        });
+      }
+    }
 
     dx.done();
     return { id: 'zoomIn', value: newZoom };

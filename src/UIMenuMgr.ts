@@ -82,6 +82,15 @@ export class UIMenuMgr {
     this.dx.done();
   }
 
+  /**
+   * Generate fresh HTML for a specific menu
+   * Returns the HTML to be sent to webview by caller
+   */
+  async getUIMenu_HTML(menuId: MenuId_t): Promise<string> {
+    const menu = this.getMenuById(menuId);
+    return await menu.getHTML();
+  }
+
   createMenu(
     id: MenuId_t,
     displayName: string,

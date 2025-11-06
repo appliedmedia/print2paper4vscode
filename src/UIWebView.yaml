@@ -129,7 +129,17 @@ webview_js: |
   if (vscode) {
     window.addEventListener('message', event => {
       const message = event.data;
-      if (message.type === 'zoom') {
+      if (message.type === 'refreshMenu') {
+        // Refresh a specific menu's HTML (generic - works for any menu)
+        const menuId = message.menuId;
+        const menuHTML = message.menuHTML;
+        if (menuId && menuHTML) {
+          const menuElement = document.getElementById(menuId);
+          if (menuElement) {
+            menuElement.outerHTML = menuHTML;
+          }
+        }
+      } else if (message.type === 'zoom') {
         if (message.zoomLevel !== undefined) {
           setZoom(message.zoomLevel);
         } else if (message.zoomAction) {

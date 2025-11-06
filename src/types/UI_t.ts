@@ -13,6 +13,7 @@ export type PostMessage = {
     | 'menu'
     | 'print'
     | 'menuItemSelected'
+    | 'refreshMenu'
     | 'dx'
     | 'updatePdf'
     | 'pageRenderResponse'
@@ -31,8 +32,9 @@ export type PostMessage = {
   message?: string; // For dx messages
   pageNumber?: number; // For page render requests
   data?: unknown; // For diagnostic messages
-  menuId?: string; // For menu item selection
+  menuId?: string; // For menu item selection and menu refresh
   itemId?: string; // For menu item selection
+  menuHTML?: string; // For menu refresh
   printType?: string; // For print messages
   zoomLevel?: number; // For zoom messages
   zoomAction?: 'in' | 'out' | 'fitWidth' | 'fitPage' | 'actualSize'; // For zoom actions

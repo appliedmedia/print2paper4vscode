@@ -258,11 +258,19 @@ uimenu_generic_handlers: |
     }
     
     // Menu has items - toggle dropdown (items may or may not have flyouts)
-    closeAllMenus();
-    
+    // Check if THIS menu is already open BEFORE closing all menus
     const isOpen = menuItems.style.display === 'block';
-    menuItems.style.display = isOpen ? 'none' : 'block';
-    btn.setAttribute('aria-expanded', isOpen ? 'false' : 'true');
+    
+    if (isOpen) {
+      // This menu is open - close it
+      menuItems.style.display = 'none';
+      btn.setAttribute('aria-expanded', 'false');
+    } else {
+      // This menu is closed - close others and open this one
+      closeAllMenus();
+      menuItems.style.display = 'block';
+      btn.setAttribute('aria-expanded', 'true');
+    }
   }
 
   /**
@@ -467,7 +475,7 @@ uimenu_generic_handlers: |
         return;
       }
       
-      // Test regex against the new value
+      // Test regex against the new value (only regex validation during typing)
       const regex = new RegExp(config.constraints_regex);
       if (!regex.test(newValue)) {
         e.preventDefault();
@@ -475,22 +483,8 @@ uimenu_generic_handlers: |
         return;
       }
       
-      // Also validate min/max if provided
-      if (config.value_min !== undefined || config.value_max !== undefined) {
-        const numValue = parseFloat(newValue);
-        if (!isNaN(numValue)) {
-          if (config.value_min !== undefined && numValue < config.value_min) {
-            e.preventDefault();
-            e.stopPropagation();
-            return;
-          }
-          if (config.value_max !== undefined && numValue > config.value_max) {
-            e.preventDefault();
-            e.stopPropagation();
-            return;
-          }
-        }
-      }
+      // NOTE: min/max validation happens on blur, not during typing
+      // This allows users to type intermediate values (e.g., "1" before "150")
     } catch (error) {
       console.error('Error validating text edit input:', error);
     }
