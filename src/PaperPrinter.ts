@@ -356,7 +356,7 @@ export class PaperPrinter {
       return {
         id: menuConst.id,
         displayName: menuConst.displayName,
-        iconSlotTriad: menuConst.iconSlotTriad,
+        iconSlotTriad: (menuConst as { iconSlotTriad: iconSlotTriad_t }).iconSlotTriad,
         isFlyout: menuConst.isFlyout,
         menuItems: (this[`menuItems_${methodName}` as keyof this] as () => UIMenuItem_t[]).bind(
           this
@@ -389,6 +389,11 @@ export class PaperPrinter {
       this.dx.out(
         `Creating menu: ${config.id} with iconSlotTriad: ${JSON.stringify(config.iconSlotTriad)}`
       );
+      
+      if (!config.iconSlotTriad) {
+        this.dx.error(`Menu ${config.id} has no iconSlotTriad!`);
+        throw new Error(`Menu ${config.id} is missing iconSlotTriad`);
+      }
 
       const menu = this.app.uimenumgr.createMenu(
         config.id as MenuId_t,
