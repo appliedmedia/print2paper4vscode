@@ -143,7 +143,7 @@ describe('PaperPrinter Page Size and Orient Tests', () => {
       const testMockApp = {
         ...mockApp,
         uimenumgr: {
-          getAllMenus: () => [],
+          getUIMenus: () => [],
           createMenu: (
             id: string,
             icon: string,

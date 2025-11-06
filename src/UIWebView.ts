@@ -3,7 +3,7 @@ import type { WebviewPanelId_t } from './VSCodeAPIs';
 import type { PostMessage } from './types/UI_t';
 import { Diagnostics } from './Diagnostics';
 import { Yaml } from './Yaml';
-import { kZoomLevels, kZoomIn, kZoomOut } from './types/PaperPrinter_t';
+import { kZoomLevel, kZoomIn, kZoomOut } from './types/PaperPrinter_t';
 
 /**
  * PDF Data for webview display
@@ -80,11 +80,20 @@ export class UIWebView {
    * Creates new panel on first call, updates existing panel on subsequent calls.
    * The PDF is embedded as base64 data URL due to VS Code postMessage limitations.
    */
-  async displayPdfPanel(pdfDocOrData: PDFData_t | { asArrayBuffer(): ArrayBuffer; pageTotal: number; pageSizePx: { widthPx: number; heightPx: number } }, title?: string): Promise<WebviewPanelId_t> {
+  async displayPdfPanel(
+    pdfDocOrData:
+      | PDFData_t
+      | {
+          asArrayBuffer(): ArrayBuffer;
+          pageTotal: number;
+          pageSizePx: { widthPx: number; heightPx: number };
+        },
+    title?: string
+  ): Promise<WebviewPanelId_t> {
     const dx = this.dx.sub('displayPdfPanel');
-    
+
     let pdfData: PDFData_t;
-    
+
     // Check if we got DocInfo_PDF or already-prepared PDFData_t
     if ('asArrayBuffer' in pdfDocOrData && 'pageTotal' in pdfDocOrData) {
       // It's a DocInfo_PDF - extract data (DocInfo_PDF already provides pixels)
@@ -92,13 +101,13 @@ export class UIWebView {
         arrayBuffer: pdfDocOrData.asArrayBuffer(),
         pageTotal: pdfDocOrData.pageTotal,
         pageSizePx: pdfDocOrData.pageSizePx,
-        title: title || 'PDF Document'
+        title: title || 'PDF Document',
       };
     } else {
       // It's already PDFData_t
       pdfData = pdfDocOrData;
     }
-    
+
     dx.require({ pdfData }, ['pdfData']);
 
     try {
@@ -118,7 +127,9 @@ export class UIWebView {
       const pdf_data_url = `data:application/pdf;base64,${base64}`;
 
       // Log PDF object usage for webview (Stage 4.3)
-      dx.out(`PDF object usage: Using PDF ArrayBuffer for webview display (${pdfData.arrayBuffer.byteLength} bytes)`);
+      dx.out(
+        `PDF object usage: Using PDF ArrayBuffer for webview display (${pdfData.arrayBuffer.byteLength} bytes)`
+      );
 
       // Generate HTML for PDF viewer
       const html = await this.generatePDFHTML(pdf_data_url, pdfData);
@@ -165,10 +176,9 @@ export class UIWebView {
       const zoomLevel = this.app.ui.persist.pdf_zoom_level;
       const parsedZoom = Number(zoomLevel);
       const pdf_zoom_level =
-        parsedZoom >= kZoomLevels.min &&
-        parsedZoom <= kZoomLevels.max
+        parsedZoom >= kZoomLevel.min && parsedZoom <= kZoomLevel.max
           ? parsedZoom
-          : Number(kZoomLevels.alt);
+          : Number(kZoomLevel.alt);
 
       // Create template dictionary
       const templateDict = {
@@ -179,13 +189,15 @@ export class UIWebView {
         pdf_data_url,
         pdfjs_library,
         pdf_zoom_level: pdf_zoom_level.toString(),
-        zoomLevel_min: kZoomLevels.min.toString(),
-        zoomLevel_max: kZoomLevels.max.toString(),
-        zoomLevel_stepAmount: kZoomLevels.stepAmount.toString(),
-        zoomLevel_in_shortcutCode: (kZoomIn as typeof kZoomIn & { shortcutCode: string }).shortcutCode,
-        zoomLevel_out_shortcutCode: (kZoomOut as typeof kZoomOut & { shortcutCode: string }).shortcutCode,
+        zoomLevel_min: kZoomLevel.min.toString(),
+        zoomLevel_max: kZoomLevel.max.toString(),
+        zoomLevel_stepAmount: kZoomLevel.stepAmount.toString(),
+        zoomLevel_in_shortcutCode: (kZoomIn as typeof kZoomIn & { shortcutCode: string })
+          .shortcutCode,
+        zoomLevel_out_shortcutCode: (kZoomOut as typeof kZoomOut & { shortcutCode: string })
+          .shortcutCode,
         zoomLevel_menuItems: JSON.stringify(
-          kZoomLevels.menuItems.map(item => ({
+          kZoomLevel.menuItems.map(item => ({
             id: item.id,
             displayName: item.displayName,
             value: 'value' in item ? item.value : undefined,
@@ -361,21 +373,18 @@ export class UIWebView {
 
     try {
       const zoomLevel = Number(msg.zoomLevel);
-      if (
-        zoomLevel >= kZoomLevels.min &&
-        zoomLevel <= kZoomLevels.max
-      ) {
+      if (zoomLevel >= kZoomLevel.min && zoomLevel <= kZoomLevel.max) {
         // Save zoom level to persistence
         this.app.ui.persist.pdf_zoom_level = zoomLevel;
         dx.out(`Zoom level saved: ${zoomLevel}`);
       } else if (msg.zoomLevel !== undefined) {
         // Invalid zoom level - show error to user immediately and fail
-        const errorMsg = `Invalid zoom level received: ${msg.zoomLevel} (must be between ${kZoomLevels.min} and ${kZoomLevels.max})`;
+        const errorMsg = `Invalid zoom level received: ${msg.zoomLevel} (must be between ${kZoomLevel.min} and ${kZoomLevel.max})`;
         dx.error(errorMsg);
         this.app.ui.showErrorMessage(errorMsg);
         throw new Error(errorMsg);
       }
-      
+
       // Handle zoom actions if present
       if (msg.zoomAction) {
         dx.out(`Zoom action received: ${msg.zoomAction}`);

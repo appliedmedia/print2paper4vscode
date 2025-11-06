@@ -4,7 +4,7 @@ import { Diagnostics } from './Diagnostics';
 import { Yaml } from './Yaml';
 import { Persist, type Persist_t } from './Persist';
 import { kMenuId } from './UIMenu';
-import { kZoomLevels } from './types/PaperPrinter_t';
+import { kZoomLevel } from './types/PaperPrinter_t';
 
 // UI persist keys - union of menu IDs, toolbar position, and PDF zoom level
 export const kUI = [...kMenuId, 'toolbar_pos', 'pdf_zoom_level'] as const;
@@ -49,7 +49,7 @@ export class UI {
     this.app = app;
     this.dx = app.dx.create('UI');
     this._yaml = new Yaml(app, 'src/UI.yaml', UI.kYaml);
-    
+
     // Initialize persist for toolbar position
     this.persist = new Persist(app) as Persist & Persist_t;
     this.persist.register('toolbar_pos');
@@ -62,10 +62,9 @@ export class UI {
     const zoomLevel = this.persist.pdf_zoom_level;
     const numZoomLevel = Number(zoomLevel);
     const safeZoom =
-      numZoomLevel >= kZoomLevels.min &&
-      numZoomLevel <= kZoomLevels.max
+      numZoomLevel >= kZoomLevel.min && numZoomLevel <= kZoomLevel.max
         ? numZoomLevel
-        : Number(kZoomLevels.alt);
+        : Number(kZoomLevel.alt);
     this.persist.pdf_zoom_level = safeZoom;
   }
 
@@ -144,11 +143,11 @@ export class UI {
 
     try {
       // Get menu HTML from UIMenuMgr
-      const menuHtml = await this.app.uimenumgr.getAllUIMenuHTML();
+      const menuHtml = await this.app.uimenumgr.getUIMenus_HTML();
 
       // Get menu CSS and JS
-      const uiMenuCss = this.app.uimenumgr.getAllUIMenuCSS();
-      const uiMenuJs = this.app.uimenumgr.getAllUIMenuJS();
+      const uiMenuCss = this.app.uimenumgr.getUIMenus_CSS();
+      const uiMenuJs = this.app.uimenumgr.getUIMenus_JS();
 
       // Get toolbar templates from yaml getter
       const templates = this.yaml;
@@ -157,15 +156,25 @@ export class UI {
       // Note: VS Code extensions run in Node.js and don't have access to window dimensions.
       // Client-side code in toolbar_js/yaml dynamically clamps to actual window.innerWidth.
       let toolbar_pos = Number(this.persist.toolbar_pos);
-      if (isNaN(toolbar_pos) || toolbar_pos < UI.kToolbar_pos_min_px || toolbar_pos >= UI.kToolbar_pos_max_px) {
+      if (
+        isNaN(toolbar_pos) ||
+        toolbar_pos < UI.kToolbar_pos_min_px ||
+        toolbar_pos >= UI.kToolbar_pos_max_px
+      ) {
         toolbar_pos = UI.kToolbar_pos_min_px;
       }
 
       // Replace toolbar_pos in toolbar_css before combining with menu CSS
-      const toolbarCssWithPos = templates.toolbar_css.replace('{{toolbar_pos}}', toolbar_pos.toString());
+      const toolbarCssWithPos = templates.toolbar_css.replace(
+        '{{toolbar_pos}}',
+        toolbar_pos.toString()
+      );
 
       // Replace toolbar positioning constant in toolbar_js
-      const toolbarJsWithConstants = templates.toolbar_js.replace(/\{\{toolbar_pos_min_px\}\}/g, UI.kToolbar_pos_min_px.toString());
+      const toolbarJsWithConstants = templates.toolbar_js.replace(
+        /\{\{toolbar_pos_min_px\}\}/g,
+        UI.kToolbar_pos_min_px.toString()
+      );
 
       // Inject toolbar into HTML using template
       const toolbarHtml = this.app.templateDictReplace(templates.toolbar_html, {

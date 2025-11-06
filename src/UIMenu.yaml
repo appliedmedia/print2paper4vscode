@@ -540,11 +540,8 @@ uimenu_generic_handlers: |
     // Validate and clamp first
     handleTextEditInput(e);
     
-    // Get the menu ID from the closest menu button
-    const menuBtn = input.closest('.p2p4vsc-menu-btn');
-    if (!menuBtn) return;
-    
-    const menu = menuBtn.closest('.p2p4vsc-menu');
+    // Get the menu ID from the closest menu
+    const menu = input.closest('.p2p4vsc-menu');
     if (!menu) return;
     
     const menuId = menu.getAttribute('id');

@@ -26,7 +26,7 @@ import { kFontSizeId } from './types/PaperPrinter_t';
  * const uimenumgr = new UIMenuMgr(app);
  * const menu = uimenumgr.createMenu('print', 'Print', '🖨️', false, ...);
  * uimenumgr.addMenu(menu);
- * const html = await uimenumgr.getAllUIMenuHTML();
+ * const html = await uimenumgr.getUIMenus_HTML();
  */
 export class UIMenuMgr {
   private app: App;
@@ -104,7 +104,7 @@ export class UIMenuMgr {
   }
 
   // Get all menus
-  getAllMenus(): UIMenu[] {
+  getUIMenus(): UIMenu[] {
     return [...this.menus];
   }
 
@@ -119,7 +119,7 @@ export class UIMenuMgr {
     const dx = this.dx.sub('handleMenuItemSelected');
 
     try {
-      const menu = this.getAllMenus().find(menu => menu.id === menuId);
+      const menu = this.getUIMenus().find(menu => menu.id === menuId);
       if (menu) {
         await menu.dispatchSelection(itemId);
         dx.out(`Menu item selected: ${menuId}.${itemId}`);
@@ -135,7 +135,7 @@ export class UIMenuMgr {
   // Get a specific menu by ID
   // Throws error if menu not found - guarantees a valid menu is returned
   getMenuById(id: string): UIMenu {
-    const menu = this.getAllMenus().find(menu => menu.id === id);
+    const menu = this.getUIMenus().find(menu => menu.id === id);
     if (!menu) {
       this.dx.error(`Menu not found: ${id}`);
       throw new Error(`Menu not found: ${id}`);
@@ -165,8 +165,8 @@ export class UIMenuMgr {
   }
 
   // Generate all HTML at once using recursive flyout strategy
-  async getAllUIMenuHTML(): Promise<string> {
-    const allMenus = this.getAllMenus();
+  async getUIMenus_HTML(): Promise<string> {
+    const allMenus = this.getUIMenus();
     const visited = new Set<string>(); // Prevent infinite loops
     let result = '';
 
@@ -185,9 +185,9 @@ export class UIMenuMgr {
   }
 
   // Generate all JavaScript at once
-  getAllUIMenuJS(): string {
+  getUIMenus_JS(): string {
     // All menus share the same generic handlers - get from any menu's cached YAML
-    const allMenus = this.getAllMenus();
+    const allMenus = this.getUIMenus();
     const anyMenu = allMenus[0];
     if (!anyMenu) {
       return '';
@@ -202,8 +202,8 @@ export class UIMenuMgr {
   }
 
   // Get all UIMenu CSS
-  getAllUIMenuCSS(): string {
-    const anyMenu = this.getAllMenus()[0];
+  getUIMenus_CSS(): string {
+    const anyMenu = this.getUIMenus()[0];
     if (!anyMenu) {
       return '';
     }

@@ -66,15 +66,15 @@ describe('UIMenuMgr', () => {
       false,
       () => [{ id: '12', displayName: '12', iconSlotTriad: { begin: '', main: '', end: '' } }],
       [],
-      async (id) => ({ id, value: id })
+      async id => ({ id, value: id })
     );
     menuMgr.addMenu(fontMenu);
-    
+
     assert.strictEqual(menuMgr.isMenuItemId('12'), true);
   });
 
   it('should get all menus', () => {
-    const menus = menuMgr.getAllMenus();
+    const menus = menuMgr.getUIMenus();
     assert.ok(Array.isArray(menus));
   });
 
@@ -87,11 +87,11 @@ describe('UIMenuMgr', () => {
       false,
       () => [],
       [],
-      async (id) => ({ id, value: id })
+      async id => ({ id, value: id })
     );
-    
+
     menuMgr.addMenu(menu);
-    const menus = menuMgr.getAllMenus();
+    const menus = menuMgr.getUIMenus();
     assert.strictEqual(menus.length, 1);
   });
 
@@ -104,12 +104,12 @@ describe('UIMenuMgr', () => {
       false,
       () => [],
       [],
-      async (id) => ({ id, value: id })
+      async id => ({ id, value: id })
     );
-    
+
     menuMgr.addMenu(menu);
     menuMgr.addMenu(menu);
-    const menus = menuMgr.getAllMenus();
+    const menus = menuMgr.getUIMenus();
     assert.strictEqual(menus.length, 1);
   });
 
@@ -122,10 +122,10 @@ describe('UIMenuMgr', () => {
       false,
       () => [],
       [],
-      async (id) => ({ id, value: id })
+      async id => ({ id, value: id })
     );
     menuMgr.addMenu(menu);
-    
+
     const foundMenu = menuMgr.getMenuById('test');
     assert.strictEqual(foundMenu.id, 'test');
   });
@@ -137,24 +137,24 @@ describe('UIMenuMgr', () => {
   });
 
   it('should get all menu CSS', () => {
-    const css = menuMgr.getAllUIMenuCSS();
+    const css = menuMgr.getUIMenus_CSS();
     assert.ok(typeof css === 'string');
   });
 
   it('should get all menu JS', () => {
-    const js = menuMgr.getAllUIMenuJS();
+    const js = menuMgr.getUIMenus_JS();
     assert.ok(typeof js === 'string');
   });
 
   it('should return empty string when no menus exist for CSS', () => {
     const emptyMgr = new UIMenuMgr(app);
-    const css = emptyMgr.getAllUIMenuCSS();
+    const css = emptyMgr.getUIMenus_CSS();
     assert.strictEqual(css, '');
   });
 
   it('should return empty string when no menus exist for JS', () => {
     const emptyMgr = new UIMenuMgr(app);
-    const js = emptyMgr.getAllUIMenuJS();
+    const js = emptyMgr.getUIMenus_JS();
     assert.strictEqual(js, '');
   });
 });

@@ -41,8 +41,7 @@ import {
   kTheme,
   kZoomOut,
   kZoomIn,
-  kZoomLevels,
-  kZoomLevelPercent,
+  kZoomLevel,
   kMenus,
 } from './types/PaperPrinter_t';
 
@@ -335,7 +334,7 @@ export class PaperPrinter {
   // Create menus when needed for the webview
   private createMenus(): void {
     // Avoid duplicates across multiple openings
-    if (this.app.uimenumgr.getAllMenus().length > 0) {
+    if (this.app.uimenumgr.getUIMenus().length > 0) {
       return;
     }
 
@@ -549,9 +548,9 @@ export class PaperPrinter {
     }));
   }
 
-  private menuItems_ZoomLevels(): UIMenuItem_t[] {
-    // Format shortcuts using OS-specific key mappings
-    return kZoomLevels.menuItems.map(item => {
+  private menuItems_ZoomLevel(): UIMenuItem_t[] {
+    // Start with static menu items
+    const staticItems = kZoomLevel.menuItems.map(item => {
       let displayName: string = item.displayName;
       let shortcut: string | undefined;
 
@@ -578,6 +577,43 @@ export class PaperPrinter {
 
       return menuItem;
     });
+
+    // Check if current selection is a custom value (not in static list)
+    const selectedId = this.app.uimenumgr.getValueForSelectedByMenuId(kZoomLevel.id);
+    const selectedScale = parseFloat(selectedId || '');
+
+    // Is it a custom value? (numeric, not in static list, not special actions)
+    const isCustomValue =
+      !isNaN(selectedScale) &&
+      selectedId !== 'fitPage' &&
+      selectedId !== 'fitWidth' &&
+      !staticItems.find(item => item.id === selectedId);
+
+    if (isCustomValue) {
+      // Add custom zoom level to the list
+      const percentValue = Math.round(selectedScale * 100);
+      const customItem: UIMenuItem_t = {
+        id: selectedId as MenuItemId_t,
+        displayName: `${percentValue}%`,
+        iconSlotTriad: { begin: '', main: '', end: '' },
+      };
+      (customItem as any).value = selectedScale;
+
+      // Merge and sort by numeric value (non-numeric items at end)
+      const allItems = [...staticItems, customItem];
+      return allItems.sort((a, b) => {
+        const aVal = (a as any).value;
+        const bVal = (b as any).value;
+
+        // Non-numeric items (fitPage, fitWidth) go to end
+        if (typeof aVal !== 'number') return 1;
+        if (typeof bVal !== 'number') return -1;
+
+        return aVal - bVal;
+      });
+    }
+
+    return staticItems;
   }
 
   private menuItems_ZoomOut(): UIMenuItem_t[] {
@@ -587,11 +623,6 @@ export class PaperPrinter {
 
   private menuItems_ZoomIn(): UIMenuItem_t[] {
     // Zoom in has no menu items - it's just a button
-    return [];
-  }
-
-  private menuItems_ZoomLevelPercent(): UIMenuItem_t[] {
-    // Zoom level percent has no menu items - it's just a text_edit widget
     return [];
   }
 
@@ -886,11 +917,11 @@ export class PaperPrinter {
     return { id, value };
   }
 
-  private async handleSelection_ZoomLevels(
+  private async handleSelection_ZoomLevel(
     menuId: MenuId_t,
     menuItemId: MenuItemId_t
   ): Promise<HandleSelection_t> {
-    const dx = this.dx.sub('handleSelection_ZoomLevels');
+    const dx = this.dx.sub('handleSelection_ZoomLevel');
 
     let id = menuItemId;
     let value: string | number | boolean = menuItemId;
@@ -900,29 +931,39 @@ export class PaperPrinter {
       id = '1.00';
       value = 1.0;
     } else {
-      // Find the menu item to get its value property
-      const menuItem = kZoomLevels.menuItems.find(item => item.id === menuItemId);
+      const menuItem = kZoomLevel.menuItems.find(item => item.id === menuItemId);
 
       if (menuItemId === 'fitPage' || menuItemId === 'fitWidth') {
         // Special actions - persist as-is
         value = menuItemId;
+        this.app.uimenumgr.setPersistForMenuId(kZoomLevel.id, menuItemId);
       } else if (menuItem && 'value' in menuItem && menuItem.value !== undefined) {
-        // Use value property from menu item
+        // Menu item with value property
         value = menuItem.value as number;
+        this.app.uimenumgr.setPersistForMenuId(kZoomLevel.id, menuItemId);
       } else {
-        // Fallback: parse zoom level from id (e.g., "1.00" -> 1.0)
-        const scale = parseFloat(menuItemId);
-        // Validate scale is within valid range
-        if (!isNaN(scale) && scale >= kZoomLevels.min && scale <= kZoomLevels.max) {
-          value = scale;
+        // Text edit input: numeric string (could be percentage like "150" or scale like "1.50")
+        const numericValue = parseFloat(menuItemId);
+
+        if (!isNaN(numericValue)) {
+          // If value > 10, treat as percentage; otherwise treat as scale
+          const scale = numericValue > 10 ? numericValue / 100 : numericValue;
+
+          // Clamp to min/max and round to 2 decimals
+          const clampedScale = Math.max(kZoomLevel.min, Math.min(kZoomLevel.max, scale));
+          const roundedScale = Math.round(clampedScale * 100) / 100;
+
+          id = menuItemId;
+          value = roundedScale;
+
+          // Persist as scale string with 2 decimals
+          this.app.uimenumgr.setPersistForMenuId(kZoomLevel.id, roundedScale.toFixed(2));
         } else {
-          dx.out(`Invalid zoom scale: ${scale}, ignoring`);
-          value = Number(kZoomLevels.alt); // Default to alt value
-          id = kZoomLevels.alt;
+          dx.out(`Invalid zoom value: ${menuItemId}, using default`);
+          value = Number(kZoomLevel.alt);
+          id = kZoomLevel.alt;
         }
       }
-      // Persist zoom level - webview will handle the actual zoom change via menuItemSelected message
-      this.app.uimenumgr.setPersistForMenuId(kZoomLevels.id, menuItemId);
     }
 
     dx.done();
@@ -935,15 +976,18 @@ export class PaperPrinter {
   ): Promise<HandleSelection_t> {
     const dx = this.dx.sub('handleSelection_ZoomOut');
     // Get current zoom level from persistence
-    const currentZoomStr = this.app.uimenumgr.getValueForSelectedByMenuId(kZoomLevels.id);
-    const currentZoom = parseFloat(currentZoomStr || kZoomLevels.alt);
-    
+    const currentZoomStr = this.app.uimenumgr.getValueForSelectedByMenuId(kZoomLevel.id);
+    const currentZoom = parseFloat(currentZoomStr || kZoomLevel.alt);
+
     // Decrement by stepAmount, clamp to min, round to 2 decimals
-    const newZoom = Math.max(kZoomLevels.min, Math.round((currentZoom - kZoomLevels.stepAmount) * 100) / 100);
-    
+    const newZoom = Math.max(
+      kZoomLevel.min,
+      Math.round((currentZoom - kZoomLevel.stepAmount) * 100) / 100
+    );
+
     // Persist the new zoom level
-    this.app.uimenumgr.setPersistForMenuId(kZoomLevels.id, newZoom.toFixed(2));
-    
+    this.app.uimenumgr.setPersistForMenuId(kZoomLevel.id, newZoom.toFixed(2));
+
     dx.done();
     return { id: 'zoomOut', value: newZoom };
   }
@@ -954,41 +998,20 @@ export class PaperPrinter {
   ): Promise<HandleSelection_t> {
     const dx = this.dx.sub('handleSelection_ZoomIn');
     // Get current zoom level from persistence
-    const currentZoomStr = this.app.uimenumgr.getValueForSelectedByMenuId(kZoomLevels.id);
-    const currentZoom = parseFloat(currentZoomStr || kZoomLevels.alt);
-    
+    const currentZoomStr = this.app.uimenumgr.getValueForSelectedByMenuId(kZoomLevel.id);
+    const currentZoom = parseFloat(currentZoomStr || kZoomLevel.alt);
+
     // Increment by stepAmount, clamp to max, round to 2 decimals
-    const newZoom = Math.min(kZoomLevels.max, Math.round((currentZoom + kZoomLevels.stepAmount) * 100) / 100);
-    
+    const newZoom = Math.min(
+      kZoomLevel.max,
+      Math.round((currentZoom + kZoomLevel.stepAmount) * 100) / 100
+    );
+
     // Persist the new zoom level
-    this.app.uimenumgr.setPersistForMenuId(kZoomLevels.id, newZoom.toFixed(2));
-    
+    this.app.uimenumgr.setPersistForMenuId(kZoomLevel.id, newZoom.toFixed(2));
+
     dx.done();
     return { id: 'zoomIn', value: newZoom };
-  }
-
-  private async handleSelection_ZoomLevelPercent(
-    menuId: MenuId_t,
-    menuItemId: MenuItemId_t
-  ): Promise<HandleSelection_t> {
-    const dx = this.dx.sub('handleSelection_ZoomLevelPercent');
-    // menuItemId is the percentage value as string (e.g., "150")
-    const percentValue = parseFloat(menuItemId);
-    
-    if (isNaN(percentValue)) {
-      dx.done();
-      return { id: '', value: '' };
-    }
-    
-    // Convert percentage to scale (150% → 1.5), round to 2 decimals
-    const scale = Math.round(percentValue) / 100;
-    const clampedScale = Math.max(kZoomLevels.min, Math.min(kZoomLevels.max, scale));
-    
-    // Persist the zoom level as scale
-    this.app.uimenumgr.setPersistForMenuId(kZoomLevels.id, clampedScale.toFixed(2));
-    
-    dx.done();
-    return { id: menuItemId, value: clampedScale };
   }
 
   // Removed CSS hacks; rely on theme overrides

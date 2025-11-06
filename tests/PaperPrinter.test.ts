@@ -74,7 +74,7 @@ describe('PaperPrinter', () => {
   it('should handle print command from VS Code', async () => {
     paperPrinter.docInfo.rawCode = 'console.log("test");';
     paperPrinter.docInfo.languageId = 'javascript';
-    
+
     try {
       await paperPrinter.handlePrintCommandFromVSCode();
       assert.ok(true); // Should not throw
@@ -128,13 +128,13 @@ describe('PaperPrinter', () => {
   });
 
   it('should create menus', () => {
-    const menusBefore = app.uimenumgr.getAllMenus().length;
-    
+    const menusBefore = app.uimenumgr.getUIMenus().length;
+
     // Access private method through type assertion
     const paperPrinterPrivate = paperPrinter as any;
     paperPrinterPrivate.createMenus();
-    
-    const menusAfter = app.uimenumgr.getAllMenus().length;
+
+    const menusAfter = app.uimenumgr.getUIMenus().length;
     assert.ok(menusAfter > menusBefore || menusAfter > 0);
   });
 

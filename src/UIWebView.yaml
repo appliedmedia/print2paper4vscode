@@ -91,9 +91,9 @@ webview_js: |
   let pageWidthPx = parseFloat('{{page_width_px}}') || 0;
   let pageHeightPx = parseFloat('{{page_height_px}}') || 0;
 
-  // Zoom constants - use values from extension (kZoomLevels.min/max/stepAmount)
+  // Zoom constants - use values from extension (kZoomLevel.min/max/stepAmount)
   // These must be injected via template variables - error if missing
-  const kZoomLevels = {
+  const kZoomLevel = {
     min: parseFloat('{{zoomLevel_min}}') || 0,
     max: parseFloat('{{zoomLevel_max}}') || 0,
     stepAmount: parseFloat('{{zoomLevel_stepAmount}}') || 0,
@@ -101,15 +101,15 @@ webview_js: |
   };
 
   // Keyboard shortcut codes from extension constants
-  if (kZoomLevels.min === 0 || kZoomLevels.max === 0 || kZoomLevels.stepAmount === 0 || 
-      isNaN(kZoomLevels.min) || isNaN(kZoomLevels.max) || isNaN(kZoomLevels.stepAmount)) {
+  if (kZoomLevel.min === 0 || kZoomLevel.max === 0 || kZoomLevel.stepAmount === 0 || 
+      isNaN(kZoomLevel.min) || isNaN(kZoomLevel.max) || isNaN(kZoomLevel.stepAmount)) {
     dx('❌ ERROR: zoomLevel_min, zoomLevel_max, or zoomLevel_stepAmount template variables not injected correctly');
     throw new Error('Zoom constants not initialized - template injection failed');
   }
 
   // Compute percent values
-  kZoomLevels.minPercent = kZoomLevels.min * 100;
-  kZoomLevels.maxPercent = kZoomLevels.max * 100;
+  kZoomLevel.minPercent = kZoomLevel.min * 100;
+  kZoomLevel.maxPercent = kZoomLevel.max * 100;
 
   // Use existing vscode API from toolbar (or create if not available)
   const vscode = window.vscode || (typeof acquireVsCodeApi !== 'undefined' ? acquireVsCodeApi() : null);
@@ -118,7 +118,7 @@ webview_js: |
    * Update text edit field to show current zoom percentage
    */
   function updateZoomTextField(scale) {
-    const textEdit = document.querySelector('.p2p4vsc-text-edit[data-item-id="zoomLevelPercent"]');
+    const textEdit = document.querySelector('.p2p4vsc-text-edit');
     if (textEdit) {
       const percentValue = Math.round(scale * 100);
       textEdit.value = percentValue.toString();
@@ -142,45 +142,41 @@ webview_js: |
         
         if (menuId === 'zoomOut') {
           // Zoom out: decrement by stepAmount
-          const newZoom = Math.max(kZoomLevels.min, Math.round((currentScale - kZoomLevels.stepAmount) * 100) / 100);
+          const newZoom = Math.max(kZoomLevel.min, Math.round((currentScale - kZoomLevel.stepAmount) * 100) / 100);
           setZoom(newZoom);
           updateZoomTextField(newZoom);
         } else if (menuId === 'zoomIn') {
           // Zoom in: increment by stepAmount
-          const newZoom = Math.min(kZoomLevels.max, Math.round((currentScale + kZoomLevels.stepAmount) * 100) / 100);
+          const newZoom = Math.min(kZoomLevel.max, Math.round((currentScale + kZoomLevel.stepAmount) * 100) / 100);
           setZoom(newZoom);
           updateZoomTextField(newZoom);
-        } else if (menuId === 'zoomLevelPercent') {
-          // Text edit field changed - itemId is the percentage value
+        } else if (menuId === 'zoomLevel') {
+          // Zoom levels menu - handles BOTH text edit input AND menu item selections
+          const menuItem = kZoomLevel.menuItems.find(item => item.id === itemId);
           const percentValue = parseFloat(itemId);
-          if (!isNaN(percentValue)) {
-            const scale = percentValue / 100;
-            const clampedScale = Math.max(kZoomLevels.min, Math.min(kZoomLevels.max, scale));
-            setZoom(clampedScale);
-            updateZoomTextField(clampedScale);
-          }
-        } else if (menuId === 'zoomLevels' || menuId === 'zoomLevelDropdown') {
-          // Zoom levels menu item selected (from dropdown button)
-          // itemId should be the menu item ID directly (e.g., '1.00', 'fitPage', 'fitWidth')
           
           if (itemId === 'fitPage') {
+            // Special action: fit page
             handleZoomAction('fitPage');
           } else if (itemId === 'fitWidth') {
+            // Special action: fit width
             handleZoomAction('fitWidth');
+          } else if (menuItem && 'value' in menuItem && menuItem.value !== undefined) {
+            // Menu item selection: use value property
+            setZoom(menuItem.value);
+            updateZoomTextField(menuItem.value);
+          } else if (!isNaN(percentValue) && !menuItem) {
+            // Text edit input: percentage value (e.g., "150")
+            const scale = percentValue / 100;
+            const clampedScale = Math.max(kZoomLevel.min, Math.min(kZoomLevel.max, scale));
+            setZoom(clampedScale);
+            updateZoomTextField(clampedScale);
           } else {
-            // Find menu item to get its value property
-            const menuItem = kZoomLevels.menuItems.find(item => item.id === itemId);
-            if (menuItem && 'value' in menuItem && menuItem.value !== undefined) {
-              // Use value property from menu item
-              setZoom(menuItem.value);
-              updateZoomTextField(menuItem.value);
-            } else {
-              // Fallback: parse from id (for backwards compatibility)
-              const scale = parseFloat(itemId);
-              if (!isNaN(scale)) {
-                setZoom(scale);
-                updateZoomTextField(scale);
-              }
+            // Fallback: parse from id
+            const scale = parseFloat(itemId);
+            if (!isNaN(scale)) {
+              setZoom(scale);
+              updateZoomTextField(scale);
             }
           }
         }
@@ -250,7 +246,7 @@ webview_js: |
    * Update zoom menu to show current selection
    */
   function updateZoomMenuSelection() {
-    const zoomLevelMenu = document.getElementById('zoomLevels');
+    const zoomLevelMenu = document.getElementById('zoomLevel');
     if (!zoomLevelMenu) return;
     
     const items = zoomLevelMenu.querySelectorAll('.p2p4vsc-menu-item');
@@ -276,10 +272,10 @@ webview_js: |
     
     switch (action) {
       case 'in':
-        newScale = Math.round(Math.min(currentScale + kZoomLevels.stepAmount, kZoomLevels.max) * 100) / 100;
+        newScale = Math.round(Math.min(currentScale + kZoomLevel.stepAmount, kZoomLevel.max) * 100) / 100;
         break;
       case 'out':
-        newScale = Math.round(Math.max(currentScale - kZoomLevels.stepAmount, kZoomLevels.min) * 100) / 100;
+        newScale = Math.round(Math.max(currentScale - kZoomLevel.stepAmount, kZoomLevel.min) * 100) / 100;
         break;
       case 'fitWidth':
         if (pageWidthPx <= 0) {
@@ -346,7 +342,7 @@ webview_js: |
    */
   function setZoom(scale) {
     // Clamp scale to valid range and round to 2 decimal places
-    currentScale = Math.round(Math.max(kZoomLevels.min, Math.min(kZoomLevels.max, scale)) * 100) / 100;
+    currentScale = Math.round(Math.max(kZoomLevel.min, Math.min(kZoomLevel.max, scale)) * 100) / 100;
     
     // Update menu selection if menu is open
     updateZoomMenuSelection();
