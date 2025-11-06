@@ -32,9 +32,9 @@ export interface iconSlotTriad_t {
 export interface UIMenuItem_t {
   id: string;
   displayName: string;
-  iconSlot: string; // Button content: icon, text_edit widget (e.g., "text_edit: {...}"), or empty for non-button
-  iconSlot_prefix: string; // Text before iconSlot (e.g., for spacing)
-  iconSlot_suffix: string; // Text after iconSlot (e.g., "%" for zoom percentage)
+  iconSlotTriad: iconSlotTriad_t; // Button content: icon, text_edit widget (e.g., "text_edit: {...}"), or empty for non-button
+  shortcutCode?: string; // Optional KeyboardEvent.code for keyboard shortcuts (e.g., "Digit0", "Minus", "Equal")
+  shortcut?: string; // Optional display string for keyboard shortcut (e.g., "Ctrl/Cmd + 0")
 }
 
 // Menu ID types - UI component identifiers
@@ -119,6 +119,7 @@ export class UIMenu {
     uimenu_flyout: '',
     uimenu_generic_handlers: '',
     uimenu_css: '',
+    uimenu_text_edit: '',
   } as const;
 
   private dx: Diagnostics;
@@ -228,17 +229,14 @@ export class UIMenu {
     const isDefault = menuItemId === defaultItemId;
     const isSelected = menuItemId === selectedItemId;
 
-    // Determine if this is a non-button item (no iconSlot) or special widget
-    const iconSlot = item.iconSlot || ``;
-    const iconSlotResult = this.handleIconSlotTypes(iconSlot, menuItemId);
-    const noButton = !iconSlot && !iconSlotResult.isSpecialType;
+    // Handle special widget types (e.g., text_edit)
+    const iconSlotResult = this.handleIconSlotTypes(item.iconSlotTriad.main, menuItemId);
 
     // Individual items only need these classes
     const itemClasses = [
       isFlyout ? 'isFlyout' : '',
       isSelected ? 'isSelected' : '',
       isDefault ? 'isDefault' : '',
-      noButton ? 'noButton' : '',
       iconSlotResult.cssClass || '',
     ]
       .filter(Boolean)
@@ -249,14 +247,14 @@ export class UIMenu {
     // DisplayName already contains processed SVG content from PaperPrinter
     const processedDisplayName = item.displayName;
 
-    // Build iconSlot with prefix/suffix
+    // Build content with prefix/suffix from iconSlotTriad
     let iconSlotWithPrefixSuffix = ``;
-    if (iconSlotResult.html || item.iconSlot_prefix || item.iconSlot_suffix) {
-      const prefix = item.iconSlot_prefix
-        ? `<span class="icon-slot-prefix">${item.iconSlot_prefix}</span>`
+    if (iconSlotResult.html || item.iconSlotTriad.begin || item.iconSlotTriad.end) {
+      const prefix = item.iconSlotTriad.begin
+        ? `<span class="icon-slot-prefix">${item.iconSlotTriad.begin}</span>`
         : ``;
-      const suffix = item.iconSlot_suffix
-        ? `<span class="icon-slot-suffix">${item.iconSlot_suffix}</span>`
+      const suffix = item.iconSlotTriad.end
+        ? `<span class="icon-slot-suffix">${item.iconSlotTriad.end}</span>`
         : ``;
       iconSlotWithPrefixSuffix = prefix + iconSlotResult.html + suffix;
     }
@@ -269,6 +267,7 @@ export class UIMenu {
       contentGutterAfter: '', // Content handled by CSS
       iconSlotWithPrefixSuffix,
       textEditConfigAttr: iconSlotResult.configAttr || ``,
+      shortcutCodeAttr: item.shortcutCode ? ` data-shortcut-code="${item.shortcutCode}"` : ``,
       flyout,
       flyoutMenuIdRef,
     };
@@ -293,11 +292,11 @@ export class UIMenu {
   }
 
   /**
-   * Handle different iconSlot types (text_edit, text_static, etc.)
-   * Returns HTML, CSS class, and config attributes for the iconSlot
+   * Handle different iconSlotTriad.main types (text_edit, text_static, etc.)
+   * Returns HTML, CSS class, and config attributes for the main slot content
    */
   private handleIconSlotTypes(
-    iconSlot: string,
+    iconSlotTriadMain: string,
     itemId: string
   ): {
     html: string;
@@ -309,19 +308,19 @@ export class UIMenu {
 
     // Default return for regular icon content
     const defaultReturn = {
-      html: iconSlot ? `<span class="icon-slot">${iconSlot}</span>` : ``,
+      html: iconSlotTriadMain ? `<span class="iconSlotTriad">${iconSlotTriadMain}</span>` : ``,
       cssClass: ``,
       configAttr: ``,
       isSpecialType: false,
     };
 
-    if (!iconSlot) {
+    if (!iconSlotTriadMain) {
       return defaultReturn;
     }
 
     // Handle text_edit type: "text_edit: {...json...}"
-    if (iconSlot.startsWith('text_edit:')) {
-      const jsonMatch = iconSlot.match(/^text_edit:\s*(.+)$/s);
+    if (iconSlotTriadMain.startsWith('text_edit:')) {
+      const jsonMatch = iconSlotTriadMain.match(/^text_edit:\s*(.+)$/s);
       if (jsonMatch) {
         try {
           const config = JSON.parse(jsonMatch[1].trim());
@@ -334,8 +333,13 @@ export class UIMenu {
             }
           }
           const textEditConfig = JSON.stringify(config);
+          const yaml = this.yaml;
+          const html = this.app.templateDictReplace(yaml.uimenu_text_edit, {
+            itemId,
+            textEditConfig,
+          });
           return {
-            html: `<span class="icon-slot text-edit-wrapper"><input type="text" class="p2p4vsc-text-edit" data-item-id="${itemId}" data-config='${textEditConfig}' /></span>`,
+            html,
             cssClass: 'text-edit',
             configAttr: ` data-text-edit-config='${textEditConfig}'`,
             isSpecialType: true,
@@ -420,7 +424,12 @@ export class UIMenu {
           ? ` data-flyout-items="${this.flyoutMenuItemIds.join(',')}"`
           : '';
 
-      // Build button content - use iconSlot if provided, otherwise use icon
+      // Get shortcutCode from menu constant if it exists
+      const menuConst = kMenus.find(m => m.id === this._id);
+      const shortcutCode = (menuConst as { shortcutCode?: string })?.shortcutCode;
+      const shortcutCodeAttr = shortcutCode ? ` data-shortcut-code="${shortcutCode}"` : ``;
+
+      // Build button content from iconSlotTriad
       const buttonContent = this.buildButtonContent();
 
       const replacementDict = {
@@ -433,6 +442,7 @@ export class UIMenu {
           : '', // Only create container if there are items
         menuClasses,
         flyoutItemsAttr, // Data attribute with flyout item IDs from static list
+        shortcutCodeAttr,
       };
 
       const result = this.app.templateDictReplace(template, replacementDict);

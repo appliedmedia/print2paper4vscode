@@ -64,7 +64,7 @@ describe('UIMenuMgr', () => {
       'Font Size',
       iconSlotTriad,
       false,
-      () => [{ id: '12', displayName: '12', iconSlot: ``, iconSlot_prefix: ``, iconSlot_suffix: `` }],
+      () => [{ id: '12', displayName: '12', iconSlotTriad: { begin: '', main: '', end: '' } }],
       [],
       async (id) => ({ id, value: id })
     );

@@ -38,8 +38,8 @@ const mockApp = {
 
 // Mock list builder and selection handler
 const mockListBuilder = (): UIMenuItem_t[] => [
-  { id: 'default', displayName: 'Default', iconSlot: ``, iconSlot_prefix: ``, iconSlot_suffix: `` },
-  { id: 'test', displayName: 'Test Item', iconSlot: ``, iconSlot_prefix: ``, iconSlot_suffix: `` },
+  { id: 'default', displayName: 'Default', iconSlotTriad: { begin: '', main: '', end: '' } },
+  { id: 'test', displayName: 'Test Item', iconSlotTriad: { begin: '', main: '', end: '' } },
 ];
 const mockSelectionHandler = async (
   menuId: MenuId_t,
