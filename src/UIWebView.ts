@@ -3,7 +3,7 @@ import type { WebviewPanelId_t } from './VSCodeAPIs';
 import type { PostMessage } from './types/UI_t';
 import { Diagnostics } from './Diagnostics';
 import { Yaml } from './Yaml';
-import { kZoomLevel, kZoomIn, kZoomOut } from './types/PaperPrinter_t';
+import { kZoomLevels, kZoomIn, kZoomOut } from './types/PaperPrinter_t';
 
 /**
  * PDF Data for webview display
@@ -165,10 +165,10 @@ export class UIWebView {
       const zoomLevel = this.app.ui.persist.pdf_zoom_level;
       const parsedZoom = Number(zoomLevel);
       const pdf_zoom_level =
-        parsedZoom >= kZoomLevel.min &&
-        parsedZoom <= kZoomLevel.max
+        parsedZoom >= kZoomLevels.min &&
+        parsedZoom <= kZoomLevels.max
           ? parsedZoom
-          : Number(kZoomLevel.alt);
+          : Number(kZoomLevels.alt);
 
       // Create template dictionary
       const templateDict = {
@@ -179,13 +179,13 @@ export class UIWebView {
         pdf_data_url,
         pdfjs_library,
         pdf_zoom_level: pdf_zoom_level.toString(),
-        zoomLevel_min: kZoomLevel.min.toString(),
-        zoomLevel_max: kZoomLevel.max.toString(),
-        zoomLevel_stepAmount: kZoomLevel.stepAmount.toString(),
+        zoomLevel_min: kZoomLevels.min.toString(),
+        zoomLevel_max: kZoomLevels.max.toString(),
+        zoomLevel_stepAmount: kZoomLevels.stepAmount.toString(),
         zoomLevel_in_shortcutCode: (kZoomIn as typeof kZoomIn & { shortcutCode: string }).shortcutCode,
         zoomLevel_out_shortcutCode: (kZoomOut as typeof kZoomOut & { shortcutCode: string }).shortcutCode,
         zoomLevel_menuItems: JSON.stringify(
-          kZoomLevel.menuItems.map(item => ({
+          kZoomLevels.menuItems.map(item => ({
             id: item.id,
             displayName: item.displayName,
             value: 'value' in item ? item.value : undefined,
@@ -362,15 +362,15 @@ export class UIWebView {
     try {
       const zoomLevel = Number(msg.zoomLevel);
       if (
-        zoomLevel >= kZoomLevel.min &&
-        zoomLevel <= kZoomLevel.max
+        zoomLevel >= kZoomLevels.min &&
+        zoomLevel <= kZoomLevels.max
       ) {
         // Save zoom level to persistence
         this.app.ui.persist.pdf_zoom_level = zoomLevel;
         dx.out(`Zoom level saved: ${zoomLevel}`);
       } else if (msg.zoomLevel !== undefined) {
         // Invalid zoom level - show error to user immediately and fail
-        const errorMsg = `Invalid zoom level received: ${msg.zoomLevel} (must be between ${kZoomLevel.min} and ${kZoomLevel.max})`;
+        const errorMsg = `Invalid zoom level received: ${msg.zoomLevel} (must be between ${kZoomLevels.min} and ${kZoomLevels.max})`;
         dx.error(errorMsg);
         this.app.ui.showErrorMessage(errorMsg);
         throw new Error(errorMsg);

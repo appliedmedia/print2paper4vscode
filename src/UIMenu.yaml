@@ -123,7 +123,7 @@ uimenu_css: |
     display: inline-block;
   }
   .p2p4vsc-menu-item .p2p4vsc-text-edit {
-    border: 1px solid #555;
+    border: 1px solid #888;
     background: #333;
     color: #fff;
     padding: 2px 4px;
@@ -131,10 +131,31 @@ uimenu_css: |
     font-size: 14px;
     font-weight: 500;
     text-align: center;
+    width: 3ch;
+    min-width: 3ch;
+    max-width: 3ch;
+    pointer-events: auto;
+    display: inline-block;
+    box-sizing: border-box;
   }
   .p2p4vsc-menu-item .p2p4vsc-text-edit:focus {
     outline: 1px solid #007acc;
     border-color: #007acc;
+  }
+  
+  /* Prevent menu button from being clickable when it contains text_edit */
+  .p2p4vsc-menu-btn:has(.p2p4vsc-text-edit) {
+    pointer-events: none;
+    cursor: default;
+    width: auto;
+    min-width: auto;
+    padding: 0 4px;
+  }
+  .p2p4vsc-menu-btn:has(.p2p4vsc-text-edit) * {
+    pointer-events: auto;
+  }
+  .p2p4vsc-menu-btn:has(.p2p4vsc-text-edit) .p2p4vsc-text-edit {
+    cursor: text;
   }
 
   .p2p4vsc-menu.has-gutter-before .p2p4vsc-menu-item {
@@ -395,6 +416,9 @@ uimenu_generic_handlers: |
     const input = e.target;
     if (!input.classList.contains('p2p4vsc-text-edit')) return;
     
+    // Prevent menu button click when clicking text edit
+    e.stopPropagation();
+    
     const configStr = input.getAttribute('data-config');
     if (!configStr) return;
     
@@ -463,8 +487,63 @@ uimenu_generic_handlers: |
     }
   }
 
-  // Register text edit keydown handler
+  /**
+   * Handle text edit widget input/change events
+   * Updates zoom level when text_edit value changes
+   */
+  function handleTextEditInput(e) {
+    const input = e.target;
+    if (!input.classList.contains('p2p4vsc-text-edit')) return;
+    
+    // Prevent menu button click when interacting with text edit
+    e.stopPropagation();
+    
+    const configStr = input.getAttribute('data-config');
+    if (!configStr) return;
+    
+    try {
+      const config = JSON.parse(configStr);
+      const value = parseFloat(input.value);
+      
+      if (!isNaN(value) && config.value_min !== undefined && config.value_max !== undefined) {
+        // Clamp value to min/max
+        const clampedValue = Math.max(config.value_min, Math.min(config.value_max, value));
+        if (clampedValue !== value) {
+          input.value = clampedValue.toString();
+        }
+        
+        // Send zoom update (convert percentage to scale: 100% = 1.0)
+        const scale = clampedValue / 100;
+        if (window.vscode) {
+          window.vscode.postMessage({
+            type: 'zoom',
+            zoomLevel: scale
+          });
+        }
+      }
+    } catch (error) {
+      console.error('Error handling text edit input:', error);
+    }
+  }
+
+  /**
+   * Handle text edit widget blur events
+   * Applies zoom when user finishes editing
+   */
+  function handleTextEditBlur(e) {
+    const input = e.target;
+    if (!input.classList.contains('p2p4vsc-text-edit')) return;
+    
+    // Prevent menu button click when clicking away from text edit
+    e.stopPropagation();
+    
+    handleTextEditInput(e);
+  }
+
+  // Register text edit handlers
   document.addEventListener('keydown', handleTextEditKeydown, true);
+  document.addEventListener('input', handleTextEditInput, true);
+  document.addEventListener('blur', handleTextEditBlur, true);
 
 uimenu_item: |
   <div class="p2p4vsc-menu-item {{itemClasses}}" id="{{itemId}}"{{flyoutMenuIdRef}}{{textEditConfigAttr}}>

@@ -18,7 +18,7 @@
 export const kPrint = {
   id: 'print',
   displayName: 'Print',
-  icon: '🖨',
+  iconSlotTriad: { begin: '', main: '🖨', end: '' },
   alt: '',
   methodName: '',
   isFlyout: false,
@@ -35,7 +35,7 @@ export type PrintMenuItems_t = (typeof kPrint.menuItems)[number]['id'];
 export const kPageSizeId = {
   id: 'pageSizeId',
   displayName: 'Size',
-  icon: '',
+  iconSlotTriad: { begin: '', main: '', end: '' },
   alt: 'a4',
   methodName: 'PageSizeId',
   isFlyout: true,
@@ -80,7 +80,7 @@ export const kPageSizeIdById = Object.fromEntries(
 export const kOrient = {
   id: 'orient',
   displayName: 'Orient',
-  icon: '',
+  iconSlotTriad: { begin: '', main: '', end: '' },
   alt: 'portrait',
   methodName: '',
   isFlyout: true,
@@ -96,7 +96,7 @@ export type OrientMenuItems_t = (typeof kOrient.menuItems)[number]['id'];
 export const kMarginId = {
   id: 'marginId',
   displayName: 'Margin',
-  icon: '',
+  iconSlotTriad: { begin: '', main: '', end: '' },
   alt: 'normal',
   methodName: 'MarginId',
   isFlyout: true,
@@ -118,7 +118,7 @@ export const kMarginIdById = Object.fromEntries(
 export const kFontSizeId = {
   id: 'fontSizeId',
   displayName: 'Text',
-  icon: 'Tt',
+  iconSlotTriad: { begin: '', main: 'Tt', end: '' },
   alt: '12',
   methodName: '',
   isFlyout: false,
@@ -149,7 +149,7 @@ export const kHeaderFooter = {
     header: 'Header',
     footer: 'Footer',
   },
-  icon: '',
+  iconSlotTriad: { begin: '', main: '', end: '' },
   alt: '',
   none: 'none',
   menuItems: [
@@ -175,7 +175,7 @@ export const kHeaderFooterMenuItemsById = Object.fromEntries(
 export const kHeader = {
   id: kHeaderFooter.id.header,
   displayName: kHeaderFooter.displayName.header,
-  icon: '',
+  iconSlotTriad: { begin: '', main: '', end: '' },
   alt: '',
   methodName: '',
   isFlyout: true,
@@ -192,7 +192,7 @@ export const kHeader = {
 export const kFooter = {
   id: kHeaderFooter.id.footer,
   displayName: kHeaderFooter.displayName.footer,
-  icon: '',
+  iconSlotTriad: { begin: '', main: '', end: '' },
   alt: '',
   methodName: '',
   isFlyout: true,
@@ -209,7 +209,7 @@ export const kFooter = {
 export const kPage = {
   id: 'page',
   displayName: 'Page',
-  icon: '📄',
+  iconSlotTriad: { begin: '', main: '📄', end: '' },
   alt: '',
   methodName: '',
   isFlyout: false,
@@ -245,7 +245,7 @@ export const kHeaderFooterSubmenuById = Object.fromEntries(
 export const kTheme = {
   id: 'theme',
   displayName: 'Theme',
-  icon: '🎨',
+  iconSlotTriad: { begin: '', main: '🎨', end: '' },
   alt: 'github-light',
   methodName: '',
   isFlyout: false,
@@ -256,7 +256,7 @@ export const kTheme = {
 export const kZoomOut = {
   id: 'zoomOut',
   displayName: 'Zoom Out',
-  icon: '−',
+  iconSlotTriad: { begin: ' ', main: '−', end: '' },
   alt: '',
   methodName: 'ZoomOut',
   isFlyout: false,
@@ -268,7 +268,7 @@ export const kZoomOut = {
 export const kZoomIn = {
   id: 'zoomIn',
   displayName: 'Zoom In',
-  icon: '+',
+  iconSlotTriad: { begin: '', main: '+', end: '' },
   alt: '',
   methodName: 'ZoomIn',
   isFlyout: false,
@@ -277,12 +277,12 @@ export const kZoomIn = {
   shortcutCode: 'Equal' as const, // KeyboardEvent.code for =/+ key (main keyboard)
 } as const;
 
-export const kZoomLevel = {
-  id: 'zoomLevel',
-  displayName: 'Zoom Level',
-  icon: '▼',
+export const kZoomLevels = {
+  id: 'zoomLevels',
+  displayName: 'Zoom Levels',
+  iconSlotTriad: { begin: '', main: '▼', end: '' },
   alt: '1.00',
-  methodName: 'ZoomLevel',
+  methodName: 'ZoomLevels',
   isFlyout: false,
   flyoutMenuItemIds: [] as const,
   min: 0.1,
@@ -308,7 +308,22 @@ export const kZoomLevel = {
     { id: 'fitWidth', displayName: 'Fit Width' },
   ],
 } as const;
-export type ZoomLevelMenuItems_t = (typeof kZoomLevel.menuItems)[number]['id'];
+export type ZoomLevelsMenuItems_t = (typeof kZoomLevels.menuItems)[number]['id'];
+
+export const kZoomLevelPercent = {
+  id: 'zoomLevelPercent',
+  displayName: 'Zoom Level Percent',
+  iconSlotTriad: {
+    begin: ' ',
+    main: `text_edit: {"width": "3ch", "constraints_regex": "^\\\\d+$", "value_min": ${kZoomLevels.min * 100}, "value_max": ${kZoomLevels.max * 100}}`,
+    end: '%',
+  },
+  alt: '',
+  methodName: 'ZoomLevelPercent',
+  isFlyout: false,
+  flyoutMenuItemIds: [] as const,
+  menuItems: [],
+} as const;
 
 // All menu constants - shared across PaperPrinter and UIMenu
 export const kMenus = [
@@ -322,8 +337,9 @@ export const kMenus = [
   kTheme,
   kFontSizeId,
   kZoomOut,
+  kZoomLevelPercent,
+  kZoomLevels,
   kZoomIn,
-  kZoomLevel,
 ] as const;
 
 // end, PaperPrinter_t.ts

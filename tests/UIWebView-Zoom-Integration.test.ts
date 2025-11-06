@@ -6,7 +6,7 @@ import type { PDFData_t } from '../src/UIWebView.js';
 import type { PostMessage } from '../src/types/UI_t.js';
 import type { ExtensionContext } from 'vscode';
 import jsPDF from 'jspdf';
-import { kZoomLevel } from '../src/types/PaperPrinter_t.js';
+import { kZoomLevels } from '../src/types/PaperPrinter_t.js';
 
 /**
  * Integration tests for Extension↔Webview Coordination
@@ -189,9 +189,9 @@ describe('Extension↔Webview Integration Tests', () => {
       capturedWebviewHTML = (global as any).__capturedWebviewHTML || '';
 
       // Verify extension constants are injected (example: zoom constants)
-      const minValue = kZoomLevel.min.toString();
-      const maxValue = kZoomLevel.max.toString();
-      const stepValue = kZoomLevel.stepAmount.toString();
+      const minValue = kZoomLevels.min.toString();
+      const maxValue = kZoomLevels.max.toString();
+      const stepValue = kZoomLevels.stepAmount.toString();
 
       assert.ok(capturedWebviewHTML.includes(minValue), `HTML should contain zoomLevel_min=${minValue}`);
       assert.ok(capturedWebviewHTML.includes(maxValue), `HTML should contain zoomLevel_max=${maxValue}`);
@@ -235,7 +235,7 @@ describe('Extension↔Webview Integration Tests', () => {
       // Should validate and use default value
       await uiWebView.displayPdfPanel(pdfData);
       capturedWebviewHTML = (global as any).__capturedWebviewHTML || '';
-      assert.ok(capturedWebviewHTML.includes(kZoomLevel.alt), `Should use default alt value (${kZoomLevel.alt}) for invalid zoom`);
+      assert.ok(capturedWebviewHTML.includes(kZoomLevels.alt), `Should use default alt value (${kZoomLevels.alt}) for invalid zoom`);
     });
 
     test('should replace all template placeholders', async () => {
@@ -433,7 +433,7 @@ describe('Extension↔Webview Integration Tests', () => {
       const zoomLevel = newApp.ui.persist.pdf_zoom_level;
       assert.strictEqual(
         zoomLevel,
-        Number(kZoomLevel.alt),
+        Number(kZoomLevels.alt),
         'Should use default zoom level when none persisted'
       );
     });
@@ -450,7 +450,7 @@ describe('Extension↔Webview Integration Tests', () => {
       // Should be sanitized to valid default
       const zoomLevel = Number(newApp.ui.persist.pdf_zoom_level);
       assert.ok(
-        zoomLevel >= kZoomLevel.min && zoomLevel <= kZoomLevel.max,
+        zoomLevel >= kZoomLevels.min && zoomLevel <= kZoomLevels.max,
         'Invalid persisted value should be sanitized on reload'
       );
     });
@@ -488,17 +488,17 @@ describe('Extension↔Webview Integration Tests', () => {
       };
 
       // Test minimum boundary (zoom example)
-      app.ui.persist.pdf_zoom_level = kZoomLevel.min;
+      app.ui.persist.pdf_zoom_level = kZoomLevels.min;
       await uiWebView.displayPdfPanel(pdfData);
       capturedWebviewHTML = (global as any).__capturedWebviewHTML || '';
-      assert.ok(capturedWebviewHTML.includes(kZoomLevel.min.toString()), 'Should accept minimum boundary value');
+      assert.ok(capturedWebviewHTML.includes(kZoomLevels.min.toString()), 'Should accept minimum boundary value');
 
       // Test maximum boundary
       capturedWebviewHTML = ''; // Reset
-      app.ui.persist.pdf_zoom_level = kZoomLevel.max;
+      app.ui.persist.pdf_zoom_level = kZoomLevels.max;
       await uiWebView.displayPdfPanel(pdfData);
       capturedWebviewHTML = (global as any).__capturedWebviewHTML || '';
-      assert.ok(capturedWebviewHTML.includes(kZoomLevel.max.toString()), 'Should accept maximum boundary value');
+      assert.ok(capturedWebviewHTML.includes(kZoomLevels.max.toString()), 'Should accept maximum boundary value');
     });
 
     test('should handle empty or missing template variables', async () => {
@@ -537,9 +537,9 @@ describe('Extension↔Webview Integration Tests', () => {
       capturedWebviewHTML = (global as any).__capturedWebviewHTML || '';
 
       // Verify zoom constants are injected
-      const minValue = kZoomLevel.min.toString();
-      const maxValue = kZoomLevel.max.toString();
-      const stepValue = kZoomLevel.stepAmount.toString();
+      const minValue = kZoomLevels.min.toString();
+      const maxValue = kZoomLevels.max.toString();
+      const stepValue = kZoomLevels.stepAmount.toString();
 
       assert.ok(capturedWebviewHTML.includes(minValue), `HTML should contain zoomLevel_min=${minValue}`);
       assert.ok(capturedWebviewHTML.includes(maxValue), `HTML should contain zoomLevel_max=${maxValue}`);
@@ -620,7 +620,7 @@ describe('Extension↔Webview Integration Tests', () => {
 
       // Verify zoom level is within valid range
       assert.ok(
-        app.ui.persist.pdf_zoom_level >= kZoomLevel.min && app.ui.persist.pdf_zoom_level <= kZoomLevel.max,
+        app.ui.persist.pdf_zoom_level >= kZoomLevels.min && app.ui.persist.pdf_zoom_level <= kZoomLevels.max,
         'Final zoom level should be within valid range after rapid changes'
       );
     });
@@ -689,7 +689,7 @@ describe('Extension↔Webview Integration Tests', () => {
       await Promise.all(promises);
 
       // Verify final zoom level is correct (1.0 + 10 * 0.1 = 2.0, capped at max)
-      const expectedZoom = Math.min(1.0 + (10 * kZoomLevel.stepAmount), kZoomLevel.max);
+      const expectedZoom = Math.min(1.0 + (10 * kZoomLevels.stepAmount), kZoomLevels.max);
       assert.strictEqual(
         app.ui.persist.pdf_zoom_level,
         expectedZoom,
@@ -763,7 +763,7 @@ describe('Extension↔Webview Integration Tests', () => {
       // Should be sanitized to valid default on init
       const zoomLevel = Number(newApp.ui.persist.pdf_zoom_level);
       assert.ok(
-        zoomLevel >= kZoomLevel.min && zoomLevel <= kZoomLevel.max,
+        zoomLevel >= kZoomLevels.min && zoomLevel <= kZoomLevels.max,
         'Corrupted persisted value should be sanitized to valid default'
       );
 

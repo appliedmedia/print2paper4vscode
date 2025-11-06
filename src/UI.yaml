@@ -41,8 +41,8 @@ toolbar_css: |
     cursor: ew-resize;
     z-index: 10;
     background:
-      radial-gradient(circle at 3px 3px, rgba(120,120,120,.6) 1px, transparent 1px) 0 0 / 6px 6px,
-      radial-gradient(circle at 0px 3px, rgba(120,120,120,.6) 1px, transparent 1px) 3px 0 / 6px 6px;
+      radial-gradient(circle at 2px 3px, rgba(120,120,120,.6) 1px, transparent 1px) 0 0 / 4px 6px,
+      radial-gradient(circle at 0px 3px, rgba(120,120,120,.6) 1px, transparent 1px) 2px 0 / 4px 6px;
   }
   #p2p4vsc-toolbar.dragging { user-select: none; }
   .p2p4vsc-menu-btn {

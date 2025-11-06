@@ -41,7 +41,8 @@ import {
   kTheme,
   kZoomOut,
   kZoomIn,
-  kZoomLevel,
+  kZoomLevels,
+  kZoomLevelPercent,
   kMenus,
 } from './types/PaperPrinter_t';
 
@@ -345,7 +346,7 @@ export class PaperPrinter {
     const menuConfigs: Array<{
       id: MenuId_t | string;
       displayName: string;
-      iconSlot: string;
+      iconSlotTriad: iconSlotTriad_t;
       isFlyout: boolean;
       menuItems: () => UIMenuItem_t[];
       flyoutMenuItemIds: readonly string[];
@@ -355,7 +356,7 @@ export class PaperPrinter {
       return {
         id: menuConst.id,
         displayName: menuConst.displayName,
-        iconSlot: menuConst.icon,
+        iconSlotTriad: menuConst.iconSlotTriad,
         isFlyout: menuConst.isFlyout,
         menuItems: (this[`menuItems_${methodName}` as keyof this] as () => UIMenuItem_t[]).bind(
           this
@@ -376,7 +377,7 @@ export class PaperPrinter {
       menuConfigs.push({
         id: menuId as MenuId_t,
         displayName: kHeaderFooterMenuItemsById[pos].displayName as string,
-        iconSlot: '',
+        iconSlotTriad: { begin: '', main: '', end: '' },
         isFlyout: true,
         menuItems: this.menuItems_HeaderFooterContent.bind(this),
         flyoutMenuItemIds: [],
@@ -385,34 +386,14 @@ export class PaperPrinter {
     });
 
     menuConfigs.forEach(config => {
-      this.dx.out(`Creating menu: ${config.id} with iconSlot: ${config.iconSlot}`);
-
-      // Special handling for zoomLevel menu - add text_edit widget
-      let iconSlotTriad: iconSlotTriad_t;
-      if (config.id === 'zoomLevel') {
-        iconSlotTriad = {
-          begin: ` `,
-          main: `text_edit: {"width": "3ch", "constraints_regex": "^\\\\d+$", "value_min": ${kZoomLevel.min * 100}, "value_max": ${kZoomLevel.max * 100}}`,
-          end: `▼`,
-        };
-      } else if (config.id === 'zoomOut') {
-        iconSlotTriad = {
-          begin: ` `,
-          main: config.iconSlot,
-          end: ``,
-        };
-      } else {
-        iconSlotTriad = {
-          begin: ``,
-          main: config.iconSlot,
-          end: ``,
-        };
-      }
+      this.dx.out(
+        `Creating menu: ${config.id} with iconSlotTriad: ${JSON.stringify(config.iconSlotTriad)}`
+      );
 
       const menu = this.app.uimenumgr.createMenu(
         config.id as MenuId_t,
         config.displayName,
-        iconSlotTriad,
+        config.iconSlotTriad,
         config.isFlyout,
         config.menuItems,
         [...config.flyoutMenuItemIds],
@@ -473,7 +454,13 @@ export class PaperPrinter {
     } else {
       dx.out(`Editor size ${editorSize} not in list, adding it`);
       // Editor size not in list - add it at the top without default selection marker
-      sizeOptions.unshift({ id: String(editorSize), displayName: `${editorSize}px`, iconSlot: ``, iconSlot_prefix: ``, iconSlot_suffix: `` });
+      sizeOptions.unshift({
+        id: String(editorSize),
+        displayName: `${editorSize}px`,
+        iconSlot: ``,
+        iconSlot_prefix: ``,
+        iconSlot_suffix: ``,
+      });
     }
 
     dx.out(
@@ -496,9 +483,28 @@ export class PaperPrinter {
     // Page submenu references (Size, Orient, Margin)
     const pageSubmenus = [kPageSizeId.id, kOrient.id, kMarginId.id].map(id => {
       if (id === kPageSizeId.id)
-        return { id: id as MenuItemId_t, displayName: kPageSizeId.displayName, iconSlot: ``, iconSlot_prefix: ``, iconSlot_suffix: `` };
-      if (id === kOrient.id) return { id: id as MenuItemId_t, displayName: kOrient.displayName, iconSlot: ``, iconSlot_prefix: ``, iconSlot_suffix: `` };
-      return { id: id as MenuItemId_t, displayName: kMarginId.displayName, iconSlot: ``, iconSlot_prefix: ``, iconSlot_suffix: `` };
+        return {
+          id: id as MenuItemId_t,
+          displayName: kPageSizeId.displayName,
+          iconSlot: ``,
+          iconSlot_prefix: ``,
+          iconSlot_suffix: ``,
+        };
+      if (id === kOrient.id)
+        return {
+          id: id as MenuItemId_t,
+          displayName: kOrient.displayName,
+          iconSlot: ``,
+          iconSlot_prefix: ``,
+          iconSlot_suffix: ``,
+        };
+      return {
+        id: id as MenuItemId_t,
+        displayName: kMarginId.displayName,
+        iconSlot: ``,
+        iconSlot_prefix: ``,
+        iconSlot_suffix: ``,
+      };
     });
 
     return [...headerFooterMenus, ...pageSubmenus] as UIMenuItem_t[];
@@ -571,11 +577,11 @@ export class PaperPrinter {
     }));
   }
 
-  private menuItems_ZoomLevel(): UIMenuItem_t[] {
+  private menuItems_ZoomLevels(): UIMenuItem_t[] {
     // Format shortcuts using OS-specific key mappings
-    return kZoomLevel.menuItems.map(item => {
+    return kZoomLevels.menuItems.map(item => {
       let displayName: string = item.displayName;
-      
+
       // Add shortcut to displayName if it exists
       // Use template replacement for platform-specific key display
       if ('shortcut' in item && item.shortcut) {
@@ -584,7 +590,7 @@ export class PaperPrinter {
         const shortcut = this.app.os.dictReplace(shortcutTemplate);
         displayName = `${displayName} ${shortcut}`;
       }
-      
+
       const menuItem: UIMenuItem_t = {
         id: item.id as MenuItemId_t,
         displayName: displayName as string,
@@ -592,12 +598,12 @@ export class PaperPrinter {
         iconSlot_prefix: ``,
         iconSlot_suffix: ``,
       };
-      
+
       // Add value property if it exists (for numeric zoom levels)
       if ('value' in item && item.value !== undefined) {
         (menuItem as any).value = item.value;
       }
-      
+
       return menuItem;
     });
   }
@@ -609,6 +615,11 @@ export class PaperPrinter {
 
   private menuItems_ZoomIn(): UIMenuItem_t[] {
     // Zoom in has no menu items - it's just a button
+    return [];
+  }
+
+  private menuItems_ZoomLevelPercent(): UIMenuItem_t[] {
+    // Zoom level percent has no menu items - it's just a text_edit widget
     return [];
   }
 
@@ -903,11 +914,11 @@ export class PaperPrinter {
     return { id, value };
   }
 
-  private async handleSelection_ZoomLevel(
+  private async handleSelection_ZoomLevels(
     menuId: MenuId_t,
     menuItemId: MenuItemId_t
   ): Promise<HandleSelection_t> {
-    const dx = this.dx.sub('handleSelection_ZoomLevel');
+    const dx = this.dx.sub('handleSelection_ZoomLevels');
 
     let id = menuItemId;
     let value: string | number | boolean = menuItemId;
@@ -918,8 +929,8 @@ export class PaperPrinter {
       value = 1.0;
     } else {
       // Find the menu item to get its value property
-      const menuItem = kZoomLevel.menuItems.find(item => item.id === menuItemId);
-      
+      const menuItem = kZoomLevels.menuItems.find(item => item.id === menuItemId);
+
       if (menuItemId === 'fitPage' || menuItemId === 'fitWidth') {
         // Special actions - persist as-is
         value = menuItemId;
@@ -930,16 +941,16 @@ export class PaperPrinter {
         // Fallback: parse zoom level from id (e.g., "1.00" -> 1.0)
         const scale = parseFloat(menuItemId);
         // Validate scale is within valid range
-        if (!isNaN(scale) && scale >= kZoomLevel.min && scale <= kZoomLevel.max) {
+        if (!isNaN(scale) && scale >= kZoomLevels.min && scale <= kZoomLevels.max) {
           value = scale;
         } else {
           dx.out(`Invalid zoom scale: ${scale}, ignoring`);
-          value = Number(kZoomLevel.alt); // Default to alt value
-          id = kZoomLevel.alt;
+          value = Number(kZoomLevels.alt); // Default to alt value
+          id = kZoomLevels.alt;
         }
       }
       // Persist zoom level - webview will handle the actual zoom change via menuItemSelected message
-      this.app.uimenumgr.setPersistForMenuId(kZoomLevel.id, menuItemId);
+      this.app.uimenumgr.setPersistForMenuId(kZoomLevels.id, menuItemId);
     }
 
     dx.done();
@@ -964,6 +975,16 @@ export class PaperPrinter {
     // Zoom in button clicked - webview will handle via menuItemSelected message
     dx.done();
     return { id: 'zoomIn', value: 'zoomIn' };
+  }
+
+  private async handleSelection_ZoomLevelPercent(
+    menuId: MenuId_t,
+    menuItemId: MenuItemId_t
+  ): Promise<HandleSelection_t> {
+    const dx = this.dx.sub('handleSelection_ZoomLevelPercent');
+    // Zoom level percent widget - no-op handler (text_edit handles input via JavaScript)
+    dx.done();
+    return { id: '', value: '' };
   }
 
   // Removed CSS hacks; rely on theme overrides
