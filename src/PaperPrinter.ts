@@ -389,7 +389,7 @@ export class PaperPrinter {
       this.dx.out(
         `Creating menu: ${config.id} with iconSlotTriad: ${JSON.stringify(config.iconSlotTriad)}`
       );
-      
+
       if (!config.iconSlotTriad) {
         this.dx.error(`Menu ${config.id} has no iconSlotTriad!`);
         throw new Error(`Menu ${config.id} is missing iconSlotTriad`);
