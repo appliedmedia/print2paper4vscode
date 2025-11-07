@@ -357,6 +357,9 @@ webview_js: |
     // Update menu selection if menu is open
     updateZoomMenuSelection();
     
+    // Update zoom text field to reflect new zoom level
+    updateZoomTextField(currentScale);
+    
     // Save zoom level to extension
     if (vscode) {
       vscode.postMessage({
