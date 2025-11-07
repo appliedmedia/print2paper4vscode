@@ -323,6 +323,8 @@ export class UIMenu {
         try {
           const config = JSON.parse(jsonMatch[1].trim());
           // Validate constraints_regex is a valid regex pattern
+          // Note: constraints_regex comes from PaperPrinter_t.ts constants (not user input),
+          // so ReDoS risk is minimal. The patterns are simple and controlled by our codebase.
           if (config.constraints_regex) {
             try {
               new RegExp(config.constraints_regex);
