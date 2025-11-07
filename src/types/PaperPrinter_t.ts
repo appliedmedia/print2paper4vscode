@@ -3,11 +3,16 @@
  *
  * Single source of truth for all document configuration and business logic types.
  * All page size, orientation, margin, and font types are defined here.
- * Also includes UI menu structure definitions.
+ * Also includes UI menu structure definitions with iconSlotTriad support.
  *
  * Naming convention:
  * - Constants: kFoo (singular with k prefix) - object with id as key, metadata as value
  * - Types: Foo_t (singular with _t suffix) - derived using `keyof typeof kFoo`
+ * 
+ * Icon Slot Triad Structure:
+ * - begin: Left-most icon position
+ * - main: Center icon position (can be text_edit widget descriptor)
+ * - end: Right-most icon position
  * - Menu ID constants: kFoo_id = 'foo' - the menu ID string
  *
  * Each const object contains ALL metadata (displayName, dimensions, etc.) in ONE place.

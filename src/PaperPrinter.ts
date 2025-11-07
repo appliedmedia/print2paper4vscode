@@ -1,3 +1,20 @@
+/**
+ * PaperPrinter - Main Extension Controller
+ * 
+ * Orchestrates PDF generation, menu management, and UI interactions for the
+ * Print2Paper VS Code extension. Handles document printing, page layout,
+ * zoom controls, and menu state persistence.
+ * 
+ * Key Responsibilities:
+ * - Coordinate PDF generation via DocInfo_PDF
+ * - Manage all UI menus (page size, margins, headers/footers, zoom)
+ * - Handle zoom functionality and keyboard shortcuts
+ * - Persist user preferences and menu selections
+ * - Generate and update webview content
+ * 
+ * @module src/PaperPrinter
+ */
+
 import type { App } from './App';
 import { Diagnostics } from './Diagnostics';
 import {
