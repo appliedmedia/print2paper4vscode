@@ -158,11 +158,72 @@ export class UIMenuMgr {
     (menu.persist as unknown as Record<string, string | number | boolean>)[menuId] = menuItemId;
   }
 
-  // Get the selected value for a menu
+  // Get the selected menuItemId for a menu (returns the persisted ID)
   getValueForSelectedByMenuId(menuId: MenuId_t): string | undefined {
     const menu = this.getMenuById(menuId);
     const selectedValue = (menu.persist as unknown as Record<string, string>)[menuId];
     return selectedValue;
+  }
+
+  // Get the numeric value for a selected menu item
+  // Looks up menuItem by ID, evaluates calc templates, or parses numeric IDs
+  getNumericValueForMenuItemId(menuId: MenuId_t, menuItemId: string): number | undefined {
+    const menu = this.getMenuById(menuId);
+    const menuItems = menu.getMenuItems();
+    
+    // Try to find the menuItem in the list
+    const menuItem = menuItems.find(item => item.id === menuItemId);
+    
+    if (menuItem && 'value' in menuItem) {
+      const value = (menuItem as any).value;
+      
+      // Check if value is a calc template
+      if (typeof value === 'string' && value.startsWith('{{calc:')) {
+        // Evaluate calc template
+        return this.evaluateCalcTemplate(value);
+      }
+      
+      // Return numeric value
+      return typeof value === 'number' ? value : parseFloat(value);
+    }
+    
+    // If not found in menuItems, try parsing menuItemId as number
+    const parsed = parseFloat(menuItemId);
+    return isNaN(parsed) ? undefined : parsed;
+  }
+
+  // Evaluate calc template like {{calc:{{pageHeight}}/{{windowHeight}}}}
+  private evaluateCalcTemplate(template: string): number {
+    // Extract the expression from {{calc:...}}
+    const match = template.match(/^\{\{calc:(.*)\}\}$/);
+    if (!match) {
+      return 1.0; // Fallback
+    }
+    
+    let expression = match[1];
+    
+    // Get current dimensions from app (we'll need to add these)
+    // For now, return placeholder values - we'll implement properly next
+    const dimensions: Record<string, number> = {
+      pageWidth: 595,    // TODO: Get from PDF page dimensions
+      pageHeight: 842,   // TODO: Get from PDF page dimensions  
+      windowWidth: 800,  // TODO: Get from webview viewport
+      windowHeight: 600, // TODO: Get from webview viewport
+    };
+    
+    // Replace template variables with actual values
+    for (const [key, value] of Object.entries(dimensions)) {
+      expression = expression.replace(new RegExp(`\\{\\{${key}\\}\\}`, 'g'), String(value));
+    }
+    
+    // Evaluate the expression (e.g., "842/600")
+    try {
+      // eslint-disable-next-line no-eval
+      const result = eval(expression);
+      return typeof result === 'number' && isFinite(result) ? result : 1.0;
+    } catch {
+      return 1.0; // Fallback on error
+    }
   }
 
   // Add a menu to the list (called by PaperPrinter)

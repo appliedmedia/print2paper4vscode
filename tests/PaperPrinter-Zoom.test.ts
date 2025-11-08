@@ -42,6 +42,22 @@ function createMockApp() {
       getValueForSelectedByMenuId: (menuId: string) => {
         return mockPersist[menuId] as string;
       },
+      getNumericValueForMenuItemId: (menuId: string, menuItemId: string) => {
+        // Mock implementation: look up in kZoomLevel or parse numeric
+        if (menuId === 'zoomLevel') {
+          const item = kZoomLevel.menuItems.find((i: any) => i.id === menuItemId);
+          if (item && 'value' in item) {
+            return typeof item.value === 'number' ? item.value : parseFloat(item.value as string);
+          }
+          const parsed = parseFloat(menuItemId);
+          return isNaN(parsed) ? undefined : parsed;
+        }
+        return undefined;
+      },
+      getMenuById: (menuId: string) => ({
+        id: menuId,
+        getMenuItems: () => [...kZoomLevel.menuItems] as any[],
+      }),
       getUIMenus: () => [],
       createMenu: () => ({}),
       addMenu: () => {},
@@ -142,12 +158,9 @@ describe('PaperPrinter Zoom Handlers', () => {
       assert.strictEqual(result, '3.00', 'Values <=10 are treated as scale, not percentage');
     });
 
-    it('should handle fitPage/fitWidth special actions (disabled for now)', async () => {
+    it('should handle fitPage/fitWidth special actions with calc templates', async () => {
       const app = createMockApp();
       const paperPrinter = new PaperPrinter(app);
-      
-      // Set initial zoom level
-      app.uimenumgr.setPersistForMenuId('zoomLevel', '1.50');
       
       let regenerateCalled = 0;
       (paperPrinter as any).regenerateAndUpdateWebview = mock.fn(() => {
@@ -155,23 +168,26 @@ describe('PaperPrinter Zoom Handlers', () => {
         return Promise.resolve();
       });
 
-      // fitPage action - currently disabled (doesn't call regenerate or persist)
+      // fitPage action - should persist 'fitPage' menuItemId
       await (paperPrinter as any).handleSelection_ZoomLevel('zoomLevel', 'fitPage');
-      assert.strictEqual(regenerateCalled, 0, 'fitPage should not regenerate (not implemented yet)');
+      assert.strictEqual(regenerateCalled, 1, 'fitPage should call regenerate');
       assert.strictEqual(
         app.uimenumgr.getValueForSelectedByMenuId('zoomLevel'),
-        '1.50',
-        'fitPage should not change persisted zoom'
+        'fitPage',
+        'fitPage should persist menuItemId'
       );
 
-      // fitWidth action - currently disabled (doesn't call regenerate or persist)
+      // fitWidth action - should persist 'fitWidth' menuItemId
       await (paperPrinter as any).handleSelection_ZoomLevel('zoomLevel', 'fitWidth');
-      assert.strictEqual(regenerateCalled, 0, 'fitWidth should not regenerate (not implemented yet)');
+      assert.strictEqual(regenerateCalled, 2, 'fitWidth should call regenerate');
       assert.strictEqual(
         app.uimenumgr.getValueForSelectedByMenuId('zoomLevel'),
-        '1.50',
-        'fitWidth should not change persisted zoom'
+        'fitWidth',
+        'fitWidth should persist menuItemId'
       );
+      
+      // Note: The actual calc template evaluation returns placeholder values in the mock
+      // Real implementation will get viewport dimensions and calculate proper scale
     });
   });
 

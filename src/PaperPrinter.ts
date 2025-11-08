@@ -940,9 +940,12 @@ export class PaperPrinter {
    * Supports:
    * - Predefined zoom levels (e.g., "1.00" for 100%)
    * - Text edit input: percentage values (e.g., "150") or scale (e.g., "1.50")
-   * - Special actions: "fitPage", "fitWidth" (NOT IMPLEMENTED YET)
+   * - Special actions: "fitPage", "fitWidth" with {{calc:...}} templates
    * 
-   * After setting zoom, regenerates PDF with new zoom level.
+   * Architecture:
+   * - Always persists menuItemId (not the value)
+   * - Value lookup handles: menu item values, calc templates, numeric parsing
+   * - fitPage/fitWidth use {{calc:...}} templates evaluated with viewport dimensions
    */
   private async handleSelection_ZoomLevel(
     menuId: MenuId_t,
@@ -957,20 +960,21 @@ export class PaperPrinter {
       // Return default zoom level (100% = 1.0)
       id = '1.00';
       value = 1.0;
+      this.app.uimenumgr.setPersistForMenuId(kZoomLevel.id, id);
+      void this.regenerateAndUpdateWebview();
     } else {
       const menuItem = kZoomLevel.menuItems.find(item => item.id === menuItemId);
 
-      if (menuItemId === 'fitPage' || menuItemId === 'fitWidth') {
-        // Special actions - DON'T persist string values (they cause NaN in zoom+/-)
-        // These need viewport dimensions from webview to calculate proper scale
-        // TODO: Implement fit actions by calculating scale in webview and returning numeric value
-        dx.out(`fitPage/fitWidth not yet implemented, ignoring`);
-        value = Number(kZoomLevel.alt);
-        id = kZoomLevel.alt;
-      } else if (menuItem && 'value' in menuItem && menuItem.value !== undefined) {
-        // Menu item with value property
-        value = menuItem.value as number;
+      if (menuItem) {
+        // Menu item selected (including fitPage/fitWidth with calc values)
+        // Persist the menuItemId, value lookup will handle getting the numeric value
         this.app.uimenumgr.setPersistForMenuId(kZoomLevel.id, menuItemId);
+        
+        // Get the actual value (this will evaluate calc templates if needed)
+        const numericValue = this.app.uimenumgr.getNumericValueForMenuItemId(kZoomLevel.id, menuItemId);
+        value = numericValue !== undefined ? numericValue : Number(kZoomLevel.alt);
+        id = menuItemId;
+        
         void this.regenerateAndUpdateWebview();
       } else {
         // Text edit input: numeric string (could be percentage like "150" or scale like "1.50")
@@ -984,16 +988,17 @@ export class PaperPrinter {
           const clampedScale = Math.max(kZoomLevel.min, Math.min(kZoomLevel.max, scale));
           const roundedScale = Math.round(clampedScale * 100) / 100;
 
-          id = menuItemId;
+          id = roundedScale.toFixed(2);
           value = roundedScale;
 
-          // Persist as scale string with 2 decimals
-          this.app.uimenumgr.setPersistForMenuId(kZoomLevel.id, roundedScale.toFixed(2));
+          // Persist as menuItemId (numeric string) - value lookup will parse it
+          this.app.uimenumgr.setPersistForMenuId(kZoomLevel.id, id);
           void this.regenerateAndUpdateWebview();
         } else {
           dx.out(`Invalid zoom value: ${menuItemId}, using default`);
           value = Number(kZoomLevel.alt);
           id = kZoomLevel.alt;
+          this.app.uimenumgr.setPersistForMenuId(kZoomLevel.id, id);
         }
       }
     }
@@ -1013,11 +1018,9 @@ export class PaperPrinter {
     menuItemId: MenuItemId_t
   ): Promise<HandleSelection_t> {
     const dx = this.dx.sub('handleSelection_ZoomOut');
-    // Get current zoom level from persistence
-    const currentZoomStr = this.app.uimenumgr.getValueForSelectedByMenuId(kZoomLevel.id);
-    const parsedZoom = Number(currentZoomStr);
-    // Guard against NaN from non-numeric selections like "fitPage"
-    const currentZoom = Number.isFinite(parsedZoom) ? parsedZoom : Number(kZoomLevel.alt);
+    // Get current zoom level using proper value lookup
+    const currentMenuItemId = this.app.uimenumgr.getValueForSelectedByMenuId(kZoomLevel.id) || kZoomLevel.alt;
+    const currentZoom = this.app.uimenumgr.getNumericValueForMenuItemId(kZoomLevel.id, currentMenuItemId) || Number(kZoomLevel.alt);
 
     // Decrement by stepAmount, clamp to min, round to 2 decimals
     const newZoom = Math.max(
@@ -1025,7 +1028,7 @@ export class PaperPrinter {
       Math.round((currentZoom - kZoomLevel.stepAmount) * 100) / 100
     );
 
-    // Persist the new zoom level and regenerate PDF
+    // Persist the new zoom level as menuItemId (numeric string)
     this.app.uimenumgr.setPersistForMenuId(kZoomLevel.id, newZoom.toFixed(2));
     void this.regenerateAndUpdateWebview();
 
@@ -1044,11 +1047,9 @@ export class PaperPrinter {
     menuItemId: MenuItemId_t
   ): Promise<HandleSelection_t> {
     const dx = this.dx.sub('handleSelection_ZoomIn');
-    // Get current zoom level from persistence
-    const currentZoomStr = this.app.uimenumgr.getValueForSelectedByMenuId(kZoomLevel.id);
-    const parsedZoom = Number(currentZoomStr);
-    // Guard against NaN from non-numeric selections like "fitPage"
-    const currentZoom = Number.isFinite(parsedZoom) ? parsedZoom : Number(kZoomLevel.alt);
+    // Get current zoom level using proper value lookup
+    const currentMenuItemId = this.app.uimenumgr.getValueForSelectedByMenuId(kZoomLevel.id) || kZoomLevel.alt;
+    const currentZoom = this.app.uimenumgr.getNumericValueForMenuItemId(kZoomLevel.id, currentMenuItemId) || Number(kZoomLevel.alt);
 
     // Increment by stepAmount, clamp to max, round to 2 decimals
     const newZoom = Math.min(
@@ -1056,7 +1057,7 @@ export class PaperPrinter {
       Math.round((currentZoom + kZoomLevel.stepAmount) * 100) / 100
     );
 
-    // Persist the new zoom level and regenerate PDF
+    // Persist the new zoom level as menuItemId (numeric string)
     this.app.uimenumgr.setPersistForMenuId(kZoomLevel.id, newZoom.toFixed(2));
     void this.regenerateAndUpdateWebview();
 

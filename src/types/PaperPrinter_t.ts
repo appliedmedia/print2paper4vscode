@@ -313,9 +313,8 @@ export const kZoomLevel = {
     { id: '2.00', displayName: '200%', value: 2.0 },
     { id: '2.50', displayName: '250%', value: 2.5 },
     { id: '3.00', displayName: '300%', value: 3.0 },
-    // TODO: Implement fitPage/fitWidth by calculating scale in webview based on viewport
-    // { id: 'fitPage', displayName: 'Fit Page' },
-    // { id: 'fitWidth', displayName: 'Fit Width' },
+    { id: 'fitPage', displayName: 'Fit Page', value: '{{calc:{{pageHeight}}/{{windowHeight}}}}' },
+    { id: 'fitWidth', displayName: 'Fit Width', value: '{{calc:{{pageWidth}}/{{windowWidth}}}}' },
   ],
 } as const;
 export type ZoomLevelMenuItems_t = (typeof kZoomLevel.menuItems)[number]['id'];
