@@ -32,6 +32,13 @@ export class UIMenuMgr {
   private app: App;
   private menus: UIMenu[] = [];
   private dx: Diagnostics;
+  // Runtime dimensions for calc template evaluation (updated on each menu selection)
+  private runtimeDimensions?: {
+    pageWidth: number;
+    pageHeight: number;
+    windowWidth: number;
+    windowHeight: number;
+  };
 
   constructor(app: App) {
     this.app = app;
@@ -124,10 +131,27 @@ export class UIMenuMgr {
   // Therefore, we don't need ID normalization, prefix stripping, or other bulletproofing.
   // If an invalid ID appears, it's a bug that should be fixed, not silently handled.
   // Future: HTML IDs will be completely reworked, so this validation is temporary.
-  async handleMenuItemSelected(menuId: MenuId_t, itemId: MenuItemId_t): Promise<void> {
+  async handleMenuItemSelected(
+    menuId: MenuId_t,
+    itemId: MenuItemId_t,
+    dimensions?: {
+      pageWidth: number;
+      pageHeight: number;
+      windowWidth: number;
+      windowHeight: number;
+    }
+  ): Promise<void> {
     const dx = this.dx.sub('handleMenuItemSelected');
 
     try {
+      // Store runtime dimensions for calc template evaluation
+      if (dimensions) {
+        this.runtimeDimensions = dimensions;
+        dx.out(
+          `Runtime dimensions updated: page=${dimensions.pageWidth}x${dimensions.pageHeight}px, window=${dimensions.windowWidth}x${dimensions.windowHeight}px`
+        );
+      }
+
       const menu = this.getUIMenus().find(menu => menu.id === menuId);
       if (menu) {
         await menu.dispatchSelection(itemId);
