@@ -32,13 +32,9 @@ export class UIMenuMgr {
   private app: App;
   private menus: UIMenu[] = [];
   private dx: Diagnostics;
-  // Runtime dimensions for calc template evaluation (updated on each menu selection)
-  private runtimeDimensions?: {
-    pageWidth: number;
-    pageHeight: number;
-    windowWidth: number;
-    windowHeight: number;
-  };
+  // Generic runtime context for calc template variable substitution
+  // Updated on each menu selection from webview (e.g., pageWidth, windowHeight)
+  private runtimeContext?: Record<string, number>;
 
   constructor(app: App) {
     this.app = app;
@@ -134,22 +130,18 @@ export class UIMenuMgr {
   async handleMenuItemSelected(
     menuId: MenuId_t,
     itemId: MenuItemId_t,
-    dimensions?: {
-      pageWidth: number;
-      pageHeight: number;
-      windowWidth: number;
-      windowHeight: number;
-    }
+    runtimeContext?: Record<string, number>
   ): Promise<void> {
     const dx = this.dx.sub('handleMenuItemSelected');
 
     try {
-      // Store runtime dimensions for calc template evaluation
-      if (dimensions) {
-        this.runtimeDimensions = dimensions;
-        dx.out(
-          `Runtime dimensions updated: page=${dimensions.pageWidth}x${dimensions.pageHeight}px, window=${dimensions.windowWidth}x${dimensions.windowHeight}px`
-        );
+      // Store runtime context for calc template variable substitution
+      if (runtimeContext) {
+        this.runtimeContext = runtimeContext;
+        const contextStr = Object.entries(runtimeContext)
+          .map(([k, v]) => `${k}=${v}`)
+          .join(', ');
+        dx.out(`Runtime context updated: ${contextStr}`);
       }
 
       const menu = this.getUIMenus().find(menu => menu.id === menuId);
@@ -222,44 +214,76 @@ export class UIMenuMgr {
   }
 
   // Evaluate calc template like {{calc:{{pageHeight}}/{{windowHeight}}}}
-  // Note: Currently returns undefined for templates requiring runtime dimensions.
-  // fitPage/fitWidth menu items using calc templates are disabled until proper
-  // dimension sources (PDF page size + webview viewport) are implemented.
+  // 
+  // SECURITY NOTE: eval() is safe here because:
+  // - Templates are DEVELOPER-DEFINED in PaperPrinter_t.ts constants (not user input)
+  // - Users only SELECT which template to use (pick "fitPage" menuItemId)
+  // - Template variable substitution uses VALIDATED numeric values from runtimeContext
+  // - No user-entered formulas can reach eval()
+  // 
+  // Flexibility: Using eval() allows complex future formulas:
+  // - {{calc:{{pageWidth}} * 0.9}} - fit with margin
+  // - {{calc:Math.min({{pageWidth}}/{{windowWidth}}, {{pageHeight}}/{{windowHeight}})}}
+  // - {{calc:({{pageHeight}}/{{windowHeight}}) * 1.1}} - scale adjustments
   private evaluateCalcTemplate(template: string): number | undefined {
-    // Extract the expression from {{calc:...}}
-    const match = template.match(/^\{\{calc:(.*)\}\}$/);
-    if (!match) {
-      return undefined; // Invalid template format
-    }
+    const dx = this.dx.sub('evaluateCalcTemplate');
     
-    const expression = match[1];
-    
-    // Check if expression contains template variables that need runtime data
-    // (pageWidth, pageHeight, windowWidth, windowHeight)
-    const requiresRuntimeDimensions = /\{\{(pageWidth|pageHeight|windowWidth|windowHeight)\}\}/;
-    if (requiresRuntimeDimensions.test(expression)) {
-      // Return undefined to signal that real dimensions are required
-      // TODO: Implement proper dimension sources:
-      // - pageWidth/pageHeight: Get from PDF.getPageSizePx() or DocInfo
-      // - windowWidth/windowHeight: Get from webview viewport via postMessage
-      return undefined;
-    }
-    
-    // For expressions without template variables, parse and evaluate safely
-    // Currently only supports simple division (num / num)
-    const divisionMatch = expression.match(/^\s*(\d+(?:\.\d+)?)\s*\/\s*(\d+(?:\.\d+)?)\s*$/);
-    if (divisionMatch) {
-      const numerator = Number(divisionMatch[1]);
-      const denominator = Number(divisionMatch[2]);
-      if (denominator === 0) {
-        return undefined; // Division by zero
+    try {
+      // Extract the expression from {{calc:...}}
+      const match = template.match(/^\{\{calc:(.*)\}\}$/);
+      if (!match) {
+        dx.out('Invalid calc template format');
+        return undefined;
       }
-      const quotient = numerator / denominator;
-      return Number.isFinite(quotient) ? quotient : undefined;
+      
+      let expression = match[1];
+      
+      // Check if runtime context is available (sent from webview on menu selection)
+      if (!this.runtimeContext) {
+        dx.out('No runtime context available for calc template');
+        return undefined;
+      }
+      
+      // Replace template variables with actual values from runtime context
+      // e.g., {{pageWidth}} -> 595, {{windowHeight}} -> 800
+      for (const [key, value] of Object.entries(this.runtimeContext)) {
+        const placeholder = `{{${key}}}`;
+        if (expression.includes(placeholder)) {
+          // Validate that the value is actually a number before substitution
+          if (typeof value !== 'number' || !Number.isFinite(value)) {
+            dx.out(`Invalid runtime context value for ${key}: ${value}`);
+            return undefined;
+          }
+          expression = expression.replace(new RegExp(`\\{\\{${key}\\}\\}`, 'g'), String(value));
+          dx.out(`Substituted ${placeholder} -> ${value}`);
+        }
+      }
+      
+      // Check if any template variables remain unsubstituted
+      if (expression.match(/\{\{.*?\}\}/)) {
+        dx.out(`Unsubstituted template variables in expression: ${expression}`);
+        return undefined;
+      }
+      
+      // Evaluate the expression (developer-defined formula with validated numeric substitutions)
+      // eslint-disable-next-line no-eval
+      const result = eval(expression);
+      
+      // Validate result
+      if (typeof result !== 'number' || !Number.isFinite(result)) {
+        dx.out(`Invalid calc result: ${result}`);
+        return undefined;
+      }
+      
+      dx.out(`Calc template evaluated: ${template} -> ${expression} = ${result}`);
+      return result;
+      
+    } catch (error) {
+      dx.out(`Error evaluating calc template: ${String(error)}`);
+      return undefined;
+    } finally {
+      dx.done();
     }
-    
-    // Unsupported expression format
-    return undefined;
   }
 
   // Add a menu to the list (called by PaperPrinter)

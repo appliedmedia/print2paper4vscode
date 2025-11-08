@@ -40,11 +40,9 @@ export type PostMessage = {
   zoomAction?: 'in' | 'out' | 'fitWidth' | 'fitPage' | 'actualSize'; // For zoom actions
   pdfDataUrl?: string; // For PDF updates
   pageTotal?: number; // For page total updates
-  // Runtime dimensions for calc template evaluation (sent from webview)
-  pageWidth?: number; // PDF page width in pixels (from webview globals)
-  pageHeight?: number; // PDF page height in pixels (from webview globals)
-  windowWidth?: number; // Viewport width in pixels (window.innerWidth)
-  windowHeight?: number; // Viewport height in pixels (window.innerHeight)
+  // Generic runtime context for calc template evaluation (sent from webview)
+  // Example: { pageWidth: 595, pageHeight: 842, windowWidth: 1200, windowHeight: 800 }
+  runtimeContext?: Record<string, number>;
   pageData?: {
     dataUrl: string;
     widthPx: number;

@@ -299,7 +299,7 @@ export class UIWebView {
     const dx = this.dx.sub('handleMenuItemSelected');
 
     try {
-      const { menuId, itemId } = msg;
+      const { menuId, itemId, runtimeContext } = msg;
       if (typeof menuId === 'string' && typeof itemId === 'string') {
         dx.out(`Processing menu selection: menuId=${menuId}, itemId=${itemId}`);
 
@@ -316,8 +316,8 @@ export class UIWebView {
         }
 
         dx.out(`Validation passed, calling app.uimenumgr.handleMenuItemSelected`);
-        // Handle menu item selection through menu manager
-        await this.app.uimenumgr.handleMenuItemSelected(menuId, itemId);
+        // Handle menu item selection through menu manager (with optional runtime context)
+        await this.app.uimenumgr.handleMenuItemSelected(menuId, itemId, runtimeContext);
         dx.out(`Menu item selected: ${menuId}.${itemId}`);
       } else {
         dx.error(`Invalid message format: menuId=${typeof menuId}, itemId=${typeof itemId}`);

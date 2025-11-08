@@ -228,20 +228,24 @@ uimenu_generic_handlers: |
 
   /**
    * Post menu item selection message to extension
-   * Includes runtime dimensions for calc template evaluation (e.g., fitPage/fitWidth)
+   * Includes optional runtime context for calc template evaluation (e.g., fitPage/fitWidth)
    */
   function postMenuItemSelected(menuId, itemId) {
     if (window.vscode && menuId && itemId) {
+      // Build runtime context dictionary for calc template variable substitution
+      // Keys match template variable names (e.g., {{pageWidth}}, {{windowHeight}})
+      const runtimeContext = {
+        pageWidth: pageWidthPx,           // From webview global (templated from PDF)
+        pageHeight: pageHeightPx,         // From webview global (templated from PDF)
+        windowWidth: window.innerWidth,   // Current viewport width
+        windowHeight: window.innerHeight  // Current viewport height
+      };
+      
       window.vscode.postMessage({
         type: 'menuItemSelected',
         itemId: itemId,
         menuId: menuId,
-        // Send runtime dimensions for calc templates (fitPage/fitWidth)
-        // These are accurate at selection time (real viewport + page dimensions)
-        pageWidth: pageWidthPx,       // From webview global (templated from PDF)
-        pageHeight: pageHeightPx,     // From webview global (templated from PDF)
-        windowWidth: window.innerWidth,   // Current viewport width
-        windowHeight: window.innerHeight  // Current viewport height
+        runtimeContext: runtimeContext
       });
     }
   }
