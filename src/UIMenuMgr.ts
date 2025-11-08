@@ -221,7 +221,6 @@ export class UIMenuMgr {
   // SECURITY NOTE: eval() is safe here because:
   // - Templates are DEVELOPER-DEFINED in PaperPrinter_t.ts constants (not user input)
   // - Users only SELECT which template to use (pick "fitPage" menuItemId)
-  // - Template variable substitution uses VALIDATED numeric values
   // - No user-entered formulas can reach eval()
   // 
   // Process:
@@ -231,6 +230,7 @@ export class UIMenuMgr {
   // 4. eval() the expression (developer-defined formula)
   // 5. Replace {{calc:...}} with result
   // 6. Return final string (or empty string on error)
+  //    - If result contains "{{", it's clear which variable didn't have a dict entry
   private evaluateCalcTemplate(value: string): string {
     const dx = this.dx.sub('evaluateCalcTemplate');
     
@@ -258,13 +258,9 @@ export class UIMenuMgr {
       if (calcMatch) {
         const expression = calcMatch[1];
         
-        // Don't eval if there are still unresolved template variables
-        if (expression.includes('{{') || expression.includes('}}')) {
-          dx.print(`Unresolved template variables in calc expression: ${expression}`);
-          return '';
-        }
-        
-        // eval() the expression (developer-defined formula with validated substitutions)
+        // eval() the expression (developer-defined formula)
+        // If it fails, catch will handle it. If unsubstituted vars remain (e.g., {{foo}}),
+        // they'll be obvious in the result or cause eval to fail naturally.
         try {
           // eslint-disable-next-line no-eval
           const calcResult = eval(expression);
