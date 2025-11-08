@@ -266,7 +266,6 @@ export class UIWebView {
       { type: 'dragEnd', handler: this.handleDragEnd.bind(this) },
       { type: 'menuItemSelected', handler: this.handleMenuItemSelected.bind(this) },
       { type: 'dx', handler: this.handleDxMessage.bind(this) },
-      { type: 'zoom', handler: this.handleZoomMessage.bind(this) },
     ];
 
     messageHandlers.forEach(({ type, handler }) => {
@@ -346,35 +345,6 @@ export class UIWebView {
     dx.done();
   }
 
-  /**
-   * Handle zoom message from webview
-   */
-  private async handleZoomMessage(msg: PostMessage): Promise<void> {
-    const dx = this.dx.sub('handleZoomMessage');
-
-    try {
-      const zoomLevel = Number(msg.zoomLevel);
-      if (zoomLevel >= kZoomLevel.min && zoomLevel <= kZoomLevel.max) {
-        // Save zoom level to persistence
-        this.app.ui.persist.pdf_zoom_level = zoomLevel;
-        dx.out(`Zoom level saved: ${zoomLevel}`);
-      } else if (msg.zoomLevel !== undefined) {
-        // Invalid zoom level - show error to user immediately and fail
-        const errorMsg = `Invalid zoom level received: ${msg.zoomLevel} (must be between ${kZoomLevel.min} and ${kZoomLevel.max})`;
-        dx.error(errorMsg);
-        this.app.ui.showErrorMessage(errorMsg);
-        throw new Error(errorMsg);
-      }
-
-      // Handle zoom actions if present
-      if (msg.zoomAction) {
-        dx.out(`Zoom action received: ${msg.zoomAction}`);
-        // Zoom actions are handled by the webview itself
-      }
-    } finally {
-      dx.done();
-    }
-  }
 }
 
 // end, UIWebView.ts

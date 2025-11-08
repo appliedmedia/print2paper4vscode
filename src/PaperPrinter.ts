@@ -934,6 +934,16 @@ export class PaperPrinter {
     return { id, value };
   }
 
+  /**
+   * Handle zoom level selection from dropdown or text edit input
+   * 
+   * Supports:
+   * - Predefined zoom levels (e.g., "1.00" for 100%)
+   * - Text edit input: percentage values (e.g., "150") or scale (e.g., "1.50")
+   * - Special actions: "fitPage", "fitWidth" (handled by webview viewer)
+   * 
+   * After setting zoom, regenerates PDF with new zoom level.
+   */
   private async handleSelection_ZoomLevel(
     menuId: MenuId_t,
     menuItemId: MenuItemId_t
@@ -954,10 +964,12 @@ export class PaperPrinter {
         // Special actions - persist as-is
         value = menuItemId;
         this.app.uimenumgr.setPersistForMenuId(kZoomLevel.id, menuItemId);
+        void this.regenerateAndUpdateWebview();
       } else if (menuItem && 'value' in menuItem && menuItem.value !== undefined) {
         // Menu item with value property
         value = menuItem.value as number;
         this.app.uimenumgr.setPersistForMenuId(kZoomLevel.id, menuItemId);
+        void this.regenerateAndUpdateWebview();
       } else {
         // Text edit input: numeric string (could be percentage like "150" or scale like "1.50")
         const numericValue = parseFloat(menuItemId);
@@ -975,19 +987,7 @@ export class PaperPrinter {
 
           // Persist as scale string with 2 decimals
           this.app.uimenumgr.setPersistForMenuId(kZoomLevel.id, roundedScale.toFixed(2));
-          
-          // Refresh menu to show custom value in dropdown
-          if (this.uiwebview) {
-            const panelId = this.uiwebview.getPanelId();
-            if (panelId) {
-              const menuHTML = await this.app.uimenumgr.getUIMenu_HTML(kZoomLevel.id);
-              this.app.vscodeapis.postMessage(panelId, {
-                type: 'refreshMenu',
-                menuId: kZoomLevel.id,
-                menuHTML,
-              });
-            }
-          }
+          void this.regenerateAndUpdateWebview();
         } else {
           dx.out(`Invalid zoom value: ${menuItemId}, using default`);
           value = Number(kZoomLevel.alt);
@@ -1000,6 +1000,12 @@ export class PaperPrinter {
     return { id, value };
   }
 
+  /**
+   * Handle zoom out button click
+   * 
+   * Decrements current zoom by stepAmount (default 0.1 = 10%), clamped to minimum.
+   * Persists new zoom to ZoomLevel menu and regenerates PDF.
+   */
   private async handleSelection_ZoomOut(
     menuId: MenuId_t,
     menuItemId: MenuItemId_t
@@ -1015,26 +1021,20 @@ export class PaperPrinter {
       Math.round((currentZoom - kZoomLevel.stepAmount) * 100) / 100
     );
 
-    // Persist the new zoom level
+    // Persist the new zoom level and regenerate PDF
     this.app.uimenumgr.setPersistForMenuId(kZoomLevel.id, newZoom.toFixed(2));
-
-    // Refresh menu to show new value (may be custom)
-    if (this.uiwebview) {
-      const panelId = this.uiwebview.getPanelId();
-      if (panelId) {
-        const menuHTML = await this.app.uimenumgr.getUIMenu_HTML(kZoomLevel.id);
-        this.app.vscodeapis.postMessage(panelId, {
-          type: 'refreshMenu',
-          menuId: kZoomLevel.id,
-          menuHTML,
-        });
-      }
-    }
+    void this.regenerateAndUpdateWebview();
 
     dx.done();
     return { id: 'zoomOut', value: newZoom };
   }
 
+  /**
+   * Handle zoom in button click
+   * 
+   * Increments current zoom by stepAmount (default 0.1 = 10%), clamped to maximum.
+   * Persists new zoom to ZoomLevel menu and regenerates PDF.
+   */
   private async handleSelection_ZoomIn(
     menuId: MenuId_t,
     menuItemId: MenuItemId_t
@@ -1050,21 +1050,9 @@ export class PaperPrinter {
       Math.round((currentZoom + kZoomLevel.stepAmount) * 100) / 100
     );
 
-    // Persist the new zoom level
+    // Persist the new zoom level and regenerate PDF
     this.app.uimenumgr.setPersistForMenuId(kZoomLevel.id, newZoom.toFixed(2));
-
-    // Refresh menu to show new value (may be custom)
-    if (this.uiwebview) {
-      const panelId = this.uiwebview.getPanelId();
-      if (panelId) {
-        const menuHTML = await this.app.uimenumgr.getUIMenu_HTML(kZoomLevel.id);
-        this.app.vscodeapis.postMessage(panelId, {
-          type: 'refreshMenu',
-          menuId: kZoomLevel.id,
-          menuHTML,
-        });
-      }
-    }
+    void this.regenerateAndUpdateWebview();
 
     dx.done();
     return { id: 'zoomIn', value: newZoom };
