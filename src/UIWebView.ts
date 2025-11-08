@@ -265,7 +265,6 @@ export class UIWebView {
     const messageHandlers = [
       { type: 'dragEnd', handler: this.handleDragEnd.bind(this) },
       { type: 'menuItemSelected', handler: this.handleMenuItemSelected.bind(this) },
-      { type: 'print', handler: this.handlePrintMessage.bind(this) },
       { type: 'dx', handler: this.handleDxMessage.bind(this) },
       { type: 'zoom', handler: this.handleZoomMessage.bind(this) },
     ];
@@ -325,24 +324,6 @@ export class UIWebView {
         dx.out(`Menu item selected: ${menuId}.${itemId}`);
       } else {
         dx.error(`Invalid message format: menuId=${typeof menuId}, itemId=${typeof itemId}`);
-      }
-    } finally {
-      dx.done();
-    }
-  }
-
-  /**
-   * Handle print message
-   */
-  private async handlePrintMessage(msg: PostMessage): Promise<void> {
-    const dx = this.dx.sub('handlePrintMessage');
-
-    try {
-      const { printType } = msg;
-      if (typeof printType === 'string') {
-        // Delegate to PaperPrinter for actual printing logic
-        await this.app.paperprinter.handlePrintRequest(printType);
-        dx.out(`Print request handled: ${printType}`);
       }
     } finally {
       dx.done();
