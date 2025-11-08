@@ -192,10 +192,8 @@ export class UIWebView {
         zoomLevel_min: kZoomLevel.min.toString(),
         zoomLevel_max: kZoomLevel.max.toString(),
         zoomLevel_stepAmount: kZoomLevel.stepAmount.toString(),
-        zoomLevel_in_shortcutCode: (kZoomIn as typeof kZoomIn & { shortcutCode: string })
-          .shortcutCode,
-        zoomLevel_out_shortcutCode: (kZoomOut as typeof kZoomOut & { shortcutCode: string })
-          .shortcutCode,
+        zoomLevel_in_shortcutCode: kZoomIn.shortcutCode,
+        zoomLevel_out_shortcutCode: kZoomOut.shortcutCode,
         zoomLevel_menuItems: JSON.stringify(
           kZoomLevel.menuItems.map(item => ({
             id: item.id,

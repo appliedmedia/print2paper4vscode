@@ -940,7 +940,7 @@ export class PaperPrinter {
    * Supports:
    * - Predefined zoom levels (e.g., "1.00" for 100%)
    * - Text edit input: percentage values (e.g., "150") or scale (e.g., "1.50")
-   * - Special actions: "fitPage", "fitWidth" (handled by webview viewer)
+   * - Special actions: "fitPage", "fitWidth" (NOT IMPLEMENTED YET)
    * 
    * After setting zoom, regenerates PDF with new zoom level.
    */
@@ -961,10 +961,12 @@ export class PaperPrinter {
       const menuItem = kZoomLevel.menuItems.find(item => item.id === menuItemId);
 
       if (menuItemId === 'fitPage' || menuItemId === 'fitWidth') {
-        // Special actions - persist as-is
-        value = menuItemId;
-        this.app.uimenumgr.setPersistForMenuId(kZoomLevel.id, menuItemId);
-        void this.regenerateAndUpdateWebview();
+        // Special actions - DON'T persist string values (they cause NaN in zoom+/-)
+        // These need viewport dimensions from webview to calculate proper scale
+        // TODO: Implement fit actions by calculating scale in webview and returning numeric value
+        dx.out(`fitPage/fitWidth not yet implemented, ignoring`);
+        value = Number(kZoomLevel.alt);
+        id = kZoomLevel.alt;
       } else if (menuItem && 'value' in menuItem && menuItem.value !== undefined) {
         // Menu item with value property
         value = menuItem.value as number;

@@ -142,9 +142,12 @@ describe('PaperPrinter Zoom Handlers', () => {
       assert.strictEqual(result, '3.00', 'Values <=10 are treated as scale, not percentage');
     });
 
-    it('should handle fitPage/fitWidth special actions', async () => {
+    it('should handle fitPage/fitWidth special actions (disabled for now)', async () => {
       const app = createMockApp();
       const paperPrinter = new PaperPrinter(app);
+      
+      // Set initial zoom level
+      app.uimenumgr.setPersistForMenuId('zoomLevel', '1.50');
       
       let regenerateCalled = 0;
       (paperPrinter as any).regenerateAndUpdateWebview = mock.fn(() => {
@@ -152,20 +155,22 @@ describe('PaperPrinter Zoom Handlers', () => {
         return Promise.resolve();
       });
 
-      // fitPage action
+      // fitPage action - currently disabled (doesn't call regenerate or persist)
       await (paperPrinter as any).handleSelection_ZoomLevel('zoomLevel', 'fitPage');
-      assert.strictEqual(regenerateCalled, 1);
+      assert.strictEqual(regenerateCalled, 0, 'fitPage should not regenerate (not implemented yet)');
       assert.strictEqual(
         app.uimenumgr.getValueForSelectedByMenuId('zoomLevel'),
-        'fitPage'
+        '1.50',
+        'fitPage should not change persisted zoom'
       );
 
-      // fitWidth action
+      // fitWidth action - currently disabled (doesn't call regenerate or persist)
       await (paperPrinter as any).handleSelection_ZoomLevel('zoomLevel', 'fitWidth');
-      assert.strictEqual(regenerateCalled, 2);
+      assert.strictEqual(regenerateCalled, 0, 'fitWidth should not regenerate (not implemented yet)');
       assert.strictEqual(
         app.uimenumgr.getValueForSelectedByMenuId('zoomLevel'),
-        'fitWidth'
+        '1.50',
+        'fitWidth should not change persisted zoom'
       );
     });
   });

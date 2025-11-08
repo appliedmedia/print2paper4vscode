@@ -313,8 +313,9 @@ export const kZoomLevel = {
     { id: '2.00', displayName: '200%', value: 2.0 },
     { id: '2.50', displayName: '250%', value: 2.5 },
     { id: '3.00', displayName: '300%', value: 3.0 },
-    { id: 'fitPage', displayName: 'Fit Page' },
-    { id: 'fitWidth', displayName: 'Fit Width' },
+    // TODO: Implement fitPage/fitWidth by calculating scale in webview based on viewport
+    // { id: 'fitPage', displayName: 'Fit Page' },
+    // { id: 'fitWidth', displayName: 'Fit Width' },
   ],
 } as const;
 export type ZoomLevelMenuItems_t = (typeof kZoomLevel.menuItems)[number]['id'];
