@@ -1013,7 +1013,9 @@ export class PaperPrinter {
     const dx = this.dx.sub('handleSelection_ZoomOut');
     // Get current zoom level from persistence
     const currentZoomStr = this.app.uimenumgr.getValueForSelectedByMenuId(kZoomLevel.id);
-    const currentZoom = parseFloat(currentZoomStr || kZoomLevel.alt);
+    const parsedZoom = Number(currentZoomStr);
+    // Guard against NaN from non-numeric selections like "fitPage"
+    const currentZoom = Number.isFinite(parsedZoom) ? parsedZoom : Number(kZoomLevel.alt);
 
     // Decrement by stepAmount, clamp to min, round to 2 decimals
     const newZoom = Math.max(
@@ -1042,7 +1044,9 @@ export class PaperPrinter {
     const dx = this.dx.sub('handleSelection_ZoomIn');
     // Get current zoom level from persistence
     const currentZoomStr = this.app.uimenumgr.getValueForSelectedByMenuId(kZoomLevel.id);
-    const currentZoom = parseFloat(currentZoomStr || kZoomLevel.alt);
+    const parsedZoom = Number(currentZoomStr);
+    // Guard against NaN from non-numeric selections like "fitPage"
+    const currentZoom = Number.isFinite(parsedZoom) ? parsedZoom : Number(kZoomLevel.alt);
 
     // Increment by stepAmount, clamp to max, round to 2 decimals
     const newZoom = Math.min(
