@@ -32,9 +32,9 @@ export class UIMenuMgr {
   private app: App;
   private menus: UIMenu[] = [];
   private dx: Diagnostics;
-  // Generic runtime context for calc template variable substitution
-  // Updated on each menu selection from webview (e.g., pageWidth, windowHeight)
-  private runtimeContext?: Record<string, number>;
+  // Generic context dictionary for template variable substitution
+  // Updated on each menu selection from webview (window dimensions)
+  private contextDict?: Record<string, number>;
 
   constructor(app: App) {
     this.app = app;
@@ -130,18 +130,18 @@ export class UIMenuMgr {
   async handleMenuItemSelected(
     menuId: MenuId_t,
     itemId: MenuItemId_t,
-    runtimeContext?: Record<string, number>
+    contextDict?: Record<string, number>
   ): Promise<void> {
     const dx = this.dx.sub('handleMenuItemSelected');
 
     try {
-      // Store runtime context for calc template variable substitution
-      if (runtimeContext) {
-        this.runtimeContext = runtimeContext;
-        const contextStr = Object.entries(runtimeContext)
+      // Store context dictionary for template variable substitution
+      if (contextDict) {
+        this.contextDict = contextDict;
+        const contextStr = Object.entries(contextDict)
           .map(([k, v]) => `${k}=${v}`)
           .join(', ');
-        dx.out(`Runtime context updated: ${contextStr}`);
+        dx.out(`Context dictionary updated: ${contextStr}`);
       }
 
       const menu = this.getUIMenus().find(menu => menu.id === menuId);
@@ -185,7 +185,7 @@ export class UIMenuMgr {
   // Looks up menuItem by ID, evaluates calc templates, or parses numeric IDs
   // Returns undefined if:
   // - menuItem not found
-  // - calc template requires unavailable runtime dimensions (e.g., fitPage/fitWidth)
+  // - calc template evaluation fails (returns empty string)
   // - value cannot be parsed as number
   getNumericValueForMenuItemId(menuId: MenuId_t, menuItemId: string): number | undefined {
     const menu = this.getMenuById(menuId);
@@ -197,11 +197,14 @@ export class UIMenuMgr {
     if (menuItem && 'value' in menuItem) {
       const value = (menuItem as any).value;
       
-      // Check if value is a calc template
-      if (typeof value === 'string' && value.startsWith('{{calc:')) {
-        // Evaluate calc template (may return undefined if dimensions unavailable)
+      // Check if value contains template syntax (including calc)
+      if (typeof value === 'string' && (value.includes('{{calc:') || value.includes('{{'))) {
+        // Evaluate template (replaces vars and evaluates calc expressions)
         const result = this.evaluateCalcTemplate(value);
-        return result; // undefined = calc requires runtime dimensions
+        // Empty string means evaluation failed, return undefined
+        if (result === '') return undefined;
+        const parsed = parseFloat(result);
+        return isNaN(parsed) ? undefined : parsed;
       }
       
       // Return numeric value
@@ -218,69 +221,69 @@ export class UIMenuMgr {
   // SECURITY NOTE: eval() is safe here because:
   // - Templates are DEVELOPER-DEFINED in PaperPrinter_t.ts constants (not user input)
   // - Users only SELECT which template to use (pick "fitPage" menuItemId)
-  // - Template variable substitution uses VALIDATED numeric values from runtimeContext
+  // - Template variable substitution uses VALIDATED numeric values
   // - No user-entered formulas can reach eval()
   // 
-  // Flexibility: Using eval() allows complex future formulas:
-  // - {{calc:{{pageWidth}} * 0.9}} - fit with margin
-  // - {{calc:Math.min({{pageWidth}}/{{windowWidth}}, {{pageHeight}}/{{windowHeight}})}}
-  // - {{calc:({{pageHeight}}/{{windowHeight}}) * 1.1}} - scale adjustments
-  private evaluateCalcTemplate(template: string): number | undefined {
+  // Process:
+  // 1. Merge contextDict (from webview) with known page dimensions (from PDF)
+  // 2. Always call templateDictReplace on value (replaces all {{vars}})
+  // 3. Look for {{calc:...}} pattern and extract expression
+  // 4. eval() the expression (developer-defined formula)
+  // 5. Replace {{calc:...}} with result
+  // 6. Return final string (or empty string on error)
+  private evaluateCalcTemplate(value: string): string {
     const dx = this.dx.sub('evaluateCalcTemplate');
     
     try {
-      // Extract the expression from {{calc:...}}
-      const match = template.match(/^\{\{calc:(.*)\}\}$/);
-      if (!match) {
-        dx.out('Invalid calc template format');
-        return undefined;
-      }
+      // Build complete context dictionary: merge contextDict with page dimensions
+      const pageSizePx = this.app.pdf?.docInfo?.pageSizePx || { widthPx: 0, heightPx: 0 };
+      const fullContext: Record<string, string> = {
+        // Page dimensions (known on extension side from PDF)
+        pageWidth: String(pageSizePx.widthPx),
+        pageHeight: String(pageSizePx.heightPx),
+      };
       
-      let expression = match[1];
-      
-      // Check if runtime context is available (sent from webview on menu selection)
-      if (!this.runtimeContext) {
-        dx.out('No runtime context available for calc template');
-        return undefined;
-      }
-      
-      // Replace template variables with actual values from runtime context
-      // e.g., {{pageWidth}} -> 595, {{windowHeight}} -> 800
-      for (const [key, value] of Object.entries(this.runtimeContext)) {
-        const placeholder = `{{${key}}}`;
-        if (expression.includes(placeholder)) {
-          // Validate that the value is actually a number before substitution
-          if (typeof value !== 'number' || !Number.isFinite(value)) {
-            dx.out(`Invalid runtime context value for ${key}: ${value}`);
-            return undefined;
-          }
-          expression = expression.replace(new RegExp(`\\{\\{${key}\\}\\}`, 'g'), String(value));
-          dx.out(`Substituted ${placeholder} -> ${value}`);
+      // Add contextDict (window dimensions from webview)
+      if (this.contextDict) {
+        for (const [key, val] of Object.entries(this.contextDict)) {
+          fullContext[key] = String(val);
         }
       }
       
-      // Check if any template variables remain unsubstituted
-      if (expression.match(/\{\{.*?\}\}/)) {
-        dx.out(`Unsubstituted template variables in expression: ${expression}`);
-        return undefined;
+      // Always replace template variables first (regardless of calc or not)
+      let result = this.app.templateDictReplace(value, fullContext);
+      
+      // Look for {{calc:...}} pattern
+      const calcMatch = result.match(/\{\{calc:([^}]+)\}\}/);
+      if (calcMatch) {
+        const expression = calcMatch[1];
+        
+        // Don't eval if there are still unresolved template variables
+        if (expression.includes('{{') || expression.includes('}}')) {
+          dx.print(`Unresolved template variables in calc expression: ${expression}`);
+          return '';
+        }
+        
+        // eval() the expression (developer-defined formula with validated substitutions)
+        try {
+          // eslint-disable-next-line no-eval
+          const calcResult = eval(expression);
+          
+          // Replace {{calc:...}} with the result
+          result = result.replace(calcMatch[0], String(calcResult));
+          dx.out(`Calc evaluated: ${expression} = ${calcResult}`);
+        } catch (evalError) {
+          dx.print(`Error in eval: ${String(evalError)}`);
+          return '';
+        }
       }
       
-      // Evaluate the expression (developer-defined formula with validated numeric substitutions)
-      // eslint-disable-next-line no-eval
-      const result = eval(expression);
-      
-      // Validate result
-      if (typeof result !== 'number' || !Number.isFinite(result)) {
-        dx.out(`Invalid calc result: ${result}`);
-        return undefined;
-      }
-      
-      dx.out(`Calc template evaluated: ${template} -> ${expression} = ${result}`);
+      dx.out(`Template value resolved: ${value} -> ${result}`);
       return result;
       
     } catch (error) {
-      dx.out(`Error evaluating calc template: ${String(error)}`);
-      return undefined;
+      dx.print(`Error in evaluateCalcTemplate: ${String(error)}`);
+      return '';
     } finally {
       dx.done();
     }
