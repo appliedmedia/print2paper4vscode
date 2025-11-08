@@ -167,6 +167,10 @@ export class UIMenuMgr {
 
   // Get the numeric value for a selected menu item
   // Looks up menuItem by ID, evaluates calc templates, or parses numeric IDs
+  // Returns undefined if:
+  // - menuItem not found
+  // - calc template requires unavailable runtime dimensions (e.g., fitPage/fitWidth)
+  // - value cannot be parsed as number
   getNumericValueForMenuItemId(menuId: MenuId_t, menuItemId: string): number | undefined {
     const menu = this.getMenuById(menuId);
     const menuItems = menu.getMenuItems();
@@ -179,8 +183,9 @@ export class UIMenuMgr {
       
       // Check if value is a calc template
       if (typeof value === 'string' && value.startsWith('{{calc:')) {
-        // Evaluate calc template
-        return this.evaluateCalcTemplate(value);
+        // Evaluate calc template (may return undefined if dimensions unavailable)
+        const result = this.evaluateCalcTemplate(value);
+        return result; // undefined = calc requires runtime dimensions
       }
       
       // Return numeric value
@@ -193,37 +198,44 @@ export class UIMenuMgr {
   }
 
   // Evaluate calc template like {{calc:{{pageHeight}}/{{windowHeight}}}}
-  private evaluateCalcTemplate(template: string): number {
+  // Note: Currently returns undefined for templates requiring runtime dimensions.
+  // fitPage/fitWidth menu items using calc templates are disabled until proper
+  // dimension sources (PDF page size + webview viewport) are implemented.
+  private evaluateCalcTemplate(template: string): number | undefined {
     // Extract the expression from {{calc:...}}
     const match = template.match(/^\{\{calc:(.*)\}\}$/);
     if (!match) {
-      return 1.0; // Fallback
+      return undefined; // Invalid template format
     }
     
-    let expression = match[1];
+    const expression = match[1];
     
-    // Get current dimensions from app (we'll need to add these)
-    // For now, return placeholder values - we'll implement properly next
-    const dimensions: Record<string, number> = {
-      pageWidth: 595,    // TODO: Get from PDF page dimensions
-      pageHeight: 842,   // TODO: Get from PDF page dimensions  
-      windowWidth: 800,  // TODO: Get from webview viewport
-      windowHeight: 600, // TODO: Get from webview viewport
-    };
-    
-    // Replace template variables with actual values
-    for (const [key, value] of Object.entries(dimensions)) {
-      expression = expression.replace(new RegExp(`\\{\\{${key}\\}\\}`, 'g'), String(value));
+    // Check if expression contains template variables that need runtime data
+    // (pageWidth, pageHeight, windowWidth, windowHeight)
+    const requiresRuntimeDimensions = /\{\{(pageWidth|pageHeight|windowWidth|windowHeight)\}\}/;
+    if (requiresRuntimeDimensions.test(expression)) {
+      // Return undefined to signal that real dimensions are required
+      // TODO: Implement proper dimension sources:
+      // - pageWidth/pageHeight: Get from PDF.getPageSizePx() or DocInfo
+      // - windowWidth/windowHeight: Get from webview viewport via postMessage
+      return undefined;
     }
     
-    // Evaluate the expression (e.g., "842/600")
-    try {
-      // eslint-disable-next-line no-eval
-      const result = eval(expression);
-      return typeof result === 'number' && isFinite(result) ? result : 1.0;
-    } catch {
-      return 1.0; // Fallback on error
+    // For expressions without template variables, parse and evaluate safely
+    // Currently only supports simple division (num / num)
+    const divisionMatch = expression.match(/^\s*(\d+(?:\.\d+)?)\s*\/\s*(\d+(?:\.\d+)?)\s*$/);
+    if (divisionMatch) {
+      const numerator = Number(divisionMatch[1]);
+      const denominator = Number(divisionMatch[2]);
+      if (denominator === 0) {
+        return undefined; // Division by zero
+      }
+      const quotient = numerator / denominator;
+      return Number.isFinite(quotient) ? quotient : undefined;
     }
+    
+    // Unsupported expression format
+    return undefined;
   }
 
   // Add a menu to the list (called by PaperPrinter)
