@@ -137,6 +137,11 @@ webview_js: |
           const menuElement = document.getElementById(menuId);
           if (menuElement) {
             menuElement.outerHTML = menuHTML;
+            
+            // If we just refreshed the zoom level menu, restore the current zoom value
+            if (menuId === 'zoomLevel') {
+              updateZoomTextField(currentScale);
+            }
           }
         }
       } else if (message.type === 'zoom') {
