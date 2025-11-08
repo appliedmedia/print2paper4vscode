@@ -253,10 +253,11 @@ export class UIMenuMgr {
       // Always replace template variables first (regardless of calc or not)
       let result = this.app.templateDictReplace(value, fullContext);
       
-      // Look for {{calc:...}} pattern
-      const calcMatch = result.match(/\{\{calc:([^}]+)\}\}/);
+      // Look for {{calc:...}} pattern (allows whitespace, only replaces calc portion)
+      // Example: "Other: {{calc: 842/800 }}" → "Other: 1.0525"
+      const calcMatch = result.match(/\{\{calc:\s*(.+?)\s*\}\}/);
       if (calcMatch) {
-        const expression = calcMatch[1];
+        const expression = calcMatch[1].trim(); // Trim captured expression
         
         // eval() the expression (developer-defined formula)
         // If it fails, catch will handle it. If unsubstituted vars remain (e.g., {{foo}}),
@@ -265,7 +266,7 @@ export class UIMenuMgr {
           // eslint-disable-next-line no-eval
           const calcResult = eval(expression);
           
-          // Replace {{calc:...}} with the result
+          // Replace only the {{calc:...}} portion with the result
           result = result.replace(calcMatch[0], String(calcResult));
           dx.out(`Calc evaluated: ${expression} = ${calcResult}`);
         } catch (evalError) {
