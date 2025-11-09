@@ -7,7 +7,7 @@
  * @module tests/UIMenu-IconSlotTriad.test
  */
 
-import { describe, it } from 'node:test';
+import { describe, it, beforeEach } from 'node:test';
 import * as assert from 'node:assert';
 import {
   UIMenu,
@@ -17,54 +17,72 @@ import {
   type MenuItemId_t,
   type iconSlotTriad_t,
 } from '../src/UIMenu.js';
+import { App } from '../src/App.js';
+import type { ExtensionContext } from 'vscode';
 
-// Mock App for testing
-const mockApp = {
-  os: {
-    readExtensionYaml: () => ({
-      ui_menu_html: '<div id="{{menuId}}">{{displayName}}</div>',
-      uimenu_text_edit: '<input id="{{itemId}}" data-config="{{textEditConfig}}" />',
+// Mock VS Code context
+const mockContext = {
+  subscriptions: [],
+  globalState: {
+    get: () => undefined,
+    update: () => {},
+  },
+  globalStorageUri: { fsPath: '/tmp' },
+} as unknown as ExtensionContext;
+
+const mockVSCode = {
+  commands: { registerCommand: () => ({}) },
+  window: {
+    showErrorMessage: () => {},
+    showInformationMessage: () => {},
+    showWarningMessage: () => {},
+    createWebviewPanel: () => ({
+      webview: {
+        asWebviewUri: (uri: any) => uri,
+        html: '',
+        onDidReceiveMessage: () => ({ dispose: () => {} }),
+        postMessage: () => {},
+      },
+      reveal: () => {},
+      onDidDispose: () => ({ dispose: () => {} }),
+      title: '',
     }),
   },
-  templateDictReplace: (template: string, dict: Record<string, string>) => {
-    return Object.entries(dict).reduce((result, [key, value]) => {
-      return result.replace(new RegExp(`{{${key}}}`, 'g'), value);
-    }, template);
-  },
-  dx: {
-    create: (name: string) => ({
-      out: () => {},
-      print: () => {},
-      done: () => {},
-      sub: (name: string) => ({
-        out: () => {},
-        print: () => {},
-        done: () => {},
-        require: () => true,
-      }),
+  workspace: {
+    getConfiguration: () => ({
+      get: (key: string) => undefined,
     }),
   },
+  Uri: { file: (path: string) => ({ fsPath: path }) },
+  Range: class Range {},
+  ViewColumn: { Active: 1 },
 } as any;
 
-// Helper to create a menu
-const createTestMenu = (
-  menuIconSlotTriad: iconSlotTriad_t, 
-  items: UIMenuItem_t[]
-): UIMenu => {
-  const listBuilder = (): UIMenuItem_t[] => items;
-  return new UIMenu(
-    mockApp,
-    'theme', // Use valid MenuId_t
-    'Test Menu',
-    menuIconSlotTriad,
-    false,
-    listBuilder,
-    [],
-    async () => ({ id: '', value: '' })
-  );
-};
+let app: App;
 
 describe('UIMenu Icon Slot Triad', () => {
+  
+  beforeEach(() => {
+    app = new App(mockContext, mockVSCode);
+  });
+
+  // Helper to create a menu
+  const createTestMenu = (
+    menuIconSlotTriad: iconSlotTriad_t, 
+    items: UIMenuItem_t[]
+  ): UIMenu => {
+    const listBuilder = (): UIMenuItem_t[] => items;
+    return new UIMenu(
+      app,
+      'theme', // Use valid MenuId_t
+      'Test Menu',
+      menuIconSlotTriad,
+      false,
+      listBuilder,
+      [],
+      async () => ({ id: '', value: '' })
+    );
+  };
   
   describe('Icon Slot Structure', () => {
     it('should handle empty iconSlotTriad', async () => {
