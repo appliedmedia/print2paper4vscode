@@ -190,19 +190,22 @@ describe('UIMenu Icon Slot Triad', () => {
   });
 
   describe('Text Edit Widget', () => {
-    it('should detect text_edit: prefix in main slot', async () => {
+    it('should detect text_edit object in main slot', async () => {
       const items: UIMenuItem_t[] = [
         { 
           id: 'zoom', 
           displayName: 'Zoom',
           iconSlotTriad: { 
             begin: '', 
-            main: `text_edit: ${JSON.stringify({
+            main: {
+              type: 'text_edit' as const,
               width: '3ch',
-              constraints_regex: '^\\d{0,3}$',  // Only 2 backslashes - much clearer!
-              value_min: 10,
-              value_max: 300,
-            })}`,
+              constrain: {
+                regex: '^\\d{0,3}$',  // Only 2 backslashes - clean and readable!
+                min: 10,
+                max: 300,
+              },
+            },
             end: '%' 
           }
         },
@@ -211,23 +214,29 @@ describe('UIMenu Icon Slot Triad', () => {
       const menu = createTestMenu(menuIcon, items);
       const html = await menu.getHTML();
       
-      // Should contain input element
+      // Should contain input element with separate data attributes
       assert.ok(html.includes('<input'));
+      assert.ok(html.includes('data-constrain-regex'));
+      assert.ok(html.includes('data-constrain-min'));
+      assert.ok(html.includes('data-constrain-max'));
     });
 
-    it('should parse text_edit JSON config correctly', async () => {
+    it('should generate correct data attributes from constrain object', async () => {
       const items: UIMenuItem_t[] = [
         { 
           id: 'zoom', 
           displayName: 'Zoom',
           iconSlotTriad: { 
             begin: ' ', 
-            main: `text_edit: ${JSON.stringify({
+            main: {
+              type: 'text_edit' as const,
               width: '5ch',
-              constraints_regex: '^\\d{1,3}$',  // Only 2 backslashes - much clearer!
-              value_min: 1,
-              value_max: 500,
-            })}`,
+              constrain: {
+                regex: '^\\d{1,3}$',  // Only 2 backslashes - clean!
+                min: 1,
+                max: 500,
+              },
+            },
             end: '%▼' 
           }
         },
@@ -237,7 +246,9 @@ describe('UIMenu Icon Slot Triad', () => {
       const html = await menu.getHTML();
       
       assert.ok(html.includes('<input'));
-      assert.ok(html.includes('zoom'));
+      assert.ok(html.includes('data-constrain-regex="^\\d{1,3}$"'));
+      assert.ok(html.includes('data-constrain-min="1"'));
+      assert.ok(html.includes('data-constrain-max="500"'));
     });
 
     it('should handle text_edit with minimal config', async () => {
@@ -247,7 +258,10 @@ describe('UIMenu Icon Slot Triad', () => {
           displayName: 'Simple',
           iconSlotTriad: { 
             begin: '', 
-            main: 'text_edit: {"width": "2ch"}',
+            main: {
+              type: 'text_edit' as const,
+              width: '2ch',
+            },
             end: '' 
           }
         },
@@ -257,6 +271,7 @@ describe('UIMenu Icon Slot Triad', () => {
       const html = await menu.getHTML();
       
       assert.ok(html.includes('<input'));
+      assert.ok(html.includes('style="width: 2ch;"'));
     });
 
     it('should validate regex patterns in text_edit config', async () => {
@@ -266,10 +281,13 @@ describe('UIMenu Icon Slot Triad', () => {
           displayName: 'Validated',
           iconSlotTriad: { 
             begin: '', 
-            main: `text_edit: ${JSON.stringify({
+            main: {
+              type: 'text_edit' as const,
               width: '3ch',
-              constraints_regex: '^\\d{0,3}$',  // Only 2 backslashes - much clearer!
-            })}`,
+              constrain: {
+                regex: '^\\d{0,3}$',  // Only 2 backslashes - clean!
+              },
+            },
             end: '' 
           }
         },
@@ -278,7 +296,7 @@ describe('UIMenu Icon Slot Triad', () => {
       const menu = createTestMenu(menuIcon, items);
       const html = await menu.getHTML();
       
-      assert.ok(html.length > 0);
+      assert.ok(html.includes('data-constrain-regex="^\\d{0,3}$"'));
     });
   });
 

@@ -436,7 +436,7 @@ uimenu_generic_handlers: |
 
   /**
    * Handle text edit widget keydown events
-   * Validates input against constraints_regex on every keydown
+   * Validates input against constrain.regex on every keydown
    */
   function handleTextEditKeydown(e) {
     const input = e.target;
@@ -445,12 +445,10 @@ uimenu_generic_handlers: |
     // Prevent menu button click when clicking text edit
     e.stopPropagation();
     
-    const configStr = input.getAttribute('data-config');
-    if (!configStr) return;
+    const regexStr = input.getAttribute('data-constrain-regex');
+    if (!regexStr) return;
     
     try {
-      const config = JSON.parse(configStr);
-      if (!config.constraints_regex) return;
       
       // Test the regex against the new character(s) that would be entered
       const currentValue = input.value;
@@ -485,7 +483,7 @@ uimenu_generic_handlers: |
       }
       
       // Test regex against the new value (only regex validation during typing)
-      const regex = new RegExp(config.constraints_regex);
+      const regex = new RegExp(regexStr);
       if (!regex.test(newValue)) {
         e.preventDefault();
         e.stopPropagation();
@@ -510,22 +508,21 @@ uimenu_generic_handlers: |
     // Prevent menu button click when interacting with text edit
     e.stopPropagation();
     
-    const configStr = input.getAttribute('data-config');
-    if (!configStr) return;
+    const minStr = input.getAttribute('data-constrain-min');
+    const maxStr = input.getAttribute('data-constrain-max');
     
-    try {
-      const config = JSON.parse(configStr);
+    if (minStr !== null && maxStr !== null) {
       const value = parseFloat(input.value);
+      const min = parseFloat(minStr);
+      const max = parseFloat(maxStr);
       
-      if (!isNaN(value) && config.value_min !== undefined && config.value_max !== undefined) {
+      if (!isNaN(value) && !isNaN(min) && !isNaN(max)) {
         // Clamp value to min/max
-        const clampedValue = Math.max(config.value_min, Math.min(config.value_max, value));
+        const clampedValue = Math.max(min, Math.min(max, value));
         if (clampedValue !== value) {
           input.value = clampedValue.toString();
         }
       }
-    } catch (error) {
-      console.error('Error handling text edit input:', error);
     }
   }
 
@@ -607,4 +604,4 @@ uimenu_item: |
   </div>
 
 uimenu_text_edit: |
-  <span class="iconSlotTriad text-edit-wrapper"><input type="text" class="p2p4vsc-text-edit" data-item-id="{{itemId}}" data-config='{{textEditConfig}}' /></span>
+  <span class="iconSlotTriad text-edit-wrapper"><input type="text" class="p2p4vsc-text-edit" data-item-id="{{itemId}}"{{constrainAttrs}}{{widthStyle}} /></span>

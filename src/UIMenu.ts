@@ -20,10 +20,21 @@ import {
   kMenus,
 } from './types/PaperPrinter_t';
 
+// Text edit config type for text input widgets in menu items
+export type TextEditConfig_t = {
+  type: 'text_edit';
+  width?: string;
+  constrain?: {
+    regex?: string;  // Regex pattern (e.g., '^\d{0,3}$') - only 2 backslashes needed!
+    min?: number;
+    max?: number;
+  };
+};
+
 // IconSlotTriad type - three-part slot structure
 export interface iconSlotTriad_t {
   begin: string;
-  main: string;
+  main: string | TextEditConfig_t;  // Can be string icon or text_edit config object
   end: string;
 }
 
@@ -294,7 +305,7 @@ export class UIMenu {
    * Returns HTML, CSS class, and config attributes for the main slot content
    */
   private handleIconSlotTypes(
-    iconSlotTriadMain: string,
+    iconSlotTriadMain: string | TextEditConfig_t,
     itemId: string
   ): {
     html: string;
@@ -306,7 +317,9 @@ export class UIMenu {
 
     // Default return for regular icon content
     const defaultReturn = {
-      html: iconSlotTriadMain ? `<span class="iconSlotTriad">${iconSlotTriadMain}</span>` : ``,
+      html: typeof iconSlotTriadMain === 'string' && iconSlotTriadMain 
+        ? `<span class="iconSlotTriad">${iconSlotTriadMain}</span>` 
+        : ``,
       cssClass: ``,
       configAttr: ``,
       isSpecialType: false,
@@ -316,36 +329,43 @@ export class UIMenu {
       return defaultReturn;
     }
 
-    // Handle text_edit type: "text_edit: {...json...}"
-    if (iconSlotTriadMain.startsWith('text_edit:')) {
-      const jsonMatch = iconSlotTriadMain.match(/^text_edit:\s*(.+)$/s);
-      if (jsonMatch) {
+    // Handle text_edit type: object with { type: 'text_edit', width, constrain: { regex, min, max } }
+    if (typeof iconSlotTriadMain === 'object' && iconSlotTriadMain !== null) {
+      const config = iconSlotTriadMain as any;
+      if (config.type === 'text_edit') {
         try {
-          const config = JSON.parse(jsonMatch[1].trim());
-          // Validate constraints_regex is a valid regex pattern
-          // Note: constraints_regex comes from PaperPrinter_t.ts constants (not user input),
-          // so ReDoS risk is minimal. The patterns are simple and controlled by our codebase.
-          if (config.constraints_regex) {
+          // Validate regex pattern if present
+          if (config.constrain?.regex) {
             try {
-              new RegExp(config.constraints_regex);
+              new RegExp(config.constrain.regex);
             } catch (regexError) {
-              throw new Error(`Invalid constraints_regex: ${config.constraints_regex}`);
+              throw new Error(`Invalid constrain.regex: ${config.constrain.regex}`);
             }
           }
-          const textEditConfig = JSON.stringify(config);
+          
+          // Build data attributes from constrain object
+          const constrainAttrs = config.constrain ? [
+            config.constrain.regex ? ` data-constrain-regex="${config.constrain.regex}"` : '',
+            config.constrain.min !== undefined ? ` data-constrain-min="${config.constrain.min}"` : '',
+            config.constrain.max !== undefined ? ` data-constrain-max="${config.constrain.max}"` : '',
+          ].join('') : '';
+          
+          const widthStyle = config.width ? ` style="width: ${config.width};"` : '';
+          
           const yaml = this.yaml;
           const html = this.app.templateDictReplace(yaml.uimenu_text_edit, {
             itemId,
-            textEditConfig,
+            constrainAttrs,
+            widthStyle,
           });
           return {
             html,
             cssClass: 'text-edit',
-            configAttr: ` data-text-edit-config='${textEditConfig}'`,
+            configAttr: constrainAttrs,
             isSpecialType: true,
           };
         } catch (error) {
-          dx.error(`Failed to parse text_edit config: ${String(error)}`);
+          dx.error(`Failed to process text_edit config: ${String(error)}`);
           return defaultReturn;
         }
       }
