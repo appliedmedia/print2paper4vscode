@@ -197,7 +197,12 @@ describe('UIMenu Icon Slot Triad', () => {
           displayName: 'Zoom',
           iconSlotTriad: { 
             begin: '', 
-            main: 'text_edit: {"width": "3ch", "constraints_regex": "^\\\\\\\\d{0,3}$", "value_min": 10, "value_max": 300}',
+            main: `text_edit: ${JSON.stringify({
+              width: '3ch',
+              constraints_regex: '^\\d{0,3}$',  // Only 2 backslashes - much clearer!
+              value_min: 10,
+              value_max: 300,
+            })}`,
             end: '%' 
           }
         },
@@ -217,7 +222,12 @@ describe('UIMenu Icon Slot Triad', () => {
           displayName: 'Zoom',
           iconSlotTriad: { 
             begin: ' ', 
-            main: 'text_edit: {"width": "5ch", "constraints_regex": "^\\\\\\\\d{1,3}$", "value_min": 1, "value_max": 500}',
+            main: `text_edit: ${JSON.stringify({
+              width: '5ch',
+              constraints_regex: '^\\d{1,3}$',  // Only 2 backslashes - much clearer!
+              value_min: 1,
+              value_max: 500,
+            })}`,
             end: '%▼' 
           }
         },
@@ -256,7 +266,10 @@ describe('UIMenu Icon Slot Triad', () => {
           displayName: 'Validated',
           iconSlotTriad: { 
             begin: '', 
-            main: 'text_edit: {"width": "3ch", "constraints_regex": "^\\\\\\\\d{0,3}$"}',
+            main: `text_edit: ${JSON.stringify({
+              width: '3ch',
+              constraints_regex: '^\\d{0,3}$',  // Only 2 backslashes - much clearer!
+            })}`,
             end: '' 
           }
         },

@@ -287,7 +287,12 @@ export const kZoomLevel = {
   displayName: 'Zoom Level',
   iconSlotTriad: {
     begin: ' ',
-    main: 'text_edit: {"width": "3ch", "constraints_regex": "^\\\\\\\\d{0,3}$", "value_min": 10, "value_max": 300}',
+    main: `text_edit: ${JSON.stringify({
+      width: '3ch',
+      constraints_regex: '^\\d{0,3}$',  // Only 2 backslashes now! JSON.stringify handles the rest
+      value_min: 10,
+      value_max: 300,
+    })}`,
     end: '%▼',
   },
   alt: '1.00',
