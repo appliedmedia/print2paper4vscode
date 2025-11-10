@@ -350,7 +350,15 @@ export class UIMenu {
             config.constrain.max !== undefined ? ` data-constrain-max="${config.constrain.max}"` : '',
           ].join('') : '';
           
-          const widthStyle = config.width ? ` style="width: ${config.width};"` : '';
+          // Calculate width: use explicit width, or auto-calculate from max value length
+          let width = config.width;
+          if (!width && config.constrain?.max !== undefined) {
+            // Auto-calculate: string(max).length + 1 for comfortable reading
+            const maxDigits = String(config.constrain.max).length;
+            width = `${maxDigits + 1}ch`;
+          }
+          
+          const widthStyle = width ? ` style="width: ${width};"` : '';
           
           const yaml = this.yaml;
           const html = this.app.templateDictReplace(yaml.uimenu_text_edit, {

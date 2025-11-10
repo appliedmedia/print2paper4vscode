@@ -289,7 +289,7 @@ export const kZoomLevel = {
     begin: ' ',
     main: {
       type: 'text_edit' as const,
-      width: '4ch',  // 4ch accommodates 3-digit values (10-300) comfortably
+      // Width auto-calculated from max: string(300).length + 1 = 4ch
       constrain: {
         regex: '^\\d{0,3}$',  // Only 2 backslashes! Becomes data-constrain-regex
         min: 10,
