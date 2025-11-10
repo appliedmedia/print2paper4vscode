@@ -499,7 +499,9 @@ uimenu_generic_handlers: |
 
   /**
    * Handle text edit widget input/change events
-   * GENERIC: Just validates and clamps value - actual handling via blur->selection
+   * GENERIC: Just stops propagation - actual validation/clamping happens on blur
+   * NOTE: We do NOT clamp during typing, as this mangles multi-digit entry
+   *       (e.g., typing "150" would clamp "1" to min "10", then append "5" → "105")
    */
   function handleTextEditInput(e) {
     const input = e.target;
@@ -508,6 +510,14 @@ uimenu_generic_handlers: |
     // Prevent menu button click when interacting with text edit
     e.stopPropagation();
     
+    // Validation and clamping happens on blur, not during typing
+  }
+  
+  /**
+   * Validate and clamp text edit value
+   * Called on blur to enforce constraints after user finishes typing
+   */
+  function validateAndClampTextEdit(input) {
     const minStr = input.getAttribute('data-constrain-min');
     const maxStr = input.getAttribute('data-constrain-max');
     
@@ -537,8 +547,8 @@ uimenu_generic_handlers: |
     // Prevent menu button click when clicking away from text edit
     e.stopPropagation();
     
-    // Validate and clamp first
-    handleTextEditInput(e);
+    // Validate and clamp now that user is done typing
+    validateAndClampTextEdit(input);
     
     // Get the menu ID from the closest menu
     const menu = input.closest('.p2p4vsc-menu');
