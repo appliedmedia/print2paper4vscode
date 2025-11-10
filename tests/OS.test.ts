@@ -5,53 +5,7 @@ import { App } from '../src/App.js';
 import * as fs from 'fs';
 import * as path from 'path';
 import { tmpdir } from 'os';
-import type { ExtensionContext } from 'vscode';
-
-// Mock VS Code context and APIs
-const mockContext = {
-  subscriptions: [],
-  extensionPath: process.cwd(),
-  globalState: {
-    get: () => undefined,
-    update: () => {},
-  },
-  globalStorageUri: { fsPath: '/tmp' },
-} as unknown as ExtensionContext;
-
-const mockVSCode = {
-  commands: { registerCommand: () => ({}) },
-  window: {
-    showErrorMessage: () => {},
-    showInformationMessage: () => {},
-    showWarningMessage: () => {},
-    createWebviewPanel: () => ({
-      webview: {
-        html: '',
-        asWebviewUri: (uri: any) => uri,
-        onDidReceiveMessage: () => ({ dispose: () => {} }),
-        postMessage: () => Promise.resolve(true),
-      },
-      title: '',
-      reveal: () => {},
-      onDidDispose: () => ({ dispose: () => {} }),
-      dispose: () => {},
-    }),
-  },
-  workspace: {
-    getConfiguration: () => ({
-      get: () => undefined,
-    }),
-  },
-  Uri: { file: (path: string) => ({ fsPath: path, path, toString: () => `file://${path}` }) },
-  Range: class Range {},
-  ViewColumn: {
-    Active: 1,
-    Beside: 2,
-    One: 1,
-    Two: 2,
-    Three: 3,
-  },
-} as any;
+import { mockContext, mockVSCode } from './test-utils.js';
 
 describe('OS Base Class', () => {
   let app: App;

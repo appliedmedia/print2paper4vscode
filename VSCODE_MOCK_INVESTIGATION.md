@@ -26,7 +26,7 @@ The vscode mocks were incomplete and missing several critical properties:
 
 ### 2. Updated Test Files
 - **VSCodeAPIs.test.ts**: Added `extensionPath` to mockContext and `fileName` to document
-- **OS.test.ts**: Added `extensionPath`, `ViewColumn`, and `createWebviewPanel` 
+- **OS.test.ts**: Added `extensionPath`, `ViewColumn`, and `createWebviewPanel`
 - **PDF-Object-Reuse.test.ts**: Added complete mock with all required properties
 - **test-utils.ts**: Created comprehensive shared mock for reuse across tests
 

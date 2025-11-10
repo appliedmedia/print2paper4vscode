@@ -2,8 +2,9 @@ import { describe, it, beforeEach, afterEach } from 'node:test';
 import * as assert from 'node:assert';
 import { App } from '../src/App.js';
 import type { ExtensionContext } from 'vscode';
+import { mockVSCode } from './test-utils.js';
 
-// Mock VS Code context and APIs with state tracking
+// Mock VS Code context with state tracking for this test suite
 let mockGlobalState: Record<string, any> = {};
 
 const mockContext = {
@@ -21,67 +22,6 @@ const mockContext = {
   },
   globalStorageUri: { fsPath: '/tmp' },
 } as unknown as ExtensionContext;
-
-const mockVSCode = {
-  commands: { registerCommand: () => ({}) },
-  window: {
-    showErrorMessage: () => {},
-    showInformationMessage: () => {},
-    showWarningMessage: () => {},
-    setStatusBarMessage: (text: string, timeoutMs?: number) => {
-      return { dispose: () => {} };
-    },
-    activeTextEditor: {
-      document: {
-        uri: { fsPath: '/test/file.js', toString: () => 'file:///test/file.js' },
-        fileName: '/test/file.js',
-        getText: () => 'test code',
-        languageId: 'javascript',
-      },
-      selection: {
-        isEmpty: true,
-      },
-    },
-    createWebviewPanel: () => ({
-      webview: {
-        asWebviewUri: (uri: any) => uri,
-        html: '',
-        onDidReceiveMessage: () => ({ dispose: () => {} }),
-        postMessage: () => {},
-      },
-      reveal: () => {},
-      onDidDispose: () => ({ dispose: () => {} }),
-      title: '',
-    }),
-  },
-  workspace: {
-    getConfiguration: () => ({
-      get: (key: string) => {
-        if (key === 'fontSize') return 14;
-        if (key === 'lineHeight') return 1.5;
-        if (key === 'fontFamily') return 'Monaco';
-        return undefined;
-      },
-    }),
-  },
-  Uri: { file: (path: string) => ({ fsPath: path }) },
-  Range: class Range {},
-  ViewColumn: {
-    Active: 1,
-    One: 1,
-    Two: 2,
-    Three: 3,
-  },
-  extensions: {
-    getExtension: () => ({
-      extensionPath: process.cwd(),
-      packageJSON: { name: 'test' },
-    }),
-  },
-  env: {
-    language: 'en',
-  },
-} as any;
 
 describe('VSCodeAPIs', () => {
   let app: App;

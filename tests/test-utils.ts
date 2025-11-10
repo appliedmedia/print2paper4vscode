@@ -30,14 +30,36 @@ export const mockVSCode = {
       onDidDispose: () => ({ dispose: () => {} }),
       dispose: () => {},
     }),
-    activeTextEditor: undefined,
+    activeTextEditor: {
+      document: {
+        uri: { fsPath: '/test/file.js', path: '/test/file.js', toString: () => 'file:///test/file.js' },
+        fileName: '/test/file.js',
+        languageId: 'javascript',
+        getText: () => 'test code',
+        lineCount: 1,
+      },
+      selection: {
+        isEmpty: true,
+        start: { line: 0, character: 0 },
+        end: { line: 0, character: 0 },
+      },
+    },
     tabGroups: {
-      activeTabGroup: undefined,
+      activeTabGroup: {
+        activeTab: {
+          label: 'test-file.js',
+        },
+      },
     },
   },
   workspace: {
     getConfiguration: () => ({
-      get: () => undefined,
+      get: (key: string) => {
+        if (key === 'fontSize') return 14;
+        if (key === 'lineHeight') return 1.5;
+        if (key === 'fontFamily') return 'Monaco';
+        return undefined;
+      },
     }),
   },
   Uri: { 

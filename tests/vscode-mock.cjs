@@ -61,30 +61,12 @@ const ViewColumn = {
   Three: 3,
 };
 
-// Mock ExtensionContext factory
-function createMockContext() {
-  return {
-    subscriptions: [],
-    extensionPath: process.cwd(),
-    globalStorageUri: Uri.file('/tmp/test-storage'),
-    globalState: {
-      get: () => undefined,
-      update: () => Promise.resolve(),
-    },
-    workspaceState: {
-      get: () => undefined,
-      update: () => Promise.resolve(),
-    },
-  };
-}
-
 module.exports = {
   Range,
   Position,
   WorkspaceEdit,
   Uri,
   ViewColumn,
-  createMockContext,
   // Add other exports as needed
   commands: {
     registerCommand: () => ({ dispose: () => {} }),
