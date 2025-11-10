@@ -614,4 +614,4 @@ uimenu_item: |
   </div>
 
 uimenu_text_edit: |
-  <span class="iconSlotTriad text-edit-wrapper"><input type="text" class="p2p4vsc-text-edit" data-item-id="{{itemId}}"{{constrainAttrs}}{{widthStyle}} /></span>
+  <span class="text-edit-wrapper"><input type="text" class="p2p4vsc-text-edit" data-item-id="{{itemId}}"{{constrainAttrs}}{{widthStyle}} /></span>

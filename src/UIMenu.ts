@@ -315,72 +315,76 @@ export class UIMenu {
   } {
     const dx = this.dx.sub('handleIconSlotTypes');
 
-    // Default return for regular icon content
-    const defaultReturn = {
-      html: typeof iconSlotTriadMain === 'string' && iconSlotTriadMain 
-        ? `<span class="iconSlotTriad">${iconSlotTriadMain}</span>` 
-        : ``,
-      cssClass: ``,
-      configAttr: ``,
-      isSpecialType: false,
-    };
+    try {
+      // Default return for regular icon content
+      const defaultReturn = {
+        html: typeof iconSlotTriadMain === 'string' && iconSlotTriadMain 
+          ? `<span class="iconSlotTriad">${iconSlotTriadMain}</span>` 
+          : ``,
+        cssClass: ``,
+        configAttr: ``,
+        isSpecialType: false,
+      };
 
-    if (!iconSlotTriadMain) {
-      return defaultReturn;
-    }
+      if (!iconSlotTriadMain) {
+        return defaultReturn;
+      }
 
-    // Handle text_edit type: object with { type: 'text_edit', width, constrain: { regex, min, max } }
-    if (typeof iconSlotTriadMain === 'object' && iconSlotTriadMain !== null) {
-      const config = iconSlotTriadMain as any;
-      if (config.type === 'text_edit') {
-        try {
-          // Validate regex pattern if present
-          if (config.constrain?.regex) {
-            try {
-              new RegExp(config.constrain.regex);
-            } catch (regexError) {
-              throw new Error(`Invalid constrain.regex: ${config.constrain.regex}`);
+      // Handle text_edit type: object with { type: 'text_edit', width, constrain: { regex, min, max } }
+      if (typeof iconSlotTriadMain === 'object' && iconSlotTriadMain !== null) {
+        const config = iconSlotTriadMain as any;
+        if (config.type === 'text_edit') {
+          try {
+            // Validate regex pattern if present
+            if (config.constrain?.regex) {
+              try {
+                new RegExp(config.constrain.regex);
+              } catch (regexError) {
+                throw new Error(`Invalid constrain.regex: ${config.constrain.regex}`);
+              }
             }
+            
+            // Build data attributes from constrain object
+            const constrainAttrs = config.constrain ? [
+              config.constrain.regex ? ` data-constrain-regex="${config.constrain.regex}"` : '',
+              config.constrain.min !== undefined ? ` data-constrain-min="${config.constrain.min}"` : '',
+              config.constrain.max !== undefined ? ` data-constrain-max="${config.constrain.max}"` : '',
+            ].join('') : '';
+            
+            // Calculate width: use explicit width, or auto-calculate from max value length
+            let width = config.width;
+            if (!width && config.constrain?.max !== undefined) {
+              // Auto-calculate: string(max).length + 1 for comfortable reading
+              const maxDigits = String(config.constrain.max).length;
+              width = `${maxDigits + 1}ch`;
+            }
+            
+            const widthStyle = width ? ` style="width: ${width};"` : '';
+            
+            const yaml = this.yaml;
+            const html = this.app.templateDictReplace(yaml.uimenu_text_edit, {
+              itemId,
+              constrainAttrs,
+              widthStyle,
+            });
+            return {
+              html,
+              cssClass: 'text-edit',
+              configAttr: constrainAttrs,
+              isSpecialType: true,
+            };
+          } catch (error) {
+            dx.error(`Failed to process text_edit config: ${String(error)}`);
+            return defaultReturn;
           }
-          
-          // Build data attributes from constrain object
-          const constrainAttrs = config.constrain ? [
-            config.constrain.regex ? ` data-constrain-regex="${config.constrain.regex}"` : '',
-            config.constrain.min !== undefined ? ` data-constrain-min="${config.constrain.min}"` : '',
-            config.constrain.max !== undefined ? ` data-constrain-max="${config.constrain.max}"` : '',
-          ].join('') : '';
-          
-          // Calculate width: use explicit width, or auto-calculate from max value length
-          let width = config.width;
-          if (!width && config.constrain?.max !== undefined) {
-            // Auto-calculate: string(max).length + 1 for comfortable reading
-            const maxDigits = String(config.constrain.max).length;
-            width = `${maxDigits + 1}ch`;
-          }
-          
-          const widthStyle = width ? ` style="width: ${width};"` : '';
-          
-          const yaml = this.yaml;
-          const html = this.app.templateDictReplace(yaml.uimenu_text_edit, {
-            itemId,
-            constrainAttrs,
-            widthStyle,
-          });
-          return {
-            html,
-            cssClass: 'text-edit',
-            configAttr: constrainAttrs,
-            isSpecialType: true,
-          };
-        } catch (error) {
-          dx.error(`Failed to process text_edit config: ${String(error)}`);
-          return defaultReturn;
         }
       }
-    }
 
-    // Regular icon content
-    return defaultReturn;
+      // Regular icon content
+      return defaultReturn;
+    } finally {
+      dx.done();
+    }
   }
 
   // Generate the complete HTML for this menu using YAML template
