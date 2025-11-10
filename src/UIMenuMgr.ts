@@ -250,23 +250,6 @@ export class UIMenuMgr {
         }
       }
       
-      // Validate dimensions are positive before calc evaluation (prevent Infinity from division by zero)
-      const pageWidth = parseFloat(fullContext.pageWidth || '0');
-      const pageHeight = parseFloat(fullContext.pageHeight || '0');
-      const windowWidth = parseFloat(fullContext.windowWidth || '0');
-      const windowHeight = parseFloat(fullContext.windowHeight || '0');
-      
-      if (value.includes('{{calc:')) {
-        // If calc template requires dimensions, validate they're positive
-        if (value.includes('pageWidth') || value.includes('pageHeight') || 
-            value.includes('windowWidth') || value.includes('windowHeight')) {
-          if (pageWidth <= 0 || pageHeight <= 0 || windowWidth <= 0 || windowHeight <= 0) {
-            dx.out(`Cannot evaluate calc: dimensions not available (page: ${pageWidth}x${pageHeight}, window: ${windowWidth}x${windowHeight})`);
-            return ''; // Return empty to signal failure
-          }
-        }
-      }
-      
       // Always replace template variables first (regardless of calc or not)
       let result = this.app.templateDictReplace(value, fullContext);
       
