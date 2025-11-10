@@ -10,6 +10,7 @@ import type { ExtensionContext } from 'vscode';
 // Mock VS Code context and APIs
 const mockContext = {
   subscriptions: [],
+  extensionPath: process.cwd(),
   globalState: {
     get: () => undefined,
     update: () => {},
@@ -23,14 +24,33 @@ const mockVSCode = {
     showErrorMessage: () => {},
     showInformationMessage: () => {},
     showWarningMessage: () => {},
+    createWebviewPanel: () => ({
+      webview: {
+        html: '',
+        asWebviewUri: (uri: any) => uri,
+        onDidReceiveMessage: () => ({ dispose: () => {} }),
+        postMessage: () => Promise.resolve(true),
+      },
+      title: '',
+      reveal: () => {},
+      onDidDispose: () => ({ dispose: () => {} }),
+      dispose: () => {},
+    }),
   },
   workspace: {
     getConfiguration: () => ({
       get: () => undefined,
     }),
   },
-  Uri: { file: (path: string) => ({ fsPath: path }) },
+  Uri: { file: (path: string) => ({ fsPath: path, path, toString: () => `file://${path}` }) },
   Range: class Range {},
+  ViewColumn: {
+    Active: 1,
+    Beside: 2,
+    One: 1,
+    Two: 2,
+    Three: 3,
+  },
 } as any;
 
 describe('OS Base Class', () => {

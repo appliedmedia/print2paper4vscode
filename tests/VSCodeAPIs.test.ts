@@ -8,6 +8,7 @@ let mockGlobalState: Record<string, any> = {};
 
 const mockContext = {
   subscriptions: [],
+  extensionPath: process.cwd(),
   globalState: {
     get: (key: string) => mockGlobalState[key],
     update: async (key: string, value: any) => {
@@ -32,7 +33,8 @@ const mockVSCode = {
     },
     activeTextEditor: {
       document: {
-        uri: { fsPath: '/test/file.js' },
+        uri: { fsPath: '/test/file.js', toString: () => 'file:///test/file.js' },
+        fileName: '/test/file.js',
         getText: () => 'test code',
         languageId: 'javascript',
       },

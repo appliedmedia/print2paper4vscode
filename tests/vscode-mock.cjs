@@ -39,8 +39,18 @@ class WorkspaceEdit {
 }
 
 const Uri = {
-  file: (path) => ({ fsPath: path, scheme: 'file', path }),
-  parse: (str) => ({ fsPath: str, scheme: 'untitled', path: str }),
+  file: (path) => ({ 
+    fsPath: path, 
+    scheme: 'file', 
+    path,
+    toString: () => `file://${path}`
+  }),
+  parse: (str) => ({ 
+    fsPath: str, 
+    scheme: 'untitled', 
+    path: str,
+    toString: () => `untitled:${str}`
+  }),
 };
 
 const ViewColumn = {
@@ -51,12 +61,30 @@ const ViewColumn = {
   Three: 3,
 };
 
+// Mock ExtensionContext factory
+function createMockContext() {
+  return {
+    subscriptions: [],
+    extensionPath: process.cwd(),
+    globalStorageUri: Uri.file('/tmp/test-storage'),
+    globalState: {
+      get: () => undefined,
+      update: () => Promise.resolve(),
+    },
+    workspaceState: {
+      get: () => undefined,
+      update: () => Promise.resolve(),
+    },
+  };
+}
+
 module.exports = {
   Range,
   Position,
   WorkspaceEdit,
   Uri,
   ViewColumn,
+  createMockContext,
   // Add other exports as needed
   commands: {
     registerCommand: () => ({ dispose: () => {} }),
@@ -67,9 +95,26 @@ module.exports = {
     showErrorMessage: () => Promise.resolve(),
     showSaveDialog: () => Promise.resolve(undefined),
     setStatusBarMessage: () => ({ dispose: () => {} }),
-    activeTextEditor: undefined,
+    activeTextEditor: {
+      document: {
+        uri: Uri.file('/test/file.js'),
+        fileName: '/test/file.js',
+        languageId: 'javascript',
+        getText: () => 'test code',
+        lineCount: 1,
+      },
+      selection: {
+        isEmpty: true,
+        start: { line: 0, character: 0 },
+        end: { line: 0, character: 0 },
+      },
+    },
     tabGroups: {
-      activeTabGroup: undefined,
+      activeTabGroup: {
+        activeTab: {
+          label: 'test-file.js',
+        },
+      },
     },
     createWebviewPanel: () => ({
       webview: {
@@ -87,7 +132,12 @@ module.exports = {
   },
   workspace: {
     getConfiguration: () => ({
-      get: () => undefined,
+      get: (key) => {
+        if (key === 'fontSize') return 14;
+        if (key === 'lineHeight') return 1.5;
+        if (key === 'fontFamily') return 'Monaco';
+        return undefined;
+      },
     }),
     openTextDocument: () => Promise.resolve({
       uri: Uri.parse('untitled:untitled'),
@@ -100,6 +150,10 @@ module.exports = {
   },
   extensions: {
     all: [],
+    getExtension: () => ({
+      extensionPath: process.cwd(),
+      packageJSON: { name: 'test-extension' },
+    }),
   },
   env: {
     language: 'en',

@@ -15,6 +15,7 @@ describe('PDF Object Reuse Tests', () => {
   // Mock VS Code context and APIs
   const mockContext = {
     subscriptions: [],
+    extensionPath: process.cwd(),
     globalState: {
       get: () => undefined,
       update: () => Promise.resolve(),
@@ -32,6 +33,18 @@ describe('PDF Object Reuse Tests', () => {
       showErrorMessage: () => {},
       showInformationMessage: () => {},
       showWarningMessage: () => {},
+      createWebviewPanel: () => ({
+        webview: {
+          html: '',
+          asWebviewUri: (uri: any) => uri,
+          onDidReceiveMessage: () => ({ dispose: () => {} }),
+          postMessage: () => Promise.resolve(true),
+        },
+        title: '',
+        reveal: () => {},
+        onDidDispose: () => ({ dispose: () => {} }),
+        dispose: () => {},
+      }),
     },
     workspace: {
       getConfiguration: () => ({
@@ -43,8 +56,18 @@ describe('PDF Object Reuse Tests', () => {
         },
       }),
     },
-    Uri: { file: (path: string) => ({ fsPath: path }) },
+    Uri: { 
+      file: (path: string) => ({ fsPath: path, path, toString: () => `file://${path}` }),
+      parse: (str: string) => ({ fsPath: str, path: str, toString: () => str }),
+    },
     Range: class Range {},
+    ViewColumn: {
+      Active: 1,
+      Beside: 2,
+      One: 1,
+      Two: 2,
+      Three: 3,
+    },
   } as any;
 
   describe('Single PDF Generation', () => {
