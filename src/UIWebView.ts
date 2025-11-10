@@ -80,11 +80,20 @@ export class UIWebView {
    * Creates new panel on first call, updates existing panel on subsequent calls.
    * The PDF is embedded as base64 data URL due to VS Code postMessage limitations.
    */
-  async displayPdfPanel(pdfDocOrData: PDFData_t | { asArrayBuffer(): ArrayBuffer; pageTotal: number; pageSizePx: { widthPx: number; heightPx: number } }, title?: string): Promise<WebviewPanelId_t> {
+  async displayPdfPanel(
+    pdfDocOrData:
+      | PDFData_t
+      | {
+          asArrayBuffer(): ArrayBuffer;
+          pageTotal: number;
+          pageSizePx: { widthPx: number; heightPx: number };
+        },
+    title?: string
+  ): Promise<WebviewPanelId_t> {
     const dx = this.dx.sub('displayPdfPanel');
-    
+
     let pdfData: PDFData_t;
-    
+
     // Check if we got DocInfo_PDF or already-prepared PDFData_t
     if ('asArrayBuffer' in pdfDocOrData && 'pageTotal' in pdfDocOrData) {
       // It's a DocInfo_PDF - extract data (DocInfo_PDF already provides pixels)
@@ -92,13 +101,13 @@ export class UIWebView {
         arrayBuffer: pdfDocOrData.asArrayBuffer(),
         pageTotal: pdfDocOrData.pageTotal,
         pageSizePx: pdfDocOrData.pageSizePx,
-        title: title || 'PDF Document'
+        title: title || 'PDF Document',
       };
     } else {
       // It's already PDFData_t
       pdfData = pdfDocOrData;
     }
-    
+
     dx.require({ pdfData }, ['pdfData']);
 
     try {
@@ -118,7 +127,9 @@ export class UIWebView {
       const pdf_data_url = `data:application/pdf;base64,${base64}`;
 
       // Log PDF object usage for webview (Stage 4.3)
-      dx.out(`PDF object usage: Using PDF ArrayBuffer for webview display (${pdfData.arrayBuffer.byteLength} bytes)`);
+      dx.out(
+        `PDF object usage: Using PDF ArrayBuffer for webview display (${pdfData.arrayBuffer.byteLength} bytes)`
+      );
 
       // Generate HTML for PDF viewer
       const html = await this.generatePDFHTML(pdf_data_url, pdfData);
@@ -165,8 +176,7 @@ export class UIWebView {
       const zoomLevel = this.app.ui.persist.pdf_zoom_level;
       const parsedZoom = Number(zoomLevel);
       const pdf_zoom_level =
-        parsedZoom >= kZoomLevel.min &&
-        parsedZoom <= kZoomLevel.max
+        parsedZoom >= kZoomLevel.min && parsedZoom <= kZoomLevel.max
           ? parsedZoom
           : Number(kZoomLevel.alt);
 
@@ -182,8 +192,8 @@ export class UIWebView {
         zoomLevel_min: kZoomLevel.min.toString(),
         zoomLevel_max: kZoomLevel.max.toString(),
         zoomLevel_stepAmount: kZoomLevel.stepAmount.toString(),
-        zoomLevel_in_shortcutCode: (kZoomIn as typeof kZoomIn & { shortcutCode: string }).shortcutCode,
-        zoomLevel_out_shortcutCode: (kZoomOut as typeof kZoomOut & { shortcutCode: string }).shortcutCode,
+        zoomLevel_in_shortcutCode: kZoomIn.shortcutCode,
+        zoomLevel_out_shortcutCode: kZoomOut.shortcutCode,
         zoomLevel_menuItems: JSON.stringify(
           kZoomLevel.menuItems.map(item => ({
             id: item.id,
@@ -253,9 +263,7 @@ export class UIWebView {
     const messageHandlers = [
       { type: 'dragEnd', handler: this.handleDragEnd.bind(this) },
       { type: 'menuItemSelected', handler: this.handleMenuItemSelected.bind(this) },
-      { type: 'print', handler: this.handlePrintMessage.bind(this) },
       { type: 'dx', handler: this.handleDxMessage.bind(this) },
-      { type: 'zoom', handler: this.handleZoomMessage.bind(this) },
     ];
 
     messageHandlers.forEach(({ type, handler }) => {
@@ -291,7 +299,7 @@ export class UIWebView {
     const dx = this.dx.sub('handleMenuItemSelected');
 
     try {
-      const { menuId, itemId } = msg;
+      const { menuId, itemId, contextDict } = msg;
       if (typeof menuId === 'string' && typeof itemId === 'string') {
         dx.out(`Processing menu selection: menuId=${menuId}, itemId=${itemId}`);
 
@@ -308,29 +316,11 @@ export class UIWebView {
         }
 
         dx.out(`Validation passed, calling app.uimenumgr.handleMenuItemSelected`);
-        // Handle menu item selection through menu manager
-        await this.app.uimenumgr.handleMenuItemSelected(menuId, itemId);
+        // Handle menu item selection through menu manager (with optional context dictionary)
+        await this.app.uimenumgr.handleMenuItemSelected(menuId, itemId, contextDict);
         dx.out(`Menu item selected: ${menuId}.${itemId}`);
       } else {
         dx.error(`Invalid message format: menuId=${typeof menuId}, itemId=${typeof itemId}`);
-      }
-    } finally {
-      dx.done();
-    }
-  }
-
-  /**
-   * Handle print message
-   */
-  private async handlePrintMessage(msg: PostMessage): Promise<void> {
-    const dx = this.dx.sub('handlePrintMessage');
-
-    try {
-      const { printType } = msg;
-      if (typeof printType === 'string') {
-        // Delegate to PaperPrinter for actual printing logic
-        await this.app.paperprinter.handlePrintRequest(printType);
-        dx.out(`Print request handled: ${printType}`);
       }
     } finally {
       dx.done();
@@ -353,38 +343,6 @@ export class UIWebView {
     dx.done();
   }
 
-  /**
-   * Handle zoom message from webview
-   */
-  private async handleZoomMessage(msg: PostMessage): Promise<void> {
-    const dx = this.dx.sub('handleZoomMessage');
-
-    try {
-      const zoomLevel = Number(msg.zoomLevel);
-      if (
-        zoomLevel >= kZoomLevel.min &&
-        zoomLevel <= kZoomLevel.max
-      ) {
-        // Save zoom level to persistence
-        this.app.ui.persist.pdf_zoom_level = zoomLevel;
-        dx.out(`Zoom level saved: ${zoomLevel}`);
-      } else if (msg.zoomLevel !== undefined) {
-        // Invalid zoom level - show error to user immediately and fail
-        const errorMsg = `Invalid zoom level received: ${msg.zoomLevel} (must be between ${kZoomLevel.min} and ${kZoomLevel.max})`;
-        dx.error(errorMsg);
-        this.app.ui.showErrorMessage(errorMsg);
-        throw new Error(errorMsg);
-      }
-      
-      // Handle zoom actions if present
-      if (msg.zoomAction) {
-        dx.out(`Zoom action received: ${msg.zoomAction}`);
-        // Zoom actions are handled by the webview itself
-      }
-    } finally {
-      dx.done();
-    }
-  }
 }
 
 // end, UIWebView.ts

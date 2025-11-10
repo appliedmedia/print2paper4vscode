@@ -6,25 +6,45 @@ import {
   kPageSizeId,
   kOrient,
   kMarginId,
-  kFontSizeId,
   kHeaderFooter,
   kHeaderFooterMenuIds,
+  kFontSizeId,
+  kHeader,
+  kFooter,
   kPrint,
   kPage,
   kTheme,
-  kHeader,
-  kFooter,
   kZoomOut,
   kZoomIn,
   kZoomLevel,
+  kMenus,
 } from './types/PaperPrinter_t';
+
+// Text edit config type for text input widgets in menu items
+export type TextEditConfig_t = {
+  type: 'text_edit';
+  width?: string;
+  constrain?: {
+    regex?: string;  // Regex pattern (e.g., '^\d{0,3}$') - only 2 backslashes needed!
+    min?: number;
+    max?: number;
+  };
+};
+
+// IconSlotTriad type - three-part slot structure
+export interface iconSlotTriad_t {
+  begin: string;
+  main: string | TextEditConfig_t;  // Can be string icon or text_edit config object
+  end: string;
+}
 
 // UIMenuItem type - menu item structure
 export interface UIMenuItem_t {
   id: string;
   displayName: string;
-  icon?: string;
-  attributes?: Record<string, string>;
+  iconSlotTriad: iconSlotTriad_t; // Button content: icon, text_edit widget (e.g., "text_edit: {...}"), or empty for non-button
+  shortcutCode?: string; // Optional KeyboardEvent.code for keyboard shortcuts (e.g., "Digit0", "Minus", "Equal")
+  shortcut?: string; // Optional display string for keyboard shortcut (e.g., "Ctrl/Cmd + 0")
 }
 
 // Menu ID types - UI component identifiers
@@ -53,28 +73,23 @@ export const kMenuId = [
 export type MenuId_t = (typeof kMenuId)[number];
 
 // Menu Item ID types - Individual menu item identifiers
-// Auto-constructed from PaperPrinter_t.ts constants
+// Auto-constructed from PaperPrinter_t.ts constants using shared kMenus
 export const kMenuItemId = [
   // System sentinel
   'default',
-  // Print actions
-  ...kPrint.menuItems.map(item => item.id),
-  // From kPage menuItems
-  ...kPage.menuItems.map(item => item.id),
-  // From kOrient menuItems
-  ...kOrient.menuItems.map(item => item.id),
+  // Extract menuItems from all menu constants
+  ...kMenus.flatMap(menu => {
+    if (menu.menuItems && menu.menuItems.length > 0) {
+      return menu.menuItems.map(item => item.id);
+    } else {
+      // Button-only menus: include the menu ID itself
+      return [menu.id];
+    }
+  }),
   // From kHeaderFooter (for header/footer position menus)
   ...kHeaderFooterMenuIds,
   // From kHeaderFooter.subMenuItems (for header/footer content selections)
   ...kHeaderFooter.subMenuItems.map(item => item.id),
-  // From kMarginId menuItems
-  ...kMarginId.menuItems.map(item => item.id),
-  // From kPageSizeId menuItems
-  ...kPageSizeId.menuItems.map(item => item.id),
-  // From kFontSizeId menuItems
-  ...kFontSizeId.menuItems.map(item => item.id),
-  // From kZoomLevel menuItems
-  ...kZoomLevel.menuItems.map(item => item.id),
 ] as const;
 
 export type MenuItemId_t = (typeof kMenuItemId)[number] | string;
@@ -113,6 +128,7 @@ export class UIMenu {
     uimenu_flyout: '',
     uimenu_generic_handlers: '',
     uimenu_css: '',
+    uimenu_text_edit: '',
   } as const;
 
   private dx: Diagnostics;
@@ -128,7 +144,7 @@ export class UIMenu {
     private app: App,
     private _id: MenuId_t,
     private _displayName: string,
-    private _icon: string,
+    private _iconSlotTriad: iconSlotTriad_t,
     private _isFlyout: boolean = false,
     private _menuItems: () => UIMenuItem_t[],
     private _flyoutMenuItemIds: string[] = [],
@@ -154,9 +170,6 @@ export class UIMenu {
   }
 
   // Getters for private properties
-  get icon(): string {
-    return this._icon;
-  }
   get displayName(): string {
     return this._displayName;
   }
@@ -221,15 +234,19 @@ export class UIMenu {
     // Check if this item has a flyout by checking if its ID is in flyoutMenuItemIds
     const menuItemId = item.id;
     const isFlyout = this.flyoutMenuItemIds.includes(menuItemId);
-    const flyoutMenuIdRef = isFlyout ? ` flyout-menu-id-ref="${menuItemId}"` : ''; // Keep for backwards compatibility
+    const flyoutMenuIdRef = isFlyout ? ` flyout-menu-id-ref="${menuItemId}"` : ``;
     const isDefault = menuItemId === defaultItemId;
     const isSelected = menuItemId === selectedItemId;
 
+    // Handle special widget types (e.g., text_edit)
+    const iconSlotResult = this.handleIconSlotTypes(item.iconSlotTriad.main, menuItemId);
+
     // Individual items only need these classes
     const itemClasses = [
-      isFlyout ? 'is-flyout' : '',
-      isSelected ? 'selected' : '',
-      isDefault ? 'default-item' : '',
+      isFlyout ? 'isFlyout' : '',
+      isSelected ? 'isSelected' : '',
+      isDefault ? 'isDefault' : '',
+      iconSlotResult.cssClass || '',
     ]
       .filter(Boolean)
       .join(' ');
@@ -239,18 +256,135 @@ export class UIMenu {
     // DisplayName already contains processed SVG content from PaperPrinter
     const processedDisplayName = item.displayName;
 
+    // Build content with prefix/suffix from iconSlotTriad
+    let iconSlotWithPrefixSuffix = ``;
+    if (iconSlotResult.html || item.iconSlotTriad.begin || item.iconSlotTriad.end) {
+      const prefix = item.iconSlotTriad.begin
+        ? `<span class="icon-slot-prefix">${item.iconSlotTriad.begin}</span>`
+        : ``;
+      const suffix = item.iconSlotTriad.end
+        ? `<span class="icon-slot-suffix">${item.iconSlotTriad.end}</span>`
+        : ``;
+      iconSlotWithPrefixSuffix = prefix + iconSlotResult.html + suffix;
+    }
+
     const replacementDict = {
       itemId,
       itemDisplayName: processedDisplayName,
       itemClasses,
       contentGutterBefore: '', // Content handled by CSS
       contentGutterAfter: '', // Content handled by CSS
+      iconSlotWithPrefixSuffix,
+      textEditConfigAttr: iconSlotResult.configAttr || ``,
+      shortcutCodeAttr: item.shortcutCode ? ` data-shortcut-code="${item.shortcutCode}"` : ``,
       flyout,
-      flyoutMenuIdRef, // Keep for backwards compatibility - will be removed in future
+      flyoutMenuIdRef,
     };
 
     dx.done();
     return this.app.templateDictReplace(yaml.uimenu_item, replacementDict);
+  }
+
+  /**
+   * Build button content from iconSlotTriad
+   */
+  private buildButtonContent(): string {
+    const iconSlotResult = this.handleIconSlotTypes(this._iconSlotTriad.main, this._id);
+    const content = iconSlotResult.html;
+    const begin = this._iconSlotTriad.begin
+      ? `<span class="icon-slot-prefix">${this._iconSlotTriad.begin}</span>`
+      : ``;
+    const end = this._iconSlotTriad.end
+      ? `<span class="icon-slot-suffix">${this._iconSlotTriad.end}</span>`
+      : ``;
+    return begin + content + end;
+  }
+
+  /**
+   * Handle different iconSlotTriad.main types (text_edit, text_static, etc.)
+   * Returns HTML, CSS class, and config attributes for the main slot content
+   */
+  private handleIconSlotTypes(
+    iconSlotTriadMain: string | TextEditConfig_t,
+    itemId: string
+  ): {
+    html: string;
+    cssClass: string;
+    configAttr: string;
+    isSpecialType: boolean;
+  } {
+    const dx = this.dx.sub('handleIconSlotTypes');
+
+    try {
+      // Default return for regular icon content
+      const defaultReturn = {
+        html: typeof iconSlotTriadMain === 'string' && iconSlotTriadMain 
+          ? `<span class="iconSlotTriad">${iconSlotTriadMain}</span>` 
+          : ``,
+        cssClass: ``,
+        configAttr: ``,
+        isSpecialType: false,
+      };
+
+      if (!iconSlotTriadMain) {
+        return defaultReturn;
+      }
+
+      // Handle text_edit type: object with { type: 'text_edit', width, constrain: { regex, min, max } }
+      if (typeof iconSlotTriadMain === 'object' && iconSlotTriadMain !== null) {
+        const config = iconSlotTriadMain as any;
+        if (config.type === 'text_edit') {
+          try {
+            // Validate regex pattern if present
+            if (config.constrain?.regex) {
+              try {
+                new RegExp(config.constrain.regex);
+              } catch (regexError) {
+                throw new Error(`Invalid constrain.regex: ${config.constrain.regex}`);
+              }
+            }
+            
+            // Build data attributes from constrain object
+            const constrainAttrs = config.constrain ? [
+              config.constrain.regex ? ` data-constrain-regex="${config.constrain.regex}"` : '',
+              config.constrain.min !== undefined ? ` data-constrain-min="${config.constrain.min}"` : '',
+              config.constrain.max !== undefined ? ` data-constrain-max="${config.constrain.max}"` : '',
+            ].join('') : '';
+            
+            // Calculate width: use explicit width, or auto-calculate from max value length
+            let width = config.width;
+            if (!width && config.constrain?.max !== undefined) {
+              // Auto-calculate: string(max).length + 1 for comfortable reading
+              const maxDigits = String(config.constrain.max).length;
+              width = `${maxDigits + 1}ch`;
+            }
+            
+            const widthStyle = width ? ` style="width: ${width};"` : '';
+            
+            const yaml = this.yaml;
+            const html = this.app.templateDictReplace(yaml.uimenu_text_edit, {
+              itemId,
+              constrainAttrs,
+              widthStyle,
+            });
+            return {
+              html,
+              cssClass: 'text-edit',
+              configAttr: constrainAttrs,
+              isSpecialType: true,
+            };
+          } catch (error) {
+            dx.error(`Failed to process text_edit config: ${String(error)}`);
+            return defaultReturn;
+          }
+        }
+      }
+
+      // Regular icon content
+      return defaultReturn;
+    } finally {
+      dx.done();
+    }
   }
 
   // Generate the complete HTML for this menu using YAML template
@@ -307,7 +441,7 @@ export class UIMenu {
 
       // Build CSS classes for menu container - only what we need
       const menuClasses = [
-        isFlyout ? 'is-flyout' : '',
+        isFlyout ? 'isFlyout' : '',
         hasGutterBefore ? 'has-gutter-before' : '',
         hasGutterAfter ? 'has-gutter-after' : '',
       ]
@@ -317,18 +451,30 @@ export class UIMenu {
       const template = yaml.uimenu_html;
 
       // Set data attribute with flyout item IDs (from static flyoutMenuItemIds list)
-      const flyoutItemsAttr = this.flyoutMenuItemIds.length > 0 
-        ? ` data-flyout-items="${this.flyoutMenuItemIds.join(',')}"`
-        : '';
-      
+      const flyoutItemsAttr =
+        this.flyoutMenuItemIds.length > 0
+          ? ` data-flyout-items="${this.flyoutMenuItemIds.join(',')}"`
+          : '';
+
+      // Get shortcutCode from menu constant if it exists
+      const menuConst = kMenus.find(m => m.id === this._id);
+      const shortcutCode = (menuConst as { shortcutCode?: string })?.shortcutCode;
+      const shortcutCodeAttr = shortcutCode ? ` data-shortcut-code="${shortcutCode}"` : ``;
+
+      // Build button content from iconSlotTriad
+      const buttonContent = this.buildButtonContent();
+
       const replacementDict = {
         menuId: this._id,
         displayName: this.displayName,
-        icon: this.icon,
+        icon: buttonContent,
         menuItems: hasItems ? menuItems : '', // Empty string if no items
-        menuItemsContainer: hasItems ? `<div class="p2p4vsc-menu-items" id="${this._id}-items">${menuItems}</div>` : '', // Only create container if there are items
+        menuItemsContainer: hasItems
+          ? `<div class="p2p4vsc-menu-items" id="${this._id}-items">${menuItems}</div>`
+          : '', // Only create container if there are items
         menuClasses,
         flyoutItemsAttr, // Data attribute with flyout item IDs from static list
+        shortcutCodeAttr,
       };
 
       const result = this.app.templateDictReplace(template, replacementDict);

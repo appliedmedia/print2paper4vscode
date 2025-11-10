@@ -5,6 +5,7 @@ import {
   type MenuItemId_t,
   type HandleSelection_t,
   type UIMenuItem_t,
+  type iconSlotTriad_t,
   kMenuId,
   kMenuItemId,
 } from './UIMenu';
@@ -25,12 +26,15 @@ import { kFontSizeId } from './types/PaperPrinter_t';
  * const uimenumgr = new UIMenuMgr(app);
  * const menu = uimenumgr.createMenu('print', 'Print', '🖨️', false, ...);
  * uimenumgr.addMenu(menu);
- * const html = await uimenumgr.getAllUIMenuHTML();
+ * const html = await uimenumgr.getUIMenus_HTML();
  */
 export class UIMenuMgr {
   private app: App;
   private menus: UIMenu[] = [];
   private dx: Diagnostics;
+  // Generic context dictionary for template variable substitution
+  // Updated on each menu selection from webview (window dimensions)
+  private contextDict?: Record<string, number>;
 
   constructor(app: App) {
     this.app = app;
@@ -81,10 +85,19 @@ export class UIMenuMgr {
     this.dx.done();
   }
 
+  /**
+   * Generate fresh HTML for a specific menu
+   * Returns the HTML to be sent to webview by caller
+   */
+  async getUIMenu_HTML(menuId: MenuId_t): Promise<string> {
+    const menu = this.getMenuById(menuId);
+    return await menu.getHTML();
+  }
+
   createMenu(
     id: MenuId_t,
     displayName: string,
-    icon: string,
+    iconSlotTriad: iconSlotTriad_t,
     isFlyout: boolean = false,
     menuItems: () => UIMenuItem_t[],
     flyoutMenuItemIds: string[] = [],
@@ -94,7 +107,7 @@ export class UIMenuMgr {
       this.app,
       id,
       displayName,
-      icon,
+      iconSlotTriad,
       isFlyout,
       menuItems,
       flyoutMenuItemIds,
@@ -103,7 +116,7 @@ export class UIMenuMgr {
   }
 
   // Get all menus
-  getAllMenus(): UIMenu[] {
+  getUIMenus(): UIMenu[] {
     return [...this.menus];
   }
 
@@ -114,11 +127,24 @@ export class UIMenuMgr {
   // Therefore, we don't need ID normalization, prefix stripping, or other bulletproofing.
   // If an invalid ID appears, it's a bug that should be fixed, not silently handled.
   // Future: HTML IDs will be completely reworked, so this validation is temporary.
-  async handleMenuItemSelected(menuId: MenuId_t, itemId: MenuItemId_t): Promise<void> {
+  async handleMenuItemSelected(
+    menuId: MenuId_t,
+    itemId: MenuItemId_t,
+    contextDict?: Record<string, number>
+  ): Promise<void> {
     const dx = this.dx.sub('handleMenuItemSelected');
 
     try {
-      const menu = this.getAllMenus().find(menu => menu.id === menuId);
+      // Store context dictionary for template variable substitution
+      if (contextDict) {
+        this.contextDict = contextDict;
+        const contextStr = Object.entries(contextDict)
+          .map(([k, v]) => `${k}=${v}`)
+          .join(', ');
+        dx.out(`Context dictionary updated: ${contextStr}`);
+      }
+
+      const menu = this.getUIMenus().find(menu => menu.id === menuId);
       if (menu) {
         await menu.dispatchSelection(itemId);
         dx.out(`Menu item selected: ${menuId}.${itemId}`);
@@ -134,7 +160,7 @@ export class UIMenuMgr {
   // Get a specific menu by ID
   // Throws error if menu not found - guarantees a valid menu is returned
   getMenuById(id: string): UIMenu {
-    const menu = this.getAllMenus().find(menu => menu.id === id);
+    const menu = this.getUIMenus().find(menu => menu.id === id);
     if (!menu) {
       this.dx.error(`Menu not found: ${id}`);
       throw new Error(`Menu not found: ${id}`);
@@ -148,11 +174,117 @@ export class UIMenuMgr {
     (menu.persist as unknown as Record<string, string | number | boolean>)[menuId] = menuItemId;
   }
 
-  // Get the selected value for a menu
+  // Get the selected menuItemId for a menu (returns the persisted ID)
   getValueForSelectedByMenuId(menuId: MenuId_t): string | undefined {
     const menu = this.getMenuById(menuId);
     const selectedValue = (menu.persist as unknown as Record<string, string>)[menuId];
     return selectedValue;
+  }
+
+  // Get the numeric value for a selected menu item
+  // Looks up menuItem by ID, evaluates calc templates, or parses numeric IDs
+  // Returns undefined if:
+  // - menuItem not found
+  // - calc template evaluation fails (returns empty string)
+  // - value cannot be parsed as number
+  getNumericValueForMenuItemId(menuId: MenuId_t, menuItemId: string): number | undefined {
+    const menu = this.getMenuById(menuId);
+    const menuItems = menu.getMenuItems();
+    
+    // Try to find the menuItem in the list
+    const menuItem = menuItems.find(item => item.id === menuItemId);
+    
+    if (menuItem && 'value' in menuItem) {
+      const value = (menuItem as any).value;
+      
+      // Check if value contains template syntax (including calc)
+      if (typeof value === 'string' && (value.includes('{{calc:') || value.includes('{{'))) {
+        // Evaluate template (replaces vars and evaluates calc expressions)
+        const result = this.evaluateCalcTemplate(value);
+        // Empty string means evaluation failed, return undefined
+        if (result === '') return undefined;
+        const parsed = parseFloat(result);
+        return isNaN(parsed) ? undefined : parsed;
+      }
+      
+      // Return numeric value
+      return typeof value === 'number' ? value : parseFloat(value);
+    }
+    
+    // If not found in menuItems, try parsing menuItemId as number
+    const parsed = parseFloat(menuItemId);
+    return isNaN(parsed) ? undefined : parsed;
+  }
+
+  // Evaluate calc template like {{calc:{{pageHeight}}/{{windowHeight}}}}
+  // 
+  // SECURITY NOTE: eval() is safe here because:
+  // - Templates are DEVELOPER-DEFINED in PaperPrinter_t.ts constants (not user input)
+  // - Users only SELECT which template to use (pick "fitPage" menuItemId)
+  // - No user-entered formulas can reach eval()
+  // 
+  // Process:
+  // 1. Merge contextDict (from webview) with known page dimensions (from PDF)
+  // 2. Always call templateDictReplace on value (replaces all {{vars}})
+  // 3. Look for {{calc:...}} pattern and extract expression
+  // 4. eval() the expression (developer-defined formula)
+  // 5. Replace {{calc:...}} with result
+  // 6. Return final string (or empty string on error)
+  //    - If result contains "{{", it's clear which variable didn't have a dict entry
+  private evaluateCalcTemplate(value: string): string {
+    const dx = this.dx.sub('evaluateCalcTemplate');
+    
+    try {
+      // Build complete context dictionary: merge contextDict with page dimensions
+      const pageSizePx = this.app.pdf?.docInfo?.pageSizePx || { widthPx: 0, heightPx: 0 };
+      const fullContext: Record<string, string> = {
+        // Page dimensions (known on extension side from PDF)
+        pageWidth: String(pageSizePx.widthPx),
+        pageHeight: String(pageSizePx.heightPx),
+      };
+      
+      // Add contextDict (window dimensions from webview)
+      if (this.contextDict) {
+        for (const [key, val] of Object.entries(this.contextDict)) {
+          fullContext[key] = String(val);
+        }
+      }
+      
+      // Always replace template variables first (regardless of calc or not)
+      let result = this.app.templateDictReplace(value, fullContext);
+      
+      // Look for {{calc:...}} pattern (allows whitespace, only replaces calc portion)
+      // Example: "Other: {{calc: 842/800 }}" → "Other: 1.0525"
+      const calcMatch = result.match(/\{\{calc:\s*(.+?)\s*\}\}/);
+      if (calcMatch) {
+        const expression = calcMatch[1].trim(); // Trim captured expression
+        
+        // eval() the expression (developer-defined formula)
+        // If it fails, catch will handle it. If unsubstituted vars remain (e.g., {{foo}}),
+        // they'll be obvious in the result or cause eval to fail naturally.
+        try {
+          // eslint-disable-next-line no-eval
+          const calcResult = eval(expression);
+          
+          // Replace only the {{calc:...}} portion with the result
+          // Note: calcResult can be any type (number, string, etc.) - convert to string
+          result = result.replace(calcMatch[0], String(calcResult));
+          dx.out(`Calc evaluated: ${expression} = ${calcResult}`);
+        } catch (evalError) {
+          dx.print(`Error in eval: ${String(evalError)}`);
+          return '';
+        }
+      }
+      
+      dx.out(`Template value resolved: ${value} -> ${result}`);
+      return result;
+      
+    } catch (error) {
+      dx.print(`Error in evaluateCalcTemplate: ${String(error)}`);
+      return '';
+    } finally {
+      dx.done();
+    }
   }
 
   // Add a menu to the list (called by PaperPrinter)
@@ -164,8 +296,8 @@ export class UIMenuMgr {
   }
 
   // Generate all HTML at once using recursive flyout strategy
-  async getAllUIMenuHTML(): Promise<string> {
-    const allMenus = this.getAllMenus();
+  async getUIMenus_HTML(): Promise<string> {
+    const allMenus = this.getUIMenus();
     const visited = new Set<string>(); // Prevent infinite loops
     let result = '';
 
@@ -184,9 +316,9 @@ export class UIMenuMgr {
   }
 
   // Generate all JavaScript at once
-  getAllUIMenuJS(): string {
+  getUIMenus_JS(): string {
     // All menus share the same generic handlers - get from any menu's cached YAML
-    const allMenus = this.getAllMenus();
+    const allMenus = this.getUIMenus();
     const anyMenu = allMenus[0];
     if (!anyMenu) {
       return '';
@@ -201,8 +333,8 @@ export class UIMenuMgr {
   }
 
   // Get all UIMenu CSS
-  getAllUIMenuCSS(): string {
-    const anyMenu = this.getAllMenus()[0];
+  getUIMenus_CSS(): string {
+    const anyMenu = this.getUIMenus()[0];
     if (!anyMenu) {
       return '';
     }

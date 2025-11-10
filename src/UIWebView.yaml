@@ -61,7 +61,7 @@ webview_css: |
     margin-right: var(--page-gutter-horizontal, 8px);
     margin-bottom: var(--page-gutter-vertical, 4px);
   }
-  
+
   :root {
     --page-gutter-horizontal: 8px;
     --page-gutter-vertical: 4px;
@@ -74,7 +74,7 @@ webview_css: |
 
 webview_js: |
   // PDF Viewer JavaScript - Minimal skeleton for PDF.js to render into
-  
+
   // Send diagnostic message to extension
   function dx(message) {
     if (window.vscode) {
@@ -84,13 +84,13 @@ webview_js: |
       });
     }
   }
-  
+
   let pdfDoc = null;
   // Parse zoom level from template, fallback to 1.0 if invalid, round to 2 decimal places
   let currentScale = Math.round((parseFloat('{{pdf_zoom_level}}') || 1.0) * 100) / 100;
   let pageWidthPx = parseFloat('{{page_width_px}}') || 0;
   let pageHeightPx = parseFloat('{{page_height_px}}') || 0;
-  
+
   // Zoom constants - use values from extension (kZoomLevel.min/max/stepAmount)
   // These must be injected via template variables - error if missing
   const kZoomLevel = {
@@ -99,73 +99,20 @@ webview_js: |
     stepAmount: parseFloat('{{zoomLevel_stepAmount}}') || 0,
     menuItems: {{zoomLevel_menuItems}}, // Menu items with id, displayName, value, shortcutCode
   };
-  
+
   // Keyboard shortcut codes from extension constants
-  const kZoomShortcutCodes = {
-    in: '{{zoomLevel_in_shortcutCode}}',
-    out: '{{zoomLevel_out_shortcutCode}}',
-  };
-  
   if (kZoomLevel.min === 0 || kZoomLevel.max === 0 || kZoomLevel.stepAmount === 0 || 
       isNaN(kZoomLevel.min) || isNaN(kZoomLevel.max) || isNaN(kZoomLevel.stepAmount)) {
     dx('❌ ERROR: zoomLevel_min, zoomLevel_max, or zoomLevel_stepAmount template variables not injected correctly');
     throw new Error('Zoom constants not initialized - template injection failed');
   }
-  
+
   // Compute percent values
   kZoomLevel.minPercent = kZoomLevel.min * 100;
   kZoomLevel.maxPercent = kZoomLevel.max * 100;
-  
+
   // Use existing vscode API from toolbar (or create if not available)
   const vscode = window.vscode || (typeof acquireVsCodeApi !== 'undefined' ? acquireVsCodeApi() : null);
-  
-  // Listen for zoom messages from extension
-  if (vscode) {
-    window.addEventListener('message', event => {
-      const message = event.data;
-      if (message.type === 'zoom') {
-        if (message.zoomLevel !== undefined) {
-          setZoom(message.zoomLevel);
-        } else if (message.zoomAction) {
-          handleZoomAction(message.zoomAction);
-        }
-      } else if (message.type === 'menuItemSelected') {
-        // Handle menu item selections for zoom controls
-        const menuId = message.menuId;
-        const itemId = message.itemId;
-        
-        if (menuId === 'zoomOut') {
-          // Zoom out menu clicked (menu with no items - handled generically by UIMenu)
-          handleZoomAction('out');
-        } else if (menuId === 'zoomIn') {
-          // Zoom in menu clicked (menu with no items - handled generically by UIMenu)
-          handleZoomAction('in');
-        } else if (menuId === 'zoomLevel') {
-          // Zoom level menu item selected
-          // itemId should be the menu item ID directly (e.g., '1.00', 'fitPage', 'fitWidth')
-          
-          if (itemId === 'fitPage') {
-            handleZoomAction('fitPage');
-          } else if (itemId === 'fitWidth') {
-            handleZoomAction('fitWidth');
-          } else {
-            // Find menu item to get its value property
-            const menuItem = kZoomLevel.menuItems.find(item => item.id === itemId);
-            if (menuItem && 'value' in menuItem && menuItem.value !== undefined) {
-              // Use value property from menu item
-              setZoom(menuItem.value);
-            } else {
-              // Fallback: parse from id (for backwards compatibility)
-              const scale = parseFloat(itemId);
-              if (!isNaN(scale)) {
-                setZoom(scale);
-              }
-            }
-          }
-        }
-      }
-    });
-  }
 
   /**
    * Initialize PDF viewer with PDF data
@@ -200,304 +147,29 @@ webview_js: |
 
   /**
    * Handle successful PDF document load
+   * 
+   * Initializes PDF viewer, gets page dimensions, and renders all pages.
+   * Zoom is controlled by extension (not webview) - PDF is regenerated at new zoom levels.
    */
   function onDocumentLoadSuccess(pdf) {
     pdfDoc = pdf;
     document.getElementById('loading').style.display = 'none';
     document.getElementById('pdf-viewer').style.display = 'block';
     
-    // Show zoom controls in toolbar
-    const zoomControls = document.getElementById('p2p4vsc-zoom-controls');
-    if (zoomControls) {
-      zoomControls.style.display = 'flex';
-    }
-    
-    // Get first page dimensions for fit calculations
+    // Get first page dimensions
     pdf.getPage(1).then(function(page) {
       const viewport = page.getViewport({ scale: 1.0 });
       pageWidthPx = viewport.width;
       pageHeightPx = viewport.height;
       
-      // Initialize zoom controls
-      initZoomControls();
-      
-      // Update zoom level display to match current scale (% is static in HTML)
-      const zoomLevelValueEl = document.getElementById('zoom-level-value');
-      if (zoomLevelValueEl) {
-        zoomLevelValueEl.textContent = Math.round(currentScale * 100).toString();
-      }
-      
-      // Render all pages with initial zoom level
+      // Render all pages
       renderAllPages();
     }).catch(function(error) {
       dx(`❌ Error getting page dimensions: ${error.message}`);
       renderAllPages();
     });
   }
-  
-  /**
-   * Sanitize zoom input text: strip non-numeric, limit to 3 chars, clamp to valid range
-   * @param {string} text - Raw input text
-   * @returns {string} - Sanitized text within valid range
-   */
-  function sanitizeZoomInput(text) {
-    // Remove non-numeric characters (no decimals, no % sign in input)
-    let sanitized = text.replace(/[^0-9]/g, '');
-    // Limit to 3 characters max (300 is max)
-    sanitized = sanitized.slice(0, 3);
-    // Ensure value is within valid range (kZoomLevel.minPercent-kZoomLevel.maxPercent)
-    const numValue = parseInt(sanitized, 10);
-    if (sanitized && !isNaN(numValue)) {
-      if (numValue < kZoomLevel.minPercent) {
-        sanitized = kZoomLevel.minPercent.toString();
-      } else if (numValue > kZoomLevel.maxPercent) {
-        sanitized = kZoomLevel.maxPercent.toString();
-      }
-    }
-    return sanitized;
-  }
 
-  /**
-   * Initialize zoom control buttons and keyboard shortcuts
-   */
-  function initZoomControls() {
-    // Show zoom controls in toolbar
-    const zoomControls = document.getElementById('p2p4vsc-zoom-controls');
-    if (zoomControls) {
-      zoomControls.style.display = 'flex';
-    }
-    
-    // Make zoom level editable
-    const zoomLevelEl = document.getElementById('zoom-level');
-    const zoomLevelValueEl = document.getElementById('zoom-level-value');
-    
-    if (zoomLevelEl && zoomLevelValueEl) {
-      // Handle click to focus and select text
-      zoomLevelEl.addEventListener('click', (e) => {
-        e.stopPropagation();
-        zoomLevelEl.focus();
-        // Select the text content (without the %)
-        const range = document.createRange();
-        range.selectNodeContents(zoomLevelValueEl);
-        const selection = window.getSelection();
-        if (selection) {
-          selection.removeAllRanges();
-          selection.addRange(range);
-        }
-      });
-      
-      // Handle input/typing - sanitize on every input (including paste events)
-      // % sign is static and not editable
-      zoomLevelEl.addEventListener('input', (e) => {
-        e.stopPropagation();
-        const text = zoomLevelValueEl.textContent || '';
-        const sanitized = sanitizeZoomInput(text);
-        zoomLevelValueEl.textContent = sanitized;
-      });
-      
-      // Handle blur or Enter key to apply zoom
-      const applyZoomFromInput = () => {
-        let text = zoomLevelValueEl.textContent || '';
-        // Sanitize input defensively (handles paste, drag-and-drop, etc.)
-        text = sanitizeZoomInput(text);
-        
-        if (text === '') {
-          // Restore current zoom if empty (% is static in HTML)
-          zoomLevelValueEl.textContent = Math.round(currentScale * 100).toString();
-          return;
-        }
-        
-        const inputPercent = parseInt(text, 10);
-        // Validate input is within kZoomLevel.minPercent-kZoomLevel.maxPercent range
-        if (isNaN(inputPercent) || inputPercent < kZoomLevel.minPercent || inputPercent > kZoomLevel.maxPercent) {
-          // Invalid input, restore current zoom (% is static in HTML)
-          zoomLevelValueEl.textContent = Math.round(currentScale * 100).toString();
-          return;
-        }
-        
-        // Convert to scale and round to 2 decimal places (no snapping)
-        const clampedPercent = Math.max(kZoomLevel.minPercent, Math.min(kZoomLevel.maxPercent, inputPercent));
-        const newScale = Math.round((clampedPercent / 100) * 100) / 100; // Round to 2 decimal places
-        
-        setZoom(newScale);
-      };
-      
-      zoomLevelEl.addEventListener('blur', applyZoomFromInput);
-      
-      zoomLevelEl.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter') {
-          e.preventDefault();
-          e.stopPropagation();
-          applyZoomFromInput();
-          zoomLevelEl.blur();
-        } else if (e.key === 'Escape') {
-          e.preventDefault();
-          e.stopPropagation();
-          // Restore current zoom on Escape (% is static in HTML)
-          zoomLevelValueEl.textContent = Math.round(currentScale * 100).toString();
-          zoomLevelEl.blur();
-        }
-      });
-    }
-    
-    // Keyboard shortcuts for zoom controls
-    // These work globally when webview has focus, regardless of dropdown state
-    // ⌘/Ctrl+0 → 100% (1:1), ⌘/Ctrl++ → zoom in, ⌘/Ctrl+- → zoom out
-    // Shortcuts are also displayed in menu items (e.g., "100% (1:1) ⌘0") via PaperPrinter.menuItems_ZoomLevel()
-    // Uses KeyboardEvent.code for language-independent key detection
-    document.addEventListener('keydown', function(e) {
-      // Check for Cmd/Ctrl modifier
-      const isModifier = e.metaKey || e.ctrlKey;
-      
-      if (isModifier) {
-        // Use e.code for language-independent key detection
-        if (e.code === kZoomShortcutCodes.in) {
-          e.preventDefault();
-          handleZoomAction('in');
-        } else if (e.code === kZoomShortcutCodes.out) {
-          e.preventDefault();
-          handleZoomAction('out');
-        } else {
-          // Check if any menu item has this shortcutCode
-          const menuItem = kZoomLevel.menuItems.find(item => item.shortcutCode === e.code);
-          if (menuItem && menuItem.value !== undefined) {
-            e.preventDefault();
-            setZoom(menuItem.value);
-          }
-        }
-      }
-    });
-  }
-  
-  /**
-   * Update zoom menu to show current selection
-   */
-  function updateZoomMenuSelection() {
-    const zoomLevelMenu = document.getElementById('zoomLevel');
-    if (!zoomLevelMenu) return;
-    
-    const items = zoomLevelMenu.querySelectorAll('.p2p4vsc-menu-item');
-    items.forEach(item => {
-      item.classList.remove('selected');
-      const itemId = item.id;
-      
-      // Check if this item matches current zoom
-      if (itemId !== 'fitPage' && itemId !== 'fitWidth') {
-        const scale = parseFloat(itemId);
-        if (!isNaN(scale) && Math.abs(scale - currentScale) < 0.01) {
-          item.classList.add('selected');
-        }
-      }
-    });
-  }
-  
-  /**
-   * Handle zoom actions
-   */
-  function handleZoomAction(action) {
-    let newScale = currentScale;
-    
-    switch (action) {
-      case 'in':
-        newScale = Math.round(Math.min(currentScale + kZoomLevel.stepAmount, kZoomLevel.max) * 100) / 100;
-        break;
-      case 'out':
-        newScale = Math.round(Math.max(currentScale - kZoomLevel.stepAmount, kZoomLevel.min) * 100) / 100;
-        break;
-      case 'fitWidth':
-        if (pageWidthPx <= 0) {
-          dx('❌ ERROR: Cannot calculate fitWidth - page dimensions not loaded. PDF may have failed to load or first page is invalid.');
-          throw new Error('Page width must be greater than 0 for fitWidth calculation');
-        }
-        const containerWidth = getAvailableContainerSize();
-        newScale = Math.round((containerWidth.width / pageWidthPx) * 100) / 100;
-        break;
-      case 'fitPage':
-        if (pageWidthPx <= 0 || pageHeightPx <= 0) {
-          dx('❌ ERROR: Cannot calculate fitPage - page dimensions not loaded. PDF may have failed to load or first page is invalid.');
-          throw new Error('Page width and height must be greater than 0 for fitPage calculation');
-        }
-        const containerPage = getAvailableContainerSize();
-        const scaleX = containerPage.width / pageWidthPx;
-        const scaleY = containerPage.height / pageHeightPx;
-        newScale = Math.round(Math.min(scaleX, scaleY) * 100) / 100;
-        break;
-    }
-    
-    setZoom(newScale);
-  }
-  
-  /**
-   * Get available container dimensions accounting for toolbar and padding
-   * Uses CSS custom properties for padding values (from webview_css)
-   */
-  function getAvailableContainerSize() {
-    const toolbar = document.getElementById('p2p4vsc-toolbar');
-    
-    // Get toolbar padding from CSS custom property
-    const toolbarPaddingStr = getComputedStyle(document.documentElement)
-      .getPropertyValue('--toolbar-padding')
-      .trim();
-    const toolbarPaddingPx = toolbarPaddingStr ? parseFloat(toolbarPaddingStr) : 24; // Fallback to 24px
-    
-    // Get default toolbar height from CSS custom property (used when toolbar is missing)
-    const toolbarDefaultHeightStr = getComputedStyle(document.documentElement)
-      .getPropertyValue('--toolbar-default-height')
-      .trim();
-    const toolbarDefaultHeightPx = toolbarDefaultHeightStr ? parseFloat(toolbarDefaultHeightStr) : 60; // Fallback to 60px
-    
-    // Calculate toolbar height: toolbar height + padding if toolbar exists, otherwise use default
-    const toolbarHeight = toolbar 
-      ? toolbar.getBoundingClientRect().height + toolbarPaddingPx
-      : toolbarDefaultHeightPx;
-    
-    // Get horizontal padding from CSS custom property (matches .pdfviewer-container padding)
-    const containerPadding = getComputedStyle(document.documentElement)
-      .getPropertyValue('--container-padding-horizontal')
-      .trim();
-    const horizontalPaddingPx = containerPadding ? parseFloat(containerPadding) : 20; // Fallback to 20px if CSS var not found
-    const horizontalPadding = horizontalPaddingPx * 2; // Left + right padding
-    
-    return {
-      width: Math.max(0, window.innerWidth - horizontalPadding),
-      height: Math.max(0, window.innerHeight - toolbarHeight),
-    };
-  }
-
-  /**
-   * Set zoom level and re-render pages
-   */
-  function setZoom(scale) {
-    // Clamp scale to valid range and round to 2 decimal places
-    currentScale = Math.round(Math.max(kZoomLevel.min, Math.min(kZoomLevel.max, scale)) * 100) / 100;
-    
-    // Update zoom level display (only the number, % is static in HTML)
-    const zoomLevelValueEl = document.getElementById('zoom-level-value');
-    if (zoomLevelValueEl) {
-      zoomLevelValueEl.textContent = Math.round(currentScale * 100).toString();
-    }
-    
-    // Update menu selection if menu is open
-    updateZoomMenuSelection();
-    
-    // Save zoom level to extension
-    if (vscode) {
-      vscode.postMessage({
-        type: 'zoom',
-        zoomLevel: currentScale
-      });
-    }
-    
-    // ⚠️NOTE⚠️ PERFORMANCE: Re-rendering all pages on zoom change
-    // For large PDFs (10+ pages), this can cause noticeable delays.
-    // PDF.js is our rendering system - we're keeping this simple and not using
-    // CSS transforms or progressive rendering tricks.
-    // If performance becomes an issue, consider:
-    // - Adding a progress indicator during re-render
-    // - Implementing lazy rendering (only visible pages first)
-    // - Using CSS transforms for instant visual feedback, then re-render at higher quality
-    renderAllPages();
-  }
 
   /**
    * Handle PDF document load error

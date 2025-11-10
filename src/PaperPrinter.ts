@@ -1,3 +1,20 @@
+/**
+ * PaperPrinter - Main Extension Controller
+ * 
+ * Orchestrates PDF generation, menu management, and UI interactions for the
+ * Print2Paper VS Code extension. Handles document printing, page layout,
+ * zoom controls, and menu state persistence.
+ * 
+ * Key Responsibilities:
+ * - Coordinate PDF generation via DocInfo_PDF
+ * - Manage all UI menus (page size, margins, headers/footers, zoom)
+ * - Handle zoom functionality and keyboard shortcuts
+ * - Persist user preferences and menu selections
+ * - Generate and update webview content
+ * 
+ * @module src/PaperPrinter
+ */
+
 import type { App } from './App';
 import { Diagnostics } from './Diagnostics';
 import {
@@ -6,6 +23,7 @@ import {
   type MenuItemId_t,
   type HandleSelection_t,
   type UIMenuItem_t,
+  type iconSlotTriad_t,
 } from './UIMenu';
 import { UIWebView } from './UIWebView';
 import { DocInfo_PDF } from './DocInfo_PDF';
@@ -41,6 +59,7 @@ import {
   kZoomOut,
   kZoomIn,
   kZoomLevel,
+  kMenus,
 } from './types/PaperPrinter_t';
 
 /**
@@ -332,31 +351,18 @@ export class PaperPrinter {
   // Create menus when needed for the webview
   private createMenus(): void {
     // Avoid duplicates across multiple openings
-    if (this.app.uimenumgr.getAllMenus().length > 0) {
+    if (this.app.uimenumgr.getUIMenus().length > 0) {
       return;
     }
 
-    // Menu configs - array of menu constants
-    const menus = [
-      kPrint,
-      kPage,
-      kPageSizeId,
-      kOrient,
-      kMarginId,
-      kHeader,
-      kFooter,
-      kTheme,
-      kFontSizeId,
-      kZoomOut,
-      kZoomIn,
-      kZoomLevel,
-    ];
+    // Menu configs - use shared kMenus array
+    const menus = kMenus;
 
     // Build menu configs from constants
     const menuConfigs: Array<{
       id: MenuId_t | string;
       displayName: string;
-      icon: string;
+      iconSlotTriad: iconSlotTriad_t;
       isFlyout: boolean;
       menuItems: () => UIMenuItem_t[];
       flyoutMenuItemIds: readonly string[];
@@ -366,7 +372,7 @@ export class PaperPrinter {
       return {
         id: menuConst.id,
         displayName: menuConst.displayName,
-        icon: menuConst.icon,
+        iconSlotTriad: (menuConst as { iconSlotTriad: iconSlotTriad_t }).iconSlotTriad,
         isFlyout: menuConst.isFlyout,
         menuItems: (this[`menuItems_${methodName}` as keyof this] as () => UIMenuItem_t[]).bind(
           this
@@ -387,7 +393,7 @@ export class PaperPrinter {
       menuConfigs.push({
         id: menuId as MenuId_t,
         displayName: kHeaderFooterMenuItemsById[pos].displayName as string,
-        icon: '',
+        iconSlotTriad: { begin: '', main: '', end: '' },
         isFlyout: true,
         menuItems: this.menuItems_HeaderFooterContent.bind(this),
         flyoutMenuItemIds: [],
@@ -396,12 +402,14 @@ export class PaperPrinter {
     });
 
     menuConfigs.forEach(config => {
-      this.dx.out(`Creating menu: ${config.id} with icon: ${config.icon}`);
+      this.dx.out(
+        `Creating menu: ${config.id} with iconSlotTriad: ${JSON.stringify(config.iconSlotTriad)}`
+      );
 
       const menu = this.app.uimenumgr.createMenu(
         config.id as MenuId_t,
         config.displayName,
-        config.icon,
+        config.iconSlotTriad,
         config.isFlyout,
         config.menuItems,
         [...config.flyoutMenuItemIds],
@@ -416,6 +424,7 @@ export class PaperPrinter {
     return kPrint.menuItems.map(item => ({
       id: item.id as MenuItemId_t,
       displayName: item.displayName,
+      iconSlotTriad: { begin: '', main: '', end: '' },
     }));
   }
 
@@ -427,6 +436,7 @@ export class PaperPrinter {
       return {
         id: theme.id,
         displayName: theme.displayName,
+        iconSlotTriad: { begin: '', main: '', end: '' },
       };
     });
   }
@@ -441,6 +451,7 @@ export class PaperPrinter {
     const sizeOptions: UIMenuItem_t[] = kFontSizeId.menuItems.map(item => ({
       id: item.id as MenuItemId_t,
       displayName: item.displayName,
+      iconSlotTriad: { begin: '', main: '', end: '' },
     }));
 
     // Check if editor size already exists in the list
@@ -453,7 +464,11 @@ export class PaperPrinter {
     } else {
       dx.out(`Editor size ${editorSize} not in list, adding it`);
       // Editor size not in list - add it at the top without default selection marker
-      sizeOptions.unshift({ id: String(editorSize), displayName: `${editorSize}px` });
+      sizeOptions.unshift({
+        id: String(editorSize),
+        displayName: `${editorSize}px`,
+        iconSlotTriad: { begin: '', main: '', end: '' },
+      });
     }
 
     dx.out(
@@ -468,14 +483,28 @@ export class PaperPrinter {
     const headerFooterMenus = [kHeader.id, kFooter.id].map(id => ({
       id: id as MenuItemId_t,
       displayName: id === kHeader.id ? kHeader.displayName : kFooter.displayName,
+      iconSlotTriad: { begin: '', main: '', end: '' },
     }));
 
     // Page submenu references (Size, Orient, Margin)
     const pageSubmenus = [kPageSizeId.id, kOrient.id, kMarginId.id].map(id => {
       if (id === kPageSizeId.id)
-        return { id: id as MenuItemId_t, displayName: kPageSizeId.displayName };
-      if (id === kOrient.id) return { id: id as MenuItemId_t, displayName: kOrient.displayName };
-      return { id: id as MenuItemId_t, displayName: kMarginId.displayName };
+        return {
+          id: id as MenuItemId_t,
+          displayName: kPageSizeId.displayName,
+          iconSlotTriad: { begin: '', main: '', end: '' },
+        };
+      if (id === kOrient.id)
+        return {
+          id: id as MenuItemId_t,
+          displayName: kOrient.displayName,
+          iconSlotTriad: { begin: '', main: '', end: '' },
+        };
+      return {
+        id: id as MenuItemId_t,
+        displayName: kMarginId.displayName,
+        iconSlotTriad: { begin: '', main: '', end: '' },
+      };
     });
 
     return [...headerFooterMenus, ...pageSubmenus] as UIMenuItem_t[];
@@ -486,6 +515,7 @@ export class PaperPrinter {
     return kPageSizeId.menuItems.map(item => ({
       id: item.id as MenuItemId_t,
       displayName: item.displayName,
+      iconSlotTriad: { begin: '', main: '', end: '' },
     }));
   }
 
@@ -494,6 +524,7 @@ export class PaperPrinter {
     return kOrient.menuItems.map(item => ({
       id: item.id as MenuItemId_t,
       displayName: this.app.templateDictReplace(item.displayName, this.yaml),
+      iconSlotTriad: { begin: '', main: '', end: '' },
     }));
   }
 
@@ -502,6 +533,7 @@ export class PaperPrinter {
     return kMarginId.menuItems.map(item => ({
       id: item.id as MenuItemId_t,
       displayName: this.app.templateDictReplace(item.displayName, this.yaml),
+      iconSlotTriad: { begin: '', main: '', end: '' },
     }));
   }
 
@@ -510,6 +542,7 @@ export class PaperPrinter {
     return kHeaderFooter.menuItems.map(item => ({
       id: `header_${item.id}` as MenuItemId_t,
       displayName: item.displayName,
+      iconSlotTriad: { begin: '', main: '', end: '' },
     })) as UIMenuItem_t[];
   }
 
@@ -518,6 +551,7 @@ export class PaperPrinter {
     return kHeaderFooter.menuItems.map(item => ({
       id: `footer_${item.id}` as MenuItemId_t,
       displayName: item.displayName,
+      iconSlotTriad: { begin: '', main: '', end: '' },
     })) as UIMenuItem_t[];
   }
 
@@ -527,35 +561,76 @@ export class PaperPrinter {
     return kHeaderFooter.subMenuItems.map(item => ({
       id: item.id as MenuItemId_t,
       displayName: item.displayName,
+      iconSlotTriad: { begin: '', main: '', end: '' },
     }));
   }
 
   private menuItems_ZoomLevel(): UIMenuItem_t[] {
-    // Format shortcuts using OS-specific key mappings
-    return kZoomLevel.menuItems.map(item => {
+    // Start with static menu items
+    const staticItems = kZoomLevel.menuItems.map(item => {
       let displayName: string = item.displayName;
-      
-      // Add shortcut to displayName if it exists
-      // Use template replacement for platform-specific key display
+      let shortcut: string | undefined;
+
+      // Process shortcut if it exists
       if ('shortcut' in item && item.shortcut) {
         // Replace "Ctrl/Cmd +" with template variable for OS-specific replacement
         const shortcutTemplate = item.shortcut.replace(/Ctrl\/Cmd\s*\+\s*/g, '{{os-ctrl-cmd}}+');
-        const shortcut = this.app.os.dictReplace(shortcutTemplate);
-        displayName = `${displayName} ${shortcut}`;
+        shortcut = this.app.os.dictReplace(shortcutTemplate);
+        // Don't add shortcut to displayName - it will be displayed separately via shortcut property
       }
-      
+
       const menuItem: UIMenuItem_t = {
         id: item.id as MenuItemId_t,
         displayName: displayName as string,
+        iconSlotTriad: { begin: '', main: '', end: '' },
+        shortcutCode: 'shortcutCode' in item ? item.shortcutCode : undefined,
+        shortcut: shortcut,
       };
-      
+
       // Add value property if it exists (for numeric zoom levels)
       if ('value' in item && item.value !== undefined) {
         (menuItem as any).value = item.value;
       }
-      
+
       return menuItem;
     });
+
+    // Check if current selection is a custom value (not in static list)
+    const selectedId = this.app.uimenumgr.getValueForSelectedByMenuId(kZoomLevel.id);
+    const selectedScale = parseFloat(selectedId || '');
+
+    // Is it a custom value? (numeric, not in static list, not special actions)
+    const isCustomValue =
+      !isNaN(selectedScale) &&
+      selectedId !== 'fitPage' &&
+      selectedId !== 'fitWidth' &&
+      !staticItems.find(item => item.id === selectedId);
+
+    if (isCustomValue) {
+      // Add custom zoom level to the list
+      const percentValue = Math.round(selectedScale * 100);
+      const customItem: UIMenuItem_t = {
+        id: selectedId as MenuItemId_t,
+        displayName: `${percentValue}%`,
+        iconSlotTriad: { begin: '', main: '', end: '' },
+      };
+      (customItem as any).value = selectedScale;
+
+      // Merge and sort by numeric value (non-numeric items at end)
+      const allItems = [...staticItems, customItem];
+      return allItems.sort((a, b) => {
+        const aVal = (a as any).value;
+        const bVal = (b as any).value;
+
+        // Non-numeric items (fitPage, fitWidth) go to end
+        if (typeof aVal !== 'number') return 1;
+        if (typeof bVal !== 'number') return -1;
+
+        return aVal - bVal;
+      });
+    }
+
+    return staticItems;
   }
 
   private menuItems_ZoomOut(): UIMenuItem_t[] {
@@ -859,6 +934,19 @@ export class PaperPrinter {
     return { id, value };
   }
 
+  /**
+   * Handle zoom level selection from dropdown or text edit input
+   * 
+   * Supports:
+   * - Predefined zoom levels (e.g., "1.00" for 100%)
+   * - Text edit input: percentage values (e.g., "150") or scale (e.g., "1.50")
+   * - Special actions: "fitPage", "fitWidth" with {{calc:...}} templates
+   * 
+   * Architecture:
+   * - Always persists menuItemId (not the value)
+   * - Value lookup handles: menu item values, calc templates, numeric parsing
+   * - fitPage/fitWidth use {{calc:...}} templates evaluated with viewport dimensions
+   */
   private async handleSelection_ZoomLevel(
     menuId: MenuId_t,
     menuItemId: MenuItemId_t
@@ -872,54 +960,109 @@ export class PaperPrinter {
       // Return default zoom level (100% = 1.0)
       id = '1.00';
       value = 1.0;
+      this.app.uimenumgr.setPersistForMenuId(kZoomLevel.id, id);
+      void this.regenerateAndUpdateWebview();
     } else {
-      // Find the menu item to get its value property
       const menuItem = kZoomLevel.menuItems.find(item => item.id === menuItemId);
-      
-      if (menuItemId === 'fitPage' || menuItemId === 'fitWidth') {
-        // Special actions - persist as-is
-        value = menuItemId;
-      } else if (menuItem && 'value' in menuItem && menuItem.value !== undefined) {
-        // Use value property from menu item
-        value = menuItem.value as number;
+
+      if (menuItem) {
+        // Menu item selected (including fitPage/fitWidth with calc values)
+        // Persist the menuItemId, value lookup will handle getting the numeric value
+        this.app.uimenumgr.setPersistForMenuId(kZoomLevel.id, menuItemId);
+        
+        // Get the actual value (this will evaluate calc templates if needed)
+        const numericValue = this.app.uimenumgr.getNumericValueForMenuItemId(kZoomLevel.id, menuItemId);
+        value = numericValue !== undefined ? numericValue : Number(kZoomLevel.alt);
+        id = menuItemId;
+        
+        void this.regenerateAndUpdateWebview();
       } else {
-        // Fallback: parse zoom level from id (e.g., "1.00" -> 1.0)
-        const scale = parseFloat(menuItemId);
-        // Validate scale is within valid range
-        if (!isNaN(scale) && scale >= kZoomLevel.min && scale <= kZoomLevel.max) {
-          value = scale;
+        // Text edit input: numeric string (could be percentage like "150" or scale like "1.50")
+        const numericValue = parseFloat(menuItemId);
+
+        if (!isNaN(numericValue)) {
+          // If value > 10, treat as percentage; otherwise treat as scale
+          const scale = numericValue > 10 ? numericValue / 100 : numericValue;
+
+          // Clamp to min/max and round to 2 decimals
+          const clampedScale = Math.max(kZoomLevel.min, Math.min(kZoomLevel.max, scale));
+          const roundedScale = Math.round(clampedScale * 100) / 100;
+
+          id = roundedScale.toFixed(2);
+          value = roundedScale;
+
+          // Persist as menuItemId (numeric string) - value lookup will parse it
+          this.app.uimenumgr.setPersistForMenuId(kZoomLevel.id, id);
+          void this.regenerateAndUpdateWebview();
         } else {
-          dx.out(`Invalid zoom scale: ${scale}, ignoring`);
-          value = Number(kZoomLevel.alt); // Default to alt value
+          dx.out(`Invalid zoom value: ${menuItemId}, using default`);
+          value = Number(kZoomLevel.alt);
           id = kZoomLevel.alt;
+          this.app.uimenumgr.setPersistForMenuId(kZoomLevel.id, id);
         }
       }
-      // Persist zoom level - webview will handle the actual zoom change via menuItemSelected message
-      this.app.uimenumgr.setPersistForMenuId(kZoomLevel.id, menuItemId);
     }
 
     dx.done();
     return { id, value };
   }
 
+  /**
+   * Handle zoom out button click
+   * 
+   * Decrements current zoom by stepAmount (default 0.1 = 10%), clamped to minimum.
+   * Persists new zoom to ZoomLevel menu and regenerates PDF.
+   */
   private async handleSelection_ZoomOut(
     menuId: MenuId_t,
     menuItemId: MenuItemId_t
   ): Promise<HandleSelection_t> {
     const dx = this.dx.sub('handleSelection_ZoomOut');
-    // Zoom out button clicked - webview will handle via menuItemSelected message
+    // Get current zoom level using proper value lookup
+    const currentMenuItemId = this.app.uimenumgr.getValueForSelectedByMenuId(kZoomLevel.id) || kZoomLevel.alt;
+    const currentZoom = this.app.uimenumgr.getNumericValueForMenuItemId(kZoomLevel.id, currentMenuItemId) || Number(kZoomLevel.alt);
+
+    // Decrement by stepAmount, clamp to min, round to 2 decimals
+    const newZoom = Math.max(
+      kZoomLevel.min,
+      Math.round((currentZoom - kZoomLevel.stepAmount) * 100) / 100
+    );
+
+    // Persist the new zoom level as menuItemId (numeric string)
+    this.app.uimenumgr.setPersistForMenuId(kZoomLevel.id, newZoom.toFixed(2));
+    void this.regenerateAndUpdateWebview();
+
     dx.done();
-    return { id: 'zoomOut', value: 'zoomOut' };
+    return { id: 'zoomOut', value: newZoom };
   }
 
+  /**
+   * Handle zoom in button click
+   * 
+   * Increments current zoom by stepAmount (default 0.1 = 10%), clamped to maximum.
+   * Persists new zoom to ZoomLevel menu and regenerates PDF.
+   */
   private async handleSelection_ZoomIn(
     menuId: MenuId_t,
     menuItemId: MenuItemId_t
   ): Promise<HandleSelection_t> {
     const dx = this.dx.sub('handleSelection_ZoomIn');
-    // Zoom in button clicked - webview will handle via menuItemSelected message
+    // Get current zoom level using proper value lookup
+    const currentMenuItemId = this.app.uimenumgr.getValueForSelectedByMenuId(kZoomLevel.id) || kZoomLevel.alt;
+    const currentZoom = this.app.uimenumgr.getNumericValueForMenuItemId(kZoomLevel.id, currentMenuItemId) || Number(kZoomLevel.alt);
+
+    // Increment by stepAmount, clamp to max, round to 2 decimals
+    const newZoom = Math.min(
+      kZoomLevel.max,
+      Math.round((currentZoom + kZoomLevel.stepAmount) * 100) / 100
+    );
+
+    // Persist the new zoom level as menuItemId (numeric string)
+    this.app.uimenumgr.setPersistForMenuId(kZoomLevel.id, newZoom.toFixed(2));
+    void this.regenerateAndUpdateWebview();
+
     dx.done();
-    return { id: 'zoomIn', value: 'zoomIn' };
+    return { id: 'zoomIn', value: newZoom };
   }
 
   // Removed CSS hacks; rely on theme overrides
