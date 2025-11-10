@@ -283,13 +283,8 @@ export class UIMenuMgr {
           // eslint-disable-next-line no-eval
           const calcResult = eval(expression);
           
-          // Validate result is finite (no Infinity/NaN)
-          if (!isFinite(calcResult)) {
-            dx.print(`Calc result is not finite: ${calcResult}`);
-            return '';
-          }
-          
           // Replace only the {{calc:...}} portion with the result
+          // Note: calcResult can be any type (number, string, etc.) - convert to string
           result = result.replace(calcMatch[0], String(calcResult));
           dx.out(`Calc evaluated: ${expression} = ${calcResult}`);
         } catch (evalError) {
