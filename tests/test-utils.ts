@@ -1,4 +1,4 @@
-import type { ExtensionContext } from 'vscode';
+import type { ExtensionContext, Uri, Range, ViewColumn, Extension, Disposable } from 'vscode';
 
 // Mock VS Code context and APIs
 export const mockContext = {
@@ -11,6 +11,72 @@ export const mockContext = {
   globalStorageUri: { fsPath: '/tmp' },
 } as unknown as ExtensionContext;
 
+interface MockVSCode {
+  commands: {
+    registerCommand: () => Disposable;
+  };
+  window: {
+    showErrorMessage: () => Promise<void>;
+    showInformationMessage: () => Promise<void>;
+    showWarningMessage: () => Promise<void>;
+    setStatusBarMessage: () => Disposable;
+    createWebviewPanel: () => {
+      webview: {
+        html: string;
+        asWebviewUri: (uri: Uri) => Uri;
+        onDidReceiveMessage: () => Disposable;
+        postMessage: () => Promise<boolean>;
+      };
+      title: string;
+      reveal: () => void;
+      onDidDispose: () => Disposable;
+      dispose: () => void;
+    };
+    activeTextEditor: {
+      document: {
+        uri: { fsPath: string; path: string; toString: () => string };
+        fileName: string;
+        languageId: string;
+        getText: () => string;
+        lineCount: number;
+      };
+      selection: {
+        isEmpty: boolean;
+        start: { line: number; character: number };
+        end: { line: number; character: number };
+      };
+    };
+    tabGroups: {
+      activeTabGroup: {
+        activeTab: {
+          label: string;
+        };
+      };
+    };
+  };
+  workspace: {
+    getConfiguration: () => {
+      get: (key: string) => string | number | undefined;
+    };
+  };
+  Uri: {
+    file: (path: string) => { fsPath: string; path: string; toString: () => string };
+    parse: (str: string) => { fsPath: string; path: string; toString: () => string };
+  };
+  Range: typeof Range;
+  ViewColumn: typeof ViewColumn;
+  extensions: {
+    all: Extension<unknown>[];
+    getExtension: () => {
+      extensionPath: string;
+      packageJSON: { name: string };
+    };
+  };
+  env: {
+    language: string;
+  };
+}
+
 export const mockVSCode = {
   commands: { registerCommand: () => ({ dispose: () => {} }) },
   window: {
@@ -21,7 +87,7 @@ export const mockVSCode = {
     createWebviewPanel: () => ({
       webview: {
         html: '',
-        asWebviewUri: (uri: any) => uri,
+        asWebviewUri: (uri: Uri) => uri,
         onDidReceiveMessage: () => ({ dispose: () => {} }),
         postMessage: () => Promise.resolve(true),
       },
@@ -67,15 +133,15 @@ export const mockVSCode = {
     parse: (str: string) => ({ fsPath: str, path: str, toString: () => str }),
   },
   Range: class Range {
-    constructor(public start: any, public end: any) {}
-  },
+    constructor(public start: { line: number; character: number }, public end: { line: number; character: number }) {}
+  } as unknown as typeof Range,
   ViewColumn: {
     Active: 1,
     Beside: 2,
     One: 1,
     Two: 2,
     Three: 3,
-  },
+  } as unknown as typeof ViewColumn,
   extensions: {
     all: [],
     getExtension: () => ({
@@ -86,4 +152,4 @@ export const mockVSCode = {
   env: {
     language: 'en',
   },
-} as any;
+} as unknown as typeof import('vscode');
