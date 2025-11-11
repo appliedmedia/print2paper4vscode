@@ -2,6 +2,7 @@ import { describe, it, beforeEach, afterEach } from 'node:test';
 import * as assert from 'node:assert';
 import { TabInspector } from '../src/TabInspector.js';
 import { App } from '../src/App.js';
+import type * as vscode from 'vscode';
 import type { ExtensionContext } from 'vscode';
 
 // Mock VS Code context and APIs
@@ -38,7 +39,7 @@ const mockVSCode = {
   },
   Uri: { file: (path: string) => ({ fsPath: path }) },
   Range: class Range {},
-} as any;
+} as unknown as typeof vscode;
 
 describe('TabInspector', () => {
   let app: App;

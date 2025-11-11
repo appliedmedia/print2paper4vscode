@@ -3,6 +3,7 @@ import * as assert from 'node:assert';
 import { DocInfo_PDF } from '../src/DocInfo_PDF.js';
 import { App } from '../src/App.js';
 import jsPDF from 'jspdf';
+import type * as vscode from 'vscode';
 import type { ExtensionContext } from 'vscode';
 
 // Mock VS Code context and APIs
@@ -29,7 +30,7 @@ const mockVSCode = {
   },
   Uri: { file: (path: string) => ({ fsPath: path }) },
   Range: class Range {},
-} as any;
+} as unknown as typeof vscode;
 
 describe('DocInfo_PDF', () => {
   let app: App;

@@ -1,3 +1,4 @@
+import type * as vscode from 'vscode';
 import type { ExtensionContext, Uri, Range, ViewColumn, Extension, Disposable } from 'vscode';
 
 // Mock VS Code context and APIs
@@ -152,4 +153,4 @@ export const mockVSCode = {
   env: {
     language: 'en',
   },
-} as unknown as typeof import('vscode');
+} as unknown as typeof vscode;

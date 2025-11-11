@@ -4,6 +4,7 @@ import { UIWebView } from '../src/UIWebView.js';
 import { App } from '../src/App.js';
 import jsPDF from 'jspdf';
 import type { PDFData_t } from '../src/UIWebView.js';
+import type * as vscode from 'vscode';
 import type { ExtensionContext } from 'vscode';
 
 // Mock VS Code context and APIs
@@ -42,7 +43,7 @@ const mockVSCode = {
   Uri: { file: (path: string) => ({ fsPath: path }) },
   Range: class Range {},
   ViewColumn: { Active: 1 },
-} as any;
+} as unknown as typeof vscode;
 
 describe('UIWebView', () => {
   let app: App;

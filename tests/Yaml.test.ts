@@ -5,6 +5,7 @@ import { App } from '../src/App.js';
 import * as fs from 'fs';
 import * as path from 'path';
 import { tmpdir } from 'os';
+import type * as vscode from 'vscode';
 import type { ExtensionContext } from 'vscode';
 
 // Mock VS Code context and APIs
@@ -31,7 +32,7 @@ const mockVSCode = {
   },
   Uri: { file: (path: string) => ({ fsPath: path }) },
   Range: class Range {},
-} as any;
+} as unknown as typeof vscode;
 
 describe('Yaml', () => {
   let app: App;

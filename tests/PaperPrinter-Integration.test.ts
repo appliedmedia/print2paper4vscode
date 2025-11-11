@@ -2,6 +2,7 @@ import { test, describe } from 'node:test';
 import { strict as assert } from 'node:assert';
 import { App } from '../src/App.js';
 import { PaperPrinter } from '../src/PaperPrinter.js';
+import type * as vscode from 'vscode';
 import type { ExtensionContext } from 'vscode';
 
 // Mock VS Code context and APIs
@@ -33,7 +34,7 @@ const mockVSCode = {
   },
   Uri: { file: (path: string) => ({ fsPath: path }) },
   Range: class Range {},
-} as any;
+} as unknown as typeof vscode;
 
 describe('PaperPrinter Integration Tests', () => {
   test('should generate same PDF for webview and print operations', async () => {
