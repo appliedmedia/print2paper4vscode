@@ -106,7 +106,7 @@ describe('PaperPrinter', () => {
 
     try {
       await paperPrinterPrivate.generatePdf();
-      assert.ok(app.pdf.docInfo !== null || app.pdf.docInfo === null);
+      assert.ok(app.pdf.docInfo !== null && app.pdf.docInfo.pdfDoc !== null, 'PDF should be generated');
     } catch (error) {
       // May fail if full setup isn't complete
       assert.ok(true);
