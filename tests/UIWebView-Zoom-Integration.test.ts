@@ -128,15 +128,13 @@ describe('Extension↔Webview Integration Tests', () => {
       const doc = new jsPDF();
       doc.text('Test PDF', 10, 10);
       
-      const pdfData: PDFData_t = {
-        arrayBuffer: doc.output('arraybuffer') as ArrayBuffer,
-        
-        pageTotal: 3,
-        pageSizePx: { widthPx: 595, heightPx: 842 },
-        title: 'Test PDF Document',
-      };
+      // Set up app.pdf.docInfo with the PDF document
+      app.pdf.docInfo.pdfDoc = doc;
+      app.pdf.docInfo.pageTotal = 3;
+      app.pdf.docInfo.pageSizePx = { widthPx: 595, heightPx: 842 };
+      app.pdf.docInfo.title = 'Test PDF Document';
 
-      await uiWebView.displayPdfPanel(pdfData);
+      await uiWebView.displayPdfPanel('Test PDF Document');
 
       // Get captured HTML from global
       capturedWebviewHTML = (global as any).__capturedWebviewHTML || '';
@@ -165,7 +163,7 @@ describe('Extension↔Webview Integration Tests', () => {
         title: 'Test',
       };
 
-      await uiWebView.displayPdfPanel(pdfData);
+      await uiWebView.displayPdfPanel(app.pdf.docInfo.title || "Test");
 
       // Get captured HTML
       capturedWebviewHTML = (global as any).__capturedWebviewHTML || '';
@@ -186,7 +184,7 @@ describe('Extension↔Webview Integration Tests', () => {
         title: 'Test',
       };
 
-      await uiWebView.displayPdfPanel(pdfData);
+      await uiWebView.displayPdfPanel(app.pdf.docInfo.title || "Test");
 
       // Get captured HTML
       capturedWebviewHTML = (global as any).__capturedWebviewHTML || '';
@@ -217,7 +215,7 @@ describe('Extension↔Webview Integration Tests', () => {
       };
 
       // Should not throw - should use default value
-      await uiWebView.displayPdfPanel(pdfData);
+      await uiWebView.displayPdfPanel(app.pdf.docInfo.title || "Test");
       capturedWebviewHTML = (global as any).__capturedWebviewHTML || '';
       assert.ok(capturedWebviewHTML.includes('1.0'), 'Should default to 1.0 when zoom level is undefined');
     });
@@ -238,7 +236,7 @@ describe('Extension↔Webview Integration Tests', () => {
       };
 
       // Should validate and use default value
-      await uiWebView.displayPdfPanel(pdfData);
+      await uiWebView.displayPdfPanel(app.pdf.docInfo.title || "Test");
       capturedWebviewHTML = (global as any).__capturedWebviewHTML || '';
       assert.ok(capturedWebviewHTML.includes(kZoomLevel.alt), `Should use default alt value (${kZoomLevel.alt}) for invalid zoom`);
     });
@@ -255,7 +253,7 @@ describe('Extension↔Webview Integration Tests', () => {
         title: 'Test',
       };
 
-      await uiWebView.displayPdfPanel(pdfData);
+      await uiWebView.displayPdfPanel(app.pdf.docInfo.title || "Test");
 
       // Get captured HTML
       capturedWebviewHTML = (global as any).__capturedWebviewHTML || '';
@@ -316,7 +314,7 @@ describe('Extension↔Webview Integration Tests', () => {
         pageSizePx: { widthPx: 595, heightPx: 842 },
         title: 'Test',
       };
-      await uiWebView.displayPdfPanel(pdfData);
+      await uiWebView.displayPdfPanel(app.pdf.docInfo.title || "Test");
 
       const initialZoom = 1.5;
       app.ui.persist.pdf_zoom_level = initialZoom;
@@ -353,7 +351,7 @@ describe('Extension↔Webview Integration Tests', () => {
         pageSizePx: { widthPx: 595, heightPx: 842 },
         title: 'Test',
       };
-      await uiWebView.displayPdfPanel(pdfData);
+      await uiWebView.displayPdfPanel(app.pdf.docInfo.title || "Test");
 
       app.ui.persist.pdf_zoom_level = 1.0;
 
@@ -388,7 +386,7 @@ describe('Extension↔Webview Integration Tests', () => {
         pageSizePx: { widthPx: 595, heightPx: 842 },
         title: 'Test',
       };
-      await uiWebView.displayPdfPanel(pdfData);
+      await uiWebView.displayPdfPanel(app.pdf.docInfo.title || "Test");
 
       const zoomActionMessage: PostMessage = {
         type: 'zoom',
@@ -481,7 +479,7 @@ describe('Extension↔Webview Integration Tests', () => {
       };
 
       // Should not throw - should handle null gracefully
-      await uiWebView.displayPdfPanel(pdfData);
+      await uiWebView.displayPdfPanel(app.pdf.docInfo.title || "Test");
       capturedWebviewHTML = (global as any).__capturedWebviewHTML || '';
       assert.ok(typeof capturedWebviewHTML === 'string' && capturedWebviewHTML.length > 0, 'Should generate HTML even with null persisted value');
     });
@@ -500,14 +498,14 @@ describe('Extension↔Webview Integration Tests', () => {
 
       // Test minimum boundary (zoom example)
       app.ui.persist.pdf_zoom_level = kZoomLevel.min;
-      await uiWebView.displayPdfPanel(pdfData);
+      await uiWebView.displayPdfPanel(app.pdf.docInfo.title || "Test");
       capturedWebviewHTML = (global as any).__capturedWebviewHTML || '';
       assert.ok(capturedWebviewHTML.includes(kZoomLevel.min.toString()), 'Should accept minimum boundary value');
 
       // Test maximum boundary
       capturedWebviewHTML = ''; // Reset
       app.ui.persist.pdf_zoom_level = kZoomLevel.max;
-      await uiWebView.displayPdfPanel(pdfData);
+      await uiWebView.displayPdfPanel(app.pdf.docInfo.title || "Test");
       capturedWebviewHTML = (global as any).__capturedWebviewHTML || '';
       assert.ok(capturedWebviewHTML.includes(kZoomLevel.max.toString()), 'Should accept maximum boundary value');
     });
@@ -525,7 +523,7 @@ describe('Extension↔Webview Integration Tests', () => {
       };
 
       // Should handle empty values without error
-      await uiWebView.displayPdfPanel(pdfData);
+      await uiWebView.displayPdfPanel(app.pdf.docInfo.title || "Test");
       capturedWebviewHTML = (global as any).__capturedWebviewHTML || '';
       assert.ok(typeof capturedWebviewHTML === 'string' && capturedWebviewHTML.length > 0, 'Should generate HTML even with empty template variables');
     });
@@ -544,7 +542,7 @@ describe('Extension↔Webview Integration Tests', () => {
         title: 'Test',
       };
 
-      await uiWebView.displayPdfPanel(pdfData);
+      await uiWebView.displayPdfPanel(app.pdf.docInfo.title || "Test");
 
       // Get captured HTML
       capturedWebviewHTML = (global as any).__capturedWebviewHTML || '';
@@ -570,7 +568,7 @@ describe('Extension↔Webview Integration Tests', () => {
         pageSizePx: { widthPx: 595, heightPx: 842 },
         title: 'Test',
       };
-      await uiWebView.displayPdfPanel(pdfData);
+      await uiWebView.displayPdfPanel(app.pdf.docInfo.title || "Test");
 
       app.ui.persist.pdf_zoom_level = 1.0;
 
@@ -601,7 +599,7 @@ describe('Extension↔Webview Integration Tests', () => {
         pageSizePx: { widthPx: 595, heightPx: 842 },
         title: 'Test',
       };
-      await uiWebView.displayPdfPanel(pdfData);
+      await uiWebView.displayPdfPanel(app.pdf.docInfo.title || "Test");
 
       app.ui.persist.pdf_zoom_level = 1.0;
 
@@ -651,7 +649,7 @@ describe('Extension↔Webview Integration Tests', () => {
         pageSizePx: { widthPx: 595, heightPx: 842 },
         title: 'Test',
       };
-      await uiWebView.displayPdfPanel(pdfData);
+      await uiWebView.displayPdfPanel(app.pdf.docInfo.title || "Test");
 
       app.ui.persist.pdf_zoom_level = 1.0;
 
@@ -688,7 +686,7 @@ describe('Extension↔Webview Integration Tests', () => {
         pageSizePx: { widthPx: 595, heightPx: 842 },
         title: 'Test',
       };
-      await uiWebView.displayPdfPanel(pdfData);
+      await uiWebView.displayPdfPanel(app.pdf.docInfo.title || "Test");
 
       app.ui.persist.pdf_zoom_level = 1.0;
 
@@ -746,7 +744,7 @@ describe('Extension↔Webview Integration Tests', () => {
         pageSizePx: { widthPx: 595, heightPx: 842 },
         title: 'Test',
       };
-      await uiWebView.displayPdfPanel(pdfData);
+      await uiWebView.displayPdfPanel(app.pdf.docInfo.title || "Test");
 
       // Send invalid zoom level (out of range)
       const invalidMessage: PostMessage = {

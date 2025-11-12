@@ -27,21 +27,18 @@ describe('UIWebView', () => {
   it('should display PDF panel with valid PDF data', async () => {
     const doc = new jsPDF();
     doc.text('Test PDF Content', 10, 10);
-    const arrayBuffer = doc.output('arraybuffer') as ArrayBuffer;
-
-    const pdfData: PDFData_t = {
-      arrayBuffer,
-      
-      pageTotal: doc.getNumberOfPages(),
-      pageSizePx: {
-        widthPx: 595,
-        heightPx: 842,
-      },
-      title: 'Test PDF',
+    
+    // Set up app.pdf.docInfo with the PDF document
+    app.pdf.docInfo.pdfDoc = doc;
+    app.pdf.docInfo.pageTotal = doc.getNumberOfPages();
+    app.pdf.docInfo.pageSizePx = {
+      widthPx: 595,
+      heightPx: 842,
     };
+    app.pdf.docInfo.title = 'Test PDF';
 
     try {
-      await uiWebView.displayPdfPanel(pdfData);
+      await uiWebView.displayPdfPanel('Test PDF');
       assert.ok(true); // Should not throw
     } catch (error) {
       // May fail if webview setup isn't complete
@@ -54,23 +51,20 @@ describe('UIWebView', () => {
     doc.text('Page 1', 10, 10);
     doc.addPage();
     doc.text('Page 2', 10, 10);
-    const arrayBuffer = doc.output('arraybuffer') as ArrayBuffer;
-
-    const pdfData: PDFData_t = {
-      arrayBuffer,
-      
-      pageTotal: doc.getNumberOfPages(),
-      pageSizePx: {
-        widthPx: 595,
-        heightPx: 842,
-      },
-      title: 'Multi-Page PDF',
+    
+    // Set up app.pdf.docInfo with the PDF document
+    app.pdf.docInfo.pdfDoc = doc;
+    app.pdf.docInfo.pageTotal = doc.getNumberOfPages();
+    app.pdf.docInfo.pageSizePx = {
+      widthPx: 595,
+      heightPx: 842,
     };
+    app.pdf.docInfo.title = 'Multi-Page PDF';
 
-    assert.strictEqual(pdfData.pageTotal, 2);
+    assert.strictEqual(app.pdf.docInfo.pageTotal, 2);
     
     try {
-      await uiWebView.displayPdfPanel(pdfData);
+      await uiWebView.displayPdfPanel('Multi-Page PDF');
       assert.ok(true);
     } catch (error) {
       assert.ok(true);
@@ -78,18 +72,14 @@ describe('UIWebView', () => {
   });
 
   it('should validate PDF data requirements', async () => {
-    const invalidPdfData = {
-      arrayBuffer: undefined as any,
-      pageTotal: 1,
-      pageSizePx: { widthPx: 595, heightPx: 842 },
-      title: 'Test',
-    };
+    // Set up app.pdf.docInfo with no PDF document
+    app.pdf.docInfo.pdfDoc = null;
 
     try {
-      await uiWebView.displayPdfPanel(invalidPdfData);
+      await uiWebView.displayPdfPanel('Test');
       assert.fail('Should have thrown error');
     } catch (error) {
-      assert.ok(String(error).includes('arrayBuffer') || String(error).includes('required'));
+      assert.ok(String(error).includes('PDF document not generated') || String(error).includes('required'));
     }
   });
 
