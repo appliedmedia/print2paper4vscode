@@ -10,6 +10,7 @@ import { kZoomLevel, kZoomIn, kZoomOut } from './types/PaperPrinter_t';
  */
 export interface PDFData_t {
   arrayBuffer: ArrayBuffer;
+  dataUrl: string; // jsPDF native format: data:application/pdf;filename=generated.pdf;base64,...
   pageTotal: number;
   pageSizePx: {
     widthPx: number;
@@ -96,23 +97,18 @@ export class UIWebView {
     let pdfData: PDFData_t;
 
     // Check if we got DocInfo_PDF or already-prepared PDFData_t
-    let pdf_data_url: string;
     if ('asArrayBuffer' in pdfDocOrData && 'pageTotal' in pdfDocOrData) {
-      // It's a DocInfo_PDF - use native jsPDF data URL format
+      // It's a DocInfo_PDF - extract data using jsPDF native format
       pdfData = {
         arrayBuffer: pdfDocOrData.asArrayBuffer(),
+        dataUrl: pdfDocOrData.asDataUrl(), // Use jsPDF's native data URL format
         pageTotal: pdfDocOrData.pageTotal,
         pageSizePx: pdfDocOrData.pageSizePx,
         title: title || 'PDF Document',
       };
-      // Use jsPDF's native data URL format
-      pdf_data_url = pdfDocOrData.asDataUrl();
     } else {
-      // It's already PDFData_t - manually construct data URL from ArrayBuffer
+      // It's already PDFData_t - use its dataUrl (should already be jsPDF format)
       pdfData = pdfDocOrData;
-      // Convert ArrayBuffer to base64 data URL (required for VS Code webview)
-      const base64 = Buffer.from(pdfData.arrayBuffer).toString('base64');
-      pdf_data_url = `data:application/pdf;base64,${base64}`;
     }
 
     dx.require({ pdfData }, ['pdfData']);
@@ -135,7 +131,7 @@ export class UIWebView {
       );
 
       // Generate HTML for PDF viewer
-      const html = await this.generatePDFHTML(pdf_data_url, pdfData);
+      const html = await this.generatePDFHTML(pdfData.dataUrl, pdfData);
 
       // Add toolbar
       const htmlWithToolbar = await this.app.ui.addToolbar(html);

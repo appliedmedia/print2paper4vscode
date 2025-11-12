@@ -114,6 +114,7 @@ describe('UIWebView PDF.js Integration', () => {
 
       const pdfData: PDFData_t = {
         arrayBuffer,
+        dataUrl: doc.output('dataurlstring') as string,
         pageTotal: doc.getNumberOfPages(),
         pageSizePx: {
           widthPx: 595, // A4 width in points at 72 DPI
@@ -216,6 +217,7 @@ describe('UIWebView PDF.js Integration', () => {
 
       const pdfData: PDFData_t = {
         arrayBuffer,
+        dataUrl: doc.output('dataurlstring') as string,
         pageTotal: doc.getNumberOfPages(),
         pageSizePx: { widthPx: 595, heightPx: 842 },
         title: 'Test PDF',
@@ -265,6 +267,7 @@ describe('UIWebView PDF.js Integration', () => {
 
       const pdfData: PDFData_t = {
         arrayBuffer,
+        dataUrl: doc.output('dataurlstring') as string,
         pageTotal: doc.getNumberOfPages(),
         pageSizePx: { widthPx: 595, heightPx: 842 },
         title: 'Multi-Page PDF',
@@ -287,7 +290,8 @@ describe('UIWebView PDF.js Integration', () => {
 
       const pdfData: PDFData_t = {
         arrayBuffer,
-        pageTotal: 2,
+        dataUrl: doc.output('dataurlstring') as string,
+      pageTotal: 2,
         pageSizePx: { widthPx: 595, heightPx: 842 },
         title: 'Multi-Page Test',
       };

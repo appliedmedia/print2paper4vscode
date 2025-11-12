@@ -2,7 +2,13 @@ import { describe, it, beforeEach, afterEach } from 'node:test';
 import * as assert from 'node:assert';
 import { DocInfo_PaperPrinter } from '../src/DocInfo_PaperPrinter.js';
 import { App } from '../src/App.js';
+import { PaperPrinter } from '../src/PaperPrinter.js';
 import { mockContext, mockVSCode } from './test-utils.js';
+
+// Type to access private createMenus method for testing
+type PaperPrinterWithCreateMenus = PaperPrinter & {
+  createMenus(): void;
+};
 
 describe('DocInfo_PaperPrinter', () => {
   let app: App;
@@ -12,7 +18,7 @@ describe('DocInfo_PaperPrinter', () => {
     app = new App(mockContext, mockVSCode);
     app.init();
     // Create menus before tests that need them (menus are created on-demand in production)
-    (app.paperprinter as any).createMenus();
+    (app.paperprinter as PaperPrinterWithCreateMenus).createMenus();
     docInfo = new DocInfo_PaperPrinter(app);
   });
 
