@@ -120,7 +120,6 @@ window.pdfjsLib = {
       // Step 3: Create PDFData_t structure
       const pdfData: PDFData_t = {
         arrayBuffer,
-        dataUrl: doc.output('dataurlstring') as string,
         pageTotal: doc.getNumberOfPages(),
         pageSizePx: {
           widthPx: 595, // A4 width in pixels at 72 DPI
@@ -156,7 +155,6 @@ window.pdfjsLib = {
 
       const pdfData: PDFData_t = {
         arrayBuffer,
-        dataUrl: doc.output('dataurlstring') as string,
         pageTotal: doc.getNumberOfPages(),
         pageSizePx: { widthPx: 595, heightPx: 842 },
         title: 'Multi-Page Test',
@@ -198,7 +196,6 @@ window.pdfjsLib = {
 
       const pdfData: PDFData_t = {
         arrayBuffer,
-        dataUrl: doc.output('dataurlstring') as string,
       pageTotal: 1,
         pageSizePx: { widthPx: 595, heightPx: 842 },
         title: 'Base64 Test',
@@ -230,7 +227,6 @@ window.pdfjsLib = {
 
         const pdfData: PDFData_t = {
           arrayBuffer,
-          dataUrl: doc.output('dataurlstring') as string,
       pageTotal: 1,
           pageSizePx: size,
           title: `${size.name} Test`,
@@ -260,7 +256,6 @@ window.pdfjsLib = {
 
       const pdfData: PDFData_t = {
         arrayBuffer,
-        dataUrl: doc.output('dataurlstring') as string,
         pageTotal: doc.getNumberOfPages(),
         pageSizePx: { widthPx: 595, heightPx: 842 },
         title: 'Large PDF Test',
@@ -358,7 +353,6 @@ window.pdfjsLib = {
 
       const pdfData: PDFData_t = {
         arrayBuffer,
-        dataUrl: doc.output('dataurlstring') as string,
         pageTotal: doc.getNumberOfPages(),
         pageSizePx: { widthPx: 595, heightPx: 842 },
         title: 'Very Large PDF Test (500 pages)',

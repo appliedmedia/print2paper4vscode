@@ -28,11 +28,10 @@ describe('UIWebView', () => {
     const doc = new jsPDF();
     doc.text('Test PDF Content', 10, 10);
     const arrayBuffer = doc.output('arraybuffer') as ArrayBuffer;
-    const dataUrl = doc.output('dataurlstring') as string;
 
     const pdfData: PDFData_t = {
       arrayBuffer,
-      dataUrl,
+      
       pageTotal: doc.getNumberOfPages(),
       pageSizePx: {
         widthPx: 595,
@@ -56,11 +55,10 @@ describe('UIWebView', () => {
     doc.addPage();
     doc.text('Page 2', 10, 10);
     const arrayBuffer = doc.output('arraybuffer') as ArrayBuffer;
-    const dataUrl = doc.output('dataurlstring') as string;
 
     const pdfData: PDFData_t = {
       arrayBuffer,
-      dataUrl,
+      
       pageTotal: doc.getNumberOfPages(),
       pageSizePx: {
         widthPx: 595,

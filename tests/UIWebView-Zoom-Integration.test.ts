@@ -128,10 +128,9 @@ describe('Extension↔Webview Integration Tests', () => {
       const doc = new jsPDF();
       doc.text('Test PDF', 10, 10);
       
-      const dataUrl = doc.output('dataurlstring') as string;
       const pdfData: PDFData_t = {
         arrayBuffer: doc.output('arraybuffer') as ArrayBuffer,
-        dataUrl,
+        
         pageTotal: 3,
         pageSizePx: { widthPx: 595, heightPx: 842 },
         title: 'Test PDF Document',
@@ -158,10 +157,9 @@ describe('Extension↔Webview Integration Tests', () => {
       const doc = new jsPDF();
       doc.text('Test', 10, 10);
       
-      const dataUrl = doc.output('dataurlstring') as string;
       const pdfData: PDFData_t = {
         arrayBuffer: doc.output('arraybuffer') as ArrayBuffer,
-        dataUrl,
+        
         pageTotal: 1,
         pageSizePx: { widthPx: 595, heightPx: 842 },
         title: 'Test',
@@ -180,10 +178,9 @@ describe('Extension↔Webview Integration Tests', () => {
       const doc = new jsPDF();
       doc.text('Test', 10, 10);
       
-      const dataUrl = doc.output('dataurlstring') as string;
       const pdfData: PDFData_t = {
         arrayBuffer: doc.output('arraybuffer') as ArrayBuffer,
-        dataUrl,
+        
         pageTotal: 1,
         pageSizePx: { widthPx: 595, heightPx: 842 },
         title: 'Test',
@@ -211,10 +208,9 @@ describe('Extension↔Webview Integration Tests', () => {
       const doc = new jsPDF();
       doc.text('Test', 10, 10);
       
-      const dataUrl = doc.output('dataurlstring') as string;
       const pdfData: PDFData_t = {
         arrayBuffer: doc.output('arraybuffer') as ArrayBuffer,
-        dataUrl,
+        
         pageTotal: 1,
         pageSizePx: { widthPx: 595, heightPx: 842 },
         title: 'Test',
@@ -233,10 +229,9 @@ describe('Extension↔Webview Integration Tests', () => {
       const doc = new jsPDF();
       doc.text('Test', 10, 10);
       
-      const dataUrl = doc.output('dataurlstring') as string;
       const pdfData: PDFData_t = {
         arrayBuffer: doc.output('arraybuffer') as ArrayBuffer,
-        dataUrl,
+        
         pageTotal: 1,
         pageSizePx: { widthPx: 595, heightPx: 842 },
         title: 'Test',
@@ -252,10 +247,9 @@ describe('Extension↔Webview Integration Tests', () => {
       const doc = new jsPDF();
       doc.text('Test', 10, 10);
       
-      const dataUrl = doc.output('dataurlstring') as string;
       const pdfData: PDFData_t = {
         arrayBuffer: doc.output('arraybuffer') as ArrayBuffer,
-        dataUrl,
+        
         pageTotal: 1,
         pageSizePx: { widthPx: 595, heightPx: 842 },
         title: 'Test',
@@ -315,10 +309,9 @@ describe('Extension↔Webview Integration Tests', () => {
       // Create a panel first to set up message routing callback
       const doc = new jsPDF();
       doc.text('Test', 10, 10);
-      const dataUrl = doc.output('dataurlstring') as string;
       const pdfData: PDFData_t = {
         arrayBuffer: doc.output('arraybuffer') as ArrayBuffer,
-        dataUrl,
+        
         pageTotal: 1,
         pageSizePx: { widthPx: 595, heightPx: 842 },
         title: 'Test',
@@ -353,10 +346,9 @@ describe('Extension↔Webview Integration Tests', () => {
       // Create panel to set up routing
       const doc = new jsPDF();
       doc.text('Test', 10, 10);
-      const dataUrl = doc.output('dataurlstring') as string;
       const pdfData: PDFData_t = {
         arrayBuffer: doc.output('arraybuffer') as ArrayBuffer,
-        dataUrl,
+        
         pageTotal: 1,
         pageSizePx: { widthPx: 595, heightPx: 842 },
         title: 'Test',
@@ -389,10 +381,9 @@ describe('Extension↔Webview Integration Tests', () => {
       // Create panel to set up routing
       const doc = new jsPDF();
       doc.text('Test', 10, 10);
-      const dataUrl = doc.output('dataurlstring') as string;
       const pdfData: PDFData_t = {
         arrayBuffer: doc.output('arraybuffer') as ArrayBuffer,
-        dataUrl,
+        
         pageTotal: 1,
         pageSizePx: { widthPx: 595, heightPx: 842 },
         title: 'Test',
@@ -481,10 +472,9 @@ describe('Extension↔Webview Integration Tests', () => {
       const doc = new jsPDF();
       doc.text('Test', 10, 10);
       
-      const dataUrl = doc.output('dataurlstring') as string;
       const pdfData: PDFData_t = {
         arrayBuffer: doc.output('arraybuffer') as ArrayBuffer,
-        dataUrl,
+        
         pageTotal: 1,
         pageSizePx: { widthPx: 595, heightPx: 842 },
         title: 'Test',
@@ -500,10 +490,9 @@ describe('Extension↔Webview Integration Tests', () => {
       const doc = new jsPDF();
       doc.text('Test', 10, 10);
       
-      const dataUrl = doc.output('dataurlstring') as string;
       const pdfData: PDFData_t = {
         arrayBuffer: doc.output('arraybuffer') as ArrayBuffer,
-        dataUrl,
+        
         pageTotal: 1,
         pageSizePx: { widthPx: 595, heightPx: 842 },
         title: 'Test',
@@ -527,10 +516,9 @@ describe('Extension↔Webview Integration Tests', () => {
       const doc = new jsPDF();
       doc.text('Test', 10, 10);
       
-      const dataUrl = doc.output('dataurlstring') as string;
       const pdfData: PDFData_t = {
         arrayBuffer: doc.output('arraybuffer') as ArrayBuffer,
-        dataUrl,
+        
         pageTotal: 1,
         pageSizePx: { widthPx: 595, heightPx: 842 },
         title: '', // Empty title
@@ -548,10 +536,9 @@ describe('Extension↔Webview Integration Tests', () => {
       const doc = new jsPDF();
       doc.text('Test', 10, 10);
       
-      const dataUrl = doc.output('dataurlstring') as string;
       const pdfData: PDFData_t = {
         arrayBuffer: doc.output('arraybuffer') as ArrayBuffer,
-        dataUrl,
+        
         pageTotal: 1,
         pageSizePx: { widthPx: 595, heightPx: 842 },
         title: 'Test',
@@ -576,10 +563,9 @@ describe('Extension↔Webview Integration Tests', () => {
       // Create panel to set up real message routing
       const doc = new jsPDF();
       doc.text('Test', 10, 10);
-      const dataUrl = doc.output('dataurlstring') as string;
       const pdfData: PDFData_t = {
         arrayBuffer: doc.output('arraybuffer') as ArrayBuffer,
-        dataUrl,
+        
         pageTotal: 1,
         pageSizePx: { widthPx: 595, heightPx: 842 },
         title: 'Test',
@@ -608,10 +594,9 @@ describe('Extension↔Webview Integration Tests', () => {
       // Create panel to set up routing
       const doc = new jsPDF();
       doc.text('Test', 10, 10);
-      const dataUrl = doc.output('dataurlstring') as string;
       const pdfData: PDFData_t = {
         arrayBuffer: doc.output('arraybuffer') as ArrayBuffer,
-        dataUrl,
+        
         pageTotal: 3, // Multiple pages to simulate slow render
         pageSizePx: { widthPx: 595, heightPx: 842 },
         title: 'Test',
@@ -659,10 +644,9 @@ describe('Extension↔Webview Integration Tests', () => {
       // Create panel to set up routing
       const doc = new jsPDF();
       doc.text('Test', 10, 10);
-      const dataUrl = doc.output('dataurlstring') as string;
       const pdfData: PDFData_t = {
         arrayBuffer: doc.output('arraybuffer') as ArrayBuffer,
-        dataUrl,
+        
         pageTotal: 1,
         pageSizePx: { widthPx: 595, heightPx: 842 },
         title: 'Test',
@@ -697,10 +681,9 @@ describe('Extension↔Webview Integration Tests', () => {
       // Create panel to set up routing
       const doc = new jsPDF();
       doc.text('Test', 10, 10);
-      const dataUrl = doc.output('dataurlstring') as string;
       const pdfData: PDFData_t = {
         arrayBuffer: doc.output('arraybuffer') as ArrayBuffer,
-        dataUrl,
+        
         pageTotal: 1,
         pageSizePx: { widthPx: 595, heightPx: 842 },
         title: 'Test',
@@ -756,10 +739,9 @@ describe('Extension↔Webview Integration Tests', () => {
       // Create panel to set up routing
       const doc = new jsPDF();
       doc.text('Test', 10, 10);
-      const dataUrl = doc.output('dataurlstring') as string;
       const pdfData: PDFData_t = {
         arrayBuffer: doc.output('arraybuffer') as ArrayBuffer,
-        dataUrl,
+        
         pageTotal: 1,
         pageSizePx: { widthPx: 595, heightPx: 842 },
         title: 'Test',

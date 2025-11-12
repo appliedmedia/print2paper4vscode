@@ -5,11 +5,6 @@ import { App } from '../src/App.js';
 import { PaperPrinter } from '../src/PaperPrinter.js';
 import { mockContext, mockVSCode } from './test-utils.js';
 
-// Type to access private createMenus method for testing
-type PaperPrinterWithCreateMenus = PaperPrinter & {
-  createMenus(): void;
-};
-
 describe('DocInfo_PaperPrinter', () => {
   let app: App;
   let docInfo: DocInfo_PaperPrinter;
@@ -18,7 +13,8 @@ describe('DocInfo_PaperPrinter', () => {
     app = new App(mockContext, mockVSCode);
     app.init();
     // Create menus before tests that need them (menus are created on-demand in production)
-    (app.paperprinter as PaperPrinterWithCreateMenus).createMenus();
+    // Access private createMenus method through type assertion
+    (app.paperprinter as unknown as { createMenus(): void }).createMenus();
     docInfo = new DocInfo_PaperPrinter(app);
   });
 
