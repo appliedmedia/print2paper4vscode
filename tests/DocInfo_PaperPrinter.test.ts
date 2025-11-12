@@ -11,6 +11,8 @@ describe('DocInfo_PaperPrinter', () => {
   beforeEach(() => {
     app = new App(mockContext, mockVSCode);
     app.init();
+    // Create menus before tests that need them (menus are created on-demand in production)
+    (app.paperprinter as any).createMenus();
     docInfo = new DocInfo_PaperPrinter(app);
   });
 

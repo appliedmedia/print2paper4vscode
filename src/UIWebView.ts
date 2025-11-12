@@ -85,6 +85,7 @@ export class UIWebView {
       | PDFData_t
       | {
           asArrayBuffer(): ArrayBuffer;
+          asDataUrl(): string;
           pageTotal: number;
           pageSizePx: { widthPx: number; heightPx: number };
         },
@@ -95,17 +96,23 @@ export class UIWebView {
     let pdfData: PDFData_t;
 
     // Check if we got DocInfo_PDF or already-prepared PDFData_t
+    let pdf_data_url: string;
     if ('asArrayBuffer' in pdfDocOrData && 'pageTotal' in pdfDocOrData) {
-      // It's a DocInfo_PDF - extract data (DocInfo_PDF already provides pixels)
+      // It's a DocInfo_PDF - use native jsPDF data URL format
       pdfData = {
         arrayBuffer: pdfDocOrData.asArrayBuffer(),
         pageTotal: pdfDocOrData.pageTotal,
         pageSizePx: pdfDocOrData.pageSizePx,
         title: title || 'PDF Document',
       };
+      // Use jsPDF's native data URL format
+      pdf_data_url = pdfDocOrData.asDataUrl();
     } else {
-      // It's already PDFData_t
+      // It's already PDFData_t - manually construct data URL from ArrayBuffer
       pdfData = pdfDocOrData;
+      // Convert ArrayBuffer to base64 data URL (required for VS Code webview)
+      const base64 = Buffer.from(pdfData.arrayBuffer).toString('base64');
+      pdf_data_url = `data:application/pdf;base64,${base64}`;
     }
 
     dx.require({ pdfData }, ['pdfData']);
@@ -121,10 +128,6 @@ export class UIWebView {
       if (!pdfData.pageSizePx?.widthPx || !pdfData.pageSizePx?.heightPx) {
         throw new Error(`pdfData.pageSizePx.widthPx and .heightPx are required`);
       }
-
-      // Convert ArrayBuffer to base64 data URL (required for VS Code webview)
-      const base64 = Buffer.from(pdfData.arrayBuffer).toString('base64');
-      const pdf_data_url = `data:application/pdf;base64,${base64}`;
 
       // Log PDF object usage for webview (Stage 4.3)
       dx.out(
