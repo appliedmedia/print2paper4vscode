@@ -225,14 +225,7 @@ export class DocInfo_PDF {
    * Get the PDF as a data URL string
    */
   asDataUrl(): string {
-    if (!this.pdfDoc) {
-      return '';
-    }
-    // jsPDF's output('dataurlstring') may not return the expected format
-    // Manually construct the data URL to ensure correct format
-    const arrayBuffer = this.pdfDoc.output('arraybuffer') as ArrayBuffer;
-    const base64 = Buffer.from(arrayBuffer).toString('base64');
-    return `data:application/pdf;base64,${base64}`;
+    return this.pdfDoc ? (this.pdfDoc.output('dataurlstring') as string) : '';
   }
 }
 
