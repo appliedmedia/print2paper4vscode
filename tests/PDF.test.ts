@@ -119,12 +119,12 @@ describe('PDF', () => {
     pdf.docInfo.code = 'console.log("test");';
     pdf.docInfo.languageId = 'javascript';
 
-    // Generate PDF using the unified approach
-    const pdfDoc = await pdf.generatePdf();
-    assert.ok(pdfDoc);
-    assert.ok(pdfDoc.pageTotal > 0);
-    assert.ok(pdfDoc.asArrayBuffer() instanceof ArrayBuffer);
-    assert.ok(pdfDoc.asArrayBuffer().byteLength > 0);
+    // Generate PDF using the unified approach (sets pdf.docInfo.pdfDoc)
+    await pdf.generatePdf();
+    assert.ok(pdf.docInfo.pdfDoc);
+    assert.ok(pdf.docInfo.pageTotal > 0);
+    assert.ok(pdf.docInfo.asArrayBuffer() instanceof ArrayBuffer);
+    assert.ok(pdf.docInfo.asArrayBuffer().byteLength > 0);
   });
 
   it('should setup PDF document', () => {

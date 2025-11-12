@@ -351,7 +351,7 @@ export class PDF {
 
   // UNIFIED: Generate complete PDF during tokenization
   // Caller should set docInfo properties (code, languageId, title, fontFamily, fontSizePx, theme, etc.) before calling this
-  async generatePdf(): Promise<DocInfo_PDF> {
+  async generatePdf(): Promise<void> {
     const dx = this.dx.sub('generatePdf');
     dx.require({ code: this.docInfo.code, languageId: this.docInfo.languageId }, [
       'code',
@@ -374,15 +374,10 @@ export class PDF {
         0 // pageEnd - 0 means all pages
       );
 
-      // Finish the PDF and get the final document
-      const pdfDoc = this.finishPdf();
+      // Finish the PDF (sets this.docInfo.pdfDoc)
+      this.finishPdf();
 
-      // Store the generated PDF for page extraction
-      // Note: pdfDoc is a DocInfo_PDF wrapper, but we need the raw jsPDF for renderContent
-      // We'll store it in a separate property
-
-      dx.out(`Generated complete PDF with ${pdfDoc.pageTotal} pages`);
-      return pdfDoc;
+      dx.out(`Generated complete PDF with ${this.docInfo.pageTotal} pages`);
     } catch (error) {
       dx.error(`Failed to generate complete PDF: ${String(error)}`);
       throw error;
@@ -930,7 +925,7 @@ export class PDF {
    * Finalize PDF and reset state
    * Returns complete multi-page PDFDoc
    */
-  public finishPdf(): DocInfo_PDF {
+  public finishPdf(): void {
     const dx = this.dx.sub('finishPdf');
 
     try {
@@ -944,7 +939,6 @@ export class PDF {
       dx.out(
         `PDF FINALIZED: ${this.docInfo.pageTotal} pages with ${this.docInfo.fontSizePx}px font`
       );
-      return this.docInfo;
     } catch (error) {
       dx.out(`Error finishing PDF: ${error}`);
       throw error;

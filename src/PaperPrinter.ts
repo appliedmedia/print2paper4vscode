@@ -90,7 +90,6 @@ export class PaperPrinter {
   } as const;
 
   private app: App;
-  private pdfDoc: DocInfo_PDF | null = null; // In-memory PDF document (DocInfo_PDF abstraction)
   private uiwebview: UIWebView | null = null;
   private dx: Diagnostics;
   private _yaml: Yaml<typeof PaperPrinter.kYaml>;
@@ -133,17 +132,17 @@ export class PaperPrinter {
 
     try {
       await this.generatePdf();
-      if (!this.pdfDoc) {
+      if (!this.app.pdf.docInfo.pdfDoc) {
         dx.error('Failed to generate PDF');
         return;
       }
 
       if (printType === 'preview')
-        await this.app.pdf.printWithPreview(this.pdfDoc, this.docInfo.printTitle || 'Print Output');
+        await this.app.pdf.printWithPreview(this.app.pdf.docInfo, this.docInfo.printTitle || 'Print Output');
       else if (printType === 'direct')
-        await this.app.pdf.printDirectly(this.pdfDoc, this.docInfo.printTitle || 'Print Output');
+        await this.app.pdf.printDirectly(this.app.pdf.docInfo, this.docInfo.printTitle || 'Print Output');
       else if (printType === 'save')
-        await this.app.pdf.saveAsPDF(this.pdfDoc, this.docInfo.printTitle || 'Print Output');
+        await this.app.pdf.saveAsPDF(this.app.pdf.docInfo, this.docInfo.printTitle || 'Print Output');
 
       dx.out(`Print request handled: ${printType}`);
     } finally {
@@ -241,7 +240,7 @@ export class PaperPrinter {
       await this.generatePdf();
 
       // Validate we have a PDF document
-      if (!this.pdfDoc) {
+      if (!this.app.pdf.docInfo.pdfDoc) {
         throw new Error('PDF document not generated');
       }
 
@@ -249,8 +248,8 @@ export class PaperPrinter {
       this.uiwebview = new UIWebView(this.app);
       this.uiwebview.init();
 
-      // Display PDF in webview panel (passes DocInfo_PDF, UIWebView extracts data)
-      await this.uiwebview.displayPdfPanel(this.pdfDoc, `Print: ${printableLabel}`);
+      // Display PDF in webview panel (uses this.app.pdf.docInfo directly)
+      await this.uiwebview.displayPdfPanel(`Print: ${printableLabel}`);
 
       this.dx.out(`Opened webview for ${printableLabel}`);
     } catch (error) {
@@ -329,17 +328,17 @@ export class PaperPrinter {
       // Generate complete PDF during tokenization (unified approach)
       dx.out(`Generating complete PDF with unified tokenize + build approach`);
 
-      // Generate the complete PDF in one pass
-      this.pdfDoc = await this.app.pdf.generatePdf();
+      // Generate the complete PDF in one pass (sets this.app.pdf.docInfo.pdfDoc)
+      await this.app.pdf.generatePdf();
 
       // Log PDF object creation for reuse verification (Stage 4.3)
-      const pdfObjectId = this.pdfDoc ? `pdfDoc@${this.pdfDoc.instanceId}` : 'null';
-      dx.out(`PDF object created: ${pdfObjectId} (reused for webview, print, save)`);
+      const pdfObjectId = this.app.pdf.docInfo ? `pdfDoc@${this.app.pdf.docInfo.instanceId}` : 'null';
+      dx.out(`PDF object created: ${pdfObjectId} (stored in app.pdf.docInfo for reuse)`);
       dx.out(
         `PDF object reuse verification: Same object will be used for webview display and print/save operations`
       );
 
-      dx.out(`PDF generation complete: ${this.pdfDoc.pageTotal} pages using unified approach`);
+      dx.out(`PDF generation complete: ${this.app.pdf.docInfo.pageTotal} pages using unified approach`);
     } catch (error) {
       dx.out(`Error in generatePdf: ${error}`);
       throw error;
@@ -667,7 +666,7 @@ export class PaperPrinter {
       await this.generatePdf();
 
       // Validate we have a PDF document
-      if (!this.pdfDoc) {
+      if (!this.app.pdf.docInfo.pdfDoc) {
         throw new Error('PDF document not generated');
       }
 
@@ -677,7 +676,7 @@ export class PaperPrinter {
 
         // Display PDF in webview (reuses existing panel)
         const tabName = this.docInfo.printTitle || 'Document';
-        void this.uiwebview.displayPdfPanel(this.pdfDoc, `Print: ${tabName}`);
+        void this.uiwebview.displayPdfPanel(`Print: ${tabName}`);
       } else {
         dx.out('No webview to update');
       }
@@ -702,23 +701,23 @@ export class PaperPrinter {
       dx.out(`Print action: ${String(menuItemId)}`);
       await this.generatePdf();
 
-      if (this.pdfDoc) {
+      if (this.app.pdf.docInfo.pdfDoc) {
         try {
           if (menuItemId === 'preview') {
             dx.out('Printing with preview...');
             await this.app.pdf.printWithPreview(
-              this.pdfDoc,
+              this.app.pdf.docInfo,
               this.docInfo.printTitle || 'Print Output'
             );
           } else if (menuItemId === 'direct') {
             dx.out('Printing directly...');
             await this.app.pdf.printDirectly(
-              this.pdfDoc,
+              this.app.pdf.docInfo,
               this.docInfo.printTitle || 'Print Output'
             );
           } else if (menuItemId === 'save') {
             dx.out('Saving as PDF...');
-            await this.app.pdf.saveAsPDF(this.pdfDoc, this.docInfo.printTitle || 'Print Output');
+            await this.app.pdf.saveAsPDF(this.app.pdf.docInfo, this.docInfo.printTitle || 'Print Output');
           }
           dx.out(`Print action ${String(menuItemId)} completed successfully`);
         } catch (error) {

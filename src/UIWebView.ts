@@ -80,40 +80,26 @@ export class UIWebView {
    * Creates new panel on first call, updates existing panel on subsequent calls.
    * The PDF is embedded as base64 data URL due to VS Code postMessage limitations.
    */
-  async displayPdfPanel(
-    pdfDocOrData:
-      | PDFData_t
-      | {
-          asArrayBuffer(): ArrayBuffer;
-          asDataUrl(): string;
-          pageTotal: number;
-          pageSizePx: { widthPx: number; heightPx: number };
-        },
-    title?: string
-  ): Promise<WebviewPanelId_t> {
+  async displayPdfPanel(title?: string): Promise<WebviewPanelId_t> {
     const dx = this.dx.sub('displayPdfPanel');
 
-    let pdfData: PDFData_t;
-    let pdf_data_url: string;
-
-    // Check if we got DocInfo_PDF or already-prepared PDFData_t
-    if ('asArrayBuffer' in pdfDocOrData && 'pageTotal' in pdfDocOrData) {
-      // It's a DocInfo_PDF - extract data and use jsPDF's native data URL format
-      pdfData = {
-        arrayBuffer: pdfDocOrData.asArrayBuffer(),
-        pageTotal: pdfDocOrData.pageTotal,
-        pageSizePx: pdfDocOrData.pageSizePx,
-        title: title || 'PDF Document',
-      };
-      // Use jsPDF's native data URL format
-      pdf_data_url = pdfDocOrData.asDataUrl();
-    } else {
-      // It's already PDFData_t - manually construct data URL from ArrayBuffer
-      pdfData = pdfDocOrData;
-      // Convert ArrayBuffer to base64 data URL (required for VS Code webview)
-      const base64 = Buffer.from(pdfData.arrayBuffer).toString('base64');
-      pdf_data_url = `data:application/pdf;base64,${base64}`;
+    // Use DocInfo_PDF directly from app.pdf.docInfo
+    const docInfo = this.app.pdf.docInfo;
+    
+    if (!docInfo.pdfDoc) {
+      throw new Error('PDF document not generated');
     }
+
+    // Extract data and use jsPDF's native data URL format
+    const pdfData: PDFData_t = {
+      arrayBuffer: docInfo.asArrayBuffer(),
+      pageTotal: docInfo.pageTotal,
+      pageSizePx: docInfo.pageSizePx,
+      title: title || docInfo.title || 'PDF Document',
+    };
+    
+    // Use jsPDF's native data URL format
+    const pdf_data_url = docInfo.asDataUrl();
 
     dx.require({ pdfData }, ['pdfData']);
 
