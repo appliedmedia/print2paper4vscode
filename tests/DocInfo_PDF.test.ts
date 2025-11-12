@@ -3,33 +3,7 @@ import * as assert from 'node:assert';
 import { DocInfo_PDF } from '../src/DocInfo_PDF.js';
 import { App } from '../src/App.js';
 import jsPDF from 'jspdf';
-import type { ExtensionContext } from 'vscode';
-
-// Mock VS Code context and APIs
-const mockContext = {
-  subscriptions: [],
-  globalState: {
-    get: () => undefined,
-    update: () => {},
-  },
-  globalStorageUri: { fsPath: '/tmp' },
-} as unknown as ExtensionContext;
-
-const mockVSCode = {
-  commands: { registerCommand: () => ({}) },
-  window: {
-    showErrorMessage: () => {},
-    showInformationMessage: () => {},
-    showWarningMessage: () => {},
-  },
-  workspace: {
-    getConfiguration: () => ({
-      get: () => undefined,
-    }),
-  },
-  Uri: { file: (path: string) => ({ fsPath: path }) },
-  Range: class Range {},
-} as any;
+import { mockContext, mockVSCode } from './test-utils.js';
 
 describe('DocInfo_PDF', () => {
   let app: App;

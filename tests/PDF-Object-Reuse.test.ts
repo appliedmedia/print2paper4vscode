@@ -3,7 +3,7 @@ import * as assert from 'node:assert';
 import { App } from '../src/App.js';
 import { PaperPrinter } from '../src/PaperPrinter.js';
 import { UIWebView } from '../src/UIWebView.js';
-import type { ExtensionContext } from 'vscode';
+import { mockContext, mockVSCode } from './test-utils.js';
 
 /**
  * Comprehensive tests for PDF object reuse (Stage 4.3)
@@ -12,40 +12,6 @@ import type { ExtensionContext } from 'vscode';
  * reused for all purposes (webview display, printing, saving).
  */
 describe('PDF Object Reuse Tests', () => {
-  // Mock VS Code context and APIs
-  const mockContext = {
-    subscriptions: [],
-    globalState: {
-      get: () => undefined,
-      update: () => Promise.resolve(),
-    },
-    globalStorageUri: { fsPath: '/tmp' },
-  } as unknown as ExtensionContext;
-
-  const mockVSCode = {
-    commands: {
-      registerCommand: () => ({
-        dispose: () => {},
-      }),
-    },
-    window: {
-      showErrorMessage: () => {},
-      showInformationMessage: () => {},
-      showWarningMessage: () => {},
-    },
-    workspace: {
-      getConfiguration: () => ({
-        get: (key: string) => {
-          if (key === 'fontSize') return 14;
-          if (key === 'lineHeight') return 1.5;
-          if (key === 'fontFamily') return 'Monaco';
-          return undefined;
-        },
-      }),
-    },
-    Uri: { file: (path: string) => ({ fsPath: path }) },
-    Range: class Range {},
-  } as any;
 
   describe('Single PDF Generation', () => {
     test('should generate PDF only once per user action', async () => {

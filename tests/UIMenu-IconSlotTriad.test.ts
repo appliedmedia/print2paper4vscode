@@ -18,45 +18,7 @@ import {
   type iconSlotTriad_t,
 } from '../src/UIMenu.js';
 import { App } from '../src/App.js';
-import type { ExtensionContext } from 'vscode';
-
-// Mock VS Code context
-const mockContext = {
-  subscriptions: [],
-  globalState: {
-    get: () => undefined,
-    update: () => {},
-  },
-  globalStorageUri: { fsPath: '/tmp' },
-} as unknown as ExtensionContext;
-
-const mockVSCode = {
-  commands: { registerCommand: () => ({}) },
-  window: {
-    showErrorMessage: () => {},
-    showInformationMessage: () => {},
-    showWarningMessage: () => {},
-    createWebviewPanel: () => ({
-      webview: {
-        asWebviewUri: (uri: any) => uri,
-        html: '',
-        onDidReceiveMessage: () => ({ dispose: () => {} }),
-        postMessage: () => {},
-      },
-      reveal: () => {},
-      onDidDispose: () => ({ dispose: () => {} }),
-      title: '',
-    }),
-  },
-  workspace: {
-    getConfiguration: () => ({
-      get: (key: string) => undefined,
-    }),
-  },
-  Uri: { file: (path: string) => ({ fsPath: path }) },
-  Range: class Range {},
-  ViewColumn: { Active: 1 },
-} as any;
+import { mockContext, mockVSCode } from './test-utils.js';
 
 let app: App;
 
