@@ -248,8 +248,8 @@ export class PaperPrinter {
       this.uiwebview = new UIWebView(this.app);
       this.uiwebview.init();
 
-      // Display PDF in webview panel (uses this.app.pdf.docInfo directly)
-      await this.uiwebview.displayPdfPanel(`Print: ${printableLabel}`);
+      // Display PDF in webview panel (uses this.app.pdf.docInfo directly, including title)
+      await this.uiwebview.displayPdfPanel();
 
       this.dx.out(`Opened webview for ${printableLabel}`);
     } catch (error) {
@@ -674,9 +674,8 @@ export class PaperPrinter {
       if (this.uiwebview) {
         dx.out('Updating webview with new PDF...');
 
-        // Display PDF in webview (reuses existing panel)
-        const tabName = this.docInfo.printTitle || 'Document';
-        void this.uiwebview.displayPdfPanel(`Print: ${tabName}`);
+        // Display PDF in webview (reuses existing panel, uses title from docInfo)
+        void this.uiwebview.displayPdfPanel();
       } else {
         dx.out('No webview to update');
       }

@@ -136,7 +136,7 @@ window.pdfjsLib = {
       const uiWebView = new UIWebView(mockApp);
 
       // Step 3: Call displayPdfPanel (uses app.pdf.docInfo)
-      const panelId = await uiWebView.displayPdfPanel('Test Document');
+      const panelId = await uiWebView.displayPdfPanel();
 
       // Step 5: Verify panel was created
       assert.ok(panelId, 'Panel ID should be returned');
@@ -145,9 +145,6 @@ window.pdfjsLib = {
     });
 
     test('should handle multi-page PDF correctly', async () => {
-      const mockApp = buildMockApp();
-      const uiWebView = new UIWebView(mockApp);
-
       // Generate multi-page PDF
       const doc = new jsPDF();
       doc.text('Page 1 Content', 10, 10);
@@ -158,18 +155,13 @@ window.pdfjsLib = {
       doc.addPage();
       doc.text('Page 3 Content', 10, 10);
 
-      const arrayBuffer = doc.output('arraybuffer') as ArrayBuffer;
+      // Create mock app with PDF document
+      const mockApp = buildMockApp(doc);
+      const uiWebView = new UIWebView(mockApp);
 
-      const pdfData: PDFData_t = {
-        arrayBuffer,
-        pageTotal: doc.getNumberOfPages(),
-        pageSizePx: { widthPx: 595, heightPx: 842 },
-        title: 'Multi-Page Test',
-      };
+      const panelId = await uiWebView.displayPdfPanel();
 
-      const panelId = await uiWebView.displayPdfPanel(pdfData);
-
-      assert.strictEqual(pdfData.pageTotal, 3, 'Should have 3 pages');
+      assert.strictEqual(mockApp.pdf.docInfo.pageTotal, 3, 'Should have 3 pages');
       assert.ok(panelId, 'Panel should be created successfully');
     });
 
@@ -179,7 +171,7 @@ window.pdfjsLib = {
       const uiWebView = new UIWebView(mockApp);
 
       try {
-        await uiWebView.displayPdfPanel('Invalid PDF');
+        await uiWebView.displayPdfPanel();
         assert.fail('Should have thrown an error for invalid data');
       } catch (error) {
         assert.ok(String(error).includes('arrayBuffer'), 'Error should mention arrayBuffer');
@@ -195,7 +187,7 @@ window.pdfjsLib = {
       const uiWebView = new UIWebView(mockApp);
 
       // The displayPdfPanel method should handle conversion internally
-      const panelId = await uiWebView.displayPdfPanel('Base64 Test');
+      const panelId = await uiWebView.displayPdfPanel();
 
       // Verify conversion was successful by checking panel was created
       assert.ok(panelId, 'Panel creation should succeed after base64 conversion');
@@ -220,7 +212,7 @@ window.pdfjsLib = {
         // Update pageSizePx to match test size
         mockApp.pdf.docInfo.pageSizePx = size;
 
-        const panelId = await uiWebView.displayPdfPanel(`${size.name} Test`);
+        const panelId = await uiWebView.displayPdfPanel();
         assert.ok(panelId, `Panel should be created for ${size.name} size`);
       }
     });
@@ -241,7 +233,7 @@ window.pdfjsLib = {
       const mockApp = buildMockApp(doc);
       const uiWebView = new UIWebView(mockApp);
 
-      const panelId = await uiWebView.displayPdfPanel('Large PDF Test');
+      const panelId = await uiWebView.displayPdfPanel();
 
       assert.ok(panelId, 'Panel should be created for moderate-size PDF');
       // A 10-page PDF with ~50 lines each should be at least 10KB
@@ -260,9 +252,6 @@ window.pdfjsLib = {
       // This test generates a 500-page PDF, so it may take longer
       // @ts-ignore - Mocha Context
       this.timeout(300000); // 5 minute timeout for CI stability
-      
-      const mockApp = buildMockApp();
-      const uiWebView = new UIWebView(mockApp);
 
       console.log('Generating 500-page PDF...');
       const startTime = Date.now();
@@ -345,7 +334,7 @@ window.pdfjsLib = {
 
       // Test that the panel can be created with this large PDF
       const panelStartTime = Date.now();
-      const panelId = await uiWebView.displayPdfPanel('Very Large PDF Test (500 pages)');
+      const panelId = await uiWebView.displayPdfPanel();
       const panelTime = Date.now() - panelStartTime;
       
       console.log(`Panel creation took ${panelTime}ms`);
@@ -374,7 +363,7 @@ window.pdfjsLib = {
       };
 
       try {
-        await uiWebView.displayPdfPanel('Invalid Page Count');
+        await uiWebView.displayPdfPanel();
         assert.fail('Should have thrown an error');
       } catch (error) {
         // Error should be displayed
@@ -398,7 +387,7 @@ window.pdfjsLib = {
       };
 
       try {
-        await uiWebView.displayPdfPanel('Invalid Page Size');
+        await uiWebView.displayPdfPanel();
         assert.fail('Should have thrown an error');
       } catch (error) {
         assert.ok(errorDisplayed || String(error).includes('pageSizePx'), 

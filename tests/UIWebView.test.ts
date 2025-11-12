@@ -29,16 +29,12 @@ describe('UIWebView', () => {
     doc.text('Test PDF Content', 10, 10);
     
     // Set up app.pdf.docInfo with the PDF document
+    // pageTotal and pageSizePx are computed getters, so just set pdfDoc
     app.pdf.docInfo.pdfDoc = doc;
-    app.pdf.docInfo.pageTotal = doc.getNumberOfPages();
-    app.pdf.docInfo.pageSizePx = {
-      widthPx: 595,
-      heightPx: 842,
-    };
     app.pdf.docInfo.title = 'Test PDF';
 
     try {
-      await uiWebView.displayPdfPanel('Test PDF');
+      await uiWebView.displayPdfPanel();
       assert.ok(true); // Should not throw
     } catch (error) {
       // May fail if webview setup isn't complete
@@ -53,18 +49,14 @@ describe('UIWebView', () => {
     doc.text('Page 2', 10, 10);
     
     // Set up app.pdf.docInfo with the PDF document
+    // pageTotal and pageSizePx are computed getters, so just set pdfDoc
     app.pdf.docInfo.pdfDoc = doc;
-    app.pdf.docInfo.pageTotal = doc.getNumberOfPages();
-    app.pdf.docInfo.pageSizePx = {
-      widthPx: 595,
-      heightPx: 842,
-    };
     app.pdf.docInfo.title = 'Multi-Page PDF';
 
     assert.strictEqual(app.pdf.docInfo.pageTotal, 2);
     
     try {
-      await uiWebView.displayPdfPanel('Multi-Page PDF');
+      await uiWebView.displayPdfPanel();
       assert.ok(true);
     } catch (error) {
       assert.ok(true);
@@ -76,7 +68,7 @@ describe('UIWebView', () => {
     app.pdf.docInfo.pdfDoc = null;
 
     try {
-      await uiWebView.displayPdfPanel('Test');
+      await uiWebView.displayPdfPanel();
       assert.fail('Should have thrown error');
     } catch (error) {
       assert.ok(String(error).includes('PDF document not generated') || String(error).includes('required'));

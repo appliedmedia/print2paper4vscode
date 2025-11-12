@@ -113,7 +113,7 @@ describe('PDF Object Reuse Tests', () => {
       // Display in webview (this should use the same PDF object)
       const uiWebView = new UIWebView(app);
       uiWebView.init();
-      await uiWebView.displayPdfPanel('Test Document');
+      await uiWebView.displayPdfPanel();
 
       // Get ArrayBuffer after webview display
       const arrayBufferAfter = pdfDoc.asArrayBuffer();
@@ -174,7 +174,7 @@ describe('PDF Object Reuse Tests', () => {
       // Display in webview using DocInfo_PDF directly
       const uiWebView = new UIWebView(app);
       uiWebView.init();
-      const panelId = await uiWebView.displayPdfPanel('Test Document');
+      const panelId = await uiWebView.displayPdfPanel();
 
       assert.ok(panelId, 'Panel should be created');
       app.done();
@@ -303,7 +303,7 @@ describe('PDF Object Reuse Tests', () => {
       try {
         const uiWebView = new UIWebView(app);
         uiWebView.init();
-        await uiWebView.displayPdfPanel('Test Document');
+        await uiWebView.displayPdfPanel();
         assert.fail('Should throw error when PDF is not generated');
       } catch (error) {
         assert.ok(
