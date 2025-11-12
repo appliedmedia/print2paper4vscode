@@ -1,3 +1,19 @@
+/**
+ * UI - User Interface Manager
+ * 
+ * Manages the main VS Code webview panel and toolbar for the Print2Paper extension.
+ * Handles webview creation, toolbar positioning, zoom level persistence, and
+ * communication between extension and webview.
+ * 
+ * Features:
+ * - Webview panel creation and lifecycle management
+ * - Toolbar position persistence and validation
+ * - Zoom level persistence
+ * - Message passing between extension and webview
+ * 
+ * @module src/UI
+ */
+
 import type { App } from './App';
 import type { PostMessage, MessageHandler } from './types/UI_t';
 import { Diagnostics } from './Diagnostics';

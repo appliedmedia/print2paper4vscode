@@ -3,11 +3,16 @@
  *
  * Single source of truth for all document configuration and business logic types.
  * All page size, orientation, margin, and font types are defined here.
- * Also includes UI menu structure definitions.
+ * Also includes UI menu structure definitions with iconSlotTriad support.
  *
  * Naming convention:
  * - Constants: kFoo (singular with k prefix) - object with id as key, metadata as value
  * - Types: Foo_t (singular with _t suffix) - derived using `keyof typeof kFoo`
+ * 
+ * Icon Slot Triad Structure:
+ * - begin: Left-most icon position
+ * - main: Center icon position (can be text_edit widget descriptor)
+ * - end: Right-most icon position
  * - Menu ID constants: kFoo_id = 'foo' - the menu ID string
  *
  * Each const object contains ALL metadata (displayName, dimensions, etc.) in ONE place.
@@ -282,7 +287,17 @@ export const kZoomLevel = {
   displayName: 'Zoom Level',
   iconSlotTriad: {
     begin: ' ',
-    main: 'text_edit: {"width": "3ch", "constraints_regex": "^\\\\d{0,3}$", "value_min": 10, "value_max": 300}',
+    main: {
+      type: 'text_edit' as const,
+      constrain: {
+        // NOTE: Text edit width is auto-calculated as: string(max).length + 1 ch
+        //       For max: 300 → width: 4ch, for max: 999 → width: 4ch, for max: 1000 → width: 5ch
+        //       Override by explicitly setting 'width' property if needed
+        regex: '^\\d{0,3}$',  // Only 2 backslashes! Becomes data-constrain-regex
+        min: 10,
+        max: 300,
+      },
+    },
     end: '%▼',
   },
   alt: '1.00',
@@ -308,8 +323,12 @@ export const kZoomLevel = {
     { id: '2.00', displayName: '200%', value: 2.0 },
     { id: '2.50', displayName: '250%', value: 2.5 },
     { id: '3.00', displayName: '300%', value: 3.0 },
-    { id: 'fitPage', displayName: 'Fit Page' },
-    { id: 'fitWidth', displayName: 'Fit Width' },
+    // fitWidth: scale page to fill window width
+    // Formula: windowWidth / pageWidth (e.g., 1200/595 = 2.016 = scale up to fit)
+    { id: 'fitWidth', displayName: 'Fit Width', value: '{{calc:{{windowWidth}}/{{pageWidth}}}}' },
+    // fitPage: scale page to fit both width and height in viewport (use smaller ratio)
+    // Formula: Math.min of width and height ratios (ensures entire page visible)
+    { id: 'fitPage', displayName: 'Fit Page', value: '{{calc:Math.min({{windowWidth}}/{{pageWidth}}, {{windowHeight}}/{{pageHeight}})}}' },
   ],
 } as const;
 export type ZoomLevelMenuItems_t = (typeof kZoomLevel.menuItems)[number]['id'];

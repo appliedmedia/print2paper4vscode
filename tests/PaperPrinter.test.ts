@@ -2,50 +2,7 @@ import { describe, it, beforeEach, afterEach } from 'node:test';
 import * as assert from 'node:assert';
 import { PaperPrinter } from '../src/PaperPrinter.js';
 import { App } from '../src/App.js';
-import type { ExtensionContext } from 'vscode';
-
-// Mock VS Code context and APIs
-const mockContext = {
-  subscriptions: [],
-  globalState: {
-    get: () => undefined,
-    update: () => {},
-  },
-  globalStorageUri: { fsPath: '/tmp' },
-} as unknown as ExtensionContext;
-
-const mockVSCode = {
-  commands: { registerCommand: () => ({}) },
-  window: {
-    showErrorMessage: () => {},
-    showInformationMessage: () => {},
-    showWarningMessage: () => {},
-    createWebviewPanel: () => ({
-      webview: {
-        asWebviewUri: (uri: any) => uri,
-        html: '',
-        onDidReceiveMessage: () => ({ dispose: () => {} }),
-        postMessage: () => {},
-      },
-      reveal: () => {},
-      onDidDispose: () => ({ dispose: () => {} }),
-      title: '',
-    }),
-  },
-  workspace: {
-    getConfiguration: () => ({
-      get: (key: string) => {
-        if (key === 'fontSize') return 14;
-        if (key === 'lineHeight') return 1.5;
-        if (key === 'fontFamily') return 'Monaco';
-        return undefined;
-      },
-    }),
-  },
-  Uri: { file: (path: string) => ({ fsPath: path }) },
-  Range: class Range {},
-  ViewColumn: { Active: 1 },
-} as any;
+import { mockContext, mockVSCode } from './test-utils.js';
 
 describe('PaperPrinter', () => {
   let app: App;
@@ -147,13 +104,8 @@ describe('PaperPrinter', () => {
     const paperPrinterPrivate = paperPrinter as any;
     paperPrinterPrivate.createMenus();
 
-    try {
-      await paperPrinterPrivate.generatePdf();
-      assert.ok(paperPrinter['pdfDoc'] !== null || paperPrinter['pdfDoc'] === null);
-    } catch (error) {
-      // May fail if full setup isn't complete
-      assert.ok(true);
-    }
+    await paperPrinterPrivate.generatePdf();
+    assert.ok(app.pdf.docInfo !== null && app.pdf.docInfo.pdfDoc !== null, 'PDF should be generated');
   });
 
   it('should get current font family', () => {

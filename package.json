@@ -52,6 +52,7 @@
     ]
   },
   "scripts": {
+    "postinstall": "node scripts/setup-vscode-mock.js",
     "vscode:prepublish": "npm run compile:deploy",
     "compile": "rm -rf out && tsc -p ./.config/",
     "compile:deploy": "rm -rf out-deploy && tsc -p ./.config/tsconfig.deploy.json",

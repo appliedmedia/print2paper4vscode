@@ -127,9 +127,9 @@ uimenu_css: |
     font-size: 14px;
     font-weight: 500;
     text-align: center;
-    width: 3ch !important;
-    min-width: 3ch !important;
-    max-width: 3ch !important;
+    /* Default width - can be overridden by inline style from config.width */
+    width: 4ch;
+    min-width: 4ch;
     pointer-events: auto;
     display: inline-block;
     box-sizing: border-box;
@@ -228,13 +228,22 @@ uimenu_generic_handlers: |
 
   /**
    * Post menu item selection message to extension
+   * Includes optional context dictionary for template variable substitution
    */
   function postMenuItemSelected(menuId, itemId) {
     if (window.vscode && menuId && itemId) {
+      // Build context dictionary with window dimensions (page dimensions already known on extension side)
+      // Keys match template variable names (e.g., {{windowWidth}}, {{windowHeight}})
+      const contextDict = {
+        windowWidth: window.innerWidth,   // Current viewport width
+        windowHeight: window.innerHeight  // Current viewport height
+      };
+      
       window.vscode.postMessage({
         type: 'menuItemSelected',
         itemId: itemId,
-        menuId: menuId
+        menuId: menuId,
+        contextDict: contextDict
       });
     }
   }
@@ -427,7 +436,7 @@ uimenu_generic_handlers: |
 
   /**
    * Handle text edit widget keydown events
-   * Validates input against constraints_regex on every keydown
+   * Validates input against constrain.regex on every keydown
    */
   function handleTextEditKeydown(e) {
     const input = e.target;
@@ -436,12 +445,10 @@ uimenu_generic_handlers: |
     // Prevent menu button click when clicking text edit
     e.stopPropagation();
     
-    const configStr = input.getAttribute('data-config');
-    if (!configStr) return;
+    const regexStr = input.getAttribute('data-constrain-regex');
+    if (!regexStr) return;
     
     try {
-      const config = JSON.parse(configStr);
-      if (!config.constraints_regex) return;
       
       // Test the regex against the new character(s) that would be entered
       const currentValue = input.value;
@@ -476,7 +483,7 @@ uimenu_generic_handlers: |
       }
       
       // Test regex against the new value (only regex validation during typing)
-      const regex = new RegExp(config.constraints_regex);
+      const regex = new RegExp(regexStr);
       if (!regex.test(newValue)) {
         e.preventDefault();
         e.stopPropagation();
@@ -492,7 +499,9 @@ uimenu_generic_handlers: |
 
   /**
    * Handle text edit widget input/change events
-   * GENERIC: Just validates and clamps value - actual handling via blur->selection
+   * GENERIC: Just stops propagation - actual validation/clamping happens on blur
+   * NOTE: We do NOT clamp during typing, as this mangles multi-digit entry
+   *       (e.g., typing "150" would clamp "1" to min "10", then append "5" → "105")
    */
   function handleTextEditInput(e) {
     const input = e.target;
@@ -501,22 +510,29 @@ uimenu_generic_handlers: |
     // Prevent menu button click when interacting with text edit
     e.stopPropagation();
     
-    const configStr = input.getAttribute('data-config');
-    if (!configStr) return;
+    // Validation and clamping happens on blur, not during typing
+  }
+  
+  /**
+   * Validate and clamp text edit value
+   * Called on blur to enforce constraints after user finishes typing
+   */
+  function validateAndClampTextEdit(input) {
+    const minStr = input.getAttribute('data-constrain-min');
+    const maxStr = input.getAttribute('data-constrain-max');
     
-    try {
-      const config = JSON.parse(configStr);
+    if (minStr !== null && maxStr !== null) {
       const value = parseFloat(input.value);
+      const min = parseFloat(minStr);
+      const max = parseFloat(maxStr);
       
-      if (!isNaN(value) && config.value_min !== undefined && config.value_max !== undefined) {
+      if (!isNaN(value) && !isNaN(min) && !isNaN(max)) {
         // Clamp value to min/max
-        const clampedValue = Math.max(config.value_min, Math.min(config.value_max, value));
+        const clampedValue = Math.max(min, Math.min(max, value));
         if (clampedValue !== value) {
           input.value = clampedValue.toString();
         }
       }
-    } catch (error) {
-      console.error('Error handling text edit input:', error);
     }
   }
 
@@ -531,8 +547,8 @@ uimenu_generic_handlers: |
     // Prevent menu button click when clicking away from text edit
     e.stopPropagation();
     
-    // Validate and clamp first
-    handleTextEditInput(e);
+    // Validate and clamp now that user is done typing
+    validateAndClampTextEdit(input);
     
     // Get the menu ID from the closest menu
     const menu = input.closest('.p2p4vsc-menu');
@@ -598,4 +614,4 @@ uimenu_item: |
   </div>
 
 uimenu_text_edit: |
-  <span class="iconSlotTriad text-edit-wrapper"><input type="text" class="p2p4vsc-text-edit" data-item-id="{{itemId}}" data-config='{{textEditConfig}}' /></span>
+  <span class="text-edit-wrapper"><input type="text" class="p2p4vsc-text-edit" data-item-id="{{itemId}}"{{constrainAttrs}}{{widthStyle}} /></span>

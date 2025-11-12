@@ -280,15 +280,6 @@ export class VSCodeAPIs {
     const htmlWithURIs = this.app.os.htmlSrcPathToURI(html, id);
     this.updatePanelHtml(id, htmlWithURIs);
 
-    // Restore toolbar position if saved (after webview is initialized)
-    const savedPosition = this.getGlobalState('toolbarPosPx');
-    if (savedPosition) {
-      panel.webview.postMessage({
-        type: 'restorePosition',
-        left: savedPosition,
-      });
-    }
-
     return id;
   }
 

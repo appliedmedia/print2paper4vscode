@@ -40,9 +40,31 @@ describe('UIWebView PDF Panel Creation Integration', () => {
   }
 
   // Helper to create a complete App mock
-  function buildMockApp() {
+  function buildMockApp(pdfDoc?: jsPDF) {
+    const mockDocInfo = pdfDoc ? {
+      pdfDoc,
+      asArrayBuffer: () => pdfDoc.output('arraybuffer') as ArrayBuffer,
+      asDataUrl: () => pdfDoc.output('dataurlstring') as string,
+      pageTotal: pdfDoc.getNumberOfPages(),
+      pageSizePx: {
+        widthPx: 595,
+        heightPx: 842,
+      },
+      title: 'Test Document',
+    } : {
+      pdfDoc: null,
+      asArrayBuffer: () => new ArrayBuffer(0),
+      asDataUrl: () => '',
+      pageTotal: 0,
+      pageSizePx: { widthPx: 0, heightPx: 0 },
+      title: '',
+    };
+
     const mockApp = {
       dx: buildDxMock(),
+      pdf: {
+        docInfo: mockDocInfo,
+      },
       ui: {
         debugOut: () => {},
         showErrorMessage: (msg: string) => {
@@ -103,33 +125,18 @@ window.pdfjsLib = {
 
   describe('Complete PDF Panel Creation Flow', () => {
     test('should create PDF panel from PDF generation to display', async () => {
-      const mockApp = buildMockApp();
-      const uiWebView = new UIWebView(mockApp);
-
       // Step 1: Generate a real PDF using jsPDF
       const doc = new jsPDF();
       doc.text('Sample Document', 10, 10);
       doc.text('This is a test PDF for integration testing.', 10, 20);
       doc.text('Page 1 of 1', 10, 290);
       
-      // Step 2: Convert to ArrayBuffer
-      const arrayBuffer = doc.output('arraybuffer') as ArrayBuffer;
-      assert.ok(arrayBuffer, 'ArrayBuffer should be generated');
-      assert.ok(arrayBuffer.byteLength > 0, 'ArrayBuffer should have content');
+      // Step 2: Create mock app with PDF document
+      const mockApp = buildMockApp(doc);
+      const uiWebView = new UIWebView(mockApp);
 
-      // Step 3: Create PDFData_t structure
-      const pdfData: PDFData_t = {
-        arrayBuffer,
-        pageTotal: doc.getNumberOfPages(),
-        pageSizePx: {
-          widthPx: 595, // A4 width in pixels at 72 DPI
-          heightPx: 842, // A4 height in pixels at 72 DPI
-        },
-        title: 'Test Document',
-      };
-
-      // Step 4: Call displayPdfPanel
-      const panelId = await uiWebView.displayPdfPanel(pdfData);
+      // Step 3: Call displayPdfPanel (uses app.pdf.docInfo)
+      const panelId = await uiWebView.displayPdfPanel();
 
       // Step 5: Verify panel was created
       assert.ok(panelId, 'Panel ID should be returned');
@@ -138,9 +145,6 @@ window.pdfjsLib = {
     });
 
     test('should handle multi-page PDF correctly', async () => {
-      const mockApp = buildMockApp();
-      const uiWebView = new UIWebView(mockApp);
-
       // Generate multi-page PDF
       const doc = new jsPDF();
       doc.text('Page 1 Content', 10, 10);
@@ -151,35 +155,23 @@ window.pdfjsLib = {
       doc.addPage();
       doc.text('Page 3 Content', 10, 10);
 
-      const arrayBuffer = doc.output('arraybuffer') as ArrayBuffer;
+      // Create mock app with PDF document
+      const mockApp = buildMockApp(doc);
+      const uiWebView = new UIWebView(mockApp);
 
-      const pdfData: PDFData_t = {
-        arrayBuffer,
-        pageTotal: doc.getNumberOfPages(),
-        pageSizePx: { widthPx: 595, heightPx: 842 },
-        title: 'Multi-Page Test',
-      };
+      const panelId = await uiWebView.displayPdfPanel();
 
-      const panelId = await uiWebView.displayPdfPanel(pdfData);
-
-      assert.strictEqual(pdfData.pageTotal, 3, 'Should have 3 pages');
+      assert.strictEqual(mockApp.pdf.docInfo.pageTotal, 3, 'Should have 3 pages');
       assert.ok(panelId, 'Panel should be created successfully');
     });
 
     test('should validate PDF data before creating panel', async () => {
-      const mockApp = buildMockApp();
+      // Test with invalid data (no PDF document)
+      const mockApp = buildMockApp(); // No PDF doc
       const uiWebView = new UIWebView(mockApp);
 
-      // Test with invalid data
-      const invalidPdfData = {
-        arrayBuffer: undefined as any,
-        pageTotal: 1,
-        pageSizePx: { widthPx: 595, heightPx: 842 },
-        title: 'Invalid PDF',
-      };
-
       try {
-        await uiWebView.displayPdfPanel(invalidPdfData);
+        await uiWebView.displayPdfPanel();
         assert.fail('Should have thrown an error for invalid data');
       } catch (error) {
         assert.ok(String(error).includes('arrayBuffer'), 'Error should mention arrayBuffer');
@@ -187,22 +179,15 @@ window.pdfjsLib = {
     });
 
     test('should convert PDF ArrayBuffer to base64 for webview', async () => {
-      const mockApp = buildMockApp();
-      const uiWebView = new UIWebView(mockApp);
-
       const doc = new jsPDF();
       doc.text('Base64 Conversion Test', 10, 10);
-      const arrayBuffer = doc.output('arraybuffer') as ArrayBuffer;
 
-      const pdfData: PDFData_t = {
-        arrayBuffer,
-        pageTotal: 1,
-        pageSizePx: { widthPx: 595, heightPx: 842 },
-        title: 'Base64 Test',
-      };
+      // Create mock app with PDF document
+      const mockApp = buildMockApp(doc);
+      const uiWebView = new UIWebView(mockApp);
 
       // The displayPdfPanel method should handle conversion internally
-      const panelId = await uiWebView.displayPdfPanel(pdfData);
+      const panelId = await uiWebView.displayPdfPanel();
 
       // Verify conversion was successful by checking panel was created
       assert.ok(panelId, 'Panel creation should succeed after base64 conversion');
@@ -211,9 +196,6 @@ window.pdfjsLib = {
 
   describe('PDF Size and Display Validation', () => {
     test('should support different page sizes', async () => {
-      const mockApp = buildMockApp();
-      const uiWebView = new UIWebView(mockApp);
-
       const sizes = [
         { widthPx: 595, heightPx: 842, name: 'A4' },
         { widthPx: 612, heightPx: 792, name: 'Letter' },
@@ -223,24 +205,19 @@ window.pdfjsLib = {
       for (const size of sizes) {
         const doc = new jsPDF();
         doc.text(`Testing ${size.name} size`, 10, 10);
-        const arrayBuffer = doc.output('arraybuffer') as ArrayBuffer;
+        
+        // Create mock app with PDF document
+        const mockApp = buildMockApp(doc);
+        const uiWebView = new UIWebView(mockApp);
+        // Update pageSizePx to match test size
+        mockApp.pdf.docInfo.pageSizePx = size;
 
-        const pdfData: PDFData_t = {
-          arrayBuffer,
-          pageTotal: 1,
-          pageSizePx: size,
-          title: `${size.name} Test`,
-        };
-
-        const panelId = await uiWebView.displayPdfPanel(pdfData);
+        const panelId = await uiWebView.displayPdfPanel();
         assert.ok(panelId, `Panel should be created for ${size.name} size`);
       }
     });
 
     test('should handle moderate-size multi-page PDF', async () => {
-      const mockApp = buildMockApp();
-      const uiWebView = new UIWebView(mockApp);
-
       // Create a larger PDF
       const doc = new jsPDF();
       for (let i = 0; i < 10; i++) {
@@ -252,19 +229,15 @@ window.pdfjsLib = {
         }
       }
 
-      const arrayBuffer = doc.output('arraybuffer') as ArrayBuffer;
+      // Create mock app with PDF document
+      const mockApp = buildMockApp(doc);
+      const uiWebView = new UIWebView(mockApp);
 
-      const pdfData: PDFData_t = {
-        arrayBuffer,
-        pageTotal: doc.getNumberOfPages(),
-        pageSizePx: { widthPx: 595, heightPx: 842 },
-        title: 'Large PDF Test',
-      };
-
-      const panelId = await uiWebView.displayPdfPanel(pdfData);
+      const panelId = await uiWebView.displayPdfPanel();
 
       assert.ok(panelId, 'Panel should be created for moderate-size PDF');
       // A 10-page PDF with ~50 lines each should be at least 10KB
+      const arrayBuffer = mockApp.pdf.docInfo.asArrayBuffer();
       assert.ok(arrayBuffer.byteLength > 10000, 'ArrayBuffer should be substantial (>10KB)');
     });
 
@@ -279,9 +252,6 @@ window.pdfjsLib = {
       // This test generates a 500-page PDF, so it may take longer
       // @ts-ignore - Mocha Context
       this.timeout(300000); // 5 minute timeout for CI stability
-      
-      const mockApp = buildMockApp();
-      const uiWebView = new UIWebView(mockApp);
 
       console.log('Generating 500-page PDF...');
       const startTime = Date.now();
@@ -348,18 +318,15 @@ window.pdfjsLib = {
       const generationTime = Date.now() - startTime;
       console.log(`PDF generation took ${generationTime}ms`);
 
-      const arrayBuffer = doc.output('arraybuffer') as ArrayBuffer;
+      // Create mock app with PDF document
+      const mockApp = buildMockApp(doc);
+      const uiWebView = new UIWebView(mockApp);
+      
+      const arrayBuffer = mockApp.pdf.docInfo.asArrayBuffer();
       console.log(`ArrayBuffer size: ${arrayBuffer.byteLength} bytes (${(arrayBuffer.byteLength / 1024 / 1024).toFixed(2)} MB)`);
 
-      const pdfData: PDFData_t = {
-        arrayBuffer,
-        pageTotal: doc.getNumberOfPages(),
-        pageSizePx: { widthPx: 595, heightPx: 842 },
-        title: 'Very Large PDF Test (500 pages)',
-      };
-
       // Page count assertion (most reliable)
-      assert.strictEqual(pdfData.pageTotal, totalPages, 'Should have exactly 500 pages');
+      assert.strictEqual(mockApp.pdf.docInfo.pageTotal, totalPages, 'Should have exactly 500 pages');
       
       // Relaxed size assertion - just verify it's substantial (>100KB)
       // Different jsPDF versions may have varying compression/formatting
@@ -367,7 +334,7 @@ window.pdfjsLib = {
 
       // Test that the panel can be created with this large PDF
       const panelStartTime = Date.now();
-      const panelId = await uiWebView.displayPdfPanel(pdfData);
+      const panelId = await uiWebView.displayPdfPanel();
       const panelTime = Date.now() - panelStartTime;
       
       console.log(`Panel creation took ${panelTime}ms`);
@@ -382,18 +349,11 @@ window.pdfjsLib = {
 
   describe('Error Handling in Integration', () => {
     test('should show error message for invalid page count', async () => {
-      const mockApp = buildMockApp();
-      const uiWebView = new UIWebView(mockApp);
-
       const doc = new jsPDF();
-      const arrayBuffer = doc.output('arraybuffer') as ArrayBuffer;
-
-      const invalidPdfData = {
-        arrayBuffer,
-        pageTotal: 0, // Invalid
-        pageSizePx: { widthPx: 595, heightPx: 842 },
-        title: 'Invalid Page Count',
-      };
+      const mockApp = buildMockApp(doc);
+      const uiWebView = new UIWebView(mockApp);
+      // Set invalid pageTotal
+      mockApp.pdf.docInfo.pageTotal = 0;
 
       let errorDisplayed = false;
       const originalShowError = mockApp.ui.showErrorMessage;
@@ -403,7 +363,7 @@ window.pdfjsLib = {
       };
 
       try {
-        await uiWebView.displayPdfPanel(invalidPdfData);
+        await uiWebView.displayPdfPanel();
         assert.fail('Should have thrown an error');
       } catch (error) {
         // Error should be displayed
@@ -413,18 +373,11 @@ window.pdfjsLib = {
     });
 
     test('should show error message for invalid page size', async () => {
-      const mockApp = buildMockApp();
-      const uiWebView = new UIWebView(mockApp);
-
       const doc = new jsPDF();
-      const arrayBuffer = doc.output('arraybuffer') as ArrayBuffer;
-
-      const invalidPdfData = {
-        arrayBuffer,
-        pageTotal: 1,
-        pageSizePx: { widthPx: 0, heightPx: 0 }, // Invalid
-        title: 'Invalid Page Size',
-      };
+      const mockApp = buildMockApp(doc);
+      const uiWebView = new UIWebView(mockApp);
+      // Set invalid pageSizePx
+      mockApp.pdf.docInfo.pageSizePx = { widthPx: 0, heightPx: 0 };
 
       let errorDisplayed = false;
       const originalShowError = mockApp.ui.showErrorMessage;
@@ -434,7 +387,7 @@ window.pdfjsLib = {
       };
 
       try {
-        await uiWebView.displayPdfPanel(invalidPdfData);
+        await uiWebView.displayPdfPanel();
         assert.fail('Should have thrown an error');
       } catch (error) {
         assert.ok(errorDisplayed || String(error).includes('pageSizePx'), 

@@ -40,6 +40,10 @@ export type PostMessage = {
   zoomAction?: 'in' | 'out' | 'fitWidth' | 'fitPage' | 'actualSize'; // For zoom actions
   pdfDataUrl?: string; // For PDF updates
   pageTotal?: number; // For page total updates
+  // Generic context dictionary for template variable substitution
+  // Sent from webview with window dimensions (page dimensions already known on extension side)
+  // Example: { windowWidth: 1200, windowHeight: 800 }
+  contextDict?: Record<string, number>;
   pageData?: {
     dataUrl: string;
     widthPx: number;

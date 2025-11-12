@@ -20,10 +20,21 @@ import {
   kMenus,
 } from './types/PaperPrinter_t';
 
+// Text edit config type for text input widgets in menu items
+export type TextEditConfig_t = {
+  type: 'text_edit';
+  width?: string;
+  constrain?: {
+    regex?: string;  // Regex pattern (e.g., '^\d{0,3}$') - only 2 backslashes needed!
+    min?: number;
+    max?: number;
+  };
+};
+
 // IconSlotTriad type - three-part slot structure
 export interface iconSlotTriad_t {
   begin: string;
-  main: string;
+  main: string | TextEditConfig_t;  // Can be string icon or text_edit config object
   end: string;
 }
 
@@ -294,7 +305,7 @@ export class UIMenu {
    * Returns HTML, CSS class, and config attributes for the main slot content
    */
   private handleIconSlotTypes(
-    iconSlotTriadMain: string,
+    iconSlotTriadMain: string | TextEditConfig_t,
     itemId: string
   ): {
     html: string;
@@ -304,53 +315,76 @@ export class UIMenu {
   } {
     const dx = this.dx.sub('handleIconSlotTypes');
 
-    // Default return for regular icon content
-    const defaultReturn = {
-      html: iconSlotTriadMain ? `<span class="iconSlotTriad">${iconSlotTriadMain}</span>` : ``,
-      cssClass: ``,
-      configAttr: ``,
-      isSpecialType: false,
-    };
+    try {
+      // Default return for regular icon content
+      const defaultReturn = {
+        html: typeof iconSlotTriadMain === 'string' && iconSlotTriadMain 
+          ? `<span class="iconSlotTriad">${iconSlotTriadMain}</span>` 
+          : ``,
+        cssClass: ``,
+        configAttr: ``,
+        isSpecialType: false,
+      };
 
-    if (!iconSlotTriadMain) {
-      return defaultReturn;
-    }
+      if (!iconSlotTriadMain) {
+        return defaultReturn;
+      }
 
-    // Handle text_edit type: "text_edit: {...json...}"
-    if (iconSlotTriadMain.startsWith('text_edit:')) {
-      const jsonMatch = iconSlotTriadMain.match(/^text_edit:\s*(.+)$/s);
-      if (jsonMatch) {
-        try {
-          const config = JSON.parse(jsonMatch[1].trim());
-          // Validate constraints_regex is a valid regex pattern
-          if (config.constraints_regex) {
-            try {
-              new RegExp(config.constraints_regex);
-            } catch (regexError) {
-              throw new Error(`Invalid constraints_regex: ${config.constraints_regex}`);
+      // Handle text_edit type: object with { type: 'text_edit', width, constrain: { regex, min, max } }
+      if (typeof iconSlotTriadMain === 'object' && iconSlotTriadMain !== null) {
+        const config = iconSlotTriadMain as any;
+        if (config.type === 'text_edit') {
+          try {
+            // Validate regex pattern if present
+            if (config.constrain?.regex) {
+              try {
+                new RegExp(config.constrain.regex);
+              } catch (regexError) {
+                throw new Error(`Invalid constrain.regex: ${config.constrain.regex}`);
+              }
             }
+            
+            // Build data attributes from constrain object
+            const constrainAttrs = config.constrain ? [
+              config.constrain.regex ? ` data-constrain-regex="${config.constrain.regex}"` : '',
+              config.constrain.min !== undefined ? ` data-constrain-min="${config.constrain.min}"` : '',
+              config.constrain.max !== undefined ? ` data-constrain-max="${config.constrain.max}"` : '',
+            ].join('') : '';
+            
+            // Calculate width: use explicit width, or auto-calculate from max value length
+            let width = config.width;
+            if (!width && config.constrain?.max !== undefined) {
+              // Auto-calculate: string(max).length + 1 for comfortable reading
+              const maxDigits = String(config.constrain.max).length;
+              width = `${maxDigits + 1}ch`;
+            }
+            
+            const widthStyle = width ? ` style="width: ${width};"` : '';
+            
+            const yaml = this.yaml;
+            const html = this.app.templateDictReplace(yaml.uimenu_text_edit, {
+              itemId,
+              constrainAttrs,
+              widthStyle,
+            });
+            return {
+              html,
+              cssClass: 'text-edit',
+              configAttr: constrainAttrs,
+              isSpecialType: true,
+            };
+          } catch (error) {
+            dx.error(`Failed to process text_edit config: ${String(error)}`);
+            return defaultReturn;
           }
-          const textEditConfig = JSON.stringify(config);
-          const yaml = this.yaml;
-          const html = this.app.templateDictReplace(yaml.uimenu_text_edit, {
-            itemId,
-            textEditConfig,
-          });
-          return {
-            html,
-            cssClass: 'text-edit',
-            configAttr: ` data-text-edit-config='${textEditConfig}'`,
-            isSpecialType: true,
-          };
-        } catch (error) {
-          dx.error(`Failed to parse text_edit config: ${String(error)}`);
-          return defaultReturn;
         }
       }
-    }
 
-    // Regular icon content
-    return defaultReturn;
+      // Regular icon content
+      return defaultReturn;
+    } finally {
+      dx.done();
+    }
   }
 
   // Generate the complete HTML for this menu using YAML template

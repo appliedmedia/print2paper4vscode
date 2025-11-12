@@ -32,6 +32,9 @@ export class UIMenuMgr {
   private app: App;
   private menus: UIMenu[] = [];
   private dx: Diagnostics;
+  // Generic context dictionary for template variable substitution
+  // Updated on each menu selection from webview (window dimensions)
+  private contextDict?: Record<string, number>;
 
   constructor(app: App) {
     this.app = app;
@@ -124,10 +127,23 @@ export class UIMenuMgr {
   // Therefore, we don't need ID normalization, prefix stripping, or other bulletproofing.
   // If an invalid ID appears, it's a bug that should be fixed, not silently handled.
   // Future: HTML IDs will be completely reworked, so this validation is temporary.
-  async handleMenuItemSelected(menuId: MenuId_t, itemId: MenuItemId_t): Promise<void> {
+  async handleMenuItemSelected(
+    menuId: MenuId_t,
+    itemId: MenuItemId_t,
+    contextDict?: Record<string, number>
+  ): Promise<void> {
     const dx = this.dx.sub('handleMenuItemSelected');
 
     try {
+      // Store context dictionary for template variable substitution
+      if (contextDict) {
+        this.contextDict = contextDict;
+        const contextStr = Object.entries(contextDict)
+          .map(([k, v]) => `${k}=${v}`)
+          .join(', ');
+        dx.out(`Context dictionary updated: ${contextStr}`);
+      }
+
       const menu = this.getUIMenus().find(menu => menu.id === menuId);
       if (menu) {
         await menu.dispatchSelection(itemId);
@@ -158,11 +174,117 @@ export class UIMenuMgr {
     (menu.persist as unknown as Record<string, string | number | boolean>)[menuId] = menuItemId;
   }
 
-  // Get the selected value for a menu
+  // Get the selected menuItemId for a menu (returns the persisted ID)
   getValueForSelectedByMenuId(menuId: MenuId_t): string | undefined {
     const menu = this.getMenuById(menuId);
     const selectedValue = (menu.persist as unknown as Record<string, string>)[menuId];
     return selectedValue;
+  }
+
+  // Get the numeric value for a selected menu item
+  // Looks up menuItem by ID, evaluates calc templates, or parses numeric IDs
+  // Returns undefined if:
+  // - menuItem not found
+  // - calc template evaluation fails (returns empty string)
+  // - value cannot be parsed as number
+  getNumericValueForMenuItemId(menuId: MenuId_t, menuItemId: string): number | undefined {
+    const menu = this.getMenuById(menuId);
+    const menuItems = menu.getMenuItems();
+    
+    // Try to find the menuItem in the list
+    const menuItem = menuItems.find(item => item.id === menuItemId);
+    
+    if (menuItem && 'value' in menuItem) {
+      const value = (menuItem as any).value;
+      
+      // Check if value contains template syntax (including calc)
+      if (typeof value === 'string' && (value.includes('{{calc:') || value.includes('{{'))) {
+        // Evaluate template (replaces vars and evaluates calc expressions)
+        const result = this.evaluateCalcTemplate(value);
+        // Empty string means evaluation failed, return undefined
+        if (result === '') return undefined;
+        const parsed = parseFloat(result);
+        return isNaN(parsed) ? undefined : parsed;
+      }
+      
+      // Return numeric value
+      return typeof value === 'number' ? value : parseFloat(value);
+    }
+    
+    // If not found in menuItems, try parsing menuItemId as number
+    const parsed = parseFloat(menuItemId);
+    return isNaN(parsed) ? undefined : parsed;
+  }
+
+  // Evaluate calc template like {{calc:{{pageHeight}}/{{windowHeight}}}}
+  // 
+  // SECURITY NOTE: eval() is safe here because:
+  // - Templates are DEVELOPER-DEFINED in PaperPrinter_t.ts constants (not user input)
+  // - Users only SELECT which template to use (pick "fitPage" menuItemId)
+  // - No user-entered formulas can reach eval()
+  // 
+  // Process:
+  // 1. Merge contextDict (from webview) with known page dimensions (from PDF)
+  // 2. Always call templateDictReplace on value (replaces all {{vars}})
+  // 3. Look for {{calc:...}} pattern and extract expression
+  // 4. eval() the expression (developer-defined formula)
+  // 5. Replace {{calc:...}} with result
+  // 6. Return final string (or empty string on error)
+  //    - If result contains "{{", it's clear which variable didn't have a dict entry
+  private evaluateCalcTemplate(value: string): string {
+    const dx = this.dx.sub('evaluateCalcTemplate');
+    
+    try {
+      // Build complete context dictionary: merge contextDict with page dimensions
+      const pageSizePx = this.app.pdf?.docInfo?.pageSizePx || { widthPx: 0, heightPx: 0 };
+      const fullContext: Record<string, string> = {
+        // Page dimensions (known on extension side from PDF)
+        pageWidth: String(pageSizePx.widthPx),
+        pageHeight: String(pageSizePx.heightPx),
+      };
+      
+      // Add contextDict (window dimensions from webview)
+      if (this.contextDict) {
+        for (const [key, val] of Object.entries(this.contextDict)) {
+          fullContext[key] = String(val);
+        }
+      }
+      
+      // Always replace template variables first (regardless of calc or not)
+      let result = this.app.templateDictReplace(value, fullContext);
+      
+      // Look for {{calc:...}} pattern (allows whitespace, only replaces calc portion)
+      // Example: "Other: {{calc: 842/800 }}" → "Other: 1.0525"
+      const calcMatch = result.match(/\{\{calc:\s*(.+?)\s*\}\}/);
+      if (calcMatch) {
+        const expression = calcMatch[1].trim(); // Trim captured expression
+        
+        // eval() the expression (developer-defined formula)
+        // If it fails, catch will handle it. If unsubstituted vars remain (e.g., {{foo}}),
+        // they'll be obvious in the result or cause eval to fail naturally.
+        try {
+          // eslint-disable-next-line no-eval
+          const calcResult = eval(expression);
+          
+          // Replace only the {{calc:...}} portion with the result
+          // Note: calcResult can be any type (number, string, etc.) - convert to string
+          result = result.replace(calcMatch[0], String(calcResult));
+          dx.out(`Calc evaluated: ${expression} = ${calcResult}`);
+        } catch (evalError) {
+          dx.print(`Error in eval: ${String(evalError)}`);
+          return '';
+        }
+      }
+      
+      dx.out(`Template value resolved: ${value} -> ${result}`);
+      return result;
+      
+    } catch (error) {
+      dx.print(`Error in evaluateCalcTemplate: ${String(error)}`);
+      return '';
+    } finally {
+      dx.done();
+    }
   }
 
   // Add a menu to the list (called by PaperPrinter)

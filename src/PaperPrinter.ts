@@ -1,3 +1,20 @@
+/**
+ * PaperPrinter - Main Extension Controller
+ * 
+ * Orchestrates PDF generation, menu management, and UI interactions for the
+ * Print2Paper VS Code extension. Handles document printing, page layout,
+ * zoom controls, and menu state persistence.
+ * 
+ * Key Responsibilities:
+ * - Coordinate PDF generation via DocInfo_PDF
+ * - Manage all UI menus (page size, margins, headers/footers, zoom)
+ * - Handle zoom functionality and keyboard shortcuts
+ * - Persist user preferences and menu selections
+ * - Generate and update webview content
+ * 
+ * @module src/PaperPrinter
+ */
+
 import type { App } from './App';
 import { Diagnostics } from './Diagnostics';
 import {
@@ -73,7 +90,6 @@ export class PaperPrinter {
   } as const;
 
   private app: App;
-  private pdfDoc: DocInfo_PDF | null = null; // In-memory PDF document (DocInfo_PDF abstraction)
   private uiwebview: UIWebView | null = null;
   private dx: Diagnostics;
   private _yaml: Yaml<typeof PaperPrinter.kYaml>;
@@ -116,17 +132,17 @@ export class PaperPrinter {
 
     try {
       await this.generatePdf();
-      if (!this.pdfDoc) {
+      if (!this.app.pdf.docInfo.pdfDoc) {
         dx.error('Failed to generate PDF');
         return;
       }
 
       if (printType === 'preview')
-        await this.app.pdf.printWithPreview(this.pdfDoc, this.docInfo.printTitle || 'Print Output');
+        await this.app.pdf.printWithPreview(this.app.pdf.docInfo, this.docInfo.printTitle || 'Print Output');
       else if (printType === 'direct')
-        await this.app.pdf.printDirectly(this.pdfDoc, this.docInfo.printTitle || 'Print Output');
+        await this.app.pdf.printDirectly(this.app.pdf.docInfo, this.docInfo.printTitle || 'Print Output');
       else if (printType === 'save')
-        await this.app.pdf.saveAsPDF(this.pdfDoc, this.docInfo.printTitle || 'Print Output');
+        await this.app.pdf.saveAsPDF(this.app.pdf.docInfo, this.docInfo.printTitle || 'Print Output');
 
       dx.out(`Print request handled: ${printType}`);
     } finally {
@@ -224,7 +240,7 @@ export class PaperPrinter {
       await this.generatePdf();
 
       // Validate we have a PDF document
-      if (!this.pdfDoc) {
+      if (!this.app.pdf.docInfo.pdfDoc) {
         throw new Error('PDF document not generated');
       }
 
@@ -232,8 +248,8 @@ export class PaperPrinter {
       this.uiwebview = new UIWebView(this.app);
       this.uiwebview.init();
 
-      // Display PDF in webview panel (passes DocInfo_PDF, UIWebView extracts data)
-      await this.uiwebview.displayPdfPanel(this.pdfDoc, `Print: ${printableLabel}`);
+      // Display PDF in webview panel (uses this.app.pdf.docInfo directly, including title)
+      await this.uiwebview.displayPdfPanel();
 
       this.dx.out(`Opened webview for ${printableLabel}`);
     } catch (error) {
@@ -312,17 +328,17 @@ export class PaperPrinter {
       // Generate complete PDF during tokenization (unified approach)
       dx.out(`Generating complete PDF with unified tokenize + build approach`);
 
-      // Generate the complete PDF in one pass
-      this.pdfDoc = await this.app.pdf.generatePdf();
+      // Generate the complete PDF in one pass (sets this.app.pdf.docInfo.pdfDoc)
+      await this.app.pdf.generatePdf();
 
       // Log PDF object creation for reuse verification (Stage 4.3)
-      const pdfObjectId = this.pdfDoc ? `pdfDoc@${this.pdfDoc.instanceId}` : 'null';
-      dx.out(`PDF object created: ${pdfObjectId} (reused for webview, print, save)`);
+      const pdfObjectId = this.app.pdf.docInfo ? `pdfDoc@${this.app.pdf.docInfo.instanceId}` : 'null';
+      dx.out(`PDF object created: ${pdfObjectId} (stored in app.pdf.docInfo for reuse)`);
       dx.out(
         `PDF object reuse verification: Same object will be used for webview display and print/save operations`
       );
 
-      dx.out(`PDF generation complete: ${this.pdfDoc.pageTotal} pages using unified approach`);
+      dx.out(`PDF generation complete: ${this.app.pdf.docInfo.pageTotal} pages using unified approach`);
     } catch (error) {
       dx.out(`Error in generatePdf: ${error}`);
       throw error;
@@ -650,7 +666,7 @@ export class PaperPrinter {
       await this.generatePdf();
 
       // Validate we have a PDF document
-      if (!this.pdfDoc) {
+      if (!this.app.pdf.docInfo.pdfDoc) {
         throw new Error('PDF document not generated');
       }
 
@@ -658,9 +674,8 @@ export class PaperPrinter {
       if (this.uiwebview) {
         dx.out('Updating webview with new PDF...');
 
-        // Display PDF in webview (reuses existing panel)
-        const tabName = this.docInfo.printTitle || 'Document';
-        void this.uiwebview.displayPdfPanel(this.pdfDoc, `Print: ${tabName}`);
+        // Display PDF in webview (reuses existing panel, uses title from docInfo)
+        void this.uiwebview.displayPdfPanel();
       } else {
         dx.out('No webview to update');
       }
@@ -685,23 +700,23 @@ export class PaperPrinter {
       dx.out(`Print action: ${String(menuItemId)}`);
       await this.generatePdf();
 
-      if (this.pdfDoc) {
+      if (this.app.pdf.docInfo.pdfDoc) {
         try {
           if (menuItemId === 'preview') {
             dx.out('Printing with preview...');
             await this.app.pdf.printWithPreview(
-              this.pdfDoc,
+              this.app.pdf.docInfo,
               this.docInfo.printTitle || 'Print Output'
             );
           } else if (menuItemId === 'direct') {
             dx.out('Printing directly...');
             await this.app.pdf.printDirectly(
-              this.pdfDoc,
+              this.app.pdf.docInfo,
               this.docInfo.printTitle || 'Print Output'
             );
           } else if (menuItemId === 'save') {
             dx.out('Saving as PDF...');
-            await this.app.pdf.saveAsPDF(this.pdfDoc, this.docInfo.printTitle || 'Print Output');
+            await this.app.pdf.saveAsPDF(this.app.pdf.docInfo, this.docInfo.printTitle || 'Print Output');
           }
           dx.out(`Print action ${String(menuItemId)} completed successfully`);
         } catch (error) {
@@ -917,6 +932,19 @@ export class PaperPrinter {
     return { id, value };
   }
 
+  /**
+   * Handle zoom level selection from dropdown or text edit input
+   * 
+   * Supports:
+   * - Predefined zoom levels (e.g., "1.00" for 100%)
+   * - Text edit input: percentage values (e.g., "150") or scale (e.g., "1.50")
+   * - Special actions: "fitPage", "fitWidth" with {{calc:...}} templates
+   * 
+   * Architecture:
+   * - Always persists menuItemId (not the value)
+   * - Value lookup handles: menu item values, calc templates, numeric parsing
+   * - fitPage/fitWidth use {{calc:...}} templates evaluated with viewport dimensions
+   */
   private async handleSelection_ZoomLevel(
     menuId: MenuId_t,
     menuItemId: MenuItemId_t
@@ -930,17 +958,22 @@ export class PaperPrinter {
       // Return default zoom level (100% = 1.0)
       id = '1.00';
       value = 1.0;
+      this.app.uimenumgr.setPersistForMenuId(kZoomLevel.id, id);
+      void this.regenerateAndUpdateWebview();
     } else {
       const menuItem = kZoomLevel.menuItems.find(item => item.id === menuItemId);
 
-      if (menuItemId === 'fitPage' || menuItemId === 'fitWidth') {
-        // Special actions - persist as-is
-        value = menuItemId;
+      if (menuItem) {
+        // Menu item selected (including fitPage/fitWidth with calc values)
+        // Persist the menuItemId, value lookup will handle getting the numeric value
         this.app.uimenumgr.setPersistForMenuId(kZoomLevel.id, menuItemId);
-      } else if (menuItem && 'value' in menuItem && menuItem.value !== undefined) {
-        // Menu item with value property
-        value = menuItem.value as number;
-        this.app.uimenumgr.setPersistForMenuId(kZoomLevel.id, menuItemId);
+        
+        // Get the actual value (this will evaluate calc templates if needed)
+        const numericValue = this.app.uimenumgr.getNumericValueForMenuItemId(kZoomLevel.id, menuItemId);
+        value = numericValue !== undefined ? numericValue : Number(kZoomLevel.alt);
+        id = menuItemId;
+        
+        void this.regenerateAndUpdateWebview();
       } else {
         // Text edit input: numeric string (could be percentage like "150" or scale like "1.50")
         const numericValue = parseFloat(menuItemId);
@@ -953,28 +986,17 @@ export class PaperPrinter {
           const clampedScale = Math.max(kZoomLevel.min, Math.min(kZoomLevel.max, scale));
           const roundedScale = Math.round(clampedScale * 100) / 100;
 
-          id = menuItemId;
+          id = roundedScale.toFixed(2);
           value = roundedScale;
 
-          // Persist as scale string with 2 decimals
-          this.app.uimenumgr.setPersistForMenuId(kZoomLevel.id, roundedScale.toFixed(2));
-          
-          // Refresh menu to show custom value in dropdown
-          if (this.uiwebview) {
-            const panelId = this.uiwebview.getPanelId();
-            if (panelId) {
-              const menuHTML = await this.app.uimenumgr.getUIMenu_HTML(kZoomLevel.id);
-              this.app.vscodeapis.postMessage(panelId, {
-                type: 'refreshMenu',
-                menuId: kZoomLevel.id,
-                menuHTML,
-              });
-            }
-          }
+          // Persist as menuItemId (numeric string) - value lookup will parse it
+          this.app.uimenumgr.setPersistForMenuId(kZoomLevel.id, id);
+          void this.regenerateAndUpdateWebview();
         } else {
           dx.out(`Invalid zoom value: ${menuItemId}, using default`);
           value = Number(kZoomLevel.alt);
           id = kZoomLevel.alt;
+          this.app.uimenumgr.setPersistForMenuId(kZoomLevel.id, id);
         }
       }
     }
@@ -983,14 +1005,20 @@ export class PaperPrinter {
     return { id, value };
   }
 
+  /**
+   * Handle zoom out button click
+   * 
+   * Decrements current zoom by stepAmount (default 0.1 = 10%), clamped to minimum.
+   * Persists new zoom to ZoomLevel menu and regenerates PDF.
+   */
   private async handleSelection_ZoomOut(
     menuId: MenuId_t,
     menuItemId: MenuItemId_t
   ): Promise<HandleSelection_t> {
     const dx = this.dx.sub('handleSelection_ZoomOut');
-    // Get current zoom level from persistence
-    const currentZoomStr = this.app.uimenumgr.getValueForSelectedByMenuId(kZoomLevel.id);
-    const currentZoom = parseFloat(currentZoomStr || kZoomLevel.alt);
+    // Get current zoom level using proper value lookup
+    const currentMenuItemId = this.app.uimenumgr.getValueForSelectedByMenuId(kZoomLevel.id) || kZoomLevel.alt;
+    const currentZoom = this.app.uimenumgr.getNumericValueForMenuItemId(kZoomLevel.id, currentMenuItemId) || Number(kZoomLevel.alt);
 
     // Decrement by stepAmount, clamp to min, round to 2 decimals
     const newZoom = Math.max(
@@ -998,34 +1026,28 @@ export class PaperPrinter {
       Math.round((currentZoom - kZoomLevel.stepAmount) * 100) / 100
     );
 
-    // Persist the new zoom level
+    // Persist the new zoom level as menuItemId (numeric string)
     this.app.uimenumgr.setPersistForMenuId(kZoomLevel.id, newZoom.toFixed(2));
-
-    // Refresh menu to show new value (may be custom)
-    if (this.uiwebview) {
-      const panelId = this.uiwebview.getPanelId();
-      if (panelId) {
-        const menuHTML = await this.app.uimenumgr.getUIMenu_HTML(kZoomLevel.id);
-        this.app.vscodeapis.postMessage(panelId, {
-          type: 'refreshMenu',
-          menuId: kZoomLevel.id,
-          menuHTML,
-        });
-      }
-    }
+    void this.regenerateAndUpdateWebview();
 
     dx.done();
     return { id: 'zoomOut', value: newZoom };
   }
 
+  /**
+   * Handle zoom in button click
+   * 
+   * Increments current zoom by stepAmount (default 0.1 = 10%), clamped to maximum.
+   * Persists new zoom to ZoomLevel menu and regenerates PDF.
+   */
   private async handleSelection_ZoomIn(
     menuId: MenuId_t,
     menuItemId: MenuItemId_t
   ): Promise<HandleSelection_t> {
     const dx = this.dx.sub('handleSelection_ZoomIn');
-    // Get current zoom level from persistence
-    const currentZoomStr = this.app.uimenumgr.getValueForSelectedByMenuId(kZoomLevel.id);
-    const currentZoom = parseFloat(currentZoomStr || kZoomLevel.alt);
+    // Get current zoom level using proper value lookup
+    const currentMenuItemId = this.app.uimenumgr.getValueForSelectedByMenuId(kZoomLevel.id) || kZoomLevel.alt;
+    const currentZoom = this.app.uimenumgr.getNumericValueForMenuItemId(kZoomLevel.id, currentMenuItemId) || Number(kZoomLevel.alt);
 
     // Increment by stepAmount, clamp to max, round to 2 decimals
     const newZoom = Math.min(
@@ -1033,21 +1055,9 @@ export class PaperPrinter {
       Math.round((currentZoom + kZoomLevel.stepAmount) * 100) / 100
     );
 
-    // Persist the new zoom level
+    // Persist the new zoom level as menuItemId (numeric string)
     this.app.uimenumgr.setPersistForMenuId(kZoomLevel.id, newZoom.toFixed(2));
-
-    // Refresh menu to show new value (may be custom)
-    if (this.uiwebview) {
-      const panelId = this.uiwebview.getPanelId();
-      if (panelId) {
-        const menuHTML = await this.app.uimenumgr.getUIMenu_HTML(kZoomLevel.id);
-        this.app.vscodeapis.postMessage(panelId, {
-          type: 'refreshMenu',
-          menuId: kZoomLevel.id,
-          menuHTML,
-        });
-      }
-    }
+    void this.regenerateAndUpdateWebview();
 
     dx.done();
     return { id: 'zoomIn', value: newZoom };

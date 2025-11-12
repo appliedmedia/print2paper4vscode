@@ -142,7 +142,7 @@ describe('UIWebView PDF.js Integration', () => {
 
       let errorCaught = false;
       try {
-        await uiWebView.displayPdfPanel(invalidPdfData);
+        await uiWebView.displayPdfPanel();
       } catch (error) {
         errorCaught = true;
         assert.ok(
@@ -170,7 +170,7 @@ describe('UIWebView PDF.js Integration', () => {
 
       let errorCaught = false;
       try {
-        await uiWebView.displayPdfPanel(invalidPdfData);
+        await uiWebView.displayPdfPanel();
       } catch (error) {
         errorCaught = true;
         assert.ok(String(error).includes('pageTotal'), 'Error should mention invalid pageTotal');
@@ -195,7 +195,7 @@ describe('UIWebView PDF.js Integration', () => {
 
       let errorCaught = false;
       try {
-        await uiWebView.displayPdfPanel(invalidPdfData);
+        await uiWebView.displayPdfPanel();
       } catch (error) {
         errorCaught = true;
         assert.ok(String(error).includes('pageSizePx'), 'Error should mention invalid pageSizePx');
@@ -287,7 +287,7 @@ describe('UIWebView PDF.js Integration', () => {
 
       const pdfData: PDFData_t = {
         arrayBuffer,
-        pageTotal: 2,
+      pageTotal: 2,
         pageSizePx: { widthPx: 595, heightPx: 842 },
         title: 'Multi-Page Test',
       };

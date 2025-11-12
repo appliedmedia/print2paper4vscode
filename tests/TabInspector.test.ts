@@ -2,43 +2,7 @@ import { describe, it, beforeEach, afterEach } from 'node:test';
 import * as assert from 'node:assert';
 import { TabInspector } from '../src/TabInspector.js';
 import { App } from '../src/App.js';
-import type { ExtensionContext } from 'vscode';
-
-// Mock VS Code context and APIs
-const mockContext = {
-  subscriptions: [],
-  globalState: {
-    get: () => undefined,
-    update: () => {},
-  },
-  globalStorageUri: { fsPath: '/tmp' },
-} as unknown as ExtensionContext;
-
-const mockVSCode = {
-  commands: { registerCommand: () => ({}) },
-  window: {
-    showErrorMessage: () => {},
-    showInformationMessage: () => {},
-    showWarningMessage: () => {},
-    activeTextEditor: {
-      document: {
-        uri: { fsPath: '/test/file.js' },
-        getText: () => 'test code',
-        languageId: 'javascript',
-      },
-      selection: {
-        isEmpty: true,
-      },
-    },
-  },
-  workspace: {
-    getConfiguration: () => ({
-      get: () => undefined,
-    }),
-  },
-  Uri: { file: (path: string) => ({ fsPath: path }) },
-  Range: class Range {},
-} as any;
+import { mockContext, mockVSCode } from './test-utils.js';
 
 describe('TabInspector', () => {
   let app: App;

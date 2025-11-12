@@ -115,86 +115,6 @@ webview_js: |
   const vscode = window.vscode || (typeof acquireVsCodeApi !== 'undefined' ? acquireVsCodeApi() : null);
 
   /**
-   * Update text edit field to show current zoom percentage
-   */
-  function updateZoomTextField(scale) {
-    const textEdit = document.querySelector('.p2p4vsc-text-edit');
-    if (textEdit) {
-      const percentValue = Math.round(scale * 100);
-      textEdit.value = percentValue.toString();
-    }
-  }
-
-  // Listen for zoom messages from extension
-  if (vscode) {
-    window.addEventListener('message', event => {
-      const message = event.data;
-      if (message.type === 'refreshMenu') {
-        // Refresh a specific menu's HTML (generic - works for any menu)
-        const menuId = message.menuId;
-        const menuHTML = message.menuHTML;
-        if (menuId && menuHTML) {
-          const menuElement = document.getElementById(menuId);
-          if (menuElement) {
-            menuElement.outerHTML = menuHTML;
-          }
-        }
-      } else if (message.type === 'zoom') {
-        if (message.zoomLevel !== undefined) {
-          setZoom(message.zoomLevel);
-        } else if (message.zoomAction) {
-          handleZoomAction(message.zoomAction);
-        }
-      } else if (message.type === 'menuItemSelected') {
-        // Handle menu item selections for zoom controls
-        const menuId = message.menuId;
-        const itemId = message.itemId;
-        
-        if (menuId === 'zoomOut') {
-          // Zoom out: decrement by stepAmount
-          const newZoom = Math.max(kZoomLevel.min, Math.round((currentScale - kZoomLevel.stepAmount) * 100) / 100);
-          setZoom(newZoom);
-          updateZoomTextField(newZoom);
-        } else if (menuId === 'zoomIn') {
-          // Zoom in: increment by stepAmount
-          const newZoom = Math.min(kZoomLevel.max, Math.round((currentScale + kZoomLevel.stepAmount) * 100) / 100);
-          setZoom(newZoom);
-          updateZoomTextField(newZoom);
-        } else if (menuId === 'zoomLevel') {
-          // Zoom levels menu - handles BOTH text edit input AND menu item selections
-          const menuItem = kZoomLevel.menuItems.find(item => item.id === itemId);
-          const percentValue = parseFloat(itemId);
-          
-          if (itemId === 'fitPage') {
-            // Special action: fit page
-            handleZoomAction('fitPage');
-          } else if (itemId === 'fitWidth') {
-            // Special action: fit width
-            handleZoomAction('fitWidth');
-          } else if (menuItem && 'value' in menuItem && menuItem.value !== undefined) {
-            // Menu item selection: use value property
-            setZoom(menuItem.value);
-            updateZoomTextField(menuItem.value);
-          } else if (!isNaN(percentValue) && !menuItem) {
-            // Text edit input: percentage value (e.g., "150")
-            const scale = percentValue / 100;
-            const clampedScale = Math.max(kZoomLevel.min, Math.min(kZoomLevel.max, scale));
-            setZoom(clampedScale);
-            updateZoomTextField(clampedScale);
-          } else {
-            // Fallback: parse from id
-            const scale = parseFloat(itemId);
-            if (!isNaN(scale)) {
-              setZoom(scale);
-              updateZoomTextField(scale);
-            }
-          }
-        }
-      }
-    });
-  }
-
-  /**
    * Initialize PDF viewer with PDF data
    * @param {string} pdfDataUrl - Base64 data URL of the PDF
    * @param {number} pageTotal - Total number of pages
@@ -227,24 +147,22 @@ webview_js: |
 
   /**
    * Handle successful PDF document load
+   * 
+   * Initializes PDF viewer, gets page dimensions, and renders all pages.
+   * Zoom is controlled by extension (not webview) - PDF is regenerated at new zoom levels.
    */
   function onDocumentLoadSuccess(pdf) {
     pdfDoc = pdf;
     document.getElementById('loading').style.display = 'none';
     document.getElementById('pdf-viewer').style.display = 'block';
     
-    // Initialize text edit field with current zoom level
-    updateZoomTextField(currentScale);
-    
-    // Get first page dimensions for fit calculations
+    // Get first page dimensions
     pdf.getPage(1).then(function(page) {
       const viewport = page.getViewport({ scale: 1.0 });
       pageWidthPx = viewport.width;
       pageHeightPx = viewport.height;
       
-      // Initialize keyboard shortcuts (now handled generically by UIMenu)
-      
-      // Render all pages with initial zoom level
+      // Render all pages
       renderAllPages();
     }).catch(function(error) {
       dx(`❌ Error getting page dimensions: ${error.message}`);
@@ -252,129 +170,6 @@ webview_js: |
     });
   }
 
-  /**
-   * Update zoom menu to show current selection
-   */
-  function updateZoomMenuSelection() {
-    const zoomLevelMenu = document.getElementById('zoomLevel');
-    if (!zoomLevelMenu) return;
-    
-    const items = zoomLevelMenu.querySelectorAll('.p2p4vsc-menu-item');
-    items.forEach(item => {
-      item.classList.remove('isSelected');
-      const itemId = item.id;
-      
-      // Check if this item matches current zoom
-      if (itemId !== 'fitPage' && itemId !== 'fitWidth') {
-        const scale = parseFloat(itemId);
-        if (!isNaN(scale) && Math.abs(scale - currentScale) < 0.01) {
-          item.classList.add('isSelected');
-        }
-      }
-    });
-  }
-
-  /**
-   * Handle zoom actions
-   */
-  function handleZoomAction(action) {
-    let newScale = currentScale;
-    
-    switch (action) {
-      case 'in':
-        newScale = Math.round(Math.min(currentScale + kZoomLevel.stepAmount, kZoomLevel.max) * 100) / 100;
-        break;
-      case 'out':
-        newScale = Math.round(Math.max(currentScale - kZoomLevel.stepAmount, kZoomLevel.min) * 100) / 100;
-        break;
-      case 'fitWidth':
-        if (pageWidthPx <= 0) {
-          dx('❌ ERROR: Cannot calculate fitWidth - page dimensions not loaded. PDF may have failed to load or first page is invalid.');
-          throw new Error('Page width must be greater than 0 for fitWidth calculation');
-        }
-        const containerWidth = getAvailableContainerSize();
-        newScale = Math.round((containerWidth.width / pageWidthPx) * 100) / 100;
-        break;
-      case 'fitPage':
-        if (pageWidthPx <= 0 || pageHeightPx <= 0) {
-          dx('❌ ERROR: Cannot calculate fitPage - page dimensions not loaded. PDF may have failed to load or first page is invalid.');
-          throw new Error('Page width and height must be greater than 0 for fitPage calculation');
-        }
-        const containerPage = getAvailableContainerSize();
-        const scaleX = containerPage.width / pageWidthPx;
-        const scaleY = containerPage.height / pageHeightPx;
-        newScale = Math.round(Math.min(scaleX, scaleY) * 100) / 100;
-        break;
-    }
-    
-    setZoom(newScale);
-  }
-
-  /**
-   * Get available container dimensions accounting for toolbar and padding
-   * Uses CSS custom properties for padding values (from webview_css)
-   */
-  function getAvailableContainerSize() {
-    const toolbar = document.getElementById('p2p4vsc-toolbar');
-    
-    // Get toolbar padding from CSS custom property
-    const toolbarPaddingStr = getComputedStyle(document.documentElement)
-      .getPropertyValue('--toolbar-padding')
-      .trim();
-    const toolbarPaddingPx = toolbarPaddingStr ? parseFloat(toolbarPaddingStr) : 24; // Fallback to 24px
-    
-    // Get default toolbar height from CSS custom property (used when toolbar is missing)
-    const toolbarDefaultHeightStr = getComputedStyle(document.documentElement)
-      .getPropertyValue('--toolbar-default-height')
-      .trim();
-    const toolbarDefaultHeightPx = toolbarDefaultHeightStr ? parseFloat(toolbarDefaultHeightStr) : 60; // Fallback to 60px
-    
-    // Calculate toolbar height: toolbar height + padding if toolbar exists, otherwise use default
-    const toolbarHeight = toolbar 
-      ? toolbar.getBoundingClientRect().height + toolbarPaddingPx
-      : toolbarDefaultHeightPx;
-    
-    // Get horizontal padding from CSS custom property (matches .pdfviewer-container padding)
-    const containerPadding = getComputedStyle(document.documentElement)
-      .getPropertyValue('--container-padding-horizontal')
-      .trim();
-    const horizontalPaddingPx = containerPadding ? parseFloat(containerPadding) : 20; // Fallback to 20px if CSS var not found
-    const horizontalPadding = horizontalPaddingPx * 2; // Left + right padding
-    
-    return {
-      width: Math.max(0, window.innerWidth - horizontalPadding),
-      height: Math.max(0, window.innerHeight - toolbarHeight),
-    };
-  }
-
-  /**
-   * Set zoom level and re-render pages
-   */
-  function setZoom(scale) {
-    // Clamp scale to valid range and round to 2 decimal places
-    currentScale = Math.round(Math.max(kZoomLevel.min, Math.min(kZoomLevel.max, scale)) * 100) / 100;
-    
-    // Update menu selection if menu is open
-    updateZoomMenuSelection();
-    
-    // Save zoom level to extension
-    if (vscode) {
-      vscode.postMessage({
-        type: 'zoom',
-        zoomLevel: currentScale
-      });
-    }
-    
-    // ⚠️NOTE⚠️ PERFORMANCE: Re-rendering all pages on zoom change
-    // For large PDFs (10+ pages), this can cause noticeable delays.
-    // PDF.js is our rendering system - we're keeping this simple and not using
-    // CSS transforms or progressive rendering tricks.
-    // If performance becomes an issue, consider:
-    // - Adding a progress indicator during re-render
-    // - Implementing lazy rendering (only visible pages first)
-    // - Using CSS transforms for instant visual feedback, then re-render at higher quality
-    renderAllPages();
-  }
 
   /**
    * Handle PDF document load error
