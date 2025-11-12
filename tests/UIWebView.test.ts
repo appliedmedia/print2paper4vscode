@@ -4,46 +4,7 @@ import { UIWebView } from '../src/UIWebView.js';
 import { App } from '../src/App.js';
 import jsPDF from 'jspdf';
 import type { PDFData_t } from '../src/UIWebView.js';
-import type * as vscode from 'vscode';
-import type { ExtensionContext } from 'vscode';
-
-// Mock VS Code context and APIs
-const mockContext = {
-  subscriptions: [],
-  globalState: {
-    get: () => undefined,
-    update: () => {},
-  },
-  globalStorageUri: { fsPath: '/tmp' },
-} as unknown as ExtensionContext;
-
-const mockVSCode = {
-  commands: { registerCommand: () => ({}) },
-  window: {
-    showErrorMessage: () => {},
-    showInformationMessage: () => {},
-    showWarningMessage: () => {},
-    createWebviewPanel: () => ({
-      webview: {
-        asWebviewUri: (uri: any) => uri,
-        html: '',
-        onDidReceiveMessage: () => ({ dispose: () => {} }),
-        postMessage: () => {},
-      },
-      reveal: () => {},
-      onDidDispose: () => ({ dispose: () => {} }),
-      title: '',
-    }),
-  },
-  workspace: {
-    getConfiguration: () => ({
-      get: () => undefined,
-    }),
-  },
-  Uri: { file: (path: string) => ({ fsPath: path }) },
-  Range: class Range {},
-  ViewColumn: { Active: 1 },
-} as unknown as typeof vscode;
+import { mockContext, mockVSCode } from './test-utils.js';
 
 describe('UIWebView', () => {
   let app: App;

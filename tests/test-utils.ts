@@ -1,5 +1,4 @@
 import type * as vscode from 'vscode';
-import type { ExtensionContext, Uri, Range, ViewColumn, Extension, Disposable } from 'vscode';
 
 // Mock VS Code context and APIs
 export const mockContext = {
@@ -10,27 +9,27 @@ export const mockContext = {
     update: () => Promise.resolve(),
   },
   globalStorageUri: { fsPath: '/tmp' },
-} as unknown as ExtensionContext;
+} as unknown as vscode.ExtensionContext;
 
 interface MockVSCode {
   commands: {
-    registerCommand: () => Disposable;
+    registerCommand: () => vscode.Disposable;
   };
   window: {
     showErrorMessage: () => Promise<void>;
     showInformationMessage: () => Promise<void>;
     showWarningMessage: () => Promise<void>;
-    setStatusBarMessage: () => Disposable;
+    setStatusBarMessage: () => vscode.Disposable;
     createWebviewPanel: () => {
       webview: {
         html: string;
-        asWebviewUri: (uri: Uri) => Uri;
-        onDidReceiveMessage: () => Disposable;
+        asWebviewUri: (uri: vscode.Uri) => vscode.Uri;
+        onDidReceiveMessage: () => vscode.Disposable;
         postMessage: () => Promise<boolean>;
       };
       title: string;
       reveal: () => void;
-      onDidDispose: () => Disposable;
+      onDidDispose: () => vscode.Disposable;
       dispose: () => void;
     };
     activeTextEditor: {
@@ -64,10 +63,10 @@ interface MockVSCode {
     file: (path: string) => { fsPath: string; path: string; toString: () => string };
     parse: (str: string) => { fsPath: string; path: string; toString: () => string };
   };
-  Range: typeof Range;
-  ViewColumn: typeof ViewColumn;
+  Range: typeof vscode.Range;
+  ViewColumn: typeof vscode.ViewColumn;
   extensions: {
-    all: Extension<unknown>[];
+    all: vscode.Extension<unknown>[];
     getExtension: () => {
       extensionPath: string;
       packageJSON: { name: string };
@@ -88,7 +87,7 @@ export const mockVSCode = {
     createWebviewPanel: () => ({
       webview: {
         html: '',
-        asWebviewUri: (uri: Uri) => uri,
+        asWebviewUri: (uri: vscode.Uri) => uri,
         onDidReceiveMessage: () => ({ dispose: () => {} }),
         postMessage: () => Promise.resolve(true),
       },
@@ -135,14 +134,14 @@ export const mockVSCode = {
   },
   Range: class Range {
     constructor(public start: { line: number; character: number }, public end: { line: number; character: number }) {}
-  } as unknown as typeof Range,
+  } as unknown as typeof vscode.Range,
   ViewColumn: {
     Active: 1,
     Beside: 2,
     One: 1,
     Two: 2,
     Three: 3,
-  } as unknown as typeof ViewColumn,
+  } as unknown as typeof vscode.ViewColumn,
   extensions: {
     all: [],
     getExtension: () => ({

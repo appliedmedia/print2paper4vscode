@@ -2,51 +2,7 @@ import { describe, it, beforeEach, afterEach } from 'node:test';
 import * as assert from 'node:assert';
 import { PaperPrinter } from '../src/PaperPrinter.js';
 import { App } from '../src/App.js';
-import type * as vscode from 'vscode';
-import type { ExtensionContext } from 'vscode';
-
-// Mock VS Code context and APIs
-const mockContext = {
-  subscriptions: [],
-  globalState: {
-    get: () => undefined,
-    update: () => {},
-  },
-  globalStorageUri: { fsPath: '/tmp' },
-} as unknown as ExtensionContext;
-
-const mockVSCode = {
-  commands: { registerCommand: () => ({}) },
-  window: {
-    showErrorMessage: () => {},
-    showInformationMessage: () => {},
-    showWarningMessage: () => {},
-    createWebviewPanel: () => ({
-      webview: {
-        asWebviewUri: (uri: any) => uri,
-        html: '',
-        onDidReceiveMessage: () => ({ dispose: () => {} }),
-        postMessage: () => {},
-      },
-      reveal: () => {},
-      onDidDispose: () => ({ dispose: () => {} }),
-      title: '',
-    }),
-  },
-  workspace: {
-    getConfiguration: () => ({
-      get: (key: string) => {
-        if (key === 'fontSize') return 14;
-        if (key === 'lineHeight') return 1.5;
-        if (key === 'fontFamily') return 'Monaco';
-        return undefined;
-      },
-    }),
-  },
-  Uri: { file: (path: string) => ({ fsPath: path }) },
-  Range: class Range {},
-  ViewColumn: { Active: 1 },
-} as unknown as typeof vscode;
+import { mockContext, mockVSCode } from './test-utils.js';
 
 describe('PaperPrinter', () => {
   let app: App;

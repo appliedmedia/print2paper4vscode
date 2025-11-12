@@ -3,7 +3,6 @@ import * as assert from 'node:assert';
 import { Persist } from '../src/Persist.js';
 import { App } from '../src/App.js';
 import type * as vscode from 'vscode';
-import type { ExtensionContext } from 'vscode';
 
 // Mock VS Code context and APIs with state tracking
 let mockGlobalState: Record<string, any> = {};
@@ -21,7 +20,7 @@ const mockContext = {
     },
   },
   globalStorageUri: { fsPath: '/tmp' },
-} as unknown as ExtensionContext;
+} as unknown as vscode.ExtensionContext;
 
 const mockVSCode = {
   commands: { registerCommand: () => ({}) },
