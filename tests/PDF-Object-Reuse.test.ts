@@ -18,6 +18,9 @@ describe('PDF Object Reuse Tests', () => {
       const app = new App(mockContext, mockVSCode);
       app.init();
 
+      // Create menus before generating PDF (menus are created on-demand in production)
+      (app.paperprinter as unknown as { createMenus(): void }).createMenus();
+
       const paperPrinter = app.paperprinter;
       paperPrinter.docInfo.rawCode = `function test() {
   console.log("Hello World");
@@ -45,6 +48,9 @@ describe('PDF Object Reuse Tests', () => {
     test('should reuse same PDF object for multiple ArrayBuffer calls', async () => {
       const app = new App(mockContext, mockVSCode);
       app.init();
+
+      // Create menus before generating PDF (menus are created on-demand in production)
+      (app.paperprinter as unknown as { createMenus(): void }).createMenus();
 
       const paperPrinter = app.paperprinter;
       paperPrinter.docInfo.rawCode = 'console.log("test");';
@@ -94,6 +100,9 @@ describe('PDF Object Reuse Tests', () => {
     test('should use same PDF object for webview display', async () => {
       const app = new App(mockContext, mockVSCode);
       app.init();
+
+      // Create menus before generating PDF (menus are created on-demand in production)
+      (app.paperprinter as unknown as { createMenus(): void }).createMenus();
 
       const paperPrinter = app.paperprinter;
       paperPrinter.docInfo.rawCode = `function example() {
@@ -150,6 +159,9 @@ describe('PDF Object Reuse Tests', () => {
       const app = new App(mockContext, mockVSCode);
       app.init();
 
+      // Create menus before generating PDF (menus are created on-demand in production)
+      (app.paperprinter as unknown as { createMenus(): void }).createMenus();
+
       const paperPrinter = app.paperprinter;
       paperPrinter.docInfo.rawCode = 'console.log("test");';
       paperPrinter.docInfo.languageId = 'javascript';
@@ -185,6 +197,9 @@ describe('PDF Object Reuse Tests', () => {
     test('should maintain PDF consistency across multiple operations', async () => {
       const app = new App(mockContext, mockVSCode);
       app.init();
+
+      // Create menus before generating PDF (menus are created on-demand in production)
+      (app.paperprinter as unknown as { createMenus(): void }).createMenus();
 
       const paperPrinter = app.paperprinter;
       paperPrinter.docInfo.rawCode = `function test() {
@@ -239,6 +254,9 @@ describe('PDF Object Reuse Tests', () => {
     test('should handle multiple ArrayBuffer conversions without issues', async () => {
       const app = new App(mockContext, mockVSCode);
       app.init();
+
+      // Create menus before generating PDF (menus are created on-demand in production)
+      (app.paperprinter as unknown as { createMenus(): void }).createMenus();
 
       const paperPrinter = app.paperprinter;
       paperPrinter.docInfo.rawCode = 'console.log("multiple conversions test");';
@@ -296,7 +314,7 @@ describe('PDF Object Reuse Tests', () => {
       paperPrinter.docInfo.languageId = 'javascript';
 
       // Don't generate PDF - pdfDoc should be null
-      assert.ok(app.pdf.docInfo === null, 'PDF should be null before generation');
+      assert.ok(app.pdf.docInfo.pdfDoc === null, 'PDF should be null before generation');
 
       // Try to display webview without generating PDF first
       // This should fail because pdfDoc is null
@@ -320,6 +338,9 @@ describe('PDF Object Reuse Tests', () => {
     test('should validate PDF data before reuse', async () => {
       const app = new App(mockContext, mockVSCode);
       app.init();
+
+      // Create menus before generating PDF (menus are created on-demand in production)
+      (app.paperprinter as unknown as { createMenus(): void }).createMenus();
 
       const paperPrinter = app.paperprinter;
       paperPrinter.docInfo.rawCode = '';
