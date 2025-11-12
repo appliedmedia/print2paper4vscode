@@ -157,6 +157,9 @@ describe('Diagnostics', () => {
   });
 
   test('should output messages with print method', () => {
+    // Reset Diagnostics state to ensure clean test
+    Diagnostics.reset();
+    
     const originalLog = console.log;
     let capturedOutput = '';
     console.log = (message: string) => {
@@ -174,6 +177,9 @@ describe('Diagnostics', () => {
   });
 
   test('should handle done with message', () => {
+    // Reset Diagnostics state to ensure clean test
+    Diagnostics.reset();
+    
     const originalLog = console.log;
     let capturedOutput = '';
     console.log = (message: string) => {
@@ -192,6 +198,9 @@ describe('Diagnostics', () => {
   });
 
   test('should handle done without message', () => {
+    // Reset Diagnostics state to ensure clean test
+    Diagnostics.reset();
+    
     const originalLog = console.log;
     let capturedOutput = '';
     console.log = (message: string) => {
@@ -209,6 +218,9 @@ describe('Diagnostics', () => {
   });
 
   test('should handle error method', () => {
+    // Reset Diagnostics state to ensure clean test
+    Diagnostics.reset();
+    
     const originalLog = console.log;
     let capturedOutput = '';
     console.log = (message: string) => {

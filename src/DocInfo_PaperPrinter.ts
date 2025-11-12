@@ -34,12 +34,19 @@ export class DocInfo_PaperPrinter {
     };
 
     // Get margin from menu's persistent state
-    const menu = this.app.uimenumgr.getMenuById('marginId');
-    const rawMarginId = menu.persist.marginId;
-    const marginId: MarginIdMenuItems_t =
-      typeof rawMarginId === 'string' && rawMarginId in marginIdToPx
-        ? (rawMarginId as MarginIdMenuItems_t)
-        : 'normal';
+    // Handle case where menu doesn't exist (e.g., in tests)
+    let marginId: MarginIdMenuItems_t = 'normal'; // Default to 'normal'
+    try {
+      const menu = this.app.uimenumgr.getMenuById('marginId');
+      const rawMarginId = menu.persist.marginId;
+      marginId =
+        typeof rawMarginId === 'string' && rawMarginId in marginIdToPx
+          ? (rawMarginId as MarginIdMenuItems_t)
+          : 'normal';
+    } catch {
+      // Menu doesn't exist, use default 'normal' margin
+      marginId = 'normal';
+    }
     const marginPx = marginIdToPx[marginId];
 
     return {

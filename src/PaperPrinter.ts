@@ -108,7 +108,10 @@ export class PaperPrinter {
     this._yaml = new Yaml(app, 'src/PaperPrinter.yaml', PaperPrinter.kYaml);
   }
 
-  init(): void {}
+  init(): void {
+    // Create menus during initialization so they're available for tests and other code
+    this.createMenus();
+  }
 
   done(): void {
     this.dx.done();

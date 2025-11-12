@@ -137,7 +137,7 @@ export class Diagnostics {
    * @returns this for method chaining
    */
   out(message: MessageRef): this {
-    if (message && (this._debugOn !== undefined ? this._debugOn : this.shared.debugOn)) {
+    if (message && this.debugOn()) {
       const formattedMessage = this.messageHeader(message);
       UI.out(formattedMessage);
     }
@@ -150,10 +150,7 @@ export class Diagnostics {
    * @returns this for method chaining
    */
   done(message?: MessageRef): this {
-    if (
-      (this._debugOn !== undefined ? this._debugOn : this.shared.debugOn) &&
-      this.startTime !== null
-    ) {
+    if (this.debugOn() && this.startTime !== null) {
       const duration = OS.performance.now() - this.startTime;
       const timeUnits = [
         { ms: 86400000, suffix: 'd' },
