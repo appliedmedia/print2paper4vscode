@@ -85,7 +85,9 @@ describe('DocInfo_PDF', () => {
 
     const dataUrl = docInfo.asDataUrl();
     assert.ok(typeof dataUrl === 'string');
-    assert.ok(dataUrl.startsWith('data:application/pdf;base64,'));
+    // jsPDF returns: data:application/pdf;filename=generated.pdf;base64,...
+    assert.ok(dataUrl.startsWith('data:application/pdf'));
+    assert.ok(dataUrl.includes('base64,'));
   });
 
   it('should return empty string when PDF doc is null', () => {

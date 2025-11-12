@@ -20,7 +20,7 @@ describe('PaperPrinter Integration Tests', () => {
     
     // Generate PDF
     await paperPrinter['generatePdf']();
-    const pdfDoc = paperPrinter['pdfDoc'];
+    const pdfDoc = app.pdf.docInfo;
     
     assert(pdfDoc, 'PDF document should be generated');
     assert.equal(typeof pdfDoc.getNumberOfPages(), 'number', 'Should have page count');
@@ -54,7 +54,7 @@ console.log(message);`;
     // Set initial theme and generate PDF
     themeMenu.persist.theme = 'github-light';
     await paperPrinter['generatePdf']();
-    const lightPdf = paperPrinter['pdfDoc'];
+    const lightPdf = app.pdf.docInfo;
     const lightArrayBuffer = lightPdf?.asArrayBuffer();
     
     assert(lightArrayBuffer, 'Should generate PDF with light theme');
@@ -62,7 +62,7 @@ console.log(message);`;
     // Change theme and regenerate
     themeMenu.persist.theme = 'github-dark';
     await paperPrinter['generatePdf']();
-    const darkPdf = paperPrinter['pdfDoc'];
+    const darkPdf = app.pdf.docInfo;
     const darkArrayBuffer = darkPdf?.asArrayBuffer();
     
     assert(darkArrayBuffer, 'Should generate PDF with dark theme');
@@ -100,14 +100,14 @@ const total = numbers.reduce(calculateSum, 0);`;
     // Test with small font
     fontMenu.persist.fontSizeId = '10';
     await paperPrinter['generatePdf']();
-    const smallFontPdf = paperPrinter['pdfDoc'];
+    const smallFontPdf = app.pdf.docInfo;
     const smallFontPages = smallFontPdf?.getNumberOfPages() || 0;
     const smallArrayBuffer = smallFontPdf?.asArrayBuffer();
     
     // Test with large font
     fontMenu.persist.fontSizeId = '18';
     await paperPrinter['generatePdf']();
-    const largeFontPdf = paperPrinter['pdfDoc'];
+    const largeFontPdf = app.pdf.docInfo;
     const largeFontPages = largeFontPdf?.getNumberOfPages() || 0;
     const largeArrayBuffer = largeFontPdf?.asArrayBuffer();
     
@@ -135,7 +135,7 @@ const total = numbers.reduce(calculateSum, 0);`;
     paperPrinter.docInfo.languageId = 'javascript';
     
     await paperPrinter['generatePdf']();
-    const pdfDoc = paperPrinter['pdfDoc'];
+    const pdfDoc = app.pdf.docInfo;
     
     assert(pdfDoc, 'PDF should be generated');
     

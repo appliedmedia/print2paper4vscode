@@ -104,13 +104,8 @@ describe('PaperPrinter', () => {
     const paperPrinterPrivate = paperPrinter as any;
     paperPrinterPrivate.createMenus();
 
-    try {
-      await paperPrinterPrivate.generatePdf();
-      assert.ok(paperPrinter['pdfDoc'] !== null || paperPrinter['pdfDoc'] === null);
-    } catch (error) {
-      // May fail if full setup isn't complete
-      assert.ok(true);
-    }
+    await paperPrinterPrivate.generatePdf();
+    assert.ok(app.pdf.docInfo !== null && app.pdf.docInfo.pdfDoc !== null, 'PDF should be generated');
   });
 
   it('should get current font family', () => {

@@ -80,33 +80,26 @@ export class UIWebView {
    * Creates new panel on first call, updates existing panel on subsequent calls.
    * The PDF is embedded as base64 data URL due to VS Code postMessage limitations.
    */
-  async displayPdfPanel(
-    pdfDocOrData:
-      | PDFData_t
-      | {
-          asArrayBuffer(): ArrayBuffer;
-          pageTotal: number;
-          pageSizePx: { widthPx: number; heightPx: number };
-        },
-    title?: string
-  ): Promise<WebviewPanelId_t> {
+  async displayPdfPanel(): Promise<WebviewPanelId_t> {
     const dx = this.dx.sub('displayPdfPanel');
 
-    let pdfData: PDFData_t;
-
-    // Check if we got DocInfo_PDF or already-prepared PDFData_t
-    if ('asArrayBuffer' in pdfDocOrData && 'pageTotal' in pdfDocOrData) {
-      // It's a DocInfo_PDF - extract data (DocInfo_PDF already provides pixels)
-      pdfData = {
-        arrayBuffer: pdfDocOrData.asArrayBuffer(),
-        pageTotal: pdfDocOrData.pageTotal,
-        pageSizePx: pdfDocOrData.pageSizePx,
-        title: title || 'PDF Document',
-      };
-    } else {
-      // It's already PDFData_t
-      pdfData = pdfDocOrData;
+    // Use DocInfo_PDF directly from app.pdf.docInfo
+    const docInfo = this.app.pdf.docInfo;
+    
+    if (!docInfo.pdfDoc) {
+      throw new Error('PDF document not generated');
     }
+
+    // Extract data and use jsPDF's native data URL format
+    const pdfData: PDFData_t = {
+      arrayBuffer: docInfo.asArrayBuffer(),
+      pageTotal: docInfo.pageTotal,
+      pageSizePx: docInfo.pageSizePx,
+      title: docInfo.title || 'PDF Document',
+    };
+    
+    // Use jsPDF's native data URL format
+    const pdf_data_url = docInfo.asDataUrl();
 
     dx.require({ pdfData }, ['pdfData']);
 
@@ -121,10 +114,6 @@ export class UIWebView {
       if (!pdfData.pageSizePx?.widthPx || !pdfData.pageSizePx?.heightPx) {
         throw new Error(`pdfData.pageSizePx.widthPx and .heightPx are required`);
       }
-
-      // Convert ArrayBuffer to base64 data URL (required for VS Code webview)
-      const base64 = Buffer.from(pdfData.arrayBuffer).toString('base64');
-      const pdf_data_url = `data:application/pdf;base64,${base64}`;
 
       // Log PDF object usage for webview (Stage 4.3)
       dx.out(

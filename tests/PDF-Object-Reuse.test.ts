@@ -18,6 +18,9 @@ describe('PDF Object Reuse Tests', () => {
       const app = new App(mockContext, mockVSCode);
       app.init();
 
+      // Create menus before generating PDF (menus are created on-demand in production)
+      (app.paperprinter as unknown as { createMenus(): void }).createMenus();
+
       const paperPrinter = app.paperprinter;
       paperPrinter.docInfo.rawCode = `function test() {
   console.log("Hello World");
@@ -27,11 +30,11 @@ describe('PDF Object Reuse Tests', () => {
 
       // Generate PDF
       await paperPrinter['generatePdf']();
-      const pdfDoc1 = paperPrinter['pdfDoc'];
+      const pdfDoc1 = app.pdf.docInfo;
 
       // Generate PDF again (should reuse same object or create new one)
       await paperPrinter['generatePdf']();
-      const pdfDoc2 = paperPrinter['pdfDoc'];
+      const pdfDoc2 = app.pdf.docInfo;
 
       // Both should be valid PDFs
       assert.ok(pdfDoc1, 'First PDF should be generated');
@@ -46,12 +49,15 @@ describe('PDF Object Reuse Tests', () => {
       const app = new App(mockContext, mockVSCode);
       app.init();
 
+      // Create menus before generating PDF (menus are created on-demand in production)
+      (app.paperprinter as unknown as { createMenus(): void }).createMenus();
+
       const paperPrinter = app.paperprinter;
       paperPrinter.docInfo.rawCode = 'console.log("test");';
       paperPrinter.docInfo.languageId = 'javascript';
 
       await paperPrinter['generatePdf']();
-      const pdfDoc = paperPrinter['pdfDoc'];
+      const pdfDoc = app.pdf.docInfo;
 
       assert.ok(pdfDoc, 'PDF should be generated');
 
@@ -95,6 +101,9 @@ describe('PDF Object Reuse Tests', () => {
       const app = new App(mockContext, mockVSCode);
       app.init();
 
+      // Create menus before generating PDF (menus are created on-demand in production)
+      (app.paperprinter as unknown as { createMenus(): void }).createMenus();
+
       const paperPrinter = app.paperprinter;
       paperPrinter.docInfo.rawCode = `function example() {
   return "Hello World";
@@ -103,7 +112,7 @@ describe('PDF Object Reuse Tests', () => {
 
       // Generate PDF
       await paperPrinter['generatePdf']();
-      const pdfDoc = paperPrinter['pdfDoc'];
+      const pdfDoc = app.pdf.docInfo;
 
       assert.ok(pdfDoc, 'PDF should be generated');
 
@@ -113,7 +122,7 @@ describe('PDF Object Reuse Tests', () => {
       // Display in webview (this should use the same PDF object)
       const uiWebView = new UIWebView(app);
       uiWebView.init();
-      await uiWebView.displayPdfPanel(pdfDoc, 'Test Document');
+      await uiWebView.displayPdfPanel();
 
       // Get ArrayBuffer after webview display
       const arrayBufferAfter = pdfDoc.asArrayBuffer();
@@ -150,12 +159,15 @@ describe('PDF Object Reuse Tests', () => {
       const app = new App(mockContext, mockVSCode);
       app.init();
 
+      // Create menus before generating PDF (menus are created on-demand in production)
+      (app.paperprinter as unknown as { createMenus(): void }).createMenus();
+
       const paperPrinter = app.paperprinter;
       paperPrinter.docInfo.rawCode = 'console.log("test");';
       paperPrinter.docInfo.languageId = 'javascript';
 
       await paperPrinter['generatePdf']();
-      const pdfDoc = paperPrinter['pdfDoc'];
+      const pdfDoc = app.pdf.docInfo;
 
       assert.ok(pdfDoc, 'PDF should be generated');
 
@@ -174,7 +186,7 @@ describe('PDF Object Reuse Tests', () => {
       // Display in webview using DocInfo_PDF directly
       const uiWebView = new UIWebView(app);
       uiWebView.init();
-      const panelId = await uiWebView.displayPdfPanel(pdfDoc, 'Test Document');
+      const panelId = await uiWebView.displayPdfPanel();
 
       assert.ok(panelId, 'Panel should be created');
       app.done();
@@ -186,6 +198,9 @@ describe('PDF Object Reuse Tests', () => {
       const app = new App(mockContext, mockVSCode);
       app.init();
 
+      // Create menus before generating PDF (menus are created on-demand in production)
+      (app.paperprinter as unknown as { createMenus(): void }).createMenus();
+
       const paperPrinter = app.paperprinter;
       paperPrinter.docInfo.rawCode = `function test() {
   const x = 1;
@@ -195,7 +210,7 @@ describe('PDF Object Reuse Tests', () => {
       paperPrinter.docInfo.languageId = 'javascript';
 
       await paperPrinter['generatePdf']();
-      const pdfDoc = paperPrinter['pdfDoc'];
+      const pdfDoc = app.pdf.docInfo;
 
       assert.ok(pdfDoc, 'PDF should be generated');
 
@@ -240,12 +255,15 @@ describe('PDF Object Reuse Tests', () => {
       const app = new App(mockContext, mockVSCode);
       app.init();
 
+      // Create menus before generating PDF (menus are created on-demand in production)
+      (app.paperprinter as unknown as { createMenus(): void }).createMenus();
+
       const paperPrinter = app.paperprinter;
       paperPrinter.docInfo.rawCode = 'console.log("multiple conversions test");';
       paperPrinter.docInfo.languageId = 'javascript';
 
       await paperPrinter['generatePdf']();
-      const pdfDoc = paperPrinter['pdfDoc'];
+      const pdfDoc = app.pdf.docInfo;
 
       assert.ok(pdfDoc, 'PDF should be generated');
 
@@ -296,14 +314,14 @@ describe('PDF Object Reuse Tests', () => {
       paperPrinter.docInfo.languageId = 'javascript';
 
       // Don't generate PDF - pdfDoc should be null
-      assert.ok(paperPrinter['pdfDoc'] === null, 'PDF should be null before generation');
+      assert.ok(app.pdf.docInfo.pdfDoc === null, 'PDF should be null before generation');
 
       // Try to display webview without generating PDF first
       // This should fail because pdfDoc is null
       try {
         const uiWebView = new UIWebView(app);
         uiWebView.init();
-        await uiWebView.displayPdfPanel(paperPrinter['pdfDoc'] as any, 'Test Document');
+        await uiWebView.displayPdfPanel();
         assert.fail('Should throw error when PDF is not generated');
       } catch (error) {
         assert.ok(
@@ -321,13 +339,16 @@ describe('PDF Object Reuse Tests', () => {
       const app = new App(mockContext, mockVSCode);
       app.init();
 
+      // Create menus before generating PDF (menus are created on-demand in production)
+      (app.paperprinter as unknown as { createMenus(): void }).createMenus();
+
       const paperPrinter = app.paperprinter;
       paperPrinter.docInfo.rawCode = '';
       paperPrinter.docInfo.languageId = 'javascript';
 
       // Generate PDF with empty code
       await paperPrinter['generatePdf']();
-      const pdfDoc = paperPrinter['pdfDoc'];
+      const pdfDoc = app.pdf.docInfo;
 
       assert.ok(pdfDoc, 'PDF should be generated even with empty code');
 
