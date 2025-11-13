@@ -563,8 +563,8 @@ uimenu_generic_handlers: |
    * Handle text edit widget blur events
    * GENERIC: Triggers selection handler like any menu item click
    * 
-   * Applies displayToPersist codec to convert display value back to persistence format
-   * Example: User types "150" (percentage) → codec converts to "1.5" (scale) → sent to handler
+   * Applies transform.persist to convert display value back to persistence format
+   * Example: User types "150" (percentage) → transform converts to "1.5" (scale) → sent to handler
    */
   function handleTextEditBlur(e) {
     const input = e.target;

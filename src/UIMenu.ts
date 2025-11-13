@@ -394,8 +394,22 @@ export class UIMenu {
             
             const widthStyle = width ? ` style="width: ${width};"` : '';
             
-            // Get initial value from persistence and convert if transform exists
-            // This populates the text edit input's value attribute with the current selection
+            /**
+             * Get initial value from persistence and convert using transform.display if defined
+             * 
+             * For menus with transform (e.g., zoom level):
+             * 1. Get persisted value from menu's persist store (e.g., "1.00" scale)
+             * 2. Apply transform.display expression to convert to display format (e.g., "100" percentage)
+             * 3. Set as input's value attribute
+             * 
+             * For menus without transform:
+             * - Display value = persist value (no conversion)
+             * 
+             * @example
+             * // Zoom level: persist="1.00" → display="100"
+             * transform.display: 'Math.round({{persist}}*100)'
+             * Result: input value="100"
+             */
             let textEditValue = '';
             const persistedValue = this.app.uimenumgr.getValueForSelectedByMenuId(this._id);
             if (persistedValue) {
