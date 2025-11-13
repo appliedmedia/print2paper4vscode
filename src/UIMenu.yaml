@@ -539,6 +539,9 @@ uimenu_generic_handlers: |
   /**
    * Handle text edit widget blur events
    * GENERIC: Triggers selection handler like any menu item click
+   * 
+   * Applies displayToPersist codec to convert display value back to persistence format
+   * Example: User types "150" (percentage) → codec converts to "1.5" (scale) → sent to handler
    */
   function handleTextEditBlur(e) {
     const input = e.target;
@@ -555,7 +558,20 @@ uimenu_generic_handlers: |
     if (!menu) return;
     
     const menuId = menu.getAttribute('id');
-    const value = input.value;
+    let value = input.value;
+    
+    // Apply displayToPersist codec if it exists (e.g., percentage → scale)
+    // Example: '150' (percentage) → '150/100' → '1.5' (scale)
+    const codecDisplayToPersist = input.getAttribute('data-codec-display-to-persist');
+    if (codecDisplayToPersist) {
+      try {
+        const expression = codecDisplayToPersist.replace(/\{\{value\}\}/g, value);
+        const persistValue = eval(expression);
+        value = String(persistValue);
+      } catch (error) {
+        console.error('Failed to evaluate displayToPersist codec:', error);
+      }
+    }
     
     // Post selection like any menu item click - let handler decide what to do
     postMenuItemSelected(menuId, value);
@@ -614,4 +630,4 @@ uimenu_item: |
   </div>
 
 uimenu_text_edit: |
-  <span class="text-edit-wrapper"><input type="text" class="p2p4vsc-text-edit" data-item-id="{{itemId}}"{{constrainAttrs}}{{widthStyle}} /></span>
+  <span class="text-edit-wrapper"><input type="text" class="p2p4vsc-text-edit" data-item-id="{{itemId}}"{{constrainAttrs}}{{widthStyle}}{{textEditValue}}{{codecPersistToDisplay}}{{codecDisplayToPersist}} /></span>

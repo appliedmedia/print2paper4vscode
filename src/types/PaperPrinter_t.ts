@@ -297,6 +297,10 @@ export const kZoomLevel = {
         min: 10,
         max: 300,
       },
+      persistCodec: {
+        persistToDisplay: 'Math.round({{value}}*100)',  // Convert scale (0.1-3.0) to percentage (10-300)
+        displayToPersist: '{{value}}/100',  // Convert percentage back to scale
+      },
     },
     end: '%▼',
   },
