@@ -959,6 +959,7 @@ export class PaperPrinter {
       id = '1.00';
       value = 1.0;
       this.app.uimenumgr.setPersistForMenuId(kZoomLevel.id, id);
+      this.app.ui.persist.pdf_zoom_level = value;
       void this.regenerateAndUpdateWebview();
     } else {
       const menuItem = kZoomLevel.menuItems.find(item => item.id === menuItemId);
@@ -973,6 +974,8 @@ export class PaperPrinter {
         value = numericValue !== undefined ? numericValue : Number(kZoomLevel.alt);
         id = menuItemId;
         
+        // Sync to UI persist for webview rendering
+        this.app.ui.persist.pdf_zoom_level = value;
         void this.regenerateAndUpdateWebview();
       } else {
         // Text edit input: numeric string (could be percentage like "150" or scale like "1.50")
@@ -991,6 +994,8 @@ export class PaperPrinter {
 
           // Persist as menuItemId (numeric string) - value lookup will parse it
           this.app.uimenumgr.setPersistForMenuId(kZoomLevel.id, id);
+          // Sync to UI persist for webview rendering
+          this.app.ui.persist.pdf_zoom_level = value;
           void this.regenerateAndUpdateWebview();
         } else {
           dx.out(`Invalid zoom value: ${menuItemId}, using default`);
@@ -1028,6 +1033,8 @@ export class PaperPrinter {
 
     // Persist the new zoom level as menuItemId (numeric string)
     this.app.uimenumgr.setPersistForMenuId(kZoomLevel.id, newZoom.toFixed(2));
+    // Sync to UI persist for webview rendering
+    this.app.ui.persist.pdf_zoom_level = newZoom;
     void this.regenerateAndUpdateWebview();
 
     dx.done();
@@ -1057,6 +1064,8 @@ export class PaperPrinter {
 
     // Persist the new zoom level as menuItemId (numeric string)
     this.app.uimenumgr.setPersistForMenuId(kZoomLevel.id, newZoom.toFixed(2));
+    // Sync to UI persist for webview rendering
+    this.app.ui.persist.pdf_zoom_level = newZoom;
     void this.regenerateAndUpdateWebview();
 
     dx.done();
