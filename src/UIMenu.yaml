@@ -583,16 +583,16 @@ uimenu_generic_handlers: |
     const menuId = menu.getAttribute('id');
     let value = input.value;
     
-    // Apply displayToPersist codec if it exists (e.g., percentage → scale)
-    // Example: '150' (percentage) → '150/100' → '1.5' (scale)
-    const codecDisplayToPersist = input.getAttribute('data-codec-display-to-persist');
-    if (codecDisplayToPersist) {
+    // Apply transform.persist if it exists (e.g., percentage → scale)
+    // Example: display='150' → '{{display}}/100' → persist='1.5'
+    const transformPersist = input.getAttribute('data-transform-persist');
+    if (transformPersist) {
       try {
-        const expression = codecDisplayToPersist.replace(/\{\{value\}\}/g, value);
+        const expression = transformPersist.replace(/\{\{display\}\}/g, value);
         const persistValue = eval(expression);
         value = String(persistValue);
       } catch (error) {
-        console.error('Failed to evaluate displayToPersist codec:', error);
+        console.error('Failed to evaluate transform.persist:', error);
       }
     }
     
@@ -654,4 +654,4 @@ uimenu_item: |
   </div>
 
 uimenu_text_edit: |
-  <span class="text-edit-wrapper"><input type="text" class="p2p4vsc-text-edit" data-item-id="{{itemId}}"{{constrainAttrs}}{{widthStyle}}{{textEditValue}}{{codecPersistToDisplay}}{{codecDisplayToPersist}} /></span>
+  <span class="text-edit-wrapper"><input type="text" class="p2p4vsc-text-edit" data-item-id="{{itemId}}"{{constrainAttrs}}{{widthStyle}}{{textEditValue}}{{transformDisplay}}{{transformPersist}} /></span>

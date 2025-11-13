@@ -33,20 +33,20 @@ import {
  * @property constrain.regex - Regex pattern for input validation (e.g., '^\d{0,3}$' for 0-3 digits)
  * @property constrain.min - Minimum allowed value (enforced on blur)
  * @property constrain.max - Maximum allowed value (enforced on blur)
- * @property persistCodec - Optional value conversion between persistence and display
- * @property persistCodec.persistToDisplay - Expression to convert persisted value to display value
- *   (e.g., 'Math.round({{value}}*100)' converts scale 1.00 to percentage 100)
- * @property persistCodec.displayToPersist - Expression to convert display value back to persisted value
- *   (e.g., '{{value}}/100' converts percentage 100 back to scale 1.00)
+ * @property transform - Optional bidirectional value conversion
+ * @property transform.display - Expression to convert from persist to display
+ *   (e.g., 'Math.round({{persist}}*100)' converts scale 1.00 to percentage 100)
+ * @property transform.persist - Expression to convert from display to persist
+ *   (e.g., '{{display}}/100' converts percentage 100 back to scale 1.00)
  * 
  * @example
  * // Zoom level with scale-to-percentage conversion
  * {
  *   type: 'text_edit',
  *   constrain: { regex: '^\\d{0,3}$', min: 10, max: 300 },
- *   persistCodec: {
- *     persistToDisplay: 'Math.round({{value}}*100)',
- *     displayToPersist: '{{value}}/100'
+ *   transform: {
+ *     display: 'Math.round({{persist}}*100)',
+ *     persist: '{{display}}/100'
  *   }
  * }
  */
@@ -58,9 +58,9 @@ export type TextEditConfig_t = {
     min?: number;
     max?: number;
   };
-  persistCodec?: {
-    persistToDisplay?: string;  // Expression to convert persisted value to display value (e.g., '{{value}}*100')
-    displayToPersist?: string;  // Expression to convert display value to persisted value (e.g., '{{value}}/100')
+  transform?: {
+    display?: string;  // Expression to convert persist value to display value (e.g., 'Math.round({{persist}}*100)')
+    persist?: string;  // Expression to convert display value to persist value (e.g., '{{display}}/100')
   };
 };
 
@@ -394,23 +394,23 @@ export class UIMenu {
             
             const widthStyle = width ? ` style="width: ${width};"` : '';
             
-            // Get initial value from persistence and convert if codec exists
+            // Get initial value from persistence and convert if transform exists
             // This populates the text edit input's value attribute with the current selection
             let textEditValue = '';
             const persistedValue = this.app.uimenumgr.getValueForSelectedByMenuId(this._id);
             if (persistedValue) {
               textEditValue = persistedValue;
               
-              // Apply persistToDisplay codec if it exists (e.g., scale → percentage)
-              // Example: '1.00' (scale) → 'Math.round(1.00*100)' → '100' (percentage)
-              if (config.persistCodec?.persistToDisplay) {
+              // Apply transform.display if it exists (e.g., scale → percentage)
+              // Example: persist='1.00' → 'Math.round({{persist}}*100)' → display='100'
+              if (config.transform?.display) {
                 try {
-                  const expression = config.persistCodec.persistToDisplay.replace(/\{\{value\}\}/g, persistedValue);
+                  const expression = config.transform.display.replace(/\{\{persist\}\}/g, persistedValue);
                   // eslint-disable-next-line no-eval
                   const displayValue = eval(expression);
                   textEditValue = String(displayValue);
                 } catch (error) {
-                  dx.error(`Failed to evaluate persistToDisplay codec: ${String(error)}`);
+                  dx.error(`Failed to evaluate transform.display: ${String(error)}`);
                   textEditValue = persistedValue;
                 }
               }
@@ -422,8 +422,8 @@ export class UIMenu {
               constrainAttrs,
               widthStyle,
               textEditValue: textEditValue ? ` value="${textEditValue}"` : '',
-              codecPersistToDisplay: config.persistCodec?.persistToDisplay ? ` data-codec-persist-to-display="${config.persistCodec.persistToDisplay}"` : '',
-              codecDisplayToPersist: config.persistCodec?.displayToPersist ? ` data-codec-display-to-persist="${config.persistCodec.displayToPersist}"` : '',
+              transformDisplay: config.transform?.display ? ` data-transform-display="${config.transform.display}"` : '',
+              transformPersist: config.transform?.persist ? ` data-transform-persist="${config.transform.persist}"` : '',
             });
             return {
               html,

@@ -18,7 +18,7 @@ describe('UIMenu - Text Edit Codec', () => {
   });
 
   it('should convert persisted value to display value using persistToDisplay codec', async () => {
-    // Create a menu with text_edit that has a codec (like zoom level)
+    // Create a menu with text_edit that has a transform (like zoom level)
     const textEditConfig: TextEditConfig_t = {
       type: 'text_edit',
       constrain: {
@@ -26,9 +26,9 @@ describe('UIMenu - Text Edit Codec', () => {
         min: 10,
         max: 300,
       },
-      persistCodec: {
-        persistToDisplay: 'Math.round({{value}}*100)', // scale to percentage
-        displayToPersist: '{{value}}/100', // percentage to scale
+      transform: {
+        display: 'Math.round({{persist}}*100)', // scale to percentage
+        persist: '{{display}}/100', // percentage to scale
       },
     };
 
@@ -53,17 +53,17 @@ describe('UIMenu - Text Edit Codec', () => {
     // Check that the input has value="150" (converted from scale 1.50 to percentage 150)
     assert.ok(html.includes('value="150"'), 'Should convert scale 1.50 to percentage 150');
     assert.ok(
-      html.includes('data-codec-persist-to-display="Math.round({{value}}*100)"'),
-      'Should include persistToDisplay codec in data attribute'
+      html.includes('data-transform-display="Math.round({{persist}}*100)"'),
+      'Should include transform.display in data attribute'
     );
     assert.ok(
-      html.includes('data-codec-display-to-persist="{{value}}/100"'),
-      'Should include displayToPersist codec in data attribute'
+      html.includes('data-transform-persist="{{display}}/100"'),
+      'Should include transform.persist in data attribute'
     );
   });
 
-  it('should handle text_edit without codec (display = persist)', async () => {
-    // Create a menu with text_edit that has NO codec
+  it('should handle text_edit without transform (display = persist)', async () => {
+    // Create a menu with text_edit that has NO transform
     const textEditConfig: TextEditConfig_t = {
       type: 'text_edit',
       constrain: {
@@ -71,7 +71,7 @@ describe('UIMenu - Text Edit Codec', () => {
         min: 8,
         max: 48,
       },
-      // No persistCodec - display value = persisted value
+      // No transform - display value = persisted value
     };
 
     const menu = new UIMenu(
@@ -95,8 +95,8 @@ describe('UIMenu - Text Edit Codec', () => {
     // Check that the input has value="14" (no conversion)
     assert.ok(html.includes('value="14"'), 'Should use persisted value directly without conversion');
     assert.ok(
-      !html.includes('data-codec-persist-to-display'),
-      'Should not include codec attributes when no codec defined'
+      !html.includes('data-transform-display'),
+      'Should not include transform attributes when no transform defined'
     );
   });
 
@@ -107,9 +107,9 @@ describe('UIMenu - Text Edit Codec', () => {
         min: 10,
         max: 300,
       },
-      persistCodec: {
-        persistToDisplay: 'Math.round({{value}}*100)',
-        displayToPersist: '{{value}}/100',
+      transform: {
+        display: 'Math.round({{persist}}*100)',
+        persist: '{{display}}/100',
       },
     };
 
@@ -133,17 +133,17 @@ describe('UIMenu - Text Edit Codec', () => {
     assert.ok(!html.includes('value="'), 'Should not include value attribute when no persisted value');
   });
 
-  it('should handle codec evaluation errors gracefully', async () => {
-    // Create a codec with an invalid expression
+  it('should handle transform evaluation errors gracefully', async () => {
+    // Create a transform with an invalid expression
     const textEditConfig: TextEditConfig_t = {
       type: 'text_edit',
       constrain: {
         min: 10,
         max: 300,
       },
-      persistCodec: {
-        persistToDisplay: 'invalid.syntax.here', // Will cause eval error
-        displayToPersist: '{{value}}/100',
+      transform: {
+        display: 'invalid.syntax.here', // Will cause eval error
+        persist: '{{display}}/100',
       },
     };
 
@@ -166,7 +166,7 @@ describe('UIMenu - Text Edit Codec', () => {
     const html = await menu.getHTML();
 
     // Check that it falls back to the persisted value
-    assert.ok(html.includes('value="1.50"'), 'Should fall back to persisted value on codec error');
+    assert.ok(html.includes('value="1.50"'), 'Should fall back to persisted value on transform error');
   });
 
   it('should round percentage values correctly', async () => {
@@ -176,9 +176,9 @@ describe('UIMenu - Text Edit Codec', () => {
         min: 10,
         max: 300,
       },
-      persistCodec: {
-        persistToDisplay: 'Math.round({{value}}*100)',
-        displayToPersist: '{{value}}/100',
+      transform: {
+        display: 'Math.round({{persist}}*100)',
+        persist: '{{display}}/100',
       },
     };
 
@@ -206,12 +206,12 @@ describe('UIMenu - Text Edit Codec', () => {
   });
 
   it('should convert display value back to persist value in blur handler', async () => {
-    // This tests the webview-side codec logic (simulated)
-    const codecDisplayToPersist = '{{value}}/100';
+    // This tests the webview-side transform logic (simulated)
+    const transformPersist = '{{display}}/100';
     const displayValue = '150';
 
     // Simulate what the blur handler does
-    const expression = codecDisplayToPersist.replace(/\{\{value\}\}/g, displayValue);
+    const expression = transformPersist.replace(/\{\{display\}\}/g, displayValue);
     // eslint-disable-next-line no-eval
     const persistValue = eval(expression);
 
@@ -236,9 +236,9 @@ describe('UIMenu - Text Edit Codec', () => {
         min: 10,
         max: 300,
       },
-      persistCodec: {
-        persistToDisplay: 'Math.round({{value}}*100)',
-        displayToPersist: '{{value}}/100',
+      transform: {
+        display: 'Math.round({{persist}}*100)',
+        persist: '{{display}}/100',
       },
     };
 
