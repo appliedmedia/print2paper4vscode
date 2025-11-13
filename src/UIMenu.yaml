@@ -3,8 +3,6 @@
 
 uimenu_css: |
   :root {
-    /* Flyout positioning: 97% leaves 3% gap to prevent overlap with parent menu item gutters */
-    /* The 3% provides visual spacing for gutter-before (2ch) and gutter-after (4ch) areas */
     --flyout-left: 97%;
   }
 
@@ -24,9 +22,9 @@ uimenu_css: |
     top: 100%;
     left: 0;
     z-index: 1000;
-    width: max-content; /* Ensure container expands to fit content */
-    min-width: 100%; /* But at least as wide as the button */
-    pointer-events: auto; /* Ensure menu items are clickable */
+    width: max-content;
+    min-width: 100%;
+    pointer-events: auto;
   }
   .p2p4vsc-menu-item {
     --gutter-before-width: 2ch;
@@ -44,8 +42,8 @@ uimenu_css: |
     gap: 0;
     user-select: none;
     -webkit-user-select: none;
-    position: relative; /* Required for absolutely positioned flyout children */
-    pointer-events: auto; /* Ensure menu items are clickable */
+    position: relative;
+    pointer-events: auto;
   }
   .p2p4vsc-menu-item:hover, .p2p4vsc-menu-item.isSelected {
     background: #444;
@@ -79,26 +77,20 @@ uimenu_css: |
     display: inline-block;
   }
 
-  /* Ensure only items with isFlyout class get flyout arrows */
   .p2p4vsc-menu-item.isFlyout .gutter-after::after {
     content: "▶" !important;
   }
 
-  /* Ensure only items with isDefault class get editor icons */
   .p2p4vsc-menu-item.isDefault .gutter-after::after {
     content: "📝" !important;
   }
 
-  /* Explicitly clear content for items without special classes */
   .p2p4vsc-menu-item:not(.isFlyout):not(.isDefault) .gutter-after::after {
     content: "" !important;
   }
 
   .p2p4vsc-menu-item.isSelected {
-    /* Keep the same grid structure as default */
   }
-
-
   .p2p4vsc-menu-item.isSelected .gutter-before::before {
     content: "✓";
     display: inline-block;
@@ -107,7 +99,6 @@ uimenu_css: |
     line-height: 1;
   }
 
-
   /* Icon slot prefix/suffix styling */
   .p2p4vsc-menu-item .icon-slot-prefix,
   .p2p4vsc-menu-item .icon-slot-suffix {
@@ -115,7 +106,6 @@ uimenu_css: |
     white-space: nowrap;
   }
 
-  /* Text edit widget styling */
   .p2p4vsc-menu-item .text-edit-wrapper {
     display: inline-block;
     width: auto;
@@ -130,7 +120,6 @@ uimenu_css: |
     font-size: 14px;
     font-weight: 500;
     text-align: center;
-    /* Default width - can be overridden by inline style from config.width */
     width: 4ch;
     min-width: 4ch;
     pointer-events: auto;
@@ -143,7 +132,6 @@ uimenu_css: |
     border-color: #007acc;
   }
 
-  /* Prevent menu button from being clickable when it contains text_edit */
   .p2p4vsc-menu-btn:has(.p2p4vsc-text-edit) {
     pointer-events: none;
     cursor: default;
@@ -178,23 +166,19 @@ uimenu_css: |
 
   .p2p4vsc-group { position: relative; }
 
-  /* Hide button for flyout menus */
   .p2p4vsc-menu.isFlyout .p2p4vsc-menu-btn {
     display: none;
   }
 
-  /* Hide flyout menus by default */
   .p2p4vsc-menu.isFlyout {
     display: none;
-    pointer-events: auto; /* Allow pointer events when visible */
+    pointer-events: auto;
   }
 
-  /* Show menu items inside flyout menus when the flyout is visible */
   .p2p4vsc-menu.isFlyout[style*="display: block"] .p2p4vsc-menu-items {
     display: block !important;
   }
 
-  /* When flyout menu is visible, ensure menu items are shown */
   .p2p4vsc-menu.isFlyout:not([style*="display: none"]) .p2p4vsc-menu-items {
     display: block !important;
   }
@@ -206,11 +190,6 @@ uimenu_html: |
   </div>
 
 uimenu_generic_handlers: |
-  // Generic handlers for all menus - refactored into focused functions
-
-  /**
-   * Close all dropdown menus and flyout menus
-   */
   function closeAllMenus() {
     document.querySelectorAll('.p2p4vsc-menu-items').forEach(items => {
       items.style.display = 'none';
@@ -220,26 +199,17 @@ uimenu_generic_handlers: |
     });
   }
 
-  /**
-   * Close all flyout menus (but keep dropdowns open)
-   */
   function closeAllFlyouts() {
     document.querySelectorAll('.p2p4vsc-menu.isFlyout').forEach(flyout => {
       flyout.style.display = 'none';
     });
   }
 
-  /**
-   * Post menu item selection message to extension
-   * Includes optional context dictionary for template variable substitution
-   */
   function postMenuItemSelected(menuId, itemId) {
     if (window.vscode && menuId && itemId) {
-      // Build context dictionary with window dimensions (page dimensions already known on extension side)
-      // Keys match template variable names (e.g., {{windowWidth}}, {{windowHeight}})
       const contextDict = {
-        windowWidth: window.innerWidth,   // Current viewport width
-        windowHeight: window.innerHeight  // Current viewport height
+        windowWidth: window.innerWidth,
+        windowHeight: window.innerHeight
       };
       
       window.vscode.postMessage({
@@ -251,57 +221,37 @@ uimenu_generic_handlers: |
     }
   }
 
-  /**
-   * Handle menu button click - either show dropdown or trigger selection if no items
-   */
   function handleMenuButtonClick(e) {
     e.preventDefault();
-    // Find the button that was clicked (in case click was on child element)
     const btn = e.target.closest('.p2p4vsc-menu-btn');
     const menu = btn?.closest('.p2p4vsc-menu');
     const menuId = menu?.getAttribute('id');
     const menuItems = menu?.querySelector('.p2p4vsc-menu-items');
     
-    // Menu items may be regular items or have flyouts; both require a dropdown.
-    // If no items, treat button click as direct selection
     if (!menuItems) {
       postMenuItemSelected(menuId, menuId);
       return;
     }
     
-    // Menu has items - toggle dropdown (items may or may not have flyouts)
-    // Check if THIS menu is already open BEFORE closing all menus
     const isOpen = menuItems.style.display === 'block';
     
     if (isOpen) {
-      // This menu is open - close it
       menuItems.style.display = 'none';
       btn.setAttribute('aria-expanded', 'false');
     } else {
-      // This menu is closed - close others and open this one
       closeAllMenus();
       menuItems.style.display = 'block';
       btn.setAttribute('aria-expanded', 'true');
     }
   }
 
-  /**
-   * Find flyout menu element by ID, searching within item first, then document-wide
-   */
   function findFlyoutMenu(itemEl, flyoutMenuId) {
     if (!flyoutMenuId) return null;
-    
-    // Flyouts are embedded as children of menu items - search within item first
     let flyoutMenu = itemEl.querySelector(`#${flyoutMenuId}`);
     if (flyoutMenu) return flyoutMenu;
-    
-    // Fallback: search document-wide (flyout menu may be elsewhere in DOM)
     return document.getElementById(flyoutMenuId);
   }
 
-  /**
-   * Get ancestor flyout menus (for proper z-index and closing logic)
-   */
   function getAncestorFlyouts(menu, excludeFlyout) {
     const ancestorFlyouts = [];
     let currentMenu = menu;
@@ -314,35 +264,28 @@ uimenu_generic_handlers: |
     return ancestorFlyouts;
   }
 
-  /**
-   * Position and show flyout menu relative to item
-   */
   function showFlyoutMenu(flyoutMenu, itemEl, e, ancestorFlyouts) {
-    // Ensure flyout is child of item (should already be from HTML generation)
     if (flyoutMenu.parentElement !== itemEl) {
       itemEl.appendChild(flyoutMenu);
     }
     
-    // Position flyout
     const itemRect = itemEl.getBoundingClientRect();
     const textElement = itemEl.querySelector('.menu-item-text');
-    let lineY = e.clientY - itemRect.top; // Fallback to mouse position
+    let lineY = e.clientY - itemRect.top;
     if (textElement) {
       const textRect = textElement.getBoundingClientRect();
       lineY = textRect.top - itemRect.top;
     }
     
     flyoutMenu.style.position = 'absolute';
-    // Use CSS variable for flyout positioning (97% leaves 3% gap for menu item gutters)
     const flyoutLeft = getComputedStyle(document.documentElement)
       .getPropertyValue('--flyout-left')
-      .trim() || '97%'; // Fallback to 97% if CSS var not found
+      .trim() || '97%';
     flyoutMenu.style.left = flyoutLeft;
     flyoutMenu.style.top = `${lineY}px`;
     flyoutMenu.style.zIndex = String(1000 + ancestorFlyouts.length + 1);
     flyoutMenu.style.display = 'block';
     
-    // Ensure menu items inside flyout are visible
     const flyoutMenuItems = flyoutMenu.querySelector('.p2p4vsc-menu-items');
     if (flyoutMenuItems) {
       flyoutMenuItems.style.display = 'block';
@@ -351,10 +294,6 @@ uimenu_generic_handlers: |
     }
   }
 
-  /**
-   * Handle flyout menu toggle (open/close flyout)
-   * Single return point - returns early only if flyout menu not found
-   */
   function handleFlyoutToggle(e, itemEl, menu, flyoutMenuId) {
     e.preventDefault();
     e.stopPropagation();
@@ -365,7 +304,6 @@ uimenu_generic_handlers: |
       const ancestorFlyouts = getAncestorFlyouts(menu, flyoutMenu);
       const wasVisible = flyoutMenu.style.display === 'block';
       
-      // Close all other flyouts except the one being toggled and its ancestors
       document.querySelectorAll('.p2p4vsc-menu.isFlyout').forEach(flyout => {
         if (flyout !== flyoutMenu && !ancestorFlyouts.includes(flyout)) {
           flyout.style.display = 'none';
@@ -380,10 +318,6 @@ uimenu_generic_handlers: |
     }
   }
 
-  /**
-   * Handle menu item click - either toggle flyout or select item
-   * Uses isFlyout class which is set from static flyoutMenuItemIds list
-   */
   function handleMenuItemClick(e, itemEl) {
     e.preventDefault();
     e.stopPropagation();
@@ -391,16 +325,12 @@ uimenu_generic_handlers: |
     const menu = itemEl.closest('.p2p4vsc-menu');
     const menuId = menu?.getAttribute('id');
     
-    // Check if item has flyout using isFlyout class (set from static flyoutMenuItemIds)
-    // This uses the source of truth: the static list from kFoo constants
     if (itemEl.classList.contains('isFlyout')) {
-      // Get flyout menu ID from flyout-menu-id-ref attribute (set from static flyoutMenuItemIds)
       const flyoutMenuId = itemEl.getAttribute('flyout-menu-id-ref');
       if (flyoutMenuId) {
         handleFlyoutToggle(e, itemEl, menu, flyoutMenuId);
       }
     } else {
-      // Terminal selection - update UI and post message
       if (menu.classList.contains('has-gutter-before')) {
         menu.querySelectorAll('.p2p4vsc-menu-item').forEach(item => {
           item.classList.remove('isSelected');
@@ -413,43 +343,30 @@ uimenu_generic_handlers: |
     }
   }
 
-  // Main event handler - single entry point
   document.addEventListener('click', (e) => {
-    // Safety checks
     if (!e || !e.target || !e.target.closest) return;
     
-    // Handle menu button clicks - check if click is inside a button (not just on the button itself)
     const btn = e.target.closest('.p2p4vsc-menu-btn');
     if (btn) {
       handleMenuButtonClick(e);
       return;
     }
     
-    // Handle menu item clicks - check if click is inside a menu item
-    // This MUST work for clicks on menu item children (like .menu-item-text, .gutter-before, etc.)
     const itemEl = e.target.closest('.p2p4vsc-menu-item');
     if (itemEl) {
       handleMenuItemClick(e, itemEl);
       return;
     }
     
-    // Click outside any menu - close everything
     closeAllMenus();
   });
 
-  /**
-   * Handle text edit widget keydown events
-   * Validates input against constrain.regex on every keydown
-   * Triggers blur on Enter/Return key
-   */
   function handleTextEditKeydown(e) {
     const input = e.target;
     if (!input.classList.contains('p2p4vsc-text-edit')) return;
     
-    // Prevent menu button click when clicking text edit
     e.stopPropagation();
     
-    // Handle Enter/Return key - trigger blur to commit value
     if (e.key === 'Enter' || e.key === 'Return') {
       e.preventDefault();
       input.blur();
@@ -460,16 +377,10 @@ uimenu_generic_handlers: |
     if (!regexStr) return;
     
     try {
-      
-      // Test the regex against the new character(s) that would be entered
       const currentValue = input.value;
       const selectionStart = input.selectionStart;
       const selectionEnd = input.selectionEnd;
-      
-      // Get the key that was pressed
       const key = e.key;
-      
-      // Build what the value would be after this keydown
       let newValue = currentValue;
       if (key === 'Backspace') {
         if (selectionStart === selectionEnd && selectionStart > 0) {
@@ -484,65 +395,37 @@ uimenu_generic_handlers: |
           newValue = currentValue.slice(0, selectionStart) + currentValue.slice(selectionEnd);
         }
       } else if (key.length === 1) {
-        // Regular character - insert at cursor position
         const before = currentValue.slice(0, selectionStart);
         const after = currentValue.slice(selectionEnd);
         newValue = before + key + after;
       } else {
-        // Other keys (Arrow, Home, End, etc.) - allow them
         return;
       }
       
-      // Test regex against the new value (only regex validation during typing)
       const regex = new RegExp(regexStr);
       if (!regex.test(newValue)) {
         e.preventDefault();
         e.stopPropagation();
         return;
       }
-      
-      // NOTE: min/max validation happens on blur, not during typing
-      // This allows users to type intermediate values (e.g., "1" before "150")
     } catch (error) {
       console.error('Error validating text edit input:', error);
     }
   }
 
-  /**
-   * Handle text edit widget click/focus events
-   * Close all menus when clicking in text edit (z-order)
-   */
   function handleTextEditClick(e) {
     const input = e.target;
     if (!input.classList.contains('p2p4vsc-text-edit')) return;
-    
-    // Close all menus when clicking in text edit
     closeAllMenus();
-    
-    // Prevent menu button click when clicking text edit
     e.stopPropagation();
   }
-  
-  /**
-   * Handle text edit widget input/change events
-   * GENERIC: Just stops propagation - actual validation/clamping happens on blur
-   * NOTE: We do NOT clamp during typing, as this mangles multi-digit entry
-   *       (e.g., typing "150" would clamp "1" to min "10", then append "5" → "105")
-   */
+
   function handleTextEditInput(e) {
     const input = e.target;
     if (!input.classList.contains('p2p4vsc-text-edit')) return;
-    
-    // Prevent menu button click when interacting with text edit
     e.stopPropagation();
-    
-    // Validation and clamping happens on blur, not during typing
   }
-  
-  /**
-   * Validate and clamp text edit value
-   * Called on blur to enforce constraints after user finishes typing
-   */
+
   function validateAndClampTextEdit(input) {
     const minStr = input.getAttribute('data-constrain-min');
     const maxStr = input.getAttribute('data-constrain-max');
@@ -553,7 +436,6 @@ uimenu_generic_handlers: |
       const max = parseFloat(maxStr);
       
       if (!isNaN(value) && !isNaN(min) && !isNaN(max)) {
-        // Clamp value to min/max
         const clampedValue = Math.max(min, Math.min(max, value));
         if (clampedValue !== value) {
           input.value = clampedValue.toString();
@@ -562,32 +444,18 @@ uimenu_generic_handlers: |
     }
   }
 
-  /**
-   * Handle text edit widget blur events
-   * GENERIC: Triggers selection handler like any menu item click
-   * 
-   * Applies transform.persist to convert display value back to persistence format
-   * Example: User types "150" (percentage) → transform converts to "1.5" (scale) → sent to handler
-   */
   function handleTextEditBlur(e) {
     const input = e.target;
     if (!input.classList.contains('p2p4vsc-text-edit')) return;
-    
-    // Prevent menu button click when clicking away from text edit
     e.stopPropagation();
-    
-    // Validate and clamp now that user is done typing
     validateAndClampTextEdit(input);
     
-    // Get the menu ID from the closest menu
     const menu = input.closest('.p2p4vsc-menu');
     if (!menu) return;
     
     const menuId = menu.getAttribute('id');
     let value = input.value;
     
-    // Apply transform.persist if it exists (e.g., percentage → scale)
-    // Example: display='150' → '{{display}}/100' → persist='1.5'
     const transformPersist = input.getAttribute('data-transform-persist');
     if (transformPersist) {
       try {
@@ -599,27 +467,19 @@ uimenu_generic_handlers: |
       }
     }
     
-    // Post selection like any menu item click - let handler decide what to do
     postMenuItemSelected(menuId, value);
   }
 
-  // Register text edit handlers
   document.addEventListener('click', handleTextEditClick, true);
   document.addEventListener('keydown', handleTextEditKeydown, true);
   document.addEventListener('input', handleTextEditInput, true);
   document.addEventListener('blur', handleTextEditBlur, true);
 
-  /**
-   * Generic keyboard shortcut handler
-   * Scans all menus and menu items for shortcutCode attributes and dispatches clicks
-   */
   function initKeyboardShortcuts() {
     document.addEventListener('keydown', function(e) {
-      // Check for Cmd/Ctrl modifier
       const isModifier = e.metaKey || e.ctrlKey;
       if (!isModifier) return;
 
-      // Check menu buttons for matching shortcutCode
       const menuButtons = document.querySelectorAll('.p2p4vsc-menu-btn[data-shortcut-code]');
       for (const btn of menuButtons) {
         const shortcutCode = btn.getAttribute('data-shortcut-code');
@@ -630,7 +490,6 @@ uimenu_generic_handlers: |
         }
       }
 
-      // Check menu items for matching shortcutCode
       const menuItems = document.querySelectorAll('.p2p4vsc-menu-item[data-shortcut-code]');
       for (const item of menuItems) {
         const shortcutCode = item.getAttribute('data-shortcut-code');
@@ -643,7 +502,6 @@ uimenu_generic_handlers: |
     });
   }
 
-  // Initialize keyboard shortcuts on page load
   initKeyboardShortcuts();
 
 uimenu_item: |

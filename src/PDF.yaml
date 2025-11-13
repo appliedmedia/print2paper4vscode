@@ -54,12 +54,11 @@ pdf_css: |
   }
 
 pdf_js: |
-  // PDF Viewer JavaScript
   let pdfDoc = null;
   let pageNum = 1;
   let pageRendering = false;
   let pageNumPending = null;
-  const scale = 1.0; // Reduced from 1.5 for better fit
+  const scale = 1.0;
   const canvas = document.getElementById('pdf-canvas');
   const ctx = canvas.getContext('2d');
 
@@ -155,11 +154,9 @@ pdf_js: |
     loadingTask.promise.then(onDocumentLoadSuccess, onDocumentLoadError);
   }
 
-  // Make functions available globally
   window.initPdfViewer = initPdfViewer;
   window.updatePdfData = updatePdfData;
 
-  // Listen for PDF update messages
   window.addEventListener('message', (event) => {
     if (event.data.type === 'updatePdf') {
       updatePdfData(event.data.pdfDataUrl);
