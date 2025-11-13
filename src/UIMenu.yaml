@@ -437,6 +437,7 @@ uimenu_generic_handlers: |
   /**
    * Handle text edit widget keydown events
    * Validates input against constrain.regex on every keydown
+   * Triggers blur on Enter/Return key
    */
   function handleTextEditKeydown(e) {
     const input = e.target;
@@ -444,6 +445,13 @@ uimenu_generic_handlers: |
     
     // Prevent menu button click when clicking text edit
     e.stopPropagation();
+    
+    // Handle Enter/Return key - trigger blur to commit value
+    if (e.key === 'Enter' || e.key === 'Return') {
+      e.preventDefault();
+      input.blur();
+      return;
+    }
     
     const regexStr = input.getAttribute('data-constrain-regex');
     if (!regexStr) return;
@@ -497,6 +505,21 @@ uimenu_generic_handlers: |
     }
   }
 
+  /**
+   * Handle text edit widget click/focus events
+   * Close all menus when clicking in text edit (z-order)
+   */
+  function handleTextEditClick(e) {
+    const input = e.target;
+    if (!input.classList.contains('p2p4vsc-text-edit')) return;
+    
+    // Close all menus when clicking in text edit
+    closeAllMenus();
+    
+    // Prevent menu button click when clicking text edit
+    e.stopPropagation();
+  }
+  
   /**
    * Handle text edit widget input/change events
    * GENERIC: Just stops propagation - actual validation/clamping happens on blur
@@ -578,6 +601,7 @@ uimenu_generic_handlers: |
   }
 
   // Register text edit handlers
+  document.addEventListener('click', handleTextEditClick, true);
   document.addEventListener('keydown', handleTextEditKeydown, true);
   document.addEventListener('input', handleTextEditInput, true);
   document.addEventListener('blur', handleTextEditBlur, true);
