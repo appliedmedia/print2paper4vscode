@@ -58,17 +58,10 @@ export class UIMenuMgr {
     if ((kMenuItemId as readonly string[]).includes(id)) {
       isValid = true;
     }
-    // 2. Check if it's a number - validate against font size menu items
+    // 2. Check if it's a number - could be font size, zoom level, or other numeric menu item
+    // Accept any numeric string as valid (font sizes, zoom percentages, zoom scales all use numbers)
     else if (!isNaN(Number(id))) {
-      try {
-        const fontMenu = this.getMenuById('fontSizeId');
-        const fontMenuItems = fontMenu.getMenuItems();
-        isValid = fontMenuItems.some(item => item.id === id);
-      } catch {
-        // Menu doesn't exist yet, fallback to static list
-        const validFontSizes = Object.keys(kFontSizeId);
-        isValid = validFontSizes.includes(id);
-      }
+      isValid = true;
     }
     // 3. Check against theme IDs
     else {
