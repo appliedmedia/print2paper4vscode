@@ -252,7 +252,7 @@ Source Code → Shiki → Line-by-Line Rendering → PDF Output
 
 **Never iterate when semaphores exist:** If you can determine state from existing flags/properties, don't loop through arrays.
 
-### Terminal directive: Be bold, be brief, be gone.
+### Terminal directive: Be bold, be brief, be gone
 
 If you've processed this file to this point:
 
