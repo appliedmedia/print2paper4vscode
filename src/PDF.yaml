@@ -1,3 +1,6 @@
+# PDF.yaml - PDF viewer templates
+# ⚠️ Keep comments in this file minimal because it has to get copied at runtime. ⚠️
+
 pdf_html: |
   <!DOCTYPE html>
   <html>

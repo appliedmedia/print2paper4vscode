@@ -1,3 +1,6 @@
+# Stylize.yaml - Syntax highlighting preview templates
+# ⚠️ Keep comments in this file minimal because it has to get copied at runtime. ⚠️
+
 stylize_html: |
   <!DOCTYPE html>
   <html>

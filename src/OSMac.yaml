@@ -1,6 +1,6 @@
-# AppleScript templates for macOS operations
+# OSMac.yaml - AppleScript templates for macOS operations
+# ⚠️ Keep comments in this file minimal because it has to get copied at runtime. ⚠️
 
-# Print operations
 apple_script_print_via_finder: |
   tell application "Finder" to print POSIX file "{{file_path}}"
 

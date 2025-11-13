@@ -1,4 +1,5 @@
-# UI templates for the Print2Paper extension
+# UI.yaml - Base UI templates and toolbar
+# ⚠️ Keep comments in this file minimal because it has to get copied at runtime. ⚠️
 
 base_css: |
   /* Minimal base styles - all theming comes from theme system */

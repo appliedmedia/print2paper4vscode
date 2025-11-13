@@ -1,6 +1,6 @@
 # PaperPrinter.yaml - SVG icons and templates for PaperPrinter
+# ⚠️ Keep comments in this file minimal because it has to get copied at runtime. ⚠️
 
-# Shared portrait box (tall, narrow) for portrait orientation and all margin icons
 icon_box_portrait_svg: |
   <rect x="4" y="2" width="24" height="28" fill="none" stroke="currentColor" stroke-width="2"/>
 

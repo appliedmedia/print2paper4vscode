@@ -1,3 +1,6 @@
+# UIMenu.yaml - Menu component templates (HTML/CSS/JS)
+# ⚠️ Keep comments in this file minimal because it has to get copied at runtime. ⚠️
+
 uimenu_css: |
   :root {
     /* Flyout positioning: 97% leaves 3% gap to prevent overlap with parent menu item gutters */
@@ -655,3 +658,5 @@ uimenu_item: |
 
 uimenu_text_edit: |
   <span class="text-edit-wrapper"><input type="text" class="p2p4vsc-text-edit" data-item-id="{{itemId}}"{{constrainAttrs}}{{widthStyle}}{{textEditValue}}{{transformDisplay}}{{transformPersist}} /></span>
+
+# end, UIMenu.yaml

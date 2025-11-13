@@ -1,3 +1,6 @@
+# UIWebView.yaml - Webview panel templates for PDF display
+# ⚠️ Keep comments in this file minimal because it has to get copied at runtime. ⚠️
+
 webview_html: |
   <!DOCTYPE html>
   <html>
@@ -229,3 +232,5 @@ webview_js: |
       dx(`❌ Error rendering page ${pageNum}: ${error.message}`);
     });
   }
+
+# end, UIWebView.yaml
