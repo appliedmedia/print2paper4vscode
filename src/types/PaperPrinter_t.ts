@@ -8,7 +8,7 @@
  * Naming convention:
  * - Constants: kFoo (singular with k prefix) - object with id as key, metadata as value
  * - Types: Foo_t (singular with _t suffix) - derived using `keyof typeof kFoo`
- * 
+ *
  * Icon Slot Triad Structure:
  * - begin: Left-most icon position
  * - main: Center icon position (can be text_edit widget descriptor)
@@ -293,13 +293,13 @@ export const kZoomLevel = {
         // NOTE: Text edit width is auto-calculated as: string(max).length + 1 ch
         //       For max: 300 → width: 4ch, for max: 999 → width: 4ch, for max: 1000 → width: 5ch
         //       Override by explicitly setting 'width' property if needed
-        regex: '^\\d{0,3}$',  // Only 2 backslashes! Becomes data-constrain-regex
-        min: 10,
+        regex: '^\\d{0,3}$', // Only 2 backslashes! Becomes data-constrain-regex
+        min: 50,
         max: 300,
       },
       transform: {
-        display: 'Math.round({{persist}}*100)',  // Convert scale (0.1-3.0) to percentage (10-300)
-        persist: '{{display}}/100',  // Convert percentage (10-300) back to scale (0.1-3.0)
+        display: 'Math.round({{persist}}*100)', // Convert scale (0.1-3.0) to percentage (10-300)
+        persist: '{{display}}/100', // Convert percentage (10-300) back to scale (0.1-3.0)
       },
     },
     end: '%▼',
@@ -308,13 +308,13 @@ export const kZoomLevel = {
   methodName: 'ZoomLevel',
   isFlyout: false,
   flyoutMenuItemIds: [] as const,
-  min: 0.1,
+  min: 0.5,
   max: 3.0,
   stepAmount: 0.1,
   menuItems: [
-    { id: '0.10', displayName: '10%', value: 0.1 },
-    { id: '0.25', displayName: '25%', value: 0.25 },
     { id: '0.50', displayName: '50%', value: 0.5 },
+    { id: '0.75', displayName: '75%', value: 0.75 },
+    { id: '0.90', displayName: '90%', value: 0.9 },
     {
       id: '1.00',
       displayName: '100% (1:1)',
@@ -332,7 +332,11 @@ export const kZoomLevel = {
     { id: 'fitWidth', displayName: 'Fit Width', value: '{{calc:{{windowWidth}}/{{pageWidth}}}}' },
     // fitPage: scale page to fit both width and height in viewport (use smaller ratio)
     // Formula: Math.min of width and height ratios (ensures entire page visible)
-    { id: 'fitPage', displayName: 'Fit Page', value: '{{calc:Math.min({{windowWidth}}/{{pageWidth}}, {{windowHeight}}/{{pageHeight}})}}' },
+    {
+      id: 'fitPage',
+      displayName: 'Fit Page',
+      value: '{{calc:Math.min({{windowWidth}}/{{pageWidth}}, {{windowHeight}}/{{pageHeight}})}}',
+    },
   ],
 } as const;
 export type ZoomLevelMenuItems_t = (typeof kZoomLevel.menuItems)[number]['id'];

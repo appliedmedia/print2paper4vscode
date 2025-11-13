@@ -39,10 +39,10 @@ function createMockApp() {
       setPersistForMenuId: (menuId: string, value: string) => {
         mockPersist[menuId] = value;
       },
-      getValueForSelectedByMenuId: (menuId: string) => {
+      getMenuItemIdSelected: (menuId: string) => {
         return mockPersist[menuId] as string;
       },
-      getNumericValueForMenuItemId: (menuId: string, menuItemId: string) => {
+      getValueForMenuItemId: (menuId: string, menuItemId: string) => {
         // Mock implementation: look up in kZoomLevel or parse numeric
         if (menuId === 'zoomLevel') {
           const item = kZoomLevel.menuItems.find((i: any) => i.id === menuItemId);
@@ -110,7 +110,7 @@ describe('PaperPrinter Zoom Handlers', () => {
       
       assert.strictEqual(regenerateCalled, true, 'regenerateAndUpdateWebview should be called');
       assert.strictEqual(
-        app.uimenumgr.getValueForSelectedByMenuId('zoomLevel'),
+        app.uimenumgr.getMenuItemIdSelected('zoomLevel'),
         '1.50',
         'Zoom level should be persisted'
       );
@@ -131,7 +131,7 @@ describe('PaperPrinter Zoom Handlers', () => {
       
       assert.strictEqual(regenerateCalled, true);
       assert.strictEqual(
-        app.uimenumgr.getValueForSelectedByMenuId('zoomLevel'),
+        app.uimenumgr.getMenuItemIdSelected('zoomLevel'),
         '1.50',
         'Should convert percentage to scale (150% -> 1.50)'
       );
@@ -146,14 +146,14 @@ describe('PaperPrinter Zoom Handlers', () => {
       // Test clamping to max (300%)
       await (paperPrinter as any).handleSelection_ZoomLevel('zoomLevel', '500');
       assert.strictEqual(
-        app.uimenumgr.getValueForSelectedByMenuId('zoomLevel'),
+        app.uimenumgr.getMenuItemIdSelected('zoomLevel'),
         '3.00',
         'Should clamp 500% to max 300% (3.00)'
       );
 
       // Test clamping to min (10%) - user types "8" (percentage < 10% gets clamped)
       await (paperPrinter as any).handleSelection_ZoomLevel('zoomLevel', '8');
-      const result = app.uimenumgr.getValueForSelectedByMenuId('zoomLevel');
+      const result = app.uimenumgr.getMenuItemIdSelected('zoomLevel');
       // "8" is treated as 8.0 scale (800%), which clamps to max 3.0
       assert.strictEqual(result, '3.00', 'Values <=10 are treated as scale, not percentage');
     });
@@ -172,7 +172,7 @@ describe('PaperPrinter Zoom Handlers', () => {
       await (paperPrinter as any).handleSelection_ZoomLevel('zoomLevel', 'fitPage');
       assert.strictEqual(regenerateCalled, 1, 'fitPage should call regenerate');
       assert.strictEqual(
-        app.uimenumgr.getValueForSelectedByMenuId('zoomLevel'),
+        app.uimenumgr.getMenuItemIdSelected('zoomLevel'),
         'fitPage',
         'fitPage should persist menuItemId'
       );
@@ -181,7 +181,7 @@ describe('PaperPrinter Zoom Handlers', () => {
       await (paperPrinter as any).handleSelection_ZoomLevel('zoomLevel', 'fitWidth');
       assert.strictEqual(regenerateCalled, 2, 'fitWidth should call regenerate');
       assert.strictEqual(
-        app.uimenumgr.getValueForSelectedByMenuId('zoomLevel'),
+        app.uimenumgr.getMenuItemIdSelected('zoomLevel'),
         'fitWidth',
         'fitWidth should persist menuItemId'
       );
@@ -208,7 +208,7 @@ describe('PaperPrinter Zoom Handlers', () => {
       
       assert.strictEqual(regenerateCalled, true);
       assert.strictEqual(
-        app.uimenumgr.getValueForSelectedByMenuId('zoomLevel'),
+        app.uimenumgr.getMenuItemIdSelected('zoomLevel'),
         '1.40',
         'Should decrement by stepAmount (0.1)'
       );
@@ -225,7 +225,7 @@ describe('PaperPrinter Zoom Handlers', () => {
       await (paperPrinter as any).handleSelection_ZoomOut('zoomOut', 'zoomOut');
       
       assert.strictEqual(
-        app.uimenumgr.getValueForSelectedByMenuId('zoomLevel'),
+        app.uimenumgr.getMenuItemIdSelected('zoomLevel'),
         '0.10',
         'Should clamp to minimum (10%)'
       );
@@ -249,7 +249,7 @@ describe('PaperPrinter Zoom Handlers', () => {
       
       assert.strictEqual(regenerateCalled, true);
       assert.strictEqual(
-        app.uimenumgr.getValueForSelectedByMenuId('zoomLevel'),
+        app.uimenumgr.getMenuItemIdSelected('zoomLevel'),
         '1.10',
         'Should increment by stepAmount (0.1)'
       );
@@ -266,7 +266,7 @@ describe('PaperPrinter Zoom Handlers', () => {
       await (paperPrinter as any).handleSelection_ZoomIn('zoomIn', 'zoomIn');
       
       assert.strictEqual(
-        app.uimenumgr.getValueForSelectedByMenuId('zoomLevel'),
+        app.uimenumgr.getMenuItemIdSelected('zoomLevel'),
         '3.00',
         'Should clamp to maximum (300%)'
       );
@@ -306,7 +306,7 @@ describe('PaperPrinter Zoom Handlers', () => {
 
       // Test rounding
       await (paperPrinter as any).handleSelection_ZoomLevel('zoomLevel', '1.234567');
-      const persisted = app.uimenumgr.getValueForSelectedByMenuId('zoomLevel');
+      const persisted = app.uimenumgr.getMenuItemIdSelected('zoomLevel');
       
       assert.strictEqual(
         persisted,

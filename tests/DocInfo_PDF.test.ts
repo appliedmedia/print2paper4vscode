@@ -29,7 +29,7 @@ describe('DocInfo_PDF', () => {
     docInfo.setPage(1);
     const info = docInfo.getCurrentPageInfo();
     assert.strictEqual(info.pageNumber, 1);
-    assert.strictEqual(info.pageCount, 2);
+    assert.strictEqual(info.pageTotal, 2);
 
     docInfo.setPage(2);
     const info2 = docInfo.getCurrentPageInfo();
@@ -50,14 +50,14 @@ describe('DocInfo_PDF', () => {
 
     const info = docInfo.getCurrentPageInfo();
     assert.strictEqual(info.pageNumber, 1);
-    assert.strictEqual(info.pageCount, 1);
+    assert.strictEqual(info.pageTotal, 1);
   });
 
   it('should return zero page info when PDF doc is null', () => {
     docInfo.pdfDoc = null;
     const info = docInfo.getCurrentPageInfo();
     assert.strictEqual(info.pageNumber, 0);
-    assert.strictEqual(info.pageCount, 0);
+    assert.strictEqual(info.pageTotal, 0);
   });
 
   it('should get page size in pixels', () => {

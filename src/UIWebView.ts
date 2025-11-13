@@ -85,7 +85,7 @@ export class UIWebView {
 
     // Use DocInfo_PDF directly from app.pdf.docInfo
     const docInfo = this.app.pdf.docInfo;
-    
+
     if (!docInfo.pdfDoc) {
       throw new Error('PDF document not generated');
     }
@@ -97,7 +97,7 @@ export class UIWebView {
       pageSizePx: docInfo.pageSizePx,
       title: docInfo.title || 'PDF Document',
     };
-    
+
     // Use jsPDF's native data URL format
     const pdf_data_url = docInfo.asDataUrl();
 
@@ -161,13 +161,12 @@ export class UIWebView {
       const base_css = this.app.ui.yaml.base_css;
       const templates = this.yaml;
 
-      // Get zoom level from persistence (default: 1.0 = 100%)
-      const zoomLevel = this.app.ui.persist.pdf_zoom_level;
-      const parsedZoom = Number(zoomLevel);
+      // Get zoom level from zoomLevel menu persist
+      const zoomMenuItemId =
+        this.app.uimenumgr.getMenuItemIdSelected(kZoomLevel.id) || kZoomLevel.alt;
       const pdf_zoom_level =
-        parsedZoom >= kZoomLevel.min && parsedZoom <= kZoomLevel.max
-          ? parsedZoom
-          : Number(kZoomLevel.alt);
+        this.app.uimenumgr.getValueForMenuItemId(kZoomLevel.id, zoomMenuItemId) ||
+        Number(kZoomLevel.alt);
 
       // Create template dictionary
       const templateDict = {
@@ -289,6 +288,12 @@ export class UIWebView {
 
     try {
       const { menuId, itemId, contextDict } = msg;
+
+      // Store contextDict in UIMenuMgr for future calc evaluations
+      if (contextDict) {
+        this.app.uimenumgr.setContextDict(contextDict);
+      }
+
       if (typeof menuId === 'string' && typeof itemId === 'string') {
         dx.out(`Processing menu selection: menuId=${menuId}, itemId=${itemId}`);
 
@@ -331,7 +336,6 @@ export class UIWebView {
     }
     dx.done();
   }
-
 }
 
 // end, UIWebView.ts

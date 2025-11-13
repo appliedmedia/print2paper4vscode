@@ -5,11 +5,7 @@ import type {
   HeaderFooterPos_t,
   HeaderFooterSubmenu_t,
 } from './types/PaperPrinter_t';
-import {
-  kPageSizeIdById,
-  kHeaderFooterSubmenuById,
-  kHeaderFooter,
-} from './types/PaperPrinter_t';
+import { kPageSizeIdById, kHeaderFooterSubmenuById, kHeaderFooter } from './types/PaperPrinter_t';
 import { Diagnostics } from './Diagnostics';
 import { Yaml } from './Yaml';
 import { Coords } from './Coords';
@@ -122,7 +118,9 @@ export class PDF {
     try {
       // Log PDF object usage for printing (Stage 4.3)
       const pdfBuffer = pdfDoc.asArrayBuffer();
-      dx.out(`PDF object usage: Using PDF ArrayBuffer for printWithPreview (${pdfBuffer.byteLength} bytes)`);
+      dx.out(
+        `PDF object usage: Using PDF ArrayBuffer for printWithPreview (${pdfBuffer.byteLength} bytes)`
+      );
 
       // Generate filename with timestamp
       const timestamp = this.app.os.dateAsYYYYMMDDHHMMSS();
@@ -152,7 +150,9 @@ export class PDF {
     try {
       // Log PDF object usage for printing (Stage 4.3)
       const pdfBuffer = pdfDoc.asArrayBuffer();
-      dx.out(`PDF object usage: Using PDF ArrayBuffer for printDirectly (${pdfBuffer.byteLength} bytes)`);
+      dx.out(
+        `PDF object usage: Using PDF ArrayBuffer for printDirectly (${pdfBuffer.byteLength} bytes)`
+      );
 
       // Generate filename with timestamp
       const timestamp = this.app.os.dateAsYYYYMMDDHHMMSS();
@@ -182,7 +182,9 @@ export class PDF {
     try {
       // Log PDF object usage for saving (Stage 4.3)
       const pdfBuffer = pdfDoc.asArrayBuffer();
-      dx.out(`PDF object usage: Using PDF ArrayBuffer for saveAsPDF (${pdfBuffer.byteLength} bytes)`);
+      dx.out(
+        `PDF object usage: Using PDF ArrayBuffer for saveAsPDF (${pdfBuffer.byteLength} bytes)`
+      );
 
       // Generate default filename with timestamp
       const timestamp = this.app.os.dateAsYYYYMMDDHHMMSS();
@@ -426,9 +428,9 @@ export class PDF {
       }
 
       // Fallback to configured size if no PDF yet
-      const pageSizeId = (this.app.uimenumgr.getValueForSelectedByMenuId('pageSizeId') ||
+      const pageSizeId = (this.app.uimenumgr.getMenuItemIdSelected('pageSizeId') ||
         'a4') as PageSizeIdMenuItems_t;
-      const orient = (this.app.uimenumgr.getValueForSelectedByMenuId('orient') || 'portrait') as
+      const orient = (this.app.uimenumgr.getMenuItemIdSelected('orient') || 'portrait') as
         | 'portrait'
         | 'landscape';
       const pageSize = this.getPageDimensions(pageSizeId, orient);
@@ -762,9 +764,7 @@ export class PDF {
     // Get document title from paperprinter's docInfo
     const docTitle = this.app.paperprinter.docInfo.printTitle || 'Document';
 
-    // Get current page info
-    const pageInfo = this.docInfo.pdfDoc.getCurrentPageInfo();
-    const currentPage = pageInfo.pageNumber;
+    const pageCurrent = this.docInfo.pageCurrent;
     const pageTotal = this.docInfo.pageTotal;
 
     // Get page dimensions and margins
@@ -794,7 +794,7 @@ export class PDF {
       const template = kHeaderFooterSubmenuById[element].template;
       const templateDict: Record<string, string> = {
         title: docTitle,
-        '#': String(currentPage),
+        '#': String(pageCurrent),
         pageTotal: String(pageTotal),
       };
 

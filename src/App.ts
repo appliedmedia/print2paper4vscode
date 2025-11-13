@@ -90,6 +90,16 @@ export class App {
   }
 
   /**
+   * Force a value to number
+   * Converts string to number, returns 0 if not parseable
+   * @param value - Value to convert to number
+   * @returns Numeric value or 0 if conversion fails
+   */
+  forceNumber(value: number | string): number {
+    return typeof value === 'number' ? value : parseFloat(String(value)) || 0;
+  }
+
+  /**
    * Generic template replacement function
    * Replaces all {{key}} placeholders in source text with values from dictionary
    * @param source - The source text containing {{key}} placeholders
@@ -98,15 +108,15 @@ export class App {
    */
   templateDictReplace(source: string, dictionary: Record<string, string>): string {
     let result = source;
-    let iter = 0;
-    const iter_max = 4;
 
-    // Keep replacing until no more {{...}} patterns or hit max iterations
-    // Updated regex to allow # and other non-word characters in variable names
-    while (result.includes('{{') && ++iter < iter_max) {
-      result = result.replace(/\{\{([^}]+)\}\}/g, (match, key) => {
-        return key in dictionary ? dictionary[key] : match; // Return value even if empty string
-      });
+    // Sort keys by length (shortest first) to avoid partial replacements
+    const sortedKeys = Object.keys(dictionary).sort((a, b) => a.length - b.length);
+
+    // Replace each {{key}} with its value (all occurrences)
+    for (const key of sortedKeys) {
+      const placeholder = `{{${key}}}`;
+      const value = dictionary[key];
+      result = result.replaceAll(placeholder, value);
     }
 
     return result;

@@ -162,16 +162,17 @@ webview_js: |
     viewer.innerHTML = '';
 
     for (let pageNum = 1; pageNum <= pdfDoc.numPages; pageNum++) {
-      renderPage(pageNum, viewer);
+      const canvas = document.createElement('canvas');
+      canvas.id = 'pdf-canvas-' + pageNum;
+      viewer.appendChild(canvas);
+      renderPage(pageNum, canvas);
     }
   }
 
-  function renderPage(pageNum, container) {
+  function renderPage(pageNum, canvas) {
     pdfDoc.getPage(pageNum).then(function(page) {
       const viewport = page.getViewport({ scale: currentScale });
       
-      const canvas = document.createElement('canvas');
-      canvas.id = 'pdf-canvas-' + pageNum;
       const ctx = canvas.getContext('2d');
       if (!ctx) {
         dx('❌ 2D canvas context not available');
@@ -186,11 +187,7 @@ webview_js: |
         viewport: viewport
       };
       
-      const renderTask = page.render(renderContext);
-
-      renderTask.promise.then(function() {
-        container.appendChild(canvas);
-      });
+      page.render(renderContext);
     }).catch(function(error) {
       dx(`❌ Error rendering page ${pageNum}: ${error.message}`);
     });

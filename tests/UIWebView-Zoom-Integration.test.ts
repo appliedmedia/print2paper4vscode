@@ -149,7 +149,7 @@ describe('Extension↔Webview Integration Tests', () => {
 
     test('should inject persisted values into webview template', async () => {
       // Set persisted zoom level as example
-      app.ui.persist.pdf_zoom_level = 1.5;
+      app.ui.persist.zoomLevel = 1.5;
 
       const doc = new jsPDF();
       doc.text('Test', 10, 10);
@@ -200,7 +200,7 @@ describe('Extension↔Webview Integration Tests', () => {
 
     test('should handle undefined/null persisted values gracefully', async () => {
       // Set undefined persisted value
-      app.ui.persist.pdf_zoom_level = undefined as any;
+      app.ui.persist.zoomLevel = undefined as any;
 
       const doc = new jsPDF();
       doc.text('Test', 10, 10);
@@ -221,7 +221,7 @@ describe('Extension↔Webview Integration Tests', () => {
 
     test('should handle invalid persisted values with validation', async () => {
       // Set invalid persisted value (example: zoom level out of range)
-      app.ui.persist.pdf_zoom_level = 999 as any;
+      app.ui.persist.zoomLevel = 999 as any;
 
       const doc = new jsPDF();
       doc.text('Test', 10, 10);
@@ -316,7 +316,7 @@ describe('Extension↔Webview Integration Tests', () => {
       await uiWebView.displayPdfPanel();
 
       const initialZoom = 1.5;
-      app.ui.persist.pdf_zoom_level = initialZoom;
+      app.ui.persist.zoomLevel = initialZoom;
 
       // Simulate webview sending zoom message - use callback from setupMessageHandling()
       // This callback calls app.ui.handleWebviewMessage() which routes to real handlers
@@ -333,7 +333,7 @@ describe('Extension↔Webview Integration Tests', () => {
 
       // Verify state was persisted by real handleZoomMessage()
       assert.strictEqual(
-        app.ui.persist.pdf_zoom_level,
+        app.ui.persist.zoomLevel,
         2.0,
         'Zoom level should be persisted after webview message (via real handler)'
       );
@@ -352,7 +352,7 @@ describe('Extension↔Webview Integration Tests', () => {
       };
       await uiWebView.displayPdfPanel();
 
-      app.ui.persist.pdf_zoom_level = 1.0;
+      app.ui.persist.zoomLevel = 1.0;
 
       // Send invalid zoom level (too high) - real validation should reject it
       const invalidMessage: PostMessage = {
@@ -368,7 +368,7 @@ describe('Extension↔Webview Integration Tests', () => {
 
       // Should not persist invalid value (real validation logic)
       assert.strictEqual(
-        app.ui.persist.pdf_zoom_level,
+        app.ui.persist.zoomLevel,
         1.0,
         'Invalid zoom level should not be persisted (real validation)'
       );
@@ -406,7 +406,7 @@ describe('Extension↔Webview Integration Tests', () => {
   describe('Persistence Across Extension Reload', () => {
     test('should persist state and retrieve it after reload', async () => {
       // Set persisted values (example: zoom level)
-      app.ui.persist.pdf_zoom_level = 1.25;
+      app.ui.persist.zoomLevel = 1.25;
       app.ui.persist.toolbar_pos = 'top';
 
       // Simulate extension reload: create new app instance
@@ -415,7 +415,7 @@ describe('Extension↔Webview Integration Tests', () => {
 
       // Verify persisted values survive reload
       assert.strictEqual(
-        newApp.ui.persist.pdf_zoom_level,
+        newApp.ui.persist.zoomLevel,
         1.25,
         'Zoom level should persist across extension reload'
       );
@@ -436,7 +436,7 @@ describe('Extension↔Webview Integration Tests', () => {
       newApp.init();
 
       // After init(), should have default values
-      const zoomLevel = newApp.ui.persist.pdf_zoom_level;
+      const zoomLevel = newApp.ui.persist.zoomLevel;
       assert.strictEqual(
         zoomLevel,
         Number(kZoomLevel.alt),
@@ -447,14 +447,14 @@ describe('Extension↔Webview Integration Tests', () => {
     test('should validate and sanitize persisted values on reload', async () => {
       // Set invalid persisted value
       mockGlobalState = {
-        'p2p4vsc.pdf_zoom_level': 999, // Invalid (out of range)
+        'p2p4vsc.zoomLevel': 999, // Invalid (out of range)
       };
 
       const newApp = new App(mockContext, mockVSCode);
       newApp.init();
 
       // Should be sanitized to valid default
-      const zoomLevel = Number(newApp.ui.persist.pdf_zoom_level);
+      const zoomLevel = Number(newApp.ui.persist.zoomLevel);
       assert.ok(
         zoomLevel >= kZoomLevel.min && zoomLevel <= kZoomLevel.max,
         'Invalid persisted value should be sanitized on reload'
@@ -464,7 +464,7 @@ describe('Extension↔Webview Integration Tests', () => {
 
   describe('Template Variable Edge Cases', () => {
     test('should handle null persisted values gracefully', async () => {
-      app.ui.persist.pdf_zoom_level = null as any;
+      app.ui.persist.zoomLevel = null as any;
 
       const doc = new jsPDF();
       doc.text('Test', 10, 10);
@@ -496,14 +496,14 @@ describe('Extension↔Webview Integration Tests', () => {
       };
 
       // Test minimum boundary (zoom example)
-      app.ui.persist.pdf_zoom_level = kZoomLevel.min;
+      app.ui.persist.zoomLevel = kZoomLevel.min;
       await uiWebView.displayPdfPanel();
       capturedWebviewHTML = (global as any).__capturedWebviewHTML || '';
       assert.ok(capturedWebviewHTML.includes(kZoomLevel.min.toString()), 'Should accept minimum boundary value');
 
       // Test maximum boundary
       capturedWebviewHTML = ''; // Reset
-      app.ui.persist.pdf_zoom_level = kZoomLevel.max;
+      app.ui.persist.zoomLevel = kZoomLevel.max;
       await uiWebView.displayPdfPanel();
       capturedWebviewHTML = (global as any).__capturedWebviewHTML || '';
       assert.ok(capturedWebviewHTML.includes(kZoomLevel.max.toString()), 'Should accept maximum boundary value');
@@ -569,7 +569,7 @@ describe('Extension↔Webview Integration Tests', () => {
       };
       await uiWebView.displayPdfPanel();
 
-      app.ui.persist.pdf_zoom_level = 1.0;
+      app.ui.persist.zoomLevel = 1.0;
 
       const zoomMessage: PostMessage = {
         type: 'zoom',
@@ -582,7 +582,7 @@ describe('Extension↔Webview Integration Tests', () => {
       await callback(zoomMessage);
 
       // Verify real handler persisted the value
-      assert.strictEqual(app.ui.persist.pdf_zoom_level, 1.5, 'Zoom level should be updated by real handler');
+      assert.strictEqual(app.ui.persist.zoomLevel, 1.5, 'Zoom level should be updated by real handler');
     });
   });
 
@@ -600,7 +600,7 @@ describe('Extension↔Webview Integration Tests', () => {
       };
       await uiWebView.displayPdfPanel();
 
-      app.ui.persist.pdf_zoom_level = 1.0;
+      app.ui.persist.zoomLevel = 1.0;
 
       const callback = (global as any).__webviewMessageCallback;
       assert.ok(callback, 'Message callback should be set up');
@@ -625,14 +625,14 @@ describe('Extension↔Webview Integration Tests', () => {
 
       // Verify final state is consistent - should match the last zoom message (1.5)
       assert.strictEqual(
-        app.ui.persist.pdf_zoom_level,
+        app.ui.persist.zoomLevel,
         1.5,
         'Final zoom level should match last zoom message after rapid changes'
       );
 
       // Verify zoom level is within valid range
       assert.ok(
-        app.ui.persist.pdf_zoom_level >= kZoomLevel.min && app.ui.persist.pdf_zoom_level <= kZoomLevel.max,
+        app.ui.persist.zoomLevel >= kZoomLevel.min && app.ui.persist.zoomLevel <= kZoomLevel.max,
         'Final zoom level should be within valid range after rapid changes'
       );
     });
@@ -650,7 +650,7 @@ describe('Extension↔Webview Integration Tests', () => {
       };
       await uiWebView.displayPdfPanel();
 
-      app.ui.persist.pdf_zoom_level = 1.0;
+      app.ui.persist.zoomLevel = 1.0;
 
       const callback = (global as any).__webviewMessageCallback;
       assert.ok(callback, 'Message callback should be set up');
@@ -668,7 +668,7 @@ describe('Extension↔Webview Integration Tests', () => {
 
       // Verify final state matches last message
       assert.strictEqual(
-        app.ui.persist.pdf_zoom_level,
+        app.ui.persist.zoomLevel,
         2.0,
         'Final zoom level should match last rapid zoom level change'
       );
@@ -687,7 +687,7 @@ describe('Extension↔Webview Integration Tests', () => {
       };
       await uiWebView.displayPdfPanel();
 
-      app.ui.persist.pdf_zoom_level = 1.0;
+      app.ui.persist.zoomLevel = 1.0;
 
       const callback = (global as any).__webviewMessageCallback;
       assert.ok(callback, 'Message callback should be set up');
@@ -705,7 +705,7 @@ describe('Extension↔Webview Integration Tests', () => {
       // Verify final zoom level is correct (1.0 + 10 * 0.1 = 2.0, capped at max)
       const expectedZoom = Math.min(1.0 + (10 * kZoomLevel.stepAmount), kZoomLevel.max);
       assert.strictEqual(
-        app.ui.persist.pdf_zoom_level,
+        app.ui.persist.zoomLevel,
         expectedZoom,
         `Final zoom level should be ${expectedZoom} after 10 rapid zoom in actions`
       );
@@ -769,14 +769,14 @@ describe('Extension↔Webview Integration Tests', () => {
     test('should validate persisted zoom level on init', async () => {
       // Set corrupted persisted value (string that can't be parsed)
       mockGlobalState = {
-        'p2p4vsc.pdf_zoom_level': 'invalid_string',
+        'p2p4vsc.zoomLevel': 'invalid_string',
       };
 
       const newApp = new App(mockContext, mockVSCode);
       newApp.init();
 
       // Should be sanitized to valid default on init
-      const zoomLevel = Number(newApp.ui.persist.pdf_zoom_level);
+      const zoomLevel = Number(newApp.ui.persist.zoomLevel);
       assert.ok(
         zoomLevel >= kZoomLevel.min && zoomLevel <= kZoomLevel.max,
         'Corrupted persisted value should be sanitized to valid default'

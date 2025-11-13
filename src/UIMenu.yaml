@@ -207,9 +207,16 @@ uimenu_generic_handlers: |
 
   function postMenuItemSelected(menuId, itemId) {
     if (window.vscode && menuId && itemId) {
+      // Use document.documentElement (the viewport) for accurate webview dimensions
+      const windowWidth = document.documentElement.clientWidth;
+      const windowHeight = document.documentElement.clientHeight;
+      
+      // Debug: log dimensions
+      console.log(`Webview dimensions: ${windowWidth}px x ${windowHeight}px`);
+      
       const contextDict = {
-        windowWidth: window.innerWidth,
-        windowHeight: window.innerHeight
+        windowWidth,
+        windowHeight
       };
       
       window.vscode.postMessage({

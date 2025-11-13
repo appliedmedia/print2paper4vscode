@@ -22,8 +22,8 @@ import { Persist, type Persist_t } from './Persist';
 import { kMenuId } from './UIMenu';
 import { kZoomLevel } from './types/PaperPrinter_t';
 
-// UI persist keys - union of menu IDs, toolbar position, and PDF zoom level
-export const kUI = [...kMenuId, 'toolbar_pos', 'pdf_zoom_level'] as const;
+// UI persist keys - union of menu IDs and toolbar position
+export const kUI = [...kMenuId, 'toolbar_pos'] as const;
 
 export type UI_t = (typeof kUI)[number];
 
@@ -72,16 +72,7 @@ export class UI {
   }
 
   init(): void {
-    // Register persist for PDF zoom level (default: 1.0 = 100%)
-    this.persist.register('pdf_zoom_level');
-    // Set default zoom level if not already set or invalid
-    const zoomLevel = this.persist.pdf_zoom_level;
-    const numZoomLevel = Number(zoomLevel);
-    const safeZoom =
-      numZoomLevel >= kZoomLevel.min && numZoomLevel <= kZoomLevel.max
-        ? numZoomLevel
-        : Number(kZoomLevel.alt);
-    this.persist.pdf_zoom_level = safeZoom;
+    // Initialization handled by component-specific init methods
   }
 
   done(): void {

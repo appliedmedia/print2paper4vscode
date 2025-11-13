@@ -22,11 +22,11 @@ import {
 
 /**
  * Text edit config type for text input widgets in menu items
- * 
+ *
  * Configuration object for text_edit widgets that appear in menu button iconSlotTriads.
  * Supports input validation, display formatting, and value conversion between
  * persisted storage format and user-visible display format.
- * 
+ *
  * @property type - Must be 'text_edit' to identify this as a text input widget
  * @property width - Optional CSS width (e.g., '4ch', '50px'). Auto-calculated from constrain.max if not provided
  * @property constrain - Input validation constraints
@@ -38,7 +38,7 @@ import {
  *   (e.g., 'Math.round({{persist}}*100)' converts scale 1.00 to percentage 100)
  * @property transform.persist - Expression to convert from display to persist
  *   (e.g., '{{display}}/100' converts percentage 100 back to scale 1.00)
- * 
+ *
  * @example
  * // Zoom level with scale-to-percentage conversion
  * {
@@ -54,20 +54,20 @@ export type TextEditConfig_t = {
   type: 'text_edit';
   width?: string;
   constrain?: {
-    regex?: string;  // Regex pattern (e.g., '^\d{0,3}$') - only 2 backslashes needed!
+    regex?: string; // Regex pattern (e.g., '^\d{0,3}$') - only 2 backslashes needed!
     min?: number;
     max?: number;
   };
   transform?: {
-    display?: string;  // Expression to convert persist value to display value (e.g., 'Math.round({{persist}}*100)')
-    persist?: string;  // Expression to convert display value to persist value (e.g., '{{display}}/100')
+    display?: string; // Expression to convert persist value to display value (e.g., 'Math.round({{persist}}*100)')
+    persist?: string; // Expression to convert display value to persist value (e.g., '{{display}}/100')
   };
 };
 
 // IconSlotTriad type - three-part slot structure
 export interface iconSlotTriad_t {
   begin: string;
-  main: string | TextEditConfig_t;  // Can be string icon or text_edit config object
+  main: string | TextEditConfig_t; // Can be string icon or text_edit config object
   end: string;
 }
 
@@ -351,9 +351,10 @@ export class UIMenu {
     try {
       // Default return for regular icon content
       const defaultReturn = {
-        html: typeof iconSlotTriadMain === 'string' && iconSlotTriadMain 
-          ? `<span class="iconSlotTriad">${iconSlotTriadMain}</span>` 
-          : ``,
+        html:
+          typeof iconSlotTriadMain === 'string' && iconSlotTriadMain
+            ? `<span class="iconSlotTriad">${iconSlotTriadMain}</span>`
+            : ``,
         cssClass: ``,
         configAttr: ``,
         isSpecialType: false,
@@ -365,7 +366,7 @@ export class UIMenu {
 
       // Handle text_edit type: object with { type: 'text_edit', width, constrain: { regex, min, max } }
       if (typeof iconSlotTriadMain === 'object' && iconSlotTriadMain !== null) {
-        const config = iconSlotTriadMain as any;
+        const config = iconSlotTriadMain as TextEditConfig_t;
         if (config.type === 'text_edit') {
           try {
             // Validate regex pattern if present
@@ -376,14 +377,20 @@ export class UIMenu {
                 throw new Error(`Invalid constrain.regex: ${config.constrain.regex}`);
               }
             }
-            
+
             // Build data attributes from constrain object
-            const constrainAttrs = config.constrain ? [
-              config.constrain.regex ? ` data-constrain-regex="${config.constrain.regex}"` : '',
-              config.constrain.min !== undefined ? ` data-constrain-min="${config.constrain.min}"` : '',
-              config.constrain.max !== undefined ? ` data-constrain-max="${config.constrain.max}"` : '',
-            ].join('') : '';
-            
+            const constrainAttrs = config.constrain
+              ? [
+                  config.constrain.regex ? ` data-constrain-regex="${config.constrain.regex}"` : '',
+                  config.constrain.min !== undefined
+                    ? ` data-constrain-min="${config.constrain.min}"`
+                    : '',
+                  config.constrain.max !== undefined
+                    ? ` data-constrain-max="${config.constrain.max}"`
+                    : '',
+                ].join('')
+              : '';
+
             // Calculate width: use explicit width, or auto-calculate from max value length
             let width = config.width;
             if (!width && config.constrain?.max !== undefined) {
@@ -391,53 +398,66 @@ export class UIMenu {
               const maxDigits = String(config.constrain.max).length;
               width = `${maxDigits + 1}ch`;
             }
-            
+
             const widthStyle = width ? ` style="width: ${width};"` : '';
-            
+
             /**
              * Get initial value from persistence and convert using transform.display if defined
-             * 
+             *
              * For menus with transform (e.g., zoom level):
              * 1. Get persisted value from menu's persist store (e.g., "1.00" scale)
              * 2. Apply transform.display expression to convert to display format (e.g., "100" percentage)
              * 3. Set as input's value attribute
-             * 
+             *
              * For menus without transform:
              * - Display value = persist value (no conversion)
-             * 
+             *
              * @example
              * // Zoom level: persist="1.00" → display="100"
              * transform.display: 'Math.round({{persist}}*100)'
              * Result: input value="100"
              */
             let textEditValue = '';
-            const persistedValue = this.app.uimenumgr.getValueForSelectedByMenuId(this._id);
-            if (persistedValue) {
-              textEditValue = persistedValue;
-              
-              // Apply transform.display if it exists (e.g., scale → percentage)
-              // Example: persist='1.00' → 'Math.round({{persist}}*100)' → display='100'
-              if (config.transform?.display) {
-                try {
-                  const expression = config.transform.display.replace(/\{\{persist\}\}/g, persistedValue);
-                  // eslint-disable-next-line no-eval
-                  const displayValue = eval(expression);
-                  textEditValue = String(displayValue);
-                } catch (error) {
-                  dx.error(`Failed to evaluate transform.display: ${String(error)}`);
-                  textEditValue = persistedValue;
+            const value = this.app.uimenumgr.getValueForMenuItemIdSelected(this._id);
+            dx.out(`Text edit for ${this._id}: value=${value}, type=${typeof value}`);
+            if (value) {
+              // Only show numeric values in text edit (skip fitPage/fitWidth strings)
+              if (typeof value === 'number') {
+                if (config.transform?.display) {
+                  try {
+                    const expression = this.app.templateDictReplace(config.transform.display, {
+                      persist: String(value),
+                    });
+                    dx.out(`Transform expression: ${expression}`);
+                    // eslint-disable-next-line no-eval
+                    const displayValue = eval(expression);
+                    textEditValue = String(displayValue);
+                    dx.out(`Text edit value set to: ${textEditValue}`);
+                  } catch (error) {
+                    dx.error(`Failed to evaluate transform.display: ${String(error)}`);
+                    textEditValue = String(value);
+                  }
+                } else {
+                  textEditValue = String(value);
+                  dx.out(`Text edit value (no transform): ${textEditValue}`);
                 }
+              } else {
+                dx.out(`Skipping non-numeric value for text edit: ${value}`);
               }
             }
-            
+
             const yaml = this.yaml;
             const html = this.app.templateDictReplace(yaml.uimenu_text_edit, {
               itemId,
               constrainAttrs,
               widthStyle,
               textEditValue: textEditValue ? ` value="${textEditValue}"` : '',
-              transformDisplay: config.transform?.display ? ` data-transform-display="${config.transform.display}"` : '',
-              transformPersist: config.transform?.persist ? ` data-transform-persist="${config.transform.persist}"` : '',
+              transformDisplay: config.transform?.display
+                ? ` data-transform-display="${config.transform.display}"`
+                : '',
+              transformPersist: config.transform?.persist
+                ? ` data-transform-persist="${config.transform.persist}"`
+                : '',
             });
             return {
               html,

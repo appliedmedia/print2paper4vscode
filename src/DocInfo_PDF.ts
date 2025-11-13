@@ -5,10 +5,7 @@ import type {
   OrientMenuItems_t,
   HeaderFooterSubmenu_t,
 } from './types/PaperPrinter_t';
-import {
-  kMarginIdById,
-  kHeaderFooter,
-} from './types/PaperPrinter_t';
+import { kMarginIdById, kHeaderFooter } from './types/PaperPrinter_t';
 import { Coords } from './Coords';
 import type { ThemedToken } from 'shiki';
 import type jsPDF from 'jspdf';
@@ -96,8 +93,7 @@ export class DocInfo_PDF {
     rightMarginPts: number;
   } {
     // Get margin setting from kMarginIdById (this is ADDED to base)
-    const marginEntry =
-      kMarginIdById[this.marginId] ?? kMarginIdById['normal'];
+    const marginEntry = kMarginIdById[this.marginId] ?? kMarginIdById['normal'];
     const marginSettingPts = marginEntry.marginPts;
 
     // Total margin = base + setting
@@ -125,6 +121,13 @@ export class DocInfo_PDF {
   }
 
   // PDF interface methods - expose jsPDF functionality through docInfo
+  /**
+   * Get the current page number (1-indexed)
+   */
+  get pageCurrent(): number {
+    return this.pdfDoc?.getCurrentPageInfo()?.pageNumber || 0;
+  }
+
   /**
    * Get the total number of pages in the document
    * Uses getNumberOfPages() - this is the current jsPDF API (not deprecated in actual library)
@@ -179,18 +182,19 @@ export class DocInfo_PDF {
 
   /**
    * Get information about the current page
-   * Returns pageNumber and pageContext from jsPDF, plus pageCount computed from pageTotal
+   * Returns pageNumber and pageTotal
    */
-  getCurrentPageInfo(): { pageNumber: number; pageCount: number; pageContext?: any } {
-    if (!this.pdfDoc) {
-      return { pageNumber: 0, pageCount: 0 };
+  getCurrentPageInfo(): { pageNumber: number; pageTotal: number } {
+    let pageNumber = 0;
+    let pageTotal = 0;
+
+    if (this.pdfDoc) {
+      const info = this.pdfDoc.getCurrentPageInfo();
+      pageNumber = info.pageNumber;
+      pageTotal = this.pageTotal;
     }
-    const info = this.pdfDoc.getCurrentPageInfo();
-    return {
-      pageNumber: info.pageNumber,
-      pageCount: this.pageTotal, // Use pageTotal which wraps getNumberOfPages()
-      pageContext: info.pageContext,
-    };
+
+    return { pageNumber, pageTotal };
   }
 
   /**
