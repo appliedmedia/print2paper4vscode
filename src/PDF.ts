@@ -816,14 +816,22 @@ export class PDF {
       end: [],
     };
 
+    // Read header/footer values from persist (single source of truth)
+    const getHeaderFooterValue = (
+      menuId: string
+    ): HeaderFooterSubmenu_t | typeof kHeaderFooter.none => {
+      const value = this.app.uimenumgr.getMenuItemIdSelected(menuId as any);
+      return (value as HeaderFooterSubmenu_t | typeof kHeaderFooter.none) || kHeaderFooter.none;
+    };
+
     // Process header positions
-    const headerBeginContent = formatContent(this.docInfo.header_begin, 'begin');
+    const headerBeginContent = formatContent(getHeaderFooterValue('header_begin'), 'begin');
     if (headerBeginContent) headerElements.begin.push(headerBeginContent);
 
-    const headerMiddleContent = formatContent(this.docInfo.header_middle, 'middle');
+    const headerMiddleContent = formatContent(getHeaderFooterValue('header_middle'), 'middle');
     if (headerMiddleContent) headerElements.middle.push(headerMiddleContent);
 
-    const headerEndContent = formatContent(this.docInfo.header_end, 'end');
+    const headerEndContent = formatContent(getHeaderFooterValue('header_end'), 'end');
     if (headerEndContent) headerElements.end.push(headerEndContent);
 
     // Build footer elements by position
@@ -834,13 +842,13 @@ export class PDF {
     };
 
     // Process footer positions
-    const footerBeginContent = formatContent(this.docInfo.footer_begin, 'begin');
+    const footerBeginContent = formatContent(getHeaderFooterValue('footer_begin'), 'begin');
     if (footerBeginContent) footerElements.begin.push(footerBeginContent);
 
-    const footerMiddleContent = formatContent(this.docInfo.footer_middle, 'middle');
+    const footerMiddleContent = formatContent(getHeaderFooterValue('footer_middle'), 'middle');
     if (footerMiddleContent) footerElements.middle.push(footerMiddleContent);
 
-    const footerEndContent = formatContent(this.docInfo.footer_end, 'end');
+    const footerEndContent = formatContent(getHeaderFooterValue('footer_end'), 'end');
     if (footerEndContent) footerElements.end.push(footerEndContent);
 
     // Render header

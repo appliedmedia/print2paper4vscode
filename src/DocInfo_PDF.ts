@@ -66,15 +66,6 @@ export class DocInfo_PDF {
   public languageId: LanguageId_t = 'typescript';
   public title: string = '';
 
-  // Header/Footer content settings (position-based)
-  // Each position stores what content appears there: 'title' | 'page' | 'total' | 'pageTotal' | kHeaderFooter.none
-  public header_begin: HeaderFooterSubmenu_t | typeof kHeaderFooter.none = kHeaderFooter.none;
-  public header_middle: HeaderFooterSubmenu_t | typeof kHeaderFooter.none = 'title';
-  public header_end: HeaderFooterSubmenu_t | typeof kHeaderFooter.none = kHeaderFooter.none;
-  public footer_begin: HeaderFooterSubmenu_t | typeof kHeaderFooter.none = kHeaderFooter.none;
-  public footer_middle: HeaderFooterSubmenu_t | typeof kHeaderFooter.none = 'pageTotal';
-  public footer_end: HeaderFooterSubmenu_t | typeof kHeaderFooter.none = kHeaderFooter.none;
-
   // Temporary file tracking
   public tempPdfs: string[] = [];
 

@@ -195,50 +195,6 @@ export class PaperPrinter {
       // Create menus if they don't exist yet
       this.createMenus();
 
-      // Initialize header/footer content defaults from docInfo if not persisted
-      // Also sync docInfo from persisted values if they differ
-      for (const menuId of kHeaderFooterMenuIds) {
-        const persistedValue = this.app.uimenumgr.getMenuItemIdSelected(menuId);
-        const docInfoValue = this.app.pdf.docInfo[menuId as keyof typeof this.app.pdf.docInfo] as
-          | HeaderFooterSubmenu_t
-          | typeof kHeaderFooter.none
-          | undefined;
-
-        if (persistedValue === undefined) {
-          // No persisted value - initialize from docInfo if it has a value
-          if (docInfoValue && docInfoValue !== kHeaderFooter.none) {
-            this.app.uimenumgr.setPersistForMenuId(menuId, docInfoValue);
-          } else {
-            // Default to 'none' if no value set
-            this.app.uimenumgr.setPersistForMenuId(menuId, kHeaderFooter.none);
-            (
-              this.app.pdf.docInfo as unknown as Record<
-                string,
-                HeaderFooterSubmenu_t | typeof kHeaderFooter.none
-              >
-            )[menuId] = kHeaderFooter.none;
-          }
-        } else if (persistedValue === kHeaderFooter.none) {
-          // Persisted value is 'none' - sync docInfo to 'none'
-          if (docInfoValue !== kHeaderFooter.none) {
-            (
-              this.app.pdf.docInfo as unknown as Record<
-                string,
-                HeaderFooterSubmenu_t | typeof kHeaderFooter.none
-              >
-            )[menuId] = kHeaderFooter.none;
-          }
-        } else if (docInfoValue !== persistedValue) {
-          // Sync docInfo from persisted value (cast needed since persistedValue is string)
-          (
-            this.app.pdf.docInfo as unknown as Record<
-              string,
-              HeaderFooterSubmenu_t | typeof kHeaderFooter.none
-            >
-          )[menuId] = persistedValue as HeaderFooterSubmenu_t;
-        }
-      }
-
       // Generate PDF
       await this.generatePdf();
 
@@ -298,20 +254,6 @@ export class PaperPrinter {
         rawMarginId && rawMarginId in kMarginIdById
           ? (rawMarginId as MarginIdMenuItems_t)
           : (kMarginId.alt as MarginIdMenuItems_t);
-
-      // Sync header/footer content from persistence
-      for (const menuId of kHeaderFooterMenuIds) {
-        const persistedValue = this.app.uimenumgr.getMenuItemIdSelected(menuId);
-        // Only sync if there's a persisted value - otherwise keep docInfo defaults
-        if (persistedValue !== undefined) {
-          (
-            this.app.pdf.docInfo as unknown as Record<
-              string,
-              HeaderFooterSubmenu_t | typeof kHeaderFooter.none
-            >
-          )[menuId] = persistedValue as HeaderFooterSubmenu_t | typeof kHeaderFooter.none;
-        }
-      }
 
       // Set properties on PDF's docInfo
       this.app.pdf.docInfo.fontFamily = this.getCurrentFontFamily();
@@ -740,11 +682,8 @@ export class PaperPrinter {
         }
         value = id;
       } else {
-        // Get current value for this position
-        const currentValue = this.app.pdf.docInfo[menuId as keyof typeof this.app.pdf.docInfo] as
-          | HeaderFooterSubmenu_t
-          | typeof kHeaderFooter.none
-          | undefined;
+        // Get current value from persist
+        const currentValue = this.app.uimenumgr.getMenuItemIdSelected(menuId) || kHeaderFooter.none;
 
         // Toggle behavior: if clicking the same item that's already selected, deselect it (set to 'none')
         if (currentValue === menuItemId) {
@@ -755,7 +694,7 @@ export class PaperPrinter {
           value = menuItemId as HeaderFooterSubmenu_t;
         }
 
-        // Persist the value (including 'none') - docInfo will be synced in generatePdf()
+        // Persist the value (including 'none')
         this.app.uimenumgr.setPersistForMenuId(menuId, value);
         void this.regenerateAndUpdateWebview();
       }
