@@ -269,31 +269,42 @@ export class UIMenuMgr {
       let result = this.app.templateDictReplace(value, fullContext);
       dx.out(`After template replacement: ${result}`);
 
-      // Look for {{calc:...}} pattern (allows whitespace, only replaces calc portion)
+      // Look for {{calc:...}} pattern
       const calcMatch = result.match(/\{\{calc:\s*(.+?)\s*\}\}/);
       if (calcMatch) {
         const expression = calcMatch[1].trim();
-        dx.out(`Extracted calc expression: "${expression}"`);
 
-        try {
-          // eslint-disable-next-line no-eval
-          const calcResult = eval(expression);
-          result = result.replace(calcMatch[0], String(calcResult));
-          dx.out(`Calc evaluated: ${expression} = ${calcResult}`);
-        } catch (evalError) {
-          dx.print(`Error in eval: ${String(evalError)}`);
-          dx.print(`Template: ${value}`);
-          dx.print(`After replacement: ${result}`);
-          dx.print(`Expression to eval: "${expression}"`);
-          dx.print(`Context dictionary: ${JSON.stringify(fullContext, null, 2)}`);
-          return '';
+        // Check for unreplaced template variables ({{ or }}) inside the expression
+        if (expression.includes('{{') || expression.includes('}}')) {
+          dx.out(`evaluateCalcTemplate: unreplaced template vars in calc: ${expression}`);
+          result = '';
+        } else {
+          dx.out(`Extracted calc expression: "${expression}"`);
+
+          try {
+            // eslint-disable-next-line no-eval
+            const calcResult = eval(expression);
+            result = result.replace(calcMatch[0], String(calcResult));
+            dx.out(`Calc evaluated: ${expression} = ${calcResult}`);
+          } catch (evalError) {
+            dx.out(`Error in eval: ${String(evalError)}`);
+            dx.out(`Template: ${value}`);
+            dx.out(`After replacement: ${result}`);
+            dx.out(`Expression to eval: "${expression}"`);
+            dx.out(`Context dictionary: ${JSON.stringify(fullContext, null, 2)}`);
+            result = '';
+          }
         }
+      } else if (result.includes('{{') || result.includes('}}')) {
+        // If there are still unreplaced template variables, fail validation
+        dx.out(`evaluateCalcTemplate: pre-eval-calc-check failed: ${result}`);
+        result = '';
       }
 
       dx.out(`Template value resolved: ${value} -> ${result}`);
       return result;
     } catch (error) {
-      dx.print(`Error in evaluateCalcTemplate: ${String(error)}`);
+      dx.error(`evaluateCalcTemplate failed: ${String(error)}`);
       return '';
     } finally {
       dx.done();
