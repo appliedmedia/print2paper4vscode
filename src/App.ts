@@ -100,6 +100,15 @@ export class App {
   }
 
   /**
+   * Check if content is non-empty
+   * @param content - Content to check (string, number, boolean, or undefined)
+   * @returns true if content has length > 0 when converted to string
+   */
+  notEmpty(content: string | number | boolean | undefined = ''): boolean {
+    return String(content ?? '').length > 0;
+  }
+
+  /**
    * Add bookends to a string with optional padding
    * @param source - The original string to bookend
    * @param bookend - The string to add at beginning and end (e.g., '⚠️')

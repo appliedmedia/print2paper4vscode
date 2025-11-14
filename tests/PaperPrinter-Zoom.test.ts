@@ -1,12 +1,12 @@
 /**
  * PaperPrinter Zoom Handler Tests
- * 
+ *
  * Tests the zoom menu handlers (ZoomLevel, ZoomOut, ZoomIn) to ensure:
  * - They call regenerateAndUpdateWebview() like all other menus
  * - They properly calculate and persist zoom values
  * - They handle text input, menu items, and special actions correctly
  * - No zoom-specific code remains in webview (zoom is extension-controlled)
- * 
+ *
  * @module tests/PaperPrinter-Zoom.test
  */
 
@@ -36,7 +36,7 @@ function createMockApp() {
       }),
     },
     uimenumgr: {
-      setPersistForMenuId: (menuId: string, value: string) => {
+      setValueForPersistIdOnMenuId: (menuId: string, persistId: string, value: string) => {
         mockPersist[menuId] = value;
       },
       getMenuItemIdSelected: (menuId: string) => {
@@ -99,7 +99,7 @@ describe('PaperPrinter Zoom Handlers', () => {
     it('should regenerate PDF when menu item selected', async () => {
       const app = createMockApp();
       const paperPrinter = new PaperPrinter(app);
-      
+
       let regenerateCalled = false;
       (paperPrinter as any).regenerateAndUpdateWebview = mock.fn(() => {
         regenerateCalled = true;
@@ -107,7 +107,7 @@ describe('PaperPrinter Zoom Handlers', () => {
       });
 
       await (paperPrinter as any).handleSelection_ZoomLevel('zoomLevel', '1.50');
-      
+
       assert.strictEqual(regenerateCalled, true, 'regenerateAndUpdateWebview should be called');
       assert.strictEqual(
         app.uimenumgr.getMenuItemIdSelected('zoomLevel'),
@@ -119,7 +119,7 @@ describe('PaperPrinter Zoom Handlers', () => {
     it('should handle text edit input (percentage)', async () => {
       const app = createMockApp();
       const paperPrinter = new PaperPrinter(app);
-      
+
       let regenerateCalled = false;
       (paperPrinter as any).regenerateAndUpdateWebview = mock.fn(() => {
         regenerateCalled = true;
@@ -128,7 +128,7 @@ describe('PaperPrinter Zoom Handlers', () => {
 
       // User types "150" in text edit (150%)
       await (paperPrinter as any).handleSelection_ZoomLevel('zoomLevel', '150');
-      
+
       assert.strictEqual(regenerateCalled, true);
       assert.strictEqual(
         app.uimenumgr.getMenuItemIdSelected('zoomLevel'),
@@ -140,7 +140,7 @@ describe('PaperPrinter Zoom Handlers', () => {
     it('should clamp text input to min/max', async () => {
       const app = createMockApp();
       const paperPrinter = new PaperPrinter(app);
-      
+
       (paperPrinter as any).regenerateAndUpdateWebview = mock.fn(() => Promise.resolve());
 
       // Test clamping to max (300%)
@@ -161,7 +161,7 @@ describe('PaperPrinter Zoom Handlers', () => {
     it('should handle fitPage/fitWidth special actions with calc templates', async () => {
       const app = createMockApp();
       const paperPrinter = new PaperPrinter(app);
-      
+
       let regenerateCalled = 0;
       (paperPrinter as any).regenerateAndUpdateWebview = mock.fn(() => {
         regenerateCalled++;
@@ -185,7 +185,7 @@ describe('PaperPrinter Zoom Handlers', () => {
         'fitWidth',
         'fitWidth should persist menuItemId'
       );
-      
+
       // Note: The actual calc template evaluation returns placeholder values in the mock
       // Real implementation will get viewport dimensions and calculate proper scale
     });
@@ -195,8 +195,8 @@ describe('PaperPrinter Zoom Handlers', () => {
     it('should decrement zoom and regenerate PDF', async () => {
       const app = createMockApp();
       // Start at 150%
-      app.uimenumgr.setPersistForMenuId('zoomLevel', '1.50');
-      
+      app.uimenumgr.setValueForPersistIdOnMenuId('zoomLevel', 'zoomLevel', '1.50');
+
       const paperPrinter = new PaperPrinter(app);
       let regenerateCalled = false;
       (paperPrinter as any).regenerateAndUpdateWebview = mock.fn(() => {
@@ -205,7 +205,7 @@ describe('PaperPrinter Zoom Handlers', () => {
       });
 
       await (paperPrinter as any).handleSelection_ZoomOut('zoomOut', 'zoomOut');
-      
+
       assert.strictEqual(regenerateCalled, true);
       assert.strictEqual(
         app.uimenumgr.getMenuItemIdSelected('zoomLevel'),
@@ -217,13 +217,13 @@ describe('PaperPrinter Zoom Handlers', () => {
     it('should clamp to minimum zoom', async () => {
       const app = createMockApp();
       // Start at 15%
-      app.uimenumgr.setPersistForMenuId('zoomLevel', '0.15');
-      
+      app.uimenumgr.setValueForPersistIdOnMenuId('zoomLevel', 'zoomLevel', '0.15');
+
       const paperPrinter = new PaperPrinter(app);
       (paperPrinter as any).regenerateAndUpdateWebview = mock.fn(() => Promise.resolve());
 
       await (paperPrinter as any).handleSelection_ZoomOut('zoomOut', 'zoomOut');
-      
+
       assert.strictEqual(
         app.uimenumgr.getMenuItemIdSelected('zoomLevel'),
         '0.10',
@@ -236,8 +236,8 @@ describe('PaperPrinter Zoom Handlers', () => {
     it('should increment zoom and regenerate PDF', async () => {
       const app = createMockApp();
       // Start at 100%
-      app.uimenumgr.setPersistForMenuId('zoomLevel', '1.00');
-      
+      app.uimenumgr.setValueForPersistIdOnMenuId('zoomLevel', 'zoomLevel', '1.00');
+
       const paperPrinter = new PaperPrinter(app);
       let regenerateCalled = false;
       (paperPrinter as any).regenerateAndUpdateWebview = mock.fn(() => {
@@ -246,7 +246,7 @@ describe('PaperPrinter Zoom Handlers', () => {
       });
 
       await (paperPrinter as any).handleSelection_ZoomIn('zoomIn', 'zoomIn');
-      
+
       assert.strictEqual(regenerateCalled, true);
       assert.strictEqual(
         app.uimenumgr.getMenuItemIdSelected('zoomLevel'),
@@ -258,13 +258,13 @@ describe('PaperPrinter Zoom Handlers', () => {
     it('should clamp to maximum zoom', async () => {
       const app = createMockApp();
       // Start at 295%
-      app.uimenumgr.setPersistForMenuId('zoomLevel', '2.95');
-      
+      app.uimenumgr.setValueForPersistIdOnMenuId('zoomLevel', 'zoomLevel', '2.95');
+
       const paperPrinter = new PaperPrinter(app);
       (paperPrinter as any).regenerateAndUpdateWebview = mock.fn(() => Promise.resolve());
 
       await (paperPrinter as any).handleSelection_ZoomIn('zoomIn', 'zoomIn');
-      
+
       assert.strictEqual(
         app.uimenumgr.getMenuItemIdSelected('zoomLevel'),
         '3.00',
@@ -277,7 +277,7 @@ describe('PaperPrinter Zoom Handlers', () => {
     it('should work like other menus (no webview-specific zoom code)', async () => {
       const app = createMockApp();
       const paperPrinter = new PaperPrinter(app);
-      
+
       const regenerateCalls: string[] = [];
       (paperPrinter as any).regenerateAndUpdateWebview = mock.fn(() => {
         regenerateCalls.push('regenerate');
@@ -286,12 +286,12 @@ describe('PaperPrinter Zoom Handlers', () => {
 
       // Theme menu pattern (for comparison)
       await (paperPrinter as any).handleSelection_Theme('theme', 'github-light');
-      
+
       // Zoom menu should follow same pattern
       await (paperPrinter as any).handleSelection_ZoomLevel('zoomLevel', '2.00');
       await (paperPrinter as any).handleSelection_ZoomOut('zoomOut', 'zoomOut');
       await (paperPrinter as any).handleSelection_ZoomIn('zoomIn', 'zoomIn');
-      
+
       assert.strictEqual(
         regenerateCalls.length,
         4,
@@ -307,12 +307,8 @@ describe('PaperPrinter Zoom Handlers', () => {
       // Test rounding
       await (paperPrinter as any).handleSelection_ZoomLevel('zoomLevel', '1.234567');
       const persisted = app.uimenumgr.getMenuItemIdSelected('zoomLevel');
-      
-      assert.strictEqual(
-        persisted,
-        '1.23',
-        'Should round to 2 decimal places'
-      );
+
+      assert.strictEqual(persisted, '1.23', 'Should round to 2 decimal places');
     });
   });
 });

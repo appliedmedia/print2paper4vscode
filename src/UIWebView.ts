@@ -1,6 +1,12 @@
 import type { App } from './App';
 import type { WebviewPanelId_t } from './VSCodeAPIs';
-import type { PostMessage } from './types/UI_t';
+import type {
+  SendToExt_t,
+  SendToExt_dragEnd,
+  SendToExt_menuItemSelected,
+  SendToExt_dx,
+  MessageHandler_t,
+} from './types/UI_t';
 import { Diagnostics } from './Diagnostics';
 import { Yaml } from './Yaml';
 import { kZoomLevel, kZoomIn, kZoomOut } from './types/PaperPrinter_t';
@@ -230,6 +236,24 @@ export class UIWebView {
     const dx = this.dx.sub('done');
 
     try {
+      // Unregister message handlers
+      if (this.handlersRegistered) {
+        const messageHandlers = [
+          { type: 'dragEnd', handler: this.handleDragEnd.bind(this) as MessageHandler_t },
+          {
+            type: 'menuItemSelected',
+            handler: this.handleMenuItemSelected.bind(this) as MessageHandler_t,
+          },
+          { type: 'dx', handler: this.handleDxMessage.bind(this) as MessageHandler_t },
+        ];
+
+        messageHandlers.forEach(({ type, handler }) => {
+          this.app.ui.unregisterMessageHandler(type, handler);
+        });
+
+        this.handlersRegistered = false;
+      }
+
       // Remove panel from VSCodeAPIs map
       if (this.panelId) {
         this.app.vscodeapis.removePanel(this.panelId);
@@ -249,9 +273,12 @@ export class UIWebView {
     if (this.handlersRegistered) return;
 
     const messageHandlers = [
-      { type: 'dragEnd', handler: this.handleDragEnd.bind(this) },
-      { type: 'menuItemSelected', handler: this.handleMenuItemSelected.bind(this) },
-      { type: 'dx', handler: this.handleDxMessage.bind(this) },
+      { type: 'dragEnd', handler: this.handleDragEnd.bind(this) as MessageHandler_t },
+      {
+        type: 'menuItemSelected',
+        handler: this.handleMenuItemSelected.bind(this) as MessageHandler_t,
+      },
+      { type: 'dx', handler: this.handleDxMessage.bind(this) as MessageHandler_t },
     ];
 
     messageHandlers.forEach(({ type, handler }) => {
@@ -265,7 +292,7 @@ export class UIWebView {
   /**
    * Handle toolbar drag end message
    */
-  private async handleDragEnd(msg: PostMessage): Promise<void> {
+  private async handleDragEnd(msg: SendToExt_dragEnd): Promise<void> {
     const dx = this.dx.sub('handleDragEnd');
 
     try {
@@ -283,48 +310,16 @@ export class UIWebView {
   /**
    * Handle menu item selection message
    */
-  private async handleMenuItemSelected(msg: PostMessage): Promise<void> {
-    const dx = this.dx.sub('handleMenuItemSelected');
-
-    try {
-      const { menuId, itemId, contextDict } = msg;
-
-      // Store contextDict in UIMenuMgr for future calc evaluations
-      if (contextDict) {
-        this.app.uimenumgr.setContextDict(contextDict);
-      }
-
-      if (typeof menuId === 'string' && typeof itemId === 'string') {
-        dx.out(`Processing menu selection: menuId=${menuId}, itemId=${itemId}`);
-
-        // Validate menuId
-        if (!this.app.uimenumgr.isMenuId(menuId)) {
-          dx.error(`Invalid menu ID: ${menuId}`);
-          return;
-        }
-
-        // Validate itemId using comprehensive validation function
-        if (!this.app.uimenumgr.isMenuItemId(itemId)) {
-          dx.error(`Invalid menu item ID: ${menuId}.${itemId}`);
-          return;
-        }
-
-        dx.out(`Validation passed, calling app.uimenumgr.handleMenuItemSelected`);
-        // Handle menu item selection through menu manager (with optional context dictionary)
-        await this.app.uimenumgr.handleMenuItemSelected(menuId, itemId, contextDict);
-        dx.out(`Menu item selected: ${menuId}.${itemId}`);
-      } else {
-        dx.error(`Invalid message format: menuId=${typeof menuId}, itemId=${typeof itemId}`);
-      }
-    } finally {
-      dx.done();
-    }
+  private async handleMenuItemSelected(msg: SendToExt_menuItemSelected): Promise<void> {
+    const { menuId, menuItemId, contextDict } = msg;
+    // Forward to UIMenuMgr for handling
+    await this.app.uimenumgr.handleMenuItemSelected(menuId, menuItemId, contextDict);
   }
 
   /**
    * Handle diagnostic message from webview
    */
-  private async handleDxMessage(msg: PostMessage): Promise<void> {
+  private async handleDxMessage(msg: SendToExt_dx): Promise<void> {
     const dx = this.dx.sub('dx'); // Every message has start/done if we debugOn here, too noisy.
     dx.require({ msg }, ['msg']);
 

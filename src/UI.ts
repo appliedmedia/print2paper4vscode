@@ -1,29 +1,28 @@
 /**
  * UI - User Interface Manager
- * 
+ *
  * Manages the main VS Code webview panel and toolbar for the Print2Paper extension.
  * Handles webview creation, toolbar positioning, zoom level persistence, and
  * communication between extension and webview.
- * 
+ *
  * Features:
  * - Webview panel creation and lifecycle management
  * - Toolbar position persistence and validation
  * - Zoom level persistence
  * - Message passing between extension and webview
- * 
+ *
  * @module src/UI
  */
 
 import type { App } from './App';
-import type { PostMessage, MessageHandler } from './types/UI_t';
+import type { SendToExt_t, MessageHandler_t } from './types/UI_t';
 import { Diagnostics } from './Diagnostics';
 import { Yaml } from './Yaml';
 import { Persist, type Persist_t } from './Persist';
 import { kMenuId } from './UIMenu';
-import { kZoomLevel } from './types/PaperPrinter_t';
 
 // UI persist keys - union of menu IDs and toolbar position
-export const kUI = [...kMenuId, 'toolbar_pos'] as const;
+export const kUI = [...kMenuId, 'toolbar_pos', 'zoomLevel_value'] as const;
 
 export type UI_t = (typeof kUI)[number];
 
@@ -56,7 +55,7 @@ export class UI {
   private static readonly kToolbar_pos_max_px = 5120; // Reasonable max for 5K displays
 
   private app: App;
-  private messageHandlers: Map<string, MessageHandler[]> = new Map();
+  private messageHandlers: Map<string, MessageHandler_t[]> = new Map();
   private dx: Diagnostics;
   private _yaml: Yaml<typeof UI.kYaml>;
   public persist: Persist & Persist_t;
@@ -84,7 +83,7 @@ export class UI {
   }
 
   // Register a message handler for a specific message type
-  registerMessageHandler(messageType: string, handler: MessageHandler): void {
+  registerMessageHandler(messageType: string, handler: MessageHandler_t): void {
     if (!this.messageHandlers.has(messageType)) {
       this.messageHandlers.set(messageType, []);
     }
@@ -92,7 +91,7 @@ export class UI {
   }
 
   // Unregister a message handler
-  unregisterMessageHandler(messageType: string, handler: MessageHandler): void {
+  unregisterMessageHandler(messageType: string, handler: MessageHandler_t): void {
     const handlers = this.messageHandlers.get(messageType);
     if (handlers) {
       const index = handlers.indexOf(handler);
@@ -103,12 +102,10 @@ export class UI {
   }
 
   // Central message handling - routes messages to registered handlers
-  async handleWebviewMessage(msg: PostMessage): Promise<void> {
+  async handleWebviewMessage(msg: SendToExt_t): Promise<void> {
     const dx = this.dx.sub('handleWebviewMessage');
     dx.require({ msg }, ['msg']);
-    dx.out(
-      `Received message: type=${msg.type}, targetId=${msg.targetId}, parentId=${msg.parentId}`
-    );
+    dx.out(`Received message: type=${msg.type}`);
 
     try {
       const handlers = this.messageHandlers.get(msg.type);

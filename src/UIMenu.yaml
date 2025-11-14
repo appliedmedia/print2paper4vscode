@@ -205,8 +205,10 @@ uimenu_generic_handlers: |
     });
   }
 
-  function postMenuItemSelected(menuId, itemId) {
-    if (window.vscode && menuId && itemId) {
+  const kContextDict_None = {};
+
+  function postMenuItemSelected(menuId, menuItemId, _contextDict) {
+    if (window.vscode && menuId && menuItemId) {
       // Use document.documentElement (the viewport) for accurate webview dimensions
       const windowWidth = document.documentElement.clientWidth;
       const windowHeight = document.documentElement.clientHeight;
@@ -216,14 +218,15 @@ uimenu_generic_handlers: |
       
       const contextDict = {
         windowWidth,
-        windowHeight
+        windowHeight,
+        ...(_contextDict || kContextDict_None)
       };
       
       window.vscode.postMessage({
         type: 'menuItemSelected',
-        itemId: itemId,
-        menuId: menuId,
-        contextDict: contextDict
+        menuId,
+        menuItemId,
+        contextDict
       });
     }
   }
@@ -236,7 +239,8 @@ uimenu_generic_handlers: |
     const menuItems = menu?.querySelector('.p2p4vsc-menu-items');
     
     if (!menuItems) {
-      postMenuItemSelected(menuId, menuId);
+      const menuItemId = menuId;
+      postMenuItemSelected(menuId, menuItemId, kContextDict_None);
       return;
     }
     
@@ -331,6 +335,7 @@ uimenu_generic_handlers: |
 
     const menu = itemEl.closest('.p2p4vsc-menu');
     const menuId = menu?.getAttribute('id');
+    const menuItemId = itemEl.id;
     
     if (itemEl.classList.contains('isFlyout')) {
       const flyoutMenuId = itemEl.getAttribute('flyout-menu-id-ref');
@@ -345,7 +350,7 @@ uimenu_generic_handlers: |
         itemEl.classList.add('isSelected');
       }
       
-      postMenuItemSelected(menuId, itemEl.id);
+      postMenuItemSelected(menuId, menuItemId, kContextDict_None);
       closeAllMenus();
     }
   }
@@ -461,20 +466,11 @@ uimenu_generic_handlers: |
     if (!menu) return;
     
     const menuId = menu.getAttribute('id');
-    let value = input.value;
+    const displayValue = input.value; // Raw text_edit content (display value)
     
-    const transformPersist = input.getAttribute('data-transform-persist');
-    if (transformPersist) {
-      try {
-        const expression = transformPersist.replace(/\{\{display\}\}/g, value);
-        const persistValue = eval(expression);
-        value = String(persistValue);
-      } catch (error) {
-        console.error('Failed to evaluate transform.persist:', error);
-      }
-    }
-    
-    postMenuItemSelected(menuId, value);
+    // For text_edit, send menuItemId = menuId and display value in contextDict
+    // Extension will apply transform.persist if needed
+    postMenuItemSelected(menuId, menuId, { display: displayValue });
   }
 
   document.addEventListener('click', handleTextEditClick, true);

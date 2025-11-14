@@ -1,4 +1,5 @@
 import type { App } from './App';
+import type { UI_t } from './UI';
 import { Diagnostics } from './Diagnostics';
 import { Persist, type Persist_t } from './Persist';
 import { Yaml } from './Yaml';
@@ -53,6 +54,7 @@ import {
 export type TextEditConfig_t = {
   type: 'text_edit';
   width?: string;
+  persistId?: UI_t; // Separate persist key for text_edit value storage (e.g., 'zoomLevel_value')
   constrain?: {
     regex?: string; // Regex pattern (e.g., '^\d{0,3}$') - only 2 backslashes needed!
     min?: number;
@@ -112,11 +114,18 @@ export const kMenuItemId = [
   'default',
   // Extract menuItems from all menu constants
   ...kMenus.flatMap(menu => {
-    if (menu.menuItems && menu.menuItems.length > 0) {
-      return menu.menuItems.map(item => item.id);
+    const menuItemIds =
+      menu.menuItems && menu.menuItems.length > 0 ? menu.menuItems.map(item => item.id) : [];
+
+    // If menu has text_edit widget, include menu.id as valid menuItemId (for custom text_edit values)
+    const hasTextEdit =
+      typeof menu.iconSlotTriad.main === 'object' && menu.iconSlotTriad.main.type === 'text_edit';
+
+    if (hasTextEdit || menuItemIds.length === 0) {
+      // Include menu.id for: text_edit menus OR button-only menus
+      return [menu.id, ...menuItemIds];
     } else {
-      // Button-only menus: include the menu ID itself
-      return [menu.id];
+      return menuItemIds;
     }
   }),
   // From kHeaderFooter (for header/footer position menus)
@@ -346,7 +355,7 @@ export class UIMenu {
     configAttr: string;
     isSpecialType: boolean;
   } {
-    const dx = this.dx.sub('handleIconSlotTypes');
+    const dx = this.dx.sub('handleIconSlotTypes', true /* debugOn */);
 
     try {
       // Default return for regular icon content
@@ -420,6 +429,7 @@ export class UIMenu {
             let textEditValue = '';
             const value = this.app.uimenumgr.getValueForMenuItemIdSelected(this._id);
             dx.out(`Text edit for ${this._id}: value=${value}, type=${typeof value}`);
+            dx.out(`Getting value for text_edit widget via getValueForMenuItemIdSelected`);
             if (value) {
               // Only show numeric values in text edit (skip fitPage/fitWidth strings)
               if (typeof value === 'number') {

@@ -3,7 +3,7 @@ import * as assert from 'node:assert';
 import { App } from '../src/App.js';
 import { UIWebView } from '../src/UIWebView.js';
 import type { PDFData_t } from '../src/UIWebView.js';
-import type { PostMessage } from '../src/types/UI_t.js';
+import type { SendToExt_t } from '../src/types/UI_t.js';
 import type { ExtensionContext } from 'vscode';
 import jsPDF from 'jspdf';
 import { kZoomLevel } from '../src/types/PaperPrinter_t.js';
@@ -74,7 +74,7 @@ const mockVSCode = {
             // Capture HTML for tests
             (global as any).__capturedWebviewHTML = value;
           },
-          onDidReceiveMessage: (callback: (msg: PostMessage) => void) => {
+          onDidReceiveMessage: (callback: (msg: SendToExt_t) => void) => {
             // Store callback that will route through real message handling system
             // When VS Code receives a message, it calls this callback
             // The callback from setupMessageHandling() calls app.ui.handleWebviewMessage()
@@ -272,7 +272,7 @@ describe('Extension↔Webview Integration Tests', () => {
       assert.ok(handlers.has('dx'), 'dx handler should be registered');
       
       // Test that messages are routed correctly through real UI.handleWebviewMessage()
-      const message: PostMessage = {
+      const message: SendToExt_t = {
         type: 'dx',
         message: 'Test diagnostic message',
       };
@@ -286,7 +286,7 @@ describe('Extension↔Webview Integration Tests', () => {
 
     test('should handle multiple message types through real routing', async () => {
       // Test various message types - all go through real handleWebviewMessage()
-      const messages: PostMessage[] = [
+      const messages: SendToExt_t[] = [
         { type: 'dx', message: 'Test' },
         { type: 'print', printType: 'test' },
         { type: 'menuItemSelected', menuId: 'test', itemId: 'test' },
@@ -320,7 +320,7 @@ describe('Extension↔Webview Integration Tests', () => {
 
       // Simulate webview sending zoom message - use callback from setupMessageHandling()
       // This callback calls app.ui.handleWebviewMessage() which routes to real handlers
-      const zoomMessage: PostMessage = {
+      const zoomMessage: SendToExt_t = {
         type: 'zoom',
         zoomLevel: 2.0,
       };
@@ -355,7 +355,7 @@ describe('Extension↔Webview Integration Tests', () => {
       app.ui.persist.zoomLevel = 1.0;
 
       // Send invalid zoom level (too high) - real validation should reject it
-      const invalidMessage: PostMessage = {
+      const invalidMessage: SendToExt_t = {
         type: 'zoom',
         zoomLevel: 999,
       };
@@ -387,7 +387,7 @@ describe('Extension↔Webview Integration Tests', () => {
       };
       await uiWebView.displayPdfPanel();
 
-      const zoomActionMessage: PostMessage = {
+      const zoomActionMessage: SendToExt_t = {
         type: 'zoom',
         zoomAction: 'in',
       };
@@ -571,7 +571,7 @@ describe('Extension↔Webview Integration Tests', () => {
 
       app.ui.persist.zoomLevel = 1.0;
 
-      const zoomMessage: PostMessage = {
+      const zoomMessage: SendToExt_t = {
         type: 'zoom',
         zoomLevel: 1.5,
       };
@@ -607,7 +607,7 @@ describe('Extension↔Webview Integration Tests', () => {
 
       // Simulate rapid zoom changes (user clicking zoom in/out rapidly)
       // This tests what happens if multiple zoom messages arrive before previous renders complete
-      const rapidZoomMessages: PostMessage[] = [
+      const rapidZoomMessages: SendToExt_t[] = [
         { type: 'zoom', zoomAction: 'in' },    // 1.0 -> 1.1
         { type: 'zoom', zoomAction: 'in' },    // 1.1 -> 1.2
         { type: 'zoom', zoomAction: 'in' },    // 1.2 -> 1.3
@@ -693,7 +693,7 @@ describe('Extension↔Webview Integration Tests', () => {
       assert.ok(callback, 'Message callback should be set up');
 
       // Rapidly send zoom in actions (simulating user clicking zoom in button rapidly)
-      const zoomInActions: PostMessage[] = Array.from({ length: 10 }, () => ({
+      const zoomInActions: SendToExt_t[] = Array.from({ length: 10 }, () => ({
         type: 'zoom' as const,
         zoomAction: 'in' as const,
       }));
@@ -746,7 +746,7 @@ describe('Extension↔Webview Integration Tests', () => {
       await uiWebView.displayPdfPanel();
 
       // Send invalid zoom level (out of range)
-      const invalidMessage: PostMessage = {
+      const invalidMessage: SendToExt_t = {
         type: 'zoom',
         zoomLevel: 999, // Invalid - too high
       };

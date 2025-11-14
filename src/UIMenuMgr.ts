@@ -1,4 +1,7 @@
 import type { App } from './App';
+import type { UI_t } from './UI';
+import type { PersistValue_t } from './Persist';
+import type { contextDict_t } from './types/UI_t';
 import {
   UIMenu,
   type MenuId_t,
@@ -6,6 +9,7 @@ import {
   type HandleSelection_t,
   type UIMenuItem_t,
   type iconSlotTriad_t,
+  type TextEditConfig_t,
   kMenuId,
   kMenuItemId,
 } from './UIMenu';
@@ -33,18 +37,18 @@ export class UIMenuMgr {
   private menus: UIMenu[] = [];
   private dx: Diagnostics;
   // Generic context dictionary for template variable substitution
-  // Updated from webview (window dimensions) and persists across menu selections
-  private contextDict?: Record<string, number>;
-
-  // Set context dictionary (called from UIWebView message handler)
-  setContextDict(contextDict: Record<string, number>): void {
-    this.contextDict = contextDict;
-  }
+  // Updated from webview (window dimensions, text_edit display values) and persists across menu selections
+  private contextDict?: contextDict_t;
 
   constructor(app: App) {
     this.app = app;
     this.dx = app.dx.create('UIMenuMgr');
     // No initialization needed - menus are created on-demand by PaperPrinter
+  }
+
+  // Set context dictionary (called from UIWebView message handler)
+  setContextDict(contextDict: contextDict_t): void {
+    this.contextDict = contextDict;
   }
 
   init(): void {
@@ -127,16 +131,66 @@ export class UIMenuMgr {
   // Future: HTML IDs will be completely reworked, so this validation is temporary.
   async handleMenuItemSelected(
     menuId: MenuId_t,
-    itemId: MenuItemId_t,
-    contextDict?: Record<string, number>
+    menuItemId: MenuItemId_t,
+    contextDict?: contextDict_t
   ): Promise<void> {
-    const dx = this.dx.sub('handleMenuItemSelected');
+    const dx = this.dx.sub('handleMenuItemSelected', true /* debugOn */);
+    dx.out(`Received: menuId=${menuId}, menuItemId=${menuItemId}`);
+    dx.out(`contextDict: ${JSON.stringify(contextDict)}`);
 
     try {
+      // Store contextDict for calc evaluations
+      if (contextDict) {
+        this.setContextDict(contextDict);
+      }
+
+      // Handle text_edit input: if contextDict.display exists and menuItemId === menuId
+      let finalMenuItemId: string = menuItemId;
+      let isTextEditInput = false;
+      dx.out(
+        `Checking text_edit: contextDict.display=${contextDict?.display}, menuItemId===menuId? ${menuItemId === menuId}`
+      );
+      if (contextDict?.display && menuItemId === menuId) {
+        isTextEditInput = true;
+        dx.out(`Text_edit input detected`);
+        // Text_edit input - apply transform.persist if present
+        const menu = this.getMenuById(menuId);
+        const iconSlotMain = (menu as any)._iconSlotTriad?.main;
+        if (typeof iconSlotMain === 'object' && iconSlotMain.type === 'text_edit') {
+          const textEditConfig = iconSlotMain;
+          if (textEditConfig.transform?.persist) {
+            try {
+              const expression = this.app.templateDictReplace(textEditConfig.transform.persist, {
+                display: String(contextDict.display),
+              });
+              // eslint-disable-next-line no-eval
+              const transformedValue = eval(expression);
+              finalMenuItemId = String(transformedValue);
+              dx.out(`Applied transform.persist: ${contextDict.display} → ${finalMenuItemId}`);
+            } catch (error) {
+              dx.error(`Failed to apply transform.persist: ${error}`);
+              return;
+            }
+          } else {
+            // No transform - use display value as-is
+            finalMenuItemId = String(contextDict.display);
+            dx.out(`No transform, using display value as-is: ${finalMenuItemId}`);
+          }
+        }
+      }
+
+      // Validate finalMenuItemId after transform (transformed value should be valid menuItemId)
+      if (!this.isMenuItemId(finalMenuItemId)) {
+        dx.error(
+          `Invalid menu item ID: ${menuId}.${finalMenuItemId}${isTextEditInput ? ' (after transform)' : ''}`
+        );
+        return;
+      }
+
       const menu = this.getUIMenus().find(menu => menu.id === menuId);
       if (menu) {
-        await menu.dispatchSelection(itemId);
-        dx.out(`Menu item selected: ${menuId}.${itemId}`);
+        await menu.dispatchSelection(finalMenuItemId);
+        dx.out(`Menu item selected: ${menuId}.${finalMenuItemId}`);
       } else {
         dx.error(`Invalid menu: ${menuId}`);
         return;
@@ -157,12 +211,26 @@ export class UIMenuMgr {
     return menu;
   }
 
-  // Set persist value for a menu
-  setPersistForMenuId(menuId: MenuId_t, menuItemId: MenuItemId_t): void {
+  // Get persist value for a menu (reads from menu.persist[menuId])
+  getPersistForMenuId(menuId: MenuId_t): PersistValue_t | undefined {
     const menu = this.getMenuById(menuId);
-    const oldValue = (menu.persist as unknown as Record<string, string>)[menuId];
-    (menu.persist as unknown as Record<string, string | number | boolean>)[menuId] = menuItemId;
-    this.dx.out(`setPersistForMenuId(${menuId}, ${menuItemId}) - was: ${oldValue}`);
+    return (menu.persist as unknown as Record<string, PersistValue_t>)[menuId];
+  }
+
+  // Get persist value for a persistId from a menu's persist
+  getValueForPersistIdOnMenuId(menuId: MenuId_t, persistId: UI_t): PersistValue_t | undefined {
+    const menu = this.getMenuById(menuId);
+    return (menu.persist as unknown as Record<string, PersistValue_t>)[persistId];
+  }
+
+  // Set persist value for a persistId on a menu's persist
+  setValueForPersistIdOnMenuId(menuId: MenuId_t, persistId: UI_t, value: PersistValue_t): void {
+    const dx = this.dx.sub('setValueForPersistIdOnMenuId', true /* debugOn */);
+    const menu = this.getMenuById(menuId);
+    const oldValue = (menu.persist as unknown as Record<string, PersistValue_t>)[persistId];
+    (menu.persist as unknown as Record<string, PersistValue_t>)[persistId] = value;
+    dx.out(`Menu[${menuId}].persist[${persistId}] = ${value} (was: ${oldValue})`);
+    dx.done();
   }
 
   // Get the selected menuItemId for a menu (returns the persisted ID)
@@ -177,13 +245,18 @@ export class UIMenuMgr {
   // Combines getMenuItemIdSelected + getValueForMenuItemId
   // Returns string or number, never undefined (falls back to empty string)
   getValueForMenuItemIdSelected(menuId: MenuId_t): number | string {
+    const dx = this.dx.sub('getValueForMenuItemIdSelected', true /* debugOn */);
     const menuItemId = this.getMenuItemIdSelected(menuId);
-    if (!menuItemId) return '';
+    dx.out(`menuId=${menuId}, menuItemId=${menuItemId}`);
+    if (!menuItemId) {
+      dx.out(`No menuItemId, returning empty string`);
+      dx.done();
+      return '';
+    }
 
     const value = this.getValueForMenuItemId(menuId, menuItemId);
-    this.dx.out(
-      `getValueForMenuItemIdSelected(${menuId}) -> menuItemId=${menuItemId}, value=${value}`
-    );
+    dx.out(`Final result: menuItemId=${menuItemId}, value=${value}`);
+    dx.done();
     return value !== undefined ? value : '';
   }
 
@@ -191,37 +264,54 @@ export class UIMenuMgr {
   // Looks up menuItem by ID, evaluates calc templates, or parses numeric IDs
   // Returns number if value is numeric, string if not (e.g., theme IDs), never undefined
   getValueForMenuItemId(menuId: MenuId_t, menuItemId: string): number | string {
+    let result: number | string = menuItemId;
+
     const menu = this.getMenuById(menuId);
-    const menuItems = menu.getMenuItems();
 
-    // Try to find the menuItem in the list
-    const menuItem = menuItems.find(item => item.id === menuItemId);
-
-    if (menuItem && 'value' in menuItem) {
-      const itemWithValue = menuItem as UIMenuItem_t & { value: number | string };
-      const value = itemWithValue.value;
-
-      // Check if value contains template syntax (including calc)
-      if (typeof value === 'string' && (value.includes('{{calc:') || value.includes('{{'))) {
-        // Evaluate template (replaces vars and evaluates calc expressions)
-        const result = this.evaluateCalcTemplate(value);
-        // Empty string means evaluation failed, return menuItemId as fallback
-        if (result === '') return menuItemId;
-        const parsed = parseFloat(result);
-        return isNaN(parsed) ? menuItemId : parsed;
+    // Check if menuItemId === menuId (custom text_edit value)
+    // Read from persistId instead of menu items
+    if (menuItemId === menuId) {
+      const dx = this.dx.sub('getValueForMenuItemId[iconSlotTriad]', true /* debugOn */);
+      const iconSlotMain = (menu as unknown as { _iconSlotTriad: iconSlotTriad_t })._iconSlotTriad
+        ?.main;
+      dx.out(`menuItemId === menuId, checking for text_edit persistId`);
+      if (typeof iconSlotMain === 'object' && iconSlotMain.type === 'text_edit') {
+        const textEditConfig = iconSlotMain as TextEditConfig_t;
+        dx.out(`Found text_edit config, persistId=${textEditConfig.persistId}`);
+        if (textEditConfig.persistId) {
+          const persistValue = this.getValueForPersistIdOnMenuId(menuId, textEditConfig.persistId);
+          dx.out(`Read from menu.persist[${textEditConfig.persistId}] = ${persistValue}`);
+          if (this.app.notEmpty(persistValue)) {
+            result = persistValue as string | number;
+            dx.out(`Returning persistValue: ${result}`);
+          }
+        }
       }
+      dx.done();
+    } else {
+      const menuItems = menu.getMenuItems();
 
-      // Return numeric value or string value
-      return typeof value === 'number'
-        ? value
-        : typeof value === 'string'
-          ? value
-          : parseFloat(String(value));
+      // Try to find the menuItem in the list
+      const menuItem = menuItems.find(item => item.id === menuItemId);
+
+      if (menuItem && 'value' in menuItem) {
+        const itemWithValue = menuItem as UIMenuItem_t & { value: number | string };
+        const value = itemWithValue.value;
+
+        // Check if value contains template syntax (including calc)
+        if (typeof value === 'string' && (value.includes('{{calc:') || value.includes('{{'))) {
+          // Evaluate template (replaces vars and evaluates calc expressions)
+          const evalResult = this.evaluateCalcTemplate(value);
+          if (this.app.notEmpty(evalResult)) {
+            result = evalResult;
+          }
+        } else {
+          result = value;
+        }
+      }
     }
 
-    // If not found in menuItems, try parsing menuItemId as number, otherwise return as string
-    const parsed = parseFloat(menuItemId);
-    return isNaN(parsed) ? menuItemId : parsed;
+    return result;
   }
 
   // Evaluate calc template like {{calc:{{pageHeight}}/{{windowHeight}}}}

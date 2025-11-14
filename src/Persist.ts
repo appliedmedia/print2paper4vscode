@@ -4,7 +4,7 @@ import type { GlobalStateKey_t, GlobalStateValue_t } from './VSCodeAPIs';
 import { kMenuId } from './UIMenu';
 
 // Persist value types - what we store locally
-export type PersistValue_t = string | number | boolean;
+export type PersistValue_t = string | number;
 
 // Empty value: intentionally not persisted (for flyout-only parent menus)
 export const kEmptyNoPersist = '';

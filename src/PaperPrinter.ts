@@ -16,6 +16,8 @@
  */
 
 import type { App } from './App';
+import type { UI_t } from './UI';
+import type { PersistValue_t } from './Persist';
 import { Diagnostics } from './Diagnostics';
 import {
   UIMenu,
@@ -24,6 +26,7 @@ import {
   type HandleSelection_t,
   type UIMenuItem_t,
   type iconSlotTriad_t,
+  type TextEditConfig_t,
 } from './UIMenu';
 import { UIWebView } from './UIWebView';
 import { DocInfo_PDF } from './DocInfo_PDF';
@@ -695,7 +698,11 @@ export class PaperPrinter {
         }
 
         // Persist the value (including 'none')
-        this.app.uimenumgr.setPersistForMenuId(menuId, value);
+        this.app.uimenumgr.setValueForPersistIdOnMenuId(
+          menuId,
+          menuId as UI_t,
+          value as PersistValue_t
+        );
         void this.regenerateAndUpdateWebview();
       }
     }
@@ -724,7 +731,11 @@ export class PaperPrinter {
     } else {
       // Update theme
       dx.out(`updating theme to ${menuItemId}`);
-      this.app.uimenumgr.setPersistForMenuId(kTheme.id, menuItemId);
+      this.app.uimenumgr.setValueForPersistIdOnMenuId(
+        kTheme.id,
+        kTheme.id as UI_t,
+        menuItemId as PersistValue_t
+      );
       // Regenerate everything (fire and forget)
       void this.regenerateAndUpdateWebview();
     }
@@ -748,7 +759,11 @@ export class PaperPrinter {
       id = String(editorTypo.fontSize);
       value = id;
     } else {
-      this.app.uimenumgr.setPersistForMenuId(kFontSizeId.id, menuItemId);
+      this.app.uimenumgr.setValueForPersistIdOnMenuId(
+        kFontSizeId.id,
+        kFontSizeId.id as UI_t,
+        menuItemId as PersistValue_t
+      );
       void this.regenerateAndUpdateWebview();
     }
 
@@ -788,7 +803,11 @@ export class PaperPrinter {
       value = id; // value is the page size ID
       dx.out(`Returning locale-based default page size: ${id}`);
     } else {
-      this.app.uimenumgr.setPersistForMenuId(kPageSizeId.id, menuItemId);
+      this.app.uimenumgr.setValueForPersistIdOnMenuId(
+        kPageSizeId.id,
+        kPageSizeId.id as UI_t,
+        menuItemId as PersistValue_t
+      );
       void this.regenerateAndUpdateWebview();
     }
 
@@ -811,7 +830,11 @@ export class PaperPrinter {
       value = id; // value is the orientation
     } else {
       // Update orientation
-      this.app.uimenumgr.setPersistForMenuId(kOrient.id, menuItemId);
+      this.app.uimenumgr.setValueForPersistIdOnMenuId(
+        kOrient.id,
+        kOrient.id as UI_t,
+        menuItemId as PersistValue_t
+      );
       void this.regenerateAndUpdateWebview();
     }
 
@@ -835,12 +858,36 @@ export class PaperPrinter {
       value = id; // value is the margin ID
       dx.out(`returning default margin: ${id}`);
     } else {
-      this.app.uimenumgr.setPersistForMenuId(kMarginId.id, menuItemId);
+      this.app.uimenumgr.setValueForPersistIdOnMenuId(
+        kMarginId.id,
+        kMarginId.id as UI_t,
+        menuItemId as PersistValue_t
+      );
       void this.regenerateAndUpdateWebview();
     }
 
     dx.done();
     return { id, value };
+  }
+
+  /**
+   * Helper: Update text_edit widget value for zoom level
+   * Saves to persistId so text_edit can display the current zoom value
+   * @param zoomValue - The zoom scale value (e.g., 1.18)
+   */
+  private zoomLevel_setTextEdit(zoomValue: number): void {
+    const dx = this.dx.sub('zoomLevel_setTextEdit', true /* debugOn */);
+    if (this.app.notEmpty(zoomValue)) {
+      const menuId = kZoomLevel.id;
+      const textEditConfig = kZoomLevel.iconSlotTriad.main as TextEditConfig_t;
+      const persistId = textEditConfig.persistId;
+      if (persistId) {
+        const persistValue = this.app.forceNumber(zoomValue) as PersistValue_t;
+        this.app.uimenumgr.setValueForPersistIdOnMenuId(menuId, persistId, persistValue);
+        dx.out(`Saved ${persistValue} to menu[${menuId}].persist[${persistId}]`);
+      }
+    }
+    dx.done();
   }
 
   /**
@@ -863,54 +910,29 @@ export class PaperPrinter {
     const dx = this.dx.sub('handleSelection_ZoomLevel');
     dx.out(`ZoomLevel selection: menuItemId=${menuItemId}`);
 
-    let id = menuItemId;
-    let value: string | number | boolean = menuItemId;
+    let persistId: UI_t = menuId;
+    let id: MenuItemId_t = menuItemId;
+    let value: string | number | boolean =
+      this.app.uimenumgr.getValueForMenuItemId(menuId, menuItemId) ?? menuItemId;
 
     if (menuItemId === UIMenu.defaultId()) {
       // Return default zoom level (100% = 1.0) - no side effects!
       id = '1.00';
       value = 1.0;
+      // Do NOT persist or regenerate - this is just a query for the default value
     } else {
-      const menuItem = kZoomLevel.menuItems.find(item => item.id === menuItemId);
-
-      if (menuItem) {
-        // Menu item selected (including fitPage/fitWidth with calc values)
-        // Persist the menuItemId, value lookup will handle getting the numeric value
-        this.app.uimenumgr.setPersistForMenuId(kZoomLevel.id, menuItemId);
-
-        // Get the actual value (this will evaluate calc templates if needed)
-        const numericValue = this.app.uimenumgr.getValueForMenuItemId(kZoomLevel.id, menuItemId);
-        value = numericValue !== undefined ? numericValue : Number(kZoomLevel.alt);
-        id = menuItemId;
-
-        void this.regenerateAndUpdateWebview();
-      } else {
-        // Text edit input: numeric string (could be percentage like "150" or scale like "1.50")
-        const numericValue = parseFloat(menuItemId);
-
-        if (!isNaN(numericValue)) {
-          // If value > 10, treat as percentage; otherwise treat as scale
-          const scale = numericValue > 10 ? numericValue / 100 : numericValue;
-
-          // Clamp to min/max and round to 2 decimals
-          const clampedScale = Math.max(kZoomLevel.min, Math.min(kZoomLevel.max, scale));
-          const roundedScale = Math.round(clampedScale * 100) / 100;
-
-          id = roundedScale.toFixed(2);
-          value = roundedScale;
-
-          // Persist as menuItemId (numeric string) - value lookup will parse it
-          this.app.uimenumgr.setPersistForMenuId(kZoomLevel.id, id);
-          void this.regenerateAndUpdateWebview();
-        } else {
-          dx.out(`Invalid zoom value: ${menuItemId}, using default`);
-          value = Number(kZoomLevel.alt);
-          id = kZoomLevel.alt;
-          this.app.uimenumgr.setPersistForMenuId(kZoomLevel.id, id);
-        }
+      if (menuId === menuItemId) {
+        // Custom text_edit value: menuItemId === menuId
       }
-    }
 
+      // Persist the default
+
+      this.app.uimenumgr.setValueForPersistIdOnMenuId(menuId, persistId, value as PersistValue_t);
+
+      this.zoomLevel_setTextEdit(this.app.forceNumber(value));
+
+      void this.regenerateAndUpdateWebview();
+    }
     dx.done();
     return { id, value };
   }
@@ -943,8 +965,13 @@ export class PaperPrinter {
       );
       dx.out(`ZoomOut: newZoom=${newZoom}`);
 
-      // Persist the new zoom level as menuItemId (numeric string)
-      this.app.uimenumgr.setPersistForMenuId(kZoomLevel.id, newZoom.toFixed(2));
+      // Persist the new zoom level (custom value - menuItemId = menuId)
+      this.app.uimenumgr.setValueForPersistIdOnMenuId(
+        kZoomLevel.id,
+        kZoomLevel.id as UI_t,
+        kZoomLevel.id as PersistValue_t
+      );
+      this.zoomLevel_setTextEdit(newZoom);
       void this.regenerateAndUpdateWebview();
 
       id = 'zoomOut';
@@ -980,9 +1007,15 @@ export class PaperPrinter {
         kZoomLevel.max,
         Math.round((currentZoom + kZoomLevel.stepAmount) * 100) / 100
       );
+      dx.out(`ZoomIn: newZoom=${newZoom}`);
 
-      // Persist the new zoom level as menuItemId (numeric string)
-      this.app.uimenumgr.setPersistForMenuId(kZoomLevel.id, newZoom.toFixed(2));
+      // Persist the new zoom level (custom value - menuItemId = menuId)
+      this.app.uimenumgr.setValueForPersistIdOnMenuId(
+        kZoomLevel.id,
+        kZoomLevel.id as UI_t,
+        kZoomLevel.id as PersistValue_t
+      );
+      this.zoomLevel_setTextEdit(newZoom);
       void this.regenerateAndUpdateWebview();
 
       id = 'zoomIn';
