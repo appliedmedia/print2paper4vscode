@@ -134,7 +134,7 @@ export class UIMenuMgr {
     menuItemId: MenuItemId_t,
     contextDict: contextDict_t
   ): Promise<void> {
-    const dx = this.dx.sub('handleMenuItemSelected', true /* debugOn */);
+    const dx = this.dx.sub('handleMenuItemSelected');
     dx.out(`Received: menuId=${menuId}, menuItemId=${menuItemId}`);
     dx.out(`contextDict: ${JSON.stringify(contextDict)}`);
 
@@ -223,7 +223,7 @@ export class UIMenuMgr {
 
   // Set persist value for a persistId on a menu's persist
   setValueForPersistIdOnMenuId(menuId: MenuId_t, persistId: UI_t, value: PersistValue_t): void {
-    const dx = this.dx.sub('setValueForPersistIdOnMenuId', true /* debugOn */);
+    const dx = this.dx.sub('setValueForPersistIdOnMenuId');
     const menu = this.getMenuById(menuId);
     const oldValue = (menu.persist as unknown as Record<string, PersistValue_t>)[persistId];
     (menu.persist as unknown as Record<string, PersistValue_t>)[persistId] = value;
@@ -243,7 +243,7 @@ export class UIMenuMgr {
   // Combines getMenuItemIdSelected + getValueForMenuItemId
   // Returns string or number, never undefined (falls back to empty string)
   getValueForMenuItemIdSelected(menuId: MenuId_t): number | string {
-    const dx = this.dx.sub('getValueForMenuItemIdSelected', true /* debugOn */);
+    const dx = this.dx.sub('getValueForMenuItemIdSelected');
     const menuItemId = this.getMenuItemIdSelected(menuId);
     dx.out(`menuId=${menuId}, menuItemId=${menuItemId}`);
     if (!menuItemId) {
@@ -269,7 +269,7 @@ export class UIMenuMgr {
     // Check if menuItemId === menuId (custom text_edit value)
     // Read from persistId instead of menu items
     if (menuItemId === menuId) {
-      const dx = this.dx.sub('getValueForMenuItemId[iconSlotTriad]', true /* debugOn */);
+      const dx = this.dx.sub('getValueForMenuItemId[iconSlotTriad]');
       const iconSlotMain = (menu as unknown as { _iconSlotTriad: iconSlotTriad_t })._iconSlotTriad
         ?.main;
       dx.out(`menuItemId === menuId, checking for text_edit persistId`);
