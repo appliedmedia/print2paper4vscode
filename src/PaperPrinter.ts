@@ -877,7 +877,7 @@ export class PaperPrinter {
    * @param zoomValue - The zoom scale value (e.g., 1.18)
    */
   private zoomLevel_setTextEdit(zoomValue: number): void {
-    const dx = this.dx.sub('zoomLevel_setTextEdit', true /* debugOn */);
+    const dx = this.dx.sub('zoomLevel_setTextEdit');
     if (this.app.notEmpty(zoomValue)) {
       const menuId = kZoomLevel.id;
       const textEditConfig = kZoomLevel.iconSlotTriad.main as TextEditConfig_t;

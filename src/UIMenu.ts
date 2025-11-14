@@ -360,7 +360,7 @@ export class UIMenu {
     configAttr: string;
     isSpecialType: boolean;
   } {
-    const dx = this.dx.sub('handleIconSlotTypes', true /* debugOn */);
+    const dx = this.dx.sub('handleIconSlotTypes');
 
     try {
       // Default return for regular icon content
