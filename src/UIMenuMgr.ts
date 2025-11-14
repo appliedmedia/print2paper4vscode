@@ -169,7 +169,7 @@ export class UIMenuMgr {
   getMenuItemIdSelected(menuId: MenuId_t): string | undefined {
     const menu = this.getMenuById(menuId);
     const selectedValue = (menu.persist as unknown as Record<string, string>)[menuId];
-    this.dx.out(`getMenuItemIdSelected(${menuId}) -> ${selectedValue}`);
+    this.dx.out(`getMenuItemIdSelected(${menuId}) → ${selectedValue}`);
     return selectedValue;
   }
 
@@ -240,7 +240,7 @@ export class UIMenuMgr {
   // 6. Return final string (or empty string on error)
   //    - If result contains "{{", it's clear which variable didn't have a dict entry
   private evaluateCalcTemplate(value: string): string {
-    const dx = this.dx.sub('evaluateCalcTemplate', true /* debugOn */);
+    const dx = this.dx.sub('evaluateCalcTemplate');
 
     try {
       // Build complete context dictionary: merge contextDict with page dimensions

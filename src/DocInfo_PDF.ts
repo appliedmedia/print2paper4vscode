@@ -206,7 +206,6 @@ export class DocInfo_PDF {
       return { widthPx: 0, heightPx: 0 };
     }
 
-    const { Coords } = require('./Coords');
     const coords = new Coords(this.app);
 
     const pageWidthPts = this.getPageWidth();

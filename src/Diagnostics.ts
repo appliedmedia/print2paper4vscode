@@ -101,11 +101,11 @@ export class Diagnostics {
   /**
    * Create a new independent Diagnostics instance (not a sub-context)
    * @param name - The name of the new Diagnostics instance
-   * @param debugOn - Optional debug override (undefined uses global debug state)
+   * @param debugOn - Optional debug override (undefined inherits from this instance)
    * @returns New independent Diagnostics instance
    */
   create(name: string, debugOn?: boolean): Diagnostics {
-    const dx = new Diagnostics(name, debugOn, null, this.app);
+    const dx = new Diagnostics(name, debugOn, this /* parent */, this.app);
     return dx;
   }
 
@@ -217,10 +217,20 @@ export class Diagnostics {
    * @param timestamp - Optional timestamp for non-truncated format
    */
   private messageHeader_addForDupe(timestamp: string = ''): string {
+    const warning_max = 10;
+    const warning_icon = '⚠️';
+
     let message = '';
     if (this.shared.duplicateCount) {
       const counter = this.messageHeader_incCounter();
-      const dupMsg = `↑ x${this.shared.duplicateCount + 1}`;
+
+      // Build duplicate message
+      let dupMsg = `↑ x${this.shared.duplicateCount + 1}`;
+
+      // Add warning bookends if duplicate count exceeds threshold
+      const shouldWarn = this.shared.duplicateCount > warning_max;
+      const warningBookend = shouldWarn ? warning_icon : '';
+      dupMsg = this.app.bookend(dupMsg, warningBookend);
 
       // Match format of duplicated message (truncated or full)
       if (this.shared.lastWasTruncated) {
@@ -350,7 +360,9 @@ export class Diagnostics {
       if (fieldName === '_name') {
         currentValue = (current as unknown as { _name: T })._name;
       } else if (fieldName === '_debugOn') {
-        currentValue = current.debugOn() as T;
+        // IMPORTANT: Access _debugOn directly to avoid infinite recursion
+        // Do NOT call current.debugOn() as it would recursively call buildDebugOnLineage()
+        currentValue = (current as unknown as { _debugOn: T })._debugOn;
       } else {
         const diag = current as unknown as Record<string, unknown>;
         currentValue = diag[fieldName] as T;

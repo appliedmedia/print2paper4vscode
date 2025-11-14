@@ -1,6 +1,7 @@
 import type { App } from './App';
 import type { UI_t } from './UI';
 import type { GlobalStateKey_t, GlobalStateValue_t } from './VSCodeAPIs';
+import { kMenuId } from './UIMenu';
 
 // Persist value types - what we store locally
 export type PersistValue_t = string | number | boolean;
@@ -102,8 +103,6 @@ export class Persist {
    * Clear all persist state
    */
   async clear(): Promise<void> {
-    const { kMenuId } = require('./UIMenu');
-
     // Clear all menu-related state
     const keysToReset: GlobalStateKey_t[] = [...kMenuId, 'toolbar_pos'];
 

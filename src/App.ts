@@ -60,7 +60,7 @@ export class App {
 
   constructor(context: ExtensionContext, vscode: typeof import('vscode')) {
     // Create Diagnostics instance first
-    this.dx = new Diagnostics('App', undefined, null, this);
+    this.dx = new Diagnostics('App', undefined /* debugOn */, null /* parent */, this);
 
     // Create components - VSCodeAPIs first, then UI, then UIMenuMgr (needed by PaperPrinter), then others
     this.vscodeapis = new VSCodeAPIs(this, vscode, context);
@@ -97,6 +97,27 @@ export class App {
    */
   forceNumber(value: number | string): number {
     return typeof value === 'number' ? value : parseFloat(String(value)) || 0;
+  }
+
+  /**
+   * Add bookends to a string with optional padding
+   * @param source - The original string to bookend
+   * @param bookend - The string to add at beginning and end (e.g., '⚠️')
+   * @param pad - Number of spaces to add between bookend and content (default: 1)
+   * @returns The bookended string, or original if bookend is empty/falsy
+   * @example
+   * bookend('Hello', '⚠️', 1) → '⚠️ Hello ⚠️'
+   * bookend('Hello', '⚠️', 0) → '⚠️Hello⚠️'
+   * bookend('Hello', '', 1) → 'Hello'
+   */
+  bookend(source: string, bookend: string, pad: number = 1): string {
+    let bookended = source;
+
+    if (bookend) {
+      const padding = ' '.repeat(pad);
+      bookended = `${bookend}${padding}${source}${padding}${bookend}`;
+    }
+    return bookended;
   }
 
   /**

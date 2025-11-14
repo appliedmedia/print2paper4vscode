@@ -192,14 +192,8 @@ export class PaperPrinter {
       }
       this.docInfo.printTitle = printableLabel;
 
-      // Create menus if they don't exist yet (needed before accessing theme menu)
+      // Create menus if they don't exist yet
       this.createMenus();
-
-      // Initialize theme choice if not set yet
-      const currentTheme = this.app.uimenumgr.getMenuItemIdSelected(kTheme.id);
-      if (!currentTheme) {
-        this.app.uimenumgr.setPersistForMenuId(kTheme.id, this.app.vscodeapis.getActiveThemeId());
-      }
 
       // Initialize header/footer content defaults from docInfo if not persisted
       // Also sync docInfo from persisted values if they differ
@@ -577,36 +571,22 @@ export class PaperPrinter {
   }
 
   private menuItems_ZoomLevel(): UIMenuItem_t[] {
-    // Get current selection to potentially show calculated values for fitPage/fitWidth
-    const selectedId = this.app.uimenumgr.getMenuItemIdSelected(kZoomLevel.id);
-    const selectedValue = this.app.uimenumgr.getValueForMenuItemIdSelected(kZoomLevel.id);
-
-    // Start with static menu items
-    const staticItems = kZoomLevel.menuItems.map(item => {
-      let displayName: string = item.displayName;
+    // Return static menu items only
+    // The text_edit widget in the button shows the current value
+    // No need to dynamically add custom zoom levels to the dropdown
+    return kZoomLevel.menuItems.map(item => {
       let shortcut: string | undefined;
-
-      // If this is fitPage/fitWidth and it's currently selected, show calculated percentage
-      if (
-        (item.id === 'fitPage' || item.id === 'fitWidth') &&
-        item.id === selectedId &&
-        typeof selectedValue === 'number'
-      ) {
-        const percentValue = Math.round(selectedValue * 100);
-        displayName = `${item.displayName} (${percentValue}%)`;
-      }
 
       // Process shortcut if it exists
       if ('shortcut' in item && item.shortcut) {
         // Replace "Ctrl/Cmd +" with template variable for OS-specific replacement
         const shortcutTemplate = item.shortcut.replace(/Ctrl\/Cmd\s*\+\s*/g, '{{os-ctrl-cmd}}+');
         shortcut = this.app.os.dictReplace(shortcutTemplate);
-        // Don't add shortcut to displayName - it will be displayed separately via shortcut property
       }
 
       const menuItem: UIMenuItem_t = {
         id: item.id as MenuItemId_t,
-        displayName: displayName as string,
+        displayName: item.displayName,
         iconSlotTriad: { begin: '', main: '', end: '' },
         shortcutCode: 'shortcutCode' in item ? item.shortcutCode : undefined,
         shortcut: shortcut,
@@ -619,57 +599,6 @@ export class PaperPrinter {
 
       return menuItem;
     });
-
-    // Add custom zoom item for calculated values (from fitPage/fitWidth or manual input)
-    let customZoomScale: number | null = null;
-
-    if (selectedId) {
-      // If fitPage/fitWidth, use the calculated value
-      if (
-        (selectedId === 'fitPage' || selectedId === 'fitWidth') &&
-        typeof selectedValue === 'number'
-      ) {
-        customZoomScale = selectedValue;
-      }
-      // If numeric custom zoom (not in static list), use parsed value
-      else {
-        const selectedScale = parseFloat(selectedId);
-        const isCustomNumeric =
-          !isNaN(selectedScale) && !staticItems.find(item => item.id === selectedId);
-
-        if (isCustomNumeric) {
-          customZoomScale = selectedScale;
-        }
-      }
-    }
-
-    if (customZoomScale !== null) {
-      // Add custom zoom level to the list
-      const percentValue = Math.round(customZoomScale * 100);
-      const customItem: UIMenuItem_t & { value: number } = {
-        id: customZoomScale.toFixed(2) as MenuItemId_t,
-        displayName: `${percentValue}%`,
-        iconSlotTriad: { begin: '', main: '', end: '' },
-        value: customZoomScale,
-      };
-
-      // Merge and sort by numeric value (non-numeric items at end)
-      const allItems = [...staticItems, customItem];
-      return allItems.sort((a, b) => {
-        const aVal =
-          'value' in a ? (a as UIMenuItem_t & { value: number | string }).value : undefined;
-        const bVal =
-          'value' in b ? (b as UIMenuItem_t & { value: number | string }).value : undefined;
-
-        // Non-numeric items (fitPage, fitWidth) go to end
-        if (typeof aVal !== 'number') return 1;
-        if (typeof bVal !== 'number') return -1;
-
-        return aVal - bVal;
-      });
-    }
-
-    return staticItems;
   }
 
   private menuItems_ZoomOut(): UIMenuItem_t[] {
