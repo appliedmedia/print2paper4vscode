@@ -132,7 +132,7 @@ export class UIMenuMgr {
   async handleMenuItemSelected(
     menuId: MenuId_t,
     menuItemId: MenuItemId_t,
-    contextDict?: contextDict_t
+    contextDict: contextDict_t
   ): Promise<void> {
     const dx = this.dx.sub('handleMenuItemSelected', true /* debugOn */);
     dx.out(`Received: menuId=${menuId}, menuItemId=${menuItemId}`);
@@ -140,9 +140,7 @@ export class UIMenuMgr {
 
     try {
       // Store contextDict for calc evaluations
-      if (contextDict) {
-        this.setContextDict(contextDict);
-      }
+      this.setContextDict(contextDict);
 
       // Handle text_edit input: if contextDict.display exists and menuItemId === menuId
       let finalMenuItemId: string = menuItemId;
@@ -189,7 +187,7 @@ export class UIMenuMgr {
 
       const menu = this.getUIMenus().find(menu => menu.id === menuId);
       if (menu) {
-        await menu.dispatchSelection(finalMenuItemId);
+        await menu.dispatchSelection(finalMenuItemId, contextDict);
         dx.out(`Menu item selected: ${menuId}.${finalMenuItemId}`);
       } else {
         dx.error(`Invalid menu: ${menuId}`);

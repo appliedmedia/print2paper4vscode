@@ -18,6 +18,7 @@
 import type { App } from './App';
 import type { UI_t } from './UI';
 import type { PersistValue_t } from './Persist';
+import type { contextDict_t } from './types/UI_t';
 import { Diagnostics } from './Diagnostics';
 import {
   UIMenu,
@@ -905,7 +906,8 @@ export class PaperPrinter {
    */
   private async handleSelection_ZoomLevel(
     menuId: MenuId_t,
-    menuItemId: MenuItemId_t
+    menuItemId: MenuItemId_t,
+    contextDict: contextDict_t
   ): Promise<HandleSelection_t> {
     const dx = this.dx.sub('handleSelection_ZoomLevel');
     dx.out(`ZoomLevel selection: menuItemId=${menuItemId}`);
@@ -921,16 +923,8 @@ export class PaperPrinter {
       value = 1.0;
       // Do NOT persist or regenerate - this is just a query for the default value
     } else {
-      if (menuId === menuItemId) {
-        // Custom text_edit value: menuItemId === menuId
-      }
-
-      // Persist the default
-
       this.app.uimenumgr.setValueForPersistIdOnMenuId(menuId, persistId, value as PersistValue_t);
-
       this.zoomLevel_setTextEdit(this.app.forceNumber(value));
-
       void this.regenerateAndUpdateWebview();
     }
     dx.done();

@@ -1,5 +1,6 @@
 import type { App } from './App';
 import type { UI_t } from './UI';
+import type { contextDict_t } from './types/UI_t';
 import { Diagnostics } from './Diagnostics';
 import { Persist, type Persist_t } from './Persist';
 import { Yaml } from './Yaml';
@@ -192,7 +193,8 @@ export class UIMenu {
     private _flyoutMenuItemIds: string[] = [],
     private _selectionHandler: (
       menuId: MenuId_t,
-      menuItemId: MenuItemId_t
+      menuItemId: MenuItemId_t,
+      contextDict: contextDict_t
     ) => Promise<HandleSelection_t>
   ) {
     this.persist = new Persist(app) as Persist & Persist_t;
@@ -239,8 +241,8 @@ export class UIMenu {
   }
 
   // Dispatch a selection to this menu's handler
-  async dispatchSelection(menuItemId: MenuItemId_t): Promise<HandleSelection_t> {
-    return this._selectionHandler(this._id, menuItemId);
+  async dispatchSelection(menuItemId: MenuItemId_t, contextDict: contextDict_t = {}): Promise<HandleSelection_t> {
+    return this._selectionHandler(this._id, menuItemId, contextDict);
   }
 
   // Get the default item ID for this menu (for default icon 📝)
