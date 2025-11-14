@@ -10,23 +10,23 @@ import { kZoomLevel } from '../src/types/PaperPrinter_t.js';
 
 /**
  * Integration tests for Extension↔Webview Coordination
- * 
+ *
  * These tests verify the complete extension↔webview wiring:
  * - Template variable injection from extension to webview HTML
  * - Webview messages reaching extension handlers
  * - Persisted state surviving extension reload
  * - Error handling for invalid/undefined template variables
  * - Message routing and handler registration
- * 
+ *
  * This suite tests general coordination patterns, with zoom controls as a concrete example.
- * 
+ *
  * **What's Real vs Mocked:**
  * - REAL: App, UIWebView, UI, Persist, templateDictReplace, generatePDFHTML, message handlers
  * - REAL: Message routing (handleWebviewMessage), handler registration, persistence logic
  * - REAL: Template variable injection, validation logic, zoom level validation
  * - MOCKED: VS Code APIs (window.createWebviewPanel, globalState, etc.)
  * - MOCKED: Webview panel object (captures HTML and message callbacks)
- * 
+ *
  * The tests ensure that when messages are sent, they route through the REAL message handling
  * system (setupMessageHandling → handleWebviewMessage → registered handlers), not mocked implementations.
  */
@@ -68,7 +68,9 @@ const mockVSCode = {
       return {
         webview: {
           asWebviewUri: (uri: any) => uri,
-          get html() { return webviewHtml; },
+          get html() {
+            return webviewHtml;
+          },
           set html(value: string) {
             webviewHtml = value;
             // Capture HTML for tests
@@ -127,7 +129,7 @@ describe('Extension↔Webview Integration Tests', () => {
     test('should inject all required template variables into webview HTML', async () => {
       const doc = new jsPDF();
       doc.text('Test PDF', 10, 10);
-      
+
       // Set up app.pdf.docInfo with the PDF document
       // pageTotal and pageSizePx are computed getters, so just set pdfDoc
       app.pdf.docInfo.pdfDoc = doc;
@@ -143,7 +145,10 @@ describe('Extension↔Webview Integration Tests', () => {
       assert.ok(capturedWebviewHTML.includes('3'), 'HTML should contain page_total');
       assert.ok(capturedWebviewHTML.includes('595'), 'HTML should contain page_width_px');
       assert.ok(capturedWebviewHTML.includes('842'), 'HTML should contain page_height_px');
-      assert.ok(capturedWebviewHTML.includes('data:application/pdf'), 'HTML should contain pdf_data_url');
+      assert.ok(
+        capturedWebviewHTML.includes('data:application/pdf'),
+        'HTML should contain pdf_data_url'
+      );
       assert.ok(capturedWebviewHTML.includes('pdfjsLib'), 'HTML should contain pdfjs_library');
     });
 
@@ -153,10 +158,10 @@ describe('Extension↔Webview Integration Tests', () => {
 
       const doc = new jsPDF();
       doc.text('Test', 10, 10);
-      
+
       const pdfData: PDFData_t = {
         arrayBuffer: doc.output('arraybuffer') as ArrayBuffer,
-        
+
         pageTotal: 1,
         pageSizePx: { widthPx: 595, heightPx: 842 },
         title: 'Test',
@@ -174,10 +179,10 @@ describe('Extension↔Webview Integration Tests', () => {
     test('should inject extension constants into webview template', async () => {
       const doc = new jsPDF();
       doc.text('Test', 10, 10);
-      
+
       const pdfData: PDFData_t = {
         arrayBuffer: doc.output('arraybuffer') as ArrayBuffer,
-        
+
         pageTotal: 1,
         pageSizePx: { widthPx: 595, heightPx: 842 },
         title: 'Test',
@@ -193,9 +198,18 @@ describe('Extension↔Webview Integration Tests', () => {
       const maxValue = kZoomLevel.max.toString();
       const stepValue = kZoomLevel.stepAmount.toString();
 
-      assert.ok(capturedWebviewHTML.includes(minValue), `HTML should contain zoomLevel_min=${minValue}`);
-      assert.ok(capturedWebviewHTML.includes(maxValue), `HTML should contain zoomLevel_max=${maxValue}`);
-      assert.ok(capturedWebviewHTML.includes(stepValue), `HTML should contain zoomLevel_stepAmount=${stepValue}`);
+      assert.ok(
+        capturedWebviewHTML.includes(minValue),
+        `HTML should contain zoomLevel_min=${minValue}`
+      );
+      assert.ok(
+        capturedWebviewHTML.includes(maxValue),
+        `HTML should contain zoomLevel_max=${maxValue}`
+      );
+      assert.ok(
+        capturedWebviewHTML.includes(stepValue),
+        `HTML should contain zoomLevel_stepAmount=${stepValue}`
+      );
     });
 
     test('should handle undefined/null persisted values gracefully', async () => {
@@ -204,10 +218,10 @@ describe('Extension↔Webview Integration Tests', () => {
 
       const doc = new jsPDF();
       doc.text('Test', 10, 10);
-      
+
       const pdfData: PDFData_t = {
         arrayBuffer: doc.output('arraybuffer') as ArrayBuffer,
-        
+
         pageTotal: 1,
         pageSizePx: { widthPx: 595, heightPx: 842 },
         title: 'Test',
@@ -216,7 +230,10 @@ describe('Extension↔Webview Integration Tests', () => {
       // Should not throw - should use default value
       await uiWebView.displayPdfPanel();
       capturedWebviewHTML = (global as any).__capturedWebviewHTML || '';
-      assert.ok(capturedWebviewHTML.includes('1.0'), 'Should default to 1.0 when zoom level is undefined');
+      assert.ok(
+        capturedWebviewHTML.includes('1.0'),
+        'Should default to 1.0 when zoom level is undefined'
+      );
     });
 
     test('should handle invalid persisted values with validation', async () => {
@@ -225,10 +242,10 @@ describe('Extension↔Webview Integration Tests', () => {
 
       const doc = new jsPDF();
       doc.text('Test', 10, 10);
-      
+
       const pdfData: PDFData_t = {
         arrayBuffer: doc.output('arraybuffer') as ArrayBuffer,
-        
+
         pageTotal: 1,
         pageSizePx: { widthPx: 595, heightPx: 842 },
         title: 'Test',
@@ -237,16 +254,19 @@ describe('Extension↔Webview Integration Tests', () => {
       // Should validate and use default value
       await uiWebView.displayPdfPanel();
       capturedWebviewHTML = (global as any).__capturedWebviewHTML || '';
-      assert.ok(capturedWebviewHTML.includes(kZoomLevel.alt), `Should use default alt value (${kZoomLevel.alt}) for invalid zoom`);
+      assert.ok(
+        capturedWebviewHTML.includes(kZoomLevel.alt),
+        `Should use default alt value (${kZoomLevel.alt}) for invalid zoom`
+      );
     });
 
     test('should replace all template placeholders', async () => {
       const doc = new jsPDF();
       doc.text('Test', 10, 10);
-      
+
       const pdfData: PDFData_t = {
         arrayBuffer: doc.output('arraybuffer') as ArrayBuffer,
-        
+
         pageTotal: 1,
         pageSizePx: { widthPx: 595, heightPx: 842 },
         title: 'Test',
@@ -260,7 +280,10 @@ describe('Extension↔Webview Integration Tests', () => {
       // Verify no unreplaced template placeholders remain (except nested ones like {{toolbar}})
       const unreplacedPattern = /\{\{(?!toolbar)[^}]+\}\}/;
       const hasUnreplaced = unreplacedPattern.test(capturedWebviewHTML);
-      assert.ok(!hasUnreplaced, 'All template variables should be replaced (except nested placeholders)');
+      assert.ok(
+        !hasUnreplaced,
+        'All template variables should be replaced (except nested placeholders)'
+      );
     });
   });
 
@@ -270,7 +293,7 @@ describe('Extension↔Webview Integration Tests', () => {
       const handlers = (app.ui as any).messageHandlers;
       assert.ok(handlers, 'Message handlers map should exist');
       assert.ok(handlers.has('dx'), 'dx handler should be registered');
-      
+
       // Test that messages are routed correctly through real UI.handleWebviewMessage()
       const message: SendToExt_t = {
         type: 'dx',
@@ -288,9 +311,8 @@ describe('Extension↔Webview Integration Tests', () => {
       // Test various message types - all go through real handleWebviewMessage()
       const messages: SendToExt_t[] = [
         { type: 'dx', message: 'Test' },
-        { type: 'print', printType: 'test' },
-        { type: 'menuItemSelected', menuId: 'test', itemId: 'test' },
-        { type: 'dragEnd', clientX: 100 },
+        { type: 'menuItemSelected', menuId: 'zoomLevel', menuItemId: '1.00', contextDict: {} },
+        { type: 'dragEnd', left: 100 },
       ];
 
       for (const msg of messages) {
@@ -308,7 +330,7 @@ describe('Extension↔Webview Integration Tests', () => {
       doc.text('Test', 10, 10);
       const pdfData: PDFData_t = {
         arrayBuffer: doc.output('arraybuffer') as ArrayBuffer,
-        
+
         pageTotal: 1,
         pageSizePx: { widthPx: 595, heightPx: 842 },
         title: 'Test',
@@ -321,13 +343,15 @@ describe('Extension↔Webview Integration Tests', () => {
       // Simulate webview sending zoom message - use callback from setupMessageHandling()
       // This callback calls app.ui.handleWebviewMessage() which routes to real handlers
       const zoomMessage: SendToExt_t = {
-        type: 'zoom',
-        zoomLevel: 2.0,
+        type: 'menuItemSelected',
+        menuId: 'zoomLevel',
+        menuItemId: '2.00',
+        contextDict: {},
       };
 
       const callback = (global as any).__webviewMessageCallback;
       assert.ok(callback, 'Message callback should be set up by setupMessageHandling()');
-      
+
       // Call through the real message routing callback
       await callback(zoomMessage);
 
@@ -345,7 +369,7 @@ describe('Extension↔Webview Integration Tests', () => {
       doc.text('Test', 10, 10);
       const pdfData: PDFData_t = {
         arrayBuffer: doc.output('arraybuffer') as ArrayBuffer,
-        
+
         pageTotal: 1,
         pageSizePx: { widthPx: 595, heightPx: 842 },
         title: 'Test',
@@ -356,13 +380,15 @@ describe('Extension↔Webview Integration Tests', () => {
 
       // Send invalid zoom level (too high) - real validation should reject it
       const invalidMessage: SendToExt_t = {
-        type: 'zoom',
-        zoomLevel: 999,
+        type: 'menuItemSelected',
+        menuId: 'zoomLevel',
+        menuItemId: '1.00',
+        contextDict: {},
       };
 
       const callback = (global as any).__webviewMessageCallback;
       assert.ok(callback, 'Message callback should be set up');
-      
+
       // Call through real message routing (which calls real handleZoomMessage with validation)
       await callback(invalidMessage);
 
@@ -380,7 +406,7 @@ describe('Extension↔Webview Integration Tests', () => {
       doc.text('Test', 10, 10);
       const pdfData: PDFData_t = {
         arrayBuffer: doc.output('arraybuffer') as ArrayBuffer,
-        
+
         pageTotal: 1,
         pageSizePx: { widthPx: 595, heightPx: 842 },
         title: 'Test',
@@ -388,13 +414,15 @@ describe('Extension↔Webview Integration Tests', () => {
       await uiWebView.displayPdfPanel();
 
       const zoomActionMessage: SendToExt_t = {
-        type: 'zoom',
-        zoomAction: 'in',
+        type: 'menuItemSelected',
+        menuId: 'zoomLevel',
+        menuItemId: '1.00',
+        contextDict: {},
       };
 
       const callback = (global as any).__webviewMessageCallback;
       assert.ok(callback, 'Message callback should be set up');
-      
+
       // Call through real message routing
       await callback(zoomActionMessage);
 
@@ -468,10 +496,10 @@ describe('Extension↔Webview Integration Tests', () => {
 
       const doc = new jsPDF();
       doc.text('Test', 10, 10);
-      
+
       const pdfData: PDFData_t = {
         arrayBuffer: doc.output('arraybuffer') as ArrayBuffer,
-        
+
         pageTotal: 1,
         pageSizePx: { widthPx: 595, heightPx: 842 },
         title: 'Test',
@@ -480,16 +508,19 @@ describe('Extension↔Webview Integration Tests', () => {
       // Should not throw - should handle null gracefully
       await uiWebView.displayPdfPanel();
       capturedWebviewHTML = (global as any).__capturedWebviewHTML || '';
-      assert.ok(typeof capturedWebviewHTML === 'string' && capturedWebviewHTML.length > 0, 'Should generate HTML even with null persisted value');
+      assert.ok(
+        typeof capturedWebviewHTML === 'string' && capturedWebviewHTML.length > 0,
+        'Should generate HTML even with null persisted value'
+      );
     });
 
     test('should validate persisted values at boundaries', async () => {
       const doc = new jsPDF();
       doc.text('Test', 10, 10);
-      
+
       const pdfData: PDFData_t = {
         arrayBuffer: doc.output('arraybuffer') as ArrayBuffer,
-        
+
         pageTotal: 1,
         pageSizePx: { widthPx: 595, heightPx: 842 },
         title: 'Test',
@@ -499,23 +530,29 @@ describe('Extension↔Webview Integration Tests', () => {
       app.ui.persist.zoomLevel = kZoomLevel.min;
       await uiWebView.displayPdfPanel();
       capturedWebviewHTML = (global as any).__capturedWebviewHTML || '';
-      assert.ok(capturedWebviewHTML.includes(kZoomLevel.min.toString()), 'Should accept minimum boundary value');
+      assert.ok(
+        capturedWebviewHTML.includes(kZoomLevel.min.toString()),
+        'Should accept minimum boundary value'
+      );
 
       // Test maximum boundary
       capturedWebviewHTML = ''; // Reset
       app.ui.persist.zoomLevel = kZoomLevel.max;
       await uiWebView.displayPdfPanel();
       capturedWebviewHTML = (global as any).__capturedWebviewHTML || '';
-      assert.ok(capturedWebviewHTML.includes(kZoomLevel.max.toString()), 'Should accept maximum boundary value');
+      assert.ok(
+        capturedWebviewHTML.includes(kZoomLevel.max.toString()),
+        'Should accept maximum boundary value'
+      );
     });
 
     test('should handle empty or missing template variables', async () => {
       const doc = new jsPDF();
       doc.text('Test', 10, 10);
-      
+
       const pdfData: PDFData_t = {
         arrayBuffer: doc.output('arraybuffer') as ArrayBuffer,
-        
+
         pageTotal: 1,
         pageSizePx: { widthPx: 595, heightPx: 842 },
         title: '', // Empty title
@@ -524,7 +561,10 @@ describe('Extension↔Webview Integration Tests', () => {
       // Should handle empty values without error
       await uiWebView.displayPdfPanel();
       capturedWebviewHTML = (global as any).__capturedWebviewHTML || '';
-      assert.ok(typeof capturedWebviewHTML === 'string' && capturedWebviewHTML.length > 0, 'Should generate HTML even with empty template variables');
+      assert.ok(
+        typeof capturedWebviewHTML === 'string' && capturedWebviewHTML.length > 0,
+        'Should generate HTML even with empty template variables'
+      );
     });
   });
 
@@ -532,10 +572,10 @@ describe('Extension↔Webview Integration Tests', () => {
     test('should inject zoom constants into webview template', async () => {
       const doc = new jsPDF();
       doc.text('Test', 10, 10);
-      
+
       const pdfData: PDFData_t = {
         arrayBuffer: doc.output('arraybuffer') as ArrayBuffer,
-        
+
         pageTotal: 1,
         pageSizePx: { widthPx: 595, heightPx: 842 },
         title: 'Test',
@@ -551,9 +591,18 @@ describe('Extension↔Webview Integration Tests', () => {
       const maxValue = kZoomLevel.max.toString();
       const stepValue = kZoomLevel.stepAmount.toString();
 
-      assert.ok(capturedWebviewHTML.includes(minValue), `HTML should contain zoomLevel_min=${minValue}`);
-      assert.ok(capturedWebviewHTML.includes(maxValue), `HTML should contain zoomLevel_max=${maxValue}`);
-      assert.ok(capturedWebviewHTML.includes(stepValue), `HTML should contain zoomLevel_stepAmount=${stepValue}`);
+      assert.ok(
+        capturedWebviewHTML.includes(minValue),
+        `HTML should contain zoomLevel_min=${minValue}`
+      );
+      assert.ok(
+        capturedWebviewHTML.includes(maxValue),
+        `HTML should contain zoomLevel_max=${maxValue}`
+      );
+      assert.ok(
+        capturedWebviewHTML.includes(stepValue),
+        `HTML should contain zoomLevel_stepAmount=${stepValue}`
+      );
     });
 
     test('should handle zoom messages from webview through real handler', async () => {
@@ -562,7 +611,7 @@ describe('Extension↔Webview Integration Tests', () => {
       doc.text('Test', 10, 10);
       const pdfData: PDFData_t = {
         arrayBuffer: doc.output('arraybuffer') as ArrayBuffer,
-        
+
         pageTotal: 1,
         pageSizePx: { widthPx: 595, heightPx: 842 },
         title: 'Test',
@@ -572,8 +621,10 @@ describe('Extension↔Webview Integration Tests', () => {
       app.ui.persist.zoomLevel = 1.0;
 
       const zoomMessage: SendToExt_t = {
-        type: 'zoom',
-        zoomLevel: 1.5,
+        type: 'menuItemSelected',
+        menuId: 'zoomLevel',
+        menuItemId: '1.00',
+        contextDict: {},
       };
 
       // Use callback from real setupMessageHandling() which calls real handleWebviewMessage()
@@ -582,7 +633,11 @@ describe('Extension↔Webview Integration Tests', () => {
       await callback(zoomMessage);
 
       // Verify real handler persisted the value
-      assert.strictEqual(app.ui.persist.zoomLevel, 1.5, 'Zoom level should be updated by real handler');
+      assert.strictEqual(
+        app.ui.persist.zoomLevel,
+        1.5,
+        'Zoom level should be updated by real handler'
+      );
     });
   });
 
@@ -593,7 +648,7 @@ describe('Extension↔Webview Integration Tests', () => {
       doc.text('Test', 10, 10);
       const pdfData: PDFData_t = {
         arrayBuffer: doc.output('arraybuffer') as ArrayBuffer,
-        
+
         pageTotal: 3, // Multiple pages to simulate slow render
         pageSizePx: { widthPx: 595, heightPx: 842 },
         title: 'Test',
@@ -608,18 +663,18 @@ describe('Extension↔Webview Integration Tests', () => {
       // Simulate rapid zoom changes (user clicking zoom in/out rapidly)
       // This tests what happens if multiple zoom messages arrive before previous renders complete
       const rapidZoomMessages: SendToExt_t[] = [
-        { type: 'zoom', zoomAction: 'in' },    // 1.0 -> 1.1
-        { type: 'zoom', zoomAction: 'in' },    // 1.1 -> 1.2
-        { type: 'zoom', zoomAction: 'in' },    // 1.2 -> 1.3
-        { type: 'zoom', zoomAction: 'out' },   // 1.3 -> 1.2
-        { type: 'zoom', zoomAction: 'out' },   // 1.2 -> 1.1
-        { type: 'zoom', zoomLevel: 2.0 },      // Direct set to 2.0
-        { type: 'zoom', zoomLevel: 1.5 },      // Direct set to 1.5
+        { type: 'menuItemSelected', menuId: 'zoomIn', menuItemId: 'zoomIn', contextDict: {} }, // 1.0 -> 1.1
+        { type: 'menuItemSelected', menuId: 'zoomIn', menuItemId: 'zoomIn', contextDict: {} }, // 1.1 -> 1.2
+        { type: 'menuItemSelected', menuId: 'zoomIn', menuItemId: 'zoomIn', contextDict: {} }, // 1.2 -> 1.3
+        { type: 'menuItemSelected', menuId: 'zoomOut', menuItemId: 'zoomOut', contextDict: {} }, // 1.3 -> 1.2
+        { type: 'menuItemSelected', menuId: 'zoomOut', menuItemId: 'zoomOut', contextDict: {} }, // 1.2 -> 1.1
+        { type: 'menuItemSelected', menuId: 'zoomLevel', menuItemId: '2.00', contextDict: {} }, // Direct set to 2.0
+        { type: 'menuItemSelected', menuId: 'zoomLevel', menuItemId: '1.50', contextDict: {} }, // Direct set to 1.5
       ];
 
       // Send all messages rapidly without awaiting each one (simulating race condition)
       const promises = rapidZoomMessages.map(msg => callback(msg));
-      
+
       // Wait for all messages to be processed
       await Promise.all(promises);
 
@@ -643,7 +698,7 @@ describe('Extension↔Webview Integration Tests', () => {
       doc.text('Test', 10, 10);
       const pdfData: PDFData_t = {
         arrayBuffer: doc.output('arraybuffer') as ArrayBuffer,
-        
+
         pageTotal: 1,
         pageSizePx: { widthPx: 595, heightPx: 842 },
         title: 'Test',
@@ -680,7 +735,7 @@ describe('Extension↔Webview Integration Tests', () => {
       doc.text('Test', 10, 10);
       const pdfData: PDFData_t = {
         arrayBuffer: doc.output('arraybuffer') as ArrayBuffer,
-        
+
         pageTotal: 1,
         pageSizePx: { widthPx: 595, heightPx: 842 },
         title: 'Test',
@@ -694,16 +749,18 @@ describe('Extension↔Webview Integration Tests', () => {
 
       // Rapidly send zoom in actions (simulating user clicking zoom in button rapidly)
       const zoomInActions: SendToExt_t[] = Array.from({ length: 10 }, () => ({
-        type: 'zoom' as const,
-        zoomAction: 'in' as const,
+        type: 'menuItemSelected' as const,
+        menuId: 'zoomIn' as const,
+        menuItemId: 'zoomIn' as const,
+        contextDict: {},
       }));
-      
+
       // Send all messages rapidly
       const promises = zoomInActions.map(msg => callback(msg));
       await Promise.all(promises);
 
       // Verify final zoom level is correct (1.0 + 10 * 0.1 = 2.0, capped at max)
-      const expectedZoom = Math.min(1.0 + (10 * kZoomLevel.stepAmount), kZoomLevel.max);
+      const expectedZoom = Math.min(1.0 + 10 * kZoomLevel.stepAmount, kZoomLevel.max);
       assert.strictEqual(
         app.ui.persist.zoomLevel,
         expectedZoom,
@@ -713,17 +770,17 @@ describe('Extension↔Webview Integration Tests', () => {
 
     /**
      * NOTE: This test covers the extension-side race condition handling.
-     * 
+     *
      * The webview-side race condition (multiple renderAllPages() calls queued
      * when user rapidly clicks zoom while renderPage is in progress) would require
      * browser-based testing or headless browser automation to fully verify.
-     * 
+     *
      * The webview JavaScript code should handle this by:
      * - Ensuring renderAllPages() clears previous content before starting
      * - Using currentScale state that updates immediately (before render completes)
      * - Each renderPage() uses the current currentScale value, so final render
      *   reflects the most recent zoom level
-     * 
+     *
      * To fully test webview-side race conditions, consider:
      * - Browser automation tests (Playwright, Puppeteer)
      * - Mocking PDF.js render promises to simulate slow rendering
@@ -738,7 +795,7 @@ describe('Extension↔Webview Integration Tests', () => {
       doc.text('Test', 10, 10);
       const pdfData: PDFData_t = {
         arrayBuffer: doc.output('arraybuffer') as ArrayBuffer,
-        
+
         pageTotal: 1,
         pageSizePx: { widthPx: 595, heightPx: 842 },
         title: 'Test',
@@ -747,8 +804,11 @@ describe('Extension↔Webview Integration Tests', () => {
 
       // Send invalid zoom level (out of range)
       const invalidMessage: SendToExt_t = {
-        type: 'zoom',
-        zoomLevel: 999, // Invalid - too high
+        type: 'menuItemSelected',
+        menuId: 'zoomLevel',
+        menuItemId: '1.00',
+        contextDict: {},
+        // Invalid - too high
       };
 
       const callback = (global as any).__webviewMessageCallback;
@@ -761,7 +821,10 @@ describe('Extension↔Webview Integration Tests', () => {
       } catch (error) {
         errorThrown = true;
         assert.ok(error instanceof Error, 'Should throw Error');
-        assert.ok(String(error).includes('Invalid zoom level'), 'Error message should mention invalid zoom level');
+        assert.ok(
+          String(error).includes('Invalid zoom level'),
+          'Error message should mention invalid zoom level'
+        );
       }
       assert.ok(errorThrown, 'Should throw error for invalid zoom level');
     });
@@ -786,4 +849,3 @@ describe('Extension↔Webview Integration Tests', () => {
     });
   });
 });
-

@@ -241,7 +241,10 @@ export class UIMenu {
   }
 
   // Dispatch a selection to this menu's handler
-  async dispatchSelection(menuItemId: MenuItemId_t, contextDict: contextDict_t = {}): Promise<HandleSelection_t> {
+  async dispatchSelection(
+    menuItemId: MenuItemId_t,
+    contextDict: contextDict_t = {}
+  ): Promise<HandleSelection_t> {
     return this._selectionHandler(this._id, menuItemId, contextDict);
   }
 

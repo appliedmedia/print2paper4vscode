@@ -1,7 +1,7 @@
 import type { App } from './App';
 import type { UI_t } from './UI';
 import type { PersistValue_t } from './Persist';
-import type { contextDict_t } from './types/UI_t';
+import { contextDict_t, kContextDict_None } from './types/UI_t';
 import {
   UIMenu,
   type MenuId_t,
@@ -47,8 +47,8 @@ export class UIMenuMgr {
   }
 
   // Set context dictionary (called from UIWebView message handler)
-  setContextDict(contextDict: contextDict_t): void {
-    this.contextDict = contextDict;
+  setContextDict(contextDict: contextDict_t = kContextDict_None): void {
+    this.contextDict = { ...(this.contextDict ?? kContextDict_None), ...contextDict };
   }
 
   init(): void {
