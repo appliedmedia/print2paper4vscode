@@ -26,8 +26,8 @@ export const kUI = [...kMenuId, 'toolbar_pos', 'zoomLevel_value'] as const;
 
 export type UI_t = (typeof kUI)[number];
 
-// Special constant for "none" or missing UI values
-export const kNone = 'none' as const;
+// Special constant for indicating no menu item selected/found
+export const kNoMenuItem = 'none' as const;
 
 /**
  * UI - User interface utilities and message handling
