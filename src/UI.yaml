@@ -108,7 +108,7 @@ toolbar_js: |
     const rawLeft = getComputedStyle(toolbar).left;
     let left = parseFloat(rawLeft);
     if (Number.isNaN(left)) left = toolbar_pos_min_px;
-    const maxLeft = Math.max(toolbar_pos_min_px, window.innerWidth - toolbar.offsetWidth - toolbar_pos_min_px);
+    const maxLeft = Math.max(toolbar_pos_min_px, document.documentElement.clientWidth - toolbar.offsetWidth - toolbar_pos_min_px);
     toolbar.style.left = Math.min(left, maxLeft) + 'px';
   });
 
@@ -143,7 +143,7 @@ toolbar_js: |
       if (e.buttons > 0) {
         e.preventDefault();
         const dx = e.clientX - dragStartX;
-        const maxLeft = Math.max(toolbar_pos_min_px, window.innerWidth - toolbar.offsetWidth - toolbar_pos_min_px);
+        const maxLeft = Math.max(toolbar_pos_min_px, document.documentElement.clientWidth - toolbar.offsetWidth - toolbar_pos_min_px);
         const newLeft = Math.min(Math.max(toolbar_pos_min_px, dragStartLeft + dx), maxLeft);
         toolbar.style.left = newLeft + 'px';
       } else {
