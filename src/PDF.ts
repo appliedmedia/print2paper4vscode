@@ -764,7 +764,7 @@ export class PDF {
     // Get document title from paperprinter's docInfo
     const docTitle = this.app.paperprinter.docInfo.printTitle || 'Document';
 
-    const pageCurrent = this.docInfo.pageCurrent;
+    const pageNumber = this.docInfo.pageNumber;
     const pageTotal = this.docInfo.pageTotal;
 
     // Get page dimensions and margins
@@ -794,7 +794,7 @@ export class PDF {
       const template = kHeaderFooterSubmenuById[element].template;
       const templateDict: Record<string, string> = {
         title: docTitle,
-        '#': String(pageCurrent),
+        '#': String(pageNumber),
         pageTotal: String(pageTotal),
       };
 
