@@ -202,14 +202,15 @@ export class UIWebView {
         zoomLevel_stepAmount: kZoomLevel.stepAmount.toString(),
         zoomLevel_in_shortcutCode: kZoomIn.shortcutCode,
         zoomLevel_out_shortcutCode: kZoomOut.shortcutCode,
-        zoomLevel_menuItems: JSON.stringify(
-          kZoomLevel.menuItems.map(item => ({
-            id: item.id,
-            displayName: item.displayName,
-            value: 'value' in item ? item.value : undefined,
-            shortcutCode: 'shortcutCode' in item ? item.shortcutCode : undefined,
-          }))
-        ),
+          zoomLevel_menuItems: JSON.stringify(
+            kZoomLevel.menuItems.map(item => ({
+              id: item.id,
+              displayName: item.displayName,
+              value:
+                'value' in item && typeof item.value !== 'function' ? item.value : undefined,
+              shortcutCode: 'shortcutCode' in item ? item.shortcutCode : undefined,
+            }))
+          ),
         toolbar: '{{toolbar}}', // Placeholder for UI.addToolbar()
       };
 

@@ -20,7 +20,7 @@
  */
 
 // Template value helpers for menu constants that compute their values on the extension side.
-export type TemplateValueDict = Record<string, string | number>;
+export type TemplateValueDict = Record<string, number>;
 export type TemplateValueResolver = (dict?: TemplateValueDict) => number | string | undefined;
 
 // Print menu definition

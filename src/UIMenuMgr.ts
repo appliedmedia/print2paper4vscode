@@ -14,7 +14,9 @@ import {
   kMenuItemId,
 } from './UIMenu';
 import { Diagnostics } from './Diagnostics';
-import { kFontSizeId } from './types/PaperPrinter_t';
+import { kFontSizeId, type TemplateValueDict, type TemplateValueResolver } from './types/PaperPrinter_t';
+
+const kTemplateValueRequiredKeys = ['windowWidth', 'windowHeight', 'pageWidth', 'pageHeight'] as const;
 
 /**
  * UIMenuMgr - Menu manager for webview toolbar system

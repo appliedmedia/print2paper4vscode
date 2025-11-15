@@ -90,17 +90,29 @@ export class App {
   }
 
   /**
-   * Force a value to number, ensuring finite result
-   * Converts string to number, returns 0 if not parseable, undefined, NaN, or Infinity
-   * @param value - Value to convert to number (number, string, or undefined)
-   * @returns Finite numeric value, or 0 if value is undefined, NaN, Infinity, or unparseable
+   * Force a value (or dictionary of values) to numbers, ensuring finite results
+   * Converts strings to numbers and returns 0 for undefined, NaN, or Infinity.
+   * When given a dictionary, returns a new dictionary with each value coerced.
+   * @param valueOrDict - Value or object to convert
+   * @returns Finite numeric value, or dictionary of finite numeric values
    */
-  forceNumber(value: number | string | undefined): number {
-    // For numeric inputs, check if finite
+  forceNumber(
+    valueOrDict: number | string | undefined | Record<string, unknown>
+  ): number | Record<string, number> {
+    if (valueOrDict && typeof valueOrDict === 'object' && !Array.isArray(valueOrDict)) {
+      const result: Record<string, number> = {};
+      for (const [key, value] of Object.entries(valueOrDict)) {
+        result[key] = this.forceNumberValue(value as number | string | undefined);
+      }
+      return result;
+    }
+    return this.forceNumberValue(valueOrDict as number | string | undefined);
+  }
+
+  private forceNumberValue(value: number | string | undefined): number {
     if (typeof value === 'number') {
       return Number.isFinite(value) ? value : 0;
     }
-    // For non-numeric inputs, parse and validate
     const parsed = parseFloat(String(value));
     return Number.isFinite(parsed) ? parsed : 0;
   }
