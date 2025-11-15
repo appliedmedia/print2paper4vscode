@@ -115,27 +115,6 @@ export class App {
   }
 
   /**
-   * Add bookends to a string with optional padding
-   * @param source - The original string to bookend
-   * @param bookend - The string to add at beginning and end (e.g., '⚠️')
-   * @param pad - Number of spaces to add between bookend and content (default: 1)
-   * @returns The bookended string, or original if bookend is empty/falsy
-   * @example
-   * bookend('Hello', '⚠️', 1) → '⚠️ Hello ⚠️'
-   * bookend('Hello', '⚠️', 0) → '⚠️Hello⚠️'
-   * bookend('Hello', '', 1) → 'Hello'
-   */
-  bookend(source: string, bookend: string, pad: number = 1): string {
-    let bookended = source;
-
-    if (bookend) {
-      const padding = ' '.repeat(Math.max(0, Math.floor(pad)));
-      bookended = `${bookend}${padding}${source}${padding}${bookend}`;
-    }
-    return bookended;
-  }
-
-  /**
    * Generic template replacement function
    * Replaces all {{key}} placeholders in source text with values from dictionary
    * @param source - The source text containing {{key}} placeholders
