@@ -43,7 +43,7 @@ export class Diagnostics {
     kBookendIcon: {
       warning: '⚠️',
     },
-    bookend: (source: string, bookend: string = '', pad: number = 1): string => {
+    bookend: (source: string, bookend: string, pad: number = 1): string => {
       let result = source;
       if (bookend) {
         const padding = ' '.repeat(Math.max(0, Math.floor(pad)));
