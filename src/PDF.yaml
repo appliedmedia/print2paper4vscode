@@ -156,9 +156,3 @@ pdf_js: |
 
   window.initPdfViewer = initPdfViewer;
   window.updatePdfData = updatePdfData;
-
-  window.addEventListener('message', (event) => {
-    if (event.data.type === 'updatePdf') {
-      updatePdfData(event.data.pdfDataUrl);
-    }
-  });

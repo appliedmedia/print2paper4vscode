@@ -182,23 +182,6 @@ export class VSCodeAPIs {
   }
 
   /**
-   * Post message to panel
-   */
-  postMessage(id: WebviewPanelId_t, message: SendToExt_t): void {
-    const panel = this.panels.get(id);
-    if (!panel) return;
-
-    try {
-      panel.webview.postMessage(message);
-    } catch (error) {
-      // Panel disposed, remove from map
-      this.panels.delete(id);
-      this.dx.out(`Panel disposed, removing from map: ${id}`);
-      this.dx.out(`Error posting message to panel: ${String(error)}`);
-    }
-  }
-
-  /**
    * Remove panel from map (for cleanup)
    */
   removePanel(id: WebviewPanelId_t): void {
