@@ -209,7 +209,10 @@ uimenu_generic_handlers: |
 
   function postMenuItemSelected(menuId, menuItemId, _contextDict) {
     if (window.vscode && menuId && menuItemId) {
-      // Use document.documentElement (the viewport) for accurate webview dimensions
+      // Use document.documentElement.clientWidth/Height instead of window.innerWidth/Height
+      // because documentElement reflects the webview's layout viewport and accounts for
+      // CSS/scrollbars and zooming in embed contexts where window.innerWidth can include
+      // browser UI or not match the rendered document size.
       const windowWidth = document.documentElement.clientWidth;
       const windowHeight = document.documentElement.clientHeight;
       
