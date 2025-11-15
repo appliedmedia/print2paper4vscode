@@ -119,18 +119,31 @@ export class App {
   /**
    * Generic template replacement function
    * Replaces all {{key}} placeholders in source text with values from dictionary
+   * Supports nested placeholders by performing multiple passes until no changes occur
    * @param source - The source text containing {{key}} placeholders
    * @param dictionary - Key-value pairs for replacement
-   * @returns The source text with all placeholders replaced
+   * @returns The source text with all placeholders replaced (including nested ones)
    */
   templateDictReplace(source: string, dictionary: Record<string, string>): string {
     let result = source;
+    const maxIterations = 4;
+    let iteration = 0;
+    let changed = true;
 
-    // Replace each {{key}} with its value (all occurrences)
-    for (const key of Object.keys(dictionary)) {
-      const placeholder = `{{${key}}}`;
-      const value = dictionary[key];
-      result = result.replaceAll(placeholder, value);
+    // Repeat replacement passes until no changes occur or max iterations reached
+    while (changed && iteration < maxIterations) {
+      const previousResult = result;
+      iteration++;
+
+      // Replace each {{key}} with its value (all occurrences)
+      for (const key of Object.keys(dictionary)) {
+        const placeholder = `{{${key}}}`;
+        const value = dictionary[key];
+        result = result.replaceAll(placeholder, value);
+      }
+
+      // Check if anything changed in this pass
+      changed = result !== previousResult;
     }
 
     return result;
