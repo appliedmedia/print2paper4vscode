@@ -40,7 +40,10 @@ export class Diagnostics {
 
   // Helper utilities namespace
   private util = {
-    bookend: (source: string, bookend: string, pad: number = 1): string => {
+    kBookendIcon: {
+      warning: '⚠️',
+    },
+    bookend: (source: string, bookend: string = '', pad: number = 1): string => {
       let result = source;
       if (bookend) {
         const padding = ' '.repeat(Math.max(0, Math.floor(pad)));
@@ -220,7 +223,6 @@ export class Diagnostics {
    */
   private messageHeader_addForDupe(timestamp: string = ''): string {
     const warning_max = 10;
-    const warning_icon = '⚠️';
 
     let message = '';
     if (this.shared.duplicateCount) {
@@ -231,7 +233,7 @@ export class Diagnostics {
 
       // Add warning bookends if duplicate count exceeds threshold
       const shouldWarn = this.shared.duplicateCount > warning_max;
-      const warningBookend = shouldWarn ? warning_icon : '';
+      const warningBookend = shouldWarn ? this.util.kBookendIcon.warning : '';
       dupMsg = this.util.bookend(dupMsg, warningBookend);
 
       // Match format of duplicated message (truncated or full)
