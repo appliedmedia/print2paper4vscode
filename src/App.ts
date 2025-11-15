@@ -91,11 +91,11 @@ export class App {
 
   /**
    * Force a value to number
-   * Converts string to number, returns 0 if not parseable
-   * @param value - Value to convert to number
-   * @returns Numeric value or 0 if conversion fails
+   * Converts string to number, returns 0 if not parseable or undefined
+   * @param value - Value to convert to number (number, string, or undefined)
+   * @returns Numeric value, or 0 if value is undefined, NaN, or unparseable
    */
-  forceNumber(value: number | string): number {
+  forceNumber(value: number | string | undefined): number {
     return typeof value === 'number' ? value : parseFloat(String(value)) || 0;
   }
 
