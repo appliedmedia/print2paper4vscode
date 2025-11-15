@@ -91,30 +91,38 @@ export class App {
 
   /**
    * Force a value (or dictionary of values) to numbers, ensuring finite results
-   * Converts strings to numbers and returns 0 for undefined, NaN, or Infinity.
-   * When given a dictionary, returns a new dictionary with each value coerced.
+   * Converts strings to numbers and replaces undefined, NaN, Infinity, or zero
+   * with the provided fallback value (defaults to 0). When given a dictionary,
+   * returns a new dictionary with each value coerced.
    * @param valueOrDict - Value or object to convert
+   * @param useForZero - Replacement for invalid or zero values (defaults to 0)
    * @returns Finite numeric value, or dictionary of finite numeric values
    */
   forceNumber(
-    valueOrDict: number | string | undefined | Record<string, unknown>
+    valueOrDict: number | string | undefined | Record<string, unknown>,
+    useForZero = 0
   ): number | Record<string, number> {
+    let result: number | Record<string, number>;
+
     if (valueOrDict && typeof valueOrDict === 'object' && !Array.isArray(valueOrDict)) {
-      const result: Record<string, number> = {};
+      const dictResult: Record<string, number> = {};
       for (const [key, value] of Object.entries(valueOrDict)) {
-        result[key] = this.forceNumberValue(value as number | string | undefined);
+        dictResult[key] = this.forceNumberValue(value as number | string | undefined, useForZero);
       }
-      return result;
+      result = dictResult;
+    } else {
+      result = this.forceNumberValue(valueOrDict as number | string | undefined, useForZero);
     }
-    return this.forceNumberValue(valueOrDict as number | string | undefined);
+
+    return result;
   }
 
-  private forceNumberValue(value: number | string | undefined): number {
-    if (typeof value === 'number') {
-      return Number.isFinite(value) ? value : 0;
+  private forceNumberValue(value: number | string | undefined, useForZero: number): number {
+    const parsed = typeof value === 'number' ? value : parseFloat(String(value));
+    if (!Number.isFinite(parsed) || parsed === 0) {
+      return useForZero;
     }
-    const parsed = parseFloat(String(value));
-    return Number.isFinite(parsed) ? parsed : 0;
+    return parsed;
   }
 
   /**
