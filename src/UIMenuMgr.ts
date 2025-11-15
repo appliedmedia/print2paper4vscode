@@ -138,6 +138,9 @@ export class UIMenuMgr {
     dx.out(`Received: menuId=${menuId}, menuItemId=${menuItemId}`);
     dx.out(`contextDict: ${JSON.stringify(contextDict)}`);
 
+    // Constant for display property key to avoid duplication
+    const kDisplay = 'display';
+
     try {
       // Store contextDict for calc evaluations
       this.setContextDict(contextDict);
@@ -146,9 +149,9 @@ export class UIMenuMgr {
       let finalMenuItemId: string = menuItemId;
       let isTextEditInput = false;
       dx.out(
-        `Checking text_edit: contextDict.display=${contextDict?.display}, menuItemId===menuId? ${menuItemId === menuId}`
+        `Checking text_edit: contextDict.${kDisplay}=${contextDict?.[kDisplay]}, menuItemId===menuId? ${menuItemId === menuId}`
       );
-      if (contextDict?.display && menuItemId === menuId) {
+      if (contextDict?.[kDisplay] !== undefined && menuItemId === menuId) {
         isTextEditInput = true;
         dx.out(`Text_edit input detected`);
         // Text_edit input - apply transform.persist if present
@@ -159,19 +162,19 @@ export class UIMenuMgr {
           if (textEditConfig.transform?.persist) {
             try {
               const expression = this.app.templateDictReplace(textEditConfig.transform.persist, {
-                display: String(contextDict.display),
+                [kDisplay]: String(contextDict[kDisplay]),
               });
               // eslint-disable-next-line no-eval
               const transformedValue = eval(expression);
               finalMenuItemId = String(transformedValue);
-              dx.out(`Applied transform.persist: ${contextDict.display} → ${finalMenuItemId}`);
+              dx.out(`Applied transform.persist: ${contextDict[kDisplay]} → ${finalMenuItemId}`);
             } catch (error) {
               dx.error(`Failed to apply transform.persist: ${error}`);
               return;
             }
           } else {
             // No transform - use display value as-is
-            finalMenuItemId = String(contextDict.display);
+            finalMenuItemId = String(contextDict[kDisplay]);
             dx.out(`No transform, using display value as-is: ${finalMenuItemId}`);
           }
         }
