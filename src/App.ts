@@ -129,7 +129,7 @@ export class App {
     let bookended = source;
 
     if (bookend) {
-      const padding = ' '.repeat(pad);
+      const padding = ' '.repeat(Math.max(0, Math.floor(pad)));
       bookended = `${bookend}${padding}${source}${padding}${bookend}`;
     }
     return bookended;
@@ -145,11 +145,8 @@ export class App {
   templateDictReplace(source: string, dictionary: Record<string, string>): string {
     let result = source;
 
-    // Sort keys by length (shortest first) to avoid partial replacements
-    const sortedKeys = Object.keys(dictionary).sort((a, b) => a.length - b.length);
-
     // Replace each {{key}} with its value (all occurrences)
-    for (const key of sortedKeys) {
+    for (const key of Object.keys(dictionary)) {
       const placeholder = `{{${key}}}`;
       const value = dictionary[key];
       result = result.replaceAll(placeholder, value);
