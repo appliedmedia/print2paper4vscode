@@ -41,10 +41,20 @@ export class UIWebView {
   private handlersRegistered: boolean = false;
   private _yaml: Yaml<typeof UIWebView.kYaml>;
 
+  // Bound handler references for proper registration/unregistration
+  private readonly handleDragEndBound: MessageHandler_t;
+  private readonly handleMenuItemSelectedBound: MessageHandler_t;
+  private readonly handleDxMessageBound: MessageHandler_t;
+
   constructor(app: App) {
     this.app = app;
     this.dx = app.dx.sub('UIWebView');
     this._yaml = new Yaml(app, 'src/UIWebView.yaml', UIWebView.kYaml);
+
+    // Bind handlers once in constructor to maintain same reference
+    this.handleDragEndBound = this.handleDragEnd.bind(this) as MessageHandler_t;
+    this.handleMenuItemSelectedBound = this.handleMenuItemSelected.bind(this) as MessageHandler_t;
+    this.handleDxMessageBound = this.handleDxMessage.bind(this) as MessageHandler_t;
   }
 
   get yaml() {
@@ -243,12 +253,9 @@ export class UIWebView {
       // Unregister message handlers
       if (this.handlersRegistered) {
         const messageHandlers = [
-          { type: 'dragEnd', handler: this.handleDragEnd.bind(this) as MessageHandler_t },
-          {
-            type: 'menuItemSelected',
-            handler: this.handleMenuItemSelected.bind(this) as MessageHandler_t,
-          },
-          { type: 'dx', handler: this.handleDxMessage.bind(this) as MessageHandler_t },
+          { type: 'dragEnd', handler: this.handleDragEndBound },
+          { type: 'menuItemSelected', handler: this.handleMenuItemSelectedBound },
+          { type: 'dx', handler: this.handleDxMessageBound },
         ];
 
         messageHandlers.forEach(({ type, handler }) => {
@@ -277,12 +284,9 @@ export class UIWebView {
     if (this.handlersRegistered) return;
 
     const messageHandlers = [
-      { type: 'dragEnd', handler: this.handleDragEnd.bind(this) as MessageHandler_t },
-      {
-        type: 'menuItemSelected',
-        handler: this.handleMenuItemSelected.bind(this) as MessageHandler_t,
-      },
-      { type: 'dx', handler: this.handleDxMessage.bind(this) as MessageHandler_t },
+      { type: 'dragEnd', handler: this.handleDragEndBound },
+      { type: 'menuItemSelected', handler: this.handleMenuItemSelectedBound },
+      { type: 'dx', handler: this.handleDxMessageBound },
     ];
 
     messageHandlers.forEach(({ type, handler }) => {
