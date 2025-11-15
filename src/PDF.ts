@@ -818,12 +818,11 @@ export class PDF {
 
     // Read header/footer values from persist (single source of truth)
     const getHeaderFooterValue = (
-      menuId: string
+      menuId: MenuId_t
     ): HeaderFooterSubmenu_t | typeof kHeaderFooter.none => {
-      const value = this.app.uimenumgr.getMenuItemIdSelected(menuId as any);
+      const value = this.app.uimenumgr.getMenuItemIdSelected(menuId);
       return (value as HeaderFooterSubmenu_t | typeof kHeaderFooter.none) || kHeaderFooter.none;
     };
-
     // Process header positions
     const headerBeginContent = formatContent(getHeaderFooterValue('header_begin'), 'begin');
     if (headerBeginContent) headerElements.begin.push(headerBeginContent);
