@@ -299,9 +299,19 @@ export class UIMenuMgr {
         // Check if value contains template syntax (including calc)
         if (typeof value === 'string' && (value.includes('{{calc:') || value.includes('{{'))) {
           // Evaluate template (replaces vars and evaluates calc expressions)
-          const evalResult = this.evaluateCalcTemplate(value);
-          if (this.app.notEmpty(evalResult)) {
+          // If evaluation fails, evaluateCalcTemplate returns undefined
+          const evalResult = this.evaluateCalcTemplate(value, menuId, menuItemId);
+          if (evalResult !== undefined) {
             result = evalResult;
+          } else {
+            // Template evaluation failed - this is an error condition
+            // Log with context and fall back to a safe default
+            this.dx.error(
+              `Template evaluation failed for ${menuId}.${menuItemId}, value: ${value}`
+            );
+            // Return the menuItemId so callers can recognize the failure
+            // Caller should handle this (e.g., use alt/default value)
+            result = menuItemId;
           }
         } else {
           result = value;
@@ -325,9 +335,18 @@ export class UIMenuMgr {
   // 3. Look for {{calc:...}} pattern and extract expression
   // 4. eval() the expression (developer-defined formula)
   // 5. Replace {{calc:...}} with result
-  // 6. Return final string (or empty string on error)
+  // 6. Return final string, or undefined on error
   //    - If result contains "{{", it's clear which variable didn't have a dict entry
-  private evaluateCalcTemplate(value: string): string {
+  //
+  // @param value - Template string to evaluate
+  // @param menuId - Menu ID for error logging context
+  // @param menuItemId - Menu item ID for error logging context
+  // @returns Evaluated result string, or undefined if evaluation fails
+  private evaluateCalcTemplate(
+    value: string,
+    menuId: string,
+    menuItemId: string
+  ): string | undefined {
     const dx = this.dx.sub('evaluateCalcTemplate');
 
     try {
@@ -364,8 +383,11 @@ export class UIMenuMgr {
 
         // Check for unreplaced template variables ({{ or }}) inside the expression
         if (expression.includes('{{') || expression.includes('}}')) {
-          dx.out(`evaluateCalcTemplate: unreplaced template vars in calc: ${expression}`);
-          result = '';
+          dx.error(
+            `Template has unreplaced vars for ${menuId}.${menuItemId}: ${expression}`
+          );
+          dx.done();
+          return undefined;
         } else {
           dx.out(`Extracted calc expression: "${expression}"`);
 
@@ -375,27 +397,31 @@ export class UIMenuMgr {
             result = result.replace(calcMatch[0], String(calcResult));
             dx.out(`Calc evaluated: ${expression} = ${calcResult}`);
           } catch (evalError) {
-            dx.out(`Error in eval: ${String(evalError)}`);
+            dx.error(`Eval failed for ${menuId}.${menuItemId}: ${String(evalError)}`);
             dx.out(`Template: ${value}`);
             dx.out(`After replacement: ${result}`);
             dx.out(`Expression to eval: "${expression}"`);
             dx.out(`Context dictionary: ${JSON.stringify(fullContext, null, 2)}`);
-            result = '';
+            dx.done();
+            return undefined;
           }
         }
       } else if (result.includes('{{') || result.includes('}}')) {
         // If there are still unreplaced template variables, fail validation
-        dx.out(`evaluateCalcTemplate: pre-eval-calc-check failed: ${result}`);
-        result = '';
+        dx.error(
+          `Template has unreplaced vars for ${menuId}.${menuItemId}: ${result}`
+        );
+        dx.done();
+        return undefined;
       }
 
       dx.out(`Template value resolved: ${value} -> ${result}`);
+      dx.done();
       return result;
     } catch (error) {
-      dx.error(`evaluateCalcTemplate failed: ${String(error)}`);
-      return '';
-    } finally {
+      dx.error(`Template evaluation failed for ${menuId}.${menuItemId}: ${String(error)}`);
       dx.done();
+      return undefined;
     }
   }
 

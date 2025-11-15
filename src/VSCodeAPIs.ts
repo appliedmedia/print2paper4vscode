@@ -17,6 +17,8 @@ import { Diagnostics } from './Diagnostics';
 export type WebviewPanelId_t = string & { readonly __brand: 'WebviewPanelId' };
 
 // Global state base types - simple scalars
+// NOTE: Matches PersistValue_t - no booleans in global state.
+// All persisted values are strings (IDs, themes) or numbers (zoom, margins).
 export type GlobalStateKey_t = string;
 export type GlobalStateValue_t = string | number;
 
