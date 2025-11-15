@@ -329,47 +329,47 @@ export const kZoomLevel = {
       shortcutCode: 'Digit0',
       value: 1.0,
     },
-      { id: '1.25', displayName: '125%', value: 1.25 },
-      { id: '1.50', displayName: '150%', value: 1.5 },
-      { id: '2.00', displayName: '200%', value: 2.0 },
-      { id: '2.50', displayName: '250%', value: 2.5 },
-      { id: '3.00', displayName: '300%', value: 3.0 },
-      // fitWidth: scale page to fill window width
-      // Formula: windowWidth / pageWidth (e.g., 1200/595 = 2.016 = scale up to fit)
-      {
-        id: 'fitWidth',
-        displayName: 'Fit Width',
-        value: (dict: TemplateValueDict = {}) => {
-          const windowWidth = Number(dict.windowWidth ?? 0);
-          const pageWidth = Number(dict.pageWidth ?? 0);
-          if (!Number.isFinite(windowWidth) || !Number.isFinite(pageWidth) || pageWidth === 0) {
-            return undefined;
-          }
-          return windowWidth / pageWidth;
-        },
+    { id: '1.25', displayName: '125%', value: 1.25 },
+    { id: '1.50', displayName: '150%', value: 1.5 },
+    { id: '2.00', displayName: '200%', value: 2.0 },
+    { id: '2.50', displayName: '250%', value: 2.5 },
+    { id: '3.00', displayName: '300%', value: 3.0 },
+    // fitWidth: scale page to fill window width
+    // Formula: windowWidth / pageWidth (e.g., 1200/595 = 2.016 = scale up to fit)
+    {
+      id: 'fitWidth',
+      displayName: 'Fit Width',
+      value: (dict?: TemplateValueDict) => {
+        const dict_nums = dict ?? ({} as TemplateValueDict);
+        const windowWidth = dict_nums.windowWidth;
+        const pageWidth = dict_nums.pageWidth;
+        if (windowWidth === undefined || pageWidth === undefined) {
+          return undefined;
+        }
+        return windowWidth / pageWidth;
       },
-      // fitPage: scale page to fit both width and height in viewport (use smaller ratio)
-      // Formula: Math.min of width and height ratios (ensures entire page visible)
-      {
-        id: 'fitPage',
-        displayName: 'Fit Page',
-        value: (dict: TemplateValueDict = {}) => {
-          const windowWidth = Number(dict.windowWidth ?? 0);
-          const pageWidth = Number(dict.pageWidth ?? 0);
-          const windowHeight = Number(dict.windowHeight ?? 0);
-          const pageHeight = Number(dict.pageHeight ?? 0);
-          const validWidths =
-            Number.isFinite(windowWidth) && Number.isFinite(pageWidth) && pageWidth !== 0;
-          const validHeights =
-            Number.isFinite(windowHeight) && Number.isFinite(pageHeight) && pageHeight !== 0;
-          if (!validWidths || !validHeights) {
-            return undefined;
-          }
-          const widthScale = windowWidth / pageWidth;
-          const heightScale = windowHeight / pageHeight;
-          return Math.min(widthScale, heightScale);
-        },
+    },
+    // fitPage: scale page to fit both width and height in viewport (use smaller ratio)
+    // Formula: Math.min of width and height ratios (ensures entire page visible)
+    {
+      id: 'fitPage',
+      displayName: 'Fit Page',
+      value: (dict?: TemplateValueDict) => {
+        const dict_nums = dict ?? ({} as TemplateValueDict);
+        const { windowWidth, pageWidth, windowHeight, pageHeight } = dict_nums;
+        if (
+          windowWidth === undefined ||
+          pageWidth === undefined ||
+          windowHeight === undefined ||
+          pageHeight === undefined
+        ) {
+          return undefined;
+        }
+        const widthScale = windowWidth / pageWidth;
+        const heightScale = windowHeight / pageHeight;
+        return Math.min(widthScale, heightScale);
       },
+    },
   ],
 } as const;
 export type ZoomLevelMenuItems_t = (typeof kZoomLevel.menuItems)[number]['id'];

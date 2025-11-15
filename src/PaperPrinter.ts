@@ -541,18 +541,14 @@ export class PaperPrinter {
       };
 
       // Add value property if it exists (for numeric zoom levels)
-        if ('value' in item && item.value !== undefined) {
-          const value = item.value;
-          if (
-            typeof value === 'number' ||
-            typeof value === 'string' ||
-            typeof value === 'function'
-          ) {
-            menuItem.value = value as number | string | TemplateValueResolver;
-          } else {
-            this.dx.error(`Invalid zoom level value type: ${typeof value} for item ${itemId}`);
-          }
+      if ('value' in item && item.value !== undefined) {
+        const value = item.value;
+        if (typeof value === 'number' || typeof value === 'string' || typeof value === 'function') {
+          menuItem.value = value as number | string | TemplateValueResolver;
+        } else {
+          this.dx.error(`Invalid zoom level value type: ${typeof value} for item ${itemId}`);
         }
+      }
 
       return menuItem;
     });

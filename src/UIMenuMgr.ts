@@ -14,9 +14,18 @@ import {
   kMenuItemId,
 } from './UIMenu';
 import { Diagnostics } from './Diagnostics';
-import { kFontSizeId, type TemplateValueDict, type TemplateValueResolver } from './types/PaperPrinter_t';
+import {
+  kFontSizeId,
+  type TemplateValueDict,
+  type TemplateValueResolver,
+} from './types/PaperPrinter_t';
 
-const kTemplateValueRequiredKeys = ['windowWidth', 'windowHeight', 'pageWidth', 'pageHeight'] as const;
+const kTemplateValueRequiredKeys = [
+  'windowWidth',
+  'windowHeight',
+  'pageWidth',
+  'pageHeight',
+] as const;
 
 /**
  * UIMenuMgr - Menu manager for webview toolbar system
@@ -50,13 +59,13 @@ export class UIMenuMgr {
 
   /**
    * Set context dictionary (merge-only)
-   * 
+   *
    * Called from UIWebView message handler to update template substitution context.
    * Always merges new values into existing context - never replaces or clears keys.
    * Stale keys persist across calls intentionally, as context accumulates webview
    * state (window dimensions, text_edit values) that should remain available for
    * subsequent menu selections and calc template evaluations.
-   * 
+   *
    * @param contextDict - Context values to merge (window dimensions, display values, etc.)
    */
   setContextDict(contextDict: contextDict_t = kContextDict_None): void {
@@ -309,24 +318,27 @@ export class UIMenuMgr {
       const menuItem = menuItems.find(item => item.id === menuItemId);
 
       if (menuItem && 'value' in menuItem) {
-        const itemWithValue = menuItem as UIMenuItem_t & { value: number | string };
+        const itemWithValue = menuItem as UIMenuItem_t & {
+          value: number | string | TemplateValueResolver;
+        };
         const value = itemWithValue.value;
 
-        // Check if value contains template syntax (including calc)
-        if (typeof value === 'string' && (value.includes('{{calc:') || value.includes('{{'))) {
-          // Evaluate template (replaces vars and evaluates calc expressions)
-          // If evaluation fails, evaluateCalcTemplate returns undefined
+        if (typeof value === 'function') {
+          const resolvedValue = this.resolveTemplateValue(value, menuId, menuItemId);
+          if (resolvedValue !== undefined) {
+            result = resolvedValue;
+          }
+        } else if (
+          typeof value === 'string' &&
+          (value.includes('{{calc:') || value.includes('{{'))
+        ) {
           const evalResult = this.evaluateCalcTemplate(value, menuId, menuItemId);
           if (evalResult !== undefined) {
             result = evalResult;
           } else {
-            // Template evaluation failed - this is an error condition
-            // Log with context and fall back to a safe default
             this.dx.error(
               `Template evaluation failed for ${menuId}.${menuItemId}, value: ${value}`
             );
-            // Return the menuItemId so callers can recognize the failure
-            // Caller should handle this (e.g., use alt/default value)
             result = menuItemId;
           }
         } else {
@@ -336,6 +348,48 @@ export class UIMenuMgr {
     }
 
     return result;
+  }
+
+  private buildTemplateValueDict(): TemplateValueDict | undefined {
+    const dx = this.dx.sub('buildTemplateValueDict');
+    const pageSizePx = this.app.pdf?.docInfo?.pageSizePx;
+    const context = this.contextDict ?? {};
+    const inputs: Record<string, number | string | undefined> = {
+      windowWidth: context.windowWidth,
+      windowHeight: context.windowHeight,
+      pageWidth: pageSizePx?.widthPx,
+      pageHeight: pageSizePx?.heightPx,
+    };
+    const requiredKeys: string[] = [...kTemplateValueRequiredKeys];
+    if (!dx.require(inputs, requiredKeys)) {
+      dx.done();
+      return undefined;
+    }
+    const dict_nums = this.app.forceNumber(inputs, 1) as TemplateValueDict;
+    dx.done();
+    return dict_nums;
+  }
+
+  private resolveTemplateValue(
+    resolver: TemplateValueResolver,
+    menuId: string,
+    menuItemId: string
+  ): number | string | undefined {
+    const dx = this.dx.sub('resolveTemplateValue');
+    const dict_nums = this.buildTemplateValueDict();
+    if (!dict_nums) {
+      dx.done();
+      return undefined;
+    }
+    try {
+      const result = resolver(dict_nums);
+      dx.done();
+      return result;
+    } catch (error) {
+      this.dx.error(`Template resolver failed for ${menuId}.${menuItemId}: ${String(error)}`);
+      dx.done();
+      return undefined;
+    }
   }
 
   // Evaluate calc template like {{calc:{{pageHeight}}/{{windowHeight}}}}
@@ -399,9 +453,7 @@ export class UIMenuMgr {
 
         // Check for unreplaced template variables ({{ or }}) inside the expression
         if (expression.includes('{{') || expression.includes('}}')) {
-          dx.error(
-            `Template has unreplaced vars for ${menuId}.${menuItemId}: ${expression}`
-          );
+          dx.error(`Template has unreplaced vars for ${menuId}.${menuItemId}: ${expression}`);
           dx.done();
           return undefined;
         } else {
@@ -424,9 +476,7 @@ export class UIMenuMgr {
         }
       } else if (result.includes('{{') || result.includes('}}')) {
         // If there are still unreplaced template variables, fail validation
-        dx.error(
-          `Template has unreplaced vars for ${menuId}.${menuItemId}: ${result}`
-        );
+        dx.error(`Template has unreplaced vars for ${menuId}.${menuItemId}: ${result}`);
         dx.done();
         return undefined;
       }
