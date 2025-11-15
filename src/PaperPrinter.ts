@@ -94,7 +94,7 @@ export class PaperPrinter {
   } as const;
 
   private app: App;
-  public uiwebview: UIWebView | null = null;
+  private uiwebview: UIWebView | null = null;
   private dx: Diagnostics;
   private _yaml: Yaml<typeof PaperPrinter.kYaml>;
 
@@ -521,6 +521,7 @@ export class PaperPrinter {
     // The text_edit widget in the button shows the current value
     // No need to dynamically add custom zoom levels to the dropdown
     return kZoomLevel.menuItems.map(item => {
+      const itemId = item.id;
       let shortcut: string | undefined;
 
       // Process shortcut if it exists
@@ -531,7 +532,7 @@ export class PaperPrinter {
       }
 
       const menuItem: UIMenuItem_t = {
-        id: item.id as MenuItemId_t,
+        id: itemId as MenuItemId_t,
         displayName: item.displayName,
         iconSlotTriad: { begin: '', main: '', end: '' },
         shortcutCode: 'shortcutCode' in item ? item.shortcutCode : undefined,
@@ -540,7 +541,13 @@ export class PaperPrinter {
 
       // Add value property if it exists (for numeric zoom levels)
       if ('value' in item && item.value !== undefined) {
-        (menuItem as UIMenuItem_t & { value: number | string }).value = item.value;
+        const value = item.value;
+        // Validate value is number or string (template)
+        if (typeof value === 'number' || typeof value === 'string') {
+          (menuItem as UIMenuItem_t & { value: number | string }).value = value;
+        } else {
+          this.dx.error(`Invalid zoom level value type: ${typeof value} for item ${itemId}`);
+        }
       }
 
       return menuItem;

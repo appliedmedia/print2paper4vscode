@@ -116,7 +116,7 @@ export class DocInfo_PDF {
    * Get the current page number (1-indexed)
    */
   get pageNumber(): number {
-    return this.pdfDoc?.getCurrentPageInfo()?.pageNumber || 0;
+    return this.getCurrentPageInfo().pageNumber;
   }
 
   /**
