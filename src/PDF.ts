@@ -429,11 +429,15 @@ export class PDF {
       }
 
       // Fallback to configured size if no PDF yet
-      const pageSizeId = (this.app.uimenumgr.getMenuItemIdSelected('pageSizeId') ||
-        'a4') as PageSizeIdMenuItems_t;
-      const orient = (this.app.uimenumgr.getMenuItemIdSelected('orient') || 'portrait') as
-        | 'portrait'
-        | 'landscape';
+      // Get current selections from menu system (defaults already handled by persist/menu system)
+      const menuKeys = ['pageSizeId', 'orient'] as const;
+      const selections: Record<string, string | undefined> = {};
+      for (const key of menuKeys) {
+        selections[key] = this.app.uimenumgr.getMenuItemIdSelected(key);
+      }
+      
+      const pageSizeId = selections.pageSizeId as PageSizeIdMenuItems_t;
+      const orient = selections.orient as 'portrait' | 'landscape';
       const pageSize = this.getPageDimensions(pageSizeId, orient);
       const unit = this.getUnitForPageSize(pageSizeId);
       const { widthPts: pageWidthPts, heightPts: pageHeightPts } = this.pageSizeToPts(
