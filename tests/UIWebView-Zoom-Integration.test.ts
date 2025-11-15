@@ -255,7 +255,7 @@ describe('Extension↔Webview Integration Tests', () => {
       await uiWebView.displayPdfPanel();
       capturedWebviewHTML = (global as any).__capturedWebviewHTML || '';
       assert.ok(
-        capturedWebviewHTML.includes(kZoomLevel.altValue),
+        capturedWebviewHTML.includes(String(kZoomLevel.altValue)),
         `Should use default alt value (${kZoomLevel.altValue}) for invalid zoom`
       );
     });
