@@ -46,7 +46,17 @@ export class UIMenuMgr {
     // No initialization needed - menus are created on-demand by PaperPrinter
   }
 
-  // Set context dictionary (called from UIWebView message handler)
+  /**
+   * Set context dictionary (merge-only)
+   * 
+   * Called from UIWebView message handler to update template substitution context.
+   * Always merges new values into existing context - never replaces or clears keys.
+   * Stale keys persist across calls intentionally, as context accumulates webview
+   * state (window dimensions, text_edit values) that should remain available for
+   * subsequent menu selections and calc template evaluations.
+   * 
+   * @param contextDict - Context values to merge (window dimensions, display values, etc.)
+   */
   setContextDict(contextDict: contextDict_t = kContextDict_None): void {
     this.contextDict = { ...(this.contextDict ?? kContextDict_None), ...contextDict };
   }
