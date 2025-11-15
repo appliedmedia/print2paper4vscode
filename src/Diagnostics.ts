@@ -232,9 +232,9 @@ export class Diagnostics {
       let dupMsg = `↑ x${this.shared.duplicateCount + 1}`;
 
       // Add warning bookends if duplicate count exceeds threshold
-      const shouldWarn = this.shared.duplicateCount > warning_max;
-      const warningBookend = shouldWarn ? this.util.kBookendIcon.warning : '';
-      dupMsg = this.util.bookend(dupMsg, warningBookend);
+      if (this.shared.duplicateCount > warning_max) {
+        dupMsg = this.util.bookend(dupMsg, this.util.kBookendIcon.warning);
+      }
 
       // Match format of duplicated message (truncated or full)
       if (this.shared.lastWasTruncated) {
