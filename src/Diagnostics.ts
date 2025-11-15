@@ -41,9 +41,12 @@ export class Diagnostics {
   // Helper utilities namespace
   private util = {
     bookend: (source: string, bookend: string, pad: number = 1): string => {
-      if (!bookend) return source;
-      const padding = ' '.repeat(Math.max(0, Math.floor(pad)));
-      return `${bookend}${padding}${source}${padding}${bookend}`;
+      let result = source;
+      if (bookend) {
+        const padding = ' '.repeat(Math.max(0, Math.floor(pad)));
+        result = `${bookend}${padding}${source}${padding}${bookend}`;
+      }
+      return result;
     },
   };
 
