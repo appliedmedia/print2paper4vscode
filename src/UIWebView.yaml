@@ -1,3 +1,6 @@
+# UIWebView.yaml - Webview panel templates for PDF display
+# ⚠️ Keep comments in this file minimal because it has to get copied at runtime. ⚠️
+
 webview_html: |
   <!DOCTYPE html>
   <html>
@@ -73,9 +76,6 @@ webview_css: |
   }
 
 webview_js: |
-  // PDF Viewer JavaScript - Minimal skeleton for PDF.js to render into
-
-  // Send diagnostic message to extension
   function dx(message) {
     if (window.vscode) {
       window.vscode.postMessage({
@@ -86,39 +86,28 @@ webview_js: |
   }
 
   let pdfDoc = null;
-  // Parse zoom level from template, fallback to 1.0 if invalid, round to 2 decimal places
   let currentScale = Math.round((parseFloat('{{pdf_zoom_level}}') || 1.0) * 100) / 100;
   let pageWidthPx = parseFloat('{{page_width_px}}') || 0;
   let pageHeightPx = parseFloat('{{page_height_px}}') || 0;
 
-  // Zoom constants - use values from extension (kZoomLevel.min/max/stepAmount)
-  // These must be injected via template variables - error if missing
   const kZoomLevel = {
     min: parseFloat('{{zoomLevel_min}}') || 0,
     max: parseFloat('{{zoomLevel_max}}') || 0,
     stepAmount: parseFloat('{{zoomLevel_stepAmount}}') || 0,
-    menuItems: {{zoomLevel_menuItems}}, // Menu items with id, displayName, value, shortcutCode
+    menuItems: {{zoomLevel_menuItems}},
   };
 
-  // Keyboard shortcut codes from extension constants
   if (kZoomLevel.min === 0 || kZoomLevel.max === 0 || kZoomLevel.stepAmount === 0 || 
       isNaN(kZoomLevel.min) || isNaN(kZoomLevel.max) || isNaN(kZoomLevel.stepAmount)) {
     dx('❌ ERROR: zoomLevel_min, zoomLevel_max, or zoomLevel_stepAmount template variables not injected correctly');
     throw new Error('Zoom constants not initialized - template injection failed');
   }
 
-  // Compute percent values
   kZoomLevel.minPercent = kZoomLevel.min * 100;
   kZoomLevel.maxPercent = kZoomLevel.max * 100;
 
-  // Use existing vscode API from toolbar (or create if not available)
   const vscode = window.vscode || (typeof acquireVsCodeApi !== 'undefined' ? acquireVsCodeApi() : null);
 
-  /**
-   * Initialize PDF viewer with PDF data
-   * @param {string} pdfDataUrl - Base64 data URL of the PDF
-   * @param {number} pageTotal - Total number of pages
-   */
   function initPdfViewer(pdfDataUrl, pageTotal) {
 
     if (typeof pdfjsLib === 'undefined') {
@@ -127,10 +116,8 @@ webview_js: |
       return;
     }
 
-    // Set worker source
     pdfjsLib.GlobalWorkerOptions.workerSrc = '{{as_uri:src/lib/pdf.worker.min.js}}';
 
-    // Load PDF document
     const loadingTask = pdfjsLib.getDocument({
       url: pdfDataUrl
     });
@@ -145,24 +132,15 @@ webview_js: |
     );
   }
 
-  /**
-   * Handle successful PDF document load
-   * 
-   * Initializes PDF viewer, gets page dimensions, and renders all pages.
-   * Zoom is controlled by extension (not webview) - PDF is regenerated at new zoom levels.
-   */
   function onDocumentLoadSuccess(pdf) {
     pdfDoc = pdf;
     document.getElementById('loading').style.display = 'none';
     document.getElementById('pdf-viewer').style.display = 'block';
     
-    // Get first page dimensions
     pdf.getPage(1).then(function(page) {
       const viewport = page.getViewport({ scale: 1.0 });
       pageWidthPx = viewport.width;
       pageHeightPx = viewport.height;
-      
-      // Render all pages
       renderAllPages();
     }).catch(function(error) {
       dx(`❌ Error getting page dimensions: ${error.message}`);
@@ -170,10 +148,6 @@ webview_js: |
     });
   }
 
-
-  /**
-   * Handle PDF document load error
-   */
   function onDocumentLoadError(error) {
     dx(`❌ PDF load error: ${error.message}`);
     document.getElementById('loading').style.display = 'none';
@@ -181,31 +155,24 @@ webview_js: |
     document.getElementById('error').textContent = 'Error loading PDF: ' + error.message;
   }
 
-  /**
-   * Render all pages in the PDF - just create canvases and let PDF.js render
-   */
   function renderAllPages() {
     if (!pdfDoc) return;
 
     const viewer = document.getElementById('pdf-viewer');
-    viewer.innerHTML = ''; // Clear existing content
+    viewer.innerHTML = '';
 
-    // Render each page as a separate canvas
     for (let pageNum = 1; pageNum <= pdfDoc.numPages; pageNum++) {
-      renderPage(pageNum, viewer);
+      const canvas = document.createElement('canvas');
+      canvas.id = 'pdf-canvas-' + pageNum;
+      viewer.appendChild(canvas);
+      renderPage(pageNum, canvas);
     }
   }
 
-  /**
-   * Render a single page - PDF.js does all the work
-   */
-  function renderPage(pageNum, container) {
+  function renderPage(pageNum, canvas) {
     pdfDoc.getPage(pageNum).then(function(page) {
       const viewport = page.getViewport({ scale: currentScale });
       
-      // Create canvas for this page
-      const canvas = document.createElement('canvas');
-      canvas.id = 'pdf-canvas-' + pageNum;
       const ctx = canvas.getContext('2d');
       if (!ctx) {
         dx('❌ 2D canvas context not available');
@@ -220,12 +187,10 @@ webview_js: |
         viewport: viewport
       };
       
-      const renderTask = page.render(renderContext);
-
-      renderTask.promise.then(function() {
-        container.appendChild(canvas);
-      });
+      page.render(renderContext);
     }).catch(function(error) {
       dx(`❌ Error rendering page ${pageNum}: ${error.message}`);
     });
   }
+
+# end, UIWebView.yaml

@@ -11,7 +11,7 @@
  * **NOTE: These are unit tests only - they do NOT test extension↔webview integration.**
  * 
  * For integration tests covering:
- * - Extension passing pdf_zoom_level to webview template injection
+ * - Extension passing zoomLevel to webview template injection
  * - Webview messages reaching extension's handleZoomMessage
  * - Persisted zoom level surviving extension reload
  * - Template variable injection handling undefined/null/invalid values
@@ -24,36 +24,36 @@ import { kZoomLevel } from '../src/types/PaperPrinter_t';
 
 describe('UIWebView Zoom Controls', () => {
   describe('Zoom Level Persistence', () => {
-    test('should persist zoom level in UI.persist.pdf_zoom_level', () => {
-      // Mock UI.persist.pdf_zoom_level
+    test('should persist zoom level in UI.persist.zoomLevel', () => {
+      // Mock UI.persist.zoomLevel
       const mockPersist = {
-        pdf_zoom_level: undefined as number | undefined,
+        zoomLevel: undefined as number | undefined,
       };
 
       // Set initial zoom level
-      mockPersist.pdf_zoom_level = 1.0;
+      mockPersist.zoomLevel = 1.0;
 
-      assert.strictEqual(mockPersist.pdf_zoom_level, 1.0, 'Zoom level should be persisted');
+      assert.strictEqual(mockPersist.zoomLevel, 1.0, 'Zoom level should be persisted');
     });
 
     test('should default to 1.0 if zoom level not set', () => {
       const mockPersist = {
-        pdf_zoom_level: undefined as number | undefined,
+        zoomLevel: undefined as number | undefined,
       };
 
-      const zoomLevel = mockPersist.pdf_zoom_level ?? 1.0;
+      const zoomLevel = mockPersist.zoomLevel ?? 1.0;
       assert.strictEqual(zoomLevel, 1.0, 'Should default to 1.0');
     });
 
     test('should persist zoom level between 0.25 and 3.0', () => {
       const mockPersist = {
-        pdf_zoom_level: undefined as number | undefined,
+        zoomLevel: undefined as number | undefined,
       };
 
       const validZooms = [0.25, 0.5, 1.0, 1.5, 2.0, 3.0];
       for (const zoom of validZooms) {
-        mockPersist.pdf_zoom_level = zoom;
-        assert.strictEqual(mockPersist.pdf_zoom_level, zoom, `Zoom ${zoom} should be persisted`);
+        mockPersist.zoomLevel = zoom;
+        assert.strictEqual(mockPersist.zoomLevel, zoom, `Zoom ${zoom} should be persisted`);
       }
     });
   });

@@ -237,4 +237,37 @@ describe('Diagnostics', () => {
 
     console.log = originalLog;
   });
+
+  test('should handle duplicate messages with warning bookends without App instance', () => {
+    // Reset Diagnostics state to ensure clean test
+    Diagnostics.reset();
+
+    const originalLog = console.log;
+    let capturedOutput = '';
+    console.log = (message: string) => {
+      capturedOutput += message;
+    };
+
+    // Create Diagnostics instance WITHOUT App (null parent and app)
+    const dx = new Diagnostics('TestClass', true, null, null);
+    const subDx = dx.sub('testMethod');
+
+    // Output the same message 15 times to trigger duplicate warning (threshold is 10)
+    const repeatedMessage = 'Duplicate message test';
+    for (let i = 0; i < 15; i++) {
+      subDx.out(repeatedMessage);
+    }
+
+    // Force flush of duplicates by outputting a different message
+    subDx.out('Different message');
+
+    console.log = originalLog;
+
+    // Should contain duplicate indicator with warning bookends (⚠️)
+    assert.ok(capturedOutput.includes('↑ x'), 'Should show duplicate indicator');
+    assert.ok(capturedOutput.includes('⚠️'), 'Should show warning bookends for >10 duplicates');
+    
+    // Verify it didn't crash (if we got this far, it succeeded)
+    assert.ok(true, 'Should handle duplicates without App instance');
+  });
 });

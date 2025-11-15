@@ -10,15 +10,17 @@ import type {
   // WorkspaceEdit,
 } from 'vscode';
 import { Range } from 'vscode';
-import type { PostMessage } from './types/UI_t';
+import type { SendToExt_t } from './types/UI_t';
 import { Diagnostics } from './Diagnostics';
 
 // Opaque ID type for webview panels
 export type WebviewPanelId_t = string & { readonly __brand: 'WebviewPanelId' };
 
 // Global state base types - simple scalars
+// NOTE: Matches PersistValue_t - no booleans in global state.
+// All persisted values are strings (IDs, themes) or numbers (zoom, margins).
 export type GlobalStateKey_t = string;
-export type GlobalStateValue_t = string | number | boolean;
+export type GlobalStateValue_t = string | number;
 
 /**
  * VSCodeAPIs - VS Code API isolation layer
@@ -52,7 +54,7 @@ export class VSCodeAPIs {
     this.app = app;
     this.vscode = vscode;
     this.context = context;
-    this.dx = app.dx.create('VSCodeAPIs');
+    this.dx = app.dx.sub('VSCodeAPIs');
   }
 
   init(): void {
@@ -180,23 +182,6 @@ export class VSCodeAPIs {
   }
 
   /**
-   * Post message to panel
-   */
-  postMessage(id: WebviewPanelId_t, message: PostMessage): void {
-    const panel = this.panels.get(id);
-    if (!panel) return;
-
-    try {
-      panel.webview.postMessage(message);
-    } catch (error) {
-      // Panel disposed, remove from map
-      this.panels.delete(id);
-      this.dx.out(`Panel disposed, removing from map: ${id}`);
-      this.dx.out(`Error posting message to panel: ${String(error)}`);
-    }
-  }
-
-  /**
    * Remove panel from map (for cleanup)
    */
   removePanel(id: WebviewPanelId_t): void {
@@ -287,7 +272,7 @@ export class VSCodeAPIs {
    * Set up message handling for an existing webview panel
    */
   setupMessageHandling(panel: WebviewPanel): void {
-    panel.webview.onDidReceiveMessage(async (msg: PostMessage) => {
+    panel.webview.onDidReceiveMessage(async (msg: SendToExt_t) => {
       await this.app.ui.handleWebviewMessage(msg);
     });
   }

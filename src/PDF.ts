@@ -5,11 +5,8 @@ import type {
   HeaderFooterPos_t,
   HeaderFooterSubmenu_t,
 } from './types/PaperPrinter_t';
-import {
-  kPageSizeIdById,
-  kHeaderFooterSubmenuById,
-  kHeaderFooter,
-} from './types/PaperPrinter_t';
+import { kPageSizeIdById, kHeaderFooterSubmenuById, kHeaderFooter } from './types/PaperPrinter_t';
+import type { MenuId_t } from './UIMenu';
 import { Diagnostics } from './Diagnostics';
 import { Yaml } from './Yaml';
 import { Coords } from './Coords';
@@ -60,7 +57,7 @@ export class PDF {
 
   constructor(app: App) {
     this.app = app;
-    this.dx = app.dx.create('PDF');
+    this.dx = app.dx.sub('PDF');
     this.coords = new Coords(app);
     this.docInfo = new DocInfo_PDF(app);
     this._yaml = new Yaml(app, 'src/PDF.yaml', PDF.kYaml);
@@ -122,7 +119,9 @@ export class PDF {
     try {
       // Log PDF object usage for printing (Stage 4.3)
       const pdfBuffer = pdfDoc.asArrayBuffer();
-      dx.out(`PDF object usage: Using PDF ArrayBuffer for printWithPreview (${pdfBuffer.byteLength} bytes)`);
+      dx.out(
+        `PDF object usage: Using PDF ArrayBuffer for printWithPreview (${pdfBuffer.byteLength} bytes)`
+      );
 
       // Generate filename with timestamp
       const timestamp = this.app.os.dateAsYYYYMMDDHHMMSS();
@@ -152,7 +151,9 @@ export class PDF {
     try {
       // Log PDF object usage for printing (Stage 4.3)
       const pdfBuffer = pdfDoc.asArrayBuffer();
-      dx.out(`PDF object usage: Using PDF ArrayBuffer for printDirectly (${pdfBuffer.byteLength} bytes)`);
+      dx.out(
+        `PDF object usage: Using PDF ArrayBuffer for printDirectly (${pdfBuffer.byteLength} bytes)`
+      );
 
       // Generate filename with timestamp
       const timestamp = this.app.os.dateAsYYYYMMDDHHMMSS();
@@ -182,7 +183,9 @@ export class PDF {
     try {
       // Log PDF object usage for saving (Stage 4.3)
       const pdfBuffer = pdfDoc.asArrayBuffer();
-      dx.out(`PDF object usage: Using PDF ArrayBuffer for saveAsPDF (${pdfBuffer.byteLength} bytes)`);
+      dx.out(
+        `PDF object usage: Using PDF ArrayBuffer for saveAsPDF (${pdfBuffer.byteLength} bytes)`
+      );
 
       // Generate default filename with timestamp
       const timestamp = this.app.os.dateAsYYYYMMDDHHMMSS();
@@ -426,11 +429,15 @@ export class PDF {
       }
 
       // Fallback to configured size if no PDF yet
-      const pageSizeId = (this.app.uimenumgr.getValueForSelectedByMenuId('pageSizeId') ||
-        'a4') as PageSizeIdMenuItems_t;
-      const orient = (this.app.uimenumgr.getValueForSelectedByMenuId('orient') || 'portrait') as
-        | 'portrait'
-        | 'landscape';
+      // Get current selections from menu system (defaults already handled by persist/menu system)
+      const menuKeys = ['pageSizeId', 'orient'] as const;
+      const selections: Record<string, string | undefined> = {};
+      for (const key of menuKeys) {
+        selections[key] = this.app.uimenumgr.getMenuItemIdSelected(key);
+      }
+      
+      const pageSizeId = selections.pageSizeId as PageSizeIdMenuItems_t;
+      const orient = selections.orient as 'portrait' | 'landscape';
       const pageSize = this.getPageDimensions(pageSizeId, orient);
       const unit = this.getUnitForPageSize(pageSizeId);
       const { widthPts: pageWidthPts, heightPts: pageHeightPts } = this.pageSizeToPts(
@@ -762,9 +769,7 @@ export class PDF {
     // Get document title from paperprinter's docInfo
     const docTitle = this.app.paperprinter.docInfo.printTitle || 'Document';
 
-    // Get current page info
-    const pageInfo = this.docInfo.pdfDoc.getCurrentPageInfo();
-    const currentPage = pageInfo.pageNumber;
+    const pageNumber = this.docInfo.pageNumber;
     const pageTotal = this.docInfo.pageTotal;
 
     // Get page dimensions and margins
@@ -794,7 +799,7 @@ export class PDF {
       const template = kHeaderFooterSubmenuById[element].template;
       const templateDict: Record<string, string> = {
         title: docTitle,
-        '#': String(currentPage),
+        '#': String(pageNumber),
         pageTotal: String(pageTotal),
       };
 
@@ -816,14 +821,21 @@ export class PDF {
       end: [],
     };
 
+    // Read header/footer values from persist (single source of truth)
+    const getHeaderFooterValue = (
+      menuId: MenuId_t
+    ): HeaderFooterSubmenu_t | typeof kHeaderFooter.none => {
+      const value = this.app.uimenumgr.getMenuItemIdSelected(menuId);
+      return (value as HeaderFooterSubmenu_t | typeof kHeaderFooter.none) || kHeaderFooter.none;
+    };
     // Process header positions
-    const headerBeginContent = formatContent(this.docInfo.header_begin, 'begin');
+    const headerBeginContent = formatContent(getHeaderFooterValue('header_begin'), 'begin');
     if (headerBeginContent) headerElements.begin.push(headerBeginContent);
 
-    const headerMiddleContent = formatContent(this.docInfo.header_middle, 'middle');
+    const headerMiddleContent = formatContent(getHeaderFooterValue('header_middle'), 'middle');
     if (headerMiddleContent) headerElements.middle.push(headerMiddleContent);
 
-    const headerEndContent = formatContent(this.docInfo.header_end, 'end');
+    const headerEndContent = formatContent(getHeaderFooterValue('header_end'), 'end');
     if (headerEndContent) headerElements.end.push(headerEndContent);
 
     // Build footer elements by position
@@ -834,13 +846,13 @@ export class PDF {
     };
 
     // Process footer positions
-    const footerBeginContent = formatContent(this.docInfo.footer_begin, 'begin');
+    const footerBeginContent = formatContent(getHeaderFooterValue('footer_begin'), 'begin');
     if (footerBeginContent) footerElements.begin.push(footerBeginContent);
 
-    const footerMiddleContent = formatContent(this.docInfo.footer_middle, 'middle');
+    const footerMiddleContent = formatContent(getHeaderFooterValue('footer_middle'), 'middle');
     if (footerMiddleContent) footerElements.middle.push(footerMiddleContent);
 
-    const footerEndContent = formatContent(this.docInfo.footer_end, 'end');
+    const footerEndContent = formatContent(getHeaderFooterValue('footer_end'), 'end');
     if (footerEndContent) footerElements.end.push(footerEndContent);
 
     // Render header

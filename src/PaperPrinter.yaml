@@ -1,24 +1,18 @@
 # PaperPrinter.yaml - SVG icons and templates for PaperPrinter
+# ⚠️ Keep comments in this file minimal because it has to get copied at runtime. ⚠️
 
-# Shared portrait box (tall, narrow) for portrait orientation and all margin icons
 icon_box_portrait_svg: |
   <rect x="4" y="2" width="24" height="28" fill="none" stroke="currentColor" stroke-width="2"/>
 
-# Shared stick figure for orientation icons
 icon_orient_figure_svg: |
-  <!-- Stick figure (tall) - vertically and horizontally centered -->
   <!-- Head (oval) -->
   <ellipse cx="16" cy="11" rx="2" ry="2.5" fill="none" stroke="currentColor" stroke-width="1"/>
-  <!-- Neck -->
   <line x1="16" y1="13.5" x2="16" y2="15" stroke="currentColor" stroke-width="1"/>
-  <!-- Shoulders/arms -->
   <line x1="13" y1="15" x2="19" y2="15" stroke="currentColor" stroke-width="1"/>
-  <!-- Arms with hands -->
   <line x1="13" y1="15" x2="11" y2="17" stroke="currentColor" stroke-width="1"/>
   <ellipse cx="11" cy="17" rx="1" ry="0.8" fill="currentColor"/>
   <line x1="19" y1="15" x2="21" y2="17" stroke="currentColor" stroke-width="1"/>
   <ellipse cx="21" cy="17" rx="1" ry="0.8" fill="currentColor"/>
-  <!-- Torso -->
   <line x1="16" y1="15" x2="16" y2="21" stroke="currentColor" stroke-width="1"/>
 
 icon_orient_portrait_svg: |
@@ -29,7 +23,6 @@ icon_orient_portrait_svg: |
 
 icon_orient_landscape_svg: |
   <svg width="32" height="32" viewBox="0 0 32 32" aria-hidden="true" focusable="false" style="display: inline-block; vertical-align: middle; margin-right: 4px;">
-    <!-- Wide box for landscape orientation - same width as before -->
     <rect x="2" y="6" width="28" height="20" fill="none" stroke="currentColor" stroke-width="2"/>
     <g transform="translate(0, 2)">
       {{icon_orient_figure_svg}}
@@ -39,7 +32,6 @@ icon_orient_landscape_svg: |
 icon_margin_none_svg: |
   <svg width="32" height="32" viewBox="0 0 32 32" aria-hidden="true" focusable="false" style="display: inline-block; vertical-align: middle; margin-right: 4px;">
     {{icon_box_portrait_svg}}
-    <!-- 6 text lines with 1px margin, 4px spacing between lines -->
     <line x1="5" y1="5" x2="27" y2="5" stroke="currentColor" stroke-width="1"/>
     <line x1="5" y1="9" x2="27" y2="9" stroke="currentColor" stroke-width="1"/>
     <line x1="5" y1="13" x2="27" y2="13" stroke="currentColor" stroke-width="1"/>
@@ -51,7 +43,6 @@ icon_margin_none_svg: |
 icon_margin_minimal_svg: |
   <svg width="32" height="32" viewBox="0 0 32 32" aria-hidden="true" focusable="false" style="display: inline-block; vertical-align: middle; margin-right: 4px;">
     {{icon_box_portrait_svg}}
-    <!-- 5 text lines with 4px margin, 4px spacing between lines -->
     <line x1="8" y1="8" x2="24" y2="8" stroke="currentColor" stroke-width="1"/>
     <line x1="8" y1="12" x2="24" y2="12" stroke="currentColor" stroke-width="1"/>
     <line x1="8" y1="16" x2="24" y2="16" stroke="currentColor" stroke-width="1"/>
@@ -62,7 +53,6 @@ icon_margin_minimal_svg: |
 icon_margin_normal_svg: |
   <svg width="32" height="32" viewBox="0 0 32 32" aria-hidden="true" focusable="false" style="display: inline-block; vertical-align: middle; margin-right: 4px;">
     {{icon_box_portrait_svg}}
-    <!-- 4 text lines with 6px margin, 4px spacing between lines -->
     <line x1="10" y1="10" x2="22" y2="10" stroke="currentColor" stroke-width="1"/>
     <line x1="10" y1="14" x2="22" y2="14" stroke="currentColor" stroke-width="1"/>
     <line x1="10" y1="18" x2="22" y2="18" stroke="currentColor" stroke-width="1"/>
@@ -72,7 +62,6 @@ icon_margin_normal_svg: |
 icon_margin_wide_svg: |
   <svg width="32" height="32" viewBox="0 0 32 32" aria-hidden="true" focusable="false" style="display: inline-block; vertical-align: middle; margin-right: 4px;">
     {{icon_box_portrait_svg}}
-    <!-- 3 text lines with 8px margin, 4px spacing between lines -->
     <line x1="12" y1="12" x2="20" y2="12" stroke="currentColor" stroke-width="1"/>
     <line x1="12" y1="16" x2="20" y2="16" stroke="currentColor" stroke-width="1"/>
     <line x1="12" y1="20" x2="20" y2="20" stroke="currentColor" stroke-width="1"/>

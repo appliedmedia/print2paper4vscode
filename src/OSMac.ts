@@ -23,7 +23,7 @@ export class OSMac extends OS {
 
   constructor(app: App) {
     super(app);
-    this.dx = app.dx.create('OSMac');
+    this.dx = app.dx.sub('OSMac');
   }
 
   protected getOSKeys(): Record<string, string> {

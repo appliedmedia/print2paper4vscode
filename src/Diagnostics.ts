@@ -38,6 +38,21 @@ export class Diagnostics {
     return Diagnostics._shared;
   }
 
+  // Helper utilities namespace
+  private util = {
+    kBookendIcon: {
+      warning: '⚠️',
+    },
+    bookend: (source: string, bookend: string, pad: number = 1): string => {
+      let result = source;
+      if (bookend) {
+        const padding = ' '.repeat(Math.max(0, Math.floor(pad)));
+        result = `${bookend}${padding}${source}${padding}${bookend}`;
+      }
+      return result;
+    },
+  };
+
   /**
    * Reset static state for testing purposes
    */
@@ -88,24 +103,14 @@ export class Diagnostics {
   }
 
   /**
-   * New sub-context Diagnostics instance for a method
-   * @param name - The name of the method being entered
-   * @param debugOn - Optional debug override (undefined inherit parent's debug status)
-   * @returns New Diagnostics instance for the method
+   * Create a sub-context Diagnostics instance
+   * Used for both component-level (in constructors) and method-level (in methods) contexts
+   * @param name - The name of the component or method
+   * @param debugOn - Optional debug override (undefined inherits parent's debug status)
+   * @returns New Diagnostics instance with this as parent
    */
   sub(name: string, debugOn?: boolean): Diagnostics {
     const dx = new Diagnostics(name, debugOn, this, this.app);
-    return dx;
-  }
-
-  /**
-   * Create a new independent Diagnostics instance (not a sub-context)
-   * @param name - The name of the new Diagnostics instance
-   * @param debugOn - Optional debug override (undefined uses global debug state)
-   * @returns New independent Diagnostics instance
-   */
-  create(name: string, debugOn?: boolean): Diagnostics {
-    const dx = new Diagnostics(name, debugOn, null, this.app);
     return dx;
   }
 
@@ -217,10 +222,19 @@ export class Diagnostics {
    * @param timestamp - Optional timestamp for non-truncated format
    */
   private messageHeader_addForDupe(timestamp: string = ''): string {
+    const warning_max = 10;
+
     let message = '';
     if (this.shared.duplicateCount) {
       const counter = this.messageHeader_incCounter();
-      const dupMsg = `↑ x${this.shared.duplicateCount + 1}`;
+
+      // Build duplicate message
+      let dupMsg = `↑ x${this.shared.duplicateCount + 1}`;
+
+      // Add warning bookends if duplicate count exceeds threshold
+      if (this.shared.duplicateCount > warning_max) {
+        dupMsg = this.util.bookend(dupMsg, this.util.kBookendIcon.warning);
+      }
 
       // Match format of duplicated message (truncated or full)
       if (this.shared.lastWasTruncated) {
@@ -350,7 +364,9 @@ export class Diagnostics {
       if (fieldName === '_name') {
         currentValue = (current as unknown as { _name: T })._name;
       } else if (fieldName === '_debugOn') {
-        currentValue = current.debugOn() as T;
+        // IMPORTANT: Access _debugOn directly to avoid infinite recursion
+        // Do NOT call current.debugOn() as it would recursively call buildDebugOnLineage()
+        currentValue = (current as unknown as { _debugOn: T })._debugOn;
       } else {
         const diag = current as unknown as Record<string, unknown>;
         currentValue = diag[fieldName] as T;

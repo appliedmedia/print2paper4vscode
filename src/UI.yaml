@@ -1,7 +1,7 @@
-# UI templates for the Print2Paper extension
+# UI.yaml - Base UI templates and toolbar
+# ⚠️ Keep comments in this file minimal because it has to get copied at runtime. ⚠️
 
 base_css: |
-  /* Minimal base styles - all theming comes from theme system */
   body {
     margin: 0;
     padding: 0;
@@ -40,9 +40,7 @@ toolbar_css: |
     border-top-right-radius: 10px;
     cursor: ew-resize;
     z-index: 10;
-    background:
-      radial-gradient(circle at 2px 3px, rgba(120,120,120,.6) 1px, transparent 1px) 0 0 / 4px 6px,
-      radial-gradient(circle at 0px 3px, rgba(120,120,120,.6) 1px, transparent 1px) 2px 0 / 4px 6px;
+    background: radial-gradient(circle at 2px 3px, rgba(120,120,120,.6) 1px, transparent 1px) 0 0 / 4px 6px, radial-gradient(circle at 0px 3px, rgba(120,120,120,.6) 1px, transparent 1px) 2px 0 / 4px 6px;
   }
   #p2p4vsc-toolbar.dragging { user-select: none; }
   .p2p4vsc-menu-btn {
@@ -65,11 +63,8 @@ toolbar_js: |
   window.vscode = acquireVsCodeApi();
   const toolbar = document.getElementById('p2p4vsc-toolbar');
   const drag = document.getElementById('p2p4vsc-toolbar-grip');
-  
-  // Toolbar positioning constant from server
   const toolbar_pos_min_px = {{toolbar_pos_min_px}};
 
-  // Generic flyout hover handler
   function handleFlyoutHover() {
     document.addEventListener('mouseenter', (e) => {
       if (!e || !e.target || !e.target.closest) return;
@@ -93,7 +88,6 @@ toolbar_js: |
       if (menuItem) {
         const flyout = menuItem.querySelector('.p2p4vsc-flyout');
         if (flyout) {
-          // Hide flyout after a short delay to allow moving to it
           setTimeout(() => {
             if (!flyout.matches(':hover') && !menuItem.matches(':hover')) {
               flyout.style.display = 'none';
@@ -104,10 +98,8 @@ toolbar_js: |
     });
   }
 
-  // Initialize flyout handling
   handleFlyoutHover();
 
-  // Drag state tracking
   let isDragging = false;
   let dragStartX = 0;
   let dragStartLeft = 0;
@@ -116,34 +108,27 @@ toolbar_js: |
     const rawLeft = getComputedStyle(toolbar).left;
     let left = parseFloat(rawLeft);
     if (Number.isNaN(left)) left = toolbar_pos_min_px;
-    const maxLeft = Math.max(toolbar_pos_min_px, window.innerWidth - toolbar.offsetWidth - toolbar_pos_min_px);
+    const maxLeft = Math.max(toolbar_pos_min_px, document.documentElement.clientWidth - toolbar.offsetWidth - toolbar_pos_min_px);
     toolbar.style.left = Math.min(left, maxLeft) + 'px';
   });
 
-  // Helper function to end dragging and notify extension
   function postDragEnd() {
     isDragging = false;
     document.body.style.cursor = '';
-    
-    // Save position to extension's global state
     const rawLeft = getComputedStyle(toolbar).left;
     const left = Number.isNaN(parseFloat(rawLeft)) ? toolbar_pos_min_px : parseFloat(rawLeft);
-    
-    // Notify extension that drag ended
     vscode.postMessage({
       type: 'dragEnd',
       left
     });
   }
 
-  // Helper function to end dragging if currently dragging
   function endIfDragging(/* e */) {
     if (isDragging) {
       postDragEnd();
     }
   }
 
-  // Drag event handlers
   drag.addEventListener('mousedown', (e)=>{
     e.preventDefault();
     isDragging = true;
@@ -155,13 +140,13 @@ toolbar_js: |
 
   document.addEventListener('mousemove', (e)=>{
     if (isDragging) {
-      if (e.buttons > 0) { // Mouse button is still down - continue dragging
+      if (e.buttons > 0) {
         e.preventDefault();
         const dx = e.clientX - dragStartX;
-        const maxLeft = Math.max(toolbar_pos_min_px, window.innerWidth - toolbar.offsetWidth - toolbar_pos_min_px);
+        const maxLeft = Math.max(toolbar_pos_min_px, document.documentElement.clientWidth - toolbar.offsetWidth - toolbar_pos_min_px);
         const newLeft = Math.min(Math.max(toolbar_pos_min_px, dragStartLeft + dx), maxLeft);
         toolbar.style.left = newLeft + 'px';
-      } else { // Mouse button released - stop dragging
+      } else {
         postDragEnd();
       }
     }

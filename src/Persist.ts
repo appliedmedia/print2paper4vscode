@@ -1,9 +1,13 @@
 import type { App } from './App';
 import type { UI_t } from './UI';
 import type { GlobalStateKey_t, GlobalStateValue_t } from './VSCodeAPIs';
+import { kMenuId } from './UIMenu';
 
 // Persist value types - what we store locally
-export type PersistValue_t = string | number | boolean;
+// NOTE: No booleans - we have no global persist bools in this codebase.
+// All menu selections are strings (menuItemId) or numbers (zoom levels, margins).
+// If you need boolean-like state, use string values like 'on'/'off' or '1'/'0'.
+export type PersistValue_t = string | number;
 
 // Empty value: intentionally not persisted (for flyout-only parent menus)
 export const kEmptyNoPersist = '';
@@ -102,8 +106,6 @@ export class Persist {
    * Clear all persist state
    */
   async clear(): Promise<void> {
-    const { kMenuId } = require('./UIMenu');
-
     // Clear all menu-related state
     const keysToReset: GlobalStateKey_t[] = [...kMenuId, 'toolbar_pos'];
 

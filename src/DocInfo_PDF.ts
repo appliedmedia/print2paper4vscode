@@ -5,10 +5,7 @@ import type {
   OrientMenuItems_t,
   HeaderFooterSubmenu_t,
 } from './types/PaperPrinter_t';
-import {
-  kMarginIdById,
-  kHeaderFooter,
-} from './types/PaperPrinter_t';
+import { kMarginIdById, kHeaderFooter } from './types/PaperPrinter_t';
 import { Coords } from './Coords';
 import type { ThemedToken } from 'shiki';
 import type jsPDF from 'jspdf';
@@ -69,15 +66,6 @@ export class DocInfo_PDF {
   public languageId: LanguageId_t = 'typescript';
   public title: string = '';
 
-  // Header/Footer content settings (position-based)
-  // Each position stores what content appears there: 'title' | 'page' | 'total' | 'pageTotal' | kHeaderFooter.none
-  public header_begin: HeaderFooterSubmenu_t | typeof kHeaderFooter.none = kHeaderFooter.none;
-  public header_middle: HeaderFooterSubmenu_t | typeof kHeaderFooter.none = 'title';
-  public header_end: HeaderFooterSubmenu_t | typeof kHeaderFooter.none = kHeaderFooter.none;
-  public footer_begin: HeaderFooterSubmenu_t | typeof kHeaderFooter.none = kHeaderFooter.none;
-  public footer_middle: HeaderFooterSubmenu_t | typeof kHeaderFooter.none = 'pageTotal';
-  public footer_end: HeaderFooterSubmenu_t | typeof kHeaderFooter.none = kHeaderFooter.none;
-
   // Temporary file tracking
   public tempPdfs: string[] = [];
 
@@ -96,8 +84,7 @@ export class DocInfo_PDF {
     rightMarginPts: number;
   } {
     // Get margin setting from kMarginIdById (this is ADDED to base)
-    const marginEntry =
-      kMarginIdById[this.marginId] ?? kMarginIdById['normal'];
+    const marginEntry = kMarginIdById[this.marginId] ?? kMarginIdById['normal'];
     const marginSettingPts = marginEntry.marginPts;
 
     // Total margin = base + setting
@@ -125,6 +112,13 @@ export class DocInfo_PDF {
   }
 
   // PDF interface methods - expose jsPDF functionality through docInfo
+  /**
+   * Get the current page number (1-indexed)
+   */
+  get pageNumber(): number {
+    return this.getCurrentPageInfo().pageNumber;
+  }
+
   /**
    * Get the total number of pages in the document
    * Uses getNumberOfPages() - this is the current jsPDF API (not deprecated in actual library)
@@ -179,18 +173,19 @@ export class DocInfo_PDF {
 
   /**
    * Get information about the current page
-   * Returns pageNumber and pageContext from jsPDF, plus pageCount computed from pageTotal
+   * Returns pageNumber and pageTotal
    */
-  getCurrentPageInfo(): { pageNumber: number; pageCount: number; pageContext?: any } {
-    if (!this.pdfDoc) {
-      return { pageNumber: 0, pageCount: 0 };
+  getCurrentPageInfo(): { pageNumber: number; pageTotal: number } {
+    let pageNumber = 0;
+    let pageTotal = 0;
+
+    if (this.pdfDoc) {
+      const info = this.pdfDoc.getCurrentPageInfo();
+      pageNumber = info.pageNumber;
+      pageTotal = this.pageTotal;
     }
-    const info = this.pdfDoc.getCurrentPageInfo();
-    return {
-      pageNumber: info.pageNumber,
-      pageCount: this.pageTotal, // Use pageTotal which wraps getNumberOfPages()
-      pageContext: info.pageContext,
-    };
+
+    return { pageNumber, pageTotal };
   }
 
   /**
@@ -202,7 +197,6 @@ export class DocInfo_PDF {
       return { widthPx: 0, heightPx: 0 };
     }
 
-    const { Coords } = require('./Coords');
     const coords = new Coords(this.app);
 
     const pageWidthPts = this.getPageWidth();

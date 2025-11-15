@@ -57,7 +57,7 @@ export class Stylize {
 
   constructor(app: App) {
     this.app = app;
-    this.dx = app.dx.create('Stylize');
+    this.dx = app.dx.sub('Stylize');
   }
 
   async init(): Promise<void> {

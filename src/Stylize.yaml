@@ -1,3 +1,6 @@
+# Stylize.yaml - Syntax highlighting preview templates
+# ⚠️ Keep comments in this file minimal because it has to get copied at runtime. ⚠️
+
 stylize_html: |
   <!DOCTYPE html>
   <html>
@@ -5,33 +8,11 @@ stylize_html: |
       <meta charset="utf-8">
       <meta name="color-scheme" content="light dark">
       <style>
-        body { 
-          margin: 24px;
-          font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace; 
-        }
-        /* Collapse whitespace between .line nodes, preserve spaces within each line */
-        pre { 
-          white-space: pre; 
-          word-wrap: normal; 
-          margin: 0; 
-        }
-        code { 
-          font-size: {{fontSizePx}}px; 
-          display: block; 
-          margin: 0; 
-          white-space: normal; 
-        }
-        pre.shiki code { 
-          line-height: {{lineHeightPx}}px; 
-        }
-        pre.shiki .line { 
-          display: block; 
-          line-height: {{lineHeightPx}}px; 
-          min-height: {{lineHeightPx}}px; 
-          margin: 0; 
-          padding: 0; 
-          white-space: pre; 
-        }
+        body { margin: 24px; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace; }
+        pre { white-space: pre; word-wrap: normal; margin: 0; }
+        code { font-size: {{fontSizePx}}px; display: block; margin: 0; white-space: normal; }
+        pre.shiki code { line-height: {{lineHeightPx}}px; }
+        pre.shiki .line { display: block; line-height: {{lineHeightPx}}px; min-height: {{lineHeightPx}}px; margin: 0; padding: 0; white-space: pre; }
       </style>
       <title>{{varTitle}}</title>
     </head>
