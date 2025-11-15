@@ -170,9 +170,13 @@ export class UIWebView {
       // Get zoom level from zoomLevel menu persist
       const zoomMenuItemId =
         this.app.uimenumgr.getMenuItemIdSelected(kZoomLevel.id) || kZoomLevel.alt;
-      const pdf_zoom_level =
-        this.app.uimenumgr.getValueForMenuItemId(kZoomLevel.id, zoomMenuItemId) ||
-        Number(kZoomLevel.alt);
+      const rawZoom = this.app.uimenumgr.getValueForMenuItemId(kZoomLevel.id, zoomMenuItemId);
+      // Coerce to number (handles non-numeric strings like "fitWidth" by returning 0)
+      const coercedZoom = this.app.forceNumber(rawZoom);
+      // Use coerced value if finite, otherwise fall back to default
+      const pdf_zoom_level = Number.isFinite(coercedZoom) && coercedZoom > 0
+        ? coercedZoom
+        : Number(kZoomLevel.alt);
 
       // Create template dictionary
       const templateDict = {
