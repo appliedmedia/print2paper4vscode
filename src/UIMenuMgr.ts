@@ -164,8 +164,7 @@ export class UIMenuMgr {
               const expression = this.app.templateDictReplace(textEditConfig.transform.persist, {
                 [kDisplay]: String(contextDict[kDisplay]),
               });
-              // biome-ignore lint/security/noGlobalEval: Templates are developer-defined constants; users only select which template to use
-              // eslint-disable-next-line no-eval
+              // biome-ignore lint/security/noGlobalEval: Templates are developer-defined constants; users only select which template to use -- eslint-disable-next-line no-eval
               const transformedValue = eval(expression);
               finalMenuItemId = String(transformedValue);
               dx.out(`Applied transform.persist: ${contextDict[kDisplay]} → ${finalMenuItemId}`);
@@ -397,8 +396,7 @@ export class UIMenuMgr {
           dx.out(`Extracted calc expression: "${expression}"`);
 
           try {
-            // biome-ignore lint/security/noGlobalEval: Templates are developer-defined constants; users only select which template to use
-            // eslint-disable-next-line no-eval
+            // biome-ignore lint/security/noGlobalEval: Templates are developer-defined constants; users only select which template to use -- eslint-disable-next-line no-eval
             const calcResult = eval(expression);
             result = result.replace(calcMatch[0], String(calcResult));
             dx.out(`Calc evaluated: ${expression} = ${calcResult}`);
