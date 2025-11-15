@@ -299,8 +299,8 @@ export const kZoomLevel = {
         max: 300,
       },
       transform: {
-        display: 'Math.round({{persist}}*100)', // Convert scale (0.1-3.0) to percentage (10-300)
-        persist: '{{display}}/100', // Convert percentage (10-300) back to scale (0.1-3.0)
+        display: 'Math.round({{persist}}*100)', // Convert scale (0.5-3.0) to percentage (50-300)
+        persist: '{{display}}/100', // Convert percentage (50-300) back to scale (0.5-3.0)
       },
       persistId: 'zoomLevel_value',
     },
