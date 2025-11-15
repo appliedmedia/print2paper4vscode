@@ -106,9 +106,11 @@ export class App {
   }
 
   /**
-   * Check if content is non-empty
+   * Check if content has content when stringified
+   * Note: Numbers (including 0) and booleans (including false) always have content after stringification.
+   * Only undefined, null, and empty strings are considered empty.
    * @param content - Content to check (string, number, boolean, or undefined)
-   * @returns true if content has length > 0 when converted to string
+   * @returns true if stringified content has length > 0
    */
   notEmpty(content: string | number | boolean | undefined = ''): boolean {
     return String(content ?? '').length > 0;
