@@ -102,27 +102,27 @@ export class App {
     valueOrDict: number | string | undefined | Record<string, unknown>,
     useForZero = 0
   ): number | Record<string, number> {
+    const forceNumberValue = (value: number | string | undefined): number => {
+      const parsed = typeof value === 'number' ? value : parseFloat(String(value));
+      if (!Number.isFinite(parsed) || parsed === 0) {
+        return useForZero;
+      }
+      return parsed;
+    };
+
     let result: number | Record<string, number>;
 
     if (valueOrDict && typeof valueOrDict === 'object' && !Array.isArray(valueOrDict)) {
       const dictResult: Record<string, number> = {};
       for (const [key, value] of Object.entries(valueOrDict)) {
-        dictResult[key] = this.forceNumberValue(value as number | string | undefined, useForZero);
+        dictResult[key] = forceNumberValue(value as number | string | undefined);
       }
       result = dictResult;
     } else {
-      result = this.forceNumberValue(valueOrDict as number | string | undefined, useForZero);
+      result = forceNumberValue(valueOrDict as number | string | undefined);
     }
 
     return result;
-  }
-
-  private forceNumberValue(value: number | string | undefined, useForZero: number): number {
-    const parsed = typeof value === 'number' ? value : parseFloat(String(value));
-    if (!Number.isFinite(parsed) || parsed === 0) {
-      return useForZero;
-    }
-    return parsed;
   }
 
   /**
