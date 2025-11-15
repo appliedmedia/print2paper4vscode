@@ -1,5 +1,6 @@
 import type { App } from './App';
 import type { UI_t } from './UI';
+import { kNone } from './UI';
 import type { PersistValue_t } from './Persist';
 import { contextDict_t, kContextDict_None } from './types/UI_t';
 import {
@@ -241,21 +242,21 @@ export class UIMenuMgr {
 
   // Get the value for the currently selected menu item
   // Combines getMenuItemIdSelected + getValueForMenuItemId
-  // Returns string or number, never undefined (falls back to empty string)
-  getValueForMenuItemIdSelected(menuId: MenuId_t): number | string {
+  // Returns string or number, or kNone if empty/missing
+  getValueForMenuItemIdSelected(menuId: MenuId_t): number | string | typeof kNone {
     const dx = this.dx.sub('getValueForMenuItemIdSelected');
     const menuItemId = this.getMenuItemIdSelected(menuId);
     dx.out(`menuId=${menuId}, menuItemId=${menuItemId}`);
     if (!menuItemId) {
-      dx.out(`No menuItemId, returning empty string`);
+      dx.out(`No menuItemId, returning kNone`);
       dx.done();
-      return '';
+      return kNone;
     }
 
     const value = this.getValueForMenuItemId(menuId, menuItemId);
     dx.out(`Final result: menuItemId=${menuItemId}, value=${value}`);
     dx.done();
-    return value !== undefined ? value : '';
+    return value !== undefined ? value : kNone;
   }
 
   // Get the value for a menu item by its ID
