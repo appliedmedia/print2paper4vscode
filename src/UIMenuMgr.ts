@@ -42,7 +42,7 @@ export class UIMenuMgr {
 
   constructor(app: App) {
     this.app = app;
-    this.dx = app.dx.create('UIMenuMgr');
+    this.dx = app.dx.sub('UIMenuMgr');
     // No initialization needed - menus are created on-demand by PaperPrinter
   }
 

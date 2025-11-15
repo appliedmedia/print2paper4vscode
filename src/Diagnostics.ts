@@ -88,24 +88,14 @@ export class Diagnostics {
   }
 
   /**
-   * New sub-context Diagnostics instance for a method
-   * @param name - The name of the method being entered
-   * @param debugOn - Optional debug override (undefined inherit parent's debug status)
-   * @returns New Diagnostics instance for the method
+   * Create a sub-context Diagnostics instance
+   * Used for both component-level (in constructors) and method-level (in methods) contexts
+   * @param name - The name of the component or method
+   * @param debugOn - Optional debug override (undefined inherits parent's debug status)
+   * @returns New Diagnostics instance with this as parent
    */
   sub(name: string, debugOn?: boolean): Diagnostics {
     const dx = new Diagnostics(name, debugOn, this, this.app);
-    return dx;
-  }
-
-  /**
-   * Create a new independent Diagnostics instance (not a sub-context)
-   * @param name - The name of the new Diagnostics instance
-   * @param debugOn - Optional debug override (undefined inherits from this instance)
-   * @returns New independent Diagnostics instance
-   */
-  create(name: string, debugOn?: boolean): Diagnostics {
-    const dx = new Diagnostics(name, debugOn, this /* parent */, this.app);
     return dx;
   }
 

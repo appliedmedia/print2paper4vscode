@@ -44,7 +44,7 @@ export abstract class OS {
   constructor(app: App) {
     this.app = app;
     this.extensionRoot = app.vscodeapis.getExtensionPath();
-    this.dx = app.dx.create('OS');
+    this.dx = app.dx.sub('OS');
   }
 
   init(): void {}

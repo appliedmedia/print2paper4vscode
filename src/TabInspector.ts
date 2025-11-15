@@ -24,7 +24,7 @@ export class TabInspector {
 
   constructor(app: App) {
     this.app = app;
-    this.dx = app.dx.create('TabInspector');
+    this.dx = app.dx.sub('TabInspector');
   }
 
   init(): void {}

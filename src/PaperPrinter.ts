@@ -102,7 +102,7 @@ export class PaperPrinter {
 
   constructor(app: App) {
     this.app = app;
-    this.dx = app.dx.create('PaperPrinter');
+    this.dx = app.dx.sub('PaperPrinter');
 
     // Initialize docInfo
     this.docInfo = new DocInfo_PaperPrinter(app);

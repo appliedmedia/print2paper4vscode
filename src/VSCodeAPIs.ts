@@ -52,7 +52,7 @@ export class VSCodeAPIs {
     this.app = app;
     this.vscode = vscode;
     this.context = context;
-    this.dx = app.dx.create('VSCodeAPIs');
+    this.dx = app.dx.sub('VSCodeAPIs');
   }
 
   init(): void {

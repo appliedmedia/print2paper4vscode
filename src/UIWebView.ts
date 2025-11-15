@@ -43,7 +43,7 @@ export class UIWebView {
 
   constructor(app: App) {
     this.app = app;
-    this.dx = app.dx.create('UIWebView');
+    this.dx = app.dx.sub('UIWebView');
     this._yaml = new Yaml(app, 'src/UIWebView.yaml', UIWebView.kYaml);
   }
 

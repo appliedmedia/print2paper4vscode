@@ -62,7 +62,7 @@ export class UI {
 
   constructor(app: App) {
     this.app = app;
-    this.dx = app.dx.create('UI');
+    this.dx = app.dx.sub('UI');
     this._yaml = new Yaml(app, 'src/UI.yaml', UI.kYaml);
 
     // Initialize persist for toolbar position

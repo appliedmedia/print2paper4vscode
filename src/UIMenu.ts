@@ -198,7 +198,7 @@ export class UIMenu {
     ) => Promise<HandleSelection_t>
   ) {
     this.persist = new Persist(app) as Persist & Persist_t;
-    this.dx = this.app.dx.create('UIMenu');
+    this.dx = this.app.dx.sub('UIMenu');
     this._yaml = new Yaml(app, 'src/UIMenu.yaml', UIMenu.kYaml);
 
     // Register persist property (no value set yet)

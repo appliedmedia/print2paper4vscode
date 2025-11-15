@@ -44,7 +44,7 @@ export class Coords {
 
   constructor(app: App) {
     this.app = app;
-    this.dx = app.dx.create('Coords');
+    this.dx = app.dx.sub('Coords');
   }
 
   /**

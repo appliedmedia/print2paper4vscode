@@ -22,7 +22,7 @@ export class OSWin extends OS {
 
   constructor(app: App) {
     super(app);
-    this.dx = app.dx.create('OSWin');
+    this.dx = app.dx.sub('OSWin');
   }
 
   protected getOSKeys(): Record<string, string> {

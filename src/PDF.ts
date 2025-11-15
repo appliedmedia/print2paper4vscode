@@ -56,7 +56,7 @@ export class PDF {
 
   constructor(app: App) {
     this.app = app;
-    this.dx = app.dx.create('PDF');
+    this.dx = app.dx.sub('PDF');
     this.coords = new Coords(app);
     this.docInfo = new DocInfo_PDF(app);
     this._yaml = new Yaml(app, 'src/PDF.yaml', PDF.kYaml);
