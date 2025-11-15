@@ -279,7 +279,7 @@ export class UIMenuMgr {
         if (textEditConfig.persistId) {
           const persistValue = this.getValueForPersistIdOnMenuId(menuId, textEditConfig.persistId);
           dx.out(`Read from menu.persist[${textEditConfig.persistId}] = ${persistValue}`);
-          if (this.app.notEmpty(persistValue)) {
+          if (this.app.hasContent(persistValue)) {
             result = persistValue as string | number;
             dx.out(`Returning persistValue: ${result}`);
           }
