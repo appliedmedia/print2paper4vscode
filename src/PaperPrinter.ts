@@ -125,7 +125,7 @@ export class PaperPrinter {
   get lineHeightPx(): number {
     const editorTypo = this.app.vscodeapis.getEditorTypography();
     const fontSizeId = this.app.uimenumgr.getMenuItemIdSelected(kFontSizeId.id);
-    return parseInt(fontSizeId || kFontSizeId.alt, 10) * editorTypo.sizeToHeightRatio;
+    return parseInt(fontSizeId || kFontSizeId.altId, 10) * editorTypo.sizeToHeightRatio;
   }
 
   /**
@@ -234,30 +234,30 @@ export class PaperPrinter {
     try {
       // Get current settings
       const fontSizeValue = this.app.uimenumgr.getMenuItemIdSelected(kFontSizeId.id);
-      const fontSize = parseInt(fontSizeValue || kFontSizeId.alt, 10);
+      const fontSize = parseInt(fontSizeValue || kFontSizeId.altId, 10);
       dx.out(`PDF GENERATION: Using font size ${fontSize}px`);
-      const theme = (this.app.uimenumgr.getMenuItemIdSelected(kTheme.id) || kTheme.alt) as string;
+      const theme = (this.app.uimenumgr.getMenuItemIdSelected(kTheme.id) || kTheme.altId) as string;
 
       // Validate and normalize pageSizeId - use lookup table, fall back to default if invalid
       const rawPageSizeId = this.app.uimenumgr.getMenuItemIdSelected(kPageSizeId.id);
       const pageSizeId: PageSizeIdMenuItems_t =
         rawPageSizeId && rawPageSizeId in kPageSizeIdById
           ? (rawPageSizeId as PageSizeIdMenuItems_t)
-          : (kPageSizeId.alt as PageSizeIdMenuItems_t);
+          : (kPageSizeId.altId as PageSizeIdMenuItems_t);
 
       // Validate and normalize orient - clamp to valid values, fall back to default if invalid
       const rawOrient = this.app.uimenumgr.getMenuItemIdSelected(kOrient.id);
       const orient: 'portrait' | 'landscape' =
         rawOrient === 'portrait' || rawOrient === 'landscape'
           ? rawOrient
-          : (kOrient.alt as 'portrait' | 'landscape');
+          : (kOrient.altId as 'portrait' | 'landscape');
 
       // Validate and normalize marginId - use lookup table, fall back to default if invalid
       const rawMarginId = this.app.uimenumgr.getMenuItemIdSelected(kMarginId.id);
       const marginId: MarginIdMenuItems_t =
         rawMarginId && rawMarginId in kMarginIdById
           ? (rawMarginId as MarginIdMenuItems_t)
-          : (kMarginId.alt as MarginIdMenuItems_t);
+          : (kMarginId.altId as MarginIdMenuItems_t);
 
       // Set properties on PDF's docInfo
       this.app.pdf.docInfo.fontFamily = this.getCurrentFontFamily();
@@ -732,7 +732,7 @@ export class PaperPrinter {
       // Return the current editor theme ID as the default
       const currentEditorTheme = this.app.vscodeapis.getActiveThemeId();
       const availableThemes = this.app.stylize.getThemes();
-      const fallbackTheme = availableThemes[0]?.id || kTheme.alt;
+      const fallbackTheme = availableThemes[0]?.id || kTheme.altId;
       id = currentEditorTheme || fallbackTheme;
       value = id; // value is the theme ID
       dx.out(`returning editor theme: ${id}`);
@@ -956,7 +956,7 @@ export class PaperPrinter {
     if (menuItemId !== UIMenu.defaultId()) {
       const currentZoom =
         this.app.forceNumber(this.app.uimenumgr.getValueForMenuItemIdSelected(kZoomLevel.id)) ||
-        Number(kZoomLevel.alt);
+        Number(kZoomLevel.altValue);
       dx.out(`ZoomOut: currentZoom=${currentZoom}`);
 
       // Decrement by stepAmount, clamp to min, round to 2 decimals
@@ -1001,7 +1001,7 @@ export class PaperPrinter {
     if (menuItemId !== UIMenu.defaultId()) {
       const currentZoom =
         this.app.forceNumber(this.app.uimenumgr.getValueForMenuItemIdSelected(kZoomLevel.id)) ||
-        Number(kZoomLevel.alt);
+        Number(kZoomLevel.altValue);
 
       // Increment by stepAmount, clamp to max, round to 2 decimals
       const newZoom = Math.min(

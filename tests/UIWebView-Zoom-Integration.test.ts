@@ -255,8 +255,8 @@ describe('Extension↔Webview Integration Tests', () => {
       await uiWebView.displayPdfPanel();
       capturedWebviewHTML = (global as any).__capturedWebviewHTML || '';
       assert.ok(
-        capturedWebviewHTML.includes(kZoomLevel.alt),
-        `Should use default alt value (${kZoomLevel.alt}) for invalid zoom`
+        capturedWebviewHTML.includes(kZoomLevel.altValue),
+        `Should use default alt value (${kZoomLevel.altValue}) for invalid zoom`
       );
     });
 
@@ -467,7 +467,7 @@ describe('Extension↔Webview Integration Tests', () => {
       const zoomLevel = newApp.ui.persist.zoomLevel;
       assert.strictEqual(
         zoomLevel,
-        Number(kZoomLevel.alt),
+        Number(kZoomLevel.altValue),
         'Should use default zoom level when none persisted'
       );
     });
