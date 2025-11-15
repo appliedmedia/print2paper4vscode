@@ -155,4 +155,3 @@ pdf_js: |
   }
 
   window.initPdfViewer = initPdfViewer;
-  window.updatePdfData = updatePdfData;
