@@ -6,6 +6,7 @@ import type {
   HeaderFooterSubmenu_t,
 } from './types/PaperPrinter_t';
 import { kPageSizeIdById, kHeaderFooterSubmenuById, kHeaderFooter } from './types/PaperPrinter_t';
+import type { MenuId_t } from './UIMenu';
 import { Diagnostics } from './Diagnostics';
 import { Yaml } from './Yaml';
 import { Coords } from './Coords';
