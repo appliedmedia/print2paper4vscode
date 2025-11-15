@@ -38,11 +38,14 @@ export class Diagnostics {
     return Diagnostics._shared;
   }
 
-  private bookend(source: string, bookend: string, pad: number = 1): string {
-    if (!bookend) return source;
-    const padding = ' '.repeat(Math.max(0, Math.floor(pad)));
-    return `${bookend}${padding}${source}${padding}${bookend}`;
-  }
+  // Helper utilities namespace
+  private util = {
+    bookend: (source: string, bookend: string, pad: number = 1): string => {
+      if (!bookend) return source;
+      const padding = ' '.repeat(Math.max(0, Math.floor(pad)));
+      return `${bookend}${padding}${source}${padding}${bookend}`;
+    },
+  };
 
   /**
    * Reset static state for testing purposes
@@ -226,7 +229,7 @@ export class Diagnostics {
       // Add warning bookends if duplicate count exceeds threshold
       const shouldWarn = this.shared.duplicateCount > warning_max;
       const warningBookend = shouldWarn ? warning_icon : '';
-      dupMsg = this.bookend(dupMsg, warningBookend);
+      dupMsg = this.util.bookend(dupMsg, warningBookend);
 
       // Match format of duplicated message (truncated or full)
       if (this.shared.lastWasTruncated) {
