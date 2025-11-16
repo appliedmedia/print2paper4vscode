@@ -1,4 +1,4 @@
-import type { App } from './App';
+import type { App, Dict_t } from './App';
 import type { UI_t } from './UI';
 import type { PersistValue_t } from './Persist';
 import { contextDict_t, kContextDict_None } from './types/UI_t';
@@ -354,7 +354,7 @@ export class UIMenuMgr {
     const dx = this.dx.sub('buildTemplateValueDict');
     const pageSizePx = this.app.pdf?.docInfo?.pageSizePx;
     const context = this.contextDict ?? {};
-    const inputs: Record<string, unknown> = {
+    const inputs: Dict_t = {
       windowWidth: context.windowWidth,
       windowHeight: context.windowHeight,
       pageWidth: pageSizePx?.widthPx,
