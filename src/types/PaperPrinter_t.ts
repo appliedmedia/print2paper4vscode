@@ -340,10 +340,21 @@ export const kZoomLevel = {
       id: 'fitWidth',
       displayName: 'Fit Width',
       value: (dict?: TemplateValueDict) => {
-        const dict_nums = dict ?? ({} as TemplateValueDict);
-        const windowWidth = dict_nums.windowWidth;
-        const pageWidth = dict_nums.pageWidth;
-        if (windowWidth === undefined || pageWidth === undefined) {
+        // Validate dict is provided
+        if (!dict) {
+          return undefined;
+        }
+        const windowWidth = dict.windowWidth;
+        const pageWidth = dict.pageWidth;
+        // Validate all required keys are present, finite, and non-zero
+        if (
+          windowWidth === undefined ||
+          pageWidth === undefined ||
+          !Number.isFinite(windowWidth) ||
+          !Number.isFinite(pageWidth) ||
+          windowWidth === 0 ||
+          pageWidth === 0
+        ) {
           return undefined;
         }
         return windowWidth / pageWidth;
@@ -355,13 +366,25 @@ export const kZoomLevel = {
       id: 'fitPage',
       displayName: 'Fit Page',
       value: (dict?: TemplateValueDict) => {
-        const dict_nums = dict ?? ({} as TemplateValueDict);
-        const { windowWidth, pageWidth, windowHeight, pageHeight } = dict_nums;
+        // Validate dict is provided
+        if (!dict) {
+          return undefined;
+        }
+        const { windowWidth, pageWidth, windowHeight, pageHeight } = dict;
+        // Validate all required keys are present, finite, and non-zero
         if (
           windowWidth === undefined ||
           pageWidth === undefined ||
           windowHeight === undefined ||
-          pageHeight === undefined
+          pageHeight === undefined ||
+          !Number.isFinite(windowWidth) ||
+          !Number.isFinite(pageWidth) ||
+          !Number.isFinite(windowHeight) ||
+          !Number.isFinite(pageHeight) ||
+          windowWidth === 0 ||
+          pageWidth === 0 ||
+          windowHeight === 0 ||
+          pageHeight === 0
         ) {
           return undefined;
         }
