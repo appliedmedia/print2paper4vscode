@@ -10,8 +10,8 @@ import { Diagnostics } from './Diagnostics';
 import type { ExtensionContext } from 'vscode';
 
 // Type aliases for values that can be coerced to numbers
-export type Dict_t = Record<string, unknown>;
 export type ForceNumber_scalar_t = number | string | undefined;
+export type Dict_t = Record<string, ForceNumber_scalar_t>;
 export type ForceNumber_dict_t = Dict_t;
 
 type components_t = {
