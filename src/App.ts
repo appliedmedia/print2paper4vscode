@@ -9,6 +9,10 @@ import { UIMenuMgr } from './UIMenuMgr';
 import { Diagnostics } from './Diagnostics';
 import type { ExtensionContext } from 'vscode';
 
+// Type aliases for values that can be coerced to numbers
+export type CoercibleValue = number | string | undefined;
+export type CoercibleDict = Record<string, unknown>;
+
 type components_t = {
   vscodeapis: VSCodeAPIs;
   ui: UI;
@@ -97,7 +101,7 @@ export class App {
    * @param useForZero - Replacement for invalid or zero values (defaults to 0)
    * @returns Finite numeric value
    */
-  forceNumber(value: number | string | undefined, useForZero?: number): number;
+  forceNumber(value: CoercibleValue, useForZero?: number): number;
   /**
    * Force a dictionary of values to numbers, ensuring finite results
    * Converts strings to numbers and replaces undefined, NaN, Infinity, or zero
@@ -106,12 +110,26 @@ export class App {
    * @param useForZero - Replacement for invalid or zero values (defaults to 0)
    * @returns Dictionary with all values coerced to finite numbers
    */
-  forceNumber(dict: Record<string, unknown>, useForZero?: number): Record<string, number>;
+  forceNumber(dict: CoercibleDict, useForZero?: number): Record<string, number>;
+  /**
+   * Force a dictionary of values to numbers with required key validation
+   * Validates that all required keys are present and coerces their values to finite numbers.
+   * @param dict - Dictionary of values to convert
+   * @param useForZero - Replacement for invalid or zero values (defaults to 0)
+   * @param requiredKeys - Array of keys that must be present in the dict
+   * @returns Dictionary with all values coerced to finite numbers, or undefined if validation fails
+   */
   forceNumber(
-    valueOrDict: number | string | undefined | Record<string, unknown>,
-    useForZero = 0
-  ): number | Record<string, number> {
-    const forceNumberValue = (value: number | string | undefined): number => {
+    dict: CoercibleDict,
+    useForZero: number,
+    requiredKeys: readonly string[]
+  ): Record<string, number> | undefined;
+  forceNumber(
+    valueOrDict: CoercibleValue | CoercibleDict,
+    useForZero = 0,
+    requiredKeys?: readonly string[]
+  ): number | Record<string, number> | undefined {
+    const forceNumberValue = (value: CoercibleValue): number => {
       const parsed = typeof value === 'number' ? value : parseFloat(String(value));
       if (!Number.isFinite(parsed) || parsed === 0) {
         return useForZero;
@@ -121,12 +139,33 @@ export class App {
 
     if (valueOrDict && typeof valueOrDict === 'object' && !Array.isArray(valueOrDict)) {
       const dictResult: Record<string, number> = {};
-      for (const [key, value] of Object.entries(valueOrDict)) {
-        dictResult[key] = forceNumberValue(value as number | string | undefined);
+      
+      // If requiredKeys specified, validate all are present first
+      if (requiredKeys) {
+        for (const key of requiredKeys) {
+          if (!(key in valueOrDict)) {
+            return undefined;
+          }
+        }
       }
+      
+      // Coerce all values to numbers, using isFinite check and useForZero fallback
+      for (const [key, value] of Object.entries(valueOrDict)) {
+        dictResult[key] = forceNumberValue(value as CoercibleValue);
+      }
+      
+      // If requiredKeys specified, validate all required keys are non-zero after coercion
+      if (requiredKeys) {
+        for (const key of requiredKeys) {
+          if (dictResult[key] === 0) {
+            return undefined;
+          }
+        }
+      }
+      
       return dictResult;
     } else {
-      return forceNumberValue(valueOrDict as number | string | undefined);
+      return forceNumberValue(valueOrDict as CoercibleValue);
     }
   }
 

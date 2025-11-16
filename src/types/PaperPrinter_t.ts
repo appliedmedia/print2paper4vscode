@@ -23,6 +23,26 @@
 export type TemplateValueDict = Record<string, number>;
 export type TemplateValueResolver = (dict?: TemplateValueDict) => number | string | undefined;
 
+/**
+ * Validate that a dict has all required keys with finite, non-zero values
+ * @param dict - Dictionary to validate
+ * @param requiredKeys - Array of keys that must be present
+ * @returns true if all required keys exist and have finite non-zero values, false otherwise
+ */
+function validateDictKeys(
+  dict: TemplateValueDict | undefined,
+  requiredKeys: readonly string[]
+): dict is TemplateValueDict {
+  if (!dict) return false;
+  for (const key of requiredKeys) {
+    const value = dict[key];
+    if (value === undefined || !Number.isFinite(value) || value === 0) {
+      return false;
+    }
+  }
+  return true;
+}
+
 // Print menu definition
 export const kPrint = {
   id: 'print',
@@ -340,24 +360,10 @@ export const kZoomLevel = {
       id: 'fitWidth',
       displayName: 'Fit Width',
       value: (dict?: TemplateValueDict) => {
-        // Validate dict is provided
-        if (!dict) {
+        if (!validateDictKeys(dict, ['windowWidth', 'pageWidth'])) {
           return undefined;
         }
-        const windowWidth = dict.windowWidth;
-        const pageWidth = dict.pageWidth;
-        // Validate all required keys are present, finite, and non-zero
-        if (
-          windowWidth === undefined ||
-          pageWidth === undefined ||
-          !Number.isFinite(windowWidth) ||
-          !Number.isFinite(pageWidth) ||
-          windowWidth === 0 ||
-          pageWidth === 0
-        ) {
-          return undefined;
-        }
-        return windowWidth / pageWidth;
+        return dict.windowWidth / dict.pageWidth;
       },
     },
     // fitPage: scale page to fit both width and height in viewport (use smaller ratio)
@@ -366,30 +372,11 @@ export const kZoomLevel = {
       id: 'fitPage',
       displayName: 'Fit Page',
       value: (dict?: TemplateValueDict) => {
-        // Validate dict is provided
-        if (!dict) {
+        if (!validateDictKeys(dict, ['windowWidth', 'pageWidth', 'windowHeight', 'pageHeight'])) {
           return undefined;
         }
-        const { windowWidth, pageWidth, windowHeight, pageHeight } = dict;
-        // Validate all required keys are present, finite, and non-zero
-        if (
-          windowWidth === undefined ||
-          pageWidth === undefined ||
-          windowHeight === undefined ||
-          pageHeight === undefined ||
-          !Number.isFinite(windowWidth) ||
-          !Number.isFinite(pageWidth) ||
-          !Number.isFinite(windowHeight) ||
-          !Number.isFinite(pageHeight) ||
-          windowWidth === 0 ||
-          pageWidth === 0 ||
-          windowHeight === 0 ||
-          pageHeight === 0
-        ) {
-          return undefined;
-        }
-        const widthScale = windowWidth / pageWidth;
-        const heightScale = windowHeight / pageHeight;
+        const widthScale = dict.windowWidth / dict.pageWidth;
+        const heightScale = dict.windowHeight / dict.pageHeight;
         return Math.min(widthScale, heightScale);
       },
     },
