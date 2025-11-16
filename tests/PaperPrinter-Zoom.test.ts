@@ -47,19 +47,22 @@ function createMockApp() {
         if (menuId === 'zoomLevel') {
           const item = kZoomLevel.menuItems.find((i: any) => i.id === menuItemId);
           if (item && 'value' in item) {
-            if (typeof item.value === 'number') {
-              return item.value;
+            const value = item.value;
+            if (typeof value === 'number') {
+              return value;
             }
-            if (typeof item.value === 'function') {
+            if (typeof value === 'function') {
               const dict_nums = {
                 windowWidth: 1200,
                 pageWidth: 600,
                 windowHeight: 900,
                 pageHeight: 900,
               };
-              return item.value(dict_nums as any);
+              return value(dict_nums as any);
             }
-            return parseFloat(item.value as string);
+            if (typeof value === 'string') {
+              return parseFloat(value);
+            }
           }
           const parsed = parseFloat(menuItemId);
           return isNaN(parsed) ? undefined : parsed;

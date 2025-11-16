@@ -90,14 +90,23 @@ export class App {
   }
 
   /**
-   * Force a value (or dictionary of values) to numbers, ensuring finite results
+   * Force a value to number, ensuring finite result
    * Converts strings to numbers and replaces undefined, NaN, Infinity, or zero
-   * with the provided fallback value (defaults to 0). When given a dictionary,
-   * returns a new dictionary with each value coerced.
-   * @param valueOrDict - Value or object to convert
+   * with the provided fallback value (defaults to 0).
+   * @param value - Value to convert to number
    * @param useForZero - Replacement for invalid or zero values (defaults to 0)
-   * @returns Finite numeric value, or dictionary of finite numeric values
+   * @returns Finite numeric value
    */
+  forceNumber(value: number | string | undefined, useForZero?: number): number;
+  /**
+   * Force a dictionary of values to numbers, ensuring finite results
+   * Converts strings to numbers and replaces undefined, NaN, Infinity, or zero
+   * with the provided fallback value (defaults to 0).
+   * @param dict - Dictionary of values to convert
+   * @param useForZero - Replacement for invalid or zero values (defaults to 0)
+   * @returns Dictionary with all values coerced to finite numbers
+   */
+  forceNumber(dict: Record<string, unknown>, useForZero?: number): Record<string, number>;
   forceNumber(
     valueOrDict: number | string | undefined | Record<string, unknown>,
     useForZero = 0
@@ -110,19 +119,15 @@ export class App {
       return parsed;
     };
 
-    let result: number | Record<string, number>;
-
     if (valueOrDict && typeof valueOrDict === 'object' && !Array.isArray(valueOrDict)) {
       const dictResult: Record<string, number> = {};
       for (const [key, value] of Object.entries(valueOrDict)) {
         dictResult[key] = forceNumberValue(value as number | string | undefined);
       }
-      result = dictResult;
+      return dictResult;
     } else {
-      result = forceNumberValue(valueOrDict as number | string | undefined);
+      return forceNumberValue(valueOrDict as number | string | undefined);
     }
-
-    return result;
   }
 
   /**

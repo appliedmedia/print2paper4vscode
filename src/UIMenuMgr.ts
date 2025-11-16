@@ -362,10 +362,20 @@ export class UIMenuMgr {
     };
     const requiredKeys: string[] = [...kTemplateValueRequiredKeys];
     if (!dx.require(inputs, requiredKeys)) {
+      dx.error('Missing required template value keys');
       dx.done();
       return undefined;
     }
-    const dict_nums = this.app.forceNumber(inputs, 1) as TemplateValueDict;
+    // Force each value to a non-zero number with fallback of 1
+    const dict_nums = this.app.forceNumber(inputs, 1);
+    // Validate that all required keys are present and non-zero after forcing
+    for (const key of requiredKeys) {
+      if (!(key in dict_nums) || dict_nums[key] === 0) {
+        dx.error(`Template value ${key} is missing or zero after coercion`);
+        dx.done();
+        return undefined;
+      }
+    }
     dx.done();
     return dict_nums;
   }
