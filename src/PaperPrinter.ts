@@ -541,6 +541,8 @@ export class PaperPrinter {
       };
 
       // Add value property if it exists (for numeric zoom levels)
+      // Contract: function values MUST be TemplateValueResolver-shaped (accept TemplateValueDict,
+      // return number|string|undefined). Type checked at compile time via constants definition.
       if ('value' in item && item.value !== undefined) {
         const value = item.value;
         if (typeof value === 'number' || typeof value === 'string' || typeof value === 'function') {

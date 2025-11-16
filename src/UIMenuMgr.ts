@@ -283,9 +283,9 @@ export class UIMenuMgr {
   }
 
   // Get the value for a menu item by its ID
-  // Looks up menuItem by ID and evaluates calc templates if present
-  // Returns string or number; callers must coerce numeric strings to numbers (e.g., via App.forceNumber())
-  // Never returns undefined - defaults to menuItemId if value not found
+  // Resolves menu item values via resolver functions (for dynamic values like fitWidth/fitPage),
+  // numeric values, or legacy calc templates. Returns the resolved value or menuItemId as fallback.
+  // Never returns undefined - defaults to menuItemId if value not found or resolution fails.
   getValueForMenuItemId(menuId: MenuId_t, menuItemId: string): number | string {
     let result: number | string = menuItemId;
 
