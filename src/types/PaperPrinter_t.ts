@@ -24,10 +24,10 @@ export type TemplateValueDict = Record<string, number>;
 export type TemplateValueResolver = (dict?: TemplateValueDict) => number | string | undefined;
 
 /**
- * Validate that a dict has all required keys with finite, non-zero values
+ * Validate that a dict has all required keys with finite, strictly positive values
  * @param dict - Dictionary to validate
  * @param requiredKeys - Array of keys that must be present
- * @returns true if all required keys exist and have finite non-zero values, false otherwise
+ * @returns true if all required keys exist and have finite strictly positive values, false otherwise
  */
 function validateDictKeys(
   dict: TemplateValueDict | undefined,
@@ -36,7 +36,7 @@ function validateDictKeys(
   if (!dict) return false;
   for (const key of requiredKeys) {
     const value = dict[key];
-    if (value === undefined || !Number.isFinite(value) || value === 0) {
+    if (value === undefined || !Number.isFinite(value) || value <= 0) {
       return false;
     }
   }

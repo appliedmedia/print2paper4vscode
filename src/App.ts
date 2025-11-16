@@ -11,8 +11,7 @@ import type { ExtensionContext } from 'vscode';
 
 // Type aliases for values that can be coerced to numbers
 export type ForceNumber_scalar_t = number | string | undefined;
-export type Dict_t = Record<string, ForceNumber_scalar_t>;
-export type ForceNumber_dict_t = Dict_t;
+export type ForceNumber_dict_t = Record<string, ForceNumber_scalar_t>;
 
 type components_t = {
   vscodeapis: VSCodeAPIs;
@@ -96,42 +95,36 @@ export class App {
 
   /**
    * Force a value to number, ensuring finite result
-   * Converts strings to numbers and replaces undefined, NaN, Infinity, or zero
-   * with the provided fallback value (defaults to 0).
+   * Converts strings to numbers. Replaces undefined, NaN, Infinity, or zero with useForZero.
    * @param value - Value to convert to number
    * @param useForZero - Replacement for invalid or zero values (defaults to 0)
-   * @returns Finite numeric value
+   * @returns Finite numeric value (always returns a valid number)
    */
   forceNumber(value: ForceNumber_scalar_t, useForZero?: number): number;
   /**
-   * Force a dictionary of values to numbers, ensuring finite results
-   * Converts strings to numbers and replaces undefined, NaN, Infinity, or zero
-   * with the provided fallback value (defaults to 0).
+   * Force a dictionary of values to numbers, ensuring all finite results
+   * Converts strings to numbers. Replaces undefined, NaN, Infinity, or zero with useForZero.
+   * If requiredKeys specified, missing keys are added and set to useForZero.
    * @param dict - Dictionary of values to convert
    * @param useForZero - Replacement for invalid or zero values (defaults to 0)
-   * @returns Dictionary with all values coerced to finite numbers
-   */
-  forceNumber(dict: ForceNumber_dict_t, useForZero?: number): Record<string, number>;
-  /**
-   * Force a dictionary of values to numbers with required key validation
-   * Validates that all required keys are present and coerces their values to finite numbers.
-   * @param dict - Dictionary of values to convert
-   * @param useForZero - Replacement for invalid or zero values (defaults to 0)
-   * @param requiredKeys - Array of keys that must be present in the dict
-   * @returns Dictionary with all values coerced to finite numbers, or undefined if validation fails
+   * @param requiredKeys - Optional array of keys that must be present (will be added if missing)
+   * @returns Dictionary with all values coerced to finite numbers (always returns a valid dict)
    */
   forceNumber(
     dict: ForceNumber_dict_t,
-    useForZero: number,
-    requiredKeys: readonly string[]
-  ): Record<string, number> | undefined;
+    useForZero?: number,
+    requiredKeys?: readonly string[]
+  ): Record<string, number>;
   forceNumber(
     valueOrDict: ForceNumber_scalar_t | ForceNumber_dict_t,
     useForZero = 0,
     requiredKeys?: readonly string[]
-  ): number | Record<string, number> | undefined {
+  ): number | Record<string, number> {
     const forceNumberValue = (value: ForceNumber_scalar_t): number => {
+      // Check if value is finite number
       const parsed = typeof value === 'number' ? value : parseFloat(String(value));
+      // isFinite returns false for NaN, Infinity, -Infinity, undefined converted to NaN
+      // 0 is finite, so we need separate check
       if (!Number.isFinite(parsed) || parsed === 0) {
         return useForZero;
       }
@@ -141,27 +134,23 @@ export class App {
     if (valueOrDict && typeof valueOrDict === 'object' && !Array.isArray(valueOrDict)) {
       const dictResult: Record<string, number> = {};
       
-      // If requiredKeys specified, validate all are present first
+      // If requiredKeys specified, ensure they all exist (add with useForZero if missing)
       if (requiredKeys) {
         for (const key of requiredKeys) {
           if (!(key in valueOrDict)) {
-            return undefined;
+            valueOrDict[key] = useForZero;
           }
         }
       }
       
       // Coerce all values to numbers, using isFinite check and useForZero fallback
       for (const [key, value] of Object.entries(valueOrDict)) {
-        dictResult[key] = forceNumberValue(value as ForceNumber_scalar_t);
+        dictResult[key] = forceNumberValue(value);
       }
       
-      // If requiredKeys specified, validate all required keys are non-zero after coercion
-      if (requiredKeys) {
-        for (const key of requiredKeys) {
-          if (dictResult[key] === 0) {
-            return undefined;
-          }
-        }
+      // If dict is empty and no required keys, return dict with key "0" set to useForZero
+      if (Object.keys(dictResult).length === 0) {
+        dictResult['0'] = useForZero;
       }
       
       return dictResult;

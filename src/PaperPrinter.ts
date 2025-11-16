@@ -540,7 +540,8 @@ export class PaperPrinter {
         shortcut: shortcut,
       };
 
-      // Add value property if it exists (for numeric zoom levels)
+      // Add value property if it exists (for numeric/dynamic zoom levels)
+      // Accepts: number (fixed zoom), string (legacy template), or function (TemplateValueResolver)
       // Contract: function values MUST be TemplateValueResolver-shaped (accept TemplateValueDict,
       // return number|string|undefined). Type checked at compile time via constants definition.
       if ('value' in item && item.value !== undefined) {

@@ -1,4 +1,4 @@
-import type { App, Dict_t } from './App';
+import type { App, ForceNumber_dict_t } from './App';
 import type { UI_t } from './UI';
 import type { PersistValue_t } from './Persist';
 import { contextDict_t, kContextDict_None } from './types/UI_t';
@@ -350,23 +350,19 @@ export class UIMenuMgr {
     return result;
   }
 
-  private buildTemplateValueDict(): TemplateValueDict | undefined {
+  private buildTemplateValueDict(): TemplateValueDict {
     const dx = this.dx.sub('buildTemplateValueDict');
     const pageSizePx = this.app.pdf?.docInfo?.pageSizePx;
     const context = this.contextDict ?? {};
-    const inputs: Dict_t = {
+    const inputs: ForceNumber_dict_t = {
       windowWidth: context.windowWidth,
       windowHeight: context.windowHeight,
       pageWidth: pageSizePx?.widthPx,
       pageHeight: pageSizePx?.heightPx,
     };
-    // forceNumber with requiredKeys validates presence, coerces to numbers, and ensures non-zero
+    // forceNumber with requiredKeys ensures all keys exist, coerces to numbers (non-zero or useForZero)
+    // Missing keys are added with useForZero=1, invalid/zero values become 1
     const dict_nums = this.app.forceNumber(inputs, 1, kTemplateValueRequiredKeys);
-    if (!dict_nums) {
-      dx.error('Failed to build template value dict: missing or invalid required keys');
-      dx.done();
-      return undefined;
-    }
     dx.done();
     return dict_nums;
   }
@@ -378,10 +374,6 @@ export class UIMenuMgr {
   ): number | string | undefined {
     const dx = this.dx.sub('resolveTemplateValue');
     const dict_nums = this.buildTemplateValueDict();
-    if (!dict_nums) {
-      dx.done();
-      return undefined;
-    }
     try {
       const result = resolver(dict_nums);
       dx.done();
