@@ -23,26 +23,6 @@
 export type TemplateValueDict = Record<string, number>;
 export type TemplateValueResolver = (dict?: TemplateValueDict) => number | string | undefined;
 
-/**
- * Validate that a dict has all required keys with finite, strictly positive values
- * @param dict - Dictionary to validate
- * @param requiredKeys - Array of keys that must be present
- * @returns true if all required keys exist and have finite strictly positive values, false otherwise
- */
-function validateDictKeys(
-  dict: TemplateValueDict | undefined,
-  requiredKeys: readonly string[]
-): dict is TemplateValueDict {
-  if (!dict) return false;
-  for (const key of requiredKeys) {
-    const value = dict[key];
-    if (value === undefined || !Number.isFinite(value) || value <= 0) {
-      return false;
-    }
-  }
-  return true;
-}
-
 // Print menu definition
 export const kPrint = {
   id: 'print',
@@ -356,25 +336,23 @@ export const kZoomLevel = {
     { id: '3.00', displayName: '300%', value: 3.0 },
     // fitWidth: scale page to fill window width
     // Formula: windowWidth / pageWidth (e.g., 1200/595 = 2.016 = scale up to fit)
+    // Note: dict guaranteed valid by forceNumber (all values finite, non-zero)
     {
       id: 'fitWidth',
       displayName: 'Fit Width',
       value: (dict?: TemplateValueDict) => {
-        if (!validateDictKeys(dict, ['windowWidth', 'pageWidth'])) {
-          return undefined;
-        }
+        if (!dict) return undefined;
         return dict.windowWidth / dict.pageWidth;
       },
     },
     // fitPage: scale page to fit both width and height in viewport (use smaller ratio)
     // Formula: Math.min of width and height ratios (ensures entire page visible)
+    // Note: dict guaranteed valid by forceNumber (all values finite, non-zero)
     {
       id: 'fitPage',
       displayName: 'Fit Page',
       value: (dict?: TemplateValueDict) => {
-        if (!validateDictKeys(dict, ['windowWidth', 'pageWidth', 'windowHeight', 'pageHeight'])) {
-          return undefined;
-        }
+        if (!dict) return undefined;
         const widthScale = dict.windowWidth / dict.pageWidth;
         const heightScale = dict.windowHeight / dict.pageHeight;
         return Math.min(widthScale, heightScale);
