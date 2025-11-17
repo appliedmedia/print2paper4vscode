@@ -44,6 +44,7 @@ import {
   type HeaderFooterSubmenu_t,
   type PrintMenuItems_t,
   type PageMenuItems_t,
+  type TemplateValueResolver,
   kPageSizeId,
   kOrient,
   kMarginId,
@@ -539,12 +540,14 @@ export class PaperPrinter {
         shortcut: shortcut,
       };
 
-      // Add value property if it exists (for numeric zoom levels)
+      // Add value property if it exists (for numeric/dynamic zoom levels)
+      // Accepts: number (fixed zoom), string (legacy template), or function (TemplateValueResolver)
+      // Contract: function values MUST be TemplateValueResolver-shaped (accept TemplateValueDict,
+      // return number|string|undefined). Type checked at compile time via constants definition.
       if ('value' in item && item.value !== undefined) {
         const value = item.value;
-        // Validate value is number or string (template)
-        if (typeof value === 'number' || typeof value === 'string') {
-          (menuItem as UIMenuItem_t & { value: number | string }).value = value;
+        if (typeof value === 'number' || typeof value === 'string' || typeof value === 'function') {
+          menuItem.value = value as number | string | TemplateValueResolver;
         } else {
           this.dx.error(`Invalid zoom level value type: ${typeof value} for item ${itemId}`);
         }

@@ -181,12 +181,11 @@ export class UIWebView {
       const zoomMenuItemId =
         this.app.uimenumgr.getMenuItemIdSelected(kZoomLevel.id) || kZoomLevel.altId;
       const rawZoom = this.app.uimenumgr.getValueForMenuItemId(kZoomLevel.id, zoomMenuItemId);
-      // Coerce to number (handles non-numeric strings like "fitWidth" by returning 0)
-      const coercedZoom = this.app.forceNumber(rawZoom);
+      // Coerce to number with explicit 0 fallback for invalid values
+      const coercedZoom = this.app.forceNumber(rawZoom, 0);
       // Use coerced value if finite and positive, otherwise fall back to hardcoded default
-      const pdf_zoom_level = Number.isFinite(coercedZoom) && coercedZoom > 0
-        ? coercedZoom
-        : kZoomLevel.altValue;
+      const pdf_zoom_level =
+        Number.isFinite(coercedZoom) && coercedZoom > 0 ? coercedZoom : kZoomLevel.altValue;
 
       // Create template dictionary
       const templateDict = {
@@ -206,7 +205,7 @@ export class UIWebView {
           kZoomLevel.menuItems.map(item => ({
             id: item.id,
             displayName: item.displayName,
-            value: 'value' in item ? item.value : undefined,
+            value: 'value' in item && typeof item.value !== 'function' ? item.value : undefined,
             shortcutCode: 'shortcutCode' in item ? item.shortcutCode : undefined,
           }))
         ),

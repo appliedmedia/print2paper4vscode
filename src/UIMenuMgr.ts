@@ -1,4 +1,4 @@
-import type { App } from './App';
+import type { App, ForceNumber_dict_t } from './App';
 import type { UI_t } from './UI';
 import type { PersistValue_t } from './Persist';
 import { contextDict_t, kContextDict_None } from './types/UI_t';
@@ -14,7 +14,18 @@ import {
   kMenuItemId,
 } from './UIMenu';
 import { Diagnostics } from './Diagnostics';
-import { kFontSizeId } from './types/PaperPrinter_t';
+import {
+  kFontSizeId,
+  type TemplateValueDict,
+  type TemplateValueResolver,
+} from './types/PaperPrinter_t';
+
+const kTemplateValueRequiredKeys = [
+  'windowWidth',
+  'windowHeight',
+  'pageWidth',
+  'pageHeight',
+] as const;
 
 /**
  * UIMenuMgr - Menu manager for webview toolbar system
@@ -48,13 +59,13 @@ export class UIMenuMgr {
 
   /**
    * Set context dictionary (merge-only)
-   * 
+   *
    * Called from UIWebView message handler to update template substitution context.
    * Always merges new values into existing context - never replaces or clears keys.
    * Stale keys persist across calls intentionally, as context accumulates webview
    * state (window dimensions, text_edit values) that should remain available for
    * subsequent menu selections and calc template evaluations.
-   * 
+   *
    * @param contextDict - Context values to merge (window dimensions, display values, etc.)
    */
   setContextDict(contextDict: contextDict_t = kContextDict_None): void {
@@ -272,9 +283,9 @@ export class UIMenuMgr {
   }
 
   // Get the value for a menu item by its ID
-  // Looks up menuItem by ID and evaluates calc templates if present
-  // Returns string or number; callers must coerce numeric strings to numbers (e.g., via App.forceNumber())
-  // Never returns undefined - defaults to menuItemId if value not found
+  // Resolves menu item values via resolver functions (for dynamic values like fitWidth/fitPage),
+  // numeric values, or legacy calc templates. Returns the resolved value or menuItemId as fallback.
+  // Never returns undefined - defaults to menuItemId if value not found or resolution fails.
   getValueForMenuItemId(menuId: MenuId_t, menuItemId: string): number | string {
     let result: number | string = menuItemId;
 
@@ -307,24 +318,27 @@ export class UIMenuMgr {
       const menuItem = menuItems.find(item => item.id === menuItemId);
 
       if (menuItem && 'value' in menuItem) {
-        const itemWithValue = menuItem as UIMenuItem_t & { value: number | string };
+        const itemWithValue = menuItem as UIMenuItem_t & {
+          value: number | string | TemplateValueResolver;
+        };
         const value = itemWithValue.value;
 
-        // Check if value contains template syntax (including calc)
-        if (typeof value === 'string' && (value.includes('{{calc:') || value.includes('{{'))) {
-          // Evaluate template (replaces vars and evaluates calc expressions)
-          // If evaluation fails, evaluateCalcTemplate returns undefined
+        if (typeof value === 'function') {
+          const resolvedValue = this.resolveTemplateValue(value, menuId, menuItemId);
+          if (resolvedValue !== undefined) {
+            result = resolvedValue;
+          }
+        } else if (
+          typeof value === 'string' &&
+          (value.includes('{{calc:') || value.includes('{{'))
+        ) {
           const evalResult = this.evaluateCalcTemplate(value, menuId, menuItemId);
           if (evalResult !== undefined) {
             result = evalResult;
           } else {
-            // Template evaluation failed - this is an error condition
-            // Log with context and fall back to a safe default
             this.dx.error(
               `Template evaluation failed for ${menuId}.${menuItemId}, value: ${value}`
             );
-            // Return the menuItemId so callers can recognize the failure
-            // Caller should handle this (e.g., use alt/default value)
             result = menuItemId;
           }
         } else {
@@ -334,6 +348,41 @@ export class UIMenuMgr {
     }
 
     return result;
+  }
+
+  private buildTemplateValueDict(): TemplateValueDict {
+    const dx = this.dx.sub('buildTemplateValueDict');
+    const pageSizePx = this.app.pdf?.docInfo?.pageSizePx;
+    const context = this.contextDict ?? {};
+    const inputs: ForceNumber_dict_t = {
+      windowWidth: context.windowWidth,
+      windowHeight: context.windowHeight,
+      pageWidth: pageSizePx?.widthPx,
+      pageHeight: pageSizePx?.heightPx,
+    };
+    // forceNumber with requiredKeys ensures all keys exist, coerces to numbers (non-zero or useForZero)
+    // Missing keys are added with useForZero=1, invalid/zero values become 1
+    const dict_nums = this.app.forceNumber(inputs, 1, kTemplateValueRequiredKeys);
+    dx.done();
+    return dict_nums;
+  }
+
+  private resolveTemplateValue(
+    resolver: TemplateValueResolver,
+    menuId: string,
+    menuItemId: string
+  ): number | string | undefined {
+    const dx = this.dx.sub('resolveTemplateValue');
+    const dict_nums = this.buildTemplateValueDict();
+    try {
+      const result = resolver(dict_nums);
+      dx.done();
+      return result;
+    } catch (error) {
+      this.dx.error(`Template resolver failed for ${menuId}.${menuItemId}: ${String(error)}`);
+      dx.done();
+      return undefined;
+    }
   }
 
   // Evaluate calc template like {{calc:{{pageHeight}}/{{windowHeight}}}}
@@ -397,9 +446,7 @@ export class UIMenuMgr {
 
         // Check for unreplaced template variables ({{ or }}) inside the expression
         if (expression.includes('{{') || expression.includes('}}')) {
-          dx.error(
-            `Template has unreplaced vars for ${menuId}.${menuItemId}: ${expression}`
-          );
+          dx.error(`Template has unreplaced vars for ${menuId}.${menuItemId}: ${expression}`);
           dx.done();
           return undefined;
         } else {
@@ -422,9 +469,7 @@ export class UIMenuMgr {
         }
       } else if (result.includes('{{') || result.includes('}}')) {
         // If there are still unreplaced template variables, fail validation
-        dx.error(
-          `Template has unreplaced vars for ${menuId}.${menuItemId}: ${result}`
-        );
+        dx.error(`Template has unreplaced vars for ${menuId}.${menuItemId}: ${result}`);
         dx.done();
         return undefined;
       }

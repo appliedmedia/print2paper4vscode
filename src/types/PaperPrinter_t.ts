@@ -19,6 +19,10 @@
  * This eliminates duplicate lookups and keeps everything in sync.
  */
 
+// Template value helpers for menu constants that compute their values on the extension side.
+export type TemplateValueDict = Record<string, number>;
+export type TemplateValueResolver = (dict?: TemplateValueDict) => number | string | undefined;
+
 // Print menu definition
 export const kPrint = {
   id: 'print',
@@ -332,13 +336,27 @@ export const kZoomLevel = {
     { id: '3.00', displayName: '300%', value: 3.0 },
     // fitWidth: scale page to fill window width
     // Formula: windowWidth / pageWidth (e.g., 1200/595 = 2.016 = scale up to fit)
-    { id: 'fitWidth', displayName: 'Fit Width', value: '{{calc:{{windowWidth}}/{{pageWidth}}}}' },
+    // Note: dict guaranteed valid by forceNumber (all values finite, non-zero)
+    {
+      id: 'fitWidth',
+      displayName: 'Fit Width',
+      value: (dict?: TemplateValueDict) => {
+        if (!dict) return undefined;
+        return dict.windowWidth / dict.pageWidth;
+      },
+    },
     // fitPage: scale page to fit both width and height in viewport (use smaller ratio)
     // Formula: Math.min of width and height ratios (ensures entire page visible)
+    // Note: dict guaranteed valid by forceNumber (all values finite, non-zero)
     {
       id: 'fitPage',
       displayName: 'Fit Page',
-      value: '{{calc:Math.min({{windowWidth}}/{{pageWidth}}, {{windowHeight}}/{{pageHeight}})}}',
+      value: (dict?: TemplateValueDict) => {
+        if (!dict) return undefined;
+        const widthScale = dict.windowWidth / dict.pageWidth;
+        const heightScale = dict.windowHeight / dict.pageHeight;
+        return Math.min(widthScale, heightScale);
+      },
     },
   ],
 } as const;

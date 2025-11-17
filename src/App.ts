@@ -9,6 +9,10 @@ import { UIMenuMgr } from './UIMenuMgr';
 import { Diagnostics } from './Diagnostics';
 import type { ExtensionContext } from 'vscode';
 
+// Type aliases for values that can be coerced to numbers
+export type ForceNumber_scalar_t = number | string | undefined;
+export type ForceNumber_dict_t = Record<string, ForceNumber_scalar_t>;
+
 type components_t = {
   vscodeapis: VSCodeAPIs;
   ui: UI;
@@ -91,18 +95,68 @@ export class App {
 
   /**
    * Force a value to number, ensuring finite result
-   * Converts string to number, returns 0 if not parseable, undefined, NaN, or Infinity
-   * @param value - Value to convert to number (number, string, or undefined)
-   * @returns Finite numeric value, or 0 if value is undefined, NaN, Infinity, or unparseable
+   * Converts strings to numbers. Replaces undefined, NaN, Infinity, or zero with useForZero.
+   * @param value - Value to convert to number
+   * @param useForZero - Replacement for invalid or zero values (defaults to 0)
+   * @returns Finite numeric value (always returns a valid number)
    */
-  forceNumber(value: number | string | undefined): number {
-    // For numeric inputs, check if finite
-    if (typeof value === 'number') {
-      return Number.isFinite(value) ? value : 0;
+  forceNumber(value: ForceNumber_scalar_t, useForZero?: number): number;
+  /**
+   * Force a dictionary of values to numbers, ensuring all finite results
+   * Converts strings to numbers. Replaces undefined, NaN, Infinity, or zero with useForZero.
+   * If requiredKeys specified, missing keys are added and set to useForZero.
+   * @param dict - Dictionary of values to convert
+   * @param useForZero - Replacement for invalid or zero values (defaults to 0)
+   * @param requiredKeys - Optional array of keys that must be present (will be added if missing)
+   * @returns Dictionary with all values coerced to finite numbers (always returns a valid dict)
+   */
+  forceNumber(
+    dict: ForceNumber_dict_t,
+    useForZero?: number,
+    requiredKeys?: readonly string[]
+  ): Record<string, number>;
+  forceNumber(
+    valueOrDict: ForceNumber_scalar_t | ForceNumber_dict_t,
+    useForZero = 0,
+    requiredKeys?: readonly string[]
+  ): number | Record<string, number> {
+    const forceNumberValue = (value: ForceNumber_scalar_t): number => {
+      // Check if value is finite number
+      const parsed = typeof value === 'number' ? value : parseFloat(String(value));
+      // isFinite returns false for NaN, Infinity, -Infinity, undefined converted to NaN
+      // 0 is finite, so we need separate check
+      if (!Number.isFinite(parsed) || parsed === 0) {
+        return useForZero;
+      }
+      return parsed;
+    };
+
+    if (valueOrDict && typeof valueOrDict === 'object' && !Array.isArray(valueOrDict)) {
+      const dictResult: Record<string, number> = {};
+      
+      // If requiredKeys specified, ensure they all exist (add with useForZero if missing)
+      if (requiredKeys) {
+        for (const key of requiredKeys) {
+          if (!(key in valueOrDict)) {
+            valueOrDict[key] = useForZero;
+          }
+        }
+      }
+      
+      // Coerce all values to numbers, using isFinite check and useForZero fallback
+      for (const [key, value] of Object.entries(valueOrDict)) {
+        dictResult[key] = forceNumberValue(value);
+      }
+      
+      // If dict is empty and no required keys, return dict with key "0" set to useForZero
+      if (Object.keys(dictResult).length === 0) {
+        dictResult['0'] = useForZero;
+      }
+      
+      return dictResult;
+    } else {
+      return forceNumberValue(valueOrDict as ForceNumber_scalar_t);
     }
-    // For non-numeric inputs, parse and validate
-    const parsed = parseFloat(String(value));
-    return Number.isFinite(parsed) ? parsed : 0;
   }
 
   /**
