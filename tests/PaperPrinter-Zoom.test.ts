@@ -14,7 +14,7 @@ import { describe, it, mock } from 'node:test';
 import * as assert from 'node:assert';
 import type { App } from '../src/App.js';
 import { PaperPrinter } from '../src/PaperPrinter.js';
-import { kZoomLevel, type TemplateValueDict } from '../src/types/PaperPrinter_t.js';
+import { kZoomLevel, type UIMenuItemDict_t } from '../src/types/PaperPrinter_t.js';
 
 // Create mock app
 function createMockApp() {
@@ -52,7 +52,7 @@ function createMockApp() {
               return value;
             }
             if (typeof value === 'function') {
-              const dict_nums: TemplateValueDict = {
+              const dict_nums: UIMenuItemDict_t = {
                 windowWidth: 1200,
                 pageWidth: 600,
                 windowHeight: 900,
