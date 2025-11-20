@@ -120,43 +120,40 @@ export class App {
     useForZero = 0,
     requiredKeys?: readonly string[]
   ): number | Record<string, number> {
-    const forceNumberValue = (value: ForceNumber_scalar_t): number => {
-      // Check if value is finite number
+    // Scalar version wraps dict version - eliminates duplicate logic
+    if (!valueOrDict || typeof valueOrDict !== 'object' || Array.isArray(valueOrDict)) {
+      const scalarValue = valueOrDict as ForceNumber_scalar_t;
+      const dict = this.forceNumber({ value: scalarValue } as ForceNumber_dict_t, useForZero);
+      return dict.value;
+    }
+
+    // Dict version - canonical implementation
+    const valueDict = valueOrDict as ForceNumber_dict_t;
+    const dictResult: Record<string, number> = {};
+
+    // If requiredKeys specified, ensure they all exist (add with useForZero if missing)
+    if (requiredKeys) {
+      for (const key of requiredKeys) {
+        if (!(key in valueDict)) {
+          valueDict[key] = useForZero;
+        }
+      }
+    }
+
+    // Coerce all values to numbers, using isFinite check and useForZero fallback
+    for (const [key, value] of Object.entries(valueDict)) {
       const parsed = typeof value === 'number' ? value : parseFloat(String(value));
       // isFinite returns false for NaN, Infinity, -Infinity, undefined converted to NaN
       // 0 is finite, so we need separate check
-      if (!Number.isFinite(parsed) || parsed === 0) {
-        return useForZero;
-      }
-      return parsed;
-    };
-
-    if (valueOrDict && typeof valueOrDict === 'object' && !Array.isArray(valueOrDict)) {
-      const dictResult: Record<string, number> = {};
-      
-      // If requiredKeys specified, ensure they all exist (add with useForZero if missing)
-      if (requiredKeys) {
-        for (const key of requiredKeys) {
-          if (!(key in valueOrDict)) {
-            valueOrDict[key] = useForZero;
-          }
-        }
-      }
-      
-      // Coerce all values to numbers, using isFinite check and useForZero fallback
-      for (const [key, value] of Object.entries(valueOrDict)) {
-        dictResult[key] = forceNumberValue(value);
-      }
-      
-      // If dict is empty and no required keys, return dict with key "0" set to useForZero
-      if (Object.keys(dictResult).length === 0) {
-        dictResult['0'] = useForZero;
-      }
-      
-      return dictResult;
-    } else {
-      return forceNumberValue(valueOrDict as ForceNumber_scalar_t);
+      dictResult[key] = !Number.isFinite(parsed) || parsed === 0 ? useForZero : parsed;
     }
+
+    // If dict is empty and no required keys, return dict with key "0" set to useForZero
+    if (Object.keys(dictResult).length === 0) {
+      dictResult['0'] = useForZero;
+    }
+
+    return dictResult;
   }
 
   /**

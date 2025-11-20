@@ -350,6 +350,20 @@ export class UIMenuMgr {
     return result;
   }
 
+  /**
+   * Build validated template value dictionary for resolver functions
+   *
+   * Constructs dict from webview context (window dimensions) and PDF page dimensions.
+   * All values validated by forceNumber() with requiredKeys to guarantee:
+   * - All required keys present (added with useForZero=1 if missing)
+   * - All values are finite numbers (invalid/zero values become 1)
+   * - No undefined or NaN values possible
+   *
+   * This validated dict is passed to resolver functions which can rely on all keys existing
+   * and containing valid numeric values - no defensive checks needed in resolvers.
+   *
+   * @returns TemplateValueDict with all required keys as finite, non-zero numbers
+   */
   private buildTemplateValueDict(): TemplateValueDict {
     const dx = this.dx.sub('buildTemplateValueDict');
     const pageSizePx = this.app.pdf?.docInfo?.pageSizePx;
@@ -367,6 +381,18 @@ export class UIMenuMgr {
     return dict_nums;
   }
 
+  /**
+   * Resolve a template value using resolver function
+   *
+   * Executes resolver function with validated dict (all required keys present as finite numbers).
+   * Returns number | string | undefined - does NOT force to number at this level.
+   * Type coercion happens at consumer level based on their specific needs.
+   *
+   * @param resolver - Function that computes value from template dict
+   * @param menuId - Menu ID for error logging context
+   * @param menuItemId - Menu item ID for error logging context
+   * @returns Resolved value (number | string | undefined) or undefined on error
+   */
   private resolveTemplateValue(
     resolver: TemplateValueResolver,
     menuId: string,

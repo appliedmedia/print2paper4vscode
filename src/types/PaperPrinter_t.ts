@@ -19,9 +19,34 @@
  * This eliminates duplicate lookups and keeps everything in sync.
  */
 
-// Template value helpers for menu constants that compute their values on the extension side.
+/**
+ * Template Value System - For menu items with dynamic or static values
+ *
+ * The `value` property on menu items is polymorphic and can be:
+ * 1. **Literal number**: `value: 1.0` - Static numeric value (e.g., zoom level)
+ * 2. **Literal string**: `value: "title"` - Static string content (e.g., header/footer template ID)
+ * 3. **Resolver function**: `value: (dict) => ...` - Dynamic value computed from context
+ *
+ * Resolver Function Contract:
+ * - Receives TemplateValueDict validated by forceNumber() with all required keys present
+ * - All dict values guaranteed to be finite numbers (non-zero unless explicitly set)
+ * - Required keys: windowWidth, windowHeight, pageWidth, pageHeight
+ * - Returns number | string | undefined based on computation
+ * - NO defensive checks needed - dict is always valid when resolver is called
+ *
+ * Value Resolution Flow:
+ * 1. UIMenuMgr.buildTemplateValueDict() creates dict from context + PDF dimensions
+ * 2. App.forceNumber(dict, useForZero=1, requiredKeys) validates all inputs
+ * 3. Resolver function executes with guaranteed-valid dict
+ * 4. Result flows to consumer who decides if/when to call forceNumber() on result
+ *
+ * Type Preservation:
+ * - Keep results as number | string | undefined through the pipeline
+ * - Only call forceNumber() at consumer level when numeric value is required
+ * - This preserves flexibility for string values (headers/footers) vs numeric (zoom)
+ */
 export type TemplateValueDict = Record<string, number>;
-export type TemplateValueResolver = (dict?: TemplateValueDict) => number | string | undefined;
+export type TemplateValueResolver = (dict: TemplateValueDict) => number | string | undefined;
 
 // Print menu definition
 export const kPrint = {
@@ -336,23 +361,19 @@ export const kZoomLevel = {
     { id: '3.00', displayName: '300%', value: 3.0 },
     // fitWidth: scale page to fill window width
     // Formula: windowWidth / pageWidth (e.g., 1200/595 = 2.016 = scale up to fit)
-    // Note: dict guaranteed valid by forceNumber (all values finite, non-zero)
+    // Dict guaranteed valid by forceNumber (all values finite, non-zero)
     {
       id: 'fitWidth',
       displayName: 'Fit Width',
-      value: (dict?: TemplateValueDict) => {
-        if (!dict) return undefined;
-        return dict.windowWidth / dict.pageWidth;
-      },
+      value: (dict: TemplateValueDict) => dict.windowWidth / dict.pageWidth,
     },
     // fitPage: scale page to fit both width and height in viewport (use smaller ratio)
     // Formula: Math.min of width and height ratios (ensures entire page visible)
-    // Note: dict guaranteed valid by forceNumber (all values finite, non-zero)
+    // Dict guaranteed valid by forceNumber (all values finite, non-zero)
     {
       id: 'fitPage',
       displayName: 'Fit Page',
-      value: (dict?: TemplateValueDict) => {
-        if (!dict) return undefined;
+      value: (dict: TemplateValueDict) => {
         const widthScale = dict.windowWidth / dict.pageWidth;
         const heightScale = dict.windowHeight / dict.pageHeight;
         return Math.min(widthScale, heightScale);

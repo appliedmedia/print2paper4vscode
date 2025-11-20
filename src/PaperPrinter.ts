@@ -540,10 +540,14 @@ export class PaperPrinter {
         shortcut: shortcut,
       };
 
-      // Add value property if it exists (for numeric/dynamic zoom levels)
-      // Accepts: number (fixed zoom), string (legacy template), or function (TemplateValueResolver)
-      // Contract: function values MUST be TemplateValueResolver-shaped (accept TemplateValueDict,
-      // return number|string|undefined). Type checked at compile time via constants definition.
+      // Add value property if it exists - polymorphic type supports multiple use cases:
+      // 1. Literal number: value: 1.0 (static zoom level like 100%)
+      // 2. Literal string: value: "title" (for headers/footers - though not used in zoom menu)
+      // 3. Resolver function: value: (dict) => ... (dynamic values like fitWidth, fitPage)
+      //
+      // Resolver functions receive validated TemplateValueDict with all required keys present
+      // and return number | string | undefined. No defensive checks needed in resolvers.
+      // Type checked at compile time via constants definition.
       if ('value' in item && item.value !== undefined) {
         const value = item.value;
         if (typeof value === 'number' || typeof value === 'string' || typeof value === 'function') {
