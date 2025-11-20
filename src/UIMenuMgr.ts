@@ -16,11 +16,11 @@ import {
 import { Diagnostics } from './Diagnostics';
 import {
   kFontSizeId,
-  type TemplateValueDict,
-  type TemplateValueResolver,
+  type UIMenuItemDict_t,
+  type UIMenuItemValueFxn_t,
 } from './types/PaperPrinter_t';
 
-const kTemplateValueRequiredKeys = [
+const kUIMenuItemDictRequiredKeys = [
   'windowWidth',
   'windowHeight',
   'pageWidth',
@@ -319,12 +319,12 @@ export class UIMenuMgr {
 
       if (menuItem && 'value' in menuItem) {
         const itemWithValue = menuItem as UIMenuItem_t & {
-          value: number | string | TemplateValueResolver;
+          value: number | string | UIMenuItemValueFxn_t;
         };
         const value = itemWithValue.value;
 
         if (typeof value === 'function') {
-          const resolvedValue = this.resolveTemplateValue(value, menuId, menuItemId);
+          const resolvedValue = this.resolveUIMenuItemValue(value, menuId, menuItemId);
           if (resolvedValue !== undefined) {
             result = resolvedValue;
           }
@@ -351,7 +351,7 @@ export class UIMenuMgr {
   }
 
   /**
-   * Build validated template value dictionary for resolver functions
+   * Build validated menu item value dictionary for resolver functions
    *
    * Constructs dict from webview context (window dimensions) and PDF page dimensions.
    * All values validated by forceNumber() with requiredKeys to guarantee:
@@ -362,10 +362,10 @@ export class UIMenuMgr {
    * This validated dict is passed to resolver functions which can rely on all keys existing
    * and containing valid numeric values - no defensive checks needed in resolvers.
    *
-   * @returns TemplateValueDict with all required keys as finite, non-zero numbers
+   * @returns UIMenuItemDict_t with all required keys as finite, non-zero numbers
    */
-  private buildTemplateValueDict(): TemplateValueDict {
-    const dx = this.dx.sub('buildTemplateValueDict');
+  private buildUIMenuItemDict(): UIMenuItemDict_t {
+    const dx = this.dx.sub('buildUIMenuItemDict');
     const pageSizePx = this.app.pdf?.docInfo?.pageSizePx;
     const context = this.contextDict ?? {};
     const inputs: ForceNumber_dict_t = {
@@ -376,36 +376,36 @@ export class UIMenuMgr {
     };
     // forceNumber with requiredKeys ensures all keys exist, coerces to numbers (non-zero or useForZero)
     // Missing keys are added with useForZero=1, invalid/zero values become 1
-    const dict_nums = this.app.forceNumber(inputs, 1, kTemplateValueRequiredKeys);
+    const dict_nums = this.app.forceNumber(inputs, 1, kUIMenuItemDictRequiredKeys);
     dx.done();
     return dict_nums;
   }
 
   /**
-   * Resolve a template value using resolver function
+   * Resolve a menu item value using resolver function
    *
    * Executes resolver function with validated dict (all required keys present as finite numbers).
    * Returns number | string | undefined - does NOT force to number at this level.
    * Type coercion happens at consumer level based on their specific needs.
    *
-   * @param resolver - Function that computes value from template dict
+   * @param resolver - Function that computes value from menu item dict
    * @param menuId - Menu ID for error logging context
    * @param menuItemId - Menu item ID for error logging context
    * @returns Resolved value (number | string | undefined) or undefined on error
    */
-  private resolveTemplateValue(
-    resolver: TemplateValueResolver,
+  private resolveUIMenuItemValue(
+    resolver: UIMenuItemValueFxn_t,
     menuId: string,
     menuItemId: string
   ): number | string | undefined {
-    const dx = this.dx.sub('resolveTemplateValue');
-    const dict_nums = this.buildTemplateValueDict();
+    const dx = this.dx.sub('resolveUIMenuItemValue');
+    const dict_nums = this.buildUIMenuItemDict();
     try {
       const result = resolver(dict_nums);
       dx.done();
       return result;
     } catch (error) {
-      this.dx.error(`Template resolver failed for ${menuId}.${menuItemId}: ${String(error)}`);
+      this.dx.error(`Menu item value resolver failed for ${menuId}.${menuItemId}: ${String(error)}`);
       dx.done();
       return undefined;
     }

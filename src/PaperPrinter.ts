@@ -44,7 +44,7 @@ import {
   type HeaderFooterSubmenu_t,
   type PrintMenuItems_t,
   type PageMenuItems_t,
-  type TemplateValueResolver,
+  type UIMenuItemValueFxn_t,
   kPageSizeId,
   kOrient,
   kMarginId,
@@ -545,13 +545,13 @@ export class PaperPrinter {
       // 2. Literal string: value: "title" (for headers/footers - though not used in zoom menu)
       // 3. Resolver function: value: (dict) => ... (dynamic values like fitWidth, fitPage)
       //
-      // Resolver functions receive validated TemplateValueDict with all required keys present
+      // Resolver functions receive validated UIMenuItemDict_t with all required keys present
       // and return number | string | undefined. No defensive checks needed in resolvers.
       // Type checked at compile time via constants definition.
       if ('value' in item && item.value !== undefined) {
         const value = item.value;
         if (typeof value === 'number' || typeof value === 'string' || typeof value === 'function') {
-          menuItem.value = value as number | string | TemplateValueResolver;
+          menuItem.value = value as number | string | UIMenuItemValueFxn_t;
         } else {
           this.dx.error(`Invalid zoom level value type: ${typeof value} for item ${itemId}`);
         }

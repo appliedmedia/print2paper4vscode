@@ -20,7 +20,7 @@
  */
 
 /**
- * Template Value System - For menu items with dynamic or static values
+ * Menu Item Value System - For menu items with dynamic or static values
  *
  * The `value` property on menu items is polymorphic and can be:
  * 1. **Literal number**: `value: 1.0` - Static numeric value (e.g., zoom level)
@@ -28,14 +28,14 @@
  * 3. **Resolver function**: `value: (dict) => ...` - Dynamic value computed from context
  *
  * Resolver Function Contract:
- * - Receives TemplateValueDict validated by forceNumber() with all required keys present
+ * - Receives UIMenuItemDict_t validated by forceNumber() with all required keys present
  * - All dict values guaranteed to be finite numbers (non-zero unless explicitly set)
  * - Required keys: windowWidth, windowHeight, pageWidth, pageHeight
  * - Returns number | string | undefined based on computation
  * - NO defensive checks needed - dict is always valid when resolver is called
  *
  * Value Resolution Flow:
- * 1. UIMenuMgr.buildTemplateValueDict() creates dict from context + PDF dimensions
+ * 1. UIMenuMgr.buildUIMenuItemDict() creates dict from context + PDF dimensions
  * 2. App.forceNumber(dict, useForZero=1, requiredKeys) validates all inputs
  * 3. Resolver function executes with guaranteed-valid dict
  * 4. Result flows to consumer who decides if/when to call forceNumber() on result
@@ -45,8 +45,8 @@
  * - Only call forceNumber() at consumer level when numeric value is required
  * - This preserves flexibility for string values (headers/footers) vs numeric (zoom)
  */
-export type TemplateValueDict = Record<string, number>;
-export type TemplateValueResolver = (dict: TemplateValueDict) => number | string | undefined;
+export type UIMenuItemDict_t = Record<string, number>;
+export type UIMenuItemValueFxn_t = (dict: UIMenuItemDict_t) => number | string | undefined;
 
 // Print menu definition
 export const kPrint = {
@@ -365,7 +365,7 @@ export const kZoomLevel = {
     {
       id: 'fitWidth',
       displayName: 'Fit Width',
-      value: (dict: TemplateValueDict) => dict.windowWidth / dict.pageWidth,
+      value: (dict: UIMenuItemDict_t) => dict.windowWidth / dict.pageWidth,
     },
     // fitPage: scale page to fit both width and height in viewport (use smaller ratio)
     // Formula: Math.min of width and height ratios (ensures entire page visible)
@@ -373,7 +373,7 @@ export const kZoomLevel = {
     {
       id: 'fitPage',
       displayName: 'Fit Page',
-      value: (dict: TemplateValueDict) => {
+      value: (dict: UIMenuItemDict_t) => {
         const widthScale = dict.windowWidth / dict.pageWidth;
         const heightScale = dict.windowHeight / dict.pageHeight;
         return Math.min(widthScale, heightScale);
