@@ -117,6 +117,14 @@ export class App {
     useForZero = 0,
     requiredKeys?: readonly string[]
   ): Record<string, number> {
+    // Internal helper: Force a single value to number
+    const force1Number = (value: ForceNumber_scalar_t): number => {
+      const parsed = typeof value === 'number' ? value : parseFloat(String(value));
+      // isFinite returns false for NaN, Infinity, -Infinity, undefined converted to NaN
+      // 0 is finite, so we need separate check
+      return !Number.isFinite(parsed) || parsed === 0 ? useForZero : parsed;
+    };
+
     const dictResult: Record<string, number> = {};
 
     // If requiredKeys specified, ensure they all exist (add with useForZero if missing)
@@ -128,12 +136,9 @@ export class App {
       }
     }
 
-    // Coerce all values to numbers, using isFinite check and useForZero fallback
+    // Coerce all values to numbers using internal helper
     for (const [key, value] of Object.entries(dict)) {
-      const parsed = typeof value === 'number' ? value : parseFloat(String(value));
-      // isFinite returns false for NaN, Infinity, -Infinity, undefined converted to NaN
-      // 0 is finite, so we need separate check
-      dictResult[key] = !Number.isFinite(parsed) || parsed === 0 ? useForZero : parsed;
+      dictResult[key] = force1Number(value);
     }
 
     // If dict is empty and no required keys, return dict with key "0" set to useForZero

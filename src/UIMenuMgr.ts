@@ -374,9 +374,9 @@ export class UIMenuMgr {
       pageWidth: pageSizePx?.widthPx,
       pageHeight: pageSizePx?.heightPx,
     };
-    // forceNumber with requiredKeys ensures all keys exist, coerces to numbers (non-zero or useForZero)
+    // forceNumbers with requiredKeys ensures all keys exist, coerces to numbers (non-zero or useForZero)
     // Missing keys are added with useForZero=1, invalid/zero values become 1
-    const dict_nums = this.app.forceNumber(inputs, 1, kUIMenuItemDictRequiredKeys);
+    const dict_nums = this.app.forceNumbers(inputs, 1, kUIMenuItemDictRequiredKeys);
     dx.done();
     return dict_nums;
   }
