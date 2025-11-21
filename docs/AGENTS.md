@@ -6,6 +6,38 @@
 
 This document provides developer-specific guidance, coding standards, and implementation notes for working on the Print2Paper4VSCode VS Code extension codebase.
 
+## Background Agent Branch Cleanup
+
+Cursor background agents automatically create feature branches but **do not** auto-delete them. Manual cleanup is required.
+
+### After PR is Merged
+
+Once your PR is merged to `main`:
+
+1. Delete the remote branch: `git push origin --delete cursor/<branch-name>`
+2. Prune stale remote refs: `git remote prune origin`
+3. Delete local branch if needed: `git branch -D cursor/<branch-name>`
+
+### If Work is Abandoned
+
+If no PR was created or the work is no longer needed:
+
+1. Delete remote immediately to prevent branch clutter
+2. Use `git branch -a` to audit all branches regularly
+3. Use `git cherry origin/main origin/<branch-name>` to verify if commits are merged before deleting
+
+### Bulk Cleanup
+
+To delete multiple merged branches at once:
+
+```bash
+# List merged remote branches (excluding main)
+git branch -r --merged origin/main | grep -v "main" | grep "origin/cursor/"
+
+# Delete them (review list first!)
+git branch -r --merged origin/main | grep "origin/cursor/" | sed 's/origin\///' | xargs -I {} git push origin --delete {}
+```
+
 ## Project Structure
 
 ```text

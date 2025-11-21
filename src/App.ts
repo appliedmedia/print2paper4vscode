@@ -9,9 +9,10 @@ import { UIMenuMgr } from './UIMenuMgr';
 import { Diagnostics } from './Diagnostics';
 import type { ExtensionContext } from 'vscode';
 
-// Type aliases for values that can be coerced to numbers
+// Type aliases for forceNumber/forceNumbers input and output
 export type ForceNumber_scalar_t = number | string | undefined;
 export type ForceNumber_dict_t = Record<string, ForceNumber_scalar_t>;
+export type ForceNumbers_t = Record<string, number>;
 
 type components_t = {
   vscodeapis: VSCodeAPIs;
@@ -94,13 +95,15 @@ export class App {
   }
 
   /**
-   * Force a value to number, ensuring finite result
-   * Converts strings to numbers. Replaces undefined, NaN, Infinity, or zero with useForZero.
+   * Force a single value to number, ensuring finite result
+   * Converts strings to numbers. Replaces undefined, NaN, Infinity, or zero with 0.
    * @param value - Value to convert to number
-   * @param useForZero - Replacement for invalid or zero values (defaults to 0)
    * @returns Finite numeric value (always returns a valid number)
    */
-  forceNumber(value: ForceNumber_scalar_t, useForZero?: number): number;
+  forceNumber(value: ForceNumber_scalar_t): number {
+    return this.forceNumbers({ value }).value;
+  }
+
   /**
    * Force a dictionary of values to numbers, ensuring all finite results
    * Converts strings to numbers. Replaces undefined, NaN, Infinity, or zero with useForZero.
@@ -110,53 +113,44 @@ export class App {
    * @param requiredKeys - Optional array of keys that must be present (will be added if missing)
    * @returns Dictionary with all values coerced to finite numbers (always returns a valid dict)
    */
-  forceNumber(
+  forceNumbers(
     dict: ForceNumber_dict_t,
-    useForZero?: number,
-    requiredKeys?: readonly string[]
-  ): Record<string, number>;
-  forceNumber(
-    valueOrDict: ForceNumber_scalar_t | ForceNumber_dict_t,
     useForZero = 0,
     requiredKeys?: readonly string[]
-  ): number | Record<string, number> {
-    const forceNumberValue = (value: ForceNumber_scalar_t): number => {
-      // Check if value is finite number
+  ): ForceNumbers_t {
+    // Internal helper: Force a single value to number
+    const force1Number = (value: ForceNumber_scalar_t): number => {
       const parsed = typeof value === 'number' ? value : parseFloat(String(value));
       // isFinite returns false for NaN, Infinity, -Infinity, undefined converted to NaN
       // 0 is finite, so we need separate check
-      if (!Number.isFinite(parsed) || parsed === 0) {
-        return useForZero;
-      }
-      return parsed;
+      return !Number.isFinite(parsed) || parsed === 0 ? useForZero : parsed;
     };
 
-    if (valueOrDict && typeof valueOrDict === 'object' && !Array.isArray(valueOrDict)) {
-      const dictResult: Record<string, number> = {};
-      
-      // If requiredKeys specified, ensure they all exist (add with useForZero if missing)
-      if (requiredKeys) {
-        for (const key of requiredKeys) {
-          if (!(key in valueOrDict)) {
-            valueOrDict[key] = useForZero;
-          }
+    const dictResult: ForceNumbers_t = {};
+
+    // If requiredKeys specified, ensure they all exist (add with useForZero if missing)
+    if (requiredKeys) {
+      for (const key of requiredKeys) {
+        if (!(key in dict)) {
+          dict[key] = useForZero;
         }
       }
-      
-      // Coerce all values to numbers, using isFinite check and useForZero fallback
-      for (const [key, value] of Object.entries(valueOrDict)) {
-        dictResult[key] = forceNumberValue(value);
-      }
-      
-      // If dict is empty and no required keys, return dict with key "0" set to useForZero
-      if (Object.keys(dictResult).length === 0) {
-        dictResult['0'] = useForZero;
-      }
-      
-      return dictResult;
-    } else {
-      return forceNumberValue(valueOrDict as ForceNumber_scalar_t);
     }
+
+    // Coerce all values to numbers using internal helper
+    for (const [key, value] of Object.entries(dict)) {
+      dictResult[key] = force1Number(value);
+    }
+
+    // Defensive: If dict is empty and no required keys, return dict with key "0" set to useForZero
+    // This ensures the function always returns at least one entry for external callers.
+    // Current internal callers never reach this (forceNumber always provides "value" key,
+    // UIMenuMgr always provides requiredKeys), but external API consumers might call with {}.
+    if (Object.keys(dictResult).length === 0) {
+      dictResult['0'] = useForZero;
+    }
+
+    return dictResult;
   }
 
   /**
