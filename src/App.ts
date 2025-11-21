@@ -142,7 +142,10 @@ export class App {
       dictResult[key] = force1Number(value);
     }
 
-    // If dict is empty and no required keys, return dict with key "0" set to useForZero
+    // Defensive: If dict is empty and no required keys, return dict with key "0" set to useForZero
+    // This ensures the function always returns at least one entry for external callers.
+    // Current internal callers never reach this (forceNumber always provides "value" key,
+    // UIMenuMgr always provides requiredKeys), but external API consumers might call with {}.
     if (Object.keys(dictResult).length === 0) {
       dictResult['0'] = useForZero;
     }
