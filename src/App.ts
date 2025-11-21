@@ -9,9 +9,10 @@ import { UIMenuMgr } from './UIMenuMgr';
 import { Diagnostics } from './Diagnostics';
 import type { ExtensionContext } from 'vscode';
 
-// Type aliases for values that can be coerced to numbers
+// Type aliases for forceNumber/forceNumbers input and output
 export type ForceNumber_scalar_t = number | string | undefined;
 export type ForceNumber_dict_t = Record<string, ForceNumber_scalar_t>;
+export type ForceNumbers_t = Record<string, number>;
 
 type components_t = {
   vscodeapis: VSCodeAPIs;
@@ -116,7 +117,7 @@ export class App {
     dict: ForceNumber_dict_t,
     useForZero = 0,
     requiredKeys?: readonly string[]
-  ): Record<string, number> {
+  ): ForceNumbers_t {
     // Internal helper: Force a single value to number
     const force1Number = (value: ForceNumber_scalar_t): number => {
       const parsed = typeof value === 'number' ? value : parseFloat(String(value));
@@ -125,7 +126,7 @@ export class App {
       return !Number.isFinite(parsed) || parsed === 0 ? useForZero : parsed;
     };
 
-    const dictResult: Record<string, number> = {};
+    const dictResult: ForceNumbers_t = {};
 
     // If requiredKeys specified, ensure they all exist (add with useForZero if missing)
     if (requiredKeys) {
