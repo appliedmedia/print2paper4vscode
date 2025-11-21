@@ -94,13 +94,15 @@ export class App {
   }
 
   /**
-   * Force a value to number, ensuring finite result
-   * Converts strings to numbers. Replaces undefined, NaN, Infinity, or zero with useForZero.
+   * Force a single value to number, ensuring finite result
+   * Converts strings to numbers. Replaces undefined, NaN, Infinity, or zero with 0.
    * @param value - Value to convert to number
-   * @param useForZero - Replacement for invalid or zero values (defaults to 0)
    * @returns Finite numeric value (always returns a valid number)
    */
-  forceNumber(value: ForceNumber_scalar_t, useForZero?: number): number;
+  forceNumber(value: ForceNumber_scalar_t): number {
+    return this.forceNumbers({ value }).value;
+  }
+
   /**
    * Force a dictionary of values to numbers, ensuring all finite results
    * Converts strings to numbers. Replaces undefined, NaN, Infinity, or zero with useForZero.
@@ -110,38 +112,24 @@ export class App {
    * @param requiredKeys - Optional array of keys that must be present (will be added if missing)
    * @returns Dictionary with all values coerced to finite numbers (always returns a valid dict)
    */
-  forceNumber(
+  forceNumbers(
     dict: ForceNumber_dict_t,
-    useForZero?: number,
-    requiredKeys?: readonly string[]
-  ): Record<string, number>;
-  forceNumber(
-    valueOrDict: ForceNumber_scalar_t | ForceNumber_dict_t,
     useForZero = 0,
     requiredKeys?: readonly string[]
-  ): number | Record<string, number> {
-    // Scalar version wraps dict version - eliminates duplicate logic
-    if (!valueOrDict || typeof valueOrDict !== 'object' || Array.isArray(valueOrDict)) {
-      const scalarValue = valueOrDict as ForceNumber_scalar_t;
-      const dict = this.forceNumber({ value: scalarValue } as ForceNumber_dict_t, useForZero);
-      return dict.value;
-    }
-
-    // Dict version - canonical implementation
-    const valueDict = valueOrDict as ForceNumber_dict_t;
+  ): Record<string, number> {
     const dictResult: Record<string, number> = {};
 
     // If requiredKeys specified, ensure they all exist (add with useForZero if missing)
     if (requiredKeys) {
       for (const key of requiredKeys) {
-        if (!(key in valueDict)) {
-          valueDict[key] = useForZero;
+        if (!(key in dict)) {
+          dict[key] = useForZero;
         }
       }
     }
 
     // Coerce all values to numbers, using isFinite check and useForZero fallback
-    for (const [key, value] of Object.entries(valueDict)) {
+    for (const [key, value] of Object.entries(dict)) {
       const parsed = typeof value === 'number' ? value : parseFloat(String(value));
       // isFinite returns false for NaN, Infinity, -Infinity, undefined converted to NaN
       // 0 is finite, so we need separate check
