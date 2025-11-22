@@ -205,6 +205,15 @@ export class UIMenu {
 
     // Register persist property (no value set yet)
     this.persist.register(this._id);
+
+    // Register text_edit persistId if present (e.g., 'zoomLevel_value' for zoom text_edit widget)
+    // This ensures the display value can be persisted and retrieved correctly
+    if (typeof this._iconSlotTriad.main === 'object' && this._iconSlotTriad.main !== null) {
+      const config = this._iconSlotTriad.main as TextEditConfig_t;
+      if (config.type === 'text_edit' && config.persistId) {
+        this.persist.register(config.persistId);
+      }
+    }
   }
 
   get yaml() {
