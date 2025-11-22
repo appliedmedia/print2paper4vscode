@@ -3,15 +3,18 @@
 ## Extension Initialization Flow
 
 ### 1. Extension Activation (`-entrypoint.ts`)
-```
+
+```text
 activate() 
   → new App(context, vscode)
   → app.init()
 ```
 
 ### 2. App Initialization (`App.ts`)
+
 Components are initialized in dependency order:
-```
+
+```text
 App.init():
   1. vscodeapis.init()
   2. ui.init()
@@ -25,7 +28,7 @@ App.init():
 
 ### 3. Print Command Flow (Option-P)
 
-```
+```text
 Command: "print2paper4vscode.printDoc"
   ↓
 PaperPrinter.handlePrintCommandFromVSCode()
@@ -53,7 +56,8 @@ PaperPrinter.handlePrintCommandFromVSCode()
 ## Custom Number Entry Flow (User enters "101")
 
 ### Webview → Extension
-```
+
+```text
 1. User types "101" in text_edit field
 2. User blurs (tabs away or hits enter)
 3. handleTextEditBlur() fires
@@ -67,7 +71,8 @@ PaperPrinter.handlePrintCommandFromVSCode()
 ```
 
 ### Extension Processing
-```
+
+```text
 5. UI.handleWebviewMessage() receives message
 6. Routes to UIMenuMgr.handleMenuItemSelected()
 7. Detects menuItemId === menuId (custom value indicator)
@@ -84,7 +89,8 @@ PaperPrinter.handlePrintCommandFromVSCode()
 ```
 
 ### Regeneration and Display
-```
+
+```text
 10. regenerateAndUpdateWebview()
     ↓
     a. generatePdf() - creates new PDF with zoom 1.01
@@ -99,27 +105,6 @@ PaperPrinter.handlePrintCommandFromVSCode()
        → textEditValue = '' (blank!)
     c. Displays webview with blank text_edit field
 ```
-
-## Why Zoom Still Works
-
-The zoom scaling is read from a DIFFERENT persist key:
-
-```typescript
-// UIWebView.ts line 181-183
-const zoomMenuItemId = this.app.uimenumgr.getMenuItemIdSelected(kZoomLevel.id);
-// Returns: 'zoomLevel' (the custom value indicator)
-
-const rawZoom = this.app.uimenumgr.getValueForMenuItemId(kZoomLevel.id, zoomMenuItemId);
-// When menuItemId === menuId, this ALSO tries to read from zoomLevel_value
-// BUT in practice, it falls through to returning the menuItemId itself ('zoomLevel')
-// Then falls back to reading from menu.persist['zoomLevel'] which WAS registered
-```
-
-Actually, looking more closely, the zoom works because:
-1. Line 940 in `handleSelection_ZoomLevel` stores value to `menu.persist['zoomLevel']` (registered)
-2. UIWebView reads from this same location
-
-But the text_edit display reads from `menu.persist['zoomLevel_value']` (not registered).
 
 ## The Fix
 
@@ -151,10 +136,10 @@ After the fix:
 
 ## Testing Checklist
 
-- [ ] Enter custom zoom value (e.g., 101)
-- [ ] Verify text_edit displays "101" after regeneration
-- [ ] Verify zoom scales correctly to 1.01x
-- [ ] Close and reopen preview
-- [ ] Verify custom zoom value persists and displays correctly
-- [ ] Test with predefined values (100%, 125%, etc.)
-- [ ] Verify predefined values still work correctly
+- [x] Enter custom zoom value (e.g., 101)
+- [x] Verify text_edit displays "101" after regeneration
+- [x] Verify zoom scales correctly to 1.01x
+- [x] Close and reopen preview
+- [x] Verify custom zoom value persists and displays correctly
+- [x] Test with predefined values (100%, 125%, etc.)
+- [x] Verify predefined values still work correctly
