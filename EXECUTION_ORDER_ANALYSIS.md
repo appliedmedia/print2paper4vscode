@@ -124,20 +124,19 @@ But the text_edit display reads from `menu.persist['zoomLevel_value']` (not regi
 ## The Fix
 
 **File**: `src/UIMenu.ts`  
-**Lines**: 209-216 (added)
+**Lines**: 209-215 (added)
 
 ```typescript
-// Register text_edit persistId if present (e.g., 'zoomLevel_value' for zoom text_edit widget)
-// This ensures the display value can be persisted and retrieved correctly
+// Register persistId if present (e.g., 'zoomLevel_value' for display values)
 if (typeof this._iconSlotTriad.main === 'object' && this._iconSlotTriad.main !== null) {
-  const config = this._iconSlotTriad.main as TextEditConfig_t;
-  if (config.type === 'text_edit' && config.persistId) {
+  const config = this._iconSlotTriad.main as { persistId?: string };
+  if (config.persistId) {
     this.persist.register(config.persistId);
   }
 }
 ```
 
-This registers 'zoomLevel_value' during menu construction, giving it proper getter/setter that syncs to VS Code global state.
+Generic solution: registers any `persistId` found in the config, regardless of widget type. This gives it proper getter/setter that syncs to VS Code global state.
 
 ## Verification
 
