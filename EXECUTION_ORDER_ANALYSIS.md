@@ -128,15 +128,14 @@ But the text_edit display reads from `menu.persist['zoomLevel_value']` (not regi
 
 ```typescript
 // Register persistId if present (e.g., 'zoomLevel_value' for display values)
-if (typeof this._iconSlotTriad.main === 'object' && this._iconSlotTriad.main !== null) {
-  const config = this._iconSlotTriad.main as { persistId?: string };
-  if (config.persistId) {
-    this.persist.register(config.persistId);
-  }
+const main = this._iconSlotTriad?.main;
+const menuPersistId = typeof main === 'object' ? main.persistId : undefined;
+if (menuPersistId) {
+  this.persist.register(menuPersistId);
 }
 ```
 
-Generic solution: registers any `persistId` found in the config, regardless of widget type. This gives it proper getter/setter that syncs to VS Code global state.
+Generic, type-safe solution: registers any `persistId` found in the config, regardless of widget type. This gives it proper getter/setter that syncs to VS Code global state.
 
 ## Verification
 
