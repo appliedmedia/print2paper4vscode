@@ -205,6 +205,12 @@ export class UIMenu {
 
     // Register persist property (no value set yet)
     this.persist.register(this._id);
+
+    // Register persistId if present (e.g., 'zoomLevel_value' for display values)
+    const menuPersistId: UI_t | undefined = (this._iconSlotTriad?.main as TextEditConfig_t)?.persistId;
+    if (menuPersistId) {
+      this.persist.register(menuPersistId);
+    }
   }
 
   get yaml() {
