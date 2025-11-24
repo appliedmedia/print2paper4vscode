@@ -223,6 +223,11 @@ describe('UIMenu Icon Slot Triad', () => {
             main: {
               type: 'text_edit' as const,
               width: '2ch',
+              constrain: {
+                regex: '^\\d{0,2}$',
+                min: 0,
+                max: 99,
+              },
             },
             end: '' 
           }
@@ -248,6 +253,8 @@ describe('UIMenu Icon Slot Triad', () => {
               width: '3ch',
               constrain: {
                 regex: '^\\d{0,3}$',  // Only 2 backslashes - clean!
+                min: 0,
+                max: 999,
               },
             },
             end: '' 

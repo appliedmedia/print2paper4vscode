@@ -27,8 +27,8 @@ describe('UIMenu - Text Edit Codec', () => {
         max: 300,
       },
       transform: {
-        display: 'Math.round({{persist}}*100)', // scale to percentage
-        persist: '{{display}}/100', // percentage to scale
+        display: (persist: number) => Math.round(persist * 100), // scale to percentage
+        persist: (display: number) => display / 100, // percentage to scale
       },
     };
 
@@ -104,12 +104,13 @@ describe('UIMenu - Text Edit Codec', () => {
     const textEditConfig: TextEditConfig_t = {
       type: 'text_edit',
       constrain: {
+        regex: '^\\d{0,3}$',
         min: 10,
         max: 300,
       },
       transform: {
-        display: 'Math.round({{persist}}*100)',
-        persist: '{{display}}/100',
+        display: (persist: number) => Math.round(persist * 100),
+        persist: (display: number) => display / 100,
       },
     };
 
@@ -138,12 +139,13 @@ describe('UIMenu - Text Edit Codec', () => {
     const textEditConfig: TextEditConfig_t = {
       type: 'text_edit',
       constrain: {
+        regex: '^\\d{0,3}$',
         min: 10,
         max: 300,
       },
       transform: {
-        display: 'invalid.syntax.here', // Will cause eval error
-        persist: '{{display}}/100',
+        display: (persist: number) => { throw new Error('Invalid transform'); }, // Will cause error
+        persist: (display: number) => display / 100,
       },
     };
 
@@ -173,12 +175,13 @@ describe('UIMenu - Text Edit Codec', () => {
     const textEditConfig: TextEditConfig_t = {
       type: 'text_edit',
       constrain: {
+        regex: '^\\d{0,3}$',
         min: 10,
         max: 300,
       },
       transform: {
-        display: 'Math.round({{persist}}*100)',
-        persist: '{{display}}/100',
+        display: (persist: number) => Math.round(persist * 100),
+        persist: (display: number) => display / 100,
       },
     };
 
@@ -233,12 +236,13 @@ describe('UIMenu - Text Edit Codec', () => {
     const textEditConfig: TextEditConfig_t = {
       type: 'text_edit',
       constrain: {
+        regex: '^\\d{0,3}$',
         min: 10,
         max: 300,
       },
       transform: {
-        display: 'Math.round({{persist}}*100)',
-        persist: '{{display}}/100',
+        display: (persist: number) => Math.round(persist * 100),
+        persist: (display: number) => display / 100,
       },
     };
 

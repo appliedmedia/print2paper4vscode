@@ -926,7 +926,6 @@ export class PaperPrinter {
     const dx = this.dx.sub('handleSelection_ZoomLevel');
     dx.out(`ZoomLevel selection: menuItemId=${menuItemId}`);
 
-    let persistId: UI_t = menuId;
     let id: MenuItemId_t = menuItemId;
     let value: string | number | boolean =
       this.app.uimenumgr.getValueForMenuItemId(menuId, menuItemId) ?? menuItemId;
@@ -937,7 +936,14 @@ export class PaperPrinter {
       value = 1.0;
       // Do NOT persist or regenerate - this is just a query for the default value
     } else {
-      this.app.uimenumgr.setValueForPersistIdOnMenuId(menuId, persistId, value as PersistValue_t);
+      // Save menuItemId to menu.persist[menuId] for tracking which item is selected
+      this.app.uimenumgr.setValueForPersistIdOnMenuId(menuId, menuId as UI_t, menuItemId);
+      
+      // For custom text_edit values (menuItemId === menuId), also save the actual value to persistId
+      if (menuItemId === menuId) {
+        this.app.uimenumgr.setValueForPersistIdOnMenuId(menuId, 'zoomLevel_value', value as PersistValue_t);
+      }
+      
       this.zoomLevel_setTextEdit(this.app.forceNumber(value));
       void this.regenerateAndUpdateWebview();
     }
