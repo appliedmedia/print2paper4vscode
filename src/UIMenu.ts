@@ -364,8 +364,15 @@ export class UIMenu {
 
   /**
    * Build constrain data attributes from iconSlotTriad.main.constrain
+   * Returns undefined if no constrain property present
    */
-  private handleIconSlotTypes_main_constrain(iconSlotTriadMain: iconSlotTriad_main_t): string {
+  private handleIconSlotTypes_main_constrain(
+    iconSlotTriadMain: string | iconSlotTriad_main_t
+  ): string | undefined {
+    if (typeof iconSlotTriadMain === 'string' || !iconSlotTriadMain.constrain) {
+      return undefined;
+    }
+
     // Validate regex pattern
     try {
       void new RegExp(iconSlotTriadMain.constrain.regex);
@@ -383,8 +390,15 @@ export class UIMenu {
 
   /**
    * Calculate width style from iconSlotTriad.main.width or auto-calculate from max
+   * Returns undefined if no constrain property present
    */
-  private handleIconSlotTypes_main_width(iconSlotTriadMain: iconSlotTriad_main_t): string {
+  private handleIconSlotTypes_main_width(
+    iconSlotTriadMain: string | iconSlotTriad_main_t
+  ): string | undefined {
+    if (typeof iconSlotTriadMain === 'string' || !iconSlotTriadMain.constrain) {
+      return undefined;
+    }
+
     let width = iconSlotTriadMain.width;
     if (!width) {
       // Auto-calculate: string(max).length + 1 for comfortable reading
@@ -396,8 +410,15 @@ export class UIMenu {
 
   /**
    * Get initial value from persistence and apply transform.display if defined
+   * Returns undefined if no constrain property present
    */
-  private handleIconSlotTypes_main_transform(iconSlotTriadMain: iconSlotTriad_main_t): string {
+  private handleIconSlotTypes_main_transform(
+    iconSlotTriadMain: string | iconSlotTriad_main_t
+  ): string | undefined {
+    if (typeof iconSlotTriadMain === 'string' || !iconSlotTriadMain.constrain) {
+      return undefined;
+    }
+
     const dx = this.dx.sub('handleIconSlotTypes_main_transform');
     let textEditValue = '';
     
@@ -460,11 +481,12 @@ export class UIMenu {
       }
 
       // Handle object with constrain (editable input with validation)
-      if (typeof iconSlotTriadMain !== 'string' && iconSlotTriadMain.constrain) {
+      // Each helper checks if it has what it needs and returns undefined if not
+      const constrainAttrs = this.handleIconSlotTypes_main_constrain(iconSlotTriadMain);
+      if (constrainAttrs) {
         try {
-          const constrainAttrs = this.handleIconSlotTypes_main_constrain(iconSlotTriadMain);
-          const widthStyle = this.handleIconSlotTypes_main_width(iconSlotTriadMain);
-          const textEditValue = this.handleIconSlotTypes_main_transform(iconSlotTriadMain);
+          const widthStyle = this.handleIconSlotTypes_main_width(iconSlotTriadMain) ?? '';
+          const textEditValue = this.handleIconSlotTypes_main_transform(iconSlotTriadMain) ?? '';
           
           const yaml = this.yaml;
           const html = this.app.templateDictReplace(yaml.uimenu_text_edit, {
