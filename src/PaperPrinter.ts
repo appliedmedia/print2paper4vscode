@@ -937,7 +937,11 @@ export class PaperPrinter {
       // Do NOT persist or regenerate - this is just a query for the default value
     } else {
       // Save menuItemId to menu.persist[menuId] for tracking which item is selected
-      this.app.uimenumgr.setValueForPersistIdOnMenuId(menuId, menuId as UI_t, menuItemId);
+      this.app.uimenumgr.setValueForPersistIdOnMenuId(
+        menuId,
+        menuId as UI_t,
+        menuItemId as PersistValue_t
+      );
 
       // Save actual zoom value to persistId (zoomLevel_setTextEdit handles this)
       this.zoomLevel_setTextEdit(this.app.forceNumber(value));
@@ -945,6 +949,43 @@ export class PaperPrinter {
     }
     dx.done();
     return { id, value };
+  }
+
+  /**
+   * Handle zoom adjustment (in/out) button clicks
+   * 
+   * @param buttonId - The button ID (kZoomOut.id or kZoomIn.id)
+   * @param direction - +1 for zoom in, -1 for zoom out
+   */
+  private async handleSelection_ZoomInOut(
+    buttonId: string,
+    direction: 1 | -1
+  ): Promise<HandleSelection_t> {
+    const dx = this.dx.sub('handleSelection_ZoomInOut');
+    const currentZoom =
+      this.app.forceNumber(this.app.uimenumgr.getValueForMenuItemIdSelected(kZoomLevel.id)) ||
+      Number(kZoomLevel.altValue);
+    dx.out(`${buttonId}: currentZoom=${currentZoom}`);
+
+    // Apply stepAmount in the specified direction, clamp to min/max, round to 2 decimals
+    const adjustment = direction * kZoomLevel.stepAmount;
+    const newZoom = Math.max(
+      kZoomLevel.min,
+      Math.min(kZoomLevel.max, Math.round((currentZoom + adjustment) * 100) / 100)
+    );
+    dx.out(`${buttonId}: newZoom=${newZoom}`);
+
+    // Persist the new zoom level (custom value - menuItemId = menuId)
+    this.app.uimenumgr.setValueForPersistIdOnMenuId(
+      kZoomLevel.id,
+      kZoomLevel.id as UI_t,
+      kZoomLevel.id as PersistValue_t
+    );
+    this.zoomLevel_setTextEdit(newZoom);
+    void this.regenerateAndUpdateWebview();
+
+    dx.done();
+    return { id: buttonId, value: newZoom };
   }
 
   /**
@@ -957,39 +998,11 @@ export class PaperPrinter {
     menuId: MenuId_t,
     menuItemId: MenuItemId_t
   ): Promise<HandleSelection_t> {
-    const dx = this.dx.sub('handleSelection_ZoomOut');
-    let id = '';
-    let value: string | number | boolean = '';
-
     // ZoomOut button has no default - only process actual clicks
-    if (menuItemId !== UIMenu.defaultId()) {
-      const currentZoom =
-        this.app.forceNumber(this.app.uimenumgr.getValueForMenuItemIdSelected(kZoomLevel.id)) ||
-        Number(kZoomLevel.altValue);
-      dx.out(`ZoomOut: currentZoom=${currentZoom}`);
-
-      // Decrement by stepAmount, clamp to min, round to 2 decimals
-      const newZoom = Math.max(
-        kZoomLevel.min,
-        Math.round((currentZoom - kZoomLevel.stepAmount) * 100) / 100
-      );
-      dx.out(`ZoomOut: newZoom=${newZoom}`);
-
-      // Persist the new zoom level (custom value - menuItemId = menuId)
-      this.app.uimenumgr.setValueForPersistIdOnMenuId(
-        kZoomLevel.id,
-        kZoomLevel.id as UI_t,
-        kZoomLevel.id as PersistValue_t
-      );
-      this.zoomLevel_setTextEdit(newZoom);
-      void this.regenerateAndUpdateWebview();
-
-      id = 'zoomOut';
-      value = newZoom;
+    if (menuItemId === UIMenu.defaultId()) {
+      return { id: '', value: '' };
     }
-
-    dx.done();
-    return { id, value };
+    return this.handleSelection_ZoomInOut(kZoomOut.id, -1);
   }
 
   /**
@@ -1002,38 +1015,11 @@ export class PaperPrinter {
     menuId: MenuId_t,
     menuItemId: MenuItemId_t
   ): Promise<HandleSelection_t> {
-    const dx = this.dx.sub('handleSelection_ZoomIn');
-    let id = '';
-    let value: string | number | boolean = '';
-
     // ZoomIn button has no default - only process actual clicks
-    if (menuItemId !== UIMenu.defaultId()) {
-      const currentZoom =
-        this.app.forceNumber(this.app.uimenumgr.getValueForMenuItemIdSelected(kZoomLevel.id)) ||
-        Number(kZoomLevel.altValue);
-
-      // Increment by stepAmount, clamp to max, round to 2 decimals
-      const newZoom = Math.min(
-        kZoomLevel.max,
-        Math.round((currentZoom + kZoomLevel.stepAmount) * 100) / 100
-      );
-      dx.out(`ZoomIn: newZoom=${newZoom}`);
-
-      // Persist the new zoom level (custom value - menuItemId = menuId)
-      this.app.uimenumgr.setValueForPersistIdOnMenuId(
-        kZoomLevel.id,
-        kZoomLevel.id as UI_t,
-        kZoomLevel.id as PersistValue_t
-      );
-      this.zoomLevel_setTextEdit(newZoom);
-      void this.regenerateAndUpdateWebview();
-
-      id = 'zoomIn';
-      value = newZoom;
+    if (menuItemId === UIMenu.defaultId()) {
+      return { id: '', value: '' };
     }
-
-    dx.done();
-    return { id, value };
+    return this.handleSelection_ZoomInOut(kZoomIn.id, +1);
   }
 
   // Removed CSS hacks; rely on theme overrides
