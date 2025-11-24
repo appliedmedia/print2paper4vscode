@@ -68,8 +68,9 @@ export type TextEditConfig_t = {
   persistId?: UI_t; // Separate persist key for text_edit value storage (e.g., 'zoomLevel_value')
   constrain: TextEditConstraint_t; // Cohesive validation strategy (regex + min/max)
   transform?: {
-    display?: (persist: number) => number; // Function to convert persist value to display value (e.g., (p) => Math.round(p*100))
-    persist?: (display: number) => number; // Function to convert display value to persist value (e.g., (d) => d/100)
+    // Transforms handle their own type conversion - they receive raw persisted values
+    display?: (persist: string | number | undefined) => number | string | undefined; // Convert persist value to display value
+    persist?: (display: string | number | undefined) => number | string | undefined; // Convert display value to persist value
   };
 };
 
