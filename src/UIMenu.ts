@@ -367,9 +367,9 @@ export class UIMenu {
    * Returns undefined if no constrain property present
    */
   private handleIconSlotTypes_main_constrain(
-    iconSlotTriadMain: string | iconSlotTriad_main_t
+    iconSlotTriadMain: iconSlotTriad_main_t
   ): string | undefined {
-    if (typeof iconSlotTriadMain === 'string' || !iconSlotTriadMain.constrain) {
+    if (!iconSlotTriadMain.constrain) {
       return undefined;
     }
 
@@ -393,9 +393,9 @@ export class UIMenu {
    * Returns undefined if no constrain property present
    */
   private handleIconSlotTypes_main_width(
-    iconSlotTriadMain: string | iconSlotTriad_main_t
+    iconSlotTriadMain: iconSlotTriad_main_t
   ): string | undefined {
-    if (typeof iconSlotTriadMain === 'string' || !iconSlotTriadMain.constrain) {
+    if (!iconSlotTriadMain.constrain) {
       return undefined;
     }
 
@@ -413,9 +413,9 @@ export class UIMenu {
    * Returns undefined if no constrain property present
    */
   private handleIconSlotTypes_main_transform(
-    iconSlotTriadMain: string | iconSlotTriad_main_t
+    iconSlotTriadMain: iconSlotTriad_main_t
   ): string | undefined {
-    if (typeof iconSlotTriadMain === 'string' || !iconSlotTriadMain.constrain) {
+    if (!iconSlotTriadMain.constrain) {
       return undefined;
     }
 
@@ -481,29 +481,31 @@ export class UIMenu {
       }
 
       // Handle object with constrain (editable input with validation)
-      // Each helper checks if it has what it needs and returns undefined if not
-      const constrainAttrs = this.handleIconSlotTypes_main_constrain(iconSlotTriadMain);
-      if (constrainAttrs) {
-        try {
-          const widthStyle = this.handleIconSlotTypes_main_width(iconSlotTriadMain) ?? '';
-          const textEditValue = this.handleIconSlotTypes_main_transform(iconSlotTriadMain) ?? '';
-          
-          const yaml = this.yaml;
-          const html = this.app.templateDictReplace(yaml.uimenu_text_edit, {
-            itemId,
-            constrainAttrs,
-            widthStyle,
-            textEditValue: textEditValue ? ` value="${textEditValue}"` : '',
-          });
-          return {
-            html,
-            cssClass: 'text-edit',
-            configAttr: constrainAttrs,
-            isSpecialType: true,
-          };
-        } catch (error) {
-          dx.error(`Failed to process text_edit config: ${String(error)}`);
-          return defaultReturn;
+      // Type guard once, then each helper checks for its specific property
+      if (typeof iconSlotTriadMain !== 'string') {
+        const constrainAttrs = this.handleIconSlotTypes_main_constrain(iconSlotTriadMain);
+        if (constrainAttrs) {
+          try {
+            const widthStyle = this.handleIconSlotTypes_main_width(iconSlotTriadMain) ?? '';
+            const textEditValue = this.handleIconSlotTypes_main_transform(iconSlotTriadMain) ?? '';
+            
+            const yaml = this.yaml;
+            const html = this.app.templateDictReplace(yaml.uimenu_text_edit, {
+              itemId,
+              constrainAttrs,
+              widthStyle,
+              textEditValue: textEditValue ? ` value="${textEditValue}"` : '',
+            });
+            return {
+              html,
+              cssClass: 'text-edit',
+              configAttr: constrainAttrs,
+              isSpecialType: true,
+            };
+          } catch (error) {
+            dx.error(`Failed to process text_edit config: ${String(error)}`);
+            return defaultReturn;
+          }
         }
       }
 
