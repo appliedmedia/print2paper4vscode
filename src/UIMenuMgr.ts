@@ -175,30 +175,27 @@ export class UIMenuMgr {
       if (contextDict?.[kDisplay] !== undefined && menuItemId === menuId) {
         isTextEditInput = true;
         dx.out(`Text_edit input detected`);
-        // Text_edit input - apply transform.persist if present
+        // Apply transform.persist if present (e.g., for text_edit input)
         const menu = this.getMenuById(menuId);
         const iconSlotMain = (menu as any)._iconSlotTriad?.main;
-        if (typeof iconSlotMain === 'object' && iconSlotMain.type === 'text_edit') {
-          const textEditConfig = iconSlotMain;
-          if (textEditConfig.transform?.persist) {
-            try {
-              const displayValue = parseFloat(String(contextDict[kDisplay]));
-              if (isNaN(displayValue)) {
-                dx.error(`Invalid display value for transform: ${contextDict[kDisplay]}`);
-                return;
-              }
-              const transformedValue = textEditConfig.transform.persist(displayValue);
-              finalMenuItemId = String(transformedValue);
-              dx.out(`Applied transform.persist: ${contextDict[kDisplay]} → ${finalMenuItemId}`);
-            } catch (error) {
-              dx.error(`Failed to apply transform.persist: ${error}`);
+        if (typeof iconSlotMain === 'object' && iconSlotMain.transform?.persist) {
+          try {
+            const displayValue = parseFloat(String(contextDict[kDisplay]));
+            if (isNaN(displayValue)) {
+              dx.error(`Invalid display value for transform: ${contextDict[kDisplay]}`);
               return;
             }
-          } else {
-            // No transform - use display value as-is
-            finalMenuItemId = String(contextDict[kDisplay]);
-            dx.out(`No transform, using display value as-is: ${finalMenuItemId}`);
+            const transformedValue = iconSlotMain.transform.persist(displayValue);
+            finalMenuItemId = String(transformedValue);
+            dx.out(`Applied transform.persist: ${contextDict[kDisplay]} → ${finalMenuItemId}`);
+          } catch (error) {
+            dx.error(`Failed to apply transform.persist: ${error}`);
+            return;
           }
+        } else {
+          // No transform - use display value as-is
+          finalMenuItemId = String(contextDict[kDisplay]);
+          dx.out(`No transform, using display value as-is: ${finalMenuItemId}`);
         }
       }
 
