@@ -412,43 +412,44 @@ export class UIMenu {
 
   /**
    * Get initial value from persistence and apply transform.display if defined
-   * Returns undefined if no transform property present
+   * Returns undefined if no persisted value present
    */
   private handleIconSlotTypes_main_transform(
     iconSlotTriadMain: iconSlotTriad_main_t
   ): string | undefined {
-    if (!iconSlotTriadMain.transform) {
-      return undefined;
-    }
-
     const dx = this.dx.sub('handleIconSlotTypes_main_transform');
-    let value = '';
+    let value: string | undefined = undefined;
     
     try {
       const persistedValue = this.app.uimenumgr.getValueForMenuItemIdSelected(this._id);
+      
+      if (persistedValue === undefined || persistedValue === null) {
+        dx.out(`No persisted value for ${this._id}`);
+        dx.done();
+        return undefined;
+      }
+      
       dx.out(`Transform for ${this._id}: value=${persistedValue}, type=${typeof persistedValue}`);
       
       // Pass value to transform as-is (string | number | undefined)
       // Transform functions handle their own type conversion
-      if (persistedValue !== undefined && persistedValue !== null) {
-        if (iconSlotTriadMain.transform.display) {
-          try {
-            const displayValue = iconSlotTriadMain.transform.display(persistedValue);
-            value = String(displayValue ?? '');
-            dx.out(`Transform value set to: ${value} (from persist: ${persistedValue})`);
-          } catch (error) {
-            dx.error(`Failed to evaluate transform.display: ${String(error)}`);
-            // On error, preserve exactly what was persisted
-            value = String(persistedValue);
-          }
-        } else {
-          // No transform.display: display == persisted representation
+      if (iconSlotTriadMain.transform?.display) {
+        try {
+          const displayValue = iconSlotTriadMain.transform.display(persistedValue);
+          value = String(displayValue ?? '');
+          dx.out(`Transform value set to: ${value} (from persist: ${persistedValue})`);
+        } catch (error) {
+          dx.error(`Failed to evaluate transform.display: ${String(error)}`);
+          // On error, preserve exactly what was persisted
           value = String(persistedValue);
-          dx.out(`Transform value (no display): ${value}`);
         }
+      } else {
+        // No transform.display: display == persisted representation
+        value = String(persistedValue);
+        dx.out(`Transform value (no display): ${value}`);
       }
     } catch (error) {
-      // If menu lookup fails (e.g., in test scenarios), just return empty
+      // If menu lookup fails (e.g., in test scenarios), just return undefined
       dx.out(`Could not get value for ${this._id}: ${String(error)}`);
     }
     
@@ -485,9 +486,9 @@ export class UIMenu {
       const yaml = this.yaml;
       const html = this.app.templateDictReplace(yaml.uimenu_text_edit, {
         itemId,
-        constrainAttrs: constrain,
-        widthStyle: width ?? '',
-        textEditValue: value ? ` value="${value}"` : '',
+        constrain,
+        width: width ?? '',
+        value: value ? ` value="${value}"` : '',
       });
       dx.done();
       return {
