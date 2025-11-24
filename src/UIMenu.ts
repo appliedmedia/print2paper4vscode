@@ -520,7 +520,7 @@ export class UIMenu {
 
     try {
       // Default return for regular icon content
-      const defaultReturn = {
+      let returnVals = {
         html:
           typeof iconSlotTriadMain === 'string' && iconSlotTriadMain
             ? `<span class="iconSlotTriad">${iconSlotTriadMain}</span>`
@@ -530,23 +530,20 @@ export class UIMenu {
         isSpecialType: false,
       };
 
-      if (!iconSlotTriadMain) {
-        return defaultReturn;
-      }
-
-      // Handle object types - gather data then dispatch by type
-      if (typeof iconSlotTriadMain === 'object' && iconSlotTriadMain?.type) {
-        const constrainAttrs = this.handleIconSlotTypes_main_constrain(iconSlotTriadMain);
-        const widthStyle = this.handleIconSlotTypes_main_width(iconSlotTriadMain);
-        const textEditValue = this.handleIconSlotTypes_main_transform(iconSlotTriadMain);
-        
-        if (iconSlotTriadMain.type === 'text_edit') {
-          return this.handleIconSlotTypes_main_text_edit(itemId, constrainAttrs, widthStyle, textEditValue);
+      if (iconSlotTriadMain) {
+        // Handle object types - gather data then dispatch by type
+        if (typeof iconSlotTriadMain === 'object' && iconSlotTriadMain?.type) {
+          const constrainAttrs = this.handleIconSlotTypes_main_constrain(iconSlotTriadMain);
+          const widthStyle = this.handleIconSlotTypes_main_width(iconSlotTriadMain);
+          const textEditValue = this.handleIconSlotTypes_main_transform(iconSlotTriadMain);
+          
+          if (iconSlotTriadMain.type === 'text_edit') {
+            returnVals = this.handleIconSlotTypes_main_text_edit(itemId, constrainAttrs, widthStyle, textEditValue);
+          }
         }
       }
 
-      // Regular icon content
-      return defaultReturn;
+      return returnVals;
     } finally {
       dx.done();
     }
