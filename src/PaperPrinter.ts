@@ -939,15 +939,7 @@ export class PaperPrinter {
       // Save menuItemId to menu.persist[menuId] for tracking which item is selected
       this.app.uimenumgr.setValueForPersistIdOnMenuId(menuId, menuId as UI_t, menuItemId);
 
-      // For custom text_edit values (menuItemId === menuId), also save the actual value to persistId
-      if (menuItemId === menuId) {
-        const menu = this.app.uimenumgr.getMenuById(menuId);
-        const iconSlotMain = (menu as any)._iconSlotTriad?.main;
-        if (typeof iconSlotMain === 'object' && iconSlotMain.type === 'text_edit' && iconSlotMain.persistId) {
-          this.app.uimenumgr.setValueForPersistIdOnMenuId(menuId, iconSlotMain.persistId, value as PersistValue_t);
-        }
-      }
-
+      // Save actual zoom value to persistId (zoomLevel_setTextEdit handles this)
       this.zoomLevel_setTextEdit(this.app.forceNumber(value));
       void this.regenerateAndUpdateWebview();
     }
