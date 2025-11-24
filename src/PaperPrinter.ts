@@ -30,20 +30,15 @@ import {
   type TextEditConfig_t,
 } from './UIMenu';
 import { UIWebView } from './UIWebView';
-import { DocInfo_PDF } from './DocInfo_PDF';
 import { DocInfo_PaperPrinter } from './DocInfo_PaperPrinter';
 import type { LanguageId_t } from './Stylize';
 import { Yaml } from './Yaml';
 import { kEmptyNoPersist } from './Persist';
 import {
   type PageSizeIdMenuItems_t,
-  type OrientMenuItems_t,
   type MarginIdMenuItems_t,
-  type FontSizeIdMenuItems_t,
   type HeaderFooterPos_t,
   type HeaderFooterSubmenu_t,
-  type PrintMenuItems_t,
-  type PageMenuItems_t,
   type UIMenuItemValueFxn_t,
   kPageSizeId,
   kOrient,
@@ -54,8 +49,6 @@ import {
   kPrint,
   kPageSizeIdById,
   kMarginIdById,
-  kHeaderFooterSubmenuById,
-  kPageMenuItemsById,
   kHeaderFooterMenuItemsById,
   kHeader,
   kFooter,
@@ -561,13 +554,8 @@ export class PaperPrinter {
     });
   }
 
-  private menuItems_ZoomOut(): UIMenuItem_t[] {
-    // Zoom out has no menu items - it's just a button
-    return [];
-  }
-
-  private menuItems_ZoomIn(): UIMenuItem_t[] {
-    // Zoom in has no menu items - it's just a button
+  private menuItems_ZoomInOut(): UIMenuItem_t[] {
+    // Zoom in/out buttons have no menu items - they're just buttons
     return [];
   }
 
