@@ -332,8 +332,17 @@ export const kZoomLevel = {
         max: 250,
       },
       transform: {
-        display: (persist: number) => Math.round(persist * 100), // Convert scale (0.5-2.5) to percentage (50-250)
-        persist: (display: number) => display / 100, // Convert percentage (50-250) back to scale (0.5-2.5)
+        // Transforms handle their own type conversion using forceNumber
+        display: (persist: string | number | undefined): number | undefined => {
+          // Convert scale (0.5-2.5) to percentage (50-250)
+          const scale = typeof persist === 'number' ? persist : parseFloat(String(persist));
+          return isNaN(scale) ? undefined : Math.round(scale * 100);
+        },
+        persist: (display: string | number | undefined): number | undefined => {
+          // Convert percentage (50-250) back to scale (0.5-2.5)
+          const percent = typeof display === 'number' ? display : parseFloat(String(display));
+          return isNaN(percent) ? undefined : percent / 100;
+        },
       },
       persistId: 'zoomLevel_value',
     },

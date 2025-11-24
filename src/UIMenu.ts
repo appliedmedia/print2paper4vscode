@@ -1,4 +1,4 @@
-import type { App } from './App';
+import type { App, ForceNumber_scalar_t } from './App';
 import type { UI_t } from './UI';
 import type { contextDict_t } from './types/UI_t';
 import { Diagnostics } from './Diagnostics';
@@ -69,8 +69,8 @@ export type TextEdit_t = {
   constrain: TextEditConstraint_t; // Cohesive validation strategy (regex + min/max)
   transform?: {
     // Transforms handle their own type conversion - they receive raw persisted values
-    display?: (persist: string | number | undefined) => number | string | undefined; // Convert persist value to display value
-    persist?: (display: string | number | undefined) => number | string | undefined; // Convert display value to persist value
+    display?: (persist: ForceNumber_scalar_t) => ForceNumber_scalar_t; // Convert persist value to display value
+    persist?: (display: ForceNumber_scalar_t) => ForceNumber_scalar_t; // Convert display value to persist value
   };
 };
 
