@@ -293,7 +293,7 @@ export const kZoomOut = {
   displayName: 'Zoom Out',
   iconSlotTriad: { begin: ' ', main: '−', end: '' },
   altId: '',
-  methodName: 'ZoomOut',
+  methodName: 'ZoomInOut', // Shared handler with zoomIn
   isFlyout: false,
   flyoutMenuItemIds: [] as const,
   menuItems: [],
@@ -305,7 +305,7 @@ export const kZoomIn = {
   displayName: 'Zoom In',
   iconSlotTriad: { begin: '', main: '+', end: '' },
   altId: '',
-  methodName: 'ZoomIn',
+  methodName: 'ZoomInOut', // Shared handler with zoomOut
   isFlyout: false,
   flyoutMenuItemIds: [] as const,
   menuItems: [],

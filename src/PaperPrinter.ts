@@ -954,72 +954,50 @@ export class PaperPrinter {
   /**
    * Handle zoom adjustment (in/out) button clicks
    * 
-   * @param buttonId - The button ID (kZoomOut.id or kZoomIn.id)
-   * @param direction - +1 for zoom in, -1 for zoom out
+   * Shared handler for both zoom in and zoom out buttons.
+   * Direction is determined by menuId: zoomOut = -1, zoomIn = +1
    */
   private async handleSelection_ZoomInOut(
-    buttonId: string,
-    direction: 1 | -1
+    menuId: MenuId_t,
+    menuItemId: MenuItemId_t
   ): Promise<HandleSelection_t> {
     const dx = this.dx.sub('handleSelection_ZoomInOut');
-    const currentZoom =
-      this.app.forceNumber(this.app.uimenumgr.getValueForMenuItemIdSelected(kZoomLevel.id)) ||
-      Number(kZoomLevel.altValue);
-    dx.out(`${buttonId}: currentZoom=${currentZoom}`);
+    let id = '';
+    let value: string | number | boolean = '';
+    
+    // Buttons have no default - only process actual clicks
+    if (menuItemId !== UIMenu.defaultId()) {
+      // Determine direction from menuId
+      const direction = menuId === kZoomOut.id ? -1 : +1;
+      
+      const currentZoom =
+        this.app.forceNumber(this.app.uimenumgr.getValueForMenuItemIdSelected(kZoomLevel.id)) ||
+        Number(kZoomLevel.altValue);
+      dx.out(`${menuId}: currentZoom=${currentZoom}, direction=${direction}`);
 
-    // Apply stepAmount in the specified direction, clamp to min/max, round to 2 decimals
-    const adjustment = direction * kZoomLevel.stepAmount;
-    const newZoom = Math.max(
-      kZoomLevel.min,
-      Math.min(kZoomLevel.max, Math.round((currentZoom + adjustment) * 100) / 100)
-    );
-    dx.out(`${buttonId}: newZoom=${newZoom}`);
+      // Apply stepAmount in the specified direction, clamp to min/max, round to 2 decimals
+      const adjustment = direction * kZoomLevel.stepAmount;
+      const newZoom = Math.max(
+        kZoomLevel.min,
+        Math.min(kZoomLevel.max, Math.round((currentZoom + adjustment) * 100) / 100)
+      );
+      dx.out(`${menuId}: newZoom=${newZoom}`);
 
-    // Persist the new zoom level (custom value - menuItemId = menuId)
-    this.app.uimenumgr.setValueForPersistIdOnMenuId(
-      kZoomLevel.id,
-      kZoomLevel.id as UI_t,
-      kZoomLevel.id as PersistValue_t
-    );
-    this.zoomLevel_setTextEdit(newZoom);
-    void this.regenerateAndUpdateWebview();
+      // Persist the new zoom level (custom value - menuItemId = menuId)
+      this.app.uimenumgr.setValueForPersistIdOnMenuId(
+        kZoomLevel.id,
+        kZoomLevel.id as UI_t,
+        kZoomLevel.id as PersistValue_t
+      );
+      this.zoomLevel_setTextEdit(newZoom);
+      void this.regenerateAndUpdateWebview();
+
+      id = menuId;
+      value = newZoom;
+    }
 
     dx.done();
-    return { id: buttonId, value: newZoom };
-  }
-
-  /**
-   * Handle zoom out button click
-   *
-   * Decrements current zoom by stepAmount (default 0.1 = 10%), clamped to minimum.
-   * Persists new zoom to ZoomLevel menu and regenerates PDF.
-   */
-  private async handleSelection_ZoomOut(
-    menuId: MenuId_t,
-    menuItemId: MenuItemId_t
-  ): Promise<HandleSelection_t> {
-    // ZoomOut button has no default - only process actual clicks
-    if (menuItemId === UIMenu.defaultId()) {
-      return { id: '', value: '' };
-    }
-    return this.handleSelection_ZoomInOut(kZoomOut.id, -1);
-  }
-
-  /**
-   * Handle zoom in button click
-   *
-   * Increments current zoom by stepAmount (default 0.1 = 10%), clamped to maximum.
-   * Persists new zoom to ZoomLevel menu and regenerates PDF.
-   */
-  private async handleSelection_ZoomIn(
-    menuId: MenuId_t,
-    menuItemId: MenuItemId_t
-  ): Promise<HandleSelection_t> {
-    // ZoomIn button has no default - only process actual clicks
-    if (menuItemId === UIMenu.defaultId()) {
-      return { id: '', value: '' };
-    }
-    return this.handleSelection_ZoomInOut(kZoomIn.id, +1);
+    return { id, value };
   }
 
   // Removed CSS hacks; rely on theme overrides
