@@ -395,28 +395,27 @@ export class UIMenu {
 
       // Handle text_edit type: object with constrain (regex + min/max work together as validation strategy)
       if (typeof iconSlotTriadMain === 'object' && iconSlotTriadMain !== null) {
-        const triadMain = iconSlotTriadMain as iconSlotTriad_main_t;
-        if (triadMain.type === 'text_edit') {
+        if (iconSlotTriadMain.type === 'text_edit') {
           try {
             // Validate regex pattern
             try {
-              new RegExp(triadMain.constrain.regex);
+              new RegExp(iconSlotTriadMain.constrain.regex);
             } catch (regexError) {
-              throw new Error(`Invalid constrain.regex: ${triadMain.constrain.regex}`);
+              throw new Error(`Invalid constrain.regex: ${iconSlotTriadMain.constrain.regex}`);
             }
 
             // Build data attributes from constrain object (all three work together)
             const constrainAttrs = [
-              ` data-constrain-regex="${triadMain.constrain.regex}"`,
-              ` data-constrain-min="${triadMain.constrain.min}"`,
-              ` data-constrain-max="${triadMain.constrain.max}"`,
+              ` data-constrain-regex="${iconSlotTriadMain.constrain.regex}"`,
+              ` data-constrain-min="${iconSlotTriadMain.constrain.min}"`,
+              ` data-constrain-max="${iconSlotTriadMain.constrain.max}"`,
             ].join('');
 
             // Calculate width: use explicit width, or auto-calculate from max value length
-            let width = triadMain.width;
+            let width = iconSlotTriadMain.width;
             if (!width) {
               // Auto-calculate: string(max).length + 1 for comfortable reading
-              const maxDigits = String(triadMain.constrain.max).length;
+              const maxDigits = String(iconSlotTriadMain.constrain.max).length;
               width = `${maxDigits + 1}ch`;
             }
 
@@ -447,9 +446,9 @@ export class UIMenu {
             // Pass value to transform as-is (string | number | undefined)
             // Transform functions handle their own type conversion
             if (value !== undefined && value !== null) {
-              if (triadMain.transform?.display) {
+              if (iconSlotTriadMain.transform?.display) {
                 try {
-                  const displayValue = triadMain.transform.display(value);
+                  const displayValue = iconSlotTriadMain.transform.display(value);
                   textEditValue = String(displayValue ?? '');
                   dx.out(`Text edit value set to: ${textEditValue} (from persist: ${value})`);
                 } catch (error) {

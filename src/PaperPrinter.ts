@@ -882,7 +882,7 @@ export class PaperPrinter {
     const dx = this.dx.sub('zoomLevel_setTextEdit');
     if (this.app.hasContent(zoomValue)) {
       const menuId = kZoomLevel.id;
-      const triadMain = kZoomLevel.iconSlotTriad.main as iconSlotTriad_main_t;
+      const triadMain: iconSlotTriad_main_t = kZoomLevel.iconSlotTriad.main;
       const persistId = triadMain.persistId;
       if (persistId) {
         const persistValue = this.app.forceNumber(zoomValue) as PersistValue_t;
