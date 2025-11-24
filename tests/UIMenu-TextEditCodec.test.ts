@@ -2,7 +2,7 @@ import { describe, it, beforeEach, afterEach } from 'node:test';
 import * as assert from 'node:assert';
 import { UIMenu } from '../src/UIMenu.js';
 import { App } from '../src/App.js';
-import type { MenuId_t, TextEdit_t } from '../src/UIMenu.js';
+import type { MenuId_t, iconSlotTriad_main_t } from '../src/UIMenu.js';
 import { mockContext, mockVSCode } from './test-utils.js';
 
 describe('UIMenu - Text Edit Codec', () => {
@@ -19,7 +19,7 @@ describe('UIMenu - Text Edit Codec', () => {
 
   it('should convert persisted value to display value using persistToDisplay codec', async () => {
     // Create a menu with text_edit that has a transform (like zoom level)
-    const textEditConfig: TextEdit_t = {
+    const textEditConfig: iconSlotTriad_main_t = {
       type: 'text_edit',
       constrain: {
         regex: '^\\d{0,3}$',
@@ -70,7 +70,7 @@ describe('UIMenu - Text Edit Codec', () => {
 
   it('should handle text_edit without transform (display = persist)', async () => {
     // Create a menu with text_edit that has NO transform
-    const textEditConfig: TextEdit_t = {
+    const textEditConfig: iconSlotTriad_main_t = {
       type: 'text_edit',
       constrain: {
         regex: '^\\d{1,2}$',
@@ -107,7 +107,7 @@ describe('UIMenu - Text Edit Codec', () => {
   });
 
   it('should handle missing persisted value gracefully', async () => {
-    const textEditConfig: TextEdit_t = {
+    const textEditConfig: iconSlotTriad_main_t = {
       type: 'text_edit',
       constrain: {
         regex: '^\\d{0,3}$',
@@ -148,7 +148,7 @@ describe('UIMenu - Text Edit Codec', () => {
 
   it('should handle transform evaluation errors gracefully', async () => {
     // Create a transform with an invalid expression
-    const textEditConfig: TextEdit_t = {
+    const textEditConfig: iconSlotTriad_main_t = {
       type: 'text_edit',
       constrain: {
         regex: '^\\d{0,3}$',
@@ -187,7 +187,7 @@ describe('UIMenu - Text Edit Codec', () => {
   });
 
   it('should round percentage values correctly', async () => {
-    const textEditConfig: TextEdit_t = {
+    const textEditConfig: iconSlotTriad_main_t = {
       type: 'text_edit',
       constrain: {
         regex: '^\\d{0,3}$',
@@ -254,7 +254,7 @@ describe('UIMenu - Text Edit Codec', () => {
       { scale: '3.00', expected: '300' }, // 300%
     ];
 
-    const textEditConfig: TextEdit_t = {
+    const textEditConfig: iconSlotTriad_main_t = {
       type: 'text_edit',
       constrain: {
         regex: '^\\d{0,3}$',

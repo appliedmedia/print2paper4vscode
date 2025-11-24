@@ -62,7 +62,7 @@ export type TextEditConstraint_t = {
   max: number; // Maximum value (enforced on blur)
 };
 
-export type TextEdit_t = {
+export type iconSlotTriad_main_t = {
   type: 'text_edit';
   width?: string;
   persistId?: UI_t; // Separate persist key for text_edit value storage (e.g., 'zoomLevel_value')
@@ -77,7 +77,7 @@ export type TextEdit_t = {
 // IconSlotTriad type - three-part slot structure
 export interface iconSlotTriad_t {
   begin: string;
-  main: string | TextEdit_t; // Can be string icon or text_edit object
+  main: string | iconSlotTriad_main_t; // Can be string icon or text_edit object
   end: string;
 }
 
@@ -213,7 +213,7 @@ export class UIMenu {
     this.persist.register(this._id);
 
     // Register persistId if present (e.g., 'zoomLevel_value' for display values)
-    const menuPersistId: UI_t | undefined = (this._iconSlotTriad?.main as TextEdit_t)
+    const menuPersistId: UI_t | undefined = (this._iconSlotTriad?.main as iconSlotTriad_main_t)
       ?.persistId;
     if (menuPersistId) {
       this.persist.register(menuPersistId);
@@ -367,7 +367,7 @@ export class UIMenu {
    * Returns HTML, CSS class, and config attributes for the main slot content
    */
   private handleIconSlotTypes(
-    iconSlotTriadMain: string | TextEdit_t,
+    iconSlotTriadMain: string | iconSlotTriad_main_t,
     itemId: string
   ): {
     html: string;
@@ -395,7 +395,7 @@ export class UIMenu {
 
       // Handle text_edit type: object with constrain (regex + min/max work together as validation strategy)
       if (typeof iconSlotTriadMain === 'object' && iconSlotTriadMain !== null) {
-        const triadMain = iconSlotTriadMain as TextEdit_t;
+        const triadMain = iconSlotTriadMain as iconSlotTriad_main_t;
         if (triadMain.type === 'text_edit') {
           try {
             // Validate regex pattern

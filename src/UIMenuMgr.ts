@@ -9,7 +9,7 @@ import {
   type HandleSelection_t,
   type UIMenuItem_t,
   type iconSlotTriad_t,
-  type TextEdit_t,
+  type iconSlotTriad_main_t,
   kMenuId,
   kMenuItemId,
 } from './UIMenu';
@@ -300,7 +300,7 @@ export class UIMenuMgr {
         ?.main;
       dx.out(`menuItemId === menuId, checking for text_edit persistId`);
       if (typeof iconSlotMain === 'object' && iconSlotMain.type === 'text_edit') {
-        const triadMain = iconSlotMain as TextEdit_t;
+        const triadMain = iconSlotMain as iconSlotTriad_main_t;
         dx.out(`Found text_edit, persistId=${triadMain.persistId}`);
         if (triadMain.persistId) {
           const persistValue = this.getValueForPersistIdOnMenuId(menuId, triadMain.persistId);

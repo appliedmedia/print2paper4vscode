@@ -27,7 +27,7 @@ import {
   type HandleSelection_t,
   type UIMenuItem_t,
   type iconSlotTriad_t,
-  type TextEdit_t,
+  type iconSlotTriad_main_t,
 } from './UIMenu';
 import { UIWebView } from './UIWebView';
 import { DocInfo_PaperPrinter } from './DocInfo_PaperPrinter';
@@ -882,7 +882,7 @@ export class PaperPrinter {
     const dx = this.dx.sub('zoomLevel_setTextEdit');
     if (this.app.hasContent(zoomValue)) {
       const menuId = kZoomLevel.id;
-      const triadMain = kZoomLevel.iconSlotTriad.main as TextEdit_t;
+      const triadMain = kZoomLevel.iconSlotTriad.main as iconSlotTriad_main_t;
       const persistId = triadMain.persistId;
       if (persistId) {
         const persistValue = this.app.forceNumber(zoomValue) as PersistValue_t;
