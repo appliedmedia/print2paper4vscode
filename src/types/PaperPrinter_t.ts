@@ -326,14 +326,14 @@ export const kZoomLevel = {
         // - min/max: Final validation on blur (clamps value to valid range)
         //
         // NOTE: Text edit width is auto-calculated as: string(max).length + 1 ch
-        //       For max: 300 → width: 4ch, for max: 999 → width: 4ch, for max: 1000 → width: 5ch
+        //       For max: 250 → width: 4ch, for max: 999 → width: 4ch, for max: 1000 → width: 5ch
         regex: '^\\d{0,4}$', // Only 2 backslashes! Becomes data-constrain-regex
         min: 50,
-        max: 300,
+        max: 250,
       },
       transform: {
-        display: (persist: number) => Math.round(persist * 100), // Convert scale (0.5-3.0) to percentage (50-300)
-        persist: (display: number) => display / 100, // Convert percentage (50-300) back to scale (0.5-3.0)
+        display: (persist: number) => Math.round(persist * 100), // Convert scale (0.5-2.5) to percentage (50-250)
+        persist: (display: number) => display / 100, // Convert percentage (50-250) back to scale (0.5-2.5)
       },
       persistId: 'zoomLevel_value',
     },
@@ -345,7 +345,7 @@ export const kZoomLevel = {
   isFlyout: false,
   flyoutMenuItemIds: [] as const,
   min: 0.5,
-  max: 3.0,
+  max: 2.5,
   stepAmount: 0.1,
   menuItems: [
     { id: '0.50', displayName: '50%', value: 0.5 },
@@ -362,7 +362,6 @@ export const kZoomLevel = {
     { id: '1.50', displayName: '150%', value: 1.5 },
     { id: '2.00', displayName: '200%', value: 2.0 },
     { id: '2.50', displayName: '250%', value: 2.5 },
-    { id: '3.00', displayName: '300%', value: 3.0 },
     // fitWidth: scale page to fill window width
     // Formula: windowWidth / pageWidth (e.g., 1200/595 = 2.016 = scale up to fit)
     // Dict guaranteed valid by forceNumber (all values finite, non-zero)
