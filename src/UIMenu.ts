@@ -394,9 +394,8 @@ export class UIMenu {
       }
 
       // Handle object with constrain (editable input with validation)
-      if (typeof iconSlotTriadMain === 'object' && iconSlotTriadMain !== null) {
-        if (iconSlotTriadMain.constrain) {
-          try {
+      if (typeof iconSlotTriadMain !== 'string' && iconSlotTriadMain.constrain) {
+        try {
             // Validate regex pattern
             try {
               new RegExp(iconSlotTriadMain.constrain.regex);

@@ -178,7 +178,7 @@ export class UIMenuMgr {
         // Apply transform.persist if present (e.g., for text_edit input)
         const menu = this.getMenuById(menuId);
         const iconSlotMain = (menu as any)._iconSlotTriad?.main;
-        if (typeof iconSlotMain === 'object' && iconSlotMain.transform?.persist) {
+        if (typeof iconSlotMain !== 'string' && iconSlotMain.transform?.persist) {
           try {
             const displayValue = parseFloat(String(contextDict[kDisplay]));
             if (isNaN(displayValue)) {
@@ -296,7 +296,7 @@ export class UIMenuMgr {
       const iconSlotMain = (menu as unknown as { _iconSlotTriad: iconSlotTriad_t })._iconSlotTriad
         ?.main;
       dx.out(`menuItemId === menuId, checking for persistId`);
-      if (typeof iconSlotMain === 'object' && iconSlotMain.persistId) {
+      if (typeof iconSlotMain !== 'string' && iconSlotMain.persistId) {
         dx.out(`Found persistId: ${iconSlotMain.persistId}`);
         const persistValue = this.getValueForPersistIdOnMenuId(menuId, iconSlotMain.persistId);
         dx.out(`Read from menu.persist[${iconSlotMain.persistId}] = ${persistValue}`);
