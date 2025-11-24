@@ -482,7 +482,7 @@ export class UIMenu {
 
       // Handle object with constrain (editable input with validation)
       // Check for type property, then each helper checks for its specific property
-      if (typeof iconSlotTriadMain !== 'string' && iconSlotTriadMain?.type) {
+      if (typeof iconSlotTriadMain === 'object' && iconSlotTriadMain?.type) {
         const constrainAttrs = this.handleIconSlotTypes_main_constrain(iconSlotTriadMain);
         if (constrainAttrs) {
           try {
