@@ -62,7 +62,7 @@ export type TextEditConstraint_t = {
   max: number; // Maximum value (enforced on blur)
 };
 
-export type TextEditConfig_t = {
+export type TextEdit_t = {
   type: 'text_edit';
   width?: string;
   persistId?: UI_t; // Separate persist key for text_edit value storage (e.g., 'zoomLevel_value')
@@ -77,7 +77,7 @@ export type TextEditConfig_t = {
 // IconSlotTriad type - three-part slot structure
 export interface iconSlotTriad_t {
   begin: string;
-  main: string | TextEditConfig_t; // Can be string icon or text_edit config object
+  main: string | TextEdit_t; // Can be string icon or text_edit object
   end: string;
 }
 
@@ -213,7 +213,7 @@ export class UIMenu {
     this.persist.register(this._id);
 
     // Register persistId if present (e.g., 'zoomLevel_value' for display values)
-    const menuPersistId: UI_t | undefined = (this._iconSlotTriad?.main as TextEditConfig_t)
+    const menuPersistId: UI_t | undefined = (this._iconSlotTriad?.main as TextEdit_t)
       ?.persistId;
     if (menuPersistId) {
       this.persist.register(menuPersistId);
@@ -367,7 +367,7 @@ export class UIMenu {
    * Returns HTML, CSS class, and config attributes for the main slot content
    */
   private handleIconSlotTypes(
-    iconSlotTriadMain: string | TextEditConfig_t,
+    iconSlotTriadMain: string | TextEdit_t,
     itemId: string
   ): {
     html: string;
@@ -395,28 +395,28 @@ export class UIMenu {
 
       // Handle text_edit type: object with constrain (regex + min/max work together as validation strategy)
       if (typeof iconSlotTriadMain === 'object' && iconSlotTriadMain !== null) {
-        const config = iconSlotTriadMain as TextEditConfig_t;
-        if (config.type === 'text_edit') {
+        const textEdit = iconSlotTriadMain as TextEdit_t;
+        if (textEdit.type === 'text_edit') {
           try {
             // Validate regex pattern
             try {
-              new RegExp(config.constrain.regex);
+              new RegExp(textEdit.constrain.regex);
             } catch (regexError) {
-              throw new Error(`Invalid constrain.regex: ${config.constrain.regex}`);
+              throw new Error(`Invalid constrain.regex: ${textEdit.constrain.regex}`);
             }
 
             // Build data attributes from constrain object (all three work together)
             const constrainAttrs = [
-              ` data-constrain-regex="${config.constrain.regex}"`,
-              ` data-constrain-min="${config.constrain.min}"`,
-              ` data-constrain-max="${config.constrain.max}"`,
+              ` data-constrain-regex="${textEdit.constrain.regex}"`,
+              ` data-constrain-min="${textEdit.constrain.min}"`,
+              ` data-constrain-max="${textEdit.constrain.max}"`,
             ].join('');
 
             // Calculate width: use explicit width, or auto-calculate from max value length
-            let width = config.width;
+            let width = textEdit.width;
             if (!width) {
               // Auto-calculate: string(max).length + 1 for comfortable reading
-              const maxDigits = String(config.constrain.max).length;
+              const maxDigits = String(textEdit.constrain.max).length;
               width = `${maxDigits + 1}ch`;
             }
 
@@ -425,17 +425,18 @@ export class UIMenu {
             /**
              * Get initial value from persistence and convert using transform.display if defined
              *
+             * Transform functions handle their own type conversion - they receive raw persisted values.
              * For menus with transform (e.g., zoom level):
-             * 1. Get persisted value from menu's persist store (e.g., "1.00" scale)
-             * 2. Apply transform.display expression to convert to display format (e.g., "100" percentage)
+             * 1. Get persisted value from menu's persist store (could be string, number, or undefined)
+             * 2. Pass to transform.display which handles conversion to display format
              * 3. Set as input's value attribute
              *
              * For menus without transform:
              * - Display value = persist value (no conversion)
              *
              * @example
-             * // Zoom level: persist="1.00" → display="100"
-             * transform.display: 'Math.round({{persist}}*100)'
+             * // Zoom level: persist="1.00" or 1.00 → display="100"
+             * transform.display: (persist) => Math.round(app.forceNumber(persist) * 100)
              * Result: input value="100"
              */
             let textEditValue = '';
@@ -443,31 +444,23 @@ export class UIMenu {
             dx.out(`Text edit for ${this._id}: value=${value}, type=${typeof value}`);
             dx.out(`Getting value for text_edit widget via getValueForMenuItemIdSelected`);
             
-            // Check for null/undefined (but allow 0, false, empty string)
+            // Pass value to transform as-is (string | number | undefined)
+            // Transform functions handle their own type conversion
             if (value !== undefined && value !== null) {
-              // Check if value is numeric (number or numeric string)
-              const numericValue = Number(value);
-
-              if (!Number.isNaN(numericValue)) {
-                if (config.transform?.display) {
-                  try {
-                    const displayValue = config.transform.display(numericValue);
-                    textEditValue = String(displayValue);
-                    dx.out(
-                      `Text edit value set to: ${textEditValue} (from persist: ${numericValue})`
-                    );
-                  } catch (error) {
-                    dx.error(`Failed to evaluate transform.display: ${String(error)}`);
-                    // On error, preserve exactly what was persisted
-                    textEditValue = String(value);
-                  }
-                } else {
-                  // No transform: display == persisted representation
+              if (textEdit.transform?.display) {
+                try {
+                  const displayValue = textEdit.transform.display(value);
+                  textEditValue = String(displayValue ?? '');
+                  dx.out(`Text edit value set to: ${textEditValue} (from persist: ${value})`);
+                } catch (error) {
+                  dx.error(`Failed to evaluate transform.display: ${String(error)}`);
+                  // On error, preserve exactly what was persisted
                   textEditValue = String(value);
-                  dx.out(`Text edit value (no transform): ${textEditValue}`);
                 }
               } else {
-                dx.out(`Skipping non-numeric value for text edit: ${value}`);
+                // No transform: display == persisted representation
+                textEditValue = String(value);
+                dx.out(`Text edit value (no transform): ${textEditValue}`);
               }
             }
 
