@@ -59,9 +59,9 @@ webview_css: |
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
     border: 1px solid #ddd;
     background: white;
-    margin-left: var(--n-up-gutter-px, 3px);
-    margin-right: var(--n-up-gutter-px, 3px);
-    margin-bottom: var(--n-up-gutter-px, 3px);
+    margin-left: var(--n-up-gutter-px);
+    margin-right: var(--n-up-gutter-px);
+    margin-bottom: var(--n-up-gutter-px);
   }
 
   :root {
