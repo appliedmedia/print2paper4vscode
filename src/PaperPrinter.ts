@@ -928,7 +928,7 @@ export class PaperPrinter {
 
     let id: MenuItemId_t = menuItemId;
     let value: string | number | boolean =
-      this.app.uimenumgr.getValueForMenuItemId(menuId, menuItemId) ?? menuItemId;
+      this.app.uimenumgr.getValueForMenuItemId(menuId, menuItemId);
 
     if (menuItemId === UIMenu.defaultId()) {
       // Return default zoom level (100% = 1.0) - no side effects!
@@ -953,7 +953,7 @@ export class PaperPrinter {
 
   /**
    * Handle zoom adjustment (in/out) button clicks
-   * 
+   *
    * Shared handler for both zoom in and zoom out buttons.
    * Direction is determined by menuId: zoomOut = -1, zoomIn = +1
    */
@@ -964,12 +964,12 @@ export class PaperPrinter {
     const dx = this.dx.sub('handleSelection_ZoomInOut');
     let id = '';
     let value: string | number | boolean = '';
-    
+
     // Buttons have no default - only process actual clicks
     if (menuItemId !== UIMenu.defaultId()) {
       // Determine direction from menuId
       const direction = menuId === kZoomOut.id ? -1 : +1;
-      
+
       const currentZoom =
         this.app.forceNumber(this.app.uimenumgr.getValueForMenuItemIdSelected(kZoomLevel.id)) ||
         Number(kZoomLevel.altValue);
