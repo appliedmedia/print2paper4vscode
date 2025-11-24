@@ -525,13 +525,12 @@ export class UIMenu {
       };
 
       if (iconSlotTriadMain) {
-        // Handle object types - gather data then dispatch by type
+        // Handle object types - dispatch by type
         if (typeof iconSlotTriadMain === 'object' && iconSlotTriadMain?.type) {
-          const constrainAttrs = this.handleIconSlotTypes_main_constrain(iconSlotTriadMain);
-          const widthStyle = this.handleIconSlotTypes_main_width(iconSlotTriadMain);
-          const textEditValue = this.handleIconSlotTypes_main_transform(iconSlotTriadMain);
-          
           if (iconSlotTriadMain.type === 'text_edit') {
+            const constrainAttrs = this.handleIconSlotTypes_main_constrain(iconSlotTriadMain);
+            const widthStyle = this.handleIconSlotTypes_main_width(iconSlotTriadMain);
+            const textEditValue = this.handleIconSlotTypes_main_transform(iconSlotTriadMain);
             returnVals = this.handleIconSlotTypes_main_text_edit(itemId, constrainAttrs, widthStyle, textEditValue);
           }
         }
