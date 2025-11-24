@@ -927,8 +927,10 @@ export class PaperPrinter {
     dx.out(`ZoomLevel selection: menuItemId=${menuItemId}`);
 
     let id: MenuItemId_t = menuItemId;
-    let value: string | number | boolean =
-      this.app.uimenumgr.getValueForMenuItemId(menuId, menuItemId);
+    let value: string | number | boolean = this.app.uimenumgr.getValueForMenuItemId(
+      menuId,
+      menuItemId
+    );
 
     if (menuItemId === UIMenu.defaultId()) {
       // Return default zoom level (100% = 1.0) - no side effects!
@@ -975,7 +977,8 @@ export class PaperPrinter {
         Number(kZoomLevel.altValue);
       dx.out(`${menuId}: currentZoom=${currentZoom}, direction=${direction}`);
 
-      // Apply stepAmount in the specified direction, clamp to min/max, round to 2 decimals
+      // Apply stepAmount in the specified direction, clamp to min/max
+      // Note: * 100 / 100 rounds to 2 decimals to avoid floating-point precision errors (e.g., 0.1 + 0.2 = 0.30000000000004)
       const adjustment = direction * kZoomLevel.stepAmount;
       const newZoom = Math.max(
         kZoomLevel.min,
