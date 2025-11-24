@@ -63,10 +63,10 @@ export type TextEditConstraint_t = {
 };
 
 export type iconSlotTriad_main_t = {
-  type?: string; // Optional type discriminator for future extensions
+  type: 'text_edit'; // Tells us what UI element to render
   width?: string;
   persistId?: UI_t; // Separate persist key for value storage (e.g., 'zoomLevel_value')
-  constrain?: TextEditConstraint_t; // Validation strategy (regex + min/max work together)
+  constrain: TextEditConstraint_t; // Validation strategy (regex + min/max work together)
   transform?: {
     // Transforms handle their own type conversion - they receive raw persisted values
     display?: (persist: ForceNumber_scalar_t) => ForceNumber_scalar_t; // Convert persist value to display value

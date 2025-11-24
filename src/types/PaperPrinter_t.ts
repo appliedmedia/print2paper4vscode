@@ -318,6 +318,7 @@ export const kZoomLevel = {
   iconSlotTriad: {
     begin: ' ',
     main: {
+      type: 'text_edit' as const,
       constrain: {
         // All three properties work together as a cohesive validation strategy:
         // - regex: Real-time validation during typing (blocks invalid keystrokes)

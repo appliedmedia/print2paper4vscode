@@ -160,6 +160,7 @@ describe('UIMenu Icon Slot Triad', () => {
           iconSlotTriad: { 
             begin: '', 
             main: {
+              type: 'text_edit' as const,
               width: '3ch',
               constrain: {
                 regex: '^\\d{0,3}$',  // Only 2 backslashes - clean and readable!
@@ -190,6 +191,7 @@ describe('UIMenu Icon Slot Triad', () => {
           iconSlotTriad: { 
             begin: ' ', 
             main: {
+              type: 'text_edit' as const,
               width: '5ch',
               constrain: {
                 regex: '^\\d{1,3}$',  // Only 2 backslashes - clean!
@@ -219,6 +221,7 @@ describe('UIMenu Icon Slot Triad', () => {
           iconSlotTriad: { 
             begin: '', 
             main: {
+              type: 'text_edit' as const,
               width: '2ch',
               constrain: {
                 regex: '^\\d{0,2}$',
@@ -248,6 +251,7 @@ describe('UIMenu Icon Slot Triad', () => {
           iconSlotTriad: { 
             begin: '', 
             main: {
+              type: 'text_edit' as const,
               width: '3ch',
               constrain: {
                 regex: '^\\d{0,3}$',  // Only 2 backslashes - clean!

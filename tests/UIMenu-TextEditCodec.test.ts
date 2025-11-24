@@ -20,6 +20,7 @@ describe('UIMenu - Text Edit Codec', () => {
   it('should convert persisted value to display value using persistToDisplay codec', async () => {
     // Create a menu with text_edit that has a transform (like zoom level)
     const textEditConfig: iconSlotTriad_main_t = {
+      type: 'text_edit',
       constrain: {
         regex: '^\\d{0,3}$',
         min: 10,
@@ -70,6 +71,7 @@ describe('UIMenu - Text Edit Codec', () => {
   it('should handle text_edit without transform (display = persist)', async () => {
     // Create a menu with text_edit that has NO transform
     const textEditConfig: iconSlotTriad_main_t = {
+      type: 'text_edit',
       constrain: {
         regex: '^\\d{1,2}$',
         min: 8,
@@ -106,6 +108,7 @@ describe('UIMenu - Text Edit Codec', () => {
 
   it('should handle missing persisted value gracefully', async () => {
     const textEditConfig: iconSlotTriad_main_t = {
+      type: 'text_edit',
       constrain: {
         regex: '^\\d{0,3}$',
         min: 10,
@@ -146,6 +149,7 @@ describe('UIMenu - Text Edit Codec', () => {
   it('should handle transform evaluation errors gracefully', async () => {
     // Create a transform with an invalid expression
     const textEditConfig: iconSlotTriad_main_t = {
+      type: 'text_edit',
       constrain: {
         regex: '^\\d{0,3}$',
         min: 10,
@@ -184,6 +188,7 @@ describe('UIMenu - Text Edit Codec', () => {
 
   it('should round percentage values correctly', async () => {
     const textEditConfig: iconSlotTriad_main_t = {
+      type: 'text_edit',
       constrain: {
         regex: '^\\d{0,3}$',
         min: 10,
@@ -250,6 +255,7 @@ describe('UIMenu - Text Edit Codec', () => {
     ];
 
     const textEditConfig: iconSlotTriad_main_t = {
+      type: 'text_edit',
       constrain: {
         regex: '^\\d{0,3}$',
         min: 10,
