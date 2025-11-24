@@ -300,11 +300,11 @@ export class UIMenuMgr {
         ?.main;
       dx.out(`menuItemId === menuId, checking for text_edit persistId`);
       if (typeof iconSlotMain === 'object' && iconSlotMain.type === 'text_edit') {
-        const textEdit = iconSlotMain as TextEdit_t;
-        dx.out(`Found text_edit, persistId=${textEdit.persistId}`);
-        if (textEdit.persistId) {
-          const persistValue = this.getValueForPersistIdOnMenuId(menuId, textEdit.persistId);
-          dx.out(`Read from menu.persist[${textEdit.persistId}] = ${persistValue}`);
+        const triadMain = iconSlotMain as TextEdit_t;
+        dx.out(`Found text_edit, persistId=${triadMain.persistId}`);
+        if (triadMain.persistId) {
+          const persistValue = this.getValueForPersistIdOnMenuId(menuId, triadMain.persistId);
+          dx.out(`Read from menu.persist[${triadMain.persistId}] = ${persistValue}`);
           if (this.app.hasContent(persistValue)) {
             result = persistValue as string | number;
             dx.out(`Returning persistValue: ${result}`);

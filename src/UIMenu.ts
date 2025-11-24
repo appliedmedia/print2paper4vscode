@@ -395,28 +395,28 @@ export class UIMenu {
 
       // Handle text_edit type: object with constrain (regex + min/max work together as validation strategy)
       if (typeof iconSlotTriadMain === 'object' && iconSlotTriadMain !== null) {
-        const textEdit = iconSlotTriadMain as TextEdit_t;
-        if (textEdit.type === 'text_edit') {
+        const triadMain = iconSlotTriadMain as TextEdit_t;
+        if (triadMain.type === 'text_edit') {
           try {
             // Validate regex pattern
             try {
-              new RegExp(textEdit.constrain.regex);
+              new RegExp(triadMain.constrain.regex);
             } catch (regexError) {
-              throw new Error(`Invalid constrain.regex: ${textEdit.constrain.regex}`);
+              throw new Error(`Invalid constrain.regex: ${triadMain.constrain.regex}`);
             }
 
             // Build data attributes from constrain object (all three work together)
             const constrainAttrs = [
-              ` data-constrain-regex="${textEdit.constrain.regex}"`,
-              ` data-constrain-min="${textEdit.constrain.min}"`,
-              ` data-constrain-max="${textEdit.constrain.max}"`,
+              ` data-constrain-regex="${triadMain.constrain.regex}"`,
+              ` data-constrain-min="${triadMain.constrain.min}"`,
+              ` data-constrain-max="${triadMain.constrain.max}"`,
             ].join('');
 
             // Calculate width: use explicit width, or auto-calculate from max value length
-            let width = textEdit.width;
+            let width = triadMain.width;
             if (!width) {
               // Auto-calculate: string(max).length + 1 for comfortable reading
-              const maxDigits = String(textEdit.constrain.max).length;
+              const maxDigits = String(triadMain.constrain.max).length;
               width = `${maxDigits + 1}ch`;
             }
 
@@ -447,9 +447,9 @@ export class UIMenu {
             // Pass value to transform as-is (string | number | undefined)
             // Transform functions handle their own type conversion
             if (value !== undefined && value !== null) {
-              if (textEdit.transform?.display) {
+              if (triadMain.transform?.display) {
                 try {
-                  const displayValue = textEdit.transform.display(value);
+                  const displayValue = triadMain.transform.display(value);
                   textEditValue = String(displayValue ?? '');
                   dx.out(`Text edit value set to: ${textEditValue} (from persist: ${value})`);
                 } catch (error) {

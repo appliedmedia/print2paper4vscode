@@ -882,8 +882,8 @@ export class PaperPrinter {
     const dx = this.dx.sub('zoomLevel_setTextEdit');
     if (this.app.hasContent(zoomValue)) {
       const menuId = kZoomLevel.id;
-      const textEdit = kZoomLevel.iconSlotTriad.main as TextEdit_t;
-      const persistId = textEdit.persistId;
+      const triadMain = kZoomLevel.iconSlotTriad.main as TextEdit_t;
+      const persistId = triadMain.persistId;
       if (persistId) {
         const persistValue = this.app.forceNumber(zoomValue) as PersistValue_t;
         this.app.uimenumgr.setValueForPersistIdOnMenuId(menuId, persistId, persistValue);
