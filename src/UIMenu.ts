@@ -368,7 +368,7 @@ export class UIMenu {
   private handleIconSlotTypes_main_constrain(iconSlotTriadMain: iconSlotTriad_main_t): string {
     // Validate regex pattern
     try {
-      new RegExp(iconSlotTriadMain.constrain.regex);
+      void new RegExp(iconSlotTriadMain.constrain.regex);
     } catch (regexError) {
       throw new Error(`Invalid constrain.regex: ${iconSlotTriadMain.constrain.regex}`);
     }
