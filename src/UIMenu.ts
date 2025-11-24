@@ -461,7 +461,6 @@ export class UIMenu {
     html: string;
     cssClass: string;
     configAttr: string;
-    isSpecialType: boolean;
   } {
     const dx = this.dx.sub('handleIconSlotTypes_main_text_edit');
     
@@ -472,7 +471,6 @@ export class UIMenu {
         html: '',
         cssClass: '',
         configAttr: '',
-        isSpecialType: false,
       };
     }
     
@@ -489,7 +487,6 @@ export class UIMenu {
         html,
         cssClass: 'text-edit',
         configAttr: constrainAttrs,
-        isSpecialType: true,
       };
     } catch (error) {
       dx.error(`Failed to process text_edit config: ${String(error)}`);
@@ -498,7 +495,6 @@ export class UIMenu {
         html: '',
         cssClass: '',
         configAttr: '',
-        isSpecialType: false,
       };
     }
   }
@@ -514,7 +510,6 @@ export class UIMenu {
     html: string;
     cssClass: string;
     configAttr: string;
-    isSpecialType: boolean;
   } {
     const dx = this.dx.sub('handleIconSlotTypes');
 
@@ -527,7 +522,6 @@ export class UIMenu {
             : ``,
         cssClass: ``,
         configAttr: ``,
-        isSpecialType: false,
       };
 
       if (iconSlotTriadMain) {
