@@ -957,20 +957,45 @@ export class PaperPrinter {
 
     // Buttons have no default - only process actual clicks
     if (menuItemId !== UIMenu.defaultId()) {
-      // Determine direction from menuId
-      const direction = menuId === kZoomOut.id ? -1 : +1;
+      // Determine direction from menuId with explicit error handling
+      let direction: number;
+      if (menuId === kZoomOut.id) {
+        direction = -1;
+      } else if (menuId === kZoomIn.id) {
+        direction = +1;
+      } else {
+        dx.error(`Unknown menuId: ${menuId}. Expected ${kZoomOut.id} or ${kZoomIn.id}`);
+        dx.done();
+        return { id, value };
+      }
 
-      const currentZoom =
-        this.app.forceNumber(this.app.uimenumgr.getValueForMenuItemIdSelected(kZoomLevel.id)) ||
-        Number(kZoomLevel.altValue);
-      dx.out(`${menuId}: currentZoom=${currentZoom}, direction=${direction}`);
+      // Get current zoom value with proper validation
+      const rawZoom = this.app.uimenumgr.getValueForMenuItemIdSelected(kZoomLevel.id);
+      const currentZoom = this.app.forceNumber(rawZoom);
+      
+      // Validate currentZoom is numeric; fall back to altValue if not
+      if (Number.isNaN(currentZoom) || currentZoom === 0) {
+        dx.out(`Invalid currentZoom (${rawZoom}), using altValue: ${kZoomLevel.altValue}`);
+        const fallbackZoom = Number(kZoomLevel.altValue);
+        if (Number.isNaN(fallbackZoom)) {
+          dx.error(`altValue is also invalid: ${kZoomLevel.altValue}`);
+          dx.done();
+          return { id, value };
+        }
+      }
+      
+      const validCurrentZoom = Number.isNaN(currentZoom) || currentZoom === 0 
+        ? Number(kZoomLevel.altValue) 
+        : currentZoom;
+      
+      dx.out(`${menuId}: currentZoom=${validCurrentZoom}, direction=${direction}`);
 
       // Apply stepAmount in the specified direction, clamp to min/max
       // Note: * 100 / 100 rounds to 2 decimals to avoid floating-point precision errors (e.g., 0.1 + 0.2 = 0.30000000000004)
       const adjustment = direction * kZoomLevel.stepAmount;
       const newZoom = Math.max(
         kZoomLevel.min,
-        Math.min(kZoomLevel.max, Math.round((currentZoom + adjustment) * 100) / 100)
+        Math.min(kZoomLevel.max, Math.round((validCurrentZoom + adjustment) * 100) / 100)
       );
       dx.out(`${menuId}: newZoom=${newZoom}`);
 

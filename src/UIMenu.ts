@@ -441,12 +441,13 @@ export class UIMenu {
             const value = this.app.uimenumgr.getValueForMenuItemIdSelected(this._id);
             dx.out(`Text edit for ${this._id}: value=${value}, type=${typeof value}`);
             dx.out(`Getting value for text_edit widget via getValueForMenuItemIdSelected`);
-            if (value) {
+            
+            // Check for null/undefined (but allow 0, false, empty string)
+            if (value !== undefined && value !== null) {
               // Check if value is numeric (number or numeric string)
-              const numericValue = parseFloat(String(value));
-              const isNumeric = !isNaN(numericValue);
+              const numericValue = Number(value);
 
-              if (isNumeric) {
+              if (!Number.isNaN(numericValue)) {
                 if (config.transform?.display) {
                   try {
                     const displayValue = config.transform.display(numericValue);
@@ -456,10 +457,12 @@ export class UIMenu {
                     );
                   } catch (error) {
                     dx.error(`Failed to evaluate transform.display: ${String(error)}`);
-                    textEditValue = String(numericValue);
+                    // On error, preserve exactly what was persisted
+                    textEditValue = String(value);
                   }
                 } else {
-                  textEditValue = String(numericValue);
+                  // No transform: display == persisted representation
+                  textEditValue = String(value);
                   dx.out(`Text edit value (no transform): ${textEditValue}`);
                 }
               } else {

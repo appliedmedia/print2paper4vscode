@@ -239,6 +239,8 @@ describe('UIMenu Icon Slot Triad', () => {
       
       assert.ok(html.includes('<input'));
       assert.ok(html.includes('style="width: 2ch;"'));
+      assert.ok(html.includes('data-constrain-min="0"'));
+      assert.ok(html.includes('data-constrain-max="99"'));
     });
 
     it('should validate regex patterns in text_edit config', async () => {
@@ -266,6 +268,8 @@ describe('UIMenu Icon Slot Triad', () => {
       const html = await menu.getHTML();
       
       assert.ok(html.includes('data-constrain-regex="^\\d{0,3}$"'));
+      assert.ok(html.includes('data-constrain-min="0"'));
+      assert.ok(html.includes('data-constrain-max="999"'));
     });
   });
 
