@@ -126,11 +126,11 @@ export const kMenuItemId = [
     const menuItemIds =
       menu.menuItems && menu.menuItems.length > 0 ? menu.menuItems.map(item => item.id) : [];
 
-    // If menu has text_edit widget, include menu.id as valid menuItemId (for custom text_edit values)
-    const hasTextEdit =
-      typeof menu.iconSlotTriad.main === 'object' && menu.iconSlotTriad.main.type === 'text_edit';
+    // If menu has constrained input widget, include menu.id as valid menuItemId (for custom values)
+    const hasConstrainedInput =
+      typeof menu.iconSlotTriad.main === 'object' && menu.iconSlotTriad.main.constrain !== undefined;
 
-    if (hasTextEdit || menuItemIds.length === 0) {
+    if (hasConstrainedInput || menuItemIds.length === 0) {
       // Include menu.id for: text_edit menus OR button-only menus
       return [menu.id, ...menuItemIds];
     } else {
