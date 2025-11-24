@@ -298,9 +298,9 @@ export class UIMenuMgr {
       const dx = this.dx.sub('getValueForMenuItemId[iconSlotTriad]');
       const iconSlotMain = (menu as unknown as { _iconSlotTriad: iconSlotTriad_t })._iconSlotTriad
         ?.main;
-      dx.out(`menuItemId === menuId, checking for text_edit persistId`);
-      if (typeof iconSlotMain === 'object' && iconSlotMain.type === 'text_edit') {
-        dx.out(`Found text_edit, persistId=${iconSlotMain.persistId}`);
+      dx.out(`menuItemId === menuId, checking for persistId`);
+      if (typeof iconSlotMain === 'object' && iconSlotMain.persistId) {
+        dx.out(`Found persistId: ${iconSlotMain.persistId}`);
         if (iconSlotMain.persistId) {
           const persistValue = this.getValueForPersistIdOnMenuId(menuId, iconSlotMain.persistId);
           dx.out(`Read from menu.persist[${iconSlotMain.persistId}] = ${persistValue}`);

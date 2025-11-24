@@ -63,10 +63,10 @@ export type TextEditConstraint_t = {
 };
 
 export type iconSlotTriad_main_t = {
-  type: 'text_edit';
+  type?: string; // Optional type discriminator for future extensions
   width?: string;
-  persistId?: UI_t; // Separate persist key for text_edit value storage (e.g., 'zoomLevel_value')
-  constrain: TextEditConstraint_t; // Cohesive validation strategy (regex + min/max)
+  persistId?: UI_t; // Separate persist key for value storage (e.g., 'zoomLevel_value')
+  constrain?: TextEditConstraint_t; // Validation strategy (regex + min/max work together)
   transform?: {
     // Transforms handle their own type conversion - they receive raw persisted values
     display?: (persist: ForceNumber_scalar_t) => ForceNumber_scalar_t; // Convert persist value to display value
@@ -393,9 +393,9 @@ export class UIMenu {
         return defaultReturn;
       }
 
-      // Handle text_edit type: object with constrain (regex + min/max work together as validation strategy)
+      // Handle object with constrain (editable input with validation)
       if (typeof iconSlotTriadMain === 'object' && iconSlotTriadMain !== null) {
-        if (iconSlotTriadMain.type === 'text_edit') {
+        if (iconSlotTriadMain.constrain) {
           try {
             // Validate regex pattern
             try {
