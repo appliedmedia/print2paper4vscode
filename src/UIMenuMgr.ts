@@ -182,11 +182,12 @@ export class UIMenuMgr {
           const textEditConfig = iconSlotMain;
           if (textEditConfig.transform?.persist) {
             try {
-              const expression = this.app.templateDictReplace(textEditConfig.transform.persist, {
-                [kDisplay]: String(contextDict[kDisplay]),
-              });
-              // biome-ignore lint/security/noGlobalEval: Templates are developer-defined constants; users only select which template to use -- eslint-disable-next-line no-eval
-              const transformedValue = eval(expression);
+              const displayValue = parseFloat(String(contextDict[kDisplay]));
+              if (isNaN(displayValue)) {
+                dx.error(`Invalid display value for transform: ${contextDict[kDisplay]}`);
+                return;
+              }
+              const transformedValue = textEditConfig.transform.persist(displayValue);
               finalMenuItemId = String(transformedValue);
               dx.out(`Applied transform.persist: ${contextDict[kDisplay]} → ${finalMenuItemId}`);
             } catch (error) {
@@ -405,7 +406,9 @@ export class UIMenuMgr {
       dx.done();
       return result;
     } catch (error) {
-      this.dx.error(`Menu item value resolver failed for ${menuId}.${menuItemId}: ${String(error)}`);
+      this.dx.error(
+        `Menu item value resolver failed for ${menuId}.${menuItemId}: ${String(error)}`
+      );
       dx.done();
       return undefined;
     }

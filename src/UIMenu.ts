@@ -32,39 +32,44 @@ import {
  *
  * @property type - Must be 'text_edit' to identify this as a text input widget
  * @property width - Optional CSS width (e.g., '4ch', '50px'). Auto-calculated from constrain.max if not provided
- * @property constrain - Input validation constraints
- * @property constrain.regex - Regex pattern for input validation (e.g., '^\d{0,3}$' for 0-3 digits)
- * @property constrain.min - Minimum allowed value (enforced on blur)
- * @property constrain.max - Maximum allowed value (enforced on blur)
+ * @property constrain - Validation strategy (regex for real-time, min/max for blur clamping)
  * @property transform - Optional bidirectional value conversion
- * @property transform.display - Expression to convert from persist to display
- *   (e.g., 'Math.round({{persist}}*100)' converts scale 1.00 to percentage 100)
- * @property transform.persist - Expression to convert from display to persist
- *   (e.g., '{{display}}/100' converts percentage 100 back to scale 1.00)
  *
  * @example
  * // Zoom level with scale-to-percentage conversion
  * {
  *   type: 'text_edit',
- *   constrain: { regex: '^\\d{0,3}$', min: 10, max: 300 },
+ *   constrain: { regex: '^\\d{0,4}$', min: 50, max: 300 },
  *   transform: {
- *     display: 'Math.round({{persist}}*100)',
- *     persist: '{{display}}/100'
+ *     display: (persist) => Math.round(persist * 100),
+ *     persist: (display) => display / 100
  *   }
  * }
  */
+/**
+ * Text edit constraint configuration
+ *
+ * All three properties work together as a cohesive validation strategy:
+ * - regex: Real-time validation during typing (blocks invalid keystrokes)
+ * - min/max: Final validation on blur (clamps value to valid range)
+ *
+ * Note: For max digits, use regex with one extra digit (e.g., \d{0,4} for max value 300)
+ * to allow users to temporarily type an extra character during editing.
+ */
+export type TextEditConstraint_t = {
+  regex: string; // Regex pattern for real-time validation (e.g., '^\d{0,4}$')
+  min: number; // Minimum value (enforced on blur)
+  max: number; // Maximum value (enforced on blur)
+};
+
 export type TextEditConfig_t = {
   type: 'text_edit';
   width?: string;
   persistId?: UI_t; // Separate persist key for text_edit value storage (e.g., 'zoomLevel_value')
-  constrain?: {
-    regex?: string; // Regex pattern (e.g., '^\d{0,3}$') - only 2 backslashes needed!
-    min?: number;
-    max?: number;
-  };
+  constrain: TextEditConstraint_t; // Cohesive validation strategy (regex + min/max)
   transform?: {
-    display?: string; // Expression to convert persist value to display value (e.g., 'Math.round({{persist}}*100)')
-    persist?: string; // Expression to convert display value to persist value (e.g., '{{display}}/100')
+    display?: (persist: number) => number; // Function to convert persist value to display value (e.g., (p) => Math.round(p*100))
+    persist?: (display: number) => number; // Function to convert display value to persist value (e.g., (d) => d/100)
   };
 };
 
@@ -207,7 +212,8 @@ export class UIMenu {
     this.persist.register(this._id);
 
     // Register persistId if present (e.g., 'zoomLevel_value' for display values)
-    const menuPersistId: UI_t | undefined = (this._iconSlotTriad?.main as TextEditConfig_t)?.persistId;
+    const menuPersistId: UI_t | undefined = (this._iconSlotTriad?.main as TextEditConfig_t)
+      ?.persistId;
     if (menuPersistId) {
       this.persist.register(menuPersistId);
     }
@@ -386,36 +392,28 @@ export class UIMenu {
         return defaultReturn;
       }
 
-      // Handle text_edit type: object with { type: 'text_edit', width, constrain: { regex, min, max } }
+      // Handle text_edit type: object with constrain (regex + min/max work together as validation strategy)
       if (typeof iconSlotTriadMain === 'object' && iconSlotTriadMain !== null) {
         const config = iconSlotTriadMain as TextEditConfig_t;
         if (config.type === 'text_edit') {
           try {
-            // Validate regex pattern if present
-            if (config.constrain?.regex) {
-              try {
-                new RegExp(config.constrain.regex);
-              } catch (regexError) {
-                throw new Error(`Invalid constrain.regex: ${config.constrain.regex}`);
-              }
+            // Validate regex pattern
+            try {
+              new RegExp(config.constrain.regex);
+            } catch (regexError) {
+              throw new Error(`Invalid constrain.regex: ${config.constrain.regex}`);
             }
 
-            // Build data attributes from constrain object
-            const constrainAttrs = config.constrain
-              ? [
-                  config.constrain.regex ? ` data-constrain-regex="${config.constrain.regex}"` : '',
-                  config.constrain.min !== undefined
-                    ? ` data-constrain-min="${config.constrain.min}"`
-                    : '',
-                  config.constrain.max !== undefined
-                    ? ` data-constrain-max="${config.constrain.max}"`
-                    : '',
-                ].join('')
-              : '';
+            // Build data attributes from constrain object (all three work together)
+            const constrainAttrs = [
+              ` data-constrain-regex="${config.constrain.regex}"`,
+              ` data-constrain-min="${config.constrain.min}"`,
+              ` data-constrain-max="${config.constrain.max}"`,
+            ].join('');
 
             // Calculate width: use explicit width, or auto-calculate from max value length
             let width = config.width;
-            if (!width && config.constrain?.max !== undefined) {
+            if (!width) {
               // Auto-calculate: string(max).length + 1 for comfortable reading
               const maxDigits = String(config.constrain.max).length;
               width = `${maxDigits + 1}ch`;
@@ -444,24 +442,24 @@ export class UIMenu {
             dx.out(`Text edit for ${this._id}: value=${value}, type=${typeof value}`);
             dx.out(`Getting value for text_edit widget via getValueForMenuItemIdSelected`);
             if (value) {
-              // Only show numeric values in text edit (skip fitPage/fitWidth strings)
-              if (typeof value === 'number') {
+              // Check if value is numeric (number or numeric string)
+              const numericValue = parseFloat(String(value));
+              const isNumeric = !isNaN(numericValue);
+
+              if (isNumeric) {
                 if (config.transform?.display) {
                   try {
-                    const expression = this.app.templateDictReplace(config.transform.display, {
-                      persist: String(value),
-                    });
-                    dx.out(`Transform expression: ${expression}`);
-                    // eslint-disable-next-line no-eval
-                    const displayValue = eval(expression);
+                    const displayValue = config.transform.display(numericValue);
                     textEditValue = String(displayValue);
-                    dx.out(`Text edit value set to: ${textEditValue}`);
+                    dx.out(
+                      `Text edit value set to: ${textEditValue} (from persist: ${numericValue})`
+                    );
                   } catch (error) {
                     dx.error(`Failed to evaluate transform.display: ${String(error)}`);
-                    textEditValue = String(value);
+                    textEditValue = String(numericValue);
                   }
                 } else {
-                  textEditValue = String(value);
+                  textEditValue = String(numericValue);
                   dx.out(`Text edit value (no transform): ${textEditValue}`);
                 }
               } else {
@@ -475,12 +473,6 @@ export class UIMenu {
               constrainAttrs,
               widthStyle,
               textEditValue: textEditValue ? ` value="${textEditValue}"` : '',
-              transformDisplay: config.transform?.display
-                ? ` data-transform-display="${config.transform.display}"`
-                : '',
-              transformPersist: config.transform?.persist
-                ? ` data-transform-persist="${config.transform.persist}"`
-                : '',
             });
             return {
               html,

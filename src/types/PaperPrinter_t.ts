@@ -320,16 +320,20 @@ export const kZoomLevel = {
     main: {
       type: 'text_edit' as const,
       constrain: {
+        // All three properties work together as a cohesive validation strategy:
+        // - regex: Real-time validation during typing (blocks invalid keystrokes)
+        //   Use one extra digit (0,4) vs max digits (3) to allow temporary editing
+        // - min/max: Final validation on blur (clamps value to valid range)
+        //
         // NOTE: Text edit width is auto-calculated as: string(max).length + 1 ch
         //       For max: 300 → width: 4ch, for max: 999 → width: 4ch, for max: 1000 → width: 5ch
-        //       Override by explicitly setting 'width' property if needed
-        regex: '^\\d{0,3}$', // Only 2 backslashes! Becomes data-constrain-regex
+        regex: '^\\d{0,4}$', // Only 2 backslashes! Becomes data-constrain-regex
         min: 50,
         max: 300,
       },
       transform: {
-        display: 'Math.round({{persist}}*100)', // Convert scale (0.5-3.0) to percentage (50-300)
-        persist: '{{display}}/100', // Convert percentage (50-300) back to scale (0.5-3.0)
+        display: (persist: number) => Math.round(persist * 100), // Convert scale (0.5-3.0) to percentage (50-300)
+        persist: (display: number) => display / 100, // Convert percentage (50-300) back to scale (0.5-3.0)
       },
       persistId: 'zoomLevel_value',
     },
