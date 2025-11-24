@@ -363,6 +363,72 @@ export class UIMenu {
   }
 
   /**
+   * Build constrain data attributes from iconSlotTriad.main.constrain
+   */
+  private handleIconSlotTypes_main_constrain(iconSlotTriadMain: iconSlotTriad_main_t): string {
+    // Validate regex pattern
+    try {
+      new RegExp(iconSlotTriadMain.constrain.regex);
+    } catch (regexError) {
+      throw new Error(`Invalid constrain.regex: ${iconSlotTriadMain.constrain.regex}`);
+    }
+
+    // Build data attributes from constrain object (all three work together)
+    return [
+      ` data-constrain-regex="${iconSlotTriadMain.constrain.regex}"`,
+      ` data-constrain-min="${iconSlotTriadMain.constrain.min}"`,
+      ` data-constrain-max="${iconSlotTriadMain.constrain.max}"`,
+    ].join('');
+  }
+
+  /**
+   * Calculate width style from iconSlotTriad.main.width or auto-calculate from max
+   */
+  private handleIconSlotTypes_main_width(iconSlotTriadMain: iconSlotTriad_main_t): string {
+    let width = iconSlotTriadMain.width;
+    if (!width) {
+      // Auto-calculate: string(max).length + 1 for comfortable reading
+      const maxDigits = String(iconSlotTriadMain.constrain.max).length;
+      width = `${maxDigits + 1}ch`;
+    }
+    return width ? ` style="width: ${width};"` : '';
+  }
+
+  /**
+   * Get initial value from persistence and apply transform.display if defined
+   */
+  private handleIconSlotTypes_main_transform(iconSlotTriadMain: iconSlotTriad_main_t): string {
+    const dx = this.dx.sub('handleIconSlotTypes_main_transform');
+    let textEditValue = '';
+    
+    const value = this.app.uimenumgr.getValueForMenuItemIdSelected(this._id);
+    dx.out(`Text edit for ${this._id}: value=${value}, type=${typeof value}`);
+    
+    // Pass value to transform as-is (string | number | undefined)
+    // Transform functions handle their own type conversion
+    if (value !== undefined && value !== null) {
+      if (iconSlotTriadMain.transform?.display) {
+        try {
+          const displayValue = iconSlotTriadMain.transform.display(value);
+          textEditValue = String(displayValue ?? '');
+          dx.out(`Text edit value set to: ${textEditValue} (from persist: ${value})`);
+        } catch (error) {
+          dx.error(`Failed to evaluate transform.display: ${String(error)}`);
+          // On error, preserve exactly what was persisted
+          textEditValue = String(value);
+        }
+      } else {
+        // No transform: display == persisted representation
+        textEditValue = String(value);
+        dx.out(`Text edit value (no transform): ${textEditValue}`);
+      }
+    }
+    
+    dx.done();
+    return textEditValue;
+  }
+
+  /**
    * Handle different iconSlotTriad.main types (text_edit, text_static, etc.)
    * Returns HTML, CSS class, and config attributes for the main slot content
    */
@@ -396,89 +462,26 @@ export class UIMenu {
       // Handle object with constrain (editable input with validation)
       if (typeof iconSlotTriadMain !== 'string' && iconSlotTriadMain.constrain) {
         try {
-            // Validate regex pattern
-            try {
-              new RegExp(iconSlotTriadMain.constrain.regex);
-            } catch (regexError) {
-              throw new Error(`Invalid constrain.regex: ${iconSlotTriadMain.constrain.regex}`);
-            }
-
-            // Build data attributes from constrain object (all three work together)
-            const constrainAttrs = [
-              ` data-constrain-regex="${iconSlotTriadMain.constrain.regex}"`,
-              ` data-constrain-min="${iconSlotTriadMain.constrain.min}"`,
-              ` data-constrain-max="${iconSlotTriadMain.constrain.max}"`,
-            ].join('');
-
-            // Calculate width: use explicit width, or auto-calculate from max value length
-            let width = iconSlotTriadMain.width;
-            if (!width) {
-              // Auto-calculate: string(max).length + 1 for comfortable reading
-              const maxDigits = String(iconSlotTriadMain.constrain.max).length;
-              width = `${maxDigits + 1}ch`;
-            }
-
-            const widthStyle = width ? ` style="width: ${width};"` : '';
-
-            /**
-             * Get initial value from persistence and convert using transform.display if defined
-             *
-             * Transform functions handle their own type conversion - they receive raw persisted values.
-             * For menus with transform (e.g., zoom level):
-             * 1. Get persisted value from menu's persist store (could be string, number, or undefined)
-             * 2. Pass to transform.display which handles conversion to display format
-             * 3. Set as input's value attribute
-             *
-             * For menus without transform:
-             * - Display value = persist value (no conversion)
-             *
-             * @example
-             * // Zoom level: persist="1.00" or 1.00 → display="100"
-             * transform.display: (persist) => Math.round(app.forceNumber(persist) * 100)
-             * Result: input value="100"
-             */
-            let textEditValue = '';
-            const value = this.app.uimenumgr.getValueForMenuItemIdSelected(this._id);
-            dx.out(`Text edit for ${this._id}: value=${value}, type=${typeof value}`);
-            dx.out(`Getting value for text_edit widget via getValueForMenuItemIdSelected`);
-            
-            // Pass value to transform as-is (string | number | undefined)
-            // Transform functions handle their own type conversion
-            if (value !== undefined && value !== null) {
-              if (iconSlotTriadMain.transform?.display) {
-                try {
-                  const displayValue = iconSlotTriadMain.transform.display(value);
-                  textEditValue = String(displayValue ?? '');
-                  dx.out(`Text edit value set to: ${textEditValue} (from persist: ${value})`);
-                } catch (error) {
-                  dx.error(`Failed to evaluate transform.display: ${String(error)}`);
-                  // On error, preserve exactly what was persisted
-                  textEditValue = String(value);
-                }
-              } else {
-                // No transform: display == persisted representation
-                textEditValue = String(value);
-                dx.out(`Text edit value (no transform): ${textEditValue}`);
-              }
-            }
-
-            const yaml = this.yaml;
-            const html = this.app.templateDictReplace(yaml.uimenu_text_edit, {
-              itemId,
-              constrainAttrs,
-              widthStyle,
-              textEditValue: textEditValue ? ` value="${textEditValue}"` : '',
-            });
-            return {
-              html,
-              cssClass: 'text-edit',
-              configAttr: constrainAttrs,
-              isSpecialType: true,
-            };
-          } catch (error) {
-            dx.error(`Failed to process text_edit config: ${String(error)}`);
-            return defaultReturn;
-          }
+          const constrainAttrs = this.handleIconSlotTypes_main_constrain(iconSlotTriadMain);
+          const widthStyle = this.handleIconSlotTypes_main_width(iconSlotTriadMain);
+          const textEditValue = this.handleIconSlotTypes_main_transform(iconSlotTriadMain);
+          
+          const yaml = this.yaml;
+          const html = this.app.templateDictReplace(yaml.uimenu_text_edit, {
+            itemId,
+            constrainAttrs,
+            widthStyle,
+            textEditValue: textEditValue ? ` value="${textEditValue}"` : '',
+          });
+          return {
+            html,
+            cssClass: 'text-edit',
+            configAttr: constrainAttrs,
+            isSpecialType: true,
+          };
+        } catch (error) {
+          dx.error(`Failed to process text_edit config: ${String(error)}`);
+          return defaultReturn;
         }
       }
 
