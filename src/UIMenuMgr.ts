@@ -9,7 +9,7 @@ import {
   type HandleSelection_t,
   type UIMenuItem_t,
   type iconSlotTriad_t,
-  type TextEditConfig_t,
+  type iconSlotTriad_main_t,
   kMenuId,
   kMenuItemId,
 } from './UIMenu';
@@ -175,29 +175,27 @@ export class UIMenuMgr {
       if (contextDict?.[kDisplay] !== undefined && menuItemId === menuId) {
         isTextEditInput = true;
         dx.out(`Text_edit input detected`);
-        // Text_edit input - apply transform.persist if present
+        // Apply transform.persist if present (e.g., for text_edit input)
         const menu = this.getMenuById(menuId);
         const iconSlotMain = (menu as any)._iconSlotTriad?.main;
-        if (typeof iconSlotMain === 'object' && iconSlotMain.type === 'text_edit') {
-          const textEditConfig = iconSlotMain;
-          if (textEditConfig.transform?.persist) {
-            try {
-              const expression = this.app.templateDictReplace(textEditConfig.transform.persist, {
-                [kDisplay]: String(contextDict[kDisplay]),
-              });
-              // biome-ignore lint/security/noGlobalEval: Templates are developer-defined constants; users only select which template to use -- eslint-disable-next-line no-eval
-              const transformedValue = eval(expression);
-              finalMenuItemId = String(transformedValue);
-              dx.out(`Applied transform.persist: ${contextDict[kDisplay]} → ${finalMenuItemId}`);
-            } catch (error) {
-              dx.error(`Failed to apply transform.persist: ${error}`);
+        if (typeof iconSlotMain !== 'string' && iconSlotMain.transform?.persist) {
+          try {
+            const displayValue = parseFloat(String(contextDict[kDisplay]));
+            if (isNaN(displayValue)) {
+              dx.error(`Invalid display value for transform: ${contextDict[kDisplay]}`);
               return;
             }
-          } else {
-            // No transform - use display value as-is
-            finalMenuItemId = String(contextDict[kDisplay]);
-            dx.out(`No transform, using display value as-is: ${finalMenuItemId}`);
+            const transformedValue = iconSlotMain.transform.persist(displayValue);
+            finalMenuItemId = String(transformedValue);
+            dx.out(`Applied transform.persist: ${contextDict[kDisplay]} → ${finalMenuItemId}`);
+          } catch (error) {
+            dx.error(`Failed to apply transform.persist: ${error}`);
+            return;
           }
+        } else {
+          // No transform - use display value as-is
+          finalMenuItemId = String(contextDict[kDisplay]);
+          dx.out(`No transform, using display value as-is: ${finalMenuItemId}`);
         }
       }
 
@@ -297,17 +295,14 @@ export class UIMenuMgr {
       const dx = this.dx.sub('getValueForMenuItemId[iconSlotTriad]');
       const iconSlotMain = (menu as unknown as { _iconSlotTriad: iconSlotTriad_t })._iconSlotTriad
         ?.main;
-      dx.out(`menuItemId === menuId, checking for text_edit persistId`);
-      if (typeof iconSlotMain === 'object' && iconSlotMain.type === 'text_edit') {
-        const textEditConfig = iconSlotMain as TextEditConfig_t;
-        dx.out(`Found text_edit config, persistId=${textEditConfig.persistId}`);
-        if (textEditConfig.persistId) {
-          const persistValue = this.getValueForPersistIdOnMenuId(menuId, textEditConfig.persistId);
-          dx.out(`Read from menu.persist[${textEditConfig.persistId}] = ${persistValue}`);
-          if (this.app.hasContent(persistValue)) {
-            result = persistValue as string | number;
-            dx.out(`Returning persistValue: ${result}`);
-          }
+      dx.out(`menuItemId === menuId, checking for persistId`);
+      if (typeof iconSlotMain !== 'string' && iconSlotMain.persistId) {
+        dx.out(`Found persistId: ${iconSlotMain.persistId}`);
+        const persistValue = this.getValueForPersistIdOnMenuId(menuId, iconSlotMain.persistId);
+        dx.out(`Read from menu.persist[${iconSlotMain.persistId}] = ${persistValue}`);
+        if (this.app.hasContent(persistValue)) {
+          result = persistValue as string | number;
+          dx.out(`Returning persistValue: ${result}`);
         }
       }
       dx.done();
@@ -405,7 +400,9 @@ export class UIMenuMgr {
       dx.done();
       return result;
     } catch (error) {
-      this.dx.error(`Menu item value resolver failed for ${menuId}.${menuItemId}: ${String(error)}`);
+      this.dx.error(
+        `Menu item value resolver failed for ${menuId}.${menuItemId}: ${String(error)}`
+      );
       dx.done();
       return undefined;
     }

@@ -223,6 +223,11 @@ describe('UIMenu Icon Slot Triad', () => {
             main: {
               type: 'text_edit' as const,
               width: '2ch',
+              constrain: {
+                regex: '^\\d{0,2}$',
+                min: 0,
+                max: 99,
+              },
             },
             end: '' 
           }
@@ -234,6 +239,8 @@ describe('UIMenu Icon Slot Triad', () => {
       
       assert.ok(html.includes('<input'));
       assert.ok(html.includes('style="width: 2ch;"'));
+      assert.ok(html.includes('data-constrain-min="0"'));
+      assert.ok(html.includes('data-constrain-max="99"'));
     });
 
     it('should validate regex patterns in text_edit config', async () => {
@@ -248,6 +255,8 @@ describe('UIMenu Icon Slot Triad', () => {
               width: '3ch',
               constrain: {
                 regex: '^\\d{0,3}$',  // Only 2 backslashes - clean!
+                min: 0,
+                max: 999,
               },
             },
             end: '' 
@@ -259,6 +268,8 @@ describe('UIMenu Icon Slot Triad', () => {
       const html = await menu.getHTML();
       
       assert.ok(html.includes('data-constrain-regex="^\\d{0,3}$"'));
+      assert.ok(html.includes('data-constrain-min="0"'));
+      assert.ok(html.includes('data-constrain-max="999"'));
     });
   });
 

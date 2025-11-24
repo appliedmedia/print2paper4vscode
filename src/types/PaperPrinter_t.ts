@@ -293,7 +293,7 @@ export const kZoomOut = {
   displayName: 'Zoom Out',
   iconSlotTriad: { begin: ' ', main: '−', end: '' },
   altId: '',
-  methodName: 'ZoomOut',
+  methodName: 'ZoomInOut', // Shared handler with zoomIn
   isFlyout: false,
   flyoutMenuItemIds: [] as const,
   menuItems: [],
@@ -305,7 +305,7 @@ export const kZoomIn = {
   displayName: 'Zoom In',
   iconSlotTriad: { begin: '', main: '+', end: '' },
   altId: '',
-  methodName: 'ZoomIn',
+  methodName: 'ZoomInOut', // Shared handler with zoomOut
   isFlyout: false,
   flyoutMenuItemIds: [] as const,
   menuItems: [],
@@ -320,16 +320,29 @@ export const kZoomLevel = {
     main: {
       type: 'text_edit' as const,
       constrain: {
+        // All three properties work together as a cohesive validation strategy:
+        // - regex: Real-time validation during typing (blocks invalid keystrokes)
+        //   Use one extra digit (0,4) vs max digits (3) to allow temporary editing
+        // - min/max: Final validation on blur (clamps value to valid range)
+        //
         // NOTE: Text edit width is auto-calculated as: string(max).length + 1 ch
-        //       For max: 300 → width: 4ch, for max: 999 → width: 4ch, for max: 1000 → width: 5ch
-        //       Override by explicitly setting 'width' property if needed
-        regex: '^\\d{0,3}$', // Only 2 backslashes! Becomes data-constrain-regex
+        //       For max: 250 → width: 4ch, for max: 999 → width: 4ch, for max: 1000 → width: 5ch
+        regex: '^\\d{0,4}$', // Only 2 backslashes! Becomes data-constrain-regex
         min: 50,
-        max: 300,
+        max: 250,
       },
       transform: {
-        display: 'Math.round({{persist}}*100)', // Convert scale (0.5-3.0) to percentage (50-300)
-        persist: '{{display}}/100', // Convert percentage (50-300) back to scale (0.5-3.0)
+        // Transforms handle their own type conversion using forceNumber
+        display: (persist: string | number | undefined): number | undefined => {
+          // Convert scale (0.5-2.5) to percentage (50-250)
+          const scale = typeof persist === 'number' ? persist : parseFloat(String(persist));
+          return isNaN(scale) ? undefined : Math.round(scale * 100);
+        },
+        persist: (display: string | number | undefined): number | undefined => {
+          // Convert percentage (50-250) back to scale (0.5-2.5)
+          const percent = typeof display === 'number' ? display : parseFloat(String(display));
+          return isNaN(percent) ? undefined : percent / 100;
+        },
       },
       persistId: 'zoomLevel_value',
     },
@@ -341,7 +354,7 @@ export const kZoomLevel = {
   isFlyout: false,
   flyoutMenuItemIds: [] as const,
   min: 0.5,
-  max: 3.0,
+  max: 2.5,
   stepAmount: 0.1,
   menuItems: [
     { id: '0.50', displayName: '50%', value: 0.5 },
@@ -358,7 +371,6 @@ export const kZoomLevel = {
     { id: '1.50', displayName: '150%', value: 1.5 },
     { id: '2.00', displayName: '200%', value: 2.0 },
     { id: '2.50', displayName: '250%', value: 2.5 },
-    { id: '3.00', displayName: '300%', value: 3.0 },
     // fitWidth: scale page to fill window width
     // Formula: windowWidth / pageWidth (e.g., 1200/595 = 2.016 = scale up to fit)
     // Dict guaranteed valid by forceNumber (all values finite, non-zero)
