@@ -389,60 +389,62 @@ export class UIMenu {
   }
 
   /**
-   * Calculate width style from iconSlotTriad.main.width or auto-calculate from max
-   * Returns undefined if no constrain property present
+   * Calculate width style from iconSlotTriad.main.width or auto-calculate from constrain.max
+   * Returns undefined if no width or constrain present
    */
   private handleIconSlotTypes_main_width(
     iconSlotTriadMain: iconSlotTriad_main_t
   ): string | undefined {
-    if (!iconSlotTriadMain.constrain) {
-      return undefined;
-    }
-
     let width = iconSlotTriadMain.width;
-    if (!width) {
-      // Auto-calculate: string(max).length + 1 for comfortable reading
+    
+    // If no explicit width, try to auto-calculate from constrain.max
+    if (!width && iconSlotTriadMain.constrain) {
       const maxDigits = String(iconSlotTriadMain.constrain.max).length;
       width = `${maxDigits + 1}ch`;
     }
-    return width ? ` style="width: ${width};"` : '';
+    
+    if (!width) {
+      return undefined;
+    }
+    
+    return ` style="width: ${width};"`;
   }
 
   /**
    * Get initial value from persistence and apply transform.display if defined
-   * Returns undefined if no constrain property present (nothing to transform)
+   * Returns undefined if no transform property present
    */
   private handleIconSlotTypes_main_transform(
     iconSlotTriadMain: iconSlotTriad_main_t
   ): string | undefined {
-    if (!iconSlotTriadMain.constrain) {
+    if (!iconSlotTriadMain.transform) {
       return undefined;
     }
 
     const dx = this.dx.sub('handleIconSlotTypes_main_transform');
-    let textEditValue = '';
+    let value = '';
     
     try {
-      const value = this.app.uimenumgr.getValueForMenuItemIdSelected(this._id);
-      dx.out(`Text edit for ${this._id}: value=${value}, type=${typeof value}`);
+      const persistedValue = this.app.uimenumgr.getValueForMenuItemIdSelected(this._id);
+      dx.out(`Transform for ${this._id}: value=${persistedValue}, type=${typeof persistedValue}`);
       
       // Pass value to transform as-is (string | number | undefined)
       // Transform functions handle their own type conversion
-      if (value !== undefined && value !== null) {
-        if (iconSlotTriadMain.transform?.display) {
+      if (persistedValue !== undefined && persistedValue !== null) {
+        if (iconSlotTriadMain.transform.display) {
           try {
-            const displayValue = iconSlotTriadMain.transform.display(value);
-            textEditValue = String(displayValue ?? '');
-            dx.out(`Text edit value set to: ${textEditValue} (from persist: ${value})`);
+            const displayValue = iconSlotTriadMain.transform.display(persistedValue);
+            value = String(displayValue ?? '');
+            dx.out(`Transform value set to: ${value} (from persist: ${persistedValue})`);
           } catch (error) {
             dx.error(`Failed to evaluate transform.display: ${String(error)}`);
             // On error, preserve exactly what was persisted
-            textEditValue = String(value);
+            value = String(persistedValue);
           }
         } else {
-          // No transform: display == persisted representation
-          textEditValue = String(value);
-          dx.out(`Text edit value (no transform): ${textEditValue}`);
+          // No transform.display: display == persisted representation
+          value = String(persistedValue);
+          dx.out(`Transform value (no display): ${value}`);
         }
       }
     } catch (error) {
@@ -451,17 +453,17 @@ export class UIMenu {
     }
     
     dx.done();
-    return textEditValue;
+    return value;
   }
 
   /**
-   * Render text_edit type with constrain, width, and transform
+   * Render text_edit type with constrain, width, and value
    */
   private handleIconSlotTypes_main_text_edit(
     itemId: string,
-    constrainAttrs: string | undefined,
-    widthStyle: string | undefined,
-    textEditValue: string | undefined
+    constrain: string | undefined,
+    width: string | undefined,
+    value: string | undefined
   ): {
     html: string;
     cssClass: string;
@@ -469,8 +471,8 @@ export class UIMenu {
   } {
     const dx = this.dx.sub('handleIconSlotTypes_main_text_edit');
     
-    if (!constrainAttrs) {
-      dx.error('text_edit requires constrainAttrs');
+    if (!constrain) {
+      dx.error('text_edit requires constrain');
       dx.done();
       return {
         html: '',
@@ -483,15 +485,15 @@ export class UIMenu {
       const yaml = this.yaml;
       const html = this.app.templateDictReplace(yaml.uimenu_text_edit, {
         itemId,
-        constrainAttrs,
-        widthStyle: widthStyle ?? '',
-        textEditValue: textEditValue ? ` value="${textEditValue}"` : '',
+        constrainAttrs: constrain,
+        widthStyle: width ?? '',
+        textEditValue: value ? ` value="${value}"` : '',
       });
       dx.done();
       return {
         html,
         cssClass: 'text-edit',
-        configAttr: constrainAttrs,
+        configAttr: constrain,
       };
     } catch (error) {
       dx.error(`Failed to process text_edit config: ${String(error)}`);
@@ -532,12 +534,12 @@ export class UIMenu {
       if (iconSlotTriadMain) {
         // Handle object types - gather data then dispatch by type
         if (typeof iconSlotTriadMain === 'object' && iconSlotTriadMain?.type) {
-          const constrainAttrs = this.handleIconSlotTypes_main_constrain(iconSlotTriadMain);
-          const widthStyle = this.handleIconSlotTypes_main_width(iconSlotTriadMain);
-          const textEditValue = this.handleIconSlotTypes_main_transform(iconSlotTriadMain);
+          const constrain = this.handleIconSlotTypes_main_constrain(iconSlotTriadMain);
+          const width = this.handleIconSlotTypes_main_width(iconSlotTriadMain);
+          const value = this.handleIconSlotTypes_main_transform(iconSlotTriadMain);
           
           if (iconSlotTriadMain.type === 'text_edit') {
-            returnVals = this.handleIconSlotTypes_main_text_edit(itemId, constrainAttrs, widthStyle, textEditValue);
+            returnVals = this.handleIconSlotTypes_main_text_edit(itemId, constrain, width, value);
           }
         }
       }
