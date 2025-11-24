@@ -52,7 +52,6 @@ webview_css: |
   #pdf-viewer {
     display: flex;
     flex-direction: column;
-    gap: 2px;
     align-items: center;
   }
 
@@ -62,12 +61,12 @@ webview_css: |
     background: white;
     margin-left: var(--page-gutter-horizontal, 8px);
     margin-right: var(--page-gutter-horizontal, 8px);
-    margin-bottom: var(--page-gutter-vertical, 4px);
+    margin-bottom: var(--page-gutter-vertical, 2px);
   }
 
   :root {
-    --page-gutter-horizontal: 8px;
-    --page-gutter-vertical: 4px;
+    --page-gutter-horizontal: 4px;
+    --page-gutter-vertical: 2px;
     /* Container padding for fit calculations - matches .pdfviewer-container padding */
     --container-padding-horizontal: 20px;
     /* Toolbar dimensions for fit calculations */
