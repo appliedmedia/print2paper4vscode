@@ -301,13 +301,11 @@ export class UIMenuMgr {
       dx.out(`menuItemId === menuId, checking for persistId`);
       if (typeof iconSlotMain === 'object' && iconSlotMain.persistId) {
         dx.out(`Found persistId: ${iconSlotMain.persistId}`);
-        if (iconSlotMain.persistId) {
-          const persistValue = this.getValueForPersistIdOnMenuId(menuId, iconSlotMain.persistId);
-          dx.out(`Read from menu.persist[${iconSlotMain.persistId}] = ${persistValue}`);
-          if (this.app.hasContent(persistValue)) {
-            result = persistValue as string | number;
-            dx.out(`Returning persistValue: ${result}`);
-          }
+        const persistValue = this.getValueForPersistIdOnMenuId(menuId, iconSlotMain.persistId);
+        dx.out(`Read from menu.persist[${iconSlotMain.persistId}] = ${persistValue}`);
+        if (this.app.hasContent(persistValue)) {
+          result = persistValue as string | number;
+          dx.out(`Returning persistValue: ${result}`);
         }
       }
       dx.done();
