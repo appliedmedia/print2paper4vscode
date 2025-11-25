@@ -23,8 +23,10 @@ describe('Coords Advanced Unit Tests', () => {
   it('should convert various page sizes correctly', () => {
     // Test A4 dimensions (210mm x 297mm)
     const a4 = coords.pageDimensionsInchesOrMmToPdfPts(210, 297, 'mm');
-    assert.ok(a4.widthPts > 590 && a4.widthPts < 600, 'A4 width should be ~595 pts');
-    assert.ok(a4.heightPts > 835 && a4.heightPts < 845, 'A4 height should be ~842 pts');
+    const expectedA4Width = 210 * 72 / 25.4; // ~595.28 pts
+    const expectedA4Height = 297 * 72 / 25.4; // ~841.89 pts
+    assert.ok(Math.abs(a4.widthPts - expectedA4Width) < 0.1, 'A4 width should be ~595.28 pts');
+    assert.ok(Math.abs(a4.heightPts - expectedA4Height) < 0.1, 'A4 height should be ~841.89 pts');
 
     // Test Letter dimensions (8.5in x 11in)
     const letter = coords.pageDimensionsInchesOrMmToPdfPts(8.5, 11, 'in');

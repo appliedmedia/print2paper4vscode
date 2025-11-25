@@ -6,9 +6,10 @@ import { mockContext, mockVSCode } from './test-utils.js';
 describe('Stylize Simple Unit Tests', () => {
   let app: App;
 
-  beforeEach(() => {
+  beforeEach(async () => {
     app = new App(mockContext, mockVSCode);
     app.init();
+    await app.stylize.init();
   });
 
   afterEach(() => {
@@ -16,7 +17,6 @@ describe('Stylize Simple Unit Tests', () => {
   });
 
   it('should initialize and load Shiki themes', async () => {
-    await app.stylize.init();
     const themes = app.stylize.getShikiThemes();
     
     assert.ok(themes.length > 0, 'Should have Shiki themes');
@@ -24,8 +24,6 @@ describe('Stylize Simple Unit Tests', () => {
   });
 
   it('should filter themes by regex pattern', async () => {
-    await app.stylize.init();
-    
     const lightThemes = app.stylize.getShikiThemes('light|bright|day');
     assert.ok(lightThemes.length > 0, 'Should have light themes');
     
@@ -39,8 +37,6 @@ describe('Stylize Simple Unit Tests', () => {
   });
 
   it('should get all themes including Shiki themes', async () => {
-    await app.stylize.init();
-    
     const allThemes = app.stylize.getThemes();
     assert.ok(allThemes.length > 0, 'Should have themes');
     
@@ -51,8 +47,6 @@ describe('Stylize Simple Unit Tests', () => {
   });
 
   it('should tokenize code with a theme', async () => {
-    await app.stylize.init();
-    
     const code = 'const x = 42;';
     const tokens = await app.stylize.tokenize(code, 'javascript', 'github-light');
     
@@ -62,16 +56,12 @@ describe('Stylize Simple Unit Tests', () => {
   });
 
   it('should resolve active theme', async () => {
-    await app.stylize.init();
-    
     const theme = app.stylize.resolveActiveTheme();
     assert.ok(typeof theme === 'string', 'Should return theme ID');
     assert.ok(theme.length > 0, 'Theme ID should not be empty');
   });
 
   it('should get font family from theme', async () => {
-    await app.stylize.init();
-    
     const themes = app.stylize.getThemes();
     if (themes.length > 0) {
       const fontFamily = app.stylize.getFontFamilyFromTheme(themes[0]);
@@ -80,8 +70,6 @@ describe('Stylize Simple Unit Tests', () => {
   });
 
   it('should convert VSCode theme to Shiki format', async () => {
-    await app.stylize.init();
-    
     const vscodeTheme = {
       name: 'test-theme',
       colors: {
@@ -107,8 +95,6 @@ describe('Stylize Simple Unit Tests', () => {
   });
 
   it('should handle empty filter to return all themes', async () => {
-    await app.stylize.init();
-    
     const allThemes = app.stylize.getShikiThemes();
     const filteredThemes = app.stylize.getShikiThemes('');
     

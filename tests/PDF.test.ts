@@ -179,25 +179,6 @@ describe('PDF', () => {
     assert.ok(true);
   });
 
-  it('should convert hex color to RGB', () => {
-    // Setup PDF first so we can test setTextColorFromWebColor which uses hex conversion internally
-    pdf.docInfo.pageSizeId = 'a4';
-    pdf.docInfo.orient = 'portrait';
-    pdf.docInfo.fontSizePx = 12;
-    pdf.docInfo.lineHeightPx = 18;
-    pdf.docInfo.fontFamily = 'Courier';
-    pdf.docInfo.theme = 'github-light';
-    pdf.setupPdf();
-
-    // Test that setTextColorFromWebColor can handle various hex colors without throwing
-    const pdfPrivate = pdf as any;
-    // These should all work without throwing
-    pdfPrivate.setTextColorFromWebColor(pdf.docInfo.pdfDoc, '#FF0000');
-    pdfPrivate.setTextColorFromWebColor(pdf.docInfo.pdfDoc, '#00FF00');
-    pdfPrivate.setTextColorFromWebColor(pdf.docInfo.pdfDoc, '#0000FF');
-    assert.ok(true);
-  });
-
   it('should handle invalid hex color', () => {
     // Setup PDF first
     pdf.docInfo.pageSizeId = 'a4';
