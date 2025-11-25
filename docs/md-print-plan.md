@@ -133,20 +133,82 @@ class PDF {
   }
   
   /**
+   * Get font info from HTML element or markdown preview settings
+   */
+  private getMarkdownFontInfo(): { fontFamily: string; fontSize: number } {
+    // Get markdown preview settings (these control what user sees in MD preview)
+    const mdConfig = this.app.vscodeapis.getConfiguration('markdown');
+    const mdFontFamily = mdConfig.get<string>('preview.fontFamily');
+    const mdFontSize = mdConfig.get<number>('preview.fontSize');
+    
+    // Use markdown preview settings, or fall back to editor settings
+    const editorTypo = this.app.vscodeapis.getEditorTypography();
+    const fontFamily = mdFontFamily || editorTypo.fontFamily;
+    const fontSize = mdFontSize || editorTypo.fontSize;
+    
+    return { fontFamily, fontSize };
+  }
+  
+  /**
+   * Extract font info from HTML element's style attribute
+   * Returns null if no style info found
+   */
+  private getFontFromElementStyle(element: HTMLElement): { fontFamily?: string; fontSize?: number } | null {
+    const style = element.getAttribute('style');
+    if (!style) return null;
+    
+    const result: { fontFamily?: string; fontSize?: number } = {};
+    
+    // Parse font-family from style
+    const fontFamilyMatch = style.match(/font-family:\s*([^;]+)/i);
+    if (fontFamilyMatch) {
+      result.fontFamily = fontFamilyMatch[1].trim().replace(/['"]/g, '');
+    }
+    
+    // Parse font-size from style
+    const fontSizeMatch = style.match(/font-size:\s*(\d+(?:\.\d+)?)(px|pt|em)/i);
+    if (fontSizeMatch) {
+      const size = parseFloat(fontSizeMatch[1]);
+      const unit = fontSizeMatch[2];
+      
+      if (unit === 'px') {
+        result.fontSize = size;
+      } else if (unit === 'pt') {
+        result.fontSize = size * (96 / 72); // Convert pt to px
+      } else if (unit === 'em') {
+        const baseFontInfo = this.getMarkdownFontInfo();
+        result.fontSize = size * baseFontInfo.fontSize;
+      }
+    }
+    
+    return Object.keys(result).length > 0 ? result : null;
+  }
+  
+  /**
    * Render heading element
    */
   private renderHeading(element: HTMLElement, level: number): void {
     if (!this.docInfo.pdfDoc) return;
     
-    // Get user's base font settings
-    const editorTypo = this.app.vscodeapis.getEditorTypography();
-    const baseFontFamily = editorTypo.fontFamily;
-    const baseFontSize = editorTypo.fontSize;
+    // Try to get font from element style first
+    const styleFont = this.getFontFromElementStyle(element);
     
-    // Calculate heading size (2x, 1.5x, 1.25x, 1.1x, 1x, 0.9x)
-    const sizeMultipliers = [2.0, 1.5, 1.25, 1.1, 1.0, 0.9];
-    const multiplier = sizeMultipliers[level - 1] || 1.0;
-    const headingSize = this.coords.cssPxToPdfPts(baseFontSize * multiplier);
+    // Fall back to markdown preview settings
+    const baseFontInfo = this.getMarkdownFontInfo();
+    
+    const fontFamily = styleFont?.fontFamily || baseFontInfo.fontFamily;
+    const fontSize = styleFont?.fontSize || baseFontInfo.fontSize;
+    
+    // Calculate heading size if not specified in style
+    // (HTML might have explicit font-size, or we calculate from base)
+    let headingSize: number;
+    if (styleFont?.fontSize) {
+      headingSize = this.coords.cssPxToPdfPts(styleFont.fontSize);
+    } else {
+      const sizeMultipliers = [2.0, 1.5, 1.25, 1.1, 1.0, 0.9];
+      const multiplier = sizeMultipliers[level - 1] || 1.0;
+      headingSize = this.coords.cssPxToPdfPts(fontSize * multiplier);
+    }
     
     // Spacing based on level
     const spacingBefore = Math.max(12 - level * 2, 4);
@@ -194,30 +256,62 @@ class PDF {
    */
   private readonly inlineElementHandlers: Record<string, (element: HTMLElement, savedFont: any) => void> = {
     'strong': (el, savedFont) => {
-      this.docInfo.pdfDoc!.setFont(savedFont.fontName, 'bold');
+      // Check if element has style attribute with font info
+      const styleFont = this.getFontFromElementStyle(el);
+      const fontName = styleFont?.fontFamily 
+        ? this.mapFontFamilyToJsPDF(styleFont.fontFamily, this.docInfo.pdfDoc!)
+        : savedFont.fontName;
+      
+      this.docInfo.pdfDoc!.setFont(fontName, 'bold');
       this.renderTextContent(el.text);
       this.docInfo.pdfDoc!.setFont(savedFont.fontName, savedFont.fontStyle);
     },
     'b': (el, savedFont) => {
-      this.docInfo.pdfDoc!.setFont(savedFont.fontName, 'bold');
+      const styleFont = this.getFontFromElementStyle(el);
+      const fontName = styleFont?.fontFamily 
+        ? this.mapFontFamilyToJsPDF(styleFont.fontFamily, this.docInfo.pdfDoc!)
+        : savedFont.fontName;
+      
+      this.docInfo.pdfDoc!.setFont(fontName, 'bold');
       this.renderTextContent(el.text);
       this.docInfo.pdfDoc!.setFont(savedFont.fontName, savedFont.fontStyle);
     },
     'em': (el, savedFont) => {
-      this.docInfo.pdfDoc!.setFont(savedFont.fontName, 'italic');
+      const styleFont = this.getFontFromElementStyle(el);
+      const fontName = styleFont?.fontFamily 
+        ? this.mapFontFamilyToJsPDF(styleFont.fontFamily, this.docInfo.pdfDoc!)
+        : savedFont.fontName;
+      
+      this.docInfo.pdfDoc!.setFont(fontName, 'italic');
       this.renderTextContent(el.text);
       this.docInfo.pdfDoc!.setFont(savedFont.fontName, savedFont.fontStyle);
     },
     'i': (el, savedFont) => {
-      this.docInfo.pdfDoc!.setFont(savedFont.fontName, 'italic');
+      const styleFont = this.getFontFromElementStyle(el);
+      const fontName = styleFont?.fontFamily 
+        ? this.mapFontFamilyToJsPDF(styleFont.fontFamily, this.docInfo.pdfDoc!)
+        : savedFont.fontName;
+      
+      this.docInfo.pdfDoc!.setFont(fontName, 'italic');
       this.renderTextContent(el.text);
       this.docInfo.pdfDoc!.setFont(savedFont.fontName, savedFont.fontStyle);
     },
     'code': (el, savedFont) => {
-      const editorTypo = this.app.vscodeapis.getEditorTypography();
-      const monoFont = this.mapFontFamilyToJsPDF(editorTypo.fontFamily, this.docInfo.pdfDoc!);
+      // For inline code, check element style first, then markdown preview settings
+      const styleFont = this.getFontFromElementStyle(el);
+      let monoFontFamily: string;
+      
+      if (styleFont?.fontFamily) {
+        monoFontFamily = styleFont.fontFamily;
+      } else {
+        // Get monospace font from markdown preview settings or editor settings
+        const editorTypo = this.app.vscodeapis.getEditorTypography();
+        monoFontFamily = editorTypo.fontFamily;
+      }
+      
+      const monoFont = this.mapFontFamilyToJsPDF(monoFontFamily, this.docInfo.pdfDoc!);
       this.docInfo.pdfDoc!.setFont(monoFont, 'normal');
-      // TODO: Add background color for inline code
+      // TODO: Get background color from element style or theme
       this.renderTextContent(el.text);
       this.docInfo.pdfDoc!.setFont(savedFont.fontName, savedFont.fontStyle);
     },
