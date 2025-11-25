@@ -1,22 +1,13 @@
 /**
- * Unit tests for UIWebView Zoom Controls
+ * Zoom Validation Unit Tests
  * 
- * These tests focus on unit-level validation of zoom control logic with mocks:
+ * Tests zoom control validation logic and algorithms:
  * - Zoom level persistence validation
  * - Menu configuration structure
- * - Input validation and clamping algorithms
+ * - Input validation and clamping (50%-250% range)
  * - Zoom action handlers (in/out/fit/actual)
  * - Keyboard shortcut detection
- * 
- * **NOTE: These are unit tests only - they do NOT test extension↔webview integration.**
- * 
- * For integration tests covering:
- * - Extension passing zoomLevel to webview template injection
- * - Webview messages reaching extension's handleZoomMessage
- * - Persisted zoom level surviving extension reload
- * - Template variable injection handling undefined/null/invalid values
- * 
- * See: tests/UIWebView-PDFjs-Integration.test.ts and tests/Integration.test.ts
+ * - Percentage to decimal conversion
  */
 import { test, describe } from 'node:test';
 import * as assert from 'node:assert';
