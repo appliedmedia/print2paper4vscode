@@ -8,7 +8,7 @@ Print markdown files in two modes:
 
 ## Architecture: Direct Rendering (No Intermediate Format)
 
-```
+```text
 Raw Markdown:
   Editor Text → Shiki Tokens → PDF.renderFromTokens() → jsPDF
 
@@ -17,6 +17,14 @@ Rendered Markdown:
 ```
 
 **Key Insight**: The PDF document IS the common format. No need for intermediate data structures.
+
+**Unified Rendering**: Both `renderFromTokens()` and `renderFromHTML()` are input adapters that feed the same underlying line-by-line rendering primitives. They share:
+- Character wrapping logic (`findCharacterBreakPoint()`)
+- Page break detection (`shouldBreakPage()`)
+- Position tracking (`currentX`, `currentY`)
+- Text rendering (`doc.text()`)
+
+The rendering logic is unified; only the input parsing differs.
 
 ---
 
@@ -27,7 +35,7 @@ Raw markdown printing works through existing code path:
 - Shiki tokenizes markdown source
 - `PDF.renderFromTokens()` renders with syntax highlighting
 
-**No changes needed.**
+No changes required.
 
 ---
 
@@ -597,7 +605,7 @@ private async generateRenderedMarkdownPdf(): Promise<void> {
   const dx = this.dx.sub('generateRenderedMarkdownPdf');
   
   try {
-    // Get VS Code's markdown extension
+    // Get VS Code markdown extension
     const mdExtension = this.app.vscodeapis.getExtension('vscode.markdown-language-features');
     
     if (!mdExtension) {
