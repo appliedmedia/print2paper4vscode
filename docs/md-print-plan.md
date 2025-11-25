@@ -99,50 +99,34 @@ class PDF {
   }
   
   /**
+   * HTML element handlers - maps tag name to render function
+   */
+  private readonly htmlElementHandlers: Record<string, (element: HTMLElement) => void> = {
+    'h1': (el) => this.renderHeading(el, 1),
+    'h2': (el) => this.renderHeading(el, 2),
+    'h3': (el) => this.renderHeading(el, 3),
+    'h4': (el) => this.renderHeading(el, 4),
+    'h5': (el) => this.renderHeading(el, 5),
+    'h6': (el) => this.renderHeading(el, 6),
+    'p': (el) => this.renderParagraph(el),
+    'ul': (el) => this.renderList(el),
+    'ol': (el) => this.renderList(el),
+    'pre': (el) => this.renderCodeBlock(el),
+    'blockquote': (el) => this.renderBlockquote(el),
+    'hr': () => this.renderHorizontalRule(),
+  };
+  
+  /**
    * Render a single HTML element
    */
   private renderHTMLElement(element: HTMLElement): void {
     const dx = this.dx.sub('renderHTMLElement');
     
-    switch (element.tagName) {
-      case 'h1':
-        this.renderHeading(element, 1);
-        break;
-      case 'h2':
-        this.renderHeading(element, 2);
-        break;
-      case 'h3':
-        this.renderHeading(element, 3);
-        break;
-      case 'h4':
-        this.renderHeading(element, 4);
-        break;
-      case 'h5':
-        this.renderHeading(element, 5);
-        break;
-      case 'h6':
-        this.renderHeading(element, 6);
-        break;
-      case 'p':
-        this.renderParagraph(element);
-        break;
-      case 'ul':
-      case 'ol':
-        this.renderList(element);
-        break;
-      case 'pre':
-        this.renderCodeBlock(element);
-        break;
-      case 'blockquote':
-        this.renderBlockquote(element);
-        break;
-      case 'hr':
-        this.renderHorizontalRule();
-        break;
-      default:
-        // Skip unknown elements
-        dx.out(`Unknown element: ${element.tagName}`);
-        break;
+    const handler = this.htmlElementHandlers[element.tagName];
+    if (handler) {
+      handler(element);
+    } else {
+      dx.out(`Unknown element: ${element.tagName}`);
     }
     
     dx.done();
@@ -206,6 +190,40 @@ class PDF {
   }
   
   /**
+   * Inline element handlers - maps tag name to render function
+   */
+  private readonly inlineElementHandlers: Record<string, (element: HTMLElement, savedFont: any) => void> = {
+    'strong': (el, savedFont) => {
+      this.docInfo.pdfDoc!.setFont(savedFont.fontName, 'bold');
+      this.renderTextContent(el.text);
+      this.docInfo.pdfDoc!.setFont(savedFont.fontName, savedFont.fontStyle);
+    },
+    'b': (el, savedFont) => {
+      this.docInfo.pdfDoc!.setFont(savedFont.fontName, 'bold');
+      this.renderTextContent(el.text);
+      this.docInfo.pdfDoc!.setFont(savedFont.fontName, savedFont.fontStyle);
+    },
+    'em': (el, savedFont) => {
+      this.docInfo.pdfDoc!.setFont(savedFont.fontName, 'italic');
+      this.renderTextContent(el.text);
+      this.docInfo.pdfDoc!.setFont(savedFont.fontName, savedFont.fontStyle);
+    },
+    'i': (el, savedFont) => {
+      this.docInfo.pdfDoc!.setFont(savedFont.fontName, 'italic');
+      this.renderTextContent(el.text);
+      this.docInfo.pdfDoc!.setFont(savedFont.fontName, savedFont.fontStyle);
+    },
+    'code': (el, savedFont) => {
+      const editorTypo = this.app.vscodeapis.getEditorTypography();
+      const monoFont = this.mapFontFamilyToJsPDF(editorTypo.fontFamily, this.docInfo.pdfDoc!);
+      this.docInfo.pdfDoc!.setFont(monoFont, 'normal');
+      // TODO: Add background color for inline code
+      this.renderTextContent(el.text);
+      this.docInfo.pdfDoc!.setFont(savedFont.fontName, savedFont.fontStyle);
+    },
+  };
+  
+  /**
    * Render inline content (handles bold, italic, code, etc.)
    */
   private renderInlineContent(element: HTMLElement): void {
@@ -219,34 +237,12 @@ class PDF {
         const el = child as HTMLElement;
         const savedFont = this.docInfo.pdfDoc.getFont();
         
-        switch (el.tagName) {
-          case 'strong':
-          case 'b':
-            this.docInfo.pdfDoc.setFont(savedFont.fontName, 'bold');
-            this.renderTextContent(el.text);
-            this.docInfo.pdfDoc.setFont(savedFont.fontName, savedFont.fontStyle);
-            break;
-            
-          case 'em':
-          case 'i':
-            this.docInfo.pdfDoc.setFont(savedFont.fontName, 'italic');
-            this.renderTextContent(el.text);
-            this.docInfo.pdfDoc.setFont(savedFont.fontName, savedFont.fontStyle);
-            break;
-            
-          case 'code':
-            const editorTypo = this.app.vscodeapis.getEditorTypography();
-            const monoFont = this.mapFontFamilyToJsPDF(editorTypo.fontFamily, this.docInfo.pdfDoc);
-            this.docInfo.pdfDoc.setFont(monoFont, 'normal');
-            // TODO: Add background color for inline code
-            this.renderTextContent(el.text);
-            this.docInfo.pdfDoc.setFont(savedFont.fontName, savedFont.fontStyle);
-            break;
-            
-          default:
-            // Recursively process unknown inline elements
-            this.renderInlineContent(el);
-            break;
+        const handler = this.inlineElementHandlers[el.tagName];
+        if (handler) {
+          handler(el, savedFont);
+        } else {
+          // Recursively process unknown inline elements
+          this.renderInlineContent(el);
         }
       }
     }
