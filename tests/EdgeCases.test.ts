@@ -2,6 +2,7 @@ import { describe, it, beforeEach, afterEach } from 'node:test';
 import * as assert from 'node:assert';
 import { App } from '../src/App.js';
 import { mockContext, mockVSCode } from './test-utils.js';
+import { installHeaderFooterMenuStubs } from './test-helpers.js';
 
 describe('Edge Cases and Error Handling', () => {
   let app: App;
@@ -9,20 +10,7 @@ describe('Edge Cases and Error Handling', () => {
   beforeEach(() => {
     app = new App(mockContext, mockVSCode);
     app.init();
-    
-    // Mock uimenumgr to return default values
-    const originalGetMenuItemIdSelected = app.uimenumgr.getMenuItemIdSelected.bind(app.uimenumgr);
-    app.uimenumgr.getMenuItemIdSelected = (menuId: any) => {
-      if (typeof menuId === 'string' && (menuId.startsWith('header_') || menuId.startsWith('footer_'))) {
-        return 'none';
-      }
-      try {
-        return originalGetMenuItemIdSelected(menuId);
-      } catch {
-        return undefined;
-      }
-    };
-    
+    installHeaderFooterMenuStubs(app);
     app.paperprinter.docInfo.printTitle = 'Test Document';
   });
 

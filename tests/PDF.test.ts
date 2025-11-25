@@ -5,6 +5,7 @@ import { DocInfo_PDF } from '../src/DocInfo_PDF.js';
 import { App } from '../src/App.js';
 import jsPDF from 'jspdf';
 import { mockContext, mockVSCode } from './test-utils.js';
+import { installHeaderFooterMenuStubs } from './test-helpers.js';
 
 describe('PDF', () => {
   let app: App;
@@ -13,21 +14,7 @@ describe('PDF', () => {
   beforeEach(() => {
     app = new App(mockContext, mockVSCode);
     app.init();
-    
-    // Mock uimenumgr to return default values for header/footer menus
-    const originalGetMenuItemIdSelected = app.uimenumgr.getMenuItemIdSelected.bind(app.uimenumgr);
-    app.uimenumgr.getMenuItemIdSelected = (menuId: any) => {
-      // Return 'none' for all header/footer menu items to avoid menu errors
-      if (typeof menuId === 'string' && (menuId.startsWith('header_') || menuId.startsWith('footer_'))) {
-        return 'none';
-      }
-      // Try original method for other menu items, return undefined if not found
-      try {
-        return originalGetMenuItemIdSelected(menuId);
-      } catch {
-        return undefined;
-      }
-    };
+    installHeaderFooterMenuStubs(app);
 
     pdf = new PDF(app);
     pdf.init();
