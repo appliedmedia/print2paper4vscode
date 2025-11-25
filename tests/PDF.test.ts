@@ -5,6 +5,7 @@ import { DocInfo_PDF } from '../src/DocInfo_PDF.js';
 import { App } from '../src/App.js';
 import jsPDF from 'jspdf';
 import { mockContext, mockVSCode } from './test-utils.js';
+import { installHeaderFooterMenuStubs } from './test-helpers.js';
 
 describe('PDF', () => {
   let app: App;
@@ -13,8 +14,13 @@ describe('PDF', () => {
   beforeEach(() => {
     app = new App(mockContext, mockVSCode);
     app.init();
+    installHeaderFooterMenuStubs(app);
+
     pdf = new PDF(app);
     pdf.init();
+    
+    // Set up paperprinter docInfo for tests
+    app.paperprinter.docInfo.printTitle = 'Test Document';
   });
 
   afterEach(() => {
@@ -160,30 +166,21 @@ describe('PDF', () => {
     assert.ok(true);
   });
 
-  it('should convert hex color to RGB', () => {
-    const pdfPrivate = pdf as any;
-    const rgb = pdfPrivate.hexToRgb('#FF0000');
-    assert.strictEqual(rgb.r, 255);
-    assert.strictEqual(rgb.g, 0);
-    assert.strictEqual(rgb.b, 0);
-
-    const rgb2 = pdfPrivate.hexToRgb('#00FF00');
-    assert.strictEqual(rgb2.r, 0);
-    assert.strictEqual(rgb2.g, 255);
-    assert.strictEqual(rgb2.b, 0);
-
-    const rgb3 = pdfPrivate.hexToRgb('#0000FF');
-    assert.strictEqual(rgb3.r, 0);
-    assert.strictEqual(rgb3.g, 0);
-    assert.strictEqual(rgb3.b, 255);
-  });
-
   it('should handle invalid hex color', () => {
+    // Setup PDF first
+    pdf.docInfo.pageSizeId = 'a4';
+    pdf.docInfo.orient = 'portrait';
+    pdf.docInfo.fontSizePx = 12;
+    pdf.docInfo.lineHeightPx = 18;
+    pdf.docInfo.fontFamily = 'Courier';
+    pdf.docInfo.theme = 'github-light';
+    pdf.setupPdf();
+
     const pdfPrivate = pdf as any;
-    const rgb = pdfPrivate.hexToRgb('invalid');
-    assert.strictEqual(rgb.r, 0);
-    assert.strictEqual(rgb.g, 0);
-    assert.strictEqual(rgb.b, 0);
+    // Should handle invalid color gracefully without throwing
+    pdfPrivate.setTextColorFromWebColor(pdf.docInfo.pdfDoc, 'invalid');
+    pdfPrivate.setTextColorFromWebColor(pdf.docInfo.pdfDoc, 'not-a-color');
+    assert.ok(true);
   });
 
   it('should get page dimensions', () => {

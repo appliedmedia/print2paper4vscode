@@ -73,6 +73,10 @@ describe('PaperPrinter', () => {
   });
 
   it('should compute line height from font size', () => {
+    // Create menus first so fontSizeId menu exists
+    const paperPrinterPrivate = paperPrinter as any;
+    paperPrinterPrivate.createMenus();
+    
     const lineHeight = paperPrinter.lineHeightPx;
     assert.ok(typeof lineHeight === 'number');
     assert.ok(lineHeight > 0);
@@ -145,9 +149,9 @@ describe('PaperPrinter', () => {
     assert.ok(menuItems.length > 0);
   });
 
-  it('should generate menu items for pageSizeId', () => {
+  it('should generate menu items for PageSizeId', () => {
     const paperPrinterPrivate = paperPrinter as any;
-    const menuItems = paperPrinterPrivate.menuItems_pageSizeId();
+    const menuItems = paperPrinterPrivate.menuItems_PageSizeId();
     assert.ok(Array.isArray(menuItems));
     assert.ok(menuItems.length > 0);
   });
@@ -180,9 +184,9 @@ describe('PaperPrinter', () => {
     assert.ok(menuItems.length > 0);
   });
 
-  it('should generate menu items for HeaderFooterPos', () => {
+  it('should generate menu items for HeaderFooterContent', () => {
     const paperPrinterPrivate = paperPrinter as any;
-    const menuItems = paperPrinterPrivate.menuItems_HeaderFooterPos();
+    const menuItems = paperPrinterPrivate.menuItems_HeaderFooterContent();
     assert.ok(Array.isArray(menuItems));
     assert.ok(menuItems.length > 0);
   });
