@@ -26,9 +26,13 @@
 - [ ] **VSCodeAPIs**: Add `renderMarkdownToHtml(markdown, document)` wrapper method
 - [ ] **PaperPrinter**: Update `generatePdf()` to branch on markdown mode selection
 
-### 🚧 Phase 4: Mode Selection UI
-- [ ] Add mode selection UI (Raw Source vs Rendered Preview) for markdown files
-- [ ] Update `handlePrintCommandFromVSCode()` to check for markdown and show mode picker
+### 🚧 Phase 4: Preview Tab Handling
+- [ ] **PaperPrinter**: When preview tab detected, show error message
+- [ ] Error: "Due to VS Code's implementation of private data in Preview tabs, they cannot be printed except via screenshot. Do that?"
+- [ ] **OSMac**: Add `screenshotWindow()` method using `screencapture -w` or AppleScript
+- [ ] **OSMac**: Add `getVSCodeWindowBounds()` via AppleScript (if possible)
+- [ ] If screenshot confirmed, capture and print the screenshot
+- [ ] If window bounds unavailable, remove "Do that?" and just show error
 
 ### 🚧 Phase 5: Testing & Polish
 - [ ] Test with basic markdown (headings, paragraphs, bold, italic)
@@ -747,24 +751,137 @@ async renderFromHTML(html: string): Promise<void> {
 
 ---
 
-## Phase 4: Add Mode Toggle to UI
+## Phase 4: Preview Tab Screenshot Handling
 
-### Option A: Quick Pick (Simple)
+### Problem
 
-```typescript
-// User triggers print on markdown file
-// → Show quick pick: "Raw Source" or "Rendered Preview"
-// → Generate PDF in chosen mode
-```
+VS Code markdown preview tabs use private webview content that cannot be directly accessed. We cannot extract HTML or text from preview tabs.
 
-### Option B: Toolbar Menu (Advanced)
+### Solution: Screenshot + Print (macOS)
+
+When user tries to print from a preview tab:
 
 ```typescript
-// Add "Markdown Mode" menu to toolbar (only for markdown files)
-// User can toggle between modes and see live updates
+// src/PaperPrinter.ts
+
+async handlePrintCommandFromVSCode(): Promise<void> {
+  const category = this.app.tabinspector.detectActiveTabCategory();
+  
+  if (category === 'preview') {
+    // Check if we can get window bounds (for targeted screenshot)
+    const canGetBounds = await this.app.os.canGetWindowBounds();
+    
+    let message = 'Due to VS Code\'s implementation of private data in Preview tabs, ' +
+                  'they cannot be printed except via screenshot.';
+    
+    if (canGetBounds) {
+      message += ' Do that?';
+      const choice = await this.app.ui.showQuickPick([
+        { label: 'Take Screenshot & Print', value: 'yes' },
+        { label: 'Cancel', value: 'no' }
+      ]);
+      
+      if (choice === 'yes') {
+        await this.screenshotAndPrint();
+      }
+    } else {
+      // Just show error if we can't screenshot properly
+      this.app.ui.showErrorMessage(message);
+    }
+    return;
+  }
+  
+  // ... rest of normal flow for editor tabs ...
+}
+
+private async screenshotAndPrint(): Promise<void> {
+  // Get VS Code window bounds (if possible)
+  const bounds = await this.app.os.getVSCodeWindowBounds();
+  
+  // Take screenshot
+  const screenshotPath = await this.app.os.screenshotWindow(bounds);
+  
+  // Print screenshot
+  await this.app.os.fileOpenPrintDialog(screenshotPath);
+}
 ```
 
-**Recommendation**: Start with Option A (quick pick), add Option B later if needed.
+### macOS Implementation
+
+```typescript
+// src/OSMac.ts
+
+/**
+ * Check if we can get window bounds via AppleScript
+ */
+async canGetWindowBounds(): Promise<boolean> {
+  try {
+    await this.executeAppleScript('apple_script_check_window_bounds');
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Get VS Code window bounds via AppleScript
+ */
+async getVSCodeWindowBounds(): Promise<{ x: number; y: number; width: number; height: number } | null> {
+  try {
+    const result = await this.executeAppleScript('apple_script_get_vscode_bounds');
+    // Parse bounds from AppleScript output
+    return parseBounds(result);
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Take screenshot of window or region
+ * Uses macOS screencapture command
+ */
+async screenshotWindow(bounds?: { x: number; y: number; width: number; height: number }): Promise<string> {
+  const tempPath = this.pathJoin(this.app.vscodeapis.getDir_Temp(), `screenshot_${Date.now()}.png`);
+  
+  if (bounds) {
+    // Targeted screenshot with bounds
+    await this.execAsync(`screencapture -R${bounds.x},${bounds.y},${bounds.width},${bounds.height} "${tempPath}"`);
+  } else {
+    // Interactive window selection
+    await this.execAsync(`screencapture -w "${tempPath}"`);
+  }
+  
+  return tempPath;
+}
+```
+
+### AppleScript Templates (OSMac.yaml)
+
+```yaml
+apple_script_get_vscode_bounds: |
+  tell application "System Events"
+    tell process "Code"
+      set frontWindow to front window
+      set windowPosition to position of frontWindow
+      set windowSize to size of frontWindow
+      return (item 1 of windowPosition) & "," & (item 2 of windowPosition) & "," & (item 1 of windowSize) & "," & (item 2 of windowSize)
+    end tell
+  end tell
+
+apple_script_check_window_bounds: |
+  tell application "System Events"
+    if exists process "Code" then
+      return true
+    end if
+  end tell
+```
+
+### Fallback
+
+If window bounds cannot be obtained:
+- Show error only: "Due to VS Code's implementation of private data in Preview tabs, they cannot be printed except via screenshot."
+- Don't offer screenshot option
+- User can manually screenshot and print if needed
 
 ---
 
