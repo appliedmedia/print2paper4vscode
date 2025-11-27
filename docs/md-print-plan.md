@@ -1,5 +1,58 @@
 # Markdown Print Plan (Revised: Direct Rendering)
 
+## TODO List
+
+
+### ✅ Phase 1: Validation (COMPLETE)
+- ✅ Verify raw markdown printing works
+- ✅ Test Shiki markdown syntax highlighting
+
+
+### 🚧 Phase 2: HTML Rendering in PDF Class
+- ☐▶ Install `node-html-parser` dependency
+- ☐ Rename `PDF.renderTokenizedLine()` → `PDF.renderFromTokens()` for clarity
+- ☐ Add `PDF.renderFromHTML(html: string)` method to parse and render HTML
+- ☐ Add `htmlElementHandlers` map and `renderHTMLElement()` dispatcher method
+- ☐ Add `getMarkdownFontInfo()` and `getFontFromElementStyle()` font helper methods
+- ☐ Implement `renderHeading()` method for h1-h6 elements with font sizing
+- ☐ Implement `renderParagraph()` method with spacing
+- ☐ Implement `renderInlineContent()` with handlers for strong/b/em/i/code elements
+- ☐ Implement `renderTextContent()` to reuse existing character wrapping logic
+- ☐ Implement `renderList()` method for ul/ol with bullets and numbering
+- ☐ Implement `renderCodeBlock()` to reuse Shiki tokenization for syntax highlighting
+- ☐ Implement `renderBlockquote()` with indentation
+- ☐ Implement `renderHorizontalRule()` method
+
+
+### 🚧 Phase 3: VS Code Markdown API Integration
+- ☐ **DocInfo_PaperPrinter**: Add `useRenderedMd: boolean = false` property
+- ☐ **VSCodeAPIs**: Add `getExtension_Markdown()` method to get extension reference
+- ☐ **VSCodeAPIs**: Add `renderMarkdownToHtml(markdown, document)` wrapper method
+- ☐ **PaperPrinter**: Update `generatePdf()` to branch on `this.docInfo.useRenderedMd` flag
+- ☐ **Follow-up TODO**: Create menu item to toggle `useRenderedMd` (implement later)
+
+
+### 🚧 Phase 4: Preview Tab Handling
+- ☐ **OSMac**: Add `getCurrentAppName()` to detect Cursor/Code/etc and cache
+- ☐ **OSMac**: Add `getEditorWindowBounds()` via AppleScript with dynamic app name
+- ☐ **OSMac**: Add `getScreenDimensions()` via AppleScript as fallback
+- ☐ **OSMac**: Add `screenshotWindow(bounds?)` using screencapture command
+- ☐ **PaperPrinter**: When preview tab detected, prompt user for screenshot
+- ☐ **PaperPrinter**: Implement `screenshotAndPrint()` with window bounds or full screen fallback
+- ☐ Prompt: "Due to VS Code's implementation of private data in Preview tabs, they cannot be printed except via screenshot. Do that?"
+
+
+### 🚧 Phase 5: Testing & Polish
+- ☐ Test with basic markdown (headings, paragraphs, bold, italic)
+- ☐ Test with lists (ordered and unordered, nested)
+- ☐ Test with code blocks with syntax highlighting
+- ☐ Test with complex markdown (blockquotes, tables, nested elements)
+- ☐ Polish - Respect `markdown.preview.fontFamily` and `fontSize` settings
+- ☐ Polish - Get background colors from theme for code/blockquotes
+- ☐ Polish - Test with different VS Code themes
+
+---
+
 ## Overview
 
 Print markdown files in two modes:
@@ -319,7 +372,7 @@ class PDF {
       
       const monoFont = this.mapFontFamilyToJsPDF(monoFontFamily, this.docInfo.pdfDoc!);
       this.docInfo.pdfDoc!.setFont(monoFont, 'normal');
-      // TODO: Get background color from element style or theme
+      // Phase 5 polish: Get background color from element style or theme (see checklist line 45)
       this.renderTextContent(el.text);
       this.docInfo.pdfDoc!.setFont(savedFont.fontName, savedFont.fontStyle);
     },
@@ -550,63 +603,30 @@ class PDF {
 
 ## Phase 3: Get HTML from VS Code Markdown API
 
-### VS Code Markdown API Integration
+### Architecture: Proper Separation of Concerns
 
+**VSCodeAPIs** - Wraps all VS Code API calls:
 ```typescript
-// src/PaperPrinter.ts
+// src/VSCodeAPIs.ts
 
-async handlePrintCommandFromVSCode(): Promise<void> {
-  const category = this.app.tabinspector.detectActiveTabCategory();
-  
-  if (category === 'preview') {
-    this.dx.error('Printing from preview tabs not yet supported');
-    return;
-  }
-  
-  const info = this.app.tabinspector.getEditorSelectionOrAll();
-  if (!info || !info.text || !info.languageId) {
-    this.dx.error('No active editor or content found');
-    return;
-  }
-  
-  this.docInfo.rawCode = info.text.trim();
-  this.docInfo.languageId = info.languageId as LanguageId_t;
-  this.docInfo.printTitle = info.name;
-  
-  // Check if markdown
-  const isMarkdown = info.languageId === 'markdown';
-  
-  if (isMarkdown) {
-    // Show mode selection
-    const mode = await this.app.ui.showQuickPick([
-      { label: 'Raw Source', value: 'raw' },
-      { label: 'Rendered Preview', value: 'rendered' }
-    ]);
-    
-    if (mode === 'rendered') {
-      await this.generateRenderedMarkdownPdf();
-    } else {
-      await this.generatePdf(); // Existing raw mode
-    }
-  } else {
-    await this.generatePdf(); // Non-markdown files
-  }
-  
-  // Display in webview
-  this.uiwebview = new UIWebView(this.app);
-  this.uiwebview.init();
-  await this.uiwebview.displayPdfPanel();
+/**
+ * Get VS Code markdown language features extension
+ */
+getExtension_Markdown(): Extension<any> | undefined {
+  return this.vscode.extensions.getExtension('vscode.markdown-language-features');
 }
 
 /**
- * Generate PDF from rendered markdown
+ * Render markdown to HTML using VS Code's markdown extension
+ * @param markdown - Markdown source text
+ * @param document - VS Code TextDocument for context
+ * @returns HTML string
  */
-private async generateRenderedMarkdownPdf(): Promise<void> {
-  const dx = this.dx.sub('generateRenderedMarkdownPdf');
+async renderMarkdownToHtml(markdown: string, document: TextDocument): Promise<string> {
+  const dx = this.dx.sub('renderMarkdownToHtml');
   
   try {
-    // Get VS Code markdown extension
-    const mdExtension = this.app.vscodeapis.getExtension('vscode.markdown-language-features');
+    const mdExtension = this.getExtension_Markdown();
     
     if (!mdExtension) {
       throw new Error('VS Code markdown extension not found');
@@ -622,30 +642,79 @@ private async generateRenderedMarkdownPdf(): Promise<void> {
       throw new Error('Markdown render API not available');
     }
     
-    // Get active document
-    const editor = this.app.vscodeapis.getActiveTextEditor();
-    if (!editor) {
-      throw new Error('No active editor');
-    }
-    
-    // Render markdown to HTML using VS Code's API
-    const html = await mdApi.render(this.docInfo.rawCode, editor.document);
-    
+    const html = await mdApi.render(markdown, document);
     dx.out(`Rendered markdown to HTML (${html.length} chars)`);
     
+    return html;
+  } finally {
+    dx.done();
+  }
+}
+```
+
+
+**DocInfo_PaperPrinter** - Add markdown rendering flag:
+
+```typescript
+// src/DocInfo_PaperPrinter.ts
+
+export class DocInfo_PaperPrinter {
+  // ... existing properties ...
+  
+  // Flag to control markdown rendering mode
+  // false = raw source with syntax highlighting (default)
+  // true = rendered HTML from VS Code markdown API
+  public useRenderedMd: boolean = false;
+  
+  // ... rest of class ...
+}
+```
+
+
+**PaperPrinter** - Orchestrates workflow (update existing method):
+
+```typescript
+// src/PaperPrinter.ts
+
+async generatePdf(): Promise<void> {
+  const dx = this.dx.sub('generatePdf');
+  
+  try {
     // Setup PDF
     this.app.pdf.setupPdf();
     this.app.pdf.addHeaderAndFooter();
     
-    // Render HTML to PDF
-    await this.app.pdf.renderFromHTML(html);
+    // Branch based on content type and useRenderedMd flag
+    if (this.docInfo.languageId === 'markdown' && this.docInfo.useRenderedMd) {
+      // Rendered markdown mode: Get HTML from VS Code markdown API
+      const editor = this.app.vscodeapis.getActiveTextEditor();
+      if (!editor) throw new Error('No active editor');
+      
+      const html = await this.app.vscodeapis.renderMarkdownToHtml(
+        this.docInfo.rawCode,
+        editor.document
+      );
+      
+      // Render HTML to PDF
+      await this.app.pdf.renderFromHTML(html);
+    } else {
+      // Raw source mode: Tokenize with Shiki (works for all languages including markdown)
+      const tokens = await this.app.stylize.tokenize(
+        this.docInfo.rawCode,
+        this.docInfo.languageId,
+        this.docInfo.theme
+      );
+      
+      // Render tokens to PDF
+      this.app.pdf.renderFromTokens(tokens);
+    }
     
     // Finish PDF
     this.app.pdf.finishPdf();
     
-    dx.out(`Generated PDF from rendered markdown`);
+    dx.out('PDF generation complete');
   } catch (error) {
-    dx.error(`Failed to generate rendered markdown PDF: ${error}`);
+    dx.error(`Failed to generate PDF: ${error}`);
     throw error;
   } finally {
     dx.done();
@@ -653,26 +722,233 @@ private async generateRenderedMarkdownPdf(): Promise<void> {
 }
 ```
 
+**Follow-up TODO**: Create a menu item in the toolbar that toggles `docInfo.useRenderedMd` on/off. This will allow users to switch between raw and rendered markdown modes without code changes. Menu should only appear when viewing markdown files.
+
+
+**PDF** - Two separate rendering methods:
+
+```typescript
+// src/PDF.ts
+
+/**
+ * Render tokens to PDF (for code with syntax highlighting)
+ * @param tokens - 2D array from Shiki: tokens[lineIndex][tokenIndex]
+ */
+renderFromTokens(tokens: ThemedToken[][]): void {
+  for (let lineNum = 0; lineNum < tokens.length; lineNum++) {
+    const lineTokens = tokens[lineNum];
+    // Render each token with color, handle wrapping, page breaks
+    // (existing renderTokenizedLine logic, just iterate internally)
+  }
+}
+
+/**
+ * Render HTML to PDF (for markdown rendered preview)
+ * @param html - HTML string from VS Code markdown API
+ */
+async renderFromHTML(html: string): Promise<void> {
+  const root = parse(html); // node-html-parser
+  
+  for (const element of root.childNodes) {
+    if (element.nodeType === NodeType.ELEMENT_NODE) {
+      this.renderHTMLElement(element as HTMLElement);
+    }
+  }
+  
+  // Uses htmlElementHandlers map to dispatch h1, p, ul, etc.
+  // Each handler calls existing primitives: findCharacterBreakPoint, 
+  // shouldBreakPage, renderTextContent, etc.
+}
+```
+
+**Key Point**: Two separate, independent methods. No "mode" stored. Just branch at call time.
+
 ---
 
-## Phase 4: Add Mode Toggle to UI
+## Phase 4: Preview Tab Screenshot Handling
 
-### Option A: Quick Pick (Simple)
+### Problem
 
-```typescript
-// User triggers print on markdown file
-// → Show quick pick: "Raw Source" or "Rendered Preview"
-// → Generate PDF in chosen mode
-```
+VS Code markdown preview tabs use private webview content that cannot be directly accessed. We cannot extract HTML or text from preview tabs.
 
-### Option B: Toolbar Menu (Advanced)
+### Solution: Screenshot + Print (macOS)
+
+When user tries to print from a preview tab:
 
 ```typescript
-// Add "Markdown Mode" menu to toolbar (only for markdown files)
-// User can toggle between modes and see live updates
+// src/PaperPrinter.ts
+
+async handlePrintCommandFromVSCode(): Promise<void> {
+  const category = this.app.tabinspector.detectActiveTabCategory();
+  
+  if (category === 'preview') {
+    // Preview tabs: screenshot and print
+    const message = 'Due to VS Code\'s implementation of private data in Preview tabs, ' +
+                    'they cannot be printed except via screenshot. Do that?';
+    
+    const choice = await this.app.ui.showQuickPick([
+      { label: 'Take Screenshot & Print', value: 'yes' },
+      { label: 'Cancel', value: 'no' }
+    ]);
+    
+    if (choice === 'yes') {
+      await this.screenshotAndPrint();
+    }
+    return;
+  }
+  
+  // ... rest of normal flow for editor tabs ...
+}
+
+private async screenshotAndPrint(): Promise<void> {
+  // Try to get window bounds (works for Cursor, VS Code, etc.)
+  let bounds = await this.app.os.getEditorWindowBounds();
+  
+  // If bounds unavailable, fall back to full screen
+  if (!bounds) {
+    this.dx.out('Window bounds unavailable, using full screen screenshot');
+    bounds = undefined; // screenshotWindow will use full screen
+  }
+  
+  // Take screenshot (window bounds or full screen)
+  const screenshotPath = await this.app.os.screenshotWindow(bounds);
+  
+  // Print screenshot using existing print workflow
+  await this.app.os.fileOpenPrintDialog(screenshotPath);
+}
 ```
 
-**Recommendation**: Start with Option A (quick pick), add Option B later if needed.
+### macOS Implementation
+
+```typescript
+// src/OSMac.ts
+
+private currentAppName: string | null = null;
+
+/**
+ * Get the name of the currently frontmost application (Cursor, Code, etc.)
+ * Cache it for subsequent operations
+ */
+async getCurrentAppName(): Promise<string> {
+  if (this.currentAppName) {
+    return this.currentAppName;
+  }
+  
+  const result = await this.executeAppleScript('apple_script_get_current_app');
+  this.currentAppName = result.trim();
+  return this.currentAppName;
+}
+
+/**
+ * Check if we can get window bounds via AppleScript
+ */
+async canGetWindowBounds(): Promise<boolean> {
+  try {
+    const appName = await this.getCurrentAppName();
+    await this.executeAppleScript('apple_script_check_window_bounds', { app_name: appName });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Get current editor window bounds via AppleScript
+ * Works with Cursor, VS Code, or any VS Code-based editor
+ */
+async getEditorWindowBounds(): Promise<{ x: number; y: number; width: number; height: number } | null> {
+  try {
+    const appName = await this.getCurrentAppName();
+    const result = await this.executeAppleScript('apple_script_get_editor_bounds', { app_name: appName });
+    // Parse "x,y,width,height" from AppleScript output
+    const parts = result.trim().split(',').map(s => parseInt(s.trim()));
+    if (parts.length === 4) {
+      return { x: parts[0], y: parts[1], width: parts[2], height: parts[3] };
+    }
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Get screen dimensions via AppleScript
+ */
+async getScreenDimensions(): Promise<{ width: number; height: number }> {
+  const result = await this.executeAppleScript('apple_script_get_screen_dimensions');
+  const parts = result.trim().split(',').map(s => parseInt(s.trim()));
+  if (parts.length === 2) {
+    return { width: parts[0], height: parts[1] };
+  }
+  // Fallback to reasonable defaults
+  return { width: 1920, height: 1080 };
+}
+
+/**
+ * Take screenshot of window or full screen
+ * Uses macOS screencapture command
+ */
+async screenshotWindow(bounds?: { x: number; y: number; width: number; height: number }): Promise<string> {
+  const tempPath = this.pathJoin(this.app.vscodeapis.getDir_Temp(), `screenshot_${Date.now()}.png`);
+  
+  if (bounds) {
+    // Targeted screenshot with window bounds
+    await this.execAsync(`screencapture -R${bounds.x},${bounds.y},${bounds.width},${bounds.height} "${tempPath}"`);
+  } else {
+    // Full screen screenshot
+    await this.execAsync(`screencapture "${tempPath}"`);
+  }
+  
+  return tempPath;
+}
+```
+
+### AppleScript Templates (OSMac.yaml)
+
+**⚠️ CRITICAL: Do NOT sanitize or escape `app_name` variable!**
+
+The `app_name` value comes directly from AppleScript's `name of first application process whose frontmost is true` and must be used **exactly as-is** when passed to subsequent AppleScript commands. AppleScript returns valid process names (e.g., "Cursor", "Code") that are safe to use in `tell process "{{app_name}}"` statements. Any sanitization, escaping, or modification will break the process lookup and cause AppleScript to fail.
+
+```yaml
+apple_script_get_current_app: |
+  tell application "System Events"
+    name of first application process whose frontmost is true
+  end tell
+
+apple_script_get_editor_bounds: |
+  tell application "System Events"
+    tell process "{{app_name}}"
+      set frontWindow to front window
+      set windowPosition to position of frontWindow
+      set windowSize to size of frontWindow
+      return (item 1 of windowPosition) & "," & (item 2 of windowPosition) & "," & (item 1 of windowSize) & "," & (item 2 of windowSize)
+    end tell
+  end tell
+
+apple_script_check_window_bounds: |
+  tell application "System Events"
+    if exists process "{{app_name}}" then
+      return true
+    end if
+  end tell
+
+apple_script_get_screen_dimensions: |
+  tell application "Finder"
+    set screenBounds to bounds of window of desktop
+    set screenWidth to (item 3 of screenBounds) - (item 1 of screenBounds)
+    set screenHeight to (item 4 of screenBounds) - (item 2 of screenBounds)
+    return screenWidth & "," & screenHeight
+  end tell
+```
+
+### Fallback Strategy
+
+If window bounds cannot be obtained:
+- Get screen dimensions via AppleScript
+- Screenshot entire screen using `screencapture` (no bounds)
+- Print the screenshot as usual
+
+No user interaction required - fully automated.
 
 ---
 
