@@ -142,13 +142,13 @@ Replace all hardcoded `p2p4vsc` strings with `{{ns}}` in templates and ensure al
 
 **Constants to Add**:
 
-- `public static readonly kNamespace = 'p2p4vsc';`
-- `public static readonly kNamespacePrefix = 'p2p4vsc_';`
+- `public static readonly kNs = 'p2p4vsc';`
+- `public static readonly kNs_ = kNs + '_';`
 
 **Instance Properties to Add** (for class access):
 
-- `public readonly ns = App.kNamespace;`
-- `public readonly ns_ = App.kNamespacePrefix;`
+- `public readonly ns = App.kNs;`
+- `public readonly ns_ = App.kNs_;`
 
 **Method to Update**:
 
