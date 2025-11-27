@@ -1,10 +1,10 @@
 #!/usr/bin/env node
 
 /**
- * Process package.json template: Replace {{ns}} with kExtId
+ * Process package.json template: Replace {{extId}} with kExtId
  * 
- * This script directly imports kExtId from the source TypeScript file
- * and uses it to replace all {{ns}} placeholders in package.json.
+ * This script directly imports kExtId from the compiled TypeScript
+ * and replaces all {{extId}} placeholders in package.json.
  * 
  * Single source of truth: kExtId from _entrypoint_extId_t.ts
  */
@@ -27,21 +27,21 @@ const outPackageJsonPath = path.join(__dirname, '..', 'out', 'package.json');
 // Process package.json template
 function processPackageJson() {
   console.log('Processing package.json template...');
-  console.log(`  Namespace (kExtId): ${kExtId}`);
+  console.log(`  Extension ID (kExtId): ${kExtId}`);
 
   // Read source package.json
   const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8'));
 
-  // Replace {{ns}} with kExtId
+  // Replace {{extId}} with kExtId
   let packageJsonStr = JSON.stringify(packageJson, null, 2);
-  const beforeCount = (packageJsonStr.match(/\{\{ns\}\}/g) || []).length;
-  packageJsonStr = packageJsonStr.replace(/\{\{ns\}\}/g, kExtId);
-  const afterCount = (packageJsonStr.match(/\{\{ns\}\}/g) || []).length;
+  const beforeCount = (packageJsonStr.match(/\{\{extId\}\}/g) || []).length;
+  packageJsonStr = packageJsonStr.replace(/\{\{extId\}\}/g, kExtId);
+  const afterCount = (packageJsonStr.match(/\{\{extId\}\}/g) || []).length;
   
-  console.log(`  Replaced ${beforeCount} occurrences of {{ns}}`);
+  console.log(`  Replaced ${beforeCount} occurrences of {{extId}}`);
   
   if (afterCount > 0) {
-    console.warn(`  WARNING: ${afterCount} {{ns}} templates remain`);
+    console.warn(`  WARNING: ${afterCount} {{extId}} templates remain`);
   }
 
   // Write to output

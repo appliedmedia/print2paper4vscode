@@ -12,8 +12,10 @@
 - **`App.kNs`** = `kExtId` (for future namespace alterability)
 - **`App.kNs_`** = `App.kNs + '_'` (underscore prefix)
 - **`VSCodeAPIs`** uses `kExtId` directly
-- **`package.json`** uses `{{ns}}` templates, replaced by build script using `kExtId`
+- **`package.json`** uses `{{extId}}` templates, replaced by build script using `kExtId`
 - **`scripts/process-package-json.mjs`** imports and uses `kExtId` directly
+- **YAML templates** use `{{ns}}` and `{{ns_}}` (namespace for CSS/HTML/JS)
+- **Build files** use `{{extId}}` (extension ID for VS Code commands)
 
 To change namespace: Update **ONE** constant (`kExtId`) in `_entrypoint_extId_t.ts` and recompile
 
