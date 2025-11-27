@@ -8,13 +8,14 @@
 
 ### Key Achievement: Single Source of Truth
 
-- **`src/_entrypoint_extId_t.ts`** = `'p2p4vsc'` (THE single source - `kExtensionId`)
-- **`VSCodeAPIs.ExtId`** = `kExtensionId` (references single source)
-- **`App.kNs`** = `kExtensionId` (references single source)
+- **`src/_entrypoint_extId_t.ts`**: `export const kExtId = 'p2p4vsc'` (THE ONLY source)
+- **`App.kNs`** = `kExtId` (for future namespace alterability)
 - **`App.kNs_`** = `App.kNs + '_'` (underscore prefix)
-- **`package.json`** uses `{{ns}}` templates, processed during build from `kExtensionId`
+- **`VSCodeAPIs`** uses `kExtId` directly
+- **`package.json`** uses `{{ns}}` templates, replaced by build script using `kExtId`
+- **`scripts/process-package-json.mjs`** imports and uses `kExtId` directly
 
-To change namespace: Update **ONE** constant in `_entrypoint_extId_t.ts` and recompile
+To change namespace: Update **ONE** constant (`kExtId`) in `_entrypoint_extId_t.ts` and recompile
 
 ### Naming Convention Change
 

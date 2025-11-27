@@ -42,9 +42,7 @@ export type GlobalStateValue_t = string | number;
  * const panel = apis.createWebviewPanel('preview', 'Preview', ...);
  */
 export class VSCodeAPIs {
-  // Extension ID - References kExtId (single source of truth)
-  public static readonly ExtId = kExtId;
-  private static readonly WEBVIEW_ID = VSCodeAPIs.ExtId + '.printprep';
+  private static readonly WEBVIEW_ID = kExtId + '.printprep';
 
   private app: App;
   private vscode: typeof import('vscode'); // Use official VS Code types
