@@ -795,13 +795,14 @@ async handlePrintCommandFromVSCode(): Promise<void> {
 }
 
 private async screenshotAndPrint(): Promise<void> {
-  // Get VS Code window bounds (if possible)
-  const bounds = await this.app.os.getVSCodeWindowBounds();
+  // Get current editor window bounds (works for Cursor, VS Code, etc.)
+  const bounds = await this.app.os.getEditorWindowBounds();
   
   // Take screenshot
   const screenshotPath = await this.app.os.screenshotWindow(bounds);
   
-  // Print screenshot
+  // Print screenshot using existing print workflow
+  // (opens print dialog just like we do for PDFs)
   await this.app.os.fileOpenPrintDialog(screenshotPath);
 }
 ```
@@ -811,12 +812,29 @@ private async screenshotAndPrint(): Promise<void> {
 ```typescript
 // src/OSMac.ts
 
+private currentAppName: string | null = null;
+
+/**
+ * Get the name of the currently frontmost application (Cursor, Code, etc.)
+ * Cache it for subsequent operations
+ */
+async getCurrentAppName(): Promise<string> {
+  if (this.currentAppName) {
+    return this.currentAppName;
+  }
+  
+  const result = await this.executeAppleScript('apple_script_get_current_app');
+  this.currentAppName = result.trim();
+  return this.currentAppName;
+}
+
 /**
  * Check if we can get window bounds via AppleScript
  */
 async canGetWindowBounds(): Promise<boolean> {
   try {
-    await this.executeAppleScript('apple_script_check_window_bounds');
+    const appName = await this.getCurrentAppName();
+    await this.executeAppleScript('apple_script_check_window_bounds', { app_name: appName });
     return true;
   } catch {
     return false;
@@ -824,13 +842,19 @@ async canGetWindowBounds(): Promise<boolean> {
 }
 
 /**
- * Get VS Code window bounds via AppleScript
+ * Get current editor window bounds via AppleScript
+ * Works with Cursor, VS Code, or any VS Code-based editor
  */
-async getVSCodeWindowBounds(): Promise<{ x: number; y: number; width: number; height: number } | null> {
+async getEditorWindowBounds(): Promise<{ x: number; y: number; width: number; height: number } | null> {
   try {
-    const result = await this.executeAppleScript('apple_script_get_vscode_bounds');
-    // Parse bounds from AppleScript output
-    return parseBounds(result);
+    const appName = await this.getCurrentAppName();
+    const result = await this.executeAppleScript('apple_script_get_editor_bounds', { app_name: appName });
+    // Parse "x,y,width,height" from AppleScript output
+    const parts = result.trim().split(',').map(s => parseInt(s.trim()));
+    if (parts.length === 4) {
+      return { x: parts[0], y: parts[1], width: parts[2], height: parts[3] };
+    }
+    return null;
   } catch {
     return null;
   }
@@ -847,7 +871,7 @@ async screenshotWindow(bounds?: { x: number; y: number; width: number; height: n
     // Targeted screenshot with bounds
     await this.execAsync(`screencapture -R${bounds.x},${bounds.y},${bounds.width},${bounds.height} "${tempPath}"`);
   } else {
-    // Interactive window selection
+    // Interactive window selection (user clicks window)
     await this.execAsync(`screencapture -w "${tempPath}"`);
   }
   
@@ -858,9 +882,14 @@ async screenshotWindow(bounds?: { x: number; y: number; width: number; height: n
 ### AppleScript Templates (OSMac.yaml)
 
 ```yaml
-apple_script_get_vscode_bounds: |
+apple_script_get_current_app: |
   tell application "System Events"
-    tell process "Code"
+    name of first application process whose frontmost is true
+  end tell
+
+apple_script_get_editor_bounds: |
+  tell application "System Events"
+    tell process "{{app_name}}"
       set frontWindow to front window
       set windowPosition to position of frontWindow
       set windowSize to size of frontWindow
@@ -870,7 +899,7 @@ apple_script_get_vscode_bounds: |
 
 apple_script_check_window_bounds: |
   tell application "System Events"
-    if exists process "Code" then
+    if exists process "{{app_name}}" then
       return true
     end if
   end tell
