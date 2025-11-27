@@ -20,6 +20,36 @@ import * as assert from 'node:assert';
 import { App } from '../src/App.js';
 import { mockContext, mockVSCode } from './test-utils.js';
 
+describe('Namespace Template Replacement - Auto-Injection', () => {
+  let app: App;
+
+  beforeEach(() => {
+    app = new App(mockContext, mockVSCode);
+  });
+
+  afterEach(() => {
+    app.done();
+  });
+
+  it('should auto-inject ns and ns_ without explicit dictionary entries', () => {
+    const template = '.{{ns_}}menuBtn { color: red; }';
+    // Pass empty dictionary - ns/ns_ should be auto-injected
+    const result = app.templateDictReplace(template, {});
+    
+    assert.strictEqual(result, '.p2p4vsc_menuBtn { color: red; }');
+    assert.ok(!result.includes('{{ns_}}'), 'Should have no remaining placeholders');
+  });
+
+  it('should not allow callers to override ns/ns_ values', () => {
+    const template = '.{{ns_}}menu { color: blue; }';
+    // Try to override with wrong values - system values should win
+    const result = app.templateDictReplace(template, { ns: 'wrong', ns_: 'wrong_' });
+    
+    assert.strictEqual(result, '.p2p4vsc_menu { color: blue; }');
+    assert.ok(!result.includes('wrong'), 'Should not use overridden values');
+  });
+});
+
 describe('Namespace Template Replacement - New Convention Verification', () => {
   let app: App;
   const namespaceDict = {

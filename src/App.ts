@@ -188,11 +188,11 @@ export class App {
     let iteration = 0;
     let changed = true;
 
-    // Auto-inject namespace values into dictionary
+    // Auto-inject namespace values into dictionary (after spread to ensure they cannot be overridden)
     const enrichedDictionary: Record<string, string> = {
-      ns: this.ns,
-      ns_: this.ns_,
       ...dictionary,
+      ns: this.ns,      // System constant - always override
+      ns_: this.ns_,    // System constant - always override
     };
 
     // Repeat replacement passes until no changes occur or max iterations reached
