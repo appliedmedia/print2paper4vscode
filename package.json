@@ -17,12 +17,12 @@
   "contributes": {
     "commands": [
       {
-        "command": "p2p4vsc.print2paper",
+        "command": "{{ns}}.print2paper",
         "title": "Print2Paper",
         "category": "Print"
       },
       {
-        "command": "p2p4vsc.persistClear",
+        "command": "{{ns}}.persistClear",
         "title": "Clear State",
         "category": "Print"
       }
@@ -30,13 +30,13 @@
     "menus": {
       "editor/context": [
         {
-          "command": "p2p4vsc.print2paper",
+          "command": "{{ns}}.print2paper",
           "group": "navigation"
         }
       ],
       "editor/title": [
         {
-          "command": "p2p4vsc.print2paper",
+          "command": "{{ns}}.print2paper",
           "group": "navigation",
           "when": "editorTextFocus",
           "title": "???"
@@ -45,7 +45,7 @@
     },
     "keybindings": [
       {
-        "command": "p2p4vsc.print2paper",
+        "command": "{{ns}}.print2paper",
         "key": "alt+p",
         "mac": "alt+p"
       }
@@ -54,8 +54,8 @@
   "scripts": {
     "postinstall": "node scripts/setup-vscode-mock.js",
     "vscode:prepublish": "npm run compile:deploy",
-    "compile": "rm -rf out && tsc -p ./.config/",
-    "compile:deploy": "rm -rf out-deploy && tsc -p ./.config/tsconfig.deploy.json",
+    "compile": "rm -rf out && tsc -p ./.config/ && node scripts/process-package-json.js",
+    "compile:deploy": "rm -rf out-deploy && tsc -p ./.config/tsconfig.deploy.json && node scripts/process-package-json.js",
     "lint": "eslint --config ./.config/eslint.config.mjs src/**/*.ts",
     "lint:fix": "eslint --config ./.config/eslint.config.mjs src/**/*.ts --fix",
     "lint:md": "markdownlint *.md tests/**/*.md",

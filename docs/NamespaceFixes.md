@@ -8,11 +8,12 @@
 
 ### Key Achievement: Single Source of Truth
 
-- **`VSCodeAPIs.ExtId`** = `'p2p4vsc'` (must match package.json)
+- **`VSCodeAPIs.ExtId`** = `'p2p4vsc'` (THE single source)
 - **`App.kNs`** = `VSCodeAPIs.ExtId` (references ExtId)
 - **`App.kNs_`** = `App.kNs + '_'` (underscore prefix)
+- **`package.json`** uses `{{ns}}` templates, processed during build
 
-To change namespace: Update **ONE** constant (`VSCodeAPIs.ExtId`) + package.json commands
+To change namespace: Update **ONE** constant (`VSCodeAPIs.ExtId`) and recompile
 
 ### Naming Convention Change
 
@@ -323,10 +324,11 @@ Replace all hardcoded `p2p4vsc` strings with `{{ns}}` in templates and ensure al
 
 #### 2. ✅ `package.json`
 
-**Decision**: Command IDs stay hardcoded (VS Code API requirement)
-- `"command": "p2p4vsc.print2paper"`
-- `"command": "p2p4vsc.persistClear"`
-- Must be manually updated when changing namespace (VS Code requires registration)
+**Implementation**: Command IDs use `{{ns}}` templates, processed during build
+- Source: `"command": "{{ns}}.print2paper"`
+- Output: `"command": "p2p4vsc.print2paper"`
+- Build script (`scripts/process-package-json.js`) reads `VSCodeAPIs.ExtId` and replaces all `{{ns}}` occurrences
+- Runs automatically during `npm run compile` and `npm run compile:deploy`
 
 ### Phase 3: 🔲 To Do
 
@@ -456,23 +458,22 @@ Replace all hardcoded `p2p4vsc` strings with `{{ns}}` in templates and ensure al
 
 To rename from `p2p4vsc` to `newname`:
 
-1. **Update `src/VSCodeAPIs.ts`**:
+1. **Update ONE constant in `src/VSCodeAPIs.ts`**:
    ```typescript
    public static readonly ExtId = 'newname'; // Changed from 'p2p4vsc'
    ```
 
-2. **Update `package.json`** (required):
-   ```json
-   "command": "newname.print2paper"  // from p2p4vsc.print2paper
-   "command": "newname.persistClear" // from p2p4vsc.persistClear
-   ```
-
-3. **Recompile and test**:
+2. **Recompile and test**:
    ```bash
    npm run compile
    npm test
    ```
 
-All templates automatically update to use `newname_menuBtn`, `newname_toolbar`, etc.
+**That's it!** All changes propagate automatically:
+- `App.kNs` references `VSCodeAPIs.ExtId`
+- All YAML templates use `{{ns}}` and `{{ns_}}` placeholders
+- `package.json` uses `{{ns}}` templates, processed during build to `out/package.json`
+- CSS classes become `newname_menuBtn`, `newname_toolbar`, etc.
+- VS Code commands become `newname.print2paper`, `newname.persistClear`
 
-**Note**: `App.kNs` automatically references `VSCodeAPIs.ExtId`, no changes needed there.
+**Single Source of Truth**: Change ONE constant, everything updates.
