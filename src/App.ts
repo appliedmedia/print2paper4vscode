@@ -188,7 +188,7 @@ export class App {
     let changed = true;
 
     // Auto-inject namespace values into dictionary
-    const enrichedDictionary = {
+    const enrichedDictionary: Record<string, string> = {
       ns: this.ns,
       ns_: this.ns_,
       ...dictionary,

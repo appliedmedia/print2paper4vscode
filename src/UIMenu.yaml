@@ -184,23 +184,26 @@ uimenu_css: |
   }
 
 uimenu_html: |
-  <div class="p2p4vsc-menu {{menuClasses}}" id="{{menuId}}"{{flyoutItemsAttr}}>
-    <button class="p2p4vsc-menu-btn" title="{{displayName}}"{{shortcutCodeAttr}}>{{icon}}</button>
+  <div class="{{ns_}}menu {{menuClasses}}" id="{{menuId}}"{{flyoutItemsAttr}}>
+    <button class="{{ns_}}menuBtn" title="{{displayName}}"{{shortcutCodeAttr}}>{{icon}}</button>
     {{menuItemsContainer}}
   </div>
 
+uimenu_items_container: |
+  <div class="{{ns_}}menuItems" id="{{menuId}}-items">{{menuItems}}</div>
+
 uimenu_generic_handlers: |
   function closeAllMenus() {
-    document.querySelectorAll('.p2p4vsc-menu-items').forEach(items => {
+    document.querySelectorAll('.{{ns_}}menuItems').forEach(items => {
       items.style.display = 'none';
     });
-    document.querySelectorAll('.p2p4vsc-menu.isFlyout').forEach(flyout => {
+    document.querySelectorAll('.{{ns_}}menu.isFlyout').forEach(flyout => {
       flyout.style.display = 'none';
     });
   }
 
   function closeAllFlyouts() {
-    document.querySelectorAll('.p2p4vsc-menu.isFlyout').forEach(flyout => {
+    document.querySelectorAll('.{{ns_}}menu.isFlyout').forEach(flyout => {
       flyout.style.display = 'none';
     });
   }
@@ -236,10 +239,10 @@ uimenu_generic_handlers: |
 
   function handleMenuButtonClick(e) {
     e.preventDefault();
-    const btn = e.target.closest('.p2p4vsc-menu-btn');
-    const menu = btn?.closest('.p2p4vsc-menu');
+    const btn = e.target.closest('.{{ns_}}menuBtn');
+    const menu = btn?.closest('.{{ns_}}menu');
     const menuId = menu?.getAttribute('id');
-    const menuItems = menu?.querySelector('.p2p4vsc-menu-items');
+    const menuItems = menu?.querySelector('.{{ns_}}menuItems');
     
     if (!menuItems) {
       const menuItemId = menuId;
@@ -273,7 +276,7 @@ uimenu_generic_handlers: |
       if (currentMenu.classList.contains('isFlyout') && currentMenu !== excludeFlyout) {
         ancestorFlyouts.push(currentMenu);
       }
-      currentMenu = currentMenu.parentElement?.closest('.p2p4vsc-menu.isFlyout') || null;
+      currentMenu = currentMenu.parentElement?.closest('.{{ns_}}menu.isFlyout') || null;
     }
     return ancestorFlyouts;
   }
@@ -300,7 +303,7 @@ uimenu_generic_handlers: |
     flyoutMenu.style.zIndex = String(1000 + ancestorFlyouts.length + 1);
     flyoutMenu.style.display = 'block';
     
-    const flyoutMenuItems = flyoutMenu.querySelector('.p2p4vsc-menu-items');
+    const flyoutMenuItems = flyoutMenu.querySelector('.{{ns_}}menuItems');
     if (flyoutMenuItems) {
       flyoutMenuItems.style.display = 'block';
       flyoutMenuItems.style.visibility = 'visible';
@@ -318,7 +321,7 @@ uimenu_generic_handlers: |
       const ancestorFlyouts = getAncestorFlyouts(menu, flyoutMenu);
       const wasVisible = flyoutMenu.style.display === 'block';
       
-      document.querySelectorAll('.p2p4vsc-menu.isFlyout').forEach(flyout => {
+      document.querySelectorAll('.{{ns_}}menu.isFlyout').forEach(flyout => {
         if (flyout !== flyoutMenu && !ancestorFlyouts.includes(flyout)) {
           flyout.style.display = 'none';
         }
@@ -336,7 +339,7 @@ uimenu_generic_handlers: |
     e.preventDefault();
     e.stopPropagation();
 
-    const menu = itemEl.closest('.p2p4vsc-menu');
+    const menu = itemEl.closest('.{{ns_}}menu');
     const menuId = menu?.getAttribute('id');
     const menuItemId = itemEl.id;
     
@@ -347,7 +350,7 @@ uimenu_generic_handlers: |
       }
     } else {
       if (menu.classList.contains('has-gutter-before')) {
-        menu.querySelectorAll('.p2p4vsc-menu-item').forEach(item => {
+        menu.querySelectorAll('.{{ns_}}menuItem').forEach(item => {
           item.classList.remove('isSelected');
         });
         itemEl.classList.add('isSelected');
@@ -361,13 +364,13 @@ uimenu_generic_handlers: |
   document.addEventListener('click', (e) => {
     if (!e || !e.target || !e.target.closest) return;
     
-    const btn = e.target.closest('.p2p4vsc-menu-btn');
+    const btn = e.target.closest('.{{ns_}}menuBtn');
     if (btn) {
       handleMenuButtonClick(e);
       return;
     }
     
-    const itemEl = e.target.closest('.p2p4vsc-menu-item');
+    const itemEl = e.target.closest('.{{ns_}}menuItem');
     if (itemEl) {
       handleMenuItemClick(e, itemEl);
       return;
@@ -378,7 +381,7 @@ uimenu_generic_handlers: |
 
   function handleTextEditKeydown(e) {
     const input = e.target;
-    if (!input.classList.contains('p2p4vsc-text-edit')) return;
+    if (!input.classList.contains('{{ns_}}textEdit')) return;
     
     e.stopPropagation();
     
@@ -430,14 +433,14 @@ uimenu_generic_handlers: |
 
   function handleTextEditClick(e) {
     const input = e.target;
-    if (!input.classList.contains('p2p4vsc-text-edit')) return;
+    if (!input.classList.contains('{{ns_}}textEdit')) return;
     closeAllMenus();
     e.stopPropagation();
   }
 
   function handleTextEditInput(e) {
     const input = e.target;
-    if (!input.classList.contains('p2p4vsc-text-edit')) return;
+    if (!input.classList.contains('{{ns_}}textEdit')) return;
     e.stopPropagation();
   }
 
@@ -461,11 +464,11 @@ uimenu_generic_handlers: |
 
   function handleTextEditBlur(e) {
     const input = e.target;
-    if (!input.classList.contains('p2p4vsc-text-edit')) return;
+    if (!input.classList.contains('{{ns_}}textEdit')) return;
     e.stopPropagation();
     validateAndClampTextEdit(input);
     
-    const menu = input.closest('.p2p4vsc-menu');
+    const menu = input.closest('.{{ns_}}menu');
     if (!menu) return;
     
     const menuId = menu.getAttribute('id');
@@ -486,7 +489,7 @@ uimenu_generic_handlers: |
       const isModifier = e.metaKey || e.ctrlKey;
       if (!isModifier) return;
 
-      const menuButtons = document.querySelectorAll('.p2p4vsc-menu-btn[data-shortcut-code]');
+      const menuButtons = document.querySelectorAll('.{{ns_}}menuBtn[data-shortcut-code]');
       for (const btn of menuButtons) {
         const shortcutCode = btn.getAttribute('data-shortcut-code');
         if (shortcutCode === e.code) {
@@ -496,7 +499,7 @@ uimenu_generic_handlers: |
         }
       }
 
-      const menuItems = document.querySelectorAll('.p2p4vsc-menu-item[data-shortcut-code]');
+      const menuItems = document.querySelectorAll('.{{ns_}}menuItem[data-shortcut-code]');
       for (const item of menuItems) {
         const shortcutCode = item.getAttribute('data-shortcut-code');
         if (shortcutCode === e.code) {
@@ -511,7 +514,7 @@ uimenu_generic_handlers: |
   initKeyboardShortcuts();
 
 uimenu_item: |
-  <div class="p2p4vsc-menu-item {{itemClasses}}" id="{{itemId}}"{{flyoutMenuIdRef}}{{textEditConfigAttr}}{{shortcutCodeAttr}}>
+  <div class="{{ns_}}menuItem {{itemClasses}}" id="{{itemId}}"{{flyoutMenuIdRef}}{{textEditConfigAttr}}{{shortcutCodeAttr}}>
     <div class="gutter-before">{{contentGutterBefore}}</div>
     <div class="menu-item-text">
       {{iconSlotWithPrefixSuffix}}{{itemDisplayName}}
@@ -521,6 +524,6 @@ uimenu_item: |
   </div>
 
 uimenu_text_edit: |
-  <span class="text-edit-wrapper"><input type="text" class="p2p4vsc-text-edit" data-item-id="{{itemId}}"{{constrain}}{{width}}{{value}} /></span>
+  <span class="text-edit-wrapper"><input type="text" class="{{ns_}}textEdit" data-item-id="{{itemId}}"{{constrain}}{{width}}{{value}} /></span>
 
 # end, UIMenu.yaml

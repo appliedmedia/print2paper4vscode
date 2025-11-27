@@ -8,7 +8,7 @@ base_css: |
   }
 
 toolbar_css: |
-  #p2p4vsc-toolbar {
+  #{{ns_}}toolbar {
     position: fixed;
     top: 12px;
     left: {{toolbar_pos}}px;
@@ -20,7 +20,7 @@ toolbar_css: |
     background: transparent;
     font: 12px -apple-system, Segoe UI, Arial, sans-serif;
   }
-  .p2p4vsc-toolbar-menubar {
+  .{{ns_}}toolbarMenubar {
     position: relative;
     display: inline-flex;
     gap: 4px;
@@ -30,7 +30,7 @@ toolbar_css: |
     padding: 14px 3px 3px 3px; /* top padding reserves space for grip */
     box-shadow: 0 4px 12px rgba(0,0,0,.15);
   }
-  .p2p4vsc-toolbar-grip {
+  .{{ns_}}toolbarGrip {
     position: absolute;
     top: 2px;
     left: 0;
@@ -42,8 +42,8 @@ toolbar_css: |
     z-index: 10;
     background: radial-gradient(circle at 2px 3px, rgba(120,120,120,.6) 1px, transparent 1px) 0 0 / 4px 6px, radial-gradient(circle at 0px 3px, rgba(120,120,120,.6) 1px, transparent 1px) 2px 0 / 4px 6px;
   }
-  #p2p4vsc-toolbar.dragging { user-select: none; }
-  .p2p4vsc-menu-btn {
+  #{{ns_}}toolbar.dragging { user-select: none; }
+  .{{ns_}}menuBtn {
     border: 1px solid #d0d0d0;
     background: #f7f7f7;
     color: #333;
@@ -61,44 +61,13 @@ toolbar_css: |
 
 toolbar_js: |
   window.vscode = acquireVsCodeApi();
-  const toolbar = document.getElementById('p2p4vsc-toolbar');
-  const drag = document.getElementById('p2p4vsc-toolbar-grip');
+  const toolbar = document.getElementById('{{ns_}}toolbar');
+  const drag = document.getElementById('{{ns_}}toolbarGrip');
   const toolbar_pos_min_px = {{toolbar_pos_min_px}};
 
-  function handleFlyoutHover() {
-    document.addEventListener('mouseenter', (e) => {
-      if (!e || !e.target || !e.target.closest) return;
-      const menuItem = e.target.closest('.p2p4vsc-menu-item');
-      if (menuItem) {
-        const flyout = menuItem.querySelector('.p2p4vsc-flyout');
-        if (flyout) {
-          // Close all other flyouts
-          document.querySelectorAll('.p2p4vsc-flyout').forEach(f => {
-            if (f !== flyout) f.style.display = 'none';
-          });
-          // Show this flyout
-          flyout.style.display = 'block';
-        }
-      }
-    });
-    
-    document.addEventListener('mouseleave', (e) => {
-      if (!e || !e.target || !e.target.closest) return;
-      const menuItem = e.target.closest('.p2p4vsc-menu-item');
-      if (menuItem) {
-        const flyout = menuItem.querySelector('.p2p4vsc-flyout');
-        if (flyout) {
-          setTimeout(() => {
-            if (!flyout.matches(':hover') && !menuItem.matches(':hover')) {
-              flyout.style.display = 'none';
-            }
-          }, 150);
-        }
-      }
-    });
-  }
-
-  handleFlyoutHover();
+  // Note: handleFlyoutHover() removed - dead code
+  // Old .{{ns_}}flyout class selector is never generated
+  // Flyouts now use .{{ns_}}menu.isFlyout instead
 
   let isDragging = false;
   let dragStartX = 0;
@@ -161,9 +130,9 @@ toolbar_html: |
     {{toolbarCss}}
     {{baseCss}}
   </style>
-  <div id="p2p4vsc-toolbar" role="toolbar" aria-label="Print2Paper toolbar">
-    <div class="p2p4vsc-toolbar-grip" id="p2p4vsc-toolbar-grip" title="Click and hold to drag left and right" aria-label="Drag toolbar" tabindex="0"></div>
-    <div class="p2p4vsc-toolbar-menubar" role="menubar">
+  <div id="{{ns_}}toolbar" role="toolbar" aria-label="Print2Paper toolbar">
+    <div class="{{ns_}}toolbarGrip" id="{{ns_}}toolbarGrip" title="Click and hold to drag left and right" aria-label="Drag toolbar" tabindex="0"></div>
+    <div class="{{ns_}}toolbarMenubar" role="menubar">
       {{menuHtml}}
     </div>
   </div>
