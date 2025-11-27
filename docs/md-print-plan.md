@@ -22,9 +22,11 @@
 - [ ] Implement `renderHorizontalRule()` method
 
 ### 🚧 Phase 3: VS Code Markdown API Integration
+- [ ] **DocInfo_PaperPrinter**: Add `useRenderedMd: boolean = false` property
 - [ ] **VSCodeAPIs**: Add `getExtension_Markdown()` method to get extension reference
 - [ ] **VSCodeAPIs**: Add `renderMarkdownToHtml(markdown, document)` wrapper method
-- [ ] **PaperPrinter**: Update `generatePdf()` to branch on markdown mode selection
+- [ ] **PaperPrinter**: Update `generatePdf()` to branch on `this.docInfo.useRenderedMd` flag
+- [ ] **Follow-up TODO**: Create menu item to toggle `useRenderedMd` (implement later)
 
 ### 🚧 Phase 4: Preview Tab Handling
 - [ ] **OSMac**: Add `getCurrentAppName()` to detect Cursor/Code/etc and cache
@@ -645,6 +647,22 @@ async renderMarkdownToHtml(markdown: string, document: TextDocument): Promise<st
 }
 ```
 
+**DocInfo_PaperPrinter** - Add markdown rendering flag:
+```typescript
+// src/DocInfo_PaperPrinter.ts
+
+export class DocInfo_PaperPrinter {
+  // ... existing properties ...
+  
+  // Flag to control markdown rendering mode
+  // false = raw source with syntax highlighting (default)
+  // true = rendered HTML from VS Code markdown API
+  public useRenderedMd: boolean = false;
+  
+  // ... rest of class ...
+}
+```
+
 **PaperPrinter** - Orchestrates workflow (update existing method):
 ```typescript
 // src/PaperPrinter.ts
@@ -657,39 +675,21 @@ async generatePdf(): Promise<void> {
     this.app.pdf.setupPdf();
     this.app.pdf.addHeaderAndFooter();
     
-    // Branch based on content type
-    if (this.docInfo.languageId === 'markdown') {
-      // Ask user which mode
-      const mode = await this.app.ui.showQuickPick([
-        { label: 'Raw Source', value: 'raw' },
-        { label: 'Rendered Preview', value: 'rendered' }
-      ]);
+    // Branch based on content type and useRenderedMd flag
+    if (this.docInfo.languageId === 'markdown' && this.docInfo.useRenderedMd) {
+      // Rendered markdown mode: Get HTML from VS Code markdown API
+      const editor = this.app.vscodeapis.getActiveTextEditor();
+      if (!editor) throw new Error('No active editor');
       
-      if (mode === 'rendered') {
-        // Get HTML from VS Code markdown API
-        const editor = this.app.vscodeapis.getActiveTextEditor();
-        if (!editor) throw new Error('No active editor');
-        
-        const html = await this.app.vscodeapis.renderMarkdownToHtml(
-          this.docInfo.rawCode,
-          editor.document
-        );
-        
-        // Render HTML to PDF (separate method)
-        await this.app.pdf.renderFromHTML(html);
-      } else {
-        // Tokenize and render (existing path for raw markdown)
-        const tokens = await this.app.stylize.tokenize(
-          this.docInfo.rawCode,
-          this.docInfo.languageId,
-          this.docInfo.theme
-        );
-        
-        // Render tokens to PDF (separate method)
-        this.app.pdf.renderFromTokens(tokens);
-      }
+      const html = await this.app.vscodeapis.renderMarkdownToHtml(
+        this.docInfo.rawCode,
+        editor.document
+      );
+      
+      // Render HTML to PDF
+      await this.app.pdf.renderFromHTML(html);
     } else {
-      // Non-markdown: always tokenize
+      // Raw source mode: Tokenize with Shiki (works for all languages including markdown)
       const tokens = await this.app.stylize.tokenize(
         this.docInfo.rawCode,
         this.docInfo.languageId,
@@ -712,6 +712,8 @@ async generatePdf(): Promise<void> {
   }
 }
 ```
+
+**Follow-up TODO**: Create a menu item in the toolbar that toggles `docInfo.useRenderedMd` on/off. This will allow users to switch between raw and rendered markdown modes without code changes. Menu should only appear when viewing markdown files.
 
 **PDF** - Two separate rendering methods:
 ```typescript
