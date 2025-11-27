@@ -11,7 +11,8 @@
   - `FnImport_t` - generic type for what a class imports
 - [ ] Create `src/Registry.ts` with basic skeleton
 - [ ] Registry builds `kId` dynamically at startup from class declarations
-- [ ] Add basic `use(methodNames: Use_t)` method stub
+- [ ] Add basic `use(...methodIds: string[])` method stub (variadic)
+- [ ] Auto-inject `dx` (Diagnostics) methods - everyone gets these automatically
 
 #### Stage 0.2: Integrate Registry into App ⏸️
 - [ ] Update `App.ts` to create Registry instance in constructor
@@ -33,7 +34,10 @@
 - [ ] Implement lazy instantiation cache for singleton services
 - [ ] Implement component factories (vscodeapis, ui, os, pdf, etc.)
 - [ ] **Registry calls constructor only - NO init() calls** (components self-initialize)
-- [ ] Implement `use(methodNames: Use_t): FnImport_t` with method resolution
+- [ ] Implement `use(...methodIds: string[]): FnImport_t` with:
+  - Variadic parameter syntax (no array brackets needed)
+  - Auto-inject `dx.create`, `dx.sub`, `dx.out` for all components
+  - Method resolution via kId lookup
 - [ ] Add circular dependency detection
 - [ ] Add error handling with circuit breaker pattern
 - [ ] Test Registry lazy loading works correctly
@@ -47,7 +51,7 @@
   - `static readonly id = 'os'`
   - `static readonly fn: FnExport_t = ['fileRead', 'fileWrite', 'fileDelete', ...]`
 - [ ] Add instance property: `private fn: FnImport_t`
-- [ ] Update OS constructor to use `app.use([kId.dx.create, kId.dx.sub, kId.dx.out])`
+- [ ] Update OS constructor: `this.fn = app.use()` (dx auto-injected, no other deps)
 - [ ] Move any `init()` logic into constructor
 - [ ] Remove `init()` method entirely
 - [ ] Update OSMac, OSWin, OSLinux (same pattern)
@@ -138,7 +142,7 @@
   - `static readonly id = 'coords'`
   - `static readonly fn: FnExport_t = ['pdfPtsToCssPx', 'cssPxToPdfPts']`
 - [ ] Add instance property: `private fn: FnImport_t`
-- [ ] Update constructor to use `app.use([kId.dx.create, kId.dx.sub, kId.dx.out])`
+- [ ] Update constructor: `this.fn = app.use()` (only needs dx, auto-injected)
 - [ ] Move `init()` logging into constructor
 - [ ] Remove `init()` method entirely
 - [ ] Keep `done()` method for explicit cleanup
@@ -293,18 +297,16 @@ class PDF {
   private dx: Diagnostics;
   
   constructor(app: App) {
-    // Request methods by hierarchical kId
-    this.fn = app.use([
+    // Request methods by hierarchical kId (variadic, no array brackets)
+    // dx is auto-injected - always available
+    this.fn = app.use(
       kId.ui.showErrorMessage,
       kId.stylize.getTokens,
       kId.os.fileRead,
-      kId.dx.create,
-      kId.dx.sub,
-      kId.dx.out,
       kId.coords.pdfPtsToCssPx,  // Coords is singleton too
-    ]);
+    );
     
-    // Create local diagnostics
+    // Create local diagnostics (dx auto-injected)
     this.dx = this.fn.dx.create('PDF');
     
     // All initialization happens here - no separate init() method
@@ -352,11 +354,11 @@ class UI {
   private _yaml: Yaml<typeof UI.kYaml>;
   
   constructor(app: App) {
-    this.fn = app.use([
-      kId.dx.create,
+    // dx auto-injected, only request what else is needed
+    this.fn = app.use(
       kId.os.fileRead,
       kId.yaml.create,  // Factory method
-    ]);
+    );
     
     // Create per-instance Yaml via factory
     this._yaml = this.fn.yaml.create(app, 'src/UI.yaml', UI.kYaml);
@@ -571,19 +573,17 @@ class PDF {
 
   constructor(app: App) {
     // Request by hierarchical kId - Registry resolves to component methods
-    this.fn = app.use([
+    // dx is auto-injected - don't need to request it
+    this.fn = app.use(
       kId.stylize.getTokens,
       kId.stylize.getThemes,
       kId.ui.showErrorMessage,
       kId.ui.showInfoMessage,
       kId.os.fileRead,
       kId.os.fileWrite,
-      kId.dx.create,
-      kId.dx.sub,
-      kId.dx.out,
       kId.coords.pdfPtsToCssPx,  // Coords is singleton, not per-instance
       kId.coords.cssPxToPdfPts,
-    ]);
+    );
 
     // Create Diagnostics instance for this class
     this.dx = this.fn.dx.create('PDF');
@@ -1216,10 +1216,10 @@ class UI {
   private fn: FnImport_t;
   
   constructor(app: App) {
-    this.fn = app.use([
-      kId.dx.create,
+    // dx auto-injected - always available
+    this.fn = app.use(
       kId.os.fileRead,
-    ]);
+    );
   }
 }
 ```
@@ -1304,12 +1304,28 @@ class Registry {
     global.kId = this.kId;
   }
 
-  use(methodIds: Use_t): FnImport_t {
+  use(...methodIds: string[]): FnImport_t {
+    // Auto-inject dx methods - everyone gets these
+    const allMethodIds = [
+      ...methodIds,
+      'dx.create',
+      'dx.sub',
+      'dx.out',
+    ];
+    
     const result: any = {};
+    
+    // Parse method IDs and group by component
+    const componentMethods = new Map<string, Set<string>>();
+    
+    for (const methodId of allMethodIds) {
+      // Find component that owns this method via kId lookup
+      // ...
+    }
 
-    for (const [componentName, methods] of Object.entries(request)) {
+    for (const [componentName, methods] of componentMethods) {
       if (componentName === 'dx') {
-        // Diagnostics is always available
+        // Diagnostics is always available (created at Registry construction)
         result.dx = this.createScopedAccess(this.diagnostics, methods as string[]);
       } else {
         // Get or create component instance lazily
