@@ -7,7 +7,7 @@
 - ✅ Test Shiki markdown syntax highlighting
 
 ### 🚧 Phase 2: HTML Rendering in PDF Class
-- ▶▶ Install `node-html-parser` dependency
+- ☐▶ Install `node-html-parser` dependency
 - ☐ Rename `PDF.renderTokenizedLine()` → `PDF.renderFromTokens()` for clarity
 - ☐ Add `PDF.renderFromHTML(html: string)` method to parse and render HTML
 - ☐ Add `htmlElementHandlers` map and `renderHTMLElement()` dispatcher method
