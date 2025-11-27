@@ -298,6 +298,112 @@ class Component {
 
 ---
 
+## Whole Class/Component Usage Analysis
+
+This section documents cases where components might need entire class instances vs specific methods.
+
+### ✅ Can Use Specific Methods Only
+
+#### 1. Yaml - Only `get()` needed
+**Used by:** PaperPrinter, UIWebView, UIMenu, PDF, UI  
+**Current pattern:**
+```typescript
+this._yaml = new Yaml(app, 'src/PDF.yaml', PDF.kYaml);
+const data = this._yaml.get();
+```
+**With Registry:**
+```typescript
+this.fn = app.use([kId.yaml.get]);
+// Yaml becomes a singleton, no per-class instances needed
+const data = this.fn.yaml.get('src/PDF.yaml', PDF.kYaml);
+```
+**Status:** Can eliminate class instantiation entirely
+
+#### 2. Coords - Only 4 methods needed
+**Used by:** PDF (holds instance), DocInfo_PDF (creates temp instance)  
+**Methods used:**
+- `init()` - move to constructor
+- `done()` - keep for cleanup
+- `pdfPtsToCssPx(value)` - called 6 times
+- `cssPxToPdfPts(value)` - called 3 times
+
+**Current pattern:**
+```typescript
+this.coords = new Coords(app);
+this.coords.init();
+const px = this.coords.pdfPtsToCssPx(pts);
+```
+**With Registry:**
+```typescript
+this.fn = app.use([
+  kId.coords.pdfPtsToCssPx,
+  kId.coords.cssPxToPdfPts,
+]);
+const px = this.fn.coords.pdfPtsToCssPx(pts);
+// Coords becomes singleton, no per-class instances
+```
+**Status:** Can eliminate class instantiation
+
+#### 3. UIWebView - Only 2 methods needed
+**Used by:** PaperPrinter (holds instance)  
+**Methods used:**
+- `init()` - move to constructor
+- `displayPdfPanel()` - called 2 times
+
+**Current pattern:**
+```typescript
+this.uiwebview = new UIWebView(this.app);
+this.uiwebview.init();
+await this.uiwebview.displayPdfPanel();
+```
+**With Registry:**
+```typescript
+this.fn = app.use([kId.uiwebview.displayPdfPanel]);
+await this.fn.uiwebview.displayPdfPanel();
+// UIWebView becomes singleton
+```
+**Status:** Can eliminate class instantiation
+
+---
+
+### ❓ Needs Investigation - Possible Whole Class Usage
+
+#### 4. UIMenu - Created and stored in arrays
+**Used by:** UIMenuMgr  
+**Pattern:**
+```typescript
+const menu = new UIMenu(app, id, displayName, ...);
+this.menus.push(menu);  // Stored for later use
+// Later: iterate through menus, call various methods
+```
+**Question:** Could we use method-based approach instead?  
+**Status:** NEEDS REVIEW - Currently assumes whole class needed
+
+---
+
+### ✅ Confirmed Needs Whole Class
+
+#### 5. DocInfo_PDF and DocInfo_PaperPrinter - Data containers
+**Used by:** PDF, PaperPrinter  
+**Reason:** Data objects with 10+ properties accessed throughout codebase
+```typescript
+this.docInfo = new DocInfo_PDF(app);
+// Then accessed: docInfo.pdfDoc, docInfo.pageTotal, docInfo.theme, etc.
+```
+**Status:** Keep as-is - data container pattern
+
+#### 6. Persist - Dynamic getter/setter pattern
+**Used by:** UI, UIMenu  
+**Reason:** Creates dynamic properties via `Object.defineProperty()`
+```typescript
+this.persist = new Persist(app);
+this.persist.register('toolbar_pos');
+this.persist.toolbar_pos = 100;  // Dynamic property
+```
+**Status:** Keep as-is - requires class instance for dynamic properties
+
+---
+
 ## Overview
 
 This document outlines a comprehensive migration plan to replace the current dependency injection pattern where every class receives a copy of `app` and accesses other classes via `this.app.componentName`, along with eliminating the requirement for `init()` routines.
