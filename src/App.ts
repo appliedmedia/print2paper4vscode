@@ -42,8 +42,8 @@ type components_t = {
  * const replaced = app.templateDictReplace('Hello {{name}}', {name: 'World'});
  */
 export class App {
-  // Namespace constants for template replacement
-  public static readonly kNs = 'p2p4vsc';
+  // Namespace derives from VSCodeAPIs.ExtId (single source of truth)
+  public static readonly kNs = VSCodeAPIs.ExtId;
   public static readonly kNs_ = App.kNs + '_';
   
   // Instance properties for easy access

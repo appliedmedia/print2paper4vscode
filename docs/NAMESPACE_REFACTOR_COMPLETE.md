@@ -30,12 +30,17 @@ This change applies to ALL CSS classes, HTML IDs, and JavaScript selectors throu
 
 ### Phase 1: Foundation (✅ Complete)
 
-1. **App.ts** - Added namespace constants:
-   - `public static readonly kNs = 'p2p4vsc'` - Source constant
+1. **VSCodeAPIs.ts** - Single source of truth:
+   - `public static readonly ExtId = 'p2p4vsc'` - Extension ID constant
+   - Must match package.json command registrations
+   - All namespace references derive from this
+
+2. **App.ts** - Namespace constants:
+   - `public static readonly kNs = VSCodeAPIs.ExtId` - References ExtId
    - `public static readonly kNs_ = App.kNs + '_'` - Underscore prefix
    - Instance properties: `ns` and `ns_` for easy access
 
-2. **App.templateDictReplace()** - Auto-injection:
+3. **App.templateDictReplace()** - Auto-injection:
    - Automatically includes `{ns: 'p2p4vsc', ns_: 'p2p4vsc_'}` in every template replacement
    - No manual dictionary additions needed in calling code
 
@@ -132,9 +137,9 @@ document.querySelector('.p2p4vsc_menuItem')
 
 To rename the entire application namespace (e.g., from `p2p4vsc` to `newname`):
 
-1. **Update ONE constant in App.ts**:
+1. **Update ONE constant in VSCodeAPIs.ts**:
    ```typescript
-   public static readonly kNs = 'newname'; // Changed from 'p2p4vsc'
+   public static readonly ExtId = 'newname'; // Changed from 'p2p4vsc'
    ```
 
 2. **Update package.json commands** (required for VS Code API):
@@ -143,18 +148,15 @@ To rename the entire application namespace (e.g., from `p2p4vsc` to `newname`):
    "command": "newname.persistClear" // Changed from p2p4vsc.persistClear
    ```
 
-3. **Update VSCodeAPIs.ts** (if needed):
-   ```typescript
-   private static readonly EXTENSION_ID = 'newname'; // Changed from 'p2p4vsc'
-   ```
-
-4. **Recompile and test**:
+3. **Recompile and test**:
    ```bash
    npm run compile
    npm test
    ```
 
 All templates will automatically use the new namespace. CSS classes, HTML IDs, and JavaScript selectors will update to `newname_menuBtn`, `newname_toolbar`, etc.
+
+**Note**: `App.kNs` automatically references `VSCodeAPIs.ExtId`, so no changes needed in App.ts.
 
 ## Removed Functionality
 
@@ -191,7 +193,8 @@ If you have any external code referencing these classes:
 ## Files Modified
 
 ### Core
-- `src/App.ts` - Added namespace constants and auto-injection
+- `src/VSCodeAPIs.ts` - Created `ExtId` as single source of truth for namespace
+- `src/App.ts` - Namespace constants reference `VSCodeAPIs.ExtId`, added auto-injection
 - `src/UIMenu.ts` - Updated type definitions, moved HTML to template
 
 ### Templates
