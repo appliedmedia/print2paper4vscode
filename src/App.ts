@@ -8,7 +8,7 @@ import { OS } from './OS';
 import { UIMenuMgr } from './UIMenuMgr';
 import { Diagnostics } from './Diagnostics';
 import type { ExtensionContext } from 'vscode';
-import { kExtensionId } from './ExtensionId_t';
+import { kExtensionId } from './_entrypoint_extId_t';
 
 // Type aliases for forceNumber/forceNumbers input and output
 export type ForceNumber_scalar_t = number | string | undefined;

@@ -5,11 +5,11 @@
  * 
  * This script:
  * 1. Reads the source package.json (with {{ns}} templates)
- * 2. Extracts the namespace from compiled ExtensionId_t.js
+ * 2. Extracts the namespace from compiled _entrypoint_extId_t.js
  * 3. Replaces all {{ns}} occurrences with the actual value
  * 4. Writes the processed package.json to the output directory
  * 
- * This ensures kExtensionId (from ExtensionId_t.ts) is the single source of truth
+ * This ensures kExtensionId (from _entrypoint_extId_t.ts) is the single source of truth
  * for the namespace, including VS Code command registrations in package.json.
  */
 
@@ -18,13 +18,13 @@ const path = require('path');
 
 // Paths
 const packageJsonPath = path.join(__dirname, '..', 'package.json');
-const extensionIdPath = path.join(__dirname, '..', 'out', 'src', 'ExtensionId_t.js');
+const extensionIdPath = path.join(__dirname, '..', 'out', 'src', '_entrypoint_extId_t.js');
 const outPackageJsonPath = path.join(__dirname, '..', 'out', 'package.json');
 
-// Extract kExtensionId from compiled ExtensionId_t.js
+// Extract kExtensionId from compiled _entrypoint_extId_t.js
 function extractNamespace() {
   if (!fs.existsSync(extensionIdPath)) {
-    console.error('ERROR: ExtensionId_t.js not found. Run `npm run compile` first.');
+    console.error('ERROR: _entrypoint_extId_t.js not found. Run `npm run compile` first.');
     process.exit(1);
   }
 
@@ -34,7 +34,7 @@ function extractNamespace() {
   const match = content.match(/kExtensionId\s*=\s*['"]([^'"]+)['"]/);
   
   if (!match) {
-    console.error('ERROR: Could not find kExtensionId in ExtensionId_t.js');
+    console.error('ERROR: Could not find kExtensionId in _entrypoint_extId_t.js');
     process.exit(1);
   }
 

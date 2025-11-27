@@ -12,7 +12,7 @@ import type {
 import { Range } from 'vscode';
 import type { SendToExt_t } from './types/UI_t';
 import { Diagnostics } from './Diagnostics';
-import { kExtensionId } from './ExtensionId_t';
+import { kExtensionId } from './_entrypoint_extId_t';
 
 // Opaque ID type for webview panels
 export type WebviewPanelId_t = string & { readonly __brand: 'WebviewPanelId' };

@@ -8,13 +8,13 @@
 
 ### Key Achievement: Single Source of Truth
 
-- **`src/ExtensionId_t.ts`** = `'p2p4vsc'` (THE single source - `kExtensionId`)
+- **`src/_entrypoint_extId_t.ts`** = `'p2p4vsc'` (THE single source - `kExtensionId`)
 - **`VSCodeAPIs.ExtId`** = `kExtensionId` (references single source)
 - **`App.kNs`** = `kExtensionId` (references single source)
 - **`App.kNs_`** = `App.kNs + '_'` (underscore prefix)
 - **`package.json`** uses `{{ns}}` templates, processed during build from `kExtensionId`
 
-To change namespace: Update **ONE** constant in `ExtensionId_t.ts` and recompile
+To change namespace: Update **ONE** constant in `_entrypoint_extId_t.ts` and recompile
 
 ### Naming Convention Change
 
@@ -184,11 +184,12 @@ Replace all hardcoded `p2p4vsc` strings with `{{ns}}` in templates and ensure al
 
 ### Phase 2: ✅ Completed
 
-#### 1. ✅ `src/ExtensionId_t.ts` (NEW)
+#### 1. ✅ `src/_entrypoint_extId_t.ts` (NEW)
 
 **Created**:
 - `export const kExtensionId = 'p2p4vsc'` - THE single source of truth
-- Dedicated file for namespace constant (no circular dependencies)
+- Dedicated foundational file (underscore prefix signals early initialization)
+- No circular dependencies
 - Imported by `App.ts`, `VSCodeAPIs.ts`, and build scripts
 
 #### 2. ✅ `src/VSCodeAPIs.ts`
@@ -323,10 +324,11 @@ Replace all hardcoded `p2p4vsc` strings with `{{ns}}` in templates and ensure al
 
 ### Phase 3: ✅ Completed
 
-#### 1. ✅ `src/ExtensionId_t.ts`
+#### 1. ✅ `src/_entrypoint_extId_t.ts`
 
-**Implementation**: Created dedicated file for namespace constant
+**Implementation**: Created dedicated foundational file for namespace constant
 - `export const kExtensionId = 'p2p4vsc'` - THE single source of truth
+- Underscore prefix signals foundational/early initialization requirement
 - No circular dependencies (standalone file)
 - Imported by all components that need namespace access
 
@@ -335,7 +337,7 @@ Replace all hardcoded `p2p4vsc` strings with `{{ns}}` in templates and ensure al
 **Implementation**: Command IDs use `{{ns}}` templates, processed during build
 - Source: `"command": "{{ns}}.print2paper"`
 - Output: `"command": "p2p4vsc.print2paper"`
-- Build script reads `kExtensionId` from compiled `ExtensionId_t.js`
+- Build script reads `kExtensionId` from compiled `_entrypoint_extId_t.js`
 - Replaces all `{{ns}}` occurrences in package.json
 - Runs automatically during `npm run compile` and `npm run compile:deploy`
 
@@ -467,7 +469,7 @@ Replace all hardcoded `p2p4vsc` strings with `{{ns}}` in templates and ensure al
 
 To rename from `p2p4vsc` to `newname`:
 
-1. **Update ONE constant in `src/ExtensionId_t.ts`**:
+1. **Update ONE constant in `src/_entrypoint_extId_t.ts`**:
    ```typescript
    export const kExtensionId = 'newname'; // Changed from 'p2p4vsc'
    ```
@@ -487,4 +489,4 @@ To rename from `p2p4vsc` to `newname`:
 - CSS classes become `newname_menuBtn`, `newname_toolbar`, etc.
 - VS Code commands become `newname.print2paper`, `newname.persistClear`
 
-**Single Source of Truth**: `kExtensionId` in `ExtensionId_t.ts` - Change ONE constant, everything updates.
+**Single Source of Truth**: `kExtensionId` in `_entrypoint_extId_t.ts` - Change ONE constant, everything updates.
