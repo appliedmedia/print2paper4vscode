@@ -8,11 +8,17 @@
 - [ ] Create `src/types/Registry_t.ts` with:
   - `Use_t = string[]` - array of method name strings
   - `FnExport_t = readonly string[]` - what a class exports
-  - `FnImport_t` - generic type for what a class imports
+  - `FnImport_t` - generic type for what a class imports (no `any` types!)
+  - `kId_t` - type for kId structure
+  - `ComponentInstance_t` - type for component instances
+  - `ComponentFactory_t` - type for factory functions
+  - `ComponentClass_t` - type for class static members
+  - `GlobalWithKId_t` - type for global with kId attached
 - [ ] Create `src/Registry.ts` with basic skeleton
 - [ ] Registry builds `kId` dynamically at startup from class declarations
 - [ ] Add basic `use(...methodIds: string[])` method stub (variadic)
-- [ ] Auto-inject `dx` (Diagnostics) methods - everyone gets these automatically
+- [ ] Registry constructor accepts `autoInject: string[]` option
+- [ ] Auto-inject specified methods (e.g., dx) for all components
 
 #### Stage 0.2: Integrate Registry into App ⏸️
 - [ ] Update `App.ts` to create Registry instance in constructor
@@ -1263,16 +1269,35 @@ export type FnExport_t = readonly string[];  // What a class exports
 
 export type FnImport_t = {
   [componentId: string]: {
-    [methodName: string]: any;
+    [methodName: string]: Function;
   };
+};
+
+export type kId_t = {
+  [componentId: string]: {
+    [methodName: string]: string;
+  };
+};
+
+export type ComponentInstance_t = object;  // Any component instance
+
+export type ComponentFactory_t = (app: App) => ComponentInstance_t;
+
+export type ComponentClass_t = {
+  readonly id: string;
+  readonly fn: FnExport_t;
+};
+
+export type GlobalWithKId_t = typeof globalThis & {
+  kId: kId_t;
 };
 
 // src/Registry.ts
 class Registry {
-  private instances: Map<string, any> = new Map();
-  private factories: Map<string, (app: App) => any> = new Map();
+  private instances: Map<string, ComponentInstance_t> = new Map();
+  private factories: Map<string, ComponentFactory_t> = new Map();
   private diagnostics: Diagnostics;
-  private kId: any = {};
+  private kId: kId_t = {};
 
   constructor(
     private vscode: any,
@@ -1289,7 +1314,15 @@ class Registry {
   
   private buildKId(): void {
     // Import all component classes
-    const components = [Diagnostics, VSCodeAPIs, UI, OS, PDF, Stylize, /* ... */];
+    const components: ComponentClass_t[] = [
+      Diagnostics, 
+      VSCodeAPIs, 
+      UI, 
+      OS, 
+      PDF, 
+      Stylize, 
+      /* ... */
+    ];
     
     for (const Component of components) {
       const id = Component.id;  // 'pdf', 'ui', etc.
@@ -1301,19 +1334,14 @@ class Registry {
     }
     
     // Export kId for use in components
-    global.kId = this.kId;
+    (global as GlobalWithKId_t).kId = this.kId;
   }
 
   use(...methodIds: string[]): FnImport_t {
-    // Auto-inject dx methods - everyone gets these
-    const allMethodIds = [
-      ...methodIds,
-      'dx.create',
-      'dx.sub',
-      'dx.out',
-    ];
+    // Add auto-injected methods from options
+    const allMethodIds = [...methodIds, ...this.autoInjectMethods];
     
-    const result: any = {};
+    const result: Partial<FnImport_t> = {};
     
     // Parse method IDs and group by component
     const componentMethods = new Map<string, Set<string>>();
@@ -1326,7 +1354,7 @@ class Registry {
     for (const [componentName, methods] of componentMethods) {
       if (componentName === 'dx') {
         // Diagnostics is always available (created at Registry construction)
-        result.dx = this.createScopedAccess(this.diagnostics, methods as string[]);
+        result[componentName] = this.createScopedAccess(this.diagnostics, Array.from(methods));
       } else {
         // Get or create component instance lazily
         if (!this.instances.has(componentName)) {
