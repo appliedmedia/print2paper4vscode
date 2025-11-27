@@ -1,9 +1,11 @@
 # VSCode Mock Investigation Summary
 
 ## Problem
+
 Tests were failing with "Cannot find module 'vscode'" errors despite vscode mocks being created.
 
 ## Root Cause
+
 The vscode mocks were incomplete and missing several critical properties:
 
 1. **Missing `extensionPath` in ExtensionContext**: Tests calling `getExtensionPath()` failed
@@ -16,6 +18,7 @@ The vscode mocks were incomplete and missing several critical properties:
 ## Solution Implemented
 
 ### 1. Enhanced `tests/vscode-mock.cjs`
+
 - Added complete `Uri` objects with `path`, `fsPath`, and `toString()` methods
 - Added proper `activeTextEditor` with complete document structure including `fileName`
 - Added `createMockContext()` factory function with `extensionPath`
@@ -25,6 +28,7 @@ The vscode mocks were incomplete and missing several critical properties:
 - Enhanced `workspace.getConfiguration()` to return editor settings
 
 ### 2. Updated Test Files
+
 - **VSCodeAPIs.test.ts**: Added `extensionPath` to mockContext and `fileName` to document
 - **OS.test.ts**: Added `extensionPath`, `ViewColumn`, and `createWebviewPanel`
 - **PDF-Object-Reuse.test.ts**: Added complete mock with all required properties
@@ -33,11 +37,13 @@ The vscode mocks were incomplete and missing several critical properties:
 ## Results
 
 ### Before
+
 - **86 failing tests** (out of 353 total)
 - Multiple "Cannot find module 'vscode'" errors
 - Tests couldn't access VS Code APIs
 
 ### After
+
 - **82 failing tests** (out of 353 total)
 - **Zero "Cannot find module 'vscode'" errors** ✓
 - **270 passing tests** (up from 266)
