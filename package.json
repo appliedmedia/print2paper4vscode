@@ -39,7 +39,7 @@
           "command": "{{extId}}.print2paper",
           "group": "navigation",
           "when": "editorTextFocus",
-          "title": "???"
+          "title": "Print2Paper"
         }
       ]
     },
