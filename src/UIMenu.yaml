@@ -6,12 +6,12 @@ uimenu_css: |
     --flyout-left: 97%;
   }
 
-  .p2p4vsc-menu-btn:hover { background: #e9e9e9; }
-  .p2p4vsc-menu {
+  .{{ns_}}menuBtn:hover { background: #e9e9e9; }
+  .{{ns_}}menu {
     position: relative;
     display: inline-block;
   }
-  .p2p4vsc-menu-items {
+  .{{ns_}}menuItems {
     position: absolute;
     background: #222;
     color: #fff;
@@ -26,7 +26,7 @@ uimenu_css: |
     min-width: 100%;
     pointer-events: auto;
   }
-  .p2p4vsc-menu-item {
+  .{{ns_}}menuItem {
     --gutter-before-width: 2ch;
     --gutter-after-width: 4ch;
     --gutter-off-width: 1ch;
@@ -45,11 +45,11 @@ uimenu_css: |
     position: relative;
     pointer-events: auto;
   }
-  .p2p4vsc-menu-item:hover, .p2p4vsc-menu-item.isSelected {
+  .{{ns_}}menuItem:hover, .{{ns_}}menuItem.isSelected {
     background: #444;
   }
 
-  .p2p4vsc-menu-item .gutter-after {
+  .{{ns_}}menuItem .gutter-after {
     grid-area: gutter-after;
     text-align: right;
     display: flex;
@@ -57,7 +57,7 @@ uimenu_css: |
     justify-content: flex-end;
   }
 
-  .p2p4vsc-menu-item .gutter-before {
+  .{{ns_}}menuItem .gutter-before {
     grid-area: gutter-before;
     text-align: left;
     display: flex;
@@ -65,33 +65,33 @@ uimenu_css: |
     justify-content: flex-start;
   }
 
-  .p2p4vsc-menu-item .menu-item-text {
+  .{{ns_}}menuItem .menu-item-text {
     grid-area: menu-text;
     text-align: left;
     display: flex;
     align-items: center;
   }
 
-  .p2p4vsc-menu-item .menu-item-text svg {
+  .{{ns_}}menuItem .menu-item-text svg {
     vertical-align: middle;
     display: inline-block;
   }
 
-  .p2p4vsc-menu-item.isFlyout .gutter-after::after {
+  .{{ns_}}menuItem.isFlyout .gutter-after::after {
     content: "▶" !important;
   }
 
-  .p2p4vsc-menu-item.isDefault .gutter-after::after {
+  .{{ns_}}menuItem.isDefault .gutter-after::after {
     content: "📝" !important;
   }
 
-  .p2p4vsc-menu-item:not(.isFlyout):not(.isDefault) .gutter-after::after {
+  .{{ns_}}menuItem:not(.isFlyout):not(.isDefault) .gutter-after::after {
     content: "" !important;
   }
 
-  .p2p4vsc-menu-item.isSelected {
+  .{{ns_}}menuItem.isSelected {
   }
-  .p2p4vsc-menu-item.isSelected .gutter-before::before {
+  .{{ns_}}menuItem.isSelected .gutter-before::before {
     content: "✓";
     display: inline-block;
     width: 100%;
@@ -100,18 +100,18 @@ uimenu_css: |
   }
 
   /* Icon slot prefix/suffix styling */
-  .p2p4vsc-menu-item .icon-slot-prefix,
-  .p2p4vsc-menu-item .icon-slot-suffix {
+  .{{ns_}}menuItem .icon-slot-prefix,
+  .{{ns_}}menuItem .icon-slot-suffix {
     display: inline-block;
     white-space: nowrap;
   }
 
-  .p2p4vsc-menu-item .text-edit-wrapper {
+  .{{ns_}}menuItem .text-edit-wrapper {
     display: inline-block;
     width: auto;
     flex-shrink: 0;
   }
-  .p2p4vsc-menu-item .p2p4vsc-text-edit {
+  .{{ns_}}menuItem .{{ns_}}textEdit {
     border: 1px solid #888;
     background: #333;
     color: #fff;
@@ -127,12 +127,12 @@ uimenu_css: |
     box-sizing: border-box;
     flex-shrink: 0;
   }
-  .p2p4vsc-menu-item .p2p4vsc-text-edit:focus {
+  .{{ns_}}menuItem .{{ns_}}textEdit:focus {
     outline: 1px solid #007acc;
     border-color: #007acc;
   }
 
-  .p2p4vsc-menu-btn:has(.p2p4vsc-text-edit) {
+  .{{ns_}}menuBtn:has(.{{ns_}}textEdit) {
     pointer-events: none;
     cursor: default;
     width: auto !important;
@@ -141,45 +141,45 @@ uimenu_css: |
     padding: 0 4px;
     flex-shrink: 0;
   }
-  .p2p4vsc-menu-btn:has(.p2p4vsc-text-edit) * {
+  .{{ns_}}menuBtn:has(.{{ns_}}textEdit) * {
     pointer-events: auto;
   }
-  .p2p4vsc-menu-btn:has(.p2p4vsc-text-edit) .p2p4vsc-text-edit {
+  .{{ns_}}menuBtn:has(.{{ns_}}textEdit) .{{ns_}}textEdit {
     cursor: text;
     width: 3ch !important;
     min-width: 3ch !important;
     max-width: 3ch !important;
   }
-  .p2p4vsc-menu-btn:has(.p2p4vsc-text-edit) .text-edit-wrapper {
+  .{{ns_}}menuBtn:has(.{{ns_}}textEdit) .text-edit-wrapper {
     width: auto !important;
     max-width: fit-content;
     flex-shrink: 0;
   }
 
-  .p2p4vsc-menu.has-gutter-before .p2p4vsc-menu-item {
+  .{{ns_}}menu.has-gutter-before .{{ns_}}menuItem {
     --gutter-before: var(--gutter-before-width);
   }
 
-  .p2p4vsc-menu.has-gutter-after .p2p4vsc-menu-item {
+  .{{ns_}}menu.has-gutter-after .{{ns_}}menuItem {
     --gutter-after: var(--gutter-after-width);
   }
 
-  .p2p4vsc-group { position: relative; }
+  .{{ns_}}group { position: relative; }
 
-  .p2p4vsc-menu.isFlyout .p2p4vsc-menu-btn {
+  .{{ns_}}menu.isFlyout .{{ns_}}menuBtn {
     display: none;
   }
 
-  .p2p4vsc-menu.isFlyout {
+  .{{ns_}}menu.isFlyout {
     display: none;
     pointer-events: auto;
   }
 
-  .p2p4vsc-menu.isFlyout[style*="display: block"] .p2p4vsc-menu-items {
+  .{{ns_}}menu.isFlyout[style*="display: block"] .{{ns_}}menuItems {
     display: block !important;
   }
 
-  .p2p4vsc-menu.isFlyout:not([style*="display: none"]) .p2p4vsc-menu-items {
+  .{{ns_}}menu.isFlyout:not([style*="display: none"]) .{{ns_}}menuItems {
     display: block !important;
   }
 
