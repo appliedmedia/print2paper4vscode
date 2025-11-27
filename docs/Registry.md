@@ -1,5 +1,268 @@
 # Registry Pattern Migration Plan
 
+## ⚡ EXECUTION TODOS
+
+### Immediate Actions (Start Here)
+
+#### Stage 0.1: Create Registry Infrastructure ✅ NEXT
+- [ ] Create `src/types/Id_t.ts` with `kId` constant and `Id_t` type
+- [ ] Create `src/types/Registry_t.ts` for Registry type definitions
+- [ ] Create `src/Registry.ts` with basic skeleton
+- [ ] Add `DependencyRequest` type (method-name-based requests)
+- [ ] Add basic `use()` method stub
+
+#### Stage 0.2: Integrate Registry into App ⏸️
+- [ ] Update `App.ts` to create Registry instance in constructor
+- [ ] Registry constructor creates Diagnostics internally
+- [ ] Add `app.use()` method that delegates to Registry
+- [ ] Verify Registry can be instantiated without breaking existing code
+
+#### Stage 0.3: Test Infrastructure ⏸️
+- [ ] Run existing tests to ensure no regressions
+- [ ] Add basic Registry construction test
+- [ ] Verify Diagnostics is available via Registry
+
+---
+
+### Stage 1: Implement Registry Core ⏸️
+- [ ] Implement `buildMethodMap()` - scan all components for methods
+- [ ] Implement lazy instantiation cache
+- [ ] Implement component factories (vscodeapis, ui, os, pdf, etc.)
+- [ ] Implement full `use()` method with method resolution
+- [ ] Add circular dependency detection
+- [ ] Add error handling with circuit breaker pattern
+- [ ] Test Registry lazy loading works correctly
+
+---
+
+### Stage 2: Migrate Leaf Components ⏸️
+
+#### 2.1 Migrate OS Classes
+- [ ] Add `public readonly id: Id_t = kId.os` to OS base class
+- [ ] Update OS constructor to use `app.use()`
+- [ ] Request dependencies: `{ create: [], sub: [], out: [] }` (Diagnostics)
+- [ ] Update OSMac, OSWin, OSLinux (add `id` property to each)
+- [ ] Remove `init()` method if empty
+- [ ] Test OS classes work correctly
+
+#### 2.2 Migrate Yaml
+- [ ] Add `public readonly id: Id_t = kId.yaml`
+- [ ] Update constructor to use `app.use()`
+- [ ] Request dependencies: OS methods, Diagnostics methods
+- [ ] Remove `init()` if empty
+- [ ] Test Yaml works correctly
+
+---
+
+### Stage 3: Migrate Core Infrastructure ⏸️
+
+#### 3.1 Migrate VSCodeAPIs
+- [ ] Add `public readonly id: Id_t = kId.vscodeapis`
+- [ ] Update constructor to use `app.use()`
+- [ ] Request Diagnostics via Registry
+- [ ] Move command registration from `init()` to constructor
+- [ ] Remove `init()` method
+- [ ] Test command registration works
+
+#### 3.2 Migrate Persist
+- [ ] Add `public readonly id: Id_t = kId.persist`
+- [ ] Update constructor to use `app.use()`
+- [ ] Request VSCodeAPIs methods via Registry
+- [ ] Remove `init()` if empty
+- [ ] Test persistence works
+
+#### 3.3 Migrate UI
+- [ ] Add `public readonly id: Id_t = kId.ui`
+- [ ] Update constructor to use `app.use()`
+- [ ] Request dependencies: Diagnostics, OS, Persist methods
+- [ ] Remove `init()` if empty
+- [ ] Test UI operations work
+
+---
+
+### Stage 4: Migrate Middle-Tier Components ⏸️
+
+#### 4.1 Migrate TabInspector
+- [ ] Add `public readonly id: Id_t = kId.tabinspector`
+- [ ] Update constructor to use `app.use()`
+- [ ] Request dependencies: VSCodeAPIs, Diagnostics
+- [ ] Remove `init()` if empty
+- [ ] Test tab inspection works
+
+#### 4.2 Migrate Stylize
+- [ ] Add `public readonly id: Id_t = kId.stylize`
+- [ ] Update constructor to use `app.use()`
+- [ ] Request Diagnostics via Registry
+- [ ] Handle async initialization (lazy pattern)
+- [ ] Remove `init()` if possible
+- [ ] Test syntax highlighting works
+
+#### 4.3 Migrate UIMenuMgr
+- [ ] Add `public readonly id: Id_t = kId.uimenumgr`
+- [ ] Update constructor to use `app.use()`
+- [ ] Request dependencies: UI, VSCodeAPIs, Diagnostics
+- [ ] Remove `init()` if empty
+- [ ] Test menu management works
+
+---
+
+### Stage 5: Migrate Complex Components ⏸️
+
+#### 5.1 Migrate Coords
+- [ ] Add `public readonly id: Id_t = kId.coords`
+- [ ] Update constructor to use `app.use()`
+- [ ] Request dependencies: PDF (docInfo), Diagnostics
+- [ ] Remove `init()` if empty
+- [ ] Test coordinate calculations work
+
+#### 5.2 Migrate PDF
+- [ ] Add `public readonly id: Id_t = kId.pdf`
+- [ ] Update constructor to use `app.use()`
+- [ ] Request dependencies: Stylize, UI, OS, Diagnostics methods
+- [ ] Update Coords instantiation
+- [ ] Remove `init()` if possible
+- [ ] Test PDF generation works
+
+#### 5.3 Migrate DocInfo Classes
+- [ ] Add `id` property to DocInfo_PDF
+- [ ] Add `id` property to DocInfo_PaperPrinter
+- [ ] Update constructors to use `app.use()`
+- [ ] Remove `app` parameter
+- [ ] Test DocInfo classes work
+
+---
+
+### Stage 6: Migrate Orchestration Components ⏸️
+
+#### 6.1 Migrate UIWebView
+- [ ] Add `public readonly id: Id_t = kId.uiwebview`
+- [ ] Update constructor to use `app.use()`
+- [ ] Request dependencies: VSCodeAPIs, UI, OS, UIMenuMgr, Diagnostics
+- [ ] Remove `init()` if empty
+- [ ] Test webview display works
+
+#### 6.2 Migrate PaperPrinter
+- [ ] Add `public readonly id: Id_t = kId.paperprinter`
+- [ ] Update constructor to use `app.use()`
+- [ ] Request all dependencies via Registry
+- [ ] Update DocInfo_PaperPrinter instantiation
+- [ ] Remove `init()` if empty
+- [ ] Test complete print workflow
+
+---
+
+### Stage 7: Cleanup and Finalization ⏸️
+
+#### 7.1 Remove App Component Properties
+- [ ] Remove `vscodeapis`, `ui`, `pdf`, etc. from App class
+- [ ] Remove `componentOrder` array
+- [ ] Keep only Registry property
+- [ ] Update App to access components via Registry
+
+#### 7.2 Remove Init/Done Infrastructure
+- [ ] Remove all `init()` method implementations
+- [ ] Remove `init()` calls from App
+- [ ] Update `-entrypoint.ts` to remove `app.init()`
+- [ ] Verify `done()` methods still needed or remove
+
+#### 7.3 Update Type Definitions
+- [ ] Remove `App` type from component imports where possible
+- [ ] Update all type imports
+- [ ] Ensure Registry types properly exported
+
+#### 7.4 Final Testing
+- [ ] Run full test suite
+- [ ] Manual testing of all features
+- [ ] Performance benchmarks
+- [ ] Documentation updates
+
+---
+
+### Stage 8: Optimization ⏸️
+- [ ] Add strong typing for dependency requests
+- [ ] Add dependency validation
+- [ ] Add lifecycle management
+- [ ] Performance profiling and optimization
+- [ ] Update all documentation
+
+---
+
+## Current Status Summary
+
+**Components in Codebase:**
+- ✅ App.ts - Main orchestrator (creates all components, has init/done)
+- ✅ Diagnostics.ts - Logging system (stores app reference)
+- ✅ VSCodeAPIs.ts - VS Code API wrapper (stores app, has init/done)
+- ✅ UI.ts - UI manager (stores app, has init/done)
+- ✅ OS.ts, OSMac.ts, OSWin.ts, OSLinux.ts - OS abstractions (store app, have init/done)
+- ✅ PDF.ts - PDF generation (stores app, has init/done)
+- ✅ Stylize.ts - Syntax highlighting (stores app, has init/done)
+- ✅ TabInspector.ts - Tab inspection (stores app, has init/done)
+- ✅ UIMenuMgr.ts - Menu management (stores app, has init/done)
+- ✅ UIMenu.ts - Menu component
+- ✅ UIWebView.ts - Webview management
+- ✅ PaperPrinter.ts - Main orchestrator (stores app, has init/done)
+- ✅ Coords.ts - Coordinate calculations (stores app, has init/done)
+- ✅ Persist.ts - State persistence
+- ✅ Yaml.ts - YAML loading
+- ✅ DocInfo_PDF.ts - PDF document info
+- ✅ DocInfo_PaperPrinter.ts - PaperPrinter document info
+
+**Current Architecture Pattern:**
+```typescript
+// Every component follows this pattern:
+class Component {
+  private app: App;
+  private dx: Diagnostics;
+  
+  constructor(app: App) {
+    this.app = app;
+    this.dx = app.dx.sub('Component');
+  }
+  
+  init(): void { /* ... */ }
+  done(): void { /* ... */ }
+  
+  someMethod() {
+    // Access other components via this.app
+    this.app.ui.showErrorMessage('Error');
+    this.app.pdf.generatePdf();
+  }
+}
+```
+
+**Target Architecture Pattern:**
+```typescript
+// Target pattern with Registry:
+class Component {
+  public readonly id: Id_t = kId.component;
+  private deps: ComponentDependencies;
+  private dx: Diagnostics;
+  
+  constructor(app: App) {
+    // Request only what you need by method names
+    this.deps = app.use({
+      showErrorMessage: [],  // Registry finds in UI
+      generatePdf: [],        // Registry finds in PDF
+      create: [],             // Registry finds in Diagnostics
+      sub: [],                // Registry finds in Diagnostics
+      out: [],                // Registry finds in Diagnostics
+    });
+    
+    // Create local diagnostics
+    this.dx = this.deps.dx.create('Component');
+  }
+  
+  someMethod() {
+    // Access via deps organized by component
+    this.deps.ui.showErrorMessage('Error');
+    this.deps.pdf.generatePdf();
+  }
+}
+```
+
+---
+
 ## Overview
 
 This document outlines a comprehensive migration plan to replace the current dependency injection pattern where every class receives a copy of `app` and accesses other classes via `this.app.componentName`, along with eliminating the requirement for `init()` routines.
