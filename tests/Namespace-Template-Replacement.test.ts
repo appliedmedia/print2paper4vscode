@@ -335,13 +335,11 @@ describe('Namespace Template Replacement - Complex Scenarios with NEW Convention
     const cssResult = app.templateDictReplace(cssTemplate, namespaceDict);
     const jsResult = app.templateDictReplace(jsTemplate, namespaceDict);
     
-    // Extract class name from CSS
-    const cssMatch = cssResult.match(/\.([a-zA-Z0-9_]+)/);
-    const cssClass = cssMatch ? cssMatch[1] : '';
-    
-    // Verify JS uses same class name
-    assert.ok(jsResult.includes(`'${cssClass}'`), 'JS selector should match CSS class name');
-    assert.strictEqual(cssClass, 'p2p4vsc_menuBtn', 'Should be consistent underscore+camelCase');
+    // Verify both produce the same class name
+    assert.ok(cssResult.includes('.p2p4vsc_menuBtn'), 'CSS should contain .p2p4vsc_menuBtn');
+    assert.ok(jsResult.includes("'.p2p4vsc_menuBtn'"), 'JS selector should contain .p2p4vsc_menuBtn');
+    assert.strictEqual(cssResult, '.p2p4vsc_menuBtn { color: red; }', 'CSS should match expected format');
+    assert.strictEqual(jsResult, "const btn = document.querySelector('.p2p4vsc_menuBtn');", 'JS should match expected format');
   });
 
   it('should handle data attributes with ns (not ns_)', () => {

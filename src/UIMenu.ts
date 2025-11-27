@@ -180,6 +180,7 @@ export class UIMenu {
     uimenu_generic_handlers: '',
     uimenu_css: '',
     uimenu_text_edit: '',
+    uimenu_items_container: '',
   } as const;
 
   private dx: Diagnostics;

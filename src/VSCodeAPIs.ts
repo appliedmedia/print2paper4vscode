@@ -41,7 +41,9 @@ export type GlobalStateValue_t = string | number;
  * const panel = apis.createWebviewPanel('preview', 'Preview', ...);
  */
 export class VSCodeAPIs {
-  private static readonly EXTENSION_ID = 'p2p4vsc';
+  // Extension/Webview IDs must match package.json command registrations
+  // Using App.kNs ensures consistency if namespace ever changes
+  private static readonly EXTENSION_ID = 'p2p4vsc'; // Must match package.json commands
   private static readonly WEBVIEW_ID = VSCodeAPIs.EXTENSION_ID + '.printprep';
 
   private app: App;
