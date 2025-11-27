@@ -42,14 +42,14 @@
 - [ ] Update OS constructor to use `app.use()`
 - [ ] Request dependencies: `{ create: [], sub: [], out: [] }` (Diagnostics)
 - [ ] Update OSMac, OSWin, OSLinux (add `id` property to each)
-- [ ] Remove `init()` method if empty
+- [ ] Keep `init()` method (add comment if empty - required by class library)
 - [ ] Test OS classes work correctly
 
 #### 2.2 Migrate Yaml
 - [ ] Add `public readonly id: Id_t = kId.yaml`
 - [ ] Update constructor to use `app.use()`
 - [ ] Request dependencies: OS methods, Diagnostics methods
-- [ ] Remove `init()` if empty
+- [ ] Keep `init()` method (add comment if empty - required by class library)
 - [ ] Test Yaml works correctly
 
 ---
@@ -61,21 +61,21 @@
 - [ ] Update constructor to use `app.use()`
 - [ ] Request Diagnostics via Registry
 - [ ] Move command registration from `init()` to constructor
-- [ ] Remove `init()` method
+- [ ] Keep `init()` method (add comment if empty - required by class library)
 - [ ] Test command registration works
 
 #### 3.2 Migrate Persist
 - [ ] Add `public readonly id: Id_t = kId.persist`
 - [ ] Update constructor to use `app.use()`
 - [ ] Request VSCodeAPIs methods via Registry
-- [ ] Remove `init()` if empty
+- [ ] Keep `init()` method (add comment if empty - required by class library)
 - [ ] Test persistence works
 
 #### 3.3 Migrate UI
 - [ ] Add `public readonly id: Id_t = kId.ui`
 - [ ] Update constructor to use `app.use()`
 - [ ] Request dependencies: Diagnostics, OS, Persist methods
-- [ ] Remove `init()` if empty
+- [ ] Keep `init()` method (add comment if empty - required by class library)
 - [ ] Test UI operations work
 
 ---
@@ -86,22 +86,22 @@
 - [ ] Add `public readonly id: Id_t = kId.tabinspector`
 - [ ] Update constructor to use `app.use()`
 - [ ] Request dependencies: VSCodeAPIs, Diagnostics
-- [ ] Remove `init()` if empty
+- [ ] Keep `init()` method (add comment if empty - required by class library)
 - [ ] Test tab inspection works
 
 #### 4.2 Migrate Stylize
 - [ ] Add `public readonly id: Id_t = kId.stylize`
 - [ ] Update constructor to use `app.use()`
 - [ ] Request Diagnostics via Registry
-- [ ] Handle async initialization (lazy pattern)
-- [ ] Remove `init()` if possible
+- [ ] Handle async initialization (lazy pattern in `init()`)
+- [ ] Keep `init()` method (required by class library)
 - [ ] Test syntax highlighting works
 
 #### 4.3 Migrate UIMenuMgr
 - [ ] Add `public readonly id: Id_t = kId.uimenumgr`
 - [ ] Update constructor to use `app.use()`
 - [ ] Request dependencies: UI, VSCodeAPIs, Diagnostics
-- [ ] Remove `init()` if empty
+- [ ] Keep `init()` method (add comment if empty - required by class library)
 - [ ] Test menu management works
 
 ---
@@ -112,7 +112,7 @@
 - [ ] Add `public readonly id: Id_t = kId.coords`
 - [ ] Update constructor to use `app.use()`
 - [ ] Request dependencies: PDF (docInfo), Diagnostics
-- [ ] Remove `init()` if empty
+- [ ] Keep `init()` method (add comment if empty - required by class library)
 - [ ] Test coordinate calculations work
 
 #### 5.2 Migrate PDF
@@ -120,7 +120,7 @@
 - [ ] Update constructor to use `app.use()`
 - [ ] Request dependencies: Stylize, UI, OS, Diagnostics methods
 - [ ] Update Coords instantiation
-- [ ] Remove `init()` if possible
+- [ ] Keep `init()` method (required by class library)
 - [ ] Test PDF generation works
 
 #### 5.3 Migrate DocInfo Classes
@@ -138,7 +138,7 @@
 - [ ] Add `public readonly id: Id_t = kId.uiwebview`
 - [ ] Update constructor to use `app.use()`
 - [ ] Request dependencies: VSCodeAPIs, UI, OS, UIMenuMgr, Diagnostics
-- [ ] Remove `init()` if empty
+- [ ] Keep `init()` method (add comment if empty - required by class library)
 - [ ] Test webview display works
 
 #### 6.2 Migrate PaperPrinter
@@ -146,7 +146,7 @@
 - [ ] Update constructor to use `app.use()`
 - [ ] Request all dependencies via Registry
 - [ ] Update DocInfo_PaperPrinter instantiation
-- [ ] Remove `init()` if empty
+- [ ] Keep `init()` method (required by class library)
 - [ ] Test complete print workflow
 
 ---
@@ -159,11 +159,11 @@
 - [ ] Keep only Registry property
 - [ ] Update App to access components via Registry
 
-#### 7.2 Remove Init/Done Infrastructure
-- [ ] Remove all `init()` method implementations
-- [ ] Remove `init()` calls from App
-- [ ] Update `-entrypoint.ts` to remove `app.init()`
-- [ ] Verify `done()` methods still needed or remove
+#### 7.2 Verify Init/Done Infrastructure
+- [ ] Verify all `init()` methods preserved (required by class library)
+- [ ] Keep `init()` calls from App (required by class library)
+- [ ] Keep `app.init()` in `-entrypoint.ts` (required by class library)
+- [ ] Verify `done()` methods still work correctly
 
 #### 7.3 Update Type Definitions
 - [ ] Remove `App` type from component imports where possible
@@ -272,7 +272,7 @@ This document outlines a comprehensive migration plan to replace the current dep
 1. **Eliminate tight coupling**: Remove the need for classes to hold references to the entire `app` object
 2. **Lazy initialization**: Construct components only when first used, not at startup
 3. **Explicit dependencies**: Each class constructor explicitly declares what it needs via a Registry
-4. **Remove init() methods**: Eliminate the need for separate initialization routines
+4. **Preserve init() methods**: Keep `init()` methods (required by class library system) but move logic to constructors where possible
 5. **Type safety**: Maintain strong typing throughout the migration
 6. **Minimal startup overhead**: Only construct App and Registry at startup (Registry creates Diagnostics internally)
 
@@ -282,7 +282,7 @@ This document outlines a comprehensive migration plan to replace the current dep
 
 1. **Tight Coupling**: Every class holds a reference to `app` and can access any component, creating implicit dependencies
 2. **Eager Initialization**: All components are constructed at startup, even if never used
-3. **Two-Phase Construction**: Constructor + `init()` creates complexity and potential for misuse
+3. **Two-Phase Construction**: Constructor + `init()` creates complexity (note: `init()` must be preserved per class library requirements)
 4. **Dependency Graph**: Hard to see what a class actually depends on without reading its entire implementation
 5. **Testing Complexity**: Difficult to mock dependencies when everything is accessed via `this.app.*`
 
@@ -1265,13 +1265,13 @@ class Registry {
 
 ## Success Criteria
 
-1. ? No `app` parameter in component constructors
-2. ? No `init()` methods required
-3. ? Components constructed lazily on first use
-4. ? Explicit dependency declarations in constructors
-5. ? All tests passing
-6. ? No performance regressions
-7. ? Code is cleaner and more maintainable.
+1. ✓ No `app` parameter in component constructors
+2. ✓ `init()` methods preserved (required by class library) but logic moved to constructors where possible
+3. ✓ Components constructed lazily on first use
+4. ✓ Explicit dependency declarations in constructors
+5. ✓ All tests passing
+6. ✓ No performance regressions
+7. ✓ Code is cleaner and more maintainable
 
 ## Timeline Estimate
 
