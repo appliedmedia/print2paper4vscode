@@ -905,6 +905,10 @@ async screenshotWindow(bounds?: { x: number; y: number; width: number; height: n
 
 ### AppleScript Templates (OSMac.yaml)
 
+**⚠️ CRITICAL: Do NOT sanitize or escape `app_name` variable!**
+
+The `app_name` value comes directly from AppleScript's `name of first application process whose frontmost is true` and must be used **exactly as-is** when passed to subsequent AppleScript commands. AppleScript returns valid process names (e.g., "Cursor", "Code") that are safe to use in `tell process "{{app_name}}"` statements. Any sanitization, escaping, or modification will break the process lookup and cause AppleScript to fail.
+
 ```yaml
 apple_script_get_current_app: |
   tell application "System Events"
