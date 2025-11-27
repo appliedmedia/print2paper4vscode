@@ -27,12 +27,13 @@
 - [ ] **PaperPrinter**: Update `generatePdf()` to branch on markdown mode selection
 
 ### 🚧 Phase 4: Preview Tab Handling
-- [ ] **PaperPrinter**: When preview tab detected, show error message
-- [ ] Error: "Due to VS Code's implementation of private data in Preview tabs, they cannot be printed except via screenshot. Do that?"
-- [ ] **OSMac**: Add `screenshotWindow()` method using `screencapture -w` or AppleScript
-- [ ] **OSMac**: Add `getVSCodeWindowBounds()` via AppleScript (if possible)
-- [ ] If screenshot confirmed, capture and print the screenshot
-- [ ] If window bounds unavailable, remove "Do that?" and just show error
+- [ ] **OSMac**: Add `getCurrentAppName()` to detect Cursor/Code/etc and cache
+- [ ] **OSMac**: Add `getEditorWindowBounds()` via AppleScript with dynamic app name
+- [ ] **OSMac**: Add `getScreenDimensions()` via AppleScript as fallback
+- [ ] **OSMac**: Add `screenshotWindow(bounds?)` using screencapture command
+- [ ] **PaperPrinter**: When preview tab detected, prompt user for screenshot
+- [ ] **PaperPrinter**: Implement `screenshotAndPrint()` with window bounds or full screen fallback
+- [ ] Prompt: "Due to VS Code's implementation of private data in Preview tabs, they cannot be printed except via screenshot. Do that?"
 
 ### 🚧 Phase 5: Testing & Polish
 - [ ] Test with basic markdown (headings, paragraphs, bold, italic)
@@ -768,25 +769,17 @@ async handlePrintCommandFromVSCode(): Promise<void> {
   const category = this.app.tabinspector.detectActiveTabCategory();
   
   if (category === 'preview') {
-    // Check if we can get window bounds (for targeted screenshot)
-    const canGetBounds = await this.app.os.canGetWindowBounds();
+    // Preview tabs: screenshot and print
+    const message = 'Due to VS Code\'s implementation of private data in Preview tabs, ' +
+                    'they cannot be printed except via screenshot. Do that?';
     
-    let message = 'Due to VS Code\'s implementation of private data in Preview tabs, ' +
-                  'they cannot be printed except via screenshot.';
+    const choice = await this.app.ui.showQuickPick([
+      { label: 'Take Screenshot & Print', value: 'yes' },
+      { label: 'Cancel', value: 'no' }
+    ]);
     
-    if (canGetBounds) {
-      message += ' Do that?';
-      const choice = await this.app.ui.showQuickPick([
-        { label: 'Take Screenshot & Print', value: 'yes' },
-        { label: 'Cancel', value: 'no' }
-      ]);
-      
-      if (choice === 'yes') {
-        await this.screenshotAndPrint();
-      }
-    } else {
-      // Just show error if we can't screenshot properly
-      this.app.ui.showErrorMessage(message);
+    if (choice === 'yes') {
+      await this.screenshotAndPrint();
     }
     return;
   }
@@ -795,14 +788,19 @@ async handlePrintCommandFromVSCode(): Promise<void> {
 }
 
 private async screenshotAndPrint(): Promise<void> {
-  // Get current editor window bounds (works for Cursor, VS Code, etc.)
-  const bounds = await this.app.os.getEditorWindowBounds();
+  // Try to get window bounds (works for Cursor, VS Code, etc.)
+  let bounds = await this.app.os.getEditorWindowBounds();
   
-  // Take screenshot
+  // If bounds unavailable, fall back to full screen
+  if (!bounds) {
+    this.dx.out('Window bounds unavailable, using full screen screenshot');
+    bounds = undefined; // screenshotWindow will use full screen
+  }
+  
+  // Take screenshot (window bounds or full screen)
   const screenshotPath = await this.app.os.screenshotWindow(bounds);
   
   // Print screenshot using existing print workflow
-  // (opens print dialog just like we do for PDFs)
   await this.app.os.fileOpenPrintDialog(screenshotPath);
 }
 ```
@@ -861,18 +859,31 @@ async getEditorWindowBounds(): Promise<{ x: number; y: number; width: number; he
 }
 
 /**
- * Take screenshot of window or region
+ * Get screen dimensions via AppleScript
+ */
+async getScreenDimensions(): Promise<{ width: number; height: number }> {
+  const result = await this.executeAppleScript('apple_script_get_screen_dimensions');
+  const parts = result.trim().split(',').map(s => parseInt(s.trim()));
+  if (parts.length === 2) {
+    return { width: parts[0], height: parts[1] };
+  }
+  // Fallback to reasonable defaults
+  return { width: 1920, height: 1080 };
+}
+
+/**
+ * Take screenshot of window or full screen
  * Uses macOS screencapture command
  */
 async screenshotWindow(bounds?: { x: number; y: number; width: number; height: number }): Promise<string> {
   const tempPath = this.pathJoin(this.app.vscodeapis.getDir_Temp(), `screenshot_${Date.now()}.png`);
   
   if (bounds) {
-    // Targeted screenshot with bounds
+    // Targeted screenshot with window bounds
     await this.execAsync(`screencapture -R${bounds.x},${bounds.y},${bounds.width},${bounds.height} "${tempPath}"`);
   } else {
-    // Interactive window selection (user clicks window)
-    await this.execAsync(`screencapture -w "${tempPath}"`);
+    // Full screen screenshot
+    await this.execAsync(`screencapture "${tempPath}"`);
   }
   
   return tempPath;
@@ -903,14 +914,24 @@ apple_script_check_window_bounds: |
       return true
     end if
   end tell
+
+apple_script_get_screen_dimensions: |
+  tell application "Finder"
+    set screenBounds to bounds of window of desktop
+    set screenWidth to (item 3 of screenBounds) - (item 1 of screenBounds)
+    set screenHeight to (item 4 of screenBounds) - (item 2 of screenBounds)
+    return screenWidth & "," & screenHeight
+  end tell
 ```
 
-### Fallback
+### Fallback Strategy
 
 If window bounds cannot be obtained:
-- Show error only: "Due to VS Code's implementation of private data in Preview tabs, they cannot be printed except via screenshot."
-- Don't offer screenshot option
-- User can manually screenshot and print if needed
+- Get screen dimensions via AppleScript
+- Screenshot entire screen using `screencapture` (no bounds)
+- Print the screenshot as usual
+
+No user interaction required - fully automated.
 
 ---
 
