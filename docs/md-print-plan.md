@@ -22,9 +22,9 @@
 - [ ] Implement `renderHorizontalRule()` method
 
 ### 🚧 Phase 3: VS Code Markdown API Integration
-- [ ] **VSCodeAPIs**: Add `getMarkdownExtension()` method to get extension reference
+- [ ] **VSCodeAPIs**: Add `getExtension_Markdown()` method to get extension reference
 - [ ] **VSCodeAPIs**: Add `renderMarkdownToHtml(markdown, document)` wrapper method
-- [ ] **PaperPrinter**: Add `generateRenderedMarkdownPdf()` method that calls VSCodeAPIs
+- [ ] **PaperPrinter**: Update `generatePdf()` to branch on markdown mode selection
 
 ### 🚧 Phase 4: Mode Selection UI
 - [ ] Add mode selection UI (Raw Source vs Rendered Preview) for markdown files
@@ -598,9 +598,9 @@ class PDF {
 // src/VSCodeAPIs.ts
 
 /**
- * Get VS Code markdown extension
+ * Get VS Code markdown language features extension
  */
-getMarkdownExtension(): Extension<any> | undefined {
+getExtension_Markdown(): Extension<any> | undefined {
   return this.vscode.extensions.getExtension('vscode.markdown-language-features');
 }
 
@@ -614,7 +614,7 @@ async renderMarkdownToHtml(markdown: string, document: TextDocument): Promise<st
   const dx = this.dx.sub('renderMarkdownToHtml');
   
   try {
-    const mdExtension = this.getMarkdownExtension();
+    const mdExtension = this.getExtension_Markdown();
     
     if (!mdExtension) {
       throw new Error('VS Code markdown extension not found');
@@ -640,87 +640,67 @@ async renderMarkdownToHtml(markdown: string, document: TextDocument): Promise<st
 }
 ```
 
-**PaperPrinter** - Orchestrates workflow:
+**PaperPrinter** - Orchestrates workflow (update existing method):
 ```typescript
 // src/PaperPrinter.ts
 
-async handlePrintCommandFromVSCode(): Promise<void> {
-  const category = this.app.tabinspector.detectActiveTabCategory();
-  
-  if (category === 'preview') {
-    this.dx.error('Printing from preview tabs not yet supported');
-    return;
-  }
-  
-  const info = this.app.tabinspector.getEditorSelectionOrAll();
-  if (!info || !info.text || !info.languageId) {
-    this.dx.error('No active editor or content found');
-    return;
-  }
-  
-  this.docInfo.rawCode = info.text.trim();
-  this.docInfo.languageId = info.languageId as LanguageId_t;
-  this.docInfo.printTitle = info.name;
-  
-  // Check if markdown
-  const isMarkdown = info.languageId === 'markdown';
-  
-  if (isMarkdown) {
-    // Show mode selection
-    const mode = await this.app.ui.showQuickPick([
-      { label: 'Raw Source', value: 'raw' },
-      { label: 'Rendered Preview', value: 'rendered' }
-    ]);
-    
-    if (mode === 'rendered') {
-      await this.generateRenderedMarkdownPdf();
-    } else {
-      await this.generatePdf(); // Existing raw mode
-    }
-  } else {
-    await this.generatePdf(); // Non-markdown files
-  }
-  
-  // Display in webview
-  this.uiwebview = new UIWebView(this.app);
-  this.uiwebview.init();
-  await this.uiwebview.displayPdfPanel();
-}
-
-/**
- * Generate PDF from rendered markdown
- */
-private async generateRenderedMarkdownPdf(): Promise<void> {
-  const dx = this.dx.sub('generateRenderedMarkdownPdf');
+async generatePdf(): Promise<void> {
+  const dx = this.dx.sub('generatePdf');
   
   try {
-    // Get active document (via VSCodeAPIs)
-    const editor = this.app.vscodeapis.getActiveTextEditor();
-    if (!editor) {
-      throw new Error('No active editor');
-    }
-    
-    // Render markdown to HTML (via VSCodeAPIs wrapper)
-    const html = await this.app.vscodeapis.renderMarkdownToHtml(
-      this.docInfo.rawCode,
-      editor.document
-    );
-    
-    dx.out(`Got HTML from VS Code markdown renderer (${html.length} chars)`);
-    
-    // Setup PDF (PDF class handles jsPDF operations)
+    // Setup PDF
     this.app.pdf.setupPdf();
     this.app.pdf.addHeaderAndFooter();
     
-    // Render HTML to PDF (PDF class has HTML→jsPDF transmutators)
-    await this.app.pdf.renderFromHTML(html);
+    // Branch based on content type
+    if (this.docInfo.languageId === 'markdown') {
+      // Ask user which mode
+      const mode = await this.app.ui.showQuickPick([
+        { label: 'Raw Source', value: 'raw' },
+        { label: 'Rendered Preview', value: 'rendered' }
+      ]);
+      
+      if (mode === 'rendered') {
+        // Get HTML from VS Code markdown API
+        const editor = this.app.vscodeapis.getActiveTextEditor();
+        if (!editor) throw new Error('No active editor');
+        
+        const html = await this.app.vscodeapis.renderMarkdownToHtml(
+          this.docInfo.rawCode,
+          editor.document
+        );
+        
+        // Render HTML to PDF (separate method)
+        await this.app.pdf.renderFromHTML(html);
+      } else {
+        // Tokenize and render (existing path for raw markdown)
+        const tokens = await this.app.stylize.tokenize(
+          this.docInfo.rawCode,
+          this.docInfo.languageId,
+          this.docInfo.theme
+        );
+        
+        // Render tokens to PDF (separate method)
+        this.app.pdf.renderFromTokens(tokens);
+      }
+    } else {
+      // Non-markdown: always tokenize
+      const tokens = await this.app.stylize.tokenize(
+        this.docInfo.rawCode,
+        this.docInfo.languageId,
+        this.docInfo.theme
+      );
+      
+      // Render tokens to PDF
+      this.app.pdf.renderFromTokens(tokens);
+    }
     
     // Finish PDF
     this.app.pdf.finishPdf();
     
-    dx.out(`Generated PDF from rendered markdown`);
+    dx.out('PDF generation complete');
   } catch (error) {
-    dx.error(`Failed to generate rendered markdown PDF: ${error}`);
+    dx.error(`Failed to generate PDF: ${error}`);
     throw error;
   } finally {
     dx.done();
@@ -728,7 +708,42 @@ private async generateRenderedMarkdownPdf(): Promise<void> {
 }
 ```
 
-**PDF** - Contains HTML→jsPDF transmutators (see Phase 2 above)
+**PDF** - Two separate rendering methods:
+```typescript
+// src/PDF.ts
+
+/**
+ * Render tokens to PDF (for code with syntax highlighting)
+ * @param tokens - 2D array from Shiki: tokens[lineIndex][tokenIndex]
+ */
+renderFromTokens(tokens: ThemedToken[][]): void {
+  for (let lineNum = 0; lineNum < tokens.length; lineNum++) {
+    const lineTokens = tokens[lineNum];
+    // Render each token with color, handle wrapping, page breaks
+    // (existing renderTokenizedLine logic, just iterate internally)
+  }
+}
+
+/**
+ * Render HTML to PDF (for markdown rendered preview)
+ * @param html - HTML string from VS Code markdown API
+ */
+async renderFromHTML(html: string): Promise<void> {
+  const root = parse(html); // node-html-parser
+  
+  for (const element of root.childNodes) {
+    if (element.nodeType === NodeType.ELEMENT_NODE) {
+      this.renderHTMLElement(element as HTMLElement);
+    }
+  }
+  
+  // Uses htmlElementHandlers map to dispatch h1, p, ul, etc.
+  // Each handler calls existing primitives: findCharacterBreakPoint, 
+  // shouldBreakPage, renderTextContent, etc.
+}
+```
+
+**Key Point**: Two separate, independent methods. No "mode" stored. Just branch at call time.
 
 ---
 
