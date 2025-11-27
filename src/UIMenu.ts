@@ -180,6 +180,7 @@ export class UIMenu {
     uimenu_generic_handlers: '',
     uimenu_css: '',
     uimenu_text_edit: '',
+    uimenu_items_container: '',
   } as const;
 
   private dx: Diagnostics;
@@ -634,7 +635,10 @@ export class UIMenu {
         icon: buttonContent,
         menuItems: hasItems ? menuItems : '', // Empty string if no items
         menuItemsContainer: hasItems
-          ? `<div class="p2p4vsc-menu-items" id="${this._id}-items">${menuItems}</div>`
+          ? this.app.templateDictReplace(this.yaml.uimenu_items_container, {
+              menuId: this._id,
+              menuItems,
+            })
           : '', // Only create container if there are items
         menuClasses,
         flyoutItemsAttr, // Data attribute with flyout item IDs from static list

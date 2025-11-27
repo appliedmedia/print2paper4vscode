@@ -8,6 +8,7 @@ import { OS } from './OS';
 import { UIMenuMgr } from './UIMenuMgr';
 import { Diagnostics } from './Diagnostics';
 import type { ExtensionContext } from 'vscode';
+import { kExtId } from './_entrypoint_extId_t';
 
 // Type aliases for forceNumber/forceNumbers input and output
 export type ForceNumber_scalar_t = number | string | undefined;
@@ -42,6 +43,14 @@ type components_t = {
  * const replaced = app.templateDictReplace('Hello {{name}}', {name: 'World'});
  */
 export class App {
+  // Namespace - References kExtId (single source of truth)
+  public static readonly kNs = kExtId;
+  public static readonly kNs_ = App.kNs + '_';
+  
+  // Instance properties for easy access
+  public readonly ns = App.kNs;
+  public readonly ns_ = App.kNs_;
+  
   vscodeapis: VSCodeAPIs;
   ui: UI;
   pdf: PDF;
@@ -168,6 +177,7 @@ export class App {
    * Generic template replacement function
    * Replaces all {{key}} placeholders in source text with values from dictionary
    * Supports nested placeholders by performing multiple passes until no changes occur
+   * Automatically includes namespace values (ns, ns_) in every replacement dictionary
    * @param source - The source text containing {{key}} placeholders
    * @param dictionary - Key-value pairs for replacement
    * @returns The source text with all placeholders replaced (including nested ones)
@@ -178,15 +188,22 @@ export class App {
     let iteration = 0;
     let changed = true;
 
+    // Auto-inject namespace values into dictionary (callers can override if needed)
+    const enrichedDictionary: Record<string, string> = {
+      ns: this.ns,      // Default namespace value
+      ns_: this.ns_,    // Default namespace prefix
+      ...dictionary,    // Caller values can override defaults
+    };
+
     // Repeat replacement passes until no changes occur or max iterations reached
     while (changed && iteration < maxIterations) {
       const previousResult = result;
       iteration++;
 
       // Replace each {{key}} with its value (all occurrences)
-      for (const key of Object.keys(dictionary)) {
+      for (const key of Object.keys(enrichedDictionary)) {
         const placeholder = `{{${key}}}`;
-        const value = dictionary[key];
+        const value = enrichedDictionary[key];
         result = result.replaceAll(placeholder, value);
       }
 
