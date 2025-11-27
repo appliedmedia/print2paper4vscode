@@ -1,12 +1,13 @@
 #!/usr/bin/env node
 
 /**
- * dictTemplateReplacer: Generic template replacement for build files
+ * templateDictReplace: Generic template replacement for build files
  * 
  * Reads configuration from .config/template-replacements.yaml and processes
  * all specified files, replacing template placeholders with actual values
  * imported from compiled TypeScript modules.
  * 
+ * Named to match App.templateDictReplace() - same concept for build process.
  * This allows easy extension - just add entries to the YAML config.
  */
 
@@ -24,7 +25,7 @@ const projectRoot = path.join(__dirname, '..');
 const configPath = path.join(projectRoot, '.config', 'template-replacements.yaml');
 const config = yaml.parse(fs.readFileSync(configPath, 'utf8'));
 
-console.log('dictTemplateReplacer: Processing template replacements...');
+console.log('templateDictReplace: Processing template replacements...');
 console.log(`  Config: ${configPath}`);
 console.log(`  Replacements: ${config.replacements.length}\n`);
 
@@ -100,8 +101,8 @@ console.log(`Successful: ${config.replacements.length - errorCount}`);
 console.log(`Failed: ${errorCount}`);
 
 if (errorCount > 0) {
-  console.error('\n✗ dictTemplateReplacer completed with errors');
+  console.error('\n✗ templateDictReplace completed with errors');
   process.exit(1);
 } else {
-  console.log('\n✓ dictTemplateReplacer completed successfully');
+  console.log('\n✓ templateDictReplace completed successfully');
 }

@@ -13,7 +13,7 @@
 - **`App.kNs_`** = `App.kNs + '_'` (underscore prefix)
 - **`VSCodeAPIs`** uses `kExtId` directly
 - **`package.json`** uses `{{extId}}` templates, replaced by build script using `kExtId`
-- **`scripts/dictTemplateReplacer.mjs`** generic template processor (config-driven)
+- **`scripts/templateDictReplace.mjs`** generic template processor (config-driven, matches internal routine)
 - **`.config/template-replacements.yaml`** defines all template replacements
 - **YAML templates** use `{{ns}}` and `{{ns_}}` (namespace for CSS/HTML/JS)
 - **Build files** use `{{extId}}` (extension ID for VS Code commands)

@@ -54,8 +54,8 @@
   "scripts": {
     "postinstall": "node scripts/setup-vscode-mock.js",
     "vscode:prepublish": "npm run compile:deploy",
-    "compile": "rm -rf out && tsc -p ./.config/ && node scripts/dictTemplateReplacer.mjs",
-    "compile:deploy": "rm -rf out-deploy && tsc -p ./.config/tsconfig.deploy.json && node scripts/dictTemplateReplacer.mjs",
+    "compile": "rm -rf out && tsc -p ./.config/ && node scripts/templateDictReplace.mjs",
+    "compile:deploy": "rm -rf out-deploy && tsc -p ./.config/tsconfig.deploy.json && node scripts/templateDictReplace.mjs",
     "lint": "eslint --config ./.config/eslint.config.mjs src/**/*.ts",
     "lint:fix": "eslint --config ./.config/eslint.config.mjs src/**/*.ts --fix",
     "lint:md": "markdownlint *.md tests/**/*.md",
