@@ -17,8 +17,8 @@
 - [ ] Create `src/Registry.ts` with basic skeleton
 - [ ] Registry builds `kId` dynamically at startup from class declarations
 - [ ] Add basic `use(...methodIds: string[])` method stub (variadic)
-- [ ] Registry constructor accepts `autoInject: string[]` option
-- [ ] Auto-inject specified methods (e.g., dx) for all components
+- [ ] Registry constructor accepts `always: string[]` option
+- [ ] Always-available methods injected automatically (e.g., dx methods)
 
 #### Stage 0.2: Integrate Registry into App ⏸️
 - [ ] Update `App.ts` to create Registry instance in constructor
@@ -42,7 +42,7 @@
 - [ ] **Registry calls constructor only - NO init() calls** (components self-initialize)
 - [ ] Implement `use(...methodIds: string[]): FnImport_t` with:
   - Variadic parameter syntax (no array brackets needed)
-  - Auto-inject `dx.create`, `dx.sub`, `dx.out` for all components
+  - Always-available methods: `dx.create`, `dx.sub`, `dx.out` for all components
   - Method resolution via kId lookup
 - [ ] Add circular dependency detection
 - [ ] Add error handling with circuit breaker pattern
@@ -57,7 +57,7 @@
   - `static readonly id = 'os'`
   - `static readonly fn: FnExport_t = ['fileRead', 'fileWrite', 'fileDelete', ...]`
 - [ ] Add instance property: `private fn: FnImport_t`
-- [ ] Update OS constructor: `this.fn = app.use()` (dx auto-injected, no other deps)
+- [ ] Update OS constructor: `this.fn = app.use()` (dx always available, no other deps)
 - [ ] Move any `init()` logic into constructor
 - [ ] Remove `init()` method entirely
 - [ ] Update OSMac, OSWin, OSLinux (same pattern)
@@ -148,7 +148,7 @@
   - `static readonly id = 'coords'`
   - `static readonly fn: FnExport_t = ['pdfPtsToCssPx', 'cssPxToPdfPts']`
 - [ ] Add instance property: `private fn: FnImport_t`
-- [ ] Update constructor: `this.fn = app.use()` (only needs dx, auto-injected)
+- [ ] Update constructor: `this.fn = app.use()` (only needs dx, always available)
 - [ ] Move `init()` logging into constructor
 - [ ] Remove `init()` method entirely
 - [ ] Keep `done()` method for explicit cleanup
@@ -304,7 +304,7 @@ class PDF {
   
   constructor(app: App) {
     // Request methods by hierarchical kId (variadic, no array brackets)
-    // dx is auto-injected - always available
+    // dx is always available
     this.fn = app.use(
       kId.ui.showErrorMessage,
       kId.stylize.getTokens,
@@ -312,7 +312,7 @@ class PDF {
       kId.coords.pdfPtsToCssPx,  // Coords is singleton too
     );
     
-    // Create local diagnostics (dx auto-injected)
+    // Create local diagnostics (dx always available)
     this.dx = this.fn.dx.create('PDF');
     
     // All initialization happens here - no separate init() method
@@ -360,7 +360,7 @@ class UI {
   private _yaml: Yaml<typeof UI.kYaml>;
   
   constructor(app: App) {
-    // dx auto-injected, only request what else is needed
+    // dx always available, only request what else is needed
     this.fn = app.use(
       kId.os.fileRead,
       kId.yaml.create,  // Factory method
@@ -579,7 +579,7 @@ class PDF {
 
   constructor(app: App) {
     // Request by hierarchical kId - Registry resolves to component methods
-    // dx is auto-injected - don't need to request it
+    // dx is always available - don't need to request it
     this.fn = app.use(
       kId.stylize.getTokens,
       kId.stylize.getThemes,
@@ -1222,7 +1222,7 @@ class UI {
   private fn: FnImport_t;
   
   constructor(app: App) {
-    // dx auto-injected - always available
+    // dx always available
     this.fn = app.use(
       kId.os.fileRead,
     );
@@ -1298,12 +1298,16 @@ class Registry {
   private factories: Map<string, ComponentFactory_t> = new Map();
   private diagnostics: Diagnostics;
   private kId: kId_t = {};
+  private alwaysMethods: string[];
 
   constructor(
-    private vscode: any,
-    private context: any,
-    private app: App
+    private vscode: typeof import('vscode'),
+    private context: ExtensionContext,
+    private app: App,
+    options: { always: string[] }
   ) {
+    this.alwaysMethods = options.always;
+    
     // Create Diagnostics immediately (needed for debugging during construction)
     this.diagnostics = new Diagnostics('Registry', undefined, null, app);
     this.instances.set('dx', this.diagnostics);
@@ -1338,8 +1342,8 @@ class Registry {
   }
 
   use(...methodIds: string[]): FnImport_t {
-    // Add auto-injected methods from options
-    const allMethodIds = [...methodIds, ...this.autoInjectMethods];
+    // Add always-available methods from options
+    const allMethodIds = [...methodIds, ...this.alwaysMethods];
     
     const result: Partial<FnImport_t> = {};
     
