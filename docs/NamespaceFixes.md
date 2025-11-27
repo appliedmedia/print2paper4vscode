@@ -474,11 +474,13 @@ Replace all hardcoded `p2p4vsc` strings with `{{ns}}` in templates and ensure al
 To rename from `p2p4vsc` to `newname`:
 
 1. **Update ONE constant in `src/_entrypoint_extId_t.ts`**:
+
    ```typescript
-   export const kExtensionId = 'newname'; // Changed from 'p2p4vsc'
+   export const kExtId = 'newname' as const; // Changed from 'p2p4vsc'
    ```
 
 2. **Recompile and test**:
+
    ```bash
    npm run compile
    npm test
