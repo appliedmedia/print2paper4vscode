@@ -22,8 +22,9 @@
 - [ ] Implement `renderHorizontalRule()` method
 
 ### 🚧 Phase 3: VS Code Markdown API Integration
-- [ ] Add VS Code markdown extension API integration to get rendered HTML
-- [ ] Add `generateRenderedMarkdownPdf()` method to PaperPrinter
+- [ ] **VSCodeAPIs**: Add `getMarkdownExtension()` method to get extension reference
+- [ ] **VSCodeAPIs**: Add `renderMarkdownToHtml(markdown, document)` wrapper method
+- [ ] **PaperPrinter**: Add `generateRenderedMarkdownPdf()` method that calls VSCodeAPIs
 
 ### 🚧 Phase 4: Mode Selection UI
 - [ ] Add mode selection UI (Raw Source vs Rendered Preview) for markdown files
@@ -590,8 +591,56 @@ class PDF {
 
 ## Phase 3: Get HTML from VS Code Markdown API
 
-### VS Code Markdown API Integration
+### Architecture: Proper Separation of Concerns
 
+**VSCodeAPIs** - Wraps all VS Code API calls:
+```typescript
+// src/VSCodeAPIs.ts
+
+/**
+ * Get VS Code markdown extension
+ */
+getMarkdownExtension(): Extension<any> | undefined {
+  return this.vscode.extensions.getExtension('vscode.markdown-language-features');
+}
+
+/**
+ * Render markdown to HTML using VS Code's markdown extension
+ * @param markdown - Markdown source text
+ * @param document - VS Code TextDocument for context
+ * @returns HTML string
+ */
+async renderMarkdownToHtml(markdown: string, document: TextDocument): Promise<string> {
+  const dx = this.dx.sub('renderMarkdownToHtml');
+  
+  try {
+    const mdExtension = this.getMarkdownExtension();
+    
+    if (!mdExtension) {
+      throw new Error('VS Code markdown extension not found');
+    }
+    
+    if (!mdExtension.isActive) {
+      await mdExtension.activate();
+    }
+    
+    const mdApi = mdExtension.exports;
+    
+    if (!mdApi || !mdApi.render) {
+      throw new Error('Markdown render API not available');
+    }
+    
+    const html = await mdApi.render(markdown, document);
+    dx.out(`Rendered markdown to HTML (${html.length} chars)`);
+    
+    return html;
+  } finally {
+    dx.done();
+  }
+}
+```
+
+**PaperPrinter** - Orchestrates workflow:
 ```typescript
 // src/PaperPrinter.ts
 
@@ -645,39 +694,25 @@ private async generateRenderedMarkdownPdf(): Promise<void> {
   const dx = this.dx.sub('generateRenderedMarkdownPdf');
   
   try {
-    // Get VS Code markdown extension
-    const mdExtension = this.app.vscodeapis.getExtension('vscode.markdown-language-features');
-    
-    if (!mdExtension) {
-      throw new Error('VS Code markdown extension not found');
-    }
-    
-    if (!mdExtension.isActive) {
-      await mdExtension.activate();
-    }
-    
-    const mdApi = mdExtension.exports;
-    
-    if (!mdApi || !mdApi.render) {
-      throw new Error('Markdown render API not available');
-    }
-    
-    // Get active document
+    // Get active document (via VSCodeAPIs)
     const editor = this.app.vscodeapis.getActiveTextEditor();
     if (!editor) {
       throw new Error('No active editor');
     }
     
-    // Render markdown to HTML using VS Code's API
-    const html = await mdApi.render(this.docInfo.rawCode, editor.document);
+    // Render markdown to HTML (via VSCodeAPIs wrapper)
+    const html = await this.app.vscodeapis.renderMarkdownToHtml(
+      this.docInfo.rawCode,
+      editor.document
+    );
     
-    dx.out(`Rendered markdown to HTML (${html.length} chars)`);
+    dx.out(`Got HTML from VS Code markdown renderer (${html.length} chars)`);
     
-    // Setup PDF
+    // Setup PDF (PDF class handles jsPDF operations)
     this.app.pdf.setupPdf();
     this.app.pdf.addHeaderAndFooter();
     
-    // Render HTML to PDF
+    // Render HTML to PDF (PDF class has HTML→jsPDF transmutators)
     await this.app.pdf.renderFromHTML(html);
     
     // Finish PDF
@@ -692,6 +727,8 @@ private async generateRenderedMarkdownPdf(): Promise<void> {
   }
 }
 ```
+
+**PDF** - Contains HTML→jsPDF transmutators (see Phase 2 above)
 
 ---
 
