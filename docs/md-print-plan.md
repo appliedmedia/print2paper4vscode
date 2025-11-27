@@ -2,9 +2,11 @@
 
 ## TODO List
 
+
 ### ✅ Phase 1: Validation (COMPLETE)
 - ✅ Verify raw markdown printing works
 - ✅ Test Shiki markdown syntax highlighting
+
 
 ### 🚧 Phase 2: HTML Rendering in PDF Class
 - ☐▶ Install `node-html-parser` dependency
@@ -21,12 +23,14 @@
 - ☐ Implement `renderBlockquote()` with indentation
 - ☐ Implement `renderHorizontalRule()` method
 
+
 ### 🚧 Phase 3: VS Code Markdown API Integration
 - ☐ **DocInfo_PaperPrinter**: Add `useRenderedMd: boolean = false` property
 - ☐ **VSCodeAPIs**: Add `getExtension_Markdown()` method to get extension reference
 - ☐ **VSCodeAPIs**: Add `renderMarkdownToHtml(markdown, document)` wrapper method
 - ☐ **PaperPrinter**: Update `generatePdf()` to branch on `this.docInfo.useRenderedMd` flag
 - ☐ **Follow-up TODO**: Create menu item to toggle `useRenderedMd` (implement later)
+
 
 ### 🚧 Phase 4: Preview Tab Handling
 - ☐ **OSMac**: Add `getCurrentAppName()` to detect Cursor/Code/etc and cache
@@ -36,6 +40,7 @@
 - ☐ **PaperPrinter**: When preview tab detected, prompt user for screenshot
 - ☐ **PaperPrinter**: Implement `screenshotAndPrint()` with window bounds or full screen fallback
 - ☐ Prompt: "Due to VS Code's implementation of private data in Preview tabs, they cannot be printed except via screenshot. Do that?"
+
 
 ### 🚧 Phase 5: Testing & Polish
 - ☐ Test with basic markdown (headings, paragraphs, bold, italic)
@@ -367,7 +372,7 @@ class PDF {
       
       const monoFont = this.mapFontFamilyToJsPDF(monoFontFamily, this.docInfo.pdfDoc!);
       this.docInfo.pdfDoc!.setFont(monoFont, 'normal');
-      // TODO: Get background color from element style or theme
+      // Phase 5 polish: Get background color from element style or theme (see checklist line 45)
       this.renderTextContent(el.text);
       this.docInfo.pdfDoc!.setFont(savedFont.fontName, savedFont.fontStyle);
     },
@@ -647,7 +652,9 @@ async renderMarkdownToHtml(markdown: string, document: TextDocument): Promise<st
 }
 ```
 
+
 **DocInfo_PaperPrinter** - Add markdown rendering flag:
+
 ```typescript
 // src/DocInfo_PaperPrinter.ts
 
@@ -663,7 +670,9 @@ export class DocInfo_PaperPrinter {
 }
 ```
 
+
 **PaperPrinter** - Orchestrates workflow (update existing method):
+
 ```typescript
 // src/PaperPrinter.ts
 
@@ -715,7 +724,9 @@ async generatePdf(): Promise<void> {
 
 **Follow-up TODO**: Create a menu item in the toolbar that toggles `docInfo.useRenderedMd` on/off. This will allow users to switch between raw and rendered markdown modes without code changes. Menu should only appear when viewing markdown files.
 
+
 **PDF** - Two separate rendering methods:
+
 ```typescript
 // src/PDF.ts
 
