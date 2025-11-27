@@ -3,48 +3,48 @@
 ## TODO List
 
 ### ✅ Phase 1: Validation (COMPLETE)
-- [x] Verify raw markdown printing works
-- [x] Test Shiki markdown syntax highlighting
+- ✅ Verify raw markdown printing works
+- ✅ Test Shiki markdown syntax highlighting
 
 ### 🚧 Phase 2: HTML Rendering in PDF Class
-- [ ] Install `node-html-parser` dependency
-- [ ] Rename `PDF.renderTokenizedLine()` → `PDF.renderFromTokens()` for clarity
-- [ ] Add `PDF.renderFromHTML(html: string)` method to parse and render HTML
-- [ ] Add `htmlElementHandlers` map and `renderHTMLElement()` dispatcher method
-- [ ] Add `getMarkdownFontInfo()` and `getFontFromElementStyle()` font helper methods
-- [ ] Implement `renderHeading()` method for h1-h6 elements with font sizing
-- [ ] Implement `renderParagraph()` method with spacing
-- [ ] Implement `renderInlineContent()` with handlers for strong/b/em/i/code elements
-- [ ] Implement `renderTextContent()` to reuse existing character wrapping logic
-- [ ] Implement `renderList()` method for ul/ol with bullets and numbering
-- [ ] Implement `renderCodeBlock()` to reuse Shiki tokenization for syntax highlighting
-- [ ] Implement `renderBlockquote()` with indentation
-- [ ] Implement `renderHorizontalRule()` method
+- ▶▶ Install `node-html-parser` dependency
+- ☐ Rename `PDF.renderTokenizedLine()` → `PDF.renderFromTokens()` for clarity
+- ☐ Add `PDF.renderFromHTML(html: string)` method to parse and render HTML
+- ☐ Add `htmlElementHandlers` map and `renderHTMLElement()` dispatcher method
+- ☐ Add `getMarkdownFontInfo()` and `getFontFromElementStyle()` font helper methods
+- ☐ Implement `renderHeading()` method for h1-h6 elements with font sizing
+- ☐ Implement `renderParagraph()` method with spacing
+- ☐ Implement `renderInlineContent()` with handlers for strong/b/em/i/code elements
+- ☐ Implement `renderTextContent()` to reuse existing character wrapping logic
+- ☐ Implement `renderList()` method for ul/ol with bullets and numbering
+- ☐ Implement `renderCodeBlock()` to reuse Shiki tokenization for syntax highlighting
+- ☐ Implement `renderBlockquote()` with indentation
+- ☐ Implement `renderHorizontalRule()` method
 
 ### 🚧 Phase 3: VS Code Markdown API Integration
-- [ ] **DocInfo_PaperPrinter**: Add `useRenderedMd: boolean = false` property
-- [ ] **VSCodeAPIs**: Add `getExtension_Markdown()` method to get extension reference
-- [ ] **VSCodeAPIs**: Add `renderMarkdownToHtml(markdown, document)` wrapper method
-- [ ] **PaperPrinter**: Update `generatePdf()` to branch on `this.docInfo.useRenderedMd` flag
-- [ ] **Follow-up TODO**: Create menu item to toggle `useRenderedMd` (implement later)
+- ☐ **DocInfo_PaperPrinter**: Add `useRenderedMd: boolean = false` property
+- ☐ **VSCodeAPIs**: Add `getExtension_Markdown()` method to get extension reference
+- ☐ **VSCodeAPIs**: Add `renderMarkdownToHtml(markdown, document)` wrapper method
+- ☐ **PaperPrinter**: Update `generatePdf()` to branch on `this.docInfo.useRenderedMd` flag
+- ☐ **Follow-up TODO**: Create menu item to toggle `useRenderedMd` (implement later)
 
 ### 🚧 Phase 4: Preview Tab Handling
-- [ ] **OSMac**: Add `getCurrentAppName()` to detect Cursor/Code/etc and cache
-- [ ] **OSMac**: Add `getEditorWindowBounds()` via AppleScript with dynamic app name
-- [ ] **OSMac**: Add `getScreenDimensions()` via AppleScript as fallback
-- [ ] **OSMac**: Add `screenshotWindow(bounds?)` using screencapture command
-- [ ] **PaperPrinter**: When preview tab detected, prompt user for screenshot
-- [ ] **PaperPrinter**: Implement `screenshotAndPrint()` with window bounds or full screen fallback
-- [ ] Prompt: "Due to VS Code's implementation of private data in Preview tabs, they cannot be printed except via screenshot. Do that?"
+- ☐ **OSMac**: Add `getCurrentAppName()` to detect Cursor/Code/etc and cache
+- ☐ **OSMac**: Add `getEditorWindowBounds()` via AppleScript with dynamic app name
+- ☐ **OSMac**: Add `getScreenDimensions()` via AppleScript as fallback
+- ☐ **OSMac**: Add `screenshotWindow(bounds?)` using screencapture command
+- ☐ **PaperPrinter**: When preview tab detected, prompt user for screenshot
+- ☐ **PaperPrinter**: Implement `screenshotAndPrint()` with window bounds or full screen fallback
+- ☐ Prompt: "Due to VS Code's implementation of private data in Preview tabs, they cannot be printed except via screenshot. Do that?"
 
 ### 🚧 Phase 5: Testing & Polish
-- [ ] Test with basic markdown (headings, paragraphs, bold, italic)
-- [ ] Test with lists (ordered and unordered, nested)
-- [ ] Test with code blocks with syntax highlighting
-- [ ] Test with complex markdown (blockquotes, tables, nested elements)
-- [ ] Polish - Respect `markdown.preview.fontFamily` and `fontSize` settings
-- [ ] Polish - Get background colors from theme for code/blockquotes
-- [ ] Polish - Test with different VS Code themes
+- ☐ Test with basic markdown (headings, paragraphs, bold, italic)
+- ☐ Test with lists (ordered and unordered, nested)
+- ☐ Test with code blocks with syntax highlighting
+- ☐ Test with complex markdown (blockquotes, tables, nested elements)
+- ☐ Polish - Respect `markdown.preview.fontFamily` and `fontSize` settings
+- ☐ Polish - Get background colors from theme for code/blockquotes
+- ☐ Polish - Test with different VS Code themes
 
 ---
 
