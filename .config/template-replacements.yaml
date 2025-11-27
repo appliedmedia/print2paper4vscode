@@ -1,0 +1,17 @@
+# Template replacement configuration for build process
+#
+# Each entry specifies:
+# - file: Target file to process (relative to project root)
+# - output: Output file path (relative to project root)
+# - template: Template placeholder to replace (e.g., {{extId}})
+# - source: Compiled JS file to import from (relative to project root)
+# - variable: Variable name to import (e.g., kExtId)
+#
+# To add more replacements, just add entries to this array
+
+replacements:
+  - file: package.json
+    output: out/package.json
+    template: "{{extId}}"
+    source: out/src/_entrypoint_extId_t.js
+    variable: kExtId
