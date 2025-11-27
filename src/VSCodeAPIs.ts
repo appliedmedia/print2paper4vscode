@@ -12,6 +12,7 @@ import type {
 import { Range } from 'vscode';
 import type { SendToExt_t } from './types/UI_t';
 import { Diagnostics } from './Diagnostics';
+import { kExtensionId } from './ExtensionId_t';
 
 // Opaque ID type for webview panels
 export type WebviewPanelId_t = string & { readonly __brand: 'WebviewPanelId' };
@@ -41,9 +42,8 @@ export type GlobalStateValue_t = string | number;
  * const panel = apis.createWebviewPanel('preview', 'Preview', ...);
  */
 export class VSCodeAPIs {
-  // Extension ID - Single source of truth for namespace
-  // Must match package.json command registrations (p2p4vsc.print2paper, etc.)
-  public static readonly ExtId = 'p2p4vsc';
+  // Extension ID - References the single source of truth
+  public static readonly ExtId = kExtensionId;
   private static readonly WEBVIEW_ID = VSCodeAPIs.ExtId + '.printprep';
 
   private app: App;

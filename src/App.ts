@@ -8,6 +8,7 @@ import { OS } from './OS';
 import { UIMenuMgr } from './UIMenuMgr';
 import { Diagnostics } from './Diagnostics';
 import type { ExtensionContext } from 'vscode';
+import { kExtensionId } from './ExtensionId_t';
 
 // Type aliases for forceNumber/forceNumbers input and output
 export type ForceNumber_scalar_t = number | string | undefined;
@@ -42,8 +43,8 @@ type components_t = {
  * const replaced = app.templateDictReplace('Hello {{name}}', {name: 'World'});
  */
 export class App {
-  // Namespace derives from VSCodeAPIs.ExtId (single source of truth)
-  public static readonly kNs = VSCodeAPIs.ExtId;
+  // Namespace - Single source of truth from ExtensionId_t
+  public static readonly kNs = kExtensionId;
   public static readonly kNs_ = App.kNs + '_';
   
   // Instance properties for easy access
