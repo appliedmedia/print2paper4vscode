@@ -1,5 +1,45 @@
 # Markdown Print Plan (Revised: Direct Rendering)
 
+## TODO List
+
+### ✅ Phase 1: Validation (COMPLETE)
+- [x] Verify raw markdown printing works
+- [x] Test Shiki markdown syntax highlighting
+
+### 🚧 Phase 2: HTML Rendering in PDF Class
+- [ ] Install `node-html-parser` dependency
+- [ ] Rename `PDF.renderTokenizedLine()` → `PDF.renderFromTokens()` for clarity
+- [ ] Add `PDF.renderFromHTML(html: string)` method to parse and render HTML
+- [ ] Add `htmlElementHandlers` map and `renderHTMLElement()` dispatcher method
+- [ ] Add `getMarkdownFontInfo()` and `getFontFromElementStyle()` font helper methods
+- [ ] Implement `renderHeading()` method for h1-h6 elements with font sizing
+- [ ] Implement `renderParagraph()` method with spacing
+- [ ] Implement `renderInlineContent()` with handlers for strong/b/em/i/code elements
+- [ ] Implement `renderTextContent()` to reuse existing character wrapping logic
+- [ ] Implement `renderList()` method for ul/ol with bullets and numbering
+- [ ] Implement `renderCodeBlock()` to reuse Shiki tokenization for syntax highlighting
+- [ ] Implement `renderBlockquote()` with indentation
+- [ ] Implement `renderHorizontalRule()` method
+
+### 🚧 Phase 3: VS Code Markdown API Integration
+- [ ] Add VS Code markdown extension API integration to get rendered HTML
+- [ ] Add `generateRenderedMarkdownPdf()` method to PaperPrinter
+
+### 🚧 Phase 4: Mode Selection UI
+- [ ] Add mode selection UI (Raw Source vs Rendered Preview) for markdown files
+- [ ] Update `handlePrintCommandFromVSCode()` to check for markdown and show mode picker
+
+### 🚧 Phase 5: Testing & Polish
+- [ ] Test with basic markdown (headings, paragraphs, bold, italic)
+- [ ] Test with lists (ordered and unordered, nested)
+- [ ] Test with code blocks with syntax highlighting
+- [ ] Test with complex markdown (blockquotes, tables, nested elements)
+- [ ] Polish - Respect `markdown.preview.fontFamily` and `fontSize` settings
+- [ ] Polish - Get background colors from theme for code/blockquotes
+- [ ] Polish - Test with different VS Code themes
+
+---
+
 ## Overview
 
 Print markdown files in two modes:
