@@ -1,4 +1,6 @@
-# Template replacement configuration for build process
+# templateDictReplace configuration for build process
+#
+# Matches App.templateDictReplace() - same concept for build files
 #
 # Each entry specifies:
 # - file: Target file to process (relative to project root)

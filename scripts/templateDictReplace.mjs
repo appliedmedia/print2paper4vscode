@@ -3,7 +3,7 @@
 /**
  * templateDictReplace: Generic template replacement for build files
  * 
- * Reads configuration from .config/template-replacements.yaml and processes
+ * Reads configuration from .config/templateDictReplace.yaml and processes
  * all specified files, replacing template placeholders with actual values
  * imported from compiled TypeScript modules.
  * 
@@ -22,7 +22,7 @@ const require = createRequire(import.meta.url);
 const projectRoot = path.join(__dirname, '..');
 
 // Load configuration
-const configPath = path.join(projectRoot, '.config', 'template-replacements.yaml');
+const configPath = path.join(projectRoot, '.config', 'templateDictReplace.yaml');
 const config = yaml.parse(fs.readFileSync(configPath, 'utf8'));
 
 console.log('templateDictReplace: Processing template replacements...');

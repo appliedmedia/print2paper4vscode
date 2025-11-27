@@ -14,7 +14,7 @@
 - **`VSCodeAPIs`** uses `kExtId` directly
 - **`package.json`** uses `{{extId}}` templates, replaced by build script using `kExtId`
 - **`scripts/templateDictReplace.mjs`** generic template processor (config-driven, matches internal routine)
-- **`.config/template-replacements.yaml`** defines all template replacements
+- **`.config/templateDictReplace.yaml`** defines all template replacements
 - **YAML templates** use `{{ns}}` and `{{ns_}}` (namespace for CSS/HTML/JS)
 - **Build files** use `{{extId}}` (extension ID for VS Code commands)
 
