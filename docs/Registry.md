@@ -12,8 +12,10 @@
   - `FnImport_t = { [componentId: string]: { [methodName: string]: Function } }` - what a class imports
   - **DO NOT** create: kId_t (kId is the constant, not the type!)
   - **DO NOT** create: ComponentInstance_t, ComponentFactory_t, ComponentClass_t, GlobalWithKId_t, RegistryArgs_t
-  - **Pattern rule**: Only create reusable types. Use inline types and `unknown` for one-off cases.
-  - **Pattern rule**: `const kSomething` comes first, then `type SomethingId_t = typeof kSomething`
+  - **Pattern rule**: Only create types that are actually used in annotations/unions/function signatures
+  - **Pattern rule**: Don't create types "just because" - use inline types and `unknown` for one-off cases
+  - **Pattern rule**: `const kSomething` comes first, then `type SomethingId_t = typeof kSomething` only if needed
+  - See Stage 7.4 for complete pattern rules and cleanup TODOs
 - [ ] Create `src/Registry.ts` with:
   - `private instances: Map<string, unknown> = new Map()` - use `unknown`, not generic type
   - `private factories: Map<string, (app: App) => unknown> = new Map()` - inline factory type
@@ -282,7 +284,20 @@
 - [ ] Update all type imports
 - [ ] Ensure Registry types properly exported
 
-#### 7.4 Final Testing
+#### 7.4 Clean Up Unused Types
+
+- [ ] **Pattern Rule**: Only create types that are actually used in type annotations, unions, or function signatures
+  - Don't create types "just because" a constant exists
+  - Use inline types and `unknown` for one-off cases
+  - Follow pattern: `const kSomething` first, then `type SomethingId_t = typeof kSomething` only if needed
+- [ ] Remove unused `ExtensionId_t` from `src/_entrypoint_extId_t.ts`
+  - Type is never used anywhere in codebase
+  - `kExtId` constant is sufficient (TypeScript infers type from `as const`)
+  - **If needed later**: Should be `ExtId_t` (not `ExtensionId_t`) following naming pattern
+- [ ] Audit all `*_t.ts` files for other unused types
+- [ ] Document type creation rules in AGENTS.md
+
+#### 7.5 Final Testing
 
 - [ ] Run full test suite
 - [ ] Manual testing of all features
