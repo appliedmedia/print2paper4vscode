@@ -14,6 +14,7 @@
   - `ComponentFactory_t` - type for factory functions
   - `ComponentClass_t` - type for class static members
   - `GlobalWithKId_t` - type for global with kId attached
+  - `RegistryArgs_t` - hash args for Registry constructor
 - [ ] Create `src/Registry.ts` with basic skeleton
 - [ ] Registry builds `kId` dynamically at startup from class declarations
 - [ ] Add basic `use(...methodIds: string[])` method stub (variadic)
@@ -21,7 +22,8 @@
 - [ ] Always-available methods injected automatically (e.g., dx methods)
 
 #### Stage 0.2: Integrate Registry into App ⏸️
-- [ ] Update `App.ts` to create Registry instance in constructor
+- [ ] Update `App.ts` to create Registry instance with hash args:
+  - `new Registry({ vscode, context, app: this, always: [...] })`
 - [ ] Registry constructor creates Diagnostics internally
 - [ ] Add `app.use()` method that delegates to Registry
 - [ ] Verify Registry can be instantiated without breaking existing code
@@ -1292,6 +1294,13 @@ export type GlobalWithKId_t = typeof globalThis & {
   kId: kId_t;
 };
 
+export type RegistryArgs_t = {
+  vscode: typeof import('vscode');
+  context: ExtensionContext;
+  app: App;
+  always?: string[];  // Optional - methods always available to all components
+};
+
 // src/Registry.ts
 class Registry {
   private instances: Map<string, ComponentInstance_t> = new Map();
@@ -1299,17 +1308,23 @@ class Registry {
   private diagnostics: Diagnostics;
   private kId: kId_t = {};
   private alwaysMethods: string[];
+  private vscode: typeof import('vscode');
+  private context: ExtensionContext;
+  private app: App;
 
-  constructor(
-    private vscode: typeof import('vscode'),
-    private context: ExtensionContext,
-    private app: App,
-    options: { always: string[] }
-  ) {
-    this.alwaysMethods = options.always;
+  constructor(args: {
+    vscode: typeof import('vscode');
+    context: ExtensionContext;
+    app: App;
+    always?: string[];  // Optional - defaults to empty array
+  }) {
+    this.vscode = args.vscode;
+    this.context = args.context;
+    this.app = args.app;
+    this.alwaysMethods = args.always || [];
     
     // Create Diagnostics immediately (needed for debugging during construction)
-    this.diagnostics = new Diagnostics('Registry', undefined, null, app);
+    this.diagnostics = new Diagnostics('Registry', undefined, null, this.app);
     this.instances.set('dx', this.diagnostics);
     
     this.buildKId();
