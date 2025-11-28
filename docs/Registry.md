@@ -16,20 +16,22 @@
   - **Pattern rule**: Don't create types "just because" - use inline types and `unknown` for one-off cases
   - **Pattern rule**: `const kSomething` comes first, then `type SomethingId_t = typeof kSomething` only if needed
   - See Stage 7.4 for complete pattern rules and cleanup TODOs
-- [ ] Create `src/Registry.ts` with:
-  - `private instances: Map<string, unknown> = new Map()` - use `unknown`, not generic type
-  - `private factories: Map<string, (app: App) => unknown> = new Map()` - inline factory type
-  - `private _kId: Record<string, Record<string, string>> = {}` - internal kId builder
-  - `private diagnostics: Diagnostics`
-  - `private app: App`
+- [ ] Create `src/Registry.ts` with minimal necessary fields:
+  - `private instances: Map<string, unknown>` - WHY: Cache singletons after first creation (lazy loading)
+  - `private factories: Map<string, (app: App) => unknown>` - WHY: Store factory functions for each component
+  - `private kId: Record<string, Record<string, string>>` - WHY: Build once, export for components to import
+  - `private dx: Diagnostics` - WHY: Registry needs diagnostics for debugging (always call it `dx` not `diagnostics`)
+  - `private app: App` - WHY: Pass to component constructors
 - [ ] Registry constructor signature: `constructor(app: App)` - simplified, no hash args
   - Registry does NOT need vscode/context - only app reference
   - Components access vscode/context via `app.vscode` and `app.context` when needed
 - [ ] Registry builds kId dynamically at startup from class declarations
 - [ ] Add `use(...methodIds: string[]): FnImport_t` method stub (variadic)
-- [ ] Export kId as module constant (following pattern): `export const kId = registry._kId`
-  - Registry makes kId available after building it
+- [ ] Export kId pattern:
+  - Option A: Make `kId` public (not private) and export directly: `export const kId = registry.kId`
+  - Option B: Add public getter: `getKId() { return this.kId; }`  and export: `export const kId = registry.getKId()`
   - Components import with: `import { kId } from './Registry'`
+  - Question: Should kId be private field or public since it's exported?
 
 #### Stage 0.2: Integrate Registry into App ⏸️
 
