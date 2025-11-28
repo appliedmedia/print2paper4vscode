@@ -284,7 +284,7 @@
 - [ ] Update all type imports
 - [ ] Ensure Registry types properly exported
 
-#### 7.4 Clean Up Unused Types
+#### 7.4 Clean Up Unused Types and Naming
 
 - [ ] **Pattern Rule**: Only create types that are actually used in type annotations, unions, or function signatures
   - Don't create types "just because" a constant exists
@@ -294,6 +294,11 @@
   - Type is never used anywhere in codebase
   - `kExtId` constant is sufficient (TypeScript infers type from `as const`)
   - **If needed later**: Should be `ExtId_t` (not `ExtensionId_t`) following naming pattern
+- [ ] Rename `WEBVIEW_ID` to `kExtId_Webview` in `src/VSCodeAPIs.ts` line 45:
+  - Change: `private static readonly WEBVIEW_ID = kExtId + '.printprep';`
+  - To: `private static readonly kExtId_Webview = \`${kExtId}.printprep\`;`
+  - Update usage on line 242: `VSCodeAPIs.WEBVIEW_ID` → `VSCodeAPIs.kExtId_Webview`
+  - Rationale: Follow k-prefix naming pattern, use template literals instead of concatenation
 - [ ] Audit all `*_t.ts` files for other unused types
 - [ ] Document type creation rules in AGENTS.md
 
