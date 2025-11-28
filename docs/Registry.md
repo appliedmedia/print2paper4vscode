@@ -19,19 +19,18 @@
 - [ ] Create `src/Registry.ts` with minimal necessary fields:
   - `private instances: Map<string, unknown>` - WHY: Cache singletons after first creation (lazy loading)
   - `private factories: Map<string, (app: App) => unknown>` - WHY: Store factory functions for each component
-  - `private kId: Record<string, Record<string, string>>` - WHY: Build once, export for components to import
   - `private dx: Diagnostics` - WHY: Registry needs diagnostics for debugging (always call it `dx` not `diagnostics`)
   - `private app: App` - WHY: Pass to component constructors
-- [ ] Registry constructor signature: `constructor(app: App)` - simplified, no hash args
-  - Registry does NOT need vscode/context - only app reference
-  - Components access vscode/context via `app.vscode` and `app.context` when needed
-- [ ] Registry builds kId dynamically at startup from class declarations
-- [ ] Add `use(...methodIds: string[]): FnImport_t` method stub (variadic)
-- [ ] Export kId pattern:
-  - Option A: Make `kId` public (not private) and export directly: `export const kId = registry.kId`
-  - Option B: Add public getter: `getKId() { return this.kId; }`  and export: `export const kId = registry.getKId()`
-  - Components import with: `import { kId } from './Registry'`
-  - Question: Should kId be private field or public since it's exported?
+  - **NO kId field** - it's derived data, not Registry state
+- [ ] Build kId at module level (not in Registry class):
+  - `const components = [Diagnostics, VSCodeAPIs, PDF, UI, ...]` - list component classes
+  - `const kId = buildKId(components)` - build hierarchical lookup from class.id and class.fn
+  - `export { kId }` - export for components to import
+  - Registry doesn't store kId - it's just a module constant
+- [ ] Registry constructor signature: `constructor(app: App)` - simplified
+- [ ] Add `use(...methodIds: string[]): FnImport_t` method
+  - Looks up methods via exported `kId` constant (imports it internally)
+  - Returns scoped function object
 
 #### Stage 0.2: Integrate Registry into App ⏸️
 
