@@ -6,28 +6,31 @@
 
 #### Stage 0.1: Create Registry Infrastructure ✅ NEXT
 
-- [ ] Create `src/types/Registry_t.ts` with:
+- [ ] Create `src/types/Registry_t.ts` with ONLY these types (following existing pattern):
   - `Use_t = string[]` - array of method name strings
   - `FnExport_t = readonly string[]` - what a class exports
-  - `FnImport_t` - generic type for what a class imports (no `any` types!)
-  - `kId_t` - type for kId structure
-  - `ComponentInstance_t` - type for component instances
-  - `ComponentFactory_t` - type for factory functions
-  - `ComponentClass_t` - type for class static members
-  - `GlobalWithKId_t` - type for global with kId attached
-  - `RegistryArgs_t` - hash args for Registry constructor
-- [ ] Create `src/Registry.ts` with basic skeleton
+  - `FnImport_t = { [componentId: string]: { [methodName: string]: Function } }` - what a class imports
+  - `kId_t = { [componentId: string]: { [methodName: string]: string } }` - kId structure
+  - **DO NOT** create: ComponentInstance_t, ComponentFactory_t, ComponentClass_t, GlobalWithKId_t, RegistryArgs_t
+  - **Pattern rule**: Only create reusable types. Use inline types and `unknown` for one-off cases.
+- [ ] Create `src/Registry.ts` with:
+  - `private instances: Map<string, unknown> = new Map()` - use `unknown`, not generic type
+  - `private factories: Map<string, (app: App) => unknown> = new Map()` - inline factory type
+  - `private kId: kId_t = {}`
+  - `private diagnostics: Diagnostics`
+  - `private app: App`
+- [ ] Registry constructor signature: `constructor(app: App)` - simplified, no hash args
+  - Registry does NOT need vscode/context - only app reference
+  - Components access vscode/context via `app.vscode` and `app.context` when needed
 - [ ] Registry builds `kId` dynamically at startup from class declarations
-- [ ] Add basic `use(...methodIds: string[])` method stub (variadic)
-- [ ] Registry constructor accepts `always: string[]` option
-- [ ] Always-available methods injected automatically (e.g., dx methods)
+- [ ] Add `use(...methodIds: string[]): FnImport_t` method stub (variadic)
+- [ ] Export `kId` as module-level export (NOT global pollution): `export const kId: kId_t`
 
 #### Stage 0.2: Integrate Registry into App ⏸️
 
-- [ ] Update `App.ts` to create Registry instance with hash args:
-  - `new Registry({ vscode, context, app: this, always: [...] })`
+- [ ] Update `App.ts` to create Registry instance: `this.registry = new Registry(this)`
 - [ ] Registry constructor creates Diagnostics internally
-- [ ] Add `app.use()` method that delegates to Registry
+- [ ] Add `app.use(...methodIds: string[])` method that delegates to `this.registry.use(...methodIds)`
 - [ ] Verify Registry can be instantiated without breaking existing code
 
 #### Stage 0.3: Test Infrastructure ⏸️
@@ -73,16 +76,30 @@
 
 #### 2.2 Convert Yaml to Factory Pattern
 
-- [ ] Add to Yaml class:
-  - `static readonly id = 'yaml'`
-  - `static readonly fn: FnExport_t = ['create']`
-  - `static create<T>(app: App, filePath: string, dataStruct: T): Yaml<T>`
-- [ ] Make constructor private
-- [ ] Move any `init()` logic into constructor (currently empty)
-- [ ] Remove `init()` method entirely
-- [ ] Keep `done()` method for cache cleanup
-- [ ] Update all usage: `this._yaml = this.fn.yaml.create(app, 'src/PDF.yaml', PDF.kYaml)`
-- [ ] Test Yaml factory works correctly
+- [ ] Update `src/Yaml.ts`:
+  - Add `static readonly id = 'yaml'`
+  - Add `static readonly fn: FnExport_t = ['create']`
+  - Add `static create<T>(app: App, filePath: string, dataStruct: T): Yaml<T>`
+  - Make constructor private
+  - Move any `init()` logic into constructor (currently empty)
+  - Remove `init()` method entirely
+  - Keep `done()` method for cache cleanup
+- [ ] Update `src/PaperPrinter.ts` line 105:
+  - Change: `this._yaml = new Yaml(app, 'src/PaperPrinter.yaml', PaperPrinter.kYaml)`
+  - To: `this._yaml = this.fn.yaml.create(app, 'src/PaperPrinter.yaml', PaperPrinter.kYaml)`
+- [ ] Update `src/UIWebView.ts` line 52:
+  - Change: `this._yaml = new Yaml(app, 'src/UIWebView.yaml', UIWebView.kYaml)`
+  - To: `this._yaml = this.fn.yaml.create(app, 'src/UIWebView.yaml', UIWebView.kYaml)`
+- [ ] Update `src/UIMenu.ts` line 211:
+  - Change: `this._yaml = new Yaml(app, 'src/UIMenu.yaml', UIMenu.kYaml)`
+  - To: `this._yaml = this.fn.yaml.create(app, 'src/UIMenu.yaml', UIMenu.kYaml)`
+- [ ] Update `src/UI.ts` line 66:
+  - Change: `this._yaml = new Yaml(app, 'src/UI.yaml', UI.kYaml)`
+  - To: `this._yaml = this.fn.yaml.create(app, 'src/UI.yaml', UI.kYaml)`
+- [ ] Update `src/PDF.ts` line 63:
+  - Change: `this._yaml = new Yaml(app, 'src/PDF.yaml', PDF.kYaml)`
+  - To: `this._yaml = this.fn.yaml.create(app, 'src/PDF.yaml', PDF.kYaml)`
+- [ ] Test Yaml factory works correctly (5 files updated)
 
 ---
 
@@ -98,15 +115,24 @@
 - [ ] Keep `done()` method for explicit cleanup
 - [ ] Test command registration works
 
-#### 3.2 Migrate Persist
+#### 3.2 Migrate Persist (Factory Pattern)
 
-- [ ] Add `public readonly id: Id_t = kId.persist`
-- [ ] Update constructor to use `app.use()`
-- [ ] Request VSCodeAPIs methods via Registry
-- [ ] Move any `init()` logic into constructor (currently empty)
-- [ ] Remove `init()` method entirely
-- [ ] Keep `done()` method for explicit cleanup
-- [ ] Test persistence works
+- [ ] Update `src/Persist.ts`:
+  - Add `static readonly id = 'persist'`
+  - Add `static readonly fn: FnExport_t = ['create']`
+  - Add `static create(app: App): Persist`
+  - Make constructor private
+  - Update constructor to use `app.use()` for VSCodeAPIs methods
+  - Move any `init()` logic into constructor (currently empty)
+  - Remove `init()` method entirely
+  - Keep `done()` method for explicit cleanup
+- [ ] Update `src/UIMenu.ts` line 209:
+  - Change: `this.persist = new Persist(app) as Persist & Persist_t`
+  - To: `this.persist = this.fn.persist.create(app) as Persist & Persist_t`
+- [ ] Update `src/UI.ts` line 69:
+  - Change: `this.persist = new Persist(app) as Persist & Persist_t`
+  - To: `this.persist = this.fn.persist.create(app) as Persist & Persist_t`
+- [ ] Test persistence works (2 files updated)
 
 #### 3.3 Migrate UI
 
