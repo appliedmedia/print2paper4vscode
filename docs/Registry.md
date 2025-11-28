@@ -294,11 +294,10 @@
   - Type is never used anywhere in codebase
   - `kExtId` constant is sufficient (TypeScript infers type from `as const`)
   - **If needed later**: Should be `ExtId_t` (not `ExtensionId_t`) following naming pattern
-- [ ] Rename `WEBVIEW_ID` to `kExtId_Webview` in `src/VSCodeAPIs.ts` line 45:
-  - Change: `private static readonly WEBVIEW_ID = kExtId + '.printprep';`
-  - To: `private static readonly kExtId_Webview = \`${kExtId}.printprep\`;`
-  - Update usage on line 242: `VSCodeAPIs.WEBVIEW_ID` → `VSCodeAPIs.kExtId_Webview`
-  - Rationale: Follow k-prefix naming pattern, use template literals instead of concatenation
+- [ ] Remove unnecessary `WEBVIEW_ID` constant from `src/VSCodeAPIs.ts`:
+  - Delete line 45: `private static readonly WEBVIEW_ID = kExtId + '.printprep';`
+  - Update line 242: Change `VSCodeAPIs.WEBVIEW_ID,` to `` `${kExtId}.printprep`, ``
+  - Rationale: Constant is only used once, no need for class-level definition. Inline it.
 - [ ] Audit all `*_t.ts` files for other unused types
 - [ ] Document type creation rules in AGENTS.md
 
