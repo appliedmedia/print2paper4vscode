@@ -1367,87 +1367,93 @@ const kId = {
 
 ```typescript
 // src/types/Registry_t.ts
-export type Use_t = string[];  // Array of method IDs from kId
-
-export type FnExport_t = readonly string[];  // What a class exports
-
+export type Use_t = string[];
+export type FnExport_t = readonly string[];
 export type FnImport_t = {
   [componentId: string]: {
     [methodName: string]: Function;
   };
 };
 
-// No kId_t type! kId is the constant, not a type
-// Pattern: const kSomething, then type SomethingId_t = typeof kSomething
-
 // src/Registry.ts
-class Registry {
-  private instances: Map<string, unknown> = new Map();
-  private factories: Map<string, (app: App) => unknown> = new Map();
-  private diagnostics: Diagnostics;
-  private _kId: Record<string, Record<string, string>> = {};  // Built dynamically
-  private app: App;
+import type { FnExport_t, FnImport_t } from './types/Registry_t';
+import { Diagnostics } from './Diagnostics';
+import { VSCodeAPIs } from './VSCodeAPIs';
+import { UI } from './UI';
+import { PDF } from './PDF';
+import { Stylize } from './Stylize';
+import { TabInspector } from './TabInspector';
+import { UIMenuMgr } from './UIMenuMgr';
+import { OS } from './OS';
+// ... import all components
 
-  constructor(app: App) {  // Simplified - only needs app
-    this.app = app;
+// Helper to build kId from component class metadata
+function buildKId(components: Array<{ readonly id: string; readonly fn: FnExport_t }>) {
+  const result: Record<string, Record<string, string>> = {};
+  
+  for (const Component of components) {
+    const componentId = Component.id;
+    result[componentId] = {};
     
-    // Create Diagnostics immediately (needed for debugging during construction)
-    this.diagnostics = new Diagnostics('Registry', undefined, null, this.app);
-    this.instances.set('dx', this.diagnostics);
-    
-    this.buildKId();
-    this.registerFactories();
+    for (const methodName of Component.fn) {
+      result[componentId][methodName] = methodName;
+    }
   }
   
-  private buildKId(): void {
-    // Import all component classes
-    const components: ComponentClass_t[] = [
-      Diagnostics, 
-      VSCodeAPIs, 
-      UI, 
-      OS, 
-      PDF, 
-      Stylize, 
-      /* ... */
-    ];
-    
-    for (const Component of components) {
-      const id = Component.id;  // 'pdf', 'ui', etc.
-      this.kId[id] = {};
-      
-      for (const methodName of Component.fn) {
-        this.kId[id][methodName] = methodName;  // pdf.generatePdf = 'generatePdf'
-      }
-    }
-    
-    // Export kId for use in components
-    (global as GlobalWithKId_t).kId = this.kId;
+  return result;
+}
+
+// Build kId once at module level - it's just derived data from component metadata
+const components = [
+  Diagnostics,
+  VSCodeAPIs,
+  UI,
+  PDF,
+  Stylize,
+  TabInspector,
+  UIMenuMgr,
+  OS,
+  // ... all component classes
+];
+
+export const kId = buildKId(components);
+
+// Registry class - manages runtime state only
+class Registry {
+  private instances = new Map<string, unknown>();
+  private factories = new Map<string, (app: App) => unknown>();
+  private dx: Diagnostics;
+  private app: App;
+
+  constructor(app: App) {
+    this.app = app;
+    this.dx = new Diagnostics('Registry', undefined, null, app);
+    this.instances.set('dx', this.dx);
+    this.registerFactories();
   }
 
   use(...methodIds: string[]): FnImport_t {
-    // Add always-available methods from options
-    const allMethodIds = [...methodIds, ...this.alwaysMethods];
-    
     const result: Partial<FnImport_t> = {};
     
-    // Parse method IDs and group by component
+    // Parse method IDs (like 'kId.pdf.generatePdf', 'kId.ui.showError') and group by component
     const componentMethods = new Map<string, Set<string>>();
     
-    for (const methodId of allMethodIds) {
-      // Find component that owns this method via kId lookup
-      // ...
+    for (const methodId of methodIds) {
+      // Parse hierarchical kId reference to find component and method
+      // kId.pdf.generatePdf -> component='pdf', method='generatePdf'
+      // ... (lookup logic)
     }
 
     for (const [componentName, methods] of componentMethods) {
       if (componentName === 'dx') {
         // Diagnostics is always available (created at Registry construction)
-        result[componentName] = this.createScopedAccess(this.diagnostics, Array.from(methods));
+        result[componentName] = this.createScopedAccess(this.dx, Array.from(methods));
       } else {
         // Get or create component instance lazily
         if (!this.instances.has(componentName)) {
           const factory = this.factories.get(componentName);
           if (!factory) throw new Error(`No factory for component: ${componentName}`);
-          this.instances.set(componentName, factory(this));
+          this.instances.set(componentName, factory(this.app));
         }
 
         const instance = this.instances.get(componentName);
