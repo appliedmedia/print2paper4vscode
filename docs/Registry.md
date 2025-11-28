@@ -5,6 +5,7 @@
 ### Immediate Actions (Start Here)
 
 #### Stage 0.1: Create Registry Infrastructure ✅ NEXT
+
 - [ ] Create `src/types/Registry_t.ts` with:
   - `Use_t = string[]` - array of method name strings
   - `FnExport_t = readonly string[]` - what a class exports
@@ -22,6 +23,7 @@
 - [ ] Always-available methods injected automatically (e.g., dx methods)
 
 #### Stage 0.2: Integrate Registry into App ⏸️
+
 - [ ] Update `App.ts` to create Registry instance with hash args:
   - `new Registry({ vscode, context, app: this, always: [...] })`
 - [ ] Registry constructor creates Diagnostics internally
@@ -29,6 +31,7 @@
 - [ ] Verify Registry can be instantiated without breaking existing code
 
 #### Stage 0.3: Test Infrastructure ⏸️
+
 - [ ] Run existing tests to ensure no regressions
 - [ ] Add basic Registry construction test
 - [ ] Verify Diagnostics is available via Registry
@@ -36,6 +39,7 @@
 ---
 
 ### Stage 1: Implement Registry Core ⏸️
+
 - [ ] Import all component classes at Registry startup
 - [ ] Read `Class.id` and `Class.fn` from each component
 - [ ] Build `kId` hierarchically: `kId[componentId][methodName] = methodName`
@@ -55,6 +59,7 @@
 ### Stage 2: Migrate Leaf Components ⏸️
 
 #### 2.1 Migrate OS Classes
+
 - [ ] Add to OS base class:
   - `static readonly id = 'os'`
   - `static readonly fn: FnExport_t = ['fileRead', 'fileWrite', 'fileDelete', ...]`
@@ -67,6 +72,7 @@
 - [ ] Test OS classes work correctly
 
 #### 2.2 Convert Yaml to Factory Pattern
+
 - [ ] Add to Yaml class:
   - `static readonly id = 'yaml'`
   - `static readonly fn: FnExport_t = ['create']`
@@ -83,6 +89,7 @@
 ### Stage 3: Migrate Core Infrastructure ⏸️
 
 #### 3.1 Migrate VSCodeAPIs
+
 - [ ] Add `public readonly id: Id_t = kId.vscodeapis`
 - [ ] Update constructor to use `app.use()`
 - [ ] Request Diagnostics via Registry
@@ -92,6 +99,7 @@
 - [ ] Test command registration works
 
 #### 3.2 Migrate Persist
+
 - [ ] Add `public readonly id: Id_t = kId.persist`
 - [ ] Update constructor to use `app.use()`
 - [ ] Request VSCodeAPIs methods via Registry
@@ -101,6 +109,7 @@
 - [ ] Test persistence works
 
 #### 3.3 Migrate UI
+
 - [ ] Add `public readonly id: Id_t = kId.ui`
 - [ ] Update constructor to use `app.use()`
 - [ ] Request dependencies: Diagnostics, OS, Persist methods
@@ -114,6 +123,7 @@
 ### Stage 4: Migrate Middle-Tier Components ⏸️
 
 #### 4.1 Migrate TabInspector
+
 - [ ] Add `public readonly id: Id_t = kId.tabinspector`
 - [ ] Update constructor to use `app.use()`
 - [ ] Request dependencies: VSCodeAPIs, Diagnostics
@@ -123,6 +133,7 @@
 - [ ] Test tab inspection works
 
 #### 4.2 Migrate Stylize
+
 - [ ] Add `public readonly id: Id_t = kId.stylize`
 - [ ] Update constructor to use `app.use()`
 - [ ] Request Diagnostics via Registry
@@ -133,6 +144,7 @@
 - [ ] Test syntax highlighting works
 
 #### 4.3 Migrate UIMenuMgr
+
 - [ ] Add `public readonly id: Id_t = kId.uimenumgr`
 - [ ] Update constructor to use `app.use()`
 - [ ] Request dependencies: UI, VSCodeAPIs, Diagnostics
@@ -146,6 +158,7 @@
 ### Stage 5: Migrate Complex Components ⏸️
 
 #### 5.1 Convert Coords to Singleton
+
 - [ ] Add to Coords class:
   - `static readonly id = 'coords'`
   - `static readonly fn: FnExport_t = ['pdfPtsToCssPx', 'cssPxToPdfPts']`
@@ -159,6 +172,7 @@
 - [ ] Test coordinate calculations work
 
 #### 5.2 Migrate PDF
+
 - [ ] Add `public readonly id: Id_t = kId.pdf`
 - [ ] Update constructor to use `app.use()`
 - [ ] Request dependencies: Stylize, UI, OS, Diagnostics methods
@@ -169,6 +183,7 @@
 - [ ] Test PDF generation works
 
 #### 5.3 Convert DocInfo Classes to Factory Pattern
+
 - [ ] Add to DocInfo_PDF:
   - `static readonly id = 'docinfo_pdf'`
   - `static readonly fn: FnExport_t = ['create']`
@@ -187,6 +202,7 @@
 ### Stage 6: Migrate Orchestration Components ⏸️
 
 #### 6.1 Convert UIWebView to Singleton
+
 - [ ] Add to UIWebView class:
   - `static readonly id = 'uiwebview'`
   - `static readonly fn: FnExport_t = ['displayPdfPanel']`
@@ -200,6 +216,7 @@
 - [ ] Test webview display works
 
 #### 6.2 Migrate PaperPrinter
+
 - [ ] Add `public readonly id: Id_t = kId.paperprinter`
 - [ ] Update constructor to use `app.use()`
 - [ ] Request all dependencies via Registry
@@ -214,12 +231,14 @@
 ### Stage 7: Cleanup and Finalization ⏸️
 
 #### 7.1 Remove App Component Properties
+
 - [ ] Remove `vscodeapis`, `ui`, `pdf`, etc. from App class
 - [ ] Remove `componentOrder` array
 - [ ] Keep only Registry property
 - [ ] Update App to access components via Registry
 
 #### 7.2 Remove Init Infrastructure, Keep Done
+
 - [ ] Verify all `init()` methods removed from all components
 - [ ] Remove `init()` method from App class
 - [ ] Remove `componentOrder` array (no longer needed for init sequence)
@@ -229,11 +248,13 @@
 - [ ] Verify `done()` methods still work correctly
 
 #### 7.3 Update Type Definitions
+
 - [ ] Remove `App` type from component imports where possible
 - [ ] Update all type imports
 - [ ] Ensure Registry types properly exported
 
 #### 7.4 Final Testing
+
 - [ ] Run full test suite
 - [ ] Manual testing of all features
 - [ ] Performance benchmarks
@@ -242,6 +263,7 @@
 ---
 
 ### Stage 8: Optimization ⏸️
+
 - [ ] Add strong typing for dependency requests
 - [ ] Add dependency validation
 - [ ] Add lifecycle management
@@ -253,6 +275,7 @@
 ## Current Status Summary
 
 **Components in Codebase:**
+
 - ✅ App.ts - Main orchestrator (creates all components, has init/done)
 - ✅ Diagnostics.ts - Logging system (stores app reference)
 - ✅ VSCodeAPIs.ts - VS Code API wrapper (stores app, has init/done)
@@ -272,6 +295,7 @@
 - ✅ DocInfo_PaperPrinter.ts - PaperPrinter document info
 
 **Current Architecture Pattern:**
+
 ```typescript
 // Every component follows this pattern:
 class Component {
@@ -295,6 +319,7 @@ class Component {
 ```
 
 **Target Architecture Pattern:**
+
 ```typescript
 // Singleton service component
 class PDF {
@@ -387,13 +412,17 @@ This section documents cases where components might need entire class instances 
 ### ✅ Factory Pattern with static create()
 
 #### 1. Yaml - Per-instance with factory
+
 **Used by:** PaperPrinter, UIWebView, UIMenu, PDF, UI  
 **Current pattern:**
+
 ```typescript
 this._yaml = new Yaml(app, 'src/PDF.yaml', PDF.kYaml);
 const data = this._yaml.get();
 ```
+
 **With Registry:**
+
 ```typescript
 class Yaml {
   static readonly id = 'yaml';
@@ -409,23 +438,29 @@ this.fn = app.use([kId.yaml.create]);
 this._yaml = this.fn.yaml.create(app, 'src/PDF.yaml', PDF.kYaml);
 const data = this._yaml.get();
 ```
+
 **Status:** Factory pattern - each component gets own instance
 
 #### 2. Coords - Only 4 methods needed
+
 **Used by:** PDF (holds instance), DocInfo_PDF (creates temp instance)  
 **Methods used:**
+
 - `init()` - move to constructor
 - `done()` - keep for cleanup
 - `pdfPtsToCssPx(value)` - called 6 times
 - `cssPxToPdfPts(value)` - called 3 times
 
 **Current pattern:**
+
 ```typescript
 this.coords = new Coords(app);
 this.coords.init();
 const px = this.coords.pdfPtsToCssPx(pts);
 ```
+
 **With Registry:**
+
 ```typescript
 this.fn = app.use([
   kId.coords.pdfPtsToCssPx,
@@ -434,26 +469,33 @@ this.fn = app.use([
 const px = this.fn.coords.pdfPtsToCssPx(pts);
 // Coords becomes singleton, no per-class instances
 ```
+
 **Status:** Can eliminate class instantiation
 
 #### 3. UIWebView - Only 2 methods needed
+
 **Used by:** PaperPrinter (holds instance)  
 **Methods used:**
+
 - `init()` - move to constructor
 - `displayPdfPanel()` - called 2 times
 
 **Current pattern:**
+
 ```typescript
 this.uiwebview = new UIWebView(this.app);
 this.uiwebview.init();
 await this.uiwebview.displayPdfPanel();
 ```
+
 **With Registry:**
+
 ```typescript
 this.fn = app.use([kId.uiwebview.displayPdfPanel]);
 await this.fn.uiwebview.displayPdfPanel();
 // UIWebView becomes singleton
 ```
+
 **Status:** Can eliminate class instantiation
 
 ---
@@ -461,13 +503,16 @@ await this.fn.uiwebview.displayPdfPanel();
 ### ❓ Needs Investigation - Possible Whole Class Usage
 
 #### 4. UIMenu - Created and stored in arrays
+
 **Used by:** UIMenuMgr  
 **Pattern:**
+
 ```typescript
 const menu = new UIMenu(app, id, displayName, ...);
 this.menus.push(menu);  // Stored for later use
 // Later: iterate through menus, call various methods
 ```
+
 **Question:** Could we use method-based approach instead?  
 **Status:** NEEDS REVIEW - Currently assumes whole class needed
 
@@ -476,17 +521,22 @@ this.menus.push(menu);  // Stored for later use
 ### ✅ Confirmed Needs Whole Class
 
 #### 5. DocInfo_PDF and DocInfo_PaperPrinter - Data containers
+
 **Used by:** PDF, PaperPrinter  
 **Reason:** Data objects with 10+ properties accessed throughout codebase
+
 ```typescript
 this.docInfo = new DocInfo_PDF(app);
 // Then accessed: docInfo.pdfDoc, docInfo.pageTotal, docInfo.theme, etc.
 ```
+
 **Status:** Keep as-is - data container pattern
 
 #### 6. Persist - Factory pattern with dynamic properties
+
 **Used by:** UI, UIMenu  
 **Reason:** Creates dynamic properties via `Object.defineProperty()`
+
 ```typescript
 class Persist {
   static readonly id = 'persist';
@@ -504,6 +554,7 @@ this.persist = this.fn.persist.create(app);
 this.persist.register('toolbar_pos');
 this.persist.toolbar_pos = 100;  // Dynamic property
 ```
+
 **Status:** Factory pattern - each component gets own instance
 
 ---
@@ -1258,9 +1309,11 @@ const kId = {
 ### Factory vs Singleton
 
 **Singletons** (Registry creates once):
+
 - `dx`, `ui`, `os`, `pdf`, `stylize`, `tabinspector`, `uimenumgr`, `vscodeapis`, `coords`, `uiwebview`
 
 **Factories** (static create() returns new instance):
+
 - `yaml`, `persist`, `docinfo_pdf`, `docinfo_paperprinter`
 
 ```typescript
