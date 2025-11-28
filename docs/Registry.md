@@ -10,21 +10,24 @@
   - `Use_t = string[]` - array of method name strings
   - `FnExport_t = readonly string[]` - what a class exports
   - `FnImport_t = { [componentId: string]: { [methodName: string]: Function } }` - what a class imports
-  - `kId_t = { [componentId: string]: { [methodName: string]: string } }` - kId structure
+  - **DO NOT** create: kId_t (kId is the constant, not the type!)
   - **DO NOT** create: ComponentInstance_t, ComponentFactory_t, ComponentClass_t, GlobalWithKId_t, RegistryArgs_t
   - **Pattern rule**: Only create reusable types. Use inline types and `unknown` for one-off cases.
+  - **Pattern rule**: `const kSomething` comes first, then `type SomethingId_t = typeof kSomething`
 - [ ] Create `src/Registry.ts` with:
   - `private instances: Map<string, unknown> = new Map()` - use `unknown`, not generic type
   - `private factories: Map<string, (app: App) => unknown> = new Map()` - inline factory type
-  - `private kId: kId_t = {}`
+  - `private _kId: Record<string, Record<string, string>> = {}` - internal kId builder
   - `private diagnostics: Diagnostics`
   - `private app: App`
 - [ ] Registry constructor signature: `constructor(app: App)` - simplified, no hash args
   - Registry does NOT need vscode/context - only app reference
   - Components access vscode/context via `app.vscode` and `app.context` when needed
-- [ ] Registry builds `kId` dynamically at startup from class declarations
+- [ ] Registry builds kId dynamically at startup from class declarations
 - [ ] Add `use(...methodIds: string[]): FnImport_t` method stub (variadic)
-- [ ] Export `kId` as module-level export (NOT global pollution): `export const kId: kId_t`
+- [ ] Export kId as module constant (following pattern): `export const kId = registry._kId`
+  - Registry makes kId available after building it
+  - Components import with: `import { kId } from './Registry'`
 
 #### Stage 0.2: Integrate Registry into App ⏸️
 
@@ -1354,53 +1357,19 @@ export type FnImport_t = {
   };
 };
 
-export type kId_t = {
-  [componentId: string]: {
-    [methodName: string]: string;
-  };
-};
-
-export type ComponentInstance_t = object;  // Any component instance
-
-export type ComponentFactory_t = (app: App) => ComponentInstance_t;
-
-export type ComponentClass_t = {
-  readonly id: string;
-  readonly fn: FnExport_t;
-};
-
-export type GlobalWithKId_t = typeof globalThis & {
-  kId: kId_t;
-};
-
-export type RegistryArgs_t = {
-  vscode: typeof import('vscode');
-  context: ExtensionContext;
-  app: App;
-  always?: string[];  // Optional - methods always available to all components
-};
+// No kId_t type! kId is the constant, not a type
+// Pattern: const kSomething, then type SomethingId_t = typeof kSomething
 
 // src/Registry.ts
 class Registry {
-  private instances: Map<string, ComponentInstance_t> = new Map();
-  private factories: Map<string, ComponentFactory_t> = new Map();
+  private instances: Map<string, unknown> = new Map();
+  private factories: Map<string, (app: App) => unknown> = new Map();
   private diagnostics: Diagnostics;
-  private kId: kId_t = {};
-  private alwaysMethods: string[];
-  private vscode: typeof import('vscode');
-  private context: ExtensionContext;
+  private _kId: Record<string, Record<string, string>> = {};  // Built dynamically
   private app: App;
 
-  constructor(args: {
-    vscode: typeof import('vscode');
-    context: ExtensionContext;
-    app: App;
-    always?: string[];  // Optional - defaults to empty array
-  }) {
-    this.vscode = args.vscode;
-    this.context = args.context;
-    this.app = args.app;
-    this.alwaysMethods = args.always || [];
+  constructor(app: App) {  // Simplified - only needs app
+    this.app = app;
     
     // Create Diagnostics immediately (needed for debugging during construction)
     this.diagnostics = new Diagnostics('Registry', undefined, null, this.app);
