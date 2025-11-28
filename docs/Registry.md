@@ -652,20 +652,20 @@ class PDF {
   }
 
   async renderPage(pageNum: number): Promise<void> {
-    const subDx = this.deps.dx.sub('renderPage');
+    const subDx = this.fn.dx.sub('renderPage');
 
     try {
       // Use requested methods - access via component name (organized by Registry)
-      const tokens = await this.deps.stylize.getTokens('code', 'javascript', 'theme');
-      this.deps.ui.showInfoMessage(`Rendering page ${pageNum}`);
+      const tokens = await this.fn.stylize.getTokens('code', 'javascript', 'theme');
+      this.fn.ui.showInfoMessage(`Rendering page ${pageNum}`);
 
-      const content = this.deps.os.fileRead('template.html');
+      const content = this.fn.os.fileRead('template.html');
     } catch (err) {
       // Error handling: log via Diagnostics and show user-friendly error
       subDx.out(
         `Failed to render page ${pageNum}: ${err instanceof Error ? err.message : String(err)}`
       );
-      this.deps.ui.showErrorMessage(`Failed to render page ${pageNum}. Please try again.`);
+      this.fn.ui.showErrorMessage(`Failed to render page ${pageNum}. Please try again.`);
       throw err; // Re-throw to allow caller to handle
     }
   }
@@ -673,11 +673,11 @@ class PDF {
 
 // UI class example
 class UI {
-  private deps: UIDependencies;
+  private fn: UIDependencies;
   public readonly id = 'ui'; // Every class must have id property or id() getter
 
   constructor(app: App) {
-    this.deps = app.use({
+    this.fn = app.use({
       create: [], // Registry finds this in Diagnostics
       sub: [], // Registry finds this in Diagnostics
       out: [], // Registry finds this in Diagnostics
@@ -687,18 +687,18 @@ class UI {
       showWarningMessage: [], // Registry finds this in VSCodeAPIs
     });
 
-    this.dx = this.deps.dx.create('UI');
+    this.dx = this.fn.dx.create('UI');
   }
 
   showError(msg: string): void {
     try {
       // Access methods via component organization
       // Check dependencies are available before using
-      if (!this.deps.vscodeapis || !this.deps.dx) {
+      if (!this.fn.vscodeapis || !this.fn.dx) {
         throw new Error('Required dependencies not available');
       }
-      this.deps.vscodeapis.showErrorMessage(msg);
-      this.deps.dx.out(`Error: ${msg}`);
+      this.fn.vscodeapis.showErrorMessage(msg);
+      this.fn.dx.out(`Error: ${msg}`);
     } catch (err) {
       // Fallback: log to console if diagnostics unavailable
       console.error(`UI.showError failed: ${err instanceof Error ? err.message : String(err)}`);
@@ -708,11 +708,11 @@ class UI {
 
 // Example with ambiguous method names (use component prefix)
 class PaperPrinter {
-  private deps: PaperPrinterDependencies;
+  private fn: PaperPrinterDependencies;
   public readonly id = 'paperprinter'; // Every class must have id property or id() getter
 
   constructor(app: App) {
-    this.deps = app.use({
+    this.fn = app.use({
       // If method names are unique across all components, just use method name
       renderPage: [],
       getCurrentPdfDoc: [],
@@ -735,28 +735,28 @@ class PaperPrinter {
       // 'diagnostics.out': [],  // Only needed if 'out' exists in multiple components
     });
 
-    this.dx = this.deps.dx.create('PaperPrinter');
+    this.dx = this.fn.dx.create('PaperPrinter');
   }
 
   async handlePrint(): Promise<void> {
-    const subDx = this.deps.dx.sub('handlePrint');
+    const subDx = this.fn.dx.sub('handlePrint');
 
     try {
       // Check dependencies are available
-      if (!this.deps.tabinspector || !this.deps.stylize || !this.deps.pdf) {
+      if (!this.fn.tabinspector || !this.fn.stylize || !this.fn.pdf) {
         throw new Error('Required dependencies not available for printing');
       }
 
-      const content = this.deps.tabinspector.getActiveTabContent();
-      const lang = this.deps.tabinspector.getLanguageId();
-      const tokens = await this.deps.stylize.getTokens(content, lang, 'github-light');
+      const content = this.fn.tabinspector.getActiveTabContent();
+      const lang = this.fn.tabinspector.getLanguageId();
+      const tokens = await this.fn.stylize.getTokens(content, lang, 'github-light');
 
-      this.deps.pdf.setTokensForPageRender(tokens, 'github-light');
-      await this.deps.pdf.renderPage(0);
+      this.fn.pdf.setTokensForPageRender(tokens, 'github-light');
+      await this.fn.pdf.renderPage(0);
     } catch (err) {
       // Error handling: log and show user-friendly message
       subDx.out(`Print failed: ${err instanceof Error ? err.message : String(err)}`);
-      this.deps.ui.showErrorMessage(
+      this.fn.ui.showErrorMessage(
         'Failed to print document. Please check your selection and try again.'
       );
       // Don't re-throw - gracefully degrade
@@ -771,7 +771,7 @@ class PaperPrinter {
 2. **Registry Resolution**: Registry automatically finds which component has each method
 3. **Ambiguity Handling**: If same method name exists in multiple components, use `'componentName.methodName'` format
 4. **Return Format**: Registry returns object organized by component: `{ dx: { create, sub, out }, ui: { showErrorMessage }, stylize: { getTokens } }`
-5. **Access Phase**: Use `this.deps.componentName.methodName()` - same access pattern as current `app.componentName.methodName()`
+5. **Access Phase**: Use `this.fn.componentName.methodName()` - same access pattern as current `app.componentName.methodName()`
 6. **Request Entire Class**: Request entire class instance by class name or short name: `app.use({ Diagnostics: [] })` or `app.use({ dx: [] })`
 7. **Class References**: For class constructors, use special syntax like `Coords: []` or similar
 
@@ -1686,7 +1686,7 @@ class Registry {
 
 ## Success Criteria
 
-1. ✓ No `app` parameter in component constructors
+1. ✓ App reference injected via constructor - components receive `app: App` to access Registry
 2. ✓ No `init()` methods - all initialization in constructors
 3. ✓ Components constructed lazily on first use by Registry
 4. ✓ Explicit dependency declarations in constructors via `app.use()`
