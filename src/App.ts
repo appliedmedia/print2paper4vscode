@@ -72,9 +72,12 @@ export class App {
     'uimenumgr',
   ];
 
-  constructor(context: ExtensionContext, vscode: typeof import('vscode')) {
+  constructor(args: { context: ExtensionContext; vscode: typeof import('vscode') }) {
     // Create Diagnostics instance first
-    this.dx = new Diagnostics('App', undefined /* debugOn */, null /* parent */, this);
+    this.dx = new Diagnostics({ name: 'App', debugOn: undefined, parent: null, app: this });
+    const dx = this.dx.sub({ name: 'constructor' });
+    dx.require(args, ['context', 'vscode']);
+    const { context, vscode } = args;
 
     // Create components - VSCodeAPIs first, then UI, then UIMenuMgr (needed by PaperPrinter), then others
     this.vscodeapis = new VSCodeAPIs(this, vscode, context);

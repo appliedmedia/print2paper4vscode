@@ -54,11 +54,11 @@ export class VSCodeAPIs {
     this.app = app;
     this.vscode = vscode;
     this.context = context;
-    this.dx = app.dx.sub('VSCodeAPIs');
+    this.dx = app.dx.sub({ name: 'VSCodeAPIs' });
   }
 
   init(): void {
-    const dx = this.dx.sub('init');
+    const dx = this.dx.sub({ name: 'init' });
     dx.require({ vscode: this.vscode, context: this.context }, ['vscode', 'context']);
 
     // Register VS Code commands

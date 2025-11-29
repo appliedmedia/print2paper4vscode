@@ -17,7 +17,7 @@ import { OS } from './OS';
  *
  * @example
  * const dx = new Diagnostics('MyClass');
- * const sub = dx.sub('myMethod');
+ * const sub = dx.sub({ name: 'myMethod' });
  * sub.require({path, content}, ['path', 'content']);
  * sub.out('Processing file');
  * sub.done();
@@ -85,7 +85,13 @@ export class Diagnostics {
   private startTime: number | null = null;
   private _debugOn: boolean | undefined;
 
-  constructor(name: string, debugOn?: boolean, parent?: Diagnostics | null, app?: any) {
+  constructor(args: { name: string; debugOn?: boolean; parent?: Diagnostics | null; app?: any }) {
+    // Note: Cannot use dx.require here as Diagnostics is not yet initialized
+    if (!args.name) {
+      throw new Error('Diagnostics constructor requires name parameter');
+    }
+    const { name, debugOn, parent, app } = args;
+    
     this._name = name;
     this.parent = parent || null;
     this.startTime = OS.performance.now();
@@ -105,13 +111,19 @@ export class Diagnostics {
   /**
    * Create a sub-context Diagnostics instance
    * Used for both component-level (in constructors) and method-level (in methods) contexts
-   * @param name - The name of the component or method
-   * @param debugOn - Optional debug override (undefined inherits parent's debug status)
+   * @param args.name - The name of the component or method
+   * @param args.debugOn - Optional debug override (undefined inherits parent's debug status)
    * @returns New Diagnostics instance with this as parent
    */
-  sub(name: string, debugOn?: boolean): Diagnostics {
-    const dx = new Diagnostics(name, debugOn, this, this.app);
-    return dx;
+  sub(args: { name: string; debugOn?: boolean }): Diagnostics {
+    // Note: Cannot use this.require() here as it would require creating a sub-diagnostics
+    // which would cause infinite recursion. Simple validation instead.
+    if (!args.name) {
+      this.print('❌ Diagnostics.sub() missing required parameter: name');
+    }
+    const { name, debugOn } = args;
+    const result = new Diagnostics({ name, debugOn, parent: this, app: this.app });
+    return result;
   }
 
   /**

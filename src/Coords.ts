@@ -44,7 +44,7 @@ export class Coords {
 
   constructor(app: App) {
     this.app = app;
-    this.dx = app.dx.sub('Coords');
+    this.dx = app.dx.sub({ name: 'Coords' });
   }
 
   /**
@@ -193,7 +193,7 @@ export class Coords {
     },
     currentPdfY: number
   ): void {
-    const dx = this.dx.sub('debugCoords');
+    const dx = this.dx.sub({ name: 'debugCoords' });
     dx.out(`Page: ${pageWidthPts}x${pageHeightPts}pts`);
     dx.out(
       `Margins: top=${marginsPts.topMarginPts}, bottom=${marginsPts.bottomMarginPts}, left=${marginsPts.leftMarginPts}, right=${marginsPts.rightMarginPts}`

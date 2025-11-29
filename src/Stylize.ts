@@ -57,7 +57,7 @@ export class Stylize {
 
   constructor(app: App) {
     this.app = app;
-    this.dx = app.dx.sub('Stylize');
+    this.dx = app.dx.sub({ name: 'Stylize' });
   }
 
   async init(): Promise<void> {
@@ -65,7 +65,7 @@ export class Stylize {
   }
 
   private async validateHighlighter(languageId: LanguageId_t): Promise<void> {
-    const dx = this.dx.sub('validateHighlighter');
+    const dx = this.dx.sub({ name: 'validateHighlighter' });
     dx.require({ languageId }, ['languageId']);
 
     if (!this.highlighter) {
@@ -244,14 +244,16 @@ export class Stylize {
   }
 
   // Tokenize code and optionally render directly to PDF
-  async tokenize(
-    code: string,
-    languageId: LanguageId_t,
-    theme?: string,
-    pageBegin?: number,
-    pageEnd?: number
-  ): Promise<ThemedToken[][]> {
-    const dx = this.dx.sub('tokenize');
+  async tokenize(args: {
+    code: string;
+    languageId: LanguageId_t;
+    theme?: string;
+    pageBegin?: number;
+    pageEnd?: number;
+  }): Promise<ThemedToken[][]> {
+    const dx = this.dx.sub({ name: 'tokenize' });
+    dx.require(args, ['code', 'languageId']);
+    const { code, languageId, theme, pageBegin, pageEnd } = args;
 
     try {
       await this.validateHighlighter(languageId);
@@ -271,7 +273,7 @@ export class Stylize {
       if (this.app.pdf.docInfo.pdfDoc) {
         for (let lineNum = 0; lineNum < filteredTokens.length; lineNum++) {
           const line = filteredTokens[lineNum];
-          this.app.pdf.renderTokenizedLine(lineNum, line);
+          this.app.pdf.renderTokenizedLine({ lineNumber: lineNum, tokens: line });
         }
       }
 

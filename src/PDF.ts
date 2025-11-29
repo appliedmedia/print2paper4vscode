@@ -57,7 +57,7 @@ export class PDF {
 
   constructor(app: App) {
     this.app = app;
-    this.dx = app.dx.sub('PDF');
+    this.dx = app.dx.sub({ name: 'PDF' });
     this.coords = new Coords(app);
     this.docInfo = new DocInfo_PDF(app);
     this._yaml = new Yaml(app, 'src/PDF.yaml', PDF.kYaml);
@@ -84,7 +84,7 @@ export class PDF {
    * Called when regenerating PDF after menu changes
    */
   resetCaches(): void {
-    const dx = this.dx.sub('invalidateAllCaches');
+    const dx = this.dx.sub({ name: 'invalidateAllCaches' });
     try {
       // Reset PDF document
       this.docInfo.pdfDoc = null;
@@ -112,9 +112,10 @@ export class PDF {
     this.dx.done();
   }
 
-  async printWithPreview(pdfDoc: DocInfo_PDF, descriptiveName?: string): Promise<void> {
-    const dx = this.dx.sub('printWithPreview');
-    dx.require({ pdfDoc }, ['pdfDoc']);
+  async printWithPreview(args: { pdfDoc: DocInfo_PDF; descriptiveName?: string }): Promise<void> {
+    const dx = this.dx.sub({ name: 'printWithPreview' });
+    dx.require(args, ['pdfDoc']);
+    const { pdfDoc, descriptiveName } = args;
 
     try {
       // Log PDF object usage for printing (Stage 4.3)
@@ -146,8 +147,10 @@ export class PDF {
     dx.done();
   }
 
-  async printDirectly(pdfDoc: DocInfo_PDF, descriptiveName?: string): Promise<void> {
-    const dx = this.dx.sub('printDirectly');
+  async printDirectly(args: { pdfDoc: DocInfo_PDF; descriptiveName?: string }): Promise<void> {
+    const dx = this.dx.sub({ name: 'printDirectly' });
+    dx.require(args, ['pdfDoc']);
+    const { pdfDoc, descriptiveName } = args;
     try {
       // Log PDF object usage for printing (Stage 4.3)
       const pdfBuffer = pdfDoc.asArrayBuffer();
@@ -178,8 +181,10 @@ export class PDF {
     }
   }
 
-  async saveAsPDF(pdfDoc: DocInfo_PDF, descriptiveName?: string): Promise<void> {
-    const dx = this.dx.sub('saveAsPDF');
+  async saveAsPDF(args: { pdfDoc: DocInfo_PDF; descriptiveName?: string }): Promise<void> {
+    const dx = this.dx.sub({ name: 'saveAsPDF' });
+    dx.require(args, ['pdfDoc']);
+    const { pdfDoc, descriptiveName } = args;
     try {
       // Log PDF object usage for saving (Stage 4.3)
       const pdfBuffer = pdfDoc.asArrayBuffer();
@@ -227,7 +232,7 @@ export class PDF {
 
   // Map font family to jsPDF built-in fonts
   private mapFontFamilyToJsPDF(fontFamily: string, doc: jsPDF): string {
-    const dx = this.dx.sub('mapFontFamilyToJsPDF');
+    const dx = this.dx.sub({ name: 'mapFontFamilyToJsPDF' });
 
     // Get available fonts from jsPDF
     const availableFonts = doc.getFontList();
@@ -355,7 +360,7 @@ export class PDF {
   // UNIFIED: Generate complete PDF during tokenization
   // Caller should set docInfo properties (code, languageId, title, fontFamily, fontSizePx, theme, etc.) before calling this
   async generatePdf(): Promise<void> {
-    const dx = this.dx.sub('generatePdf');
+    const dx = this.dx.sub({ name: 'generatePdf' });
     dx.require({ code: this.docInfo.code, languageId: this.docInfo.languageId }, [
       'code',
       'languageId',
@@ -369,13 +374,13 @@ export class PDF {
       this.addHeaderAndFooter();
 
       // Tokenize and build complete PDF in one pass
-      await this.app.stylize.tokenize(
-        this.docInfo.code,
-        this.docInfo.languageId,
-        this.docInfo.theme,
-        1, // pageBegin - render all pages
-        0 // pageEnd - 0 means all pages
-      );
+      await this.app.stylize.tokenize({
+        code: this.docInfo.code,
+        languageId: this.docInfo.languageId,
+        theme: this.docInfo.theme,
+        pageBegin: 1, // render all pages
+        pageEnd: 0 // 0 means all pages
+      });
 
       // Finish the PDF (sets this.docInfo.pdfDoc)
       this.finishPdf();
@@ -415,7 +420,7 @@ export class PDF {
   }
 
   async getPageSizePx(): Promise<{ widthPx: number; heightPx: number }> {
-    const dx = this.dx.sub('getPageSizePx');
+    const dx = this.dx.sub({ name: 'getPageSizePx' });
 
     try {
       // Prefer actual PDF dimensions if available
@@ -466,7 +471,7 @@ export class PDF {
    * Uses properties from docInfo (set before calling this method)
    */
   public setupPdf(): void {
-    const dx = this.dx.sub('setupPdf');
+    const dx = this.dx.sub({ name: 'setupPdf' });
 
     try {
       // Get page dimensions
@@ -590,8 +595,10 @@ export class PDF {
    * Render tokenized line content into PDF document
    * Called by tokenizer to add content to PDF as tokens are processed
    */
-  public renderTokenizedLine(lineNumber: number, tokens: ThemedToken[]): void {
-    const dx = this.dx.sub('renderTokenizedLine');
+  public renderTokenizedLine(args: { lineNumber: number; tokens: ThemedToken[] }): void {
+    const dx = this.dx.sub({ name: 'renderTokenizedLine' });
+    dx.require(args, ['lineNumber', 'tokens']);
+    const { lineNumber, tokens } = args;
 
     try {
       // Initialize jsPDF document on first line
@@ -910,7 +917,7 @@ export class PDF {
    * Called after page total is known, so we can render totals correctly
    */
   private renderPageTotals(): void {
-    const dx = this.dx.sub('renderPageTotals');
+    const dx = this.dx.sub({ name: 'renderPageTotals' });
 
     try {
       if (!this.docInfo.pdfDoc) {
@@ -938,7 +945,7 @@ export class PDF {
    * Returns complete multi-page PDFDoc
    */
   public finishPdf(): void {
-    const dx = this.dx.sub('finishPdf');
+    const dx = this.dx.sub({ name: 'finishPdf' });
 
     try {
       if (!this.docInfo.pdfDoc) {

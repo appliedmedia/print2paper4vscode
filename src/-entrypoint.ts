@@ -6,7 +6,7 @@ let app: App;
 export function activate(context: vscode.ExtensionContext) {
   console.log('Print2Paper4VSCode extension activating...');
   try {
-    app = new App(context, vscode);
+    app = new App({ context, vscode });
     app.init();
   } catch (error) {
     console.error('Failed to activate extension:', error);

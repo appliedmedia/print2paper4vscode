@@ -140,11 +140,13 @@ The following methods meet one or more exclusion criteria and should remain with
 
 The following methods have 2-4 simple parameters OR 5+ parameters and will benefit from named parameter refactoring:
 
+**Status:** ✅ = Completed, ⏳ = In Progress, ⬜ = Pending
+
 ---
 
 ## App.ts
 
-### `constructor(context, vscode)`
+### ✅ `constructor(context, vscode)`
 
 **Current signature:** `constructor(context: ExtensionContext, vscode: typeof import('vscode'))`
 
@@ -171,7 +173,7 @@ constructor(args: {
 
 ## Diagnostics.ts
 
-### `constructor(name, debugOn?, parent?, app?)`
+### ✅ `constructor(name, debugOn?, parent?, app?)`
 
 **Current signature:** `constructor(name: string, debugOn?: boolean, parent?: Diagnostics | null, app?: any)`
 
@@ -200,7 +202,7 @@ constructor(args: {
 
 ---
 
-### `sub(name, debugOn?)`
+### ✅ `sub(name, debugOn?)`
 
 **Current signature:** `sub(name: string, debugOn?: boolean): Diagnostics`
 
@@ -225,7 +227,7 @@ sub(args: { name: string; debugOn?: boolean }): Diagnostics
 
 ## PDF.ts
 
-### `printWithPreview(pdfDoc, descriptiveName?)`
+### ✅ `printWithPreview(pdfDoc, descriptiveName?)`
 
 **Current signature:** `async printWithPreview(pdfDoc: DocInfo_PDF, descriptiveName?: string): Promise<void>`
 
@@ -250,7 +252,7 @@ async printWithPreview(args: {
 
 ---
 
-### `printDirectly(pdfDoc, descriptiveName?)`
+### ✅ `printDirectly(pdfDoc, descriptiveName?)`
 
 **Current signature:** `async printDirectly(pdfDoc: DocInfo_PDF, descriptiveName?: string): Promise<void>`
 
@@ -275,7 +277,7 @@ async printDirectly(args: {
 
 ---
 
-### `saveAsPDF(pdfDoc, descriptiveName?)`
+### ✅ `saveAsPDF(pdfDoc, descriptiveName?)`
 
 **Current signature:** `async saveAsPDF(pdfDoc: DocInfo_PDF, descriptiveName?: string): Promise<void>`
 
@@ -300,7 +302,7 @@ async saveAsPDF(args: {
 
 ---
 
-### `renderTokenizedLine(lineNumber, tokens)`
+### ✅ `renderTokenizedLine(lineNumber, tokens)`
 
 **Current signature:** `public renderTokenizedLine(lineNumber: number, tokens: ThemedToken[]): void`
 
@@ -327,7 +329,7 @@ public renderTokenizedLine(args: {
 
 ## PaperPrinter.ts
 
-### `handleSelection_Print(menuId, menuItemId)`
+### ✅ `handleSelection_Print(menuId, menuItemId)`
 
 **Current signature:** `private async handleSelection_Print(menuId: MenuId_t, menuItemId: MenuItemId_t): Promise<HandleSelection_t>`
 
@@ -352,7 +354,7 @@ private async handleSelection_Print(args: {
 
 ---
 
-### `handleSelection_Theme(menuId, menuItemId)`
+### ✅ `handleSelection_Theme(menuId, menuItemId)`
 
 **Current signature:** `private async handleSelection_Theme(menuId: MenuId_t, menuItemId: MenuItemId_t): Promise<HandleSelection_t>`
 
@@ -377,7 +379,7 @@ private async handleSelection_Theme(args: {
 
 ---
 
-### `handleSelection_Text(menuId, menuItemId)`
+### ✅ `handleSelection_Text(menuId, menuItemId)`
 
 **Current signature:** `private async handleSelection_Text(menuId: MenuId_t, menuItemId: MenuItemId_t): Promise<HandleSelection_t>`
 
@@ -402,7 +404,7 @@ private async handleSelection_Text(args: {
 
 ---
 
-### `handleSelection_PageSizeId(menuId, menuItemId)`
+### ✅ `handleSelection_PageSizeId(menuId, menuItemId)`
 
 **Current signature:** `private async handleSelection_PageSizeId(menuId: MenuId_t, menuItemId: MenuItemId_t): Promise<HandleSelection_t>`
 
@@ -427,7 +429,7 @@ private async handleSelection_PageSizeId(args: {
 
 ---
 
-### `handleSelection_Orient(menuId, menuItemId)`
+### ✅ `handleSelection_Orient(menuId, menuItemId)`
 
 **Current signature:** `private async handleSelection_Orient(menuId: MenuId_t, menuItemId: MenuItemId_t): Promise<HandleSelection_t>`
 
@@ -452,7 +454,7 @@ private async handleSelection_Orient(args: {
 
 ---
 
-### `handleSelection_MarginId(menuId, menuItemId)`
+### ✅ `handleSelection_MarginId(menuId, menuItemId)`
 
 **Current signature:** `private async handleSelection_MarginId(menuId: MenuId_t, menuItemId: MenuItemId_t): Promise<HandleSelection_t>`
 
@@ -477,7 +479,7 @@ private async handleSelection_MarginId(args: {
 
 ---
 
-### `handleSelection_HeaderFooter(menuId, menuItemId)`
+### ✅ `handleSelection_HeaderFooter(menuId, menuItemId)`
 
 **Current signature:** `private async handleSelection_HeaderFooter(menuId: MenuId_t, menuItemId: MenuItemId_t): Promise<HandleSelection_t>`
 
@@ -502,7 +504,7 @@ private async handleSelection_HeaderFooter(args: {
 
 ---
 
-### `handleSelection_ZoomInOut(menuId, menuItemId)`
+### ✅ `handleSelection_ZoomInOut(menuId, menuItemId)`
 
 **Current signature:** `private async handleSelection_ZoomInOut(menuId: MenuId_t, menuItemId: MenuItemId_t): Promise<HandleSelection_t>`
 
@@ -529,7 +531,7 @@ private async handleSelection_ZoomInOut(args: {
 
 ## Stylize.ts
 
-### `tokenize(code, languageId, theme?, pageBegin?, pageEnd?)`
+### ✅ `tokenize(code, languageId, theme?, pageBegin?, pageEnd?)`
 
 **Current signature:**
 
@@ -569,7 +571,7 @@ async tokenize(args: {
 
 ## UI.ts
 
-### `registerMessageHandler(messageType, handler)`
+### ✅ `registerMessageHandler(messageType, handler)`
 
 **Current signature:** `registerMessageHandler(messageType: string, handler: MessageHandler_t): void`
 
@@ -594,7 +596,7 @@ registerMessageHandler(args: {
 
 ---
 
-### `unregisterMessageHandler(messageType, handler)`
+### ✅ `unregisterMessageHandler(messageType, handler)`
 
 **Current signature:** `unregisterMessageHandler(messageType: string, handler: MessageHandler_t): void`
 
@@ -627,7 +629,7 @@ No methods in this file meet the refactoring criteria.
 
 ## UIMenu.ts
 
-### `constructor(app, id, displayName, iconSlotTriad, isFlyout, menuItems, flyoutMenuItemIds, selectionHandler)`
+### ✅ `constructor(app, id, displayName, iconSlotTriad, isFlyout, menuItems, flyoutMenuItemIds, selectionHandler)`
 
 **Current signature:**
 
@@ -675,7 +677,7 @@ constructor(args: {
 
 ---
 
-### `getItemHTML(item, flyout, defaultItemId, selectedItemId)`
+### ✅ `getItemHTML(item, flyout, defaultItemId, selectedItemId)`
 
 **Current signature:**
 
@@ -713,7 +715,7 @@ async getItemHTML(args: {
 
 ## UIMenuMgr.ts
 
-### `createMenu(id, displayName, iconSlotTriad, isFlyout, menuItems, flyoutMenuItemIds, selectionHandler)`
+### ✅ `createMenu(id, displayName, iconSlotTriad, isFlyout, menuItems, flyoutMenuItemIds, selectionHandler)`
 
 **Current signature:**
 
@@ -814,7 +816,7 @@ Additional consideration:
 
 ---
 
-### `getValueForPersistIdOnMenuId(menuId, persistId)`
+### ✅ `getValueForPersistIdOnMenuId(menuId, persistId)`
 
 **Current signature:** `getValueForPersistIdOnMenuId(menuId: MenuId_t, persistId: UI_t): PersistValue_t | undefined`
 
@@ -839,7 +841,7 @@ getValueForPersistIdOnMenuId(args: {
 
 ---
 
-### `setValueForPersistIdOnMenuId(menuId, persistId, value)`
+### ✅ `setValueForPersistIdOnMenuId(menuId, persistId, value)`
 
 **Current signature:** `setValueForPersistIdOnMenuId(menuId: MenuId_t, persistId: UI_t, value: PersistValue_t): void`
 
@@ -865,7 +867,7 @@ setValueForPersistIdOnMenuId(args: {
 
 ---
 
-### `getValueForMenuItemId(menuId, menuItemId)`
+### ✅ `getValueForMenuItemId(menuId, menuItemId)`
 
 **Current signature:** `getValueForMenuItemId(menuId: MenuId_t, menuItemId: string): number | string`
 
