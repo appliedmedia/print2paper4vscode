@@ -21,41 +21,42 @@
 
 #### Stage 0.1: Create Registry Infrastructure ✅ NEXT
 
-- [ ] Create `src/types/Registry_t.ts` with ONLY these types (following existing pattern):
-  - `Use_t = string[]` - array of method name strings
-  - `FnExport_t = readonly string[]` - what a class exports
+- [ ] Create `src/types/Registry_t.ts` with ONLY this type:
   - `FnImport_t = { [componentId: string]: { [methodName: string]: Function } }` - what a class imports
-  - **DO NOT** create: ComponentInstance_t, ComponentFactory_t, ComponentClass_t, GlobalWithKId_t, RegistryArgs_t
-  - **Pattern rule**: Only create types that are actually used in annotations/unions/function signatures
-  - **Pattern rule**: Don't create types "just because" - use inline types and `unknown` for one-off cases
-  - **Pattern rule**: `const kSomething` comes first, then `type SomethingId_t = typeof kSomething` only if needed
+  - **That's it!** No other types needed
+  - **DO NOT** create: Use_t, FnExport_t, ComponentInstance_t, ComponentFactory_t, etc.
+  - **Pattern rule**: Only create types that are actually used
   - See Stage 7.4 for complete pattern rules and cleanup TODOs
 - [ ] Create `src/Registry.ts`:
   - `static readonly id = 'reg'` - Registry's component id
   - `[key: string]: unknown` - index signature for dynamic component lookups (this.pdf, this.ui, etc)
   - `private _instances: Map<string, unknown>` - cache for lazy-loaded singleton instances
-  - `private components: Array<{ readonly id: string; readonly fn: FnExport_t }>` - component class references
-  - `private always: string[]` - methods always injected (e.g., dx.create, dx.sub, dx.out)
+  - `private components: Array<{ new(app: App): any; id: string }>` - component class references
+  - `private always: string[]` - methods always injected (e.g., 'create', 'sub', 'out')
   - `private dx: Diagnostics` - Registry's diagnostics instance
   - `private app: App` - app reference
 - [ ] Registry constructor signature: `constructor(args: { app: App; components: Array<...>; always?: string[] })`
   - Assign fields: `this.app = args.app`, `this.components = args.components`, `this.always = args.always || []`
   - Create diagnostics: `this.dx = this.app.dx.sub('Registry')`
   - Initialize instances cache: `this._instances = new Map()`, `this._instances.set('dx', this.dx)`
-  - Build component lookup structure directly on `this`:
-    - For each component: `this[Component.id] = {}`
-    - For each method: `this[Component.id][methodName] = methodName`
-  - Result: `app.reg.pdf.generatePdf`, `app.reg.ui.showError` etc. are available
-- [ ] Add `use(...methodIds: string[]): FnImport_t` method
-  - Merges requested methods with always-available: `[...methodIds, ...this.always]`
-  - Parses method IDs, creates instances lazily, returns scoped function access
+  - Build placeholder structure on `this`:
+    - For each component: `this[Component.id] = {}` - just empty placeholders!
+  - Result: `app.reg.pdf`, `app.reg.ui` etc. exist (values don't matter, just used for intellisense)
+- [ ] Add `use(...methodIds: string[]): FnImport_t` method - THE SIMPLE VERSION:
+  - Merge: `const allMethods = [...methodIds, ...this.always]`
+  - For each method name (e.g., 'showError', 'generatePdf'):
+    - Find which component class has that method: `Component.prototype.hasOwnProperty(methodName)`
+    - Get or create instance: `this._instances.get(componentId) || new Component(this.app)`
+    - Return bound method: `instance[methodName].bind(instance)`
+  - That's it! No complex parsing, prototype IS the source of truth
 
 #### Stage 0.2: Integrate Registry into App ⏸️
 
 - [ ] Update `App.ts` to create Registry instance:
   - Import all component classes: `import { Diagnostics } from './Diagnostics'`, etc.
-  - Create Registry: `this.reg = new Registry({ app: this, components: [Diagnostics, VSCodeAPIs, UI, PDF, Stylize, TabInspector, UIMenuMgr, OS], always: ['dx.create', 'dx.sub', 'dx.out'] })`
+  - Create Registry: `this.reg = new Registry({ app: this, components: [Diagnostics, VSCodeAPIs, UI, PDF, Stylize, TabInspector, UIMenuMgr, OS], always: ['create', 'sub', 'out'] })`
   - App owns the list of what components exist
+  - Note: `always` is just method names, not `dx.create` - Registry figures out they're from Diagnostics
 - [ ] Add `app.use(...methodIds: string[])` method that delegates to `this.reg.use(...methodIds)`
 - [ ] Verify Registry can be instantiated without breaking existing code
 
@@ -90,26 +91,25 @@
 #### 2.1 Migrate OS Classes
 
 - [ ] Add to OS base class:
-  - `static readonly id = 'os'`
-  - `static readonly fn: FnExport_t = ['fileRead', 'fileWrite', 'fileDelete', ...]`
+  - `static readonly id = 'os'` - that's it! No fn array needed!
 - [ ] Add instance property: `private fn: FnImport_t`
-- [ ] Update OS constructor: `this.fn = app.use()` (dx always available, no other deps)
+- [ ] Update OS constructor: `this.fn = app.use()` (dx methods always available from `always` array)
 - [ ] Move any `init()` logic into constructor
 - [ ] Remove `init()` method entirely
-- [ ] Update OSMac, OSWin, OSLinux (same pattern)
+- [ ] Update OSMac, OSWin, OSLinux (each adds `static readonly id = 'osmac'/'oswin'/'oslinux'`)
 - [ ] Keep `done()` method for explicit cleanup
 - [ ] Test OS classes work correctly
 
 #### 2.2 Convert Yaml to Factory Pattern
 
 - [ ] Update `src/Yaml.ts`:
-  - Add `static readonly id = 'yaml'`
-  - Add `static readonly fn: FnExport_t = ['create']`
-  - Add `static create<T>(app: App, filePath: string, dataStruct: T): Yaml<T>`
+  - Add `static readonly id = 'yaml'` - that's all!
+  - Add `static create<T>(app: App, filePath: string, dataStruct: T): Yaml<T>` - public static method
   - Make constructor private
   - Move any `init()` logic into constructor (currently empty)
   - Remove `init()` method entirely
   - Keep `done()` method for cache cleanup
+  - Registry will find `create` via `Yaml.hasOwnProperty('create')`
 - [ ] Update `src/PaperPrinter.ts` line 105:
   - Change: `this._yaml = new Yaml(app, 'src/PaperPrinter.yaml', PaperPrinter.kYaml)`
   - To: `this._yaml = this.fn.yaml.create(app, 'src/PaperPrinter.yaml', PaperPrinter.kYaml)`
@@ -133,8 +133,7 @@
 
 #### 3.1 Migrate VSCodeAPIs
 
-- [ ] Add `static readonly id = 'vscodeapis'`
-- [ ] Add `static readonly fn: FnExport_t = ['showErrorMessage', 'showInfoMessage', ...]`
+- [ ] Add `static readonly id = 'vscodeapis'` - that's it!
 - [ ] Update constructor to use `app.use()`
 - [ ] Request Diagnostics via Registry
 - [ ] Move command registration from `init()` to constructor
@@ -145,9 +144,8 @@
 #### 3.2 Migrate Persist (Factory Pattern)
 
 - [ ] Update `src/Persist.ts`:
-  - Add `static readonly id = 'persist'`
-  - Add `static readonly fn: FnExport_t = ['create']`
-  - Add `static create(app: App): Persist`
+  - Add `static readonly id = 'persist'` - that's it!
+  - Add `static create(app: App): Persist` - public static method
   - Make constructor private
   - Update constructor to use `app.use()` for VSCodeAPIs methods
   - Move any `init()` logic into constructor (currently empty)
@@ -163,8 +161,7 @@
 
 #### 3.3 Migrate UI
 
-- [ ] Add `static readonly id = 'ui'`
-- [ ] Add `static readonly fn: FnExport_t = ['showError', 'showInfo', ...]`
+- [ ] Add `static readonly id = 'ui'` - that's it!
 - [ ] Update constructor to use `app.use()`
 - [ ] Request dependencies: Diagnostics, OS, Persist methods
 - [ ] Move any `init()` logic into constructor (currently empty)
@@ -178,8 +175,7 @@
 
 #### 4.1 Migrate TabInspector
 
-- [ ] Add `static readonly id = 'tabinspector'`
-- [ ] Add `static readonly fn: FnExport_t = ['getActiveTabContent', 'getLanguageId', ...]`
+- [ ] Add `static readonly id = 'tabinspector'` - that's it!
 - [ ] Update constructor to use `app.use()`
 - [ ] Request dependencies: VSCodeAPIs, Diagnostics
 - [ ] Move any `init()` logic into constructor (currently empty)
@@ -189,8 +185,7 @@
 
 #### 4.2 Migrate Stylize
 
-- [ ] Add `static readonly id = 'stylize'`
-- [ ] Add `static readonly fn: FnExport_t = ['getTokens', 'getThemes', ...]`
+- [ ] Add `static readonly id = 'stylize'` - that's it!
 - [ ] Update constructor to use `app.use()`
 - [ ] Request Diagnostics via Registry
 - [ ] Handle async initialization with lazy pattern in constructor
@@ -201,8 +196,7 @@
 
 #### 4.3 Migrate UIMenuMgr
 
-- [ ] Add `static readonly id = 'uimenumgr'`
-- [ ] Add `static readonly fn: FnExport_t = ['createMenu', 'getMenu', ...]`
+- [ ] Add `static readonly id = 'uimenumgr'` - that's it!
 - [ ] Update constructor to use `app.use()`
 - [ ] Request dependencies: UI, VSCodeAPIs, Diagnostics
 - [ ] Move any `init()` logic into constructor (currently empty)
@@ -217,8 +211,7 @@
 #### 5.1 Convert Coords to Singleton
 
 - [ ] Add to Coords class:
-  - `static readonly id = 'coords'`
-  - `static readonly fn: FnExport_t = ['pdfPtsToCssPx', 'cssPxToPdfPts']`
+  - `static readonly id = 'coords'` - that's it!
 - [ ] Add instance property: `private fn: FnImport_t`
 - [ ] Update constructor: `this.fn = app.use()` (only needs dx, always available)
 - [ ] Move `init()` logging into constructor
@@ -230,8 +223,7 @@
 
 #### 5.2 Migrate PDF
 
-- [ ] Add `static readonly id = 'pdf'`
-- [ ] Add `static readonly fn: FnExport_t = ['generatePdf', 'renderPage', 'getCurrentPdfDoc']`
+- [ ] Add `static readonly id = 'pdf'` - that's it!
 - [ ] Update constructor to use `app.use()`
 - [ ] Request dependencies: Stylize, UI, OS, Diagnostics methods
 - [ ] Update Coords instantiation in constructor
@@ -243,13 +235,11 @@
 #### 5.3 Convert DocInfo Classes to Factory Pattern
 
 - [ ] Add to DocInfo_PDF:
-  - `static readonly id = 'docinfo_pdf'`
-  - `static readonly fn: FnExport_t = ['create']`
+  - `static readonly id = 'docinfo_pdf'` - that's it!
   - `static create(app: App): DocInfo_PDF`
   - Make constructor private
 - [ ] Add to DocInfo_PaperPrinter:
-  - `static readonly id = 'docinfo_paperprinter'`
-  - `static readonly fn: FnExport_t = ['create']`
+  - `static readonly id = 'docinfo_paperprinter'` - that's it!
   - `static create(app: App): DocInfo_PaperPrinter`
   - Make constructor private
 - [ ] Update usage: `this.docInfo = this.fn.docinfo_pdf.create(app)`
@@ -262,8 +252,7 @@
 #### 6.1 Convert UIWebView to Singleton
 
 - [ ] Add to UIWebView class:
-  - `static readonly id = 'uiwebview'`
-  - `static readonly fn: FnExport_t = ['displayPdfPanel']`
+  - `static readonly id = 'uiwebview'` - that's it!
 - [ ] Add instance property: `private fn: FnImport_t`
 - [ ] Update constructor to use `app.use([...])`
 - [ ] Move `registerMessageHandlers()` call from `init()` to constructor
@@ -275,8 +264,7 @@
 
 #### 6.2 Migrate PaperPrinter
 
-- [ ] Add `static readonly id = 'paperprinter'`
-- [ ] Add `static readonly fn: FnExport_t = ['handlePrint', ...]`
+- [ ] Add `static readonly id = 'paperprinter'` - that's it!
 - [ ] Update constructor to use `app.use()`
 - [ ] Request all dependencies via Registry
 - [ ] Update DocInfo_PaperPrinter instantiation
@@ -399,8 +387,7 @@ class Component {
 ```typescript
 // Singleton service component
 class PDF {
-  static readonly id = 'pdf';
-  static readonly fn: FnExport_t = ['generatePdf', 'renderPage', 'getCurrentPdfDoc'];
+  static readonly id = 'pdf';  // That's it! Registry finds methods via prototype
   
   private fn: FnImport_t;
   private dx: Diagnostics;
@@ -501,8 +488,7 @@ const data = this._yaml.get();
 
 ```typescript
 class Yaml {
-  static readonly id = 'yaml';
-  static readonly fn: FnExport_t = ['create'];
+  static readonly id = 'yaml';  // That's it!
   static create<T>(app: App, path: string, struct: T): Yaml<T> {
     return new Yaml(app, path, struct);
   }
@@ -615,8 +601,7 @@ this.docInfo = new DocInfo_PDF(app);
 
 ```typescript
 class Persist {
-  static readonly id = 'persist';
-  static readonly fn: FnExport_t = ['create'];
+  static readonly id = 'persist';  // That's it!
   static create(app: App): Persist {
     return new Persist(app);
   }
@@ -699,8 +684,7 @@ class PDF {
 ```typescript
 // Target pattern - PDF class example
 class PDF {
-  static readonly id = 'pdf';
-  static readonly fn: FnExport_t = ['generatePdf', 'renderPage', 'getCurrentPdfDoc'];
+  static readonly id = 'pdf';  // That's it! Registry finds methods via PDF.prototype
   
   private fn: FnImport_t;
   private dx: Diagnostics;
@@ -895,29 +879,30 @@ export const kId = {
   // ... all component IDs and methods
 };
 
-// Usage in classes - every component declares what it exports:
+// Usage in classes - every component just declares its id:
 class Diagnostics {
-  static readonly id = 'dx';
-  static readonly fn = ['create', 'sub', 'out'] as const;
+  static readonly id = 'dx';  // That's it!
+  // Public methods: create(), sub(), out() - found via Diagnostics.prototype
 }
 
 class UI {
-  static readonly id = 'ui';
-  static readonly fn = ['showError', 'showInfo', 'showWarning'] as const;
+  static readonly id = 'ui';  // That's it!
+  // Public methods: showError(), showInfo(), showWarning() - found via UI.prototype
 }
 ```
 
 Registry builds this structure dynamically:
-- Reads `Component.id` and `Component.fn` from each class
-- Hangs them on `this` as `this.dx = { create: 'create', sub: 'sub', out: 'out' }`
-- Components use via `app.reg.dx.create`, `app.reg.ui.showError`
+- Reads `Component.id` from each class
+- Hangs empty placeholders on `this`: `this.dx = {}`, `this.ui = {}`
+- When `use()` is called, looks up methods via `Component.prototype.hasOwnProperty(methodName)`
+- Components use via `app.reg.dx`, `app.reg.ui` (for intellisense)
 
 This provides:
 
-- Single source of truth (component class declarations)
-- Type safety from `as const`
-- Autocomplete support
-- Can't get out of sync (Registry builds from actual classes)
+- Single source of truth: **the actual class prototype**
+- No arrays to maintain
+- No type exports needed
+- Can't get out of sync - prototype IS the truth
 
 ## Migration Stages
 
@@ -1007,13 +992,13 @@ This provides:
 **Note**:
 
 - Diagnostics is owned by Registry and created immediately at Registry construction. All components request Diagnostics via Registry.
-- **Critical**: Every migrated class must add `static readonly id = 'xxx'` and `static readonly fn: FnExport_t = [...]`
+- **Critical**: Every migrated class must add `static readonly id = 'xxx'` - that's it! Registry finds methods via prototype
 
 #### 2.1: Migrate OS Classes
 
 - [ ] Update OS base class constructor to accept App
 - [ ] Remove `app` parameter  
-- [ ] Add `static readonly id = 'os'` and `static readonly fn: FnExport_t = [...]`
+- [ ] Add `static readonly id = 'os'` - that's it!
 - [ ] Request dependencies via Registry:
   - `Diagnostics` (for logging)
   - `VSCodeAPIs` (for extension path)
