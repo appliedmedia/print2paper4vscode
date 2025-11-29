@@ -1,5 +1,20 @@
 # Registry Pattern Migration Plan
 
+## ⚠️ /!\ CRITICAL: READ THIS FIRST /!\ ⚠️
+
+**This document has been meticulously detailed over many hours of careful design and architectural decisions.**
+
+**DO NOT deviate from this plan. DO NOT "improve" or "simplify" things. DO NOT add types, patterns, or abstractions not explicitly specified here.**
+
+**If you think you must do something different than what's written:**
+1. **STOP**
+2. **Ask the user first**
+3. **Explain why you think a deviation is necessary**
+
+**Following existing patterns means following THIS document's patterns, not inventing new ones.**
+
+---
+
 ## ⚡ EXECUTION TODOS
 
 ### Immediate Actions (Start Here)
@@ -118,7 +133,8 @@
 
 #### 3.1 Migrate VSCodeAPIs
 
-- [ ] Add `public readonly id: Id_t = kId.vscodeapis`
+- [ ] Add `static readonly id = 'vscodeapis'`
+- [ ] Add `static readonly fn: FnExport_t = ['showErrorMessage', 'showInfoMessage', ...]`
 - [ ] Update constructor to use `app.use()`
 - [ ] Request Diagnostics via Registry
 - [ ] Move command registration from `init()` to constructor
@@ -147,7 +163,8 @@
 
 #### 3.3 Migrate UI
 
-- [ ] Add `public readonly id: Id_t = kId.ui`
+- [ ] Add `static readonly id = 'ui'`
+- [ ] Add `static readonly fn: FnExport_t = ['showError', 'showInfo', ...]`
 - [ ] Update constructor to use `app.use()`
 - [ ] Request dependencies: Diagnostics, OS, Persist methods
 - [ ] Move any `init()` logic into constructor (currently empty)
@@ -161,7 +178,8 @@
 
 #### 4.1 Migrate TabInspector
 
-- [ ] Add `public readonly id: Id_t = kId.tabinspector`
+- [ ] Add `static readonly id = 'tabinspector'`
+- [ ] Add `static readonly fn: FnExport_t = ['getActiveTabContent', 'getLanguageId', ...]`
 - [ ] Update constructor to use `app.use()`
 - [ ] Request dependencies: VSCodeAPIs, Diagnostics
 - [ ] Move any `init()` logic into constructor (currently empty)
@@ -171,7 +189,8 @@
 
 #### 4.2 Migrate Stylize
 
-- [ ] Add `public readonly id: Id_t = kId.stylize`
+- [ ] Add `static readonly id = 'stylize'`
+- [ ] Add `static readonly fn: FnExport_t = ['getTokens', 'getThemes', ...]`
 - [ ] Update constructor to use `app.use()`
 - [ ] Request Diagnostics via Registry
 - [ ] Handle async initialization with lazy pattern in constructor
@@ -182,7 +201,8 @@
 
 #### 4.3 Migrate UIMenuMgr
 
-- [ ] Add `public readonly id: Id_t = kId.uimenumgr`
+- [ ] Add `static readonly id = 'uimenumgr'`
+- [ ] Add `static readonly fn: FnExport_t = ['createMenu', 'getMenu', ...]`
 - [ ] Update constructor to use `app.use()`
 - [ ] Request dependencies: UI, VSCodeAPIs, Diagnostics
 - [ ] Move any `init()` logic into constructor (currently empty)
@@ -210,7 +230,8 @@
 
 #### 5.2 Migrate PDF
 
-- [ ] Add `public readonly id: Id_t = kId.pdf`
+- [ ] Add `static readonly id = 'pdf'`
+- [ ] Add `static readonly fn: FnExport_t = ['generatePdf', 'renderPage', 'getCurrentPdfDoc']`
 - [ ] Update constructor to use `app.use()`
 - [ ] Request dependencies: Stylize, UI, OS, Diagnostics methods
 - [ ] Update Coords instantiation in constructor
@@ -254,7 +275,8 @@
 
 #### 6.2 Migrate PaperPrinter
 
-- [ ] Add `public readonly id: Id_t = kId.paperprinter`
+- [ ] Add `static readonly id = 'paperprinter'`
+- [ ] Add `static readonly fn: FnExport_t = ['handlePrint', ...]`
 - [ ] Update constructor to use `app.use()`
 - [ ] Request all dependencies via Registry
 - [ ] Update DocInfo_PaperPrinter instantiation
@@ -443,8 +465,8 @@ class UI {
   constructor(app: App) {
     // dx always available, only request what else is needed
     this.fn = app.use(
-      kId.os.fileRead,
-      kId.yaml.create,  // Factory method
+      app.reg.os.fileRead,
+      app.reg.yaml.create,  // Factory method
     );
     
     // Create per-instance Yaml via factory
@@ -488,7 +510,7 @@ class Yaml {
 }
 
 // Usage
-this.fn = app.use([kId.yaml.create]);
+this.fn = app.use(app.reg.yaml.create);
 this._yaml = this.fn.yaml.create(app, 'src/PDF.yaml', PDF.kYaml);
 const data = this._yaml.get();
 ```
@@ -516,10 +538,10 @@ const px = this.coords.pdfPtsToCssPx(pts);
 **With Registry:**
 
 ```typescript
-this.fn = app.use([
-  kId.coords.pdfPtsToCssPx,
-  kId.coords.cssPxToPdfPts,
-]);
+this.fn = app.use(
+  app.reg.coords.pdfPtsToCssPx,
+  app.reg.coords.cssPxToPdfPts
+);
 const px = this.fn.coords.pdfPtsToCssPx(pts);
 // Coords becomes singleton, no per-class instances
 ```
@@ -545,7 +567,7 @@ await this.uiwebview.displayPdfPanel();
 **With Registry:**
 
 ```typescript
-this.fn = app.use([kId.uiwebview.displayPdfPanel]);
+this.fn = app.use(app.reg.uiwebview.displayPdfPanel);
 await this.fn.uiwebview.displayPdfPanel();
 // UIWebView becomes singleton
 ```
@@ -603,7 +625,7 @@ class Persist {
 }
 
 // Usage
-this.fn = app.use([kId.persist.create]);
+this.fn = app.use(app.reg.persist.create);
 this.persist = this.fn.persist.create(app);
 this.persist.register('toolbar_pos');
 this.persist.toolbar_pos = 100;  // Dynamic property
@@ -870,28 +892,32 @@ export const kId = {
   coords: 'coords',
   persist: 'persist',
   yaml: 'yaml',
-  // ... all component IDs
-} as const;
+  // ... all component IDs and methods
+};
 
-// Derive type from kId values
-export type Id_t = (typeof kId)[keyof typeof kId];
-
-// Usage in classes:
+// Usage in classes - every component declares what it exports:
 class Diagnostics {
-  public readonly id: Id_t = kId.dx;
+  static readonly id = 'dx';
+  static readonly fn = ['create', 'sub', 'out'] as const;
 }
 
 class UI {
-  public readonly id: Id_t = kId.ui;
+  static readonly id = 'ui';
+  static readonly fn = ['showError', 'showInfo', 'showWarning'] as const;
 }
 ```
 
+Registry builds this structure dynamically:
+- Reads `Component.id` and `Component.fn` from each class
+- Hangs them on `this` as `this.dx = { create: 'create', sub: 'sub', out: 'out' }`
+- Components use via `app.reg.dx.create`, `app.reg.ui.showError`
+
 This provides:
 
-- Single source of truth for all IDs (`kId`)
-- Type safety (`Id_t` ensures only valid IDs are used)
+- Single source of truth (component class declarations)
+- Type safety from `as const`
 - Autocomplete support
-- Refactoring safety (renaming `kId.dx` updates all references)
+- Can't get out of sync (Registry builds from actual classes)
 
 ## Migration Stages
 
@@ -981,13 +1007,13 @@ This provides:
 **Note**:
 
 - Diagnostics is owned by Registry and created immediately at Registry construction. All components request Diagnostics via Registry.
-- **Critical**: Every migrated class must add `public readonly id: Id_t = kId.xxx` (using the appropriate ID from `kId`)
+- **Critical**: Every migrated class must add `static readonly id = 'xxx'` and `static readonly fn: FnExport_t = [...]`
 
 #### 2.1: Migrate OS Classes
 
 - [ ] Update OS base class constructor to accept App
-- [ ] Remove `app` parameter
-- [ ] Add `public readonly id: Id_t = kId.os` (or appropriate ID)
+- [ ] Remove `app` parameter  
+- [ ] Add `static readonly id = 'os'` and `static readonly fn: FnExport_t = [...]`
 - [ ] Request dependencies via Registry:
   - `Diagnostics` (for logging)
   - `VSCodeAPIs` (for extension path)
@@ -1331,7 +1357,7 @@ class UI {
   constructor(app: App) {
     // dx always available
     this.fn = app.use(
-      kId.os.fileRead,
+      app.reg.os.fileRead,
     );
   }
 }
@@ -1440,12 +1466,12 @@ class Registry {
   use(...methodIds: string[]): FnImport_t {
     const result: Partial<FnImport_t> = {};
     
-    // Parse method IDs (like 'kId.pdf.generatePdf', 'kId.ui.showError') and group by component
+    // Parse method IDs (like 'app.reg.pdf.generatePdf', 'app.reg.ui.showError') and group by component
     const componentMethods = new Map<string, Set<string>>();
     
     for (const methodId of methodIds) {
-      // Parse hierarchical kId reference to find component and method
-      // kId.pdf.generatePdf -> component='pdf', method='generatePdf'
+      // methodId is a string like 'generatePdf' from app.reg.pdf.generatePdf
+      // Lookup which component owns this method by checking this.components
       // ... (lookup logic)
     }
 
