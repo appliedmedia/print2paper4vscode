@@ -5,10 +5,12 @@ This document outlines the comprehensive plan for refactoring method signatures 
 ## Scope & Exclusion Rules
 
 **INCLUDE (refactor to named parameters):**
+
 - Methods with 2+ primitive/simple parameters (no object params)
 - **Exception:** Methods with object params where the calling pattern is already config-based (unpacking config objects to pass individual params) - these will be **simplified** by named parameters
 
 **EXCLUDE (do NOT refactor):**
+
 - Single parameter methods
 - Zero parameter methods
 - Variadic/rest parameters (`...args`)
@@ -42,6 +44,7 @@ function foo(args: { param1: string; param2: number; param3?: boolean }) {
 The following methods meet one or more exclusion criteria and should remain with positional parameters:
 
 ### Single Parameter Methods
+
 - `forceNumber(value)` - App.ts
 - `Diagnostics.out(message)` - single param
 - `Diagnostics.print(message)` - single param
@@ -99,6 +102,7 @@ The following methods meet one or more exclusion criteria and should remain with
 - `setPage(pageNumber)` - DocInfo_PDF.ts
 
 ### Zero Parameter Methods
+
 - `Diagnostics.static reset()` - no params
 - `setupPdf()` - PDF.ts
 - `finishPdf()` - PDF.ts
@@ -111,13 +115,16 @@ The following methods meet one or more exclusion criteria and should remain with
 - `displayPdfPanel()` - UIWebView.ts
 
 ### Type Guard Functions
+
 - `isMenuId(id)` - UIMenuMgr.ts (type narrowing requires positional params)
 - `isMenuItemId(id)` - UIMenuMgr.ts (type narrowing requires positional params)
 
 ### Variadic Functions
+
 - `pathJoin(...parts)` - OS.ts (rest parameters - wrapping in object defeats ergonomics)
 
 ### Methods with Object/Dict Parameter (any param count)
+
 - `templateDictReplace(source, dictionary)` - App.ts (has dictionary object)
 - `forceNumbers(dict, useForZero?, requiredKeys?)` - App.ts (has dict object)
 - `Diagnostics.require(args, requiredKeys)` - Diagnostics.ts (has args object)
@@ -138,22 +145,26 @@ The following methods have 2-4 simple parameters OR 5+ parameters and will benef
 ## App.ts
 
 ### `constructor(context, vscode)`
+
 **Current signature:** `constructor(context: ExtensionContext, vscode: typeof import('vscode'))`
 
-**New signature:** 
+**New signature:**
+
 ```typescript
-constructor(args: { 
-  context: ExtensionContext; 
-  vscode: typeof import('vscode') 
+constructor(args: {
+  context: ExtensionContext;
+  vscode: typeof import('vscode')
 })
 ```
 
 **dx.require:** `['context', 'vscode']`
 
 **Callers to update:**
+
 - `src/-entrypoint.ts` - activation function
 
 **Typedefs to update:**
+
 - None (uses imported types)
 
 ---
@@ -161,9 +172,11 @@ constructor(args: {
 ## Diagnostics.ts
 
 ### `constructor(name, debugOn?, parent?, app?)`
+
 **Current signature:** `constructor(name: string, debugOn?: boolean, parent?: Diagnostics | null, app?: any)`
 
 **New signature:**
+
 ```typescript
 constructor(args: {
   name: string;
@@ -176,19 +189,23 @@ constructor(args: {
 **dx.require:** `['name']`
 
 **Callers to update:**
+
 - `src/App.ts` line 77
 - `src/Diagnostics.ts` line 113 - sub() method
 - Every component constructor creates Diagnostics
 
 **Typedefs to update:**
+
 - None
 
 ---
 
 ### `sub(name, debugOn?)`
+
 **Current signature:** `sub(name: string, debugOn?: boolean): Diagnostics`
 
 **New signature:**
+
 ```typescript
 sub(args: { name: string; debugOn?: boolean }): Diagnostics
 ```
@@ -196,10 +213,12 @@ sub(args: { name: string; debugOn?: boolean }): Diagnostics
 **dx.require:** `['name']`
 
 **Callers to update:**
+
 - Hundreds of calls throughout codebase (every method creates a sub-diagnostics)
 - Search for `.sub(` pattern
 
 **Typedefs to update:**
+
 - None
 
 ---
@@ -207,9 +226,11 @@ sub(args: { name: string; debugOn?: boolean }): Diagnostics
 ## PDF.ts
 
 ### `printWithPreview(pdfDoc, descriptiveName?)`
+
 **Current signature:** `async printWithPreview(pdfDoc: DocInfo_PDF, descriptiveName?: string): Promise<void>`
 
 **New signature:**
+
 ```typescript
 async printWithPreview(args: {
   pdfDoc: DocInfo_PDF;
@@ -220,17 +241,21 @@ async printWithPreview(args: {
 **dx.require:** `['pdfDoc']`
 
 **Callers to update:**
+
 - `src/PaperPrinter.ts` line 139-142, 624-627
 
 **Typedefs to update:**
+
 - None
 
 ---
 
 ### `printDirectly(pdfDoc, descriptiveName?)`
+
 **Current signature:** `async printDirectly(pdfDoc: DocInfo_PDF, descriptiveName?: string): Promise<void>`
 
 **New signature:**
+
 ```typescript
 async printDirectly(args: {
   pdfDoc: DocInfo_PDF;
@@ -241,17 +266,21 @@ async printDirectly(args: {
 **dx.require:** `['pdfDoc']`
 
 **Callers to update:**
+
 - `src/PaperPrinter.ts` line 143-146, 628-631
 
 **Typedefs to update:**
+
 - None
 
 ---
 
 ### `saveAsPDF(pdfDoc, descriptiveName?)`
+
 **Current signature:** `async saveAsPDF(pdfDoc: DocInfo_PDF, descriptiveName?: string): Promise<void>`
 
 **New signature:**
+
 ```typescript
 async saveAsPDF(args: {
   pdfDoc: DocInfo_PDF;
@@ -262,17 +291,21 @@ async saveAsPDF(args: {
 **dx.require:** `['pdfDoc']`
 
 **Callers to update:**
+
 - `src/PaperPrinter.ts` line 148-151, 635-638
 
 **Typedefs to update:**
+
 - None
 
 ---
 
 ### `renderTokenizedLine(lineNumber, tokens)`
+
 **Current signature:** `public renderTokenizedLine(lineNumber: number, tokens: ThemedToken[]): void`
 
 **New signature:**
+
 ```typescript
 public renderTokenizedLine(args: {
   lineNumber: number;
@@ -283,9 +316,11 @@ public renderTokenizedLine(args: {
 **dx.require:** `['lineNumber', 'tokens']`
 
 **Callers to update:**
+
 - `src/Stylize.ts` line 274
 
 **Typedefs to update:**
+
 - None (uses Shiki types)
 
 ---
@@ -293,9 +328,11 @@ public renderTokenizedLine(args: {
 ## PaperPrinter.ts
 
 ### `handleSelection_Print(menuId, menuItemId)`
+
 **Current signature:** `private async handleSelection_Print(menuId: MenuId_t, menuItemId: MenuItemId_t): Promise<HandleSelection_t>`
 
 **New signature:**
+
 ```typescript
 private async handleSelection_Print(args: {
   menuId: MenuId_t;
@@ -306,17 +343,21 @@ private async handleSelection_Print(args: {
 **dx.require:** `['menuId', 'menuItemId']`
 
 **Callers to update:**
+
 - `src/PaperPrinter.ts` line 331 - bound reference in createMenus
 
 **Typedefs to update:**
+
 - None
 
 ---
 
 ### `handleSelection_Theme(menuId, menuItemId)`
+
 **Current signature:** `private async handleSelection_Theme(menuId: MenuId_t, menuItemId: MenuItemId_t): Promise<HandleSelection_t>`
 
 **New signature:**
+
 ```typescript
 private async handleSelection_Theme(args: {
   menuId: MenuId_t;
@@ -327,17 +368,21 @@ private async handleSelection_Theme(args: {
 **dx.require:** `['menuId', 'menuItemId']`
 
 **Callers to update:**
+
 - `src/PaperPrinter.ts` line 331 - bound reference in createMenus
 
 **Typedefs to update:**
+
 - None
 
 ---
 
 ### `handleSelection_Text(menuId, menuItemId)`
+
 **Current signature:** `private async handleSelection_Text(menuId: MenuId_t, menuItemId: MenuItemId_t): Promise<HandleSelection_t>`
 
 **New signature:**
+
 ```typescript
 private async handleSelection_Text(args: {
   menuId: MenuId_t;
@@ -348,17 +393,21 @@ private async handleSelection_Text(args: {
 **dx.require:** `['menuId', 'menuItemId']`
 
 **Callers to update:**
+
 - `src/PaperPrinter.ts` line 331 - bound reference in createMenus
 
 **Typedefs to update:**
+
 - None
 
 ---
 
 ### `handleSelection_PageSizeId(menuId, menuItemId)`
+
 **Current signature:** `private async handleSelection_PageSizeId(menuId: MenuId_t, menuItemId: MenuItemId_t): Promise<HandleSelection_t>`
 
 **New signature:**
+
 ```typescript
 private async handleSelection_PageSizeId(args: {
   menuId: MenuId_t;
@@ -369,17 +418,21 @@ private async handleSelection_PageSizeId(args: {
 **dx.require:** `['menuId', 'menuItemId']`
 
 **Callers to update:**
+
 - `src/PaperPrinter.ts` line 331 - bound reference in createMenus
 
 **Typedefs to update:**
+
 - None
 
 ---
 
 ### `handleSelection_Orient(menuId, menuItemId)`
+
 **Current signature:** `private async handleSelection_Orient(menuId: MenuId_t, menuItemId: MenuItemId_t): Promise<HandleSelection_t>`
 
 **New signature:**
+
 ```typescript
 private async handleSelection_Orient(args: {
   menuId: MenuId_t;
@@ -390,17 +443,21 @@ private async handleSelection_Orient(args: {
 **dx.require:** `['menuId', 'menuItemId']`
 
 **Callers to update:**
+
 - `src/PaperPrinter.ts` line 331 - bound reference in createMenus
 
 **Typedefs to update:**
+
 - None
 
 ---
 
 ### `handleSelection_MarginId(menuId, menuItemId)`
+
 **Current signature:** `private async handleSelection_MarginId(menuId: MenuId_t, menuItemId: MenuItemId_t): Promise<HandleSelection_t>`
 
 **New signature:**
+
 ```typescript
 private async handleSelection_MarginId(args: {
   menuId: MenuId_t;
@@ -411,17 +468,21 @@ private async handleSelection_MarginId(args: {
 **dx.require:** `['menuId', 'menuItemId']`
 
 **Callers to update:**
+
 - `src/PaperPrinter.ts` line 331 - bound reference in createMenus
 
 **Typedefs to update:**
+
 - None
 
 ---
 
 ### `handleSelection_HeaderFooter(menuId, menuItemId)`
+
 **Current signature:** `private async handleSelection_HeaderFooter(menuId: MenuId_t, menuItemId: MenuItemId_t): Promise<HandleSelection_t>`
 
 **New signature:**
+
 ```typescript
 private async handleSelection_HeaderFooter(args: {
   menuId: MenuId_t;
@@ -432,17 +493,21 @@ private async handleSelection_HeaderFooter(args: {
 **dx.require:** `['menuId', 'menuItemId']`
 
 **Callers to update:**
+
 - `src/PaperPrinter.ts` line 345 - bound reference in createMenus
 
 **Typedefs to update:**
+
 - None
 
 ---
 
 ### `handleSelection_ZoomInOut(menuId, menuItemId)`
+
 **Current signature:** `private async handleSelection_ZoomInOut(menuId: MenuId_t, menuItemId: MenuItemId_t): Promise<HandleSelection_t>`
 
 **New signature:**
+
 ```typescript
 private async handleSelection_ZoomInOut(args: {
   menuId: MenuId_t;
@@ -453,9 +518,11 @@ private async handleSelection_ZoomInOut(args: {
 **dx.require:** `['menuId', 'menuItemId']`
 
 **Callers to update:**
+
 - Menu system dispatch (UIMenuMgr)
 
 **Typedefs to update:**
+
 - None
 
 ---
@@ -463,7 +530,9 @@ private async handleSelection_ZoomInOut(args: {
 ## Stylize.ts
 
 ### `tokenize(code, languageId, theme?, pageBegin?, pageEnd?)`
-**Current signature:** 
+
+**Current signature:**
+
 ```typescript
 async tokenize(
   code: string,
@@ -475,6 +544,7 @@ async tokenize(
 ```
 
 **New signature:**
+
 ```typescript
 async tokenize(args: {
   code: string;
@@ -488,9 +558,11 @@ async tokenize(args: {
 **dx.require:** `['code', 'languageId']`
 
 **Callers to update:**
+
 - `src/PDF.ts` line 372-378
 
 **Typedefs to update:**
+
 - None
 
 ---
@@ -498,9 +570,11 @@ async tokenize(args: {
 ## UI.ts
 
 ### `registerMessageHandler(messageType, handler)`
+
 **Current signature:** `registerMessageHandler(messageType: string, handler: MessageHandler_t): void`
 
 **New signature:**
+
 ```typescript
 registerMessageHandler(args: {
   messageType: string;
@@ -511,17 +585,21 @@ registerMessageHandler(args: {
 **dx.require:** `['messageType', 'handler']`
 
 **Callers to update:**
+
 - `src/UIWebView.ts` line 292
 
 **Typedefs to update:**
+
 - None
 
 ---
 
 ### `unregisterMessageHandler(messageType, handler)`
+
 **Current signature:** `unregisterMessageHandler(messageType: string, handler: MessageHandler_t): void`
 
 **New signature:**
+
 ```typescript
 unregisterMessageHandler(args: {
   messageType: string;
@@ -532,23 +610,27 @@ unregisterMessageHandler(args: {
 **dx.require:** `['messageType', 'handler']`
 
 **Callers to update:**
+
 - `src/UIWebView.ts` line 261
 
 **Typedefs to update:**
+
 - None
 
 ---
 
 ## UIWebView.ts
 
-*(No methods in this file meet the refactoring criteria)*
+No methods in this file meet the refactoring criteria.
 
 ---
 
 ## UIMenu.ts
 
 ### `constructor(app, id, displayName, iconSlotTriad, isFlyout, menuItems, flyoutMenuItemIds, selectionHandler)`
+
 **Current signature:**
+
 ```typescript
 constructor(
   app: App,
@@ -563,6 +645,7 @@ constructor(
 ```
 
 **New signature:**
+
 ```typescript
 constructor(args: {
   app: App;
@@ -579,9 +662,11 @@ constructor(args: {
 **dx.require:** `['app', 'id', 'displayName', 'iconSlotTriad', 'menuItems', 'selectionHandler']`
 
 **Callers to update:**
+
 - `src/UIMenuMgr.ts` line 129-139 (createMenu method)
 
 **Typedefs to update:**
+
 - None
 
 **Refactoring Note:** This was previously excluded due to `iconSlotTriad` object parameter, but actual usage in PaperPrinter.ts shows the calling pattern already uses config objects that are unpacked. Named parameters will **simplify** this by allowing direct spread: `new UIMenu({ app: this.app, ...config })` instead of unpacking each property individually.
@@ -589,7 +674,9 @@ constructor(args: {
 ---
 
 ### `getItemHTML(item, flyout, defaultItemId, selectedItemId)`
-**Current signature:** 
+
+**Current signature:**
+
 ```typescript
 async getItemHTML(
   item: UIMenuItem_t,
@@ -600,6 +687,7 @@ async getItemHTML(
 ```
 
 **New signature:**
+
 ```typescript
 async getItemHTML(args: {
   item: UIMenuItem_t;
@@ -612,9 +700,11 @@ async getItemHTML(args: {
 **dx.require:** `['item', 'flyout', 'defaultItemId', 'selectedItemId']`
 
 **Callers to update:**
+
 - `src/UIMenu.ts` line 601
 
 **Typedefs to update:**
+
 - None
 
 ---
@@ -622,7 +712,9 @@ async getItemHTML(args: {
 ## UIMenuMgr.ts
 
 ### `createMenu(id, displayName, iconSlotTriad, isFlyout, menuItems, flyoutMenuItemIds, selectionHandler)`
+
 **Current signature:**
+
 ```typescript
 createMenu(
   id: MenuId_t,
@@ -636,6 +728,7 @@ createMenu(
 ```
 
 **New signature:**
+
 ```typescript
 createMenu(args: {
   id: MenuId_t;
@@ -651,14 +744,17 @@ createMenu(args: {
 **dx.require:** `['id', 'displayName', 'iconSlotTriad', 'menuItems', 'selectionHandler']`
 
 **Callers to update:**
+
 - `src/PaperPrinter.ts` line 354-362 (loop through menuConfigs)
 
 **Typedefs to update:**
+
 - None
 
 **Refactoring Note:** This was previously excluded due to `iconSlotTriad` object parameter, but actual usage shows config-based calling pattern where every config property is unpacked to pass as individual params. After refactoring, PaperPrinter.ts can be dramatically simplified:
 
 **Before (current):**
+
 ```typescript
 menuConfigs.forEach(config => {
   const menu = this.app.uimenumgr.createMenu(
@@ -675,6 +771,7 @@ menuConfigs.forEach(config => {
 ```
 
 **After (named params):**
+
 ```typescript
 menus.forEach(menu => {  // Renamed: menuConfigs → menus, config → menu
   this.app.uimenumgr.createMenu({ app: this.app, ...menu });
@@ -682,14 +779,17 @@ menus.forEach(menu => {  // Renamed: menuConfigs → menus, config → menu
 ```
 
 Additional consideration:
+
 - The returned menu is immediately passed to `addMenu()` - consider if `createMenu()` should internally call `addMenu()` to eliminate the intermediate variable
 
 ---
 
 ### `getValueForPersistIdOnMenuId(menuId, persistId)`
+
 **Current signature:** `getValueForPersistIdOnMenuId(menuId: MenuId_t, persistId: UI_t): PersistValue_t | undefined`
 
 **New signature:**
+
 ```typescript
 getValueForPersistIdOnMenuId(args: {
   menuId: MenuId_t;
@@ -700,17 +800,21 @@ getValueForPersistIdOnMenuId(args: {
 **dx.require:** `['menuId', 'persistId']`
 
 **Callers to update:**
+
 - `src/UIMenuMgr.ts` line 301
 
 **Typedefs to update:**
+
 - None
 
 ---
 
 ### `setValueForPersistIdOnMenuId(menuId, persistId, value)`
+
 **Current signature:** `setValueForPersistIdOnMenuId(menuId: MenuId_t, persistId: UI_t, value: PersistValue_t): void`
 
 **New signature:**
+
 ```typescript
 setValueForPersistIdOnMenuId(args: {
   menuId: MenuId_t;
@@ -722,17 +826,21 @@ setValueForPersistIdOnMenuId(args: {
 **dx.require:** `['menuId', 'persistId', 'value']`
 
 **Callers to update:**
+
 - `src/PaperPrinter.ts` line 704, 738, 765, 810, 836, 864, 889, 1003, 1006
 
 **Typedefs to update:**
+
 - None
 
 ---
 
 ### `getValueForMenuItemId(menuId, menuItemId)`
+
 **Current signature:** `getValueForMenuItemId(menuId: MenuId_t, menuItemId: string): number | string`
 
 **New signature:**
+
 ```typescript
 getValueForMenuItemId(args: {
   menuId: MenuId_t;
@@ -743,11 +851,13 @@ getValueForMenuItemId(args: {
 **dx.require:** `['menuId', 'menuItemId']`
 
 **Callers to update:**
+
 - `src/UIMenuMgr.ts` line 277
 - `src/UIWebView.ts` line 183
 - `src/PaperPrinter.ts` line 918
 
 **Typedefs to update:**
+
 - None
 
 ---
@@ -755,9 +865,11 @@ getValueForMenuItemId(args: {
 ## VSCodeAPIs.ts
 
 ### `constructor(app, vscode, context)`
+
 **Current signature:** `constructor(app: App, vscode: typeof import('vscode'), context: ExtensionContext)`
 
 **New signature:**
+
 ```typescript
 constructor(args: {
   app: App;
@@ -769,17 +881,21 @@ constructor(args: {
 **dx.require:** `['app', 'vscode', 'context']`
 
 **Callers to update:**
+
 - `src/App.ts` line 80
 
 **Typedefs to update:**
+
 - None
 
 ---
 
 ### `updateGlobalState(key, value)`
+
 **Current signature:** `updateGlobalState(key: GlobalStateKey_t, value: GlobalStateValue_t): void`
 
 **New signature:**
+
 ```typescript
 updateGlobalState(args: {
   key: GlobalStateKey_t;
@@ -790,17 +906,21 @@ updateGlobalState(args: {
 **dx.require:** `['key', 'value']`
 
 **Callers to update:**
+
 - `src/Persist.ts` line 63, 78, 113
 
 **Typedefs to update:**
+
 - None
 
 ---
 
 ### `setPanelTitle(id, title)`
+
 **Current signature:** `setPanelTitle(id: WebviewPanelId_t, title: string): void`
 
 **New signature:**
+
 ```typescript
 setPanelTitle(args: {
   id: WebviewPanelId_t;
@@ -811,17 +931,21 @@ setPanelTitle(args: {
 **dx.require:** `['id', 'title']`
 
 **Callers to update:**
+
 - Search for calls
 
 **Typedefs to update:**
+
 - None
 
 ---
 
 ### `updatePanelHtml(id, html)`
+
 **Current signature:** `updatePanelHtml(id: WebviewPanelId_t, html: string): void`
 
 **New signature:**
+
 ```typescript
 updatePanelHtml(args: {
   id: WebviewPanelId_t;
@@ -832,15 +956,19 @@ updatePanelHtml(args: {
 **dx.require:** `['id', 'html']`
 
 **Callers to update:**
+
 - `src/VSCodeAPIs.ts` line 219, 266
 
 **Typedefs to update:**
+
 - None
 
 ---
 
 ### `getOrCreateWebviewPanel(title, html, existingPanelId?)`
-**Current signature:** 
+
+**Current signature:**
+
 ```typescript
 async getOrCreateWebviewPanel(
   title: string,
@@ -850,6 +978,7 @@ async getOrCreateWebviewPanel(
 ```
 
 **New signature:**
+
 ```typescript
 async getOrCreateWebviewPanel(args: {
   title: string;
@@ -861,17 +990,21 @@ async getOrCreateWebviewPanel(args: {
 **dx.require:** `['title', 'html']`
 
 **Callers to update:**
+
 - `src/UIWebView.ts` line 146-150
 
 **Typedefs to update:**
+
 - None
 
 ---
 
 ### `getVSCodeThemeJson(themeId, keys?)`
+
 **Current signature:** `getVSCodeThemeJson(themeId: string, keys?: string[]): Record<string, unknown> | undefined`
 
 **New signature:**
+
 ```typescript
 getVSCodeThemeJson(args: {
   themeId: string;
@@ -882,9 +1015,11 @@ getVSCodeThemeJson(args: {
 **dx.require:** `['themeId']`
 
 **Callers to update:**
+
 - `src/Stylize.ts` line 155, 217
 
 **Typedefs to update:**
+
 - None
 
 ---
@@ -892,9 +1027,11 @@ getVSCodeThemeJson(args: {
 ## OS.ts
 
 ### `fileWrite(filePath, content)`
+
 **Current signature:** `fileWrite(filePath: string, content: string | Buffer): void`
 
 **New signature:**
+
 ```typescript
 fileWrite(args: {
   filePath: string;
@@ -905,17 +1042,21 @@ fileWrite(args: {
 **dx.require:** `['filePath', 'content']`
 
 **Callers to update:**
+
 - `src/PDF.ts` line 137, 169, 208
 
 **Typedefs to update:**
+
 - None
 
 ---
 
 ### `fileCopy(srcPath, destPath)`
+
 **Current signature:** `fileCopy(srcPath: string, destPath: string): void`
 
 **New signature:**
+
 ```typescript
 fileCopy(args: {
   srcPath: string;
@@ -926,17 +1067,21 @@ fileCopy(args: {
 **dx.require:** `['srcPath', 'destPath']`
 
 **Callers to update:**
+
 - Search for calls
 
 **Typedefs to update:**
+
 - None
 
 ---
 
 ### `fileRead<T>(path, key?)`
+
 **Current signature:** `fileRead: FileRead_t = <T = string>(path: string, key?: string): T | undefined`
 
 **New signature:**
+
 ```typescript
 fileRead<T = string>(args: {
   path: string;
@@ -947,20 +1092,24 @@ fileRead<T = string>(args: {
 **dx.require:** `['path']`
 
 **Callers to update:**
+
 - `src/Stylize.ts` line 166, 317
 - `src/Yaml.ts` line 45
 - `src/UIWebView.ts` line 171
 - `src/VSCodeAPIs.ts` line 335
 
 **Typedefs to update:**
+
 - `FileRead_t`
 
 ---
 
 ### `htmlSrcPathToURI(html, webviewPanelId)`
+
 **Current signature:** `htmlSrcPathToURI(html: string, webviewPanelId: WebviewPanelId_t): string`
 
 **New signature:**
+
 ```typescript
 htmlSrcPathToURI(args: {
   html: string;
@@ -971,23 +1120,27 @@ htmlSrcPathToURI(args: {
 **dx.require:** `['html', 'webviewPanelId']`
 
 **Callers to update:**
+
 - `src/VSCodeAPIs.ts` line 219, 265
 
 **Typedefs to update:**
+
 - None
 
 ---
 
 ## TabInspector.ts
 
-*(No methods in this file meet the refactoring criteria)*
+No methods in this file meet the refactoring criteria.
 
 ---
 
 ## Coords.ts
 
 ### `pageDimensionsInchesOrMmToPdfPts(widthInchesOrMm, heightInchesOrMm, unit)`
-**Current signature:** 
+
+**Current signature:**
+
 ```typescript
 pageDimensionsInchesOrMmToPdfPts(
   widthInchesOrMm: number,
@@ -997,6 +1150,7 @@ pageDimensionsInchesOrMmToPdfPts(
 ```
 
 **New signature:**
+
 ```typescript
 pageDimensionsInchesOrMmToPdfPts(args: {
   widthInchesOrMm: number;
@@ -1008,9 +1162,11 @@ pageDimensionsInchesOrMmToPdfPts(args: {
 **dx.require:** `['widthInchesOrMm', 'heightInchesOrMm', 'unit']`
 
 **Callers to update:**
+
 - Search for calls
 
 **Typedefs to update:**
+
 - None
 
 ---
@@ -1018,9 +1174,11 @@ pageDimensionsInchesOrMmToPdfPts(args: {
 ## Persist.ts
 
 ### `validateDefault(name, computeFn)`
+
 **Current signature:** `async validateDefault(name: string, computeFn: () => Promise<PersistValue_t>): Promise<PersistValue_t>`
 
 **New signature:**
+
 ```typescript
 async validateDefault(args: {
   name: string;
@@ -1031,9 +1189,11 @@ async validateDefault(args: {
 **dx.require:** `['name', 'computeFn']`
 
 **Callers to update:**
+
 - `src/UIMenu.ts` line 269
 
 **Typedefs to update:**
+
 - None
 
 ---
@@ -1041,9 +1201,11 @@ async validateDefault(args: {
 ## Yaml.ts
 
 ### `constructor(app, filePath, dataStruct)`
+
 **Current signature:** `constructor(app: App, filePath: string, dataStruct: T)`
 
 **New signature:**
+
 ```typescript
 constructor(args: {
   app: App;
@@ -1055,22 +1217,24 @@ constructor(args: {
 **dx.require:** `['app', 'filePath', 'dataStruct']`
 
 **Callers to update:**
+
 - Every component that uses Yaml: `src/UI.ts`, `src/PDF.ts`, `src/PaperPrinter.ts`, `src/UIWebView.ts`, `src/UIMenu.ts`
 
 **Typedefs to update:**
+
 - None
 
 ---
 
 ## DocInfo_PDF.ts
 
-*(No methods in this file meet the refactoring criteria)*
+No methods in this file meet the refactoring criteria.
 
 ---
 
 ## DocInfo_PaperPrinter.ts
 
-*(No methods in this file meet the refactoring criteria)*
+No methods in this file meet the refactoring criteria.
 
 ---
 
@@ -1097,11 +1261,13 @@ This refactoring focuses on methods where named parameters provide clear benefit
 ### Estimated Impact
 
 **INCLUDED (will be refactored):**
+
 - **~27-32 methods** need refactoring (includes UIMenu.constructor and UIMenuMgr.createMenu)
 - **~125-155 call sites** need updating
 - Methods with clear benefit: 2+ simple/primitive parameters, OR methods with object params where the calling pattern is already config-based (e.g., UIMenu initialization)
 
 **EXCLUDED (remain positional):**
+
 - **~73+ methods** remain unchanged
 - Single-parameter, zero-parameter, variadic functions, type guards, and methods with object/dict/config params (except where already config-driven)
 - No effort required, no risk introduced, no double-nesting confusion
