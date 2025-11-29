@@ -268,6 +268,14 @@ If there are ANY errors, **FIX THEM IMMEDIATELY**. Do not ask the user to fix yo
 
 **The user pays for every token.** Creating markdown with 180+ errors and then paying again to fix them is unacceptable. This costs real money. **Get it right the first time, every time.**
 
+### Project Markdown Configuration
+
+This project enforces **ALL** markdown linting rules via `.markdownlint.json` with one exception:
+
+- `MD013` (line length): Set to 512 characters to accommodate long TypeScript signatures and technical content
+
+All other rules (MD022, MD031, MD032, MD009, MD036, etc.) are strictly enforced.
+
 ### AI Instructions in Markdown
 
 If you need to embed instructions for AI tooling (like repeated headings for systematic processing), use:

@@ -1,7 +1,5 @@
 # Named Parameters Refactoring Plan
 
-> **Formatting:** This repo enforces only MD013 (line length) via `.markdownlint.json`; other markdown style rules are non-blocking.
-
 This document outlines the comprehensive plan for refactoring method signatures from positional parameters to named parameters (hash/object style) throughout the codebase. Each method will accept an `args` object and use `dx.require()` for mandatory parameters.
 
 ## Scope & Exclusion Rules
@@ -1195,7 +1193,10 @@ pageDimensionsInchesOrMmToPdfPts(args: {
 
 **Callers to update:**
 
-- Discovery: rely on TypeScript compiler to surface callers. Run: `npm run compile` then fix failing call sites. Optional assist: `rg -nP '\bpageDimensionsInchesOrMmToPdfPts\s*\(' src --type=ts -C2`
+- `tests/Coords.test.ts:24` - convert inches to PDF points test
+- `tests/Coords.test.ts:30` - convert millimeters to PDF points test
+- `tests/Coords-PageLayout.test.ts:25` - A4 page dimensions test
+- `tests/Coords-PageLayout.test.ts:32` - Letter page dimensions test
 
 **Typedefs to update:**
 
