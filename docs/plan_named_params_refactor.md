@@ -5,15 +5,15 @@ This document outlines the comprehensive plan for refactoring method signatures 
 ## Scope & Exclusion Rules
 
 **INCLUDE (refactor to named parameters):**
-- Methods with 2-4 primitive/simple parameters (no object params)
-- Methods with 5+ parameters (even if one is an object - too many to track positionally)
+- Methods with 2+ primitive/simple parameters (no object params)
 
 **EXCLUDE (do NOT refactor):**
 - Single parameter methods
+- Zero parameter methods
 - Variadic/rest parameters (`...args`)
 - Type guard functions (`param is Type`)
-- Methods that already have object/dict/config parameter AND have fewer than 5 total params
-  - Examples: `(source, dictionary)`, `(value, options)`, `(id, contextDict)`
+- **Methods that already have an object/dict/config parameter (any param count)**
+  - Examples: `(source, dictionary)`, `(value, options)`, `(id, contextDict)`, `(app, id, name, iconSlotTriad, ...)`
   - Reason: Avoids confusing double-nesting of objects
 
 ## Pattern
@@ -115,15 +115,17 @@ The following methods meet one or more exclusion criteria and should remain with
 ### Variadic Functions
 - `pathJoin(...parts)` - OS.ts (rest parameters - wrapping in object defeats ergonomics)
 
-### Methods with Object/Dict Parameter (< 5 total params)
-- `templateDictReplace(source, dictionary)` - App.ts (has dictionary object, 2 params)
-- `forceNumbers(dict, useForZero?, requiredKeys?)` - App.ts (has dict object, 3 params)
-- `Diagnostics.require(args, requiredKeys)` - Diagnostics.ts (has args object, 2 params)
-- `dispatchSelection(menuItemId, contextDict?)` - UIMenu.ts (has contextDict object, 2 params)
-- `handleMenuItemSelected(menuId, menuItemId, contextDict)` - UIMenuMgr.ts (has contextDict, 3 params)
-- `handleSelection_ZoomLevel(menuId, menuItemId, contextDict)` - PaperPrinter.ts (has contextDict, 3 params)
-- `createDocument(content, uri?)` - VSCodeAPIs.ts (has uri object, 2 params)
-- `showDocument(document, preview?)` - VSCodeAPIs.ts (has document object, 2 params)
+### Methods with Object/Dict Parameter (any param count)
+- `templateDictReplace(source, dictionary)` - App.ts (has dictionary object)
+- `forceNumbers(dict, useForZero?, requiredKeys?)` - App.ts (has dict object)
+- `Diagnostics.require(args, requiredKeys)` - Diagnostics.ts (has args object)
+- `dispatchSelection(menuItemId, contextDict?)` - UIMenu.ts (has contextDict object)
+- `UIMenu.constructor(app, id, displayName, iconSlotTriad, ...)` - UIMenu.ts (has iconSlotTriad object, 8 params)
+- `UIMenuMgr.createMenu(id, displayName, iconSlotTriad, ...)` - UIMenuMgr.ts (has iconSlotTriad object, 7 params)
+- `handleMenuItemSelected(menuId, menuItemId, contextDict)` - UIMenuMgr.ts (has contextDict)
+- `handleSelection_ZoomLevel(menuId, menuItemId, contextDict)` - PaperPrinter.ts (has contextDict)
+- `createDocument(content, uri?)` - VSCodeAPIs.ts (has uri object)
+- `showDocument(document, preview?)` - VSCodeAPIs.ts (has document object)
 
 ---
 
@@ -545,45 +547,6 @@ unregisterMessageHandler(args: {
 
 ## UIMenu.ts
 
-### `constructor(app, id, displayName, iconSlotTriad, isFlyout, menuItems, flyoutMenuItemIds, selectionHandler)`
-**Current signature:** 
-```typescript
-constructor(
-  app: App,
-  id: MenuId_t,
-  displayName: string,
-  iconSlotTriad: iconSlotTriad_t,
-  isFlyout: boolean = false,
-  menuItems: () => UIMenuItem_t[],
-  flyoutMenuItemIds: string[] = [],
-  selectionHandler: (menuId: MenuId_t, menuItemId: MenuItemId_t, contextDict: contextDict_t) => Promise<HandleSelection_t>
-)
-```
-
-**New signature:**
-```typescript
-constructor(args: {
-  app: App;
-  id: MenuId_t;
-  displayName: string;
-  iconSlotTriad: iconSlotTriad_t;
-  isFlyout?: boolean;
-  menuItems: () => UIMenuItem_t[];
-  flyoutMenuItemIds?: string[];
-  selectionHandler: (menuId: MenuId_t, menuItemId: MenuItemId_t, contextDict: contextDict_t) => Promise<HandleSelection_t>;
-})
-```
-
-**dx.require:** `['app', 'id', 'displayName', 'iconSlotTriad', 'menuItems', 'selectionHandler']`
-
-**Callers to update:**
-- `src/UIMenuMgr.ts` line 129-139
-
-**Typedefs to update:**
-- None
-
----
-
 ### `getItemHTML(item, flyout, defaultItemId, selectedItemId)`
 **Current signature:** 
 ```typescript
@@ -616,43 +579,6 @@ async getItemHTML(args: {
 ---
 
 ## UIMenuMgr.ts
-
-### `createMenu(id, displayName, iconSlotTriad, isFlyout, menuItems, flyoutMenuItemIds, selectionHandler)`
-**Current signature:**
-```typescript
-createMenu(
-  id: MenuId_t,
-  displayName: string,
-  iconSlotTriad: iconSlotTriad_t,
-  isFlyout: boolean = false,
-  menuItems: () => UIMenuItem_t[],
-  flyoutMenuItemIds: string[] = [],
-  selectionHandler: (menuId: MenuId_t, menuItemId: MenuItemId_t) => Promise<HandleSelection_t>
-): UIMenu
-```
-
-**New signature:**
-```typescript
-createMenu(args: {
-  id: MenuId_t;
-  displayName: string;
-  iconSlotTriad: iconSlotTriad_t;
-  isFlyout?: boolean;
-  menuItems: () => UIMenuItem_t[];
-  flyoutMenuItemIds?: string[];
-  selectionHandler: (menuId: MenuId_t, menuItemId: MenuItemId_t) => Promise<HandleSelection_t>;
-}): UIMenu
-```
-
-**dx.require:** `['id', 'displayName', 'iconSlotTriad', 'menuItems', 'selectionHandler']`
-
-**Callers to update:**
-- `src/PaperPrinter.ts` line 354-363
-
-**Typedefs to update:**
-- None
-
----
 
 ### `getValueForPersistIdOnMenuId(menuId, persistId)`
 **Current signature:** `getValueForPersistIdOnMenuId(menuId: MenuId_t, persistId: UI_t): PersistValue_t | undefined`
@@ -1065,13 +991,13 @@ This refactoring focuses on methods where named parameters provide clear benefit
 ### Estimated Impact
 
 **INCLUDED (will be refactored):**
-- **~30-35 methods** need refactoring
-- **~150-200 call sites** need updating
-- Methods with clear benefit: 2-4 simple parameters, or 5+ parameters (even with objects)
+- **~25-30 methods** need refactoring
+- **~120-150 call sites** need updating
+- Methods with clear benefit: 2+ simple/primitive parameters (no object params)
 
 **EXCLUDED (remain positional):**
-- **~70+ methods** remain unchanged
-- Single-parameter methods, variadic functions, type guards, and methods with object params (< 5 total)
-- No effort required, no risk introduced
+- **~75+ methods** remain unchanged
+- Single-parameter, zero-parameter, variadic functions, type guards, and **any method with object/dict/config params**
+- No effort required, no risk introduced, no double-nesting confusion
 
 **Total effort:** Focused on high-value changes that improve API clarity without unnecessary churn.
