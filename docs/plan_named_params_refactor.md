@@ -964,7 +964,7 @@ setPanelTitle(args: {
 
 **Callers to update:**
 
-- Discovery: rely on TypeScript compiler to surface callers. Run: `npm run compile` then fix failing call sites. Optional assist: `rg -nP '\bsetPanelTitle\s*\(' src --type=ts -C2`
+- None (no current callers in src/)
 
 **Typedefs to update:**
 
@@ -1100,7 +1100,7 @@ fileCopy(args: {
 
 **Callers to update:**
 
-- Discovery: rely on TypeScript compiler to surface callers. Run: `npm run compile` then fix failing call sites. Optional assist: `rg -nP '\bfileCopy\s*\(' src --type=ts -C2`
+- None (no current callers in src/)
 
 **Typedefs to update:**
 
