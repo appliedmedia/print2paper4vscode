@@ -19,21 +19,7 @@ describe('Coords', () => {
     app.done();
   });
 
-  describe('pageDimensionsInchesOrMmToPdfPts', () => {
-    it('should convert inches to PDF points', () => {
-      const result = coords.pageDimensionsInchesOrMmToPdfPts(8.5, 11, 'in');
-      assert.strictEqual(result.widthPts, 8.5 * 72);
-      assert.strictEqual(result.heightPts, 11 * 72);
-    });
-
-    it('should convert millimeters to PDF points', () => {
-      const result = coords.pageDimensionsInchesOrMmToPdfPts(210, 297, 'mm');
-      const expectedWidth = 210 * 2.834645669;
-      const expectedHeight = 297 * 2.834645669;
-      assert.ok(Math.abs(result.widthPts - expectedWidth) < 0.001);
-      assert.ok(Math.abs(result.heightPts - expectedHeight) < 0.001);
-    });
-  });
+  // pageDimensionsInchesOrMmToPdfPts removed - dead code (only test usage, no production usage)
 
   describe('cssPxToPdfPts', () => {
     it('should convert CSS pixels to PDF points', () => {

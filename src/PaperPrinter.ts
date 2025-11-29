@@ -102,7 +102,7 @@ export class PaperPrinter {
     this.docInfo = new DocInfo_PaperPrinter(app);
 
     // Initialize YAML loader
-    this._yaml = new Yaml(app, 'src/PaperPrinter.yaml', PaperPrinter.kYaml);
+    this._yaml = new Yaml({ app, filePath: 'src/PaperPrinter.yaml', dataStruct: PaperPrinter.kYaml });
   }
 
   init(): void {}

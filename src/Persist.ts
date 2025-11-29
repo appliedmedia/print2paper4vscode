@@ -60,10 +60,10 @@ export class Persist {
             const defaultValue = this.default[name];
             this.value[name] = defaultValue;
             // Try to persist default to global state
-            this.app.vscodeapis.updateGlobalState(
-              name as GlobalStateKey_t,
-              defaultValue as GlobalStateValue_t
-            );
+            this.app.vscodeapis.updateGlobalState({
+              key: name as GlobalStateKey_t,
+              value: defaultValue as GlobalStateValue_t,
+            });
             result = defaultValue;
           }
         }
@@ -75,10 +75,10 @@ export class Persist {
           this.value[name] = value;
           // Skip global state update if value is empty string (non-persistent menus like 'print'/'page')
           if (value !== kEmptyNoPersist) {
-            this.app.vscodeapis.updateGlobalState(
-              name as GlobalStateKey_t,
-              value as GlobalStateValue_t
-            );
+            this.app.vscodeapis.updateGlobalState({
+              key: name as GlobalStateKey_t,
+              value: value as GlobalStateValue_t,
+            });
           }
         }
       },
@@ -88,10 +88,11 @@ export class Persist {
     return this;
   }
 
-  async validateDefault(
-    name: string,
-    computeFn: () => Promise<PersistValue_t>
-  ): Promise<PersistValue_t> {
+  async validateDefault(args: {
+    name: string;
+    computeFn: () => Promise<PersistValue_t>;
+  }): Promise<PersistValue_t> {
+    const { name, computeFn } = args;
     const existing = this.default[name];
     if (existing !== undefined) {
       return existing;
@@ -110,10 +111,10 @@ export class Persist {
     const keysToReset: GlobalStateKey_t[] = [...kMenuId, 'toolbar_pos'];
 
     for (const key of keysToReset) {
-      await this.app.vscodeapis.updateGlobalState(
-        key as GlobalStateKey_t,
-        undefined as unknown as GlobalStateValue_t
-      );
+      await this.app.vscodeapis.updateGlobalState({
+        key: key as GlobalStateKey_t,
+        value: undefined as unknown as GlobalStateValue_t,
+      });
     }
 
     // Clear in-memory caches

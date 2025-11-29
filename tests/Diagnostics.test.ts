@@ -4,27 +4,27 @@ import { Diagnostics } from '../src/Diagnostics';
 
 describe('Diagnostics', () => {
   test('should create instance with correct name', () => {
-    const dx = new Diagnostics('TestClass');
+    const dx = new Diagnostics({ name: 'TestClass' });
     // Test that the instance was created (can't access private name property)
     assert.ok(dx instanceof Diagnostics);
   });
 
   test('should create sub-context with method name', () => {
-    const dx = new Diagnostics('TestClass');
-    const methodDx = dx.sub('testMethod');
+    const dx = new Diagnostics({ name: 'TestClass' });
+    const methodDx = dx.sub({ name: 'testMethod' });
     // Test that the sub-context was created
     assert.ok(methodDx instanceof Diagnostics);
   });
 
   test('should chain methods correctly', () => {
-    const dx = new Diagnostics('TestClass');
+    const dx = new Diagnostics({ name: 'TestClass' });
     const result = dx.out('message1').out('message2').out('message3');
     assert.strictEqual(result, dx); // Should return this for chaining
   });
 
   test('should validate required arguments correctly', () => {
-    const dx = new Diagnostics('TestClass');
-    const methodDx = dx.sub('testMethod');
+    const dx = new Diagnostics({ name: 'TestClass' });
+    const methodDx = dx.sub({ name: 'testMethod' });
 
     // Test with valid args
     const validArgs = { content: 'test', uri: 'file://test' };
@@ -43,8 +43,8 @@ describe('Diagnostics', () => {
   });
 
   test('should handle empty required keys array', () => {
-    const dx = new Diagnostics('TestClass');
-    const methodDx = dx.sub('testMethod');
+    const dx = new Diagnostics({ name: 'TestClass' });
+    const methodDx = dx.sub({ name: 'testMethod' });
 
     const args = { content: 'test' };
     const result = methodDx.require(args, []);
@@ -52,8 +52,8 @@ describe('Diagnostics', () => {
   });
 
   test('should handle args with null values', () => {
-    const dx = new Diagnostics('TestClass');
-    const methodDx = dx.sub('testMethod');
+    const dx = new Diagnostics({ name: 'TestClass' });
+    const methodDx = dx.sub({ name: 'testMethod' });
 
     const args = { content: null, uri: 'test' };
     // null should be considered present (not undefined)
@@ -62,8 +62,8 @@ describe('Diagnostics', () => {
   });
 
   test('should handle args with empty string values', () => {
-    const dx = new Diagnostics('TestClass');
-    const methodDx = dx.sub('testMethod');
+    const dx = new Diagnostics({ name: 'TestClass' });
+    const methodDx = dx.sub({ name: 'testMethod' });
 
     const args = { content: '', uri: 'test' };
     // Empty string should be considered present
@@ -72,8 +72,8 @@ describe('Diagnostics', () => {
   });
 
   test('should handle args with zero values', () => {
-    const dx = new Diagnostics('TestClass');
-    const methodDx = dx.sub('testMethod');
+    const dx = new Diagnostics({ name: 'TestClass' });
+    const methodDx = dx.sub({ name: 'testMethod' });
 
     const args = { count: 0, uri: 'test' };
     // Zero should be considered present
@@ -82,8 +82,8 @@ describe('Diagnostics', () => {
   });
 
   test('should handle args with false values', () => {
-    const dx = new Diagnostics('TestClass');
-    const methodDx = dx.sub('testMethod');
+    const dx = new Diagnostics({ name: 'TestClass' });
+    const methodDx = dx.sub({ name: 'testMethod' });
 
     const args = { enabled: false, uri: 'test' };
     // False should be considered present
@@ -105,8 +105,8 @@ describe('Diagnostics', () => {
     };
 
     // Create Diagnostics instance after capturing console.log
-    const dx = new Diagnostics('TestClass');
-    const methodDx = dx.sub('testMethod');
+    const dx = new Diagnostics({ name: 'TestClass' });
+    const methodDx = dx.sub({ name: 'testMethod' });
     // Enable debug mode to see the output
     methodDx.debugOn(true);
 
@@ -121,22 +121,22 @@ describe('Diagnostics', () => {
   });
 
   test('should handle debug state inheritance', () => {
-    const parentDx = new Diagnostics('ParentClass', true);
+    const parentDx = new Diagnostics({ name: 'ParentClass', debugOn: true });
     console.log('Parent debugOn:', parentDx.debugOn());
 
-    const childDx = parentDx.sub('childMethod');
+    const childDx = parentDx.sub({ name: 'childMethod' });
     console.log('Child debugOn:', childDx.debugOn());
 
     assert.strictEqual(childDx.debugOn(), true);
 
-    const grandchildDx = childDx.sub('grandchildMethod');
+    const grandchildDx = childDx.sub({ name: 'grandchildMethod' });
     console.log('Grandchild debugOn:', grandchildDx.debugOn());
     assert.strictEqual(grandchildDx.debugOn(), true);
   });
 
   test('should handle debug state override', () => {
-    const parentDx = new Diagnostics('ParentClass', true);
-    const childDx = parentDx.sub('childMethod', false);
+    const parentDx = new Diagnostics({ name: 'ParentClass', debugOn: true });
+    const childDx = parentDx.sub({ name: 'childMethod', debugOn: false });
 
     assert.strictEqual(childDx.debugOn(), false);
     assert.strictEqual(parentDx.debugOn(), true);
@@ -148,7 +148,7 @@ describe('Diagnostics', () => {
     assert.strictEqual(Diagnostics.debugOn(), true);
 
     // Create instance without explicit debug state
-    const dx = new Diagnostics('TestClass');
+    const dx = new Diagnostics({ name: 'TestClass' });
     assert.strictEqual(dx.debugOn(), true);
 
     // Reset global debug state
@@ -166,7 +166,7 @@ describe('Diagnostics', () => {
       capturedOutput += message;
     };
 
-    const dx = new Diagnostics('TestClass');
+    const dx = new Diagnostics({ name: 'TestClass' });
     dx.print('Test message');
 
     assert.ok(capturedOutput.includes('Test message'), 'print() should output the message');
@@ -186,8 +186,8 @@ describe('Diagnostics', () => {
       capturedOutput += message;
     };
 
-    const dx = new Diagnostics('TestClass', true);
-    const subDx = dx.sub('testMethod');
+    const dx = new Diagnostics({ name: 'TestClass', debugOn: true });
+    const subDx = dx.sub({ name: 'testMethod' });
     subDx.done('completed');
 
     assert.ok(capturedOutput.includes('Done'), 'done() should output completion message');
@@ -207,8 +207,8 @@ describe('Diagnostics', () => {
       capturedOutput += message;
     };
 
-    const dx = new Diagnostics('TestClass', true);
-    const subDx = dx.sub('testMethod');
+    const dx = new Diagnostics({ name: 'TestClass', debugOn: true });
+    const subDx = dx.sub({ name: 'testMethod' });
     subDx.done();
 
     assert.ok(capturedOutput.includes('Done'), 'done() should output completion message');
@@ -227,7 +227,7 @@ describe('Diagnostics', () => {
       capturedOutput += message;
     };
 
-    const dx = new Diagnostics('TestClass');
+    const dx = new Diagnostics({ name: 'TestClass' });
     dx.error('Error message');
 
     assert.ok(capturedOutput.includes('ERROR'), 'error() should include ERROR prefix');
@@ -249,8 +249,8 @@ describe('Diagnostics', () => {
     };
 
     // Create Diagnostics instance WITHOUT App (null parent and app)
-    const dx = new Diagnostics('TestClass', true, null, null);
-    const subDx = dx.sub('testMethod');
+    const dx = new Diagnostics({ name: 'TestClass', debugOn: true, parent: null, app: null });
+    const subDx = dx.sub({ name: 'testMethod' });
 
     // Output the same message 15 times to trigger duplicate warning (threshold is 10)
     const repeatedMessage = 'Duplicate message test';

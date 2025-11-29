@@ -50,11 +50,13 @@ export class VSCodeAPIs {
   private panels = new Map<WebviewPanelId_t, WebviewPanel>(); // Panel mapping
   private dx: Diagnostics;
 
-  constructor(app: App, vscode: typeof import('vscode'), context: ExtensionContext) {
+  constructor(args: { app: App; vscode: typeof import('vscode'); context: ExtensionContext }) {
+    const { app, vscode, context } = args;
     this.app = app;
     this.vscode = vscode;
     this.context = context;
     this.dx = app.dx.sub({ name: 'VSCodeAPIs' });
+    this.dx.require(args, ['app', 'vscode', 'context']);
   }
 
   init(): void {
@@ -89,7 +91,10 @@ export class VSCodeAPIs {
   /**
    * Update global state value
    */
-  updateGlobalState(key: GlobalStateKey_t, value: GlobalStateValue_t): void {
+  updateGlobalState(args: { key: GlobalStateKey_t; value: GlobalStateValue_t }): void {
+    const dx = this.dx.sub({ name: 'updateGlobalState' });
+    dx.require(args, ['key', 'value']);
+    const { key, value } = args;
     this.context.globalState.update(key, value);
   }
 
@@ -166,17 +171,12 @@ export class VSCodeAPIs {
   }
 
   /**
-   * Update panel title
-   */
-  setPanelTitle(id: WebviewPanelId_t, title: string): void {
-    const panel = this.panels.get(id);
-    if (panel) panel.title = title;
-  }
-
-  /**
    * Update panel HTML content
    */
-  updatePanelHtml(id: WebviewPanelId_t, html: string): void {
+  updatePanelHtml(args: { id: WebviewPanelId_t; html: string }): void {
+    const dx = this.dx.sub({ name: 'updatePanelHtml' });
+    dx.require(args, ['id', 'html']);
+    const { id, html } = args;
     const panel = this.panels.get(id);
     if (panel) panel.webview.html = html;
   }
@@ -199,11 +199,14 @@ export class VSCodeAPIs {
   /**
    * Get or create webview panel with URI conversion
    */
-  async getOrCreateWebviewPanel(
-    title: string,
-    html: string,
-    existingPanelId?: WebviewPanelId_t
-  ): Promise<WebviewPanelId_t> {
+  async getOrCreateWebviewPanel(args: {
+    title: string;
+    html: string;
+    existingPanelId?: WebviewPanelId_t;
+  }): Promise<WebviewPanelId_t> {
+    const dx = this.dx.sub({ name: 'getOrCreateWebviewPanel' });
+    dx.require(args, ['title', 'html']);
+    const { title, html, existingPanelId } = args;
     this.dx.out(
       `getOrCreateWebviewPanel: existingPanelId=${existingPanelId}, panels.size=${this.panels.size}`
     );
@@ -216,7 +219,7 @@ export class VSCodeAPIs {
           // Panel is still valid, reuse it
           this.dx.out(`Reusing existing panel: ${existingPanelId}`);
           panel.title = title;
-          const htmlWithURIs = this.app.os.htmlSrcPathToURI(html, existingPanelId);
+          const htmlWithURIs = this.app.os.htmlSrcPathToURI({ html, webviewPanelId: existingPanelId });
           panel.webview.html = htmlWithURIs;
           return existingPanelId;
         } catch {
@@ -262,8 +265,8 @@ export class VSCodeAPIs {
     // Set up message handling
     this.setupMessageHandling(panel);
 
-    const htmlWithURIs = this.app.os.htmlSrcPathToURI(html, id);
-    this.updatePanelHtml(id, htmlWithURIs);
+    const htmlWithURIs = this.app.os.htmlSrcPathToURI({ html, webviewPanelId: id });
+    this.updatePanelHtml({ id, html: htmlWithURIs });
 
     return id;
   }
@@ -296,11 +299,14 @@ export class VSCodeAPIs {
 
   /**
    * Get VS Code theme JSON data for a specific theme
-   * @param themeId - The theme ID to retrieve
-   * @param keys - Optional array of specific keys to extract from the theme
+   * @param args.themeId - The theme ID to retrieve
+   * @param args.keys - Optional array of specific keys to extract from the theme
    * @returns Theme data or undefined if not found
    */
-  getVSCodeThemeJson(themeId: string, keys?: string[]): Record<string, unknown> | undefined {
+  getVSCodeThemeJson(args: { themeId: string; keys?: string[] }): Record<string, unknown> | undefined {
+    const dx = this.dx.sub({ name: 'getVSCodeThemeJson' });
+    dx.require(args, ['themeId']);
+    const { themeId, keys } = args;
     // Find the extension that contributes this theme
     // themeId might be a display name, so check multiple properties
     const themeExtension = this.vscode.extensions.all.find(ext => {
@@ -332,7 +338,7 @@ export class VSCodeAPIs {
     if (theme.path && typeof theme.path === 'string') {
       try {
         const themePath = this.app.os.pathJoin(themeExtension.extensionPath, theme.path);
-        const themeContent = this.app.os.fileRead<Record<string, unknown>>(themePath);
+        const themeContent = this.app.os.fileRead<Record<string, unknown>>({ path: themePath });
 
         if (themeContent) {
           // Merge the theme metadata with the loaded content

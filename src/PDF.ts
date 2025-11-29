@@ -60,7 +60,7 @@ export class PDF {
     this.dx = app.dx.sub({ name: 'PDF' });
     this.coords = new Coords(app);
     this.docInfo = new DocInfo_PDF(app);
-    this._yaml = new Yaml(app, 'src/PDF.yaml', PDF.kYaml);
+    this._yaml = new Yaml({ app, filePath: 'src/PDF.yaml', dataStruct: PDF.kYaml });
   }
 
   get yaml() {
@@ -135,7 +135,7 @@ export class PDF {
       const tempPdfPath = this.app.os.pathJoin(tempDir, filename);
 
       // Write PDF document to temp file
-      this.app.os.fileWrite(tempPdfPath, Buffer.from(new Uint8Array(pdfBuffer)));
+      this.app.os.fileWrite({ filePath: tempPdfPath, content: Buffer.from(new Uint8Array(pdfBuffer)) });
 
       this.trackTempPdf(tempPdfPath);
       await this.app.os.fileOpenPrintDialog(tempPdfPath);
@@ -169,7 +169,7 @@ export class PDF {
       const tempPdfPath = this.app.os.pathJoin(tempDir, filename);
 
       // Write PDF document to temp file
-      this.app.os.fileWrite(tempPdfPath, Buffer.from(new Uint8Array(pdfBuffer)));
+      this.app.os.fileWrite({ filePath: tempPdfPath, content: Buffer.from(new Uint8Array(pdfBuffer)) });
 
       this.trackTempPdf(tempPdfPath);
       // Send PDF to printer
@@ -210,7 +210,7 @@ export class PDF {
       this.app.os.ensureDir(targetDir);
 
       // Save PDF document directly to chosen location
-      this.app.os.fileWrite(targetPath, Buffer.from(new Uint8Array(pdfBuffer)));
+      this.app.os.fileWrite({ filePath: targetPath, content: Buffer.from(new Uint8Array(pdfBuffer)) });
 
       // Track file for cleanup (optional)
       this.trackTempPdf(targetPath);
