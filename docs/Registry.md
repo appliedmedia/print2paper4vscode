@@ -39,7 +39,7 @@
   - `[key: string]: unknown` - index signature for dynamic component lookups (this.pdf, this.ui, etc)
   - `private _instances: Map<string, unknown>` - cache for lazy-loaded singleton instances
   - `private components: Array<{ new(app: App): any; id: string }>` - component class references
-  - `private always: string[]` - methods always injected (e.g., 'sub')
+  - `private always: string[]` - methods always injected (format: 'componentId.methodName', e.g., 'dx.sub')
   - `private dx: Diagnostics` - Registry's diagnostics instance
   - `private app: App` - app reference
 - [ ] Registry constructor signature: `constructor(args: { app: App; components: Array<...>; always?: string[] })`
@@ -61,9 +61,9 @@
 
 - [ ] Update `App.ts` to create Registry instance:
   - Import all component classes: `import { Diagnostics } from './Diagnostics'`, etc.
-  - Create Registry: `this.reg = new Registry({ app: this, components: [Diagnostics, VSCodeAPIs, UI, PDF, Stylize, TabInspector, UIMenuMgr, OS], always: ['sub'] })`
+  - Create Registry: `this.reg = new Registry({ app: this, components: [Diagnostics, VSCodeAPIs, UI, PDF, Stylize, TabInspector, UIMenuMgr, OS], always: ['dx.sub'] })`
   - App owns the list of what components exist
-  - Note: `always: ['sub']` means all components can call `this.fn.dx.sub('ComponentName')` without requesting it
+  - Note: `always: ['dx.sub']` means all components can call `this.fn.dx.sub('ComponentName')` without requesting it
 - [ ] Add `app.use(...methodIds: string[])` method that delegates to `this.reg.use(...methodIds)`
 - [ ] Verify Registry can be instantiated without breaking existing code
 
@@ -355,9 +355,9 @@ this.fn = app.use(app.reg.component.method1, app.reg.component.method2);
 **CRITICAL NOTES:**
 1. **Property access** (e.g., `pdf.docInfo`) means the component needs access to the entire instance, not just a method. For now, list it as a method request - we'll handle this case specially.
 2. **Factory methods** (e.g., `yaml.create`, `persist.create`) are static methods on the class.
-3. **Methods from `always` array** (`sub`) don't need to be requested - automatically available as `this.fn.dx.sub`.
+3. **Methods from `always` array** (e.g., `'dx.sub'`) don't need to be requested - automatically available as `this.fn.dx.sub`.
 4. Components use: `this.dx = this.fn.dx.sub('ComponentName')` (or `app.dx.sub()` during migration)
-5. When implementing, translate `app.reg.component.method` to just the string `'method'` - Registry will look it up.
+5. When implementing, translate `app.reg.component.method` to the format `'componentId.methodName'` for use() calls.
 
 ### Core Infrastructure
 
@@ -555,7 +555,7 @@ class PDF {
   
   constructor(app: App) {
     // Request methods via app.reg (variadic, no array brackets)
-    // dx.sub is always available (from always: ['sub'])
+    // dx.sub is always available (from always: ['dx.sub'])
     this.fn = app.use(
       app.reg.ui.showErrorMessage,
       app.reg.stylize.getTokens,
@@ -853,7 +853,7 @@ class PDF {
 
   constructor(app: App) {
     // Request via app.reg - Registry resolves to component methods
-    // dx.sub is always available (from always: ['sub'])
+    // dx.sub is always available (from always: ['dx.sub'])
     this.fn = app.use(
       app.reg.stylize.getTokens,
       app.reg.stylize.getThemes,
