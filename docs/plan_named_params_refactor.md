@@ -656,11 +656,35 @@ createMenu(args: {
 **Typedefs to update:**
 - None
 
-**Refactoring Note:** This was previously excluded due to `iconSlotTriad` object parameter, but actual usage shows config-based calling pattern. After refactoring, PaperPrinter.ts can be simplified:
-- Rename `menuConfigs` → `menus` (remove redundant "Configs")
-- Rename loop variable `config` → `menu`
-- Simplify call: `const menu = this.app.uimenumgr.createMenu({ app: this.app, ...menu })`
-- The returned menu from `createMenu()` is currently captured then immediately passed to `addMenu()` - consider if `createMenu()` should internally call `addMenu()` and return void, or if the intermediate variable serves a purpose.
+**Refactoring Note:** This was previously excluded due to `iconSlotTriad` object parameter, but actual usage shows config-based calling pattern where every config property is unpacked to pass as individual params. After refactoring, PaperPrinter.ts can be dramatically simplified:
+
+**Before (current):**
+```typescript
+menuConfigs.forEach(config => {
+  const menu = this.app.uimenumgr.createMenu(
+    config.id as MenuId_t,           // Unpack
+    config.displayName,              // Unpack
+    config.iconSlotTriad,            // Unpack
+    config.isFlyout,                 // Unpack
+    config.menuItems,                // Unpack
+    [...config.flyoutMenuItemIds],   // Unpack + defensive copy
+    config.selectionHandler          // Unpack
+  );
+  this.app.uimenumgr.addMenu(menu);
+});
+```
+
+**After (named params):**
+```typescript
+menus.forEach(menu => {  // Renamed: menuConfigs → menus, config → menu
+  this.app.uimenumgr.createMenu({ app: this.app, ...menu });
+  // Note: createMenu should handle defensive copying of arrays internally if needed
+});
+```
+
+Additional considerations:
+- The returned menu is immediately passed to `addMenu()` - consider if `createMenu()` should internally call `addMenu()` to eliminate the intermediate variable
+- If `flyoutMenuItemIds` needs defensive copying, do it inside `createMenu()` constructor, not at every call site
 
 ---
 
