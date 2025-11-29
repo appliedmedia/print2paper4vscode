@@ -964,7 +964,7 @@ setPanelTitle(args: {
 
 **Callers to update:**
 
-- None (no current callers in src/)
+- None found in src/ or tests/
 
 **Typedefs to update:**
 
@@ -1100,7 +1100,7 @@ fileCopy(args: {
 
 **Callers to update:**
 
-- None (no current callers in src/)
+- `tests/OS.test.ts:53` - test case for file copy operations
 
 **Typedefs to update:**
 
