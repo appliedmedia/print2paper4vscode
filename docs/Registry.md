@@ -37,9 +37,11 @@
 
 #### Stage 0.2: Integrate Registry into App ⏸️
 
-- [ ] Update `App.ts` to create Registry instance: `this.registry = new Registry(this)`
-- [ ] Registry constructor creates Diagnostics internally
-- [ ] Add `app.use(...methodIds: string[])` method that delegates to `this.registry.use(...methodIds)`
+- [ ] Update `App.ts` to create Registry instance:
+  - Import all component classes: `import { Diagnostics } from './Diagnostics'`, etc.
+  - Create Registry: `this.reg = new Registry({ app: this, components: [Diagnostics, VSCodeAPIs, UI, PDF, Stylize, TabInspector, UIMenuMgr, OS], always: ['dx.create', 'dx.sub', 'dx.out'] })`
+  - App owns the list of what components exist
+- [ ] Add `app.use(...methodIds: string[])` method that delegates to `this.reg.use(...methodIds)`
 - [ ] Verify Registry can be instantiated without breaking existing code
 
 #### Stage 0.3: Test Infrastructure ⏸️
@@ -382,13 +384,13 @@ class PDF {
   private dx: Diagnostics;
   
   constructor(app: App) {
-    // Request methods by hierarchical kId (variadic, no array brackets)
-    // dx is always available
+    // Request methods via app.reg (variadic, no array brackets)
+    // dx is always available (from always: ['dx.create', 'dx.sub', 'dx.out'])
     this.fn = app.use(
-      kId.ui.showErrorMessage,
-      kId.stylize.getTokens,
-      kId.os.fileRead,
-      kId.coords.pdfPtsToCssPx,  // Coords is singleton too
+      app.reg.ui.showErrorMessage,
+      app.reg.stylize.getTokens,
+      app.reg.os.fileRead,
+      app.reg.coords.pdfPtsToCssPx,  // Coords is singleton too
     );
     
     // Create local diagnostics (dx always available)
@@ -683,17 +685,17 @@ class PDF {
   private tempPdfs: string[] = [];
 
   constructor(app: App) {
-    // Request by hierarchical kId - Registry resolves to component methods
-    // dx is always available - don't need to request it
+    // Request via app.reg - Registry resolves to component methods
+    // dx is always available (from always: ['dx.create', 'dx.sub', 'dx.out'])
     this.fn = app.use(
-      kId.stylize.getTokens,
-      kId.stylize.getThemes,
-      kId.ui.showErrorMessage,
-      kId.ui.showInfoMessage,
-      kId.os.fileRead,
-      kId.os.fileWrite,
-      kId.coords.pdfPtsToCssPx,  // Coords is singleton, not per-instance
-      kId.coords.cssPxToPdfPts,
+      app.reg.stylize.getTokens,
+      app.reg.stylize.getThemes,
+      app.reg.ui.showErrorMessage,
+      app.reg.ui.showInfoMessage,
+      app.reg.os.fileRead,
+      app.reg.os.fileWrite,
+      app.reg.coords.pdfPtsToCssPx,  // Coords is singleton, not per-instance
+      app.reg.coords.cssPxToPdfPts,
     );
 
     // Create Diagnostics instance for this class
