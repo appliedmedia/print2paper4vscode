@@ -6,6 +6,7 @@ This document outlines the comprehensive plan for refactoring method signatures 
 
 **INCLUDE (refactor to named parameters):**
 - Methods with 2+ primitive/simple parameters (no object params)
+- **Exception:** Methods with object params where the calling pattern is already config-based (unpacking config objects to pass individual params) - these will be **simplified** by named parameters
 
 **EXCLUDE (do NOT refactor):**
 - Single parameter methods
@@ -13,8 +14,9 @@ This document outlines the comprehensive plan for refactoring method signatures 
 - Variadic/rest parameters (`...args`)
 - Type guard functions (`param is Type`)
 - **Methods that already have an object/dict/config parameter (any param count)**
-  - Examples: `(source, dictionary)`, `(value, options)`, `(id, contextDict)`, `(app, id, name, iconSlotTriad, ...)`
+  - Examples: `(source, dictionary)`, `(value, options)`, `(id, contextDict)`
   - Reason: Avoids confusing double-nesting of objects
+  - **Exception:** If callers already unpack config objects to call the method (like UIMenu.constructor), named parameters will simplify the code
 
 ## Pattern
 
@@ -120,8 +122,6 @@ The following methods meet one or more exclusion criteria and should remain with
 - `forceNumbers(dict, useForZero?, requiredKeys?)` - App.ts (has dict object)
 - `Diagnostics.require(args, requiredKeys)` - Diagnostics.ts (has args object)
 - `dispatchSelection(menuItemId, contextDict?)` - UIMenu.ts (has contextDict object)
-- `UIMenu.constructor(app, id, displayName, iconSlotTriad, ...)` - UIMenu.ts (has iconSlotTriad object, 8 params)
-- `UIMenuMgr.createMenu(id, displayName, iconSlotTriad, ...)` - UIMenuMgr.ts (has iconSlotTriad object, 7 params)
 - `handleMenuItemSelected(menuId, menuItemId, contextDict)` - UIMenuMgr.ts (has contextDict)
 - `handleSelection_ZoomLevel(menuId, menuItemId, contextDict)` - PaperPrinter.ts (has contextDict)
 - `createDocument(content, uri?)` - VSCodeAPIs.ts (has uri object)
@@ -547,6 +547,47 @@ unregisterMessageHandler(args: {
 
 ## UIMenu.ts
 
+### `constructor(app, id, displayName, iconSlotTriad, isFlyout, menuItems, flyoutMenuItemIds, selectionHandler)`
+**Current signature:**
+```typescript
+constructor(
+  app: App,
+  id: MenuId_t,
+  displayName: string,
+  iconSlotTriad: iconSlotTriad_t,
+  isFlyout: boolean = false,
+  menuItems: () => UIMenuItem_t[],
+  flyoutMenuItemIds: string[] = [],
+  selectionHandler: (menuId: MenuId_t, menuItemId: MenuItemId_t, contextDict: contextDict_t) => Promise<HandleSelection_t>
+)
+```
+
+**New signature:**
+```typescript
+constructor(args: {
+  app: App;
+  id: MenuId_t;
+  displayName: string;
+  iconSlotTriad: iconSlotTriad_t;
+  isFlyout?: boolean;
+  menuItems: () => UIMenuItem_t[];
+  flyoutMenuItemIds?: string[];
+  selectionHandler: (menuId: MenuId_t, menuItemId: MenuItemId_t, contextDict: contextDict_t) => Promise<HandleSelection_t>;
+})
+```
+
+**dx.require:** `['app', 'id', 'displayName', 'iconSlotTriad', 'menuItems', 'selectionHandler']`
+
+**Callers to update:**
+- `src/UIMenuMgr.ts` line 129-139 (createMenu method)
+
+**Typedefs to update:**
+- None
+
+**Refactoring Note:** This was previously excluded due to `iconSlotTriad` object parameter, but actual usage in PaperPrinter.ts shows the calling pattern already uses config objects that are unpacked. Named parameters will **simplify** this by allowing direct spread: `new UIMenu({ app: this.app, ...config })` instead of unpacking each property individually.
+
+---
+
 ### `getItemHTML(item, flyout, defaultItemId, selectedItemId)`
 **Current signature:** 
 ```typescript
@@ -579,6 +620,49 @@ async getItemHTML(args: {
 ---
 
 ## UIMenuMgr.ts
+
+### `createMenu(id, displayName, iconSlotTriad, isFlyout, menuItems, flyoutMenuItemIds, selectionHandler)`
+**Current signature:**
+```typescript
+createMenu(
+  id: MenuId_t,
+  displayName: string,
+  iconSlotTriad: iconSlotTriad_t,
+  isFlyout: boolean = false,
+  menuItems: () => UIMenuItem_t[],
+  flyoutMenuItemIds: string[] = [],
+  selectionHandler: (menuId: MenuId_t, menuItemId: MenuItemId_t) => Promise<HandleSelection_t>
+): UIMenu
+```
+
+**New signature:**
+```typescript
+createMenu(args: {
+  id: MenuId_t;
+  displayName: string;
+  iconSlotTriad: iconSlotTriad_t;
+  isFlyout?: boolean;
+  menuItems: () => UIMenuItem_t[];
+  flyoutMenuItemIds?: string[];
+  selectionHandler: (menuId: MenuId_t, menuItemId: MenuItemId_t) => Promise<HandleSelection_t>;
+}): UIMenu
+```
+
+**dx.require:** `['id', 'displayName', 'iconSlotTriad', 'menuItems', 'selectionHandler']`
+
+**Callers to update:**
+- `src/PaperPrinter.ts` line 354-362 (loop through menuConfigs)
+
+**Typedefs to update:**
+- None
+
+**Refactoring Note:** This was previously excluded due to `iconSlotTriad` object parameter, but actual usage shows config-based calling pattern. After refactoring, PaperPrinter.ts can be simplified:
+- Rename `menuConfigs` → `menus` (remove redundant "Configs")
+- Rename loop variable `config` → `menu`
+- Simplify call: `const menu = this.app.uimenumgr.createMenu({ app: this.app, ...menu })`
+- The returned menu from `createMenu()` is currently captured then immediately passed to `addMenu()` - consider if `createMenu()` should internally call `addMenu()` and return void, or if the intermediate variable serves a purpose.
+
+---
 
 ### `getValueForPersistIdOnMenuId(menuId, persistId)`
 **Current signature:** `getValueForPersistIdOnMenuId(menuId: MenuId_t, persistId: UI_t): PersistValue_t | undefined`
@@ -991,13 +1075,13 @@ This refactoring focuses on methods where named parameters provide clear benefit
 ### Estimated Impact
 
 **INCLUDED (will be refactored):**
-- **~25-30 methods** need refactoring
-- **~120-150 call sites** need updating
-- Methods with clear benefit: 2+ simple/primitive parameters (no object params)
+- **~27-32 methods** need refactoring (includes UIMenu.constructor and UIMenuMgr.createMenu)
+- **~125-155 call sites** need updating
+- Methods with clear benefit: 2+ simple/primitive parameters, OR methods with object params where the calling pattern is already config-based (e.g., UIMenu initialization)
 
 **EXCLUDED (remain positional):**
-- **~75+ methods** remain unchanged
-- Single-parameter, zero-parameter, variadic functions, type guards, and **any method with object/dict/config params**
+- **~73+ methods** remain unchanged
+- Single-parameter, zero-parameter, variadic functions, type guards, and methods with object/dict/config params (except where already config-driven)
 - No effort required, no risk introduced, no double-nesting confusion
 
-**Total effort:** Focused on high-value changes that improve API clarity without unnecessary churn.
+**Total effort:** Focused on high-value changes that improve API clarity without unnecessary churn. Special attention to UIMenu/UIMenuMgr which will enable significant simplification in PaperPrinter.ts (menuConfigs → menus, direct object spread).
