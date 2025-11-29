@@ -1185,12 +1185,12 @@ This provides:
 
 #### 3.1: Migrate VSCodeAPIs
 
-- [ ] Update VSCodeAPIs constructor to accept App + vscode + context
-- [ ] Remove `app` parameter
+- [ ] Add `static readonly id = 'vscodeapis'` - that's it!
+- [ ] Update constructor to use `app.use()`
+- [ ] VSCodeAPIs accesses `app.vscode` and `app.context` directly (App stores these)
 - [ ] Request Diagnostics via Registry
 - [ ] Move `init()` logic (command registration) into constructor
-- [ ] Update Registry factory for VSCodeAPIs
-- [ ] Update App to construct VSCodeAPIs via Registry
+- [ ] Registry creates VSCodeAPIs like any other component: `new VSCodeAPIs(app)`
 
 #### 3.2: Migrate UI
 
@@ -1671,12 +1671,14 @@ class Registry {
     return scoped;
   }
 
-  private registerFactories(): void {
-    // Register factories using short names (aliases), not class names
-    // This matches the current app.dx, app.ui pattern for consistency
-
+  // NOTE: This is OLD DESIGN - keeping for reference only
+  // In final design, Registry doesn't have registerFactories()
+  // Registry constructor builds structure directly from components array
+  // and uses prototype to discover methods
+  private registerFactories_OBSOLETE(): void {
+    // This was the old approach - NO LONGER USED
     this.factories.set('vscodeapis', registry => {
-      return new VSCodeAPIs(registry, this.vscode, this.context);
+      return new VSCodeAPIs(registry);
     });
 
     this.factories.set('ui', registry => {
@@ -1731,19 +1733,22 @@ Use feature flags instead of commented-out code or multiple branches:
 
 ```typescript
 // Feature flag configuration
-const USE_REGISTRY = process.env.USE_REGISTRY === 'true' || false;
+// NOTE: This is OLD DESIGN - keeping for reference only
+// In final design, Registry only takes { app, components, always }
+const USE_REGISTRY_OBSOLETE = process.env.USE_REGISTRY === 'true' || false;
 
-class App {
+class App_OBSOLETE {
   constructor(context: ExtensionContext, vscode: typeof import('vscode')) {
-    if (USE_REGISTRY) {
-      this.registry = new Registry(vscode, context, this);
-      // Use Registry pattern
-    } else {
-      // Legacy pattern: eager initialization
-      this.vscodeapis = new VSCodeAPIs(this, vscode, context);
-      this.ui = new UI(this);
-      // ... etc
-    }
+    // CURRENT DESIGN:
+    this.vscode = vscode;
+    this.context = context;
+    this.dx = new Diagnostics(/* ... */);
+    this.reg = new Registry({ 
+      app: this, 
+      components: [Diagnostics, VSCodeAPIs, UI, PDF, /* ... */], 
+      always: ['dx.sub'] 
+    });
+    // Components access vscode/context via app: app.vscode, app.context
   }
 }
 ```
