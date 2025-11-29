@@ -17,6 +17,13 @@
 
 ## ⚡ EXECUTION TODOS
 
+**THE SIMPLE APPROACH:**
+1. Components only need: `static readonly id = 'componentname'`
+2. Registry builds `this.pdf = {}`, `this.ui = {}` etc. (empty placeholders for intellisense)
+3. When `use()` is called with method names, Registry uses `Component.prototype.hasOwnProperty(method)` to find which component owns it
+4. Registry creates/caches instance and returns bound method
+5. **The prototype IS the source of truth** - no arrays to maintain!
+
 ### Immediate Actions (Start Here)
 
 #### Stage 0.1: Create Registry Infrastructure ✅ NEXT
@@ -333,6 +340,159 @@
 - [ ] Add lifecycle management
 - [ ] Performance profiling and optimization
 - [ ] Update all documentation
+
+---
+
+## 📋 COMPONENT DEPENDENCY MAP (REQUIRED READING)
+
+**This section lists exactly what each component needs to request in `app.use()`.**
+
+**Format:** `ComponentName needs: ['method1', 'method2']` means that component must call:
+```typescript
+this.fn = app.use(app.reg.component.method1, app.reg.component.method2);
+```
+
+**CRITICAL NOTES:**
+1. **Property access** (e.g., `pdf.docInfo`) means the component needs access to the entire instance, not just a method. For now, list it as a method request - we'll handle this case specially.
+2. **Factory methods** (e.g., `yaml.create`, `persist.create`) are static methods on the class.
+3. **Methods from `always` array** (`create`, `sub`, `out`) don't need to be requested - they're automatically available in `this.fn.dx`.
+4. When implementing, translate `app.reg.component.method` to just the string `'method'` - Registry will look it up.
+
+### Core Infrastructure
+
+**VSCodeAPIs** needs:
+- `os.dateAsYYYYMMDDHHMMSS`
+- `os.htmlSrcPathToURI`
+- `os.getExtensionRoot`
+- `os.pathJoin`
+- `os.fileRead`
+- `os.pathBasename`
+- `paperprinter.handlePrintCommandFromVSCode` (for command registration)
+- `ui.handleWebviewMessage` (for message routing)
+- `persist.clear` (for command registration)
+
+**Persist** needs:
+- `vscodeapis.getGlobalState`
+- `vscodeapis.updateGlobalState`
+- `ui.showInfoMessage`
+
+**UI** needs:
+- `vscodeapis.showInformationMessage`
+- `vscodeapis.showErrorMessage`
+- `vscodeapis.showWarningMessage`
+- `vscodeapis.showSaveDialog`
+- `vscodeapis.uriFromPath`
+- `vscodeapis.uriToPath`
+- `uimenumgr.getUIMenus_HTML`
+- `uimenumgr.getUIMenus_CSS`
+- `uimenumgr.getUIMenus_JS`
+- `yaml.create` (factory)
+- `persist.create` (factory)
+
+**OS** (base class) needs:
+- `vscodeapis.getPanelForUriConversion`
+
+### Middle-Tier Components
+
+**TabInspector** needs:
+- `vscodeapis.getActiveTextEditor`
+- `vscodeapis.getSelectionOrDocumentText`
+- `vscodeapis.getDescriptiveName`
+
+**Stylize** needs:
+- `vscodeapis.getVSCodeExtensionsThemes`
+- `vscodeapis.getVSCodeThemeJson`
+- `vscodeapis.getActiveThemeId`
+- `vscodeapis.getEditorTypography`
+- `os.pathJoin`
+- `os.fileRead`
+- `pdf.docInfo` (property access)
+- `pdf.renderTokenizedLine`
+
+**UIMenuMgr** needs:
+- `stylize.getThemes`
+- `pdf.docInfo` (property access)
+- `os.dictReplace`
+
+### Complex Components
+
+**Coords** needs:
+- (no dependencies - pure calculation)
+
+**PDF** needs:
+- `os.dateAsYYYYMMDDHHMMSS`
+- `os.sanitizeFileName`
+- `os.fileDelete`
+- `os.ensureDir`
+- `os.pathJoin`
+- `os.fileWrite`
+- `os.fileOpenPrintDialog`
+- `os.filePrint`
+- `os.pathDirname`
+- `os.fileReveal`
+- `vscodeapis.getDir_Temp`
+- `ui.showErrorMessage`
+- `ui.chooseSaveLocation`
+- `stylize.tokenize`
+- `uimenumgr.getMenuItemIdSelected`
+- `paperprinter.docInfo` (property access)
+- `coords.pdfPtsToCssPx` (or call directly if singleton)
+- `yaml.create` (factory)
+
+**UIWebView** needs:
+- `pdf.docInfo` (property access)
+- `ui.addToolbar`
+- `ui.registerMessageHandler`
+- `ui.unregisterMessageHandler`
+- `ui.persist` (property access)
+- `vscodeapis.getOrCreateWebviewPanel`
+- `vscodeapis.removePanel`
+- `os.fileRead`
+- `uimenumgr.getMenuItemIdSelected`
+- `uimenumgr.getValueForMenuItemId`
+- `uimenumgr.handleMenuItemSelected`
+- `yaml.create` (factory)
+
+### Orchestration Components
+
+**PaperPrinter** needs:
+- (everything - it's the orchestrator)
+- `vscodeapis.getActiveTextEditor`
+- `vscodeapis.getEditorTypography`
+- `tabinspector.detectActiveTabCategory`
+- `tabinspector.getEditorSelectionOrAll`
+- `uimenumgr.getMenuItemIdSelected`
+- `uimenumgr.setValueForPersistIdOnMenuId`
+- `uimenumgr.getValueForMenuItemId`
+- `uimenumgr.getValueForMenuItemIdSelected`
+- `uimenumgr.createMenu`
+- `uimenumgr.addMenu`
+- `uimenumgr.getUIMenus`
+- `pdf.docInfo` (property access)
+- `pdf.generatePdf`
+- `pdf.printWithPreview`
+- `pdf.printDirectly`
+- `pdf.saveAsPDF`
+- `pdf.resetCaches`
+- `stylize.getThemes`
+- `os.dictReplace`
+- `os.getLocale`
+- `yaml.create` (factory)
+
+### Data Container Classes
+
+**DocInfo_PDF** needs:
+- `coords.pdfPtsToCssPx` (if needed - check actual usage)
+
+**DocInfo_PaperPrinter** needs:
+- (no dependencies - pure data)
+
+**UIMenu** needs:
+- `persist.create` (factory)
+- `yaml.create` (factory)
+
+**Yaml** needs:
+- (no dependencies)
 
 ---
 
