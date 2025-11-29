@@ -180,6 +180,7 @@ export class UIMenu {
     uimenu_generic_handlers: '',
     uimenu_css: '',
     uimenu_text_edit: '',
+    uimenu_items_container: '',
   } as const;
 
   private dx: Diagnostics;
@@ -191,22 +192,49 @@ export class UIMenu {
     return this._id;
   }
 
-  constructor(
-    private app: App,
-    private _id: MenuId_t,
-    private _displayName: string,
-    private _iconSlotTriad: iconSlotTriad_t,
-    private _isFlyout: boolean = false,
-    private _menuItems: () => UIMenuItem_t[],
-    private _flyoutMenuItemIds: string[] = [],
-    private _selectionHandler: (
+  private app: App;
+  private _id: MenuId_t;
+  private _displayName: string;
+  private _iconSlotTriad: iconSlotTriad_t;
+  private _isFlyout: boolean;
+  private _menuItems: () => UIMenuItem_t[];
+  private _flyoutMenuItemIds: string[];
+  private _selectionHandler: (
+    menuId: MenuId_t,
+    menuItemId: MenuItemId_t,
+    contextDict: contextDict_t
+  ) => Promise<HandleSelection_t>;
+
+  constructor(args: {
+    app: App;
+    id: MenuId_t;
+    displayName: string;
+    iconSlotTriad: iconSlotTriad_t;
+    isFlyout?: boolean;
+    menuItems: () => UIMenuItem_t[];
+    flyoutMenuItemIds?: string[];
+    selectionHandler: (
       menuId: MenuId_t,
       menuItemId: MenuItemId_t,
       contextDict: contextDict_t
-    ) => Promise<HandleSelection_t>
-  ) {
+    ) => Promise<HandleSelection_t>;
+  }) {
+    // Note: Cannot use dx.require here as Diagnostics is not yet initialized
+    if (!args.app || !args.id || !args.displayName || !args.iconSlotTriad || !args.menuItems || !args.selectionHandler) {
+      throw new Error('UIMenu constructor requires app, id, displayName, iconSlotTriad, menuItems, and selectionHandler');
+    }
+    const { app, id, displayName, iconSlotTriad, isFlyout = false, menuItems, flyoutMenuItemIds = [], selectionHandler } = args;
+    
+    this.app = app;
+    this._id = id;
+    this._displayName = displayName;
+    this._iconSlotTriad = iconSlotTriad;
+    this._isFlyout = isFlyout;
+    this._menuItems = menuItems;
+    this._flyoutMenuItemIds = flyoutMenuItemIds;
+    this._selectionHandler = selectionHandler;
     this.persist = new Persist(app) as Persist & Persist_t;
-    this.dx = this.app.dx.sub('UIMenu');
+    this.dx = this.app.dx.sub({ name: 'UIMenu' });
     this._yaml = new Yaml(app, 'src/UIMenu.yaml', UIMenu.kYaml);
 
     // Register persist property (no value set yet)
@@ -284,13 +312,15 @@ export class UIMenu {
   }
 
   // Generate a single menu item HTML
-  async getItemHTML(
-    item: UIMenuItem_t,
-    flyout: string,
-    defaultItemId: string,
-    selectedItemId: string
-  ): Promise<string> {
-    const dx = this.dx.sub('getItemHTML');
+  async getItemHTML(args: {
+    item: UIMenuItem_t;
+    flyout: string;
+    defaultItemId: string;
+    selectedItemId: string;
+  }): Promise<string> {
+    const dx = this.dx.sub({ name: 'getItemHTML' });
+    dx.require(args, ['item', 'flyout', 'defaultItemId', 'selectedItemId']);
+    const { item, flyout, defaultItemId, selectedItemId } = args;
     const yaml = this.yaml; // This will load and validate automatically
 
     // Check if this item has a flyout by checking if its ID is in flyoutMenuItemIds
@@ -417,7 +447,7 @@ export class UIMenu {
   private handleIconSlotTypes_main_transform(
     iconSlotTriadMain: iconSlotTriad_main_t
   ): string | undefined {
-    const dx = this.dx.sub('handleIconSlotTypes_main_transform');
+    const dx = this.dx.sub({ name: 'handleIconSlotTypes_main_transform' });
     let value: string | undefined = undefined;
     
     try {
@@ -470,7 +500,7 @@ export class UIMenu {
     cssClass: string;
     configAttr: string;
   } {
-    const dx = this.dx.sub('handleIconSlotTypes_main_text_edit');
+    const dx = this.dx.sub({ name: 'handleIconSlotTypes_main_text_edit' });
     
     if (!constrain) {
       dx.error('text_edit requires constrain');
@@ -519,7 +549,7 @@ export class UIMenu {
     cssClass: string;
     configAttr: string;
   } {
-    const dx = this.dx.sub('handleIconSlotTypes');
+    const dx = this.dx.sub({ name: 'handleIconSlotTypes' });
 
     try {
       // Default return for regular icon content
@@ -597,7 +627,7 @@ export class UIMenu {
       const hasGutterAfter = hasFlyout || hasDefaultItem; // Menus with flyout items OR default items get gutter-after
       const processedMenuItemsHtml = await Promise.all(
         menuItemsList.map(item =>
-          this.getItemHTML(item, flyoutCache[item.id] || '', defaultItemId, selectedItemId)
+          this.getItemHTML({ item, flyout: flyoutCache[item.id] || '', defaultItemId, selectedItemId })
         )
       );
       const menuItems = processedMenuItemsHtml.join('\n');
@@ -634,7 +664,10 @@ export class UIMenu {
         icon: buttonContent,
         menuItems: hasItems ? menuItems : '', // Empty string if no items
         menuItemsContainer: hasItems
-          ? `<div class="p2p4vsc-menu-items" id="${this._id}-items">${menuItems}</div>`
+          ? this.app.templateDictReplace(this.yaml.uimenu_items_container, {
+              menuId: this._id,
+              menuItems,
+            })
           : '', // Only create container if there are items
         menuClasses,
         flyoutItemsAttr, // Data attribute with flyout item IDs from static list

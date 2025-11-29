@@ -25,7 +25,7 @@ let app: App;
 describe('UIMenu Icon Slot Triad', () => {
   
   beforeEach(() => {
-    app = new App(mockContext, mockVSCode);
+    app = new App({ context: mockContext, vscode: mockVSCode });
   });
 
   // Helper to create a menu

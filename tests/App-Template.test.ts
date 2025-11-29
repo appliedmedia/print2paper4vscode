@@ -7,7 +7,7 @@ describe('Template Dictionary Replacement', () => {
   let app: App;
 
   beforeEach(() => {
-    app = new App(mockContext, mockVSCode);
+    app = new App({ context: mockContext, vscode: mockVSCode });
   });
 
   afterEach(() => {

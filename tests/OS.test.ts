@@ -13,7 +13,7 @@ describe('OS Base Class', () => {
   let tempDir: string;
 
   beforeEach(() => {
-    app = new App(mockContext, mockVSCode);
+    app = new App({ context: mockContext, vscode: mockVSCode });
     os = OS.create(app);
     tempDir = path.join(tmpdir(), `os-test-${Date.now()}`);
     fs.mkdirSync(tempDir, { recursive: true });

@@ -12,6 +12,7 @@ import type {
 import { Range } from 'vscode';
 import type { SendToExt_t } from './types/UI_t';
 import { Diagnostics } from './Diagnostics';
+import { kExtId } from './_entrypoint_extId_t';
 
 // Opaque ID type for webview panels
 export type WebviewPanelId_t = string & { readonly __brand: 'WebviewPanelId' };
@@ -41,8 +42,7 @@ export type GlobalStateValue_t = string | number;
  * const panel = apis.createWebviewPanel('preview', 'Preview', ...);
  */
 export class VSCodeAPIs {
-  private static readonly EXTENSION_ID = 'p2p4vsc';
-  private static readonly WEBVIEW_ID = VSCodeAPIs.EXTENSION_ID + '.printprep';
+  private static readonly WEBVIEW_ID = kExtId + '.printprep';
 
   private app: App;
   private vscode: typeof import('vscode'); // Use official VS Code types
@@ -54,11 +54,11 @@ export class VSCodeAPIs {
     this.app = app;
     this.vscode = vscode;
     this.context = context;
-    this.dx = app.dx.sub('VSCodeAPIs');
+    this.dx = app.dx.sub({ name: 'VSCodeAPIs' });
   }
 
   init(): void {
-    const dx = this.dx.sub('init');
+    const dx = this.dx.sub({ name: 'init' });
     dx.require({ vscode: this.vscode, context: this.context }, ['vscode', 'context']);
 
     // Register VS Code commands

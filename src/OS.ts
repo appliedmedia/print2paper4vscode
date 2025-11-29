@@ -44,7 +44,7 @@ export abstract class OS {
   constructor(app: App) {
     this.app = app;
     this.extensionRoot = app.vscodeapis.getExtensionPath();
-    this.dx = app.dx.sub('OS');
+    this.dx = app.dx.sub({ name: 'OS' });
   }
 
   init(): void {}
@@ -208,7 +208,7 @@ export abstract class OS {
     const webviewPanel = this.app.vscodeapis.getPanelForUriConversion(webviewPanelId);
     if (!webviewPanel?.webview) return result;
 
-    const dx = this.dx.sub('htmlSrcPathToURI');
+    const dx = this.dx.sub({ name: 'htmlSrcPathToURI' });
 
     // Helper function to convert a path to webview URI
     const convertPathToURI = (path: string): string => {

@@ -53,7 +53,7 @@ export class UIMenuMgr {
 
   constructor(app: App) {
     this.app = app;
-    this.dx = app.dx.sub('UIMenuMgr');
+    this.dx = app.dx.sub({ name: 'UIMenuMgr' });
     // No initialization needed - menus are created on-demand by PaperPrinter
   }
 
@@ -117,17 +117,20 @@ export class UIMenuMgr {
     return await menu.getHTML();
   }
 
-  createMenu(
-    id: MenuId_t,
-    displayName: string,
-    iconSlotTriad: iconSlotTriad_t,
-    isFlyout: boolean = false,
-    menuItems: () => UIMenuItem_t[],
-    flyoutMenuItemIds: string[] = [],
-    selectionHandler: (menuId: MenuId_t, menuItemId: MenuItemId_t) => Promise<HandleSelection_t>
-  ): UIMenu {
-    return new UIMenu(
-      this.app,
+  createMenu(args: {
+    id: MenuId_t;
+    displayName: string;
+    iconSlotTriad: iconSlotTriad_t;
+    isFlyout?: boolean;
+    menuItems: () => UIMenuItem_t[];
+    flyoutMenuItemIds?: string[];
+    selectionHandler: (menuId: MenuId_t, menuItemId: MenuItemId_t) => Promise<HandleSelection_t>;
+  }): UIMenu {
+    const dx = this.dx.sub({ name: 'createMenu' });
+    dx.require(args, ['id', 'displayName', 'iconSlotTriad', 'menuItems', 'selectionHandler']);
+    const { id, displayName, iconSlotTriad, isFlyout = false, menuItems, flyoutMenuItemIds = [], selectionHandler } = args;
+    return new UIMenu({
+      app: this.app,
       id,
       displayName,
       iconSlotTriad,
@@ -135,7 +138,7 @@ export class UIMenuMgr {
       menuItems,
       flyoutMenuItemIds,
       selectionHandler
-    );
+    });
   }
 
   // Get all menus
@@ -155,7 +158,7 @@ export class UIMenuMgr {
     menuItemId: MenuItemId_t,
     contextDict: contextDict_t
   ): Promise<void> {
-    const dx = this.dx.sub('handleMenuItemSelected');
+    const dx = this.dx.sub({ name: 'handleMenuItemSelected' });
     dx.out(`Received: menuId=${menuId}, menuItemId=${menuItemId}`);
     dx.out(`contextDict: ${JSON.stringify(contextDict)}`);
 
@@ -238,14 +241,21 @@ export class UIMenuMgr {
   }
 
   // Get persist value for a persistId from a menu's persist
-  getValueForPersistIdOnMenuId(menuId: MenuId_t, persistId: UI_t): PersistValue_t | undefined {
+  getValueForPersistIdOnMenuId(args: { menuId: MenuId_t; persistId: UI_t }): PersistValue_t | undefined {
+    const dx = this.dx.sub({ name: 'getValueForPersistIdOnMenuId' });
+    dx.require(args, ['menuId', 'persistId']);
+    const { menuId, persistId } = args;
     const menu = this.getMenuById(menuId);
-    return (menu.persist as unknown as Record<string, PersistValue_t>)[persistId];
+    const result = (menu.persist as unknown as Record<string, PersistValue_t>)[persistId];
+    dx.done();
+    return result;
   }
 
   // Set persist value for a persistId on a menu's persist
-  setValueForPersistIdOnMenuId(menuId: MenuId_t, persistId: UI_t, value: PersistValue_t): void {
-    const dx = this.dx.sub('setValueForPersistIdOnMenuId');
+  setValueForPersistIdOnMenuId(args: { menuId: MenuId_t; persistId: UI_t; value: PersistValue_t }): void {
+    const dx = this.dx.sub({ name: 'setValueForPersistIdOnMenuId' });
+    dx.require(args, ['menuId', 'persistId', 'value']);
+    const { menuId, persistId, value } = args;
     const menu = this.getMenuById(menuId);
     const oldValue = (menu.persist as unknown as Record<string, PersistValue_t>)[persistId];
     (menu.persist as unknown as Record<string, PersistValue_t>)[persistId] = value;
@@ -265,7 +275,7 @@ export class UIMenuMgr {
   // Combines getMenuItemIdSelected + getValueForMenuItemId
   // Returns string or number, or undefined if empty/missing
   getValueForMenuItemIdSelected(menuId: MenuId_t): number | string | undefined {
-    const dx = this.dx.sub('getValueForMenuItemIdSelected');
+    const dx = this.dx.sub({ name: 'getValueForMenuItemIdSelected' });
     const menuItemId = this.getMenuItemIdSelected(menuId);
     dx.out(`menuId=${menuId}, menuItemId=${menuItemId}`);
     if (!menuItemId) {
@@ -274,7 +284,7 @@ export class UIMenuMgr {
       return undefined;
     }
 
-    const value = this.getValueForMenuItemId(menuId, menuItemId);
+    const value = this.getValueForMenuItemId({ menuId, menuItemId });
     dx.out(`Final result: menuItemId=${menuItemId}, value=${value}`);
     dx.done();
     return value;
@@ -284,7 +294,10 @@ export class UIMenuMgr {
   // Resolves menu item values via resolver functions (for dynamic values like fitWidth/fitPage),
   // numeric values, or legacy calc templates. Returns the resolved value or menuItemId as fallback.
   // Never returns undefined - defaults to menuItemId if value not found or resolution fails.
-  getValueForMenuItemId(menuId: MenuId_t, menuItemId: string): number | string {
+  getValueForMenuItemId(args: { menuId: MenuId_t; menuItemId: string }): number | string {
+    const dx = this.dx.sub({ name: 'getValueForMenuItemId' });
+    dx.require(args, ['menuId', 'menuItemId']);
+    const { menuId, menuItemId } = args;
     let result: number | string = menuItemId;
 
     const menu = this.getMenuById(menuId);
@@ -292,13 +305,13 @@ export class UIMenuMgr {
     // Check if menuItemId === menuId (custom text_edit value)
     // Read from persistId instead of menu items
     if (menuItemId === menuId) {
-      const dx = this.dx.sub('getValueForMenuItemId[iconSlotTriad]');
+      const dx = this.dx.sub({ name: 'getValueForMenuItemId[iconSlotTriad]' });
       const iconSlotMain = (menu as unknown as { _iconSlotTriad: iconSlotTriad_t })._iconSlotTriad
         ?.main;
       dx.out(`menuItemId === menuId, checking for persistId`);
       if (typeof iconSlotMain !== 'string' && iconSlotMain.persistId) {
         dx.out(`Found persistId: ${iconSlotMain.persistId}`);
-        const persistValue = this.getValueForPersistIdOnMenuId(menuId, iconSlotMain.persistId);
+        const persistValue = this.getValueForPersistIdOnMenuId({ menuId, persistId: iconSlotMain.persistId });
         dx.out(`Read from menu.persist[${iconSlotMain.persistId}] = ${persistValue}`);
         if (this.app.hasContent(persistValue)) {
           result = persistValue as string | number;
@@ -360,7 +373,7 @@ export class UIMenuMgr {
    * @returns UIMenuItemDict_t with all required keys as finite, non-zero numbers
    */
   private buildUIMenuItemDict(): UIMenuItemDict_t {
-    const dx = this.dx.sub('buildUIMenuItemDict');
+    const dx = this.dx.sub({ name: 'buildUIMenuItemDict' });
     const pageSizePx = this.app.pdf?.docInfo?.pageSizePx;
     const context = this.contextDict ?? {};
     const inputs: ForceNumber_dict_t = {
@@ -393,7 +406,7 @@ export class UIMenuMgr {
     menuId: string,
     menuItemId: string
   ): number | string | undefined {
-    const dx = this.dx.sub('resolveUIMenuItemValue');
+    const dx = this.dx.sub({ name: 'resolveUIMenuItemValue' });
     const dict_nums = this.buildUIMenuItemDict();
     try {
       const result = resolver(dict_nums);
@@ -433,7 +446,7 @@ export class UIMenuMgr {
     menuId: string,
     menuItemId: string
   ): string | undefined {
-    const dx = this.dx.sub('evaluateCalcTemplate');
+    const dx = this.dx.sub({ name: 'evaluateCalcTemplate' });
 
     try {
       // Build complete context dictionary: merge contextDict with page dimensions

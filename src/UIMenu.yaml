@@ -6,12 +6,12 @@ uimenu_css: |
     --flyout-left: 97%;
   }
 
-  .p2p4vsc-menu-btn:hover { background: #e9e9e9; }
-  .p2p4vsc-menu {
+  .{{ns_}}menuBtn:hover { background: #e9e9e9; }
+  .{{ns_}}menu {
     position: relative;
     display: inline-block;
   }
-  .p2p4vsc-menu-items {
+  .{{ns_}}menuItems {
     position: absolute;
     background: #222;
     color: #fff;
@@ -26,7 +26,7 @@ uimenu_css: |
     min-width: 100%;
     pointer-events: auto;
   }
-  .p2p4vsc-menu-item {
+  .{{ns_}}menuItem {
     --gutter-before-width: 2ch;
     --gutter-after-width: 4ch;
     --gutter-off-width: 1ch;
@@ -45,11 +45,11 @@ uimenu_css: |
     position: relative;
     pointer-events: auto;
   }
-  .p2p4vsc-menu-item:hover, .p2p4vsc-menu-item.isSelected {
+  .{{ns_}}menuItem:hover, .{{ns_}}menuItem.isSelected {
     background: #444;
   }
 
-  .p2p4vsc-menu-item .gutter-after {
+  .{{ns_}}menuItem .gutter-after {
     grid-area: gutter-after;
     text-align: right;
     display: flex;
@@ -57,7 +57,7 @@ uimenu_css: |
     justify-content: flex-end;
   }
 
-  .p2p4vsc-menu-item .gutter-before {
+  .{{ns_}}menuItem .gutter-before {
     grid-area: gutter-before;
     text-align: left;
     display: flex;
@@ -65,33 +65,33 @@ uimenu_css: |
     justify-content: flex-start;
   }
 
-  .p2p4vsc-menu-item .menu-item-text {
+  .{{ns_}}menuItem .menu-item-text {
     grid-area: menu-text;
     text-align: left;
     display: flex;
     align-items: center;
   }
 
-  .p2p4vsc-menu-item .menu-item-text svg {
+  .{{ns_}}menuItem .menu-item-text svg {
     vertical-align: middle;
     display: inline-block;
   }
 
-  .p2p4vsc-menu-item.isFlyout .gutter-after::after {
+  .{{ns_}}menuItem.isFlyout .gutter-after::after {
     content: "▶" !important;
   }
 
-  .p2p4vsc-menu-item.isDefault .gutter-after::after {
+  .{{ns_}}menuItem.isDefault .gutter-after::after {
     content: "📝" !important;
   }
 
-  .p2p4vsc-menu-item:not(.isFlyout):not(.isDefault) .gutter-after::after {
+  .{{ns_}}menuItem:not(.isFlyout):not(.isDefault) .gutter-after::after {
     content: "" !important;
   }
 
-  .p2p4vsc-menu-item.isSelected {
+  .{{ns_}}menuItem.isSelected {
   }
-  .p2p4vsc-menu-item.isSelected .gutter-before::before {
+  .{{ns_}}menuItem.isSelected .gutter-before::before {
     content: "✓";
     display: inline-block;
     width: 100%;
@@ -100,18 +100,18 @@ uimenu_css: |
   }
 
   /* Icon slot prefix/suffix styling */
-  .p2p4vsc-menu-item .icon-slot-prefix,
-  .p2p4vsc-menu-item .icon-slot-suffix {
+  .{{ns_}}menuItem .icon-slot-prefix,
+  .{{ns_}}menuItem .icon-slot-suffix {
     display: inline-block;
     white-space: nowrap;
   }
 
-  .p2p4vsc-menu-item .text-edit-wrapper {
+  .{{ns_}}menuItem .text-edit-wrapper {
     display: inline-block;
     width: auto;
     flex-shrink: 0;
   }
-  .p2p4vsc-menu-item .p2p4vsc-text-edit {
+  .{{ns_}}menuItem .{{ns_}}textEdit {
     border: 1px solid #888;
     background: #333;
     color: #fff;
@@ -127,12 +127,12 @@ uimenu_css: |
     box-sizing: border-box;
     flex-shrink: 0;
   }
-  .p2p4vsc-menu-item .p2p4vsc-text-edit:focus {
+  .{{ns_}}menuItem .{{ns_}}textEdit:focus {
     outline: 1px solid #007acc;
     border-color: #007acc;
   }
 
-  .p2p4vsc-menu-btn:has(.p2p4vsc-text-edit) {
+  .{{ns_}}menuBtn:has(.{{ns_}}textEdit) {
     pointer-events: none;
     cursor: default;
     width: auto !important;
@@ -141,66 +141,69 @@ uimenu_css: |
     padding: 0 4px;
     flex-shrink: 0;
   }
-  .p2p4vsc-menu-btn:has(.p2p4vsc-text-edit) * {
+  .{{ns_}}menuBtn:has(.{{ns_}}textEdit) * {
     pointer-events: auto;
   }
-  .p2p4vsc-menu-btn:has(.p2p4vsc-text-edit) .p2p4vsc-text-edit {
+  .{{ns_}}menuBtn:has(.{{ns_}}textEdit) .{{ns_}}textEdit {
     cursor: text;
     width: 3ch !important;
     min-width: 3ch !important;
     max-width: 3ch !important;
   }
-  .p2p4vsc-menu-btn:has(.p2p4vsc-text-edit) .text-edit-wrapper {
+  .{{ns_}}menuBtn:has(.{{ns_}}textEdit) .text-edit-wrapper {
     width: auto !important;
     max-width: fit-content;
     flex-shrink: 0;
   }
 
-  .p2p4vsc-menu.has-gutter-before .p2p4vsc-menu-item {
+  .{{ns_}}menu.has-gutter-before .{{ns_}}menuItem {
     --gutter-before: var(--gutter-before-width);
   }
 
-  .p2p4vsc-menu.has-gutter-after .p2p4vsc-menu-item {
+  .{{ns_}}menu.has-gutter-after .{{ns_}}menuItem {
     --gutter-after: var(--gutter-after-width);
   }
 
-  .p2p4vsc-group { position: relative; }
+  .{{ns_}}group { position: relative; }
 
-  .p2p4vsc-menu.isFlyout .p2p4vsc-menu-btn {
+  .{{ns_}}menu.isFlyout .{{ns_}}menuBtn {
     display: none;
   }
 
-  .p2p4vsc-menu.isFlyout {
+  .{{ns_}}menu.isFlyout {
     display: none;
     pointer-events: auto;
   }
 
-  .p2p4vsc-menu.isFlyout[style*="display: block"] .p2p4vsc-menu-items {
+  .{{ns_}}menu.isFlyout[style*="display: block"] .{{ns_}}menuItems {
     display: block !important;
   }
 
-  .p2p4vsc-menu.isFlyout:not([style*="display: none"]) .p2p4vsc-menu-items {
+  .{{ns_}}menu.isFlyout:not([style*="display: none"]) .{{ns_}}menuItems {
     display: block !important;
   }
 
 uimenu_html: |
-  <div class="p2p4vsc-menu {{menuClasses}}" id="{{menuId}}"{{flyoutItemsAttr}}>
-    <button class="p2p4vsc-menu-btn" title="{{displayName}}"{{shortcutCodeAttr}}>{{icon}}</button>
+  <div class="{{ns_}}menu {{menuClasses}}" id="{{menuId}}"{{flyoutItemsAttr}}>
+    <button class="{{ns_}}menuBtn" title="{{displayName}}"{{shortcutCodeAttr}}>{{icon}}</button>
     {{menuItemsContainer}}
   </div>
 
+uimenu_items_container: |
+  <div class="{{ns_}}menuItems" id="{{menuId}}-items">{{menuItems}}</div>
+
 uimenu_generic_handlers: |
   function closeAllMenus() {
-    document.querySelectorAll('.p2p4vsc-menu-items').forEach(items => {
+    document.querySelectorAll('.{{ns_}}menuItems').forEach(items => {
       items.style.display = 'none';
     });
-    document.querySelectorAll('.p2p4vsc-menu.isFlyout').forEach(flyout => {
+    document.querySelectorAll('.{{ns_}}menu.isFlyout').forEach(flyout => {
       flyout.style.display = 'none';
     });
   }
 
   function closeAllFlyouts() {
-    document.querySelectorAll('.p2p4vsc-menu.isFlyout').forEach(flyout => {
+    document.querySelectorAll('.{{ns_}}menu.isFlyout').forEach(flyout => {
       flyout.style.display = 'none';
     });
   }
@@ -236,10 +239,10 @@ uimenu_generic_handlers: |
 
   function handleMenuButtonClick(e) {
     e.preventDefault();
-    const btn = e.target.closest('.p2p4vsc-menu-btn');
-    const menu = btn?.closest('.p2p4vsc-menu');
+    const btn = e.target.closest('.{{ns_}}menuBtn');
+    const menu = btn?.closest('.{{ns_}}menu');
     const menuId = menu?.getAttribute('id');
-    const menuItems = menu?.querySelector('.p2p4vsc-menu-items');
+    const menuItems = menu?.querySelector('.{{ns_}}menuItems');
     
     if (!menuItems) {
       const menuItemId = menuId;
@@ -273,7 +276,7 @@ uimenu_generic_handlers: |
       if (currentMenu.classList.contains('isFlyout') && currentMenu !== excludeFlyout) {
         ancestorFlyouts.push(currentMenu);
       }
-      currentMenu = currentMenu.parentElement?.closest('.p2p4vsc-menu.isFlyout') || null;
+      currentMenu = currentMenu.parentElement?.closest('.{{ns_}}menu.isFlyout') || null;
     }
     return ancestorFlyouts;
   }
@@ -300,7 +303,7 @@ uimenu_generic_handlers: |
     flyoutMenu.style.zIndex = String(1000 + ancestorFlyouts.length + 1);
     flyoutMenu.style.display = 'block';
     
-    const flyoutMenuItems = flyoutMenu.querySelector('.p2p4vsc-menu-items');
+    const flyoutMenuItems = flyoutMenu.querySelector('.{{ns_}}menuItems');
     if (flyoutMenuItems) {
       flyoutMenuItems.style.display = 'block';
       flyoutMenuItems.style.visibility = 'visible';
@@ -318,7 +321,7 @@ uimenu_generic_handlers: |
       const ancestorFlyouts = getAncestorFlyouts(menu, flyoutMenu);
       const wasVisible = flyoutMenu.style.display === 'block';
       
-      document.querySelectorAll('.p2p4vsc-menu.isFlyout').forEach(flyout => {
+      document.querySelectorAll('.{{ns_}}menu.isFlyout').forEach(flyout => {
         if (flyout !== flyoutMenu && !ancestorFlyouts.includes(flyout)) {
           flyout.style.display = 'none';
         }
@@ -336,7 +339,7 @@ uimenu_generic_handlers: |
     e.preventDefault();
     e.stopPropagation();
 
-    const menu = itemEl.closest('.p2p4vsc-menu');
+    const menu = itemEl.closest('.{{ns_}}menu');
     const menuId = menu?.getAttribute('id');
     const menuItemId = itemEl.id;
     
@@ -347,7 +350,7 @@ uimenu_generic_handlers: |
       }
     } else {
       if (menu.classList.contains('has-gutter-before')) {
-        menu.querySelectorAll('.p2p4vsc-menu-item').forEach(item => {
+        menu.querySelectorAll('.{{ns_}}menuItem').forEach(item => {
           item.classList.remove('isSelected');
         });
         itemEl.classList.add('isSelected');
@@ -361,13 +364,13 @@ uimenu_generic_handlers: |
   document.addEventListener('click', (e) => {
     if (!e || !e.target || !e.target.closest) return;
     
-    const btn = e.target.closest('.p2p4vsc-menu-btn');
+    const btn = e.target.closest('.{{ns_}}menuBtn');
     if (btn) {
       handleMenuButtonClick(e);
       return;
     }
     
-    const itemEl = e.target.closest('.p2p4vsc-menu-item');
+    const itemEl = e.target.closest('.{{ns_}}menuItem');
     if (itemEl) {
       handleMenuItemClick(e, itemEl);
       return;
@@ -378,7 +381,7 @@ uimenu_generic_handlers: |
 
   function handleTextEditKeydown(e) {
     const input = e.target;
-    if (!input.classList.contains('p2p4vsc-text-edit')) return;
+    if (!input.classList.contains('{{ns_}}textEdit')) return;
     
     e.stopPropagation();
     
@@ -430,14 +433,14 @@ uimenu_generic_handlers: |
 
   function handleTextEditClick(e) {
     const input = e.target;
-    if (!input.classList.contains('p2p4vsc-text-edit')) return;
+    if (!input.classList.contains('{{ns_}}textEdit')) return;
     closeAllMenus();
     e.stopPropagation();
   }
 
   function handleTextEditInput(e) {
     const input = e.target;
-    if (!input.classList.contains('p2p4vsc-text-edit')) return;
+    if (!input.classList.contains('{{ns_}}textEdit')) return;
     e.stopPropagation();
   }
 
@@ -461,11 +464,11 @@ uimenu_generic_handlers: |
 
   function handleTextEditBlur(e) {
     const input = e.target;
-    if (!input.classList.contains('p2p4vsc-text-edit')) return;
+    if (!input.classList.contains('{{ns_}}textEdit')) return;
     e.stopPropagation();
     validateAndClampTextEdit(input);
     
-    const menu = input.closest('.p2p4vsc-menu');
+    const menu = input.closest('.{{ns_}}menu');
     if (!menu) return;
     
     const menuId = menu.getAttribute('id');
@@ -486,7 +489,7 @@ uimenu_generic_handlers: |
       const isModifier = e.metaKey || e.ctrlKey;
       if (!isModifier) return;
 
-      const menuButtons = document.querySelectorAll('.p2p4vsc-menu-btn[data-shortcut-code]');
+      const menuButtons = document.querySelectorAll('.{{ns_}}menuBtn[data-shortcut-code]');
       for (const btn of menuButtons) {
         const shortcutCode = btn.getAttribute('data-shortcut-code');
         if (shortcutCode === e.code) {
@@ -496,7 +499,7 @@ uimenu_generic_handlers: |
         }
       }
 
-      const menuItems = document.querySelectorAll('.p2p4vsc-menu-item[data-shortcut-code]');
+      const menuItems = document.querySelectorAll('.{{ns_}}menuItem[data-shortcut-code]');
       for (const item of menuItems) {
         const shortcutCode = item.getAttribute('data-shortcut-code');
         if (shortcutCode === e.code) {
@@ -511,7 +514,7 @@ uimenu_generic_handlers: |
   initKeyboardShortcuts();
 
 uimenu_item: |
-  <div class="p2p4vsc-menu-item {{itemClasses}}" id="{{itemId}}"{{flyoutMenuIdRef}}{{textEditConfigAttr}}{{shortcutCodeAttr}}>
+  <div class="{{ns_}}menuItem {{itemClasses}}" id="{{itemId}}"{{flyoutMenuIdRef}}{{textEditConfigAttr}}{{shortcutCodeAttr}}>
     <div class="gutter-before">{{contentGutterBefore}}</div>
     <div class="menu-item-text">
       {{iconSlotWithPrefixSuffix}}{{itemDisplayName}}
@@ -521,6 +524,6 @@ uimenu_item: |
   </div>
 
 uimenu_text_edit: |
-  <span class="text-edit-wrapper"><input type="text" class="p2p4vsc-text-edit" data-item-id="{{itemId}}"{{constrain}}{{width}}{{value}} /></span>
+  <span class="text-edit-wrapper"><input type="text" class="{{ns_}}textEdit" data-item-id="{{itemId}}"{{constrain}}{{width}}{{value}} /></span>
 
 # end, UIMenu.yaml

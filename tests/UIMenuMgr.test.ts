@@ -10,7 +10,7 @@ describe('UIMenuMgr', () => {
   let menuMgr: UIMenuMgr;
 
   beforeEach(() => {
-    app = new App(mockContext, mockVSCode);
+    app = new App({ context: mockContext, vscode: mockVSCode });
     app.init();
     menuMgr = new UIMenuMgr(app);
   });

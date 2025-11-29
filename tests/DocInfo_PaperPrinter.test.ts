@@ -10,7 +10,7 @@ describe('DocInfo_PaperPrinter', () => {
   let docInfo: DocInfo_PaperPrinter;
 
   beforeEach(() => {
-    app = new App(mockContext, mockVSCode);
+    app = new App({ context: mockContext, vscode: mockVSCode });
     app.init();
     // Create menus before tests that need them (menus are created on-demand in production)
     // Access private createMenus method through type assertion

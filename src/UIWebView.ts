@@ -48,7 +48,7 @@ export class UIWebView {
 
   constructor(app: App) {
     this.app = app;
-    this.dx = app.dx.sub('UIWebView');
+    this.dx = app.dx.sub({ name: 'UIWebView' });
     this._yaml = new Yaml(app, 'src/UIWebView.yaml', UIWebView.kYaml);
 
     // Bind handlers once in constructor to maintain same reference
@@ -70,7 +70,7 @@ export class UIWebView {
    * @deprecated Menu manager should be accessed via this.app.uimenumgr
    */
   createMenus() {
-    const dx = this.dx.sub('createMenus');
+    const dx = this.dx.sub({ name: 'createMenus' });
 
     try {
       // Menu manager is always available via this.app.uimenumgr
@@ -97,7 +97,7 @@ export class UIWebView {
    * The PDF is embedded as base64 data URL due to VS Code postMessage limitations.
    */
   async displayPdfPanel(): Promise<WebviewPanelId_t> {
-    const dx = this.dx.sub('displayPdfPanel');
+    const dx = this.dx.sub({ name: 'displayPdfPanel' });
 
     // Use DocInfo_PDF directly from app.pdf.docInfo
     const docInfo = this.app.pdf.docInfo;
@@ -164,7 +164,7 @@ export class UIWebView {
    * Generate HTML for PDF viewer with embedded PDF
    */
   private async generatePDFHTML(pdf_data_url: string, pdfData: PDFData_t): Promise<string> {
-    const dx = this.dx.sub('generatePDFHTML');
+    const dx = this.dx.sub({ name: 'generatePDFHTML' });
 
     try {
       // Load PDF.js library
@@ -180,7 +180,7 @@ export class UIWebView {
       // Get zoom level from zoomLevel menu persist
       const zoomMenuItemId =
         this.app.uimenumgr.getMenuItemIdSelected(kZoomLevel.id) || kZoomLevel.altId;
-      const rawZoom = this.app.uimenumgr.getValueForMenuItemId(kZoomLevel.id, zoomMenuItemId);
+      const rawZoom = this.app.uimenumgr.getValueForMenuItemId({ menuId: kZoomLevel.id, menuItemId: zoomMenuItemId });
       // Coerce to number (forceNumber always returns valid number or 0)
       const coercedZoom = this.app.forceNumber(rawZoom);
       // Use coerced value if finite and positive, otherwise fall back to hardcoded default
@@ -246,7 +246,7 @@ export class UIWebView {
    * Cleanup webview resources
    */
   done(): void {
-    const dx = this.dx.sub('done');
+    const dx = this.dx.sub({ name: 'done' });
 
     try {
       // Unregister message handlers
@@ -258,7 +258,7 @@ export class UIWebView {
         ];
 
         messageHandlers.forEach(({ type, handler }) => {
-          this.app.ui.unregisterMessageHandler(type, handler);
+          this.app.ui.unregisterMessageHandler({ messageType: type, handler });
         });
 
         this.handlersRegistered = false;
@@ -289,7 +289,7 @@ export class UIWebView {
     ];
 
     messageHandlers.forEach(({ type, handler }) => {
-      this.app.ui.registerMessageHandler(type, handler);
+      this.app.ui.registerMessageHandler({ messageType: type, handler });
     });
 
     this.handlersRegistered = true;
@@ -300,7 +300,7 @@ export class UIWebView {
    * Handle toolbar drag end message
    */
   private async handleDragEnd(msg: SendToExt_dragEnd): Promise<void> {
-    const dx = this.dx.sub('handleDragEnd');
+    const dx = this.dx.sub({ name: 'handleDragEnd' });
 
     try {
       const left = msg.left;
@@ -327,7 +327,7 @@ export class UIWebView {
    * Handle diagnostic message from webview
    */
   private async handleDxMessage(msg: SendToExt_dx): Promise<void> {
-    const dx = this.dx.sub('dx'); // Every message has start/done if we debugOn here, too noisy.
+    const dx = this.dx.sub({ name: 'dx' }); // Every message has start/done if we debugOn here, too noisy.
     dx.require({ msg }, ['msg']);
 
     // Output webview diagnostic message via dx.out (forced debug on)

@@ -62,7 +62,7 @@ export class UI {
 
   constructor(app: App) {
     this.app = app;
-    this.dx = app.dx.sub('UI');
+    this.dx = app.dx.sub({ name: 'UI' });
     this._yaml = new Yaml(app, 'src/UI.yaml', UI.kYaml);
 
     // Initialize persist for toolbar position
@@ -83,15 +83,22 @@ export class UI {
   }
 
   // Register a message handler for a specific message type
-  registerMessageHandler(messageType: string, handler: MessageHandler_t): void {
+  registerMessageHandler(args: { messageType: string; handler: MessageHandler_t }): void {
+    const dx = this.dx.sub({ name: 'registerMessageHandler' });
+    dx.require(args, ['messageType', 'handler']);
+    const { messageType, handler } = args;
     if (!this.messageHandlers.has(messageType)) {
       this.messageHandlers.set(messageType, []);
     }
     this.messageHandlers.get(messageType)!.push(handler);
+    dx.done();
   }
 
   // Unregister a message handler
-  unregisterMessageHandler(messageType: string, handler: MessageHandler_t): void {
+  unregisterMessageHandler(args: { messageType: string; handler: MessageHandler_t }): void {
+    const dx = this.dx.sub({ name: 'unregisterMessageHandler' });
+    dx.require(args, ['messageType', 'handler']);
+    const { messageType, handler } = args;
     const handlers = this.messageHandlers.get(messageType);
     if (handlers) {
       const index = handlers.indexOf(handler);
@@ -103,7 +110,7 @@ export class UI {
 
   // Central message handling - routes messages to registered handlers
   async handleWebviewMessage(msg: SendToExt_t): Promise<void> {
-    const dx = this.dx.sub('handleWebviewMessage');
+    const dx = this.dx.sub({ name: 'handleWebviewMessage' });
     dx.require({ msg }, ['msg']);
     dx.out(`Received message: type=${msg.type}`);
 
@@ -142,7 +149,7 @@ export class UI {
 
   // Add toolbar to HTML content
   async addToolbar(html: string): Promise<string> {
-    const dx = this.dx.sub('addToolbar');
+    const dx = this.dx.sub({ name: 'addToolbar' });
     dx.require({ html }, ['html']);
 
     try {
@@ -213,7 +220,7 @@ export class UI {
 
   // Choose save location
   async chooseSaveLocation(defaultFilename: string): Promise<string | null> {
-    const dx = this.dx.sub('chooseSaveLocation');
+    const dx = this.dx.sub({ name: 'chooseSaveLocation' });
 
     try {
       const uri = await this.app.vscodeapis.showSaveDialog({

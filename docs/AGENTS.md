@@ -244,6 +244,55 @@ Source Code → Shiki → Line-by-Line Rendering → PDF Output
 - **Theme Switching**: Monitor `currentThemeChoice` state in PaperPrinter
 - **Menu Creation**: Debug menu registration and selection handling
 
+## Markdown Compliance - CRITICAL
+
+### ⚠️ MANDATORY: All markdown documents MUST be fully compliant with markdownlint on first generation
+
+This project enforces markdown standards using `markdownlint-cli2`. **EVERY** markdown file you create or modify must pass linting with ZERO errors before being committed.
+
+### Required Markdown Standards
+
+1. **Blank lines around headings**: Always add blank line before and after headings (MD022)
+2. **Blank lines around lists**: Always add blank line before and after lists (MD032)
+3. **Blank lines around fenced code blocks**: Always add blank line before and after code blocks (MD031)
+4. **No trailing spaces**: Never leave trailing spaces at end of lines (MD009)
+5. **No emphasis as headings**: Use proper `###` headings, not `**Bold as heading**` (MD036)
+
+### Before Committing Any Markdown
+
+**ALWAYS** run: `npx markdownlint-cli2 <filename>.md`
+
+If there are ANY errors, **FIX THEM IMMEDIATELY**. Do not ask the user to fix your markdown violations. Do not create markdown with violations and then "fix it later." Get it right the first time.
+
+### Cost Impact
+
+**The user pays for every token.** Creating markdown with 180+ errors and then paying again to fix them is unacceptable. This costs real money. **Get it right the first time, every time.**
+
+### Project Markdown Configuration
+
+This project enforces **ALL** markdown linting rules via `.markdownlint.json` with one exception:
+
+- `MD013` (line length): Set to 512 characters to accommodate long TypeScript signatures and technical content
+
+All other rules (MD022, MD031, MD032, MD009, MD036, etc.) are strictly enforced.
+
+### AI Instructions in Markdown
+
+If you need to embed instructions for AI tooling (like repeated headings for systematic processing), use:
+
+- HTML comments: `<!-- AI instruction: ... -->`
+- Valid markdown structure that also serves as documentation
+- **Never** violate markdown rules for "AI convenience"
+
+### Verification Process
+
+1. Generate markdown
+2. Run `npx markdownlint-cli2 <file>.md`
+3. If errors exist, fix them ALL before presenting to user
+4. Only show the user compliant markdown
+
+**This is not optional. This is mandatory.**
+
 ## Development Guidelines
 
 ### Naming Conventions

@@ -11,7 +11,7 @@ describe('UIWebView', () => {
   let uiWebView: UIWebView;
 
   beforeEach(() => {
-    app = new App(mockContext, mockVSCode);
+    app = new App({ context: mockContext, vscode: mockVSCode });
     app.init();
     uiWebView = new UIWebView(app);
   });
