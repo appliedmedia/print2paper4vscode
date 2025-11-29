@@ -10,27 +10,30 @@
   - `Use_t = string[]` - array of method name strings
   - `FnExport_t = readonly string[]` - what a class exports
   - `FnImport_t = { [componentId: string]: { [methodName: string]: Function } }` - what a class imports
-  - **DO NOT** create: kId_t (kId is the constant, not the type!)
   - **DO NOT** create: ComponentInstance_t, ComponentFactory_t, ComponentClass_t, GlobalWithKId_t, RegistryArgs_t
   - **Pattern rule**: Only create types that are actually used in annotations/unions/function signatures
   - **Pattern rule**: Don't create types "just because" - use inline types and `unknown` for one-off cases
   - **Pattern rule**: `const kSomething` comes first, then `type SomethingId_t = typeof kSomething` only if needed
   - See Stage 7.4 for complete pattern rules and cleanup TODOs
-- [ ] Create `src/Registry.ts` with minimal necessary fields:
-  - `private instances: Map<string, unknown>` - WHY: Cache singletons after first creation (lazy loading)
-  - `private factories: Map<string, (app: App) => unknown>` - WHY: Store factory functions for each component
-  - `private dx: Diagnostics` - WHY: Registry needs diagnostics for debugging (always call it `dx` not `diagnostics`)
-  - `private app: App` - WHY: Pass to component constructors
-  - **NO kId field** - it's derived data, not Registry state
-- [ ] Build kId at module level (not in Registry class):
-  - `const components = [Diagnostics, VSCodeAPIs, PDF, UI, ...]` - list component classes
-  - `const kId = buildKId(components)` - build hierarchical lookup from class.id and class.fn
-  - `export { kId }` - export for components to import
-  - Registry doesn't store kId - it's just a module constant
-- [ ] Registry constructor signature: `constructor(app: App)` - simplified
+- [ ] Create `src/Registry.ts`:
+  - `static readonly id = 'reg'` - Registry's component id
+  - `[key: string]: unknown` - index signature for dynamic component lookups (this.pdf, this.ui, etc)
+  - `private _instances: Map<string, unknown>` - cache for lazy-loaded singleton instances
+  - `private components: Array<{ readonly id: string; readonly fn: FnExport_t }>` - component class references
+  - `private always: string[]` - methods always injected (e.g., dx.create, dx.sub, dx.out)
+  - `private dx: Diagnostics` - Registry's diagnostics instance
+  - `private app: App` - app reference
+- [ ] Registry constructor signature: `constructor(args: { app: App; components: Array<...>; always?: string[] })`
+  - Assign fields: `this.app = args.app`, `this.components = args.components`, `this.always = args.always || []`
+  - Create diagnostics: `this.dx = this.app.dx.sub('Registry')`
+  - Initialize instances cache: `this._instances = new Map()`, `this._instances.set('dx', this.dx)`
+  - Build component lookup structure directly on `this`:
+    - For each component: `this[Component.id] = {}`
+    - For each method: `this[Component.id][methodName] = methodName`
+  - Result: `app.reg.pdf.generatePdf`, `app.reg.ui.showError` etc. are available
 - [ ] Add `use(...methodIds: string[]): FnImport_t` method
-  - Looks up methods via exported `kId` constant (imports it internally)
-  - Returns scoped function object
+  - Merges requested methods with always-available: `[...methodIds, ...this.always]`
+  - Parses method IDs, creates instances lazily, returns scoped function access
 
 #### Stage 0.2: Integrate Registry into App ⏸️
 
