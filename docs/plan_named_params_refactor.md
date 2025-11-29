@@ -678,13 +678,11 @@ menuConfigs.forEach(config => {
 ```typescript
 menus.forEach(menu => {  // Renamed: menuConfigs → menus, config → menu
   this.app.uimenumgr.createMenu({ app: this.app, ...menu });
-  // Note: createMenu should handle defensive copying of arrays internally if needed
 });
 ```
 
-Additional considerations:
+Additional consideration:
 - The returned menu is immediately passed to `addMenu()` - consider if `createMenu()` should internally call `addMenu()` to eliminate the intermediate variable
-- If `flyoutMenuItemIds` needs defensive copying, do it inside `createMenu()` constructor, not at every call site
 
 ---
 
