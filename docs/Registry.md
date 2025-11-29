@@ -1,5 +1,786 @@
 # Registry Pattern Migration Plan
 
+## ⚠️ /!\ CRITICAL: READ THIS FIRST /!\ ⚠️
+
+**This document has been meticulously detailed over many hours of careful design and architectural decisions.**
+
+**DO NOT deviate from this plan. DO NOT "improve" or "simplify" things. DO NOT add types, patterns, or abstractions not explicitly specified here.**
+
+**If you think you must do something different than what's written:**
+1. **STOP**
+2. **Ask the user first**
+3. **Explain why you think a deviation is necessary**
+
+**Following existing patterns means following THIS document's patterns, not inventing new ones.**
+
+---
+
+## ⚡ EXECUTION TODOS
+
+**THE SIMPLE APPROACH:**
+1. Components only need: `static readonly id = 'componentname'`
+2. Registry builds `this.pdf = {}`, `this.ui = {}` etc. (empty placeholders for intellisense)
+3. When `use()` is called with method names, Registry uses `Component.prototype.hasOwnProperty(method)` to find which component owns it
+4. Registry creates/caches instance and returns bound method
+5. **The prototype IS the source of truth** - no arrays to maintain!
+
+### Immediate Actions (Start Here)
+
+#### Stage 0.1: Create Registry Infrastructure ✅ NEXT
+
+- [ ] Create `src/types/Registry_t.ts` with ONLY this type:
+  - `FnImport_t = { [componentId: string]: { [methodName: string]: Function } }` - what a class imports
+  - **That's it!** No other types needed
+  - **DO NOT** create: Use_t, FnExport_t, ComponentInstance_t, ComponentFactory_t, etc.
+  - **Pattern rule**: Only create types that are actually used
+  - See Stage 7.4 for complete pattern rules and cleanup TODOs
+- [ ] Create `src/Registry.ts`:
+  - `static readonly id = 'reg'` - Registry's component id
+  - `[key: string]: unknown` - index signature for dynamic component lookups (this.pdf, this.ui, etc)
+  - `private _instances: Map<string, unknown>` - cache for lazy-loaded singleton instances
+  - `private components: Array<{ new(app: App): any; id: string }>` - component class references
+  - `private always: string[]` - methods always injected (format: 'componentId.methodName', e.g., 'dx.sub')
+  - `private dx: Diagnostics` - Registry's diagnostics instance
+  - `private app: App` - app reference
+- [ ] Registry constructor signature: `constructor(args: { app: App; components: Array<...>; always?: string[] })`
+  - Assign fields: `this.app = args.app`, `this.components = args.components`, `this.always = args.always || []`
+  - Create diagnostics: `this.dx = this.app.dx.sub('Registry')`
+  - Initialize instances cache: `this._instances = new Map()`, `this._instances.set('dx', this.dx)`
+  - Build placeholder structure on `this`:
+    - For each component: `this[Component.id] = {}` - just empty placeholders!
+  - Result: `app.reg.pdf`, `app.reg.ui` etc. exist (values don't matter, just used for intellisense)
+- [ ] Add `use(...methodIds: string[]): FnImport_t` method - THE SIMPLE VERSION:
+  - Merge: `const allMethods = [...methodIds, ...this.always]`
+  - For each method name (e.g., 'showError', 'generatePdf'):
+    - Find which component class has that method: `Component.prototype.hasOwnProperty(methodName)`
+    - Get or create instance: `this._instances.get(componentId) || new Component(this.app)`
+    - Return bound method: `instance[methodName].bind(instance)`
+  - That's it! No complex parsing, prototype IS the source of truth
+
+#### Stage 0.2: Integrate Registry into App ⏸️
+
+- [ ] Update `App.ts` to create Registry instance:
+  - Import all component classes: `import { Diagnostics } from './Diagnostics'`, etc.
+  - Create Registry: `this.reg = new Registry({ app: this, components: [Diagnostics, VSCodeAPIs, UI, PDF, Stylize, TabInspector, UIMenuMgr, OS], always: ['dx.sub'] })`
+  - App owns the list of what components exist
+  - Note: `always: ['dx.sub']` means all components can call `this.fn.dx.sub('ComponentName')` without requesting it
+- [ ] Add `app.use(...methodIds: string[])` method that delegates to `this.reg.use(...methodIds)`
+- [ ] Verify Registry can be instantiated without breaking existing code
+
+#### Stage 0.3: Test Infrastructure ⏸️
+
+- [ ] Run existing tests to ensure no regressions
+- [ ] Add basic Registry construction test
+- [ ] Verify Diagnostics is available via Registry
+
+---
+
+### Stage 1: Implement Registry Core ⏸️
+
+- [ ] Import all component classes at Registry startup
+- [ ] Read `Class.id` and `Class.fn` from each component
+- [ ] Build `kId` hierarchically: `kId[componentId][methodName] = methodName`
+- [ ] Implement lazy instantiation cache for singleton services
+- [ ] Implement component factories (vscodeapis, ui, os, pdf, etc.)
+- [ ] **Registry calls constructor only - NO init() calls** (components self-initialize)
+- [ ] Implement `use(...methodIds: string[]): FnImport_t` with:
+  - Variadic parameter syntax (no array brackets needed)
+  - Always-available methods: `dx.create`, `dx.sub`, `dx.out` for all components
+  - Method resolution via kId lookup
+- [ ] Add circular dependency detection
+- [ ] Add error handling with circuit breaker pattern
+- [ ] Test Registry lazy loading works correctly
+
+---
+
+### Stage 2: Migrate Leaf Components ⏸️
+
+#### 2.1 Migrate OS Classes
+
+- [ ] Add to OS base class:
+  - `static readonly id = 'os'` - that's it! No fn array needed!
+- [ ] Add instance property: `private fn: FnImport_t`
+- [ ] Update OS constructor: `this.fn = app.use()` (dx methods always available from `always` array)
+- [ ] Move any `init()` logic into constructor
+- [ ] Remove `init()` method entirely
+- [ ] Update OSMac, OSWin, OSLinux (each adds `static readonly id = 'osmac'/'oswin'/'oslinux'`)
+- [ ] Keep `done()` method for explicit cleanup
+- [ ] Test OS classes work correctly
+
+#### 2.2 Convert Yaml to Factory Pattern
+
+- [ ] Update `src/Yaml.ts`:
+  - Add `static readonly id = 'yaml'` - that's all!
+  - Add `static create<T>(app: App, filePath: string, dataStruct: T): Yaml<T>` - public static method
+  - Make constructor private
+  - Move any `init()` logic into constructor (currently empty)
+  - Remove `init()` method entirely
+  - Keep `done()` method for cache cleanup
+  - Registry will find `create` via `Yaml.hasOwnProperty('create')`
+- [ ] Update `src/PaperPrinter.ts` line 105:
+  - Change: `this._yaml = new Yaml(app, 'src/PaperPrinter.yaml', PaperPrinter.kYaml)`
+  - To: `this._yaml = this.fn.yaml.create(app, 'src/PaperPrinter.yaml', PaperPrinter.kYaml)`
+- [ ] Update `src/UIWebView.ts` line 52:
+  - Change: `this._yaml = new Yaml(app, 'src/UIWebView.yaml', UIWebView.kYaml)`
+  - To: `this._yaml = this.fn.yaml.create(app, 'src/UIWebView.yaml', UIWebView.kYaml)`
+- [ ] Update `src/UIMenu.ts` line 211:
+  - Change: `this._yaml = new Yaml(app, 'src/UIMenu.yaml', UIMenu.kYaml)`
+  - To: `this._yaml = this.fn.yaml.create(app, 'src/UIMenu.yaml', UIMenu.kYaml)`
+- [ ] Update `src/UI.ts` line 66:
+  - Change: `this._yaml = new Yaml(app, 'src/UI.yaml', UI.kYaml)`
+  - To: `this._yaml = this.fn.yaml.create(app, 'src/UI.yaml', UI.kYaml)`
+- [ ] Update `src/PDF.ts` line 63:
+  - Change: `this._yaml = new Yaml(app, 'src/PDF.yaml', PDF.kYaml)`
+  - To: `this._yaml = this.fn.yaml.create(app, 'src/PDF.yaml', PDF.kYaml)`
+- [ ] Test Yaml factory works correctly (5 files updated)
+
+---
+
+### Stage 3: Migrate Core Infrastructure ⏸️
+
+#### 3.1 Migrate VSCodeAPIs
+
+- [ ] Add `static readonly id = 'vscodeapis'` - that's it!
+- [ ] Update constructor to use `app.use()`
+- [ ] Request Diagnostics via Registry
+- [ ] Move command registration from `init()` to constructor
+- [ ] Remove `init()` method entirely
+- [ ] Keep `done()` method for explicit cleanup
+- [ ] Test command registration works
+
+#### 3.2 Migrate Persist (Factory Pattern)
+
+- [ ] Update `src/Persist.ts`:
+  - Add `static readonly id = 'persist'` - that's it!
+  - Add `static create(app: App): Persist` - public static method
+  - Make constructor private
+  - Update constructor to use `app.use()` for VSCodeAPIs methods
+  - Move any `init()` logic into constructor (currently empty)
+  - Remove `init()` method entirely
+  - Keep `done()` method for explicit cleanup
+- [ ] Update `src/UIMenu.ts` line 209:
+  - Change: `this.persist = new Persist(app) as Persist & Persist_t`
+  - To: `this.persist = this.fn.persist.create(app) as Persist & Persist_t`
+- [ ] Update `src/UI.ts` line 69:
+  - Change: `this.persist = new Persist(app) as Persist & Persist_t`
+  - To: `this.persist = this.fn.persist.create(app) as Persist & Persist_t`
+- [ ] Test persistence works (2 files updated)
+
+#### 3.3 Migrate UI
+
+- [ ] Add `static readonly id = 'ui'` - that's it!
+- [ ] Update constructor to use `app.use()`
+- [ ] Request dependencies: Diagnostics, OS, Persist methods
+- [ ] Move any `init()` logic into constructor (currently empty)
+- [ ] Remove `init()` method entirely
+- [ ] Keep `done()` method for explicit cleanup
+- [ ] Test UI operations work
+
+---
+
+### Stage 4: Migrate Middle-Tier Components ⏸️
+
+#### 4.1 Migrate TabInspector
+
+- [ ] Add `static readonly id = 'tabinspector'` - that's it!
+- [ ] Update constructor to use `app.use()`
+- [ ] Request dependencies: VSCodeAPIs, Diagnostics
+- [ ] Move any `init()` logic into constructor (currently empty)
+- [ ] Remove `init()` method entirely
+- [ ] Keep `done()` method for explicit cleanup
+- [ ] Test tab inspection works
+
+#### 4.2 Migrate Stylize
+
+- [ ] Add `static readonly id = 'stylize'` - that's it!
+- [ ] Update constructor to use `app.use()`
+- [ ] Request Diagnostics via Registry
+- [ ] Handle async initialization with lazy pattern in constructor
+- [ ] Move any `init()` logic into constructor
+- [ ] Remove `init()` method entirely
+- [ ] Keep `done()` method for explicit cleanup
+- [ ] Test syntax highlighting works
+
+#### 4.3 Migrate UIMenuMgr
+
+- [ ] Add `static readonly id = 'uimenumgr'` - that's it!
+- [ ] Update constructor to use `app.use()`
+- [ ] Request dependencies: UI, VSCodeAPIs, Diagnostics
+- [ ] Move any `init()` logic into constructor (currently empty)
+- [ ] Remove `init()` method entirely
+- [ ] Keep `done()` method for cleanup (clears menus array)
+- [ ] Test menu management works
+
+---
+
+### Stage 5: Migrate Complex Components ⏸️
+
+#### 5.1 Convert Coords to Singleton
+
+- [ ] Add to Coords class:
+  - `static readonly id = 'coords'` - that's it!
+- [ ] Add instance property: `private fn: FnImport_t`
+- [ ] Update constructor: `this.fn = app.use()` (only needs dx, always available)
+- [ ] Move `init()` logging into constructor
+- [ ] Remove `init()` method entirely
+- [ ] Keep `done()` method for explicit cleanup
+- [ ] Registry manages as singleton - eliminate per-class instances
+- [ ] Update PDF and DocInfo_PDF to use: `this.fn.coords.pdfPtsToCssPx()`
+- [ ] Test coordinate calculations work
+
+#### 5.2 Migrate PDF
+
+- [ ] Add `static readonly id = 'pdf'` - that's it!
+- [ ] Update constructor to use `app.use()`
+- [ ] Request dependencies: Stylize, UI, OS, Diagnostics methods
+- [ ] Update Coords instantiation in constructor
+- [ ] Move `init()` logic (tempPdfs = [], coords.init()) to constructor
+- [ ] Remove `init()` method entirely
+- [ ] Keep `done()` method for temp file cleanup
+- [ ] Test PDF generation works
+
+#### 5.3 Convert DocInfo Classes to Factory Pattern
+
+- [ ] Add to DocInfo_PDF:
+  - `static readonly id = 'docinfo_pdf'` - that's it!
+  - `static create(app: App): DocInfo_PDF`
+  - Make constructor private
+- [ ] Add to DocInfo_PaperPrinter:
+  - `static readonly id = 'docinfo_paperprinter'` - that's it!
+  - `static create(app: App): DocInfo_PaperPrinter`
+  - Make constructor private
+- [ ] Update usage: `this.docInfo = this.fn.docinfo_pdf.create(app)`
+- [ ] Test DocInfo classes work
+
+---
+
+### Stage 6: Migrate Orchestration Components ⏸️
+
+#### 6.1 Convert UIWebView to Singleton
+
+- [ ] Add to UIWebView class:
+  - `static readonly id = 'uiwebview'` - that's it!
+- [ ] Add instance property: `private fn: FnImport_t`
+- [ ] Update constructor to use `app.use([...])`
+- [ ] Move `registerMessageHandlers()` call from `init()` to constructor
+- [ ] Remove `init()` method entirely
+- [ ] Keep `done()` method for unregistering message handlers
+- [ ] Registry manages as singleton
+- [ ] Update PaperPrinter to use: `await this.fn.uiwebview.displayPdfPanel()`
+- [ ] Test webview display works
+
+#### 6.2 Migrate PaperPrinter
+
+- [ ] Add `static readonly id = 'paperprinter'` - that's it!
+- [ ] Update constructor to use `app.use()`
+- [ ] Request all dependencies via Registry
+- [ ] Update DocInfo_PaperPrinter instantiation
+- [ ] Move any `init()` logic into constructor (currently empty)
+- [ ] Remove `init()` method entirely
+- [ ] Keep `done()` method for explicit cleanup
+- [ ] Test complete print workflow
+
+---
+
+### Stage 7: Cleanup and Finalization ⏸️
+
+#### 7.1 Remove App Component Properties
+
+- [ ] Remove `vscodeapis`, `ui`, `pdf`, etc. from App class
+- [ ] Remove `componentOrder` array
+- [ ] Keep only Registry property
+- [ ] Update App to access components via Registry
+
+#### 7.2 Remove Init Infrastructure, Keep Done
+
+- [ ] Verify all `init()` methods removed from all components
+- [ ] Remove `init()` method from App class
+- [ ] Remove `componentOrder` array (no longer needed for init sequence)
+- [ ] Remove `app.init()` call from `-entrypoint.ts`
+- [ ] Keep all `done()` methods for explicit cleanup
+- [ ] Keep `app.done()` in deactivate() for explicit cleanup
+- [ ] Verify `done()` methods still work correctly
+
+#### 7.3 Update Type Definitions
+
+- [ ] Remove `App` type from component imports where possible
+- [ ] Update all type imports
+- [ ] Ensure Registry types properly exported
+
+#### 7.4 Clean Up Unused Types and Naming
+
+- [ ] **Pattern Rule**: Only create types that are actually used in type annotations, unions, or function signatures
+  - Don't create types "just because" a constant exists
+  - Use inline types and `unknown` for one-off cases
+  - Follow pattern: `const kSomething` first, then `type SomethingId_t = typeof kSomething` only if needed
+- [ ] Remove unused `ExtensionId_t` from `src/_entrypoint_extId_t.ts`
+  - Type is never used anywhere in codebase
+  - `kExtId` constant is sufficient (TypeScript infers type from `as const`)
+  - **If needed later**: Should be `ExtId_t` (not `ExtensionId_t`) following naming pattern
+- [ ] Remove unnecessary `WEBVIEW_ID` constant from `src/VSCodeAPIs.ts`:
+  - Delete line 45: `private static readonly WEBVIEW_ID = kExtId + '.printprep';`
+  - Update line 242: Change `VSCodeAPIs.WEBVIEW_ID,` to `` `${kExtId}.printprep`, ``
+  - Rationale: Constant is only used once, no need for class-level definition. Inline it.
+- [ ] Audit all `*_t.ts` files for other unused types
+- [ ] Document type creation rules in AGENTS.md
+
+#### 7.5 Final Testing
+
+- [ ] Run full test suite
+- [ ] Manual testing of all features
+- [ ] Performance benchmarks
+- [ ] Documentation updates
+
+---
+
+### Stage 8: Optimization ⏸️
+
+- [ ] Add strong typing for dependency requests
+- [ ] Add dependency validation
+- [ ] Add lifecycle management
+- [ ] Performance profiling and optimization
+- [ ] Update all documentation
+
+---
+
+## 📋 COMPONENT DEPENDENCY MAP (REQUIRED READING)
+
+**This section lists exactly what each component needs to request in `app.use()`.**
+
+**Format:** `ComponentName needs: ['method1', 'method2']` means that component must call:
+```typescript
+this.fn = app.use(app.reg.component.method1, app.reg.component.method2);
+```
+
+**CRITICAL NOTES:**
+1. **Property access** (e.g., `pdf.docInfo`) means the component needs access to the entire instance, not just a method. For now, list it as a method request - we'll handle this case specially.
+2. **Factory methods** (e.g., `yaml.create`, `persist.create`) are static methods on the class.
+3. **Methods from `always` array** (e.g., `'dx.sub'`) don't need to be requested - automatically available as `this.fn.dx.sub`.
+4. Components use: `this.dx = this.fn.dx.sub('ComponentName')` (or `app.dx.sub()` during migration)
+5. When implementing, translate `app.reg.component.method` to the format `'componentId.methodName'` for use() calls.
+
+### Core Infrastructure
+
+**VSCodeAPIs** needs:
+- `os.dateAsYYYYMMDDHHMMSS`
+- `os.htmlSrcPathToURI`
+- `os.getExtensionRoot`
+- `os.pathJoin`
+- `os.fileRead`
+- `os.pathBasename`
+- `paperprinter.handlePrintCommandFromVSCode` (for command registration)
+- `ui.handleWebviewMessage` (for message routing)
+- `persist.clear` (for command registration)
+
+**Persist** needs:
+- `vscodeapis.getGlobalState`
+- `vscodeapis.updateGlobalState`
+- `ui.showInfoMessage`
+
+**UI** needs:
+- `vscodeapis.showInformationMessage`
+- `vscodeapis.showErrorMessage`
+- `vscodeapis.showWarningMessage`
+- `vscodeapis.showSaveDialog`
+- `vscodeapis.uriFromPath`
+- `vscodeapis.uriToPath`
+- `uimenumgr.getUIMenus_HTML`
+- `uimenumgr.getUIMenus_CSS`
+- `uimenumgr.getUIMenus_JS`
+- `yaml.create` (factory)
+- `persist.create` (factory)
+
+**OS** (base class) needs:
+- `vscodeapis.getPanelForUriConversion`
+
+### Middle-Tier Components
+
+**TabInspector** needs:
+- `vscodeapis.getActiveTextEditor`
+- `vscodeapis.getSelectionOrDocumentText`
+- `vscodeapis.getDescriptiveName`
+
+**Stylize** needs:
+- `vscodeapis.getVSCodeExtensionsThemes`
+- `vscodeapis.getVSCodeThemeJson`
+- `vscodeapis.getActiveThemeId`
+- `vscodeapis.getEditorTypography`
+- `os.pathJoin`
+- `os.fileRead`
+- `pdf.docInfo` (property access)
+- `pdf.renderTokenizedLine`
+
+**UIMenuMgr** needs:
+- `stylize.getThemes`
+- `pdf.docInfo` (property access)
+- `os.dictReplace`
+
+### Complex Components
+
+**Coords** needs:
+- (no dependencies - pure calculation)
+
+**PDF** needs:
+- `os.dateAsYYYYMMDDHHMMSS`
+- `os.sanitizeFileName`
+- `os.fileDelete`
+- `os.ensureDir`
+- `os.pathJoin`
+- `os.fileWrite`
+- `os.fileOpenPrintDialog`
+- `os.filePrint`
+- `os.pathDirname`
+- `os.fileReveal`
+- `vscodeapis.getDir_Temp`
+- `ui.showErrorMessage`
+- `ui.chooseSaveLocation`
+- `stylize.tokenize`
+- `uimenumgr.getMenuItemIdSelected`
+- `paperprinter.docInfo` (property access)
+- `coords.pdfPtsToCssPx` (or call directly if singleton)
+- `yaml.create` (factory)
+
+**UIWebView** needs:
+- `pdf.docInfo` (property access)
+- `ui.addToolbar`
+- `ui.registerMessageHandler`
+- `ui.unregisterMessageHandler`
+- `ui.persist` (property access)
+- `vscodeapis.getOrCreateWebviewPanel`
+- `vscodeapis.removePanel`
+- `os.fileRead`
+- `uimenumgr.getMenuItemIdSelected`
+- `uimenumgr.getValueForMenuItemId`
+- `uimenumgr.handleMenuItemSelected`
+- `yaml.create` (factory)
+
+### Orchestration Components
+
+**PaperPrinter** needs:
+- (everything - it's the orchestrator)
+- `vscodeapis.getActiveTextEditor`
+- `vscodeapis.getEditorTypography`
+- `tabinspector.detectActiveTabCategory`
+- `tabinspector.getEditorSelectionOrAll`
+- `uimenumgr.getMenuItemIdSelected`
+- `uimenumgr.setValueForPersistIdOnMenuId`
+- `uimenumgr.getValueForMenuItemId`
+- `uimenumgr.getValueForMenuItemIdSelected`
+- `uimenumgr.createMenu`
+- `uimenumgr.addMenu`
+- `uimenumgr.getUIMenus`
+- `pdf.docInfo` (property access)
+- `pdf.generatePdf`
+- `pdf.printWithPreview`
+- `pdf.printDirectly`
+- `pdf.saveAsPDF`
+- `pdf.resetCaches`
+- `stylize.getThemes`
+- `os.dictReplace`
+- `os.getLocale`
+- `yaml.create` (factory)
+
+### Data Container Classes
+
+**DocInfo_PDF** needs:
+- `coords.pdfPtsToCssPx` (if needed - check actual usage)
+
+**DocInfo_PaperPrinter** needs:
+- (no dependencies - pure data)
+
+**UIMenu** needs:
+- `persist.create` (factory)
+- `yaml.create` (factory)
+
+**Yaml** needs:
+- (no dependencies)
+
+---
+
+## Current Status Summary
+
+**Components in Codebase:**
+
+- ✅ App.ts - Main orchestrator (creates all components, has init/done)
+- ✅ Diagnostics.ts - Logging system (stores app reference)
+- ✅ VSCodeAPIs.ts - VS Code API wrapper (stores app, has init/done)
+- ✅ UI.ts - UI manager (stores app, has init/done)
+- ✅ OS.ts, OSMac.ts, OSWin.ts, OSLinux.ts - OS abstractions (store app, have init/done)
+- ✅ PDF.ts - PDF generation (stores app, has init/done)
+- ✅ Stylize.ts - Syntax highlighting (stores app, has init/done)
+- ✅ TabInspector.ts - Tab inspection (stores app, has init/done)
+- ✅ UIMenuMgr.ts - Menu management (stores app, has init/done)
+- ✅ UIMenu.ts - Menu component
+- ✅ UIWebView.ts - Webview management
+- ✅ PaperPrinter.ts - Main orchestrator (stores app, has init/done)
+- ✅ Coords.ts - Coordinate calculations (stores app, has init/done)
+- ✅ Persist.ts - State persistence
+- ✅ Yaml.ts - YAML loading
+- ✅ DocInfo_PDF.ts - PDF document info
+- ✅ DocInfo_PaperPrinter.ts - PaperPrinter document info
+
+**Current Architecture Pattern:**
+
+```typescript
+// Every component follows this pattern:
+class Component {
+  private app: App;
+  private dx: Diagnostics;
+  
+  constructor(app: App) {
+    this.app = app;
+    this.dx = app.dx.sub('Component');
+  }
+  
+  init(): void { /* ... */ }
+  done(): void { /* ... */ }
+  
+  someMethod() {
+    // Access other components via this.app
+    this.app.ui.showErrorMessage('Error');
+    this.app.pdf.generatePdf();
+  }
+}
+```
+
+**Target Architecture Pattern:**
+
+```typescript
+// Singleton service component
+class PDF {
+  static readonly id = 'pdf';  // That's it! Registry finds methods via prototype
+  
+  private fn: FnImport_t;
+  private dx: Diagnostics;
+  
+  constructor(app: App) {
+    // Request methods via app.reg (variadic, no array brackets)
+    // dx.sub is always available (from always: ['dx.sub'])
+    this.fn = app.use(
+      app.reg.ui.showErrorMessage,
+      app.reg.stylize.getTokens,
+      app.reg.os.fileRead,
+      app.reg.coords.pdfPtsToCssPx,  // Coords is singleton too
+    );
+    
+    // Create local diagnostics (dx.sub always available)
+    this.dx = this.fn.dx.sub('PDF');
+    
+    // All initialization happens here - no separate init() method
+    // Component is fully ready when constructor completes
+  }
+  
+  someMethod() {
+    // Access via fn organized by component
+    this.fn.ui.showErrorMessage('Error');
+    const px = this.fn.coords.pdfPtsToCssPx(100);
+  }
+  
+  done(): void {
+    // Explicit cleanup - called manually when needed
+    this.dx.done();
+  }
+}
+
+// Factory pattern for per-instance classes
+class Yaml<T> {
+  static readonly id = 'yaml';
+  static readonly fn: FnExport_t = ['create'];
+  
+  static create<T>(app: App, filePath: string, dataStruct: T): Yaml<T> {
+    return new Yaml(app, filePath, dataStruct);
+  }
+  
+  private constructor(private app: App, private filePath: string, private dataStruct: T) {}
+  
+  get(): T {
+    // Lazy load and cache
+  }
+  
+  done(): void {
+    this.cached = undefined;
+  }
+}
+
+// Usage in consuming class
+class UI {
+  static readonly id = 'ui';
+  static readonly fn: FnExport_t = ['showErrorMessage', 'showInfoMessage'];
+  
+  private fn: FnImport_t;
+  private _yaml: Yaml<typeof UI.kYaml>;
+  
+  constructor(app: App) {
+    // dx always available, only request what else is needed
+    this.fn = app.use(
+      app.reg.os.fileRead,
+      app.reg.yaml.create,  // Factory method
+    );
+    
+    // Create per-instance Yaml via factory
+    this._yaml = this.fn.yaml.create(app, 'src/UI.yaml', UI.kYaml);
+  }
+  
+  get yaml() {
+    return this._yaml.get();
+  }
+}
+```
+
+---
+
+## Whole Class/Component Usage Analysis
+
+This section documents cases where components might need entire class instances vs specific methods.
+
+### ✅ Factory Pattern with static create()
+
+#### 1. Yaml - Per-instance with factory
+
+**Used by:** PaperPrinter, UIWebView, UIMenu, PDF, UI  
+**Current pattern:**
+
+```typescript
+this._yaml = new Yaml(app, 'src/PDF.yaml', PDF.kYaml);
+const data = this._yaml.get();
+```
+
+**With Registry:**
+
+```typescript
+class Yaml {
+  static readonly id = 'yaml';  // That's it!
+  static create<T>(app: App, path: string, struct: T): Yaml<T> {
+    return new Yaml(app, path, struct);
+  }
+  private constructor(...) {}
+}
+
+// Usage
+this.fn = app.use(app.reg.yaml.create);
+this._yaml = this.fn.yaml.create(app, 'src/PDF.yaml', PDF.kYaml);
+const data = this._yaml.get();
+```
+
+**Status:** Factory pattern - each component gets own instance
+
+#### 2. Coords - Only 4 methods needed
+
+**Used by:** PDF (holds instance), DocInfo_PDF (creates temp instance)  
+**Methods used:**
+
+- `init()` - move to constructor
+- `done()` - keep for cleanup
+- `pdfPtsToCssPx(value)` - called 6 times
+- `cssPxToPdfPts(value)` - called 3 times
+
+**Current pattern:**
+
+```typescript
+this.coords = new Coords(app);
+this.coords.init();
+const px = this.coords.pdfPtsToCssPx(pts);
+```
+
+**With Registry:**
+
+```typescript
+this.fn = app.use(
+  app.reg.coords.pdfPtsToCssPx,
+  app.reg.coords.cssPxToPdfPts
+);
+const px = this.fn.coords.pdfPtsToCssPx(pts);
+// Coords becomes singleton, no per-class instances
+```
+
+**Status:** Can eliminate class instantiation
+
+#### 3. UIWebView - Only 2 methods needed
+
+**Used by:** PaperPrinter (holds instance)  
+**Methods used:**
+
+- `init()` - move to constructor
+- `displayPdfPanel()` - called 2 times
+
+**Current pattern:**
+
+```typescript
+this.uiwebview = new UIWebView(this.app);
+this.uiwebview.init();
+await this.uiwebview.displayPdfPanel();
+```
+
+**With Registry:**
+
+```typescript
+this.fn = app.use(app.reg.uiwebview.displayPdfPanel);
+await this.fn.uiwebview.displayPdfPanel();
+// UIWebView becomes singleton
+```
+
+**Status:** Can eliminate class instantiation
+
+---
+
+### ❓ Needs Investigation - Possible Whole Class Usage
+
+#### 4. UIMenu - Created and stored in arrays
+
+**Used by:** UIMenuMgr  
+**Pattern:**
+
+```typescript
+const menu = new UIMenu(app, id, displayName, ...);
+this.menus.push(menu);  // Stored for later use
+// Later: iterate through menus, call various methods
+```
+
+**Question:** Could we use method-based approach instead?  
+**Status:** NEEDS REVIEW - Currently assumes whole class needed
+
+---
+
+### ✅ Confirmed Needs Whole Class
+
+#### 5. DocInfo_PDF and DocInfo_PaperPrinter - Data containers
+
+**Used by:** PDF, PaperPrinter  
+**Reason:** Data objects with 10+ properties accessed throughout codebase
+
+```typescript
+this.docInfo = new DocInfo_PDF(app);
+// Then accessed: docInfo.pdfDoc, docInfo.pageTotal, docInfo.theme, etc.
+```
+
+**Status:** Keep as-is - data container pattern
+
+#### 6. Persist - Factory pattern with dynamic properties
+
+**Used by:** UI, UIMenu  
+**Reason:** Creates dynamic properties via `Object.defineProperty()`
+
+```typescript
+class Persist {
+  static readonly id = 'persist';  // That's it!
+  static create(app: App): Persist {
+    return new Persist(app);
+  }
+  private constructor(app: App) {}
+  register(name: string): this { /* ... */ }
+}
+
+// Usage
+this.fn = app.use(app.reg.persist.create);
+this.persist = this.fn.persist.create(app);
+this.persist.register('toolbar_pos');
+this.persist.toolbar_pos = 100;  // Dynamic property
+```
+
+**Status:** Factory pattern - each component gets own instance
+
+---
+
 ## Overview
 
 This document outlines a comprehensive migration plan to replace the current dependency injection pattern where every class receives a copy of `app` and accesses other classes via `this.app.componentName`, along with eliminating the requirement for `init()` routines.
@@ -9,9 +790,10 @@ This document outlines a comprehensive migration plan to replace the current dep
 1. **Eliminate tight coupling**: Remove the need for classes to hold references to the entire `app` object
 2. **Lazy initialization**: Construct components only when first used, not at startup
 3. **Explicit dependencies**: Each class constructor explicitly declares what it needs via a Registry
-4. **Remove init() methods**: Eliminate the need for separate initialization routines
-5. **Type safety**: Maintain strong typing throughout the migration
-6. **Minimal startup overhead**: Only construct App and Registry at startup (Registry creates Diagnostics internally)
+4. **Remove init() methods**: Eliminate two-phase construction - all initialization happens in constructor
+5. **Keep done() methods**: Preserve explicit cleanup methods for resource disposal
+6. **Type safety**: Maintain strong typing throughout the migration
+7. **Minimal startup overhead**: Only construct App and Registry at startup (Registry creates Diagnostics internally)
 
 ## Current Architecture Problems
 
@@ -19,7 +801,7 @@ This document outlines a comprehensive migration plan to replace the current dep
 
 1. **Tight Coupling**: Every class holds a reference to `app` and can access any component, creating implicit dependencies
 2. **Eager Initialization**: All components are constructed at startup, even if never used
-3. **Two-Phase Construction**: Constructor + `init()` creates complexity and potential for misuse
+3. **Two-Phase Construction**: Constructor + `init()` creates complexity and initialization order dependencies
 4. **Dependency Graph**: Hard to see what a class actually depends on without reading its entire implementation
 5. **Testing Complexity**: Difficult to mock dependencies when everything is accessed via `this.app.*`
 
@@ -37,12 +819,12 @@ class PDF {
 
   init(): void {
     this.tempPdfs = [];
-    this.coords.init();
+    this.coords.init();  // Two-phase construction dependency
   }
 
   someMethod() {
-    const tokens = this.app.stylize.getTokens(...);
-    const ui = this.app.ui.showErrorMessage(...);
+    const tokens = this.app.stylize.getTokens(...);  // Implicit dependency
+    const ui = this.app.ui.showErrorMessage(...);     // Implicit dependency
   }
 }
 ```
@@ -63,44 +845,48 @@ class PDF {
 ```typescript
 // Target pattern - PDF class example
 class PDF {
-  private deps: PDFDependencies;
+  static readonly id = 'pdf';  // That's it! Registry finds methods via PDF.prototype
+  
+  private fn: FnImport_t;
+  private dx: Diagnostics;
+  private tempPdfs: string[] = [];
 
   constructor(app: App) {
-    // Request by method names - Registry figures out which component has each method
-    this.deps = app.use({
-      getTokens: [], // Registry finds this in Stylize
-      getThemes: [], // Registry finds this in Stylize
-      showErrorMessage: [], // Registry finds this in UI
-      showInfoMessage: [], // Registry finds this in UI
-      fileRead: [], // Registry finds this in OS
-      fileWrite: [], // Registry finds this in OS
-      create: [], // Registry finds this in Diagnostics (dx)
-      sub: [], // Registry finds this in Diagnostics (dx)
-      out: [], // Registry finds this in Diagnostics (dx)
-    });
+    // Request via app.reg - Registry resolves to component methods
+    // dx.sub is always available (from always: ['dx.sub'])
+    this.fn = app.use(
+      app.reg.stylize.getTokens,
+      app.reg.stylize.getThemes,
+      app.reg.ui.showErrorMessage,
+      app.reg.ui.showInfoMessage,
+      app.reg.os.fileRead,
+      app.reg.os.fileWrite,
+      app.reg.coords.pdfPtsToCssPx,  // Coords is singleton, not per-instance
+      app.reg.coords.cssPxToPdfPts,
+    );
 
     // Create Diagnostics instance for this class
-    this.dx = this.deps.dx.create('PDF');
-
-    // Create Coords instance (request class reference)
-    this.coords = new Coords(app);
+    this.dx = this.fn.dx.sub('PDF');
+    
+    // All initialization happens here - no separate init() needed
+    this.tempPdfs = [];
   }
 
   async renderPage(pageNum: number): Promise<void> {
-    const subDx = this.deps.dx.sub('renderPage');
+    const subDx = this.fn.dx.sub('renderPage');
 
     try {
       // Use requested methods - access via component name (organized by Registry)
-      const tokens = await this.deps.stylize.getTokens('code', 'javascript', 'theme');
-      this.deps.ui.showInfoMessage(`Rendering page ${pageNum}`);
+      const tokens = await this.fn.stylize.getTokens('code', 'javascript', 'theme');
+      this.fn.ui.showInfoMessage(`Rendering page ${pageNum}`);
 
-      const content = this.deps.os.fileRead('template.html');
+      const content = this.fn.os.fileRead('template.html');
     } catch (err) {
       // Error handling: log via Diagnostics and show user-friendly error
       subDx.out(
         `Failed to render page ${pageNum}: ${err instanceof Error ? err.message : String(err)}`
       );
-      this.deps.ui.showErrorMessage(`Failed to render page ${pageNum}. Please try again.`);
+      this.fn.ui.showErrorMessage(`Failed to render page ${pageNum}. Please try again.`);
       throw err; // Re-throw to allow caller to handle
     }
   }
@@ -108,11 +894,11 @@ class PDF {
 
 // UI class example
 class UI {
-  private deps: UIDependencies;
+  private fn: UIDependencies;
   public readonly id = 'ui'; // Every class must have id property or id() getter
 
   constructor(app: App) {
-    this.deps = app.use({
+    this.fn = app.use({
       create: [], // Registry finds this in Diagnostics
       sub: [], // Registry finds this in Diagnostics
       out: [], // Registry finds this in Diagnostics
@@ -122,18 +908,18 @@ class UI {
       showWarningMessage: [], // Registry finds this in VSCodeAPIs
     });
 
-    this.dx = this.deps.dx.create('UI');
+    this.dx = this.fn.dx.create('UI');
   }
 
   showError(msg: string): void {
     try {
       // Access methods via component organization
       // Check dependencies are available before using
-      if (!this.deps.vscodeapis || !this.deps.dx) {
+      if (!this.fn.vscodeapis || !this.fn.dx) {
         throw new Error('Required dependencies not available');
       }
-      this.deps.vscodeapis.showErrorMessage(msg);
-      this.deps.dx.out(`Error: ${msg}`);
+      this.fn.vscodeapis.showErrorMessage(msg);
+      this.fn.dx.out(`Error: ${msg}`);
     } catch (err) {
       // Fallback: log to console if diagnostics unavailable
       console.error(`UI.showError failed: ${err instanceof Error ? err.message : String(err)}`);
@@ -143,11 +929,11 @@ class UI {
 
 // Example with ambiguous method names (use component prefix)
 class PaperPrinter {
-  private deps: PaperPrinterDependencies;
+  private fn: PaperPrinterDependencies;
   public readonly id = 'paperprinter'; // Every class must have id property or id() getter
 
   constructor(app: App) {
-    this.deps = app.use({
+    this.fn = app.use({
       // If method names are unique across all components, just use method name
       renderPage: [],
       getCurrentPdfDoc: [],
@@ -170,28 +956,28 @@ class PaperPrinter {
       // 'diagnostics.out': [],  // Only needed if 'out' exists in multiple components
     });
 
-    this.dx = this.deps.dx.create('PaperPrinter');
+    this.dx = this.fn.dx.create('PaperPrinter');
   }
 
   async handlePrint(): Promise<void> {
-    const subDx = this.deps.dx.sub('handlePrint');
+    const subDx = this.fn.dx.sub('handlePrint');
 
     try {
       // Check dependencies are available
-      if (!this.deps.tabinspector || !this.deps.stylize || !this.deps.pdf) {
+      if (!this.fn.tabinspector || !this.fn.stylize || !this.fn.pdf) {
         throw new Error('Required dependencies not available for printing');
       }
 
-      const content = this.deps.tabinspector.getActiveTabContent();
-      const lang = this.deps.tabinspector.getLanguageId();
-      const tokens = await this.deps.stylize.getTokens(content, lang, 'github-light');
+      const content = this.fn.tabinspector.getActiveTabContent();
+      const lang = this.fn.tabinspector.getLanguageId();
+      const tokens = await this.fn.stylize.getTokens(content, lang, 'github-light');
 
-      this.deps.pdf.setTokensForPageRender(tokens, 'github-light');
-      await this.deps.pdf.renderPage(0);
+      this.fn.pdf.setTokensForPageRender(tokens, 'github-light');
+      await this.fn.pdf.renderPage(0);
     } catch (err) {
       // Error handling: log and show user-friendly message
       subDx.out(`Print failed: ${err instanceof Error ? err.message : String(err)}`);
-      this.deps.ui.showErrorMessage(
+      this.fn.ui.showErrorMessage(
         'Failed to print document. Please check your selection and try again.'
       );
       // Don't re-throw - gracefully degrade
@@ -206,7 +992,7 @@ class PaperPrinter {
 2. **Registry Resolution**: Registry automatically finds which component has each method
 3. **Ambiguity Handling**: If same method name exists in multiple components, use `'componentName.methodName'` format
 4. **Return Format**: Registry returns object organized by component: `{ dx: { create, sub, out }, ui: { showErrorMessage }, stylize: { getTokens } }`
-5. **Access Phase**: Use `this.deps.componentName.methodName()` - same access pattern as current `app.componentName.methodName()`
+5. **Access Phase**: Use `this.fn.componentName.methodName()` - same access pattern as current `app.componentName.methodName()`
 6. **Request Entire Class**: Request entire class instance by class name or short name: `app.use({ Diagnostics: [] })` or `app.use({ dx: [] })`
 7. **Class References**: For class constructors, use special syntax like `Coords: []` or similar
 
@@ -251,28 +1037,33 @@ export const kId = {
   coords: 'coords',
   persist: 'persist',
   yaml: 'yaml',
-  // ... all component IDs
-} as const;
+  // ... all component IDs and methods
+};
 
-// Derive type from kId values
-export type Id_t = (typeof kId)[keyof typeof kId];
-
-// Usage in classes:
+// Usage in classes - every component just declares its id:
 class Diagnostics {
-  public readonly id: Id_t = kId.dx;
+  static readonly id = 'dx';  // That's it!
+  // Public methods: create(), sub(), out() - found via Diagnostics.prototype
 }
 
 class UI {
-  public readonly id: Id_t = kId.ui;
+  static readonly id = 'ui';  // That's it!
+  // Public methods: showError(), showInfo(), showWarning() - found via UI.prototype
 }
 ```
 
+Registry builds this structure dynamically:
+- Reads `Component.id` from each class
+- Hangs empty placeholders on `this`: `this.dx = {}`, `this.ui = {}`
+- When `use()` is called, looks up methods via `Component.prototype.hasOwnProperty(methodName)`
+- Components use via `app.reg.dx`, `app.reg.ui` (for intellisense)
+
 This provides:
 
-- Single source of truth for all IDs (`kId`)
-- Type safety (`Id_t` ensures only valid IDs are used)
-- Autocomplete support
-- Refactoring safety (renaming `kId.dx` updates all references)
+- Single source of truth: **the actual class prototype**
+- No arrays to maintain
+- No type exports needed
+- Can't get out of sync - prototype IS the truth
 
 ## Migration Stages
 
@@ -362,13 +1153,13 @@ This provides:
 **Note**:
 
 - Diagnostics is owned by Registry and created immediately at Registry construction. All components request Diagnostics via Registry.
-- **Critical**: Every migrated class must add `public readonly id: Id_t = kId.xxx` (using the appropriate ID from `kId`)
+- **Critical**: Every migrated class must add `static readonly id = 'xxx'` - that's it! Registry finds methods via prototype
 
 #### 2.1: Migrate OS Classes
 
 - [ ] Update OS base class constructor to accept App
-- [ ] Remove `app` parameter
-- [ ] Add `public readonly id: Id_t = kId.os` (or appropriate ID)
+- [ ] Remove `app` parameter  
+- [ ] Add `static readonly id = 'os'` - that's it!
 - [ ] Request dependencies via Registry:
   - `Diagnostics` (for logging)
   - `VSCodeAPIs` (for extension path)
@@ -394,12 +1185,12 @@ This provides:
 
 #### 3.1: Migrate VSCodeAPIs
 
-- [ ] Update VSCodeAPIs constructor to accept App + vscode + context
-- [ ] Remove `app` parameter
+- [ ] Add `static readonly id = 'vscodeapis'` - that's it!
+- [ ] Update constructor to use `app.use()`
+- [ ] VSCodeAPIs accesses `app.vscode` and `app.context` directly (App stores these)
 - [ ] Request Diagnostics via Registry
 - [ ] Move `init()` logic (command registration) into constructor
-- [ ] Update Registry factory for VSCodeAPIs
-- [ ] Update App to construct VSCodeAPIs via Registry
+- [ ] Registry creates VSCodeAPIs like any other component: `new VSCodeAPIs(app)`
 
 #### 3.2: Migrate UI
 
@@ -690,65 +1481,156 @@ Registry functionality is exposed directly on App: `app.use()`. Registry is stil
 
 ## Registry Implementation Details
 
-### Component Naming Convention
+### Class Declaration Pattern
 
-Registry uses **short names/aliases** (not class names) for consistency with the current App pattern:
-
-- `dx` ? Diagnostics class
-- `vscodeapis` ? VSCodeAPIs class
-- `ui` ? UI class
-- `os` ? OS class
-- `pdf` ? PDF class
-- `stylize` ? Stylize class
-- `tabinspector` ? TabInspector class
-- `uimenumgr` ? UIMenuMgr class
-- etc.
-
-When requesting dependencies, use these short names:
+Every class declares what it provides:
 
 ```typescript
-registry.use({
-  dx: ['create', 'sub', 'out'], // Not 'diagnostics' or 'Diagnostics'
-  ui: ['showErrorMessage'],
-  vscodeapis: ['getActiveTextEditor'],
-});
+class UI {
+  // Component ID (lowercase)
+  static readonly id = 'ui';
+  
+  // Exported methods (what others can use)
+  static readonly fn: FnExport_t = [
+    'showErrorMessage',
+    'showInfoMessage',
+    'showWarningMessage',
+  ];
+  
+  // Imported methods (what this component needs)
+  private fn: FnImport_t;
+  
+  constructor(app: App) {
+    // dx always available
+    this.fn = app.use(
+      app.reg.os.fileRead,
+    );
+  }
+}
 ```
 
-This matches the current `app.dx`, `app.ui`, `app.vscodeapis` pattern for easy migration.
+### kId Structure (Built by Registry)
+
+Registry scans all classes at startup and builds hierarchical kId:
 
 ```typescript
-type DependencyRequest = {
-  [componentName: string]: string[] | string; // Methods array or 'ClassName' string
+const kId = {
+  dx: {
+    create: 'create',
+    sub: 'sub',
+    out: 'out',
+  },
+  ui: {
+    showErrorMessage: 'showErrorMessage',
+    showInfoMessage: 'showInfoMessage',
+  },
+  pdf: {
+    generatePdf: 'generatePdf',
+    renderPage: 'renderPage',
+  },
+  // ... all components
+};
+```
+
+### Factory vs Singleton
+
+**Singletons** (Registry creates once):
+
+- `dx`, `ui`, `os`, `pdf`, `stylize`, `tabinspector`, `uimenumgr`, `vscodeapis`, `coords`, `uiwebview`
+
+**Factories** (static create() returns new instance):
+
+- `yaml`, `persist`, `docinfo_pdf`, `docinfo_paperprinter`
+
+```typescript
+// src/types/Registry_t.ts
+export type Use_t = string[];
+export type FnExport_t = readonly string[];
+export type FnImport_t = {
+  [componentId: string]: {
+    [methodName: string]: Function;
+  };
 };
 
-class Registry {
-  private instances: Map<string, any> = new Map();
-  private factories: Map<string, (registry: Registry) => any> = new Map();
-  private diagnostics: Diagnostics;
+// src/Registry.ts
+import type { FnExport_t, FnImport_t } from './types/Registry_t';
+import { Diagnostics } from './Diagnostics';
+import { VSCodeAPIs } from './VSCodeAPIs';
+import { UI } from './UI';
+import { PDF } from './PDF';
+import { Stylize } from './Stylize';
+import { TabInspector } from './TabInspector';
+import { UIMenuMgr } from './UIMenuMgr';
+import { OS } from './OS';
+// ... import all components
 
-  constructor(
-    private vscode: any,
-    private context: any
-  ) {
-    // Create Diagnostics immediately (needed for debugging during construction)
-    this.diagnostics = new Diagnostics('Registry', undefined, null, null);
-    this.instances.set('dx', this.diagnostics);
+// Helper to build kId from component class metadata
+function buildKId(components: Array<{ readonly id: string; readonly fn: FnExport_t }>) {
+  const result: Record<string, Record<string, string>> = {};
+  
+  for (const Component of components) {
+    const componentId = Component.id;
+    result[componentId] = {};
+    
+    for (const methodName of Component.fn) {
+      result[componentId][methodName] = methodName;
+    }
+  }
+  
+  return result;
+}
+
+// Build kId once at module level - it's just derived data from component metadata
+const components = [
+  Diagnostics,
+  VSCodeAPIs,
+  UI,
+  PDF,
+  Stylize,
+  TabInspector,
+  UIMenuMgr,
+  OS,
+  // ... all component classes
+];
+
+export const kId = buildKId(components);
+
+// Registry class - manages runtime state only
+class Registry {
+  private instances = new Map<string, unknown>();
+  private factories = new Map<string, (app: App) => unknown>();
+  private dx: Diagnostics;
+  private app: App;
+
+  constructor(app: App) {
+    this.app = app;
+    this.dx = new Diagnostics('Registry', undefined, null, app);
+    this.instances.set('dx', this.dx);
     this.registerFactories();
   }
 
-  use<T>(request: DependencyRequest): T {
-    const result: any = {};
+  use(...methodIds: string[]): FnImport_t {
+    const result: Partial<FnImport_t> = {};
+    
+    // Parse method IDs (like 'app.reg.pdf.generatePdf', 'app.reg.ui.showError') and group by component
+    const componentMethods = new Map<string, Set<string>>();
+    
+    for (const methodId of methodIds) {
+      // methodId is a string like 'generatePdf' from app.reg.pdf.generatePdf
+      // Lookup which component owns this method by checking this.components
+      // ... (lookup logic)
+    }
 
-    for (const [componentName, methods] of Object.entries(request)) {
+    for (const [componentName, methods] of componentMethods) {
       if (componentName === 'dx') {
-        // Diagnostics is always available
-        result.dx = this.createScopedAccess(this.diagnostics, methods as string[]);
+        // Diagnostics is always available (created at Registry construction)
+        result[componentName] = this.createScopedAccess(this.dx, Array.from(methods));
       } else {
         // Get or create component instance lazily
         if (!this.instances.has(componentName)) {
           const factory = this.factories.get(componentName);
           if (!factory) throw new Error(`No factory for component: ${componentName}`);
-          this.instances.set(componentName, factory(this));
+          this.instances.set(componentName, factory(this.app));
         }
 
         const instance = this.instances.get(componentName);
@@ -788,33 +1670,6 @@ class Registry {
     }
     return scoped;
   }
-
-  private registerFactories(): void {
-    // Register factories using short names (aliases), not class names
-    // This matches the current app.dx, app.ui pattern for consistency
-
-    this.factories.set('vscodeapis', registry => {
-      return new VSCodeAPIs(registry, this.vscode, this.context);
-    });
-
-    this.factories.set('ui', registry => {
-      return new UI(registry);
-    });
-
-    this.factories.set('os', registry => {
-      return OS.create(registry);
-    });
-
-    this.factories.set('pdf', registry => {
-      return new PDF(registry);
-    });
-
-    this.factories.set('stylize', registry => {
-      return new Stylize(registry);
-    });
-
-    // ... register all other components with their short names
-  }
 }
 ```
 
@@ -845,26 +1700,7 @@ class Registry {
 
 Use feature flags instead of commented-out code or multiple branches:
 
-**Implementation**:
-
-```typescript
-// Feature flag configuration
-const USE_REGISTRY = process.env.USE_REGISTRY === 'true' || false;
-
-class App {
-  constructor(context: ExtensionContext, vscode: typeof import('vscode')) {
-    if (USE_REGISTRY) {
-      this.registry = new Registry(vscode, context, this);
-      // Use Registry pattern
-    } else {
-      // Legacy pattern: eager initialization
-      this.vscodeapis = new VSCodeAPIs(this, vscode, context);
-      this.ui = new UI(this);
-      // ... etc
-    }
-  }
-}
-```
+**Implementation**: Feature flags can be implemented if gradual rollout is needed during migration stages.
 
 **Rollout Strategy**:
 
@@ -1002,13 +1838,14 @@ class Registry {
 
 ## Success Criteria
 
-1. ? No `app` parameter in component constructors
-2. ? No `init()` methods required
-3. ? Components constructed lazily on first use
-4. ? Explicit dependency declarations in constructors
-5. ? All tests passing
-6. ? No performance regressions
-7. ? Code is cleaner and more maintainable.
+1. ✓ App reference injected via constructor - components receive `app: App` to access Registry
+2. ✓ No `init()` methods - all initialization in constructors
+3. ✓ Components constructed lazily on first use by Registry
+4. ✓ Explicit dependency declarations in constructors via `app.use()`
+5. ✓ `done()` methods preserved for explicit cleanup
+6. ✓ All tests passing
+7. ✓ No performance regressions
+8. ✓ Code is cleaner and more maintainable
 
 ## Timeline Estimate
 
