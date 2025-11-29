@@ -119,7 +119,7 @@ export class Diagnostics {
     // Note: Cannot use this.require() here as it would require creating a sub-diagnostics
     // which would cause infinite recursion. Simple validation instead.
     if (!args.name) {
-      this.print('❌ Diagnostics.sub() missing required parameter: name');
+      throw new Error('Diagnostics.sub() missing required parameter: name');
     }
     const { name, debugOn } = args;
     const result = new Diagnostics({ name, debugOn, parent: this, app: this.app });

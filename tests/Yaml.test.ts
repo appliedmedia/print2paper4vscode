@@ -13,7 +13,7 @@ describe('Yaml', () => {
   let yamlPath: string;
 
   beforeEach(() => {
-    app = new App(mockContext, mockVSCode);
+    app = new App({ context: mockContext, vscode: mockVSCode });
     tempDir = path.join(tmpdir(), `yaml-test-${Date.now()}`);
     fs.mkdirSync(tempDir, { recursive: true });
     yamlPath = path.join(tempDir, 'test.yaml');

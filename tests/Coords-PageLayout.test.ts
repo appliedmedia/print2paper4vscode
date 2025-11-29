@@ -9,7 +9,7 @@ describe('Coords Advanced Unit Tests', () => {
   let coords: Coords;
 
   beforeEach(() => {
-    app = new App(mockContext, mockVSCode);
+    app = new App({ context: mockContext, vscode: mockVSCode });
     app.init();
     coords = new Coords(app);
     coords.init();

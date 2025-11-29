@@ -248,12 +248,10 @@ export class Stylize {
     code: string;
     languageId: LanguageId_t;
     theme?: string;
-    pageBegin?: number;
-    pageEnd?: number;
   }): Promise<ThemedToken[][]> {
     const dx = this.dx.sub({ name: 'tokenize' });
     dx.require(args, ['code', 'languageId']);
-    const { code, languageId, theme, pageBegin, pageEnd } = args;
+    const { code, languageId, theme } = args;
 
     try {
       await this.validateHighlighter(languageId);

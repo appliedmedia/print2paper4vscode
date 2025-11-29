@@ -38,7 +38,7 @@ type components_t = {
  * @output Initialized component ecosystem, lifecycle management, template utilities
  *
  * @example
- * const app = new App(context, vscode);
+ * const app = new App({ context, vscode });
  * app.init();
  * const replaced = app.templateDictReplace('Hello {{name}}', {name: 'World'});
  */

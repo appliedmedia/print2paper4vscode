@@ -10,7 +10,7 @@ describe('DocInfo_PDF', () => {
   let docInfo: DocInfo_PDF;
 
   beforeEach(() => {
-    app = new App(mockContext, mockVSCode);
+    app = new App({ context: mockContext, vscode: mockVSCode });
     app.init();
     docInfo = new DocInfo_PDF(app);
   });

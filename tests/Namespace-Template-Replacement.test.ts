@@ -24,7 +24,7 @@ describe('Namespace Template Replacement - Auto-Injection', () => {
   let app: App;
 
   beforeEach(() => {
-    app = new App(mockContext, mockVSCode);
+    app = new App({ context: mockContext, vscode: mockVSCode });
   });
 
   afterEach(() => {
@@ -58,7 +58,7 @@ describe('Namespace Template Replacement - New Convention Verification', () => {
   };
 
   beforeEach(() => {
-    app = new App(mockContext, mockVSCode);
+    app = new App({ context: mockContext, vscode: mockVSCode });
   });
 
   afterEach(() => {
@@ -142,7 +142,7 @@ describe('Namespace Template Replacement - UIMenu New Convention', () => {
   };
 
   beforeEach(() => {
-    app = new App(mockContext, mockVSCode);
+    app = new App({ context: mockContext, vscode: mockVSCode });
   });
 
   afterEach(() => {
@@ -221,7 +221,7 @@ describe('Namespace Template Replacement - UI.yaml New Convention', () => {
   };
 
   beforeEach(() => {
-    app = new App(mockContext, mockVSCode);
+    app = new App({ context: mockContext, vscode: mockVSCode });
   });
 
   afterEach(() => {
@@ -291,7 +291,7 @@ describe('Namespace Template Replacement - UIWebView New Convention', () => {
   };
 
   beforeEach(() => {
-    app = new App(mockContext, mockVSCode);
+    app = new App({ context: mockContext, vscode: mockVSCode });
   });
 
   afterEach(() => {
@@ -319,7 +319,7 @@ describe('Namespace Template Replacement - Complex Scenarios with NEW Convention
   };
 
   beforeEach(() => {
-    app = new App(mockContext, mockVSCode);
+    app = new App({ context: mockContext, vscode: mockVSCode });
   });
 
   afterEach(() => {

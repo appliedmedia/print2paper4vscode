@@ -91,6 +91,7 @@ export class UI {
       this.messageHandlers.set(messageType, []);
     }
     this.messageHandlers.get(messageType)!.push(handler);
+    dx.done();
   }
 
   // Unregister a message handler

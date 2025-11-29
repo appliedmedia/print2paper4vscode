@@ -5,7 +5,7 @@ import { mockContext, mockVSCode } from './test-utils.js';
 
 describe('System Integration Tests', () => {
   test('should initialize all components correctly', async () => {
-    const app = new App(mockContext, mockVSCode);
+    const app = new App({ context: mockContext, vscode: mockVSCode });
     app.init();
     
     // Verify all major components are created
@@ -22,7 +22,7 @@ describe('System Integration Tests', () => {
   });
 
   test('should handle Shiki theme workflow', async () => {
-    const app = new App(mockContext, mockVSCode);
+    const app = new App({ context: mockContext, vscode: mockVSCode });
     app.init();
     
     await app.stylize.init();
@@ -47,7 +47,7 @@ describe('System Integration Tests', () => {
   });
 
   test('should validate template system integration', async () => {
-    const app = new App(mockContext, mockVSCode);
+    const app = new App({ context: mockContext, vscode: mockVSCode });
     app.init();
     
     // Test template replacement
@@ -67,7 +67,7 @@ describe('System Integration Tests', () => {
   });
 
   test('should handle page size and orient functionality', async () => {
-    const app = new App(mockContext, mockVSCode);
+    const app = new App({ context: mockContext, vscode: mockVSCode });
     app.init();
 
     // Test page size menu items
@@ -90,7 +90,7 @@ describe('System Integration Tests', () => {
   });
 
   test('should handle PDF generation workflow', async () => {
-    const app = new App(mockContext, mockVSCode);
+    const app = new App({ context: mockContext, vscode: mockVSCode });
     app.init();
     
     // Set up document
@@ -111,7 +111,7 @@ describe('System Integration Tests', () => {
   });
 
   test('should coordinate between components', async () => {
-    const app = new App(mockContext, mockVSCode);
+    const app = new App({ context: mockContext, vscode: mockVSCode });
     app.init();
     
     // Test that components can access each other

@@ -8,7 +8,7 @@ describe('Edge Cases and Error Handling', () => {
   let app: App;
 
   beforeEach(() => {
-    app = new App(mockContext, mockVSCode);
+    app = new App({ context: mockContext, vscode: mockVSCode });
     app.init();
     installHeaderFooterMenuStubs(app);
     app.paperprinter.docInfo.printTitle = 'Test Document';

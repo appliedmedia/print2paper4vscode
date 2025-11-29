@@ -9,7 +9,7 @@ describe('TabInspector', () => {
   let tabInspector: TabInspector;
 
   beforeEach(() => {
-    app = new App(mockContext, mockVSCode);
+    app = new App({ context: mockContext, vscode: mockVSCode });
     tabInspector = new TabInspector(app);
     tabInspector.init();
   });

@@ -377,9 +377,7 @@ export class PDF {
       await this.app.stylize.tokenize({
         code: this.docInfo.code,
         languageId: this.docInfo.languageId,
-        theme: this.docInfo.theme,
-        pageBegin: 1, // render all pages
-        pageEnd: 0 // 0 means all pages
+        theme: this.docInfo.theme
       });
 
       // Finish the PDF (sets this.docInfo.pdfDoc)
