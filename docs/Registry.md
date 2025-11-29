@@ -1670,35 +1670,6 @@ class Registry {
     }
     return scoped;
   }
-
-  // NOTE: This is OLD DESIGN - keeping for reference only
-  // In final design, Registry doesn't have registerFactories()
-  // Registry constructor builds structure directly from components array
-  // and uses prototype to discover methods
-  private registerFactories_OBSOLETE(): void {
-    // This was the old approach - NO LONGER USED
-    this.factories.set('vscodeapis', registry => {
-      return new VSCodeAPIs(registry);
-    });
-
-    this.factories.set('ui', registry => {
-      return new UI(registry);
-    });
-
-    this.factories.set('os', registry => {
-      return OS.create(registry);
-    });
-
-    this.factories.set('pdf', registry => {
-      return new PDF(registry);
-    });
-
-    this.factories.set('stylize', registry => {
-      return new Stylize(registry);
-    });
-
-    // ... register all other components with their short names
-  }
 }
 ```
 
@@ -1729,29 +1700,7 @@ class Registry {
 
 Use feature flags instead of commented-out code or multiple branches:
 
-**Implementation**:
-
-```typescript
-// Feature flag configuration
-// NOTE: This is OLD DESIGN - keeping for reference only
-// In final design, Registry only takes { app, components, always }
-const USE_REGISTRY_OBSOLETE = process.env.USE_REGISTRY === 'true' || false;
-
-class App_OBSOLETE {
-  constructor(context: ExtensionContext, vscode: typeof import('vscode')) {
-    // CURRENT DESIGN:
-    this.vscode = vscode;
-    this.context = context;
-    this.dx = new Diagnostics(/* ... */);
-    this.reg = new Registry({ 
-      app: this, 
-      components: [Diagnostics, VSCodeAPIs, UI, PDF, /* ... */], 
-      always: ['dx.sub'] 
-    });
-    // Components access vscode/context via app: app.vscode, app.context
-  }
-}
-```
+**Implementation**: Feature flags can be implemented if gradual rollout is needed during migration stages.
 
 **Rollout Strategy**:
 
