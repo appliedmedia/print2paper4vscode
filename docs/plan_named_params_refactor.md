@@ -945,28 +945,16 @@ updateGlobalState(args: {
 
 ---
 
-### `setPanelTitle(id, title)`
+### `setPanelTitle(id, title)` ⚠️ REMOVE
 
 **Current signature:** `setPanelTitle(id: WebviewPanelId_t, title: string): void`
 
-**New signature:**
+**Recommendation:** **DELETE THIS METHOD** - No callers found in src/ or tests/. This is dead code.
 
-```typescript
-setPanelTitle(args: {
-  id: WebviewPanelId_t;
-  title: string;
-}): void
-```
+**Action:**
 
-**dx.require:** `['id', 'title']`
-
-**Callers to update:**
-
-- None found in src/ or tests/
-
-**Typedefs to update:**
-
-- None
+- Remove method from VSCodeAPIs.ts
+- No tests to update (none exist)
 
 ---
 
@@ -1081,28 +1069,16 @@ fileWrite(args: {
 
 ---
 
-### `fileCopy(srcPath, destPath)`
+### `fileCopy(srcPath, destPath)` ⚠️ REMOVE
 
 **Current signature:** `fileCopy(srcPath: string, destPath: string): void`
 
-**New signature:**
+**Recommendation:** **DELETE THIS METHOD** - Only test caller, no production usage.
 
-```typescript
-fileCopy(args: {
-  srcPath: string;
-  destPath: string;
-}): void
-```
+**Action:**
 
-**dx.require:** `['srcPath', 'destPath']`
-
-**Callers to update:**
-
-- `tests/OS.test.ts:53` - test case for file copy operations
-
-**Typedefs to update:**
-
-- None
+- Remove method from OS.ts
+- Update `tests/OS.test.ts:53` to remove file copy test or test alternative approach
 
 ---
 
@@ -1167,7 +1143,7 @@ No methods in this file meet the refactoring criteria.
 
 ## Coords.ts
 
-### `pageDimensionsInchesOrMmToPdfPts(widthInchesOrMm, heightInchesOrMm, unit)`
+### `pageDimensionsInchesOrMmToPdfPts(widthInchesOrMm, heightInchesOrMm, unit)` ⚠️ REMOVE
 
 **Current signature:**
 
@@ -1179,28 +1155,16 @@ pageDimensionsInchesOrMmToPdfPts(
 ): { widthPts: number; heightPts: number }
 ```
 
-**New signature:**
+**Recommendation:** **DELETE THIS METHOD** - Only test callers (4), no production usage.
 
-```typescript
-pageDimensionsInchesOrMmToPdfPts(args: {
-  widthInchesOrMm: number;
-  heightInchesOrMm: number;
-  unit: 'in' | 'mm';
-}): { widthPts: number; heightPts: number }
-```
+**Action:**
 
-**dx.require:** `['widthInchesOrMm', 'heightInchesOrMm', 'unit']`
-
-**Callers to update:**
-
-- `tests/Coords.test.ts:24` - convert inches to PDF points test
-- `tests/Coords.test.ts:30` - convert millimeters to PDF points test
-- `tests/Coords-PageLayout.test.ts:25` - A4 page dimensions test
-- `tests/Coords-PageLayout.test.ts:32` - Letter page dimensions test
-
-**Typedefs to update:**
-
-- None
+- Remove method from Coords.ts
+- Update or remove tests:
+  - `tests/Coords.test.ts:24` - convert inches to PDF points test
+  - `tests/Coords.test.ts:30` - convert millimeters to PDF points test
+  - `tests/Coords-PageLayout.test.ts:25` - A4 page dimensions test
+  - `tests/Coords-PageLayout.test.ts:32` - Letter page dimensions test
 
 ---
 
@@ -1299,9 +1263,16 @@ This project is pre-1.0; breaking changes are permitted. All affected call sites
 
 **INCLUDED (will be refactored):**
 
-- **~32-38 methods** need refactoring (includes UIMenu.constructor and UIMenuMgr.createMenu)
-- **~190-230 call sites** need updating (includes Diagnostics.sub with ~70-90 calls based on `rg -nP '\.sub\s*\(' src --type=ts`, plus other high-frequency methods like registerMessageHandler, constructors, and handler methods)
+- **~24-29 methods** need refactoring (includes UIMenu.constructor and UIMenuMgr.createMenu)
+- **~115-145 call sites** need updating (includes Diagnostics.sub with ~70-90 calls based on `rg -nP '\.sub\s*\(' src --type=ts`, plus other high-frequency methods like registerMessageHandler, constructors, and handler methods)
 - Methods with clear benefit: 2+ simple/primitive parameters, OR methods with object params where the calling pattern is already config-based (e.g., UIMenu initialization)
+
+**REMOVED (dead code):**
+
+- **3 methods** marked for deletion - only test callers, no production usage:
+  - `setPanelTitle` (VSCodeAPIs.ts) - no callers at all
+  - `fileCopy` (OS.ts) - 1 test caller
+  - `pageDimensionsInchesOrMmToPdfPts` (Coords.ts) - 4 test callers
 
 **EXCLUDED (remain positional):**
 
@@ -1309,4 +1280,4 @@ This project is pre-1.0; breaking changes are permitted. All affected call sites
 - Single-parameter, zero-parameter, variadic functions, type guards, and methods with object/dict/config params (except where already config-driven)
 - No effort required, no risk introduced, no double-nesting confusion
 
-**Total effort:** Focused on high-value changes that improve API clarity without unnecessary churn. Special attention to UIMenu/UIMenuMgr which will enable significant simplification in PaperPrinter.ts (menuConfigs → menus, direct object spread).
+**Total effort:** Focused on high-value changes that improve API clarity without unnecessary churn. Special attention to UIMenu/UIMenuMgr which will enable significant simplification in PaperPrinter.ts (menuConfigs → menus, direct object spread). Bonus cleanup: removing 3 dead code methods.
