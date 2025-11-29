@@ -1,5 +1,7 @@
 # Named Parameters Refactoring Plan
 
+> **Formatting:** This repo enforces only MD013 (line length) via `.markdownlint.json`; other markdown style rules are non-blocking.
+
 This document outlines the comprehensive plan for refactoring method signatures from positional parameters to named parameters (hash/object style) throughout the codebase. Each method will accept an `args` object and use `dx.require()` for mandatory parameters.
 
 ## Scope & Exclusion Rules
@@ -214,8 +216,8 @@ sub(args: { name: string; debugOn?: boolean }): Diagnostics
 
 **Callers to update:**
 
-- Hundreds of calls throughout codebase (every method creates a sub-diagnostics)
-- Search for `.sub(` pattern
+- ~70-90 calls in src/ (every method creates a sub-diagnostics)
+- Discovery: `rg -nP '\.sub\s*\(' src --type=ts`
 
 **Typedefs to update:**
 
@@ -671,6 +673,8 @@ constructor(args: {
 
 **Refactoring Note:** This was previously excluded due to `iconSlotTriad` object parameter, but actual usage in PaperPrinter.ts shows the calling pattern already uses config objects that are unpacked. Named parameters will **simplify** this by allowing direct spread: `new UIMenu({ app: this.app, ...config })` instead of unpacking each property individually.
 
+**Design Note on Handler Signatures:** Selection handlers remain positional `(menuId, menuItemId, contextDict)` to preserve ergonomic call sites and common handler signatures across UIMenu/UIMenuMgr. Only constructors/factory-style APIs move to named args. If we later refactor handlers, we will introduce a single args object and deprecate the positional form.
+
 ---
 
 ### `getItemHTML(item, flyout, defaultItemId, selectedItemId)`
@@ -751,32 +755,60 @@ createMenu(args: {
 
 - None
 
-**Refactoring Note:** This was previously excluded due to `iconSlotTriad` object parameter, but actual usage shows config-based calling pattern where every config property is unpacked to pass as individual params. After refactoring, PaperPrinter.ts can be dramatically simplified:
+**Refactoring Note:** This was previously excluded due to `iconSlotTriad` object parameter, but actual usage shows config-based calling pattern where every config property is unpacked to pass as individual params. After refactoring, PaperPrinter.ts can be dramatically simplified.
 
-**Before (current):**
+**Current state in PaperPrinter.ts (lines 307-362):**
 
 ```typescript
+const menuConfigs: Array<{
+  id: MenuId_t | string;
+  displayName: string;
+  iconSlotTriad: iconSlotTriad_t;
+  isFlyout: boolean;
+  menuItems: () => UIMenuItem_t[];
+  flyoutMenuItemIds: readonly string[];
+  selectionHandler: (menuId: MenuId_t, menuItemId: MenuItemId_t) => Promise<HandleSelection_t>;
+}> = menus.map(menuConst => {
+  return {
+    id: menuConst.id,
+    displayName: menuConst.displayName,
+    iconSlotTriad: (menuConst as { iconSlotTriad: iconSlotTriad_t }).iconSlotTriad,
+    isFlyout: menuConst.isFlyout,
+    menuItems: (this[`menuItems_${methodName}` as keyof this] as () => UIMenuItem_t[]).bind(this),
+    flyoutMenuItemIds: menuConst.flyoutMenuItemIds,
+    selectionHandler: (this[`handleSelection_${methodName}` as keyof this] as (...) => ...).bind(this),
+  };
+});
+
 menuConfigs.forEach(config => {
   const menu = this.app.uimenumgr.createMenu(
-    config.id as MenuId_t,           // Unpack
-    config.displayName,              // Unpack
-    config.iconSlotTriad,            // Unpack
-    config.isFlyout,                 // Unpack
-    config.menuItems,                // Unpack
-    [...config.flyoutMenuItemIds],   // Unpack + defensive copy
-    config.selectionHandler          // Unpack
+    config.id as MenuId_t,           // Unpack each property
+    config.displayName,
+    config.iconSlotTriad,
+    config.isFlyout,
+    config.menuItems,
+    [...config.flyoutMenuItemIds],   // Even makes defensive copy
+    config.selectionHandler
   );
   this.app.uimenumgr.addMenu(menu);
 });
 ```
 
-**After (named params):**
+**After refactoring:**
 
 ```typescript
-menus.forEach(menu => {  // Renamed: menuConfigs → menus, config → menu
-  this.app.uimenumgr.createMenu({ app: this.app, ...menu });
+const menus: Array<{  // Renamed from menuConfigs
+  // ... same type definition
+}> = kMenus.map(menuConst => {
+  // ... same mapping logic
+});
+
+menus.forEach(menu => {  // Renamed from config
+  this.app.uimenumgr.createMenu({ app: this.app, ...menu });  // Just spread!
 });
 ```
+
+This is the textbook case for named parameters: the caller already has all data in an object and must tediously unpack it to pass as positional args.
 
 Additional consideration:
 
@@ -932,7 +964,7 @@ setPanelTitle(args: {
 
 **Callers to update:**
 
-- Search for calls
+- Discovery: rely on TypeScript compiler to surface callers. Run: `npm run compile` then fix failing call sites. Optional assist: `rg -nP '\bsetPanelTitle\s*\(' src --type=ts -C2`
 
 **Typedefs to update:**
 
@@ -1068,7 +1100,7 @@ fileCopy(args: {
 
 **Callers to update:**
 
-- Search for calls
+- Discovery: rely on TypeScript compiler to surface callers. Run: `npm run compile` then fix failing call sites. Optional assist: `rg -nP '\bfileCopy\s*\(' src --type=ts -C2`
 
 **Typedefs to update:**
 
@@ -1163,7 +1195,7 @@ pageDimensionsInchesOrMmToPdfPts(args: {
 
 **Callers to update:**
 
-- Search for calls
+- Discovery: rely on TypeScript compiler to surface callers. Run: `npm run compile` then fix failing call sites. Optional assist: `rg -nP '\bpageDimensionsInchesOrMmToPdfPts\s*\(' src --type=ts -C2`
 
 **Typedefs to update:**
 
@@ -1242,6 +1274,10 @@ No methods in this file meet the refactoring criteria.
 
 This refactoring focuses on methods where named parameters provide clear benefits: multi-parameter methods with simple arguments, and large constructors/methods with many parameters. By excluding single-parameter methods, variadic functions, type guards, and methods that already use object parameters, we avoid unnecessary complexity while still achieving the goal of explicit, self-documenting API calls.
 
+### Versioning and BC Policy
+
+This project is pre-1.0; breaking changes are permitted. All affected call sites are internal to this repo and will be updated in the same changeset. No external API surface (VS Code commands) is broken. No deprecations are issued for internal APIs.
+
 ### Key Steps
 
 1. Update each method signature to accept a single `args` object with keys matching variable names
@@ -1255,20 +1291,20 @@ This refactoring focuses on methods where named parameters provide clear benefit
 1. **Start with leaf methods** - Methods that don't call other methods in the codebase
 2. **Work bottom-up** - Refactor callers after callees
 3. **Test incrementally** - Run tests after each file or set of related methods
-4. **Use compiler** - TypeScript will catch all call sites that need updating
+4. **Use compiler** - TypeScript will catch all call sites that need updating. For any method lists that show "Discovery: compiler", implementers are not expected to pre-enumerate callers; compile errors are the source of truth.
 5. **Verify key names** - Ensure destructured variable names match object keys exactly
 
 ### Estimated Impact
 
 **INCLUDED (will be refactored):**
 
-- **~27-32 methods** need refactoring (includes UIMenu.constructor and UIMenuMgr.createMenu)
-- **~125-155 call sites** need updating
+- **~32-38 methods** need refactoring (includes UIMenu.constructor and UIMenuMgr.createMenu)
+- **~190-230 call sites** need updating (includes Diagnostics.sub with ~70-90 calls based on `rg -nP '\.sub\s*\(' src --type=ts`, plus other high-frequency methods like registerMessageHandler, constructors, and handler methods)
 - Methods with clear benefit: 2+ simple/primitive parameters, OR methods with object params where the calling pattern is already config-based (e.g., UIMenu initialization)
 
 **EXCLUDED (remain positional):**
 
-- **~73+ methods** remain unchanged
+- **~70+ methods** remain unchanged
 - Single-parameter, zero-parameter, variadic functions, type guards, and methods with object/dict/config params (except where already config-driven)
 - No effort required, no risk introduced, no double-nesting confusion
 
