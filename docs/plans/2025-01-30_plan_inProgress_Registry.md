@@ -12,7 +12,7 @@
 
 **DO NOT deviate from this plan. DO NOT "improve" or "simplify" things. DO NOT add types, patterns, or abstractions not explicitly specified here.**
 
-**If you think you must do something different than what's written:**
+**If you think you must do something different from what's written:**
 
 1. **STOP**
 2. **Ask the user first**
@@ -36,7 +36,7 @@
   - Updated `App.ts` to create Registry instance
   - Registry owns `use()` method (components call `app.reg.use()` directly)
   - Verified compilation succeeds
-  - All 319 existing tests pass
+  - All 319 existing tests pass (319 existing + 11 new Registry tests = 330 total)
 
 - **Stage 0.3: Test Infrastructure** - Complete
   - ✅ All existing tests pass (no regressions)
@@ -50,7 +50,6 @@
 
 - Register component classes with Registry
 - Implement full lazy instantiation
-- Complete `use()` method implementation (currently placeholder)
 - Add circular dependency detection
 - Add error handling
 

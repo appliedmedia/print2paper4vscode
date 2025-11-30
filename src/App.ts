@@ -91,6 +91,7 @@ export class App {
         VSCodeAPIs,
         UI,
         PDF,
+        PaperPrinter,
         Stylize,
         TabInspector,
         UIMenuMgr,
