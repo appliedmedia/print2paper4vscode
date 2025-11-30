@@ -329,7 +329,7 @@ export class UIMenu {
     // Check if this item has a flyout by checking if its ID is in flyoutMenuItemIds
     const menuItemId = item.id;
     const isFlyout = this.flyoutMenuItemIds.includes(menuItemId);
-    const flyoutMenuIdRef = isFlyout ? ` flyout-menu-id-ref="${menuItemId}"` : ``;
+    const flyoutMenuId = isFlyout ? ` data-{{ns_}}flyoutMenuId="${menuItemId}"` : ``;
     const isDefault = menuItemId === defaultItemId;
     const isSelected = menuItemId === selectedItemId;
 
@@ -371,9 +371,9 @@ export class UIMenu {
       contentGutterAfter: '', // Content handled by CSS
       iconSlotWithPrefixSuffix,
       textEditConfigAttr: iconSlotResult.configAttr || ``,
-      shortcutCodeAttr: item.shortcutCode ? ` data-shortcut-code="${item.shortcutCode}"` : ``,
+      shortcutCodeAttr: item.shortcutCode ? ` data-{{ns_}}shortcutCode="${item.shortcutCode}"` : ``,
       flyout,
-      flyoutMenuIdRef,
+      flyoutMenuId,
     };
 
     dx.done();
@@ -415,9 +415,9 @@ export class UIMenu {
 
     // Build data attributes from constrain object (all three work together)
     return [
-      ` data-constrain-regex="${iconSlotTriadMain.constrain.regex}"`,
-      ` data-constrain-min="${iconSlotTriadMain.constrain.min}"`,
-      ` data-constrain-max="${iconSlotTriadMain.constrain.max}"`,
+      ` data-{{ns_}}constrain_regex="${iconSlotTriadMain.constrain.regex}"`,
+      ` data-{{ns_}}constrain_min="${iconSlotTriadMain.constrain.min}"`,
+      ` data-{{ns_}}constrain_max="${iconSlotTriadMain.constrain.max}"`,
     ].join('');
   }
 
@@ -647,16 +647,10 @@ export class UIMenu {
       // Use the main template for all menus
       const template = yaml.uimenu_html;
 
-      // Set data attribute with flyout item IDs (from static flyoutMenuItemIds list)
-      const flyoutItemsAttr =
-        this.flyoutMenuItemIds.length > 0
-          ? ` data-flyout-items="${this.flyoutMenuItemIds.join(',')}"`
-          : '';
-
       // Get shortcutCode from menu constant if it exists
       const menuConst = kMenus.find(m => m.id === this._id);
       const shortcutCode = (menuConst as { shortcutCode?: string })?.shortcutCode;
-      const shortcutCodeAttr = shortcutCode ? ` data-shortcut-code="${shortcutCode}"` : ``;
+      const shortcutCodeAttr = shortcutCode ? ` data-{{ns_}}shortcutCode="${shortcutCode}"` : ``;
 
       // Build button content from iconSlotTriad
       const buttonContent = this.buildButtonContent();
@@ -673,7 +667,6 @@ export class UIMenu {
             })
           : '', // Only create container if there are items
         menuClasses,
-        flyoutItemsAttr, // Data attribute with flyout item IDs from static list
         shortcutCodeAttr,
       };
 

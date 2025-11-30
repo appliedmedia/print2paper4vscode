@@ -293,6 +293,32 @@ If you need to embed instructions for AI tooling (like repeated headings for sys
 
 **This is not optional. This is mandatory.**
 
+## Documentation Organization
+
+### Plan Documents
+
+All planning documents are stored in `docs/plans/` and follow a standardized naming convention:
+
+**Naming Pattern**: `YYYY-MM-DD_plan_{status}_{MixedCaseName}.md`
+
+- **Date**: `YYYY-MM-DD` format (use `YYYY-MM-XX` if exact date unknown)
+- **Status**: One of:
+  - `done` - Plan completed and implemented
+  - `inProgress` - Plan actively being worked on
+  - `todo` - Plan not yet started
+- **Name**: MixedCase descriptive name (e.g., `NamespaceFixes`, `MarkdownPrint`, `NamedParamsRefactor`)
+
+**Examples**:
+
+- `2025-11-27_plan_done_NamespaceFixes.md` - Completed namespace refactoring plan
+- `2025-11-29_plan_done_NamedParamsRefactor.md` - Completed named parameters refactoring plan
+- `2025-01-XX_plan_inProgress_MarkdownPrint.md` - In-progress markdown printing plan
+
+**File Management**:
+
+- Use `git mv` to move/rename plan documents to preserve git history
+- If a file isn't tracked by git, use regular `mv` then `git add`
+
 ## Development Guidelines
 
 ### Naming Conventions

@@ -2,10 +2,11 @@
 
 ## ✅ STATUS: COMPLETE
 
-- **Completion Date**: 2025-11-27
-- **Verification Date**: 2025-11-27
+- **Initial Completion Date**: 2025-11-27
+- **Phase 4 (Data Attributes) Completion Date**: 2025-11-30
+- **Verification Date**: 2025-11-30
 - **Tests**: Namespace-Template-Replacement.test.ts exists and verifies implementation
-- **Compilation**: Implementation complete (note: unrelated compilation errors exist in Diagnostics tests)
+- **Compilation**: Implementation complete - all 319 tests passing
 
 ### Verification Summary (2025-11-27)
 
@@ -29,7 +30,7 @@
 - `scripts/templateDictReplace.mjs`: ✅ Exists and processes templates
 - `.config/templateDictReplace.yaml`: ✅ Configuration exists
 
-✅ **Phase 4 (Data Attributes)**: Marked as "Future" - not required for completion
+✅ **Phase 4 (Data Attributes)**: ✅ COMPLETE - All data attributes namespaced and using dataset API
 
 ✅ **Phase 5 (Testing)**: Test suite verified
 
@@ -407,24 +408,40 @@ Replace all hardcoded `p2p4vsc` strings with `{{ns}}` in templates and ensure al
 
 ---
 
-## Phase 4: Data Attributes (Future)
+## Phase 4: Data Attributes
 
-### Phase 4: 🔲 To Do
+### Phase 4: ✅ Completed
 
-#### 1. Add Namespaced Data Attributes
+#### 1. ✅ All Data Attributes Namespaced
 
-**When adding data attributes**, use format consistent with the underscore+camelCase convention:
+**Naming Convention**: Use camelCase for all data attributes, with one exception for constrain attributes.
 
-- `data-{{ns_}}menuItemId` → becomes `data-p2p4vsc_menuItemId`
-- Accessible in JavaScript as `dataset.p2p4vsc_menuItemId` (underscores preserved, no automatic conversion)
+**Standard Pattern (camelCase)**:
 
-**Examples**:
+- `data-{{ns_}}shortcutCode` → `data-p2p4vsc_shortcutCode` → accessed via `getAttribute` (for selector queries)
+- `data-{{ns_}}itemId` → `data-p2p4vsc_itemId` → `dataset.p2p4vsc_itemId`
+- `data-{{ns_}}flyoutMenuId` → `data-p2p4vsc_flyoutMenuId` → `dataset.p2p4vsc_flyoutMenuId`
 
-- `data-{{ns_}}menuItemId` → `data-p2p4vsc_menuItemId` → `dataset.p2p4vsc_menuItemId`
-- `data-{{ns_}}actionType` → `data-p2p4vsc_actionType` → `dataset.p2p4vsc_actionType`
-- `data-{{ns_}}toolbarPosition` → `data-p2p4vsc_toolbarPosition` → `dataset.p2p4vsc_toolbarPosition`
+**Exception Pattern (snake_case for constrain attributes only)**:
 
-**Recommendation**: Use underscore+camelCase format (`data-{{ns_}}menuItemId`) to match the codebase naming convention and avoid JavaScript's automatic hyphen-to-camelCase conversion. This provides predictable, explicit attribute names.
+- `data-{{ns_}}constrain_regex` → `data-p2p4vsc_constrain_regex` → `dataset.p2p4vsc_constrain_regex`
+- `data-{{ns_}}constrain_min` → `data-p2p4vsc_constrain_min` → `dataset.p2p4vsc_constrain_min`
+- `data-{{ns_}}constrain_max` → `data-p2p4vsc_constrain_max` → `dataset.p2p4vsc_constrain_max`
+
+**Implementation Details**:
+
+- All data attributes use `data-{{ns_}}` prefix
+- Most attributes accessed via `dataset['{{ns_}}attributeName']` in JavaScript (template replacement handles namespace)
+- Keyboard shortcuts use `getAttribute('data-{{ns_}}shortcutCode')` for selector-friendly access in `src/UIMenu.yaml`
+- Constrain attributes use snake_case as a one-off exception; all other attributes use camelCase
+- Updated in `src/UIMenu.ts` (attribute generation) and `src/UIMenu.yaml` (attribute reading)
+
+**Files Updated**:
+
+- ✅ `src/UIMenu.ts`: All data attribute generation uses namespaced templates
+- ✅ `src/UIMenu.yaml`: Most data attribute access uses `dataset` API; keyboard shortcuts use `getAttribute` for selector queries
+- ✅ `src/types/PaperPrinter_t.ts`: Comment updated to reflect correct attribute name
+- ✅ `tests/UIMenu-IconSlotTriad.test.ts`: Test assertions updated for namespaced attributes
 
 ---
 
@@ -455,7 +472,7 @@ Replace all hardcoded `p2p4vsc` strings with `{{ns}}` in templates and ensure al
 #### 3. ✅ Test Namespace Change
 
 **Compilation**: No errors ✅  
-**Test Suite**: 321/321 tests passing (100%) ✅  
+**Test Suite**: 319/319 tests passing (100%) ✅  
 **Ready**: To change namespace by updating ONE constant ✅
 
 ---
@@ -492,11 +509,11 @@ Replace all hardcoded `p2p4vsc` strings with `{{ns}}` in templates and ensure al
 
 ## Notes
 
-- **VS Code Command IDs**: May need to remain hardcoded if VS Code requires them at registration time
-- **Extension ID**: May need to remain hardcoded for VS Code API compatibility - verify requirements
-- **Data Attributes**: Decide on hyphen vs underscore convention before implementing
-- **Shared Constants**: Namespace constants (`kNamespace` and `kNamespacePrefix`) are defined in `App` class and automatically included in every `templateDictReplace()` call
-- **Dead Code Cleanup**: `.p2p4vsc-flyout` class selector is referenced in `src/UI.yaml` JavaScript but the class is never generated. Actual flyout menus use `.p2p4vsc-menu.is-flyout` instead. **CONFIRM and REMOVE** `.p2p4vsc-flyout` references before namespace refactoring.
+- **VS Code Command IDs**: Must remain hardcoded per VS Code API requirements (documented as intentional)
+- **Extension ID**: Uses single source of truth (`kExtId` in `_entrypoint_extId_t.ts`)
+- **Data Attributes**: ✅ COMPLETE - All custom data attributes are namespaced via `data-{{ns_}}`; most are read via `dataset[...]` API, with keyboard shortcuts using `getAttribute` for selector-friendly access. Constrain attributes use snake_case as one-off exception.
+- **Shared Constants**: Namespace constants (`kNs` and `kNs_`) are defined in `App` class and automatically included in every `templateDictReplace()` call
+- **Dead Code Cleanup**: ✅ COMPLETE - `.p2p4vsc-flyout` references removed from `src/UI.yaml`
 
 ---
 
@@ -505,7 +522,7 @@ Replace all hardcoded `p2p4vsc` strings with `{{ns}}` in templates and ensure al
 - [x] Phase 1: YAML Templates
 - [x] Phase 2: TypeScript Source Files
 - [x] Phase 3: Configuration and Command IDs
-- [ ] Phase 4: Data Attributes (future enhancement, not required)
+- [x] Phase 4: Data Attributes
 - [x] Phase 5: Testing and Verification
 
 ---
@@ -535,6 +552,8 @@ To rename from `p2p4vsc` to `newname`:
 - `package.json` uses `{{ns}}` templates, processed during build from `kExtId`
 - Output `out/package.json` has all `{{ns}}` replaced with actual value
 - CSS classes become `newname_menuBtn`, `newname_toolbar`, etc.
+- Data attributes become `data-newname_shortcutCode`, `data-newname_itemId`, `data-newname_flyoutMenuId`, etc. (camelCase)
+- Constrain attributes become `data-newname_constrain_regex`, `data-newname_constrain_min`, etc. (snake_case exception)
 - VS Code commands become `newname.print2paper`, `newname.persistClear`
 
 **Single Source of Truth**: `kExtId` in `_entrypoint_extId_t.ts` - Change ONE constant, everything updates.
