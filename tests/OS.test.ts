@@ -231,8 +231,8 @@ describe('OS Base Class', () => {
     it('should convert src attributes to webview URIs', async () => {
       const html = '<img src="test.png">';
       // Create a panel first so htmlSrcPathToURI can find it
-      const panelId = await app.vscodeapis.getOrCreateWebviewPanel('Test Panel', '<html></html>');
-      const result = os.htmlSrcPathToURI(html, panelId);
+      const panelId = await app.vscodeapis.getOrCreateWebviewPanel({ title: 'Test Panel', html: '<html></html>' });
+      const result = os.htmlSrcPathToURI({ html, webviewPanelId: panelId });
       assert.ok(typeof result === 'string');
       // Should have converted the src path
       assert.ok(result.includes('vscode-webview') || result.includes('test.png'));

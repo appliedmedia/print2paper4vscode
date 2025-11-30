@@ -33,15 +33,15 @@ describe('UIMenuMgr', () => {
   it('should validate numeric menu item IDs (font sizes)', () => {
     // Create a font size menu first
     const iconSlotTriad: iconSlotTriad_t = { begin: ``, main: `A`, end: `` };
-    const fontMenu = menuMgr.createMenu(
-      'fontSizeId',
-      'Font Size',
+    const fontMenu = menuMgr.createMenu({
+      id: 'fontSizeId',
+      displayName: 'Font Size',
       iconSlotTriad,
-      false,
-      () => [{ id: '12', displayName: '12', iconSlotTriad: { begin: '', main: '', end: '' } }],
-      [],
-      async id => ({ id, value: id })
-    );
+      isFlyout: false,
+      menuItems: () => [{ id: '12', displayName: '12', iconSlotTriad: { begin: '', main: '', end: '' } }],
+      flyoutMenuItemIds: [],
+      selectionHandler: async id => ({ id, value: id }),
+    });
     menuMgr.addMenu(fontMenu);
 
     assert.strictEqual(menuMgr.isMenuItemId('12'), true);
@@ -54,15 +54,15 @@ describe('UIMenuMgr', () => {
 
   it('should add menu', () => {
     const iconSlotTriad: iconSlotTriad_t = { begin: ``, main: `T`, end: `` };
-    const menu = menuMgr.createMenu(
-      'test' as MenuId_t,
-      'Test Menu',
+    const menu = menuMgr.createMenu({
+      id: 'test' as MenuId_t,
+      displayName: 'Test Menu',
       iconSlotTriad,
-      false,
-      () => [],
-      [],
-      async id => ({ id, value: id })
-    );
+      isFlyout: false,
+      menuItems: () => [],
+      flyoutMenuItemIds: [],
+      selectionHandler: async id => ({ id, value: id }),
+    });
 
     menuMgr.addMenu(menu);
     const menus = menuMgr.getUIMenus();
@@ -71,15 +71,15 @@ describe('UIMenuMgr', () => {
 
   it('should not add duplicate menus', () => {
     const iconSlotTriad: iconSlotTriad_t = { begin: ``, main: `T`, end: `` };
-    const menu = menuMgr.createMenu(
-      'test' as MenuId_t,
-      'Test Menu',
+    const menu = menuMgr.createMenu({
+      id: 'test' as MenuId_t,
+      displayName: 'Test Menu',
       iconSlotTriad,
-      false,
-      () => [],
-      [],
-      async id => ({ id, value: id })
-    );
+      isFlyout: false,
+      menuItems: () => [],
+      flyoutMenuItemIds: [],
+      selectionHandler: async id => ({ id, value: id }),
+    });
 
     menuMgr.addMenu(menu);
     menuMgr.addMenu(menu);
@@ -89,15 +89,15 @@ describe('UIMenuMgr', () => {
 
   it('should get menu by ID', () => {
     const iconSlotTriad: iconSlotTriad_t = { begin: ``, main: `T`, end: `` };
-    const menu = menuMgr.createMenu(
-      'test' as MenuId_t,
-      'Test Menu',
+    const menu = menuMgr.createMenu({
+      id: 'test' as MenuId_t,
+      displayName: 'Test Menu',
       iconSlotTriad,
-      false,
-      () => [],
-      [],
-      async id => ({ id, value: id })
-    );
+      isFlyout: false,
+      menuItems: () => [],
+      flyoutMenuItemIds: [],
+      selectionHandler: async id => ({ id, value: id }),
+    });
     menuMgr.addMenu(menu);
 
     const foundMenu = menuMgr.getMenuById('test');

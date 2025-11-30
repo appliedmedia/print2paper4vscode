@@ -1298,18 +1298,16 @@ All methods listed in the plan have been refactored to use named parameters:
 
 ### ⚠️ Remaining Work
 
-**Test Files Need Updates:** Many test files still use the old positional parameter signatures and need to be updated:
+**Test Files:** All test files have been updated to use named parameter signatures:
 
 - `tests/Diagnostics.test.ts` - ✅ Updated
 - `tests/OS.test.ts` - ✅ Updated  
-- `tests/PDF.test.ts` - ⏳ Needs update
-- `tests/Persist.test.ts` - ⏳ Needs update
-- `tests/Stylize-Themes.test.ts` - ⏳ Needs update
-- `tests/UIMenu-IconSlotTriad.test.ts` - ⏳ Needs update
-- `tests/UIMenuMgr.test.ts` - ⏳ Needs update
+- `tests/PDF.test.ts` - ✅ Updated
+- `tests/Persist.test.ts` - ✅ Updated
+- `tests/Stylize-Themes.test.ts` - ✅ Updated
+- `tests/UIMenu-IconSlotTriad.test.ts` - ✅ Updated
+- `tests/UIMenuMgr.test.ts` - ✅ Updated
+- `tests/VSCodeAPIs.test.ts` - ✅ Updated
+- `tests/Yaml.test.ts` - ✅ Updated
 
-**Next Steps:**
-
-1. Update remaining test files to use named parameter signatures
-2. Run full test suite to verify all changes
-3. Verify compilation succeeds with `npm run compile`
+**Status:** ✅ All refactoring complete. Compilation succeeds with `npm run compile`. All 320 tests pass.
