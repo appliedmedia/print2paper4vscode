@@ -63,11 +63,10 @@
 
 - [x] Update `App.ts` to create Registry instance:
   - Import Registry: `import { Registry } from './Registry'`
-  - Import type: `import type { FnImport_t } from './types/Registry_t'`
   - Create Registry: `this.reg = new Registry({ app: this, components: [], always: ['dx.sub'] })`
   - App owns the list of what components exist (components array empty for now - will be populated during migration)
   - Note: `always: ['dx.sub']` means all components can call `this.fn.dx.sub('ComponentName')` without requesting it
-- [x] Add `app.use(...methodIds: string[])` method that delegates to `this.reg.use(...methodIds)`
+  - Registry owns the `use()` method - components call `app.reg.use(...methodIds)` directly
 - [x] Verify Registry can be instantiated without breaking existing code (compiles successfully, components still created the old way)
 
 #### Stage 0.3: Test Infrastructure ⏸️
@@ -353,7 +352,7 @@
 **Format:** `ComponentName needs: ['method1', 'method2']` means that component must call:
 
 ```typescript
-this.fn = app.use(app.reg.component.method1, app.reg.component.method2);
+this.fn = app.reg.use('method1', 'method2');
 ```
 
 **CRITICAL NOTES:**
@@ -1008,13 +1007,13 @@ class PaperPrinter {
 
 ### How Dependency Access Works
 
-1. **Request Phase**: Request by method names in constructor: `app.use({ getTokens: [], showErrorMessage: [] })`
+1. **Request Phase**: Request by method names in constructor: `app.reg.use('getTokens', 'showErrorMessage')`
 2. **Registry Resolution**: Registry automatically finds which component has each method
 3. **Ambiguity Handling**: If same method name exists in multiple components, use `'componentName.methodName'` format
 4. **Return Format**: Registry returns object organized by component: `{ dx: { create, sub, out }, ui: { showErrorMessage }, stylize: { getTokens } }`
 5. **Access Phase**: Use `this.fn.componentName.methodName()` - same access pattern as current `app.componentName.methodName()`
-6. **Request Entire Class**: Request entire class instance by class name or short name: `app.use({ Diagnostics: [] })` or `app.use({ dx: [] })`
-7. **Class References**: For class constructors, use special syntax like `Coords: []` or similar
+6. **Request Entire Class**: Request entire class instance by class name or short name: `app.reg.use('Diagnostics')` or `app.reg.use('dx')`
+7. **Class References**: For class constructors, use special syntax like `'Coords'` or similar
 
 **Key Benefits**:
 
@@ -1496,9 +1495,9 @@ use<T>(request: DependencyRequest): T {
 
 ---
 
-## Architecture Decision: Registry Integrated into App
+## Architecture Decision: Registry Owns Dependency Injection API
 
-Registry functionality is exposed directly on App: `app.use()`. Registry is still a separate internal class that handles the dependency management, but App delegates to it. This keeps the API simple - components just call `app.use()` without needing to know about Registry.
+Registry owns the dependency injection API: `app.reg.use()`. Components call `app.reg.use()` directly to request methods they need. Registry is a separate class that handles all dependency management, lazy instantiation, and method resolution.
 
 ## Registry Implementation Details
 
@@ -1862,7 +1861,7 @@ class Registry {
 1. ✓ App reference injected via constructor - components receive `app: App` to access Registry
 2. ✓ No `init()` methods - all initialization in constructors
 3. ✓ Components constructed lazily on first use by Registry
-4. ✓ Explicit dependency declarations in constructors via `app.use()`
+4. ✓ Explicit dependency declarations in constructors via `app.reg.use()`
 5. ✓ `done()` methods preserved for explicit cleanup
 6. ✓ All tests passing
 7. ✓ No performance regressions

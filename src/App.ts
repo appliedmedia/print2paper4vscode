@@ -10,7 +10,6 @@ import { Diagnostics } from './Diagnostics';
 import { Registry } from './Registry';
 import type { ExtensionContext } from 'vscode';
 import { kExtId } from './_entrypoint_extId_t';
-import type { FnImport_t } from './types/Registry_t';
 
 // Type aliases for forceNumber/forceNumbers input and output
 export type ForceNumber_scalar_t = number | string | undefined;
@@ -228,19 +227,6 @@ export class App {
     }
 
     return result;
-  }
-
-  /**
-   * Request methods from components via Registry
-   *
-   * Delegates to Registry.use() for dependency injection.
-   * Components call this to request methods they need.
-   *
-   * @param methodIds - Variadic method names (e.g., 'showError', 'generatePdf')
-   * @returns Object organized by component: { dx: { sub: Function }, ui: { showErrorMessage: Function } }
-   */
-  use(...methodIds: string[]): FnImport_t {
-    return this.reg.use(...methodIds);
   }
 }
 
