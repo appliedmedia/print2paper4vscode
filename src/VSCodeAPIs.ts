@@ -50,11 +50,17 @@ export class VSCodeAPIs {
   private panels = new Map<WebviewPanelId_t, WebviewPanel>(); // Panel mapping
   private dx: Diagnostics;
 
-  constructor(app: App, vscode: typeof import('vscode'), context: ExtensionContext) {
+  constructor(args: { app: App; vscode: typeof import('vscode'); context: ExtensionContext }) {
+    const { app, vscode, context } = args;
+    if (!app?.dx) {
+      throw new Error('VSCodeAPIs requires app with initialized dx');
+    }
+    const dx = app.dx.sub({ name: 'VSCodeAPIs' });
+    dx.require(args, ['app', 'vscode', 'context']);
     this.app = app;
     this.vscode = vscode;
     this.context = context;
-    this.dx = app.dx.sub({ name: 'VSCodeAPIs' });
+    this.dx = dx;
   }
 
   init(): void {
@@ -89,8 +95,23 @@ export class VSCodeAPIs {
   /**
    * Update global state value
    */
-  updateGlobalState(key: GlobalStateKey_t, value: GlobalStateValue_t): void {
+  updateGlobalState(args: { key: GlobalStateKey_t; value: GlobalStateValue_t | undefined }): void {
+    const dx = this.dx.sub({ name: 'updateGlobalState' });
+    dx.require(args, ['key', 'value']);
+    const { key, value } = args;
     this.context.globalState.update(key, value);
+    dx.done();
+  }
+
+  /**
+   * Delete global state value
+   */
+  deleteGlobalState(args: { key: GlobalStateKey_t }): void {
+    const dx = this.dx.sub({ name: 'deleteGlobalState' });
+    dx.require(args, ['key']);
+    const { key } = args;
+    this.context.globalState.update(key, undefined);
+    dx.done();
   }
 
   /**
