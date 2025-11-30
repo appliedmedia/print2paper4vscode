@@ -51,6 +51,10 @@ export class VSCodeAPIs {
   private dx: Diagnostics;
 
   constructor(args: { app: App; vscode: typeof import('vscode'); context: ExtensionContext }) {
+    // Validate args before using them
+    if (!args || !args.app || !args.vscode || !args.context) {
+      throw new Error('VSCodeAPIs constructor requires app, vscode, and context');
+    }
     const { app, vscode, context } = args;
     this.app = app;
     this.vscode = vscode;
@@ -91,9 +95,9 @@ export class VSCodeAPIs {
   /**
    * Update global state value
    */
-  updateGlobalState(args: { key: GlobalStateKey_t; value: GlobalStateValue_t }): void {
+  updateGlobalState(args: { key: GlobalStateKey_t; value: GlobalStateValue_t | undefined }): void {
     const dx = this.dx.sub({ name: 'updateGlobalState' });
-    dx.require(args, ['key', 'value']);
+    dx.require(args, ['key']);
     const { key, value } = args;
     this.context.globalState.update(key, value);
   }

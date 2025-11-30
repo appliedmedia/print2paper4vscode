@@ -130,7 +130,11 @@ export abstract class OS {
     const dx = this.dx.sub({ name: 'fileWrite' });
     dx.require(args, ['filePath', 'content']);
     const { filePath, content } = args;
-    fs.writeFileSync(filePath, content);
+    try {
+      fs.writeFileSync(filePath, content);
+    } finally {
+      dx.done();
+    }
   }
 
   fileDelete(targetPath: string): void {
@@ -153,20 +157,20 @@ export abstract class OS {
   fileRead: FileRead_t = <T = string>(args: { path: string; key?: string }): T | undefined => {
     const dx = this.dx.sub({ name: 'fileRead' });
     dx.require(args, ['path']);
-    const { path, key } = args;
+    const { path: filePath, key } = args;
     try {
       // Determine if this is an extension-relative path
-      const isExtensionPath = !path.startsWith('/') && !path.includes(':\\');
+      const isExtensionPath = !filePath.startsWith('/') && !filePath.includes(':\\');
 
       // Resolve the absolute path
       const absPath = isExtensionPath
         ? this.extensionRoot
-          ? this.pathJoin(this.extensionRoot, path)
+          ? this.pathJoin(this.extensionRoot, filePath)
           : undefined
-        : path;
+        : filePath;
 
       if (!absPath || !fs.existsSync(absPath)) {
-        this.dx.error(`Failed to load ${path}: file not found`);
+        dx.error(`Failed to load ${filePath}: file not found`);
         return undefined;
       }
 
@@ -174,7 +178,7 @@ export abstract class OS {
       const content = fs.readFileSync(absPath, 'utf8');
 
       // Determine parser from file extension
-      const ext = path.split('.').pop()?.toLowerCase();
+      const ext = filePath.split('.').pop()?.toLowerCase();
       const extFxnMap: Record<string, (content: string) => unknown> = {
         yaml: yamlParse,
         yml: yamlParse,
@@ -196,8 +200,10 @@ export abstract class OS {
 
       return parsed as T;
     } catch (err) {
-      this.dx.error(`Failed to load ${path}: ${err}`);
+      dx.error(`Failed to load ${filePath}: ${err}`);
       return undefined;
+    } finally {
+      dx.done();
     }
   };
 

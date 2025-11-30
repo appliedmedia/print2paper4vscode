@@ -1301,7 +1301,7 @@ All methods listed in the plan have been refactored to use named parameters:
 **Test Files:** All test files have been updated to use named parameter signatures:
 
 - `tests/Diagnostics.test.ts` - ✅ Updated
-- `tests/OS.test.ts` - ✅ Updated  
+- `tests/OS.test.ts` - ✅ Updated
 - `tests/PDF.test.ts` - ✅ Updated
 - `tests/Persist.test.ts` - ✅ Updated
 - `tests/Stylize-Themes.test.ts` - ✅ Updated
