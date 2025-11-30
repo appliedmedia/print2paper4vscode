@@ -54,6 +54,18 @@ export class Registry {
   }
 
   /**
+   * Register an existing component instance with Registry
+   *
+   * Allows App to register instances created the old way so Registry can use them.
+   *
+   * @param componentId - Component ID (e.g., 'ui', 'pdf')
+   * @param instance - The component instance to register
+   */
+  registerInstance(componentId: string, instance: unknown): void {
+    this._instances.set(componentId, instance);
+  }
+
+  /**
    * Request methods from components via Registry
    *
    * THE SIMPLE VERSION:
@@ -115,14 +127,10 @@ export class Registry {
       const componentIdForInstance = foundComponent.id;
       if (!this._instances.has(componentIdForInstance)) {
         try {
-          // For now, components are still created the old way by App
-          // Registry.use() will work once components are migrated to Registry pattern
-          // For Stage 0.2, we just verify Registry can be instantiated
-          this.dx.out(
-            `Registry.use() called for '${foundMethodName}' from '${componentIdForInstance}' - component migration pending`
-          );
-          // Don't create instance yet - components still created by App constructor
-          continue;
+          // Try to create instance lazily if not already registered
+          // Note: VSCodeAPIs needs special args, so it should be registered by App
+          const instance = new foundComponent(this.app);
+          this._instances.set(componentIdForInstance, instance);
         } catch (err) {
           this.dx.error(
             `Failed to create component '${componentIdForInstance}': ${err instanceof Error ? err.message : String(err)}`

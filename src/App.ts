@@ -81,13 +81,21 @@ export class App {
     dx.require(args, ['context', 'vscode']);
     const { context, vscode } = args;
 
-    // Create Registry instance
-    // Stage 0.2: Registry infrastructure created, but components still created the old way
-    // Components will be migrated to Registry pattern in later stages
-    // For now, Registry exists but components array is empty - will be populated during migration
+    // Create Registry instance with all component classes
+    // Components are still created the old way by App, but Registry knows about them
+    // Registry can use existing instances or create new ones lazily
     this.reg = new Registry({
       app: this,
-      components: [], // Empty for now - components still created by App constructor
+      components: [
+        Diagnostics,
+        VSCodeAPIs,
+        UI,
+        PDF,
+        Stylize,
+        TabInspector,
+        UIMenuMgr,
+        // OS is abstract with factory method - will be handled specially
+      ],
       always: ['dx.sub'],
     });
 
@@ -100,6 +108,18 @@ export class App {
     this.paperprinter = new PaperPrinter(this);
     this.stylize = new Stylize(this);
     this.tabinspector = new TabInspector(this);
+
+    // Register existing instances with Registry so it can use them
+    // Note: Registry creates its own Diagnostics instance, but we can also register App's dx
+    this.reg.registerInstance('dx', this.dx);
+    this.reg.registerInstance('vscodeapis', this.vscodeapis);
+    this.reg.registerInstance('ui', this.ui);
+    this.reg.registerInstance('uimenumgr', this.uimenumgr);
+    this.reg.registerInstance('os', this.os);
+    this.reg.registerInstance('pdf', this.pdf);
+    this.reg.registerInstance('paperprinter', this.paperprinter);
+    this.reg.registerInstance('stylize', this.stylize);
+    this.reg.registerInstance('tabinspector', this.tabinspector);
   }
 
   init(): void {
