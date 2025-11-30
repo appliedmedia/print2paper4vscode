@@ -1,5 +1,11 @@
 # Registry Pattern Migration Plan
 
+**Status**: Stage 0.1-0.2 Complete | Stage 0.3 In Progress | Stage 1+ Pending
+
+**Quick Status**: Registry infrastructure created and integrated. Components still use old pattern. Next: Complete tests, then implement full Registry core functionality.
+
+---
+
 ## ⚠️ /!\ CRITICAL: READ THIS FIRST /!\ ⚠️
 
 **This document has been meticulously detailed over many hours of careful design and architectural decisions.**
@@ -16,6 +22,50 @@
 
 ---
 
+## 📊 CURRENT STATUS
+
+### ✅ Completed
+
+- **Stage 0.1: Registry Infrastructure** - Complete
+  - Created `src/types/Registry_t.ts` with `FnImport_t` type
+  - Created `src/Registry.ts` with Registry class
+  - Added `static readonly id` to all main components (Diagnostics, VSCodeAPIs, UI, PDF, Stylize, TabInspector, UIMenuMgr, OS)
+  - Registry has `use()` method that resolves methods via prototype lookup
+
+- **Stage 0.2: Registry Integration** - Complete
+  - Updated `App.ts` to create Registry instance
+  - Registry owns `use()` method (components call `app.reg.use()` directly)
+  - Verified compilation succeeds
+  - All 319 existing tests pass
+
+- **Stage 0.3: Test Infrastructure** - Partially Complete
+  - ✅ All existing tests pass (no regressions)
+  - ⏸️ Still needed: Basic Registry construction test
+  - ⏸️ Still needed: Verify Diagnostics available via Registry
+
+### 🎯 What's Next
+
+#### Immediate Priority: Complete Stage 0.3
+
+- Add basic Registry construction test
+- Verify Diagnostics is accessible via Registry
+
+#### Then: Stage 1 - Implement Registry Core
+
+- Register component classes with Registry
+- Implement full lazy instantiation
+- Complete `use()` method implementation (currently placeholder)
+- Add circular dependency detection
+- Add error handling
+
+#### After Stage 1: Begin Component Migration (Stage 2+)
+
+- Start with leaf components (OS classes, Yaml)
+- Migrate core infrastructure (VSCodeAPIs, UI, Persist)
+- Continue through middle-tier and complex components
+
+---
+
 ## ⚡ EXECUTION TODOS
 
 **THE SIMPLE APPROACH:**
@@ -28,7 +78,7 @@
 
 ### Immediate Actions (Start Here)
 
-#### Stage 0.1: Create Registry Infrastructure ✅ NEXT
+#### Stage 0.1: Create Registry Infrastructure ✅ DONE
 
 - [ ] Create `src/types/Registry_t.ts` with ONLY this type:
   - `FnImport_t = { [componentId: string]: { [methodName: string]: Function } }` - what a class imports
@@ -69,11 +119,13 @@
   - Registry owns the `use()` method - components call `app.reg.use(...methodIds)` directly
 - [x] Verify Registry can be instantiated without breaking existing code (compiles successfully, components still created the old way)
 
-#### Stage 0.3: Test Infrastructure ⏸️
+#### Stage 0.3: Test Infrastructure ⏸️ IN PROGRESS
 
 - [x] Run existing tests to ensure no regressions (all 319 tests pass)
 - [ ] Add basic Registry construction test
 - [ ] Verify Diagnostics is available via Registry
+
+**Status**: Infrastructure tests passing. Need to add Registry-specific tests.
 
 ---
 
@@ -516,7 +568,16 @@ this.fn = app.reg.use('method1', 'method2');
 
 ---
 
-## Current Status Summary
+## Current Implementation Status
+
+**Registry Infrastructure:**
+
+- ✅ Registry class created with `use()` method
+- ✅ Type definitions (`FnImport_t`) created
+- ✅ Registry integrated into App
+- ✅ All components have `static readonly id` properties
+- ⏸️ Registry `use()` method is placeholder (logs but doesn't create instances yet)
+- ⏸️ Components still created the old way by App constructor
 
 **Components in Codebase:**
 
