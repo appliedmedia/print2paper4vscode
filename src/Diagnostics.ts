@@ -128,11 +128,12 @@ export class Diagnostics {
 
   /**
    * Validate that required arguments are present in the args object
+   * Shows user-facing error and throws if validation fails
    * @param args - The arguments object to validate
    * @param requiredKeys - Array of required argument key names
-   * @returns true if all required arguments are present, false otherwise
+   * @throws Error if any required arguments are missing
    */
-  require(args: Record<string, unknown>, requiredKeys: string[]): boolean {
+  require(args: Record<string, unknown>, requiredKeys: string[]): void {
     let missingKeys: string[] = [];
     for (const key of requiredKeys) {
       if (!(key in args) || args[key] === undefined) {
@@ -142,10 +143,14 @@ export class Diagnostics {
 
     if (missingKeys.length > 0) {
       const missingKeysString = `"${missingKeys.join('", "')}"`;
-      this.print(`❌ missing: ${missingKeysString}`);
+      const errorMessage = `Missing required parameters: ${missingKeysString} in ${this.name}`;
+      
+      // Show user-facing error dialog (very publicly visible)
+      this.error(errorMessage);
+      
+      // Then throw to fail fast
+      throw new Error(errorMessage);
     }
-
-    return missingKeys.length === 0;
   }
 
   /**

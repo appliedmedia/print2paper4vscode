@@ -26,20 +26,17 @@ describe('Diagnostics', () => {
     const dx = new Diagnostics({ name: 'TestClass' });
     const methodDx = dx.sub({ name: 'testMethod' });
 
-    // Test with valid args
+    // Test with valid args - should not throw
     const validArgs = { content: 'test', uri: 'file://test' };
-    const validResult = methodDx.require(validArgs, ['content']);
-    assert.strictEqual(validResult, true);
+    methodDx.require(validArgs, ['content']); // Should not throw
 
-    // Test with missing required arg
+    // Test with missing required arg - should throw
     const invalidArgs = { content: 'test' };
-    const invalidResult = methodDx.require(invalidArgs, ['content', 'uri']);
-    assert.strictEqual(invalidResult, false);
+    assert.throws(() => methodDx.require(invalidArgs, ['content', 'uri']), /Missing required parameters/);
 
-    // Test with undefined arg
+    // Test with undefined arg - should throw
     const undefinedArgs = { content: 'test', uri: undefined };
-    const undefinedResult = methodDx.require(undefinedArgs, ['content', 'uri']);
-    assert.strictEqual(undefinedResult, false);
+    assert.throws(() => methodDx.require(undefinedArgs, ['content', 'uri']), /Missing required parameters/);
   });
 
   test('should handle empty required keys array', () => {
@@ -47,8 +44,8 @@ describe('Diagnostics', () => {
     const methodDx = dx.sub({ name: 'testMethod' });
 
     const args = { content: 'test' };
-    const result = methodDx.require(args, []);
-    assert.strictEqual(result, true);
+    // Empty required keys should not throw
+    methodDx.require(args, []); // Should not throw
   });
 
   test('should handle args with null values', () => {
@@ -56,9 +53,8 @@ describe('Diagnostics', () => {
     const methodDx = dx.sub({ name: 'testMethod' });
 
     const args = { content: null, uri: 'test' };
-    // null should be considered present (not undefined)
-    const result = methodDx.require(args, ['content', 'uri']);
-    assert.strictEqual(result, true);
+    // null should be considered present (not undefined) - should not throw
+    methodDx.require(args, ['content', 'uri']); // Should not throw
   });
 
   test('should handle args with empty string values', () => {
@@ -66,9 +62,8 @@ describe('Diagnostics', () => {
     const methodDx = dx.sub({ name: 'testMethod' });
 
     const args = { content: '', uri: 'test' };
-    // Empty string should be considered present
-    const result = methodDx.require(args, ['content', 'uri']);
-    assert.strictEqual(result, true);
+    // Empty string should be considered present - should not throw
+    methodDx.require(args, ['content', 'uri']); // Should not throw
   });
 
   test('should handle args with zero values', () => {
@@ -76,9 +71,8 @@ describe('Diagnostics', () => {
     const methodDx = dx.sub({ name: 'testMethod' });
 
     const args = { count: 0, uri: 'test' };
-    // Zero should be considered present
-    const result = methodDx.require(args, ['count', 'uri']);
-    assert.strictEqual(result, true);
+    // Zero should be considered present - should not throw
+    methodDx.require(args, ['count', 'uri']); // Should not throw
   });
 
   test('should handle args with false values', () => {
@@ -86,9 +80,8 @@ describe('Diagnostics', () => {
     const methodDx = dx.sub({ name: 'testMethod' });
 
     const args = { enabled: false, uri: 'test' };
-    // False should be considered present
-    const result = methodDx.require(args, ['enabled', 'uri']);
-    assert.strictEqual(result, true);
+    // False should be considered present - should not throw
+    methodDx.require(args, ['enabled', 'uri']); // Should not throw
   });
 
   test('should format error messages correctly', () => {
@@ -97,27 +90,24 @@ describe('Diagnostics', () => {
 
     const args = { content: 'test' };
 
-    // Capture console.log output to verify message format
-    const originalLog = console.log;
-    let logOutput = '';
-    console.log = (...args: unknown[]) => {
-      logOutput += args.map(a => String(a)).join(' ') + '\n';
-    };
-
-    // Create Diagnostics instance after capturing console.log
+    // Create Diagnostics instance
     const dx = new Diagnostics({ name: 'TestClass' });
     const methodDx = dx.sub({ name: 'testMethod' });
-    // Enable debug mode to see the output
-    methodDx.debugOn(true);
 
-    methodDx.require(args, ['content', 'missingKey']);
-
-    // Restore console.log
-    console.log = originalLog;
-
-    // Should contain missing key
-    assert.ok(logOutput.includes('❌ missing: "missingKey"'));
-    assert.ok(logOutput.includes('TestClass > testMethod'));
+    // Should throw with proper error message
+    assert.throws(
+      () => methodDx.require(args, ['content', 'missingKey']),
+      (error: Error) => {
+        const errorMsg = String(error);
+        return (
+          error instanceof Error &&
+          errorMsg.includes('Missing required parameters') &&
+          errorMsg.includes('missingKey') &&
+          errorMsg.includes('TestClass > testMethod')
+        );
+      },
+      'Should throw error with missing key information'
+    );
   });
 
   test('should handle debug state inheritance', () => {
