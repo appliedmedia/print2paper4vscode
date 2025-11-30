@@ -37,29 +37,18 @@ describe('OS Base Class', () => {
       const filePath = path.join(tempDir, 'test.txt');
       const content = 'test content';
       
-      os.fileWrite(filePath, content);
+      os.fileWrite({ filePath, content });
       assert.ok(os.exists(filePath));
       
-      const readContent = os.fileRead(filePath);
+      const readContent = os.fileRead({ path: filePath });
       assert.strictEqual(readContent, content);
     });
 
-    it('should copy files', () => {
-      const srcPath = path.join(tempDir, 'source.txt');
-      const destPath = path.join(tempDir, 'dest.txt');
-      const content = 'source content';
-      
-      os.fileWrite(srcPath, content);
-      os.fileCopy(srcPath, destPath);
-      
-      assert.ok(os.exists(destPath));
-      const destContent = os.fileRead(destPath);
-      assert.strictEqual(destContent, content);
-    });
+    // fileCopy was removed as dead code (only used in tests)
 
     it('should delete files', () => {
       const filePath = path.join(tempDir, 'delete.txt');
-      os.fileWrite(filePath, 'content');
+      os.fileWrite({ filePath, content: 'content' });
       assert.ok(os.exists(filePath));
       
       os.fileDelete(filePath);
@@ -117,9 +106,9 @@ describe('OS Base Class', () => {
     it('should parse JSON files', () => {
       const jsonPath = path.join(tempDir, 'test.json');
       const jsonContent = { key: 'value', number: 42 };
-      os.fileWrite(jsonPath, JSON.stringify(jsonContent));
+      os.fileWrite({ filePath: jsonPath, content: JSON.stringify(jsonContent) });
       
-      const parsed = os.fileRead<typeof jsonContent>(jsonPath);
+      const parsed = os.fileRead<typeof jsonContent>({ path: jsonPath });
       assert.strictEqual(parsed?.key, 'value');
       assert.strictEqual(parsed?.number, 42);
     });
@@ -127,9 +116,9 @@ describe('OS Base Class', () => {
     it('should return specific key from JSON', () => {
       const jsonPath = path.join(tempDir, 'test.json');
       const jsonContent = { key1: 'value1', key2: 'value2' };
-      os.fileWrite(jsonPath, JSON.stringify(jsonContent));
+      os.fileWrite({ filePath: jsonPath, content: JSON.stringify(jsonContent) });
       
-      const value = os.fileRead<string>(jsonPath, 'key1');
+      const value = os.fileRead<string>({ path: jsonPath, key: 'key1' });
       assert.strictEqual(value, 'value1');
     });
   });
@@ -138,9 +127,9 @@ describe('OS Base Class', () => {
     it('should parse YAML files', () => {
       const yamlPath = path.join(tempDir, 'test.yaml');
       const yamlContent = 'key1: value1\nkey2: value2';
-      os.fileWrite(yamlPath, yamlContent);
+      os.fileWrite({ filePath: yamlPath, content: yamlContent });
       
-      const parsed = os.fileRead<{ key1: string; key2: string }>(yamlPath);
+      const parsed = os.fileRead<{ key1: string; key2: string }>({ path: yamlPath });
       assert.strictEqual(parsed?.key1, 'value1');
       assert.strictEqual(parsed?.key2, 'value2');
     });
@@ -148,9 +137,9 @@ describe('OS Base Class', () => {
     it('should return specific key from YAML', () => {
       const yamlPath = path.join(tempDir, 'test.yaml');
       const yamlContent = 'key1: value1\nkey2: value2';
-      os.fileWrite(yamlPath, yamlContent);
+      os.fileWrite({ filePath: yamlPath, content: yamlContent });
       
-      const value = os.fileRead<string>(yamlPath, 'key1');
+      const value = os.fileRead<string>({ path: yamlPath, key: 'key1' });
       assert.strictEqual(value, 'value1');
     });
   });
@@ -159,14 +148,14 @@ describe('OS Base Class', () => {
     it('should read plain text files', () => {
       const txtPath = path.join(tempDir, 'test.txt');
       const content = 'plain text content';
-      os.fileWrite(txtPath, content);
+      os.fileWrite({ filePath: txtPath, content });
       
-      const readContent = os.fileRead<string>(txtPath);
+      const readContent = os.fileRead<string>({ path: txtPath });
       assert.strictEqual(readContent, content);
     });
 
     it('should return undefined for non-existent files', () => {
-      const result = os.fileRead('/nonexistent/path/file.txt');
+      const result = os.fileRead({ path: '/nonexistent/path/file.txt' });
       assert.strictEqual(result, undefined);
     });
   });
@@ -231,8 +220,8 @@ describe('OS Base Class', () => {
     it('should convert src attributes to webview URIs', async () => {
       const html = '<img src="test.png">';
       // Create a panel first so htmlSrcPathToURI can find it
-      const panelId = await app.vscodeapis.getOrCreateWebviewPanel('Test Panel', '<html></html>');
-      const result = os.htmlSrcPathToURI(html, panelId);
+      const panelId = await app.vscodeapis.getOrCreateWebviewPanel({ title: 'Test Panel', html: '<html></html>' });
+      const result = os.htmlSrcPathToURI({ html, webviewPanelId: panelId });
       assert.ok(typeof result === 'string');
       // Should have converted the src path
       assert.ok(result.includes('vscode-webview') || result.includes('test.png'));

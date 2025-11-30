@@ -41,7 +41,7 @@ describe('PDF', () => {
     const originalOpenPrintDialog = app.os.fileOpenPrintDialog;
     app.os.fileOpenPrintDialog = async () => {};
 
-    await pdf.printWithPreview(pdf.docInfo, 'test');
+    await pdf.printWithPreview({ pdfDoc: pdf.docInfo, descriptiveName: 'test' });
     // If we get here without throwing, it worked
     assert.ok(true);
     
@@ -57,7 +57,7 @@ describe('PDF', () => {
     const originalFilePrint = app.os.filePrint;
     app.os.filePrint = async () => {};
 
-    await pdf.printDirectly(pdf.docInfo, 'test');
+    await pdf.printDirectly({ pdfDoc: pdf.docInfo, descriptiveName: 'test' });
     // If we get here without throwing, it worked
     assert.ok(true);
     
@@ -73,7 +73,7 @@ describe('PDF', () => {
     const originalChooseSaveLocation = app.ui.chooseSaveLocation;
     app.ui.chooseSaveLocation = async () => null;
 
-    await pdf.saveAsPDF(pdf.docInfo, 'test');
+    await pdf.saveAsPDF({ pdfDoc: pdf.docInfo, descriptiveName: 'test' });
     // Should handle cancellation gracefully without throwing
     
     app.ui.chooseSaveLocation = originalChooseSaveLocation;
@@ -161,7 +161,7 @@ describe('PDF', () => {
       { content: ' =', color: '#000000', offset: 7 },
       { content: ' 42', color: '#008000', offset: 9 },
     ];
-    pdf.renderTokenizedLine(0, tokens);
+    pdf.renderTokenizedLine({ lineNumber: 0, tokens });
     // Should not throw
     assert.ok(true);
   });

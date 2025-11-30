@@ -60,7 +60,7 @@ describe('Persist', () => {
 
   it('should use default value when no value is set', async () => {
     persist.register('theme');
-    await persist.validateDefault('theme', async () => 'github-light');
+    await persist.validateDefault({ name: 'theme', computeFn: async () => 'github-light' });
     
     assert.strictEqual(persist['theme'], 'github-light');
   });
@@ -84,7 +84,7 @@ describe('Persist', () => {
 
   it('should use default when value is not in global state or cache', async () => {
     persist.register('newKey');
-    await persist.validateDefault('newKey', async () => 'defaultValue');
+    await persist.validateDefault({ name: 'newKey', computeFn: async () => 'defaultValue' });
     
     assert.strictEqual(persist['newKey'], 'defaultValue');
     // Should also be persisted to global state
@@ -104,8 +104,8 @@ describe('Persist', () => {
   it('should return same default on multiple validateDefault calls', async () => {
     persist.register('key');
     
-    const default1 = await persist.validateDefault('key', async () => 'default');
-    const default2 = await persist.validateDefault('key', async () => 'different');
+    const default1 = await persist.validateDefault({ name: 'key', computeFn: async () => 'default' });
+    const default2 = await persist.validateDefault({ name: 'key', computeFn: async () => 'different' });
     
     assert.strictEqual(default1, 'default');
     assert.strictEqual(default2, 'default'); // Should return cached default

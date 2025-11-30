@@ -42,7 +42,7 @@ describe('VSCodeAPIs', () => {
   });
 
   it('should update and get global state', () => {
-    app.vscodeapis.updateGlobalState('testKey', 'testValue');
+    app.vscodeapis.updateGlobalState({ key: 'testKey', value: 'testValue' });
     const value = app.vscodeapis.getGlobalState('testKey');
     assert.strictEqual(value, 'testValue');
   });
@@ -70,14 +70,14 @@ describe('VSCodeAPIs', () => {
   });
 
   it('should get or create webview panel', async () => {
-    const panelId = await app.vscodeapis.getOrCreateWebviewPanel('Test Panel', '<html><body>Test</body></html>');
+    const panelId = await app.vscodeapis.getOrCreateWebviewPanel({ title: 'Test Panel', html: '<html><body>Test</body></html>' });
     assert.ok(typeof panelId === 'string');
     assert.ok(panelId.length > 0);
   });
 
   it('should reuse existing webview panel', async () => {
-    const panelId1 = await app.vscodeapis.getOrCreateWebviewPanel('Test', '<html></html>');
-    const panelId2 = await app.vscodeapis.getOrCreateWebviewPanel('Test', '<html></html>', panelId1);
+    const panelId1 = await app.vscodeapis.getOrCreateWebviewPanel({ title: 'Test', html: '<html></html>' });
+    const panelId2 = await app.vscodeapis.getOrCreateWebviewPanel({ title: 'Test', html: '<html></html>', existingPanelId: panelId1 });
     assert.strictEqual(panelId1, panelId2);
   });
 

@@ -34,16 +34,16 @@ describe('UIMenu Icon Slot Triad', () => {
     items: UIMenuItem_t[]
   ): UIMenu => {
     const listBuilder = (): UIMenuItem_t[] => items;
-    return new UIMenu(
+    return new UIMenu({
       app,
-      'theme', // Use valid MenuId_t
-      'Test Menu',
-      menuIconSlotTriad,
-      false,
-      listBuilder,
-      [],
-      async () => ({ id: '', value: '' })
-    );
+      id: 'theme', // Use valid MenuId_t
+      displayName: 'Test Menu',
+      iconSlotTriad: menuIconSlotTriad,
+      isFlyout: false,
+      menuItems: listBuilder,
+      flyoutMenuItemIds: [],
+      selectionHandler: async () => ({ id: '', value: '' }),
+    });
   };
   
   describe('Icon Slot Structure', () => {

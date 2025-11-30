@@ -21,17 +21,8 @@ describe('Coords Advanced Unit Tests', () => {
   });
 
   it('should convert various page sizes correctly', () => {
-    // Test A4 dimensions (210mm x 297mm)
-    const a4 = coords.pageDimensionsInchesOrMmToPdfPts(210, 297, 'mm');
-    const expectedA4Width = 210 * 72 / 25.4; // ~595.28 pts
-    const expectedA4Height = 297 * 72 / 25.4; // ~841.89 pts
-    assert.ok(Math.abs(a4.widthPts - expectedA4Width) < 0.1, 'A4 width should be ~595.28 pts');
-    assert.ok(Math.abs(a4.heightPts - expectedA4Height) < 0.1, 'A4 height should be ~841.89 pts');
-
-    // Test Letter dimensions (8.5in x 11in)
-    const letter = coords.pageDimensionsInchesOrMmToPdfPts(8.5, 11, 'in');
-    assert.strictEqual(letter.widthPts, 8.5 * 72, 'Letter width should be 612 pts');
-    assert.strictEqual(letter.heightPts, 11 * 72, 'Letter height should be 792 pts');
+    // pageDimensionsInchesOrMmToPdfPts was removed as dead code (only used in tests)
+    // A4 and Letter dimension tests removed
   });
 
   it('should handle coordinate transformations', () => {
