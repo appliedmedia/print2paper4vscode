@@ -403,17 +403,17 @@ Replace all hardcoded `p2p4vsc` strings with `{{ns}}` in templates and ensure al
 
 #### 1. Add Namespaced Data Attributes
 
-**When adding data attributes**, use format:
+**When adding data attributes**, use format consistent with the underscore+camelCase convention:
 
-- `data-{{ns}}-menu-item-id` → becomes `data-p2p4vsc-menu-item-id`
-- Accessible in JavaScript as `dataset.{{ns_}}menuItemId` → `dataset.p2p4vscMenuItemId`
+- `data-{{ns_}}menuItemId` → becomes `data-p2p4vsc_menuItemId`
+- Accessible in JavaScript as `dataset.p2p4vsc_menuItemId` (underscores preserved, no automatic conversion)
 
-**Note**: For data attributes with hyphens, JavaScript converts to camelCase:
+**Examples**:
+- `data-{{ns_}}menuItemId` → `data-p2p4vsc_menuItemId` → `dataset.p2p4vsc_menuItemId`
+- `data-{{ns_}}actionType` → `data-p2p4vsc_actionType` → `dataset.p2p4vsc_actionType`
+- `data-{{ns_}}toolbarPosition` → `data-p2p4vsc_toolbarPosition` → `dataset.p2p4vsc_toolbarPosition`
 
-- `data-p2p4vsc-menu-item-id` → `dataset.p2p4vscMenuItemId` (hyphens removed, camelCase)
-- `data-p2p4vsc_menu_item_id` → `dataset.p2p4vsc_menu_item_id` (underscores preserved)
-
-**Recommendation**: Use hyphens in HTML (`data-{{ns}}-menu-item-id`) and access via camelCase in JavaScript (`dataset.p2p4vscMenuItemId`)
+**Recommendation**: Use underscore+camelCase format (`data-{{ns_}}menuItemId`) to match the codebase naming convention and avoid JavaScript's automatic hyphen-to-camelCase conversion. This provides predictable, explicit attribute names.
 
 ---
 
