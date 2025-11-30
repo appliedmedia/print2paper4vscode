@@ -344,7 +344,7 @@ uimenu_generic_handlers: |
     const menuItemId = itemEl.id;
     
     if (itemEl.classList.contains('isFlyout')) {
-      const flyoutMenuId = itemEl.getAttribute('flyout-menu-id-ref');
+      const flyoutMenuId = itemEl.getAttribute('{{ns_}}flyoutMenuIdRef');
       if (flyoutMenuId) {
         handleFlyoutToggle(e, itemEl, menu, flyoutMenuId);
       }
