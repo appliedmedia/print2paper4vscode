@@ -120,7 +120,7 @@ export class Persist {
     for (const key of keysToReset) {
       await this.app.vscodeapis.updateGlobalState({
         key: key as GlobalStateKey_t,
-        value: undefined as unknown as GlobalStateValue_t,
+        value: undefined,
       });
     }
 

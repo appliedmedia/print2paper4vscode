@@ -135,7 +135,7 @@ export class PDF {
       const tempPdfPath = this.app.os.pathJoin(tempDir, filename);
 
       // Write PDF document to temp file
-      this.app.os.fileWrite({ filePath: tempPdfPath, content: Buffer.from(new Uint8Array(pdfBuffer)) });
+      this.app.os.fileWrite({ filePath: tempPdfPath, content: Buffer.from(pdfBuffer) });
 
       this.trackTempPdf(tempPdfPath);
       await this.app.os.fileOpenPrintDialog(tempPdfPath);
@@ -169,7 +169,7 @@ export class PDF {
       const tempPdfPath = this.app.os.pathJoin(tempDir, filename);
 
       // Write PDF document to temp file
-      this.app.os.fileWrite({ filePath: tempPdfPath, content: Buffer.from(new Uint8Array(pdfBuffer)) });
+      this.app.os.fileWrite({ filePath: tempPdfPath, content: Buffer.from(pdfBuffer) });
 
       this.trackTempPdf(tempPdfPath);
       // Send PDF to printer

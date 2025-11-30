@@ -20,10 +20,6 @@ describe('Coords Advanced Unit Tests', () => {
     app.done();
   });
 
-  it('should convert various page sizes correctly', () => {
-    // pageDimensionsInchesOrMmToPdfPts was removed as dead code (only used in tests)
-    // A4 and Letter dimension tests removed
-  });
 
   it('should handle coordinate transformations', () => {
     const pageHeightPts = 792; // Letter size height

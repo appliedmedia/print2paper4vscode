@@ -130,8 +130,14 @@ export abstract class OS {
     const dx = this.dx.sub({ name: 'fileWrite' });
     dx.require(args, ['filePath', 'content']);
     const { filePath, content } = args;
-    fs.writeFileSync(filePath, content);
-    dx.done();
+    try {
+      fs.writeFileSync(filePath, content);
+    } catch (err) {
+      dx.error(`Failed to write ${filePath}: ${err}`);
+      throw err; // Re-throw to preserve existing behavior
+    } finally {
+      dx.done();
+    }
   }
 
 

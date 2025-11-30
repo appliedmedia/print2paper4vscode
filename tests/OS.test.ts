@@ -44,8 +44,6 @@ describe('OS Base Class', () => {
       assert.strictEqual(readContent, content);
     });
 
-    // fileCopy was removed as dead code (only used in tests)
-
     it('should delete files', () => {
       const filePath = path.join(tempDir, 'delete.txt');
       os.fileWrite({ filePath, content: 'content' });
