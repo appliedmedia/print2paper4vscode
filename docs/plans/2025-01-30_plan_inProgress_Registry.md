@@ -943,6 +943,108 @@ export class Yaml<T extends Record<string, string>> {
 
 ---
 
+## 📝 ACTUAL IMPLEMENTATION TRACKING
+
+**This section tracks actual code implementations as classes are migrated to use `app.reg.use()`.**
+**Code samples above show the TARGET pattern - this section shows what's ACTUALLY implemented.**
+
+### Migrated Classes
+
+*No classes migrated yet - Registry infrastructure complete, component migration pending.*
+
+**Note**: As each class is migrated in Stages 2-6, add its actual implementation code here showing the `app.reg.use()` call.
+
+### Registry Infrastructure (Stage 0.1-0.2)
+
+**Registry.ts - Actual Implementation:**
+
+```typescript
+export class Registry {
+  static readonly id = 'reg';
+  [key: string]: unknown;
+  private _instances: Map<string, unknown> = new Map();
+  private components: Array<{ new (...args: any[]): any; id: string }> = [];
+  private always: string[] = [];
+  private dx: Diagnostics;
+  private app: App;
+
+  constructor(args: {
+    app: App;
+    components?: Array<{ new (...args: any[]): any; id: string }>;
+    always?: string[];
+  }) {
+    this.app = args.app;
+    this.components = args.components || [];
+    this.always = args.always || [];
+    this.dx = new Diagnostics({
+      name: 'Registry',
+      debugOn: undefined,
+      parent: null,
+      app: this.app,
+    });
+    this._instances.set('dx', this.dx);
+    for (const Component of this.components) {
+      if (Component.id) {
+        (this as Record<string, unknown>)[Component.id] = {};
+      }
+    }
+  }
+
+  registerInstance(componentId: string, instance: unknown): void {
+    this._instances.set(componentId, instance);
+  }
+
+  use(...methodIds: string[]): FnImport_t {
+    const allMethods = [...methodIds, ...this.always];
+    const result: FnImport_t = {};
+    // ... method resolution logic
+    return result;
+  }
+}
+```
+
+**App.ts - Registry Integration:**
+
+```typescript
+export class App {
+  // ... existing properties
+  reg: Registry;
+
+  constructor(args: { context: ExtensionContext; vscode: typeof import('vscode') }) {
+    // ... create Diagnostics
+    const { context, vscode } = args;
+
+    // Create Registry with component classes
+    this.reg = new Registry({
+      app: this,
+      components: [
+        Diagnostics,
+        VSCodeAPIs,
+        UI,
+        PDF,
+        Stylize,
+        TabInspector,
+        UIMenuMgr,
+      ],
+      always: ['dx.sub'],
+    });
+
+    // Create components the old way
+    this.vscodeapis = new VSCodeAPIs({ app: this, vscode, context });
+    this.ui = new UI(this);
+    // ... etc
+
+    // Register existing instances with Registry
+    this.reg.registerInstance('dx', this.dx);
+    this.reg.registerInstance('vscodeapis', this.vscodeapis);
+    this.reg.registerInstance('ui', this.ui);
+    // ... etc
+  }
+}
+```
+
+---
+
 ## Current Implementation Status
 
 **Registry Infrastructure:**
@@ -951,8 +1053,12 @@ export class Yaml<T extends Record<string, string>> {
 - ✅ Type definitions (`FnImport_t`) created
 - ✅ Registry integrated into App
 - ✅ All components have `static readonly id` properties
-- ⏸️ Registry `use()` method is placeholder (logs but doesn't create instances yet)
-- ⏸️ Components still created the old way by App constructor
+- ✅ Registry has `registerInstance()` method to register existing instances
+- ✅ Registry `use()` method can resolve methods from registered instances
+- ✅ All component classes registered with Registry constructor
+- ✅ All existing component instances registered via `registerInstance()`
+- ⏸️ Components still created the old way by App constructor (migration pending)
+- ⏸️ No classes migrated to use `app.reg.use()` yet (Stage 2+)
 
 **Components in Codebase:**
 
