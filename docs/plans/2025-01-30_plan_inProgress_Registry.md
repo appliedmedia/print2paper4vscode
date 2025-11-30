@@ -80,13 +80,13 @@
 
 #### Stage 0.1: Create Registry Infrastructure ✅ DONE
 
-- [ ] Create `src/types/Registry_t.ts` with ONLY this type:
+- ✅ Create `src/types/Registry_t.ts` with ONLY this type:
   - `FnImport_t = { [componentId: string]: { [methodName: string]: Function } }` - what a class imports
   - **That's it!** No other types needed
   - **DO NOT** create: Use_t, FnExport_t, ComponentInstance_t, ComponentFactory_t, etc.
   - **Pattern rule**: Only create types that are actually used
   - See Stage 7.4 for complete pattern rules and cleanup TODOs
-- [ ] Create `src/Registry.ts`:
+- ✅ Create `src/Registry.ts`:
   - `static readonly id = 'reg'` - Registry's component id
   - `[key: string]: unknown` - index signature for dynamic component lookups (this.pdf, this.ui, etc)
   - `private _instances: Map<string, unknown>` - cache for lazy-loaded singleton instances
@@ -94,34 +94,35 @@
   - `private always: string[]` - methods always injected (format: 'componentId.methodName', e.g., 'dx.sub')
   - `private dx: Diagnostics` - Registry's diagnostics instance
   - `private app: App` - app reference
-- [ ] Registry constructor signature: `constructor(args: { app: App; components: Array<...>; always?: string[] })`
+- ✅ Registry constructor signature: `constructor(args: { app: App; components?: Array<...>; always?: string[] })`
   - Assign fields: `this.app = args.app`, `this.components = args.components`, `this.always = args.always || []`
   - Create diagnostics: `this.dx = this.app.dx.sub('Registry')`
   - Initialize instances cache: `this._instances = new Map()`, `this._instances.set('dx', this.dx)`
   - Build placeholder structure on `this`:
     - For each component: `this[Component.id] = {}` - just empty placeholders!
   - Result: `app.reg.pdf`, `app.reg.ui` etc. exist (values don't matter, just used for intellisense)
-- [ ] Add `use(...methodIds: string[]): FnImport_t` method - THE SIMPLE VERSION:
+- ✅ Add `use(...methodIds: string[]): FnImport_t` method - THE SIMPLE VERSION:
   - Merge: `const allMethods = [...methodIds, ...this.always]`
   - For each method name (e.g., 'showError', 'generatePdf'):
     - Find which component class has that method: `Component.prototype.hasOwnProperty(methodName)`
     - Get or create instance: `this._instances.get(componentId) || new Component(this.app)`
     - Return bound method: `instance[methodName].bind(instance)`
   - That's it! No complex parsing, prototype IS the source of truth
+- ✅ Add `static readonly id` properties to components: Diagnostics ('dx'), VSCodeAPIs ('vscodeapis'), UI ('ui'), PDF ('pdf'), Stylize ('stylize'), TabInspector ('tabinspector'), UIMenuMgr ('uimenumgr'), OS ('os')
 
 #### Stage 0.2: Integrate Registry into App ✅ DONE
 
-- [x] Update `App.ts` to create Registry instance:
+- ✅ Update `App.ts` to create Registry instance:
   - Import Registry: `import { Registry } from './Registry'`
   - Create Registry: `this.reg = new Registry({ app: this, components: [], always: ['dx.sub'] })`
   - App owns the list of what components exist (components array empty for now - will be populated during migration)
   - Note: `always: ['dx.sub']` means all components can call `this.fn.dx.sub('ComponentName')` without requesting it
   - Registry owns the `use()` method - components call `app.reg.use(...methodIds)` directly
-- [x] Verify Registry can be instantiated without breaking existing code (compiles successfully, components still created the old way)
+- ✅ Verify Registry can be instantiated without breaking existing code (compiles successfully, components still created the old way)
 
 #### Stage 0.3: Test Infrastructure ⏸️ IN PROGRESS
 
-- [x] Run existing tests to ensure no regressions (all 319 tests pass)
+- ✅ Run existing tests to ensure no regressions (all 319 tests pass)
 - [ ] Add basic Registry construction test
 - [ ] Verify Diagnostics is available via Registry
 
