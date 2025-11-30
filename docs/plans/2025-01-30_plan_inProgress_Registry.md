@@ -90,13 +90,13 @@
   - `static readonly id = 'reg'` - Registry's component id
   - `[key: string]: unknown` - index signature for dynamic component lookups (this.pdf, this.ui, etc)
   - `private _instances: Map<string, unknown>` - cache for lazy-loaded singleton instances
-  - `private components: Array<{ new(app: App): any; id: string }>` - component class references
+  - `private components: Array<{ new(...args: any[]): any; id: string }>` - component class references (made flexible for different constructors)
   - `private always: string[]` - methods always injected (format: 'componentId.methodName', e.g., 'dx.sub')
   - `private dx: Diagnostics` - Registry's diagnostics instance
   - `private app: App` - app reference
 - ✅ Registry constructor signature: `constructor(args: { app: App; components?: Array<...>; always?: string[] })`
-  - Assign fields: `this.app = args.app`, `this.components = args.components`, `this.always = args.always || []`
-  - Create diagnostics: `this.dx = this.app.dx.sub('Registry')`
+  - Assign fields: `this.app = args.app`, `this.components = args.components || []`, `this.always = args.always || []`
+  - Create diagnostics: `this.dx = new Diagnostics({ name: 'Registry', ... })` (Registry creates its own Diagnostics)
   - Initialize instances cache: `this._instances = new Map()`, `this._instances.set('dx', this.dx)`
   - Build placeholder structure on `this`:
     - For each component: `this[Component.id] = {}` - just empty placeholders!
@@ -105,7 +105,7 @@
   - Merge: `const allMethods = [...methodIds, ...this.always]`
   - For each method name (e.g., 'showError', 'generatePdf'):
     - Find which component class has that method: `Component.prototype.hasOwnProperty(methodName)`
-    - Get or create instance: `this._instances.get(componentId) || new Component(this.app)`
+    - Get or create instance: `this._instances.get(componentId) || new Component(this.app)` (placeholder for now - components still created by App)
     - Return bound method: `instance[methodName].bind(instance)`
   - That's it! No complex parsing, prototype IS the source of truth
 - ✅ Add `static readonly id` properties to components: Diagnostics ('dx'), VSCodeAPIs ('vscodeapis'), UI ('ui'), PDF ('pdf'), Stylize ('stylize'), TabInspector ('tabinspector'), UIMenuMgr ('uimenumgr'), OS ('os')
@@ -114,10 +114,11 @@
 
 - ✅ Update `App.ts` to create Registry instance:
   - Import Registry: `import { Registry } from './Registry'`
-  - Create Registry: `this.reg = new Registry({ app: this, components: [], always: ['dx.sub'] })`
-  - App owns the list of what components exist (components array empty for now - will be populated during migration)
+  - Create Registry: `this.reg = new Registry({ app: this, components: [Diagnostics, VSCodeAPIs, UI, PDF, Stylize, TabInspector, UIMenuMgr], always: ['dx.sub'] })`
+  - App owns the list of what components exist (all component classes registered)
   - Note: `always: ['dx.sub']` means all components can call `this.fn.dx.sub('ComponentName')` without requesting it
   - Registry owns the `use()` method - components call `app.reg.use(...methodIds)` directly
+  - Register existing component instances via `this.reg.registerInstance()`
 - ✅ Verify Registry can be instantiated without breaking existing code (compiles successfully, components still created the old way)
 
 #### Stage 0.3: Test Infrastructure ⏸️ IN PROGRESS
@@ -1045,7 +1046,7 @@ export class App {
 
 ---
 
-## Current Implementation Status
+## Current Status Summary
 
 **Registry Infrastructure:**
 
@@ -1549,13 +1550,13 @@ class PaperPrinter {
 
 ### How Dependency Access Works
 
-1. **Request Phase**: Request by method names in constructor: `app.reg.use('getTokens', 'showErrorMessage')`
+1. **Request Phase**: Request by method names in constructor: `app.use({ getTokens: [], showErrorMessage: [] })`
 2. **Registry Resolution**: Registry automatically finds which component has each method
 3. **Ambiguity Handling**: If same method name exists in multiple components, use `'componentName.methodName'` format
 4. **Return Format**: Registry returns object organized by component: `{ dx: { create, sub, out }, ui: { showErrorMessage }, stylize: { getTokens } }`
 5. **Access Phase**: Use `this.fn.componentName.methodName()` - same access pattern as current `app.componentName.methodName()`
-6. **Request Entire Class**: Request entire class instance by class name or short name: `app.reg.use('Diagnostics')` or `app.reg.use('dx')`
-7. **Class References**: For class constructors, use special syntax like `'Coords'` or similar
+6. **Request Entire Class**: Request entire class instance by class name or short name: `app.use({ Diagnostics: [] })` or `app.use({ dx: [] })`
+7. **Class References**: For class constructors, use special syntax like `Coords: []` or similar
 
 **Key Benefits**:
 
@@ -2037,9 +2038,9 @@ use<T>(request: DependencyRequest): T {
 
 ---
 
-## Architecture Decision: Registry Owns Dependency Injection API
+## Architecture Decision: Registry Integrated into App
 
-Registry owns the dependency injection API: `app.reg.use()`. Components call `app.reg.use()` directly to request methods they need. Registry is a separate class that handles all dependency management, lazy instantiation, and method resolution.
+Registry functionality is exposed directly on App: `app.use()`. Registry is still a separate internal class that handles the dependency management, but App delegates to it. This keeps the API simple - components just call `app.use()` without needing to know about Registry.
 
 ## Registry Implementation Details
 
@@ -2403,7 +2404,7 @@ class Registry {
 1. ✓ App reference injected via constructor - components receive `app: App` to access Registry
 2. ✓ No `init()` methods - all initialization in constructors
 3. ✓ Components constructed lazily on first use by Registry
-4. ✓ Explicit dependency declarations in constructors via `app.reg.use()`
+4. ✓ Explicit dependency declarations in constructors via `app.use()`
 5. ✓ `done()` methods preserved for explicit cleanup
 6. ✓ All tests passing
 7. ✓ No performance regressions
