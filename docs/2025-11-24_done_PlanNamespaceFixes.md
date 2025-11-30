@@ -2,9 +2,9 @@
 
 ## ✅ STATUS: COMPLETE
 
-**Completion Date**: 2025-11-27  
-**Verification Date**: 2025-11-24  
-**Tests**: Namespace-Template-Replacement.test.ts exists and verifies implementation  
+**Completion Date**: 2025-11-27<br>
+**Verification Date**: 2025-11-24<br>
+**Tests**: Namespace-Template-Replacement.test.ts exists and verifies implementation<br>
 **Compilation**: Implementation complete (note: unrelated compilation errors exist in Diagnostics tests)
 
 ### Verification Summary (2025-11-24)
@@ -223,7 +223,7 @@ Replace all hardcoded `p2p4vsc` strings with `{{ns}}` in templates and ensure al
 #### 1. ✅ `src/_entrypoint_extId_t.ts` (NEW)
 
 **Created**:
-- `export const kExtensionId = 'p2p4vsc'` - THE single source of truth
+- `export const kExtId = 'p2p4vsc'` - THE single source of truth
 - Dedicated foundational file (underscore prefix signals early initialization)
 - No circular dependencies
 - Imported by `App.ts`, `VSCodeAPIs.ts`, and build scripts
@@ -231,13 +231,13 @@ Replace all hardcoded `p2p4vsc` strings with `{{ns}}` in templates and ensure al
 #### 2. ✅ `src/VSCodeAPIs.ts`
 
 **Added**:
-- `public static readonly ExtId = kExtensionId` - References single source
+- `public static readonly ExtId = kExtId` - References single source
 - All VS Code API operations use this constant
 
 #### 3. ✅ `src/App.ts`
 
 **Added**:
-- `public static readonly kNs = kExtensionId` - References single source
+- `public static readonly kNs = kExtId` - References single source
 - `public static readonly kNs_ = App.kNs + '_'` - Underscore prefix
 - Instance properties: `ns` and `ns_` for easy access
 - Updated `templateDictReplace()` to auto-inject `{ns: 'p2p4vsc', ns_: 'p2p4vsc_'}`
@@ -363,7 +363,7 @@ Replace all hardcoded `p2p4vsc` strings with `{{ns}}` in templates and ensure al
 #### 1. ✅ `src/_entrypoint_extId_t.ts`
 
 **Implementation**: Created dedicated foundational file for namespace constant
-- `export const kExtensionId = 'p2p4vsc'` - THE single source of truth
+- `export const kExtId = 'p2p4vsc'` - THE single source of truth
 - Underscore prefix signals foundational/early initialization requirement
 - No circular dependencies (standalone file)
 - Imported by all components that need namespace access
@@ -373,7 +373,7 @@ Replace all hardcoded `p2p4vsc` strings with `{{ns}}` in templates and ensure al
 **Implementation**: Command IDs use `{{ns}}` templates, processed during build
 - Source: `"command": "{{ns}}.print2paper"`
 - Output: `"command": "p2p4vsc.print2paper"`
-- Build script reads `kExtensionId` from compiled `_entrypoint_extId_t.js`
+- Build script reads `kExtId` from compiled `_entrypoint_extId_t.js`
 - Replaces all `{{ns}}` occurrences in package.json
 - Runs automatically during `npm run compile` and `npm run compile:deploy`
 
@@ -519,12 +519,12 @@ To rename from `p2p4vsc` to `newname`:
    ```
 
 **That's it!** All changes propagate automatically:
-- `VSCodeAPIs.ExtId` references `kExtensionId`
-- `App.kNs` references `kExtensionId`
+- `VSCodeAPIs.ExtId` references `kExtId`
+- `App.kNs` references `kExtId`
 - All YAML templates use `{{ns}}` and `{{ns_}}` placeholders
-- `package.json` uses `{{ns}}` templates, processed during build from `kExtensionId`
+- `package.json` uses `{{ns}}` templates, processed during build from `kExtId`
 - Output `out/package.json` has all `{{ns}}` replaced with actual value
 - CSS classes become `newname_menuBtn`, `newname_toolbar`, etc.
 - VS Code commands become `newname.print2paper`, `newname.persistClear`
 
-**Single Source of Truth**: `kExtensionId` in `_entrypoint_extId_t.ts` - Change ONE constant, everything updates.
+**Single Source of Truth**: `kExtId` in `_entrypoint_extId_t.ts` - Change ONE constant, everything updates.
