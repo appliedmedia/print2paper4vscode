@@ -140,9 +140,6 @@ export abstract class OS {
     }
   }
 
-  fileCopy(srcPath: string, destPath: string): void {
-    fs.copyFileSync(srcPath, destPath);
-  }
 
   fileDelete(targetPath: string): void {
     try {

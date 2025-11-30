@@ -42,7 +42,7 @@ describe('VSCodeAPIs', () => {
   });
 
   it('should update and get global state', () => {
-    app.vscodeapis.updateGlobalState('testKey', 'testValue');
+    app.vscodeapis.updateGlobalState({ key: 'testKey', value: 'testValue' });
     const value = app.vscodeapis.getGlobalState('testKey');
     assert.strictEqual(value, 'testValue');
   });
