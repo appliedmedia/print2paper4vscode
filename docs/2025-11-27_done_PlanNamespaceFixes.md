@@ -446,6 +446,7 @@ Replace all hardcoded `p2p4vsc` strings with `{{ns}}` in templates and ensure al
 #### 2. ✅ Test Template Replacement
 
 **Created**: `tests/Namespace-Template-Replacement.test.ts`
+
 - Verifies `templateDictReplace()` auto-injects `{ns, ns_}`
 - Tests CSS, HTML, and JavaScript consistency
 - Validates new underscore+camelCase convention
@@ -527,6 +528,7 @@ To rename from `p2p4vsc` to `newname`:
    ```
 
 **That's it!** All changes propagate automatically:
+
 - `VSCodeAPIs.ExtId` references `kExtId`
 - `App.kNs` references `kExtId`
 - All YAML templates use `{{ns}}` and `{{ns_}}` placeholders
