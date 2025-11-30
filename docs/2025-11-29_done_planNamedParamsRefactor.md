@@ -1,6 +1,8 @@
-# Named Parameters Refactoring Plan
+# Named Parameters Refactoring Plan - COMPLETED ✅
 
-This document outlines the comprehensive plan for refactoring method signatures from positional parameters to named parameters (hash/object style) throughout the codebase. Each method will accept an `args` object and use `dx.require()` for mandatory parameters.
+This document documents the completed refactoring of method signatures from positional parameters to named parameters (hash/object style) throughout the codebase. Each method now accepts an `args` object and uses `dx.require()` for mandatory parameters.
+
+**Status:** All methods have been refactored and all call sites updated. All tests have been updated. Compilation succeeds with zero errors.
 
 ## Scope & Exclusion Rules
 
@@ -148,9 +150,9 @@ The following methods have 2-4 simple parameters OR 5+ parameters and will benef
 
 ### ✅ `constructor(context, vscode)`
 
-**Current signature:** `constructor(context: ExtensionContext, vscode: typeof import('vscode'))`
+**Previous signature:** `constructor(context: ExtensionContext, vscode: typeof import('vscode'))`
 
-**New signature:**
+**Updated signature:**
 
 ```typescript
 constructor(args: {
@@ -175,9 +177,9 @@ constructor(args: {
 
 ### ✅ `constructor(name, debugOn?, parent?, app?)`
 
-**Current signature:** `constructor(name: string, debugOn?: boolean, parent?: Diagnostics | null, app?: any)`
+**Previous signature:** `constructor(name: string, debugOn?: boolean, parent?: Diagnostics | null, app?: any)`
 
-**New signature:**
+**Updated signature:**
 
 ```typescript
 constructor(args: {
@@ -204,9 +206,9 @@ constructor(args: {
 
 ### ✅ `sub(name, debugOn?)`
 
-**Current signature:** `sub(name: string, debugOn?: boolean): Diagnostics`
+**Previous signature:** `sub(name: string, debugOn?: boolean): Diagnostics`
 
-**New signature:**
+**Updated signature:**
 
 ```typescript
 sub(args: { name: string; debugOn?: boolean }): Diagnostics
@@ -229,9 +231,9 @@ sub(args: { name: string; debugOn?: boolean }): Diagnostics
 
 ### ✅ `printWithPreview(pdfDoc, descriptiveName?)`
 
-**Current signature:** `async printWithPreview(pdfDoc: DocInfo_PDF, descriptiveName?: string): Promise<void>`
+**Previous signature:** `async printWithPreview(pdfDoc: DocInfo_PDF, descriptiveName?: string): Promise<void>`
 
-**New signature:**
+**Updated signature:**
 
 ```typescript
 async printWithPreview(args: {
@@ -254,9 +256,9 @@ async printWithPreview(args: {
 
 ### ✅ `printDirectly(pdfDoc, descriptiveName?)`
 
-**Current signature:** `async printDirectly(pdfDoc: DocInfo_PDF, descriptiveName?: string): Promise<void>`
+**Previous signature:** `async printDirectly(pdfDoc: DocInfo_PDF, descriptiveName?: string): Promise<void>`
 
-**New signature:**
+**Updated signature:**
 
 ```typescript
 async printDirectly(args: {
@@ -279,9 +281,9 @@ async printDirectly(args: {
 
 ### ✅ `saveAsPDF(pdfDoc, descriptiveName?)`
 
-**Current signature:** `async saveAsPDF(pdfDoc: DocInfo_PDF, descriptiveName?: string): Promise<void>`
+**Previous signature:** `async saveAsPDF(pdfDoc: DocInfo_PDF, descriptiveName?: string): Promise<void>`
 
-**New signature:**
+**Updated signature:**
 
 ```typescript
 async saveAsPDF(args: {
@@ -304,9 +306,9 @@ async saveAsPDF(args: {
 
 ### ✅ `renderTokenizedLine(lineNumber, tokens)`
 
-**Current signature:** `public renderTokenizedLine(lineNumber: number, tokens: ThemedToken[]): void`
+**Previous signature:** `public renderTokenizedLine(lineNumber: number, tokens: ThemedToken[]): void`
 
-**New signature:**
+**Updated signature:**
 
 ```typescript
 public renderTokenizedLine(args: {
@@ -331,9 +333,9 @@ public renderTokenizedLine(args: {
 
 ### ✅ `handleSelection_Print(menuId, menuItemId)`
 
-**Current signature:** `private async handleSelection_Print(menuId: MenuId_t, menuItemId: MenuItemId_t): Promise<HandleSelection_t>`
+**Previous signature:** `private async handleSelection_Print(menuId: MenuId_t, menuItemId: MenuItemId_t): Promise<HandleSelection_t>`
 
-**New signature:**
+**Updated signature:**
 
 ```typescript
 private async handleSelection_Print(args: {
@@ -356,9 +358,9 @@ private async handleSelection_Print(args: {
 
 ### ✅ `handleSelection_Theme(menuId, menuItemId)`
 
-**Current signature:** `private async handleSelection_Theme(menuId: MenuId_t, menuItemId: MenuItemId_t): Promise<HandleSelection_t>`
+**Previous signature:** `private async handleSelection_Theme(menuId: MenuId_t, menuItemId: MenuItemId_t): Promise<HandleSelection_t>`
 
-**New signature:**
+**Updated signature:**
 
 ```typescript
 private async handleSelection_Theme(args: {
@@ -381,9 +383,9 @@ private async handleSelection_Theme(args: {
 
 ### ✅ `handleSelection_Text(menuId, menuItemId)`
 
-**Current signature:** `private async handleSelection_Text(menuId: MenuId_t, menuItemId: MenuItemId_t): Promise<HandleSelection_t>`
+**Previous signature:** `private async handleSelection_Text(menuId: MenuId_t, menuItemId: MenuItemId_t): Promise<HandleSelection_t>`
 
-**New signature:**
+**Updated signature:**
 
 ```typescript
 private async handleSelection_Text(args: {
@@ -406,9 +408,9 @@ private async handleSelection_Text(args: {
 
 ### ✅ `handleSelection_PageSizeId(menuId, menuItemId)`
 
-**Current signature:** `private async handleSelection_PageSizeId(menuId: MenuId_t, menuItemId: MenuItemId_t): Promise<HandleSelection_t>`
+**Previous signature:** `private async handleSelection_PageSizeId(menuId: MenuId_t, menuItemId: MenuItemId_t): Promise<HandleSelection_t>`
 
-**New signature:**
+**Updated signature:**
 
 ```typescript
 private async handleSelection_PageSizeId(args: {
@@ -431,9 +433,9 @@ private async handleSelection_PageSizeId(args: {
 
 ### ✅ `handleSelection_Orient(menuId, menuItemId)`
 
-**Current signature:** `private async handleSelection_Orient(menuId: MenuId_t, menuItemId: MenuItemId_t): Promise<HandleSelection_t>`
+**Previous signature:** `private async handleSelection_Orient(menuId: MenuId_t, menuItemId: MenuItemId_t): Promise<HandleSelection_t>`
 
-**New signature:**
+**Updated signature:**
 
 ```typescript
 private async handleSelection_Orient(args: {
@@ -456,9 +458,9 @@ private async handleSelection_Orient(args: {
 
 ### ✅ `handleSelection_MarginId(menuId, menuItemId)`
 
-**Current signature:** `private async handleSelection_MarginId(menuId: MenuId_t, menuItemId: MenuItemId_t): Promise<HandleSelection_t>`
+**Previous signature:** `private async handleSelection_MarginId(menuId: MenuId_t, menuItemId: MenuItemId_t): Promise<HandleSelection_t>`
 
-**New signature:**
+**Updated signature:**
 
 ```typescript
 private async handleSelection_MarginId(args: {
@@ -481,9 +483,9 @@ private async handleSelection_MarginId(args: {
 
 ### ✅ `handleSelection_HeaderFooter(menuId, menuItemId)`
 
-**Current signature:** `private async handleSelection_HeaderFooter(menuId: MenuId_t, menuItemId: MenuItemId_t): Promise<HandleSelection_t>`
+**Previous signature:** `private async handleSelection_HeaderFooter(menuId: MenuId_t, menuItemId: MenuItemId_t): Promise<HandleSelection_t>`
 
-**New signature:**
+**Updated signature:**
 
 ```typescript
 private async handleSelection_HeaderFooter(args: {
@@ -506,9 +508,9 @@ private async handleSelection_HeaderFooter(args: {
 
 ### ✅ `handleSelection_ZoomInOut(menuId, menuItemId)`
 
-**Current signature:** `private async handleSelection_ZoomInOut(menuId: MenuId_t, menuItemId: MenuItemId_t): Promise<HandleSelection_t>`
+**Previous signature:** `private async handleSelection_ZoomInOut(menuId: MenuId_t, menuItemId: MenuItemId_t): Promise<HandleSelection_t>`
 
-**New signature:**
+**Updated signature:**
 
 ```typescript
 private async handleSelection_ZoomInOut(args: {
@@ -533,7 +535,7 @@ private async handleSelection_ZoomInOut(args: {
 
 ### ✅ `tokenize(code, languageId, theme?, pageBegin?, pageEnd?)`
 
-**Current signature:**
+**Previous signature:**
 
 ```typescript
 async tokenize(
@@ -545,7 +547,7 @@ async tokenize(
 ): Promise<ThemedToken[][]>
 ```
 
-**New signature:**
+**Updated signature:**
 
 ```typescript
 async tokenize(args: {
@@ -573,9 +575,9 @@ async tokenize(args: {
 
 ### ✅ `registerMessageHandler(messageType, handler)`
 
-**Current signature:** `registerMessageHandler(messageType: string, handler: MessageHandler_t): void`
+**Previous signature:** `registerMessageHandler(messageType: string, handler: MessageHandler_t): void`
 
-**New signature:**
+**Updated signature:**
 
 ```typescript
 registerMessageHandler(args: {
@@ -598,9 +600,9 @@ registerMessageHandler(args: {
 
 ### ✅ `unregisterMessageHandler(messageType, handler)`
 
-**Current signature:** `unregisterMessageHandler(messageType: string, handler: MessageHandler_t): void`
+**Previous signature:** `unregisterMessageHandler(messageType: string, handler: MessageHandler_t): void`
 
-**New signature:**
+**Updated signature:**
 
 ```typescript
 unregisterMessageHandler(args: {
@@ -631,7 +633,7 @@ No methods in this file meet the refactoring criteria.
 
 ### ✅ `constructor(app, id, displayName, iconSlotTriad, isFlyout, menuItems, flyoutMenuItemIds, selectionHandler)`
 
-**Current signature:**
+**Previous signature:**
 
 ```typescript
 constructor(
@@ -646,7 +648,7 @@ constructor(
 )
 ```
 
-**New signature:**
+**Updated signature:**
 
 ```typescript
 constructor(args: {
@@ -679,7 +681,7 @@ constructor(args: {
 
 ### ✅ `getItemHTML(item, flyout, defaultItemId, selectedItemId)`
 
-**Current signature:**
+**Previous signature:**
 
 ```typescript
 async getItemHTML(
@@ -690,7 +692,7 @@ async getItemHTML(
 ): Promise<string>
 ```
 
-**New signature:**
+**Updated signature:**
 
 ```typescript
 async getItemHTML(args: {
@@ -717,7 +719,7 @@ async getItemHTML(args: {
 
 ### ✅ `createMenu(id, displayName, iconSlotTriad, isFlyout, menuItems, flyoutMenuItemIds, selectionHandler)`
 
-**Current signature:**
+**Previous signature:**
 
 ```typescript
 createMenu(
@@ -731,7 +733,7 @@ createMenu(
 ): UIMenu
 ```
 
-**New signature:**
+**Updated signature:**
 
 ```typescript
 createMenu(args: {
@@ -818,9 +820,9 @@ Additional consideration:
 
 ### ✅ `getValueForPersistIdOnMenuId(menuId, persistId)`
 
-**Current signature:** `getValueForPersistIdOnMenuId(menuId: MenuId_t, persistId: UI_t): PersistValue_t | undefined`
+**Previous signature:** `getValueForPersistIdOnMenuId(menuId: MenuId_t, persistId: UI_t): PersistValue_t | undefined`
 
-**New signature:**
+**Updated signature:**
 
 ```typescript
 getValueForPersistIdOnMenuId(args: {
@@ -843,9 +845,9 @@ getValueForPersistIdOnMenuId(args: {
 
 ### ✅ `setValueForPersistIdOnMenuId(menuId, persistId, value)`
 
-**Current signature:** `setValueForPersistIdOnMenuId(menuId: MenuId_t, persistId: UI_t, value: PersistValue_t): void`
+**Previous signature:** `setValueForPersistIdOnMenuId(menuId: MenuId_t, persistId: UI_t, value: PersistValue_t): void`
 
-**New signature:**
+**Updated signature:**
 
 ```typescript
 setValueForPersistIdOnMenuId(args: {
@@ -869,9 +871,9 @@ setValueForPersistIdOnMenuId(args: {
 
 ### ✅ `getValueForMenuItemId(menuId, menuItemId)`
 
-**Current signature:** `getValueForMenuItemId(menuId: MenuId_t, menuItemId: string): number | string`
+**Previous signature:** `getValueForMenuItemId(menuId: MenuId_t, menuItemId: string): number | string`
 
-**New signature:**
+**Updated signature:**
 
 ```typescript
 getValueForMenuItemId(args: {
@@ -898,9 +900,9 @@ getValueForMenuItemId(args: {
 
 ### ✅ `constructor(app, vscode, context)`
 
-**Current signature:** `constructor(app: App, vscode: typeof import('vscode'), context: ExtensionContext)`
+**Previous signature:** `constructor(app: App, vscode: typeof import('vscode'), context: ExtensionContext)`
 
-**New signature:**
+**Updated signature:**
 
 ```typescript
 constructor(args: {
@@ -924,9 +926,9 @@ constructor(args: {
 
 ### ✅ `updateGlobalState(key, value)`
 
-**Current signature:** `updateGlobalState(key: GlobalStateKey_t, value: GlobalStateValue_t): void`
+**Previous signature:** `updateGlobalState(key: GlobalStateKey_t, value: GlobalStateValue_t): void`
 
-**New signature:**
+**Updated signature:**
 
 ```typescript
 updateGlobalState(args: {
@@ -949,7 +951,7 @@ updateGlobalState(args: {
 
 ### ✅ `setPanelTitle(id, title)` ⚠️ REMOVE
 
-**Current signature:** `setPanelTitle(id: WebviewPanelId_t, title: string): void`
+**Previous signature:** `setPanelTitle(id: WebviewPanelId_t, title: string): void`
 
 **Recommendation:** **DELETE THIS METHOD** - No callers found in src/ or tests/. This is dead code.
 
@@ -962,9 +964,9 @@ updateGlobalState(args: {
 
 ### ✅ `updatePanelHtml(id, html)`
 
-**Current signature:** `updatePanelHtml(id: WebviewPanelId_t, html: string): void`
+**Previous signature:** `updatePanelHtml(id: WebviewPanelId_t, html: string): void`
 
-**New signature:**
+**Updated signature:**
 
 ```typescript
 updatePanelHtml(args: {
@@ -987,7 +989,7 @@ updatePanelHtml(args: {
 
 ### ✅ `getOrCreateWebviewPanel(title, html, existingPanelId?)`
 
-**Current signature:**
+**Previous signature:**
 
 ```typescript
 async getOrCreateWebviewPanel(
@@ -997,7 +999,7 @@ async getOrCreateWebviewPanel(
 ): Promise<WebviewPanelId_t>
 ```
 
-**New signature:**
+**Updated signature:**
 
 ```typescript
 async getOrCreateWebviewPanel(args: {
@@ -1021,9 +1023,9 @@ async getOrCreateWebviewPanel(args: {
 
 ### ✅ `getVSCodeThemeJson(themeId, keys?)`
 
-**Current signature:** `getVSCodeThemeJson(themeId: string, keys?: string[]): Record<string, unknown> | undefined`
+**Previous signature:** `getVSCodeThemeJson(themeId: string, keys?: string[]): Record<string, unknown> | undefined`
 
-**New signature:**
+**Updated signature:**
 
 ```typescript
 getVSCodeThemeJson(args: {
@@ -1048,9 +1050,9 @@ getVSCodeThemeJson(args: {
 
 ### ✅ `fileWrite(filePath, content)`
 
-**Current signature:** `fileWrite(filePath: string, content: string | Buffer): void`
+**Previous signature:** `fileWrite(filePath: string, content: string | Buffer): void`
 
-**New signature:**
+**Updated signature:**
 
 ```typescript
 fileWrite(args: {
@@ -1073,7 +1075,7 @@ fileWrite(args: {
 
 ### ✅ `fileCopy(srcPath, destPath)` ⚠️ REMOVE
 
-**Current signature:** `fileCopy(srcPath: string, destPath: string): void`
+**Previous signature:** `fileCopy(srcPath: string, destPath: string): void`
 
 **Recommendation:** **DELETE THIS METHOD** - Only test caller, no production usage.
 
@@ -1086,9 +1088,9 @@ fileWrite(args: {
 
 ### ✅ `fileRead<T>(path, key?)`
 
-**Current signature:** `fileRead: FileRead_t = <T = string>(path: string, key?: string): T | undefined`
+**Previous signature:** `fileRead: FileRead_t = <T = string>(path: string, key?: string): T | undefined`
 
-**New signature:**
+**Updated signature:**
 
 ```typescript
 fileRead<T = string>(args: {
@@ -1114,9 +1116,9 @@ fileRead<T = string>(args: {
 
 ### ✅ `htmlSrcPathToURI(html, webviewPanelId)`
 
-**Current signature:** `htmlSrcPathToURI(html: string, webviewPanelId: WebviewPanelId_t): string`
+**Previous signature:** `htmlSrcPathToURI(html: string, webviewPanelId: WebviewPanelId_t): string`
 
-**New signature:**
+**Updated signature:**
 
 ```typescript
 htmlSrcPathToURI(args: {
@@ -1147,7 +1149,7 @@ No methods in this file meet the refactoring criteria.
 
 ### ✅ `pageDimensionsInchesOrMmToPdfPts(widthInchesOrMm, heightInchesOrMm, unit)` ⚠️ REMOVE
 
-**Current signature:**
+**Previous signature:**
 
 ```typescript
 pageDimensionsInchesOrMmToPdfPts(
@@ -1174,9 +1176,9 @@ pageDimensionsInchesOrMmToPdfPts(
 
 ### ✅ `validateDefault(name, computeFn)`
 
-**Current signature:** `async validateDefault(name: string, computeFn: () => Promise<PersistValue_t>): Promise<PersistValue_t>`
+**Previous signature:** `async validateDefault(name: string, computeFn: () => Promise<PersistValue_t>): Promise<PersistValue_t>`
 
-**New signature:**
+**Updated signature:**
 
 ```typescript
 async validateDefault(args: {
@@ -1201,9 +1203,9 @@ async validateDefault(args: {
 
 ### ✅ `constructor(app, filePath, dataStruct)`
 
-**Current signature:** `constructor(app: App, filePath: string, dataStruct: T)`
+**Previous signature:** `constructor(app: App, filePath: string, dataStruct: T)`
 
-**New signature:**
+**Updated signature:**
 
 ```typescript
 constructor(args: {
