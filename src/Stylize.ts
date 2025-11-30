@@ -51,6 +51,7 @@ interface VSCodeTheme {
  * const themes = stylize.getThemes();
  */
 export class Stylize {
+  static readonly id = 'stylize';
   private app: App;
   private highlighter: Highlighter | null = null;
   private dx: Diagnostics;

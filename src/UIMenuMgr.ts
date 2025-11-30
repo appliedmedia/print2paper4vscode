@@ -44,6 +44,7 @@ const kUIMenuItemDictRequiredKeys = [
  * const html = await uimenumgr.getUIMenus_HTML();
  */
 export class UIMenuMgr {
+  static readonly id = 'uimenumgr';
   private app: App;
   private menus: UIMenu[] = [];
   private dx: Diagnostics;

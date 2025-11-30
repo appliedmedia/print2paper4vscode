@@ -42,6 +42,7 @@ export type GlobalStateValue_t = string | number;
  * const panel = apis.createWebviewPanel('preview', 'Preview', ...);
  */
 export class VSCodeAPIs {
+  static readonly id = 'vscodeapis';
   private static readonly WEBVIEW_ID = kExtId + '.printprep';
 
   private app: App;

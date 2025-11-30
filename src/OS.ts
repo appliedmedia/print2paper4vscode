@@ -30,6 +30,7 @@ export type FileRead_t = <T = string>(args: { path: string; key?: string }) => T
  * os.fileWrite('/tmp/output.txt', 'content');
  */
 export abstract class OS {
+  static readonly id = 'os';
   // Performance timing from Node.js perf_hooks
   static performance = performance;
   protected app: App;

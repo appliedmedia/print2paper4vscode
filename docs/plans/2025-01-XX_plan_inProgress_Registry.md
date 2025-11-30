@@ -7,6 +7,7 @@
 **DO NOT deviate from this plan. DO NOT "improve" or "simplify" things. DO NOT add types, patterns, or abstractions not explicitly specified here.**
 
 **If you think you must do something different than what's written:**
+
 1. **STOP**
 2. **Ask the user first**
 3. **Explain why you think a deviation is necessary**
@@ -18,6 +19,7 @@
 ## ⚡ EXECUTION TODOS
 
 **THE SIMPLE APPROACH:**
+
 1. Components only need: `static readonly id = 'componentname'`
 2. Registry builds `this.pdf = {}`, `this.ui = {}` etc. (empty placeholders for intellisense)
 3. When `use()` is called with method names, Registry uses `Component.prototype.hasOwnProperty(method)` to find which component owns it
@@ -26,37 +28,36 @@
 
 ### Immediate Actions (Start Here)
 
-#### Stage 0.1: Create Registry Infrastructure ✅ DONE
+#### Stage 0.1: Create Registry Infrastructure ✅ NEXT
 
-- [x] Create `src/types/Registry_t.ts` with ONLY this type:
+- [ ] Create `src/types/Registry_t.ts` with ONLY this type:
   - `FnImport_t = { [componentId: string]: { [methodName: string]: Function } }` - what a class imports
   - **That's it!** No other types needed
   - **DO NOT** create: Use_t, FnExport_t, ComponentInstance_t, ComponentFactory_t, etc.
   - **Pattern rule**: Only create types that are actually used
   - See Stage 7.4 for complete pattern rules and cleanup TODOs
-- [x] Create `src/Registry.ts`:
+- [ ] Create `src/Registry.ts`:
   - `static readonly id = 'reg'` - Registry's component id
   - `[key: string]: unknown` - index signature for dynamic component lookups (this.pdf, this.ui, etc)
   - `private _instances: Map<string, unknown>` - cache for lazy-loaded singleton instances
-  - `private components: Array<{ new(...args: any[]): any; id: string }>` - component class references (made flexible for different constructors)
+  - `private components: Array<{ new(app: App): any; id: string }>` - component class references
   - `private always: string[]` - methods always injected (format: 'componentId.methodName', e.g., 'dx.sub')
   - `private dx: Diagnostics` - Registry's diagnostics instance
   - `private app: App` - app reference
-- [x] Registry constructor signature: `constructor(args: { app: App; components?: Array<...>; always?: string[] })`
-  - Assign fields: `this.app = args.app`, `this.components = args.components || []`, `this.always = args.always || []`
-  - Create diagnostics: `this.dx = new Diagnostics({ name: 'Registry', ... })` (Registry creates its own Diagnostics)
+- [ ] Registry constructor signature: `constructor(args: { app: App; components: Array<...>; always?: string[] })`
+  - Assign fields: `this.app = args.app`, `this.components = args.components`, `this.always = args.always || []`
+  - Create diagnostics: `this.dx = this.app.dx.sub('Registry')`
   - Initialize instances cache: `this._instances = new Map()`, `this._instances.set('dx', this.dx)`
   - Build placeholder structure on `this`:
     - For each component: `this[Component.id] = {}` - just empty placeholders!
   - Result: `app.reg.pdf`, `app.reg.ui` etc. exist (values don't matter, just used for intellisense)
-- [x] Add `use(...methodIds: string[]): FnImport_t` method - THE SIMPLE VERSION:
+- [ ] Add `use(...methodIds: string[]): FnImport_t` method - THE SIMPLE VERSION:
   - Merge: `const allMethods = [...methodIds, ...this.always]`
   - For each method name (e.g., 'showError', 'generatePdf'):
     - Find which component class has that method: `Component.prototype.hasOwnProperty(methodName)`
-    - Get or create instance: `this._instances.get(componentId) || new Component(this.app)` (placeholder for now - components still created by App)
+    - Get or create instance: `this._instances.get(componentId) || new Component(this.app)`
     - Return bound method: `instance[methodName].bind(instance)`
   - That's it! No complex parsing, prototype IS the source of truth
-- [x] Add `static readonly id` properties to components: Diagnostics ('dx'), VSCodeAPIs ('vscodeapis'), UI ('ui'), PDF ('pdf'), Stylize ('stylize'), TabInspector ('tabinspector'), UIMenuMgr ('uimenumgr'), OS ('os')
 
 #### Stage 0.2: Integrate Registry into App ✅ DONE
 
@@ -71,7 +72,7 @@
 
 #### Stage 0.3: Test Infrastructure ⏸️
 
-- [ ] Run existing tests to ensure no regressions
+- [x] Run existing tests to ensure no regressions (all 319 tests pass)
 - [ ] Add basic Registry construction test
 - [ ] Verify Diagnostics is available via Registry
 
@@ -350,11 +351,13 @@
 **This section lists exactly what each component needs to request in `app.use()`.**
 
 **Format:** `ComponentName needs: ['method1', 'method2']` means that component must call:
+
 ```typescript
 this.fn = app.use(app.reg.component.method1, app.reg.component.method2);
 ```
 
 **CRITICAL NOTES:**
+
 1. **Property access** (e.g., `pdf.docInfo`) means the component needs access to the entire instance, not just a method. For now, list it as a method request - we'll handle this case specially.
 2. **Factory methods** (e.g., `yaml.create`, `persist.create`) are static methods on the class.
 3. **Methods from `always` array** (e.g., `'dx.sub'`) don't need to be requested - automatically available as `this.fn.dx.sub`.
@@ -364,6 +367,7 @@ this.fn = app.use(app.reg.component.method1, app.reg.component.method2);
 ### Core Infrastructure
 
 **VSCodeAPIs** needs:
+
 - `os.dateAsYYYYMMDDHHMMSS`
 - `os.htmlSrcPathToURI`
 - `os.getExtensionRoot`
@@ -375,11 +379,13 @@ this.fn = app.use(app.reg.component.method1, app.reg.component.method2);
 - `persist.clear` (for command registration)
 
 **Persist** needs:
+
 - `vscodeapis.getGlobalState`
 - `vscodeapis.updateGlobalState`
 - `ui.showInfoMessage`
 
 **UI** needs:
+
 - `vscodeapis.showInformationMessage`
 - `vscodeapis.showErrorMessage`
 - `vscodeapis.showWarningMessage`
@@ -393,16 +399,19 @@ this.fn = app.use(app.reg.component.method1, app.reg.component.method2);
 - `persist.create` (factory)
 
 **OS** (base class) needs:
+
 - `vscodeapis.getPanelForUriConversion`
 
 ### Middle-Tier Components
 
 **TabInspector** needs:
+
 - `vscodeapis.getActiveTextEditor`
 - `vscodeapis.getSelectionOrDocumentText`
 - `vscodeapis.getDescriptiveName`
 
 **Stylize** needs:
+
 - `vscodeapis.getVSCodeExtensionsThemes`
 - `vscodeapis.getVSCodeThemeJson`
 - `vscodeapis.getActiveThemeId`
@@ -413,6 +422,7 @@ this.fn = app.use(app.reg.component.method1, app.reg.component.method2);
 - `pdf.renderTokenizedLine`
 
 **UIMenuMgr** needs:
+
 - `stylize.getThemes`
 - `pdf.docInfo` (property access)
 - `os.dictReplace`
@@ -420,9 +430,11 @@ this.fn = app.use(app.reg.component.method1, app.reg.component.method2);
 ### Complex Components
 
 **Coords** needs:
+
 - (no dependencies - pure calculation)
 
 **PDF** needs:
+
 - `os.dateAsYYYYMMDDHHMMSS`
 - `os.sanitizeFileName`
 - `os.fileDelete`
@@ -443,6 +455,7 @@ this.fn = app.use(app.reg.component.method1, app.reg.component.method2);
 - `yaml.create` (factory)
 
 **UIWebView** needs:
+
 - `pdf.docInfo` (property access)
 - `ui.addToolbar`
 - `ui.registerMessageHandler`
@@ -459,6 +472,7 @@ this.fn = app.use(app.reg.component.method1, app.reg.component.method2);
 ### Orchestration Components
 
 **PaperPrinter** needs:
+
 - (everything - it's the orchestrator)
 - `vscodeapis.getActiveTextEditor`
 - `vscodeapis.getEditorTypography`
@@ -485,16 +499,20 @@ this.fn = app.use(app.reg.component.method1, app.reg.component.method2);
 ### Data Container Classes
 
 **DocInfo_PDF** needs:
+
 - `coords.pdfPtsToCssPx` (if needed - check actual usage)
 
 **DocInfo_PaperPrinter** needs:
+
 - (no dependencies - pure data)
 
 **UIMenu** needs:
+
 - `persist.create` (factory)
 - `yaml.create` (factory)
 
 **Yaml** needs:
+
 - (no dependencies)
 
 ---
@@ -1055,6 +1073,7 @@ class UI {
 ```
 
 Registry builds this structure dynamically:
+
 - Reads `Component.id` from each class
 - Hangs empty placeholders on `this`: `this.dx = {}`, `this.ui = {}`
 - When `use()` is called, looks up methods via `Component.prototype.hasOwnProperty(methodName)`

@@ -7,8 +7,10 @@ import { TabInspector } from './TabInspector';
 import { OS } from './OS';
 import { UIMenuMgr } from './UIMenuMgr';
 import { Diagnostics } from './Diagnostics';
+import { Registry } from './Registry';
 import type { ExtensionContext } from 'vscode';
 import { kExtId } from './_entrypoint_extId_t';
+import type { FnImport_t } from './types/Registry_t';
 
 // Type aliases for forceNumber/forceNumbers input and output
 export type ForceNumber_scalar_t = number | string | undefined;
@@ -60,6 +62,7 @@ export class App {
   os: OS;
   uimenumgr: UIMenuMgr;
   dx: Diagnostics;
+  reg: Registry;
 
   private readonly componentOrder: (keyof components_t)[] = [
     'vscodeapis',
@@ -78,6 +81,16 @@ export class App {
     const dx = this.dx.sub({ name: 'constructor' });
     dx.require(args, ['context', 'vscode']);
     const { context, vscode } = args;
+
+    // Create Registry instance
+    // Stage 0.2: Registry infrastructure created, but components still created the old way
+    // Components will be migrated to Registry pattern in later stages
+    // For now, Registry exists but components array is empty - will be populated during migration
+    this.reg = new Registry({
+      app: this,
+      components: [], // Empty for now - components still created by App constructor
+      always: ['dx.sub'],
+    });
 
     // Create components - VSCodeAPIs first, then UI, then UIMenuMgr (needed by PaperPrinter), then others
     this.vscodeapis = new VSCodeAPIs({ app: this, vscode, context });
@@ -215,6 +228,19 @@ export class App {
     }
 
     return result;
+  }
+
+  /**
+   * Request methods from components via Registry
+   *
+   * Delegates to Registry.use() for dependency injection.
+   * Components call this to request methods they need.
+   *
+   * @param methodIds - Variadic method names (e.g., 'showError', 'generatePdf')
+   * @returns Object organized by component: { dx: { sub: Function }, ui: { showErrorMessage: Function } }
+   */
+  use(...methodIds: string[]): FnImport_t {
+    return this.reg.use(...methodIds);
   }
 }
 

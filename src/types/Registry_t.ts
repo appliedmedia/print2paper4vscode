@@ -1,0 +1,23 @@
+/**
+ * Registry Type Definitions
+ *
+ * Type definitions for the Registry dependency injection system.
+ */
+
+/**
+ * FnImport_t - What a class imports (receives from Registry)
+ *
+ * Structure: { [componentId: string]: { [methodName: string]: Function } }
+ *
+ * Example:
+ * {
+ *   dx: { sub: Function, out: Function },
+ *   ui: { showErrorMessage: Function },
+ *   pdf: { generatePdf: Function }
+ * }
+ */
+export type FnImport_t = {
+  [componentId: string]: {
+    [methodName: string]: Function;
+  };
+};

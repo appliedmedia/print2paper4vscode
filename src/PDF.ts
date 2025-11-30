@@ -31,6 +31,7 @@ type HeaderFooterRenderablePos = HeaderFooterPos_t;
  * const pdfDoc = await pdf.generatePdf();
  */
 export class PDF {
+  static readonly id = 'pdf';
   private static readonly kYaml = {
     pdf_html: '',
     pdf_css: '',
