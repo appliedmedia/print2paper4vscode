@@ -344,7 +344,7 @@ uimenu_generic_handlers: |
     const menuItemId = itemEl.id;
     
     if (itemEl.classList.contains('isFlyout')) {
-      const flyoutMenuId = itemEl.dataset['{{ns_}}flyoutMenuId'];
+      const flyoutMenuId = itemEl.dataset['{{ns_}}flyout_menu_id'];
       if (flyoutMenuId) {
         handleFlyoutToggle(e, itemEl, menu, flyoutMenuId);
       }
@@ -489,9 +489,9 @@ uimenu_generic_handlers: |
       const isModifier = e.metaKey || e.ctrlKey;
       if (!isModifier) return;
 
-      const menuButtons = document.querySelectorAll('.{{ns_}}menuBtn[data-{{ns_}}shortcutCode]');
+      const menuButtons = document.querySelectorAll('.{{ns_}}menuBtn[data-{{ns_}}shortcut_code]');
       for (const btn of menuButtons) {
-        const shortcutCode = btn.getAttribute('data-{{ns_}}shortcutCode');
+        const shortcutCode = btn.getAttribute('data-{{ns_}}shortcut_code');
         if (shortcutCode === e.code) {
           e.preventDefault();
           btn.click();
@@ -499,9 +499,9 @@ uimenu_generic_handlers: |
         }
       }
 
-      const menuItems = document.querySelectorAll('.{{ns_}}menuItem[data-{{ns_}}shortcutCode]');
+      const menuItems = document.querySelectorAll('.{{ns_}}menuItem[data-{{ns_}}shortcut_code]');
       for (const item of menuItems) {
-        const shortcutCode = item.getAttribute('data-{{ns_}}shortcutCode');
+        const shortcutCode = item.getAttribute('data-{{ns_}}shortcut_code');
         if (shortcutCode === e.code) {
           e.preventDefault();
           item.click();
@@ -524,6 +524,6 @@ uimenu_item: |
   </div>
 
 uimenu_text_edit: |
-  <span class="text-edit-wrapper"><input type="text" class="{{ns_}}textEdit" data-{{ns_}}itemId="{{itemId}}"{{constrain}}{{width}}{{value}} /></span>
+  <span class="text-edit-wrapper"><input type="text" class="{{ns_}}textEdit" data-{{ns_}}item_id="{{itemId}}"{{constrain}}{{width}}{{value}} /></span>
 
 # end, UIMenu.yaml
