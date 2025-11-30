@@ -647,12 +647,6 @@ export class UIMenu {
       // Use the main template for all menus
       const template = yaml.uimenu_html;
 
-      // Set data attribute with flyout item IDs (from static flyoutMenuItemIds list)
-      const flyoutItemsAttr =
-        this.flyoutMenuItemIds.length > 0
-          ? ` data-{{ns_}}flyoutItems="${this.flyoutMenuItemIds.join(',')}"`
-          : '';
-
       // Get shortcutCode from menu constant if it exists
       const menuConst = kMenus.find(m => m.id === this._id);
       const shortcutCode = (menuConst as { shortcutCode?: string })?.shortcutCode;
@@ -673,7 +667,6 @@ export class UIMenu {
             })
           : '', // Only create container if there are items
         menuClasses,
-        flyoutItemsAttr, // Data attribute with flyout item IDs from static list
         shortcutCodeAttr,
       };
 

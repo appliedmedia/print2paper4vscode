@@ -184,7 +184,7 @@ uimenu_css: |
   }
 
 uimenu_html: |
-  <div class="{{ns_}}menu {{menuClasses}}" id="{{menuId}}"{{flyoutItemsAttr}}>
+  <div class="{{ns_}}menu {{menuClasses}}" id="{{menuId}}">
     <button class="{{ns_}}menuBtn" title="{{displayName}}"{{shortcutCodeAttr}}>{{icon}}</button>
     {{menuItemsContainer}}
   </div>
@@ -391,7 +391,7 @@ uimenu_generic_handlers: |
       return;
     }
     
-    const regexStr = input.getAttribute('data-{{ns_}}constrain_regex');
+    const regexStr = input.dataset['{{ns_}}constrain_regex'];
     if (!regexStr) return;
     
     try {
@@ -445,8 +445,8 @@ uimenu_generic_handlers: |
   }
 
   function validateAndClampTextEdit(input) {
-    const minStr = input.getAttribute('data-{{ns_}}constrain_min');
-    const maxStr = input.getAttribute('data-{{ns_}}constrain_max');
+    const minStr = input.dataset['{{ns_}}constrain_min'];
+    const maxStr = input.dataset['{{ns_}}constrain_max'];
     
     if (minStr !== null && maxStr !== null) {
       const value = parseFloat(input.value);
