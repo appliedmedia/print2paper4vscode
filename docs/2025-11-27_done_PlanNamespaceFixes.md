@@ -55,6 +55,7 @@ To change namespace: Update **ONE** constant (`kExtId`) in `_entrypoint_extId_t.
 ### Naming Convention Change
 
 **BREAKING**: Changed from kebab-case to underscore+camelCase
+
 - OLD: `.p2p4vsc-menu-btn`, `#p2p4vsc-toolbar`
 - NEW: `.p2p4vsc_menuBtn`, `#p2p4vsc_toolbar`
 
@@ -223,6 +224,7 @@ Replace all hardcoded `p2p4vsc` strings with `{{ns}}` in templates and ensure al
 #### 1. ✅ `src/_entrypoint_extId_t.ts` (NEW)
 
 **Created**:
+
 - `export const kExtId = 'p2p4vsc'` - THE single source of truth
 - Dedicated foundational file (underscore prefix signals early initialization)
 - No circular dependencies
@@ -231,12 +233,14 @@ Replace all hardcoded `p2p4vsc` strings with `{{ns}}` in templates and ensure al
 #### 2. ✅ `src/VSCodeAPIs.ts`
 
 **Added**:
+
 - `public static readonly ExtId = kExtId` - References single source
 - All VS Code API operations use this constant
 
 #### 3. ✅ `src/App.ts`
 
 **Added**:
+
 - `public static readonly kNs = kExtId` - References single source
 - `public static readonly kNs_ = App.kNs + '_'` - Underscore prefix
 - Instance properties: `ns` and `ns_` for easy access
@@ -363,6 +367,7 @@ Replace all hardcoded `p2p4vsc` strings with `{{ns}}` in templates and ensure al
 #### 1. ✅ `src/_entrypoint_extId_t.ts`
 
 **Implementation**: Created dedicated foundational file for namespace constant
+
 - `export const kExtId = 'p2p4vsc'` - THE single source of truth
 - Underscore prefix signals foundational/early initialization requirement
 - No circular dependencies (standalone file)
@@ -371,6 +376,7 @@ Replace all hardcoded `p2p4vsc` strings with `{{ns}}` in templates and ensure al
 #### 2. ✅ `package.json` + `scripts/process-package-json.js`
 
 **Implementation**: Command IDs use `{{ns}}` templates, processed during build
+
 - Source: `"command": "{{ns}}.print2paper"`
 - Output: `"command": "p2p4vsc.print2paper"`
 - Build script reads `kExtId` from compiled `_entrypoint_extId_t.js`
@@ -413,6 +419,7 @@ Replace all hardcoded `p2p4vsc` strings with `{{ns}}` in templates and ensure al
 - Accessible in JavaScript as `dataset.p2p4vsc_menuItemId` (underscores preserved, no automatic conversion)
 
 **Examples**:
+
 - `data-{{ns_}}menuItemId` → `data-p2p4vsc_menuItemId` → `dataset.p2p4vsc_menuItemId`
 - `data-{{ns_}}actionType` → `data-p2p4vsc_actionType` → `dataset.p2p4vsc_actionType`
 - `data-{{ns_}}toolbarPosition` → `data-p2p4vsc_toolbarPosition` → `dataset.p2p4vsc_toolbarPosition`
@@ -430,6 +437,7 @@ Replace all hardcoded `p2p4vsc` strings with `{{ns}}` in templates and ensure al
 **Ran**: `grep -r "p2p4vsc" src/ --exclude-dir=node_modules`
 
 **Results**: All accounted for
+
 - `VSCodeAPIs.ExtId = 'p2p4vsc'` - Source constant ✅
 - `App.kNs = VSCodeAPIs.ExtId` - References source ✅
 - Command registrations in VSCodeAPIs.ts - Must match package.json ✅
