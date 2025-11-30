@@ -415,9 +415,9 @@ export class UIMenu {
 
     // Build data attributes from constrain object (all three work together)
     return [
-      ` data-{{ns_}}constrainRegex="${iconSlotTriadMain.constrain.regex}"`,
-      ` data-{{ns_}}constrainMin="${iconSlotTriadMain.constrain.min}"`,
-      ` data-{{ns_}}constrainMax="${iconSlotTriadMain.constrain.max}"`,
+      ` data-{{ns_}}constrain_regex="${iconSlotTriadMain.constrain.regex}"`,
+      ` data-{{ns_}}constrain_min="${iconSlotTriadMain.constrain.min}"`,
+      ` data-{{ns_}}constrain_max="${iconSlotTriadMain.constrain.max}"`,
     ].join('');
   }
 

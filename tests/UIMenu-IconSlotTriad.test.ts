@@ -178,9 +178,9 @@ describe('UIMenu Icon Slot Triad', () => {
       
       // Should contain input element with separate data attributes
       assert.ok(html.includes('<input'));
-      assert.ok(html.includes('data-p2p4vsc_constrainRegex'));
-      assert.ok(html.includes('data-p2p4vsc_constrainMin'));
-      assert.ok(html.includes('data-p2p4vsc_constrainMax'));
+      assert.ok(html.includes('data-p2p4vsc_constrain_regex'));
+      assert.ok(html.includes('data-p2p4vsc_constrain_min'));
+      assert.ok(html.includes('data-p2p4vsc_constrain_max'));
     });
 
     it('should generate correct data attributes from constrain object', async () => {
@@ -208,9 +208,9 @@ describe('UIMenu Icon Slot Triad', () => {
       const html = await menu.getHTML();
       
       assert.ok(html.includes('<input'));
-      assert.ok(html.includes('data-p2p4vsc_constrainRegex="^\\d{1,3}$"'));
-      assert.ok(html.includes('data-p2p4vsc_constrainMin="1"'));
-      assert.ok(html.includes('data-p2p4vsc_constrainMax="500"'));
+      assert.ok(html.includes('data-p2p4vsc_constrain_regex="^\\d{1,3}$"'));
+      assert.ok(html.includes('data-p2p4vsc_constrain_min="1"'));
+      assert.ok(html.includes('data-p2p4vsc_constrain_max="500"'));
     });
 
     it('should handle text_edit with minimal config', async () => {
@@ -239,8 +239,8 @@ describe('UIMenu Icon Slot Triad', () => {
       
       assert.ok(html.includes('<input'));
       assert.ok(html.includes('style="width: 2ch;"'));
-      assert.ok(html.includes('data-p2p4vsc_constrainMin="0"'));
-      assert.ok(html.includes('data-p2p4vsc_constrainMax="99"'));
+      assert.ok(html.includes('data-p2p4vsc_constrain_min="0"'));
+      assert.ok(html.includes('data-p2p4vsc_constrain_max="99"'));
     });
 
     it('should validate regex patterns in text_edit config', async () => {
@@ -267,9 +267,9 @@ describe('UIMenu Icon Slot Triad', () => {
       const menu = createTestMenu(menuIcon, items);
       const html = await menu.getHTML();
       
-      assert.ok(html.includes('data-p2p4vsc_constrainRegex="^\\d{0,3}$"'));
-      assert.ok(html.includes('data-p2p4vsc_constrainMin="0"'));
-      assert.ok(html.includes('data-p2p4vsc_constrainMax="999"'));
+      assert.ok(html.includes('data-p2p4vsc_constrain_regex="^\\d{0,3}$"'));
+      assert.ok(html.includes('data-p2p4vsc_constrain_min="0"'));
+      assert.ok(html.includes('data-p2p4vsc_constrain_max="999"'));
     });
   });
 

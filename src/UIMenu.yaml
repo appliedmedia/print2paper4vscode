@@ -391,7 +391,7 @@ uimenu_generic_handlers: |
       return;
     }
     
-    const regexStr = input.getAttribute('data-{{ns_}}constrainRegex');
+    const regexStr = input.getAttribute('data-{{ns_}}constrain_regex');
     if (!regexStr) return;
     
     try {
@@ -445,8 +445,8 @@ uimenu_generic_handlers: |
   }
 
   function validateAndClampTextEdit(input) {
-    const minStr = input.getAttribute('data-{{ns_}}constrainMin');
-    const maxStr = input.getAttribute('data-{{ns_}}constrainMax');
+    const minStr = input.getAttribute('data-{{ns_}}constrain_min');
+    const maxStr = input.getAttribute('data-{{ns_}}constrain_max');
     
     if (minStr !== null && maxStr !== null) {
       const value = parseFloat(input.value);
