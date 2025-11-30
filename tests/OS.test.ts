@@ -37,16 +37,16 @@ describe('OS Base Class', () => {
       const filePath = path.join(tempDir, 'test.txt');
       const content = 'test content';
       
-      os.fileWrite(filePath, content);
+      os.fileWrite({ filePath, content });
       assert.ok(os.exists(filePath));
       
-      const readContent = os.fileRead(filePath);
+      const readContent = os.fileRead({ path: filePath });
       assert.strictEqual(readContent, content);
     });
 
     it('should delete files', () => {
       const filePath = path.join(tempDir, 'delete.txt');
-      os.fileWrite(filePath, 'content');
+      os.fileWrite({ filePath, content: 'content' });
       assert.ok(os.exists(filePath));
       
       os.fileDelete(filePath);
@@ -104,9 +104,9 @@ describe('OS Base Class', () => {
     it('should parse JSON files', () => {
       const jsonPath = path.join(tempDir, 'test.json');
       const jsonContent = { key: 'value', number: 42 };
-      os.fileWrite(jsonPath, JSON.stringify(jsonContent));
+      os.fileWrite({ filePath: jsonPath, content: JSON.stringify(jsonContent) });
       
-      const parsed = os.fileRead<typeof jsonContent>(jsonPath);
+      const parsed = os.fileRead<typeof jsonContent>({ path: jsonPath });
       assert.strictEqual(parsed?.key, 'value');
       assert.strictEqual(parsed?.number, 42);
     });
@@ -114,7 +114,7 @@ describe('OS Base Class', () => {
     it('should return specific key from JSON', () => {
       const jsonPath = path.join(tempDir, 'test.json');
       const jsonContent = { key1: 'value1', key2: 'value2' };
-      os.fileWrite(jsonPath, JSON.stringify(jsonContent));
+      os.fileWrite({ filePath: jsonPath, content: JSON.stringify(jsonContent) });
       
       const value = os.fileRead<string>(jsonPath, 'key1');
       assert.strictEqual(value, 'value1');
@@ -125,7 +125,7 @@ describe('OS Base Class', () => {
     it('should parse YAML files', () => {
       const yamlPath = path.join(tempDir, 'test.yaml');
       const yamlContent = 'key1: value1\nkey2: value2';
-      os.fileWrite(yamlPath, yamlContent);
+      os.fileWrite({ filePath: yamlPath, content: yamlContent });
       
       const parsed = os.fileRead<{ key1: string; key2: string }>(yamlPath);
       assert.strictEqual(parsed?.key1, 'value1');
@@ -135,7 +135,7 @@ describe('OS Base Class', () => {
     it('should return specific key from YAML', () => {
       const yamlPath = path.join(tempDir, 'test.yaml');
       const yamlContent = 'key1: value1\nkey2: value2';
-      os.fileWrite(yamlPath, yamlContent);
+      os.fileWrite({ filePath: yamlPath, content: yamlContent });
       
       const value = os.fileRead<string>(yamlPath, 'key1');
       assert.strictEqual(value, 'value1');
@@ -146,7 +146,7 @@ describe('OS Base Class', () => {
     it('should read plain text files', () => {
       const txtPath = path.join(tempDir, 'test.txt');
       const content = 'plain text content';
-      os.fileWrite(txtPath, content);
+      os.fileWrite({ filePath: txtPath, content });
       
       const readContent = os.fileRead<string>(txtPath);
       assert.strictEqual(readContent, content);
