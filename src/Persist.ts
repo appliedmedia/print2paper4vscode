@@ -112,7 +112,7 @@ export class Persist {
 
     for (const key of keysToReset) {
       await this.app.vscodeapis.deleteGlobalState({
-        key: key as GlobalStateKey_t,
+        key: key,
       });
     }
 
