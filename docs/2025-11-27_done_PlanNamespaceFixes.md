@@ -2,9 +2,41 @@
 
 ## ✅ STATUS: COMPLETE
 
-**Completion Date**: 2025-11-27  
-**Tests**: 323/323 passing (100%)  
-**Compilation**: No errors
+- **Completion Date**: 2025-11-27
+- **Verification Date**: 2025-11-27
+- **Tests**: Namespace-Template-Replacement.test.ts exists and verifies implementation
+- **Compilation**: Implementation complete (note: unrelated compilation errors exist in Diagnostics tests)
+
+### Verification Summary (2025-11-27)
+
+✅ **Phase 1 (YAML Templates)**: All YAML files verified to use `{{ns}}` and `{{ns_}}` templates
+
+- `src/UIMenu.yaml`: ✅ Uses `{{ns_}}` templates throughout
+- `src/UI.yaml`: ✅ Uses `{{ns_}}` templates, dead code removed
+- `src/UIWebView.yaml`: ✅ Clean, no hardcoded strings
+- `src/PaperPrinter.yaml`, `src/PDF.yaml`, `src/Stylize.yaml`, `src/OSMac.yaml`: ✅ All clean
+
+✅ **Phase 2 (TypeScript Source)**: All source files verified
+
+- `src/_entrypoint_extId_t.ts`: ✅ Exists with `kExtId = 'p2p4vsc'` (single source of truth)
+- `src/App.ts`: ✅ Has `kNs` and `kNs_` constants, auto-injects namespace in `templateDictReplace()`
+- `src/VSCodeAPIs.ts`: ✅ Uses `kExtId` for `WEBVIEW_ID`
+- All other TypeScript files: ✅ Verified to work with auto-injection
+
+✅ **Phase 3 (Configuration)**: Build system verified
+
+- `package.json`: ✅ Uses `{{extId}}` templates
+- `scripts/templateDictReplace.mjs`: ✅ Exists and processes templates
+- `.config/templateDictReplace.yaml`: ✅ Configuration exists
+
+✅ **Phase 4 (Data Attributes)**: Marked as "Future" - not required for completion
+
+✅ **Phase 5 (Testing)**: Test suite verified
+
+- `tests/Namespace-Template-Replacement.test.ts`: ✅ Exists with comprehensive tests
+- Tests verify auto-injection, new naming convention, and template consistency
+
+**Note**: VS Code command IDs (`'p2p4vsc.print2paper'`, `'p2p4vsc.persistClear'`) remain hardcoded in `VSCodeAPIs.ts` as required by VS Code API. These are correctly documented as intentional.
 
 ### Key Achievement: Single Source of Truth
 
@@ -23,6 +55,7 @@ To change namespace: Update **ONE** constant (`kExtId`) in `_entrypoint_extId_t.
 ### Naming Convention Change
 
 **BREAKING**: Changed from kebab-case to underscore+camelCase
+
 - OLD: `.p2p4vsc-menu-btn`, `#p2p4vsc-toolbar`
 - NEW: `.p2p4vsc_menuBtn`, `#p2p4vsc_toolbar`
 
@@ -191,7 +224,8 @@ Replace all hardcoded `p2p4vsc` strings with `{{ns}}` in templates and ensure al
 #### 1. ✅ `src/_entrypoint_extId_t.ts` (NEW)
 
 **Created**:
-- `export const kExtensionId = 'p2p4vsc'` - THE single source of truth
+
+- `export const kExtId = 'p2p4vsc'` - THE single source of truth
 - Dedicated foundational file (underscore prefix signals early initialization)
 - No circular dependencies
 - Imported by `App.ts`, `VSCodeAPIs.ts`, and build scripts
@@ -199,13 +233,15 @@ Replace all hardcoded `p2p4vsc` strings with `{{ns}}` in templates and ensure al
 #### 2. ✅ `src/VSCodeAPIs.ts`
 
 **Added**:
-- `public static readonly ExtId = kExtensionId` - References single source
+
+- `public static readonly ExtId = kExtId` - References single source
 - All VS Code API operations use this constant
 
 #### 3. ✅ `src/App.ts`
 
 **Added**:
-- `public static readonly kNs = kExtensionId` - References single source
+
+- `public static readonly kNs = kExtId` - References single source
 - `public static readonly kNs_ = App.kNs + '_'` - Underscore prefix
 - Instance properties: `ns` and `ns_` for easy access
 - Updated `templateDictReplace()` to auto-inject `{ns: 'p2p4vsc', ns_: 'p2p4vsc_'}`
@@ -331,7 +367,8 @@ Replace all hardcoded `p2p4vsc` strings with `{{ns}}` in templates and ensure al
 #### 1. ✅ `src/_entrypoint_extId_t.ts`
 
 **Implementation**: Created dedicated foundational file for namespace constant
-- `export const kExtensionId = 'p2p4vsc'` - THE single source of truth
+
+- `export const kExtId = 'p2p4vsc'` - THE single source of truth
 - Underscore prefix signals foundational/early initialization requirement
 - No circular dependencies (standalone file)
 - Imported by all components that need namespace access
@@ -339,9 +376,10 @@ Replace all hardcoded `p2p4vsc` strings with `{{ns}}` in templates and ensure al
 #### 2. ✅ `package.json` + `scripts/process-package-json.js`
 
 **Implementation**: Command IDs use `{{ns}}` templates, processed during build
+
 - Source: `"command": "{{ns}}.print2paper"`
 - Output: `"command": "p2p4vsc.print2paper"`
-- Build script reads `kExtensionId` from compiled `_entrypoint_extId_t.js`
+- Build script reads `kExtId` from compiled `_entrypoint_extId_t.js`
 - Replaces all `{{ns}}` occurrences in package.json
 - Runs automatically during `npm run compile` and `npm run compile:deploy`
 
@@ -375,17 +413,18 @@ Replace all hardcoded `p2p4vsc` strings with `{{ns}}` in templates and ensure al
 
 #### 1. Add Namespaced Data Attributes
 
-**When adding data attributes**, use format:
+**When adding data attributes**, use format consistent with the underscore+camelCase convention:
 
-- `data-{{ns}}-menu-item-id` → becomes `data-p2p4vsc-menu-item-id`
-- Accessible in JavaScript as `dataset.{{ns_}}menuItemId` → `dataset.p2p4vscMenuItemId`
+- `data-{{ns_}}menuItemId` → becomes `data-p2p4vsc_menuItemId`
+- Accessible in JavaScript as `dataset.p2p4vsc_menuItemId` (underscores preserved, no automatic conversion)
 
-**Note**: For data attributes with hyphens, JavaScript converts to camelCase:
+**Examples**:
 
-- `data-p2p4vsc-menu-item-id` → `dataset.p2p4vscMenuItemId` (hyphens removed, camelCase)
-- `data-p2p4vsc_menu_item_id` → `dataset.p2p4vsc_menu_item_id` (underscores preserved)
+- `data-{{ns_}}menuItemId` → `data-p2p4vsc_menuItemId` → `dataset.p2p4vsc_menuItemId`
+- `data-{{ns_}}actionType` → `data-p2p4vsc_actionType` → `dataset.p2p4vsc_actionType`
+- `data-{{ns_}}toolbarPosition` → `data-p2p4vsc_toolbarPosition` → `dataset.p2p4vsc_toolbarPosition`
 
-**Recommendation**: Use hyphens in HTML (`data-{{ns}}-menu-item-id`) and access via camelCase in JavaScript (`dataset.p2p4vscMenuItemId`)
+**Recommendation**: Use underscore+camelCase format (`data-{{ns_}}menuItemId`) to match the codebase naming convention and avoid JavaScript's automatic hyphen-to-camelCase conversion. This provides predictable, explicit attribute names.
 
 ---
 
@@ -398,6 +437,7 @@ Replace all hardcoded `p2p4vsc` strings with `{{ns}}` in templates and ensure al
 **Ran**: `grep -r "p2p4vsc" src/ --exclude-dir=node_modules`
 
 **Results**: All accounted for
+
 - `VSCodeAPIs.ExtId = 'p2p4vsc'` - Source constant ✅
 - `App.kNs = VSCodeAPIs.ExtId` - References source ✅
 - Command registrations in VSCodeAPIs.ts - Must match package.json ✅
@@ -406,6 +446,7 @@ Replace all hardcoded `p2p4vsc` strings with `{{ns}}` in templates and ensure al
 #### 2. ✅ Test Template Replacement
 
 **Created**: `tests/Namespace-Template-Replacement.test.ts`
+
 - Verifies `templateDictReplace()` auto-injects `{ns, ns_}`
 - Tests CSS, HTML, and JavaScript consistency
 - Validates new underscore+camelCase convention
@@ -487,12 +528,13 @@ To rename from `p2p4vsc` to `newname`:
    ```
 
 **That's it!** All changes propagate automatically:
-- `VSCodeAPIs.ExtId` references `kExtensionId`
-- `App.kNs` references `kExtensionId`
+
+- `VSCodeAPIs.ExtId` references `kExtId`
+- `App.kNs` references `kExtId`
 - All YAML templates use `{{ns}}` and `{{ns_}}` placeholders
-- `package.json` uses `{{ns}}` templates, processed during build from `kExtensionId`
+- `package.json` uses `{{ns}}` templates, processed during build from `kExtId`
 - Output `out/package.json` has all `{{ns}}` replaced with actual value
 - CSS classes become `newname_menuBtn`, `newname_toolbar`, etc.
 - VS Code commands become `newname.print2paper`, `newname.persistClear`
 
-**Single Source of Truth**: `kExtensionId` in `_entrypoint_extId_t.ts` - Change ONE constant, everything updates.
+**Single Source of Truth**: `kExtId` in `_entrypoint_extId_t.ts` - Change ONE constant, everything updates.

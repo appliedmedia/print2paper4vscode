@@ -126,11 +126,11 @@ describe('Namespace Template Replacement - New Convention Verification', () => {
     assert.strictEqual(result, '.p2p4vsc_menu .p2p4vsc_menuBtn { display: block; }');
   });
 
-  it('should handle {{ns}} for plain namespace without underscore', () => {
-    const template = 'data-{{ns}}-action="print"';
+  it('should handle {{ns_}} for data attributes with underscore+camelCase convention', () => {
+    const template = 'data-{{ns_}}actionType="print"';
     const result = app.templateDictReplace(template, namespaceDict);
     
-    assert.strictEqual(result, 'data-p2p4vsc-action="print"');
+    assert.strictEqual(result, 'data-p2p4vsc_actionType="print"');
   });
 });
 
@@ -372,12 +372,14 @@ describe('Namespace Template Replacement - Complex Scenarios with NEW Convention
     assert.strictEqual(jsResult, "const btn = document.querySelector('.p2p4vsc_menuBtn');", 'JS should match expected format');
   });
 
-  it('should handle data attributes with ns (not ns_)', () => {
-    // data attributes use hyphen format: data-{{ns}}-something
-    const template = '<div data-{{ns}}-menu-id="123" data-{{ns}}-action="click"></div>';
+  it('should handle data attributes with {{ns_}} using underscore+camelCase convention', () => {
+    // data attributes use underscore+camelCase format: data-{{ns_}}menuItemId
+    const template = '<div data-{{ns_}}menuItemId="123" data-{{ns_}}actionType="click"></div>';
     const result = app.templateDictReplace(template, namespaceDict);
     
-    assert.ok(result.includes('data-p2p4vsc-menu-id'), 'Should use ns for data attributes');
-    assert.ok(result.includes('data-p2p4vsc-action'), 'Should use ns for data attributes');
+    assert.strictEqual(
+      result,
+      '<div data-p2p4vsc_menuItemId="123" data-p2p4vsc_actionType="click"></div>',
+    );
   });
 });
