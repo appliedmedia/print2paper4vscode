@@ -10,7 +10,7 @@ import type { WebviewPanelId_t } from './VSCodeAPIs';
 import { Diagnostics } from './Diagnostics';
 
 // Type definition for fileRead method
-export type FileRead_t = <T = string>(path: string, key?: string) => T | undefined;
+export type FileRead_t = <T = string>(args: { path: string; key?: string }) => T | undefined;
 
 /**
  * OS - Abstract base class for operating system operations
@@ -158,7 +158,10 @@ export abstract class OS {
   }
 
   // Smart file reader that handles everything
-  fileRead: FileRead_t = <T = string>(path: string, key?: string): T | undefined => {
+  fileRead<T = string>(args: { path: string; key?: string }): T | undefined {
+    const dx = this.dx.sub({ name: 'fileRead' });
+    dx.require(args, ['path']);
+    const { path, key } = args;
     try {
       // Determine if this is an extension-relative path
       const isExtensionPath = !path.startsWith('/') && !path.includes(':\\');
@@ -171,7 +174,7 @@ export abstract class OS {
         : path;
 
       if (!absPath || !fs.existsSync(absPath)) {
-        this.dx.error(`Failed to load ${path}: file not found`);
+        dx.error(`Failed to load ${path}: file not found`);
         return undefined;
       }
 
@@ -189,6 +192,7 @@ export abstract class OS {
       const parser = extFxnMap[ext || ''];
       if (!parser) {
         // No parsing, return raw content
+        dx.done();
         return content as T;
       }
 
@@ -196,26 +200,35 @@ export abstract class OS {
 
       // If key specified, return just that key
       if (key && typeof parsed === 'object' && parsed !== null) {
+        dx.done();
         return (parsed as Record<string, unknown>)[key] as T;
       }
 
+      dx.done();
       return parsed as T;
     } catch (err) {
-      this.dx.error(`Failed to load ${path}: ${err}`);
+      dx.error(`Failed to load ${path}: ${err}`);
       return undefined;
     }
-  };
+  }
 
   // Convert relative src attributes and as_uri patterns in HTML to webview URIs
-  htmlSrcPathToURI(html: string, webviewPanelId: WebviewPanelId_t): string {
+  htmlSrcPathToURI(args: { html: string; webviewPanelId: WebviewPanelId_t }): string {
+    const dx = this.dx.sub({ name: 'htmlSrcPathToURI' });
+    dx.require(args, ['html', 'webviewPanelId']);
+    const { html, webviewPanelId } = args;
     let result = html;
 
-    if (!this.extensionRoot) return result;
+    if (!this.extensionRoot) {
+      dx.done();
+      return result;
+    }
 
     const webviewPanel = this.app.vscodeapis.getPanelForUriConversion(webviewPanelId);
-    if (!webviewPanel?.webview) return result;
-
-    const dx = this.dx.sub({ name: 'htmlSrcPathToURI' });
+    if (!webviewPanel?.webview) {
+      dx.done();
+      return result;
+    }
 
     // Helper function to convert a path to webview URI
     const convertPathToURI = (path: string): string => {

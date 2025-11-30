@@ -116,7 +116,7 @@ describe('OS Base Class', () => {
       const jsonContent = { key1: 'value1', key2: 'value2' };
       os.fileWrite({ filePath: jsonPath, content: JSON.stringify(jsonContent) });
       
-      const value = os.fileRead<string>(jsonPath, 'key1');
+      const value = os.fileRead<string>({ path: jsonPath, key: 'key1' });
       assert.strictEqual(value, 'value1');
     });
   });
@@ -127,7 +127,7 @@ describe('OS Base Class', () => {
       const yamlContent = 'key1: value1\nkey2: value2';
       os.fileWrite({ filePath: yamlPath, content: yamlContent });
       
-      const parsed = os.fileRead<{ key1: string; key2: string }>(yamlPath);
+      const parsed = os.fileRead<{ key1: string; key2: string }>({ path: yamlPath });
       assert.strictEqual(parsed?.key1, 'value1');
       assert.strictEqual(parsed?.key2, 'value2');
     });
@@ -137,7 +137,7 @@ describe('OS Base Class', () => {
       const yamlContent = 'key1: value1\nkey2: value2';
       os.fileWrite({ filePath: yamlPath, content: yamlContent });
       
-      const value = os.fileRead<string>(yamlPath, 'key1');
+      const value = os.fileRead<string>({ path: yamlPath, key: 'key1' });
       assert.strictEqual(value, 'value1');
     });
   });
@@ -148,12 +148,12 @@ describe('OS Base Class', () => {
       const content = 'plain text content';
       os.fileWrite({ filePath: txtPath, content });
       
-      const readContent = os.fileRead<string>(txtPath);
+      const readContent = os.fileRead<string>({ path: txtPath });
       assert.strictEqual(readContent, content);
     });
 
     it('should return undefined for non-existent files', () => {
-      const result = os.fileRead('/nonexistent/path/file.txt');
+      const result = os.fileRead({ path: '/nonexistent/path/file.txt' });
       assert.strictEqual(result, undefined);
     });
   });
@@ -218,8 +218,8 @@ describe('OS Base Class', () => {
     it('should convert src attributes to webview URIs', async () => {
       const html = '<img src="test.png">';
       // Create a panel first so htmlSrcPathToURI can find it
-      const panelId = await app.vscodeapis.getOrCreateWebviewPanel('Test Panel', '<html></html>');
-      const result = os.htmlSrcPathToURI(html, panelId);
+      const panelId = await app.vscodeapis.getOrCreateWebviewPanel({ title: 'Test Panel', html: '<html></html>' });
+      const result = os.htmlSrcPathToURI({ html, webviewPanelId: panelId });
       assert.ok(typeof result === 'string');
       // Should have converted the src path
       assert.ok(result.includes('vscode-webview') || result.includes('test.png'));

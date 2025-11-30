@@ -95,7 +95,7 @@ export class VSCodeAPIs {
   /**
    * Update global state value
    */
-  updateGlobalState(args: { key: GlobalStateKey_t; value: GlobalStateValue_t | undefined }): void {
+  updateGlobalState(args: { key: GlobalStateKey_t; value: GlobalStateValue_t }): void {
     const dx = this.dx.sub({ name: 'updateGlobalState' });
     dx.require(args, ['key', 'value']);
     const { key, value } = args;
@@ -186,20 +186,17 @@ export class VSCodeAPIs {
     return baseId;
   }
 
-  /**
-   * Update panel title
-   */
-  setPanelTitle(id: WebviewPanelId_t, title: string): void {
-    const panel = this.panels.get(id);
-    if (panel) panel.title = title;
-  }
 
   /**
    * Update panel HTML content
    */
-  updatePanelHtml(id: WebviewPanelId_t, html: string): void {
+  updatePanelHtml(args: { id: WebviewPanelId_t; html: string }): void {
+    const dx = this.dx.sub({ name: 'updatePanelHtml' });
+    dx.require(args, ['id', 'html']);
+    const { id, html } = args;
     const panel = this.panels.get(id);
     if (panel) panel.webview.html = html;
+    dx.done();
   }
 
   /**
@@ -220,12 +217,15 @@ export class VSCodeAPIs {
   /**
    * Get or create webview panel with URI conversion
    */
-  async getOrCreateWebviewPanel(
-    title: string,
-    html: string,
-    existingPanelId?: WebviewPanelId_t
-  ): Promise<WebviewPanelId_t> {
-    this.dx.out(
+  async getOrCreateWebviewPanel(args: {
+    title: string;
+    html: string;
+    existingPanelId?: WebviewPanelId_t;
+  }): Promise<WebviewPanelId_t> {
+    const dx = this.dx.sub({ name: 'getOrCreateWebviewPanel' });
+    dx.require(args, ['title', 'html']);
+    const { title, html, existingPanelId } = args;
+    dx.out(
       `getOrCreateWebviewPanel: existingPanelId=${existingPanelId}, panels.size=${this.panels.size}`
     );
 
@@ -235,25 +235,26 @@ export class VSCodeAPIs {
       if (panel) {
         try {
           // Panel is still valid, reuse it
-          this.dx.out(`Reusing existing panel: ${existingPanelId}`);
+          dx.out(`Reusing existing panel: ${existingPanelId}`);
           panel.title = title;
-          const htmlWithURIs = this.app.os.htmlSrcPathToURI(html, existingPanelId);
+          const htmlWithURIs = this.app.os.htmlSrcPathToURI({ html, webviewPanelId: existingPanelId });
           panel.webview.html = htmlWithURIs;
+          dx.done();
           return existingPanelId;
         } catch {
           // Panel is disposed, remove from map
-          this.dx.out(`Panel disposed, removing from map: ${existingPanelId}`);
+          dx.out(`Panel disposed, removing from map: ${existingPanelId}`);
           this.panels.delete(existingPanelId);
         }
       } else {
-        this.dx.out(`Panel not found in map: ${existingPanelId}`);
+        dx.out(`Panel not found in map: ${existingPanelId}`);
       }
     } else {
-      this.dx.out(`No existingPanelId provided`);
+      dx.out(`No existingPanelId provided`);
     }
 
     // Create new panel
-    this.dx.out(`Creating new panel for title: ${title}`);
+    dx.out(`Creating new panel for title: ${title}`);
 
     // Get extension root URI for local resource access
     const extensionRoot = this.app.os.getExtensionRoot();
@@ -277,15 +278,16 @@ export class VSCodeAPIs {
     // Clean up when panel is closed
     panel.onDidDispose(() => {
       this.panels.delete(id);
-      this.dx.out(`Panel ${id} disposed and removed from map`);
+      dx.out(`Panel ${id} disposed and removed from map`);
     });
 
     // Set up message handling
     this.setupMessageHandling(panel);
 
-    const htmlWithURIs = this.app.os.htmlSrcPathToURI(html, id);
-    this.updatePanelHtml(id, htmlWithURIs);
+    const htmlWithURIs = this.app.os.htmlSrcPathToURI({ html, webviewPanelId: id });
+    this.updatePanelHtml({ id, html: htmlWithURIs });
 
+    dx.done();
     return id;
   }
 
@@ -321,7 +323,13 @@ export class VSCodeAPIs {
    * @param keys - Optional array of specific keys to extract from the theme
    * @returns Theme data or undefined if not found
    */
-  getVSCodeThemeJson(themeId: string, keys?: string[]): Record<string, unknown> | undefined {
+  getVSCodeThemeJson(args: {
+    themeId: string;
+    keys?: string[];
+  }): Record<string, unknown> | undefined {
+    const dx = this.dx.sub({ name: 'getVSCodeThemeJson' });
+    dx.require(args, ['themeId']);
+    const { themeId, keys } = args;
     // Find the extension that contributes this theme
     // themeId might be a display name, so check multiple properties
     const themeExtension = this.vscode.extensions.all.find(ext => {
@@ -338,6 +346,7 @@ export class VSCodeAPIs {
     });
 
     if (!themeExtension) {
+      dx.done();
       return undefined;
     }
 
@@ -346,6 +355,7 @@ export class VSCodeAPIs {
         t.id === themeId || t.label === themeId
     );
     if (!theme) {
+      dx.done();
       return undefined;
     }
 
@@ -353,7 +363,7 @@ export class VSCodeAPIs {
     if (theme.path && typeof theme.path === 'string') {
       try {
         const themePath = this.app.os.pathJoin(themeExtension.extensionPath, theme.path);
-        const themeContent = this.app.os.fileRead<Record<string, unknown>>(themePath);
+        const themeContent = this.app.os.fileRead<Record<string, unknown>>({ path: themePath });
 
         if (themeContent) {
           // Merge the theme metadata with the loaded content
@@ -367,13 +377,15 @@ export class VSCodeAPIs {
                 filteredTheme[key] = (fullTheme as Record<string, unknown>)[key];
               }
             });
+            dx.done();
             return filteredTheme;
           }
 
+          dx.done();
           return fullTheme;
         }
       } catch (err) {
-        this.dx.out(`ERROR: Failed to load theme file: ${err}`);
+        dx.out(`ERROR: Failed to load theme file: ${err}`);
       }
     }
 
@@ -385,9 +397,11 @@ export class VSCodeAPIs {
           filteredTheme[key] = (theme as Record<string, unknown>)[key];
         }
       });
+      dx.done();
       return filteredTheme;
     }
 
+    dx.done();
     return theme;
   }
 

@@ -152,7 +152,7 @@ export class Stylize {
 
       for (const ext of themeExtensions) {
         // Get theme data for this extension
-        const themeJson = this.app.vscodeapis.getVSCodeThemeJson(ext.id);
+        const themeJson = this.app.vscodeapis.getVSCodeThemeJson({ themeId: ext.id });
         if (!themeJson) continue;
 
         // Process each theme in the extension
@@ -164,7 +164,7 @@ export class Stylize {
           let displayName = theme.id;
           try {
             const nlsPath = this.app.os.pathJoin(ext.extensionPath, 'package.nls.json');
-            const nlsData = this.app.os.fileRead<Record<string, string>>(nlsPath);
+            const nlsData = this.app.os.fileRead<Record<string, string>>({ path: nlsPath });
             if (
               nlsData &&
               theme.label &&
@@ -214,7 +214,7 @@ export class Stylize {
         }
       } else {
         // If editor theme not in list, add it at the top
-        const themeJson = this.app.vscodeapis.getVSCodeThemeJson(id);
+        const themeJson = this.app.vscodeapis.getVSCodeThemeJson({ themeId: id });
 
         if (themeJson && themeJson.colors && themeJson.tokenColors) {
           try {
@@ -319,7 +319,7 @@ export class Stylize {
       stylize_token_pre: string;
       stylize_token_line: string;
       stylize_token_span: string;
-    }>('src/Stylize.yaml');
+    }>({ path: 'src/Stylize.yaml' });
 
     if (!yaml) {
       throw new Error('Failed to load Stylize template');

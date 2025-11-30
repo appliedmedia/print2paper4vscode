@@ -63,7 +63,7 @@ export class UI {
   constructor(app: App) {
     this.app = app;
     this.dx = app.dx.sub({ name: 'UI' });
-    this._yaml = new Yaml(app, 'src/UI.yaml', UI.kYaml);
+    this._yaml = new Yaml({ app, filePath: 'src/UI.yaml', dataStruct: UI.kYaml });
 
     // Initialize persist for toolbar position
     this.persist = new Persist(app) as Persist & Persist_t;

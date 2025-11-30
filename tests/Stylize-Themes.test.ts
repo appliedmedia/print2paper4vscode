@@ -48,7 +48,7 @@ describe('Stylize Simple Unit Tests', () => {
 
   it('should tokenize code with a theme', async () => {
     const code = 'const x = 42;';
-    const tokens = await app.stylize.tokenize(code, 'javascript', 'github-light');
+    const tokens = await app.stylize.tokenize({ code, languageId: 'javascript', theme: 'github-light' });
     
     assert.ok(Array.isArray(tokens), 'Should return array');
     assert.ok(tokens.length > 0, 'Should have tokens');

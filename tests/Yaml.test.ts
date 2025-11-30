@@ -38,11 +38,11 @@ describe('Yaml', () => {
     const yamlContent = 'key1: value1\nkey2: value2';
     fs.writeFileSync(yamlPath, yamlContent);
 
-    const yaml = new Yaml<{ key1: string; key2: string }>(
+    const yaml = new Yaml<{ key1: string; key2: string }>({
       app,
-      yamlPath,
-      { key1: '', key2: '' }
-    );
+      filePath: yamlPath,
+      dataStruct: { key1: '', key2: '' },
+    });
     yaml.init();
 
     const result = yaml.get();
@@ -55,11 +55,11 @@ describe('Yaml', () => {
   });
 
   it('should return default structure when file does not exist', () => {
-    const yaml = new Yaml<{ key1: string; key2: string }>(
+    const yaml = new Yaml<{ key1: string; key2: string }>({
       app,
-      path.join(tempDir, 'nonexistent.yaml'),
-      { key1: 'default1', key2: 'default2' }
-    );
+      filePath: path.join(tempDir, 'nonexistent.yaml'),
+      dataStruct: { key1: 'default1', key2: 'default2' },
+    });
     yaml.init();
 
     const result = yaml.get();
@@ -68,11 +68,11 @@ describe('Yaml', () => {
   });
 
   it('should use default when file read fails', () => {
-    const yaml = new Yaml<{ key1: string }>(
+    const yaml = new Yaml<{ key1: string }>({
       app,
-      '/invalid/path/that/does/not/exist.yaml',
-      { key1: 'default' }
-    );
+      filePath: '/invalid/path/that/does/not/exist.yaml',
+      dataStruct: { key1: 'default' },
+    });
     yaml.init();
 
     const result = yaml.get();
@@ -83,11 +83,11 @@ describe('Yaml', () => {
     const yamlContent = 'key1: value1';
     fs.writeFileSync(yamlPath, yamlContent);
 
-    const yaml = new Yaml<{ key1: string }>(
+    const yaml = new Yaml<{ key1: string }>({
       app,
-      yamlPath,
-      { key1: '' }
-    );
+      filePath: yamlPath,
+      dataStruct: { key1: '' },
+    });
     yaml.init();
 
     const result1 = yaml.get();
@@ -114,11 +114,11 @@ array:
 `;
     fs.writeFileSync(yamlPath, yamlContent);
 
-    const yaml = new Yaml<any>(
+    const yaml = new Yaml<any>({
       app,
-      yamlPath,
-      {}
-    );
+      filePath: yamlPath,
+      dataStruct: {},
+    });
     yaml.init();
 
     const result = yaml.get();
