@@ -418,8 +418,7 @@ Replace all hardcoded `p2p4vsc` strings with `{{ns}}` in templates and ensure al
 
 **Standard Pattern (camelCase)**:
 
-- `data-{{ns_}}shortcutCode` → `data-p2p4vsc_shortcutCode` → `dataset.p2p4vsc_shortcutCode`
-- `data-{{ns_}}flyoutItems` → `data-p2p4vsc_flyoutItems` → `dataset.p2p4vsc_flyoutItems`
+- `data-{{ns_}}shortcutCode` → `data-p2p4vsc_shortcutCode` → accessed via `getAttribute` (for selector queries)
 - `data-{{ns_}}itemId` → `data-p2p4vsc_itemId` → `dataset.p2p4vsc_itemId`
 - `data-{{ns_}}flyoutMenuId` → `data-p2p4vsc_flyoutMenuId` → `dataset.p2p4vsc_flyoutMenuId`
 
@@ -432,14 +431,15 @@ Replace all hardcoded `p2p4vsc` strings with `{{ns}}` in templates and ensure al
 **Implementation Details**:
 
 - All data attributes use `data-{{ns_}}` prefix
-- Access via `dataset['{{ns_}}attributeName']` in JavaScript (template replacement handles namespace)
+- Most attributes accessed via `dataset['{{ns_}}attributeName']` in JavaScript (template replacement handles namespace)
+- Keyboard shortcuts use `getAttribute('data-{{ns_}}shortcutCode')` for selector-friendly access in `src/UIMenu.yaml`
 - Constrain attributes use snake_case as a one-off exception; all other attributes use camelCase
 - Updated in `src/UIMenu.ts` (attribute generation) and `src/UIMenu.yaml` (attribute reading)
 
 **Files Updated**:
 
 - ✅ `src/UIMenu.ts`: All data attribute generation uses namespaced templates
-- ✅ `src/UIMenu.yaml`: All data attribute access uses `dataset` API with namespaced keys
+- ✅ `src/UIMenu.yaml`: Most data attribute access uses `dataset` API; keyboard shortcuts use `getAttribute` for selector queries
 - ✅ `src/types/PaperPrinter_t.ts`: Comment updated to reflect correct attribute name
 - ✅ `tests/UIMenu-IconSlotTriad.test.ts`: Test assertions updated for namespaced attributes
 
@@ -511,7 +511,7 @@ Replace all hardcoded `p2p4vsc` strings with `{{ns}}` in templates and ensure al
 
 - **VS Code Command IDs**: Must remain hardcoded per VS Code API requirements (documented as intentional)
 - **Extension ID**: Uses single source of truth (`kExtId` in `_entrypoint_extId_t.ts`)
-- **Data Attributes**: ✅ COMPLETE - All use `data-{{ns_}}` prefix with camelCase (except constrain attributes which use snake_case as one-off exception)
+- **Data Attributes**: ✅ COMPLETE - All custom data attributes are namespaced via `data-{{ns_}}`; most are read via `dataset[...]` API, with keyboard shortcuts using `getAttribute` for selector-friendly access. Constrain attributes use snake_case as one-off exception.
 - **Shared Constants**: Namespace constants (`kNs` and `kNs_`) are defined in `App` class and automatically included in every `templateDictReplace()` call
 - **Dead Code Cleanup**: ✅ COMPLETE - `.p2p4vsc-flyout` references removed from `src/UI.yaml`
 
@@ -552,7 +552,7 @@ To rename from `p2p4vsc` to `newname`:
 - `package.json` uses `{{ns}}` templates, processed during build from `kExtId`
 - Output `out/package.json` has all `{{ns}}` replaced with actual value
 - CSS classes become `newname_menuBtn`, `newname_toolbar`, etc.
-- Data attributes become `data-newname_shortcutCode`, `data-newname_flyoutItems`, etc. (camelCase)
+- Data attributes become `data-newname_shortcutCode`, `data-newname_itemId`, `data-newname_flyoutMenuId`, etc. (camelCase)
 - Constrain attributes become `data-newname_constrain_regex`, `data-newname_constrain_min`, etc. (snake_case exception)
 - VS Code commands become `newname.print2paper`, `newname.persistClear`
 
