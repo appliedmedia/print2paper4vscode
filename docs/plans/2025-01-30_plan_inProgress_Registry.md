@@ -1,8 +1,8 @@
 # Registry Pattern Migration Plan
 
-**Status**: Stage 0.1-0.2 Complete | Stage 0.3 In Progress | Stage 1+ Pending
+**Status**: Stage 0.1-0.3 Complete | Stage 1+ Pending
 
-**Quick Status**: Registry infrastructure created and integrated. Components still use old pattern. Next: Complete tests, then implement full Registry core functionality.
+**Quick Status**: Registry infrastructure complete and tested. All 330 tests pass. Components still use old pattern. Next: Implement full Registry core functionality (Stage 1), then begin component migration (Stage 2+).
 
 ---
 
@@ -38,19 +38,15 @@
   - Verified compilation succeeds
   - All 319 existing tests pass
 
-- **Stage 0.3: Test Infrastructure** - Partially Complete
+- **Stage 0.3: Test Infrastructure** - Complete
   - ✅ All existing tests pass (no regressions)
-  - ⏸️ Still needed: Basic Registry construction test
-  - ⏸️ Still needed: Verify Diagnostics available via Registry
+  - ✅ Basic Registry construction test added
+  - ✅ Diagnostics availability via Registry verified
+  - ✅ 11 Registry tests covering: construction, Diagnostics access, method resolution, instance registration, always-injected methods
 
 ### 🎯 What's Next
 
-#### Immediate Priority: Complete Stage 0.3
-
-- Add basic Registry construction test
-- Verify Diagnostics is accessible via Registry
-
-#### Then: Stage 1 - Implement Registry Core
+#### Next: Stage 1 - Implement Registry Core
 
 - Register component classes with Registry
 - Implement full lazy instantiation
@@ -121,13 +117,13 @@
   - Register existing component instances via `this.reg.registerInstance()`
 - ✅ Verify Registry can be instantiated without breaking existing code (compiles successfully, components still created the old way)
 
-#### Stage 0.3: Test Infrastructure ⏸️ IN PROGRESS
+#### Stage 0.3: Test Infrastructure ✅ DONE
 
-- ✅ Run existing tests to ensure no regressions (all 319 tests pass)
-- [ ] Add basic Registry construction test
-- [ ] Verify Diagnostics is available via Registry
+- ✅ Run existing tests to ensure no regressions (all 330 tests pass, including Registry tests)
+- ✅ Add basic Registry construction test
+- ✅ Verify Diagnostics is available via Registry
 
-**Status**: Infrastructure tests passing. Need to add Registry-specific tests.
+**Status**: All tests passing. Registry tests verify construction, Diagnostics availability, method resolution, and instance registration.
 
 ---
 
@@ -955,7 +951,41 @@ export class Yaml<T extends Record<string, string>> {
 
 **Note**: As each class is migrated in Stages 2-6, add its actual implementation code here showing the `app.reg.use()` call.
 
-### Registry Infrastructure (Stage 0.1-0.2)
+### Registry Infrastructure (Stage 0.1-0.3)
+
+**Registry.test.ts - Test Implementation:**
+
+```typescript
+describe('Registry', () => {
+  let app: App;
+
+  beforeEach(() => {
+    app = new App({ context: mockContext, vscode: mockVSCode });
+    app.init();
+  });
+
+  afterEach(() => {
+    app.done();
+  });
+
+  test('should create Registry instance', () => {
+    const reg = app.reg;
+    assert.ok(reg instanceof Registry);
+    assert.strictEqual(Registry.id, 'reg');
+  });
+
+  test('should verify Diagnostics is available via Registry', () => {
+    const reg = app.reg;
+    const fn = reg.use('dx.sub', 'dx.out', 'dx.error');
+    assert.ok(fn.dx);
+    assert.ok(typeof fn.dx.sub === 'function');
+    const subDx = fn.dx.sub({ name: 'TestComponent' });
+    assert.ok(subDx instanceof Diagnostics);
+  });
+
+  // ... 9 more tests covering method resolution, instance registration, etc.
+});
+```
 
 **Registry.ts - Actual Implementation:**
 
