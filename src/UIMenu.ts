@@ -329,7 +329,7 @@ export class UIMenu {
     // Check if this item has a flyout by checking if its ID is in flyoutMenuItemIds
     const menuItemId = item.id;
     const isFlyout = this.flyoutMenuItemIds.includes(menuItemId);
-    const flyoutMenuIdRef = isFlyout ? ` {{ns_}}flyoutMenuIdRef="${menuItemId}"` : ``;
+    const flyoutMenuId = isFlyout ? ` {{ns_}}flyoutMenuId="${menuItemId}"` : ``;
     const isDefault = menuItemId === defaultItemId;
     const isSelected = menuItemId === selectedItemId;
 
@@ -373,7 +373,7 @@ export class UIMenu {
       textEditConfigAttr: iconSlotResult.configAttr || ``,
       shortcutCodeAttr: item.shortcutCode ? ` data-{{ns_}}shortcutCode="${item.shortcutCode}"` : ``,
       flyout,
-      flyoutMenuIdRef,
+      flyoutMenuId,
     };
 
     dx.done();
