@@ -25,11 +25,20 @@ import type { App } from './App';
 export class Yaml<T extends Record<string, string>> {
   private cached: T | undefined = undefined;
 
-  constructor(
-    private app: App,
-    private filePath: string,
-    private dataStruct: T
-  ) {}
+  constructor(args: { app: App; filePath: string; dataStruct: T }) {
+    // Note: Cannot use dx.require here as Diagnostics is not yet initialized
+    if (!args.app || !args.filePath || !args.dataStruct) {
+      throw new Error('Yaml constructor requires app, filePath, and dataStruct');
+    }
+    const { app, filePath, dataStruct } = args;
+    this.app = app;
+    this.filePath = filePath;
+    this.dataStruct = dataStruct;
+  }
+
+  private app: App;
+  private filePath: string;
+  private dataStruct: T;
 
   init(): void {
     // Nothing to initialize
@@ -42,7 +51,7 @@ export class Yaml<T extends Record<string, string>> {
 
   get(): T {
     if (this.cached === undefined) {
-      this.cached = this.app.os.fileRead<T>(this.filePath) || this.dataStruct;
+      this.cached = this.app.os.fileRead<T>({ path: this.filePath }) || this.dataStruct;
     }
     return this.cached;
   }

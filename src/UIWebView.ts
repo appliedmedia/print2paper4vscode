@@ -49,7 +49,7 @@ export class UIWebView {
   constructor(app: App) {
     this.app = app;
     this.dx = app.dx.sub({ name: 'UIWebView' });
-    this._yaml = new Yaml(app, 'src/UIWebView.yaml', UIWebView.kYaml);
+    this._yaml = new Yaml({ app, filePath: 'src/UIWebView.yaml', dataStruct: UIWebView.kYaml });
 
     // Bind handlers once in constructor to maintain same reference
     this.handleDragEndBound = this.handleDragEnd.bind(this) as MessageHandler_t;
@@ -143,11 +143,11 @@ export class UIWebView {
       const htmlWithToolbar = await this.app.ui.addToolbar(html);
 
       // Create or reuse webview panel
-      const panelId = await this.app.vscodeapis.getOrCreateWebviewPanel(
-        pdfData.title,
-        htmlWithToolbar,
-        this.panelId || undefined
-      );
+      const panelId = await this.app.vscodeapis.getOrCreateWebviewPanel({
+        title: pdfData.title,
+        html: htmlWithToolbar,
+        existingPanelId: this.panelId || undefined,
+      });
       this.panelId = panelId;
 
       dx.out(`Created PDF panel: "${pdfData.title}" with ${pdfData.pageTotal} pages`);
@@ -168,7 +168,7 @@ export class UIWebView {
 
     try {
       // Load PDF.js library
-      const pdfjs_library = this.app.os.fileRead('src/lib/pdf.min.js');
+      const pdfjs_library = this.app.os.fileRead({ path: 'src/lib/pdf.min.js' });
       if (!pdfjs_library) {
         throw new Error('Failed to load PDF.js library');
       }

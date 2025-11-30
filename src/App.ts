@@ -80,7 +80,7 @@ export class App {
     const { context, vscode } = args;
 
     // Create components - VSCodeAPIs first, then UI, then UIMenuMgr (needed by PaperPrinter), then others
-    this.vscodeapis = new VSCodeAPIs(this, vscode, context);
+    this.vscodeapis = new VSCodeAPIs({ app: this, vscode, context });
     this.ui = new UI(this);
     this.uimenumgr = new UIMenuMgr(this); // Must be created before PaperPrinter (which creates menus in constructor)
     this.os = OS.create(this);

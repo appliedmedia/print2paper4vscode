@@ -62,19 +62,6 @@ export class Coords {
     this.dx.done();
   }
 
-  /**
-   * Convert page dimensions from inches/millimeters to PDF points
-   */
-  pageDimensionsInchesOrMmToPdfPts(
-    widthInchesOrMm: number,
-    heightInchesOrMm: number,
-    unit: 'in' | 'mm'
-  ): { widthPts: number; heightPts: number } {
-    const multiplier = unit === 'in' ? Coords.POINTS_PER_INCH : Coords.POINTS_PER_MM;
-    const widthPts = widthInchesOrMm * multiplier;
-    const heightPts = heightInchesOrMm * multiplier;
-    return { widthPts, heightPts };
-  }
 
   /**
    * Convert CSS pixels to PDF points

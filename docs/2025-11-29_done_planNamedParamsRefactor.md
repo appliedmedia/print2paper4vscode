@@ -896,7 +896,7 @@ getValueForMenuItemId(args: {
 
 ## VSCodeAPIs.ts
 
-### `constructor(app, vscode, context)`
+### ✅ `constructor(app, vscode, context)`
 
 **Current signature:** `constructor(app: App, vscode: typeof import('vscode'), context: ExtensionContext)`
 
@@ -922,7 +922,7 @@ constructor(args: {
 
 ---
 
-### `updateGlobalState(key, value)`
+### ✅ `updateGlobalState(key, value)`
 
 **Current signature:** `updateGlobalState(key: GlobalStateKey_t, value: GlobalStateValue_t): void`
 
@@ -947,7 +947,7 @@ updateGlobalState(args: {
 
 ---
 
-### `setPanelTitle(id, title)` ⚠️ REMOVE
+### ✅ `setPanelTitle(id, title)` ⚠️ REMOVE
 
 **Current signature:** `setPanelTitle(id: WebviewPanelId_t, title: string): void`
 
@@ -960,7 +960,7 @@ updateGlobalState(args: {
 
 ---
 
-### `updatePanelHtml(id, html)`
+### ✅ `updatePanelHtml(id, html)`
 
 **Current signature:** `updatePanelHtml(id: WebviewPanelId_t, html: string): void`
 
@@ -985,7 +985,7 @@ updatePanelHtml(args: {
 
 ---
 
-### `getOrCreateWebviewPanel(title, html, existingPanelId?)`
+### ✅ `getOrCreateWebviewPanel(title, html, existingPanelId?)`
 
 **Current signature:**
 
@@ -1019,7 +1019,7 @@ async getOrCreateWebviewPanel(args: {
 
 ---
 
-### `getVSCodeThemeJson(themeId, keys?)`
+### ✅ `getVSCodeThemeJson(themeId, keys?)`
 
 **Current signature:** `getVSCodeThemeJson(themeId: string, keys?: string[]): Record<string, unknown> | undefined`
 
@@ -1046,7 +1046,7 @@ getVSCodeThemeJson(args: {
 
 ## OS.ts
 
-### `fileWrite(filePath, content)`
+### ✅ `fileWrite(filePath, content)`
 
 **Current signature:** `fileWrite(filePath: string, content: string | Buffer): void`
 
@@ -1071,7 +1071,7 @@ fileWrite(args: {
 
 ---
 
-### `fileCopy(srcPath, destPath)` ⚠️ REMOVE
+### ✅ `fileCopy(srcPath, destPath)` ⚠️ REMOVE
 
 **Current signature:** `fileCopy(srcPath: string, destPath: string): void`
 
@@ -1084,7 +1084,7 @@ fileWrite(args: {
 
 ---
 
-### `fileRead<T>(path, key?)`
+### ✅ `fileRead<T>(path, key?)`
 
 **Current signature:** `fileRead: FileRead_t = <T = string>(path: string, key?: string): T | undefined`
 
@@ -1112,7 +1112,7 @@ fileRead<T = string>(args: {
 
 ---
 
-### `htmlSrcPathToURI(html, webviewPanelId)`
+### ✅ `htmlSrcPathToURI(html, webviewPanelId)`
 
 **Current signature:** `htmlSrcPathToURI(html: string, webviewPanelId: WebviewPanelId_t): string`
 
@@ -1145,7 +1145,7 @@ No methods in this file meet the refactoring criteria.
 
 ## Coords.ts
 
-### `pageDimensionsInchesOrMmToPdfPts(widthInchesOrMm, heightInchesOrMm, unit)` ⚠️ REMOVE
+### ✅ `pageDimensionsInchesOrMmToPdfPts(widthInchesOrMm, heightInchesOrMm, unit)` ⚠️ REMOVE
 
 **Current signature:**
 
@@ -1172,7 +1172,7 @@ pageDimensionsInchesOrMmToPdfPts(
 
 ## Persist.ts
 
-### `validateDefault(name, computeFn)`
+### ✅ `validateDefault(name, computeFn)`
 
 **Current signature:** `async validateDefault(name: string, computeFn: () => Promise<PersistValue_t>): Promise<PersistValue_t>`
 
@@ -1199,7 +1199,7 @@ async validateDefault(args: {
 
 ## Yaml.ts
 
-### `constructor(app, filePath, dataStruct)`
+### ✅ `constructor(app, filePath, dataStruct)`
 
 **Current signature:** `constructor(app: App, filePath: string, dataStruct: T)`
 

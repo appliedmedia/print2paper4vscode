@@ -235,7 +235,7 @@ export class UIMenu {
     this._selectionHandler = selectionHandler;
     this.persist = new Persist(app) as Persist & Persist_t;
     this.dx = this.app.dx.sub({ name: 'UIMenu' });
-    this._yaml = new Yaml(app, 'src/UIMenu.yaml', UIMenu.kYaml);
+    this._yaml = new Yaml({ app, filePath: 'src/UIMenu.yaml', dataStruct: UIMenu.kYaml });
 
     // Register persist property (no value set yet)
     this.persist.register(this._id);
@@ -293,9 +293,12 @@ export class UIMenu {
 
   // Get the default item ID for this menu (for default icon 📝)
   async getDefaultItemId(): Promise<string> {
-    const defaultItemId = await this.persist.validateDefault(this._id, async () => {
-      const { id } = await this.dispatchSelection(this.defaultId());
-      return id;
+    const defaultItemId = await this.persist.validateDefault({
+      name: this._id,
+      computeFn: async () => {
+        const { id } = await this.dispatchSelection(this.defaultId());
+        return id;
+      },
     });
 
     return String(defaultItemId);
