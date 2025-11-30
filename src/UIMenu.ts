@@ -329,7 +329,7 @@ export class UIMenu {
     // Check if this item has a flyout by checking if its ID is in flyoutMenuItemIds
     const menuItemId = item.id;
     const isFlyout = this.flyoutMenuItemIds.includes(menuItemId);
-    const flyoutMenuId = isFlyout ? ` {{ns_}}flyoutMenuId="${menuItemId}"` : ``;
+    const flyoutMenuId = isFlyout ? ` data-{{ns_}}flyoutMenuId="${menuItemId}"` : ``;
     const isDefault = menuItemId === defaultItemId;
     const isSelected = menuItemId === selectedItemId;
 
