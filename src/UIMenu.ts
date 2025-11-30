@@ -329,7 +329,7 @@ export class UIMenu {
     // Check if this item has a flyout by checking if its ID is in flyoutMenuItemIds
     const menuItemId = item.id;
     const isFlyout = this.flyoutMenuItemIds.includes(menuItemId);
-    const flyoutMenuId = isFlyout ? ` data-{{ns_}}flyout_menu_id="${menuItemId}"` : ``;
+    const flyoutMenuId = isFlyout ? ` data-{{ns_}}flyoutMenuId="${menuItemId}"` : ``;
     const isDefault = menuItemId === defaultItemId;
     const isSelected = menuItemId === selectedItemId;
 
@@ -371,7 +371,7 @@ export class UIMenu {
       contentGutterAfter: '', // Content handled by CSS
       iconSlotWithPrefixSuffix,
       textEditConfigAttr: iconSlotResult.configAttr || ``,
-      shortcutCodeAttr: item.shortcutCode ? ` data-{{ns_}}shortcut_code="${item.shortcutCode}"` : ``,
+      shortcutCodeAttr: item.shortcutCode ? ` data-{{ns_}}shortcutCode="${item.shortcutCode}"` : ``,
       flyout,
       flyoutMenuId,
     };
@@ -650,13 +650,13 @@ export class UIMenu {
       // Set data attribute with flyout item IDs (from static flyoutMenuItemIds list)
       const flyoutItemsAttr =
         this.flyoutMenuItemIds.length > 0
-          ? ` data-{{ns_}}flyout_items="${this.flyoutMenuItemIds.join(',')}"`
+          ? ` data-{{ns_}}flyoutItems="${this.flyoutMenuItemIds.join(',')}"`
           : '';
 
       // Get shortcutCode from menu constant if it exists
       const menuConst = kMenus.find(m => m.id === this._id);
       const shortcutCode = (menuConst as { shortcutCode?: string })?.shortcutCode;
-      const shortcutCodeAttr = shortcutCode ? ` data-{{ns_}}shortcut_code="${shortcutCode}"` : ``;
+      const shortcutCodeAttr = shortcutCode ? ` data-{{ns_}}shortcutCode="${shortcutCode}"` : ``;
 
       // Build button content from iconSlotTriad
       const buttonContent = this.buildButtonContent();
