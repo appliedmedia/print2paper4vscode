@@ -126,8 +126,18 @@ export abstract class OS {
     fs.mkdirSync(dirPath, { recursive: true });
   }
 
-  fileWrite(filePath: string, content: string | Buffer): void {
-    fs.writeFileSync(filePath, content);
+  fileWrite(args: { filePath: string; content: string | Buffer }): void {
+    const dx = this.dx.sub({ name: 'fileWrite' });
+    dx.require(args, ['filePath', 'content']);
+    const { filePath, content } = args;
+    try {
+      fs.writeFileSync(filePath, content);
+    } catch (err) {
+      dx.error(`Failed to write ${filePath}: ${err}`);
+      throw err; // Re-throw to preserve existing behavior
+    } finally {
+      dx.done();
+    }
   }
 
   fileCopy(srcPath: string, destPath: string): void {

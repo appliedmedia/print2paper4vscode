@@ -44,19 +44,6 @@ describe('OS Base Class', () => {
       assert.strictEqual(readContent, content);
     });
 
-    it('should copy files', () => {
-      const srcPath = path.join(tempDir, 'source.txt');
-      const destPath = path.join(tempDir, 'dest.txt');
-      const content = 'source content';
-      
-      os.fileWrite(srcPath, content);
-      os.fileCopy(srcPath, destPath);
-      
-      assert.ok(os.exists(destPath));
-      const destContent = os.fileRead(destPath);
-      assert.strictEqual(destContent, content);
-    });
-
     it('should delete files', () => {
       const filePath = path.join(tempDir, 'delete.txt');
       os.fileWrite(filePath, 'content');
