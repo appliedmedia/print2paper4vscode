@@ -327,7 +327,7 @@ export const kZoomLevel = {
         //
         // NOTE: Text edit width is auto-calculated as: string(max).length + 1 ch
         //       For max: 250 → width: 4ch, for max: 999 → width: 4ch, for max: 1000 → width: 5ch
-        regex: '^\\d{0,4}$', // Only 2 backslashes! Becomes data-constrain-regex
+        regex: '^\\d{0,4}$', // Only 2 backslashes! Becomes data-{{ns_}}constrainRegex
         min: 50,
         max: 250,
       },

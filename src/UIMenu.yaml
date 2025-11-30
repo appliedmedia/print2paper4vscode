@@ -391,7 +391,7 @@ uimenu_generic_handlers: |
       return;
     }
     
-    const regexStr = input.getAttribute('data-constrain-regex');
+    const regexStr = input.getAttribute('data-{{ns_}}constrainRegex');
     if (!regexStr) return;
     
     try {
@@ -445,8 +445,8 @@ uimenu_generic_handlers: |
   }
 
   function validateAndClampTextEdit(input) {
-    const minStr = input.getAttribute('data-constrain-min');
-    const maxStr = input.getAttribute('data-constrain-max');
+    const minStr = input.getAttribute('data-{{ns_}}constrainMin');
+    const maxStr = input.getAttribute('data-{{ns_}}constrainMax');
     
     if (minStr !== null && maxStr !== null) {
       const value = parseFloat(input.value);
@@ -489,9 +489,9 @@ uimenu_generic_handlers: |
       const isModifier = e.metaKey || e.ctrlKey;
       if (!isModifier) return;
 
-      const menuButtons = document.querySelectorAll('.{{ns_}}menuBtn[data-shortcut-code]');
+      const menuButtons = document.querySelectorAll('.{{ns_}}menuBtn[data-{{ns_}}shortcutCode]');
       for (const btn of menuButtons) {
-        const shortcutCode = btn.getAttribute('data-shortcut-code');
+        const shortcutCode = btn.getAttribute('data-{{ns_}}shortcutCode');
         if (shortcutCode === e.code) {
           e.preventDefault();
           btn.click();
@@ -499,9 +499,9 @@ uimenu_generic_handlers: |
         }
       }
 
-      const menuItems = document.querySelectorAll('.{{ns_}}menuItem[data-shortcut-code]');
+      const menuItems = document.querySelectorAll('.{{ns_}}menuItem[data-{{ns_}}shortcutCode]');
       for (const item of menuItems) {
-        const shortcutCode = item.getAttribute('data-shortcut-code');
+        const shortcutCode = item.getAttribute('data-{{ns_}}shortcutCode');
         if (shortcutCode === e.code) {
           e.preventDefault();
           item.click();
@@ -524,6 +524,6 @@ uimenu_item: |
   </div>
 
 uimenu_text_edit: |
-  <span class="text-edit-wrapper"><input type="text" class="{{ns_}}textEdit" data-item-id="{{itemId}}"{{constrain}}{{width}}{{value}} /></span>
+  <span class="text-edit-wrapper"><input type="text" class="{{ns_}}textEdit" data-{{ns_}}itemId="{{itemId}}"{{constrain}}{{width}}{{value}} /></span>
 
 # end, UIMenu.yaml

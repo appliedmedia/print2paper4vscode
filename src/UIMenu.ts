@@ -371,7 +371,7 @@ export class UIMenu {
       contentGutterAfter: '', // Content handled by CSS
       iconSlotWithPrefixSuffix,
       textEditConfigAttr: iconSlotResult.configAttr || ``,
-      shortcutCodeAttr: item.shortcutCode ? ` data-shortcut-code="${item.shortcutCode}"` : ``,
+      shortcutCodeAttr: item.shortcutCode ? ` data-{{ns_}}shortcutCode="${item.shortcutCode}"` : ``,
       flyout,
       flyoutMenuIdRef,
     };
@@ -415,9 +415,9 @@ export class UIMenu {
 
     // Build data attributes from constrain object (all three work together)
     return [
-      ` data-constrain-regex="${iconSlotTriadMain.constrain.regex}"`,
-      ` data-constrain-min="${iconSlotTriadMain.constrain.min}"`,
-      ` data-constrain-max="${iconSlotTriadMain.constrain.max}"`,
+      ` data-{{ns_}}constrainRegex="${iconSlotTriadMain.constrain.regex}"`,
+      ` data-{{ns_}}constrainMin="${iconSlotTriadMain.constrain.min}"`,
+      ` data-{{ns_}}constrainMax="${iconSlotTriadMain.constrain.max}"`,
     ].join('');
   }
 
@@ -650,13 +650,13 @@ export class UIMenu {
       // Set data attribute with flyout item IDs (from static flyoutMenuItemIds list)
       const flyoutItemsAttr =
         this.flyoutMenuItemIds.length > 0
-          ? ` data-flyout-items="${this.flyoutMenuItemIds.join(',')}"`
+          ? ` data-{{ns_}}flyoutItems="${this.flyoutMenuItemIds.join(',')}"`
           : '';
 
       // Get shortcutCode from menu constant if it exists
       const menuConst = kMenus.find(m => m.id === this._id);
       const shortcutCode = (menuConst as { shortcutCode?: string })?.shortcutCode;
-      const shortcutCodeAttr = shortcutCode ? ` data-shortcut-code="${shortcutCode}"` : ``;
+      const shortcutCodeAttr = shortcutCode ? ` data-{{ns_}}shortcutCode="${shortcutCode}"` : ``;
 
       // Build button content from iconSlotTriad
       const buttonContent = this.buildButtonContent();
