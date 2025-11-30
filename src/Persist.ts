@@ -110,10 +110,9 @@ export class Persist {
     const keysToReset: GlobalStateKey_t[] = [...kMenuId, 'toolbar_pos'];
 
     for (const key of keysToReset) {
-      await this.app.vscodeapis.updateGlobalState(
-        key as GlobalStateKey_t,
-        undefined as unknown as GlobalStateValue_t
-      );
+      await this.app.vscodeapis.deleteGlobalState({
+        key: key as GlobalStateKey_t,
+      });
     }
 
     // Clear in-memory caches
