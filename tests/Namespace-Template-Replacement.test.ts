@@ -377,7 +377,9 @@ describe('Namespace Template Replacement - Complex Scenarios with NEW Convention
     const template = '<div data-{{ns_}}menuItemId="123" data-{{ns_}}actionType="click"></div>';
     const result = app.templateDictReplace(template, namespaceDict);
     
-    assert.ok(result.includes('data-p2p4vsc_menuItemId'), 'Should use ns_ with underscore+camelCase for data attributes');
-    assert.ok(result.includes('data-p2p4vsc_actionType'), 'Should use ns_ with underscore+camelCase for data attributes');
+    assert.strictEqual(
+      result,
+      '<div data-p2p4vsc_menuItemId="123" data-p2p4vsc_actionType="click"></div>',
+    );
   });
 });
