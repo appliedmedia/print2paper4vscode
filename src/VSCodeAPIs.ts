@@ -51,7 +51,7 @@ export class VSCodeAPIs {
   private dx: Diagnostics;
 
   constructor(args: { app: App; vscode: typeof import('vscode'); context: ExtensionContext }) {
-    // Validate args before using them
+    // Validate args before using them (needed before accessing app.dx)
     if (!args || !args.app || !args.vscode || !args.context) {
       throw new Error('VSCodeAPIs constructor requires app, vscode, and context');
     }
@@ -60,7 +60,7 @@ export class VSCodeAPIs {
     this.vscode = vscode;
     this.context = context;
     this.dx = app.dx.sub({ name: 'VSCodeAPIs' });
-    this.dx.require(args, ['app', 'vscode', 'context']);
+    // Note: dx.require() removed - manual validation above is sufficient and needed before app.dx access
   }
 
   init(): void {
@@ -99,7 +99,11 @@ export class VSCodeAPIs {
     const dx = this.dx.sub({ name: 'updateGlobalState' });
     dx.require(args, ['key', 'value']);
     const { key, value } = args;
-    this.context.globalState.update(key, value);
+    try {
+      this.context.globalState.update(key, value);
+    } finally {
+      dx.done();
+    }
   }
 
   /**
@@ -109,7 +113,11 @@ export class VSCodeAPIs {
     const dx = this.dx.sub({ name: 'deleteGlobalState' });
     dx.require(args, ['key']);
     const { key } = args;
-    this.context.globalState.update(key, undefined);
+    try {
+      this.context.globalState.update(key, undefined);
+    } finally {
+      dx.done();
+    }
   }
 
   /**
@@ -191,8 +199,12 @@ export class VSCodeAPIs {
     const dx = this.dx.sub({ name: 'updatePanelHtml' });
     dx.require(args, ['id', 'html']);
     const { id, html } = args;
-    const panel = this.panels.get(id);
-    if (panel) panel.webview.html = html;
+    try {
+      const panel = this.panels.get(id);
+      if (panel) panel.webview.html = html;
+    } finally {
+      dx.done();
+    }
   }
 
   /**
@@ -321,73 +333,77 @@ export class VSCodeAPIs {
     const dx = this.dx.sub({ name: 'getVSCodeThemeJson' });
     dx.require(args, ['themeId']);
     const { themeId, keys } = args;
-    // Find the extension that contributes this theme
-    // themeId might be a display name, so check multiple properties
-    const themeExtension = this.vscode.extensions.all.find(ext => {
-      if (ext.packageJSON?.contributes?.themes) {
-        const found = ext.packageJSON.contributes.themes.some(
-          (theme: { id: string; label?: string; uiTheme?: string }) => {
-            const matches = theme.id === themeId || theme.label === themeId;
-            return matches;
-          }
-        );
-        return found;
-      }
-      return false;
-    });
-
-    if (!themeExtension) {
-      return undefined;
-    }
-
-    const theme = themeExtension.packageJSON.contributes.themes.find(
-      (t: { id: string; label?: string; uiTheme?: string }) =>
-        t.id === themeId || t.label === themeId
-    );
-    if (!theme) {
-      return undefined;
-    }
-
-    // Load the actual theme file content if path is available
-    if (theme.path && typeof theme.path === 'string') {
-      try {
-        const themePath = this.app.os.pathJoin(themeExtension.extensionPath, theme.path);
-        const themeContent = this.app.os.fileRead<Record<string, unknown>>({ path: themePath });
-
-        if (themeContent) {
-          // Merge the theme metadata with the loaded content
-          const fullTheme = { ...theme, ...themeContent };
-
-          // If specific keys requested, filter the theme data
-          if (keys && keys.length > 0) {
-            const filteredTheme: Record<string, unknown> = {};
-            keys.forEach(key => {
-              if ((fullTheme as Record<string, unknown>)[key] !== undefined) {
-                filteredTheme[key] = (fullTheme as Record<string, unknown>)[key];
-              }
-            });
-            return filteredTheme;
-          }
-
-          return fullTheme;
+    try {
+      // Find the extension that contributes this theme
+      // themeId might be a display name, so check multiple properties
+      const themeExtension = this.vscode.extensions.all.find(ext => {
+        if (ext.packageJSON?.contributes?.themes) {
+          const found = ext.packageJSON.contributes.themes.some(
+            (theme: { id: string; label?: string; uiTheme?: string }) => {
+              const matches = theme.id === themeId || theme.label === themeId;
+              return matches;
+            }
+          );
+          return found;
         }
-      } catch (err) {
-        this.dx.out(`ERROR: Failed to load theme file: ${err}`);
-      }
-    }
-
-    // If specific keys requested, filter the theme data
-    if (keys && keys.length > 0) {
-      const filteredTheme: Record<string, unknown> = {};
-      keys.forEach(key => {
-        if ((theme as Record<string, unknown>)[key] !== undefined) {
-          filteredTheme[key] = (theme as Record<string, unknown>)[key];
-        }
+        return false;
       });
-      return filteredTheme;
-    }
 
-    return theme;
+      if (!themeExtension) {
+        return undefined;
+      }
+
+      const theme = themeExtension.packageJSON.contributes.themes.find(
+        (t: { id: string; label?: string; uiTheme?: string }) =>
+          t.id === themeId || t.label === themeId
+      );
+      if (!theme) {
+        return undefined;
+      }
+
+      // Load the actual theme file content if path is available
+      if (theme.path && typeof theme.path === 'string') {
+        try {
+          const themePath = this.app.os.pathJoin(themeExtension.extensionPath, theme.path);
+          const themeContent = this.app.os.fileRead<Record<string, unknown>>({ path: themePath });
+
+          if (themeContent) {
+            // Merge the theme metadata with the loaded content
+            const fullTheme = { ...theme, ...themeContent };
+
+            // If specific keys requested, filter the theme data
+            if (keys && keys.length > 0) {
+              const filteredTheme: Record<string, unknown> = {};
+              keys.forEach(key => {
+                if ((fullTheme as Record<string, unknown>)[key] !== undefined) {
+                  filteredTheme[key] = (fullTheme as Record<string, unknown>)[key];
+                }
+              });
+              return filteredTheme;
+            }
+
+            return fullTheme;
+          }
+        } catch (err) {
+          this.dx.out(`ERROR: Failed to load theme file: ${err}`);
+        }
+      }
+
+      // If specific keys requested, filter the theme data
+      if (keys && keys.length > 0) {
+        const filteredTheme: Record<string, unknown> = {};
+        keys.forEach(key => {
+          if ((theme as Record<string, unknown>)[key] !== undefined) {
+            filteredTheme[key] = (theme as Record<string, unknown>)[key];
+          }
+        });
+        return filteredTheme;
+      }
+
+      return theme;
+    } finally {
+      dx.done();
+    }
   }
 
   /**

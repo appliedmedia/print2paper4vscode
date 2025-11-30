@@ -28,7 +28,7 @@ export type Persist_t = Record<UI_t, PersistValue_t>;
  *
  * @example
  * const persist = new Persist(app);
- * persist.register('theme').validateDefault('theme', async () => 'github-light');
+ * persist.register('theme').validateDefault({ name: 'theme', computeFn: async () => 'github-light' });
  * console.log(persist.theme); // 'github-light' from default
  * persist.theme = 'dark'; // Saves to VS Code global state
  */
@@ -61,8 +61,8 @@ export class Persist {
             this.value[name] = defaultValue;
             // Try to persist default to global state
             this.app.vscodeapis.updateGlobalState({
-              key: name as GlobalStateKey_t,
-              value: defaultValue as GlobalStateValue_t,
+              key: name,
+              value: defaultValue,
             });
             result = defaultValue;
           }
@@ -76,8 +76,8 @@ export class Persist {
           // Skip global state update if value is empty string (non-persistent menus like 'print'/'page')
           if (value !== kEmptyNoPersist) {
             this.app.vscodeapis.updateGlobalState({
-              key: name as GlobalStateKey_t,
-              value: value as GlobalStateValue_t,
+              key: name,
+              value: value,
             });
           }
         }
