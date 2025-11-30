@@ -95,11 +95,22 @@ export class VSCodeAPIs {
   /**
    * Update global state value
    */
-  updateGlobalState(args: { key: GlobalStateKey_t; value: GlobalStateValue_t | undefined }): void {
+  updateGlobalState(args: { key: GlobalStateKey_t; value: GlobalStateValue_t }): void {
     const dx = this.dx.sub({ name: 'updateGlobalState' });
     dx.require(args, ['key', 'value']);
     const { key, value } = args;
     this.context.globalState.update(key, value);
+    dx.done();
+  }
+
+  /**
+   * Delete global state value
+   */
+  deleteGlobalState(args: { key: GlobalStateKey_t }): void {
+    const dx = this.dx.sub({ name: 'deleteGlobalState' });
+    dx.require(args, ['key']);
+    const { key } = args;
+    this.context.globalState.update(key, undefined);
     dx.done();
   }
 

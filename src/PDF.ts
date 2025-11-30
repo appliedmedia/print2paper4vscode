@@ -210,7 +210,7 @@ export class PDF {
       this.app.os.ensureDir(targetDir);
 
       // Save PDF document directly to chosen location
-      this.app.os.fileWrite({ filePath: targetPath, content: Buffer.from(new Uint8Array(pdfBuffer)) });
+      this.app.os.fileWrite({ filePath: targetPath, content: Buffer.from(pdfBuffer) });
 
       // Track file for cleanup (optional)
       this.trackTempPdf(targetPath);
