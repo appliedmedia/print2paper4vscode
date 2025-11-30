@@ -399,7 +399,7 @@
 
 ## 📋 COMPONENT DEPENDENCY MAP (REQUIRED READING)
 
-**This section lists exactly what each component needs to request in `app.use()`.**
+**This section lists exactly what each component needs to request in `app.reg.use()` and shows actual code samples.**
 
 **Format:** `ComponentName needs: ['method1', 'method2']` means that component must call:
 
@@ -429,11 +429,68 @@ this.fn = app.reg.use('method1', 'method2');
 - `ui.handleWebviewMessage` (for message routing)
 - `persist.clear` (for command registration)
 
+**Code Sample:**
+
+```typescript
+export class VSCodeAPIs {
+  static readonly id = 'vscodeapis';
+  private fn: FnImport_t;
+  private dx: Diagnostics;
+
+  constructor(args: { app: App; vscode: typeof import('vscode'); context: ExtensionContext }) {
+    const { app, vscode, context } = args;
+    
+    // Request dependencies via Registry
+    this.fn = app.reg.use(
+      'os.dateAsYYYYMMDDHHMMSS',
+      'os.htmlSrcPathToURI',
+      'os.getExtensionRoot',
+      'os.pathJoin',
+      'os.fileRead',
+      'os.pathBasename',
+      'paperprinter.handlePrintCommandFromVSCode',
+      'ui.handleWebviewMessage',
+      'persist.clear'
+    );
+    
+    // dx.sub is always available (from always: ['dx.sub'])
+    this.dx = this.fn.dx.sub('VSCodeAPIs');
+    
+    this.vscode = vscode;
+    this.context = context;
+  }
+}
+```
+
 **Persist** needs:
 
 - `vscodeapis.getGlobalState`
 - `vscodeapis.updateGlobalState`
 - `ui.showInfoMessage`
+
+**Code Sample:**
+
+```typescript
+export class Persist {
+  static readonly id = 'persist';
+  private fn: FnImport_t;
+  private dx: Diagnostics;
+
+  constructor(app: App) {
+    this.fn = app.reg.use(
+      'vscodeapis.getGlobalState',
+      'vscodeapis.updateGlobalState',
+      'ui.showInfoMessage'
+    );
+    
+    this.dx = this.fn.dx.sub('Persist');
+  }
+  
+  static create(app: App): Persist {
+    return new Persist(app);
+  }
+}
+```
 
 **UI** needs:
 
@@ -449,9 +506,59 @@ this.fn = app.reg.use('method1', 'method2');
 - `yaml.create` (factory)
 - `persist.create` (factory)
 
+**Code Sample:**
+
+```typescript
+export class UI {
+  static readonly id = 'ui';
+  private fn: FnImport_t;
+  private dx: Diagnostics;
+  private _yaml: Yaml<typeof UI.kYaml>;
+  public persist: Persist & Persist_t;
+
+  constructor(app: App) {
+    this.fn = app.reg.use(
+      'vscodeapis.showInformationMessage',
+      'vscodeapis.showErrorMessage',
+      'vscodeapis.showWarningMessage',
+      'vscodeapis.showSaveDialog',
+      'vscodeapis.uriFromPath',
+      'vscodeapis.uriToPath',
+      'uimenumgr.getUIMenus_HTML',
+      'uimenumgr.getUIMenus_CSS',
+      'uimenumgr.getUIMenus_JS',
+      'yaml.create',
+      'persist.create'
+    );
+    
+    this.dx = this.fn.dx.sub('UI');
+    
+    // Create per-instance Yaml and Persist via factories
+    this._yaml = this.fn.yaml.create(app, 'src/UI.yaml', UI.kYaml);
+    this.persist = this.fn.persist.create(app) as Persist & Persist_t;
+    this.persist.register('toolbar_pos');
+  }
+}
+```
+
 **OS** (base class) needs:
 
 - `vscodeapis.getPanelForUriConversion`
+
+**Code Sample:**
+
+```typescript
+export abstract class OS {
+  static readonly id = 'os';
+  protected fn: FnImport_t;
+  protected dx: Diagnostics;
+
+  constructor(app: App) {
+    this.fn = app.reg.use('vscodeapis.getPanelForUriConversion');
+    this.dx = this.fn.dx.sub('OS');
+  }
+}
+```
 
 ### Middle-Tier Components
 
@@ -460,6 +567,26 @@ this.fn = app.reg.use('method1', 'method2');
 - `vscodeapis.getActiveTextEditor`
 - `vscodeapis.getSelectionOrDocumentText`
 - `vscodeapis.getDescriptiveName`
+
+**Code Sample:**
+
+```typescript
+export class TabInspector {
+  static readonly id = 'tabinspector';
+  private fn: FnImport_t;
+  private dx: Diagnostics;
+
+  constructor(app: App) {
+    this.fn = app.reg.use(
+      'vscodeapis.getActiveTextEditor',
+      'vscodeapis.getSelectionOrDocumentText',
+      'vscodeapis.getDescriptiveName'
+    );
+    
+    this.dx = this.fn.dx.sub('TabInspector');
+  }
+}
+```
 
 **Stylize** needs:
 
@@ -472,17 +599,78 @@ this.fn = app.reg.use('method1', 'method2');
 - `pdf.docInfo` (property access)
 - `pdf.renderTokenizedLine`
 
+**Code Sample:**
+
+```typescript
+export class Stylize {
+  static readonly id = 'stylize';
+  private fn: FnImport_t;
+  private dx: Diagnostics;
+
+  constructor(app: App) {
+    this.fn = app.reg.use(
+      'vscodeapis.getVSCodeExtensionsThemes',
+      'vscodeapis.getVSCodeThemeJson',
+      'vscodeapis.getActiveThemeId',
+      'vscodeapis.getEditorTypography',
+      'os.pathJoin',
+      'os.fileRead',
+      'pdf.docInfo',  // Property access - handled specially
+      'pdf.renderTokenizedLine'
+    );
+    
+    this.dx = this.fn.dx.sub('Stylize');
+  }
+}
+```
+
 **UIMenuMgr** needs:
 
 - `stylize.getThemes`
 - `pdf.docInfo` (property access)
 - `os.dictReplace`
 
+**Code Sample:**
+
+```typescript
+export class UIMenuMgr {
+  static readonly id = 'uimenumgr';
+  private fn: FnImport_t;
+  private dx: Diagnostics;
+
+  constructor(app: App) {
+    this.fn = app.reg.use(
+      'stylize.getThemes',
+      'pdf.docInfo',  // Property access - handled specially
+      'os.dictReplace'
+    );
+    
+    this.dx = this.fn.dx.sub('UIMenuMgr');
+  }
+}
+```
+
 ### Complex Components
 
 **Coords** needs:
 
 - (no dependencies - pure calculation)
+
+**Code Sample:**
+
+```typescript
+export class Coords {
+  static readonly id = 'coords';
+  private fn: FnImport_t;
+  private dx: Diagnostics;
+
+  constructor(app: App) {
+    // Only needs dx.sub, which is always available
+    this.fn = app.reg.use();  // Empty - only always-injected methods needed
+    this.dx = this.fn.dx.sub('Coords');
+  }
+}
+```
 
 **PDF** needs:
 
@@ -505,6 +693,43 @@ this.fn = app.reg.use('method1', 'method2');
 - `coords.pdfPtsToCssPx` (or call directly if singleton)
 - `yaml.create` (factory)
 
+**Code Sample:**
+
+```typescript
+export class PDF {
+  static readonly id = 'pdf';
+  private fn: FnImport_t;
+  private dx: Diagnostics;
+  private _yaml: Yaml<typeof PDF.kYaml>;
+
+  constructor(app: App) {
+    this.fn = app.reg.use(
+      'os.dateAsYYYYMMDDHHMMSS',
+      'os.sanitizeFileName',
+      'os.fileDelete',
+      'os.ensureDir',
+      'os.pathJoin',
+      'os.fileWrite',
+      'os.fileOpenPrintDialog',
+      'os.filePrint',
+      'os.pathDirname',
+      'os.fileReveal',
+      'vscodeapis.getDir_Temp',
+      'ui.showErrorMessage',
+      'ui.chooseSaveLocation',
+      'stylize.tokenize',
+      'uimenumgr.getMenuItemIdSelected',
+      'paperprinter.docInfo',  // Property access
+      'coords.pdfPtsToCssPx',
+      'yaml.create'
+    );
+    
+    this.dx = this.fn.dx.sub('PDF');
+    this._yaml = this.fn.yaml.create(app, 'src/PDF.yaml', PDF.kYaml);
+  }
+}
+```
+
 **UIWebView** needs:
 
 - `pdf.docInfo` (property access)
@@ -519,6 +744,37 @@ this.fn = app.reg.use('method1', 'method2');
 - `uimenumgr.getValueForMenuItemId`
 - `uimenumgr.handleMenuItemSelected`
 - `yaml.create` (factory)
+
+**Code Sample:**
+
+```typescript
+export class UIWebView {
+  static readonly id = 'uiwebview';
+  private fn: FnImport_t;
+  private dx: Diagnostics;
+  private _yaml: Yaml<typeof UIWebView.kYaml>;
+
+  constructor(app: App) {
+    this.fn = app.reg.use(
+      'pdf.docInfo',  // Property access
+      'ui.addToolbar',
+      'ui.registerMessageHandler',
+      'ui.unregisterMessageHandler',
+      'ui.persist',  // Property access
+      'vscodeapis.getOrCreateWebviewPanel',
+      'vscodeapis.removePanel',
+      'os.fileRead',
+      'uimenumgr.getMenuItemIdSelected',
+      'uimenumgr.getValueForMenuItemId',
+      'uimenumgr.handleMenuItemSelected',
+      'yaml.create'
+    );
+    
+    this.dx = this.fn.dx.sub('UIWebView');
+    this._yaml = this.fn.yaml.create(app, 'src/UIWebView.yaml', UIWebView.kYaml);
+  }
+}
+```
 
 ### Orchestration Components
 
@@ -547,24 +803,142 @@ this.fn = app.reg.use('method1', 'method2');
 - `os.getLocale`
 - `yaml.create` (factory)
 
+**Code Sample:**
+
+```typescript
+export class PaperPrinter {
+  static readonly id = 'paperprinter';
+  private fn: FnImport_t;
+  private dx: Diagnostics;
+  private _yaml: Yaml<typeof PaperPrinter.kYaml>;
+
+  constructor(app: App) {
+    this.fn = app.reg.use(
+      'vscodeapis.getActiveTextEditor',
+      'vscodeapis.getEditorTypography',
+      'tabinspector.detectActiveTabCategory',
+      'tabinspector.getEditorSelectionOrAll',
+      'uimenumgr.getMenuItemIdSelected',
+      'uimenumgr.setValueForPersistIdOnMenuId',
+      'uimenumgr.getValueForMenuItemId',
+      'uimenumgr.getValueForMenuItemIdSelected',
+      'uimenumgr.createMenu',
+      'uimenumgr.addMenu',
+      'uimenumgr.getUIMenus',
+      'pdf.docInfo',  // Property access
+      'pdf.generatePdf',
+      'pdf.printWithPreview',
+      'pdf.printDirectly',
+      'pdf.saveAsPDF',
+      'pdf.resetCaches',
+      'stylize.getThemes',
+      'os.dictReplace',
+      'os.getLocale',
+      'yaml.create'
+    );
+    
+    this.dx = this.fn.dx.sub('PaperPrinter');
+    this._yaml = this.fn.yaml.create(app, 'src/PaperPrinter.yaml', PaperPrinter.kYaml);
+  }
+}
+```
+
 ### Data Container Classes
 
 **DocInfo_PDF** needs:
 
 - `coords.pdfPtsToCssPx` (if needed - check actual usage)
 
+**Code Sample:**
+
+```typescript
+export class DocInfo_PDF {
+  static readonly id = 'docinfo_pdf';
+  private fn: FnImport_t;
+  private dx: Diagnostics;
+
+  constructor(app: App) {
+    this.fn = app.reg.use('coords.pdfPtsToCssPx');
+    this.dx = this.fn.dx.sub('DocInfo_PDF');
+  }
+  
+  static create(app: App): DocInfo_PDF {
+    return new DocInfo_PDF(app);
+  }
+}
+```
+
 **DocInfo_PaperPrinter** needs:
 
 - (no dependencies - pure data)
+
+**Code Sample:**
+
+```typescript
+export class DocInfo_PaperPrinter {
+  static readonly id = 'docinfo_paperprinter';
+  private fn: FnImport_t;
+  private dx: Diagnostics;
+
+  constructor(app: App) {
+    this.fn = app.reg.use();  // Empty - only always-injected methods needed
+    this.dx = this.fn.dx.sub('DocInfo_PaperPrinter');
+  }
+  
+  static create(app: App): DocInfo_PaperPrinter {
+    return new DocInfo_PaperPrinter(app);
+  }
+}
+```
 
 **UIMenu** needs:
 
 - `persist.create` (factory)
 - `yaml.create` (factory)
 
+**Code Sample:**
+
+```typescript
+export class UIMenu {
+  static readonly id = 'uimenu';
+  private fn: FnImport_t;
+  private dx: Diagnostics;
+  private _yaml: Yaml<typeof UIMenu.kYaml>;
+  private persist: Persist & Persist_t;
+
+  constructor(app: App, id: string, displayName: string, ...) {
+    this.fn = app.reg.use('persist.create', 'yaml.create');
+    this.dx = this.fn.dx.sub('UIMenu');
+    
+    this._yaml = this.fn.yaml.create(app, 'src/UIMenu.yaml', UIMenu.kYaml);
+    this.persist = this.fn.persist.create(app) as Persist & Persist_t;
+  }
+}
+```
+
 **Yaml** needs:
 
 - (no dependencies)
+
+**Code Sample:**
+
+```typescript
+export class Yaml<T extends Record<string, string>> {
+  static readonly id = 'yaml';
+  private fn: FnImport_t;
+  private dx: Diagnostics;
+
+  private constructor(app: App, filePath: string, dataStruct: T) {
+    this.fn = app.reg.use();  // Empty - only always-injected methods needed
+    this.dx = this.fn.dx.sub('Yaml');
+    // ... initialization
+  }
+  
+  static create<T>(app: App, filePath: string, dataStruct: T): Yaml<T> {
+    return new Yaml(app, filePath, dataStruct);
+  }
+}
+```
 
 ---
 
