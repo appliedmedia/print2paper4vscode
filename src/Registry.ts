@@ -25,6 +25,8 @@ export class Registry {
   private always: string[] = [];
   private dx: Diagnostics;
   private app: App;
+  private constructionStack: string[] = []; // Track components being constructed for circular dependency detection
+  private failedComponents: Set<string> = new Set(); // Track components that failed to initialize (circuit breaker)
 
   constructor(args: {
     app: App;
@@ -143,37 +145,66 @@ export class Registry {
 
       // Get or create component instance
       // Use foundComponent.id directly (always defined since foundComponent exists)
-      if (!this._instances.has(foundComponent.id)) {
+      const componentId = foundComponent.id;
+      
+      // Check if component previously failed (circuit breaker)
+      if (this.failedComponents.has(componentId)) {
+        this.dx.error(`Component '${componentId}' failed to initialize and is unavailable`);
+        continue;
+      }
+
+      if (!this._instances.has(componentId)) {
+        // Check for circular dependency
+        if (this.constructionStack.includes(componentId)) {
+          const cycle = [...this.constructionStack, componentId].join(' -> ');
+          const errorMsg = `Circular dependency detected: ${cycle}. Components cannot depend on each other directly or indirectly.`;
+          this.dx.error(errorMsg);
+          throw new Error(errorMsg);
+        }
+
+        // Push component onto construction stack
+        this.constructionStack.push(componentId);
+
         try {
           // Try to create instance lazily if not already registered
           // Note: VSCodeAPIs needs special args, so it should be registered by App
           const instance = new foundComponent(this.app);
-          this._instances.set(foundComponent.id, instance);
+          this._instances.set(componentId, instance);
         } catch (err) {
-          this.dx.error(
-            `Failed to create component '${foundComponent.id}': ${err instanceof Error ? err.message : String(err)}`
-          );
-          continue;
+          // Circuit breaker: mark component as failed, don't retry
+          this.failedComponents.add(componentId);
+          
+          const errorMsg = `Failed to initialize component '${componentId}': ${err instanceof Error ? err.message : String(err)}. Extension may need to be restarted.`;
+          this.dx.error(errorMsg);
+          
+          // Throw meaningful error to caller
+          throw new Error(errorMsg);
+        } finally {
+          // Pop component from stack when done (even if error occurred)
+          const index = this.constructionStack.indexOf(componentId);
+          if (index !== -1) {
+            this.constructionStack.splice(index, 1);
+          }
         }
       }
 
-      const instance = this._instances.get(foundComponent.id);
+      const instance = this._instances.get(componentId);
       if (!instance) {
         continue;
       }
 
       // Ensure component entry exists in result
-      if (!result[foundComponent.id]) {
-        result[foundComponent.id] = {};
+      if (!result[componentId]) {
+        result[componentId] = {};
       }
 
       // Bind method to instance and add to result
       if (typeof (instance as Record<string, unknown>)[foundMethodName] === 'function') {
-        result[foundComponent.id][foundMethodName] = (
+        result[componentId][foundMethodName] = (
           (instance as Record<string, unknown>)[foundMethodName] as Function
         ).bind(instance);
       } else {
-        this.dx.error(`Method '${foundMethodName}' is not a function on component '${foundComponent.id}'`);
+        this.dx.error(`Method '${foundMethodName}' is not a function on component '${componentId}'`);
       }
     }
 

@@ -1,8 +1,8 @@
 # Registry Pattern Migration Plan
 
-**Status**: Stage 0.1-0.3 Complete | Stage 1+ Pending
+**Status**: Stage 0.1-0.3 Complete | Stage 1 Complete | Stage 2+ Pending
 
-**Quick Status**: Registry infrastructure complete and tested. All 330 tests pass. Components still use old pattern. Next: Implement full Registry core functionality (Stage 1), then begin component migration (Stage 2+).
+**Quick Status**: Registry infrastructure and core functionality complete and tested. All 330 tests pass. Components still use old pattern. Next: Begin component migration (Stage 2+).
 
 ---
 
@@ -46,14 +46,7 @@
 
 ### 🎯 What's Next
 
-#### Next: Stage 1 - Implement Registry Core
-
-- Register component classes with Registry
-- Implement full lazy instantiation
-- Add circular dependency detection
-- Add error handling
-
-#### After Stage 1: Begin Component Migration (Stage 2+)
+#### Next: Stage 2 - Begin Component Migration
 
 - Start with leaf components (OS classes, Yaml)
 - Migrate core infrastructure (VSCodeAPIs, UI, Persist)
@@ -126,21 +119,21 @@
 
 ---
 
-### Stage 1: Implement Registry Core ⏸️
+### Stage 1: Implement Registry Core ✅ DONE
 
-- [ ] Import all component classes at Registry startup
-- [ ] Read `Class.id` and `Class.fn` from each component
-- [ ] Build `kId` hierarchically: `kId[componentId][methodName] = methodName`
-- [ ] Implement lazy instantiation cache for singleton services
-- [ ] Implement component factories (vscodeapis, ui, os, pdf, etc.)
-- [ ] **Registry calls constructor only - NO init() calls** (components self-initialize)
-- [ ] Implement `use(...methodIds: string[]): FnImport_t` with:
+- [x] Import all component classes at Registry startup
+- [x] Read `Class.id` from each component (components have `static readonly id`)
+- [x] ~~Build `kId` hierarchically~~ - NOT NEEDED (using prototype lookup approach per "THE SIMPLE APPROACH")
+- [x] Implement lazy instantiation cache for singleton services
+- [x] ~~Implement component factories~~ - NOT NEEDED YET (components created by App and registered via `registerInstance()`)
+- [x] **Registry calls constructor only - NO init() calls** (components self-initialize) - VERIFIED
+- [x] Implement `use(...methodIds: string[]): FnImport_t` with:
   - Variadic parameter syntax (no array brackets needed)
-  - Always-available methods: `dx.create`, `dx.sub`, `dx.out` for all components
-  - Method resolution via kId lookup
-- [ ] Add circular dependency detection
-- [ ] Add error handling with circuit breaker pattern
-- [ ] Test Registry lazy loading works correctly
+  - Always-available methods: `dx.sub` for all components (via `always` array)
+  - Method resolution via prototype lookup (`Component.prototype.hasOwnProperty()`)
+- [x] Add circular dependency detection (construction stack tracking)
+- [x] Add error handling with circuit breaker pattern (failed components tracked in Set)
+- [x] Test Registry lazy loading works correctly (all 11 Registry tests pass)
 
 ---
 
@@ -1087,6 +1080,9 @@ export class App {
 - ✅ Registry `use()` method can resolve methods from registered instances
 - ✅ All component classes registered with Registry constructor
 - ✅ All existing component instances registered via `registerInstance()`
+- ✅ Circular dependency detection implemented (construction stack tracking)
+- ✅ Circuit breaker pattern implemented (failed components tracked)
+- ✅ Lazy instantiation cache working correctly
 - ⏸️ Components still created the old way by App constructor (migration pending)
 - ⏸️ No classes migrated to use `app.reg.use()` yet (Stage 2+)
 
