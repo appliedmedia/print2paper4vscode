@@ -119,12 +119,22 @@ export class Registry {
               (instance as Record<string, unknown>)[actualMethodName] as Function
             ).bind(instance);
           } else {
-            this.dx.error(`Method '${actualMethodName}' not found on registered instance '${id}'`);
+            // Use try-catch in case Diagnostics.error() fails (e.g., UI not initialized)
+            try {
+              this.dx.error(`Method '${actualMethodName}' not found on registered instance '${id}'`);
+            } catch {
+              console.error(`[Registry] Method '${actualMethodName}' not found on registered instance '${id}'`);
+            }
           }
           continue;
         }
         if (!foundComponent) {
-          this.dx.error(`Component '${id}' not found in Registry`);
+          // Use try-catch in case Diagnostics.error() fails (e.g., UI not initialized)
+          try {
+            this.dx.error(`Component '${id}' not found in Registry`);
+          } catch {
+            console.error(`[Registry] Component '${id}' not found in Registry`);
+          }
           continue;
         }
       } else {
@@ -139,7 +149,12 @@ export class Registry {
       }
 
       if (!foundComponent) {
-        this.dx.error(`Method '${actualMethodName}' not found in any component`);
+        // Use try-catch in case Diagnostics.error() fails (e.g., UI not initialized)
+        try {
+          this.dx.error(`Method '${actualMethodName}' not found in any component`);
+        } catch {
+          console.error(`[Registry] Method '${actualMethodName}' not found in any component`);
+        }
         continue;
       }
 
@@ -149,7 +164,12 @@ export class Registry {
       
       // Check if component previously failed (circuit breaker)
       if (this.failedComponents.has(componentId)) {
-        this.dx.error(`Component '${componentId}' failed to initialize and is unavailable`);
+        // Use try-catch in case Diagnostics.error() fails (e.g., UI not initialized)
+        try {
+          this.dx.error(`Component '${componentId}' failed to initialize and is unavailable`);
+        } catch {
+          console.error(`[Registry] Component '${componentId}' failed to initialize and is unavailable`);
+        }
         continue;
       }
 
@@ -175,7 +195,12 @@ export class Registry {
           this.failedComponents.add(componentId);
           
           const errorMsg = `Failed to initialize component '${componentId}': ${err instanceof Error ? err.message : String(err)}. Extension may need to be restarted.`;
-          this.dx.error(errorMsg);
+          // Use try-catch in case Diagnostics.error() fails (e.g., UI not initialized)
+          try {
+            this.dx.error(errorMsg);
+          } catch {
+            console.error(`[Registry] ${errorMsg}`);
+          }
           
           // Throw meaningful error to caller
           throw new Error(errorMsg);
@@ -217,7 +242,12 @@ export class Registry {
           (instance as Record<string, unknown>)[foundMethodName] as Function
         ).bind(instance);
       } else {
-        this.dx.error(`Method '${foundMethodName}' is not a function on component '${componentId}'`);
+        // Use try-catch in case Diagnostics.error() fails (e.g., UI not initialized)
+        try {
+          this.dx.error(`Method '${foundMethodName}' is not a function on component '${componentId}'`);
+        } catch {
+          console.error(`[Registry] Method '${foundMethodName}' is not a function on component '${componentId}'`);
+        }
       }
     }
 

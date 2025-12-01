@@ -21,11 +21,17 @@
  */
 
 import type { App } from './App';
+import type { FnImport_t } from './types/Registry_t';
 
 export class Yaml<T extends Record<string, string>> {
+  static readonly id = 'yaml';
   private cached: T | undefined = undefined;
+  private app: App;
+  private filePath: string;
+  private dataStruct: T;
+  private fn: FnImport_t;
 
-  constructor(args: { app: App; filePath: string; dataStruct: T }) {
+  private constructor(args: { app: App; filePath: string; dataStruct: T }) {
     // Note: Cannot use dx.require here as Diagnostics is not yet initialized
     if (!args.app || !args.filePath || !args.dataStruct) {
       throw new Error('Yaml constructor requires app, filePath, and dataStruct');
@@ -34,14 +40,13 @@ export class Yaml<T extends Record<string, string>> {
     this.app = app;
     this.filePath = filePath;
     this.dataStruct = dataStruct;
+    // Request dependencies via Registry (only needs dx.sub, always available)
+    this.fn = app.reg.use();
+    // Move init() logic into constructor (currently empty)
   }
 
-  private app: App;
-  private filePath: string;
-  private dataStruct: T;
-
-  init(): void {
-    // Nothing to initialize
+  static create<T extends Record<string, string>>(app: App, filePath: string, dataStruct: T): Yaml<T> {
+    return new Yaml({ app, filePath, dataStruct });
   }
 
   done(): void {

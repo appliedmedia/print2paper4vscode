@@ -1,8 +1,8 @@
 # Registry Pattern Migration Plan
 
-**Status**: Stage 0.1-0.3 Complete | Stage 1 Complete | Stage 2+ Pending
+**Status**: Stage 0.1-0.3 Complete | Stage 1 Complete | Stage 2 Complete | Stage 3+ Pending
 
-**Quick Status**: Registry infrastructure and core functionality complete and tested. All 330 tests pass. Components still use old pattern. Next: Begin component migration (Stage 2+).
+**Quick Status**: Registry infrastructure and core functionality complete and tested. Stage 2 (OS Classes and Yaml Factory) migration complete. All tests pass. Next: Migrate Core Infrastructure (Stage 3).
 
 ---
 
@@ -137,23 +137,24 @@
 
 ---
 
-### Stage 2: Migrate Leaf Components ⏸️
+### Stage 2: Migrate Leaf Components ✅
 
-#### 2.1 Migrate OS Classes
+#### 2.1 Migrate OS Classes ✅
 
-- [ ] Add to OS base class:
+- [x] Add to OS base class:
   - `static readonly id = 'os'` - that's it! No fn array needed!
-- [ ] Add instance property: `private fn: FnImport_t`
-- [ ] Update OS constructor: `this.fn = app.use()` (dx methods always available from `always` array)
-- [ ] Move any `init()` logic into constructor
-- [ ] Remove `init()` method entirely
-- [ ] Update OSMac, OSWin, OSLinux (each adds `static readonly id = 'osmac'/'oswin'/'oslinux'`)
-- [ ] Keep `done()` method for explicit cleanup
-- [ ] Test OS classes work correctly
+- [x] Add instance property: `protected fn: FnImport_t` (protected so subclasses can access)
+- [x] Update OS constructor: `this.fn = app.reg.use('vscodeapis.getExtensionPath', 'vscodeapis.getPanelForUriConversion', 'vscodeapis.uriFromPath')` (dx.sub always available from `always` array)
+- [x] Move any `init()` logic into constructor (getExtensionPath moved to constructor)
+- [x] Remove `init()` method entirely
+- [x] Update OSMac, OSWin, OSLinux (removed static id from subclasses - only base OS class needs it, subclasses use `this.fn.dx.sub()`)
+- [x] Keep `done()` method for explicit cleanup
+- [x] Test OS classes work correctly (compilation successful, all 330 tests pass)
+- [x] **Note**: Fixed registration order in App.ts - VSCodeAPIs must be registered before OS creation since OS constructor calls `app.reg.use('vscodeapis.getExtensionPath')`
 
-#### 2.2 Convert Yaml to Factory Pattern
+#### 2.2 Convert Yaml to Factory Pattern ✅
 
-- [ ] Update `src/Yaml.ts`:
+- [x] Update `src/Yaml.ts`:
   - Add `static readonly id = 'yaml'` - that's all!
   - Add `static create<T>(app: App, filePath: string, dataStruct: T): Yaml<T>` - public static method
   - Make constructor private
@@ -161,22 +162,22 @@
   - Remove `init()` method entirely
   - Keep `done()` method for cache cleanup
   - Registry will find `create` via `Yaml.hasOwnProperty('create')`
-- [ ] Update `src/PaperPrinter.ts` line 105:
-  - Change: `this._yaml = new Yaml(app, 'src/PaperPrinter.yaml', PaperPrinter.kYaml)`
-  - To: `this._yaml = this.fn.yaml.create(app, 'src/PaperPrinter.yaml', PaperPrinter.kYaml)`
-- [ ] Update `src/UIWebView.ts` line 52:
-  - Change: `this._yaml = new Yaml(app, 'src/UIWebView.yaml', UIWebView.kYaml)`
-  - To: `this._yaml = this.fn.yaml.create(app, 'src/UIWebView.yaml', UIWebView.kYaml)`
-- [ ] Update `src/UIMenu.ts` line 211:
-  - Change: `this._yaml = new Yaml(app, 'src/UIMenu.yaml', UIMenu.kYaml)`
-  - To: `this._yaml = this.fn.yaml.create(app, 'src/UIMenu.yaml', UIMenu.kYaml)`
-- [ ] Update `src/UI.ts` line 66:
-  - Change: `this._yaml = new Yaml(app, 'src/UI.yaml', UI.kYaml)`
-  - To: `this._yaml = this.fn.yaml.create(app, 'src/UI.yaml', UI.kYaml)`
-- [ ] Update `src/PDF.ts` line 63:
-  - Change: `this._yaml = new Yaml(app, 'src/PDF.yaml', PDF.kYaml)`
-  - To: `this._yaml = this.fn.yaml.create(app, 'src/PDF.yaml', PDF.kYaml)`
-- [ ] Test Yaml factory works correctly (5 files updated)
+- [x] Update `src/PaperPrinter.ts` line 107:
+  - Changed: `this._yaml = new Yaml({ app, filePath: 'src/PaperPrinter.yaml', dataStruct: PaperPrinter.kYaml })`
+  - To: `this._yaml = Yaml.create(app, 'src/PaperPrinter.yaml', PaperPrinter.kYaml)`
+- [x] Update `src/UIWebView.ts` line 52:
+  - Changed: `this._yaml = new Yaml({ app, filePath: 'src/UIWebView.yaml', dataStruct: UIWebView.kYaml })`
+  - To: `this._yaml = Yaml.create(app, 'src/UIWebView.yaml', UIWebView.kYaml)`
+- [x] Update `src/UIMenu.ts` line 238:
+  - Changed: `this._yaml = new Yaml({ app, filePath: 'src/UIMenu.yaml', dataStruct: UIMenu.kYaml })`
+  - To: `this._yaml = Yaml.create(app, 'src/UIMenu.yaml', UIMenu.kYaml)`
+- [x] Update `src/UI.ts` line 67:
+  - Changed: `this._yaml = new Yaml({ app, filePath: 'src/UI.yaml', dataStruct: UI.kYaml })`
+  - To: `this._yaml = Yaml.create(app, 'src/UI.yaml', UI.kYaml)`
+- [x] Update `src/PDF.ts` line 64:
+  - Changed: `this._yaml = new Yaml({ app, filePath: 'src/PDF.yaml', dataStruct: PDF.kYaml })`
+  - To: `this._yaml = Yaml.create(app, 'src/PDF.yaml', PDF.kYaml)`
+- [x] Test Yaml factory works correctly (5 files updated, tests updated, compilation successful, all 330 tests pass)
 
 ---
 

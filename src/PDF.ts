@@ -61,7 +61,7 @@ export class PDF {
     this.dx = app.dx.sub({ name: 'PDF' });
     this.coords = new Coords(app);
     this.docInfo = new DocInfo_PDF(app);
-    this._yaml = new Yaml({ app, filePath: 'src/PDF.yaml', dataStruct: PDF.kYaml });
+    this._yaml = Yaml.create(app, 'src/PDF.yaml', PDF.kYaml);
   }
 
   get yaml() {

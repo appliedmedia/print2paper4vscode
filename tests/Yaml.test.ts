@@ -38,12 +38,7 @@ describe('Yaml', () => {
     const yamlContent = 'key1: value1\nkey2: value2';
     fs.writeFileSync(yamlPath, yamlContent);
 
-    const yaml = new Yaml<{ key1: string; key2: string }>({
-      app,
-      filePath: yamlPath,
-      dataStruct: { key1: '', key2: '' },
-    });
-    yaml.init();
+    const yaml = Yaml.create(app, yamlPath, { key1: '', key2: '' });
 
     const result = yaml.get();
     assert.strictEqual(result.key1, 'value1');
@@ -55,12 +50,7 @@ describe('Yaml', () => {
   });
 
   it('should return default structure when file does not exist', () => {
-    const yaml = new Yaml<{ key1: string; key2: string }>({
-      app,
-      filePath: path.join(tempDir, 'nonexistent.yaml'),
-      dataStruct: { key1: 'default1', key2: 'default2' },
-    });
-    yaml.init();
+    const yaml = Yaml.create(app, path.join(tempDir, 'nonexistent.yaml'), { key1: 'default1', key2: 'default2' });
 
     const result = yaml.get();
     assert.strictEqual(result.key1, 'default1');
@@ -68,12 +58,7 @@ describe('Yaml', () => {
   });
 
   it('should use default when file read fails', () => {
-    const yaml = new Yaml<{ key1: string }>({
-      app,
-      filePath: '/invalid/path/that/does/not/exist.yaml',
-      dataStruct: { key1: 'default' },
-    });
-    yaml.init();
+    const yaml = Yaml.create(app, '/invalid/path/that/does/not/exist.yaml', { key1: 'default' });
 
     const result = yaml.get();
     assert.strictEqual(result.key1, 'default');
@@ -83,12 +68,7 @@ describe('Yaml', () => {
     const yamlContent = 'key1: value1';
     fs.writeFileSync(yamlPath, yamlContent);
 
-    const yaml = new Yaml<{ key1: string }>({
-      app,
-      filePath: yamlPath,
-      dataStruct: { key1: '' },
-    });
-    yaml.init();
+    const yaml = Yaml.create(app, yamlPath, { key1: '' });
 
     const result1 = yaml.get();
     assert.strictEqual(result1.key1, 'value1');
@@ -114,12 +94,7 @@ array:
 `;
     fs.writeFileSync(yamlPath, yamlContent);
 
-    const yaml = new Yaml<any>({
-      app,
-      filePath: yamlPath,
-      dataStruct: {},
-    });
-    yaml.init();
+    const yaml = Yaml.create<any>(app, yamlPath, {});
 
     const result = yaml.get();
     assert.ok(result.nested);

@@ -49,7 +49,7 @@ export class UIWebView {
   constructor(app: App) {
     this.app = app;
     this.dx = app.dx.sub({ name: 'UIWebView' });
-    this._yaml = new Yaml({ app, filePath: 'src/UIWebView.yaml', dataStruct: UIWebView.kYaml });
+    this._yaml = Yaml.create(app, 'src/UIWebView.yaml', UIWebView.kYaml);
 
     // Bind handlers once in constructor to maintain same reference
     this.handleDragEndBound = this.handleDragEnd.bind(this) as MessageHandler_t;
