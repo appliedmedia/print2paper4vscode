@@ -19,6 +19,7 @@ export type TabCategory = 'editor-nonmd' | 'editor-md' | 'preview';
  * const content = inspector.getEditorSelectionOrAll();
  */
 export class TabInspector {
+  static readonly id = 'tabinspector';
   private app: App;
   private dx: Diagnostics;
 

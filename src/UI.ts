@@ -43,6 +43,7 @@ export type UI_t = (typeof kUI)[number];
  * const toolbar = ui.getToolbarHTML();
  */
 export class UI {
+  static readonly id = 'ui';
   private static readonly kYaml = {
     base_css: '',
     toolbar_css: '',

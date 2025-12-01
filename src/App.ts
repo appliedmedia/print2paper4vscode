@@ -7,6 +7,7 @@ import { TabInspector } from './TabInspector';
 import { OS } from './OS';
 import { UIMenuMgr } from './UIMenuMgr';
 import { Diagnostics } from './Diagnostics';
+import { Registry } from './Registry';
 import type { ExtensionContext } from 'vscode';
 import { kExtId } from './_entrypoint_extId_t';
 
@@ -60,6 +61,7 @@ export class App {
   os: OS;
   uimenumgr: UIMenuMgr;
   dx: Diagnostics;
+  reg: Registry;
 
   private readonly componentOrder: (keyof components_t)[] = [
     'vscodeapis',
@@ -79,6 +81,25 @@ export class App {
     dx.require(args, ['context', 'vscode']);
     const { context, vscode } = args;
 
+    // Create Registry instance with all component classes
+    // Components are still created the old way by App, but Registry knows about them
+    // Registry can use existing instances or create new ones lazily
+    this.reg = new Registry({
+      app: this,
+      components: [
+        Diagnostics,
+        VSCodeAPIs,
+        UI,
+        PDF,
+        PaperPrinter,
+        Stylize,
+        TabInspector,
+        UIMenuMgr,
+        // OS is abstract with factory method - will be handled specially
+      ],
+      always: ['dx.sub'],
+    });
+
     // Create components - VSCodeAPIs first, then UI, then UIMenuMgr (needed by PaperPrinter), then others
     this.vscodeapis = new VSCodeAPIs({ app: this, vscode, context });
     this.ui = new UI(this);
@@ -88,6 +109,18 @@ export class App {
     this.paperprinter = new PaperPrinter(this);
     this.stylize = new Stylize(this);
     this.tabinspector = new TabInspector(this);
+
+    // Register existing instances with Registry so it can use them
+    // Note: Registry creates its own Diagnostics instance, but we can also register App's dx
+    this.reg.registerInstance('dx', this.dx);
+    this.reg.registerInstance('vscodeapis', this.vscodeapis);
+    this.reg.registerInstance('ui', this.ui);
+    this.reg.registerInstance('uimenumgr', this.uimenumgr);
+    this.reg.registerInstance('os', this.os);
+    this.reg.registerInstance('pdf', this.pdf);
+    this.reg.registerInstance('paperprinter', this.paperprinter);
+    this.reg.registerInstance('stylize', this.stylize);
+    this.reg.registerInstance('tabinspector', this.tabinspector);
   }
 
   init(): void {

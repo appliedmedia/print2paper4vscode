@@ -76,6 +76,8 @@ import {
  * await printer.handlePrintCommandFromVSCode();
  */
 export class PaperPrinter {
+  static readonly id = 'paperprinter';
+
   private static readonly kYaml = {
     icon_box_portrait_svg: '',
     icon_orient_figure_svg: '',

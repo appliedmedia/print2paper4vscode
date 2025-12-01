@@ -23,6 +23,8 @@ import { OS } from './OS';
  * sub.done();
  */
 export class Diagnostics {
+  static readonly id = 'dx';
+
   private static _shared = {
     separator: ' > ',
     debugOn: false,
