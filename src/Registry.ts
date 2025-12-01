@@ -84,13 +84,13 @@ export class Registry {
 
     // For each method name, find which component owns it
     for (const methodName of allMethods) {
-      // Parse methodId if it's in format 'componentId.methodName', otherwise just methodName
-      let componentId: string | undefined;
+      // Parse methodId if it's in format 'id.methodName', otherwise just methodName
+      let id: string | undefined;
       let actualMethodName: string;
 
       if (methodName.includes('.')) {
         const parts = methodName.split('.');
-        componentId = parts[0];
+        id = parts[0];
         actualMethodName = parts.slice(1).join('.');
       } else {
         actualMethodName = methodName;
@@ -100,29 +100,29 @@ export class Registry {
       let foundComponent: { new (app: App): any; id: string } | undefined;
       let foundMethodName = actualMethodName;
 
-      if (componentId) {
+      if (id) {
         // Explicit component specified - find it
-        foundComponent = this.components.find((c) => c.id === componentId);
+        foundComponent = this.components.find((c) => c.id === id);
         // If not in components array, check if instance was registered directly (e.g., OS)
-        if (!foundComponent && this._instances.has(componentId)) {
+        if (!foundComponent && this._instances.has(id)) {
           // Instance exists but not in components array - get instance to resolve method
-          const instance = this._instances.get(componentId);
+          const instance = this._instances.get(id);
           if (instance && typeof (instance as Record<string, unknown>)[actualMethodName] === 'function') {
             // Ensure component entry exists in result
-            if (!result[componentId]) {
-              result[componentId] = {};
+            if (!result[id]) {
+              result[id] = {};
             }
             // Bind method to instance and add to result
-            result[componentId][actualMethodName] = (
+            result[id][actualMethodName] = (
               (instance as Record<string, unknown>)[actualMethodName] as Function
             ).bind(instance);
           } else {
-            this.dx.error(`Method '${actualMethodName}' not found on registered instance '${componentId}'`);
+            this.dx.error(`Method '${actualMethodName}' not found on registered instance '${id}'`);
           }
           continue;
         }
         if (!foundComponent) {
-          this.dx.error(`Component '${componentId}' not found in Registry`);
+          this.dx.error(`Component '${id}' not found in Registry`);
           continue;
         }
       } else {
@@ -142,38 +142,38 @@ export class Registry {
       }
 
       // Get or create component instance
-      const componentIdForInstance = foundComponent.id;
-      if (!this._instances.has(componentIdForInstance)) {
+      // Use foundComponent.id directly (always defined since foundComponent exists)
+      if (!this._instances.has(foundComponent.id)) {
         try {
           // Try to create instance lazily if not already registered
           // Note: VSCodeAPIs needs special args, so it should be registered by App
           const instance = new foundComponent(this.app);
-          this._instances.set(componentIdForInstance, instance);
+          this._instances.set(foundComponent.id, instance);
         } catch (err) {
           this.dx.error(
-            `Failed to create component '${componentIdForInstance}': ${err instanceof Error ? err.message : String(err)}`
+            `Failed to create component '${foundComponent.id}': ${err instanceof Error ? err.message : String(err)}`
           );
           continue;
         }
       }
 
-      const instance = this._instances.get(componentIdForInstance);
+      const instance = this._instances.get(foundComponent.id);
       if (!instance) {
         continue;
       }
 
       // Ensure component entry exists in result
-      if (!result[componentIdForInstance]) {
-        result[componentIdForInstance] = {};
+      if (!result[foundComponent.id]) {
+        result[foundComponent.id] = {};
       }
 
       // Bind method to instance and add to result
       if (typeof (instance as Record<string, unknown>)[foundMethodName] === 'function') {
-        result[componentIdForInstance][foundMethodName] = (
+        result[foundComponent.id][foundMethodName] = (
           (instance as Record<string, unknown>)[foundMethodName] as Function
         ).bind(instance);
       } else {
-        this.dx.error(`Method '${foundMethodName}' is not a function on component '${componentIdForInstance}'`);
+        this.dx.error(`Method '${foundMethodName}' is not a function on component '${foundComponent.id}'`);
       }
     }
 
