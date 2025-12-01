@@ -103,6 +103,24 @@ export class Registry {
       if (componentId) {
         // Explicit component specified - find it
         foundComponent = this.components.find((c) => c.id === componentId);
+        // If not in components array, check if instance was registered directly (e.g., OS)
+        if (!foundComponent && this._instances.has(componentId)) {
+          // Instance exists but not in components array - get instance to resolve method
+          const instance = this._instances.get(componentId);
+          if (instance && typeof (instance as Record<string, unknown>)[actualMethodName] === 'function') {
+            // Ensure component entry exists in result
+            if (!result[componentId]) {
+              result[componentId] = {};
+            }
+            // Bind method to instance and add to result
+            result[componentId][actualMethodName] = (
+              (instance as Record<string, unknown>)[actualMethodName] as Function
+            ).bind(instance);
+          } else {
+            this.dx.error(`Method '${actualMethodName}' not found on registered instance '${componentId}'`);
+          }
+          continue;
+        }
         if (!foundComponent) {
           this.dx.error(`Component '${componentId}' not found in Registry`);
           continue;

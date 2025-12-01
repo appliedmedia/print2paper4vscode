@@ -103,7 +103,7 @@
     - Get or create instance: `this._instances.get(componentId) || new Component(this.app)` (placeholder for now - components still created by App)
     - Return bound method: `instance[methodName].bind(instance)`
   - That's it! No complex parsing, prototype IS the source of truth
-- ✅ Add `static readonly id` properties to components: Diagnostics ('dx'), VSCodeAPIs ('vscodeapis'), UI ('ui'), PDF ('pdf'), Stylize ('stylize'), TabInspector ('tabinspector'), UIMenuMgr ('uimenumgr'), OS ('os')
+- ✅ Add `static readonly id` properties to components: Diagnostics ('dx'), VSCodeAPIs ('vscodeapis'), UI ('ui'), PDF ('pdf'), PaperPrinter ('paperprinter'), Stylize ('stylize'), TabInspector ('tabinspector'), UIMenuMgr ('uimenumgr'), OS ('os')
 
 #### Stage 0.2: Integrate Registry into App ✅ DONE
 
@@ -612,7 +612,7 @@ export class Stylize {
       'vscodeapis.getEditorTypography',
       'os.pathJoin',
       'os.fileRead',
-      'pdf.docInfo',  // Property access - handled specially
+      'pdf.docInfo',  // Property access - accessed directly via this.app.pdf.docInfo during migration; Registry property access will be implemented in Stage 2+
       'pdf.renderTokenizedLine'
     );
     
@@ -638,7 +638,7 @@ export class UIMenuMgr {
   constructor(app: App) {
     this.fn = app.reg.use(
       'stylize.getThemes',
-      'pdf.docInfo',  // Property access - handled specially
+      'pdf.docInfo',  // Property access - accessed directly via this.app.pdf.docInfo during migration; Registry property access will be implemented in Stage 2+
       'os.dictReplace'
     );
     
