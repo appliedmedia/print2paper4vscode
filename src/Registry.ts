@@ -181,9 +181,22 @@ export class Registry {
           throw new Error(errorMsg);
         } finally {
           // Pop component from stack when done (even if error occurred)
-          const index = this.constructionStack.indexOf(componentId);
-          if (index !== -1) {
-            this.constructionStack.splice(index, 1);
+          // Always pop the last item we pushed (LIFO stack behavior)
+          const popped = this.constructionStack.pop();
+          if (popped !== componentId) {
+            // This should never happen, but log if it does for debugging
+            this.dx.error(
+              `Construction stack mismatch: expected to pop '${componentId}' but popped '${popped}'. Stack: ${this.constructionStack.join(' -> ')}`
+            );
+            // Restore stack integrity by removing componentId if it exists elsewhere
+            const index = this.constructionStack.indexOf(componentId);
+            if (index !== -1) {
+              this.constructionStack.splice(index, 1);
+            }
+            // Restore the popped item if it wasn't what we expected
+            if (popped) {
+              this.constructionStack.push(popped);
+            }
           }
         }
       }
