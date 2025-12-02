@@ -28,15 +28,6 @@ export class Registry {
   private constructionStack: string[] = []; // Track components being constructed for circular dependency detection
   private failedComponents: Set<string> = new Set(); // Track components that failed to initialize (circuit breaker)
 
-  // Best-effort Diagnostics; never let logging crash Registry
-  private safeDxError(message: string): void {
-    try {
-      this.dx.error(message);
-    } catch {
-      console.error(`[Registry] ${message}`);
-    }
-  }
-
   constructor(args: {
     app: App;
     components?: Array<{ new (...args: any[]): any; id: string }>;
@@ -128,12 +119,12 @@ export class Registry {
               (instance as Record<string, unknown>)[actualMethodName] as Function
             ).bind(instance);
           } else {
-            this.safeDxError(`Method '${actualMethodName}' not found on registered instance '${id}'`);
+            this.dx.error(`Method '${actualMethodName}' not found on registered instance '${id}'`);
           }
           continue;
         }
         if (!foundComponent) {
-          this.safeDxError(`Component '${id}' not found in Registry`);
+          this.dx.error(`Component '${id}' not found in Registry`);
           continue;
         }
       } else {
@@ -148,7 +139,7 @@ export class Registry {
       }
 
       if (!foundComponent) {
-        this.safeDxError(`Method '${actualMethodName}' not found in any component`);
+        this.dx.error(`Method '${actualMethodName}' not found in any component`);
         continue;
       }
 
@@ -158,7 +149,7 @@ export class Registry {
       
       // Check if component previously failed (circuit breaker)
       if (this.failedComponents.has(componentId)) {
-        this.safeDxError(`Component '${componentId}' failed to initialize and is unavailable`);
+        this.dx.error(`Component '${componentId}' failed to initialize and is unavailable`);
         continue;
       }
 
@@ -167,7 +158,7 @@ export class Registry {
         if (this.constructionStack.includes(componentId)) {
           const cycle = [...this.constructionStack, componentId].join(' -> ');
           const errorMsg = `Circular dependency detected: ${cycle}. Components cannot depend on each other directly or indirectly.`;
-          this.safeDxError(errorMsg);
+          this.dx.error(errorMsg);
           throw new Error(errorMsg);
         }
 
@@ -184,7 +175,7 @@ export class Registry {
           this.failedComponents.add(componentId);
           
           const errorMsg = `Failed to initialize component '${componentId}': ${err instanceof Error ? err.message : String(err)}. Extension may need to be restarted.`;
-          this.safeDxError(errorMsg);
+          this.dx.error(errorMsg);
           
           // Throw meaningful error to caller
           throw new Error(errorMsg);
@@ -194,7 +185,7 @@ export class Registry {
           const popped = this.constructionStack.pop();
           if (popped !== componentId) {
             // This should never happen, but log if it does for debugging
-            this.safeDxError(
+            this.dx.error(
               `Construction stack mismatch: expected to pop '${componentId}' but popped '${popped}'. Stack: ${this.constructionStack.join(' -> ')}`
             );
             // Restore stack integrity by removing componentId if it exists elsewhere
@@ -226,7 +217,7 @@ export class Registry {
           (instance as Record<string, unknown>)[foundMethodName] as Function
         ).bind(instance);
       } else {
-        this.safeDxError(`Method '${foundMethodName}' is not a function on component '${componentId}'`);
+        this.dx.error(`Method '${foundMethodName}' is not a function on component '${componentId}'`);
       }
     }
 
