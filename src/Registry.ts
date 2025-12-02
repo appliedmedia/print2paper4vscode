@@ -37,13 +37,8 @@ export class Registry {
     this.components = args.components || [];
     this.always = args.always || [];
 
-    // Create Diagnostics instance immediately (needed for debugging)
-    this.dx = new Diagnostics({
-      name: 'Registry',
-      debugOn: undefined,
-      parent: null,
-      app: this.app,
-    });
+    // Create Diagnostics instance as child of App's dx (not a new root instance)
+    this.dx = this.app.dx.sub({ name: 'Registry' });
     this._instances.set('dx', this.dx);
 
     // Build placeholder structure on `this` for intellisense

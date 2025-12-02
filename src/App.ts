@@ -115,8 +115,7 @@ export class App {
     this.tabinspector = new TabInspector(this);
 
     // Register remaining instances with Registry so it can use them
-    // Note: Registry creates its own Diagnostics instance, but we can also register App's dx
-    this.reg.registerInstance('dx', this.dx);
+    // Note: Registry already has dx (created via app.dx.sub()), so no need to register it
     this.reg.registerInstance('ui', this.ui);
     this.reg.registerInstance('uimenumgr', this.uimenumgr);
     this.reg.registerInstance('os', this.os);
