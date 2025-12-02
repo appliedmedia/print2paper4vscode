@@ -200,7 +200,7 @@ export class Registry {
       // Return method (bound) or property (direct access)
       const value = (instance as Record<string, unknown>)[foundMethodName];
       if (typeof value === 'function') {
-        result[componentId][foundMethodName] = value.bind(instance);
+        result[componentId][foundMethodName] = value.bind(instance) as Function;
       } else {
         result[componentId][foundMethodName] = value;
       }

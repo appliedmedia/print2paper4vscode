@@ -105,7 +105,7 @@ describe('Registry', () => {
     const reg = app.reg;
 
     const fn = reg.use('dx.sub');
-    const subDx = fn.dx.sub({ name: 'TestComponent' });
+    const subDx = (fn.dx.sub as Function)({ name: 'TestComponent' });
 
     assert.ok(subDx instanceof Diagnostics);
     assert.ok(subDx.name.includes('TestComponent'));

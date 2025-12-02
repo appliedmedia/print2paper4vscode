@@ -22,7 +22,7 @@ export class OSWin extends OS {
 
   constructor(app: App) {
     super(app);
-    this.dx = this.fn.dx.sub({ name: 'OSWin' });
+    this.dx = (this.fn.dx.sub as Function)({ name: 'OSWin' });
   }
 
   protected getOSKeys(): Record<string, string> {
