@@ -26,7 +26,6 @@ export class Registry {
   private dx: Diagnostics;
   private app: App;
   private constructionStack: string[] = []; // Track components being constructed for circular dependency detection
-  private failedComponents: Set<string> = new Set(); // Track components that failed to initialize (circuit breaker)
 
   constructor(args: {
     app: App;
@@ -37,13 +36,8 @@ export class Registry {
     this.components = args.components || [];
     this.always = args.always || [];
 
-    // Create Diagnostics instance immediately (needed for debugging)
-    this.dx = new Diagnostics({
-      name: 'Registry',
-      debugOn: undefined,
-      parent: null,
-      app: this.app,
-    });
+    // Create Diagnostics instance as child of App's dx (not a new root instance)
+    this.dx = this.app.dx.sub({ name: 'Registry' });
     this._instances.set('dx', this.dx);
 
     // Build placeholder structure on `this` for intellisense
@@ -119,13 +113,15 @@ export class Registry {
               (instance as Record<string, unknown>)[actualMethodName] as Function
             ).bind(instance);
           } else {
-            this.dx.error(`Method '${actualMethodName}' not found on registered instance '${id}'`);
+            const errorMsg = `Method '${actualMethodName}' not found on registered instance '${id}'`;
+            this.dx.error(errorMsg);
+            throw new Error(errorMsg);
           }
-          continue;
         }
         if (!foundComponent) {
-          this.dx.error(`Component '${id}' not found in Registry`);
-          continue;
+          const errorMsg = `Component '${id}' not found in Registry`;
+          this.dx.error(errorMsg);
+          throw new Error(errorMsg);
         }
       } else {
         // No component specified - search all components via prototype
@@ -139,19 +135,14 @@ export class Registry {
       }
 
       if (!foundComponent) {
-        this.dx.error(`Method '${actualMethodName}' not found in any component`);
-        continue;
+        const errorMsg = `Method '${actualMethodName}' not found in any component`;
+        this.dx.error(errorMsg);
+        throw new Error(errorMsg);
       }
 
       // Get or create component instance
       // Use foundComponent.id directly (always defined since foundComponent exists)
       const componentId = foundComponent.id;
-      
-      // Check if component previously failed (circuit breaker)
-      if (this.failedComponents.has(componentId)) {
-        this.dx.error(`Component '${componentId}' failed to initialize and is unavailable`);
-        continue;
-      }
 
       if (!this._instances.has(componentId)) {
         // Check for circular dependency
@@ -171,13 +162,8 @@ export class Registry {
           const instance = new foundComponent(this.app);
           this._instances.set(componentId, instance);
         } catch (err) {
-          // Circuit breaker: mark component as failed, don't retry
-          this.failedComponents.add(componentId);
-          
           const errorMsg = `Failed to initialize component '${componentId}': ${err instanceof Error ? err.message : String(err)}. Extension may need to be restarted.`;
           this.dx.error(errorMsg);
-          
-          // Throw meaningful error to caller
           throw new Error(errorMsg);
         } finally {
           // Pop component from stack when done (even if error occurred)
@@ -212,12 +198,13 @@ export class Registry {
       }
 
       // Bind method to instance and add to result
-      if (typeof (instance as Record<string, unknown>)[foundMethodName] === 'function') {
-        result[componentId][foundMethodName] = (
-          (instance as Record<string, unknown>)[foundMethodName] as Function
-        ).bind(instance);
+      // Note: Registry can return properties too, but type is Function for now
+      const value = (instance as Record<string, unknown>)[foundMethodName];
+      if (typeof value === 'function') {
+        result[componentId][foundMethodName] = value.bind(instance);
       } else {
-        this.dx.error(`Method '${foundMethodName}' is not a function on component '${componentId}'`);
+        // Property access - cast to Function for now, update type when needed
+        result[componentId][foundMethodName] = value as Function;
       }
     }
 

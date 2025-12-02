@@ -66,7 +66,7 @@ export class App {
   private readonly componentOrder: (keyof components_t)[] = [
     'vscodeapis',
     'ui',
-    'os',
+    // 'os', // OS no longer has init() method
     'pdf',
     'paperprinter',
     'stylize',
@@ -102,6 +102,10 @@ export class App {
 
     // Create components - VSCodeAPIs first, then UI, then UIMenuMgr (needed by PaperPrinter), then others
     this.vscodeapis = new VSCodeAPIs({ app: this, vscode, context });
+    
+    // Register VSCodeAPIs immediately so OS can use it (OS constructor calls app.reg.use('vscodeapis.getExtensionPath'))
+    this.reg.registerInstance('vscodeapis', this.vscodeapis);
+    
     this.ui = new UI(this);
     this.uimenumgr = new UIMenuMgr(this); // Must be created before PaperPrinter (which creates menus in constructor)
     this.os = OS.create(this);
@@ -110,10 +114,8 @@ export class App {
     this.stylize = new Stylize(this);
     this.tabinspector = new TabInspector(this);
 
-    // Register existing instances with Registry so it can use them
-    // Note: Registry creates its own Diagnostics instance, but we can also register App's dx
-    this.reg.registerInstance('dx', this.dx);
-    this.reg.registerInstance('vscodeapis', this.vscodeapis);
+    // Register remaining instances with Registry so it can use them
+    // Note: Registry creates its own dx via app.dx.sub() internally, so no need to register app.dx here
     this.reg.registerInstance('ui', this.ui);
     this.reg.registerInstance('uimenumgr', this.uimenumgr);
     this.reg.registerInstance('os', this.os);
@@ -125,15 +127,23 @@ export class App {
 
   init(): void {
     // Initialize all components in dependency order
+    // Note: OS no longer has init() method (migrated to Registry pattern)
     for (const component of this.componentOrder) {
-      (this as components_t)[component].init();
+      const instance = (this as components_t)[component];
+      if ('init' in instance && typeof instance.init === 'function') {
+        instance.init();
+      }
     }
   }
 
   done(): void {
     // Cleanup all components in reverse order
+    // Note: OS no longer has done() method (migrated to Registry pattern)
     for (const component of [...this.componentOrder].reverse()) {
-      (this as components_t)[component].done();
+      const instance = (this as components_t)[component];
+      if ('done' in instance && typeof instance.done === 'function') {
+        instance.done();
+      }
     }
 
     this.dx.done();
