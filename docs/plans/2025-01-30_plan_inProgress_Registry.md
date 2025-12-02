@@ -1,8 +1,8 @@
 # Registry Pattern Migration Plan
 
-**Status**: Stage 0.1-0.3 Complete | Stage 1 Complete | Stage 2 Complete | Stage 3+ Pending
+**Status**: Stage 0.1-0.3 Complete | Stage 1 Complete | Stage 2 Complete | Stage 3 Complete | Stage 4+ Pending
 
-**Quick Status**: Registry infrastructure and core functionality complete and tested. Stage 2 (OS Classes and Yaml Factory) migration complete. All tests pass. Next: Migrate Core Infrastructure (Stage 3).
+**Quick Status**: Registry infrastructure and core functionality complete and tested. Stage 2 (OS Classes and Yaml Factory) migration complete. Stage 3 (VSCodeAPIs, Persist, UI) migration complete. All compilation successful. Next: Migrate Middle-Tier Components (Stage 4).
 
 ---
 
@@ -46,11 +46,11 @@
 
 ### 🎯 What's Next
 
-#### Next: Stage 2 - Begin Component Migration
+#### Next: Stage 4 - Migrate Middle-Tier Components
 
-- Start with leaf components (OS classes, Yaml)
-- Migrate core infrastructure (VSCodeAPIs, UI, Persist)
-- Continue through middle-tier and complex components
+- Migrate TabInspector
+- Migrate Stylize
+- Migrate UIMenuMgr
 
 ---
 
@@ -203,13 +203,13 @@
   - Move any `init()` logic into constructor (currently empty)
   - Remove `init()` method entirely
   - Keep `done()` method for explicit cleanup
-- [ ] Update `src/UIMenu.ts` line 209:
-  - Change: `this.persist = new Persist(app) as Persist & Persist_t`
-  - To: `this.persist = this.fn.persist.create(app) as Persist & Persist_t`
-- [ ] Update `src/UI.ts` line 69:
-  - Change: `this.persist = new Persist(app) as Persist & Persist_t`
-  - To: `this.persist = this.fn.persist.create(app) as Persist & Persist_t`
-- [ ] Test persistence works (2 files updated)
+- [x] Update `src/UIMenu.ts` line 236:
+  - Changed: `this.persist = new Persist(app) as Persist & Persist_t`
+  - To: `this.persist = Persist.create(app) as Persist & Persist_t`
+- [x] Update `src/UI.ts` line 70:
+  - Changed: `this.persist = new Persist(app) as Persist & Persist_t`
+  - To: `this.persist = Persist.create(app) as Persist & Persist_t`
+- [x] Test persistence works (2 files updated, compilation successful)
 
 #### 3.3 Migrate UI
 

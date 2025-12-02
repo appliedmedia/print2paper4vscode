@@ -233,7 +233,7 @@ export class UIMenu {
     this._menuItems = menuItems;
     this._flyoutMenuItemIds = flyoutMenuItemIds;
     this._selectionHandler = selectionHandler;
-    this.persist = new Persist(app) as Persist & Persist_t;
+    this.persist = Persist.create(app) as Persist & Persist_t;
     this.dx = this.app.dx.sub({ name: 'UIMenu' });
     this._yaml = Yaml.create(app, 'src/UIMenu.yaml', UIMenu.kYaml);
 

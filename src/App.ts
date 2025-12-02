@@ -8,6 +8,7 @@ import { OS } from './OS';
 import { UIMenuMgr } from './UIMenuMgr';
 import { Diagnostics } from './Diagnostics';
 import { Registry } from './Registry';
+import { Persist } from './Persist';
 import type { ExtensionContext } from 'vscode';
 import { kExtId } from './_entrypoint_extId_t';
 
@@ -65,7 +66,7 @@ export class App {
 
   private readonly componentOrder: (keyof components_t)[] = [
     'vscodeapis',
-    'ui',
+    // 'ui', // UI no longer has init() method
     // 'os', // OS no longer has init() method
     'pdf',
     'paperprinter',
@@ -84,6 +85,7 @@ export class App {
     // Create Registry instance with all component classes
     // Components are still created the old way by App, but Registry knows about them
     // Registry can use existing instances or create new ones lazily
+    // Note: Persist has private constructor (factory pattern), so it's registered as instance later
     this.reg = new Registry({
       app: this,
       components: [
@@ -95,6 +97,7 @@ export class App {
         Stylize,
         TabInspector,
         UIMenuMgr,
+        // Persist has private constructor (factory pattern) - registered as instance after creation
         // OS is abstract with factory method - will be handled specially
       ],
       always: ['dx.sub'],
@@ -106,8 +109,17 @@ export class App {
     // Register VSCodeAPIs immediately so OS can use it (OS constructor calls app.reg.use('vscodeapis.getExtensionPath'))
     this.reg.registerInstance('vscodeapis', this.vscodeapis);
     
+    // Create UIMenuMgr before UI since UI requests UIMenuMgr methods in constructor
+    this.uimenumgr = new UIMenuMgr(this);
+    this.reg.registerInstance('uimenumgr', this.uimenumgr);
+    
     this.ui = new UI(this);
-    this.uimenumgr = new UIMenuMgr(this); // Must be created before PaperPrinter (which creates menus in constructor)
+    
+    // Create singleton Persist instance for clear() method (needed by VSCodeAPIs command registration)
+    // Note: Persist is a factory pattern, but we need a singleton instance for the clear() command
+    // Must be created after UI since Persist needs ui.showInfoMessage
+    const persistSingleton = Persist.create(this);
+    this.reg.registerInstance('persist', persistSingleton);
     this.os = OS.create(this);
     this.pdf = new PDF(this);
     this.paperprinter = new PaperPrinter(this);
@@ -116,8 +128,8 @@ export class App {
 
     // Register remaining instances with Registry so it can use them
     // Note: Registry creates its own dx via app.dx.sub() internally, so no need to register app.dx here
+    // Note: uimenumgr already registered above
     this.reg.registerInstance('ui', this.ui);
-    this.reg.registerInstance('uimenumgr', this.uimenumgr);
     this.reg.registerInstance('os', this.os);
     this.reg.registerInstance('pdf', this.pdf);
     this.reg.registerInstance('paperprinter', this.paperprinter);

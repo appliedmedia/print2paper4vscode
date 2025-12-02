@@ -1,4 +1,5 @@
 import type { App } from './App';
+import type { FnImport_t } from './types/Registry_t';
 import { Diagnostics } from './Diagnostics';
 import type { UI_t } from './UI';
 import type { GlobalStateKey_t, GlobalStateValue_t } from './VSCodeAPIs';
@@ -34,14 +35,27 @@ export type Persist_t = Record<UI_t, PersistValue_t>;
  * persist.theme = 'dark'; // Saves to VS Code global state
  */
 export class Persist {
-  private app: App;
+  static readonly id = 'persist';
+  private fn: FnImport_t;
   private dx: Diagnostics;
   private default: Record<string, PersistValue_t> = {};
   private value: Record<string, PersistValue_t> = {};
 
-  constructor(app: App) {
-    this.app = app;
-    this.dx = app.dx.sub({ name: 'Persist' });
+  private constructor(app: App) {
+    // Request dependencies via Registry
+    this.fn = app.reg.use(
+      'vscodeapis.getGlobalState',
+      'vscodeapis.updateGlobalState',
+      'vscodeapis.deleteGlobalState',
+      'ui.showInfoMessage'
+    );
+    
+    // dx.sub is always available (from always: ['dx.sub'])
+    this.dx = this.fn.dx.sub('Persist');
+  }
+  
+  static create(app: App): Persist {
+    return new Persist(app);
   }
 
   register(name: string): this {
@@ -54,7 +68,7 @@ export class Persist {
           result = this.value[name];
         } else {
           // Try to get from global state (may fail if not a GlobalStateKey)
-          const globalValue = this.app.vscodeapis.getGlobalState(name as GlobalStateKey_t);
+          const globalValue = this.fn.vscodeapis.getGlobalState(name as GlobalStateKey_t);
           if (globalValue !== undefined) {
             this.value[name] = globalValue;
             result = globalValue;
@@ -63,7 +77,7 @@ export class Persist {
             const defaultValue = this.default[name];
             this.value[name] = defaultValue;
             // Try to persist default to global state
-            this.app.vscodeapis.updateGlobalState({
+            this.fn.vscodeapis.updateGlobalState({
               key: name as GlobalStateKey_t,
               value: defaultValue as GlobalStateValue_t,
             });
@@ -78,7 +92,7 @@ export class Persist {
           this.value[name] = value;
           // Skip global state update if value is empty string (non-persistent menus like 'print'/'page')
           if (value !== kEmptyNoPersist) {
-            this.app.vscodeapis.updateGlobalState({
+            this.fn.vscodeapis.updateGlobalState({
               key: name as GlobalStateKey_t,
               value: value as GlobalStateValue_t,
             });
@@ -118,7 +132,7 @@ export class Persist {
     const keysToReset: GlobalStateKey_t[] = [...kMenuId, 'toolbar_pos'];
 
     for (const key of keysToReset) {
-      await this.app.vscodeapis.deleteGlobalState({
+      await this.fn.vscodeapis.deleteGlobalState({
         key: key as GlobalStateKey_t,
       });
     }
@@ -128,7 +142,7 @@ export class Persist {
     this.default = {};
 
     // Inform user
-    this.app.ui.showInfoMessage('Print2Paper state reset - reopen print view to see defaults');
+    this.fn.ui.showInfoMessage('Print2Paper state reset - reopen print view to see defaults');
   }
 }
 
