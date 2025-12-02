@@ -114,13 +114,15 @@ export class Registry {
               (instance as Record<string, unknown>)[actualMethodName] as Function
             ).bind(instance);
           } else {
-            this.dx.error(`Method '${actualMethodName}' not found on registered instance '${id}'`);
+            const errorMsg = `Method '${actualMethodName}' not found on registered instance '${id}'`;
+            this.dx.error(errorMsg);
+            throw new Error(errorMsg);
           }
-          continue;
         }
         if (!foundComponent) {
-          this.dx.error(`Component '${id}' not found in Registry`);
-          continue;
+          const errorMsg = `Component '${id}' not found in Registry`;
+          this.dx.error(errorMsg);
+          throw new Error(errorMsg);
         }
       } else {
         // No component specified - search all components via prototype
@@ -134,8 +136,9 @@ export class Registry {
       }
 
       if (!foundComponent) {
-        this.dx.error(`Method '${actualMethodName}' not found in any component`);
-        continue;
+        const errorMsg = `Method '${actualMethodName}' not found in any component`;
+        this.dx.error(errorMsg);
+        throw new Error(errorMsg);
       }
 
       // Get or create component instance
@@ -144,8 +147,9 @@ export class Registry {
       
       // Check if component previously failed (circuit breaker)
       if (this.failedComponents.has(componentId)) {
-        this.dx.error(`Component '${componentId}' failed to initialize and is unavailable`);
-        continue;
+        const errorMsg = `Component '${componentId}' failed to initialize and is unavailable`;
+        this.dx.error(errorMsg);
+        throw new Error(errorMsg);
       }
 
       if (!this._instances.has(componentId)) {
@@ -212,7 +216,9 @@ export class Registry {
           (instance as Record<string, unknown>)[foundMethodName] as Function
         ).bind(instance);
       } else {
-        this.dx.error(`Method '${foundMethodName}' is not a function on component '${componentId}'`);
+        const errorMsg = `Method '${foundMethodName}' is not a function on component '${componentId}'`;
+        this.dx.error(errorMsg);
+        throw new Error(errorMsg);
       }
     }
 
