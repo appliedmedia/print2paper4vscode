@@ -115,7 +115,7 @@ export class App {
     this.tabinspector = new TabInspector(this);
 
     // Register remaining instances with Registry so it can use them
-    // Note: Registry already has dx (created via app.dx.sub()), so no need to register it
+    // Note: Registry creates its own dx via app.dx.sub() internally, so no need to register app.dx here
     this.reg.registerInstance('ui', this.ui);
     this.reg.registerInstance('uimenumgr', this.uimenumgr);
     this.reg.registerInstance('os', this.os);
@@ -138,8 +138,12 @@ export class App {
 
   done(): void {
     // Cleanup all components in reverse order
+    // Note: OS no longer has done() method (migrated to Registry pattern)
     for (const component of [...this.componentOrder].reverse()) {
-      (this as components_t)[component].done();
+      const instance = (this as components_t)[component];
+      if ('done' in instance && typeof instance.done === 'function') {
+        instance.done();
+      }
     }
 
     this.dx.done();

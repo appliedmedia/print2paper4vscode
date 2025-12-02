@@ -38,7 +38,6 @@ export class Yaml<T extends Record<string, string>> {
     this.app = app;
     this.filePath = filePath;
     this.dataStruct = dataStruct;
-    // Move init() logic into constructor (currently empty)
   }
 
   static create<T extends Record<string, string>>(app: App, filePath: string, dataStruct: T): Yaml<T> {
