@@ -197,12 +197,14 @@ export class Registry {
         result[componentId] = {};
       }
 
-      // Return method (bound) or property (direct access)
+      // Bind method to instance and add to result
+      // Note: Registry can return properties too, but type is Function for now
       const value = (instance as Record<string, unknown>)[foundMethodName];
       if (typeof value === 'function') {
-        result[componentId][foundMethodName] = value.bind(instance) as Function;
+        result[componentId][foundMethodName] = value.bind(instance);
       } else {
-        result[componentId][foundMethodName] = value;
+        // Property access - cast to Function for now, update type when needed
+        result[componentId][foundMethodName] = value as Function;
       }
     }
 

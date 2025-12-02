@@ -7,19 +7,17 @@
 /**
  * FnImport_t - What a class imports (receives from Registry)
  *
- * Structure: { [componentId: string]: { [methodName: string]: Function | unknown } }
- *
- * Can return methods (bound functions) or properties (direct access).
+ * Structure: { [componentId: string]: { [methodName: string]: Function } }
  *
  * Example:
  * {
  *   dx: { sub: Function, out: Function },
  *   ui: { showErrorMessage: Function },
- *   pdf: { generatePdf: Function, docInfo: DocInfo_PDF }
+ *   pdf: { generatePdf: Function }
  * }
  */
 export type FnImport_t = {
   [componentId: string]: {
-    [methodName: string]: Function | unknown;
+    [methodName: string]: Function;
   };
 };

@@ -49,9 +49,9 @@ export abstract class OS {
     // Request dependencies via Registry
     // dx.sub is always available (from always: ['dx.sub'])
     this.fn = app.reg.use('vscodeapis.getExtensionPath', 'vscodeapis.getPanelForUriConversion', 'vscodeapis.uriFromPath');
-    this.dx = (this.fn.dx.sub as Function)({ name: 'OS' });
+    this.dx = this.fn.dx.sub({ name: 'OS' });
     // Move init() logic into constructor (getExtensionPath was called in init before)
-    this.extensionRoot = (this.fn.vscodeapis.getExtensionPath as Function)();
+    this.extensionRoot = this.fn.vscodeapis.getExtensionPath();
   }
 
   done(): void {
@@ -229,7 +229,7 @@ export abstract class OS {
       return result;
     }
 
-    const webviewPanel = (this.fn.vscodeapis.getPanelForUriConversion as Function)(webviewPanelId);
+    const webviewPanel = this.fn.vscodeapis.getPanelForUriConversion(webviewPanelId);
     if (!webviewPanel?.webview) {
       dx.done();
       return result;
@@ -248,7 +248,7 @@ export abstract class OS {
 
       // Convert relative path to webview URI
       const fullPath = this.pathJoin(this.extensionRoot!, path);
-      const uri = (this.fn.vscodeapis.uriFromPath as Function)(fullPath);
+      const uri = this.fn.vscodeapis.uriFromPath(fullPath);
       const webviewUri = webviewPanel.webview.asWebviewUri(uri).toString();
       return webviewUri;
     };

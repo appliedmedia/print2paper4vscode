@@ -22,7 +22,7 @@ export class OSLinux extends OS {
 
   constructor(app: App) {
     super(app);
-    this.dx = (this.fn.dx.sub as Function)({ name: 'OSLinux' });
+    this.dx = this.fn.dx.sub({ name: 'OSLinux' });
   }
 
   protected getOSKeys(): Record<string, string> {
