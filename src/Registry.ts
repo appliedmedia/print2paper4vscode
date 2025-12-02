@@ -26,7 +26,6 @@ export class Registry {
   private dx: Diagnostics;
   private app: App;
   private constructionStack: string[] = []; // Track components being constructed for circular dependency detection
-  private failedComponents: Set<string> = new Set(); // Track components that failed to initialize (circuit breaker)
 
   constructor(args: {
     app: App;
@@ -144,13 +143,6 @@ export class Registry {
       // Get or create component instance
       // Use foundComponent.id directly (always defined since foundComponent exists)
       const componentId = foundComponent.id;
-      
-      // Check if component previously failed (circuit breaker)
-      if (this.failedComponents.has(componentId)) {
-        const errorMsg = `Component '${componentId}' failed to initialize and is unavailable`;
-        this.dx.error(errorMsg);
-        throw new Error(errorMsg);
-      }
 
       if (!this._instances.has(componentId)) {
         // Check for circular dependency
@@ -170,13 +162,8 @@ export class Registry {
           const instance = new foundComponent(this.app);
           this._instances.set(componentId, instance);
         } catch (err) {
-          // Circuit breaker: mark component as failed, don't retry
-          this.failedComponents.add(componentId);
-          
           const errorMsg = `Failed to initialize component '${componentId}': ${err instanceof Error ? err.message : String(err)}. Extension may need to be restarted.`;
           this.dx.error(errorMsg);
-          
-          // Throw meaningful error to caller
           throw new Error(errorMsg);
         } finally {
           // Pop component from stack when done (even if error occurred)
@@ -211,15 +198,9 @@ export class Registry {
       }
 
       // Bind method to instance and add to result
-      if (typeof (instance as Record<string, unknown>)[foundMethodName] === 'function') {
-        result[componentId][foundMethodName] = (
-          (instance as Record<string, unknown>)[foundMethodName] as Function
-        ).bind(instance);
-      } else {
-        const errorMsg = `Method '${foundMethodName}' is not a function on component '${componentId}'`;
-        this.dx.error(errorMsg);
-        throw new Error(errorMsg);
-      }
+      result[componentId][foundMethodName] = (
+        (instance as Record<string, unknown>)[foundMethodName] as Function
+      ).bind(instance);
     }
 
     return result;
