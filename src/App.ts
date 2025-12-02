@@ -114,6 +114,7 @@ export class App {
     this.reg.registerInstance('uimenumgr', this.uimenumgr);
     
     this.ui = new UI(this);
+    this.reg.registerInstance('ui', this.ui);
     
     // Create singleton Persist instance for clear() method (needed by VSCodeAPIs command registration)
     // Note: Persist is a factory pattern, but we need a singleton instance for the clear() command
@@ -128,8 +129,7 @@ export class App {
 
     // Register remaining instances with Registry so it can use them
     // Note: Registry creates its own dx via app.dx.sub() internally, so no need to register app.dx here
-    // Note: uimenumgr already registered above
-    this.reg.registerInstance('ui', this.ui);
+    // Note: uimenumgr and ui already registered above
     this.reg.registerInstance('os', this.os);
     this.reg.registerInstance('pdf', this.pdf);
     this.reg.registerInstance('paperprinter', this.paperprinter);
