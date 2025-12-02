@@ -21,7 +21,6 @@
  */
 
 import type { App } from './App';
-import type { FnImport_t } from './types/Registry_t';
 
 export class Yaml<T extends Record<string, string>> {
   static readonly id = 'yaml';
@@ -29,7 +28,6 @@ export class Yaml<T extends Record<string, string>> {
   private app: App;
   private filePath: string;
   private dataStruct: T;
-  private fn: FnImport_t;
 
   private constructor(args: { app: App; filePath: string; dataStruct: T }) {
     // Note: Cannot use dx.require here as Diagnostics is not yet initialized
@@ -40,8 +38,6 @@ export class Yaml<T extends Record<string, string>> {
     this.app = app;
     this.filePath = filePath;
     this.dataStruct = dataStruct;
-    // Request dependencies via Registry (only needs dx.sub, always available)
-    this.fn = app.reg.use();
     // Move init() logic into constructor (currently empty)
   }
 

@@ -51,6 +51,10 @@ export abstract class OS {
     this.fn = app.reg.use('vscodeapis.getExtensionPath', 'vscodeapis.getPanelForUriConversion', 'vscodeapis.uriFromPath');
     this.dx = this.fn.dx.sub({ name: 'OS' });
     // Move init() logic into constructor (getExtensionPath was called in init before)
+    // Defensive check: ensure Registry resolved the method before calling
+    if (!this.fn.vscodeapis?.getExtensionPath) {
+      throw new Error('VSCodeAPIs.getExtensionPath not resolved from Registry');
+    }
     this.extensionRoot = this.fn.vscodeapis.getExtensionPath();
   }
 

@@ -28,6 +28,15 @@ export class Registry {
   private constructionStack: string[] = []; // Track components being constructed for circular dependency detection
   private failedComponents: Set<string> = new Set(); // Track components that failed to initialize (circuit breaker)
 
+  // Best-effort Diagnostics; never let logging crash Registry
+  private safeDxError(message: string): void {
+    try {
+      this.dx.error(message);
+    } catch {
+      console.error(`[Registry] ${message}`);
+    }
+  }
+
   constructor(args: {
     app: App;
     components?: Array<{ new (...args: any[]): any; id: string }>;
@@ -119,22 +128,12 @@ export class Registry {
               (instance as Record<string, unknown>)[actualMethodName] as Function
             ).bind(instance);
           } else {
-            // Use try-catch in case Diagnostics.error() fails (e.g., UI not initialized)
-            try {
-              this.dx.error(`Method '${actualMethodName}' not found on registered instance '${id}'`);
-            } catch {
-              console.error(`[Registry] Method '${actualMethodName}' not found on registered instance '${id}'`);
-            }
+            this.safeDxError(`Method '${actualMethodName}' not found on registered instance '${id}'`);
           }
           continue;
         }
         if (!foundComponent) {
-          // Use try-catch in case Diagnostics.error() fails (e.g., UI not initialized)
-          try {
-            this.dx.error(`Component '${id}' not found in Registry`);
-          } catch {
-            console.error(`[Registry] Component '${id}' not found in Registry`);
-          }
+          this.safeDxError(`Component '${id}' not found in Registry`);
           continue;
         }
       } else {
@@ -149,12 +148,7 @@ export class Registry {
       }
 
       if (!foundComponent) {
-        // Use try-catch in case Diagnostics.error() fails (e.g., UI not initialized)
-        try {
-          this.dx.error(`Method '${actualMethodName}' not found in any component`);
-        } catch {
-          console.error(`[Registry] Method '${actualMethodName}' not found in any component`);
-        }
+        this.safeDxError(`Method '${actualMethodName}' not found in any component`);
         continue;
       }
 
@@ -164,12 +158,7 @@ export class Registry {
       
       // Check if component previously failed (circuit breaker)
       if (this.failedComponents.has(componentId)) {
-        // Use try-catch in case Diagnostics.error() fails (e.g., UI not initialized)
-        try {
-          this.dx.error(`Component '${componentId}' failed to initialize and is unavailable`);
-        } catch {
-          console.error(`[Registry] Component '${componentId}' failed to initialize and is unavailable`);
-        }
+        this.safeDxError(`Component '${componentId}' failed to initialize and is unavailable`);
         continue;
       }
 
@@ -178,7 +167,7 @@ export class Registry {
         if (this.constructionStack.includes(componentId)) {
           const cycle = [...this.constructionStack, componentId].join(' -> ');
           const errorMsg = `Circular dependency detected: ${cycle}. Components cannot depend on each other directly or indirectly.`;
-          this.dx.error(errorMsg);
+          this.safeDxError(errorMsg);
           throw new Error(errorMsg);
         }
 
@@ -195,12 +184,7 @@ export class Registry {
           this.failedComponents.add(componentId);
           
           const errorMsg = `Failed to initialize component '${componentId}': ${err instanceof Error ? err.message : String(err)}. Extension may need to be restarted.`;
-          // Use try-catch in case Diagnostics.error() fails (e.g., UI not initialized)
-          try {
-            this.dx.error(errorMsg);
-          } catch {
-            console.error(`[Registry] ${errorMsg}`);
-          }
+          this.safeDxError(errorMsg);
           
           // Throw meaningful error to caller
           throw new Error(errorMsg);
@@ -210,7 +194,7 @@ export class Registry {
           const popped = this.constructionStack.pop();
           if (popped !== componentId) {
             // This should never happen, but log if it does for debugging
-            this.dx.error(
+            this.safeDxError(
               `Construction stack mismatch: expected to pop '${componentId}' but popped '${popped}'. Stack: ${this.constructionStack.join(' -> ')}`
             );
             // Restore stack integrity by removing componentId if it exists elsewhere
@@ -242,12 +226,7 @@ export class Registry {
           (instance as Record<string, unknown>)[foundMethodName] as Function
         ).bind(instance);
       } else {
-        // Use try-catch in case Diagnostics.error() fails (e.g., UI not initialized)
-        try {
-          this.dx.error(`Method '${foundMethodName}' is not a function on component '${componentId}'`);
-        } catch {
-          console.error(`[Registry] Method '${foundMethodName}' is not a function on component '${componentId}'`);
-        }
+        this.safeDxError(`Method '${foundMethodName}' is not a function on component '${componentId}'`);
       }
     }
 
