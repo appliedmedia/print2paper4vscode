@@ -181,28 +181,28 @@
 
 ---
 
-### Stage 3: Migrate Core Infrastructure ⏸️
+### Stage 3: Migrate Core Infrastructure ✅
 
-#### 3.1 Migrate VSCodeAPIs
+#### 3.1 Migrate VSCodeAPIs ✅
 
-- [ ] Add `static readonly id = 'vscodeapis'` - that's it!
-- [ ] Update constructor to use `app.use()`
-- [ ] Request Diagnostics via Registry
-- [ ] Move command registration from `init()` to constructor
-- [ ] Remove `init()` method entirely
-- [ ] Keep `done()` method for explicit cleanup
-- [ ] Test command registration works
+- [x] Add `static readonly id = 'vscodeapis'` - that's it!
+- [x] Update constructor to use `app.reg.use()`
+- [x] Request Diagnostics via Registry
+- [x] Move command registration from `init()` to constructor
+- [x] Remove `init()` method entirely
+- [x] Keep `done()` method for explicit cleanup
+- [x] Test command registration works (compilation successful, command handlers request methods lazily)
 
-#### 3.2 Migrate Persist (Factory Pattern)
+#### 3.2 Migrate Persist (Factory Pattern) ✅
 
-- [ ] Update `src/Persist.ts`:
+- [x] Update `src/Persist.ts`:
   - Add `static readonly id = 'persist'` - that's it!
   - Add `static create(app: App): Persist` - public static method
   - Make constructor private
-  - Update constructor to use `app.use()` for VSCodeAPIs methods
+  - Update constructor to use `app.reg.use()` for VSCodeAPIs and UI methods
   - Move any `init()` logic into constructor (currently empty)
   - Remove `init()` method entirely
-  - Keep `done()` method for explicit cleanup
+  - Keep `done()` method for cleanup (no done() method exists)
 - [x] Update `src/UIMenu.ts` line 236:
   - Changed: `this.persist = new Persist(app) as Persist & Persist_t`
   - To: `this.persist = Persist.create(app) as Persist & Persist_t`
@@ -210,16 +210,17 @@
   - Changed: `this.persist = new Persist(app) as Persist & Persist_t`
   - To: `this.persist = Persist.create(app) as Persist & Persist_t`
 - [x] Test persistence works (2 files updated, compilation successful)
+- [x] Created singleton Persist instance in App.ts for VSCodeAPIs `persist.clear()` command
 
-#### 3.3 Migrate UI
+#### 3.3 Migrate UI ✅
 
-- [ ] Add `static readonly id = 'ui'` - that's it!
-- [ ] Update constructor to use `app.use()`
-- [ ] Request dependencies: Diagnostics, OS, Persist methods
-- [ ] Move any `init()` logic into constructor (currently empty)
-- [ ] Remove `init()` method entirely
-- [ ] Keep `done()` method for explicit cleanup
-- [ ] Test UI operations work
+- [x] Add `static readonly id = 'ui'` - that's it!
+- [x] Update constructor to use `app.reg.use()`
+- [x] Request dependencies: VSCodeAPIs, UIMenuMgr, Yaml, Persist methods
+- [x] Move any `init()` logic into constructor (currently empty)
+- [x] Remove `init()` method entirely
+- [x] Keep `done()` method for explicit cleanup
+- [x] Test UI operations work (compilation successful, updated App.ts to create UIMenuMgr before UI)
 
 ---
 
