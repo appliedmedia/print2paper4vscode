@@ -42,9 +42,9 @@ export class Coords {
   // Base margin constant: 0.4 inch gutter required for all non-full-bleed printers
   public static readonly kMarginGutterMinPts = 0.4 * Coords.POINTS_PER_INCH;
 
-  constructor(app: App) {
-    this.app = app;
-    this.dx = app.dx.sub({ name: 'Coords' });
+  constructor(args: { app: App; dx: Diagnostics }) {
+    this.app = args.app;
+    this.dx = args.dx.sub({ name: 'Coords' });
   }
 
   /**

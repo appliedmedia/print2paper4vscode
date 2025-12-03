@@ -18,11 +18,10 @@ import type { App } from './App';
  * await os.fileReveal('/path/to/file.pdf');
  */
 export class OSLinux extends OS {
-  protected dx: Diagnostics;
-
-  constructor(app: App) {
-    super(app);
-    this.dx = this.fn.dx.sub({ name: 'OSLinux' });
+  constructor(args: { app: App; dx: Diagnostics }) {
+    super(args);
+    // dx already set by parent constructor, just rename for OSLinux context
+    this.dx = args.dx.sub({ name: 'OSLinux' });
   }
 
   protected getOSKeys(): Record<string, string> {

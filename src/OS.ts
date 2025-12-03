@@ -7,7 +7,6 @@ import { parse as yamlParse } from 'yaml';
 import { performance } from 'node:perf_hooks';
 import type { App } from './App';
 import type { WebviewPanelId_t } from './VSCodeAPIs';
-import type { FnImport_t } from './types/Registry_t';
 import { Diagnostics } from './Diagnostics';
 
 // Type definition for fileRead method
@@ -37,21 +36,17 @@ export abstract class OS {
   protected app: App;
   protected extensionRoot?: string;
   protected dx: Diagnostics;
-  protected fn: FnImport_t;
 
   // Getter for extension root
   getExtensionRoot(): string | undefined {
     return this.extensionRoot;
   }
 
-  constructor(args: { app: App }) {
+  constructor(args: { app: App; dx: Diagnostics }) {
     this.app = args.app;
-    // Request dependencies via Registry
-    // dx.sub is always available (from always: ['dx.sub'])
-    this.fn = this.app.reg.use('vscodeapis.getExtensionPath', 'vscodeapis.getPanelForUriConversion', 'vscodeapis.uriFromPath');
-    this.dx = this.fn.dx.sub({ name: 'OS' });
-    // Move init() logic into constructor (getExtensionPath was called in init before)
-    this.extensionRoot = this.fn.vscodeapis.getExtensionPath();
+    this.dx = args.dx.sub({ name: 'OS' });
+    // Get extension root from vscodeapis (accessed via app)
+    this.extensionRoot = this.app.vscodeapis.getExtensionPath();
   }
 
   done(): void {
@@ -67,18 +62,18 @@ export abstract class OS {
     return cpExecSync(cmd, { encoding: 'utf8' }) as unknown as string;
   }
 
-  static create(app: App): OS {
+  static create(args: { app: App; dx: Diagnostics }): OS {
     // Using process.platform instead of os.platform() for robustness:
     // - process.platform is available immediately on Node.js startup
     // - os.platform() requires module loading and can throw errors
     // - process.platform is more commonly used in Node.js ecosystem
     // - Both return identical values, but process.platform is more reliable
     if (process?.platform === 'win32') {
-      return new OSWin(app);
+      return new OSWin(args);
     } else if (process?.platform === 'linux') {
-      return new OSLinux(app);
+      return new OSLinux(args);
     } else if (process?.platform === 'darwin') {
-      return new OSMac(app);
+      return new OSMac(args);
     } else {
       const platform = process?.platform || 'unknown';
       throw new Error(
@@ -229,7 +224,7 @@ export abstract class OS {
       return result;
     }
 
-    const webviewPanel = this.fn.vscodeapis.getPanelForUriConversion(webviewPanelId);
+    const webviewPanel = this.app.vscodeapis.getPanelForUriConversion(webviewPanelId);
     if (!webviewPanel?.webview) {
       dx.done();
       return result;
@@ -248,7 +243,7 @@ export abstract class OS {
 
       // Convert relative path to webview URI
       const fullPath = this.pathJoin(this.extensionRoot!, path);
-      const uri = this.fn.vscodeapis.uriFromPath(fullPath);
+      const uri = this.app.vscodeapis.uriFromPath(fullPath);
       const webviewUri = webviewPanel.webview.asWebviewUri(uri).toString();
       return webviewUri;
     };

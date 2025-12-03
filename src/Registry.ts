@@ -4,12 +4,12 @@ import type { FnImport_t } from './types/Registry_t';
 
 /**
  * Component interface for Registry-managed classes
- * All constructors take a single args object with app: App plus any extra params
+ * All constructors take a single args object with app, dx, plus any extra params
  */
 export interface ComponentClass {
   readonly id: string;
-  create?(args: { app: App } & Record<string, unknown>): unknown;
-  new (args: { app: App } & Record<string, unknown>): unknown;
+  create?(args: { app: App; dx: Diagnostics } & Record<string, unknown>): unknown;
+  new (args: { app: App; dx: Diagnostics } & Record<string, unknown>): unknown;
 }
 
 /**
@@ -99,8 +99,8 @@ export class Registry {
     this.constructionStack.push(componentId);
 
     try {
-      // All constructors receive args with app + any init params
-      const args = { app: this.app, ...this.init[componentId] };
+      // All constructors receive args with app, dx, and any init params
+      const args = { app: this.app, dx: this.app.dx, ...this.init[componentId] };
       let instance: unknown;
       
       if ('create' in Component && typeof Component.create === 'function') {

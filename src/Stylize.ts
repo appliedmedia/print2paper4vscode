@@ -1,6 +1,5 @@
 import type { App } from './App';
 import type { FileRead_t } from './OS';
-import type { FnImport_t } from './types/Registry_t';
 import {
   getSingletonHighlighter,
   bundledThemesInfo,
@@ -54,16 +53,12 @@ interface VSCodeTheme {
 export class Stylize {
   static readonly id = 'stylize';
   private app: App;
-  private fn: FnImport_t;
   private highlighter: Highlighter | null = null;
   private dx: Diagnostics;
 
-  constructor(args: { app: App }) {
+  constructor(args: { app: App; dx: Diagnostics }) {
     this.app = args.app;
-    // Request only dx.sub via Registry (always available)
-    // Other dependencies accessed via this.app.xxx
-    this.fn = this.app.reg.use();
-    this.dx = this.fn.dx.sub({ name: 'Stylize' });
+    this.dx = args.dx.sub({ name: 'Stylize' });
     // No init() logic to move - highlighter initialized lazily when needed
   }
 

@@ -96,15 +96,15 @@ export class PaperPrinter {
 
   public docInfo: DocInfo_PaperPrinter;
 
-  constructor(args: { app: App }) {
+  constructor(args: { app: App; dx: Diagnostics }) {
     this.app = args.app;
-    this.dx = this.app.dx.sub({ name: 'PaperPrinter' });
+    this.dx = args.dx.sub({ name: 'PaperPrinter' });
 
     // Initialize docInfo
-    this.docInfo = new DocInfo_PaperPrinter({ app: this.app });
+    this.docInfo = new DocInfo_PaperPrinter({ app: this.app, dx: this.dx });
 
     // Initialize YAML loader
-    this._yaml = Yaml.create(this.app, 'src/PaperPrinter.yaml', PaperPrinter.kYaml);
+    this._yaml = Yaml.create({ app: this.app }, 'src/PaperPrinter.yaml', PaperPrinter.kYaml);
   }
 
   init(): void {}
@@ -204,7 +204,7 @@ export class PaperPrinter {
       }
 
       // Create webview and initialize message handlers
-      this.uiwebview = new UIWebView(this.app);
+      this.uiwebview = new UIWebView({ app: this.app, dx: this.dx });
       this.uiwebview.init();
 
       // Display PDF in webview panel (uses this.app.pdf.docInfo directly, including title)

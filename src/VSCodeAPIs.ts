@@ -11,7 +11,6 @@ import type {
 } from 'vscode';
 import { Range } from 'vscode';
 import type { SendToExt_t } from './types/UI_t';
-import type { FnImport_t } from './types/Registry_t';
 import { Diagnostics } from './Diagnostics';
 import { kExtId } from './_entrypoint_extId_t';
 
@@ -50,19 +49,11 @@ export class VSCodeAPIs {
   public vscode: typeof import('vscode');
   public context: ExtensionContext;
   private panels = new Map<WebviewPanelId_t, WebviewPanel>();
-  
-  // Lazy diagnostics
-  private _dx?: Diagnostics;
-  private get dx(): Diagnostics {
-    if (!this._dx) {
-      const fn = this.app.reg.use(); // gets dx.sub from always
-      this._dx = fn.dx.sub({ name: 'VSCodeAPIs' });
-    }
-    return this._dx;
-  }
+  private dx: Diagnostics;
 
-  constructor(args: { app: App; vscode: typeof import('vscode'); context: ExtensionContext }) {
+  constructor(args: { app: App; dx: Diagnostics; vscode: typeof import('vscode'); context: ExtensionContext }) {
     this.app = args.app;
+    this.dx = args.dx.sub({ name: 'VSCodeAPIs' });
     this.vscode = args.vscode;
     this.context = args.context;
 

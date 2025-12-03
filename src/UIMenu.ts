@@ -233,9 +233,9 @@ export class UIMenu {
     this._menuItems = menuItems;
     this._flyoutMenuItemIds = flyoutMenuItemIds;
     this._selectionHandler = selectionHandler;
-    this.persist = Persist.create(app) as Persist & Persist_t;
+    this.persist = Persist.create({ app }) as Persist & Persist_t;
     this.dx = this.app.dx.sub({ name: 'UIMenu' });
-    this._yaml = Yaml.create(app, 'src/UIMenu.yaml', UIMenu.kYaml);
+    this._yaml = Yaml.create({ app }, 'src/UIMenu.yaml', UIMenu.kYaml);
 
     // Register persist property (no value set yet)
     this.persist.register(this._id);

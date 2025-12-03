@@ -1,5 +1,4 @@
 import type { App } from './App';
-import type { FnImport_t } from './types/Registry_t';
 import { Diagnostics } from './Diagnostics';
 import type { UI_t } from './UI';
 import type { GlobalStateKey_t, GlobalStateValue_t } from './VSCodeAPIs';
@@ -36,25 +35,21 @@ export type Persist_t = Record<UI_t, PersistValue_t>;
  */
 export class Persist {
   static readonly id = 'persist';
-  private fn: FnImport_t;
   private dx: Diagnostics;
   private default: Record<string, PersistValue_t> = {};
   private value: Record<string, PersistValue_t> = {};
 
   private app: App;
   
-  private constructor(args: { app: App }) {
+  private constructor(args: { app: App; dx: Diagnostics }) {
     this.app = args.app;
-    // Request only dx.sub via Registry (always available)
-    // Other dependencies accessed via this.app.xxx
-    this.fn = this.app.reg.use();
-    
-    // dx.sub is always available (from always: ['dx.sub'])
-    this.dx = this.fn.dx.sub({ name: 'Persist' });
+    this.dx = args.dx.sub({ name: 'Persist' });
   }
   
-  static create(args: { app: App }): Persist {
-    return new Persist(args);
+  static create(args: { app: App; dx?: Diagnostics }): Persist {
+    // If dx not provided, use app.dx
+    const dx = args.dx || args.app.dx;
+    return new Persist({ app: args.app, dx });
   }
 
   register(name: string): this {

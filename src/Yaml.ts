@@ -40,8 +40,8 @@ export class Yaml<T extends Record<string, string>> {
     this.dataStruct = dataStruct;
   }
 
-  static create<T extends Record<string, string>>(app: App, filePath: string, dataStruct: T): Yaml<T> {
-    return new Yaml({ app, filePath, dataStruct });
+  static create<T extends Record<string, string>>(args: { app: App }, filePath: string, dataStruct: T): Yaml<T> {
+    return new Yaml({ app: args.app, filePath, dataStruct });
   }
 
   done(): void {
