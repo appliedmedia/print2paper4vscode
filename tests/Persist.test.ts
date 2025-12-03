@@ -45,7 +45,7 @@ describe('Persist', () => {
   beforeEach(() => {
     mockGlobalState = {}; // Reset state before each test
     app = new App({ context: mockContext, vscode: mockVSCode });
-    persist = Persist.create(app) as Persist & Record<string, any>;
+    persist = Persist.create({ app }) as Persist & Record<string, any>;
   });
 
   afterEach(() => {

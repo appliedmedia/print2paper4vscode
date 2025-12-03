@@ -19,13 +19,13 @@ describe('OS Platform-Specific Classes', () => {
 
   describe('OSLinux', () => {
     it('should initialize OSLinux instance', () => {
-      const osLinux = new OSLinux(app);
+      const osLinux = new OSLinux({ app, dx: app.dx });
       assert.ok(osLinux instanceof OSLinux);
       osLinux.done();
     });
 
     it('should provide Linux-specific OS keys', () => {
-      const osLinux = new OSLinux(app);
+      const osLinux = new OSLinux({ app, dx: app.dx });
       const keys = (osLinux as any).getOSKeys();
       assert.ok(keys, 'Should have OS keys');
       assert.strictEqual(keys['os-ctrl-cmd'], 'Ctrl', 'Linux uses Ctrl key');
@@ -33,7 +33,7 @@ describe('OS Platform-Specific Classes', () => {
     });
 
     it('should have platform-specific file operations', () => {
-      const osLinux = new OSLinux(app);
+      const osLinux = new OSLinux({ app, dx: app.dx });
       
       // Should have the required methods
       assert.ok(typeof osLinux.fileOpenInDefaultApp === 'function');
@@ -47,13 +47,13 @@ describe('OS Platform-Specific Classes', () => {
 
   describe('OSWin', () => {
     it('should initialize OSWin instance', () => {
-      const osWin = new OSWin(app);
+      const osWin = new OSWin({ app, dx: app.dx });
       assert.ok(osWin instanceof OSWin);
       osWin.done();
     });
 
     it('should provide Windows-specific OS keys', () => {
-      const osWin = new OSWin(app);
+      const osWin = new OSWin({ app, dx: app.dx });
       const keys = (osWin as any).getOSKeys();
       assert.ok(keys, 'Should have OS keys');
       assert.strictEqual(keys['os-ctrl-cmd'], 'Ctrl', 'Windows uses Ctrl key');
@@ -61,7 +61,7 @@ describe('OS Platform-Specific Classes', () => {
     });
 
     it('should have platform-specific file operations', () => {
-      const osWin = new OSWin(app);
+      const osWin = new OSWin({ app, dx: app.dx });
       
       // Should have the required methods
       assert.ok(typeof osWin.fileOpenInDefaultApp === 'function');
