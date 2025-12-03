@@ -96,15 +96,15 @@ export class PaperPrinter {
 
   public docInfo: DocInfo_PaperPrinter;
 
-  constructor(app: App) {
-    this.app = app;
-    this.dx = app.dx.sub({ name: 'PaperPrinter' });
+  constructor(args: { app: App }) {
+    this.app = args.app;
+    this.dx = this.app.dx.sub({ name: 'PaperPrinter' });
 
     // Initialize docInfo
-    this.docInfo = new DocInfo_PaperPrinter(app);
+    this.docInfo = new DocInfo_PaperPrinter({ app: this.app });
 
     // Initialize YAML loader
-    this._yaml = Yaml.create(app, 'src/PaperPrinter.yaml', PaperPrinter.kYaml);
+    this._yaml = Yaml.create(this.app, 'src/PaperPrinter.yaml', PaperPrinter.kYaml);
   }
 
   init(): void {}

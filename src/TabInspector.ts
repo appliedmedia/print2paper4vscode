@@ -25,11 +25,11 @@ export class TabInspector {
   private fn: FnImport_t;
   private dx: Diagnostics;
 
-  constructor(app: App) {
-    this.app = app;
+  constructor(args: { app: App }) {
+    this.app = args.app;
     // Request only dx.sub via Registry (always available)
     // VSCodeAPIs methods accessed via this.app.vscodeapis
-    this.fn = app.reg.use();
+    this.fn = this.app.reg.use();
     this.dx = this.fn.dx.sub({ name: 'TabInspector' });
     // No init() logic to move - constructor completes initialization
   }

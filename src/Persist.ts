@@ -43,18 +43,18 @@ export class Persist {
 
   private app: App;
   
-  private constructor(app: App) {
-    this.app = app;
+  private constructor(args: { app: App }) {
+    this.app = args.app;
     // Request only dx.sub via Registry (always available)
     // Other dependencies accessed via this.app.xxx
-    this.fn = app.reg.use();
+    this.fn = this.app.reg.use();
     
     // dx.sub is always available (from always: ['dx.sub'])
     this.dx = this.fn.dx.sub({ name: 'Persist' });
   }
   
-  static create(app: App): Persist {
-    return new Persist(app);
+  static create(args: { app: App }): Persist {
+    return new Persist(args);
   }
 
   register(name: string): this {

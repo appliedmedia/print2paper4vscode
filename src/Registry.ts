@@ -4,11 +4,12 @@ import type { FnImport_t } from './types/Registry_t';
 
 /**
  * Component interface for Registry-managed classes
+ * All constructors take a single args object with app: App plus any extra params
  */
 export interface ComponentClass {
   readonly id: string;
-  create?(app: App, params?: Record<string, unknown>): unknown;
-  new (app: App, params?: Record<string, unknown>): unknown;
+  create?(args: { app: App } & Record<string, unknown>): unknown;
+  new (args: { app: App } & Record<string, unknown>): unknown;
 }
 
 /**
@@ -85,7 +86,7 @@ export class Registry {
 
   /**
    * Create a component instance using factory or constructor
-   * Passes init params if available for this component
+   * Merges { app } with init params for this component
    */
   private createInstance(Component: ComponentClass): void {
     const componentId = Component.id;
@@ -98,13 +99,14 @@ export class Registry {
     this.constructionStack.push(componentId);
 
     try {
-      const initParams = this.init[componentId];
+      // All constructors receive args with app + any init params
+      const args = { app: this.app, ...this.init[componentId] };
       let instance: unknown;
       
       if ('create' in Component && typeof Component.create === 'function') {
-        instance = Component.create(this.app, initParams);
+        instance = Component.create(args);
       } else {
-        instance = new Component(this.app, initParams);
+        instance = new Component(args);
       }
       
       this._instances.set(componentId, instance);

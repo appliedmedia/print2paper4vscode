@@ -56,12 +56,12 @@ export class PDF {
   // PDF document information
   public docInfo: DocInfo_PDF;
 
-  constructor(app: App) {
-    this.app = app;
-    this.dx = app.dx.sub({ name: 'PDF' });
-    this.coords = new Coords(app);
-    this.docInfo = new DocInfo_PDF(app);
-    this._yaml = Yaml.create(app, 'src/PDF.yaml', PDF.kYaml);
+  constructor(args: { app: App }) {
+    this.app = args.app;
+    this.dx = this.app.dx.sub({ name: 'PDF' });
+    this.coords = new Coords({ app: this.app });
+    this.docInfo = new DocInfo_PDF({ app: this.app });
+    this._yaml = Yaml.create(this.app, 'src/PDF.yaml', PDF.kYaml);
   }
 
   get yaml() {

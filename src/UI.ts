@@ -63,8 +63,8 @@ export class UI {
   private _yaml: Yaml<typeof UI.kYaml>;
   public persist: Persist & Persist_t;
 
-  constructor(app: App) {
-    this.app = app;
+  constructor(args: { app: App }) {
+    this.app = args.app;
     
     // Request dependencies via Registry
     // Note: Yaml and Persist use factory pattern and are not singletons in Registry

@@ -58,11 +58,11 @@ export class Stylize {
   private highlighter: Highlighter | null = null;
   private dx: Diagnostics;
 
-  constructor(app: App) {
-    this.app = app;
+  constructor(args: { app: App }) {
+    this.app = args.app;
     // Request only dx.sub via Registry (always available)
     // Other dependencies accessed via this.app.xxx
-    this.fn = app.reg.use();
+    this.fn = this.app.reg.use();
     this.dx = this.fn.dx.sub({ name: 'Stylize' });
     // No init() logic to move - highlighter initialized lazily when needed
   }

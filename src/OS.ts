@@ -44,11 +44,11 @@ export abstract class OS {
     return this.extensionRoot;
   }
 
-  constructor(app: App) {
-    this.app = app;
+  constructor(args: { app: App }) {
+    this.app = args.app;
     // Request dependencies via Registry
     // dx.sub is always available (from always: ['dx.sub'])
-    this.fn = app.reg.use('vscodeapis.getExtensionPath', 'vscodeapis.getPanelForUriConversion', 'vscodeapis.uriFromPath');
+    this.fn = this.app.reg.use('vscodeapis.getExtensionPath', 'vscodeapis.getPanelForUriConversion', 'vscodeapis.uriFromPath');
     this.dx = this.fn.dx.sub({ name: 'OS' });
     // Move init() logic into constructor (getExtensionPath was called in init before)
     this.extensionRoot = this.fn.vscodeapis.getExtensionPath();

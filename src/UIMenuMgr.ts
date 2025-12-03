@@ -54,11 +54,11 @@ export class UIMenuMgr {
   // Updated from webview (window dimensions, text_edit display values) and persists across menu selections
   private contextDict?: contextDict_t;
 
-  constructor(app: App) {
-    this.app = app;
+  constructor(args: { app: App }) {
+    this.app = args.app;
     // Request only dx.sub via Registry (always available)
     // Other dependencies accessed via this.app.xxx
-    this.fn = app.reg.use();
+    this.fn = this.app.reg.use();
     this.dx = this.fn.dx.sub({ name: 'UIMenuMgr' });
     // No init() logic to move - menus created on-demand by PaperPrinter
   }
