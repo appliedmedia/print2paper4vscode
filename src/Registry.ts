@@ -69,6 +69,13 @@ export class Registry {
   }
 
   /**
+   * Check if a component instance already exists (without triggering instantiation)
+   */
+  hasInstance(componentId: string): boolean {
+    return this._instances.has(componentId);
+  }
+
+  /**
    * Get or create a component instance by ID
    */
   getInstance<T = unknown>(componentId: string): T | undefined {

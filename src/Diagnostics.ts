@@ -217,8 +217,10 @@ export class Diagnostics {
       message = `❌ ERROR: ${message}`;
       const formattedMessage = this.messageHeader(message);
       UI.out(formattedMessage);
-      // Note: Removed this.app?.ui?.showErrorMessage() to avoid circular dependency
-      // issues during component construction. Errors are logged via UI.out() above.
+      // Show error dialog to user (only if UI is already instantiated to avoid circular deps)
+      if (this.app?.reg?.hasInstance?.('ui')) {
+        this.app.ui.showErrorMessage(formattedMessage);
+      }
     }
 
     return this;
