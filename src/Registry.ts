@@ -157,12 +157,17 @@ export class Registry {
         actualMethodName = methodName;
       }
 
-      // For already-registered instances (like dx), return the instance itself
-      // This allows this.fn.dx to be the actual Diagnostics instance
+      // For already-registered instances (like dx), bind immediately
       if (id && this._instances.has(id)) {
         const instance = this._instances.get(id);
-        if (instance && !result[id]) {
-          result[id] = instance as Record<string, Function>;
+        if (instance) {
+          const value = (instance as Record<string, unknown>)[actualMethodName];
+          if (!result[id]) result[id] = {};
+          if (typeof value === 'function') {
+            result[id][actualMethodName] = value.bind(instance);
+          } else {
+            result[id][actualMethodName] = value as Function;
+          }
         }
         continue;
       }
