@@ -1,4 +1,5 @@
 import type { App } from './App';
+import type { FnImport_t } from './types/Registry_t';
 import { Diagnostics } from './Diagnostics';
 
 export type TabCategory = 'editor-nonmd' | 'editor-md' | 'preview';
@@ -21,11 +22,17 @@ export type TabCategory = 'editor-nonmd' | 'editor-md' | 'preview';
 export class TabInspector {
   static readonly id = 'tabinspector';
   private app: App;
+  private fn: FnImport_t;
   private dx: Diagnostics;
 
   constructor(args: { app: App; dx: Diagnostics }) {
     this.app = args.app;
     this.dx = args.dx.sub({ name: 'TabInspector' });
+    this.fn = this.app.reg.use(
+      'vscodeapis.getActiveTextEditor',
+      'vscodeapis.getSelectionOrDocumentText',
+      'vscodeapis.getDescriptiveName'
+    );
   }
 
   done(): void {
@@ -33,7 +40,7 @@ export class TabInspector {
   }
 
   detectActiveTabCategory(): TabCategory {
-    const editor = this.app.vscodeapis.getActiveTextEditor();
+    const editor = this.fn.vscodeapis.getActiveTextEditor();
     if (editor) {
       const lang = editor.document.languageId;
       if (lang === 'markdown') return 'editor-md';
@@ -44,11 +51,11 @@ export class TabInspector {
   }
 
   getEditorSelectionOrAll(): { text: string; languageId: string; name: string } | null {
-    const editor = this.app.vscodeapis.getActiveTextEditor();
+    const editor = this.fn.vscodeapis.getActiveTextEditor();
     if (!editor) return null;
-    const text = this.app.vscodeapis.getSelectionOrDocumentText(editor);
+    const text = this.fn.vscodeapis.getSelectionOrDocumentText(editor);
     const languageId = editor.document.languageId || 'plaintext';
-    const name = this.app.vscodeapis.getDescriptiveName(editor.document);
+    const name = this.fn.vscodeapis.getDescriptiveName(editor.document);
     return { text, languageId, name };
   }
 
@@ -59,14 +66,14 @@ export class TabInspector {
     filePath: string;
   }> {
     try {
-      const editor = this.app.vscodeapis.getActiveTextEditor();
+      const editor = this.fn.vscodeapis.getActiveTextEditor();
       if (!editor) {
         return { code: '', language: 'plaintext', fileName: '', filePath: '' };
       }
 
-      const code = this.app.vscodeapis.getSelectionOrDocumentText(editor);
+      const code = this.fn.vscodeapis.getSelectionOrDocumentText(editor);
       const language = editor.document.languageId || 'plaintext';
-      const fileName = this.app.vscodeapis.getDescriptiveName(editor.document);
+      const fileName = this.fn.vscodeapis.getDescriptiveName(editor.document);
       const filePath = editor.document.uri.fsPath;
 
       return { code, language, fileName, filePath };
@@ -81,12 +88,12 @@ export class TabInspector {
   > {
     try {
       // For now, just return the active editor since getVisibleTextEditors is not implemented
-      const activeEditor = this.app.vscodeapis.getActiveTextEditor();
+      const activeEditor = this.fn.vscodeapis.getActiveTextEditor();
       if (!activeEditor) return [];
 
-      const code = this.app.vscodeapis.getSelectionOrDocumentText(activeEditor);
+      const code = this.fn.vscodeapis.getSelectionOrDocumentText(activeEditor);
       const language = activeEditor.document.languageId || 'plaintext';
-      const fileName = this.app.vscodeapis.getDescriptiveName(activeEditor.document);
+      const fileName = this.fn.vscodeapis.getDescriptiveName(activeEditor.document);
       const filePath = activeEditor.document.uri.fsPath;
       return [{ code, language, fileName, filePath }];
     } catch (error) {

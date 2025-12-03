@@ -7,6 +7,7 @@ import { parse as yamlParse } from 'yaml';
 import { performance } from 'node:perf_hooks';
 import type { App } from './App';
 import type { WebviewPanelId_t } from './VSCodeAPIs';
+import type { FnImport_t } from './types/Registry_t';
 import { Diagnostics } from './Diagnostics';
 
 // Type definition for fileRead method
@@ -36,6 +37,7 @@ export abstract class OS {
   protected app: App;
   protected extensionRoot?: string;
   protected dx: Diagnostics;
+  protected fn: FnImport_t;
 
   // Getter for extension root
   getExtensionRoot(): string | undefined {
@@ -45,8 +47,12 @@ export abstract class OS {
   constructor(args: { app: App; dx: Diagnostics }) {
     this.app = args.app;
     this.dx = args.dx.sub({ name: 'OS' });
-    // Get extension root from vscodeapis (accessed via app)
-    this.extensionRoot = this.app.vscodeapis.getExtensionPath();
+    this.fn = this.app.reg.use(
+      'vscodeapis.getExtensionPath',
+      'vscodeapis.getPanelForUriConversion',
+      'vscodeapis.uriFromPath'
+    );
+    this.extensionRoot = this.fn.vscodeapis.getExtensionPath();
   }
 
   done(): void {
@@ -224,7 +230,7 @@ export abstract class OS {
       return result;
     }
 
-    const webviewPanel = this.app.vscodeapis.getPanelForUriConversion(webviewPanelId);
+    const webviewPanel = this.fn.vscodeapis.getPanelForUriConversion(webviewPanelId);
     if (!webviewPanel?.webview) {
       dx.done();
       return result;
@@ -243,7 +249,7 @@ export abstract class OS {
 
       // Convert relative path to webview URI
       const fullPath = this.pathJoin(this.extensionRoot!, path);
-      const uri = this.app.vscodeapis.uriFromPath(fullPath);
+      const uri = this.fn.vscodeapis.uriFromPath(fullPath);
       const webviewUri = webviewPanel.webview.asWebviewUri(uri).toString();
       return webviewUri;
     };
