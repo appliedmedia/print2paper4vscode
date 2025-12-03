@@ -18,10 +18,10 @@ import type { App } from './App';
  * await os.fileReveal('C:\\path\\to\\file.pdf');
  */
 export class OSWin extends OS {
-  constructor(args: { app: App; dx: Diagnostics }) {
+  constructor(args: { app: App }) {
     super(args);
-    // dx already set by parent constructor, just rename for OSWin context
-    this.dx = args.dx.sub({ name: 'OSWin' });
+    // Override dx with OSWin-specific context
+    this.dx = this.fn.dx.sub({ name: 'OSWin' });
   }
 
   protected getOSKeys(): Record<string, string> {

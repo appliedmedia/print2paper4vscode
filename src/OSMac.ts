@@ -19,10 +19,10 @@ import type { App } from './App';
  * await os.filePrint('/path/to/file.pdf');
  */
 export class OSMac extends OS {
-  constructor(args: { app: App; dx: Diagnostics }) {
+  constructor(args: { app: App }) {
     super(args);
-    // dx already set by parent constructor, just rename for OSMac context
-    this.dx = args.dx.sub({ name: 'OSMac' });
+    // Override dx with OSMac-specific context
+    this.dx = this.fn.dx.sub({ name: 'OSMac' });
   }
 
   protected getOSKeys(): Record<string, string> {

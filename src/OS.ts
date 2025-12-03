@@ -44,14 +44,14 @@ export abstract class OS {
     return this.extensionRoot;
   }
 
-  constructor(args: { app: App; dx: Diagnostics }) {
+  constructor(args: { app: App }) {
     this.app = args.app;
-    this.dx = args.dx.sub({ name: 'OS' });
     this.fn = this.app.reg.use(
       'vscodeapis.getExtensionPath',
       'vscodeapis.getPanelForUriConversion',
       'vscodeapis.uriFromPath'
     );
+    this.dx = this.fn.dx.sub({ name: 'OS' });
     this.extensionRoot = this.fn.vscodeapis.getExtensionPath();
   }
 
@@ -68,7 +68,7 @@ export abstract class OS {
     return cpExecSync(cmd, { encoding: 'utf8' }) as unknown as string;
   }
 
-  static create(args: { app: App; dx: Diagnostics }): OS {
+  static create(args: { app: App }): OS {
     // Using process.platform instead of os.platform() for robustness:
     // - process.platform is available immediately on Node.js startup
     // - os.platform() requires module loading and can throw errors

@@ -11,6 +11,7 @@ import type {
 } from 'vscode';
 import { Range } from 'vscode';
 import type { SendToExt_t } from './types/UI_t';
+import type { FnImport_t } from './types/Registry_t';
 import { Diagnostics } from './Diagnostics';
 import { kExtId } from './_entrypoint_extId_t';
 
@@ -46,14 +47,26 @@ export class VSCodeAPIs {
   private static readonly WEBVIEW_ID = kExtId + '.printprep';
 
   private app: App;
+  private fn: FnImport_t;
   public vscode: typeof import('vscode');
   public context: ExtensionContext;
   private panels = new Map<WebviewPanelId_t, WebviewPanel>();
   private dx: Diagnostics;
 
-  constructor(args: { app: App; dx: Diagnostics; vscode: typeof import('vscode'); context: ExtensionContext }) {
+  constructor(args: { app: App; vscode: typeof import('vscode'); context: ExtensionContext }) {
     this.app = args.app;
-    this.dx = args.dx.sub({ name: 'VSCodeAPIs' });
+    this.fn = this.app.reg.use(
+      'os.dateAsYYYYMMDDHHMMSS',
+      'os.htmlSrcPathToURI',
+      'os.getExtensionRoot',
+      'os.pathJoin',
+      'os.fileRead',
+      'os.pathBasename',
+      'paperprinter.handlePrintCommandFromVSCode',
+      'ui.handleWebviewMessage',
+      'persist.clear'
+    );
+    this.dx = this.fn.dx.sub({ name: 'VSCodeAPIs' });
     this.vscode = args.vscode;
     this.context = args.context;
 
