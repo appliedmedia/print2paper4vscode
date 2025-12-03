@@ -360,7 +360,7 @@ export class VSCodeAPIs {
     if (theme.path && typeof theme.path === 'string') {
       try {
         const themePath = this.app.os.pathJoin(themeExtension.extensionPath, theme.path);
-        const themeContent = (this.app.os.fileRead as (args: { path: string }) => Record<string, unknown> | undefined)({ path: themePath });
+        const themeContent = this.app.os.fileRead<Record<string, unknown>>({ path: themePath });
 
         if (themeContent) {
           // Merge the theme metadata with the loaded content

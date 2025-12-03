@@ -166,7 +166,7 @@ export class Registry {
           if (typeof value === 'function') {
             result[id][actualMethodName] = value.bind(instance);
           } else {
-            result[id][actualMethodName] = value as Function;
+            throw new Error(`'${id}.${actualMethodName}' is not a function`);
           }
         }
         continue;
@@ -181,9 +181,9 @@ export class Registry {
           throw new Error(`Component '${id}' not found`);
         }
       } else {
-        // Search by method name in prototypes
+        // Search by method name in prototypes (use 'in' to find inherited methods too)
         for (const Component of this.components) {
-          if (Component.prototype?.hasOwnProperty(actualMethodName)) {
+          if (actualMethodName in (Component.prototype || {})) {
             foundComponent = Component;
             break;
           }
@@ -203,10 +203,10 @@ export class Registry {
           throw new Error(`Failed to get instance of '${componentId}'`);
         }
         const method = (instance as Record<string, unknown>)[actualMethodName];
-        if (typeof method === 'function') {
-          return method.apply(instance, args);
+        if (typeof method !== 'function') {
+          throw new Error(`'${componentId}.${actualMethodName}' is not a function`);
         }
-        return method;
+        return method.apply(instance, args);
       }) as Function;
     }
 
