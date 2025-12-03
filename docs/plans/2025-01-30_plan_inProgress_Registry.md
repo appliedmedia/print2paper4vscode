@@ -210,7 +210,7 @@
   - Changed: `this.persist = new Persist(app) as Persist & Persist_t`
   - To: `this.persist = Persist.create(app) as Persist & Persist_t`
 - [x] Test persistence works (2 files updated, compilation successful)
-- [x] Created singleton Persist instance in App.ts for VSCodeAPIs `persist.clear()` command
+- [x] Created singleton Persist instance in App.ts for VSCodeAPIs `persist.clear()` command.
 
 #### 3.3 Migrate UI ✅
 
