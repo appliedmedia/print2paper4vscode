@@ -50,32 +50,32 @@ export class VSCodeAPIs {
   private vscode: typeof import('vscode'); // Use official VS Code types
   private context: ExtensionContext; // Properly typed context
   private panels = new Map<WebviewPanelId_t, WebviewPanel>(); // Panel mapping
-  private fn: FnImport_t;
-  private dx: Diagnostics;
+  private fn!: FnImport_t;
+  private dx!: Diagnostics;
 
-  constructor(args: { app: App; vscode: typeof import('vscode'); context: ExtensionContext }) {
-    const { app, vscode, context } = args;
-    
+  constructor(app: App) {
+    this.app = app;
+    // Read vscode and context from app (stored there for components to access)
+    this.vscode = app.vscode;
+    this.context = app.context;
+  }
+
+  /**
+   * Initialize VSCodeAPIs - registers commands and sets up dependencies
+   * Called by Registry after construction
+   */
+  init(): void {
     // Request dependencies via Registry
-    // Note: OS methods are NOT requested here because OS is created AFTER VSCodeAPIs
-    // Instead, OS methods are accessed via this.app.os.methodName() or lazily via use()
-    // Note: UI methods are also accessed via this.app.ui since UI may not be registered yet
-    this.fn = app.reg.use();
+    this.fn = this.app.reg.use();
     
     // dx.sub is always available (from always: ['dx.sub'])
     this.dx = this.fn.dx.sub({ name: 'VSCodeAPIs' });
     
-    this.app = app;
-    this.vscode = vscode;
-    this.context = context;
-    
-    // Move command registration from init() to constructor
-    const dx = this.dx.sub({ name: 'constructor' });
-    dx.require({ vscode: this.vscode, context: this.context }, ['vscode', 'context']);
+    const dx = this.dx.sub({ name: 'init' });
 
     // Register VS Code commands
     const command_Print2Paper = this.vscode.commands.registerCommand('p2p4vsc.print2paper', () => {
-      // Request paperprinter.handlePrintCommandFromVSCode lazily since PaperPrinter is created after VSCodeAPIs
+      // Request paperprinter.handlePrintCommandFromVSCode lazily
       const paperprinterFn = this.app.reg.use('paperprinter.handlePrintCommandFromVSCode');
       paperprinterFn.paperprinter.handlePrintCommandFromVSCode();
     });
@@ -83,7 +83,7 @@ export class VSCodeAPIs {
     const command_PersistClear = this.vscode.commands.registerCommand(
       'p2p4vsc.persistClear',
       async () => {
-        // Request persist.clear lazily since Persist is created after VSCodeAPIs
+        // Request persist.clear lazily
         const persistFn = this.app.reg.use('persist.clear');
         await persistFn.persist.clear();
       }

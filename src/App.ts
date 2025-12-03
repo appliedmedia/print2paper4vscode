@@ -7,8 +7,9 @@ import { TabInspector } from './TabInspector';
 import { OS } from './OS';
 import { UIMenuMgr } from './UIMenuMgr';
 import { Diagnostics } from './Diagnostics';
-import { Registry } from './Registry';
+import { Registry, type ComponentClass } from './Registry';
 import { Persist } from './Persist';
+import { Yaml } from './Yaml';
 import type { ExtensionContext } from 'vscode';
 import { kExtId } from './_entrypoint_extId_t';
 
@@ -17,23 +18,13 @@ export type ForceNumber_scalar_t = number | string | undefined;
 export type ForceNumber_dict_t = Record<string, ForceNumber_scalar_t>;
 export type ForceNumbers_t = Record<string, number>;
 
-type components_t = {
-  vscodeapis: VSCodeAPIs;
-  ui: UI;
-  os: OS;
-  pdf: PDF;
-  paperprinter: PaperPrinter;
-  stylize: Stylize;
-  tabinspector: TabInspector;
-  uimenumgr: UIMenuMgr;
-};
-
 /**
  * App - Main application container and component manager
  *
- * Central orchestrator for the Print2Paper4VSCode extension. Creates and manages
- * all major components, handles initialization/cleanup lifecycle, and provides
- * shared utilities like template replacement.
+ * Central orchestrator for the Print2Paper4VSCode extension. Registry manages
+ * lazy component creation. App provides shared utilities like template replacement.
+ *
+ * Components are created lazily by Registry when first accessed via use().
  *
  * @input context - VS Code extension context
  * @input vscode - VS Code API module
@@ -41,8 +32,9 @@ type components_t = {
  *
  * @example
  * const app = new App({ context, vscode });
- * app.init();
- * const replaced = app.templateDictReplace('Hello {{name}}', {name: 'World'});
+ * // Components created lazily when accessed
+ * const fn = app.reg.use('pdf.generatePdf');
+ * await fn.pdf.generatePdf();
  */
 export class App {
   // Namespace - References kExtId (single source of truth)
@@ -53,39 +45,38 @@ export class App {
   public readonly ns = App.kNs;
   public readonly ns_ = App.kNs_;
   
-  vscodeapis: VSCodeAPIs;
-  ui: UI;
-  pdf: PDF;
-  paperprinter: PaperPrinter;
-  stylize: Stylize;
-  tabinspector: TabInspector;
-  os: OS;
-  uimenumgr: UIMenuMgr;
-  dx: Diagnostics;
-  reg: Registry;
+  // VS Code context - stored for components to access
+  public readonly vscode: typeof import('vscode');
+  public readonly context: ExtensionContext;
+  
+  // Core infrastructure
+  public readonly dx: Diagnostics;
+  public readonly reg: Registry;
 
-  private readonly componentOrder: (keyof components_t)[] = [
-    'vscodeapis',
-    // 'ui', // UI no longer has init() method
-    // 'os', // OS no longer has init() method
-    'pdf',
-    'paperprinter',
-    'stylize',
-    'tabinspector',
-    'uimenumgr',
-  ];
+  // Lazy accessors for components (for backwards compatibility during migration)
+  get vscodeapis(): VSCodeAPIs { return this.reg.getInstance<VSCodeAPIs>('vscodeapis')!; }
+  get ui(): UI { return this.reg.getInstance<UI>('ui')!; }
+  get pdf(): PDF { return this.reg.getInstance<PDF>('pdf')!; }
+  get paperprinter(): PaperPrinter { return this.reg.getInstance<PaperPrinter>('paperprinter')!; }
+  get stylize(): Stylize { return this.reg.getInstance<Stylize>('stylize')!; }
+  get tabinspector(): TabInspector { return this.reg.getInstance<TabInspector>('tabinspector')!; }
+  get os(): OS { return this.reg.getInstance<OS>('os')!; }
+  get uimenumgr(): UIMenuMgr { return this.reg.getInstance<UIMenuMgr>('uimenumgr')!; }
 
   constructor(args: { context: ExtensionContext; vscode: typeof import('vscode') }) {
-    // Create Diagnostics instance first
+    const { context, vscode } = args;
+    
+    // Store VS Code context for components to access
+    this.vscode = vscode;
+    this.context = context;
+    
+    // Create Diagnostics instance first (needed by Registry)
     this.dx = new Diagnostics({ name: 'App', debugOn: undefined, parent: null, app: this });
     const dx = this.dx.sub({ name: 'constructor' });
     dx.require(args, ['context', 'vscode']);
-    const { context, vscode } = args;
 
-    // Create Registry instance with all component classes
-    // Components are still created the old way by App, but Registry knows about them
-    // Registry can use existing instances or create new ones lazily
-    // Note: Persist has private constructor (factory pattern), so it's registered as instance later
+    // Create Registry with all component classes
+    // Components are created LAZILY when first accessed via use() or getInstance()
     this.reg = new Registry({
       app: this,
       components: [
@@ -97,67 +88,32 @@ export class App {
         Stylize,
         TabInspector,
         UIMenuMgr,
-        // Persist has private constructor (factory pattern) - registered as instance after creation
-        // OS is abstract with factory method - will be handled specially
+        OS as unknown as ComponentClass, // OS has static create() factory
+        Persist as unknown as ComponentClass, // Persist has static create() factory
+        Yaml as unknown as ComponentClass, // Yaml has static create() factory
       ],
       always: ['dx.sub'],
     });
 
-    // Create components - VSCodeAPIs first, then UI, then UIMenuMgr (needed by PaperPrinter), then others
-    this.vscodeapis = new VSCodeAPIs({ app: this, vscode, context });
-    
-    // Register VSCodeAPIs immediately so OS can use it (OS constructor calls app.reg.use('vscodeapis.getExtensionPath'))
-    this.reg.registerInstance('vscodeapis', this.vscodeapis);
-    
-    // Create UIMenuMgr before UI since UI requests UIMenuMgr methods in constructor
-    this.uimenumgr = new UIMenuMgr(this);
-    this.reg.registerInstance('uimenumgr', this.uimenumgr);
-    
-    this.ui = new UI(this);
-    this.reg.registerInstance('ui', this.ui);
-    
-    // Create singleton Persist instance for clear() method (needed by VSCodeAPIs command registration)
-    // Note: Persist is a factory pattern, but we need a singleton instance for the clear() command
-    // Must be created after UI since Persist needs ui.showInfoMessage
-    const persistSingleton = Persist.create(this);
-    this.reg.registerInstance('persist', persistSingleton);
-    this.os = OS.create(this);
-    this.pdf = new PDF(this);
-    this.paperprinter = new PaperPrinter(this);
-    this.stylize = new Stylize(this);
-    this.tabinspector = new TabInspector(this);
-
-    // Register remaining instances with Registry so it can use them
-    // Note: Registry creates its own dx via app.dx.sub() internally, so no need to register app.dx here
-    // Note: uimenumgr and ui already registered above
-    this.reg.registerInstance('os', this.os);
-    this.reg.registerInstance('pdf', this.pdf);
-    this.reg.registerInstance('paperprinter', this.paperprinter);
-    this.reg.registerInstance('stylize', this.stylize);
-    this.reg.registerInstance('tabinspector', this.tabinspector);
+    dx.done();
   }
 
+  /**
+   * Initialize the app - triggers lazy creation of core components
+   * This ensures command registration happens (in VSCodeAPIs)
+   */
   init(): void {
-    // Initialize all components in dependency order
-    // Note: OS no longer has init() method (migrated to Registry pattern)
-    for (const component of this.componentOrder) {
-      const instance = (this as components_t)[component];
-      if ('init' in instance && typeof instance.init === 'function') {
-        instance.init();
-      }
-    }
+    const dx = this.dx.sub({ name: 'init' });
+    // Access VSCodeAPIs to trigger its creation and command registration
+    this.vscodeapis;
+    dx.done();
   }
 
+  /**
+   * Cleanup all components
+   */
   done(): void {
-    // Cleanup all components in reverse order
-    // Note: OS no longer has done() method (migrated to Registry pattern)
-    for (const component of [...this.componentOrder].reverse()) {
-      const instance = (this as components_t)[component];
-      if ('done' in instance && typeof instance.done === 'function') {
-        instance.done();
-      }
-    }
-
+    this.reg.done();
     this.dx.done();
   }
 
