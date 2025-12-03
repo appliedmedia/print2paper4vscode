@@ -19,6 +19,8 @@ export interface ComponentClass {
  * Components are created lazily when first accessed via use().
  * Special init params (like vscode/context for VSCodeAPIs) are passed
  * via the init dict at Registry construction.
+ *
+ * Diagnostics is bootstrapped first - pass init.dx.name for root dx name (e.g., 'App').
  */
 export class Registry {
   static readonly id = 'reg';
@@ -30,6 +32,7 @@ export class Registry {
   private components: ComponentClass[] = [];
   private always: string[] = [];
   private init: Record<string, Record<string, unknown>> = {};
+  private fn: FnImport_t;
   private dx: Diagnostics;
   private app: App;
   private constructionStack: string[] = [];
@@ -45,12 +48,17 @@ export class Registry {
     this.always = args.always || [];
     this.init = args.init || {};
 
-    // Create Registry's own Diagnostics
-    this.dx = this.app.dx.sub({ name: 'Registry' });
-
-    // Register App's dx so components can use dx.sub
-    this._instances.set('dx', this.app.dx);
+    // Bootstrap: Create root Diagnostics first (before anything else)
+    // Use init.dx.name for root name (defaults to 'App')
+    const dxInit = this.init['dx'] || {};
+    const rootDxName = (dxInit.name as string) || 'App';
+    const rootDx = new Diagnostics({ name: rootDxName, app: this.app });
+    this._instances.set('dx', rootDx);
     this._initialized.add('dx');
+
+    // Now Registry can use fn.dx.sub() like everyone else
+    this.fn = this.use();
+    this.dx = this.fn.dx.sub({ name: 'Registry' });
 
     // Build placeholder structure for intellisense
     for (const Component of this.components) {
@@ -211,6 +219,7 @@ export class Registry {
   done(): void {
     const ids = Array.from(this._initialized).reverse();
     for (const id of ids) {
+      // Skip dx for now, clean it up last
       if (id === 'dx') continue;
       const instance = this._instances.get(id);
       if (instance && typeof (instance as { done?: () => void }).done === 'function') {
@@ -221,5 +230,7 @@ export class Registry {
         }
       }
     }
+    // Clean up dx last
+    this.dx.done();
   }
 }

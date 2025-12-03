@@ -6,10 +6,11 @@ import { Stylize } from './Stylize';
 import { TabInspector } from './TabInspector';
 import { OS } from './OS';
 import { UIMenuMgr } from './UIMenuMgr';
-import { Diagnostics } from './Diagnostics';
+import type { Diagnostics } from './Diagnostics';
 import { Registry, type ComponentClass } from './Registry';
 import { Persist } from './Persist';
 import { Yaml } from './Yaml';
+import type { FnImport_t } from './types/Registry_t';
 import type { ExtensionContext } from 'vscode';
 import { kExtId } from './_entrypoint_extId_t';
 
@@ -48,8 +49,11 @@ export class App {
   public readonly ns_ = App.kNs_;
   
   // Core infrastructure
-  public readonly dx: Diagnostics;
   public readonly reg: Registry;
+  private fn: FnImport_t;
+
+  // dx accessor - gets root Diagnostics from Registry
+  get dx(): Diagnostics { return this.reg.getInstance<Diagnostics>('dx')!; }
 
   // Lazy accessors for components (for backwards compatibility during migration)
   get vscodeapis(): VSCodeAPIs { return this.reg.getInstance<VSCodeAPIs>('vscodeapis')!; }
@@ -63,19 +67,13 @@ export class App {
 
   constructor(args: { context: ExtensionContext; vscode: typeof import('vscode') }) {
     const { context, vscode } = args;
-    
-    // Create Diagnostics instance first (needed by Registry)
-    this.dx = new Diagnostics({ name: 'App', debugOn: undefined, parent: null, app: this });
-    const dx = this.dx.sub({ name: 'constructor' });
-    dx.require(args, ['context', 'vscode']);
 
     // Create Registry with all component classes
-    // Components are created LAZILY when first accessed via use() or getInstance()
+    // Registry bootstraps Diagnostics first, then creates components lazily
     // Special init params passed via 'init' dict for components needing extra args
     this.reg = new Registry({
       app: this,
       components: [
-        // Diagnostics excluded - App creates it directly (needed before Registry)
         VSCodeAPIs as unknown as ComponentClass,
         UI,
         PDF,
@@ -89,13 +87,17 @@ export class App {
       ],
       always: ['dx.sub'],
       init: {
+        // Root Diagnostics name
+        dx: { name: 'App' },
         // VSCodeAPIs needs vscode and context at construction
         vscodeapis: { vscode, context },
       },
     });
 
-    // Register App's dx with Registry so components can use dx.sub
-    this.reg.registerInstance('dx', this.dx);
+    // Now we can use fn.dx.sub() like everyone else
+    this.fn = this.reg.use();
+    const dx = this.fn.dx.sub({ name: 'constructor' });
+    dx.require(args, ['context', 'vscode']);
 
     // Force VSCodeAPIs creation now - commands must register at activation
     this.reg.getInstance('vscodeapis');
@@ -117,7 +119,7 @@ export class App {
    */
   done(): void {
     this.reg.done();
-    this.dx.done();
+    // dx is managed by Registry, will be cleaned up there
   }
 
   /**
