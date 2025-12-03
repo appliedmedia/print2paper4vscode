@@ -9,7 +9,7 @@ describe('Stylize Simple Unit Tests', () => {
   beforeEach(async () => {
     app = new App({ context: mockContext, vscode: mockVSCode });
     app.init();
-    await app.stylize.init();
+    // Note: Stylize no longer has init() - highlighter initialized lazily when needed
   });
 
   afterEach(() => {

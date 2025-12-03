@@ -57,20 +57,13 @@ export class VSCodeAPIs {
     const { app, vscode, context } = args;
     
     // Request dependencies via Registry
-    this.fn = app.reg.use(
-      'os.dateAsYYYYMMDDHHMMSS',
-      'os.htmlSrcPathToURI',
-      'os.getExtensionRoot',
-      'os.pathJoin',
-      'os.fileRead',
-      'os.pathBasename',
-      'ui.handleWebviewMessage'
-      // Note: paperprinter.handlePrintCommandFromVSCode and persist.clear requested lazily in command handlers
-      // since they are created after VSCodeAPIs
-    );
+    // Note: OS methods are NOT requested here because OS is created AFTER VSCodeAPIs
+    // Instead, OS methods are accessed via this.app.os.methodName() or lazily via use()
+    // Note: UI methods are also accessed via this.app.ui since UI may not be registered yet
+    this.fn = app.reg.use();
     
     // dx.sub is always available (from always: ['dx.sub'])
-    this.dx = this.fn.dx.sub('VSCodeAPIs');
+    this.dx = this.fn.dx.sub({ name: 'VSCodeAPIs' });
     
     this.app = app;
     this.vscode = vscode;
@@ -196,7 +189,7 @@ export class VSCodeAPIs {
     let baseId = title.toLowerCase().replace(/\s+/g, '_') as WebviewPanelId_t;
 
     if (this.panels.has(baseId)) {
-      const dt = this.fn.os.dateAsYYYYMMDDHHMMSS();
+      const dt = this.app.os.dateAsYYYYMMDDHHMMSS();
       baseId = `${baseId}_${dt}` as WebviewPanelId_t;
     }
 
@@ -254,7 +247,7 @@ export class VSCodeAPIs {
           // Panel is still valid, reuse it
           dx.out(`Reusing existing panel: ${existingPanelId}`);
           panel.title = title;
-          const htmlWithURIs = this.fn.os.htmlSrcPathToURI({ html, webviewPanelId: existingPanelId });
+          const htmlWithURIs = this.app.os.htmlSrcPathToURI({ html, webviewPanelId: existingPanelId });
           panel.webview.html = htmlWithURIs;
           dx.done();
           return existingPanelId;
@@ -274,7 +267,7 @@ export class VSCodeAPIs {
     dx.out(`Creating new panel for title: ${title}`);
 
     // Get extension root URI for local resource access
-    const extensionRoot = this.fn.os.getExtensionRoot();
+    const extensionRoot = this.app.os.getExtensionRoot();
     const extensionUri = extensionRoot ? this.vscode.Uri.file(extensionRoot) : undefined;
 
     const panel = this.vscode.window.createWebviewPanel(
@@ -301,7 +294,7 @@ export class VSCodeAPIs {
     // Set up message handling
     this.setupMessageHandling(panel);
 
-    const htmlWithURIs = this.fn.os.htmlSrcPathToURI({ html, webviewPanelId: id });
+    const htmlWithURIs = this.app.os.htmlSrcPathToURI({ html, webviewPanelId: id });
     this.updatePanelHtml({ id, html: htmlWithURIs });
 
     dx.done();
@@ -313,7 +306,7 @@ export class VSCodeAPIs {
    */
   setupMessageHandling(panel: WebviewPanel): void {
     panel.webview.onDidReceiveMessage(async (msg: SendToExt_t) => {
-      await this.fn.ui.handleWebviewMessage(msg);
+      await this.app.ui.handleWebviewMessage(msg);
     });
   }
 
@@ -379,8 +372,8 @@ export class VSCodeAPIs {
     // Load the actual theme file content if path is available
     if (theme.path && typeof theme.path === 'string') {
       try {
-        const themePath = this.fn.os.pathJoin(themeExtension.extensionPath, theme.path);
-        const themeContent = (this.fn.os.fileRead as (args: { path: string }) => Record<string, unknown> | undefined)({ path: themePath });
+        const themePath = this.app.os.pathJoin(themeExtension.extensionPath, theme.path);
+        const themeContent = (this.app.os.fileRead as (args: { path: string }) => Record<string, unknown> | undefined)({ path: themePath });
 
         if (themeContent) {
           // Merge the theme metadata with the loaded content
@@ -497,7 +490,7 @@ export class VSCodeAPIs {
       const tabName = uri.replace('untitled:', '');
       return tabName;
     } else {
-      const fileName = this.fn.os.pathBasename(document.fileName);
+      const fileName = this.app.os.pathBasename(document.fileName);
       return fileName;
     }
   }
@@ -544,7 +537,7 @@ export class VSCodeAPIs {
    * Gets temp directory for the extension
    */
   getDir_Temp(): string {
-    return this.fn.os.pathJoin(this.context.globalStorageUri.fsPath, 'temp');
+    return this.app.os.pathJoin(this.context.globalStorageUri.fsPath, 'temp');
   }
 
   /**

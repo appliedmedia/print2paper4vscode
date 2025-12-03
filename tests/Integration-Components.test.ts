@@ -24,8 +24,7 @@ describe('System Integration Tests', () => {
   test('should handle Shiki theme workflow', async () => {
     const app = new App({ context: mockContext, vscode: mockVSCode });
     app.init();
-    
-    await app.stylize.init();
+    // Note: Stylize no longer has init() - highlighter initialized lazily when needed
     
     // Test that Shiki themes are loaded
     const shikiThemes = app.stylize.getShikiThemes();

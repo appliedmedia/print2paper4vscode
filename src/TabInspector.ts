@@ -1,4 +1,5 @@
 import type { App } from './App';
+import type { FnImport_t } from './types/Registry_t';
 import { Diagnostics } from './Diagnostics';
 
 export type TabCategory = 'editor-nonmd' | 'editor-md' | 'preview';
@@ -21,14 +22,17 @@ export type TabCategory = 'editor-nonmd' | 'editor-md' | 'preview';
 export class TabInspector {
   static readonly id = 'tabinspector';
   private app: App;
+  private fn: FnImport_t;
   private dx: Diagnostics;
 
   constructor(app: App) {
     this.app = app;
-    this.dx = app.dx.sub({ name: 'TabInspector' });
+    // Request only dx.sub via Registry (always available)
+    // VSCodeAPIs methods accessed via this.app.vscodeapis
+    this.fn = app.reg.use();
+    this.dx = this.fn.dx.sub({ name: 'TabInspector' });
+    // No init() logic to move - constructor completes initialization
   }
-
-  init(): void {}
 
   done(): void {
     this.dx.done();

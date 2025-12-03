@@ -67,26 +67,16 @@ export class UI {
     this.app = app;
     
     // Request dependencies via Registry
-    this.fn = app.reg.use(
-      'vscodeapis.showInformationMessage',
-      'vscodeapis.showErrorMessage',
-      'vscodeapis.showWarningMessage',
-      'vscodeapis.showSaveDialog',
-      'vscodeapis.uriFromPath',
-      'vscodeapis.uriToPath',
-      'uimenumgr.getUIMenus_HTML',
-      'uimenumgr.getUIMenus_CSS',
-      'uimenumgr.getUIMenus_JS',
-      'yaml.create',
-      'persist.create'
-    );
+    // Note: Yaml and Persist use factory pattern and are not singletons in Registry
+    // They are instantiated directly using their static create() methods
+    this.fn = app.reg.use();
     
     // dx.sub is always available (from always: ['dx.sub'])
-    this.dx = this.fn.dx.sub('UI');
+    this.dx = this.fn.dx.sub({ name: 'UI' });
     
-    // Create per-instance Yaml and Persist via factories
-    this._yaml = this.fn.yaml.create(app, 'src/UI.yaml', UI.kYaml);
-    this.persist = this.fn.persist.create(app) as Persist & Persist_t;
+    // Create per-instance Yaml and Persist via their static factory methods
+    this._yaml = Yaml.create(app, 'src/UI.yaml', UI.kYaml);
+    this.persist = Persist.create(app) as Persist & Persist_t;
     this.persist.register('toolbar_pos');
   }
 
@@ -150,17 +140,17 @@ export class UI {
 
   // Show information message
   showInfoMessage(message: string): void {
-    this.fn.vscodeapis.showInformationMessage(message);
+    this.app.vscodeapis.showInformationMessage(message);
   }
 
   // Show error message
   showErrorMessage(message: string): void {
-    this.fn.vscodeapis.showErrorMessage(message);
+    this.app.vscodeapis.showErrorMessage(message);
   }
 
   // Show warning message
   showWarningMessage(message: string): void {
-    this.fn.vscodeapis.showWarningMessage(message);
+    this.app.vscodeapis.showWarningMessage(message);
   }
 
   // Add toolbar to HTML content
@@ -170,11 +160,11 @@ export class UI {
 
     try {
       // Get menu HTML from UIMenuMgr
-      const menuHtml = await this.fn.uimenumgr.getUIMenus_HTML();
+      const menuHtml = await this.app.uimenumgr.getUIMenus_HTML();
 
       // Get menu CSS and JS
-      const uiMenuCss = this.fn.uimenumgr.getUIMenus_CSS();
-      const uiMenuJs = this.fn.uimenumgr.getUIMenus_JS();
+      const uiMenuCss = this.app.uimenumgr.getUIMenus_CSS();
+      const uiMenuJs = this.app.uimenumgr.getUIMenus_JS();
 
       // Get toolbar templates from yaml getter
       const templates = this.yaml;
@@ -239,8 +229,8 @@ export class UI {
     const dx = this.dx.sub({ name: 'chooseSaveLocation' });
 
     try {
-      const uri = await this.fn.vscodeapis.showSaveDialog({
-        defaultUri: this.fn.vscodeapis.uriFromPath(defaultFilename),
+      const uri = await this.app.vscodeapis.showSaveDialog({
+        defaultUri: this.app.vscodeapis.uriFromPath(defaultFilename),
         filters: {
           'PDF files': ['pdf'],
         },
@@ -248,7 +238,7 @@ export class UI {
       });
 
       if (uri) {
-        const path = this.fn.vscodeapis.uriToPath(uri);
+        const path = this.app.vscodeapis.uriToPath(uri);
         dx.out(`User chose save location: ${path}`);
         return path;
       } else {
