@@ -51,9 +51,7 @@ export class App {
   // Core infrastructure
   public readonly reg: Registry;
   private fn: FnImport_t;
-
-  // dx accessor - gets root Diagnostics from Registry
-  get dx(): Diagnostics { return this.reg.getInstance<Diagnostics>('dx')!; }
+  public readonly dx: Diagnostics;
 
   // Lazy accessors for components (for backwards compatibility during migration)
   get vscodeapis(): VSCodeAPIs { return this.reg.getInstance<VSCodeAPIs>('vscodeapis')!; }
@@ -94,8 +92,9 @@ export class App {
       },
     });
 
-    // Now we can use fn.dx.sub() like everyone else
+    // Get our fn and dx - dx instance was created by Registry with name 'App'
     this.fn = this.reg.use();
+    this.dx = this.reg.getInstance<Diagnostics>('dx')!;
     const dx = this.fn.dx.sub({ name: 'constructor' });
     dx.require(args, ['context', 'vscode']);
 
