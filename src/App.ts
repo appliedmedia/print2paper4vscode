@@ -95,13 +95,9 @@ export class App {
     // Get our fn and dx - dx instance was created by Registry with name 'App'
     this.fn = this.reg.use();
     this.dx = this.reg.getInstance<Diagnostics>('dx')!;
-    const dx = this.fn.dx.sub({ name: 'constructor' });
-    dx.require(args, ['context', 'vscode']);
 
     // Force VSCodeAPIs creation now - commands must register at activation
     this.reg.getInstance('vscodeapis');
-
-    dx.done();
   }
 
   /**
