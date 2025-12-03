@@ -124,6 +124,7 @@ export class Registry {
 
   /**
    * Request methods from components
+   * Returns lazy proxies - components are only instantiated when methods are actually called
    */
   use(...methodIds: string[]): FnImport_t {
     const allMethods = [...methodIds, ...this.always];
@@ -141,73 +142,57 @@ export class Registry {
         actualMethodName = methodName;
       }
 
-      // Find component that owns this method
+      // For already-registered instances (like dx), bind immediately
+      if (id && this._instances.has(id)) {
+        const instance = this._instances.get(id);
+        if (instance) {
+          const value = (instance as Record<string, unknown>)[actualMethodName];
+          if (!result[id]) result[id] = {};
+          if (typeof value === 'function') {
+            result[id][actualMethodName] = value.bind(instance);
+          } else {
+            result[id][actualMethodName] = value as Function;
+          }
+        }
+        continue;
+      }
+
+      // Find component class that owns this method
       let foundComponent: ComponentClass | undefined;
 
       if (id) {
         foundComponent = this.components.find((c) => c.id === id);
-        
-        // Check if already registered (like dx)
-        if (!foundComponent && this._instances.has(id)) {
-          const instance = this._instances.get(id);
-          if (instance) {
-            const value = (instance as Record<string, unknown>)[actualMethodName];
-            if (!result[id]) result[id] = {};
-            if (typeof value === 'function') {
-              result[id][actualMethodName] = value.bind(instance);
-            } else {
-              result[id][actualMethodName] = value as Function;
-            }
-          }
-          continue;
-        }
-        
         if (!foundComponent) {
           throw new Error(`Component '${id}' not found`);
         }
       } else {
-        // Search by method name
+        // Search by method name in prototypes
         for (const Component of this.components) {
           if (Component.prototype?.hasOwnProperty(actualMethodName)) {
             foundComponent = Component;
             break;
           }
         }
-        
-        // Check registered instances
         if (!foundComponent) {
-          for (const [instId, instance] of this._instances) {
-            if (instance && typeof (instance as Record<string, unknown>)[actualMethodName] === 'function') {
-              if (!result[instId]) result[instId] = {};
-              result[instId][actualMethodName] = ((instance as Record<string, unknown>)[actualMethodName] as Function).bind(instance);
-              break;
-            }
-          }
-          continue;
+          throw new Error(`Method '${actualMethodName}' not found`);
         }
       }
 
-      if (!foundComponent) {
-        throw new Error(`Method '${actualMethodName}' not found`);
-      }
-
       const componentId = foundComponent.id;
-
-      if (!this._instances.has(componentId)) {
-        this.createInstance(foundComponent);
-      }
-
-      const instance = this._instances.get(componentId);
-      if (!instance) continue;
-
       if (!result[componentId]) result[componentId] = {};
 
-      const value = (instance as Record<string, unknown>)[actualMethodName];
-      if (typeof value === 'function') {
-        result[componentId][actualMethodName] = value.bind(instance);
-      } else {
-        result[componentId][actualMethodName] = value as Function;
-      }
+      // Return lazy proxy - instance created on first call
+      result[componentId][actualMethodName] = ((...args: unknown[]) => {
+        const instance = this.getInstance(componentId);
+        if (!instance) {
+          throw new Error(`Failed to get instance of '${componentId}'`);
+        }
+        const method = (instance as Record<string, unknown>)[actualMethodName];
+        if (typeof method === 'function') {
+          return method.apply(instance, args);
+        }
+        return method;
+      }) as Function;
     }
 
     return result;

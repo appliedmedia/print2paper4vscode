@@ -60,9 +60,7 @@ export class PDF {
 
   constructor(args: { app: App }) {
     this.app = args.app;
-    // Only request dx.sub via Registry (always available)
-    // Other dependencies accessed via this.app.xxx to avoid circular deps during construction
-    this.fn = this.app.reg.use();
+    this.fn = this.app.reg.use('ui.showErrorMessage');
     this.dx = this.fn.dx.sub({ name: 'PDF' });
     this.coords = new Coords({ app: this.app });
     this.docInfo = new DocInfo_PDF({ app: this.app });
@@ -182,7 +180,7 @@ export class PDF {
       await this.app.os.filePrint(tempPdfPath);
       dx.out('Sent PDF to printer');
     } catch (error) {
-      this.app.ui.showErrorMessage(`Failed to print PDF: ${String(error)}`);
+      this.fn.ui.showErrorMessage(`Failed to print PDF: ${String(error)}`);
       throw error;
     }
   }
@@ -226,7 +224,7 @@ export class PDF {
 
       dx.out(`Saved PDF document to ${targetPath}`);
     } catch (error) {
-      this.app.ui.showErrorMessage(`Failed to save PDF: ${String(error)}`);
+      this.fn.ui.showErrorMessage(`Failed to save PDF: ${String(error)}`);
       throw error;
     }
   }
