@@ -61,10 +61,13 @@ export class VSCodeAPIs {
     return this._dx;
   }
 
-  constructor(app: App, vscode: typeof import('vscode'), context: ExtensionContext) {
+  constructor(app: App, params?: { vscode: typeof import('vscode'); context: ExtensionContext }) {
     this.app = app;
-    this.vscode = vscode;
-    this.context = context;
+    if (!params) {
+      throw new Error('VSCodeAPIs requires vscode and context params');
+    }
+    this.vscode = params.vscode;
+    this.context = params.context;
 
     // Register VS Code commands - must happen at activation
     // Command handlers resolve dependencies lazily when invoked
