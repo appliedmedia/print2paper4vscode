@@ -13,7 +13,7 @@ describe('UIWebView', () => {
   beforeEach(() => {
     app = new App({ context: mockContext, vscode: mockVSCode });
     app.init();
-    uiWebView = new UIWebView({ app, dx: app.dx });
+    uiWebView = new UIWebView({ app });
   });
 
   afterEach(() => {

@@ -10,7 +10,7 @@ describe('Coords', () => {
 
   beforeEach(() => {
     app = new App({ context: mockContext, vscode: mockVSCode });
-    coords = new Coords({ app, dx: app.dx });
+    coords = new Coords({ app });
     coords.init();
   });
 

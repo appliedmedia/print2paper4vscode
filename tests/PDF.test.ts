@@ -16,7 +16,7 @@ describe('PDF', () => {
     app.init();
     installHeaderFooterMenuStubs(app);
 
-    pdf = new PDF({ app, dx: app.dx });
+    pdf = new PDF({ app });
     pdf.init();
     
     // Set up paperprinter docInfo for tests

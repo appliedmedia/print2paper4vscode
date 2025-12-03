@@ -55,17 +55,9 @@ export class VSCodeAPIs {
 
   constructor(args: { app: App; vscode: typeof import('vscode'); context: ExtensionContext }) {
     this.app = args.app;
-    this.fn = this.app.reg.use(
-      'os.dateAsYYYYMMDDHHMMSS',
-      'os.htmlSrcPathToURI',
-      'os.getExtensionRoot',
-      'os.pathJoin',
-      'os.fileRead',
-      'os.pathBasename',
-      'paperprinter.handlePrintCommandFromVSCode',
-      'ui.handleWebviewMessage',
-      'persist.clear'
-    );
+    // Only request dx.sub via Registry (always available)
+    // Other dependencies accessed via this.app.xxx to avoid circular deps during construction
+    this.fn = this.app.reg.use();
     this.dx = this.fn.dx.sub({ name: 'VSCodeAPIs' });
     this.vscode = args.vscode;
     this.context = args.context;

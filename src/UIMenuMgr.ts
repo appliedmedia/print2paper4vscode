@@ -1,4 +1,5 @@
 import type { App, ForceNumber_dict_t } from './App';
+import type { FnImport_t } from './types/Registry_t';
 import type { UI_t } from './UI';
 import type { PersistValue_t } from './Persist';
 import { contextDict_t, kContextDict_None } from './types/UI_t';
@@ -46,15 +47,19 @@ const kUIMenuItemDictRequiredKeys = [
 export class UIMenuMgr {
   static readonly id = 'uimenumgr';
   private app: App;
+  private fn: FnImport_t;
   private menus: UIMenu[] = [];
   private dx: Diagnostics;
   // Generic context dictionary for template variable substitution
   // Updated from webview (window dimensions, text_edit display values) and persists across menu selections
   private contextDict?: contextDict_t;
 
-  constructor(args: { app: App; dx: Diagnostics }) {
+  constructor(args: { app: App }) {
     this.app = args.app;
-    this.dx = args.dx.sub({ name: 'UIMenuMgr' });
+    // Only request dx.sub via Registry (always available)
+    // Other dependencies accessed via this.app.xxx to avoid circular deps during construction
+    this.fn = this.app.reg.use();
+    this.dx = this.fn.dx.sub({ name: 'UIMenuMgr' });
   }
 
   /**

@@ -20,7 +20,7 @@ export class DocInfo_PaperPrinter {
   public pageWidthPx: number = 0;
   public pageHeightPx: number = 0;
 
-  constructor(args: { app: App; dx?: unknown }) {
+  constructor(args: { app: App }) {
     this.app = args.app;
   }
 

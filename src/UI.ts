@@ -16,6 +16,7 @@
 
 import type { App } from './App';
 import type { SendToExt_t, MessageHandler_t } from './types/UI_t';
+import type { FnImport_t } from './types/Registry_t';
 import { Diagnostics } from './Diagnostics';
 import { Yaml } from './Yaml';
 import { Persist, type Persist_t } from './Persist';
@@ -56,17 +57,21 @@ export class UI {
   private static readonly kToolbar_pos_max_px = 5120; // Reasonable max for 5K displays
 
   private app: App;
+  private fn: FnImport_t;
   private messageHandlers: Map<string, MessageHandler_t[]> = new Map();
   private dx: Diagnostics;
   private _yaml: Yaml<typeof UI.kYaml>;
   public persist: Persist & Persist_t;
 
-  constructor(args: { app: App; dx: Diagnostics }) {
+  constructor(args: { app: App }) {
     this.app = args.app;
-    this.dx = args.dx.sub({ name: 'UI' });
+    // Only request dx.sub via Registry (always available)
+    // Other dependencies accessed via this.app.xxx to avoid circular deps during construction
+    this.fn = this.app.reg.use();
+    this.dx = this.fn.dx.sub({ name: 'UI' });
     
     // Create per-instance Yaml and Persist via their static factory methods
-    this._yaml = Yaml.create({ app: this.app }, 'src/UI.yaml', UI.kYaml);
+    this._yaml = Yaml.create(this.app, 'src/UI.yaml', UI.kYaml);
     this.persist = Persist.create({ app: this.app }) as Persist & Persist_t;
     this.persist.register('toolbar_pos');
   }

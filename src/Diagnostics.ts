@@ -217,7 +217,8 @@ export class Diagnostics {
       message = `❌ ERROR: ${message}`;
       const formattedMessage = this.messageHeader(message);
       UI.out(formattedMessage);
-      this.app?.ui?.showErrorMessage(formattedMessage);
+      // Note: Removed this.app?.ui?.showErrorMessage() to avoid circular dependency
+      // issues during component construction. Errors are logged via UI.out() above.
     }
 
     return this;

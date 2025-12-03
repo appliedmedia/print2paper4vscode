@@ -1,4 +1,5 @@
 import type { App } from './App';
+import type { FnImport_t } from './types/Registry_t';
 import { Diagnostics } from './Diagnostics';
 
 /**
@@ -9,6 +10,7 @@ import { Diagnostics } from './Diagnostics';
  */
 export class Coords {
   private app: App;
+  private fn: FnImport_t;
   private dx: Diagnostics;
 
   // ⚠️ CRITICAL: COORDINATE SYSTEM WARNING ⚠️
@@ -42,9 +44,10 @@ export class Coords {
   // Base margin constant: 0.4 inch gutter required for all non-full-bleed printers
   public static readonly kMarginGutterMinPts = 0.4 * Coords.POINTS_PER_INCH;
 
-  constructor(args: { app: App; dx: Diagnostics }) {
+  constructor(args: { app: App }) {
     this.app = args.app;
-    this.dx = args.dx.sub({ name: 'Coords' });
+    this.fn = this.app.reg.use(); // Only needs dx.sub which is always available
+    this.dx = this.fn.dx.sub({ name: 'Coords' });
   }
 
   /**
