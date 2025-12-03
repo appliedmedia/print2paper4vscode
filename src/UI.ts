@@ -16,6 +16,7 @@
 
 import type { App } from './App';
 import type { SendToExt_t, MessageHandler_t } from './types/UI_t';
+import type { FnImport_t } from './types/Registry_t';
 import { Diagnostics } from './Diagnostics';
 import { Yaml } from './Yaml';
 import { Persist, type Persist_t } from './Persist';
@@ -56,6 +57,7 @@ export class UI {
   private static readonly kToolbar_pos_max_px = 5120; // Reasonable max for 5K displays
 
   private app: App;
+  private fn: FnImport_t;
   private messageHandlers: Map<string, MessageHandler_t[]> = new Map();
   private dx: Diagnostics;
   private _yaml: Yaml<typeof UI.kYaml>;
@@ -63,16 +65,29 @@ export class UI {
 
   constructor(app: App) {
     this.app = app;
-    this.dx = app.dx.sub({ name: 'UI' });
-    this._yaml = Yaml.create(app, 'src/UI.yaml', UI.kYaml);
-
-    // Initialize persist for toolbar position
-    this.persist = new Persist(app) as Persist & Persist_t;
+    
+    // Request dependencies via Registry
+    this.fn = app.reg.use(
+      'vscodeapis.showInformationMessage',
+      'vscodeapis.showErrorMessage',
+      'vscodeapis.showWarningMessage',
+      'vscodeapis.showSaveDialog',
+      'vscodeapis.uriFromPath',
+      'vscodeapis.uriToPath',
+      'uimenumgr.getUIMenus_HTML',
+      'uimenumgr.getUIMenus_CSS',
+      'uimenumgr.getUIMenus_JS',
+      'yaml.create',
+      'persist.create'
+    );
+    
+    // dx.sub is always available (from always: ['dx.sub'])
+    this.dx = this.fn.dx.sub('UI');
+    
+    // Create per-instance Yaml and Persist via factories
+    this._yaml = this.fn.yaml.create(app, 'src/UI.yaml', UI.kYaml);
+    this.persist = this.fn.persist.create(app) as Persist & Persist_t;
     this.persist.register('toolbar_pos');
-  }
-
-  init(): void {
-    // Initialization handled by component-specific init methods
   }
 
   done(): void {
@@ -135,17 +150,17 @@ export class UI {
 
   // Show information message
   showInfoMessage(message: string): void {
-    this.app.vscodeapis.showInformationMessage(message);
+    this.fn.vscodeapis.showInformationMessage(message);
   }
 
   // Show error message
   showErrorMessage(message: string): void {
-    this.app.vscodeapis.showErrorMessage(message);
+    this.fn.vscodeapis.showErrorMessage(message);
   }
 
   // Show warning message
   showWarningMessage(message: string): void {
-    this.app.vscodeapis.showWarningMessage(message);
+    this.fn.vscodeapis.showWarningMessage(message);
   }
 
   // Add toolbar to HTML content
@@ -155,11 +170,11 @@ export class UI {
 
     try {
       // Get menu HTML from UIMenuMgr
-      const menuHtml = await this.app.uimenumgr.getUIMenus_HTML();
+      const menuHtml = await this.fn.uimenumgr.getUIMenus_HTML();
 
       // Get menu CSS and JS
-      const uiMenuCss = this.app.uimenumgr.getUIMenus_CSS();
-      const uiMenuJs = this.app.uimenumgr.getUIMenus_JS();
+      const uiMenuCss = this.fn.uimenumgr.getUIMenus_CSS();
+      const uiMenuJs = this.fn.uimenumgr.getUIMenus_JS();
 
       // Get toolbar templates from yaml getter
       const templates = this.yaml;
@@ -224,8 +239,8 @@ export class UI {
     const dx = this.dx.sub({ name: 'chooseSaveLocation' });
 
     try {
-      const uri = await this.app.vscodeapis.showSaveDialog({
-        defaultUri: this.app.vscodeapis.uriFromPath(defaultFilename),
+      const uri = await this.fn.vscodeapis.showSaveDialog({
+        defaultUri: this.fn.vscodeapis.uriFromPath(defaultFilename),
         filters: {
           'PDF files': ['pdf'],
         },
@@ -233,7 +248,7 @@ export class UI {
       });
 
       if (uri) {
-        const path = this.app.vscodeapis.uriToPath(uri);
+        const path = this.fn.vscodeapis.uriToPath(uri);
         dx.out(`User chose save location: ${path}`);
         return path;
       } else {
