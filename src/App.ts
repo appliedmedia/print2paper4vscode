@@ -25,6 +25,7 @@ export type ForceNumbers_t = Record<string, number>;
  * lazy component creation. App provides shared utilities like template replacement.
  *
  * Components are created lazily by Registry when first accessed via use().
+ * VSCodeAPIs is special - created by App with vscode/context, then registered.
  *
  * @input context - VS Code extension context
  * @input vscode - VS Code API module
@@ -32,6 +33,7 @@ export type ForceNumbers_t = Record<string, number>;
  *
  * @example
  * const app = new App({ context, vscode });
+ * app.init();
  * // Components created lazily when accessed
  * const fn = app.reg.use('pdf.generatePdf');
  * await fn.pdf.generatePdf();
@@ -44,10 +46,6 @@ export class App {
   // Instance properties for easy access
   public readonly ns = App.kNs;
   public readonly ns_ = App.kNs_;
-  
-  // VS Code context - stored for components to access
-  public readonly vscode: typeof import('vscode');
-  public readonly context: ExtensionContext;
   
   // Core infrastructure
   public readonly dx: Diagnostics;
@@ -66,10 +64,6 @@ export class App {
   constructor(args: { context: ExtensionContext; vscode: typeof import('vscode') }) {
     const { context, vscode } = args;
     
-    // Store VS Code context for components to access
-    this.vscode = vscode;
-    this.context = context;
-    
     // Create Diagnostics instance first (needed by Registry)
     this.dx = new Diagnostics({ name: 'App', debugOn: undefined, parent: null, app: this });
     const dx = this.dx.sub({ name: 'constructor' });
@@ -77,11 +71,12 @@ export class App {
 
     // Create Registry with all component classes
     // Components are created LAZILY when first accessed via use() or getInstance()
+    // Note: VSCodeAPIs is excluded - it needs special creation with vscode/context
     this.reg = new Registry({
       app: this,
       components: [
         Diagnostics,
-        VSCodeAPIs,
+        // VSCodeAPIs excluded - created specially below
         UI,
         PDF,
         PaperPrinter,
@@ -95,17 +90,23 @@ export class App {
       always: ['dx.sub'],
     });
 
+    // VSCodeAPIs is special - needs vscode and context at creation
+    // Create it directly and register with Registry
+    const vscodeapis = new VSCodeAPIs(this);
+    vscodeapis.vscode = vscode;
+    vscodeapis.context = context;
+    this.reg.registerInstance('vscodeapis', vscodeapis);
+
     dx.done();
   }
 
   /**
-   * Initialize the app - triggers lazy creation of core components
-   * This ensures command registration happens (in VSCodeAPIs)
+   * Initialize the app - triggers VSCodeAPIs init for command registration
    */
   init(): void {
     const dx = this.dx.sub({ name: 'init' });
-    // Access VSCodeAPIs to trigger its creation and command registration
-    this.vscodeapis;
+    // Initialize VSCodeAPIs (registers commands)
+    this.vscodeapis.init();
     dx.done();
   }
 

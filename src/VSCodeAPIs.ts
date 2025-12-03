@@ -47,22 +47,21 @@ export class VSCodeAPIs {
   private static readonly WEBVIEW_ID = kExtId + '.printprep';
 
   private app: App;
-  private vscode: typeof import('vscode'); // Use official VS Code types
-  private context: ExtensionContext; // Properly typed context
+  // VS Code API and context - set by App after construction
+  public vscode!: typeof import('vscode');
+  public context!: ExtensionContext;
   private panels = new Map<WebviewPanelId_t, WebviewPanel>(); // Panel mapping
   private fn!: FnImport_t;
   private dx!: Diagnostics;
 
   constructor(app: App) {
     this.app = app;
-    // Read vscode and context from app (stored there for components to access)
-    this.vscode = app.vscode;
-    this.context = app.context;
+    // vscode and context are set by App after construction
   }
 
   /**
    * Initialize VSCodeAPIs - registers commands and sets up dependencies
-   * Called by Registry after construction
+   * Called by App after setting vscode and context
    */
   init(): void {
     // Request dependencies via Registry
