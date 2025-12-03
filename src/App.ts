@@ -71,12 +71,12 @@ export class App {
 
     // Create Registry with all component classes
     // Components are created LAZILY when first accessed via use() or getInstance()
-    // Note: VSCodeAPIs is excluded - it needs special creation with vscode/context
+    // Note: Diagnostics and VSCodeAPIs are excluded - created specially
     this.reg = new Registry({
       app: this,
       components: [
-        Diagnostics,
-        // VSCodeAPIs excluded - created specially below
+        // Diagnostics excluded - App creates it directly
+        // VSCodeAPIs excluded - needs vscode/context at creation
         UI,
         PDF,
         PaperPrinter,
@@ -90,24 +90,25 @@ export class App {
       always: ['dx.sub'],
     });
 
+    // Register App's dx with Registry so components can use dx.sub
+    this.reg.registerInstance('dx', this.dx);
+
     // VSCodeAPIs is special - needs vscode and context at creation
     // Create it directly and register with Registry
-    const vscodeapis = new VSCodeAPIs(this);
-    vscodeapis.vscode = vscode;
-    vscodeapis.context = context;
+    // Command registration happens in constructor (must happen at activation)
+    const vscodeapis = new VSCodeAPIs(this, vscode, context);
     this.reg.registerInstance('vscodeapis', vscodeapis);
 
     dx.done();
   }
 
   /**
-   * Initialize the app - triggers VSCodeAPIs init for command registration
+   * Initialize the app
+   * Currently a no-op - all initialization happens lazily or in constructors
    */
   init(): void {
-    const dx = this.dx.sub({ name: 'init' });
-    // Initialize VSCodeAPIs (registers commands)
-    this.vscodeapis.init();
-    dx.done();
+    // No-op - VSCodeAPIs registers commands in constructor
+    // All other components initialize lazily
   }
 
   /**

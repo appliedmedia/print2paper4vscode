@@ -47,49 +47,41 @@ export class VSCodeAPIs {
   private static readonly WEBVIEW_ID = kExtId + '.printprep';
 
   private app: App;
-  // VS Code API and context - set by App after construction
-  public vscode!: typeof import('vscode');
-  public context!: ExtensionContext;
-  private panels = new Map<WebviewPanelId_t, WebviewPanel>(); // Panel mapping
-  private fn!: FnImport_t;
-  private dx!: Diagnostics;
-
-  constructor(app: App) {
-    this.app = app;
-    // vscode and context are set by App after construction
+  public vscode: typeof import('vscode');
+  public context: ExtensionContext;
+  private panels = new Map<WebviewPanelId_t, WebviewPanel>();
+  
+  // Lazy diagnostics
+  private _dx?: Diagnostics;
+  private get dx(): Diagnostics {
+    if (!this._dx) {
+      const fn = this.app.reg.use(); // gets dx.sub from always
+      this._dx = fn.dx.sub({ name: 'VSCodeAPIs' });
+    }
+    return this._dx;
   }
 
-  /**
-   * Initialize VSCodeAPIs - registers commands and sets up dependencies
-   * Called by App after setting vscode and context
-   */
-  init(): void {
-    // Request dependencies via Registry
-    this.fn = this.app.reg.use();
-    
-    // dx.sub is always available (from always: ['dx.sub'])
-    this.dx = this.fn.dx.sub({ name: 'VSCodeAPIs' });
-    
-    const dx = this.dx.sub({ name: 'init' });
+  constructor(app: App, vscode: typeof import('vscode'), context: ExtensionContext) {
+    this.app = app;
+    this.vscode = vscode;
+    this.context = context;
 
-    // Register VS Code commands
+    // Register VS Code commands - must happen at activation
+    // Command handlers resolve dependencies lazily when invoked
     const command_Print2Paper = this.vscode.commands.registerCommand('p2p4vsc.print2paper', () => {
-      // Request paperprinter.handlePrintCommandFromVSCode lazily
-      const paperprinterFn = this.app.reg.use('paperprinter.handlePrintCommandFromVSCode');
-      paperprinterFn.paperprinter.handlePrintCommandFromVSCode();
+      const fn = this.app.reg.use('paperprinter.handlePrintCommandFromVSCode');
+      fn.paperprinter.handlePrintCommandFromVSCode();
     });
 
     const command_PersistClear = this.vscode.commands.registerCommand(
       'p2p4vsc.persistClear',
       async () => {
-        // Request persist.clear lazily
-        const persistFn = this.app.reg.use('persist.clear');
-        await persistFn.persist.clear();
+        const fn = this.app.reg.use('persist.clear');
+        await fn.persist.clear();
       }
     );
 
     this.context.subscriptions.push(command_Print2Paper, command_PersistClear);
-    dx.done();
   }
 
   done(): void {

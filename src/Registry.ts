@@ -53,10 +53,8 @@ export class Registry {
     this.components = args.components || [];
     this.always = args.always || [];
 
-    // Create Diagnostics instance as child of App's dx (not a new root instance)
+    // Create Diagnostics instance as child of App's dx
     this.dx = this.app.dx.sub({ name: 'Registry' });
-    this._instances.set('dx', this.dx);
-    this._initialized.add('dx'); // Diagnostics doesn't need init
 
     // Build placeholder structure on `this` for intellisense
     // For each component: `this[Component.id] = {}` - just empty placeholders!
@@ -65,6 +63,14 @@ export class Registry {
         (this as Record<string, unknown>)[Component.id] = {};
       }
     }
+  }
+
+  /**
+   * Register an existing component instance with Registry
+   */
+  registerInstance(componentId: string, instance: unknown): void {
+    this._instances.set(componentId, instance);
+    this._initialized.add(componentId);
   }
 
   /**
@@ -90,7 +96,7 @@ export class Registry {
 
   /**
    * Create a component instance using factory or constructor
-   * Calls init() after creation if it exists
+   * No init() calls - components use lazy getters for dependencies
    */
   private createInstance(Component: ComponentClass): void {
     const componentId = Component.id;
@@ -115,12 +121,6 @@ export class Registry {
         instance = new Component(this.app);
       }
       this._instances.set(componentId, instance);
-
-      // Call init() if it exists (for lazy dependency setup)
-      // This happens AFTER the instance is in the cache, so other components can find it
-      if (instance && typeof (instance as { init?: () => void }).init === 'function') {
-        (instance as { init: () => void }).init();
-      }
       this._initialized.add(componentId);
     } catch (err) {
       const errorMsg = `Failed to initialize component '${componentId}': ${err instanceof Error ? err.message : String(err)}. Extension may need to be restarted.`;
