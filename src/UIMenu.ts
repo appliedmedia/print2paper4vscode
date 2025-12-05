@@ -188,7 +188,7 @@ export class UIMenu {
   private reg: Registry;
   private fn: FnImport_t;
   private dx: Diagnostics;
-  public persist: Persist & Persist_t;
+  public persist: Persist;
   private _yaml: YamlInstance<typeof UIMenu.kYaml>;
 
   // Typed accessor for uimenumgr singleton
@@ -241,7 +241,7 @@ export class UIMenu {
     this._flyoutMenuItemIds = flyoutMenuItemIds;
     this._selectionHandler = selectionHandler;
     // Access the singleton Persist instance (shared across all UIMenu instances)
-    this.persist = this.fn.persist.use() as Persist & Persist_t;
+    this.persist = this.fn.persist.use();
     this.dx = this.fn.dx.sub({ name: 'UIMenu' });
     this._yaml = this.fn.yaml.create({ filePath: 'src/UIMenu.yaml', dataStruct: UIMenu.kYaml });
 
@@ -311,7 +311,7 @@ export class UIMenu {
   // Get the currently selected item ID for this menu (for highlighting ✓)
   async getSelectedItemId(): Promise<string> {
     // Get the current persisted value (user's selection)
-    let menuItemId = this.persist[this._id as keyof typeof this.persist] || '';
+    let menuItemId = this.persist.get(this._id) || '';
     if (!menuItemId) {
       menuItemId = await this.getDefaultItemId();
     }

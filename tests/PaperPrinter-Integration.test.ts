@@ -100,14 +100,14 @@ const total = numbers.reduce(calculateSum, 0);`;
     const fontMenu = app.uimenumgr.getMenuById('fontSizeId');
     
     // Test with small font
-    fontMenu.persist.fontSizeId = '10';
+    fontMenu.persist.set('fontSizeId', '10');
     await paperPrinter['generatePdf']();
     const smallFontPdf = app.pdf.docInfo;
     const smallFontPages = smallFontPdf?.getNumberOfPages() || 0;
     const smallArrayBuffer = smallFontPdf?.asArrayBuffer();
     
     // Test with large font
-    fontMenu.persist.fontSizeId = '18';
+    fontMenu.persist.set('fontSizeId', '18');
     await paperPrinter['generatePdf']();
     const largeFontPdf = app.pdf.docInfo;
     const largeFontPages = largeFontPdf?.getNumberOfPages() || 0;

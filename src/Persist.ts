@@ -14,7 +14,7 @@ export type PersistValue_t = string | number;
 // Empty value: intentionally not persisted (for flyout-only parent menus)
 export const kEmptyNoPersist = '';
 
-// Type for dynamically created properties on Persist instances
+// Deprecated - Persist now uses get/set methods instead of dynamic properties
 export type Persist_t = Record<UI_t, PersistValue_t>;
 
 /**
@@ -62,50 +62,58 @@ export class Persist {
   }
 
   register(name: string): this {
-    Object.defineProperty(this, name, {
-      get: () => {
-        let result: unknown = undefined;
-
-        // Check in-memory cache first
-        if (this.value[name] !== undefined) {
-          result = this.value[name];
-        } else {
-          // Try to get from global state (may fail if not a GlobalStateKey)
-          const globalValue = this.fn.vscodeapis.getGlobalState(name as GlobalStateKey_t);
-          if (globalValue !== undefined) {
-            this.value[name] = globalValue;
-            result = globalValue;
-          } else if (this.default[name] !== undefined) {
-            // Fall back to default value
-            const defaultValue = this.default[name];
-            this.value[name] = defaultValue;
-            // Try to persist default to global state
-            this.fn.vscodeapis.updateGlobalState({
-              key: name as GlobalStateKey_t,
-              value: defaultValue as GlobalStateValue_t,
-            });
-            result = defaultValue;
-          }
-        }
-
-        return result;
-      },
-      set: (value: PersistValue_t) => {
-        if (value !== this.value[name]) {
-          this.value[name] = value;
-          // Skip global state update if value is empty string (non-persistent menus like 'print'/'page')
-          if (value !== kEmptyNoPersist) {
-            this.fn.vscodeapis.updateGlobalState({
-              key: name as GlobalStateKey_t,
-              value: value as GlobalStateValue_t,
-            });
-          }
-        }
-      },
-      enumerable: true,
-      configurable: true,
-    });
+    // Just track that this key is registered (for validation if needed)
+    // Actual storage is handled by get/set methods
     return this;
+  }
+
+  /**
+   * Get a persisted value
+   * Returns undefined if key not found and no default set
+   */
+  get<T extends PersistValue_t = PersistValue_t>(name: string): T | undefined {
+    let result: T | undefined = undefined;
+
+    // Check in-memory cache first
+    if (this.value[name] !== undefined) {
+      result = this.value[name] as T;
+    } else {
+      // Try to get from global state
+      const globalValue = this.fn.vscodeapis.getGlobalState(name as GlobalStateKey_t);
+      if (globalValue !== undefined) {
+        this.value[name] = globalValue;
+        result = globalValue as T;
+      } else if (this.default[name] !== undefined) {
+        // Fall back to default value
+        const defaultValue = this.default[name];
+        this.value[name] = defaultValue;
+        // Try to persist default to global state
+        this.fn.vscodeapis.updateGlobalState({
+          key: name as GlobalStateKey_t,
+          value: defaultValue as GlobalStateValue_t,
+        });
+        result = defaultValue as T;
+      }
+    }
+
+    return result;
+  }
+
+  /**
+   * Set a persisted value
+   * Saves to both in-memory cache and VS Code global state
+   */
+  set<T extends PersistValue_t = PersistValue_t>(name: string, value: T): void {
+    if (value !== this.value[name]) {
+      this.value[name] = value;
+      // Skip global state update if value is empty string (non-persistent menus like 'print'/'page')
+      if (value !== kEmptyNoPersist) {
+        this.fn.vscodeapis.updateGlobalState({
+          key: name as GlobalStateKey_t,
+          value: value as GlobalStateValue_t,
+        });
+      }
+    }
   }
 
   async validateDefault(args: {

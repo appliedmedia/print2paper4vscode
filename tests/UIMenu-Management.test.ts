@@ -57,7 +57,7 @@ describe('UIMenu Simple Unit Tests', () => {
     const themeMenu = app.uimenumgr.getMenuById('theme');
     
     // Set a value
-    themeMenu.persist.theme = 'github-light';
+    themeMenu.persist.set('theme', 'github-light');
     
     // Retrieve it
     const selectedTheme = app.uimenumgr.getMenuItemIdSelected('theme');

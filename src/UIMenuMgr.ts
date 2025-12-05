@@ -238,10 +238,10 @@ export class UIMenuMgr {
     return menu;
   }
 
-  // Get persist value for a menu (reads from menu.persist[menuId])
+  // Get persist value for a menu (reads from menu.persist.get(menuId))
   getPersistForMenuId(menuId: MenuId_t): PersistValue_t | undefined {
     const menu = this.getMenuById(menuId);
-    return (menu.persist as unknown as Record<string, PersistValue_t>)[menuId];
+    return menu.persist.get(menuId);
   }
 
   // Get persist value for a persistId from a menu's persist
@@ -250,7 +250,7 @@ export class UIMenuMgr {
     dx.require(args, ['menuId', 'persistId']);
     const { menuId, persistId } = args;
     const menu = this.getMenuById(menuId);
-    const result = (menu.persist as unknown as Record<string, PersistValue_t>)[persistId];
+    const result = menu.persist.get(persistId);
     dx.done();
     return result;
   }
@@ -261,8 +261,8 @@ export class UIMenuMgr {
     dx.require(args, ['menuId', 'persistId', 'value']);
     const { menuId, persistId, value } = args;
     const menu = this.getMenuById(menuId);
-    const oldValue = (menu.persist as unknown as Record<string, PersistValue_t>)[persistId];
-    (menu.persist as unknown as Record<string, PersistValue_t>)[persistId] = value;
+    const oldValue = menu.persist.get(persistId);
+    menu.persist.set(persistId, value);
     dx.out(`Menu[${menuId}].persist[${persistId}] = ${value} (was: ${oldValue})`);
     dx.done();
   }
@@ -270,9 +270,9 @@ export class UIMenuMgr {
   // Get the selected menuItemId for a menu (returns the persisted ID)
   getMenuItemIdSelected(menuId: MenuId_t): string | undefined {
     const menu = this.getMenuById(menuId);
-    const selectedValue = (menu.persist as unknown as Record<string, string>)[menuId];
+    const selectedValue = menu.persist.get(menuId);
     this.dx.out(`getMenuItemIdSelected(${menuId}) → ${selectedValue}`);
-    return selectedValue;
+    return selectedValue ? String(selectedValue) : undefined;
   }
 
   // Get the value for the currently selected menu item

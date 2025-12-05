@@ -322,7 +322,7 @@ export class UIWebView {
       const left = msg.left;
       if (typeof left === 'number') {
         // Save toolbar position via persist
-        this.ui.persist.toolbar_pos = left;
+        this.ui.persist.set('toolbar_pos', left);
         dx.out(`Toolbar position saved: ${left}px`);
       }
     } finally {

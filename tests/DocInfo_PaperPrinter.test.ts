@@ -34,29 +34,29 @@ describe('DocInfo_PaperPrinter', () => {
   it('should return different margin values for different margin IDs', () => {
     // Set margin to 'none'
     const marginMenu = app.uimenumgr.getMenuById('marginId');
-    marginMenu.persist.marginId = 'none';
+    marginMenu.persist.set('marginId', 'none');
     const noneMargin = docInfo.marginPx;
     assert.strictEqual(noneMargin.topPx, 0);
 
     // Set margin to 'minimal'
-    marginMenu.persist.marginId = 'minimal';
+    marginMenu.persist.set('marginId', 'minimal');
     const minimalMargin = docInfo.marginPx;
     assert.strictEqual(minimalMargin.topPx, 7);
 
     // Set margin to 'normal'
-    marginMenu.persist.marginId = 'normal';
+    marginMenu.persist.set('marginId', 'normal');
     const normalMargin = docInfo.marginPx;
     assert.strictEqual(normalMargin.topPx, 20);
 
     // Set margin to 'wide'
-    marginMenu.persist.marginId = 'wide';
+    marginMenu.persist.set('marginId', 'wide');
     const wideMargin = docInfo.marginPx;
     assert.strictEqual(wideMargin.topPx, 40);
   });
 
   it('should default to normal when invalid margin ID is provided', () => {
     const marginMenu = app.uimenumgr.getMenuById('marginId');
-    marginMenu.persist.marginId = 'invalid-margin' as any;
+    marginMenu.persist.set('marginId', 'invalid-margin' as any);
     const margin = docInfo.marginPx;
     assert.strictEqual(margin.topPx, 20); // Should default to 'normal'
   });
