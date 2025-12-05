@@ -77,10 +77,6 @@ export class UIMenuMgr {
     this.contextDict = { ...(this.contextDict ?? kContextDict_None), ...contextDict };
   }
 
-  init(): void {
-    // No initialization needed - menus are created on-demand by PaperPrinter
-  }
-
   // Instance methods with full validation using this.app
   isMenuId(id: string): id is MenuId_t {
     return kMenuId.includes(id as MenuId_t);

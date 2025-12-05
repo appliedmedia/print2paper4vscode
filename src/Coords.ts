@@ -9,6 +9,7 @@ import { Diagnostics } from './Diagnostics';
  * Provides a single source of truth for coordinate transformations.
  */
 export class Coords {
+  static readonly id = 'coords';
   private app: App;
   private fn: FnImport_t;
   private dx: Diagnostics;
@@ -48,12 +49,8 @@ export class Coords {
     this.app = args.app;
     this.fn = this.app.reg.use(); // Only needs dx.sub which is always available
     this.dx = this.fn.dx.sub({ name: 'Coords' });
-  }
-
-  /**
-   * Initialize the Coords system
-   */
-  init(): void {
+    
+    // All initialization happens here - no separate init() needed
     this.dx.out('Coords system initialized');
   }
 

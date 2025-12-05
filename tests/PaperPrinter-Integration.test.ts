@@ -7,7 +7,6 @@ import { mockContext, mockVSCode } from './test-utils.js';
 describe('PaperPrinter Integration Tests', () => {
   test('should generate same PDF for webview and print operations', async () => {
     const app = new App({ context: mockContext, vscode: mockVSCode });
-    app.init();
     
     const paperPrinter = app.paperprinter;
     
@@ -44,7 +43,6 @@ describe('PaperPrinter Integration Tests', () => {
 
   test('should regenerate PDF when settings change', async () => {
     const app = new App({ context: mockContext, vscode: mockVSCode });
-    app.init();
     
     const paperPrinter = app.paperprinter;
     paperPrinter.docInfo.rawCode = `const message = "test";
@@ -83,7 +81,6 @@ console.log(message);`;
 
   test('should regenerate PDF when font size changes', async () => {
     const app = new App({ context: mockContext, vscode: mockVSCode });
-    app.init();
     
     const paperPrinter = app.paperprinter;
     paperPrinter.docInfo.rawCode = `// Test code with multiple lines
@@ -128,7 +125,6 @@ const total = numbers.reduce(calculateSum, 0);`;
 
   test('should handle PDF ArrayBuffer conversion for webview', async () => {
     const app = new App({ context: mockContext, vscode: mockVSCode });
-    app.init();
     
     const paperPrinter = app.paperprinter;
     paperPrinter.docInfo.rawCode = 'console.log("PDF conversion test");';

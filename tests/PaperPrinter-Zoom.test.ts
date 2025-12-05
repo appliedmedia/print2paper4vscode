@@ -8,7 +8,6 @@ describe('PaperPrinter Zoom Unit Tests', () => {
 
   beforeEach(() => {
     app = new App({ context: mockContext, vscode: mockVSCode });
-    app.init();
     // Create menus so zoom menus exist
     (app.paperprinter as any).createMenus();
   });

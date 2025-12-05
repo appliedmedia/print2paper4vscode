@@ -29,7 +29,6 @@ describe('VSCodeAPIs', () => {
   beforeEach(() => {
     mockGlobalState = {}; // Reset state before each test
     app = new App({ context: mockContext, vscode: mockVSCode });
-    app.init();
   });
 
   afterEach(() => {

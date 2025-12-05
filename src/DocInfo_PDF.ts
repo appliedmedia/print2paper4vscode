@@ -18,6 +18,7 @@ import type { LanguageId_t } from './Stylize';
  * for accessing them. The main PDF class accesses these through this.docInfo.
  */
 export class DocInfo_PDF {
+  static readonly id = 'docinfo_pdf';
   private app: App;
 
   // Stable instance identifier for tracking PDF object reuse
@@ -69,9 +70,16 @@ export class DocInfo_PDF {
   // Temporary file tracking
   public tempPdfs: string[] = [];
 
-  constructor(args: { app: App }) {
+  private constructor(args: { app: App }) {
     this.app = args.app;
     this.instanceId = DocInfo_PDF.nextInstanceId++;
+  }
+  
+  /**
+   * Factory method to create DocInfo_PDF instances
+   */
+  static create(app: App): DocInfo_PDF {
+    return new DocInfo_PDF({ app });
   }
 
   // Margin getter - calculates from current marginId
@@ -197,14 +205,13 @@ export class DocInfo_PDF {
       return { widthPx: 0, heightPx: 0 };
     }
 
-    const coords = new Coords({ app: this.app });
-
+    // Use Coords singleton via app.coords
     const pageWidthPts = this.getPageWidth();
     const pageHeightPts = this.getPageHeight();
 
     return {
-      widthPx: Math.round(coords.pdfPtsToCssPx(pageWidthPts)),
-      heightPx: Math.round(coords.pdfPtsToCssPx(pageHeightPts)),
+      widthPx: Math.round(this.app.coords.pdfPtsToCssPx(pageWidthPts)),
+      heightPx: Math.round(this.app.coords.pdfPtsToCssPx(pageHeightPts)),
     };
   }
 

@@ -9,7 +9,6 @@ describe('PDF Header and Footer', () => {
 
   beforeEach(() => {
     app = new App({ context: mockContext, vscode: mockVSCode });
-    app.init();
     installHeaderFooterMenuStubs(app);
     app.paperprinter.docInfo.printTitle = 'Test Document';
   });

@@ -12,7 +12,6 @@ describe('UIWebView', () => {
 
   beforeEach(() => {
     app = new App({ context: mockContext, vscode: mockVSCode });
-    app.init();
     uiWebView = new UIWebView({ app });
   });
 
@@ -86,7 +85,7 @@ describe('UIWebView', () => {
   });
 
   it('should initialize webview', () => {
-    uiWebView.init();
+    // UIWebView initialization now happens in constructor
     assert.ok(true); // Should not throw
   });
 

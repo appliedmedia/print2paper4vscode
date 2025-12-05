@@ -9,6 +9,7 @@ import type { MarginIdMenuItems_t } from './types/PaperPrinter_t';
  * for accessing them. The main PaperPrinter class accesses these through this.docInfo.
  */
 export class DocInfo_PaperPrinter {
+  static readonly id = 'docinfo_paperprinter';
   private app: App;
 
   // Document content
@@ -20,8 +21,15 @@ export class DocInfo_PaperPrinter {
   public pageWidthPx: number = 0;
   public pageHeightPx: number = 0;
 
-  constructor(args: { app: App }) {
+  private constructor(args: { app: App }) {
     this.app = args.app;
+  }
+  
+  /**
+   * Factory method to create DocInfo_PaperPrinter instances
+   */
+  static create(app: App): DocInfo_PaperPrinter {
+    return new DocInfo_PaperPrinter({ app });
   }
 
   // Margin in pixels for webview display
