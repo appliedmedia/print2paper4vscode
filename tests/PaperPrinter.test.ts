@@ -10,7 +10,6 @@ describe('PaperPrinter', () => {
 
   beforeEach(() => {
     app = new App({ context: mockContext, vscode: mockVSCode });
-    app.init();
     paperPrinter = app.paperprinter;
   });
 

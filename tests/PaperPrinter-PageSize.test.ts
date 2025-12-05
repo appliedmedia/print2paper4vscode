@@ -8,7 +8,6 @@ describe('PaperPrinter Page Size Unit Tests', () => {
 
   beforeEach(() => {
     app = new App({ context: mockContext, vscode: mockVSCode });
-    app.init();
   });
 
   afterEach(() => {

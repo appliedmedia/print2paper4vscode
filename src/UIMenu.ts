@@ -252,10 +252,6 @@ export class UIMenu {
     return this._yaml.get();
   }
 
-  init(): void {
-    // No initialization needed
-  }
-
   // Getters for private properties
   get displayName(): string {
     return this._displayName;

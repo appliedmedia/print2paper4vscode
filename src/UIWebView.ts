@@ -30,6 +30,7 @@ export interface PDFData_t {
  * Acts as a flexible orchestrator for webview-related functionality
  */
 export class UIWebView {
+  static readonly id = 'uiwebview';
   private static readonly kYaml = {
     webview_html: '',
     webview_css: '',
@@ -60,14 +61,13 @@ export class UIWebView {
     this.handleDragEndBound = this.handleDragEnd.bind(this) as MessageHandler_t;
     this.handleMenuItemSelectedBound = this.handleMenuItemSelected.bind(this) as MessageHandler_t;
     this.handleDxMessageBound = this.handleDxMessage.bind(this) as MessageHandler_t;
+    
+    // All initialization happens here - no separate init() needed
+    this.registerMessageHandlers();
   }
 
   get yaml() {
     return this._yaml.get();
-  }
-
-  init(): void {
-    this.registerMessageHandlers();
   }
 
   /**

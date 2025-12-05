@@ -10,7 +10,6 @@ describe('OS Platform-Specific Classes', () => {
 
   beforeEach(() => {
     app = new App({ context: mockContext, vscode: mockVSCode });
-    app.init();
   });
 
   afterEach(() => {

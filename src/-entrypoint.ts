@@ -7,7 +7,7 @@ export function activate(context: vscode.ExtensionContext) {
   console.log('Print2Paper4VSCode extension activating...');
   try {
     app = new App({ context, vscode });
-    app.init();
+    // All initialization happens in constructors - no separate init() needed
   } catch (error) {
     console.error('Failed to activate extension:', error);
   }

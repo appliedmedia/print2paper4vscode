@@ -6,7 +6,6 @@ import { mockContext, mockVSCode } from './test-utils.js';
 describe('System Integration Tests', () => {
   test('should initialize all components correctly', async () => {
     const app = new App({ context: mockContext, vscode: mockVSCode });
-    app.init();
     
     // Verify all major components are created
     assert.ok(app.vscodeapis, 'Should have VSCodeAPIs');
@@ -23,7 +22,6 @@ describe('System Integration Tests', () => {
 
   test('should handle Shiki theme workflow', async () => {
     const app = new App({ context: mockContext, vscode: mockVSCode });
-    app.init();
     // Note: Stylize no longer has init() - highlighter initialized lazily when needed
     
     // Test that Shiki themes are loaded
@@ -47,7 +45,6 @@ describe('System Integration Tests', () => {
 
   test('should validate template system integration', async () => {
     const app = new App({ context: mockContext, vscode: mockVSCode });
-    app.init();
     
     // Test template replacement
     const template = 'Hello {{NAME}}, welcome to {{PRODUCT}}!';
@@ -67,7 +64,6 @@ describe('System Integration Tests', () => {
 
   test('should handle page size and orient functionality', async () => {
     const app = new App({ context: mockContext, vscode: mockVSCode });
-    app.init();
 
     // Test page size menu items
     const pageMenuItems = (app.paperprinter as any).menuItems_Page();
@@ -90,7 +86,6 @@ describe('System Integration Tests', () => {
 
   test('should handle PDF generation workflow', async () => {
     const app = new App({ context: mockContext, vscode: mockVSCode });
-    app.init();
     
     // Set up document
     app.paperprinter.docInfo.rawCode = 'const x = 42;';
@@ -111,7 +106,6 @@ describe('System Integration Tests', () => {
 
   test('should coordinate between components', async () => {
     const app = new App({ context: mockContext, vscode: mockVSCode });
-    app.init();
     
     // Test that components can access each other
     assert.strictEqual(app.stylize['app'], app, 'Stylize should reference app');

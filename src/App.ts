@@ -6,6 +6,8 @@ import { Stylize } from './Stylize';
 import { TabInspector } from './TabInspector';
 import { OS } from './OS';
 import { UIMenuMgr } from './UIMenuMgr';
+import { UIWebView } from './UIWebView';
+import { Coords } from './Coords';
 import type { Diagnostics } from './Diagnostics';
 import { Registry, type ComponentClass } from './Registry';
 import { Persist } from './Persist';
@@ -62,6 +64,8 @@ export class App {
   get tabinspector(): TabInspector { return this.reg.getInstance<TabInspector>('tabinspector')!; }
   get os(): OS { return this.reg.getInstance<OS>('os')!; }
   get uimenumgr(): UIMenuMgr { return this.reg.getInstance<UIMenuMgr>('uimenumgr')!; }
+  get coords(): Coords { return this.reg.getInstance<Coords>('coords')!; }
+  get uiwebview(): UIWebView { return this.reg.getInstance<UIWebView>('uiwebview')!; }
 
   constructor(args: { context: ExtensionContext; vscode: typeof import('vscode') }) {
     const { context, vscode } = args;
@@ -79,9 +83,11 @@ export class App {
         Stylize,
         TabInspector,
         UIMenuMgr,
+        UIWebView, // Singleton webview manager
         OS as unknown as ComponentClass, // OS has static create() factory
         Persist as unknown as ComponentClass, // Persist has static create() factory
         Yaml as unknown as ComponentClass, // Yaml has static create() factory
+        Coords, // Singleton coordinate system
       ],
       always: ['dx.sub'],
       init: {
@@ -100,14 +106,6 @@ export class App {
     this.reg.getInstance('vscodeapis');
   }
 
-  /**
-   * Initialize the app
-   * Currently a no-op - all initialization happens lazily or in constructors
-   */
-  init(): void {
-    // No-op - VSCodeAPIs registers commands in constructor
-    // All other components initialize lazily
-  }
 
   /**
    * Cleanup all components

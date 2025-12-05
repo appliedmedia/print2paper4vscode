@@ -92,7 +92,6 @@ export class PaperPrinter {
 
   private app: App;
   private fn: FnImport_t;
-  private uiwebview: UIWebView | null = null;
   private dx: Diagnostics;
   private _yaml: Yaml<typeof PaperPrinter.kYaml>;
 
@@ -106,13 +105,11 @@ export class PaperPrinter {
     this.dx = this.fn.dx.sub({ name: 'PaperPrinter' });
 
     // Initialize docInfo
-    this.docInfo = new DocInfo_PaperPrinter({ app: this.app });
+    this.docInfo = DocInfo_PaperPrinter.create(this.app);
 
     // Initialize YAML loader
     this._yaml = Yaml.create(this.app, 'src/PaperPrinter.yaml', PaperPrinter.kYaml);
   }
-
-  init(): void {}
 
   done(): void {
     this.dx.done();
@@ -208,12 +205,9 @@ export class PaperPrinter {
         throw new Error('PDF document not generated');
       }
 
-      // Create webview and initialize message handlers
-      this.uiwebview = new UIWebView({ app: this.app });
-      this.uiwebview.init();
-
-      // Display PDF in webview panel (uses this.app.pdf.docInfo directly, including title)
-      await this.uiwebview.displayPdfPanel();
+      // Display PDF in webview panel using singleton UIWebView
+      // (uses this.app.pdf.docInfo directly, including title)
+      await this.app.uiwebview.displayPdfPanel();
 
       this.dx.out(`Opened webview for ${printableLabel}`);
     } catch (error) {
@@ -605,14 +599,11 @@ export class PaperPrinter {
       }
 
       // Update webview with new PDF (same logic as initial display)
-      if (this.uiwebview) {
-        dx.out('Updating webview with new PDF...');
+      // UIWebView is a singleton, displayPdfPanel() will update existing panel if already open
+      dx.out('Updating webview with new PDF...');
 
-        // Display PDF in webview (reuses existing panel, uses title from docInfo)
-        void this.uiwebview.displayPdfPanel();
-      } else {
-        dx.out('No webview to update');
-      }
+      // Display PDF in webview (reuses existing panel, uses title from docInfo)
+      void this.app.uiwebview.displayPdfPanel();
     } catch (error) {
       dx.error(`Error regenerating PDF: ${error}`);
       throw error;

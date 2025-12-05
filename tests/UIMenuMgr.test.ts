@@ -11,7 +11,6 @@ describe('UIMenuMgr', () => {
 
   beforeEach(() => {
     app = new App({ context: mockContext, vscode: mockVSCode });
-    app.init();
     menuMgr = new UIMenuMgr({ app });
   });
 

@@ -28,7 +28,6 @@ describe('Registry', () => {
 
   beforeEach(() => {
     app = new App({ context: mockContext, vscode: mockVSCode });
-    app.init();
   });
 
   afterEach(() => {

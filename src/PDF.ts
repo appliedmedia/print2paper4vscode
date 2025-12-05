@@ -44,7 +44,6 @@ export class PDF {
   private tempPdfs: string[] = [];
   private dx: Diagnostics;
   private _yaml: Yaml<typeof PDF.kYaml>;
-  private coords: Coords;
 
   // Line-by-line rendering state - jsPDF now managed through docInfo.pdfDoc
   private currentX: number = 0;
@@ -60,20 +59,22 @@ export class PDF {
 
   constructor(args: { app: App }) {
     this.app = args.app;
-    this.fn = this.app.reg.use('ui.showErrorMessage');
+    this.fn = this.app.reg.use('ui.showErrorMessage', 'coords.pdfPtsToCssPx', 'coords.cssPxToPdfPts');
     this.dx = this.fn.dx.sub({ name: 'PDF' });
-    this.coords = new Coords({ app: this.app });
-    this.docInfo = new DocInfo_PDF({ app: this.app });
+    this.docInfo = DocInfo_PDF.create(this.app);
     this._yaml = Yaml.create(this.app, 'src/PDF.yaml', PDF.kYaml);
+    
+    // All initialization happens here - no separate init() needed
+    this.tempPdfs = [];
   }
 
   get yaml() {
     return this._yaml.get();
   }
-
-  init(): void {
-    this.tempPdfs = [];
-    this.coords.init();
+  
+  // Accessor for Coords singleton via Registry
+  private get coords(): Coords {
+    return this.app.coords;
   }
 
   /**
@@ -112,7 +113,6 @@ export class PDF {
       }
     }
     this.tempPdfs = [];
-    this.coords.done();
     this.dx.done();
   }
 

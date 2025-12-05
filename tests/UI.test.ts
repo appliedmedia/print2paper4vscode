@@ -10,7 +10,6 @@ describe('UI', () => {
 
   beforeEach(() => {
     app = new App({ context: mockContext, vscode: mockVSCode });
-    app.init();
     ui = new UI({ app });
     // UI no longer has init() method (migrated to Registry pattern)
   });
