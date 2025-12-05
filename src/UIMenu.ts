@@ -1,9 +1,11 @@
-import type { App, ForceNumber_scalar_t } from './App';
+import type { Registry } from './Registry';
+import type { ForceNumber_scalar_t } from './App';
 import type { UI_t } from './UI';
 import type { contextDict_t } from './types/UI_t';
 import { Diagnostics } from './Diagnostics';
 import { Persist, type Persist_t } from './Persist';
 import { Yaml } from './Yaml';
+import type { FnImport_t } from './types/Registry_t';
 import {
   kPageSizeId,
   kOrient,
@@ -183,16 +185,20 @@ export class UIMenu {
     uimenu_items_container: '',
   } as const;
 
+  private reg: Registry;
+  private fn: FnImport_t;
   private dx: Diagnostics;
   public persist: Persist & Persist_t;
   private _yaml: Yaml<typeof UIMenu.kYaml>;
+
+  // Typed accessor for uimenumgr singleton
+  private get uimenumgr() { return this.reg.getInstance<import('./UIMenuMgr').UIMenuMgr>('uimenumgr')!; }
 
   // Public getter for id
   get id(): MenuId_t {
     return this._id;
   }
 
-  private app: App;
   private _id: MenuId_t;
   private _displayName: string;
   private _iconSlotTriad: iconSlotTriad_t;
@@ -206,7 +212,7 @@ export class UIMenu {
   ) => Promise<HandleSelection_t>;
 
   constructor(args: {
-    app: App;
+    reg: Registry;
     id: MenuId_t;
     displayName: string;
     iconSlotTriad: iconSlotTriad_t;
@@ -220,12 +226,13 @@ export class UIMenu {
     ) => Promise<HandleSelection_t>;
   }) {
     // Note: Cannot use dx.require here as Diagnostics is not yet initialized
-    if (!args.app || !args.id || !args.displayName || !args.iconSlotTriad || !args.menuItems || !args.selectionHandler) {
-      throw new Error('UIMenu constructor requires app, id, displayName, iconSlotTriad, menuItems, and selectionHandler');
+    if (!args.reg || !args.id || !args.displayName || !args.iconSlotTriad || !args.menuItems || !args.selectionHandler) {
+      throw new Error('UIMenu constructor requires reg, id, displayName, iconSlotTriad, menuItems, and selectionHandler');
     }
-    const { app, id, displayName, iconSlotTriad, isFlyout = false, menuItems, flyoutMenuItemIds = [], selectionHandler } = args;
+    const { reg, id, displayName, iconSlotTriad, isFlyout = false, menuItems, flyoutMenuItemIds = [], selectionHandler } = args;
     
-    this.app = app;
+    this.reg = reg;
+    this.fn = this.reg.use();
     this._id = id;
     this._displayName = displayName;
     this._iconSlotTriad = iconSlotTriad;
@@ -233,9 +240,9 @@ export class UIMenu {
     this._menuItems = menuItems;
     this._flyoutMenuItemIds = flyoutMenuItemIds;
     this._selectionHandler = selectionHandler;
-    this.persist = Persist.create({ app }) as Persist & Persist_t;
-    this.dx = this.app.dx.sub({ name: 'UIMenu' });
-    this._yaml = Yaml.create(app, 'src/UIMenu.yaml', UIMenu.kYaml);
+    this.persist = Persist.create({ reg: this.reg }) as Persist & Persist_t;
+    this.dx = this.reg.getInstance<Diagnostics>('dx')!.sub({ name: 'UIMenu' });
+    this._yaml = Yaml.create({ reg: this.reg, filePath: 'src/UIMenu.yaml', dataStruct: UIMenu.kYaml });
 
     // Register persist property (no value set yet)
     this.persist.register(this._id);
@@ -373,7 +380,7 @@ export class UIMenu {
     };
 
     dx.done();
-    return this.app.templateDictReplace(yaml.uimenu_item, replacementDict);
+    return this.reg.app.templateDictReplace(yaml.uimenu_item, replacementDict);
   }
 
   /**
@@ -450,7 +457,7 @@ export class UIMenu {
     let value: string | undefined = undefined;
     
     try {
-      const persistedValue = this.app.uimenumgr.getValueForMenuItemIdSelected(this._id);
+      const persistedValue = this.uimenumgr.getValueForMenuItemIdSelected(this._id);
       
       if (persistedValue === undefined || persistedValue === null) {
         dx.out(`No persisted value for ${this._id}`);
@@ -513,7 +520,7 @@ export class UIMenu {
     
     try {
       const yaml = this.yaml;
-      const html = this.app.templateDictReplace(yaml.uimenu_text_edit, {
+      const html = this.reg.app.templateDictReplace(yaml.uimenu_text_edit, {
         itemId,
         constrain,
         width: width ?? '',
@@ -597,7 +604,7 @@ export class UIMenu {
       const flyoutCache: Record<string, string> = {};
       for (const flyoutMenuItemId of this.flyoutMenuItemIds) {
         try {
-          const flyoutMenu = this.app.uimenumgr.getMenuById(flyoutMenuItemId);
+          const flyoutMenu = this.uimenumgr.getMenuById(flyoutMenuItemId);
           const flyoutHtml = await flyoutMenu.getHTML(visited);
           flyoutCache[flyoutMenuItemId] = flyoutHtml;
         } catch (error) {
@@ -657,7 +664,7 @@ export class UIMenu {
         icon: buttonContent,
         menuItems: hasItems ? menuItems : '', // Empty string if no items
         menuItemsContainer: hasItems
-          ? this.app.templateDictReplace(this.yaml.uimenu_items_container, {
+          ? this.reg.app.templateDictReplace(this.yaml.uimenu_items_container, {
               menuId: this._id,
               menuItems,
             })
@@ -666,7 +673,7 @@ export class UIMenu {
         shortcutCodeAttr,
       };
 
-      const result = this.app.templateDictReplace(template, replacementDict);
+      const result = this.reg.app.templateDictReplace(template, replacementDict);
       visited.delete(this._id); // Remove from visited set after successful generation
       return result;
     } catch (error) {

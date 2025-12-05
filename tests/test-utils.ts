@@ -83,6 +83,7 @@ export const mockVSCode = {
     showErrorMessage: () => Promise.resolve(),
     showInformationMessage: () => Promise.resolve(),
     showWarningMessage: () => Promise.resolve(),
+    showSaveDialog: () => Promise.resolve(undefined),
     setStatusBarMessage: () => ({ dispose: () => {} }),
     createWebviewPanel: () => ({
       webview: {

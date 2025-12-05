@@ -1,4 +1,4 @@
-import type { App } from './App';
+import type { Registry } from './Registry';
 import type { FnImport_t } from './types/Registry_t';
 import { Diagnostics } from './Diagnostics';
 import type { UI_t } from './UI';
@@ -25,33 +25,36 @@ export type Persist_t = Record<UI_t, PersistValue_t>;
  * global state, then default values. Supports transparent read/write with automatic
  * state synchronization.
  *
- * @input app - Application instance for global state access
+ * @input reg - Registry instance for global state access
  * @output Dynamic properties with persistent storage, default value management
  *
  * @example
- * const persist = new Persist(app);
+ * const persist = Persist.create({ reg });
  * persist.register('theme').validateDefault('theme', async () => 'github-light');
  * console.log(persist.theme); // 'github-light' from default
  * persist.theme = 'dark'; // Saves to VS Code global state
  */
 export class Persist {
   static readonly id = 'persist';
+  private reg: Registry;
   private fn: FnImport_t;
   private dx: Diagnostics;
   private default: Record<string, PersistValue_t> = {};
   private value: Record<string, PersistValue_t> = {};
-
-  private app: App;
   
-  private constructor(args: { app: App }) {
-    this.app = args.app;
-    // Only request dx.sub via Registry (always available)
-    // Other dependencies accessed via this.app.xxx to avoid circular deps during construction
-    this.fn = this.app.reg.use();
+  private constructor(args: { reg: Registry }) {
+    this.reg = args.reg;
+    // Request methods via Registry
+    this.fn = this.reg.use(
+      'vscodeapis.getGlobalState',
+      'vscodeapis.updateGlobalState',
+      'vscodeapis.deleteGlobalState',
+      'ui.showInfoMessage'
+    );
     this.dx = this.fn.dx.sub({ name: 'Persist' });
   }
   
-  static create(args: { app: App }): Persist {
+  static create(args: { reg: Registry }): Persist {
     return new Persist(args);
   }
 
@@ -65,7 +68,7 @@ export class Persist {
           result = this.value[name];
         } else {
           // Try to get from global state (may fail if not a GlobalStateKey)
-          const globalValue = this.app.vscodeapis.getGlobalState(name as GlobalStateKey_t);
+          const globalValue = this.fn.vscodeapis.getGlobalState(name as GlobalStateKey_t);
           if (globalValue !== undefined) {
             this.value[name] = globalValue;
             result = globalValue;
@@ -74,7 +77,7 @@ export class Persist {
             const defaultValue = this.default[name];
             this.value[name] = defaultValue;
             // Try to persist default to global state
-            this.app.vscodeapis.updateGlobalState({
+            this.fn.vscodeapis.updateGlobalState({
               key: name as GlobalStateKey_t,
               value: defaultValue as GlobalStateValue_t,
             });
@@ -89,7 +92,7 @@ export class Persist {
           this.value[name] = value;
           // Skip global state update if value is empty string (non-persistent menus like 'print'/'page')
           if (value !== kEmptyNoPersist) {
-            this.app.vscodeapis.updateGlobalState({
+            this.fn.vscodeapis.updateGlobalState({
               key: name as GlobalStateKey_t,
               value: value as GlobalStateValue_t,
             });
@@ -129,7 +132,7 @@ export class Persist {
     const keysToReset: GlobalStateKey_t[] = [...kMenuId, 'toolbar_pos'];
 
     for (const key of keysToReset) {
-      await this.app.vscodeapis.deleteGlobalState({
+      await this.fn.vscodeapis.deleteGlobalState({
         key: key as GlobalStateKey_t,
       });
     }
@@ -139,7 +142,30 @@ export class Persist {
     this.default = {};
 
     // Inform user
-    this.app.ui.showInfoMessage('Print2Paper state reset - reopen print view to see defaults');
+    this.fn.ui.showInfoMessage('Print2Paper state reset - reopen print view to see defaults');
+  }
+
+  /**
+   * Clear all persist state (static version for global operations)
+   */
+  static async clear(args: { reg: Registry }): Promise<void> {
+    const { reg } = args;
+    const fn = reg.use(
+      'vscodeapis.deleteGlobalState',
+      'ui.showInfoMessage'
+    );
+
+    // Clear all menu-related state
+    const keysToReset: GlobalStateKey_t[] = [...kMenuId, 'toolbar_pos'];
+
+    for (const key of keysToReset) {
+      await fn.vscodeapis.deleteGlobalState({
+        key: key as GlobalStateKey_t,
+      });
+    }
+
+    // Inform user
+    fn.ui.showInfoMessage('Print2Paper state reset - reopen print view to see defaults');
   }
 }
 

@@ -1,4 +1,5 @@
-import type { App, ForceNumber_dict_t } from './App';
+import type { Registry } from './Registry';
+import type { ForceNumber_dict_t } from './App';
 import type { FnImport_t } from './types/Registry_t';
 import type { UI_t } from './UI';
 import type { PersistValue_t } from './Persist';
@@ -46,7 +47,7 @@ const kUIMenuItemDictRequiredKeys = [
  */
 export class UIMenuMgr {
   static readonly id = 'uimenumgr';
-  private app: App;
+  private reg: Registry;
   private fn: FnImport_t;
   private menus: UIMenu[] = [];
   private dx: Diagnostics;
@@ -54,11 +55,13 @@ export class UIMenuMgr {
   // Updated from webview (window dimensions, text_edit display values) and persists across menu selections
   private contextDict?: contextDict_t;
 
-  constructor(args: { app: App }) {
-    this.app = args.app;
-    // Only request dx.sub via Registry (always available)
-    // Other dependencies accessed via this.app.xxx to avoid circular deps during construction
-    this.fn = this.app.reg.use();
+  // Typed accessor for pdf singleton
+  private get pdf() { return this.reg.getInstance<import('./PDF').PDF>('pdf')!; }
+
+  constructor(args: { reg: Registry }) {
+    this.reg = args.reg;
+    // Request methods via Registry
+    this.fn = this.reg.use('stylize.getThemes', 'os.dictReplace');
     this.dx = this.fn.dx.sub({ name: 'UIMenuMgr' });
   }
 
@@ -96,7 +99,7 @@ export class UIMenuMgr {
     }
     // 3. Check against theme IDs
     else {
-      const validThemes = this.app.stylize.getThemes().map(t => t.id);
+      const validThemes = this.fn.stylize.getThemes().map((t: any) => t.id);
       isValid = validThemes.includes(id);
     }
 
@@ -131,7 +134,7 @@ export class UIMenuMgr {
     dx.require(args, ['id', 'displayName', 'iconSlotTriad', 'menuItems', 'selectionHandler']);
     const { id, displayName, iconSlotTriad, isFlyout = false, menuItems, flyoutMenuItemIds = [], selectionHandler } = args;
     return new UIMenu({
-      app: this.app,
+      reg: this.reg,
       id,
       displayName,
       iconSlotTriad,
@@ -314,7 +317,7 @@ export class UIMenuMgr {
         dx.out(`Found persistId: ${iconSlotMain.persistId}`);
         const persistValue = this.getValueForPersistIdOnMenuId({ menuId, persistId: iconSlotMain.persistId });
         dx.out(`Read from menu.persist[${iconSlotMain.persistId}] = ${persistValue}`);
-        if (this.app.hasContent(persistValue)) {
+        if (this.reg.app.hasContent(persistValue)) {
           result = persistValue as string | number;
           dx.out(`Returning persistValue: ${result}`);
         }
@@ -375,7 +378,7 @@ export class UIMenuMgr {
    */
   private buildUIMenuItemDict(): UIMenuItemDict_t {
     const dx = this.dx.sub({ name: 'buildUIMenuItemDict' });
-    const pageSizePx = this.app.pdf?.docInfo?.pageSizePx;
+    const pageSizePx = this.pdf?.docInfo?.pageSizePx;
     const context = this.contextDict ?? {};
     const inputs: ForceNumber_dict_t = {
       windowWidth: context.windowWidth,
@@ -385,7 +388,7 @@ export class UIMenuMgr {
     };
     // forceNumbers with requiredKeys ensures all keys exist, coerces to numbers (non-zero or useForZero)
     // Missing keys are added with useForZero=1, invalid/zero values become 1
-    const dict_nums = this.app.forceNumbers(inputs, 1, kUIMenuItemDictRequiredKeys);
+    const dict_nums = this.reg.app.forceNumbers(inputs, 1, kUIMenuItemDictRequiredKeys);
     dx.done();
     return dict_nums;
   }
@@ -451,7 +454,7 @@ export class UIMenuMgr {
 
     try {
       // Build complete context dictionary: merge contextDict with page dimensions
-      const pageSizePx = this.app.pdf?.docInfo?.pageSizePx || { widthPx: 0, heightPx: 0 };
+      const pageSizePx = this.pdf?.docInfo?.pageSizePx || { widthPx: 0, heightPx: 0 };
       dx.out(`PDF page dimensions: ${pageSizePx.widthPx}px x ${pageSizePx.heightPx}px`);
       const fullContext: Record<string, string> = {
         // Page dimensions (known on extension side from PDF)
@@ -473,7 +476,7 @@ export class UIMenuMgr {
       dx.out(`fullContext keys: ${Object.keys(fullContext).join(', ')}`);
       dx.out(`fullContext: ${JSON.stringify(fullContext)}`);
       dx.out(`Template to replace: ${value}`);
-      let result = this.app.templateDictReplace(value, fullContext);
+      let result = this.reg.app.templateDictReplace(value, fullContext);
       dx.out(`After template replacement: ${result}`);
 
       // Look for {{calc:...}} pattern

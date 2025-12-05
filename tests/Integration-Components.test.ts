@@ -107,10 +107,10 @@ describe('System Integration Tests', () => {
   test('should coordinate between components', async () => {
     const app = new App({ context: mockContext, vscode: mockVSCode });
     
-    // Test that components can access each other
-    assert.strictEqual(app.stylize['app'], app, 'Stylize should reference app');
-    assert.strictEqual(app.pdf['app'], app, 'PDF should reference app');
-    assert.strictEqual(app.paperprinter['app'], app, 'PaperPrinter should reference app');
+    // Test that components can access registry
+    assert.strictEqual(app.stylize['reg'], app.reg, 'Stylize should reference registry');
+    assert.strictEqual(app.pdf['reg'], app.reg, 'PDF should reference registry');
+    assert.strictEqual(app.paperprinter['reg'], app.reg, 'PaperPrinter should reference registry');
     
     // Test that shared services work
     const typography = app.vscodeapis.getEditorTypography();

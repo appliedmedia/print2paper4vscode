@@ -10,8 +10,6 @@ import { UIWebView } from './UIWebView';
 import { Coords } from './Coords';
 import type { Diagnostics } from './Diagnostics';
 import { Registry, type ComponentClass } from './Registry';
-import { Persist } from './Persist';
-import { Yaml } from './Yaml';
 import type { FnImport_t } from './types/Registry_t';
 import type { ExtensionContext } from 'vscode';
 import { kExtId } from './_entrypoint_extId_t';
@@ -85,8 +83,6 @@ export class App {
         UIMenuMgr,
         UIWebView, // Singleton webview manager
         OS as unknown as ComponentClass, // OS has static create() factory
-        Persist as unknown as ComponentClass, // Persist has static create() factory
-        Yaml as unknown as ComponentClass, // Yaml has static create() factory
         Coords, // Singleton coordinate system
       ],
       always: ['dx.sub'],

@@ -1,4 +1,4 @@
-import type { App } from './App';
+import type { Registry } from './Registry';
 import type { FileRead_t } from './OS';
 import type { FnImport_t } from './types/Registry_t';
 import {
@@ -53,16 +53,25 @@ interface VSCodeTheme {
  */
 export class Stylize {
   static readonly id = 'stylize';
-  private app: App;
+  private reg: Registry;
   private fn: FnImport_t;
   private highlighter: Highlighter | null = null;
   private dx: Diagnostics;
 
-  constructor(args: { app: App }) {
-    this.app = args.app;
-    // Only request dx.sub via Registry (always available)
-    // Other dependencies accessed via this.app.xxx to avoid circular deps during construction
-    this.fn = this.app.reg.use();
+  // Typed accessor for pdf singleton
+  private get pdf() { return this.reg.getInstance<import('./PDF').PDF>('pdf')!; }
+
+  constructor(args: { reg: Registry }) {
+    this.reg = args.reg;
+    // Request methods via Registry
+    this.fn = this.reg.use(
+      'vscodeapis.getVSCodeExtensionsThemes',
+      'vscodeapis.getVSCodeThemeJson',
+      'vscodeapis.getActiveThemeId',
+      'vscodeapis.getEditorTypography',
+      'os.pathJoin',
+      'os.fileRead'
+    );
     this.dx = this.fn.dx.sub({ name: 'Stylize' });
   }
 
@@ -143,18 +152,18 @@ export class Stylize {
   getVSCodeThemes(filter?: string): Theme[] {
     try {
       // Get theme extensions and filter them immediately if filter is provided
-      let themeExtensions = this.app.vscodeapis.getVSCodeExtensionsThemes();
+      let themeExtensions = this.fn.vscodeapis.getVSCodeExtensionsThemes();
 
       if (filter) {
         const filterRegex = new RegExp(filter, 'i');
-        themeExtensions = themeExtensions.filter(ext => filterRegex.test(ext.id));
+        themeExtensions = themeExtensions.filter((ext: any) => filterRegex.test(ext.id));
       }
 
       const themesOut: Theme[] = [];
 
       for (const ext of themeExtensions) {
         // Get theme data for this extension
-        const themeJson = this.app.vscodeapis.getVSCodeThemeJson({ themeId: ext.id });
+        const themeJson = this.fn.vscodeapis.getVSCodeThemeJson({ themeId: ext.id });
         if (!themeJson) continue;
 
         // Process each theme in the extension
@@ -165,8 +174,8 @@ export class Stylize {
           // Resolve display name from NLS if available
           let displayName = theme.id;
           try {
-            const nlsPath = this.app.os.pathJoin(ext.extensionPath, 'package.nls.json');
-            const nlsData = this.app.os.fileRead<Record<string, string>>({ path: nlsPath });
+            const nlsPath = this.fn.os.pathJoin(ext.extensionPath, 'package.nls.json');
+            const nlsData = (this.fn.os.fileRead as FileRead_t)<Record<string, string>>({ path: nlsPath });
             if (
               nlsData &&
               theme.label &&
@@ -204,7 +213,7 @@ export class Stylize {
       }
 
       // Move current editor theme to the top
-      const id = this.app.vscodeapis.getActiveThemeId();
+      const id = this.fn.vscodeapis.getActiveThemeId();
       const theme = themesOut.find(t => t.id === id);
 
       if (theme) {
@@ -216,7 +225,7 @@ export class Stylize {
         }
       } else {
         // If editor theme not in list, add it at the top
-        const themeJson = this.app.vscodeapis.getVSCodeThemeJson({ themeId: id });
+        const themeJson = this.fn.vscodeapis.getVSCodeThemeJson({ themeId: id });
 
         if (themeJson && themeJson.colors && themeJson.tokenColors) {
           try {
@@ -270,10 +279,10 @@ export class Stylize {
       const filteredTokens = tokens;
 
       // Render directly to PDF if PDF is initialized and ready
-      if (this.app.pdf.docInfo.pdfDoc) {
+      if (this.pdf.docInfo.pdfDoc) {
         for (let lineNum = 0; lineNum < filteredTokens.length; lineNum++) {
           const line = filteredTokens[lineNum];
-          this.app.pdf.renderTokenizedLine({ lineNumber: lineNum, tokens: line });
+          this.pdf.renderTokenizedLine({ lineNumber: lineNum, tokens: line });
         }
       }
 
@@ -291,7 +300,7 @@ export class Stylize {
    * Resolve active theme for token generation
    */
   public resolveActiveTheme(): string {
-    const activeThemeId = this.app.vscodeapis.getActiveThemeId();
+    const activeThemeId = this.fn.vscodeapis.getActiveThemeId();
     const themeData = this.getThemes().find(theme => theme.id === activeThemeId);
 
     if (themeData) {
@@ -316,7 +325,7 @@ export class Stylize {
     lineHeight: number
   ): string {
     // Load YAML templates
-    const fileRead: FileRead_t = this.app.os.fileRead;
+    const fileRead = this.fn.os.fileRead as FileRead_t;
     const yaml = fileRead<{
       stylize_token_pre: string;
       stylize_token_line: string;
@@ -345,14 +354,14 @@ export class Stylize {
             if (fontStyle & 2) styleParts.push('font-style: italic');
             const style = styleParts.join('; ') + ';';
 
-            return this.app.templateDictReplace(yaml.stylize_token_span, {
+            return this.reg.app.templateDictReplace(yaml.stylize_token_span, {
               style,
               text,
             });
           })
           .join('');
 
-        return this.app.templateDictReplace(yaml.stylize_token_line, {
+        return this.reg.app.templateDictReplace(yaml.stylize_token_line, {
           lineHeight: lineHeight.toString(),
           tokens,
         });
@@ -360,7 +369,7 @@ export class Stylize {
       .join('');
 
     // Generate final pre element
-    return this.app.templateDictReplace(yaml.stylize_token_pre, {
+    return this.reg.app.templateDictReplace(yaml.stylize_token_pre, {
       fontSize: fontSize.toString(),
       lineHeight: lineHeight.toString(),
       lines,
@@ -399,7 +408,7 @@ export class Stylize {
 
   // Helper: Get font family from theme
   public getFontFamilyFromTheme(themeData: Theme): string {
-    const et = this.app.vscodeapis.getEditorTypography();
+    const et = this.fn.vscodeapis.getEditorTypography();
     return themeData?.themeData?.fonts?.editor || et?.fontFamily || 'courier';
   }
 

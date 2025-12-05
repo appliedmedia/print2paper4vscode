@@ -15,7 +15,7 @@ describe('PDF', () => {
     app = new App({ context: mockContext, vscode: mockVSCode });
     installHeaderFooterMenuStubs(app);
 
-    pdf = new PDF({ app });
+    pdf = new PDF({ reg: app.reg });
     
     // Set up paperprinter docInfo for tests
     app.paperprinter.docInfo.printTitle = 'Test Document';

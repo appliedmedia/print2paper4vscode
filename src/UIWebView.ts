@@ -1,4 +1,4 @@
-import type { App } from './App';
+import type { Registry } from './Registry';
 import type { WebviewPanelId_t } from './VSCodeAPIs';
 import type {
   SendToExt_t,
@@ -37,7 +37,7 @@ export class UIWebView {
     webview_js: '',
   } as const;
 
-  private app: App;
+  private reg: Registry;
   private fn: FnImport_t;
   private dx: Diagnostics;
   private panelId: WebviewPanelId_t | null = null;
@@ -49,13 +49,21 @@ export class UIWebView {
   private readonly handleMenuItemSelectedBound: MessageHandler_t;
   private readonly handleDxMessageBound: MessageHandler_t;
 
-  constructor(args: { app: App }) {
-    this.app = args.app;
-    // Only request dx.sub via Registry (always available)
-    // Other dependencies accessed via this.app.xxx to avoid circular deps during construction
-    this.fn = this.app.reg.use();
+  // Typed accessors for singleton components
+  private get pdf() { return this.reg.getInstance<import('./PDF').PDF>('pdf')!; }
+  private get ui() { return this.reg.getInstance<import('./UI').UI>('ui')!; }
+  private get uimenumgr() { return this.reg.getInstance<import('./UIMenuMgr').UIMenuMgr>('uimenumgr')!; }
+
+  constructor(args: { reg: Registry }) {
+    this.reg = args.reg;
+    // Request methods via Registry
+    this.fn = this.reg.use(
+      'vscodeapis.getOrCreateWebviewPanel',
+      'vscodeapis.removePanel',
+      'os.fileRead'
+    );
     this.dx = this.fn.dx.sub({ name: 'UIWebView' });
-    this._yaml = Yaml.create(this.app, 'src/UIWebView.yaml', UIWebView.kYaml);
+    this._yaml = Yaml.create({ reg: this.reg, filePath: 'src/UIWebView.yaml', dataStruct: UIWebView.kYaml });
 
     // Bind handlers once in constructor to maintain same reference
     this.handleDragEndBound = this.handleDragEnd.bind(this) as MessageHandler_t;
@@ -72,15 +80,15 @@ export class UIWebView {
 
   /**
    * Create and configure menu manager (for external use)
-   * @deprecated Menu manager should be accessed via this.app.uimenumgr
+   * @deprecated Menu manager should be accessed via this.reg.getInstance('uimenumgr')!
    */
   createMenus() {
     const dx = this.dx.sub({ name: 'createMenus' });
 
     try {
-      // Menu manager is always available via this.app.uimenumgr
+      // Menu manager is always available via this.reg.getInstance('uimenumgr')!
       dx.out('Returning app menu manager');
-      return this.app.uimenumgr;
+      return this.reg.getInstance('uimenumgr')!;
     } finally {
       dx.done();
     }
@@ -88,10 +96,10 @@ export class UIWebView {
 
   /**
    * Get the menu manager
-   * @deprecated Use this.app.uimenumgr directly
+   * @deprecated Use this.reg.getInstance('uimenumgr')! directly
    */
   getMenus() {
-    return this.app.uimenumgr;
+    return this.reg.getInstance('uimenumgr')!;
   }
 
   /**
@@ -105,7 +113,7 @@ export class UIWebView {
     const dx = this.dx.sub({ name: 'displayPdfPanel' });
 
     // Use DocInfo_PDF directly from app.pdf.docInfo
-    const docInfo = this.app.pdf.docInfo;
+    const docInfo = this.pdf.docInfo;
 
     if (!docInfo.pdfDoc) {
       throw new Error('PDF document not generated');
@@ -145,10 +153,10 @@ export class UIWebView {
       const html = await this.generatePDFHTML(pdf_data_url, pdfData);
 
       // Add toolbar
-      const htmlWithToolbar = await this.app.ui.addToolbar(html);
+      const htmlWithToolbar = await this.ui.addToolbar(html);
 
       // Create or reuse webview panel
-      const panelId = await this.app.vscodeapis.getOrCreateWebviewPanel({
+      const panelId = await this.fn.vscodeapis.getOrCreateWebviewPanel({
         title: pdfData.title,
         html: htmlWithToolbar,
         existingPanelId: this.panelId || undefined,
@@ -173,21 +181,21 @@ export class UIWebView {
 
     try {
       // Load PDF.js library
-      const pdfjs_library = this.app.os.fileRead({ path: 'src/lib/pdf.min.js' });
+      const pdfjs_library = this.fn.os.fileRead({ path: 'src/lib/pdf.min.js' });
       if (!pdfjs_library) {
         throw new Error('Failed to load PDF.js library');
       }
 
       // Get templates
-      const base_css = this.app.ui.yaml.base_css;
+      const base_css = this.ui.yaml.base_css;
       const templates = this.yaml;
 
       // Get zoom level from zoomLevel menu persist
       const zoomMenuItemId =
-        this.app.uimenumgr.getMenuItemIdSelected(kZoomLevel.id) || kZoomLevel.altId;
-      const rawZoom = this.app.uimenumgr.getValueForMenuItemId({ menuId: kZoomLevel.id, menuItemId: zoomMenuItemId });
+        this.uimenumgr.getMenuItemIdSelected(kZoomLevel.id) || kZoomLevel.altId;
+      const rawZoom = this.uimenumgr.getValueForMenuItemId({ menuId: kZoomLevel.id, menuItemId: zoomMenuItemId });
       // Coerce to number (forceNumber always returns valid number or 0)
-      const coercedZoom = this.app.forceNumber(rawZoom);
+      const coercedZoom = this.reg.app.forceNumber(rawZoom);
       // Use coerced value if finite and positive, otherwise fall back to hardcoded default
       const pdf_zoom_level =
         Number.isFinite(coercedZoom) && coercedZoom > 0 ? coercedZoom : kZoomLevel.altValue;
@@ -218,11 +226,11 @@ export class UIWebView {
       };
 
       // Replace placeholders
-      const webview_css = this.app.templateDictReplace(templates.webview_css, templateDict);
-      const webview_js = this.app.templateDictReplace(templates.webview_js, templateDict);
+      const webview_css = this.reg.app.templateDictReplace(templates.webview_css, templateDict);
+      const webview_js = this.reg.app.templateDictReplace(templates.webview_js, templateDict);
 
       // Generate HTML
-      return this.app.templateDictReplace(templates.webview_html, {
+      return this.reg.app.templateDictReplace(templates.webview_html, {
         base_css,
         webview_css,
         webview_js,
@@ -263,7 +271,7 @@ export class UIWebView {
         ];
 
         messageHandlers.forEach(({ type, handler }) => {
-          this.app.ui.unregisterMessageHandler({ messageType: type, handler });
+          this.ui.unregisterMessageHandler({ messageType: type, handler });
         });
 
         this.handlersRegistered = false;
@@ -271,7 +279,7 @@ export class UIWebView {
 
       // Remove panel from VSCodeAPIs map
       if (this.panelId) {
-        this.app.vscodeapis.removePanel(this.panelId);
+        this.fn.vscodeapis.removePanel(this.panelId);
       }
 
       this.panelId = null;
@@ -294,7 +302,7 @@ export class UIWebView {
     ];
 
     messageHandlers.forEach(({ type, handler }) => {
-      this.app.ui.registerMessageHandler({ messageType: type, handler });
+      this.ui.registerMessageHandler({ messageType: type, handler });
     });
 
     this.handlersRegistered = true;
@@ -311,7 +319,7 @@ export class UIWebView {
       const left = msg.left;
       if (typeof left === 'number') {
         // Save toolbar position via persist
-        this.app.ui.persist.toolbar_pos = left;
+        this.ui.persist.toolbar_pos = left;
         dx.out(`Toolbar position saved: ${left}px`);
       }
     } finally {
@@ -325,7 +333,7 @@ export class UIWebView {
   private async handleMenuItemSelected(msg: SendToExt_menuItemSelected): Promise<void> {
     const { menuId, menuItemId, contextDict } = msg;
     // Forward to UIMenuMgr for handling
-    await this.app.uimenumgr.handleMenuItemSelected(menuId, menuItemId, contextDict);
+    await this.uimenumgr.handleMenuItemSelected(menuId, menuItemId, contextDict);
   }
 
   /**

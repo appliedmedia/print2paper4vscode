@@ -20,28 +20,31 @@
  *   - Minimal boilerplate in consuming classes
  */
 
-import type { App } from './App';
+import type { Registry } from './Registry';
+import type { FnImport_t } from './types/Registry_t';
 
 export class Yaml<T extends Record<string, string>> {
   static readonly id = 'yaml';
   private cached: T | undefined = undefined;
-  private app: App;
+  private reg: Registry;
+  private fn: FnImport_t;
   private filePath: string;
   private dataStruct: T;
 
-  private constructor(args: { app: App; filePath: string; dataStruct: T }) {
+  private constructor(args: { reg: Registry; filePath: string; dataStruct: T }) {
     // Note: Cannot use dx.require here as Diagnostics is not yet initialized
-    if (!args.app || !args.filePath || !args.dataStruct) {
-      throw new Error('Yaml constructor requires app, filePath, and dataStruct');
+    if (!args.reg || !args.filePath || !args.dataStruct) {
+      throw new Error('Yaml constructor requires reg, filePath, and dataStruct');
     }
-    const { app, filePath, dataStruct } = args;
-    this.app = app;
+    const { reg, filePath, dataStruct } = args;
+    this.reg = reg;
+    this.fn = this.reg.use('os.fileRead');
     this.filePath = filePath;
     this.dataStruct = dataStruct;
   }
 
-  static create<T extends Record<string, string>>(app: App, filePath: string, dataStruct: T): Yaml<T> {
-    return new Yaml({ app, filePath, dataStruct });
+  static create<T extends Record<string, string>>(args: { reg: Registry; filePath: string; dataStruct: T }): Yaml<T> {
+    return new Yaml(args);
   }
 
   done(): void {
@@ -51,8 +54,9 @@ export class Yaml<T extends Record<string, string>> {
 
   get(): T {
     if (this.cached === undefined) {
-      this.cached = this.app.os.fileRead<T>({ path: this.filePath }) || this.dataStruct;
+      const fileRead = this.fn.os.fileRead as import('./OS').FileRead_t;
+      this.cached = fileRead<T>({ path: this.filePath }) || this.dataStruct;
     }
-    return this.cached;
+    return this.cached as T;
   }
 }

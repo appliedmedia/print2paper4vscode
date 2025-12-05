@@ -1,4 +1,4 @@
-import type { App } from './App';
+import type { Registry } from './Registry';
 import type {
   Disposable,
   ExtensionContext,
@@ -14,6 +14,8 @@ import type { SendToExt_t } from './types/UI_t';
 import type { FnImport_t } from './types/Registry_t';
 import { Diagnostics } from './Diagnostics';
 import { kExtId } from './_entrypoint_extId_t';
+import type { FileRead_t } from './OS';
+import { Persist } from './Persist';
 
 // Opaque ID type for webview panels
 export type WebviewPanelId_t = string & { readonly __brand: 'WebviewPanelId' };
@@ -46,34 +48,40 @@ export class VSCodeAPIs {
   static readonly id = 'vscodeapis';
   private static readonly WEBVIEW_ID = kExtId + '.printprep';
 
-  private app: App;
+  private reg: Registry;
   private fn: FnImport_t;
   public vscode: typeof import('vscode');
   public context: ExtensionContext;
   private panels = new Map<WebviewPanelId_t, WebviewPanel>();
   private dx: Diagnostics;
 
-  constructor(args: { app: App; vscode: typeof import('vscode'); context: ExtensionContext }) {
-    this.app = args.app;
-    // Only request dx.sub via Registry (always available)
-    // Other dependencies accessed via this.app.xxx to avoid circular deps during construction
-    this.fn = this.app.reg.use();
+  constructor(args: { reg: Registry; vscode: typeof import('vscode'); context: ExtensionContext }) {
+    this.reg = args.reg;
+    // Request methods via Registry
+    this.fn = this.reg.use(
+      'paperprinter.handlePrintCommandFromVSCode',
+      'ui.handleWebviewMessage',
+      'os.pathJoin',
+      'os.fileRead',
+      'os.getExtensionRoot',
+      'os.htmlSrcPathToURI',
+      'os.pathBasename',
+      'os.dateAsYYYYMMDDHHMMSS'
+    );
     this.dx = this.fn.dx.sub({ name: 'VSCodeAPIs' });
     this.vscode = args.vscode;
     this.context = args.context;
 
     // Register VS Code commands - must happen at activation
-    // Command handlers resolve dependencies lazily when invoked
+    // Command handlers use methods requested during construction
     const command_Print2Paper = this.vscode.commands.registerCommand('p2p4vsc.print2paper', () => {
-      const fn = this.app.reg.use('paperprinter.handlePrintCommandFromVSCode');
-      fn.paperprinter.handlePrintCommandFromVSCode();
+      this.fn.paperprinter.handlePrintCommandFromVSCode();
     });
 
     const command_PersistClear = this.vscode.commands.registerCommand(
       'p2p4vsc.persistClear',
       async () => {
-        const fn = this.app.reg.use('persist.clear');
-        await fn.persist.clear();
+        await Persist.clear({ reg: this.reg });
       }
     );
 
@@ -176,7 +184,7 @@ export class VSCodeAPIs {
     let baseId = title.toLowerCase().replace(/\s+/g, '_') as WebviewPanelId_t;
 
     if (this.panels.has(baseId)) {
-      const dt = this.app.os.dateAsYYYYMMDDHHMMSS();
+      const dt = this.fn.os.dateAsYYYYMMDDHHMMSS();
       baseId = `${baseId}_${dt}` as WebviewPanelId_t;
     }
 
@@ -234,7 +242,7 @@ export class VSCodeAPIs {
           // Panel is still valid, reuse it
           dx.out(`Reusing existing panel: ${existingPanelId}`);
           panel.title = title;
-          const htmlWithURIs = this.app.os.htmlSrcPathToURI({ html, webviewPanelId: existingPanelId });
+          const htmlWithURIs = this.fn.os.htmlSrcPathToURI({ html, webviewPanelId: existingPanelId });
           panel.webview.html = htmlWithURIs;
           dx.done();
           return existingPanelId;
@@ -254,7 +262,7 @@ export class VSCodeAPIs {
     dx.out(`Creating new panel for title: ${title}`);
 
     // Get extension root URI for local resource access
-    const extensionRoot = this.app.os.getExtensionRoot();
+    const extensionRoot = this.fn.os.getExtensionRoot();
     const extensionUri = extensionRoot ? this.vscode.Uri.file(extensionRoot) : undefined;
 
     const panel = this.vscode.window.createWebviewPanel(
@@ -281,7 +289,7 @@ export class VSCodeAPIs {
     // Set up message handling
     this.setupMessageHandling(panel);
 
-    const htmlWithURIs = this.app.os.htmlSrcPathToURI({ html, webviewPanelId: id });
+    const htmlWithURIs = this.fn.os.htmlSrcPathToURI({ html, webviewPanelId: id });
     this.updatePanelHtml({ id, html: htmlWithURIs });
 
     dx.done();
@@ -293,7 +301,7 @@ export class VSCodeAPIs {
    */
   setupMessageHandling(panel: WebviewPanel): void {
     panel.webview.onDidReceiveMessage(async (msg: SendToExt_t) => {
-      await this.app.ui.handleWebviewMessage(msg);
+      await this.fn.ui.handleWebviewMessage(msg);
     });
   }
 
@@ -359,8 +367,9 @@ export class VSCodeAPIs {
     // Load the actual theme file content if path is available
     if (theme.path && typeof theme.path === 'string') {
       try {
-        const themePath = this.app.os.pathJoin(themeExtension.extensionPath, theme.path);
-        const themeContent = this.app.os.fileRead<Record<string, unknown>>({ path: themePath });
+        const themePath = this.fn.os.pathJoin(themeExtension.extensionPath, theme.path);
+        const fileRead = this.fn.os.fileRead as FileRead_t;
+        const themeContent = fileRead<Record<string, unknown>>({ path: themePath });
 
         if (themeContent) {
           // Merge the theme metadata with the loaded content
@@ -477,7 +486,7 @@ export class VSCodeAPIs {
       const tabName = uri.replace('untitled:', '');
       return tabName;
     } else {
-      const fileName = this.app.os.pathBasename(document.fileName);
+      const fileName = this.fn.os.pathBasename(document.fileName);
       return fileName;
     }
   }
@@ -524,7 +533,7 @@ export class VSCodeAPIs {
    * Gets temp directory for the extension
    */
   getDir_Temp(): string {
-    return this.app.os.pathJoin(this.context.globalStorageUri.fsPath, 'temp');
+    return this.fn.os.pathJoin(this.context.globalStorageUri.fsPath, 'temp');
   }
 
   /**

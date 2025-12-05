@@ -35,7 +35,7 @@ describe('UIMenu Icon Slot Triad', () => {
   ): UIMenu => {
     const listBuilder = (): UIMenuItem_t[] => items;
     return new UIMenu({
-      app,
+      reg: app.reg,
       id: 'theme', // Use valid MenuId_t
       displayName: 'Test Menu',
       iconSlotTriad: menuIconSlotTriad,
