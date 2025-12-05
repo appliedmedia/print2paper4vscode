@@ -232,7 +232,7 @@ export class UIMenu {
     const { reg, id, displayName, iconSlotTriad, isFlyout = false, menuItems, flyoutMenuItemIds = [], selectionHandler } = args;
     
     this.reg = reg;
-    this.fn = this.reg.use('yaml.create', 'utils.templateDictReplace');
+    this.fn = this.reg.use('yaml.create', 'persist.create', 'utils.templateDictReplace');
     this._id = id;
     this._displayName = displayName;
     this._iconSlotTriad = iconSlotTriad;
@@ -241,7 +241,7 @@ export class UIMenu {
     this._flyoutMenuItemIds = flyoutMenuItemIds;
     this._selectionHandler = selectionHandler;
     // Get the singleton Persist instance (shared across all UIMenu instances)
-    this.persist = this.reg.getInstance<Persist>('persist')! as Persist & Persist_t;
+    this.persist = this.fn.persist.create() as Persist & Persist_t;
     this.dx = this.fn.dx.sub({ name: 'UIMenu' });
     this._yaml = this.fn.yaml.create({ filePath: 'src/UIMenu.yaml', dataStruct: UIMenu.kYaml });
 

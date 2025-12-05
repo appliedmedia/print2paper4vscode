@@ -54,6 +54,12 @@ export class Persist {
     this.dx = this.fn.dx.sub({ name: 'Persist' });
   }
 
+  // Factory method that returns the singleton (for API consistency with Yaml)
+  // Persist is inherently a singleton because it manages shared global state
+  create(): Persist {
+    return this;
+  }
+
   register(name: string): this {
     Object.defineProperty(this, name, {
       get: () => {
