@@ -3,45 +3,64 @@ import { Diagnostics } from './Diagnostics';
 import type { FnImport_t } from './types/Registry_t';
 
 /**
+ * Component interface for Registry-managed classes
+ * All constructors take a single args object with app plus any extra init params
+ * Components get dx via this.fn.dx.sub() after calling reg.use()
+ */
+export interface ComponentClass {
+  readonly id: string;
+  create?(args: { app: App } & Record<string, unknown>): unknown;
+  new (args: { app: App } & Record<string, unknown>): unknown;
+}
+
+/**
  * Registry - Dependency injection and lazy component management system
  *
- * Manages lazy instantiation of components, resolves method dependencies,
- * and provides scoped access to component methods. Components declare what
- * they need via `app.use()` and Registry resolves and caches instances.
+ * Components are created lazily when first accessed via use().
+ * Special init params (like vscode/context for VSCodeAPIs) are passed
+ * via the init dict at Registry construction.
  *
- * @input app - App instance
- * @input components - Array of component classes to register
- * @input always - Array of method IDs always injected (format: 'componentId.methodName')
- * @output Lazy-loaded component instances, method resolution, dependency management
+ * Diagnostics is bootstrapped first - pass init.dx.name for root dx name (e.g., 'App').
  */
 export class Registry {
   static readonly id = 'reg';
 
-  // Index signature for dynamic component lookups (this.pdf, this.ui, etc.)
   [key: string]: unknown;
 
   private _instances: Map<string, unknown> = new Map();
-  private components: Array<{ new (...args: any[]): any; id: string }> = [];
+  private _initialized: Set<string> = new Set();
+  private components: ComponentClass[] = [];
   private always: string[] = [];
+  private init: Record<string, Record<string, unknown>> = {};
+  private fn: FnImport_t;
   private dx: Diagnostics;
   private app: App;
-  private constructionStack: string[] = []; // Track components being constructed for circular dependency detection
+  private constructionStack: string[] = [];
 
   constructor(args: {
     app: App;
-    components?: Array<{ new (...args: any[]): any; id: string }>;
+    components?: ComponentClass[];
     always?: string[];
+    init?: Record<string, Record<string, unknown>>;
   }) {
     this.app = args.app;
     this.components = args.components || [];
     this.always = args.always || [];
+    this.init = args.init || {};
 
-    // Create Diagnostics instance as child of App's dx (not a new root instance)
-    this.dx = this.app.dx.sub({ name: 'Registry' });
-    this._instances.set('dx', this.dx);
+    // Bootstrap: Create root Diagnostics first (before anything else)
+    // Use init.dx.name for root name (defaults to 'App')
+    const dxInit = this.init['dx'] || {};
+    const rootDxName = (dxInit.name as string) || 'App';
+    const rootDx = new Diagnostics({ name: rootDxName, app: this.app });
+    this._instances.set('dx', rootDx);
+    this._initialized.add('dx');
 
-    // Build placeholder structure on `this` for intellisense
-    // For each component: `this[Component.id] = {}` - just empty placeholders!
+    // Now Registry can use fn.dx.sub() like everyone else
+    this.fn = this.use();
+    this.dx = this.fn.dx.sub({ name: 'Registry' });
+
+    // Build placeholder structure for intellisense
     for (const Component of this.components) {
       if (Component.id) {
         (this as Record<string, unknown>)[Component.id] = {};
@@ -50,37 +69,83 @@ export class Registry {
   }
 
   /**
-   * Register an existing component instance with Registry
-   *
-   * Allows App to register instances created the old way so Registry can use them.
-   *
-   * @param componentId - Component ID (e.g., 'ui', 'pdf')
-   * @param instance - The component instance to register
+   * Register an existing component instance
    */
   registerInstance(componentId: string, instance: unknown): void {
     this._instances.set(componentId, instance);
+    this._initialized.add(componentId);
   }
 
   /**
-   * Request methods from components via Registry
-   *
-   * THE SIMPLE VERSION:
-   * - Merge methodIds with always-injected methods
-   * - For each method name, find which component class has that method via prototype
-   * - Get or create instance and return bound method
-   *
-   * @param methodIds - Variadic method names (e.g., 'showError', 'generatePdf')
-   * @returns Object organized by component: { dx: { sub: Function }, ui: { showErrorMessage: Function } }
+   * Check if a component instance already exists (without triggering instantiation)
+   */
+  hasInstance(componentId: string): boolean {
+    return this._instances.has(componentId);
+  }
+
+  /**
+   * Get or create a component instance by ID
+   */
+  getInstance<T = unknown>(componentId: string): T | undefined {
+    if (this._instances.has(componentId)) {
+      return this._instances.get(componentId) as T;
+    }
+
+    const Component = this.components.find((c) => c.id === componentId);
+    if (!Component) {
+      return undefined;
+    }
+
+    this.createInstance(Component);
+    return this._instances.get(componentId) as T;
+  }
+
+  /**
+   * Create a component instance using factory or constructor
+   * Merges { app } with init params for this component
+   */
+  private createInstance(Component: ComponentClass): void {
+    const componentId = Component.id;
+
+    if (this.constructionStack.includes(componentId)) {
+      const cycle = [...this.constructionStack, componentId].join(' -> ');
+      throw new Error(`Circular dependency: ${cycle}`);
+    }
+
+    this.constructionStack.push(componentId);
+
+    try {
+      // All constructors receive args with app and any init params
+      // Components get dx via this.fn.dx.sub() after calling reg.use()
+      const args = { app: this.app, ...this.init[componentId] };
+      let instance: unknown;
+      
+      if ('create' in Component && typeof Component.create === 'function') {
+        instance = Component.create(args);
+      } else {
+        instance = new Component(args);
+      }
+      
+      this._instances.set(componentId, instance);
+      this._initialized.add(componentId);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      this.dx.error(`Failed to create '${componentId}': ${msg}`);
+      throw err;
+    } finally {
+      this.constructionStack.pop();
+    }
+  }
+
+  /**
+   * Request methods from components
+   * Returns lazy proxies - components are only instantiated when methods are actually called
    */
   use(...methodIds: string[]): FnImport_t {
-    // Merge requested methods with always-injected methods
     const allMethods = [...methodIds, ...this.always];
-
     const result: FnImport_t = {};
 
-    // For each method name, find which component owns it
     for (const methodName of allMethods) {
-      // Parse methodId if it's in format 'id.methodName', otherwise just methodName
       let id: string | undefined;
       let actualMethodName: string;
 
@@ -92,122 +157,80 @@ export class Registry {
         actualMethodName = methodName;
       }
 
-      // Find component that owns this method
-      let foundComponent: { new (app: App): any; id: string } | undefined;
-      let foundMethodName = actualMethodName;
-
-      if (id) {
-        // Explicit component specified - find it
-        foundComponent = this.components.find((c) => c.id === id);
-        // If not in components array, check if instance was registered directly (e.g., OS)
-        if (!foundComponent && this._instances.has(id)) {
-          // Instance exists but not in components array - get instance to resolve method
-          const instance = this._instances.get(id);
-          if (instance && typeof (instance as Record<string, unknown>)[actualMethodName] === 'function') {
-            // Ensure component entry exists in result
-            if (!result[id]) {
-              result[id] = {};
-            }
-            // Bind method to instance and add to result
-            result[id][actualMethodName] = (
-              (instance as Record<string, unknown>)[actualMethodName] as Function
-            ).bind(instance);
+      // For already-registered instances (like dx), bind immediately
+      if (id && this._instances.has(id)) {
+        const instance = this._instances.get(id);
+        if (instance) {
+          const value = (instance as Record<string, unknown>)[actualMethodName];
+          if (!result[id]) result[id] = {};
+          if (typeof value === 'function') {
+            result[id][actualMethodName] = value.bind(instance);
           } else {
-            const errorMsg = `Method '${actualMethodName}' not found on registered instance '${id}'`;
-            this.dx.error(errorMsg);
-            throw new Error(errorMsg);
+            throw new Error(`'${id}.${actualMethodName}' is not a function`);
           }
         }
-        if (!foundComponent) {
-          const errorMsg = `Component '${id}' not found in Registry`;
-          this.dx.error(errorMsg);
-          throw new Error(errorMsg);
-        }
-      } else {
-        // No component specified - search all components via prototype
-        for (const Component of this.components) {
-          if (Component.prototype.hasOwnProperty(actualMethodName)) {
-            foundComponent = Component;
-            foundMethodName = actualMethodName;
-            break;
-          }
-        }
-      }
-
-      if (!foundComponent) {
-        const errorMsg = `Method '${actualMethodName}' not found in any component`;
-        this.dx.error(errorMsg);
-        throw new Error(errorMsg);
-      }
-
-      // Get or create component instance
-      // Use foundComponent.id directly (always defined since foundComponent exists)
-      const componentId = foundComponent.id;
-
-      if (!this._instances.has(componentId)) {
-        // Check for circular dependency
-        if (this.constructionStack.includes(componentId)) {
-          const cycle = [...this.constructionStack, componentId].join(' -> ');
-          const errorMsg = `Circular dependency detected: ${cycle}. Components cannot depend on each other directly or indirectly.`;
-          this.dx.error(errorMsg);
-          throw new Error(errorMsg);
-        }
-
-        // Push component onto construction stack
-        this.constructionStack.push(componentId);
-
-        try {
-          // Try to create instance lazily if not already registered
-          // Note: VSCodeAPIs needs special args, so it should be registered by App
-          const instance = new foundComponent(this.app);
-          this._instances.set(componentId, instance);
-        } catch (err) {
-          const errorMsg = `Failed to initialize component '${componentId}': ${err instanceof Error ? err.message : String(err)}. Extension may need to be restarted.`;
-          this.dx.error(errorMsg);
-          throw new Error(errorMsg);
-        } finally {
-          // Pop component from stack when done (even if error occurred)
-          // Always pop the last item we pushed (LIFO stack behavior)
-          const popped = this.constructionStack.pop();
-          if (popped !== componentId) {
-            // This should never happen, but log if it does for debugging
-            this.dx.error(
-              `Construction stack mismatch: expected to pop '${componentId}' but popped '${popped}'. Stack: ${this.constructionStack.join(' -> ')}`
-            );
-            // Restore stack integrity by removing componentId if it exists elsewhere
-            const index = this.constructionStack.indexOf(componentId);
-            if (index !== -1) {
-              this.constructionStack.splice(index, 1);
-            }
-            // Restore the popped item if it wasn't what we expected
-            if (popped) {
-              this.constructionStack.push(popped);
-            }
-          }
-        }
-      }
-
-      const instance = this._instances.get(componentId);
-      if (!instance) {
         continue;
       }
 
-      // Ensure component entry exists in result
-      if (!result[componentId]) {
-        result[componentId] = {};
+      // Find component class that owns this method
+      let foundComponent: ComponentClass | undefined;
+
+      if (id) {
+        foundComponent = this.components.find((c) => c.id === id);
+        if (!foundComponent) {
+          throw new Error(`Component '${id}' not found`);
+        }
+      } else {
+        // Search by method name in prototypes (use 'in' to find inherited methods too)
+        for (const Component of this.components) {
+          if (actualMethodName in (Component.prototype || {})) {
+            foundComponent = Component;
+            break;
+          }
+        }
+        if (!foundComponent) {
+          throw new Error(`Method '${actualMethodName}' not found`);
+        }
       }
 
-      // Bind method to instance and add to result
-      // Note: Registry can return properties too, but type is Function for now
-      const value = (instance as Record<string, unknown>)[foundMethodName];
-      if (typeof value === 'function') {
-        result[componentId][foundMethodName] = value.bind(instance);
-      } else {
-        // Property access - cast to Function for now, update type when needed
-        result[componentId][foundMethodName] = value as Function;
-      }
+      const componentId = foundComponent.id;
+      if (!result[componentId]) result[componentId] = {};
+
+      // Return lazy proxy - instance created on first call
+      result[componentId][actualMethodName] = ((...args: unknown[]) => {
+        const instance = this.getInstance(componentId);
+        if (!instance) {
+          throw new Error(`Failed to get instance of '${componentId}'`);
+        }
+        const method = (instance as Record<string, unknown>)[actualMethodName];
+        if (typeof method !== 'function') {
+          throw new Error(`'${componentId}.${actualMethodName}' is not a function`);
+        }
+        return method.apply(instance, args);
+      }) as Function;
     }
 
     return result;
+  }
+
+  /**
+   * Cleanup all components
+   */
+  done(): void {
+    const ids = Array.from(this._initialized).reverse();
+    for (const id of ids) {
+      // Skip dx for now, clean it up last
+      if (id === 'dx') continue;
+      const instance = this._instances.get(id);
+      if (instance && typeof (instance as { done?: () => void }).done === 'function') {
+        try {
+          (instance as { done: () => void }).done();
+        } catch (err) {
+          this.dx.out(`Error in ${id}.done(): ${err}`);
+        }
+      }
+    }
+    // Clean up dx last
+    this.dx.done();
   }
 }

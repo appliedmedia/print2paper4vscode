@@ -7,6 +7,7 @@ import type {
   SendToExt_dx,
   MessageHandler_t,
 } from './types/UI_t';
+import type { FnImport_t } from './types/Registry_t';
 import { Diagnostics } from './Diagnostics';
 import { Yaml } from './Yaml';
 import { kZoomLevel, kZoomIn, kZoomOut } from './types/PaperPrinter_t';
@@ -36,6 +37,7 @@ export class UIWebView {
   } as const;
 
   private app: App;
+  private fn: FnImport_t;
   private dx: Diagnostics;
   private panelId: WebviewPanelId_t | null = null;
   private handlersRegistered: boolean = false;
@@ -46,10 +48,13 @@ export class UIWebView {
   private readonly handleMenuItemSelectedBound: MessageHandler_t;
   private readonly handleDxMessageBound: MessageHandler_t;
 
-  constructor(app: App) {
-    this.app = app;
-    this.dx = app.dx.sub({ name: 'UIWebView' });
-    this._yaml = Yaml.create(app, 'src/UIWebView.yaml', UIWebView.kYaml);
+  constructor(args: { app: App }) {
+    this.app = args.app;
+    // Only request dx.sub via Registry (always available)
+    // Other dependencies accessed via this.app.xxx to avoid circular deps during construction
+    this.fn = this.app.reg.use();
+    this.dx = this.fn.dx.sub({ name: 'UIWebView' });
+    this._yaml = Yaml.create(this.app, 'src/UIWebView.yaml', UIWebView.kYaml);
 
     // Bind handlers once in constructor to maintain same reference
     this.handleDragEndBound = this.handleDragEnd.bind(this) as MessageHandler_t;

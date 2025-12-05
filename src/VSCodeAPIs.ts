@@ -47,57 +47,37 @@ export class VSCodeAPIs {
   private static readonly WEBVIEW_ID = kExtId + '.printprep';
 
   private app: App;
-  private vscode: typeof import('vscode'); // Use official VS Code types
-  private context: ExtensionContext; // Properly typed context
-  private panels = new Map<WebviewPanelId_t, WebviewPanel>(); // Panel mapping
   private fn: FnImport_t;
+  public vscode: typeof import('vscode');
+  public context: ExtensionContext;
+  private panels = new Map<WebviewPanelId_t, WebviewPanel>();
   private dx: Diagnostics;
 
   constructor(args: { app: App; vscode: typeof import('vscode'); context: ExtensionContext }) {
-    const { app, vscode, context } = args;
-    
-    // Request dependencies via Registry
-    this.fn = app.reg.use(
-      'os.dateAsYYYYMMDDHHMMSS',
-      'os.htmlSrcPathToURI',
-      'os.getExtensionRoot',
-      'os.pathJoin',
-      'os.fileRead',
-      'os.pathBasename',
-      'ui.handleWebviewMessage'
-      // Note: paperprinter.handlePrintCommandFromVSCode and persist.clear requested lazily in command handlers
-      // since they are created after VSCodeAPIs
-    );
-    
-    // dx.sub is always available (from always: ['dx.sub'])
-    this.dx = this.fn.dx.sub('VSCodeAPIs');
-    
-    this.app = app;
-    this.vscode = vscode;
-    this.context = context;
-    
-    // Move command registration from init() to constructor
-    const dx = this.dx.sub({ name: 'constructor' });
-    dx.require({ vscode: this.vscode, context: this.context }, ['vscode', 'context']);
+    this.app = args.app;
+    // Only request dx.sub via Registry (always available)
+    // Other dependencies accessed via this.app.xxx to avoid circular deps during construction
+    this.fn = this.app.reg.use();
+    this.dx = this.fn.dx.sub({ name: 'VSCodeAPIs' });
+    this.vscode = args.vscode;
+    this.context = args.context;
 
-    // Register VS Code commands
+    // Register VS Code commands - must happen at activation
+    // Command handlers resolve dependencies lazily when invoked
     const command_Print2Paper = this.vscode.commands.registerCommand('p2p4vsc.print2paper', () => {
-      // Request paperprinter.handlePrintCommandFromVSCode lazily since PaperPrinter is created after VSCodeAPIs
-      const paperprinterFn = this.app.reg.use('paperprinter.handlePrintCommandFromVSCode');
-      paperprinterFn.paperprinter.handlePrintCommandFromVSCode();
+      const fn = this.app.reg.use('paperprinter.handlePrintCommandFromVSCode');
+      fn.paperprinter.handlePrintCommandFromVSCode();
     });
 
     const command_PersistClear = this.vscode.commands.registerCommand(
       'p2p4vsc.persistClear',
       async () => {
-        // Request persist.clear lazily since Persist is created after VSCodeAPIs
-        const persistFn = this.app.reg.use('persist.clear');
-        await persistFn.persist.clear();
+        const fn = this.app.reg.use('persist.clear');
+        await fn.persist.clear();
       }
     );
 
     this.context.subscriptions.push(command_Print2Paper, command_PersistClear);
-    dx.done();
   }
 
   done(): void {
@@ -196,7 +176,7 @@ export class VSCodeAPIs {
     let baseId = title.toLowerCase().replace(/\s+/g, '_') as WebviewPanelId_t;
 
     if (this.panels.has(baseId)) {
-      const dt = this.fn.os.dateAsYYYYMMDDHHMMSS();
+      const dt = this.app.os.dateAsYYYYMMDDHHMMSS();
       baseId = `${baseId}_${dt}` as WebviewPanelId_t;
     }
 
@@ -254,7 +234,7 @@ export class VSCodeAPIs {
           // Panel is still valid, reuse it
           dx.out(`Reusing existing panel: ${existingPanelId}`);
           panel.title = title;
-          const htmlWithURIs = this.fn.os.htmlSrcPathToURI({ html, webviewPanelId: existingPanelId });
+          const htmlWithURIs = this.app.os.htmlSrcPathToURI({ html, webviewPanelId: existingPanelId });
           panel.webview.html = htmlWithURIs;
           dx.done();
           return existingPanelId;
@@ -274,7 +254,7 @@ export class VSCodeAPIs {
     dx.out(`Creating new panel for title: ${title}`);
 
     // Get extension root URI for local resource access
-    const extensionRoot = this.fn.os.getExtensionRoot();
+    const extensionRoot = this.app.os.getExtensionRoot();
     const extensionUri = extensionRoot ? this.vscode.Uri.file(extensionRoot) : undefined;
 
     const panel = this.vscode.window.createWebviewPanel(
@@ -301,7 +281,7 @@ export class VSCodeAPIs {
     // Set up message handling
     this.setupMessageHandling(panel);
 
-    const htmlWithURIs = this.fn.os.htmlSrcPathToURI({ html, webviewPanelId: id });
+    const htmlWithURIs = this.app.os.htmlSrcPathToURI({ html, webviewPanelId: id });
     this.updatePanelHtml({ id, html: htmlWithURIs });
 
     dx.done();
@@ -313,7 +293,7 @@ export class VSCodeAPIs {
    */
   setupMessageHandling(panel: WebviewPanel): void {
     panel.webview.onDidReceiveMessage(async (msg: SendToExt_t) => {
-      await this.fn.ui.handleWebviewMessage(msg);
+      await this.app.ui.handleWebviewMessage(msg);
     });
   }
 
@@ -379,8 +359,8 @@ export class VSCodeAPIs {
     // Load the actual theme file content if path is available
     if (theme.path && typeof theme.path === 'string') {
       try {
-        const themePath = this.fn.os.pathJoin(themeExtension.extensionPath, theme.path);
-        const themeContent = (this.fn.os.fileRead as (args: { path: string }) => Record<string, unknown> | undefined)({ path: themePath });
+        const themePath = this.app.os.pathJoin(themeExtension.extensionPath, theme.path);
+        const themeContent = this.app.os.fileRead<Record<string, unknown>>({ path: themePath });
 
         if (themeContent) {
           // Merge the theme metadata with the loaded content
@@ -497,7 +477,7 @@ export class VSCodeAPIs {
       const tabName = uri.replace('untitled:', '');
       return tabName;
     } else {
-      const fileName = this.fn.os.pathBasename(document.fileName);
+      const fileName = this.app.os.pathBasename(document.fileName);
       return fileName;
     }
   }
@@ -544,7 +524,7 @@ export class VSCodeAPIs {
    * Gets temp directory for the extension
    */
   getDir_Temp(): string {
-    return this.fn.os.pathJoin(this.context.globalStorageUri.fsPath, 'temp');
+    return this.app.os.pathJoin(this.context.globalStorageUri.fsPath, 'temp');
   }
 
   /**

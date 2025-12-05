@@ -12,7 +12,7 @@ describe('DocInfo_PDF', () => {
   beforeEach(() => {
     app = new App({ context: mockContext, vscode: mockVSCode });
     app.init();
-    docInfo = new DocInfo_PDF(app);
+    docInfo = new DocInfo_PDF({ app });
   });
 
   afterEach(() => {

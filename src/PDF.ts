@@ -7,6 +7,7 @@ import type {
 } from './types/PaperPrinter_t';
 import { kPageSizeIdById, kHeaderFooterSubmenuById, kHeaderFooter } from './types/PaperPrinter_t';
 import type { MenuId_t } from './UIMenu';
+import type { FnImport_t } from './types/Registry_t';
 import { Diagnostics } from './Diagnostics';
 import { Yaml } from './Yaml';
 import { Coords } from './Coords';
@@ -39,6 +40,7 @@ export class PDF {
   } as const;
 
   private app: App;
+  private fn: FnImport_t;
   private tempPdfs: string[] = [];
   private dx: Diagnostics;
   private _yaml: Yaml<typeof PDF.kYaml>;
@@ -56,12 +58,13 @@ export class PDF {
   // PDF document information
   public docInfo: DocInfo_PDF;
 
-  constructor(app: App) {
-    this.app = app;
-    this.dx = app.dx.sub({ name: 'PDF' });
-    this.coords = new Coords(app);
-    this.docInfo = new DocInfo_PDF(app);
-    this._yaml = Yaml.create(app, 'src/PDF.yaml', PDF.kYaml);
+  constructor(args: { app: App }) {
+    this.app = args.app;
+    this.fn = this.app.reg.use('ui.showErrorMessage');
+    this.dx = this.fn.dx.sub({ name: 'PDF' });
+    this.coords = new Coords({ app: this.app });
+    this.docInfo = new DocInfo_PDF({ app: this.app });
+    this._yaml = Yaml.create(this.app, 'src/PDF.yaml', PDF.kYaml);
   }
 
   get yaml() {
@@ -177,7 +180,7 @@ export class PDF {
       await this.app.os.filePrint(tempPdfPath);
       dx.out('Sent PDF to printer');
     } catch (error) {
-      this.app.ui.showErrorMessage(`Failed to print PDF: ${String(error)}`);
+      this.fn.ui.showErrorMessage(`Failed to print PDF: ${String(error)}`);
       throw error;
     }
   }
@@ -221,7 +224,7 @@ export class PDF {
 
       dx.out(`Saved PDF document to ${targetPath}`);
     } catch (error) {
-      this.app.ui.showErrorMessage(`Failed to save PDF: ${String(error)}`);
+      this.fn.ui.showErrorMessage(`Failed to save PDF: ${String(error)}`);
       throw error;
     }
   }

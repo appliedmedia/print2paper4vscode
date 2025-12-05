@@ -69,8 +69,8 @@ export class DocInfo_PDF {
   // Temporary file tracking
   public tempPdfs: string[] = [];
 
-  constructor(app: App) {
-    this.app = app;
+  constructor(args: { app: App }) {
+    this.app = args.app;
     this.instanceId = DocInfo_PDF.nextInstanceId++;
   }
 
@@ -197,7 +197,7 @@ export class DocInfo_PDF {
       return { widthPx: 0, heightPx: 0 };
     }
 
-    const coords = new Coords(this.app);
+    const coords = new Coords({ app: this.app });
 
     const pageWidthPts = this.getPageWidth();
     const pageHeightPts = this.getPageHeight();

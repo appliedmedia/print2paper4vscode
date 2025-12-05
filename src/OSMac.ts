@@ -19,10 +19,9 @@ import type { App } from './App';
  * await os.filePrint('/path/to/file.pdf');
  */
 export class OSMac extends OS {
-  protected dx: Diagnostics;
-
-  constructor(app: App) {
-    super(app);
+  constructor(args: { app: App }) {
+    super(args);
+    // Override dx with OSMac-specific context
     this.dx = this.fn.dx.sub({ name: 'OSMac' });
   }
 

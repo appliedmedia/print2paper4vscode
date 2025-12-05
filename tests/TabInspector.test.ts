@@ -10,8 +10,8 @@ describe('TabInspector', () => {
 
   beforeEach(() => {
     app = new App({ context: mockContext, vscode: mockVSCode });
-    tabInspector = new TabInspector(app);
-    tabInspector.init();
+    tabInspector = new TabInspector({ app });
+    // Note: TabInspector no longer has init() - initialization happens in constructor
   });
 
   afterEach(() => {

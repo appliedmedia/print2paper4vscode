@@ -20,8 +20,8 @@ export class DocInfo_PaperPrinter {
   public pageWidthPx: number = 0;
   public pageHeightPx: number = 0;
 
-  constructor(app: App) {
-    this.app = app;
+  constructor(args: { app: App }) {
+    this.app = args.app;
   }
 
   // Margin in pixels for webview display

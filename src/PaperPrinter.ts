@@ -19,6 +19,7 @@ import type { App } from './App';
 import type { UI_t } from './UI';
 import type { PersistValue_t } from './Persist';
 import type { contextDict_t } from './types/UI_t';
+import type { FnImport_t } from './types/Registry_t';
 import { Diagnostics } from './Diagnostics';
 import {
   UIMenu,
@@ -90,21 +91,25 @@ export class PaperPrinter {
   } as const;
 
   private app: App;
+  private fn: FnImport_t;
   private uiwebview: UIWebView | null = null;
   private dx: Diagnostics;
   private _yaml: Yaml<typeof PaperPrinter.kYaml>;
 
   public docInfo: DocInfo_PaperPrinter;
 
-  constructor(app: App) {
-    this.app = app;
-    this.dx = app.dx.sub({ name: 'PaperPrinter' });
+  constructor(args: { app: App }) {
+    this.app = args.app;
+    // Only request dx.sub via Registry (always available)
+    // Other dependencies accessed via this.app.xxx to avoid circular deps during construction
+    this.fn = this.app.reg.use();
+    this.dx = this.fn.dx.sub({ name: 'PaperPrinter' });
 
     // Initialize docInfo
-    this.docInfo = new DocInfo_PaperPrinter(app);
+    this.docInfo = new DocInfo_PaperPrinter({ app: this.app });
 
     // Initialize YAML loader
-    this._yaml = Yaml.create(app, 'src/PaperPrinter.yaml', PaperPrinter.kYaml);
+    this._yaml = Yaml.create(this.app, 'src/PaperPrinter.yaml', PaperPrinter.kYaml);
   }
 
   init(): void {}
@@ -204,7 +209,7 @@ export class PaperPrinter {
       }
 
       // Create webview and initialize message handlers
-      this.uiwebview = new UIWebView(this.app);
+      this.uiwebview = new UIWebView({ app: this.app });
       this.uiwebview.init();
 
       // Display PDF in webview panel (uses this.app.pdf.docInfo directly, including title)
