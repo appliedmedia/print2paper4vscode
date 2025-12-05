@@ -23,15 +23,15 @@
 import type { Registry } from './Registry';
 import type { FnImport_t } from './types/Registry_t';
 
-export class Yaml<T extends Record<string, string>> {
-  static readonly id = 'yaml';
+// Yaml instance - created by YamlFactory
+export class YamlInstance<T extends Record<string, string>> {
   private cached: T | undefined = undefined;
   private reg: Registry;
   private fn: FnImport_t;
   private filePath: string;
   private dataStruct: T;
 
-  private constructor(args: { reg: Registry; filePath: string; dataStruct: T }) {
+  constructor(args: { reg: Registry; filePath: string; dataStruct: T }) {
     // Note: Cannot use dx.require here as Diagnostics is not yet initialized
     if (!args.reg || !args.filePath || !args.dataStruct) {
       throw new Error('Yaml constructor requires reg, filePath, and dataStruct');
@@ -41,10 +41,6 @@ export class Yaml<T extends Record<string, string>> {
     this.fn = this.reg.use('os.fileRead');
     this.filePath = filePath;
     this.dataStruct = dataStruct;
-  }
-
-  static create<T extends Record<string, string>>(args: { reg: Registry; filePath: string; dataStruct: T }): Yaml<T> {
-    return new Yaml(args);
   }
 
   done(): void {
@@ -60,3 +56,20 @@ export class Yaml<T extends Record<string, string>> {
     return this.cached as T;
   }
 }
+
+// Yaml factory singleton - Registry instantiates this
+export class Yaml {
+  static readonly id = 'yaml';
+  private reg: Registry;
+
+  constructor(args: { reg: Registry }) {
+    this.reg = args.reg;
+  }
+
+  // Factory method exposed to components via this.fn.yaml.create()
+  create<T extends Record<string, string>>(args: { filePath: string; dataStruct: T }): YamlInstance<T> {
+    return new YamlInstance({ reg: this.reg, ...args });
+  }
+}
+
+// end, Yaml.ts

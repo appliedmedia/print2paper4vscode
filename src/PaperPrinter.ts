@@ -33,7 +33,7 @@ import {
 import { UIWebView } from './UIWebView';
 import { DocInfo_PaperPrinter } from './DocInfo_PaperPrinter';
 import type { LanguageId_t } from './Stylize';
-import { Yaml } from './Yaml';
+import { YamlInstance } from './Yaml';
 import { kEmptyNoPersist } from './Persist';
 import {
   type PageSizeIdMenuItems_t,
@@ -92,7 +92,7 @@ export class PaperPrinter {
   private reg: Registry;
   private fn: FnImport_t;
   private dx: Diagnostics;
-  private _yaml: Yaml<typeof PaperPrinter.kYaml>;
+  private _yaml: YamlInstance<typeof PaperPrinter.kYaml>;
 
   public docInfo: DocInfo_PaperPrinter;
 
@@ -111,15 +111,19 @@ export class PaperPrinter {
       'tabinspector.getEditorSelectionOrAll',
       'stylize.getThemes',
       'os.dictReplace',
-      'os.getLocale'
+      'os.getLocale',
+      'yaml.create',
+      'utils.templateDictReplace',
+      'utils.forceNumber',
+      'utils.hasContent'
     );
     this.dx = this.fn.dx.sub({ name: 'PaperPrinter' });
 
     // Initialize docInfo
     this.docInfo = DocInfo_PaperPrinter.create({ reg: this.reg });
 
-    // Initialize YAML loader (called directly, not via Registry)
-    this._yaml = Yaml.create({ reg: this.reg, filePath: 'src/PaperPrinter.yaml', dataStruct: PaperPrinter.kYaml });
+    // Initialize YAML loader via Registry factory
+    this._yaml = this.fn.yaml.create({ filePath: 'src/PaperPrinter.yaml', dataStruct: PaperPrinter.kYaml });
   }
 
   done(): void {

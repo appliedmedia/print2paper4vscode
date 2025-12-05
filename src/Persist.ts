@@ -42,7 +42,7 @@ export class Persist {
   private default: Record<string, PersistValue_t> = {};
   private value: Record<string, PersistValue_t> = {};
   
-  private constructor(args: { reg: Registry }) {
+  constructor(args: { reg: Registry }) {
     this.reg = args.reg;
     // Request methods via Registry
     this.fn = this.reg.use(
@@ -52,10 +52,6 @@ export class Persist {
       'ui.showInfoMessage'
     );
     this.dx = this.fn.dx.sub({ name: 'Persist' });
-  }
-  
-  static create(args: { reg: Registry }): Persist {
-    return new Persist(args);
   }
 
   register(name: string): this {

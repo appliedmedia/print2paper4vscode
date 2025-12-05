@@ -56,6 +56,7 @@ export class Registry {
     this._instances.set('dx', rootDx);
     this._initialized.add('dx');
 
+
     // Now Registry can use fn.dx.sub() like everyone else
     this.fn = this.use();
     this.dx = this.fn.dx.sub({ name: 'Registry' });

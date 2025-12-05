@@ -9,7 +9,7 @@ import { kPageSizeIdById, kHeaderFooterSubmenuById, kHeaderFooter } from './type
 import type { MenuId_t } from './UIMenu';
 import type { FnImport_t } from './types/Registry_t';
 import { Diagnostics } from './Diagnostics';
-import { Yaml } from './Yaml';
+import { YamlInstance } from './Yaml';
 import { Coords } from './Coords';
 import jsPDF from 'jspdf';
 import { DocInfo_PDF } from './DocInfo_PDF';
@@ -43,7 +43,7 @@ export class PDF {
   private fn: FnImport_t;
   private tempPdfs: string[] = [];
   private dx: Diagnostics;
-  private _yaml: Yaml<typeof PDF.kYaml>;
+  private _yaml: YamlInstance<typeof PDF.kYaml>;
 
   // Line-by-line rendering state - jsPDF now managed through docInfo.pdfDoc
   private currentX: number = 0;
@@ -79,11 +79,14 @@ export class PDF {
       'os.pathDirname',
       'os.fileReveal',
       'vscodeapis.getDir_Temp',
-      'stylize.tokenize'
+      'stylize.tokenize',
+      'yaml.create',
+      'utils.templateDictReplace',
+      'utils.hasContent'
     );
     this.dx = this.fn.dx.sub({ name: 'PDF' });
     this.docInfo = DocInfo_PDF.create({ reg: this.reg });
-    this._yaml = Yaml.create({ reg: this.reg, filePath: 'src/PDF.yaml', dataStruct: PDF.kYaml });
+    this._yaml = this.fn.yaml.create({ filePath: 'src/PDF.yaml', dataStruct: PDF.kYaml });
     
     // All initialization happens here - no separate init() needed
     this.tempPdfs = [];

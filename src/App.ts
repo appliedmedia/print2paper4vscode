@@ -10,14 +10,15 @@ import { UIWebView } from './UIWebView';
 import { Coords } from './Coords';
 import type { Diagnostics } from './Diagnostics';
 import { Registry, type ComponentClass } from './Registry';
+import { Persist } from './Persist';
+import { Yaml } from './Yaml';
+import { Utils, type ForceNumber_scalar_t, type ForceNumber_dict_t, type ForceNumbers_t } from './Utils';
 import type { FnImport_t } from './types/Registry_t';
 import type { ExtensionContext } from 'vscode';
 import { kExtId } from './_entrypoint_extId_t';
 
-// Type aliases for forceNumber/forceNumbers input and output
-export type ForceNumber_scalar_t = number | string | undefined;
-export type ForceNumber_dict_t = Record<string, ForceNumber_scalar_t>;
-export type ForceNumbers_t = Record<string, number>;
+// Re-export type aliases from Utils for backward compatibility
+export type { ForceNumber_scalar_t, ForceNumber_dict_t, ForceNumbers_t } from './Utils';
 
 /**
  * App - Main application container and component manager
@@ -74,6 +75,7 @@ export class App {
     this.reg = new Registry({
       app: this,
       components: [
+        Utils as unknown as ComponentClass, // Utility methods (templateDictReplace, forceNumber, etc.)
         VSCodeAPIs as unknown as ComponentClass,
         UI,
         PDF,
@@ -84,11 +86,15 @@ export class App {
         UIWebView, // Singleton webview manager
         OS as unknown as ComponentClass, // OS has static create() factory
         Coords, // Singleton coordinate system
+        Persist, // Persist singleton for shared state management
+        Yaml, // Yaml factory (exposes create method)
       ],
       always: ['dx.sub'],
       init: {
         // Root Diagnostics name
         dx: { name: 'App' },
+        // Utils needs namespace values
+        utils: { ns: this.ns, ns_: this.ns_ },
         // VSCodeAPIs needs vscode and context at construction
         vscodeapis: { vscode, context },
       },
@@ -111,115 +117,25 @@ export class App {
     // dx is managed by Registry, will be cleaned up there
   }
 
-  /**
-   * Force a single value to number, ensuring finite result
-   * Converts strings to numbers. Replaces undefined, NaN, Infinity, or zero with 0.
-   * @param value - Value to convert to number
-   * @returns Finite numeric value (always returns a valid number)
-   */
+  // Utility methods - delegate to Utils singleton
   forceNumber(value: ForceNumber_scalar_t): number {
-    return this.forceNumbers({ value }).value;
+    return this.reg.getInstance<Utils>('utils')!.forceNumber(value);
   }
 
-  /**
-   * Force a dictionary of values to numbers, ensuring all finite results
-   * Converts strings to numbers. Replaces undefined, NaN, Infinity, or zero with useForZero.
-   * If requiredKeys specified, missing keys are added and set to useForZero.
-   * @param dict - Dictionary of values to convert
-   * @param useForZero - Replacement for invalid or zero values (defaults to 0)
-   * @param requiredKeys - Optional array of keys that must be present (will be added if missing)
-   * @returns Dictionary with all values coerced to finite numbers (always returns a valid dict)
-   */
   forceNumbers(
     dict: ForceNumber_dict_t,
     useForZero = 0,
     requiredKeys?: readonly string[]
   ): ForceNumbers_t {
-    // Internal helper: Force a single value to number
-    const force1Number = (value: ForceNumber_scalar_t): number => {
-      const parsed = typeof value === 'number' ? value : parseFloat(String(value));
-      // isFinite returns false for NaN, Infinity, -Infinity, undefined converted to NaN
-      // 0 is finite, so we need separate check
-      return !Number.isFinite(parsed) || parsed === 0 ? useForZero : parsed;
-    };
-
-    const dictResult: ForceNumbers_t = {};
-
-    // If requiredKeys specified, ensure they all exist (add with useForZero if missing)
-    if (requiredKeys) {
-      for (const key of requiredKeys) {
-        if (!(key in dict)) {
-          dict[key] = useForZero;
-        }
-      }
-    }
-
-    // Coerce all values to numbers using internal helper
-    for (const [key, value] of Object.entries(dict)) {
-      dictResult[key] = force1Number(value);
-    }
-
-    // Defensive: If dict is empty and no required keys, return dict with key "0" set to useForZero
-    // This ensures the function always returns at least one entry for external callers.
-    // Current internal callers never reach this (forceNumber always provides "value" key,
-    // UIMenuMgr always provides requiredKeys), but external API consumers might call with {}.
-    if (Object.keys(dictResult).length === 0) {
-      dictResult['0'] = useForZero;
-    }
-
-    return dictResult;
+    return this.reg.getInstance<Utils>('utils')!.forceNumbers(dict, useForZero, requiredKeys);
   }
 
-  /**
-   * Check if content has content when stringified
-   * Note: Numbers (including 0) and booleans (including false) always have content after stringification.
-   * Only undefined, null, and empty strings are considered empty.
-   * @param content - Content to check (string, number, boolean, or undefined)
-   * @returns true if content has content when stringified (length > 0)
-   */
   hasContent(content: string | number | boolean | undefined = ''): boolean {
-    return String(content ?? '').length > 0;
+    return this.reg.getInstance<Utils>('utils')!.hasContent(content);
   }
 
-  /**
-   * Generic template replacement function
-   * Replaces all {{key}} placeholders in source text with values from dictionary
-   * Supports nested placeholders by performing multiple passes until no changes occur
-   * Automatically includes namespace values (ns, ns_) in every replacement dictionary
-   * @param source - The source text containing {{key}} placeholders
-   * @param dictionary - Key-value pairs for replacement
-   * @returns The source text with all placeholders replaced (including nested ones)
-   */
   templateDictReplace(source: string, dictionary: Record<string, string>): string {
-    let result = source;
-    const maxIterations = 4;
-    let iteration = 0;
-    let changed = true;
-
-    // Auto-inject namespace values into dictionary (callers can override if needed)
-    const enrichedDictionary: Record<string, string> = {
-      ns: this.ns,      // Default namespace value
-      ns_: this.ns_,    // Default namespace prefix
-      ...dictionary,    // Caller values can override defaults
-    };
-
-    // Repeat replacement passes until no changes occur or max iterations reached
-    while (changed && iteration < maxIterations) {
-      const previousResult = result;
-      iteration++;
-
-      // Replace each {{key}} with its value (all occurrences)
-      for (const key of Object.keys(enrichedDictionary)) {
-        const placeholder = `{{${key}}}`;
-        const value = enrichedDictionary[key];
-        result = result.replaceAll(placeholder, value);
-      }
-
-      // Check if anything changed in this pass
-      changed = result !== previousResult;
-    }
-
-    return result;
+    return this.reg.getInstance<Utils>('utils')!.templateDictReplace(source, dictionary);
   }
 }
 

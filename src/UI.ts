@@ -18,8 +18,8 @@ import type { Registry } from './Registry';
 import type { SendToExt_t, MessageHandler_t } from './types/UI_t';
 import type { FnImport_t } from './types/Registry_t';
 import { Diagnostics } from './Diagnostics';
-import { Yaml } from './Yaml';
-import { Persist, type Persist_t } from './Persist';
+import { YamlInstance } from './Yaml';
+import type { Persist, Persist_t } from './Persist';
 import { kMenuId } from './UIMenu';
 
 // UI persist keys - union of menu IDs and toolbar position
@@ -60,7 +60,7 @@ export class UI {
   private fn: FnImport_t;
   private messageHandlers: Map<string, MessageHandler_t[]> = new Map();
   private dx: Diagnostics;
-  private _yaml: Yaml<typeof UI.kYaml>;
+  private _yaml: YamlInstance<typeof UI.kYaml>;
   public persist: Persist & Persist_t;
 
   // Typed accessor for uimenumgr singleton
@@ -75,13 +75,16 @@ export class UI {
       'vscodeapis.showWarningMessage',
       'vscodeapis.showSaveDialog',
       'vscodeapis.uriFromPath',
-      'vscodeapis.uriToPath'
+      'vscodeapis.uriToPath',
+      'yaml.create',
+      'persist.register',
+      'utils.templateDictReplace'
     );
     this.dx = this.fn.dx.sub({ name: 'UI' });
     
-    // Create per-instance Yaml and Persist via their static factory methods (called directly, not via Registry)
-    this._yaml = Yaml.create({ reg: this.reg, filePath: 'src/UI.yaml', dataStruct: UI.kYaml });
-    this.persist = Persist.create({ reg: this.reg }) as Persist & Persist_t;
+    // Create per-instance Yaml via factory, access shared Persist singleton
+    this._yaml = this.fn.yaml.create({ filePath: 'src/UI.yaml', dataStruct: UI.kYaml });
+    this.persist = this.fn.persist as unknown as Persist & Persist_t;
     this.persist.register('toolbar_pos');
   }
 
@@ -199,7 +202,7 @@ export class UI {
       );
 
       // Inject toolbar into HTML using template
-      const toolbarHtml = this.reg.app.templateDictReplace(templates.toolbar_html, {
+      const toolbarHtml = this.fn.utils.templateDictReplace(templates.toolbar_html, {
         toolbarCss: toolbarCssWithPos + '\n' + uiMenuCss,
         baseCss: templates.base_css,
         menuHtml,
@@ -221,7 +224,7 @@ export class UI {
 
   // Template dictionary replacement
   templateDictReplace(template: string, dict: Record<string, string>): string {
-    return this.reg.app.templateDictReplace(template, dict);
+    return this.fn.utils.templateDictReplace(template, dict);
   }
 
   // Get base CSS

@@ -3,8 +3,8 @@ import type { ForceNumber_scalar_t } from './App';
 import type { UI_t } from './UI';
 import type { contextDict_t } from './types/UI_t';
 import { Diagnostics } from './Diagnostics';
-import { Persist, type Persist_t } from './Persist';
-import { Yaml } from './Yaml';
+import type { Persist, Persist_t } from './Persist';
+import { YamlInstance } from './Yaml';
 import type { FnImport_t } from './types/Registry_t';
 import {
   kPageSizeId,
@@ -189,7 +189,7 @@ export class UIMenu {
   private fn: FnImport_t;
   private dx: Diagnostics;
   public persist: Persist & Persist_t;
-  private _yaml: Yaml<typeof UIMenu.kYaml>;
+  private _yaml: YamlInstance<typeof UIMenu.kYaml>;
 
   // Typed accessor for uimenumgr singleton
   private get uimenumgr() { return this.reg.getInstance<import('./UIMenuMgr').UIMenuMgr>('uimenumgr')!; }
@@ -232,7 +232,7 @@ export class UIMenu {
     const { reg, id, displayName, iconSlotTriad, isFlyout = false, menuItems, flyoutMenuItemIds = [], selectionHandler } = args;
     
     this.reg = reg;
-    this.fn = this.reg.use();
+    this.fn = this.reg.use('yaml.create', 'utils.templateDictReplace');
     this._id = id;
     this._displayName = displayName;
     this._iconSlotTriad = iconSlotTriad;
@@ -240,9 +240,10 @@ export class UIMenu {
     this._menuItems = menuItems;
     this._flyoutMenuItemIds = flyoutMenuItemIds;
     this._selectionHandler = selectionHandler;
-    this.persist = Persist.create({ reg: this.reg }) as Persist & Persist_t;
-    this.dx = this.reg.getInstance<Diagnostics>('dx')!.sub({ name: 'UIMenu' });
-    this._yaml = Yaml.create({ reg: this.reg, filePath: 'src/UIMenu.yaml', dataStruct: UIMenu.kYaml });
+    // Get the singleton Persist instance (shared across all UIMenu instances)
+    this.persist = this.reg.getInstance<Persist>('persist')! as Persist & Persist_t;
+    this.dx = this.fn.dx.sub({ name: 'UIMenu' });
+    this._yaml = this.fn.yaml.create({ filePath: 'src/UIMenu.yaml', dataStruct: UIMenu.kYaml });
 
     // Register persist property (no value set yet)
     this.persist.register(this._id);
@@ -380,7 +381,7 @@ export class UIMenu {
     };
 
     dx.done();
-    return this.reg.app.templateDictReplace(yaml.uimenu_item, replacementDict);
+    return this.fn.utils.templateDictReplace(yaml.uimenu_item, replacementDict);
   }
 
   /**

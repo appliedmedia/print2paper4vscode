@@ -9,7 +9,7 @@ import type {
 } from './types/UI_t';
 import type { FnImport_t } from './types/Registry_t';
 import { Diagnostics } from './Diagnostics';
-import { Yaml } from './Yaml';
+import { YamlInstance } from './Yaml';
 import { kZoomLevel, kZoomIn, kZoomOut } from './types/PaperPrinter_t';
 
 /**
@@ -42,7 +42,7 @@ export class UIWebView {
   private dx: Diagnostics;
   private panelId: WebviewPanelId_t | null = null;
   private handlersRegistered: boolean = false;
-  private _yaml: Yaml<typeof UIWebView.kYaml>;
+  private _yaml: YamlInstance<typeof UIWebView.kYaml>;
 
   // Bound handler references for proper registration/unregistration
   private readonly handleDragEndBound: MessageHandler_t;
@@ -60,10 +60,13 @@ export class UIWebView {
     this.fn = this.reg.use(
       'vscodeapis.getOrCreateWebviewPanel',
       'vscodeapis.removePanel',
-      'os.fileRead'
+      'os.fileRead',
+      'yaml.create',
+      'utils.forceNumber',
+      'utils.templateDictReplace'
     );
     this.dx = this.fn.dx.sub({ name: 'UIWebView' });
-    this._yaml = Yaml.create({ reg: this.reg, filePath: 'src/UIWebView.yaml', dataStruct: UIWebView.kYaml });
+    this._yaml = this.fn.yaml.create({ filePath: 'src/UIWebView.yaml', dataStruct: UIWebView.kYaml });
 
     // Bind handlers once in constructor to maintain same reference
     this.handleDragEndBound = this.handleDragEnd.bind(this) as MessageHandler_t;
