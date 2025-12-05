@@ -77,14 +77,13 @@ export class UI {
       'vscodeapis.uriFromPath',
       'vscodeapis.uriToPath',
       'yaml.create',
-      'persist.register',
       'utils.templateDictReplace'
     );
     this.dx = this.fn.dx.sub({ name: 'UI' });
     
     // Create per-instance Yaml via factory, access shared Persist singleton
     this._yaml = this.fn.yaml.create({ filePath: 'src/UI.yaml', dataStruct: UI.kYaml });
-    this.persist = this.fn.persist as unknown as Persist & Persist_t;
+    this.persist = this.reg.getInstance<Persist>('persist')! as Persist & Persist_t;
     this.persist.register('toolbar_pos');
   }
 
