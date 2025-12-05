@@ -62,6 +62,7 @@ export class UIWebView {
       'vscodeapis.removePanel',
       'os.fileRead',
       'yaml.create',
+      'persist.set',
       'utils.forceNumber',
       'utils.templateDictReplace'
     );
@@ -322,7 +323,7 @@ export class UIWebView {
       const left = msg.left;
       if (typeof left === 'number') {
         // Save toolbar position via persist
-        this.ui.persist.set('toolbar_pos', left);
+        this.fn.persist.set('toolbar_pos', left);
         dx.out(`Toolbar position saved: ${left}px`);
       }
     } finally {

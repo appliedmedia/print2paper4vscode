@@ -1,6 +1,7 @@
 import { describe, it, beforeEach, afterEach } from 'node:test';
 import * as assert from 'node:assert';
 import { App } from '../src/App.js';
+import { Persist } from '../src/Persist.js';
 import { mockContext, mockVSCode } from './test-utils.js';
 
 describe('UIMenu Simple Unit Tests', () => {
@@ -54,10 +55,10 @@ describe('UIMenu Simple Unit Tests', () => {
   it('should persist menu selections', () => {
     (app.paperprinter as any).createMenus();
     
-    const themeMenu = app.uimenumgr.getMenuById('theme');
+    const persist = app.reg.getInstance<Persist>('persist')!;
     
     // Set a value
-    themeMenu.persist.set('theme', 'github-light');
+    persist.set('theme', 'github-light');
     
     // Retrieve it
     const selectedTheme = app.uimenumgr.getMenuItemIdSelected('theme');

@@ -54,18 +54,6 @@ export class Persist {
     this.dx = this.fn.dx.sub({ name: 'Persist' });
   }
 
-  // Access method that returns this singleton (similar to dx.sub pattern)
-  // Persist is inherently a singleton because it manages shared global state
-  // Unlike yaml.create() which creates new instances, this returns the shared singleton
-  use(): Persist {
-    return this;
-  }
-
-  register(name: string): this {
-    // Just track that this key is registered (for validation if needed)
-    // Actual storage is handled by get/set methods
-    return this;
-  }
 
   /**
    * Get a persisted value
@@ -161,22 +149,9 @@ export class Persist {
    */
   static async clear(args: { reg: Registry }): Promise<void> {
     const { reg } = args;
-    const fn = reg.use(
-      'vscodeapis.deleteGlobalState',
-      'ui.showInfoMessage'
-    );
-
-    // Clear all menu-related state
-    const keysToReset: GlobalStateKey_t[] = [...kMenuId, 'toolbar_pos'];
-
-    for (const key of keysToReset) {
-      await fn.vscodeapis.deleteGlobalState({
-        key: key as GlobalStateKey_t,
-      });
-    }
-
-    // Inform user
-    fn.ui.showInfoMessage('Print2Paper state reset - reopen print view to see defaults');
+    // Get the singleton instance and call its clear method
+    const persist = reg.getInstance<Persist>('persist')!;
+    await persist.clear();
   }
 }
 

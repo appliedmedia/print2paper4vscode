@@ -61,7 +61,7 @@ export class UIMenuMgr {
   constructor(args: { reg: Registry }) {
     this.reg = args.reg;
     // Request methods via Registry
-    this.fn = this.reg.use('stylize.getThemes', 'os.dictReplace');
+    this.fn = this.reg.use('stylize.getThemes', 'os.dictReplace', 'persist.get', 'persist.set');
     this.dx = this.fn.dx.sub({ name: 'UIMenuMgr' });
   }
 
@@ -238,39 +238,35 @@ export class UIMenuMgr {
     return menu;
   }
 
-  // Get persist value for a menu (reads from menu.persist.get(menuId))
+  // Get persist value for a menu (reads from persist singleton)
   getPersistForMenuId(menuId: MenuId_t): PersistValue_t | undefined {
-    const menu = this.getMenuById(menuId);
-    return menu.persist.get(menuId);
+    return this.fn.persist.get(menuId);
   }
 
-  // Get persist value for a persistId from a menu's persist
+  // Get persist value for a persistId from persist singleton
   getValueForPersistIdOnMenuId(args: { menuId: MenuId_t; persistId: UI_t }): PersistValue_t | undefined {
     const dx = this.dx.sub({ name: 'getValueForPersistIdOnMenuId' });
     dx.require(args, ['menuId', 'persistId']);
-    const { menuId, persistId } = args;
-    const menu = this.getMenuById(menuId);
-    const result = menu.persist.get(persistId);
+    const { persistId } = args;
+    const result = this.fn.persist.get(persistId);
     dx.done();
     return result;
   }
 
-  // Set persist value for a persistId on a menu's persist
+  // Set persist value for a persistId on persist singleton
   setValueForPersistIdOnMenuId(args: { menuId: MenuId_t; persistId: UI_t; value: PersistValue_t }): void {
     const dx = this.dx.sub({ name: 'setValueForPersistIdOnMenuId' });
     dx.require(args, ['menuId', 'persistId', 'value']);
     const { menuId, persistId, value } = args;
-    const menu = this.getMenuById(menuId);
-    const oldValue = menu.persist.get(persistId);
-    menu.persist.set(persistId, value);
+    const oldValue = this.fn.persist.get(persistId);
+    this.fn.persist.set(persistId, value);
     dx.out(`Menu[${menuId}].persist[${persistId}] = ${value} (was: ${oldValue})`);
     dx.done();
   }
 
   // Get the selected menuItemId for a menu (returns the persisted ID)
   getMenuItemIdSelected(menuId: MenuId_t): string | undefined {
-    const menu = this.getMenuById(menuId);
-    const selectedValue = menu.persist.get(menuId);
+    const selectedValue = this.fn.persist.get(menuId);
     this.dx.out(`getMenuItemIdSelected(${menuId}) → ${selectedValue}`);
     return selectedValue ? String(selectedValue) : undefined;
   }

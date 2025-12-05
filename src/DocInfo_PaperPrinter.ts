@@ -11,6 +11,7 @@ import type { MarginIdMenuItems_t } from './types/PaperPrinter_t';
 export class DocInfo_PaperPrinter {
   static readonly id = 'docinfo_paperprinter';
   private reg: Registry;
+  private fn: ReturnType<Registry['use']>;
 
   // Document content
   public rawCode: string = '';
@@ -23,6 +24,7 @@ export class DocInfo_PaperPrinter {
 
   private constructor(args: { reg: Registry }) {
     this.reg = args.reg;
+    this.fn = this.reg.use('persist.get');
   }
   
   /**
@@ -41,10 +43,8 @@ export class DocInfo_PaperPrinter {
       wide: 40, // ~40px
     };
 
-    // Get margin from menu's persistent state via registry
-    const uimenumgr = this.reg.getInstance('uimenumgr') as any;
-    const menu = uimenumgr.getMenuById('marginId');
-    const rawMarginId = menu.persist.marginId;
+    // Get margin from persist singleton via registry
+    const rawMarginId = this.fn.persist.get('marginId');
     const marginId: MarginIdMenuItems_t =
       typeof rawMarginId === 'string' && rawMarginId in marginIdToPx
         ? (rawMarginId as MarginIdMenuItems_t)

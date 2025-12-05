@@ -188,7 +188,6 @@ export class UIMenu {
   private reg: Registry;
   private fn: FnImport_t;
   private dx: Diagnostics;
-  public persist: Persist;
   private _yaml: YamlInstance<typeof UIMenu.kYaml>;
 
   // Typed accessor for uimenumgr singleton
@@ -232,7 +231,7 @@ export class UIMenu {
     const { reg, id, displayName, iconSlotTriad, isFlyout = false, menuItems, flyoutMenuItemIds = [], selectionHandler } = args;
     
     this.reg = reg;
-    this.fn = this.reg.use('yaml.create', 'persist.use', 'utils.templateDictReplace');
+    this.fn = this.reg.use('yaml.create', 'persist.get', 'persist.set', 'persist.validateDefault', 'utils.templateDictReplace');
     this._id = id;
     this._displayName = displayName;
     this._iconSlotTriad = iconSlotTriad;
@@ -240,20 +239,8 @@ export class UIMenu {
     this._menuItems = menuItems;
     this._flyoutMenuItemIds = flyoutMenuItemIds;
     this._selectionHandler = selectionHandler;
-    // Access the singleton Persist instance (shared across all UIMenu instances)
-    this.persist = this.fn.persist.use();
     this.dx = this.fn.dx.sub({ name: 'UIMenu' });
     this._yaml = this.fn.yaml.create({ filePath: 'src/UIMenu.yaml', dataStruct: UIMenu.kYaml });
-
-    // Register persist property (no value set yet)
-    this.persist.register(this._id);
-
-    // Register persistId if present (e.g., 'zoomLevel_value' for display values)
-    const menuPersistId: UI_t | undefined = (this._iconSlotTriad?.main as iconSlotTriad_main_t)
-      ?.persistId;
-    if (menuPersistId) {
-      this.persist.register(menuPersistId);
-    }
   }
 
   get yaml() {
@@ -297,7 +284,7 @@ export class UIMenu {
 
   // Get the default item ID for this menu (for default icon 📝)
   async getDefaultItemId(): Promise<string> {
-    const defaultItemId = await this.persist.validateDefault({
+    const defaultItemId = await this.fn.persist.validateDefault({
       name: this._id,
       computeFn: async () => {
         const { id } = await this.dispatchSelection(this.defaultId());
@@ -311,7 +298,7 @@ export class UIMenu {
   // Get the currently selected item ID for this menu (for highlighting ✓)
   async getSelectedItemId(): Promise<string> {
     // Get the current persisted value (user's selection)
-    let menuItemId = this.persist.get(this._id) || '';
+    let menuItemId = this.fn.persist.get(this._id) || '';
     if (!menuItemId) {
       menuItemId = await this.getDefaultItemId();
     }

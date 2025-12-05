@@ -61,7 +61,6 @@ export class UI {
   private messageHandlers: Map<string, MessageHandler_t[]> = new Map();
   private dx: Diagnostics;
   private _yaml: YamlInstance<typeof UI.kYaml>;
-  public persist: Persist;
 
   // Typed accessor for uimenumgr singleton
   private get uimenumgr() { return this.reg.getInstance<import('./UIMenuMgr').UIMenuMgr>('uimenumgr')!; }
@@ -77,15 +76,14 @@ export class UI {
       'vscodeapis.uriFromPath',
       'vscodeapis.uriToPath',
       'yaml.create',
-      'persist.use',
+      'persist.get',
+      'persist.set',
       'utils.templateDictReplace'
     );
     this.dx = this.fn.dx.sub({ name: 'UI' });
     
-    // Create per-instance Yaml via factory, access shared Persist singleton
+    // Create per-instance Yaml via factory
     this._yaml = this.fn.yaml.create({ filePath: 'src/UI.yaml', dataStruct: UI.kYaml });
-    this.persist = this.fn.persist.use();
-    this.persist.register('toolbar_pos');
   }
 
   done(): void {
@@ -180,7 +178,7 @@ export class UI {
       // Get toolbar position, validate it's within bounds, else use default
       // Note: VS Code extensions run in Node.js and don't have access to window dimensions.
       // Client-side code in toolbar_js/yaml dynamically clamps to actual window.innerWidth.
-      let toolbar_pos = Number(this.persist.get('toolbar_pos'));
+      let toolbar_pos = Number(this.fn.persist.get('toolbar_pos'));
       if (
         isNaN(toolbar_pos) ||
         toolbar_pos < UI.kToolbar_pos_min_px ||
