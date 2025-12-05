@@ -82,6 +82,13 @@ export class DocInfo_PDF {
     return new DocInfo_PDF(args);
   }
 
+  /**
+   * Private getter for Coords singleton
+   */
+  private get coords(): Coords {
+    return this.reg.getInstance<Coords>('coords')!;
+  }
+
   // Margin getter - calculates from current marginId
   // Always includes base 0.4 inch (28.8 pts) minimum margin for safe printing
   // Margin settings (none/minimal/normal/wide) are ADDED to this base
@@ -206,13 +213,12 @@ export class DocInfo_PDF {
     }
 
     // Use Coords singleton via registry
-    const coords = this.reg.getInstance<Coords>('coords')!;
     const pageWidthPts = this.getPageWidth();
     const pageHeightPts = this.getPageHeight();
 
     return {
-      widthPx: Math.round(coords.pdfPtsToCssPx(pageWidthPts)),
-      heightPx: Math.round(coords.pdfPtsToCssPx(pageHeightPts)),
+      widthPx: Math.round(this.coords.pdfPtsToCssPx(pageWidthPts)),
+      heightPx: Math.round(this.coords.pdfPtsToCssPx(pageHeightPts)),
     };
   }
 

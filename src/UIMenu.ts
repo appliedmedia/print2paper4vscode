@@ -508,7 +508,7 @@ export class UIMenu {
     
     try {
       const yaml = this.yaml;
-      const html = this.reg.app.templateDictReplace(yaml.uimenu_text_edit, {
+      const html = this.fn.utils.templateDictReplace(yaml.uimenu_text_edit, {
         itemId,
         constrain,
         width: width ?? '',
@@ -652,7 +652,7 @@ export class UIMenu {
         icon: buttonContent,
         menuItems: hasItems ? menuItems : '', // Empty string if no items
         menuItemsContainer: hasItems
-          ? this.reg.app.templateDictReplace(this.yaml.uimenu_items_container, {
+          ? this.fn.utils.templateDictReplace(this.yaml.uimenu_items_container, {
               menuId: this._id,
               menuItems,
             })
@@ -661,7 +661,7 @@ export class UIMenu {
         shortcutCodeAttr,
       };
 
-      const result = this.reg.app.templateDictReplace(template, replacementDict);
+      const result = this.fn.utils.templateDictReplace(template, replacementDict);
       visited.delete(this._id); // Remove from visited set after successful generation
       return result;
     } catch (error) {

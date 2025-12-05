@@ -199,7 +199,7 @@ export class UIWebView {
         this.uimenumgr.getMenuItemIdSelected(kZoomLevel.id) || kZoomLevel.altId;
       const rawZoom = this.uimenumgr.getValueForMenuItemId({ menuId: kZoomLevel.id, menuItemId: zoomMenuItemId });
       // Coerce to number (forceNumber always returns valid number or 0)
-      const coercedZoom = this.reg.app.forceNumber(rawZoom);
+      const coercedZoom = this.fn.utils.forceNumber(rawZoom);
       // Use coerced value if finite and positive, otherwise fall back to hardcoded default
       const pdf_zoom_level =
         Number.isFinite(coercedZoom) && coercedZoom > 0 ? coercedZoom : kZoomLevel.altValue;
@@ -230,11 +230,11 @@ export class UIWebView {
       };
 
       // Replace placeholders
-      const webview_css = this.reg.app.templateDictReplace(templates.webview_css, templateDict);
-      const webview_js = this.reg.app.templateDictReplace(templates.webview_js, templateDict);
+      const webview_css = this.fn.utils.templateDictReplace(templates.webview_css, templateDict);
+      const webview_js = this.fn.utils.templateDictReplace(templates.webview_js, templateDict);
 
       // Generate HTML
-      return this.reg.app.templateDictReplace(templates.webview_html, {
+      return this.fn.utils.templateDictReplace(templates.webview_html, {
         base_css,
         webview_css,
         webview_js,

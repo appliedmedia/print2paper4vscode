@@ -13,12 +13,10 @@ export type ForceNumbers_t = Record<string, number>;
 
 export class Utils {
   static readonly id = 'utils';
-  private reg: Registry;
   private ns: string;
   private ns_: string;
 
-  constructor(args: { reg: Registry; ns: string; ns_: string }) {
-    this.reg = args.reg;
+  constructor(args: { ns: string; ns_: string }) {
     this.ns = args.ns;
     this.ns_ = args.ns_;
   }
@@ -108,7 +106,7 @@ export class Utils {
    * Note: Numbers (including 0) and booleans (including false) always have content after stringification.
    * Only undefined, null, and empty strings are considered empty.
    */
-  hasContent(content: string | number | boolean | undefined = ''): boolean {
+  hasContent(content: string | number | boolean | null | undefined = ''): boolean {
     return String(content ?? '').length > 0;
   }
 }

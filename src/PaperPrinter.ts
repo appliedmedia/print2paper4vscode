@@ -494,7 +494,7 @@ export class PaperPrinter {
     // Use centralized const with template replacement for SVG icons
     return kOrient.menuItems.map(item => ({
       id: item.id as MenuItemId_t,
-      displayName: this.reg.app.templateDictReplace(item.displayName, this.yaml),
+      displayName: this.fn.utils.templateDictReplace(item.displayName, this.yaml),
       iconSlotTriad: { begin: '', main: '', end: '' },
     }));
   }
@@ -503,7 +503,7 @@ export class PaperPrinter {
     // Use centralized const with template replacement for SVG icons
     return kMarginId.menuItems.map(item => ({
       id: item.id as MenuItemId_t,
-      displayName: this.reg.app.templateDictReplace(item.displayName, this.yaml),
+      displayName: this.fn.utils.templateDictReplace(item.displayName, this.yaml),
       iconSlotTriad: { begin: '', main: '', end: '' },
     }));
   }
@@ -910,12 +910,12 @@ export class PaperPrinter {
    */
   private zoomLevel_setTextEdit(zoomValue: number): void {
     const dx = this.dx.sub({ name: 'zoomLevel_setTextEdit' });
-    if (this.reg.app.hasContent(zoomValue)) {
+    if (this.fn.utils.hasContent(zoomValue)) {
       const menuId = kZoomLevel.id;
       const triadMain: iconSlotTriad_main_t = kZoomLevel.iconSlotTriad.main;
       const persistId = triadMain.persistId;
       if (persistId) {
-        const persistValue = this.reg.app.forceNumber(zoomValue) as PersistValue_t;
+        const persistValue = this.fn.utils.forceNumber(zoomValue) as PersistValue_t;
         this.uimenumgr.setValueForPersistIdOnMenuId({ menuId, persistId, value: persistValue });
         dx.out(`Saved ${persistValue} to menu[${menuId}].persist[${persistId}]`);
       }
@@ -961,7 +961,7 @@ export class PaperPrinter {
       });
 
       // Save actual zoom value to persistId (zoomLevel_setTextEdit handles this)
-      this.zoomLevel_setTextEdit(this.reg.app.forceNumber(value));
+      this.zoomLevel_setTextEdit(this.fn.utils.forceNumber(value));
       void this.regenerateAndUpdateWebview();
     }
     dx.done();
@@ -999,7 +999,7 @@ export class PaperPrinter {
 
       // Get current zoom value with proper validation
       const rawZoom = this.uimenumgr.getValueForMenuItemIdSelected(kZoomLevel.id);
-      const currentZoom = this.reg.app.forceNumber(rawZoom);
+      const currentZoom = this.fn.utils.forceNumber(rawZoom);
       
       // Validate currentZoom is numeric; fall back to altValue if not
       if (Number.isNaN(currentZoom) || currentZoom === 0) {

@@ -70,7 +70,8 @@ export class Stylize {
       'vscodeapis.getActiveThemeId',
       'vscodeapis.getEditorTypography',
       'os.pathJoin',
-      'os.fileRead'
+      'os.fileRead',
+      'utils.templateDictReplace'
     );
     this.dx = this.fn.dx.sub({ name: 'Stylize' });
   }
@@ -354,14 +355,14 @@ export class Stylize {
             if (fontStyle & 2) styleParts.push('font-style: italic');
             const style = styleParts.join('; ') + ';';
 
-            return this.reg.app.templateDictReplace(yaml.stylize_token_span, {
+            return this.fn.utils.templateDictReplace(yaml.stylize_token_span, {
               style,
               text,
             });
           })
           .join('');
 
-        return this.reg.app.templateDictReplace(yaml.stylize_token_line, {
+        return this.fn.utils.templateDictReplace(yaml.stylize_token_line, {
           lineHeight: lineHeight.toString(),
           tokens,
         });
@@ -369,7 +370,7 @@ export class Stylize {
       .join('');
 
     // Generate final pre element
-    return this.reg.app.templateDictReplace(yaml.stylize_token_pre, {
+    return this.fn.utils.templateDictReplace(yaml.stylize_token_pre, {
       fontSize: fontSize.toString(),
       lineHeight: lineHeight.toString(),
       lines,

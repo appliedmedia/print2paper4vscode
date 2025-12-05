@@ -1,3 +1,4 @@
+import type { FnImport_t } from './types/Registry_t';
 import type { Registry } from './Registry';
 import type { LanguageId_t } from './Stylize';
 import type { MarginIdMenuItems_t } from './types/PaperPrinter_t';
@@ -11,7 +12,7 @@ import type { MarginIdMenuItems_t } from './types/PaperPrinter_t';
 export class DocInfo_PaperPrinter {
   static readonly id = 'docinfo_paperprinter';
   private reg: Registry;
-  private fn: ReturnType<Registry['use']>;
+  private fn: FnImport_t;
 
   // Document content
   public rawCode: string = '';

@@ -41,7 +41,7 @@ export class OSMac extends OS {
       throw new Error(`Failed to load AppleScript template for ${templateKey}`);
     }
 
-    const appleScript = this.reg.app.templateDictReplace(yaml[templateKey], variables);
+    const appleScript = this.fn.utils.templateDictReplace(yaml[templateKey], variables);
     if (!appleScript) {
       throw new Error(`Failed to process AppleScript template for ${templateKey}`);
     }

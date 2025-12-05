@@ -74,6 +74,7 @@ export class PDF {
       'os.ensureDir',
       'os.pathJoin',
       'os.fileWrite',
+      'utils.templateDictReplace',
       'os.fileOpenPrintDialog',
       'os.filePrint',
       'os.pathDirname',
@@ -837,7 +838,7 @@ export class PDF {
       };
 
       // Replace template variables
-      const formatted = this.reg.app.templateDictReplace(template, templateDict);
+      const formatted = this.fn.utils.templateDictReplace(template, templateDict);
 
       // Return null if pageTotal is needed but is 0
       if ((element === 'total' || element === 'pageTotal') && pageTotal === 0) {

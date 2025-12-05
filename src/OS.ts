@@ -51,7 +51,8 @@ export abstract class OS {
     this.fn = this.reg.use(
       'vscodeapis.getExtensionPath',
       'vscodeapis.getPanelForUriConversion',
-      'vscodeapis.uriFromPath'
+      'vscodeapis.uriFromPath',
+      'utils.templateDictReplace'
     );
     this.dx = this.fn.dx.sub({ name: 'OS' });
     this.extensionRoot = this.fn.vscodeapis.getExtensionPath();
@@ -126,7 +127,7 @@ export abstract class OS {
   dictReplace(source: string): string {
     const osKeys = this.getOSKeys();
     // Use the app's templateDictReplace method via reg.app
-    return this.reg.app.templateDictReplace(source, osKeys);
+    return this.fn.utils.templateDictReplace(source, osKeys);
   }
 
   // Common filesystem helpers consolidated here

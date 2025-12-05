@@ -61,7 +61,7 @@ export class UIMenuMgr {
   constructor(args: { reg: Registry }) {
     this.reg = args.reg;
     // Request methods via Registry
-    this.fn = this.reg.use('stylize.getThemes', 'os.dictReplace', 'persist.get', 'persist.set');
+    this.fn = this.reg.use('stylize.getThemes', 'os.dictReplace', 'persist.get', 'persist.set', 'utils.hasContent', 'utils.forceNumbers', 'utils.templateDictReplace');
     this.dx = this.fn.dx.sub({ name: 'UIMenuMgr' });
   }
 
@@ -313,7 +313,7 @@ export class UIMenuMgr {
         dx.out(`Found persistId: ${iconSlotMain.persistId}`);
         const persistValue = this.getValueForPersistIdOnMenuId({ menuId, persistId: iconSlotMain.persistId });
         dx.out(`Read from menu.persist[${iconSlotMain.persistId}] = ${persistValue}`);
-        if (this.reg.app.hasContent(persistValue)) {
+        if (this.fn.utils.hasContent(persistValue)) {
           result = persistValue as string | number;
           dx.out(`Returning persistValue: ${result}`);
         }
@@ -384,7 +384,7 @@ export class UIMenuMgr {
     };
     // forceNumbers with requiredKeys ensures all keys exist, coerces to numbers (non-zero or useForZero)
     // Missing keys are added with useForZero=1, invalid/zero values become 1
-    const dict_nums = this.reg.app.forceNumbers(inputs, 1, kUIMenuItemDictRequiredKeys);
+    const dict_nums = this.fn.utils.forceNumbers(inputs, 1, kUIMenuItemDictRequiredKeys);
     dx.done();
     return dict_nums;
   }
@@ -472,7 +472,7 @@ export class UIMenuMgr {
       dx.out(`fullContext keys: ${Object.keys(fullContext).join(', ')}`);
       dx.out(`fullContext: ${JSON.stringify(fullContext)}`);
       dx.out(`Template to replace: ${value}`);
-      let result = this.reg.app.templateDictReplace(value, fullContext);
+      let result = this.fn.utils.templateDictReplace(value, fullContext);
       dx.out(`After template replacement: ${result}`);
 
       // Look for {{calc:...}} pattern
