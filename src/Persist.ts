@@ -54,9 +54,10 @@ export class Persist {
     this.dx = this.fn.dx.sub({ name: 'Persist' });
   }
 
-  // Factory method that returns the singleton (for API consistency with Yaml)
+  // Access method that returns this singleton (similar to dx.sub pattern)
   // Persist is inherently a singleton because it manages shared global state
-  create(): Persist {
+  // Unlike yaml.create() which creates new instances, this returns the shared singleton
+  use(): Persist {
     return this;
   }
 
