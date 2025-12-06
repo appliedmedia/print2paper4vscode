@@ -117,8 +117,8 @@ describe('PDF Object Reuse Tests', () => {
       const arrayBufferBefore = pdfDoc.asArrayBuffer();
 
       // Display in webview (this should use the same PDF object)
-      const uiWebView = new UIWebView({ reg: app.reg });
-      await uiWebView.displayPdfPanel();
+      // Use the singleton UIWebView instance from app
+      await app.uiwebview.displayPdfPanel();
 
       // Get ArrayBuffer after webview display
       const arrayBufferAfter = pdfDoc.asArrayBuffer();
@@ -179,8 +179,8 @@ describe('PDF Object Reuse Tests', () => {
       assert.ok(pageSizePx.heightPx > 0, 'Should have valid height');
 
       // Display in webview using DocInfo_PDF directly
-      const uiWebView = new UIWebView({ reg: app.reg });
-      const panelId = await uiWebView.displayPdfPanel();
+      // Use the singleton UIWebView instance from app
+      const panelId = await app.uiwebview.displayPdfPanel();
 
       assert.ok(panelId, 'Panel should be created');
       app.done();
@@ -310,8 +310,8 @@ describe('PDF Object Reuse Tests', () => {
       // Try to display webview without generating PDF first
       // This should fail because pdfDoc is null
       try {
-        const uiWebView = new UIWebView({ reg: app.reg });
-        await uiWebView.displayPdfPanel();
+        // Use the singleton UIWebView instance from app
+        await app.uiwebview.displayPdfPanel();
         assert.fail('Should throw error when PDF is not generated');
       } catch (error) {
         assert.ok(

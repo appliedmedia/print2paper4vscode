@@ -340,6 +340,100 @@ All planning documents are stored in `docs/plans/` and follow a standardized nam
 - Use `OS.fileRead` instead of `fs.readFileSync`
 - Set default values in variables and return once at the end of functions
 
+### Registry Pattern and Dependency Injection
+
+**All components use the Registry pattern for dependency injection.**
+
+#### Constructor Pattern
+
+Every component receives `{ reg: Registry }` and accesses dependencies via `this.fn`:
+
+```typescript
+export class MyComponent {
+  static readonly id = 'mycomponent';
+  private reg: Registry;
+  private fn: FnImport_t;
+  private dx: Diagnostics;
+
+  constructor(args: { reg: Registry }) {
+    this.reg = args.reg;
+    
+    // Request dependencies via Registry
+    this.fn = this.reg.use(
+      'ui.showErrorMessage',
+      'os.fileRead',
+      'pdf.generatePdf'
+    );
+    
+    // Create diagnostics instance (dx.sub always available)
+    this.dx = this.fn.dx.sub({ name: 'MyComponent' });
+    
+    // All initialization happens in constructor
+    // No separate init() method needed
+  }
+  
+  async someMethod(): Promise<void> {
+    // Use dependencies via this.fn
+    const data = this.fn.os.fileRead('file.txt');
+    await this.fn.pdf.generatePdf();
+    this.fn.ui.showErrorMessage('Done!');
+    
+    // Access App utilities via this.reg.app
+    const sanitized = this.reg.app.templateDictReplace(data, {});
+  }
+  
+  done(): void {
+    // Explicit cleanup when needed
+    this.dx.done();
+  }
+}
+```
+
+#### Factory Pattern for Per-Instance Classes
+
+Classes like Yaml and Persist use factory pattern:
+
+```typescript
+export class Yaml<T> {
+  static readonly id = 'yaml';
+  
+  private constructor(args: { reg: Registry; filePath: string; dataStruct: T }) {
+    // ...
+  }
+  
+  static create<T>(args: { reg: Registry; filePath: string; dataStruct: T }): Yaml<T> {
+    return new Yaml(args);
+  }
+}
+
+// Usage in component
+this._yaml = Yaml.create({ 
+  reg: this.reg, 
+  filePath: 'src/MyComponent.yaml',
+  dataStruct: MyComponent.kYaml 
+});
+```
+
+#### Singleton Pattern
+
+Components like UIWebView and Coords are singletons managed by Registry:
+
+```typescript
+// Access via app property, not via this.fn
+await this.reg.app.uiwebview.displayPdfPanel();
+const px = this.reg.app.coords.pdfPtsToCssPx(100);
+```
+
+#### Key Principles
+
+- **No init() methods** - all initialization in constructor
+- **Keep done() methods** - explicit cleanup when needed
+- **Request specific methods** - not entire components
+- **Always available: dx.sub** - for creating diagnostics instances
+- **App utilities via this.reg.app** - templateDictReplace, forceNumber, hasContent
+- **Component methods via this.fn** - all requested dependencies
+- **Lazy instantiation** - Registry creates components on first use
+
 ### UIMenu Generic Design Principles
 
 **UIMenu is a completely generic menu provider.** All explicit business logic is provided by the calling party that instantiates the UIMenu instance. NONE of those details should EVER permeate into any other part of the code. Keep separation of concerns strongly encapsulated.

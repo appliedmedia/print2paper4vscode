@@ -213,8 +213,8 @@ export class DocInfo_PDF {
     const pageHeightPts = this.getPageHeight();
 
     return {
-      widthPx: Math.round(this.fn.coords.pdfPtsToCssPx({ pdfPts: pageWidthPts })),
-      heightPx: Math.round(this.fn.coords.pdfPtsToCssPx({ pdfPts: pageHeightPts })),
+      widthPx: Math.round(this.fn.coords.pdfPtsToCssPx(pageWidthPts)),
+      heightPx: Math.round(this.fn.coords.pdfPtsToCssPx(pageHeightPts)),
     };
   }
 
