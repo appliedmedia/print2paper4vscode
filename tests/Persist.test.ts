@@ -6,12 +6,14 @@ import type * as vscode from 'vscode';
 
 // Mock VS Code context and APIs with state tracking
 let mockGlobalState: Record<string, any> = {};
+let mockUpdateCallCount = 0;
 
 const mockContext = {
   subscriptions: [],
   globalState: {
     get: (key: string) => mockGlobalState[key],
     update: async (key: string, value: any) => {
+      mockUpdateCallCount++;
       if (value === undefined) {
         delete mockGlobalState[key];
       } else {
@@ -44,6 +46,7 @@ describe('Persist', () => {
 
   beforeEach(() => {
     mockGlobalState = {}; // Reset state before each test
+    mockUpdateCallCount = 0; // Reset call count before each test
     app = new App({ context: mockContext, vscode: mockVSCode });
     persist = app.reg.getInstance<Persist>('persist')!;
   });
@@ -122,12 +125,12 @@ describe('Persist', () => {
   it('should not update global state when value does not change', () => {
     persist.set('unchanged', 'same');
     
-    const callCountBefore = Object.keys(mockGlobalState).length;
+    const callCountBefore = mockUpdateCallCount;
     persist.set('unchanged', 'same'); // Set same value again
     
-    // Global state should not be updated (no new keys)
-    const callCountAfter = Object.keys(mockGlobalState).length;
-    assert.strictEqual(callCountBefore, callCountAfter);
+    // Global state update should not be called again (redundant update suppressed)
+    const callCountAfter = mockUpdateCallCount;
+    assert.strictEqual(callCountBefore, callCountAfter, 'update() should not be called for unchanged values');
   });
 
   it('should handle different value types', () => {
