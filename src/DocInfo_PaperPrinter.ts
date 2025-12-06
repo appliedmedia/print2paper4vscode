@@ -44,7 +44,7 @@ export class DocInfo_PaperPrinter {
       wide: 40, // ~40px
     };
 
-    // Get margin from persist singleton via registry
+    // Get margin from persist singleton
     const rawMarginId = this.fn.persist.get('marginId');
     const marginId: MarginIdMenuItems_t =
       typeof rawMarginId === 'string' && rawMarginId in marginIdToPx

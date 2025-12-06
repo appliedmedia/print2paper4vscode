@@ -1,4 +1,5 @@
 import type { Registry } from './Registry';
+import type { FnImport_t } from './types/Registry_t';
 import type {
   MarginIdMenuItems_t,
   PageSizeIdMenuItems_t,
@@ -20,6 +21,7 @@ import type { LanguageId_t } from './Stylize';
 export class DocInfo_PDF {
   static readonly id = 'docinfo_pdf';
   private reg: Registry;
+  private fn: FnImport_t;
 
   // Stable instance identifier for tracking PDF object reuse
   private static nextInstanceId = 1;
@@ -72,6 +74,7 @@ export class DocInfo_PDF {
 
   private constructor(args: { reg: Registry }) {
     this.reg = args.reg;
+    this.fn = this.reg.use('coords.pdfPtsToCssPx');
     this.instanceId = DocInfo_PDF.nextInstanceId++;
   }
   
@@ -80,13 +83,6 @@ export class DocInfo_PDF {
    */
   static create(args: { reg: Registry }): DocInfo_PDF {
     return new DocInfo_PDF(args);
-  }
-
-  /**
-   * Private getter for Coords singleton
-   */
-  private get coords(): Coords {
-    return this.reg.getInstance<Coords>('coords')!;
   }
 
   // Margin getter - calculates from current marginId
@@ -212,13 +208,13 @@ export class DocInfo_PDF {
       return { widthPx: 0, heightPx: 0 };
     }
 
-    // Use Coords singleton via registry
+    // Use Coords via registry
     const pageWidthPts = this.getPageWidth();
     const pageHeightPts = this.getPageHeight();
 
     return {
-      widthPx: Math.round(this.coords.pdfPtsToCssPx(pageWidthPts)),
-      heightPx: Math.round(this.coords.pdfPtsToCssPx(pageHeightPts)),
+      widthPx: Math.round(this.fn.coords.pdfPtsToCssPx({ pdfPts: pageWidthPts })),
+      heightPx: Math.round(this.fn.coords.pdfPtsToCssPx({ pdfPts: pageHeightPts })),
     };
   }
 
