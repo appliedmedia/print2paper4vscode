@@ -302,15 +302,6 @@ export class PaperPrinter {
       // Generate the complete PDF in one pass (sets this.pdf.docInfo.pdfDoc)
       await this.pdf.generatePdf();
 
-      // Log PDF object creation for reuse verification (Stage 4.3)
-      const pdfObjectId = this.pdf.docInfo
-        ? `pdfDoc@${this.pdf.docInfo.instanceId}`
-        : 'null';
-      dx.out(`PDF object created: ${pdfObjectId} (stored in app.pdf.docInfo for reuse)`);
-      dx.out(
-        `PDF object reuse verification: Same object will be used for webview display and print/save operations`
-      );
-
       dx.out(
         `PDF generation complete: ${this.pdf.docInfo.pageTotal} pages using unified approach`
       );

@@ -23,10 +23,6 @@ export class DocInfo_PDF {
   private reg: Registry;
   private fn: FnImport_t;
 
-  // Stable instance identifier for tracking PDF object reuse
-  private static nextInstanceId = 1;
-  public readonly instanceId: number;
-
   // PDF document state
   public currentPdfDoc: jsPDF | null = null;
   public currentTokens: ThemedToken[][] | null = null;
@@ -75,7 +71,6 @@ export class DocInfo_PDF {
   private constructor(args: { reg: Registry }) {
     this.reg = args.reg;
     this.fn = this.reg.use('coords.pdfPtsToCssPx');
-    this.instanceId = DocInfo_PDF.nextInstanceId++;
   }
   
   /**
