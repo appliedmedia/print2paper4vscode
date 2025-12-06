@@ -223,6 +223,7 @@ export class PaperPrinter {
 
       // Validate we have a PDF document
       if (!this.pdf.docInfo.pdfDoc) {
+        this.dx.error('PDF document not generated');
         throw new Error('PDF document not generated');
       }
 
@@ -616,6 +617,7 @@ export class PaperPrinter {
 
       // Validate we have a PDF document
       if (!this.pdf.docInfo.pdfDoc) {
+        this.dx.error('PDF document not generated');
         throw new Error('PDF document not generated');
       }
 

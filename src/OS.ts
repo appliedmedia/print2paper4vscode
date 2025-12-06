@@ -85,10 +85,11 @@ export abstract class OS {
       return new OSMac(args);
     } else {
       const platform = process?.platform || 'unknown';
-      throw new Error(
-        `Cannot determine operating system. Platform "${platform}" is not supported. ` +
-        `Supported platforms: win32, linux, darwin.`
-      );
+      const msg = `Cannot determine operating system. Platform "${platform}" is not supported. ` +
+        `Supported platforms: win32, linux, darwin.`;
+      // Cannot use dx.error here - static factory method, no dx available yet
+      console.error(`❌ ERROR: ${msg}`);
+      throw new Error(msg);
     }
   }
 

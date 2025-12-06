@@ -120,6 +120,7 @@ export class UIWebView {
     const docInfo = this.pdf.docInfo;
 
     if (!docInfo.pdfDoc) {
+      dx.error('PDF document not generated');
       throw new Error('PDF document not generated');
     }
 
@@ -139,12 +140,15 @@ export class UIWebView {
     try {
       // Validate PDF data - display error if invalid instead of falling back
       if (!pdfData.arrayBuffer) {
+        dx.error('pdfData.arrayBuffer is required');
         throw new Error('pdfData.arrayBuffer is required');
       }
       if (!pdfData.pageTotal || pdfData.pageTotal < 1) {
+        dx.error(`pdfData.pageTotal must be at least 1, got ${pdfData.pageTotal}`);
         throw new Error(`pdfData.pageTotal must be at least 1, got ${pdfData.pageTotal}`);
       }
       if (!pdfData.pageSizePx?.widthPx || !pdfData.pageSizePx?.heightPx) {
+        dx.error(`pdfData.pageSizePx.widthPx and .heightPx are required`);
         throw new Error(`pdfData.pageSizePx.widthPx and .heightPx are required`);
       }
 
@@ -187,6 +191,7 @@ export class UIWebView {
       // Load PDF.js library
       const pdfjs_library = this.fn.os.fileRead({ path: 'src/lib/pdf.min.js' });
       if (!pdfjs_library) {
+        dx.error('Failed to load PDF.js library');
         throw new Error('Failed to load PDF.js library');
       }
 

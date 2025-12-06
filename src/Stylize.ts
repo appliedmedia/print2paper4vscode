@@ -334,6 +334,7 @@ export class Stylize {
     }>({ path: 'src/Stylize.yaml' });
 
     if (!yaml) {
+      this.dx.error('Failed to load Stylize template');
       throw new Error('Failed to load Stylize template');
     }
 

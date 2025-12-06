@@ -634,6 +634,7 @@ export class PDF {
     try {
       // Initialize jsPDF document on first line
       if (!this.docInfo.pdfDoc) {
+        dx.error('PDF document not initialized. Call setupPdf() first.');
         throw new Error('PDF document not initialized. Call setupPdf() first.');
       }
 
@@ -980,6 +981,7 @@ export class PDF {
 
     try {
       if (!this.docInfo.pdfDoc) {
+        dx.error('No PDF document to finish');
         throw new Error('No PDF document to finish');
       }
 

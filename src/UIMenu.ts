@@ -401,6 +401,7 @@ export class UIMenu {
     try {
       void new RegExp(iconSlotTriadMain.constrain.regex);
     } catch (regexError) {
+      this.dx.error(`Invalid constrain.regex: ${iconSlotTriadMain.constrain.regex}`);
       throw new Error(`Invalid constrain.regex: ${iconSlotTriadMain.constrain.regex}`);
     }
 

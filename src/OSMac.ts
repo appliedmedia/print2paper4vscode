@@ -38,11 +38,13 @@ export class OSMac extends OS {
   ): Promise<void> {
     const yaml = this.fileRead<Record<string, string>>({ path: 'src/OSMac.yaml' });
     if (!yaml?.[templateKey]) {
+      this.dx.error(`Failed to load AppleScript template for ${templateKey}`);
       throw new Error(`Failed to load AppleScript template for ${templateKey}`);
     }
 
     const appleScript = this.fn.utils.templateDictReplace(yaml[templateKey], variables);
     if (!appleScript) {
+      this.dx.error(`Failed to process AppleScript template for ${templateKey}`);
       throw new Error(`Failed to process AppleScript template for ${templateKey}`);
     }
 
