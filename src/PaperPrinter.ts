@@ -402,7 +402,7 @@ export class PaperPrinter {
   private menuItems_Theme(): UIMenuItem_t[] {
     const themes = this.fn.stylize.getThemes();
 
-    return themes.map((theme: any) => {
+    return themes.map((theme: { id: string; displayName: string }) => {
       // UIMenu.ts will handle default selection marker in displayName
       return {
         id: theme.id,

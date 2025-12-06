@@ -207,6 +207,8 @@ export class PDF {
     } catch (error) {
       this.fn.ui.showErrorMessage(`Failed to print PDF: ${String(error)}`);
       throw error;
+    } finally {
+      dx.done();
     }
   }
 
@@ -251,6 +253,8 @@ export class PDF {
     } catch (error) {
       this.fn.ui.showErrorMessage(`Failed to save PDF: ${String(error)}`);
       throw error;
+    } finally {
+      dx.done();
     }
   }
 
