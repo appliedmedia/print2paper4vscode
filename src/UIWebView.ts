@@ -49,10 +49,9 @@ export class UIWebView {
   private readonly handleMenuItemSelectedBound: MessageHandler_t;
   private readonly handleDxMessageBound: MessageHandler_t;
 
-  // Typed accessors for singleton components
+  // Typed accessors for singleton components (property access needed)
   private get pdf() { return this.reg.getInstance<import('./PDF').PDF>('pdf')!; }
   private get ui() { return this.reg.getInstance<import('./UI').UI>('ui')!; }
-  private get uimenumgr() { return this.reg.getInstance<import('./UIMenuMgr').UIMenuMgr>('uimenumgr')!; }
 
   constructor(args: { reg: Registry }) {
     this.reg = args.reg;
@@ -64,7 +63,10 @@ export class UIWebView {
       'yaml.create',
       'persist.set',
       'utils.forceNumber',
-      'utils.templateDictReplace'
+      'utils.templateDictReplace',
+      'uimenumgr.getMenuItemIdSelected',
+      'uimenumgr.getValueForMenuItemId',
+      'uimenumgr.handleMenuItemSelected'
     );
     this.dx = this.fn.dx.sub({ name: 'UIWebView' });
     this._yaml = this.fn.yaml.create({ filePath: 'src/UIWebView.yaml', dataStruct: UIWebView.kYaml });
@@ -201,8 +203,8 @@ export class UIWebView {
 
       // Get zoom level from zoomLevel menu persist
       const zoomMenuItemId =
-        this.uimenumgr.getMenuItemIdSelected(kZoomLevel.id) || kZoomLevel.altId;
-      const rawZoom = this.uimenumgr.getValueForMenuItemId({ menuId: kZoomLevel.id, menuItemId: zoomMenuItemId });
+        this.fn.uimenumgr.getMenuItemIdSelected(kZoomLevel.id) || kZoomLevel.altId;
+      const rawZoom = this.fn.uimenumgr.getValueForMenuItemId({ menuId: kZoomLevel.id, menuItemId: zoomMenuItemId });
       // Coerce to number (forceNumber always returns valid number or 0)
       const coercedZoom = this.fn.utils.forceNumber(rawZoom);
       // Use coerced value if finite and positive, otherwise fall back to hardcoded default
@@ -342,7 +344,7 @@ export class UIWebView {
   private async handleMenuItemSelected(msg: SendToExt_menuItemSelected): Promise<void> {
     const { menuId, menuItemId, contextDict } = msg;
     // Forward to UIMenuMgr for handling
-    await this.uimenumgr.handleMenuItemSelected(menuId, menuItemId, contextDict);
+    await this.fn.uimenumgr.handleMenuItemSelected(menuId, menuItemId, contextDict);
   }
 
   /**

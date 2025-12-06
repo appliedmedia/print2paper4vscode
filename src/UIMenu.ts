@@ -190,8 +190,6 @@ export class UIMenu {
   private dx: Diagnostics;
   private _yaml: YamlInstance<typeof UIMenu.kYaml>;
 
-  // Typed accessor for uimenumgr singleton
-  private get uimenumgr() { return this.reg.getInstance<import('./UIMenuMgr').UIMenuMgr>('uimenumgr')!; }
 
   // Public getter for id
   get id(): MenuId_t {
@@ -231,7 +229,15 @@ export class UIMenu {
     const { reg, id, displayName, iconSlotTriad, isFlyout = false, menuItems, flyoutMenuItemIds = [], selectionHandler } = args;
     
     this.reg = reg;
-    this.fn = this.reg.use('yaml.create', 'persist.get', 'persist.set', 'persist.validateDefault', 'utils.templateDictReplace');
+    this.fn = this.reg.use(
+      'yaml.create',
+      'persist.get',
+      'persist.set',
+      'persist.validateDefault',
+      'utils.templateDictReplace',
+      'uimenumgr.getValueForMenuItemIdSelected',
+      'uimenumgr.getMenuById'
+    );
     this._id = id;
     this._displayName = displayName;
     this._iconSlotTriad = iconSlotTriad;
@@ -446,7 +452,7 @@ export class UIMenu {
     let value: string | undefined = undefined;
     
     try {
-      const persistedValue = this.uimenumgr.getValueForMenuItemIdSelected(this._id);
+      const persistedValue = this.fn.uimenumgr.getValueForMenuItemIdSelected(this._id);
       
       if (persistedValue === undefined || persistedValue === null) {
         dx.out(`No persisted value for ${this._id}`);
@@ -593,7 +599,7 @@ export class UIMenu {
       const flyoutCache: Record<string, string> = {};
       for (const flyoutMenuItemId of this.flyoutMenuItemIds) {
         try {
-          const flyoutMenu = this.uimenumgr.getMenuById(flyoutMenuItemId);
+          const flyoutMenu = this.fn.uimenumgr.getMenuById(flyoutMenuItemId);
           const flyoutHtml = await flyoutMenu.getHTML(visited);
           flyoutCache[flyoutMenuItemId] = flyoutHtml;
         } catch (error) {

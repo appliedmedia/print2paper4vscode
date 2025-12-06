@@ -102,10 +102,8 @@ export class PaperPrinter {
 
   public docInfo: DocInfo_PaperPrinter;
 
-  // Typed accessors for singleton components
+  // Typed accessors for singleton components (property access needed)
   private get pdf() { return this.reg.getInstance<import('./PDF').PDF>('pdf')!; }
-  private get uimenumgr() { return this.reg.getInstance<import('./UIMenuMgr').UIMenuMgr>('uimenumgr')!; }
-  private get uiwebview() { return this.reg.getInstance<import('./UIWebView').UIWebView>('uiwebview')!; }
 
   constructor(args: { reg: Registry }) {
     this.reg = args.reg;
@@ -121,7 +119,15 @@ export class PaperPrinter {
       'yaml.create',
       'utils.templateDictReplace',
       'utils.forceNumber',
-      'utils.hasContent'
+      'utils.hasContent',
+      'uimenumgr.getMenuItemIdSelected',
+      'uimenumgr.getValueForMenuItemId',
+      'uimenumgr.getValueForMenuItemIdSelected',
+      'uimenumgr.setValueForPersistIdOnMenuId',
+      'uimenumgr.getUIMenus',
+      'uimenumgr.createMenu',
+      'uimenumgr.addMenu',
+      'uiwebview.displayPdfPanel'
     );
     this.dx = this.fn.dx.sub({ name: 'PaperPrinter' });
 
@@ -143,7 +149,7 @@ export class PaperPrinter {
   // Computed line height from font size
   get lineHeightPx(): number {
     const editorTypo = this.fn.vscodeapis.getEditorTypography();
-    const fontSizeId = this.uimenumgr.getMenuItemIdSelected(kFontSizeId.id);
+    const fontSizeId = this.fn.uimenumgr.getMenuItemIdSelected(kFontSizeId.id);
     return parseInt(fontSizeId || kFontSizeId.altId, 10) * editorTypo.sizeToHeightRatio;
   }
 
@@ -229,7 +235,7 @@ export class PaperPrinter {
 
       // Display PDF in webview panel using singleton UIWebView
       // (uses this.pdf.docInfo directly, including title)
-      await this.uiwebview.displayPdfPanel();
+      await this.fn.uiwebview.displayPdfPanel();
 
       this.dx.out(`Opened webview for ${printableLabel}`);
     } catch (error) {
@@ -250,27 +256,27 @@ export class PaperPrinter {
 
     try {
       // Get current settings
-      const fontSizeValue = this.uimenumgr.getMenuItemIdSelected(kFontSizeId.id);
+      const fontSizeValue = this.fn.uimenumgr.getMenuItemIdSelected(kFontSizeId.id);
       const fontSize = parseInt(fontSizeValue || kFontSizeId.altId, 10);
       dx.out(`PDF GENERATION: Using font size ${fontSize}px`);
-      const theme = (this.uimenumgr.getMenuItemIdSelected(kTheme.id) || kTheme.altId) as string;
+      const theme = (this.fn.uimenumgr.getMenuItemIdSelected(kTheme.id) || kTheme.altId) as string;
 
       // Validate and normalize pageSizeId - use lookup table, fall back to default if invalid
-      const rawPageSizeId = this.uimenumgr.getMenuItemIdSelected(kPageSizeId.id);
+      const rawPageSizeId = this.fn.uimenumgr.getMenuItemIdSelected(kPageSizeId.id);
       const pageSizeId: PageSizeIdMenuItems_t =
         rawPageSizeId && rawPageSizeId in kPageSizeIdById
           ? (rawPageSizeId as PageSizeIdMenuItems_t)
           : (kPageSizeId.altId as PageSizeIdMenuItems_t);
 
       // Validate and normalize orient - clamp to valid values, fall back to default if invalid
-      const rawOrient = this.uimenumgr.getMenuItemIdSelected(kOrient.id);
+      const rawOrient = this.fn.uimenumgr.getMenuItemIdSelected(kOrient.id);
       const orient: 'portrait' | 'landscape' =
         rawOrient === 'portrait' || rawOrient === 'landscape'
           ? rawOrient
           : (kOrient.altId as 'portrait' | 'landscape');
 
       // Validate and normalize marginId - use lookup table, fall back to default if invalid
-      const rawMarginId = this.uimenumgr.getMenuItemIdSelected(kMarginId.id);
+      const rawMarginId = this.fn.uimenumgr.getMenuItemIdSelected(kMarginId.id);
       const marginId: MarginIdMenuItems_t =
         rawMarginId && rawMarginId in kMarginIdById
           ? (rawMarginId as MarginIdMenuItems_t)
@@ -319,7 +325,7 @@ export class PaperPrinter {
   // Create menus when needed for the webview
   private createMenus(): void {
     // Avoid duplicates across multiple openings
-    if (this.uimenumgr.getUIMenus().length > 0) {
+    if (this.fn.uimenumgr.getUIMenus().length > 0) {
       return;
     }
 
@@ -384,7 +390,7 @@ export class PaperPrinter {
         `Creating menu: ${config.id} with iconSlotTriad: ${JSON.stringify(config.iconSlotTriad)}`
       );
 
-      const menu = this.uimenumgr.createMenu({
+      const menu = this.fn.uimenumgr.createMenu({
         id: config.id as MenuId_t,
         displayName: config.displayName,
         iconSlotTriad: config.iconSlotTriad,
@@ -393,7 +399,7 @@ export class PaperPrinter {
         flyoutMenuItemIds: [...config.flyoutMenuItemIds],
         selectionHandler: config.selectionHandler
       });
-      this.uimenumgr.addMenu(menu);
+      this.fn.uimenumgr.addMenu(menu);
     });
   }
 
@@ -626,7 +632,7 @@ export class PaperPrinter {
       dx.out('Updating webview with new PDF...');
 
       // Display PDF in webview (reuses existing panel, uses title from docInfo)
-      void this.uiwebview.displayPdfPanel();
+      void this.fn.uiwebview.displayPdfPanel();
     } catch (error) {
       dx.error(`Error regenerating PDF: ${error}`);
       throw error;
@@ -722,7 +728,7 @@ export class PaperPrinter {
         value = id;
       } else {
         // Get current value from persist
-        const currentValue = this.uimenumgr.getMenuItemIdSelected(menuId) || kHeaderFooter.none;
+        const currentValue = this.fn.uimenumgr.getMenuItemIdSelected(menuId) || kHeaderFooter.none;
 
         // Toggle behavior: if clicking the same item that's already selected, deselect it (set to 'none')
         if (currentValue === menuItemId) {
@@ -734,7 +740,7 @@ export class PaperPrinter {
         }
 
         // Persist the value (including 'none')
-        this.uimenumgr.setValueForPersistIdOnMenuId({
+        this.fn.uimenumgr.setValueForPersistIdOnMenuId({
           menuId,
           persistId: menuId as UI_t,
           value: value as PersistValue_t
@@ -768,7 +774,7 @@ export class PaperPrinter {
     } else {
       // Update theme
       dx.out(`updating theme to ${menuItemId}`);
-      this.uimenumgr.setValueForPersistIdOnMenuId({
+      this.fn.uimenumgr.setValueForPersistIdOnMenuId({
         menuId: kTheme.id,
         persistId: kTheme.id as UI_t,
         value: menuItemId as PersistValue_t
@@ -797,7 +803,7 @@ export class PaperPrinter {
       id = String(editorTypo.fontSize);
       value = id;
     } else {
-      this.uimenumgr.setValueForPersistIdOnMenuId({
+      this.fn.uimenumgr.setValueForPersistIdOnMenuId({
         menuId: kFontSizeId.id,
         persistId: kFontSizeId.id as UI_t,
         value: menuItemId as PersistValue_t
@@ -842,7 +848,7 @@ export class PaperPrinter {
       value = id; // value is the page size ID
       dx.out(`Returning locale-based default page size: ${id}`);
     } else {
-      this.uimenumgr.setValueForPersistIdOnMenuId({
+      this.fn.uimenumgr.setValueForPersistIdOnMenuId({
         menuId: kPageSizeId.id,
         persistId: kPageSizeId.id as UI_t,
         value: menuItemId as PersistValue_t
@@ -870,7 +876,7 @@ export class PaperPrinter {
       value = id; // value is the orientation
     } else {
       // Update orientation
-      this.uimenumgr.setValueForPersistIdOnMenuId({
+      this.fn.uimenumgr.setValueForPersistIdOnMenuId({
         menuId: kOrient.id,
         persistId: kOrient.id as UI_t,
         value: menuItemId as PersistValue_t
@@ -899,7 +905,7 @@ export class PaperPrinter {
       value = id; // value is the margin ID
       dx.out(`returning default margin: ${id}`);
     } else {
-      this.uimenumgr.setValueForPersistIdOnMenuId({
+      this.fn.uimenumgr.setValueForPersistIdOnMenuId({
         menuId: kMarginId.id,
         persistId: kMarginId.id as UI_t,
         value: menuItemId as PersistValue_t
@@ -924,7 +930,7 @@ export class PaperPrinter {
       const persistId = triadMain.persistId;
       if (persistId) {
         const persistValue = this.fn.utils.forceNumber(zoomValue) as PersistValue_t;
-        this.uimenumgr.setValueForPersistIdOnMenuId({ menuId, persistId, value: persistValue });
+        this.fn.uimenumgr.setValueForPersistIdOnMenuId({ menuId, persistId, value: persistValue });
         dx.out(`Saved ${persistValue} to menu[${menuId}].persist[${persistId}]`);
       }
     }
@@ -953,7 +959,7 @@ export class PaperPrinter {
     dx.out(`ZoomLevel selection: menuItemId=${menuItemId}`);
 
     let id: MenuItemId_t = menuItemId;
-    let value: string | number | boolean = this.uimenumgr.getValueForMenuItemId({ menuId, menuItemId });
+    let value: string | number | boolean = this.fn.uimenumgr.getValueForMenuItemId({ menuId, menuItemId });
 
     if (menuItemId === UIMenu.defaultId()) {
       // Return default zoom level (100% = 1.0) - no side effects!
@@ -962,7 +968,7 @@ export class PaperPrinter {
       // Do NOT persist or regenerate - this is just a query for the default value
     } else {
       // Save menuItemId to menu.persist[menuId] for tracking which item is selected
-      this.uimenumgr.setValueForPersistIdOnMenuId({
+      this.fn.uimenumgr.setValueForPersistIdOnMenuId({
         menuId,
         persistId: menuId as UI_t,
         value: menuItemId as PersistValue_t
@@ -1006,7 +1012,7 @@ export class PaperPrinter {
       }
 
       // Get current zoom value with proper validation
-      const rawZoom = this.uimenumgr.getValueForMenuItemIdSelected(kZoomLevel.id);
+      const rawZoom = this.fn.uimenumgr.getValueForMenuItemIdSelected(kZoomLevel.id);
       const currentZoom = this.fn.utils.forceNumber(rawZoom);
       
       // Validate currentZoom is numeric; fall back to altValue if not
@@ -1036,7 +1042,7 @@ export class PaperPrinter {
       dx.out(`${menuId}: newZoom=${newZoom}`);
 
       // Persist the new zoom level (custom value - menuItemId = menuId)
-      this.uimenumgr.setValueForPersistIdOnMenuId({
+      this.fn.uimenumgr.setValueForPersistIdOnMenuId({
         menuId: kZoomLevel.id,
         persistId: kZoomLevel.id as UI_t,
         value: kZoomLevel.id as PersistValue_t

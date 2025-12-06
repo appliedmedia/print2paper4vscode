@@ -57,8 +57,7 @@ export class PDF {
   // PDF document information
   public docInfo: DocInfo_PDF;
 
-  // Typed accessors for singleton components
-  private get uimenumgr() { return this.reg.getInstance<import('./UIMenuMgr').UIMenuMgr>('uimenumgr')!; }
+  // Typed accessor for singleton components (property access needed)
   private get paperprinter() { return this.reg.getInstance<import('./PaperPrinter').PaperPrinter>('paperprinter')!; }
 
   constructor(args: { reg: Registry }) {
@@ -82,7 +81,8 @@ export class PDF {
       'stylize.tokenize',
       'yaml.create',
       'utils.templateDictReplace',
-      'utils.hasContent'
+      'utils.hasContent',
+      'uimenumgr.getMenuItemIdSelected'
     );
     this.dx = this.fn.dx.sub({ name: 'PDF' });
     this.docInfo = DocInfo_PDF.create({ reg: this.reg });
@@ -96,10 +96,6 @@ export class PDF {
     return this._yaml.get();
   }
   
-  // Accessor for Coords singleton via Registry
-  private get coords(): Coords {
-    return this.reg.getInstance<Coords>('coords')!;
-  }
 
   /**
    * Get the total number of pages in the document
@@ -457,8 +453,8 @@ export class PDF {
       if (this.docInfo.pdfDoc) {
         const pageWidthPts = (this.docInfo.pdfDoc as any).getPageWidth();
         const pageHeightPts = (this.docInfo.pdfDoc as any).getPageHeight();
-        const pageWidthPx = Math.round(this.coords.pdfPtsToCssPx(pageWidthPts));
-        const pageHeightPx = Math.round(this.coords.pdfPtsToCssPx(pageHeightPts));
+        const pageWidthPx = Math.round(this.fn.coords.pdfPtsToCssPx(pageWidthPts));
+        const pageHeightPx = Math.round(this.fn.coords.pdfPtsToCssPx(pageHeightPts));
         dx.out(`Page dimensions (from PDF): ${pageWidthPx}x${pageHeightPx}px`);
         return { widthPx: pageWidthPx, heightPx: pageHeightPx };
       }
@@ -468,7 +464,7 @@ export class PDF {
       const menuKeys = ['pageSizeId', 'orient'] as const;
       const selections: Record<string, string | undefined> = {};
       for (const key of menuKeys) {
-        selections[key] = this.uimenumgr.getMenuItemIdSelected(key);
+        selections[key] = this.fn.uimenumgr.getMenuItemIdSelected(key);
       }
       
       const pageSizeId = selections.pageSizeId as PageSizeIdMenuItems_t;
@@ -480,8 +476,8 @@ export class PDF {
         pageSize.height,
         unit
       );
-      const pageWidthPx = Math.round(this.coords.pdfPtsToCssPx(pageWidthPts));
-      const pageHeightPx = Math.round(this.coords.pdfPtsToCssPx(pageHeightPts));
+      const pageWidthPx = Math.round(this.fn.coords.pdfPtsToCssPx(pageWidthPts));
+      const pageHeightPx = Math.round(this.fn.coords.pdfPtsToCssPx(pageHeightPts));
       dx.out(`Page dimensions (from config): ${pageWidthPx}x${pageHeightPx}px`);
       return { widthPx: pageWidthPx, heightPx: pageHeightPx };
     } catch (error) {
@@ -539,13 +535,13 @@ export class PDF {
 
       // Convert fontSize from pixels to points for jsPDF, clamping to minimum of 8pt
       const px = this.docInfo.fontSizePx ?? 12;
-      const fontSizePts = this.coords.cssPxToPdfPts(Math.max(8, px));
+      const fontSizePts = this.fn.coords.cssPxToPdfPts(Math.max(8, px));
       this.docInfo.fontSizePts = fontSizePts;
       this.docInfo.pdfDoc.setFontSize(fontSizePts);
       dx.out(`PDF font size set: ${px}px -> ${fontSizePts}pt`);
 
       // Convert lineHeight from pixels to points for jsPDF
-      this.currentLineHeight = this.coords.cssPxToPdfPts(this.docInfo.lineHeightPx);
+      this.currentLineHeight = this.fn.coords.cssPxToPdfPts(this.docInfo.lineHeightPx);
       this.docInfo.lineHeightPts = this.currentLineHeight;
 
       // Set initial position using docInfo margins
@@ -863,7 +859,7 @@ export class PDF {
     const getHeaderFooterValue = (
       menuId: MenuId_t
     ): HeaderFooterSubmenu_t | typeof kHeaderFooter.none => {
-      const value = this.uimenumgr.getMenuItemIdSelected(menuId);
+      const value = this.fn.uimenumgr.getMenuItemIdSelected(menuId);
       return (value as HeaderFooterSubmenu_t | typeof kHeaderFooter.none) || kHeaderFooter.none;
     };
     // Process header positions
@@ -902,7 +898,7 @@ export class PDF {
     this.renderHeaderFooterElements(footerElements, footerY, widthPts, margins);
 
     // Restore original font size
-    this.docInfo.pdfDoc.setFontSize(this.coords.cssPxToPdfPts(originalFontSizePx));
+    this.docInfo.pdfDoc.setFontSize(this.fn.coords.cssPxToPdfPts(originalFontSizePx));
   }
 
   /**
