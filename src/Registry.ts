@@ -34,7 +34,7 @@ export class Registry {
   private init: Record<string, Record<string, unknown>> = {};
   private fn: FnImport_t;
   private dx: Diagnostics;
-  public readonly app: App; // Public so components can access App utilities
+  private app: App;
   private constructionStack: string[] = [];
 
   constructor(args: {
