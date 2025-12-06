@@ -61,6 +61,12 @@ import {
   kMenus,
 } from './types/PaperPrinter_t';
 
+// Type for theme menu items returned by stylize.getThemes()
+type ThemeMenuItem_t = {
+  id: string;
+  displayName: string;
+};
+
 /**
  * PaperPrinter - Main print workflow orchestrator
  *
@@ -402,7 +408,7 @@ export class PaperPrinter {
   private menuItems_Theme(): UIMenuItem_t[] {
     const themes = this.fn.stylize.getThemes();
 
-    return themes.map((theme: { id: string; displayName: string }) => {
+    return themes.map((theme: ThemeMenuItem_t) => {
       // UIMenu.ts will handle default selection marker in displayName
       return {
         id: theme.id,
