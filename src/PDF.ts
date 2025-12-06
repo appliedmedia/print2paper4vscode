@@ -74,7 +74,6 @@ export class PDF {
       'os.ensureDir',
       'os.pathJoin',
       'os.fileWrite',
-      'utils.templateDictReplace',
       'os.fileOpenPrintDialog',
       'os.filePrint',
       'os.pathDirname',
