@@ -1,6 +1,6 @@
 import { OS } from './OS';
 import { Diagnostics } from './Diagnostics';
-import type { App } from './App';
+import type { Registry } from './Registry';
 
 /**
  * OSLinux - Linux-specific operating system operations
@@ -8,17 +8,17 @@ import type { App } from './App';
  * Provides Linux-specific implementations for file operations and printing.
  * Uses xdg-open for file operations and lp command for printing.
  *
- * @input app - Application instance for accessing shared services
+ * @input reg - Registry instance for accessing shared services
  * @output File operations, print commands via lp, directory reveal
  *
  * @example
- * const os = new OSLinux(app);
+ * const os = new OSLinux({ reg });
  * await os.fileOpenInDefaultApp('/path/to/file.pdf');
  * await os.filePrint('/path/to/file.pdf');
  * await os.fileReveal('/path/to/file.pdf');
  */
 export class OSLinux extends OS {
-  constructor(args: { app: App }) {
+  constructor(args: { reg: Registry }) {
     super(args);
     // Override dx with OSLinux-specific context
     this.dx = this.fn.dx.sub({ name: 'OSLinux' });

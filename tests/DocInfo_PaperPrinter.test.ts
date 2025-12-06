@@ -3,6 +3,7 @@ import * as assert from 'node:assert';
 import { DocInfo_PaperPrinter } from '../src/DocInfo_PaperPrinter.js';
 import { App } from '../src/App.js';
 import { PaperPrinter } from '../src/PaperPrinter.js';
+import { Persist } from '../src/Persist.js';
 import { mockContext, mockVSCode } from './test-utils.js';
 
 describe('DocInfo_PaperPrinter', () => {
@@ -32,31 +33,32 @@ describe('DocInfo_PaperPrinter', () => {
   });
 
   it('should return different margin values for different margin IDs', () => {
+    const persist = app.reg.getInstance<Persist>('persist')!;
+    
     // Set margin to 'none'
-    const marginMenu = app.uimenumgr.getMenuById('marginId');
-    marginMenu.persist.marginId = 'none';
+    persist.set('marginId', 'none');
     const noneMargin = docInfo.marginPx;
     assert.strictEqual(noneMargin.topPx, 0);
 
     // Set margin to 'minimal'
-    marginMenu.persist.marginId = 'minimal';
+    persist.set('marginId', 'minimal');
     const minimalMargin = docInfo.marginPx;
     assert.strictEqual(minimalMargin.topPx, 7);
 
     // Set margin to 'normal'
-    marginMenu.persist.marginId = 'normal';
+    persist.set('marginId', 'normal');
     const normalMargin = docInfo.marginPx;
     assert.strictEqual(normalMargin.topPx, 20);
 
     // Set margin to 'wide'
-    marginMenu.persist.marginId = 'wide';
+    persist.set('marginId', 'wide');
     const wideMargin = docInfo.marginPx;
     assert.strictEqual(wideMargin.topPx, 40);
   });
 
   it('should default to normal when invalid margin ID is provided', () => {
-    const marginMenu = app.uimenumgr.getMenuById('marginId');
-    marginMenu.persist.marginId = 'invalid-margin' as any;
+    const persist = app.reg.getInstance<Persist>('persist')!;
+    persist.set('marginId', 'invalid-margin' as any);
     const margin = docInfo.marginPx;
     assert.strictEqual(margin.topPx, 20); // Should default to 'normal'
   });

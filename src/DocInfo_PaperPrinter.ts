@@ -1,4 +1,5 @@
-import type { App } from './App';
+import type { FnImport_t } from './types/Registry_t';
+import type { Registry } from './Registry';
 import type { LanguageId_t } from './Stylize';
 import type { MarginIdMenuItems_t } from './types/PaperPrinter_t';
 
@@ -10,7 +11,8 @@ import type { MarginIdMenuItems_t } from './types/PaperPrinter_t';
  */
 export class DocInfo_PaperPrinter {
   static readonly id = 'docinfo_paperprinter';
-  private app: App;
+  private reg: Registry;
+  private fn: FnImport_t;
 
   // Document content
   public rawCode: string = '';
@@ -21,15 +23,16 @@ export class DocInfo_PaperPrinter {
   public pageWidthPx: number = 0;
   public pageHeightPx: number = 0;
 
-  private constructor(args: { app: App }) {
-    this.app = args.app;
+  private constructor(args: { reg: Registry }) {
+    this.reg = args.reg;
+    this.fn = this.reg.use('persist.get');
   }
   
   /**
    * Factory method to create DocInfo_PaperPrinter instances
    */
-  static create(app: App): DocInfo_PaperPrinter {
-    return new DocInfo_PaperPrinter({ app });
+  static create(args: { reg: Registry }): DocInfo_PaperPrinter {
+    return new DocInfo_PaperPrinter(args);
   }
 
   // Margin in pixels for webview display
@@ -41,9 +44,8 @@ export class DocInfo_PaperPrinter {
       wide: 40, // ~40px
     };
 
-    // Get margin from menu's persistent state
-    const menu = this.app.uimenumgr.getMenuById('marginId');
-    const rawMarginId = menu.persist.marginId;
+    // Get margin from persist singleton
+    const rawMarginId = this.fn.persist.get('marginId');
     const marginId: MarginIdMenuItems_t =
       typeof rawMarginId === 'string' && rawMarginId in marginIdToPx
         ? (rawMarginId as MarginIdMenuItems_t)

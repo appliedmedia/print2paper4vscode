@@ -9,6 +9,7 @@ import type { App } from './App';
 import type { WebviewPanelId_t } from './VSCodeAPIs';
 import type { FnImport_t } from './types/Registry_t';
 import { Diagnostics } from './Diagnostics';
+import type { Registry } from './Registry';
 
 // Type definition for fileRead method
 export type FileRead_t = <T = string>(args: { path: string; key?: string }) => T | undefined;
@@ -34,7 +35,7 @@ export abstract class OS {
   static readonly id = 'os';
   // Performance timing from Node.js perf_hooks
   static performance = performance;
-  protected app: App;
+  protected reg: Registry;
   protected extensionRoot?: string;
   protected dx: Diagnostics;
   protected fn: FnImport_t;
@@ -44,13 +45,17 @@ export abstract class OS {
     return this.extensionRoot;
   }
 
-  constructor(args: { app: App }) {
-    this.app = args.app;
-    // Only request dx.sub via Registry (always available)
-    // Other dependencies accessed via this.app.xxx to avoid circular deps during construction
-    this.fn = this.app.reg.use();
+  constructor(args: { reg: Registry }) {
+    this.reg = args.reg;
+    // Request methods via Registry
+    this.fn = this.reg.use(
+      'vscodeapis.getExtensionPath',
+      'vscodeapis.getPanelForUriConversion',
+      'vscodeapis.uriFromPath',
+      'utils.templateDictReplace'
+    );
     this.dx = this.fn.dx.sub({ name: 'OS' });
-    this.extensionRoot = this.app.vscodeapis.getExtensionPath();
+    this.extensionRoot = this.fn.vscodeapis.getExtensionPath();
   }
 
   done(): void {
@@ -66,7 +71,7 @@ export abstract class OS {
     return cpExecSync(cmd, { encoding: 'utf8' }) as unknown as string;
   }
 
-  static create(args: { app: App }): OS {
+  static create(args: { reg: Registry }): OS {
     // Using process.platform instead of os.platform() for robustness:
     // - process.platform is available immediately on Node.js startup
     // - os.platform() requires module loading and can throw errors
@@ -80,10 +85,11 @@ export abstract class OS {
       return new OSMac(args);
     } else {
       const platform = process?.platform || 'unknown';
-      throw new Error(
-        `Cannot determine operating system. Platform "${platform}" is not supported. ` +
-        `Supported platforms: win32, linux, darwin.`
-      );
+      const msg = `Cannot determine operating system. Platform "${platform}" is not supported. ` +
+        `Supported platforms: win32, linux, darwin.`;
+      // Cannot use dx.error here - static factory method, no dx available yet
+      console.error(`❌ ERROR: ${msg}`);
+      throw new Error(msg);
     }
   }
 
@@ -121,8 +127,8 @@ export abstract class OS {
    */
   dictReplace(source: string): string {
     const osKeys = this.getOSKeys();
-    // Use the app's templateDictReplace method
-    return this.app.templateDictReplace(source, osKeys);
+    // Use the app's templateDictReplace method via reg.app
+    return this.fn.utils.templateDictReplace(source, osKeys);
   }
 
   // Common filesystem helpers consolidated here
@@ -228,7 +234,7 @@ export abstract class OS {
       return result;
     }
 
-    const webviewPanel = this.app.vscodeapis.getPanelForUriConversion(webviewPanelId);
+    const webviewPanel = this.fn.vscodeapis.getPanelForUriConversion(webviewPanelId);
     if (!webviewPanel?.webview) {
       dx.done();
       return result;
@@ -247,7 +253,7 @@ export abstract class OS {
 
       // Convert relative path to webview URI
       const fullPath = this.pathJoin(this.extensionRoot!, path);
-      const uri = this.app.vscodeapis.uriFromPath(fullPath);
+      const uri = this.fn.vscodeapis.uriFromPath(fullPath);
       const webviewUri = webviewPanel.webview.asWebviewUri(uri).toString();
       return webviewUri;
     };

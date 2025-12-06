@@ -2,6 +2,7 @@ import { test, describe } from 'node:test';
 import { strict as assert } from 'node:assert';
 import { App } from '../src/App.js';
 import { PaperPrinter } from '../src/PaperPrinter.js';
+import { Persist } from '../src/Persist.js';
 import { mockContext, mockVSCode } from './test-utils.js';
 
 describe('PaperPrinter Integration Tests', () => {
@@ -97,17 +98,17 @@ const total = numbers.reduce(calculateSum, 0);`;
     
     // Create menus
     paperPrinter['createMenus']();
-    const fontMenu = app.uimenumgr.getMenuById('fontSizeId');
+    const persist = app.reg.getInstance<Persist>('persist')!;
     
     // Test with small font
-    fontMenu.persist.fontSizeId = '10';
+    persist.set('fontSizeId', '10');
     await paperPrinter['generatePdf']();
     const smallFontPdf = app.pdf.docInfo;
     const smallFontPages = smallFontPdf?.getNumberOfPages() || 0;
     const smallArrayBuffer = smallFontPdf?.asArrayBuffer();
     
     // Test with large font
-    fontMenu.persist.fontSizeId = '18';
+    persist.set('fontSizeId', '18');
     await paperPrinter['generatePdf']();
     const largeFontPdf = app.pdf.docInfo;
     const largeFontPages = largeFontPdf?.getNumberOfPages() || 0;

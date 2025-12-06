@@ -10,7 +10,7 @@ describe('UI', () => {
 
   beforeEach(() => {
     app = new App({ context: mockContext, vscode: mockVSCode });
-    ui = new UI({ app });
+    ui = new UI({ reg: app.reg });
     // UI no longer has init() method (migrated to Registry pattern)
   });
 
@@ -36,12 +36,21 @@ describe('UI', () => {
   it('should choose save location', async () => {
     // Mock showSaveDialog to return a URI
     const originalShowSaveDialog = app.vscodeapis.showSaveDialog;
-    app.vscodeapis.showSaveDialog = async () => ({ fsPath: '/test/save.pdf' } as any);
+    const mockUri = {
+      fsPath: '/test/save.pdf',
+      path: '/test/save.pdf',
+      toString: () => 'file:///test/save.pdf'
+    } as any;
+    app.vscodeapis.showSaveDialog = async (options?: any) => mockUri;
 
-    const path = await ui.chooseSaveLocation('test.pdf');
-    assert.ok(path !== null);
+    // Recreate UI instance after mocking so it picks up the mocked method
+    const testUi = new UI({ reg: app.reg });
+    
+    const path = await testUi.chooseSaveLocation('test.pdf');
+    assert.ok(path !== null, `Expected path to not be null, got: ${path}`);
     assert.strictEqual(path, '/test/save.pdf');
     
+    testUi.done();
     app.vscodeapis.showSaveDialog = originalShowSaveDialog;
   });
 

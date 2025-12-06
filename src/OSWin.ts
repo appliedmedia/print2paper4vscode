@@ -1,6 +1,6 @@
 import { OS } from './OS';
 import { Diagnostics } from './Diagnostics';
-import type { App } from './App';
+import type { Registry } from './Registry';
 
 /**
  * OSWin - Windows-specific operating system operations
@@ -8,17 +8,17 @@ import type { App } from './App';
  * Provides Windows-specific implementations for file operations and printing.
  * Uses Windows shell commands (start, explorer.exe) and rundll32 for printing.
  *
- * @input app - Application instance for accessing shared services
+ * @input reg - Registry instance for accessing shared services
  * @output File operations, print commands via rundll32, Explorer integration
  *
  * @example
- * const os = new OSWin(app);
+ * const os = new OSWin({ reg });
  * await os.fileOpenInDefaultApp('C:\\path\\to\\file.pdf');
  * await os.filePrint('C:\\path\\to\\file.pdf');
  * await os.fileReveal('C:\\path\\to\\file.pdf');
  */
 export class OSWin extends OS {
-  constructor(args: { app: App }) {
+  constructor(args: { reg: Registry }) {
     super(args);
     // Override dx with OSWin-specific context
     this.dx = this.fn.dx.sub({ name: 'OSWin' });

@@ -1,4 +1,4 @@
-import type { App } from './App';
+import type { Registry } from './Registry';
 import type {
   PageSizeIdMenuItems_t,
   OrientMenuItems_t,
@@ -9,7 +9,7 @@ import { kPageSizeIdById, kHeaderFooterSubmenuById, kHeaderFooter } from './type
 import type { MenuId_t } from './UIMenu';
 import type { FnImport_t } from './types/Registry_t';
 import { Diagnostics } from './Diagnostics';
-import { Yaml } from './Yaml';
+import { YamlInstance } from './Yaml';
 import { Coords } from './Coords';
 import jsPDF from 'jspdf';
 import { DocInfo_PDF } from './DocInfo_PDF';
@@ -39,11 +39,11 @@ export class PDF {
     pdf_js: '',
   } as const;
 
-  private app: App;
+  private reg: Registry;
   private fn: FnImport_t;
   private tempPdfs: string[] = [];
   private dx: Diagnostics;
-  private _yaml: Yaml<typeof PDF.kYaml>;
+  private _yaml: YamlInstance<typeof PDF.kYaml>;
 
   // Line-by-line rendering state - jsPDF now managed through docInfo.pdfDoc
   private currentX: number = 0;
@@ -57,12 +57,36 @@ export class PDF {
   // PDF document information
   public docInfo: DocInfo_PDF;
 
-  constructor(args: { app: App }) {
-    this.app = args.app;
-    this.fn = this.app.reg.use('ui.showErrorMessage', 'coords.pdfPtsToCssPx', 'coords.cssPxToPdfPts');
+  // Typed accessors for singleton components
+  private get uimenumgr() { return this.reg.getInstance<import('./UIMenuMgr').UIMenuMgr>('uimenumgr')!; }
+  private get paperprinter() { return this.reg.getInstance<import('./PaperPrinter').PaperPrinter>('paperprinter')!; }
+
+  constructor(args: { reg: Registry }) {
+    this.reg = args.reg;
+    this.fn = this.reg.use(
+      'ui.showErrorMessage',
+      'ui.chooseSaveLocation',
+      'coords.pdfPtsToCssPx',
+      'coords.cssPxToPdfPts',
+      'os.dateAsYYYYMMDDHHMMSS',
+      'os.sanitizeFileName',
+      'os.fileDelete',
+      'os.ensureDir',
+      'os.pathJoin',
+      'os.fileWrite',
+      'os.fileOpenPrintDialog',
+      'os.filePrint',
+      'os.pathDirname',
+      'os.fileReveal',
+      'vscodeapis.getDir_Temp',
+      'stylize.tokenize',
+      'yaml.create',
+      'utils.templateDictReplace',
+      'utils.hasContent'
+    );
     this.dx = this.fn.dx.sub({ name: 'PDF' });
-    this.docInfo = DocInfo_PDF.create(this.app);
-    this._yaml = Yaml.create(this.app, 'src/PDF.yaml', PDF.kYaml);
+    this.docInfo = DocInfo_PDF.create({ reg: this.reg });
+    this._yaml = this.fn.yaml.create({ filePath: 'src/PDF.yaml', dataStruct: PDF.kYaml });
     
     // All initialization happens here - no separate init() needed
     this.tempPdfs = [];
@@ -74,7 +98,7 @@ export class PDF {
   
   // Accessor for Coords singleton via Registry
   private get coords(): Coords {
-    return this.app.coords;
+    return this.reg.getInstance<Coords>('coords')!;
   }
 
   /**
@@ -107,7 +131,7 @@ export class PDF {
     // Best-effort cleanup of temp PDFs created this session
     for (const p of this.tempPdfs) {
       try {
-        this.app.os.fileDelete(p);
+        this.fn.os.fileDelete(p);
       } catch {
         /* ignore */
       }
@@ -129,20 +153,20 @@ export class PDF {
       );
 
       // Generate filename with timestamp
-      const timestamp = this.app.os.dateAsYYYYMMDDHHMMSS();
-      const safeName = this.app.os.sanitizeFileName(descriptiveName || 'print_output');
+      const timestamp = this.fn.os.dateAsYYYYMMDDHHMMSS();
+      const safeName = this.fn.os.sanitizeFileName(descriptiveName || 'print_output');
       const filename = `${timestamp}_${safeName}.pdf`;
 
       // Save PDF to temp directory
-      const tempDir = this.app.vscodeapis.getDir_Temp();
-      this.app.os.ensureDir(tempDir);
-      const tempPdfPath = this.app.os.pathJoin(tempDir, filename);
+      const tempDir = this.fn.vscodeapis.getDir_Temp();
+      this.fn.os.ensureDir(tempDir);
+      const tempPdfPath = this.fn.os.pathJoin(tempDir, filename);
 
       // Write PDF document to temp file
-      this.app.os.fileWrite({ filePath: tempPdfPath, content: Buffer.from(pdfBuffer) });
+      this.fn.os.fileWrite({ filePath: tempPdfPath, content: Buffer.from(pdfBuffer) });
 
       this.trackTempPdf(tempPdfPath);
-      await this.app.os.fileOpenPrintDialog(tempPdfPath);
+      await this.fn.os.fileOpenPrintDialog(tempPdfPath);
       dx.out('Opened PDF in Preview app');
     } catch (error) {
       dx.out(`Error in print with preview: ${error}`);
@@ -163,25 +187,27 @@ export class PDF {
       );
 
       // Generate filename with timestamp
-      const timestamp = this.app.os.dateAsYYYYMMDDHHMMSS();
-      const safeName = this.app.os.sanitizeFileName(descriptiveName || 'print_output');
+      const timestamp = this.fn.os.dateAsYYYYMMDDHHMMSS();
+      const safeName = this.fn.os.sanitizeFileName(descriptiveName || 'print_output');
       const filename = `${timestamp}_${safeName}.pdf`;
 
       // Save PDF to temp directory
-      const tempDir = this.app.vscodeapis.getDir_Temp();
-      this.app.os.ensureDir(tempDir);
-      const tempPdfPath = this.app.os.pathJoin(tempDir, filename);
+      const tempDir = this.fn.vscodeapis.getDir_Temp();
+      this.fn.os.ensureDir(tempDir);
+      const tempPdfPath = this.fn.os.pathJoin(tempDir, filename);
 
       // Write PDF document to temp file
-      this.app.os.fileWrite({ filePath: tempPdfPath, content: Buffer.from(pdfBuffer) });
+      this.fn.os.fileWrite({ filePath: tempPdfPath, content: Buffer.from(pdfBuffer) });
 
       this.trackTempPdf(tempPdfPath);
       // Send PDF to printer
-      await this.app.os.filePrint(tempPdfPath);
+      await this.fn.os.filePrint(tempPdfPath);
       dx.out('Sent PDF to printer');
     } catch (error) {
       this.fn.ui.showErrorMessage(`Failed to print PDF: ${String(error)}`);
       throw error;
+    } finally {
+      dx.done();
     }
   }
 
@@ -197,12 +223,12 @@ export class PDF {
       );
 
       // Generate default filename with timestamp
-      const timestamp = this.app.os.dateAsYYYYMMDDHHMMSS();
-      const safeName = this.app.os.sanitizeFileName(descriptiveName || 'print_output');
+      const timestamp = this.fn.os.dateAsYYYYMMDDHHMMSS();
+      const safeName = this.fn.os.sanitizeFileName(descriptiveName || 'print_output');
       const defaultFilename = `${timestamp}_${safeName}.pdf`;
 
       // Ask user for save location using UI method
-      const targetPath = await this.app.ui.chooseSaveLocation(defaultFilename);
+      const targetPath = await this.fn.ui.chooseSaveLocation(defaultFilename);
 
       if (!targetPath) {
         dx.out('Save cancelled by user');
@@ -210,22 +236,24 @@ export class PDF {
       }
 
       // Ensure directory exists
-      const targetDir = this.app.os.pathDirname(targetPath);
-      this.app.os.ensureDir(targetDir);
+      const targetDir = this.fn.os.pathDirname(targetPath);
+      this.fn.os.ensureDir(targetDir);
 
       // Save PDF document directly to chosen location
-      this.app.os.fileWrite({ filePath: targetPath, content: Buffer.from(pdfBuffer) });
+      this.fn.os.fileWrite({ filePath: targetPath, content: Buffer.from(pdfBuffer) });
 
       // Track file for cleanup (optional)
       this.trackTempPdf(targetPath);
 
       // Reveal file in file explorer
-      await this.app.os.fileReveal(targetPath);
+      await this.fn.os.fileReveal(targetPath);
 
       dx.out(`Saved PDF document to ${targetPath}`);
     } catch (error) {
       this.fn.ui.showErrorMessage(`Failed to save PDF: ${String(error)}`);
       throw error;
+    } finally {
+      dx.done();
     }
   }
 
@@ -378,7 +406,7 @@ export class PDF {
       this.addHeaderAndFooter();
 
       // Tokenize and build complete PDF in one pass
-      await this.app.stylize.tokenize({
+      await this.fn.stylize.tokenize({
         code: this.docInfo.code,
         languageId: this.docInfo.languageId,
         theme: this.docInfo.theme
@@ -440,7 +468,7 @@ export class PDF {
       const menuKeys = ['pageSizeId', 'orient'] as const;
       const selections: Record<string, string | undefined> = {};
       for (const key of menuKeys) {
-        selections[key] = this.app.uimenumgr.getMenuItemIdSelected(key);
+        selections[key] = this.uimenumgr.getMenuItemIdSelected(key);
       }
       
       const pageSizeId = selections.pageSizeId as PageSizeIdMenuItems_t;
@@ -605,6 +633,7 @@ export class PDF {
     try {
       // Initialize jsPDF document on first line
       if (!this.docInfo.pdfDoc) {
+        dx.error('PDF document not initialized. Call setupPdf() first.');
         throw new Error('PDF document not initialized. Call setupPdf() first.');
       }
 
@@ -776,7 +805,7 @@ export class PDF {
     }
 
     // Get document title from paperprinter's docInfo
-    const docTitle = this.app.paperprinter.docInfo.printTitle || 'Document';
+    const docTitle = this.paperprinter.docInfo.printTitle || 'Document';
 
     const pageNumber = this.docInfo.pageNumber;
     const pageTotal = this.docInfo.pageTotal;
@@ -813,7 +842,7 @@ export class PDF {
       };
 
       // Replace template variables
-      const formatted = this.app.templateDictReplace(template, templateDict);
+      const formatted = this.fn.utils.templateDictReplace(template, templateDict);
 
       // Return null if pageTotal is needed but is 0
       if ((element === 'total' || element === 'pageTotal') && pageTotal === 0) {
@@ -834,7 +863,7 @@ export class PDF {
     const getHeaderFooterValue = (
       menuId: MenuId_t
     ): HeaderFooterSubmenu_t | typeof kHeaderFooter.none => {
-      const value = this.app.uimenumgr.getMenuItemIdSelected(menuId);
+      const value = this.uimenumgr.getMenuItemIdSelected(menuId);
       return (value as HeaderFooterSubmenu_t | typeof kHeaderFooter.none) || kHeaderFooter.none;
     };
     // Process header positions
@@ -951,6 +980,7 @@ export class PDF {
 
     try {
       if (!this.docInfo.pdfDoc) {
+        dx.error('No PDF document to finish');
         throw new Error('No PDF document to finish');
       }
 

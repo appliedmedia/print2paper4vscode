@@ -1,6 +1,6 @@
 import { describe, it, beforeEach, afterEach } from 'node:test';
 import * as assert from 'node:assert';
-import { Yaml } from '../src/Yaml.js';
+import { Yaml, YamlInstance } from '../src/Yaml.js';
 import { App } from '../src/App.js';
 import * as fs from 'fs';
 import * as path from 'path';
@@ -38,7 +38,8 @@ describe('Yaml', () => {
     const yamlContent = 'key1: value1\nkey2: value2';
     fs.writeFileSync(yamlPath, yamlContent);
 
-    const yaml = Yaml.create(app, yamlPath, { key1: '', key2: '' });
+    const yamlFactory = app.reg.getInstance<Yaml>("yaml")!;
+    const yaml = yamlFactory.create({ filePath: yamlPath, dataStruct: { key1: '', key2: '' } });
 
     const result = yaml.get();
     assert.strictEqual(result.key1, 'value1');
@@ -50,7 +51,8 @@ describe('Yaml', () => {
   });
 
   it('should return default structure when file does not exist', () => {
-    const yaml = Yaml.create(app, path.join(tempDir, 'nonexistent.yaml'), { key1: 'default1', key2: 'default2' });
+    const yamlFactory = app.reg.getInstance<Yaml>("yaml")!;
+    const yaml = yamlFactory.create({ filePath: path.join(tempDir, 'nonexistent.yaml'), dataStruct: { key1: 'default1', key2: 'default2' } });
 
     const result = yaml.get();
     assert.strictEqual(result.key1, 'default1');
@@ -58,7 +60,8 @@ describe('Yaml', () => {
   });
 
   it('should use default when file read fails', () => {
-    const yaml = Yaml.create(app, '/invalid/path/that/does/not/exist.yaml', { key1: 'default' });
+    const yamlFactory = app.reg.getInstance<Yaml>("yaml")!;
+    const yaml = yamlFactory.create({ filePath: '/invalid/path/that/does/not/exist.yaml', dataStruct: { key1: 'default' } });
 
     const result = yaml.get();
     assert.strictEqual(result.key1, 'default');
@@ -68,7 +71,8 @@ describe('Yaml', () => {
     const yamlContent = 'key1: value1';
     fs.writeFileSync(yamlPath, yamlContent);
 
-    const yaml = Yaml.create(app, yamlPath, { key1: '' });
+    const yamlFactory = app.reg.getInstance<Yaml>("yaml")!;
+    const yaml = yamlFactory.create({ filePath: yamlPath, dataStruct: { key1: '' } });
 
     const result1 = yaml.get();
     assert.strictEqual(result1.key1, 'value1');
@@ -94,7 +98,8 @@ array:
 `;
     fs.writeFileSync(yamlPath, yamlContent);
 
-    const yaml = Yaml.create<any>(app, yamlPath, {});
+    const yamlFactory = app.reg.getInstance<Yaml>('yaml')!;
+    const yaml = yamlFactory.create<any>({ filePath: yamlPath, dataStruct: {} });
 
     const result = yaml.get();
     assert.ok(result.nested);

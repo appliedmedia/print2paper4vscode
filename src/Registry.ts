@@ -4,13 +4,13 @@ import type { FnImport_t } from './types/Registry_t';
 
 /**
  * Component interface for Registry-managed classes
- * All constructors take a single args object with app plus any extra init params
+ * All constructors take a single args object with reg plus any extra init params
  * Components get dx via this.fn.dx.sub() after calling reg.use()
  */
 export interface ComponentClass {
   readonly id: string;
-  create?(args: { app: App } & Record<string, unknown>): unknown;
-  new (args: { app: App } & Record<string, unknown>): unknown;
+  create?(args: { reg: Registry } & Record<string, unknown>): unknown;
+  new (args: { reg: Registry } & Record<string, unknown>): unknown;
 }
 
 /**
@@ -55,6 +55,7 @@ export class Registry {
     const rootDx = new Diagnostics({ name: rootDxName, app: this.app });
     this._instances.set('dx', rootDx);
     this._initialized.add('dx');
+
 
     // Now Registry can use fn.dx.sub() like everyone else
     this.fn = this.use();
@@ -102,22 +103,25 @@ export class Registry {
 
   /**
    * Create a component instance using factory or constructor
-   * Merges { app } with init params for this component
+   * Merges { reg } with init params for this component
+   * Components can access app via reg.app for utility methods
    */
   private createInstance(Component: ComponentClass): void {
     const componentId = Component.id;
 
     if (this.constructionStack.includes(componentId)) {
       const cycle = [...this.constructionStack, componentId].join(' -> ');
+      this.dx.error(`Circular dependency: ${cycle}`);
       throw new Error(`Circular dependency: ${cycle}`);
     }
 
     this.constructionStack.push(componentId);
 
     try {
-      // All constructors receive args with app and any init params
+      // All constructors receive args with reg and any init params
       // Components get dx via this.fn.dx.sub() after calling reg.use()
-      const args = { app: this.app, ...this.init[componentId] };
+      // Components can access app utilities via reg.app
+      const args = { reg: this, ...this.init[componentId] };
       let instance: unknown;
       
       if ('create' in Component && typeof Component.create === 'function') {
@@ -166,6 +170,7 @@ export class Registry {
           if (typeof value === 'function') {
             result[id][actualMethodName] = value.bind(instance);
           } else {
+            this.dx.error(`'${id}.${actualMethodName}' is not a function`);
             throw new Error(`'${id}.${actualMethodName}' is not a function`);
           }
         }
@@ -178,6 +183,7 @@ export class Registry {
       if (id) {
         foundComponent = this.components.find((c) => c.id === id);
         if (!foundComponent) {
+          this.dx.error(`Component '${id}' not found`);
           throw new Error(`Component '${id}' not found`);
         }
       } else {
@@ -189,6 +195,7 @@ export class Registry {
           }
         }
         if (!foundComponent) {
+          this.dx.error(`Method '${actualMethodName}' not found`);
           throw new Error(`Method '${actualMethodName}' not found`);
         }
       }
@@ -200,10 +207,12 @@ export class Registry {
       result[componentId][actualMethodName] = ((...args: unknown[]) => {
         const instance = this.getInstance(componentId);
         if (!instance) {
+          this.dx.error(`Failed to get instance of '${componentId}'`);
           throw new Error(`Failed to get instance of '${componentId}'`);
         }
         const method = (instance as Record<string, unknown>)[actualMethodName];
         if (typeof method !== 'function') {
+          this.dx.error(`'${componentId}.${actualMethodName}' is not a function`);
           throw new Error(`'${componentId}.${actualMethodName}' is not a function`);
         }
         return method.apply(instance, args);

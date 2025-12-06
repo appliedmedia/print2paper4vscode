@@ -14,12 +14,12 @@
  * @module src/UI
  */
 
-import type { App } from './App';
+import type { Registry } from './Registry';
 import type { SendToExt_t, MessageHandler_t } from './types/UI_t';
 import type { FnImport_t } from './types/Registry_t';
 import { Diagnostics } from './Diagnostics';
-import { Yaml } from './Yaml';
-import { Persist, type Persist_t } from './Persist';
+import { YamlInstance } from './Yaml';
+import type { Persist, Persist_t } from './Persist';
 import { kMenuId } from './UIMenu';
 
 // UI persist keys - union of menu IDs and toolbar position
@@ -56,24 +56,34 @@ export class UI {
   private static readonly kToolbar_pos_min_px = 8;
   private static readonly kToolbar_pos_max_px = 5120; // Reasonable max for 5K displays
 
-  private app: App;
+  private reg: Registry;
   private fn: FnImport_t;
   private messageHandlers: Map<string, MessageHandler_t[]> = new Map();
   private dx: Diagnostics;
-  private _yaml: Yaml<typeof UI.kYaml>;
-  public persist: Persist & Persist_t;
+  private _yaml: YamlInstance<typeof UI.kYaml>;
 
-  constructor(args: { app: App }) {
-    this.app = args.app;
-    // Only request dx.sub via Registry (always available)
-    // Other dependencies accessed via this.app.xxx to avoid circular deps during construction
-    this.fn = this.app.reg.use();
+  // Typed accessor for uimenumgr singleton
+  private get uimenumgr() { return this.reg.getInstance<import('./UIMenuMgr').UIMenuMgr>('uimenumgr')!; }
+
+  constructor(args: { reg: Registry }) {
+    this.reg = args.reg;
+    // Request methods via Registry
+    this.fn = this.reg.use(
+      'vscodeapis.showInformationMessage',
+      'vscodeapis.showErrorMessage',
+      'vscodeapis.showWarningMessage',
+      'vscodeapis.showSaveDialog',
+      'vscodeapis.uriFromPath',
+      'vscodeapis.uriToPath',
+      'yaml.create',
+      'persist.get',
+      'persist.set',
+      'utils.templateDictReplace'
+    );
     this.dx = this.fn.dx.sub({ name: 'UI' });
     
-    // Create per-instance Yaml and Persist via their static factory methods
-    this._yaml = Yaml.create(this.app, 'src/UI.yaml', UI.kYaml);
-    this.persist = Persist.create({ app: this.app }) as Persist & Persist_t;
-    this.persist.register('toolbar_pos');
+    // Create per-instance Yaml via factory
+    this._yaml = this.fn.yaml.create({ filePath: 'src/UI.yaml', dataStruct: UI.kYaml });
   }
 
   done(): void {
@@ -136,17 +146,17 @@ export class UI {
 
   // Show information message
   showInfoMessage(message: string): void {
-    this.app.vscodeapis.showInformationMessage(message);
+    this.fn.vscodeapis.showInformationMessage(message);
   }
 
   // Show error message
   showErrorMessage(message: string): void {
-    this.app.vscodeapis.showErrorMessage(message);
+    this.fn.vscodeapis.showErrorMessage(message);
   }
 
   // Show warning message
   showWarningMessage(message: string): void {
-    this.app.vscodeapis.showWarningMessage(message);
+    this.fn.vscodeapis.showWarningMessage(message);
   }
 
   // Add toolbar to HTML content
@@ -156,11 +166,11 @@ export class UI {
 
     try {
       // Get menu HTML from UIMenuMgr
-      const menuHtml = await this.app.uimenumgr.getUIMenus_HTML();
+      const menuHtml = await this.uimenumgr.getUIMenus_HTML();
 
       // Get menu CSS and JS
-      const uiMenuCss = this.app.uimenumgr.getUIMenus_CSS();
-      const uiMenuJs = this.app.uimenumgr.getUIMenus_JS();
+      const uiMenuCss = this.uimenumgr.getUIMenus_CSS();
+      const uiMenuJs = this.uimenumgr.getUIMenus_JS();
 
       // Get toolbar templates from yaml getter
       const templates = this.yaml;
@@ -168,7 +178,7 @@ export class UI {
       // Get toolbar position, validate it's within bounds, else use default
       // Note: VS Code extensions run in Node.js and don't have access to window dimensions.
       // Client-side code in toolbar_js/yaml dynamically clamps to actual window.innerWidth.
-      let toolbar_pos = Number(this.persist.toolbar_pos);
+      let toolbar_pos = Number(this.fn.persist.get('toolbar_pos'));
       if (
         isNaN(toolbar_pos) ||
         toolbar_pos < UI.kToolbar_pos_min_px ||
@@ -190,7 +200,7 @@ export class UI {
       );
 
       // Inject toolbar into HTML using template
-      const toolbarHtml = this.app.templateDictReplace(templates.toolbar_html, {
+      const toolbarHtml = this.fn.utils.templateDictReplace(templates.toolbar_html, {
         toolbarCss: toolbarCssWithPos + '\n' + uiMenuCss,
         baseCss: templates.base_css,
         menuHtml,
@@ -212,7 +222,7 @@ export class UI {
 
   // Template dictionary replacement
   templateDictReplace(template: string, dict: Record<string, string>): string {
-    return this.app.templateDictReplace(template, dict);
+    return this.fn.utils.templateDictReplace(template, dict);
   }
 
   // Get base CSS
@@ -225,8 +235,8 @@ export class UI {
     const dx = this.dx.sub({ name: 'chooseSaveLocation' });
 
     try {
-      const uri = await this.app.vscodeapis.showSaveDialog({
-        defaultUri: this.app.vscodeapis.uriFromPath(defaultFilename),
+      const uri = await this.fn.vscodeapis.showSaveDialog({
+        defaultUri: this.fn.vscodeapis.uriFromPath(defaultFilename),
         filters: {
           'PDF files': ['pdf'],
         },
@@ -234,7 +244,7 @@ export class UI {
       });
 
       if (uri) {
-        const path = this.app.vscodeapis.uriToPath(uri);
+        const path = this.fn.vscodeapis.uriToPath(uri);
         dx.out(`User chose save location: ${path}`);
         return path;
       } else {

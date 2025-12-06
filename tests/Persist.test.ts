@@ -6,12 +6,14 @@ import type * as vscode from 'vscode';
 
 // Mock VS Code context and APIs with state tracking
 let mockGlobalState: Record<string, any> = {};
+let mockUpdateCallCount = 0;
 
 const mockContext = {
   subscriptions: [],
   globalState: {
     get: (key: string) => mockGlobalState[key],
     update: async (key: string, value: any) => {
+      mockUpdateCallCount++;
       if (value === undefined) {
         delete mockGlobalState[key];
       } else {
@@ -40,12 +42,13 @@ const mockVSCode = {
 
 describe('Persist', () => {
   let app: App;
-  let persist: Persist & Record<string, any>;
+  let persist: Persist;
 
   beforeEach(() => {
     mockGlobalState = {}; // Reset state before each test
+    mockUpdateCallCount = 0; // Reset call count before each test
     app = new App({ context: mockContext, vscode: mockVSCode });
-    persist = Persist.create({ app }) as Persist & Record<string, any>;
+    persist = app.reg.getInstance<Persist>('persist')!;
   });
 
   afterEach(() => {
@@ -53,21 +56,18 @@ describe('Persist', () => {
   });
 
   it('should register and retrieve a property', () => {
-    persist.register('testKey');
-    persist['testKey'] = 'testValue';
-    assert.strictEqual(persist['testKey'], 'testValue');
+    persist.set('testKey', 'testValue');
+    assert.strictEqual(persist.get('testKey'), 'testValue');
   });
 
   it('should use default value when no value is set', async () => {
-    persist.register('theme');
     await persist.validateDefault({ name: 'theme', computeFn: async () => 'github-light' });
     
-    assert.strictEqual(persist['theme'], 'github-light');
+    assert.strictEqual(persist.get('theme'), 'github-light');
   });
 
   it('should persist values to global state', () => {
-    persist.register('testKey');
-    persist['testKey'] = 'persistedValue';
+    persist.set('testKey', 'persistedValue');
     
     assert.strictEqual(mockGlobalState['testKey'], 'persistedValue');
   });
@@ -76,34 +76,29 @@ describe('Persist', () => {
     // Set value in global state directly
     mockGlobalState['existingKey'] = 'existingValue';
     
-    persist.register('existingKey');
-    const value = persist['existingKey'];
+    const value = persist.get('existingKey');
     
     assert.strictEqual(value, 'existingValue');
   });
 
   it('should use default when value is not in global state or cache', async () => {
-    persist.register('newKey');
     await persist.validateDefault({ name: 'newKey', computeFn: async () => 'defaultValue' });
     
-    assert.strictEqual(persist['newKey'], 'defaultValue');
+    assert.strictEqual(persist.get('newKey'), 'defaultValue');
     // Should also be persisted to global state
     assert.strictEqual(mockGlobalState['newKey'], 'defaultValue');
   });
 
   it('should not update global state for empty string values', () => {
-    persist.register('emptyKey');
-    persist['emptyKey'] = '';
+    persist.set('emptyKey', '');
     
     // Empty string should not persist to global state
     assert.strictEqual(mockGlobalState['emptyKey'], undefined);
     // But should be in memory cache
-    assert.strictEqual(persist['emptyKey'], '');
+    assert.strictEqual(persist.get('emptyKey'), '');
   });
 
   it('should return same default on multiple validateDefault calls', async () => {
-    persist.register('key');
-    
     const default1 = await persist.validateDefault({ name: 'key', computeFn: async () => 'default' });
     const default2 = await persist.validateDefault({ name: 'key', computeFn: async () => 'different' });
     
@@ -112,68 +107,57 @@ describe('Persist', () => {
   });
 
   it('should handle multiple registered properties', () => {
-    persist.register('key1').register('key2');
-    persist['key1'] = 'value1';
-    persist['key2'] = 'value2';
+    persist.set('key1', 'value1');
+    persist.set('key2', 'value2');
     
-    assert.strictEqual(persist['key1'], 'value1');
-    assert.strictEqual(persist['key2'], 'value2');
+    assert.strictEqual(persist.get('key1'), 'value1');
+    assert.strictEqual(persist.get('key2'), 'value2');
   });
 
   it('should update global state when value changes', () => {
-    persist.register('changeable');
-    persist['changeable'] = 'value1';
+    persist.set('changeable', 'value1');
     assert.strictEqual(mockGlobalState['changeable'], 'value1');
     
-    persist['changeable'] = 'value2';
+    persist.set('changeable', 'value2');
     assert.strictEqual(mockGlobalState['changeable'], 'value2');
   });
 
   it('should not update global state when value does not change', () => {
-    persist.register('unchanged');
-    persist['unchanged'] = 'same';
+    persist.set('unchanged', 'same');
     
-    const callCountBefore = Object.keys(mockGlobalState).length;
-    persist['unchanged'] = 'same'; // Set same value again
+    const callCountBefore = mockUpdateCallCount;
+    persist.set('unchanged', 'same'); // Set same value again
     
-    // Global state should not be updated (no new keys)
-    const callCountAfter = Object.keys(mockGlobalState).length;
-    assert.strictEqual(callCountBefore, callCountAfter);
+    // Global state update should not be called again (redundant update suppressed)
+    const callCountAfter = mockUpdateCallCount;
+    assert.strictEqual(callCountBefore, callCountAfter, 'update() should not be called for unchanged values');
   });
 
   it('should handle different value types', () => {
-    persist.register('stringKey');
-    persist.register('numberKey');
-    persist.register('booleanKey');
+    persist.set('stringKey', 'string');
+    persist.set('numberKey', 42);
     
-    persist['stringKey'] = 'string';
-    persist['numberKey'] = 42;
-    persist['booleanKey'] = true;
-    
-    assert.strictEqual(persist['stringKey'], 'string');
-    assert.strictEqual(persist['numberKey'], 42);
-    assert.strictEqual(persist['booleanKey'], true);
+    assert.strictEqual(persist.get('stringKey'), 'string');
+    assert.strictEqual(persist.get('numberKey'), 42);
   });
 
   it('should clear persist state', async () => {
     // Import kMenuId to know what keys clear() actually clears
     const { kMenuId } = await import('../src/UIMenu.js');
     
-    // Register actual menu keys that clear() will remove
+    // Set actual menu keys that clear() will remove
     const menuKey1 = kMenuId[0];
     const menuKey2 = kMenuId.length > 1 ? kMenuId[1] : 'toolbar_pos';
     
-    persist.register(menuKey1);
-    persist.register(menuKey2);
-    persist[menuKey1] = 'value1';
-    persist[menuKey2] = 'value2';
+    persist.set(menuKey1, 'value1');
+    persist.set(menuKey2, 'value2');
     
     assert.strictEqual(mockGlobalState[menuKey1], 'value1');
     
-    await persist.clear();
+    await Persist.clear({ reg: app.reg });
     
     // State should be cleared from memory for menu keys
-    assert.strictEqual(persist[menuKey1], undefined);
-    assert.strictEqual(persist[menuKey2], undefined);
+    assert.strictEqual(persist.get(menuKey1), undefined);
+    assert.strictEqual(persist.get(menuKey2), undefined);
   });
 });

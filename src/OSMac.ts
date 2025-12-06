@@ -1,6 +1,6 @@
 import { OS } from './OS';
 import { Diagnostics } from './Diagnostics';
-import type { App } from './App';
+import type { Registry } from './Registry';
 
 /**
  * OSMac - macOS-specific operating system operations
@@ -9,17 +9,17 @@ import type { App } from './App';
  * Uses AppleScript for complex operations (print dialogs via Preview/Finder)
  * and native macOS commands for file operations (open, open -R).
  *
- * @input app - Application instance for accessing shared services
+ * @input reg - Registry instance for accessing shared services
  * @output File operations, AppleScript-based print dialogs, Finder integration
  *
  * @example
- * const os = new OSMac(app);
+ * const os = new OSMac({ reg });
  * await os.fileOpenInDefaultApp('/path/to/file.pdf');
  * await os.fileOpenPrintDialog('/path/to/file.pdf');
  * await os.filePrint('/path/to/file.pdf');
  */
 export class OSMac extends OS {
-  constructor(args: { app: App }) {
+  constructor(args: { reg: Registry }) {
     super(args);
     // Override dx with OSMac-specific context
     this.dx = this.fn.dx.sub({ name: 'OSMac' });
@@ -36,13 +36,15 @@ export class OSMac extends OS {
     templateKey: string,
     variables: Record<string, string> = {}
   ): Promise<void> {
-    const yaml = this.app?.os.fileRead<Record<string, string>>({ path: 'src/OSMac.yaml' });
+    const yaml = this.fileRead<Record<string, string>>({ path: 'src/OSMac.yaml' });
     if (!yaml?.[templateKey]) {
+      this.dx.error(`Failed to load AppleScript template for ${templateKey}`);
       throw new Error(`Failed to load AppleScript template for ${templateKey}`);
     }
 
-    const appleScript = this.app?.templateDictReplace(yaml[templateKey], variables);
+    const appleScript = this.fn.utils.templateDictReplace(yaml[templateKey], variables);
     if (!appleScript) {
+      this.dx.error(`Failed to process AppleScript template for ${templateKey}`);
       throw new Error(`Failed to process AppleScript template for ${templateKey}`);
     }
 

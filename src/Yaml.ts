@@ -20,28 +20,27 @@
  *   - Minimal boilerplate in consuming classes
  */
 
-import type { App } from './App';
+import type { Registry } from './Registry';
+import type { FnImport_t } from './types/Registry_t';
 
-export class Yaml<T extends Record<string, string>> {
-  static readonly id = 'yaml';
+// Yaml instance - created by YamlFactory
+export class YamlInstance<T extends Record<string, string>> {
   private cached: T | undefined = undefined;
-  private app: App;
+  private reg: Registry;
+  private fn: FnImport_t;
   private filePath: string;
   private dataStruct: T;
 
-  private constructor(args: { app: App; filePath: string; dataStruct: T }) {
+  constructor(args: { reg: Registry; filePath: string; dataStruct: T }) {
     // Note: Cannot use dx.require here as Diagnostics is not yet initialized
-    if (!args.app || !args.filePath || !args.dataStruct) {
-      throw new Error('Yaml constructor requires app, filePath, and dataStruct');
+    if (!args.reg || !args.filePath || !args.dataStruct) {
+      throw new Error('Yaml constructor requires reg, filePath, and dataStruct');
     }
-    const { app, filePath, dataStruct } = args;
-    this.app = app;
+    const { reg, filePath, dataStruct } = args;
+    this.reg = reg;
+    this.fn = this.reg.use('os.fileRead');
     this.filePath = filePath;
     this.dataStruct = dataStruct;
-  }
-
-  static create<T extends Record<string, string>>(app: App, filePath: string, dataStruct: T): Yaml<T> {
-    return new Yaml({ app, filePath, dataStruct });
   }
 
   done(): void {
@@ -51,8 +50,26 @@ export class Yaml<T extends Record<string, string>> {
 
   get(): T {
     if (this.cached === undefined) {
-      this.cached = this.app.os.fileRead<T>({ path: this.filePath }) || this.dataStruct;
+      const fileRead = this.fn.os.fileRead as import('./OS').FileRead_t;
+      this.cached = fileRead<T>({ path: this.filePath }) || this.dataStruct;
     }
-    return this.cached;
+    return this.cached as T;
   }
 }
+
+// Yaml factory singleton - Registry instantiates this
+export class Yaml {
+  static readonly id = 'yaml';
+  private reg: Registry;
+
+  constructor(args: { reg: Registry }) {
+    this.reg = args.reg;
+  }
+
+  // Factory method exposed to components via this.fn.yaml.create()
+  create<T extends Record<string, string>>(args: { filePath: string; dataStruct: T }): YamlInstance<T> {
+    return new YamlInstance({ reg: this.reg, ...args });
+  }
+}
+
+// end, Yaml.ts

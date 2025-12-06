@@ -11,7 +11,7 @@ describe('UIMenuMgr', () => {
 
   beforeEach(() => {
     app = new App({ context: mockContext, vscode: mockVSCode });
-    menuMgr = new UIMenuMgr({ app });
+    menuMgr = new UIMenuMgr({ reg: app.reg });
   });
 
   afterEach(() => {
@@ -120,13 +120,13 @@ describe('UIMenuMgr', () => {
   });
 
   it('should return empty string when no menus exist for CSS', () => {
-    const emptyMgr = new UIMenuMgr({ app });
+    const emptyMgr = new UIMenuMgr({ reg: app.reg });
     const css = emptyMgr.getUIMenus_CSS();
     assert.strictEqual(css, '');
   });
 
   it('should return empty string when no menus exist for JS', () => {
-    const emptyMgr = new UIMenuMgr({ app });
+    const emptyMgr = new UIMenuMgr({ reg: app.reg });
     const js = emptyMgr.getUIMenus_JS();
     assert.strictEqual(js, '');
   });

@@ -10,7 +10,7 @@ describe('Coords Advanced Unit Tests', () => {
 
   beforeEach(() => {
     app = new App({ context: mockContext, vscode: mockVSCode });
-    coords = new Coords({ app });
+    coords = new Coords({ reg: app.reg });
   });
 
   afterEach(() => {

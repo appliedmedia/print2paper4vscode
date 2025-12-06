@@ -1,4 +1,4 @@
-import type { App } from './App';
+import type { Registry } from './Registry';
 import type { FnImport_t } from './types/Registry_t';
 import { Diagnostics } from './Diagnostics';
 
@@ -11,25 +11,28 @@ export type TabCategory = 'editor-nonmd' | 'editor-md' | 'preview';
  * extracts text content, detects language IDs, and captures preview HTML.
  * Handles both text editor tabs and webview preview tabs.
  *
- * @input app - Application instance for accessing VS Code APIs
+ * @input reg - Registry instance for accessing VS Code APIs
  * @output Tab metadata, source code content, language detection, preview HTML
  *
  * @example
- * const inspector = new TabInspector(app);
+ * const inspector = new TabInspector({ reg });
  * const category = inspector.detectActiveTabCategory();
  * const content = inspector.getEditorSelectionOrAll();
  */
 export class TabInspector {
   static readonly id = 'tabinspector';
-  private app: App;
+  private reg: Registry;
   private fn: FnImport_t;
   private dx: Diagnostics;
 
-  constructor(args: { app: App }) {
-    this.app = args.app;
-    // Only request dx.sub via Registry (always available)
-    // Other dependencies accessed via this.app.xxx to avoid circular deps during construction
-    this.fn = this.app.reg.use();
+  constructor(args: { reg: Registry }) {
+    this.reg = args.reg;
+    // Request methods via Registry
+    this.fn = this.reg.use(
+      'vscodeapis.getActiveTextEditor',
+      'vscodeapis.getSelectionOrDocumentText',
+      'vscodeapis.getDescriptiveName'
+    );
     this.dx = this.fn.dx.sub({ name: 'TabInspector' });
   }
 
@@ -38,7 +41,7 @@ export class TabInspector {
   }
 
   detectActiveTabCategory(): TabCategory {
-    const editor = this.app.vscodeapis.getActiveTextEditor();
+    const editor = this.fn.vscodeapis.getActiveTextEditor();
     if (editor) {
       const lang = editor.document.languageId;
       if (lang === 'markdown') return 'editor-md';
@@ -49,11 +52,11 @@ export class TabInspector {
   }
 
   getEditorSelectionOrAll(): { text: string; languageId: string; name: string } | null {
-    const editor = this.app.vscodeapis.getActiveTextEditor();
+    const editor = this.fn.vscodeapis.getActiveTextEditor();
     if (!editor) return null;
-    const text = this.app.vscodeapis.getSelectionOrDocumentText(editor);
+    const text = this.fn.vscodeapis.getSelectionOrDocumentText(editor);
     const languageId = editor.document.languageId || 'plaintext';
-    const name = this.app.vscodeapis.getDescriptiveName(editor.document);
+    const name = this.fn.vscodeapis.getDescriptiveName(editor.document);
     return { text, languageId, name };
   }
 
@@ -64,14 +67,14 @@ export class TabInspector {
     filePath: string;
   }> {
     try {
-      const editor = this.app.vscodeapis.getActiveTextEditor();
+      const editor = this.fn.vscodeapis.getActiveTextEditor();
       if (!editor) {
         return { code: '', language: 'plaintext', fileName: '', filePath: '' };
       }
 
-      const code = this.app.vscodeapis.getSelectionOrDocumentText(editor);
+      const code = this.fn.vscodeapis.getSelectionOrDocumentText(editor);
       const language = editor.document.languageId || 'plaintext';
-      const fileName = this.app.vscodeapis.getDescriptiveName(editor.document);
+      const fileName = this.fn.vscodeapis.getDescriptiveName(editor.document);
       const filePath = editor.document.uri.fsPath;
 
       return { code, language, fileName, filePath };
@@ -86,12 +89,12 @@ export class TabInspector {
   > {
     try {
       // For now, just return the active editor since getVisibleTextEditors is not implemented
-      const activeEditor = this.app.vscodeapis.getActiveTextEditor();
+      const activeEditor = this.fn.vscodeapis.getActiveTextEditor();
       if (!activeEditor) return [];
 
-      const code = this.app.vscodeapis.getSelectionOrDocumentText(activeEditor);
+      const code = this.fn.vscodeapis.getSelectionOrDocumentText(activeEditor);
       const language = activeEditor.document.languageId || 'plaintext';
-      const fileName = this.app.vscodeapis.getDescriptiveName(activeEditor.document);
+      const fileName = this.fn.vscodeapis.getDescriptiveName(activeEditor.document);
       const filePath = activeEditor.document.uri.fsPath;
       return [{ code, language, fileName, filePath }];
     } catch (error) {

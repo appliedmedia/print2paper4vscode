@@ -1,4 +1,4 @@
-import type { App } from './App';
+import type { Registry } from './Registry';
 import type { FnImport_t } from './types/Registry_t';
 import { Diagnostics } from './Diagnostics';
 
@@ -10,7 +10,7 @@ import { Diagnostics } from './Diagnostics';
  */
 export class Coords {
   static readonly id = 'coords';
-  private app: App;
+  private reg: Registry;
   private fn: FnImport_t;
   private dx: Diagnostics;
 
@@ -45,9 +45,9 @@ export class Coords {
   // Base margin constant: 0.4 inch gutter required for all non-full-bleed printers
   public static readonly kMarginGutterMinPts = 0.4 * Coords.POINTS_PER_INCH;
 
-  constructor(args: { app: App }) {
-    this.app = args.app;
-    this.fn = this.app.reg.use(); // Only needs dx.sub which is always available
+  constructor(args: { reg: Registry }) {
+    this.reg = args.reg;
+    this.fn = this.reg.use(); // Only needs dx.sub which is always available
     this.dx = this.fn.dx.sub({ name: 'Coords' });
     
     // All initialization happens here - no separate init() needed

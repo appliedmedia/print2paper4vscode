@@ -12,7 +12,7 @@ describe('UIWebView', () => {
 
   beforeEach(() => {
     app = new App({ context: mockContext, vscode: mockVSCode });
-    uiWebView = new UIWebView({ app });
+    uiWebView = new UIWebView({ reg: app.reg });
   });
 
   afterEach(() => {
