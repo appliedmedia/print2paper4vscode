@@ -79,8 +79,7 @@ export class PDF {
       'yaml.create',
       'utils.templateDictReplace',
       'utils.hasContent',
-      'uimenumgr.getMenuItemIdSelected',
-      'paperprinter.docInfo'
+      'uimenumgr.getMenuItemIdSelected'
     );
     this.dx = this.fn.dx.sub({ name: 'PDF' });
     this._docInfo = DocInfo_PDF.create({ reg: this.reg });
@@ -152,6 +151,10 @@ export class PDF {
     const dx = this.dx.sub({ name: 'printWithPreview' });
 
     try {
+      if (!this.readyToPrint()) {
+        dx.error('PDF document not generated');
+        throw new Error('PDF document not generated');
+      }
       const pdfBuffer = this.docInfo().asArrayBuffer();
       dx.out(
         `Using PDF ArrayBuffer for printWithPreview (${pdfBuffer.byteLength} bytes)`
@@ -183,6 +186,10 @@ export class PDF {
   async printDirectly(descriptiveName?: string): Promise<void> {
     const dx = this.dx.sub({ name: 'printDirectly' });
     try {
+      if (!this.readyToPrint()) {
+        dx.error('PDF document not generated');
+        throw new Error('PDF document not generated');
+      }
       const pdfBuffer = this.docInfo().asArrayBuffer();
       dx.out(
         `Using PDF ArrayBuffer for printDirectly (${pdfBuffer.byteLength} bytes)`
@@ -216,6 +223,10 @@ export class PDF {
   async saveAsPDF(descriptiveName?: string): Promise<void> {
     const dx = this.dx.sub({ name: 'saveAsPDF' });
     try {
+      if (!this.readyToPrint()) {
+        dx.error('PDF document not generated');
+        throw new Error('PDF document not generated');
+      }
       const pdfBuffer = this.docInfo().asArrayBuffer();
       dx.out(
         `Using PDF ArrayBuffer for saveAsPDF (${pdfBuffer.byteLength} bytes)`
@@ -807,8 +818,8 @@ export class PDF {
     }
     const pdfDoc = docInfo.pdfDoc;
 
-    // Get document title from paperprinter's docInfo
-    const docTitle = this.fn.paperprinter.docInfo().printTitle || 'Document';
+    // Get document title from docInfo (PaperPrinter copies printTitle into docInfo.title)
+    const docTitle = docInfo.title || 'Document';
 
     const pageNumber = docInfo.pageNumber;
     const pageTotal = docInfo.pageTotal;

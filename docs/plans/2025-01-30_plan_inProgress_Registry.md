@@ -2189,7 +2189,7 @@ Components updated:
 - [x] Update plan document with completion status
 - [x] Update AGENTS.md with new constructor pattern
 - [x] Add examples showing { reg: Registry } pattern
-- [x] Document when to use this.reg.app for utilities vs this.fn for components
+- [x] Document when to use this.reg.app for utilities vs. this.fn for components
 
 **Implementation Notes:**
 
