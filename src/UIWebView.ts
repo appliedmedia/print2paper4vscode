@@ -86,30 +86,6 @@ export class UIWebView {
   }
 
   /**
-   * Create and configure menu manager (for external use)
-   * @deprecated Menu manager should be accessed via this.reg.getInstance('uimenumgr')!
-   */
-  createMenus() {
-    const dx = this.dx.sub({ name: 'createMenus' });
-
-    try {
-      // Menu manager is always available via this.reg.getInstance('uimenumgr')!
-      dx.out('Returning app menu manager');
-      return this.reg.getInstance('uimenumgr')!;
-    } finally {
-      dx.done();
-    }
-  }
-
-  /**
-   * Get the menu manager
-   * @deprecated Use this.reg.getInstance('uimenumgr')! directly
-   */
-  getMenus() {
-    return this.reg.getInstance('uimenumgr')!;
-  }
-
-  /**
    * Display PDF in webview panel (new simplified architecture)
    *
    * Accepts either PDFData_t or DocInfo_PDF - extracts data and converts on the fly.
