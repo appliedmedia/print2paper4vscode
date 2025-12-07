@@ -143,9 +143,8 @@ export class PDF {
     this.dx.done();
   }
 
-  async printWithPreview(args?: { descriptiveName?: string }): Promise<void> {
+  async printWithPreview(descriptiveName?: string): Promise<void> {
     const dx = this.dx.sub({ name: 'printWithPreview' });
-    const descriptiveName = args?.descriptiveName;
 
     try {
       const pdfBuffer = this.docInfo.asArrayBuffer();
@@ -176,9 +175,8 @@ export class PDF {
     dx.done();
   }
 
-  async printDirectly(args?: { descriptiveName?: string }): Promise<void> {
+  async printDirectly(descriptiveName?: string): Promise<void> {
     const dx = this.dx.sub({ name: 'printDirectly' });
-    const descriptiveName = args?.descriptiveName;
     try {
       const pdfBuffer = this.docInfo.asArrayBuffer();
       dx.out(
@@ -210,9 +208,8 @@ export class PDF {
     }
   }
 
-  async saveAsPDF(args?: { descriptiveName?: string }): Promise<void> {
+  async saveAsPDF(descriptiveName?: string): Promise<void> {
     const dx = this.dx.sub({ name: 'saveAsPDF' });
-    const descriptiveName = args?.descriptiveName;
     try {
       const pdfBuffer = this.docInfo.asArrayBuffer();
       dx.out(

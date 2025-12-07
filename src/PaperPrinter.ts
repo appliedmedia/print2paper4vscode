@@ -167,17 +167,11 @@ export class PaperPrinter {
       }
 
       if (printType === 'preview')
-        await this.pdf.printWithPreview({
-          descriptiveName: this.docInfo.printTitle || 'Print Output'
-        });
+        await this.pdf.printWithPreview(this.docInfo.printTitle || 'Print Output');
       else if (printType === 'direct')
-        await this.pdf.printDirectly({
-          descriptiveName: this.docInfo.printTitle || 'Print Output'
-        });
+        await this.pdf.printDirectly(this.docInfo.printTitle || 'Print Output');
       else if (printType === 'save')
-        await this.pdf.saveAsPDF({
-          descriptiveName: this.docInfo.printTitle || 'Print Output'
-        });
+        await this.pdf.saveAsPDF(this.docInfo.printTitle || 'Print Output');
 
       dx.out(`Print request handled: ${printType}`);
     } finally {
@@ -647,19 +641,13 @@ export class PaperPrinter {
         try {
           if (menuItemId === 'preview') {
             dx.out('Printing with preview...');
-            await this.pdf.printWithPreview({
-              descriptiveName: this.docInfo.printTitle || 'Print Output'
-            });
+            await this.pdf.printWithPreview(this.docInfo.printTitle || 'Print Output');
           } else if (menuItemId === 'direct') {
             dx.out('Printing directly...');
-            await this.pdf.printDirectly({
-              descriptiveName: this.docInfo.printTitle || 'Print Output'
-            });
+            await this.pdf.printDirectly(this.docInfo.printTitle || 'Print Output');
           } else if (menuItemId === 'save') {
             dx.out('Saving as PDF...');
-            await this.pdf.saveAsPDF({
-              descriptiveName: this.docInfo.printTitle || 'Print Output'
-            });
+            await this.pdf.saveAsPDF(this.docInfo.printTitle || 'Print Output');
           }
           dx.out(`Print action ${String(menuItemId)} completed successfully`);
         } catch (error) {
