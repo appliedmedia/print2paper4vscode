@@ -57,9 +57,6 @@ export class PDF {
   // PDF document information (private, accessed via docInfo() method)
   private _docInfo: DocInfo_PDF;
 
-  // Typed accessor for singleton components (property access needed)
-  private get paperprinter() { return this.reg.getInstance<import('./PaperPrinter').PaperPrinter>('paperprinter')!; }
-
   constructor(args: { reg: Registry }) {
     this.reg = args.reg;
     this.fn = this.reg.use(
@@ -82,7 +79,8 @@ export class PDF {
       'yaml.create',
       'utils.templateDictReplace',
       'utils.hasContent',
-      'uimenumgr.getMenuItemIdSelected'
+      'uimenumgr.getMenuItemIdSelected',
+      'paperprinter.docInfo'
     );
     this.dx = this.fn.dx.sub({ name: 'PDF' });
     this._docInfo = DocInfo_PDF.create({ reg: this.reg });
@@ -810,7 +808,7 @@ export class PDF {
     const pdfDoc = docInfo.pdfDoc;
 
     // Get document title from paperprinter's docInfo
-    const docTitle = this.paperprinter.docInfo().printTitle || 'Document';
+    const docTitle = this.fn.paperprinter.docInfo().printTitle || 'Document';
 
     const pageNumber = docInfo.pageNumber;
     const pageTotal = docInfo.pageTotal;
