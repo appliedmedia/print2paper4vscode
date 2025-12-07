@@ -374,7 +374,7 @@ export class UIMenuMgr {
    */
   private buildUIMenuItemDict(): UIMenuItemDict_t {
     const dx = this.dx.sub({ name: 'buildUIMenuItemDict' });
-    const pageSizePx = this.pdf?.docInfo?.pageSizePx;
+    const pageSizePx = this.pdf?.docInfo()?.pageSizePx;
     const context = this.contextDict ?? {};
     const inputs: ForceNumber_dict_t = {
       windowWidth: context.windowWidth,
@@ -450,7 +450,7 @@ export class UIMenuMgr {
 
     try {
       // Build complete context dictionary: merge contextDict with page dimensions
-      const pageSizePx = this.pdf?.docInfo?.pageSizePx || { widthPx: 0, heightPx: 0 };
+      const pageSizePx = this.pdf?.docInfo()?.pageSizePx || { widthPx: 0, heightPx: 0 };
       dx.out(`PDF page dimensions: ${pageSizePx.widthPx}px x ${pageSizePx.heightPx}px`);
       const fullContext: Record<string, string> = {
         // Page dimensions (known on extension side from PDF)

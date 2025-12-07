@@ -24,7 +24,7 @@ describe('PaperPrinter Integration Tests', () => {
     
     // Generate PDF
     await paperPrinter['generatePdf']();
-    const pdfDoc = app.pdf.docInfo;
+    const pdfDoc = app.pdf.docInfo();
     
     assert(pdfDoc, 'PDF document should be generated');
     assert.equal(typeof pdfDoc.getNumberOfPages(), 'number', 'Should have page count');
@@ -56,7 +56,7 @@ console.log(message);`;
     
     // Generate initial PDF
     await paperPrinter['generatePdf']();
-    const pdf1 = app.pdf.docInfo;
+    const pdf1 = app.pdf.docInfo();
     const arrayBuffer1 = pdf1?.asArrayBuffer();
     
     assert(arrayBuffer1, 'Should generate initial PDF');
@@ -65,7 +65,7 @@ console.log(message);`;
     
     // Regenerate PDF (simulates settings change)
     await paperPrinter['generatePdf']();
-    const pdf2 = app.pdf.docInfo;
+    const pdf2 = app.pdf.docInfo();
     const arrayBuffer2 = pdf2?.asArrayBuffer();
     
     assert(arrayBuffer2, 'Should regenerate PDF');
@@ -103,14 +103,14 @@ const total = numbers.reduce(calculateSum, 0);`;
     // Test with small font
     persist.set('fontSizeId', '10');
     await paperPrinter['generatePdf']();
-    const smallFontPdf = app.pdf.docInfo;
+    const smallFontPdf = app.pdf.docInfo();
     const smallFontPages = smallFontPdf?.getNumberOfPages() || 0;
     const smallArrayBuffer = smallFontPdf?.asArrayBuffer();
     
     // Test with large font
     persist.set('fontSizeId', '18');
     await paperPrinter['generatePdf']();
-    const largeFontPdf = app.pdf.docInfo;
+    const largeFontPdf = app.pdf.docInfo();
     const largeFontPages = largeFontPdf?.getNumberOfPages() || 0;
     const largeArrayBuffer = largeFontPdf?.asArrayBuffer();
     
@@ -136,7 +136,7 @@ const total = numbers.reduce(calculateSum, 0);`;
     paperPrinter['createMenus']();
     
     await paperPrinter['generatePdf']();
-    const pdfDoc = app.pdf.docInfo;
+    const pdfDoc = app.pdf.docInfo();
     
     assert(pdfDoc, 'PDF should be generated');
     

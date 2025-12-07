@@ -33,7 +33,7 @@ describe('PDF', () => {
   it('should print with preview', async () => {
     const pdfDoc = new jsPDF();
     pdfDoc.text('Test', 10, 10);
-    pdf.docInfo.pdfDoc = pdfDoc;
+    pdf.docInfo().pdfDoc = pdfDoc;
 
     // Mock fileOpenPrintDialog to avoid actual OS calls
     const originalOpenPrintDialog = app.os.fileOpenPrintDialog;
@@ -49,7 +49,7 @@ describe('PDF', () => {
   it('should print directly', async () => {
     const pdfDoc = new jsPDF();
     pdfDoc.text('Test', 10, 10);
-    pdf.docInfo.pdfDoc = pdfDoc;
+    pdf.docInfo().pdfDoc = pdfDoc;
 
     // Mock filePrint to avoid actual OS calls
     const originalFilePrint = app.os.filePrint;
@@ -65,7 +65,7 @@ describe('PDF', () => {
   it('should save as PDF', async () => {
     const pdfDoc = new jsPDF();
     pdfDoc.text('Test', 10, 10);
-    pdf.docInfo.pdfDoc = pdfDoc;
+    pdf.docInfo().pdfDoc = pdfDoc;
 
     // Mock chooseSaveLocation to return null (user cancelled)
     const originalChooseSaveLocation = app.ui.chooseSaveLocation;
@@ -85,7 +85,7 @@ describe('PDF', () => {
   it('should get total page count', async () => {
     const pdfDoc = new jsPDF();
     pdfDoc.text('Page 1', 10, 10);
-    pdf.docInfo.pdfDoc = pdfDoc;
+    pdf.docInfo().pdfDoc = pdfDoc;
 
     const pageCount = await pdf.getPageTotal();
     assert.strictEqual(pageCount, 1);
@@ -97,13 +97,13 @@ describe('PDF', () => {
   });
 
   it('should have docInfo property', () => {
-    assert.ok(pdf.docInfo);
-    assert.ok(pdf.docInfo instanceof DocInfo_PDF);
+    assert.ok(pdf.docInfo());
+    assert.ok(pdf.docInfo() instanceof DocInfo_PDF);
   });
 
   it('should get page size in pixels', async () => {
     const pdfDoc = new jsPDF();
-    pdf.docInfo.pdfDoc = pdfDoc;
+    pdf.docInfo().pdfDoc = pdfDoc;
 
     const pageSize = await pdf.getPageSizePx();
     assert.ok(typeof pageSize.widthPx === 'number');
@@ -114,43 +114,43 @@ describe('PDF', () => {
 
   it('should generate complete PDF document', async () => {
     // Set up PDF document properties
-    pdf.docInfo.pageSizeId = 'a4';
-    pdf.docInfo.orient = 'portrait';
-    pdf.docInfo.fontSizePx = 12;
-    pdf.docInfo.lineHeightPx = 18;
-    pdf.docInfo.fontFamily = 'Courier';
-    pdf.docInfo.theme = 'github-light';
-    pdf.docInfo.code = 'console.log("test");';
-    pdf.docInfo.languageId = 'javascript';
+    pdf.docInfo().pageSizeId = 'a4';
+    pdf.docInfo().orient = 'portrait';
+    pdf.docInfo().fontSizePx = 12;
+    pdf.docInfo().lineHeightPx = 18;
+    pdf.docInfo().fontFamily = 'Courier';
+    pdf.docInfo().theme = 'github-light';
+    pdf.docInfo().code = 'console.log("test");';
+    pdf.docInfo().languageId = 'javascript';
 
-    // Generate PDF using the unified approach (sets pdf.docInfo.pdfDoc)
+    // Generate PDF using the unified approach (sets pdf.docInfo().pdfDoc)
     await pdf.generatePdf();
-    assert.ok(pdf.docInfo.pdfDoc);
-    assert.ok(pdf.docInfo.pageTotal > 0);
-    assert.ok(pdf.docInfo.asArrayBuffer() instanceof ArrayBuffer);
-    assert.ok(pdf.docInfo.asArrayBuffer().byteLength > 0);
+    assert.ok(pdf.docInfo().pdfDoc);
+    assert.ok(pdf.docInfo().pageTotal > 0);
+    assert.ok(pdf.docInfo().asArrayBuffer() instanceof ArrayBuffer);
+    assert.ok(pdf.docInfo().asArrayBuffer().byteLength > 0);
   });
 
   it('should setup PDF document', () => {
-    pdf.docInfo.pageSizeId = 'a4';
-    pdf.docInfo.orient = 'portrait';
-    pdf.docInfo.fontSizePx = 12;
-    pdf.docInfo.lineHeightPx = 18;
-    pdf.docInfo.fontFamily = 'Courier';
-    pdf.docInfo.theme = 'github-light';
+    pdf.docInfo().pageSizeId = 'a4';
+    pdf.docInfo().orient = 'portrait';
+    pdf.docInfo().fontSizePx = 12;
+    pdf.docInfo().lineHeightPx = 18;
+    pdf.docInfo().fontFamily = 'Courier';
+    pdf.docInfo().theme = 'github-light';
 
     pdf.setupPdf();
-    assert.ok(pdf.docInfo.pdfDoc !== null);
+    assert.ok(pdf.docInfo().pdfDoc !== null);
   });
 
   it('should render tokenized line', () => {
     // Setup PDF first
-    pdf.docInfo.pageSizeId = 'a4';
-    pdf.docInfo.orient = 'portrait';
-    pdf.docInfo.fontSizePx = 12;
-    pdf.docInfo.lineHeightPx = 18;
-    pdf.docInfo.fontFamily = 'Courier';
-    pdf.docInfo.theme = 'github-light';
+    pdf.docInfo().pageSizeId = 'a4';
+    pdf.docInfo().orient = 'portrait';
+    pdf.docInfo().fontSizePx = 12;
+    pdf.docInfo().lineHeightPx = 18;
+    pdf.docInfo().fontFamily = 'Courier';
+    pdf.docInfo().theme = 'github-light';
 
     pdf.setupPdf();
     const tokens = [
@@ -166,18 +166,18 @@ describe('PDF', () => {
 
   it('should handle invalid hex color', () => {
     // Setup PDF first
-    pdf.docInfo.pageSizeId = 'a4';
-    pdf.docInfo.orient = 'portrait';
-    pdf.docInfo.fontSizePx = 12;
-    pdf.docInfo.lineHeightPx = 18;
-    pdf.docInfo.fontFamily = 'Courier';
-    pdf.docInfo.theme = 'github-light';
+    pdf.docInfo().pageSizeId = 'a4';
+    pdf.docInfo().orient = 'portrait';
+    pdf.docInfo().fontSizePx = 12;
+    pdf.docInfo().lineHeightPx = 18;
+    pdf.docInfo().fontFamily = 'Courier';
+    pdf.docInfo().theme = 'github-light';
     pdf.setupPdf();
 
     const pdfPrivate = pdf as any;
     // Should handle invalid color gracefully without throwing
-    pdfPrivate.setTextColorFromWebColor(pdf.docInfo.pdfDoc, 'invalid');
-    pdfPrivate.setTextColorFromWebColor(pdf.docInfo.pdfDoc, 'not-a-color');
+    pdfPrivate.setTextColorFromWebColor(pdf.docInfo().pdfDoc, 'invalid');
+    pdfPrivate.setTextColorFromWebColor(pdf.docInfo().pdfDoc, 'not-a-color');
     assert.ok(true);
   });
 
@@ -199,78 +199,78 @@ describe('PDF', () => {
   });
 
   it('should map font family to jsPDF font', () => {
-    pdf.docInfo.pageSizeId = 'a4';
-    pdf.docInfo.orient = 'portrait';
-    pdf.docInfo.fontSizePx = 12;
-    pdf.docInfo.lineHeightPx = 18;
-    pdf.docInfo.fontFamily = 'Courier';
-    pdf.docInfo.theme = 'github-light';
+    pdf.docInfo().pageSizeId = 'a4';
+    pdf.docInfo().orient = 'portrait';
+    pdf.docInfo().fontSizePx = 12;
+    pdf.docInfo().lineHeightPx = 18;
+    pdf.docInfo().fontFamily = 'Courier';
+    pdf.docInfo().theme = 'github-light';
     pdf.setupPdf();
 
     const pdfPrivate = pdf as any;
-    const font = pdfPrivate.mapFontFamilyToJsPDF('Courier', pdf.docInfo.pdfDoc);
+    const font = pdfPrivate.mapFontFamilyToJsPDF('Courier', pdf.docInfo().pdfDoc);
     assert.ok(typeof font === 'string');
     assert.ok(font.length > 0);
   });
 
   it('should set text color from web color (hex)', () => {
-    pdf.docInfo.pageSizeId = 'a4';
-    pdf.docInfo.orient = 'portrait';
-    pdf.docInfo.fontSizePx = 12;
-    pdf.docInfo.lineHeightPx = 18;
-    pdf.docInfo.fontFamily = 'Courier';
-    pdf.docInfo.theme = 'github-light';
+    pdf.docInfo().pageSizeId = 'a4';
+    pdf.docInfo().orient = 'portrait';
+    pdf.docInfo().fontSizePx = 12;
+    pdf.docInfo().lineHeightPx = 18;
+    pdf.docInfo().fontFamily = 'Courier';
+    pdf.docInfo().theme = 'github-light';
     pdf.setupPdf();
 
     const pdfPrivate = pdf as any;
     // Should not throw
-    pdfPrivate.setTextColorFromWebColor(pdf.docInfo.pdfDoc, '#FF0000');
-    pdfPrivate.setTextColorFromWebColor(pdf.docInfo.pdfDoc, '#00FF00');
-    pdfPrivate.setTextColorFromWebColor(pdf.docInfo.pdfDoc, '#0000FF');
+    pdfPrivate.setTextColorFromWebColor(pdf.docInfo().pdfDoc, '#FF0000');
+    pdfPrivate.setTextColorFromWebColor(pdf.docInfo().pdfDoc, '#00FF00');
+    pdfPrivate.setTextColorFromWebColor(pdf.docInfo().pdfDoc, '#0000FF');
     assert.ok(true);
   });
 
   it('should set text color from web color (named colors)', () => {
-    pdf.docInfo.pageSizeId = 'a4';
-    pdf.docInfo.orient = 'portrait';
-    pdf.docInfo.fontSizePx = 12;
-    pdf.docInfo.lineHeightPx = 18;
-    pdf.docInfo.fontFamily = 'Courier';
-    pdf.docInfo.theme = 'github-light';
+    pdf.docInfo().pageSizeId = 'a4';
+    pdf.docInfo().orient = 'portrait';
+    pdf.docInfo().fontSizePx = 12;
+    pdf.docInfo().lineHeightPx = 18;
+    pdf.docInfo().fontFamily = 'Courier';
+    pdf.docInfo().theme = 'github-light';
     pdf.setupPdf();
 
     const pdfPrivate = pdf as any;
-    pdfPrivate.setTextColorFromWebColor(pdf.docInfo.pdfDoc, 'red');
-    pdfPrivate.setTextColorFromWebColor(pdf.docInfo.pdfDoc, 'black');
-    pdfPrivate.setTextColorFromWebColor(pdf.docInfo.pdfDoc, 'blue');
+    pdfPrivate.setTextColorFromWebColor(pdf.docInfo().pdfDoc, 'red');
+    pdfPrivate.setTextColorFromWebColor(pdf.docInfo().pdfDoc, 'black');
+    pdfPrivate.setTextColorFromWebColor(pdf.docInfo().pdfDoc, 'blue');
     assert.ok(true);
   });
 
   it('should handle 3-digit hex colors', () => {
-    pdf.docInfo.pageSizeId = 'a4';
-    pdf.docInfo.orient = 'portrait';
-    pdf.docInfo.fontSizePx = 12;
-    pdf.docInfo.lineHeightPx = 18;
-    pdf.docInfo.fontFamily = 'Courier';
-    pdf.docInfo.theme = 'github-light';
+    pdf.docInfo().pageSizeId = 'a4';
+    pdf.docInfo().orient = 'portrait';
+    pdf.docInfo().fontSizePx = 12;
+    pdf.docInfo().lineHeightPx = 18;
+    pdf.docInfo().fontFamily = 'Courier';
+    pdf.docInfo().theme = 'github-light';
     pdf.setupPdf();
 
     const pdfPrivate = pdf as any;
-    pdfPrivate.setTextColorFromWebColor(pdf.docInfo.pdfDoc, '#F00'); // 3-digit hex
+    pdfPrivate.setTextColorFromWebColor(pdf.docInfo().pdfDoc, '#F00'); // 3-digit hex
     assert.ok(true);
   });
 
   it('should handle hex colors with alpha channel', () => {
-    pdf.docInfo.pageSizeId = 'a4';
-    pdf.docInfo.orient = 'portrait';
-    pdf.docInfo.fontSizePx = 12;
-    pdf.docInfo.lineHeightPx = 18;
-    pdf.docInfo.fontFamily = 'Courier';
-    pdf.docInfo.theme = 'github-light';
+    pdf.docInfo().pageSizeId = 'a4';
+    pdf.docInfo().orient = 'portrait';
+    pdf.docInfo().fontSizePx = 12;
+    pdf.docInfo().lineHeightPx = 18;
+    pdf.docInfo().fontFamily = 'Courier';
+    pdf.docInfo().theme = 'github-light';
     pdf.setupPdf();
 
     const pdfPrivate = pdf as any;
-    pdfPrivate.setTextColorFromWebColor(pdf.docInfo.pdfDoc, '#FF00005C'); // With alpha
+    pdfPrivate.setTextColorFromWebColor(pdf.docInfo().pdfDoc, '#FF00005C'); // With alpha
     assert.ok(true);
   });
 

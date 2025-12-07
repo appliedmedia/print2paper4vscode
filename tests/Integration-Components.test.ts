@@ -98,8 +98,8 @@ describe('System Integration Tests', () => {
     // Generate PDF
     await (app.paperprinter as any).generatePdf();
     
-    assert.ok(app.pdf.docInfo.pdfDoc, 'Should generate PDF');
-    assert.ok(app.pdf.docInfo.pageTotal > 0, 'Should have pages');
+    assert.ok(app.pdf.docInfo().pdfDoc, 'Should generate PDF');
+    assert.ok(app.pdf.docInfo().pageTotal > 0, 'Should have pages');
     
     app.done();
   });

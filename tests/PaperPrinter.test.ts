@@ -108,9 +108,9 @@ describe('PaperPrinter', () => {
     paperPrinterPrivate.createMenus();
 
     await paperPrinterPrivate.generatePdf();
-    assert.ok(app.pdf.docInfo.pdfDoc !== null, 'PDF should be generated');
-    assert.strictEqual(app.pdf.docInfo.title, 'Test', 'Title should match');
-    assert.ok(app.pdf.docInfo.pageTotal > 0, 'Should have pages');
+    assert.ok(app.pdf.docInfo().pdfDoc !== null, 'PDF should be generated');
+    assert.strictEqual(app.pdf.docInfo().title, 'Test', 'Title should match');
+    assert.ok(app.pdf.docInfo().pageTotal > 0, 'Should have pages');
   });
 
   it('should get current font family', () => {
