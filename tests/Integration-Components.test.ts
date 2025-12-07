@@ -45,10 +45,11 @@ describe('System Integration Tests', () => {
 
   test('should validate template system integration', async () => {
     const app = new App({ context: mockContext, vscode: mockVSCode });
+    const utils = app.reg.getInstance<import('../src/Utils.js').Utils>('utils')!;
     
     // Test template replacement
     const template = 'Hello {{NAME}}, welcome to {{PRODUCT}}!';
-    const result = app.templateDictReplace(template, {
+    const result = utils.templateDictReplace(template, {
       NAME: 'Developer',
       PRODUCT: 'VSCode Extension',
     });

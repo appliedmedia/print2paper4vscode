@@ -377,9 +377,7 @@ export class MyComponent {
     const data = this.fn.os.fileRead('file.txt');
     await this.fn.pdf.generatePdf();
     this.fn.ui.showErrorMessage('Done!');
-    
-    // Access App utilities via this.reg.app
-    const sanitized = this.reg.app.templateDictReplace(data, {});
+    const sanitized = this.fn.utils.templateDictReplace(data, {});
   }
   
   done(): void {

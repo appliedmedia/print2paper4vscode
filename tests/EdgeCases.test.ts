@@ -1,14 +1,17 @@
 import { describe, it, beforeEach, afterEach } from 'node:test';
 import * as assert from 'node:assert';
 import { App } from '../src/App.js';
+import { Utils } from '../src/Utils.js';
 import { mockContext, mockVSCode } from './test-utils.js';
 import { installHeaderFooterMenuStubs } from './test-helpers.js';
 
 describe('Edge Cases and Error Handling', () => {
   let app: App;
+  let utils: Utils;
 
   beforeEach(() => {
     app = new App({ context: mockContext, vscode: mockVSCode });
+    utils = app.reg.getInstance<Utils>('utils')!;
     installHeaderFooterMenuStubs(app);
     app.paperprinter.docInfo().printTitle = 'Test Document';
   });
@@ -195,7 +198,7 @@ describe('Edge Cases and Error Handling', () => {
         INNER: 'final value',
       };
 
-      const result = app.templateDictReplace(source, dictionary);
+      const result = utils.templateDictReplace(source, dictionary);
       assert.strictEqual(result, 'final value', 'Should resolve nested templates');
     });
 
@@ -207,7 +210,7 @@ describe('Edge Cases and Error Handling', () => {
       };
 
       // Should not hang - will stop after max iterations
-      const result = app.templateDictReplace(source, dictionary);
+      const result = utils.templateDictReplace(source, dictionary);
       assert.ok(result, 'Should handle circular references gracefully');
     });
 
@@ -217,7 +220,7 @@ describe('Edge Cases and Error Handling', () => {
         'KEY.WITH.DOTS': 'test value',
       };
 
-      const result = app.templateDictReplace(source, dictionary);
+      const result = utils.templateDictReplace(source, dictionary);
       assert.strictEqual(result, 'Value: test value', 'Should handle dots in keys');
     });
   });

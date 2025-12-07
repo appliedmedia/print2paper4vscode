@@ -1,13 +1,16 @@
 import { describe, it, beforeEach, afterEach } from 'node:test';
 import * as assert from 'node:assert';
 import { App } from '../src/App.js';
+import { Utils } from '../src/Utils.js';
 import { mockContext, mockVSCode } from './test-utils.js';
 
 describe('Template Dictionary Replacement', () => {
   let app: App;
+  let utils: Utils;
 
   beforeEach(() => {
     app = new App({ context: mockContext, vscode: mockVSCode });
+    utils = app.reg.getInstance<Utils>('utils')!;
   });
 
   afterEach(() => {
@@ -22,7 +25,7 @@ describe('Template Dictionary Replacement', () => {
       CITY: 'New York',
     };
 
-    const result = app.templateDictReplace(source, dictionary);
+    const result = utils.templateDictReplace(source, dictionary);
     assert.strictEqual(result, 'Hello John, your age is 30 and you live in New York');
   });
 
@@ -30,7 +33,7 @@ describe('Template Dictionary Replacement', () => {
     const source = 'Hello {{NAME}}, your age is {{AGE}}';
     const dictionary: Record<string, string> = {};
 
-    const result = app.templateDictReplace(source, dictionary);
+    const result = utils.templateDictReplace(source, dictionary);
     assert.strictEqual(result, 'Hello {{NAME}}, your age is {{AGE}}');
   });
 
@@ -41,7 +44,7 @@ describe('Template Dictionary Replacement', () => {
       ITEM_SUFFIX: '',
     };
 
-    const result = app.templateDictReplace(source, dictionary);
+    const result = utils.templateDictReplace(source, dictionary);
     assert.strictEqual(result, '123456789');
   });
 
@@ -53,7 +56,7 @@ describe('Template Dictionary Replacement', () => {
       // CITY is missing
     };
 
-    const result = app.templateDictReplace(source, dictionary);
+    const result = utils.templateDictReplace(source, dictionary);
     assert.strictEqual(result, 'Hello John, your age is 30 and you live in {{CITY}}');
   });
 
@@ -64,7 +67,7 @@ describe('Template Dictionary Replacement', () => {
       AGE: '30',
     };
 
-    const result = app.templateDictReplace(source, dictionary);
+    const result = utils.templateDictReplace(source, dictionary);
     assert.strictEqual(result, 'Hello World, this is a simple string');
   });
 
@@ -74,7 +77,7 @@ describe('Template Dictionary Replacement', () => {
       MESSAGE: 'Hello & <world> with "quotes" and \'apostrophes\'',
     };
 
-    const result = app.templateDictReplace(source, dictionary);
+    const result = utils.templateDictReplace(source, dictionary);
     assert.strictEqual(result, 'Message: Hello & <world> with "quotes" and \'apostrophes\'');
   });
 
@@ -85,7 +88,7 @@ describe('Template Dictionary Replacement', () => {
       NAME: 'John',
     };
 
-    const result = app.templateDictReplace(source, dictionary);
+    const result = utils.templateDictReplace(source, dictionary);
     assert.strictEqual(result, 'Hello John! Hello again, John!');
   });
 
@@ -100,7 +103,7 @@ describe('Template Dictionary Replacement', () => {
       APP_NAME: 'MyApp',
     };
 
-    const result = app.templateDictReplace(source, dictionary);
+    const result = utils.templateDictReplace(source, dictionary);
     // With multi-pass replacement (up to 4 iterations), nested {{APP_NAME}} should be replaced
     assert.strictEqual(
       result,
@@ -115,7 +118,7 @@ describe('Template Dictionary Replacement', () => {
       LAST_NAME: 'Doe',
     };
 
-    const result = app.templateDictReplace(source, dictionary);
+    const result = utils.templateDictReplace(source, dictionary);
     assert.strictEqual(result, 'Hello John Doe');
   });
 });
