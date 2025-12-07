@@ -102,9 +102,6 @@ export class PaperPrinter {
 
   public docInfo: DocInfo_PaperPrinter;
 
-  // Typed accessors for singleton components (property access needed)
-  private get pdf() { return this.reg.getInstance<import('./PDF').PDF>('pdf')!; }
-
   constructor(args: { reg: Registry }) {
     this.reg = args.reg;
     // Request methods via Registry
@@ -127,7 +124,15 @@ export class PaperPrinter {
       'uimenumgr.getUIMenus',
       'uimenumgr.createMenu',
       'uimenumgr.addMenu',
-      'uiwebview.displayPdfPanel'
+      'uiwebview.displayPdfPanel',
+      'pdf.docInfo',
+      'pdf.readyToPrint',
+      'pdf.getPageTotal',
+      'pdf.printWithPreview',
+      'pdf.printDirectly',
+      'pdf.saveAsPDF',
+      'pdf.generatePdf',
+      'pdf.resetCaches'
     );
     this.dx = this.fn.dx.sub({ name: 'PaperPrinter' });
 
@@ -161,17 +166,17 @@ export class PaperPrinter {
 
     try {
       await this.generatePdf();
-      if (!this.pdf.readyToPrint()) {
+      if (!this.fn.pdf.readyToPrint()) {
         dx.error('Failed to generate PDF');
         return;
       }
 
       if (printType === 'preview')
-        await this.pdf.printWithPreview(this.docInfo.printTitle || 'Print Output');
+        await this.fn.pdf.printWithPreview(this.docInfo.printTitle || 'Print Output');
       else if (printType === 'direct')
-        await this.pdf.printDirectly(this.docInfo.printTitle || 'Print Output');
+        await this.fn.pdf.printDirectly(this.docInfo.printTitle || 'Print Output');
       else if (printType === 'save')
-        await this.pdf.saveAsPDF(this.docInfo.printTitle || 'Print Output');
+        await this.fn.pdf.saveAsPDF(this.docInfo.printTitle || 'Print Output');
 
       dx.out(`Print request handled: ${printType}`);
     } finally {
@@ -219,13 +224,13 @@ export class PaperPrinter {
       await this.generatePdf();
 
       // Validate we have a PDF document
-      if (!this.pdf.readyToPrint()) {
+      if (!this.fn.pdf.readyToPrint()) {
         this.dx.error('PDF document not generated');
         throw new Error('PDF document not generated');
       }
 
       // Display PDF in webview panel using singleton UIWebView
-      // (uses this.pdf.docInfo directly, including title)
+      // (uses this.fn.pdf.docInfo directly, including title)
       await this.fn.uiwebview.displayPdfPanel();
 
       this.dx.out(`Opened webview for ${printableLabel}`);
@@ -274,27 +279,27 @@ export class PaperPrinter {
           : (kMarginId.altId as MarginIdMenuItems_t);
 
       // Set properties on PDF's docInfo
-      this.pdf.docInfo.fontFamily = this.getCurrentFontFamily();
-      this.pdf.docInfo.fontSizePx = fontSize;
-      this.pdf.docInfo.lineHeightPx = this.lineHeightPx;
-      this.pdf.docInfo.theme = theme;
-      this.pdf.docInfo.pageSizeId = pageSizeId;
-      this.pdf.docInfo.orient = orient;
-      this.pdf.docInfo.marginId = marginId;
+      this.fn.pdf.docInfo.fontFamily = this.getCurrentFontFamily();
+      this.fn.pdf.docInfo.fontSizePx = fontSize;
+      this.fn.pdf.docInfo.lineHeightPx = this.lineHeightPx;
+      this.fn.pdf.docInfo.theme = theme;
+      this.fn.pdf.docInfo.pageSizeId = pageSizeId;
+      this.fn.pdf.docInfo.orient = orient;
+      this.fn.pdf.docInfo.marginId = marginId;
 
       // Set document content
-      this.pdf.docInfo.code = this.docInfo.rawCode;
-      this.pdf.docInfo.languageId = this.docInfo.languageId;
-      this.pdf.docInfo.title = this.docInfo.printTitle;
+      this.fn.pdf.docInfo.code = this.docInfo.rawCode;
+      this.fn.pdf.docInfo.languageId = this.docInfo.languageId;
+      this.fn.pdf.docInfo.title = this.docInfo.printTitle;
 
       // Generate complete PDF during tokenization (unified approach)
       dx.out(`Generating complete PDF with unified tokenize + build approach`);
 
       // Generate the complete PDF in one pass
-      await this.pdf.generatePdf();
+      await this.fn.pdf.generatePdf();
 
       dx.out(
-        `PDF generation complete: ${this.pdf.getPageTotal()} pages using unified approach`
+        `PDF generation complete: ${this.fn.pdf.getPageTotal()} pages using unified approach`
       );
     } catch (error) {
       dx.out(`Error in generatePdf: ${error}`);
@@ -598,13 +603,13 @@ export class PaperPrinter {
     const dx = this.dx.sub({ name: 'regenerateAndUpdateWebview' });
     try {
       // Reset PDF caches and state
-      this.pdf.resetCaches();
+      this.fn.pdf.resetCaches();
 
       // Regenerate PDF with current settings
       await this.generatePdf();
 
       // Validate we have a PDF document
-      if (!this.pdf.readyToPrint()) {
+      if (!this.fn.pdf.readyToPrint()) {
         this.dx.error('PDF document not generated');
         throw new Error('PDF document not generated');
       }
@@ -637,17 +642,17 @@ export class PaperPrinter {
       dx.out(`Print action: ${String(menuItemId)}`);
       await this.generatePdf();
 
-      if (this.pdf.readyToPrint()) {
+      if (this.fn.pdf.readyToPrint()) {
         try {
           if (menuItemId === 'preview') {
             dx.out('Printing with preview...');
-            await this.pdf.printWithPreview(this.docInfo.printTitle || 'Print Output');
+            await this.fn.pdf.printWithPreview(this.docInfo.printTitle || 'Print Output');
           } else if (menuItemId === 'direct') {
             dx.out('Printing directly...');
-            await this.pdf.printDirectly(this.docInfo.printTitle || 'Print Output');
+            await this.fn.pdf.printDirectly(this.docInfo.printTitle || 'Print Output');
           } else if (menuItemId === 'save') {
             dx.out('Saving as PDF...');
-            await this.pdf.saveAsPDF(this.docInfo.printTitle || 'Print Output');
+            await this.fn.pdf.saveAsPDF(this.docInfo.printTitle || 'Print Output');
           }
           dx.out(`Print action ${String(menuItemId)} completed successfully`);
         } catch (error) {
