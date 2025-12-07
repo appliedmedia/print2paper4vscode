@@ -66,7 +66,8 @@ export class UIWebView {
       'pdf.docInfo',
       'ui.addToolbar',
       'ui.registerMessageHandler',
-      'ui.unregisterMessageHandler'
+      'ui.unregisterMessageHandler',
+      'ui.yaml'
     );
     this.dx = this.fn.dx.sub({ name: 'UIWebView' });
     this._yaml = this.fn.yaml.create({ filePath: 'src/UIWebView.yaml', dataStruct: UIWebView.kYaml });
@@ -198,8 +199,7 @@ export class UIWebView {
       }
 
       // Get templates
-      const uiInstance = this.reg.getInstance<import('./UI').UI>('ui')!;
-      const base_css = uiInstance.yaml.base_css;
+      const base_css = this.fn.ui.yaml().base_css;
       const templates = this.yaml;
 
       // Get zoom level from zoomLevel menu persist

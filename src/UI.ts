@@ -86,12 +86,15 @@ export class UI {
     this._yaml = this.fn.yaml.create({ filePath: 'src/UI.yaml', dataStruct: UI.kYaml });
   }
 
-  done(): void {
-    this.dx.done();
+  /**
+   * Get the UI yaml data
+   */
+  yaml() {
+    return this._yaml.get();
   }
 
-  get yaml() {
-    return this._yaml.get();
+  done(): void {
+    this.dx.done();
   }
 
   // Register a message handler for a specific message type
@@ -172,8 +175,8 @@ export class UI {
       const uiMenuCss = this.fn.uimenumgr.getUIMenus_CSS();
       const uiMenuJs = this.fn.uimenumgr.getUIMenus_JS();
 
-      // Get toolbar templates from yaml getter
-      const templates = this.yaml;
+      // Get toolbar templates from yaml method
+      const templates = this.yaml();
 
       // Get toolbar position, validate it's within bounds, else use default
       // Note: VS Code extensions run in Node.js and don't have access to window dimensions.
@@ -227,7 +230,7 @@ export class UI {
 
   // Get base CSS
   getBaseCSS(): string {
-    return this.yaml.base_css;
+    return this.yaml().base_css;
   }
 
   // Choose save location
