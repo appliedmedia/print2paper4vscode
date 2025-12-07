@@ -55,13 +55,19 @@ export class UIMenuMgr {
   // Updated from webview (window dimensions, text_edit display values) and persists across menu selections
   private contextDict?: contextDict_t;
 
-  // Typed accessor for pdf singleton
-  private get pdf() { return this.reg.getInstance<import('./PDF').PDF>('pdf')!; }
-
   constructor(args: { reg: Registry }) {
     this.reg = args.reg;
     // Request methods via Registry
-    this.fn = this.reg.use('stylize.getThemes', 'os.dictReplace', 'persist.get', 'persist.set', 'utils.hasContent', 'utils.forceNumbers', 'utils.templateDictReplace');
+    this.fn = this.reg.use(
+      'stylize.getThemes',
+      'os.dictReplace',
+      'persist.get',
+      'persist.set',
+      'utils.hasContent',
+      'utils.forceNumbers',
+      'utils.templateDictReplace',
+      'pdf.docInfo'
+    );
     this.dx = this.fn.dx.sub({ name: 'UIMenuMgr' });
   }
 
@@ -374,7 +380,7 @@ export class UIMenuMgr {
    */
   private buildUIMenuItemDict(): UIMenuItemDict_t {
     const dx = this.dx.sub({ name: 'buildUIMenuItemDict' });
-    const pageSizePx = this.pdf?.docInfo()?.pageSizePx;
+    const pageSizePx = this.fn.pdf?.docInfo()?.pageSizePx;
     const context = this.contextDict ?? {};
     const inputs: ForceNumber_dict_t = {
       windowWidth: context.windowWidth,
@@ -450,7 +456,7 @@ export class UIMenuMgr {
 
     try {
       // Build complete context dictionary: merge contextDict with page dimensions
-      const pageSizePx = this.pdf?.docInfo()?.pageSizePx || { widthPx: 0, heightPx: 0 };
+      const pageSizePx = this.fn.pdf?.docInfo()?.pageSizePx || { widthPx: 0, heightPx: 0 };
       dx.out(`PDF page dimensions: ${pageSizePx.widthPx}px x ${pageSizePx.heightPx}px`);
       const fullContext: Record<string, string> = {
         // Page dimensions (known on extension side from PDF)

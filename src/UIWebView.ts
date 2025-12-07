@@ -49,10 +49,6 @@ export class UIWebView {
   private readonly handleMenuItemSelectedBound: MessageHandler_t;
   private readonly handleDxMessageBound: MessageHandler_t;
 
-  // Typed accessors for singleton components (property access needed)
-  private get pdf() { return this.reg.getInstance<import('./PDF').PDF>('pdf')!; }
-  private get ui() { return this.reg.getInstance<import('./UI').UI>('ui')!; }
-
   constructor(args: { reg: Registry }) {
     this.reg = args.reg;
     // Request methods via Registry
@@ -66,7 +62,11 @@ export class UIWebView {
       'utils.templateDictReplace',
       'uimenumgr.getMenuItemIdSelected',
       'uimenumgr.getValueForMenuItemId',
-      'uimenumgr.handleMenuItemSelected'
+      'uimenumgr.handleMenuItemSelected',
+      'pdf.docInfo',
+      'ui.addToolbar',
+      'ui.registerMessageHandler',
+      'ui.unregisterMessageHandler'
     );
     this.dx = this.fn.dx.sub({ name: 'UIWebView' });
     this._yaml = this.fn.yaml.create({ filePath: 'src/UIWebView.yaml', dataStruct: UIWebView.kYaml });
@@ -119,7 +119,7 @@ export class UIWebView {
     const dx = this.dx.sub({ name: 'displayPdfPanel' });
 
     // Use DocInfo_PDF directly from app.pdf.docInfo()
-    const docInfo = this.pdf.docInfo();
+    const docInfo = this.fn.pdf.docInfo();
 
     if (!docInfo.pdfDoc) {
       dx.error('PDF document not generated');
@@ -163,7 +163,7 @@ export class UIWebView {
       const html = await this.generatePDFHTML(pdf_data_url, pdfData);
 
       // Add toolbar
-      const htmlWithToolbar = await this.ui.addToolbar(html);
+      const htmlWithToolbar = await this.fn.ui.addToolbar(html);
 
       // Create or reuse webview panel
       const panelId = await this.fn.vscodeapis.getOrCreateWebviewPanel({
@@ -198,7 +198,8 @@ export class UIWebView {
       }
 
       // Get templates
-      const base_css = this.ui.yaml.base_css;
+      const uiInstance = this.reg.getInstance<import('./UI').UI>('ui')!;
+      const base_css = uiInstance.yaml.base_css;
       const templates = this.yaml;
 
       // Get zoom level from zoomLevel menu persist
@@ -282,7 +283,7 @@ export class UIWebView {
         ];
 
         messageHandlers.forEach(({ type, handler }) => {
-          this.ui.unregisterMessageHandler({ messageType: type, handler });
+          this.fn.ui.unregisterMessageHandler({ messageType: type, handler });
         });
 
         this.handlersRegistered = false;
@@ -313,7 +314,7 @@ export class UIWebView {
     ];
 
     messageHandlers.forEach(({ type, handler }) => {
-      this.ui.registerMessageHandler({ messageType: type, handler });
+      this.fn.ui.registerMessageHandler({ messageType: type, handler });
     });
 
     this.handlersRegistered = true;
