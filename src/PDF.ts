@@ -136,16 +136,14 @@ export class PDF {
     this.dx.done();
   }
 
-  async printWithPreview(args: { pdfDoc: DocInfo_PDF; descriptiveName?: string }): Promise<void> {
+  async printWithPreview(args?: { descriptiveName?: string }): Promise<void> {
     const dx = this.dx.sub({ name: 'printWithPreview' });
-    dx.require(args, ['pdfDoc']);
-    const { pdfDoc, descriptiveName } = args;
+    const descriptiveName = args?.descriptiveName;
 
     try {
-      // Log PDF object usage for printing (Stage 4.3)
-      const pdfBuffer = pdfDoc.asArrayBuffer();
+      const pdfBuffer = this.docInfo.asArrayBuffer();
       dx.out(
-        `PDF object usage: Using PDF ArrayBuffer for printWithPreview (${pdfBuffer.byteLength} bytes)`
+        `Using PDF ArrayBuffer for printWithPreview (${pdfBuffer.byteLength} bytes)`
       );
 
       // Generate filename with timestamp
@@ -171,15 +169,13 @@ export class PDF {
     dx.done();
   }
 
-  async printDirectly(args: { pdfDoc: DocInfo_PDF; descriptiveName?: string }): Promise<void> {
+  async printDirectly(args?: { descriptiveName?: string }): Promise<void> {
     const dx = this.dx.sub({ name: 'printDirectly' });
-    dx.require(args, ['pdfDoc']);
-    const { pdfDoc, descriptiveName } = args;
+    const descriptiveName = args?.descriptiveName;
     try {
-      // Log PDF object usage for printing (Stage 4.3)
-      const pdfBuffer = pdfDoc.asArrayBuffer();
+      const pdfBuffer = this.docInfo.asArrayBuffer();
       dx.out(
-        `PDF object usage: Using PDF ArrayBuffer for printDirectly (${pdfBuffer.byteLength} bytes)`
+        `Using PDF ArrayBuffer for printDirectly (${pdfBuffer.byteLength} bytes)`
       );
 
       // Generate filename with timestamp
@@ -207,15 +203,13 @@ export class PDF {
     }
   }
 
-  async saveAsPDF(args: { pdfDoc: DocInfo_PDF; descriptiveName?: string }): Promise<void> {
+  async saveAsPDF(args?: { descriptiveName?: string }): Promise<void> {
     const dx = this.dx.sub({ name: 'saveAsPDF' });
-    dx.require(args, ['pdfDoc']);
-    const { pdfDoc, descriptiveName } = args;
+    const descriptiveName = args?.descriptiveName;
     try {
-      // Log PDF object usage for saving (Stage 4.3)
-      const pdfBuffer = pdfDoc.asArrayBuffer();
+      const pdfBuffer = this.docInfo.asArrayBuffer();
       dx.out(
-        `PDF object usage: Using PDF ArrayBuffer for saveAsPDF (${pdfBuffer.byteLength} bytes)`
+        `Using PDF ArrayBuffer for saveAsPDF (${pdfBuffer.byteLength} bytes)`
       );
 
       // Generate default filename with timestamp

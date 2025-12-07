@@ -168,17 +168,14 @@ export class PaperPrinter {
 
       if (printType === 'preview')
         await this.pdf.printWithPreview({
-          pdfDoc: this.pdf.docInfo,
           descriptiveName: this.docInfo.printTitle || 'Print Output'
         });
       else if (printType === 'direct')
         await this.pdf.printDirectly({
-          pdfDoc: this.pdf.docInfo,
           descriptiveName: this.docInfo.printTitle || 'Print Output'
         });
       else if (printType === 'save')
         await this.pdf.saveAsPDF({
-          pdfDoc: this.pdf.docInfo,
           descriptiveName: this.docInfo.printTitle || 'Print Output'
         });
 
@@ -651,19 +648,16 @@ export class PaperPrinter {
           if (menuItemId === 'preview') {
             dx.out('Printing with preview...');
             await this.pdf.printWithPreview({
-              pdfDoc: this.pdf.docInfo,
               descriptiveName: this.docInfo.printTitle || 'Print Output'
             });
           } else if (menuItemId === 'direct') {
             dx.out('Printing directly...');
             await this.pdf.printDirectly({
-              pdfDoc: this.pdf.docInfo,
               descriptiveName: this.docInfo.printTitle || 'Print Output'
             });
           } else if (menuItemId === 'save') {
             dx.out('Saving as PDF...');
             await this.pdf.saveAsPDF({
-              pdfDoc: this.pdf.docInfo,
               descriptiveName: this.docInfo.printTitle || 'Print Output'
             });
           }
