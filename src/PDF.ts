@@ -100,7 +100,7 @@ export class PDF {
   /**
    * Get the PDF document info
    */
-  getDocInfo(): DocInfo_PDF {
+  docInfo(): DocInfo_PDF {
     return this._docInfo;
   }
 
@@ -108,14 +108,14 @@ export class PDF {
    * Check if PDF is ready for printing/saving
    */
   readyToPrint(): boolean {
-    return this._docInfo.pdfDoc !== null;
+    return this.docInfo().pdfDoc !== null;
   }
 
   /**
    * Get the total number of pages in the document
    */
   getPageTotal(): number {
-    return this._docInfo.pageTotal;
+    return this.docInfo().pageTotal;
   }
 
   /**
@@ -126,7 +126,7 @@ export class PDF {
     const dx = this.dx.sub({ name: 'invalidateAllCaches' });
     try {
       // Reset PDF document
-      this._docInfo.pdfDoc = null;
+      this.docInfo().pdfDoc = null;
 
       // Reset rendering state
       this.currentX = 0;
@@ -154,7 +154,7 @@ export class PDF {
     const dx = this.dx.sub({ name: 'printWithPreview' });
 
     try {
-      const pdfBuffer = this._docInfo.asArrayBuffer();
+      const pdfBuffer = this.docInfo().asArrayBuffer();
       dx.out(
         `Using PDF ArrayBuffer for printWithPreview (${pdfBuffer.byteLength} bytes)`
       );
@@ -185,7 +185,7 @@ export class PDF {
   async printDirectly(descriptiveName?: string): Promise<void> {
     const dx = this.dx.sub({ name: 'printDirectly' });
     try {
-      const pdfBuffer = this._docInfo.asArrayBuffer();
+      const pdfBuffer = this.docInfo().asArrayBuffer();
       dx.out(
         `Using PDF ArrayBuffer for printDirectly (${pdfBuffer.byteLength} bytes)`
       );
@@ -218,7 +218,7 @@ export class PDF {
   async saveAsPDF(descriptiveName?: string): Promise<void> {
     const dx = this.dx.sub({ name: 'saveAsPDF' });
     try {
-      const pdfBuffer = this._docInfo.asArrayBuffer();
+      const pdfBuffer = this.docInfo().asArrayBuffer();
       dx.out(
         `Using PDF ArrayBuffer for saveAsPDF (${pdfBuffer.byteLength} bytes)`
       );
@@ -394,7 +394,7 @@ export class PDF {
   // Caller should set docInfo properties (code, languageId, title, fontFamily, fontSizePx, theme, etc.) before calling this
   async generatePdf(): Promise<void> {
     const dx = this.dx.sub({ name: 'generatePdf' });
-    dx.require({ code: this._docInfo.code, languageId: this._docInfo.languageId }, [
+    dx.require({ code: this.docInfo().code, languageId: this.docInfo().languageId }, [
       'code',
       'languageId',
     ]);
@@ -408,15 +408,15 @@ export class PDF {
 
       // Tokenize and build complete PDF in one pass
       await this.fn.stylize.tokenize({
-        code: this._docInfo.code,
-        languageId: this._docInfo.languageId,
-        theme: this._docInfo.theme
+        code: this.docInfo().code,
+        languageId: this.docInfo().languageId,
+        theme: this.docInfo().theme
       });
 
-      // Finish the PDF (sets this._docInfo.pdfDoc)
+      // Finish the PDF (sets this.docInfo().pdfDoc)
       this.finishPdf();
 
-      dx.out(`Generated complete PDF with ${this._docInfo.pageTotal} pages`);
+      dx.out(`Generated complete PDF with ${this.docInfo().pageTotal} pages`);
     } catch (error) {
       dx.error(`Failed to generate complete PDF: ${String(error)}`);
       throw error;
@@ -455,9 +455,9 @@ export class PDF {
 
     try {
       // Prefer actual PDF dimensions if available
-      if (this._docInfo.pdfDoc) {
-        const pageWidthPts = (this._docInfo.pdfDoc as any).getPageWidth();
-        const pageHeightPts = (this._docInfo.pdfDoc as any).getPageHeight();
+      if (this.docInfo().pdfDoc) {
+        const pageWidthPts = (this.docInfo().pdfDoc as any).getPageWidth();
+        const pageHeightPts = (this.docInfo().pdfDoc as any).getPageHeight();
         const pageWidthPx = Math.round(this.fn.coords.pdfPtsToCssPx(pageWidthPts));
         const pageHeightPx = Math.round(this.fn.coords.pdfPtsToCssPx(pageHeightPts));
         dx.out(`Page dimensions (from PDF): ${pageWidthPx}x${pageHeightPx}px`);
@@ -506,8 +506,8 @@ export class PDF {
 
     try {
       // Get page dimensions
-      const pageSize = this.getPageDimensions(this._docInfo.pageSizeId, this._docInfo.orient);
-      const unit = this.getUnitForPageSize(this._docInfo.pageSizeId);
+      const pageSize = this.getPageDimensions(this.docInfo().pageSizeId, this.docInfo().orient);
+      const unit = this.getUnitForPageSize(this.docInfo().pageSizeId);
       const { widthPts: pageWidthPts, heightPts: pageHeightPts } = this.pageSizeToPts(
         pageSize.width,
         pageSize.height,
@@ -528,30 +528,31 @@ export class PDF {
       // - Viewer Interface/Canvas: Top-left origin (web standard)
       // - We use the VIEWER INTERFACE system, which matches jsPDF!
       // - This ensures consistent coordinates between PDF generation and webview display
-      this._docInfo.pdfDoc = new jsPDF({
-        orientation: this._docInfo.orient,
+      this.docInfo().pdfDoc = new jsPDF({
+        orientation: this.docInfo().orient,
         unit: 'pt',
         format: [pageWidthPts, pageHeightPts],
       });
 
       // Map font family to jsPDF supported fonts
-      const jsPdfFont = this.mapFontFamilyToJsPDF(this._docInfo.fontFamily, this._docInfo.pdfDoc);
-      this._docInfo.pdfDoc.setFont(jsPdfFont, 'normal');
+      const docInfo = this.docInfo();
+      const jsPdfFont = this.mapFontFamilyToJsPDF(docInfo.fontFamily, docInfo.pdfDoc!);
+      docInfo.pdfDoc!.setFont(jsPdfFont, 'normal');
 
       // Convert fontSize from pixels to points for jsPDF, clamping to minimum of 8pt
-      const px = this._docInfo.fontSizePx ?? 12;
+      const px = docInfo.fontSizePx ?? 12;
       const fontSizePts = this.fn.coords.cssPxToPdfPts(Math.max(8, px));
-      this._docInfo.fontSizePts = fontSizePts;
-      this._docInfo.pdfDoc.setFontSize(fontSizePts);
+      docInfo.fontSizePts = fontSizePts;
+      docInfo.pdfDoc!.setFontSize(fontSizePts);
       dx.out(`PDF font size set: ${px}px -> ${fontSizePts}pt`);
 
       // Convert lineHeight from pixels to points for jsPDF
-      this.currentLineHeight = this.fn.coords.cssPxToPdfPts(this._docInfo.lineHeightPx);
-      this._docInfo.lineHeightPts = this.currentLineHeight;
+      this.currentLineHeight = this.fn.coords.cssPxToPdfPts(this.docInfo().lineHeightPx);
+      this.docInfo().lineHeightPts = this.currentLineHeight;
 
       // Set initial position using docInfo margins
       // jsPDF uses top-left origin: Y=0 at top, Y increases downward
-      const marginsPts = this._docInfo.marginPts;
+      const marginsPts = this.docInfo().marginPts;
       // Start at the left margin for X position
       this.currentX = marginsPts.leftMarginPts;
 
@@ -570,7 +571,7 @@ export class PDF {
       dx.out(`Starting at top margin, will move DOWN by adding to Y`);
 
       dx.out(
-        `PDF document setup: ${this._docInfo.pageSizeId} ${this._docInfo.orient}, ${fontSizePts}pt font, ${this.currentLineHeight}pt line height`
+        `PDF document setup: ${this.docInfo().pageSizeId} ${this.docInfo().orient}, ${fontSizePts}pt font, ${this.currentLineHeight}pt line height`
       );
       dx.out(
         `Page dimensions: ${pageWidthPts}x${pageHeightPts}pts, margins: top=${marginsPts.topMarginPts}, bottom=${marginsPts.bottomMarginPts}, left=${marginsPts.leftMarginPts}, right=${marginsPts.rightMarginPts}`
@@ -594,7 +595,7 @@ export class PDF {
     leftMargin: number,
     availableWidth: number
   ): number {
-    if (!this._docInfo.pdfDoc) {
+    if (!this.docInfo().pdfDoc) {
       return text.length;
     }
 
@@ -602,7 +603,8 @@ export class PDF {
     let widthSoFar = 0;
 
     // Quick check: if entire text fits, return it all
-    const fullWidth = this._docInfo.pdfDoc.getTextWidth(text);
+    const pdfDoc = this.docInfo().pdfDoc!;
+    const fullWidth = pdfDoc.getTextWidth(text);
     if (currentXPos + fullWidth <= maxX) {
       return text.length;
     }
@@ -610,7 +612,7 @@ export class PDF {
     // Character-by-character search to find exact break point
     let bestFit = 0;
     for (let i = 0; i < text.length; i++) {
-      const charWidth = this._docInfo.pdfDoc.getTextWidth(text[i]);
+      const charWidth = pdfDoc.getTextWidth(text[i]);
       if (currentXPos + widthSoFar + charWidth > maxX) {
         // This character would exceed the line, break before it
         break;
@@ -633,16 +635,16 @@ export class PDF {
 
     try {
       // Initialize jsPDF document on first line
-      if (!this._docInfo.pdfDoc) {
+      if (!this.docInfo().pdfDoc) {
         dx.error('PDF document not initialized. Call setupPdf() first.');
         throw new Error('PDF document not initialized. Call setupPdf() first.');
       }
 
       // Get available width for line wrapping using docInfo
-      const pageSize = this.getPageDimensions(this._docInfo.pageSizeId, this._docInfo.orient);
-      const unit = this.getUnitForPageSize(this._docInfo.pageSizeId);
+      const pageSize = this.getPageDimensions(this.docInfo().pageSizeId, this.docInfo().orient);
+      const unit = this.getUnitForPageSize(this.docInfo().pageSizeId);
       const { widthPts: pageWidthPts } = this.pageSizeToPts(pageSize.width, pageSize.height, unit);
-      const marginsPts = this._docInfo.marginPts;
+      const marginsPts = this.docInfo().marginPts;
       const availableWidth = pageWidthPts - marginsPts.leftMarginPts - marginsPts.rightMarginPts;
 
       // Each line starts at left margin, same Y position
@@ -658,7 +660,7 @@ export class PDF {
 
         if (content) {
           // Set color for this token
-          this.setTextColorFromWebColor(this._docInfo.pdfDoc!, color);
+          this.setTextColorFromWebColor(this.docInfo().pdfDoc!, color);
 
           // Process content character by character to wrap at proper line length
           while (content.length > 0) {
@@ -689,7 +691,7 @@ export class PDF {
 
             // Render the portion that fits
             const portionToRender = content.substring(0, charsToRender);
-            const portionWidth = this._docInfo.pdfDoc!.getTextWidth(portionToRender);
+            const portionWidth = this.docInfo().pdfDoc!.getTextWidth(portionToRender);
 
             dx.out(`Rendering text "${portionToRender}" at (${xPos}, ${yPos})`);
             if (lineNumber < 3) {
@@ -697,7 +699,7 @@ export class PDF {
                 `First few lines - Line ${lineNumber}, Token portion: "${portionToRender}", Position: (${xPos}, ${yPos})`
               );
             }
-            this._docInfo.pdfDoc!.text(portionToRender, xPos, yPos);
+            this.docInfo().pdfDoc!.text(portionToRender, xPos, yPos);
 
             // Advance x position
             xPos += portionWidth;
@@ -742,10 +744,10 @@ export class PDF {
   }
 
   private computePageBreakMetrics(): { maxContentY: number; bottomMarginY: number } {
-    const pageSize = this.getPageDimensions(this._docInfo.pageSizeId, this._docInfo.orient);
-    const unit = this.getUnitForPageSize(this._docInfo.pageSizeId);
+    const pageSize = this.getPageDimensions(this.docInfo().pageSizeId, this.docInfo().orient);
+    const unit = this.getUnitForPageSize(this.docInfo().pageSizeId);
     const { heightPts } = this.pageSizeToPts(pageSize.width, pageSize.height, unit);
-    const margins = this._docInfo.marginPts;
+    const margins = this.docInfo().marginPts;
 
     const footerFontSizePts = 8;
     const footerY = heightPts - margins.bottomMarginPts + 5;
@@ -759,7 +761,7 @@ export class PDF {
   }
 
   private shouldBreakPage(yPos: number): boolean {
-    if (!this._docInfo.pdfDoc) {
+    if (!this.docInfo().pdfDoc) {
       return false;
     }
 
@@ -774,15 +776,15 @@ export class PDF {
   }
 
   private addPageBreak(): void {
-    if (!this._docInfo.pdfDoc) {
+    if (!this.docInfo().pdfDoc) {
       return;
     }
 
     this.lastPageBreakMetrics = null;
 
-    const margins = this._docInfo.marginPts;
+    const margins = this.docInfo().marginPts;
 
-    this._docInfo.pdfDoc.addPage();
+    this.docInfo().pdfDoc!.addPage();
 
     const headerFontSizePts = 8;
     const headerY = margins.topMarginPts - 5;
@@ -801,26 +803,28 @@ export class PDF {
    * Each position (left, center, right) can have: title, page, total, pageTotal, or null
    */
   private addHeaderAndFooter(): void {
-    if (!this._docInfo.pdfDoc) {
+    const docInfo = this.docInfo();
+    if (!docInfo.pdfDoc) {
       return;
     }
+    const pdfDoc = docInfo.pdfDoc;
 
     // Get document title from paperprinter's docInfo
-    const docTitle = this.paperprinter.docInfo.printTitle || 'Document';
+    const docTitle = this.paperprinter.docInfo().printTitle || 'Document';
 
-    const pageNumber = this._docInfo.pageNumber;
-    const pageTotal = this._docInfo.pageTotal;
+    const pageNumber = docInfo.pageNumber;
+    const pageTotal = docInfo.pageTotal;
 
     // Get page dimensions and margins
-    const pageSize = this.getPageDimensions(this._docInfo.pageSizeId, this._docInfo.orient);
-    const unit = this.getUnitForPageSize(this._docInfo.pageSizeId);
+    const pageSize = this.getPageDimensions(docInfo.pageSizeId, docInfo.orient);
+    const unit = this.getUnitForPageSize(docInfo.pageSizeId);
     const { widthPts, heightPts } = this.pageSizeToPts(pageSize.width, pageSize.height, unit);
-    const margins = this._docInfo.marginPts;
+    const margins = docInfo.marginPts;
 
     // Set small font for header/footer
-    const originalFontSizePx = this._docInfo.fontSizePx;
-    this._docInfo.pdfDoc.setFontSize(8); // points
-    this.setTextColorFromWebColor(this._docInfo.pdfDoc, PDF.HEADER_FOOTER_COLOR);
+    const originalFontSizePx = docInfo.fontSizePx;
+    pdfDoc.setFontSize(8); // points
+    this.setTextColorFromWebColor(pdfDoc, PDF.HEADER_FOOTER_COLOR);
 
     // Helper function to format content based on element type using templates
     const formatContent = (
@@ -903,7 +907,7 @@ export class PDF {
     this.renderHeaderFooterElements(footerElements, footerY, widthPts, margins);
 
     // Restore original font size
-    this._docInfo.pdfDoc.setFontSize(this.fn.coords.cssPxToPdfPts(originalFontSizePx));
+    pdfDoc.setFontSize(this.fn.coords.cssPxToPdfPts(originalFontSizePx));
   }
 
   /**
@@ -915,7 +919,7 @@ export class PDF {
     widthPts: number,
     margins: { leftMarginPts: number; rightMarginPts: number }
   ): void {
-    if (!this._docInfo.pdfDoc) {
+    if (!this.docInfo().pdfDoc) {
       return;
     }
 
@@ -924,23 +928,25 @@ export class PDF {
     const middleText = elements.middle.join(' | ');
     const endText = elements.end.join(' | ');
 
+    const pdfDoc = this.docInfo().pdfDoc!;
+    
     // Render begin (left) position
     if (beginText) {
-      this._docInfo.pdfDoc.text(beginText, margins.leftMarginPts, y);
+      pdfDoc.text(beginText, margins.leftMarginPts, y);
     }
 
     // Render middle position
     if (middleText) {
-      const middleWidth = this._docInfo.pdfDoc.getTextWidth(middleText);
+      const middleWidth = pdfDoc.getTextWidth(middleText);
       const middleX = (widthPts - middleWidth) / 2;
-      this._docInfo.pdfDoc.text(middleText, middleX, y);
+      pdfDoc.text(middleText, middleX, y);
     }
 
     // Render end (right) position
     if (endText) {
-      const endWidth = this._docInfo.pdfDoc.getTextWidth(endText);
+      const endWidth = pdfDoc.getTextWidth(endText);
       const endX = widthPts - margins.rightMarginPts - endWidth;
-      this._docInfo.pdfDoc.text(endText, endX, y);
+      pdfDoc.text(endText, endX, y);
     }
   }
 
@@ -952,15 +958,16 @@ export class PDF {
     const dx = this.dx.sub({ name: 'renderPageTotals' });
 
     try {
-      if (!this._docInfo.pdfDoc) {
+      if (!this.docInfo().pdfDoc) {
         return;
       }
 
-      const totalPages = this._docInfo.pageTotal;
+      const totalPages = this.docInfo().pageTotal;
 
       // Re-render headers and footers on all pages now that we know the total
+      const pdfDoc = this.docInfo().pdfDoc!;
       for (let pageNum = 1; pageNum <= totalPages; pageNum++) {
-        this._docInfo.pdfDoc.setPage(pageNum);
+        pdfDoc.setPage(pageNum);
         this.addHeaderAndFooter();
       }
 
@@ -980,7 +987,7 @@ export class PDF {
     const dx = this.dx.sub({ name: 'finishPdf' });
 
     try {
-      if (!this._docInfo.pdfDoc) {
+      if (!this.docInfo().pdfDoc) {
         dx.error('No PDF document to finish');
         throw new Error('No PDF document to finish');
       }
@@ -989,7 +996,7 @@ export class PDF {
       this.renderPageTotals();
 
       dx.out(
-        `PDF FINALIZED: ${this._docInfo.pageTotal} pages with ${this._docInfo.fontSizePx}px font`
+        `PDF FINALIZED: ${this.docInfo().pageTotal} pages with ${this.docInfo().fontSizePx}px font`
       );
     } catch (error) {
       dx.out(`Error finishing PDF: ${error}`);

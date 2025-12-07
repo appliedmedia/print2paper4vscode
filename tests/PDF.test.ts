@@ -18,7 +18,7 @@ describe('PDF', () => {
     pdf = new PDF({ reg: app.reg });
     
     // Set up paperprinter docInfo for tests
-    app.paperprinter.docInfo.printTitle = 'Test Document';
+    app.paperprinter.docInfo().printTitle = 'Test Document';
   });
 
   afterEach(() => {

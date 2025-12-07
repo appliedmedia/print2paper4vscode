@@ -21,11 +21,11 @@ describe('PDF Object Reuse Tests', () => {
       (app.paperprinter as unknown as { createMenus(): void }).createMenus();
 
       const paperPrinter = app.paperprinter;
-      paperPrinter.docInfo.rawCode = `function test() {
+      paperPrinter.docInfo().rawCode = `function test() {
   console.log("Hello World");
   return 42;
 }`;
-      paperPrinter.docInfo.languageId = 'javascript';
+      paperPrinter.docInfo().languageId = 'javascript';
 
       // Generate PDF
       await paperPrinter['generatePdf']();
@@ -51,8 +51,8 @@ describe('PDF Object Reuse Tests', () => {
       (app.paperprinter as unknown as { createMenus(): void }).createMenus();
 
       const paperPrinter = app.paperprinter;
-      paperPrinter.docInfo.rawCode = 'console.log("test");';
-      paperPrinter.docInfo.languageId = 'javascript';
+      paperPrinter.docInfo().rawCode = 'console.log("test");';
+      paperPrinter.docInfo().languageId = 'javascript';
 
       await paperPrinter['generatePdf']();
       const pdfDoc = app.pdf.docInfo();
@@ -102,10 +102,10 @@ describe('PDF Object Reuse Tests', () => {
       (app.paperprinter as unknown as { createMenus(): void }).createMenus();
 
       const paperPrinter = app.paperprinter;
-      paperPrinter.docInfo.rawCode = `function example() {
+      paperPrinter.docInfo().rawCode = `function example() {
   return "Hello World";
 }`;
-      paperPrinter.docInfo.languageId = 'javascript';
+      paperPrinter.docInfo().languageId = 'javascript';
 
       // Generate PDF
       await paperPrinter['generatePdf']();
@@ -158,8 +158,8 @@ describe('PDF Object Reuse Tests', () => {
       (app.paperprinter as unknown as { createMenus(): void }).createMenus();
 
       const paperPrinter = app.paperprinter;
-      paperPrinter.docInfo.rawCode = 'console.log("test");';
-      paperPrinter.docInfo.languageId = 'javascript';
+      paperPrinter.docInfo().rawCode = 'console.log("test");';
+      paperPrinter.docInfo().languageId = 'javascript';
 
       await paperPrinter['generatePdf']();
       const pdfDoc = app.pdf.docInfo();
@@ -195,12 +195,12 @@ describe('PDF Object Reuse Tests', () => {
       (app.paperprinter as unknown as { createMenus(): void }).createMenus();
 
       const paperPrinter = app.paperprinter;
-      paperPrinter.docInfo.rawCode = `function test() {
+      paperPrinter.docInfo().rawCode = `function test() {
   const x = 1;
   const y = 2;
   return x + y;
 }`;
-      paperPrinter.docInfo.languageId = 'javascript';
+      paperPrinter.docInfo().languageId = 'javascript';
 
       await paperPrinter['generatePdf']();
       const pdfDoc = app.pdf.docInfo();
@@ -251,8 +251,8 @@ describe('PDF Object Reuse Tests', () => {
       (app.paperprinter as unknown as { createMenus(): void }).createMenus();
 
       const paperPrinter = app.paperprinter;
-      paperPrinter.docInfo.rawCode = 'console.log("multiple conversions test");';
-      paperPrinter.docInfo.languageId = 'javascript';
+      paperPrinter.docInfo().rawCode = 'console.log("multiple conversions test");';
+      paperPrinter.docInfo().languageId = 'javascript';
 
       await paperPrinter['generatePdf']();
       const pdfDoc = app.pdf.docInfo();
@@ -301,8 +301,8 @@ describe('PDF Object Reuse Tests', () => {
       const app = new App({ context: mockContext, vscode: mockVSCode });
 
       const paperPrinter = app.paperprinter;
-      paperPrinter.docInfo.rawCode = 'console.log("test");';
-      paperPrinter.docInfo.languageId = 'javascript';
+      paperPrinter.docInfo().rawCode = 'console.log("test");';
+      paperPrinter.docInfo().languageId = 'javascript';
 
       // Don't generate PDF - pdfDoc should be null
       assert.ok(app.pdf.docInfo().pdfDoc === null, 'PDF should be null before generation');
@@ -332,8 +332,8 @@ describe('PDF Object Reuse Tests', () => {
       (app.paperprinter as unknown as { createMenus(): void }).createMenus();
 
       const paperPrinter = app.paperprinter;
-      paperPrinter.docInfo.rawCode = '';
-      paperPrinter.docInfo.languageId = 'javascript';
+      paperPrinter.docInfo().rawCode = '';
+      paperPrinter.docInfo().languageId = 'javascript';
 
       // Generate PDF with empty code
       await paperPrinter['generatePdf']();

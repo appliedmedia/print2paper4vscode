@@ -12,12 +12,12 @@ describe('PaperPrinter Integration Tests', () => {
     const paperPrinter = app.paperprinter;
     
     // Set up test document
-    paperPrinter.docInfo.rawCode = `function test() {
+    paperPrinter.docInfo().rawCode = `function test() {
   console.log("Hello World");
   return 42;
 }`;
-    paperPrinter.docInfo.languageId = 'javascript';
-    paperPrinter.docInfo.printTitle = 'Test Document';
+    paperPrinter.docInfo().languageId = 'javascript';
+    paperPrinter.docInfo().printTitle = 'Test Document';
     
     // Create menus to avoid "Menu not found" errors
     paperPrinter['createMenus']();
@@ -46,10 +46,10 @@ describe('PaperPrinter Integration Tests', () => {
     const app = new App({ context: mockContext, vscode: mockVSCode });
     
     const paperPrinter = app.paperprinter;
-    paperPrinter.docInfo.rawCode = `const message = "test";
+    paperPrinter.docInfo().rawCode = `const message = "test";
 console.log(message);`;
-    paperPrinter.docInfo.languageId = 'javascript';
-    paperPrinter.docInfo.printTitle = 'Test Document';
+    paperPrinter.docInfo().languageId = 'javascript';
+    paperPrinter.docInfo().printTitle = 'Test Document';
     
     // Create menus
     paperPrinter['createMenus']();
@@ -84,7 +84,7 @@ console.log(message);`;
     const app = new App({ context: mockContext, vscode: mockVSCode });
     
     const paperPrinter = app.paperprinter;
-    paperPrinter.docInfo.rawCode = `// Test code with multiple lines
+    paperPrinter.docInfo().rawCode = `// Test code with multiple lines
 function calculateSum(a, b) {
   const result = a + b;
   console.log(\`Sum: \${result}\`);
@@ -93,8 +93,8 @@ function calculateSum(a, b) {
 
 const numbers = [1, 2, 3, 4, 5];
 const total = numbers.reduce(calculateSum, 0);`;
-    paperPrinter.docInfo.languageId = 'javascript';
-    paperPrinter.docInfo.printTitle = 'Test Document';
+    paperPrinter.docInfo().languageId = 'javascript';
+    paperPrinter.docInfo().printTitle = 'Test Document';
     
     // Create menus
     paperPrinter['createMenus']();
@@ -128,9 +128,9 @@ const total = numbers.reduce(calculateSum, 0);`;
     const app = new App({ context: mockContext, vscode: mockVSCode });
     
     const paperPrinter = app.paperprinter;
-    paperPrinter.docInfo.rawCode = 'console.log("PDF conversion test");';
-    paperPrinter.docInfo.languageId = 'javascript';
-    paperPrinter.docInfo.printTitle = 'Test Document';
+    paperPrinter.docInfo().rawCode = 'console.log("PDF conversion test");';
+    paperPrinter.docInfo().languageId = 'javascript';
+    paperPrinter.docInfo().printTitle = 'Test Document';
     
     // Create menus to avoid "Menu not found" errors
     paperPrinter['createMenus']();

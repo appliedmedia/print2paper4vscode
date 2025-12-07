@@ -100,7 +100,14 @@ export class PaperPrinter {
   private dx: Diagnostics;
   private _yaml: YamlInstance<typeof PaperPrinter.kYaml>;
 
-  public docInfo: DocInfo_PaperPrinter;
+  private _docInfo: DocInfo_PaperPrinter;
+
+  /**
+   * Get the PaperPrinter document info
+   */
+  docInfo(): DocInfo_PaperPrinter {
+    return this._docInfo;
+  }
 
   constructor(args: { reg: Registry }) {
     this.reg = args.reg;
@@ -137,7 +144,7 @@ export class PaperPrinter {
     this.dx = this.fn.dx.sub({ name: 'PaperPrinter' });
 
     // Initialize docInfo
-    this.docInfo = DocInfo_PaperPrinter.create({ reg: this.reg });
+    this._docInfo = DocInfo_PaperPrinter.create({ reg: this.reg });
 
     // Initialize YAML loader via Registry factory
     this._yaml = this.fn.yaml.create({ filePath: 'src/PaperPrinter.yaml', dataStruct: PaperPrinter.kYaml });
@@ -172,11 +179,11 @@ export class PaperPrinter {
       }
 
       if (printType === 'preview')
-        await this.fn.pdf.printWithPreview(this.docInfo.printTitle || 'Print Output');
+        await this.fn.pdf.printWithPreview(this.docInfo().printTitle || 'Print Output');
       else if (printType === 'direct')
-        await this.fn.pdf.printDirectly(this.docInfo.printTitle || 'Print Output');
+        await this.fn.pdf.printDirectly(this.docInfo().printTitle || 'Print Output');
       else if (printType === 'save')
-        await this.fn.pdf.saveAsPDF(this.docInfo.printTitle || 'Print Output');
+        await this.fn.pdf.saveAsPDF(this.docInfo().printTitle || 'Print Output');
 
       dx.out(`Print request handled: ${printType}`);
     } finally {
@@ -205,8 +212,8 @@ export class PaperPrinter {
         return;
       }
 
-      this.docInfo.rawCode = info.text.trim();
-      this.docInfo.languageId = info.languageId as LanguageId_t;
+      this.docInfo().rawCode = info.text.trim();
+      this.docInfo().languageId = info.languageId as LanguageId_t;
       const selection = this.fn.vscodeapis.getActiveTextEditor()?.selection;
       let printableLabel = info.name;
       if (selection && !selection.isEmpty) {
@@ -215,7 +222,7 @@ export class PaperPrinter {
         printableLabel =
           start === end ? `Line ${start} of ${info.name}` : `Lines ${start}-${end} of ${info.name}`;
       }
-      this.docInfo.printTitle = printableLabel;
+      this.docInfo().printTitle = printableLabel;
 
       // Create menus if they don't exist yet
       this.createMenus();
@@ -288,9 +295,9 @@ export class PaperPrinter {
       this.fn.pdf.docInfo().marginId = marginId;
 
       // Set document content
-      this.fn.pdf.docInfo().code = this.docInfo.rawCode;
-      this.fn.pdf.docInfo().languageId = this.docInfo.languageId;
-      this.fn.pdf.docInfo().title = this.docInfo.printTitle;
+      this.fn.pdf.docInfo().code = this.docInfo().rawCode;
+      this.fn.pdf.docInfo().languageId = this.docInfo().languageId;
+      this.fn.pdf.docInfo().title = this.docInfo().printTitle;
 
       // Generate complete PDF during tokenization (unified approach)
       dx.out(`Generating complete PDF with unified tokenize + build approach`);
@@ -646,13 +653,13 @@ export class PaperPrinter {
         try {
           if (menuItemId === 'preview') {
             dx.out('Printing with preview...');
-            await this.fn.pdf.printWithPreview(this.docInfo.printTitle || 'Print Output');
+            await this.fn.pdf.printWithPreview(this.docInfo().printTitle || 'Print Output');
           } else if (menuItemId === 'direct') {
             dx.out('Printing directly...');
-            await this.fn.pdf.printDirectly(this.docInfo.printTitle || 'Print Output');
+            await this.fn.pdf.printDirectly(this.docInfo().printTitle || 'Print Output');
           } else if (menuItemId === 'save') {
             dx.out('Saving as PDF...');
-            await this.fn.pdf.saveAsPDF(this.docInfo.printTitle || 'Print Output');
+            await this.fn.pdf.saveAsPDF(this.docInfo().printTitle || 'Print Output');
           }
           dx.out(`Print action ${String(menuItemId)} completed successfully`);
         } catch (error) {
