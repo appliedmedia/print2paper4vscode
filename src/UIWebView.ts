@@ -118,8 +118,8 @@ export class UIWebView {
   async displayPdfPanel(): Promise<WebviewPanelId_t> {
     const dx = this.dx.sub({ name: 'displayPdfPanel' });
 
-    // Use DocInfo_PDF directly from app.pdf.docInfo
-    const docInfo = this.pdf.docInfo;
+    // Use DocInfo_PDF directly from app.pdf.docInfo()
+    const docInfo = this.pdf.docInfo();
 
     if (!docInfo.pdfDoc) {
       dx.error('PDF document not generated');

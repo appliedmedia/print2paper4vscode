@@ -125,7 +125,7 @@ export class PaperPrinter {
       'uimenumgr.createMenu',
       'uimenumgr.addMenu',
       'uiwebview.displayPdfPanel',
-      'pdf.getDocInfo',
+      'pdf.docInfo',
       'pdf.readyToPrint',
       'pdf.getPageTotal',
       'pdf.printWithPreview',
@@ -230,7 +230,7 @@ export class PaperPrinter {
       }
 
       // Display PDF in webview panel using singleton UIWebView
-      // (uses this.fn.pdf.getDocInfo() directly, including title)
+      // (uses this.fn.pdf.docInfo() directly, including title)
       await this.fn.uiwebview.displayPdfPanel();
 
       this.dx.out(`Opened webview for ${printableLabel}`);
@@ -279,18 +279,18 @@ export class PaperPrinter {
           : (kMarginId.altId as MarginIdMenuItems_t);
 
       // Set properties on PDF's docInfo
-      this.fn.pdf.getDocInfo().fontFamily = this.getCurrentFontFamily();
-      this.fn.pdf.getDocInfo().fontSizePx = fontSize;
-      this.fn.pdf.getDocInfo().lineHeightPx = this.lineHeightPx;
-      this.fn.pdf.getDocInfo().theme = theme;
-      this.fn.pdf.getDocInfo().pageSizeId = pageSizeId;
-      this.fn.pdf.getDocInfo().orient = orient;
-      this.fn.pdf.getDocInfo().marginId = marginId;
+      this.fn.pdf.docInfo().fontFamily = this.getCurrentFontFamily();
+      this.fn.pdf.docInfo().fontSizePx = fontSize;
+      this.fn.pdf.docInfo().lineHeightPx = this.lineHeightPx;
+      this.fn.pdf.docInfo().theme = theme;
+      this.fn.pdf.docInfo().pageSizeId = pageSizeId;
+      this.fn.pdf.docInfo().orient = orient;
+      this.fn.pdf.docInfo().marginId = marginId;
 
       // Set document content
-      this.fn.pdf.getDocInfo().code = this.docInfo.rawCode;
-      this.fn.pdf.getDocInfo().languageId = this.docInfo.languageId;
-      this.fn.pdf.getDocInfo().title = this.docInfo.printTitle;
+      this.fn.pdf.docInfo().code = this.docInfo.rawCode;
+      this.fn.pdf.docInfo().languageId = this.docInfo.languageId;
+      this.fn.pdf.docInfo().title = this.docInfo.printTitle;
 
       // Generate complete PDF during tokenization (unified approach)
       dx.out(`Generating complete PDF with unified tokenize + build approach`);
