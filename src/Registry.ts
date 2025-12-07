@@ -170,12 +170,8 @@ export class Registry {
           if (typeof value === 'function') {
             result[id][actualMethodName] = value.bind(instance);
           } else {
-            // Property access - return getter that accesses the property
-            Object.defineProperty(result[id], actualMethodName, {
-              get: () => (instance as Record<string, unknown>)[actualMethodName],
-              enumerable: true,
-              configurable: true
-            });
+            this.dx.error(`'${id}.${actualMethodName}' is not a function`);
+            throw new Error(`'${id}.${actualMethodName}' is not a function`);
           }
         }
         continue;
@@ -207,40 +203,20 @@ export class Registry {
       const componentId = foundComponent.id;
       if (!result[componentId]) result[componentId] = {};
 
-      // Check if it's a method or property by looking at prototype
-      const prototypeValue = (foundComponent.prototype as Record<string, unknown>)?.[actualMethodName];
-      const isMethod = typeof prototypeValue === 'function';
-
-      if (isMethod) {
-        // Return lazy proxy - instance created on first call (for methods)
-        result[componentId][actualMethodName] = ((...args: unknown[]) => {
-          const instance = this.getInstance(componentId);
-          if (!instance) {
-            this.dx.error(`Failed to get instance of '${componentId}'`);
-            throw new Error(`Failed to get instance of '${componentId}'`);
-          }
-          const method = (instance as Record<string, unknown>)[actualMethodName];
-          if (typeof method !== 'function') {
-            this.dx.error(`'${componentId}.${actualMethodName}' is not a function`);
-            throw new Error(`'${componentId}.${actualMethodName}' is not a function`);
-          }
-          return method.apply(instance, args);
-        }) as Function;
-      } else {
-        // Property access - return getter that creates instance lazily
-        Object.defineProperty(result[componentId], actualMethodName, {
-          get: () => {
-            const instance = this.getInstance(componentId);
-            if (!instance) {
-              this.dx.error(`Failed to get instance of '${componentId}'`);
-              throw new Error(`Failed to get instance of '${componentId}'`);
-            }
-            return (instance as Record<string, unknown>)[actualMethodName];
-          },
-          enumerable: true,
-          configurable: true
-        });
-      }
+      // Return lazy proxy - instance created on first call
+      result[componentId][actualMethodName] = ((...args: unknown[]) => {
+        const instance = this.getInstance(componentId);
+        if (!instance) {
+          this.dx.error(`Failed to get instance of '${componentId}'`);
+          throw new Error(`Failed to get instance of '${componentId}'`);
+        }
+        const method = (instance as Record<string, unknown>)[actualMethodName];
+        if (typeof method !== 'function') {
+          this.dx.error(`'${componentId}.${actualMethodName}' is not a function`);
+          throw new Error(`'${componentId}.${actualMethodName}' is not a function`);
+        }
+        return method.apply(instance, args);
+      }) as Function;
     }
 
     return result;

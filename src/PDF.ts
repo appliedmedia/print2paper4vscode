@@ -98,6 +98,13 @@ export class PDF {
   
 
   /**
+   * Get the PDF document info
+   */
+  getDocInfo(): DocInfo_PDF {
+    return this.docInfo;
+  }
+
+  /**
    * Check if PDF is ready for printing/saving
    */
   readyToPrint(): boolean {
