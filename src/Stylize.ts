@@ -280,7 +280,7 @@ export class Stylize {
       const filteredTokens = tokens;
 
       // Render directly to PDF if PDF is initialized and ready
-      if (this.pdf.docInfo.pdfDoc) {
+      if (this.pdf.readyToPrint()) {
         for (let lineNum = 0; lineNum < filteredTokens.length; lineNum++) {
           const line = filteredTokens[lineNum];
           this.pdf.renderTokenizedLine({ lineNumber: lineNum, tokens: line });

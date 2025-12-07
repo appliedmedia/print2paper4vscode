@@ -98,9 +98,16 @@ export class PDF {
   
 
   /**
+   * Check if PDF is ready for printing/saving
+   */
+  readyToPrint(): boolean {
+    return this.docInfo.pdfDoc !== null;
+  }
+
+  /**
    * Get the total number of pages in the document
    */
-  async getPageTotal(): Promise<number> {
+  getPageTotal(): number {
     return this.docInfo.pageTotal;
   }
 

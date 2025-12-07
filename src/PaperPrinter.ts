@@ -161,7 +161,7 @@ export class PaperPrinter {
 
     try {
       await this.generatePdf();
-      if (!this.pdf.docInfo.pdfDoc) {
+      if (!this.pdf.readyToPrint()) {
         dx.error('Failed to generate PDF');
         return;
       }
@@ -225,7 +225,7 @@ export class PaperPrinter {
       await this.generatePdf();
 
       // Validate we have a PDF document
-      if (!this.pdf.docInfo.pdfDoc) {
+      if (!this.pdf.readyToPrint()) {
         this.dx.error('PDF document not generated');
         throw new Error('PDF document not generated');
       }
@@ -296,11 +296,11 @@ export class PaperPrinter {
       // Generate complete PDF during tokenization (unified approach)
       dx.out(`Generating complete PDF with unified tokenize + build approach`);
 
-      // Generate the complete PDF in one pass (sets this.pdf.docInfo.pdfDoc)
+      // Generate the complete PDF in one pass
       await this.pdf.generatePdf();
 
       dx.out(
-        `PDF generation complete: ${this.pdf.docInfo.pageTotal} pages using unified approach`
+        `PDF generation complete: ${this.pdf.getPageTotal()} pages using unified approach`
       );
     } catch (error) {
       dx.out(`Error in generatePdf: ${error}`);
@@ -610,7 +610,7 @@ export class PaperPrinter {
       await this.generatePdf();
 
       // Validate we have a PDF document
-      if (!this.pdf.docInfo.pdfDoc) {
+      if (!this.pdf.readyToPrint()) {
         this.dx.error('PDF document not generated');
         throw new Error('PDF document not generated');
       }
@@ -643,7 +643,7 @@ export class PaperPrinter {
       dx.out(`Print action: ${String(menuItemId)}`);
       await this.generatePdf();
 
-      if (this.pdf.docInfo.pdfDoc) {
+      if (this.pdf.readyToPrint()) {
         try {
           if (menuItemId === 'preview') {
             dx.out('Printing with preview...');
