@@ -2,15 +2,18 @@
 
 ## Implementation Summary
 
-**Status**: Phases 1-4 Complete, Phase 5 Ready for Manual Testing
+**Status**: Phases 1-4 Complete, Phase 5 (Test Infrastructure) In Progress
 
 All core functionality for markdown printing in both raw and rendered modes has been implemented:
 - ✅ HTML parsing and rendering infrastructure in PDF class
 - ✅ VS Code markdown API integration
 - ✅ Preview tab screenshot handling
+- 🚧 Test infrastructure needs fixes (vscode mock issues)
 - ⚠️ Manual testing required before marking as complete
 
-**To test the new functionality:**
+**Current Blocker**: Tests fail with `Cannot find module 'vscode'` error. This is a pre-existing test infrastructure issue that affects all tests, not just the new markdown functionality.
+
+**To test the new functionality manually:**
 1. Enable rendered markdown mode by setting `this.docInfo().useRenderedMd = true` (menu toggle TODO)
 2. Open a markdown file in VS Code
 3. Run the print command (Alt+P or context menu)
@@ -57,8 +60,36 @@ All core functionality for markdown printing in both raw and rendered modes has 
 - ✅ Prompt: "Due to VS Code's implementation of private data in Preview tabs, they cannot be printed except via screenshot. Do that?"
 
 
-### 🚧 Phase 5: Testing & Polish
-- ⚠️ **Manual testing required** - Automated tests have pre-existing vscode mock issues
+### 🚧 Phase 5: Fix Test Infrastructure
+
+**Root Cause**: Tests fail with `Cannot find module 'vscode'` because VSCodeAPIs.ts now imports types from vscode module directly (`Extension` type).
+
+**Options to Fix**:
+
+#### Option 1: Update vscode-mock.cjs (Recommended)
+- ☐ Add `Extension` type export to vscode-mock.cjs
+- ☐ Verify all vscode types used in codebase are exported
+- ☐ Ensure mock properly handles ES6 module imports
+
+#### Option 2: Update test-utils.ts and Add Mocks
+- ☐ Add mock for `getExtension_Markdown()` returning mock extension object
+- ☐ Add mock for `renderMarkdownToHtml()` returning sample HTML
+- ☐ Update `extensions.getExtension()` to return proper Extension type
+- ☐ Add `extensions.all` array with mock extensions
+
+#### Option 3: Separate Type Imports from Runtime Imports
+- ☐ Move `Extension` import to type-only import in VSCodeAPIs.ts
+- ☐ Use `import type { Extension }` instead of runtime import
+- ☐ Verify this allows tests to run without full vscode module
+
+**Testing Tasks**:
+- ☐ **Create test for renderFromTokens**: Verify 2D array signature works correctly
+- ☐ **Create test for renderFromHTML**: Mock HTML parsing and verify element handlers
+- ☐ **Update PDF.test.ts**: Update existing tests to use new 2D token array signature
+- ☐ **Run npm test**: Ensure all tests pass
+
+### 🚧 Phase 6: Testing & Polish
+- ⚠️ **Manual testing required** - Extension must be loaded in VS Code
 - ☐ Test with basic markdown (headings, paragraphs, bold, italic)
 - ☐ Test with lists (ordered and unordered, nested)
 - ☐ Test with code blocks with syntax highlighting
@@ -1049,19 +1080,27 @@ No user interaction required - fully automated.
 
 ## Timeline Estimate
 
-- Phase 1 (Validation): 30 min - testing only
-- Phase 2 (HTML Rendering): 8 hours
+- Phase 1 (Validation): ✅ 30 min - testing only (COMPLETE)
+- Phase 2 (HTML Rendering): ✅ 8 hours (COMPLETE)
   - Setup: 1 hour
   - Basic elements (h1-6, p): 2 hours
   - Inline formatting (bold, italic, code): 1 hour
   - Lists: 2 hours
   - Code blocks: 1 hour (reuses tokens!)
   - Blockquotes, hr: 1 hour
-- Phase 3 (VS Code API): 2 hours
-- Phase 4 (Mode selection): 1 hour
-- Phase 5 (Polish): 2 hours
+- Phase 3 (VS Code API): ✅ 2 hours (COMPLETE)
+- Phase 4 (Preview tabs): ✅ 2 hours (COMPLETE)
+- Phase 5 (Test Infrastructure): 🚧 4-6 hours (IN PROGRESS)
+  - Investigation: 1 hour
+  - Fix vscode mocks: 2-3 hours
+  - Write new tests: 1-2 hours
+- Phase 6 (Polish & Manual Testing): 2 hours (PENDING)
 
-**Total: ~14 hours**
+### Time Summary
+
+- **Total Estimated**: 18-20 hours
+- **Completed**: 12.5 hours (Phases 1-4)
+- **Remaining**: 5.5-7.5 hours (Phases 5-6)
 
 ---
 
