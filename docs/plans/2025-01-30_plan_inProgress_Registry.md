@@ -200,19 +200,19 @@ Test fixes applied: factory method signatures corrected, singleton usage in inte
 
 ### Stage 1: Implement Registry Core ✅ DONE
 
-- [x] Import all component classes at Registry startup
-- [x] Read `Class.id` from each component (components have `static readonly id`)
-- [x] ~~Build `kId` hierarchically~~ - NOT NEEDED (using prototype lookup approach per "THE SIMPLE APPROACH")
-- [x] Implement lazy instantiation cache for singleton services
-- [x] ~~Implement component factories~~ - NOT NEEDED YET (components created by App and registered via `registerInstance()`)
-- [x] **Registry calls constructor only - NO init() calls** (components self-initialize) - VERIFIED
-- [x] Implement `use(...methodIds: string[]): FnImport_t` with:
+- ✅ Import all component classes at Registry startup
+- ✅ Read `Class.id` from each component (components have `static readonly id`)
+- ✅ ~~Build `kId` hierarchically~~ - NOT NEEDED (using prototype lookup approach per "THE SIMPLE APPROACH")
+- ✅ Implement lazy instantiation cache for singleton services
+- ✅ ~~Implement component factories~~ - NOT NEEDED YET (components created by App and registered via `registerInstance()`)
+- ✅ **Registry calls constructor only - NO init() calls** (components self-initialize) - VERIFIED
+- ✅ Implement `use(...methodIds: string[]): FnImport_t` with:
   - Variadic parameter syntax (no array brackets needed)
   - Always-available methods: `dx.sub` for all components (via `always` array)
   - Method resolution via prototype lookup (`Component.prototype.hasOwnProperty()`)
-- [x] Add circular dependency detection (construction stack tracking)
-- [x] Add error handling with circuit breaker pattern (failed components tracked in Set)
-- [x] Test Registry lazy loading works correctly (all 11 Registry tests pass)
+- ✅ Add circular dependency detection (construction stack tracking)
+- ✅ Add error handling with circuit breaker pattern (failed components tracked in Set)
+- ✅ Test Registry lazy loading works correctly (all 11 Registry tests pass)
 
 ---
 
@@ -220,20 +220,20 @@ Test fixes applied: factory method signatures corrected, singleton usage in inte
 
 #### 2.1 Migrate OS Classes ✅
 
-- [x] Add to OS base class:
+- ✅ Add to OS base class:
   - `static readonly id = 'os'` - that's it! No fn array needed!
-- [x] Add instance property: `protected fn: FnImport_t` (protected so subclasses can access)
-- [x] Update OS constructor: `this.fn = app.reg.use('vscodeapis.getExtensionPath', 'vscodeapis.getPanelForUriConversion', 'vscodeapis.uriFromPath')` (dx.sub always available from `always` array)
-- [x] Move any `init()` logic into constructor (getExtensionPath moved to constructor)
-- [x] Remove `init()` method entirely
-- [x] Update OSMac, OSWin, OSLinux (removed static id from subclasses - only base OS class needs it, subclasses use `this.fn.dx.sub()`)
-- [x] Keep `done()` method for explicit cleanup
-- [x] Test OS classes work correctly (compilation successful, all 330 tests pass)
-- [x] **Note**: Fixed registration order in App.ts - VSCodeAPIs must be registered before OS creation since OS constructor calls `app.reg.use('vscodeapis.getExtensionPath')`
+- ✅ Add instance property: `protected fn: FnImport_t` (protected so subclasses can access)
+- ✅ Update OS constructor: `this.fn = app.reg.use('vscodeapis.getExtensionPath', 'vscodeapis.getPanelForUriConversion', 'vscodeapis.uriFromPath')` (dx.sub always available from `always` array)
+- ✅ Move any `init()` logic into constructor (getExtensionPath moved to constructor)
+- ✅ Remove `init()` method entirely
+- ✅ Update OSMac, OSWin, OSLinux (removed static id from subclasses - only base OS class needs it, subclasses use `this.fn.dx.sub()`)
+- ✅ Keep `done()` method for explicit cleanup
+- ✅ Test OS classes work correctly (compilation successful, all 330 tests pass)
+- ✅ **Note**: Fixed registration order in App.ts - VSCodeAPIs must be registered before OS creation since OS constructor calls `app.reg.use('vscodeapis.getExtensionPath')`
 
 #### 2.2 Convert Yaml to Factory Pattern ✅
 
-- [x] Update `src/Yaml.ts`:
+- ✅ Update `src/Yaml.ts`:
   - Add `static readonly id = 'yaml'` - that's all!
   - Add `static create<T>(app: App, filePath: string, dataStruct: T): Yaml<T>` - public static method
   - Make constructor private
@@ -241,22 +241,22 @@ Test fixes applied: factory method signatures corrected, singleton usage in inte
   - Remove `init()` method entirely
   - Keep `done()` method for cache cleanup
   - Registry will find `create` via `Yaml.hasOwnProperty('create')`
-- [x] Update `src/PaperPrinter.ts` line 107:
+- ✅ Update `src/PaperPrinter.ts` line 107:
   - Changed: `this._yaml = new Yaml({ app, filePath: 'src/PaperPrinter.yaml', dataStruct: PaperPrinter.kYaml })`
   - To: `this._yaml = Yaml.create(app, 'src/PaperPrinter.yaml', PaperPrinter.kYaml)`
-- [x] Update `src/UIWebView.ts` line 52:
+- ✅ Update `src/UIWebView.ts` line 52:
   - Changed: `this._yaml = new Yaml({ app, filePath: 'src/UIWebView.yaml', dataStruct: UIWebView.kYaml })`
   - To: `this._yaml = Yaml.create(app, 'src/UIWebView.yaml', UIWebView.kYaml)`
-- [x] Update `src/UIMenu.ts` line 238:
+- ✅ Update `src/UIMenu.ts` line 238:
   - Changed: `this._yaml = new Yaml({ app, filePath: 'src/UIMenu.yaml', dataStruct: UIMenu.kYaml })`
   - To: `this._yaml = Yaml.create(app, 'src/UIMenu.yaml', UIMenu.kYaml)`
-- [x] Update `src/UI.ts` line 67:
+- ✅ Update `src/UI.ts` line 67:
   - Changed: `this._yaml = new Yaml({ app, filePath: 'src/UI.yaml', dataStruct: UI.kYaml })`
   - To: `this._yaml = Yaml.create(app, 'src/UI.yaml', UI.kYaml)`
-- [x] Update `src/PDF.ts` line 64:
+- ✅ Update `src/PDF.ts` line 64:
   - Changed: `this._yaml = new Yaml({ app, filePath: 'src/PDF.yaml', dataStruct: PDF.kYaml })`
   - To: `this._yaml = Yaml.create(app, 'src/PDF.yaml', PDF.kYaml)`
-- [x] Test Yaml factory works correctly (5 files updated, tests updated, compilation successful, all 330 tests pass)
+- ✅ Test Yaml factory works correctly (5 files updated, tests updated, compilation successful, all 330 tests pass)
 
 ---
 
@@ -264,17 +264,17 @@ Test fixes applied: factory method signatures corrected, singleton usage in inte
 
 #### 3.1 Migrate VSCodeAPIs ✅
 
-- [x] Add `static readonly id = 'vscodeapis'` - that's it!
-- [x] Update constructor to use `app.reg.use()`
-- [x] Request Diagnostics via Registry
-- [x] Move command registration from `init()` to constructor
-- [x] Remove `init()` method entirely
-- [x] Keep `done()` method for explicit cleanup
-- [x] Test command registration works (compilation successful, command handlers request methods lazily)
+- ✅ Add `static readonly id = 'vscodeapis'` - that's it!
+- ✅ Update constructor to use `app.reg.use()`
+- ✅ Request Diagnostics via Registry
+- ✅ Move command registration from `init()` to constructor
+- ✅ Remove `init()` method entirely
+- ✅ Keep `done()` method for explicit cleanup
+- ✅ Test command registration works (compilation successful, command handlers request methods lazily)
 
 #### 3.2 Migrate Persist (Factory Pattern) ✅
 
-- [x] Update `src/Persist.ts`:
+- ✅ Update `src/Persist.ts`:
   - Add `static readonly id = 'persist'` - that's it!
   - Add `static create(app: App): Persist` - public static method
   - Make constructor private
@@ -282,24 +282,24 @@ Test fixes applied: factory method signatures corrected, singleton usage in inte
   - Move any `init()` logic into constructor (currently empty)
   - Remove `init()` method entirely
   - Keep `done()` method for cleanup (no done() method exists)
-- [x] Update `src/UIMenu.ts` line 236:
+- ✅ Update `src/UIMenu.ts` line 236:
   - Changed: `this.persist = new Persist(app) as Persist & Persist_t`
   - To: `this.persist = Persist.create(app) as Persist & Persist_t`
-- [x] Update `src/UI.ts` line 70:
+- ✅ Update `src/UI.ts` line 70:
   - Changed: `this.persist = new Persist(app) as Persist & Persist_t`
   - To: `this.persist = Persist.create(app) as Persist & Persist_t`
-- [x] Test persistence works (2 files updated, compilation successful)
-- [x] Created singleton Persist instance in App.ts for VSCodeAPIs `persist.clear()` command.
+- ✅ Test persistence works (2 files updated, compilation successful)
+- ✅ Created singleton Persist instance in App.ts for VSCodeAPIs `persist.clear()` command.
 
 #### 3.3 Migrate UI ✅
 
-- [x] Add `static readonly id = 'ui'` - that's it!
-- [x] Update constructor to use `app.reg.use()`
-- [x] Request dependencies: VSCodeAPIs, UIMenuMgr, Yaml, Persist methods
-- [x] Move any `init()` logic into constructor (currently empty)
-- [x] Remove `init()` method entirely
-- [x] Keep `done()` method for explicit cleanup
-- [x] Test UI operations work (compilation successful, updated App.ts to create UIMenuMgr before UI)
+- ✅ Add `static readonly id = 'ui'` - that's it!
+- ✅ Update constructor to use `app.reg.use()`
+- ✅ Request dependencies: VSCodeAPIs, UIMenuMgr, Yaml, Persist methods
+- ✅ Move any `init()` logic into constructor (currently empty)
+- ✅ Remove `init()` method entirely
+- ✅ Keep `done()` method for explicit cleanup
+- ✅ Test UI operations work (compilation successful, updated App.ts to create UIMenuMgr before UI)
 
 ---
 
@@ -307,34 +307,34 @@ Test fixes applied: factory method signatures corrected, singleton usage in inte
 
 #### 4.1 Migrate TabInspector ✅
 
-- [x] Add `static readonly id = 'tabinspector'` - already exists
-- [x] Update constructor to use `app.reg.use()` for dx.sub
-- [x] Request dependencies: VSCodeAPIs methods accessed via `this.app.vscodeapis` (old pattern retained to avoid circular deps)
-- [x] Move any `init()` logic into constructor (was empty)
-- [x] Remove `init()` method entirely
-- [x] Keep `done()` method for explicit cleanup
-- [x] Test tab inspection works (all 330 tests pass)
+- ✅ Add `static readonly id = 'tabinspector'` - already exists
+- ✅ Update constructor to use `app.reg.use()` for dx.sub
+- ✅ Request dependencies: VSCodeAPIs methods accessed via `this.app.vscodeapis` (old pattern retained to avoid circular deps)
+- ✅ Move any `init()` logic into constructor (was empty)
+- ✅ Remove `init()` method entirely
+- ✅ Keep `done()` method for explicit cleanup
+- ✅ Test tab inspection works (all 330 tests pass)
 
 #### 4.2 Migrate Stylize ✅
 
-- [x] Add `static readonly id = 'stylize'` - already exists
-- [x] Update constructor to use `app.reg.use()` for dx.sub
-- [x] Request Diagnostics via Registry (dx.sub from always array)
-- [x] Handle async initialization with lazy pattern in constructor (highlighter already lazy)
-- [x] Move any `init()` logic into constructor (was empty - highlighter lazy initialized)
-- [x] Remove `init()` method entirely
-- [x] Keep `done()` method for explicit cleanup
-- [x] Test syntax highlighting works (all 330 tests pass)
+- ✅ Add `static readonly id = 'stylize'` - already exists
+- ✅ Update constructor to use `app.reg.use()` for dx.sub
+- ✅ Request Diagnostics via Registry (dx.sub from always array)
+- ✅ Handle async initialization with lazy pattern in constructor (highlighter already lazy)
+- ✅ Move any `init()` logic into constructor (was empty - highlighter lazy initialized)
+- ✅ Remove `init()` method entirely
+- ✅ Keep `done()` method for explicit cleanup
+- ✅ Test syntax highlighting works (all 330 tests pass)
 
 #### 4.3 Migrate UIMenuMgr ✅
 
-- [x] Add `static readonly id = 'uimenumgr'` - already exists
-- [x] Update constructor to use `app.reg.use()` for dx.sub
-- [x] Request dependencies: accessed via `this.app.xxx` (old pattern retained to avoid circular deps)
-- [x] Move any `init()` logic into constructor (was empty)
-- [x] Keep `init()` method (empty, for compatibility) - UIMenuMgr still in App.componentOrder
-- [x] Keep `done()` method for cleanup (clears menus array)
-- [x] Test menu management works (all 330 tests pass)
+- ✅ Add `static readonly id = 'uimenumgr'` - already exists
+- ✅ Update constructor to use `app.reg.use()` for dx.sub
+- ✅ Request dependencies: accessed via `this.app.xxx` (old pattern retained to avoid circular deps)
+- ✅ Move any `init()` logic into constructor (was empty)
+- ✅ Keep `init()` method (empty, for compatibility) - UIMenuMgr still in App.componentOrder
+- ✅ Keep `done()` method for cleanup (clears menus array)
+- ✅ Test menu management works (all 330 tests pass)
 
 ---
 
@@ -342,43 +342,43 @@ Test fixes applied: factory method signatures corrected, singleton usage in inte
 
 #### 5.1 Convert Coords to Singleton ✅
 
-- [x] Add to Coords class:
+- ✅ Add to Coords class:
   - `static readonly id = 'coords'` - that's it!
-- [x] Add instance property: `private fn: FnImport_t` - already existed
-- [x] Update constructor: `this.fn = app.use()` (only needs dx, always available) - already done
-- [x] Move `init()` logging into constructor
-- [x] Remove `init()` method entirely
-- [x] Keep `done()` method for explicit cleanup
-- [x] Registry manages as singleton - eliminate per-class instances
-- [x] Update PDF to use Coords singleton via `app.coords` accessor
-- [x] Update DocInfo_PDF to use Coords singleton via `app.coords` accessor
-- [x] Test coordinate calculations work - all 330 tests passing
+- ✅ Add instance property: `private fn: FnImport_t` - already existed
+- ✅ Update constructor: `this.fn = app.use()` (only needs dx, always available) - already done
+- ✅ Move `init()` logging into constructor
+- ✅ Remove `init()` method entirely
+- ✅ Keep `done()` method for explicit cleanup
+- ✅ Registry manages as singleton - eliminate per-class instances
+- ✅ Update PDF to use Coords singleton via `app.coords` accessor
+- ✅ Update DocInfo_PDF to use Coords singleton via `app.coords` accessor
+- ✅ Test coordinate calculations work - all 330 tests passing
 
 #### 5.2 Migrate PDF ✅
 
-- [x] Add `static readonly id = 'pdf'` - already existed
-- [x] Update constructor to use `app.use()` with Coords methods
-- [x] Request dependencies: UI, Coords methods via Registry
-- [x] Update Coords instantiation in constructor - removed, using singleton
-- [x] Move `init()` logic (tempPdfs = []) to constructor
-- [x] Remove `init()` method entirely
-- [x] Keep `done()` method for temp file cleanup (removed coords.done() call)
-- [x] Test PDF generation works - all 330 tests passing
+- ✅ Add `static readonly id = 'pdf'` - already existed
+- ✅ Update constructor to use `app.use()` with Coords methods
+- ✅ Request dependencies: UI, Coords methods via Registry
+- ✅ Update Coords instantiation in constructor - removed, using singleton
+- ✅ Move `init()` logic (tempPdfs = []) to constructor
+- ✅ Remove `init()` method entirely
+- ✅ Keep `done()` method for temp file cleanup (removed coords.done() call)
+- ✅ Test PDF generation works - all 330 tests passing
 
 #### 5.3 Convert DocInfo Classes to Factory Pattern ✅
 
-- [x] Add to DocInfo_PDF:
+- ✅ Add to DocInfo_PDF:
   - `static readonly id = 'docinfo_pdf'` - done
   - `static create(app: App): DocInfo_PDF` - done
   - Make constructor private - done
-- [x] Add to DocInfo_PaperPrinter:
+- ✅ Add to DocInfo_PaperPrinter:
   - `static readonly id = 'docinfo_paperprinter'` - done
   - `static create(app: App): DocInfo_PaperPrinter` - done
   - Make constructor private - done
-- [x] Update usage: `this.docInfo = DocInfo_PDF.create(app)` - done in PDF.ts
-- [x] Update usage: `this.docInfo = DocInfo_PaperPrinter.create(app)` - done in PaperPrinter.ts
-- [x] Update test files to use factory methods - done
-- [x] Test DocInfo classes work - all 330 tests passing
+- ✅ Update usage: `this.docInfo = DocInfo_PDF.create(app)` - done in PDF.ts
+- ✅ Update usage: `this.docInfo = DocInfo_PaperPrinter.create(app)` - done in PaperPrinter.ts
+- ✅ Update test files to use factory methods - done
+- ✅ Test DocInfo classes work - all 330 tests passing
 
 ---
 
@@ -386,28 +386,28 @@ Test fixes applied: factory method signatures corrected, singleton usage in inte
 
 #### 6.1 Convert UIWebView to Singleton ✅
 
-- [x] Add to UIWebView class:
+- ✅ Add to UIWebView class:
   - `static readonly id = 'uiwebview'` - done
-- [x] Add instance property: `private fn: FnImport_t` - already existed
-- [x] Update constructor to use `app.use()` - already done (uses dx.sub only)
-- [x] Move `registerMessageHandlers()` call from `init()` to constructor
-- [x] Remove `init()` method entirely
-- [x] Keep `done()` method for unregistering message handlers
-- [x] Registry manages as singleton - added to App.ts components list
-- [x] Update PaperPrinter to use: `await this.app.uiwebview.displayPdfPanel()`
-- [x] Removed per-instance UIWebView creation in PaperPrinter
-- [x] Test webview display works - all 330 tests passing
+- ✅ Add instance property: `private fn: FnImport_t` - already existed
+- ✅ Update constructor to use `app.use()` - already done (uses dx.sub only)
+- ✅ Move `registerMessageHandlers()` call from `init()` to constructor
+- ✅ Remove `init()` method entirely
+- ✅ Keep `done()` method for unregistering message handlers
+- ✅ Registry manages as singleton - added to App.ts components list
+- ✅ Update PaperPrinter to use: `await this.app.uiwebview.displayPdfPanel()`
+- ✅ Removed per-instance UIWebView creation in PaperPrinter
+- ✅ Test webview display works - all 330 tests passing
 
 #### 6.2 Migrate PaperPrinter ✅
 
-- [x] Add `static readonly id = 'paperprinter'` - already existed
-- [x] Update constructor to use `app.use()` - already done (uses dx.sub only)
-- [x] Request all dependencies via Registry - using dx.sub, others via this.app.xxx
-- [x] Update DocInfo_PaperPrinter instantiation - already using factory pattern
-- [x] Move any `init()` logic into constructor - init() was already empty
-- [x] Remove `init()` method entirely - removed empty init()
-- [x] Keep `done()` method for explicit cleanup
-- [x] Test complete print workflow - all 330 tests passing
+- ✅ Add `static readonly id = 'paperprinter'` - already existed
+- ✅ Update constructor to use `app.use()` - already done (uses dx.sub only)
+- ✅ Request all dependencies via Registry - using dx.sub, others via this.app.xxx
+- ✅ Update DocInfo_PaperPrinter instantiation - already using factory pattern
+- ✅ Move any `init()` logic into constructor - init() was already empty
+- ✅ Remove `init()` method entirely - removed empty init()
+- ✅ Keep `done()` method for explicit cleanup
+- ✅ Test complete print workflow - all 330 tests passing
 
 ---
 
@@ -424,14 +424,14 @@ Test fixes applied: factory method signatures corrected, singleton usage in inte
 
 #### 7.2 Remove Init Infrastructure, Keep Done ✅
 
-- [x] Verify all `init()` methods removed from all components
-- [x] Remove `init()` method from App class
-- [x] Remove `componentOrder` array (never existed in current architecture)
-- [x] Remove `app.init()` call from `-entrypoint.ts`
-- [x] Remove all `app.init()` calls from test files (36 instances removed via sed)
-- [x] Keep all `done()` methods for explicit cleanup
-- [x] Keep `app.done()` in deactivate() for explicit cleanup
-- [x] Verify `done()` methods still work correctly - all 330 tests passing
+- ✅ Verify all `init()` methods removed from all components
+- ✅ Remove `init()` method from App class
+- ✅ Remove `componentOrder` array (never existed in current architecture)
+- ✅ Remove `app.init()` call from `-entrypoint.ts`
+- ✅ Remove all `app.init()` calls from test files (36 instances removed via sed)
+- ✅ Keep all `done()` methods for explicit cleanup
+- ✅ Keep `app.done()` in deactivate() for explicit cleanup
+- ✅ Verify `done()` methods still work correctly - all 330 tests passing
 
 #### 7.3 Update Type Definitions ⏸️ DEFERRED
 
@@ -449,7 +449,7 @@ Test fixes applied: factory method signatures corrected, singleton usage in inte
 
 #### 7.5 Final Testing ✅
 
-- [x] Run full test suite - all 330 tests passing
+- ✅ Run full test suite - all 330 tests passing
 - ⏸️ Manual testing of all features - **DEFERRED: Would require VS Code environment**
 - ⏸️ Performance benchmarks - **DEFERRED: Optional enhancement**
 - ⏸️ Documentation updates - **PARTIALLY DONE: Plan document updated**
@@ -2129,78 +2129,78 @@ use<T>(request: DependencyRequest): T {
 
 #### 8.1: Update Registry to pass reg ✅
 
-- [x] Update Registry.createInstance() to pass `{ reg: this, ...this.init[componentId] }` instead of `{ app: this.app, ...this.init[componentId] }`
-- [x] Update ComponentClass interface to reflect new constructor signature
-- [x] Verify dx bootstrapping still works correctly
-- [x] Made Registry.app public readonly to allow `this.reg.app` access for App utilities
+- ✅ Update Registry.createInstance() to pass `{ reg: this, ...this.init[componentId] }` instead of `{ app: this.app, ...this.init[componentId] }`
+- ✅ Update ComponentClass interface to reflect new constructor signature
+- ✅ Verify dx bootstrapping still works correctly
+- ✅ Made Registry.app public readonly to allow `this.reg.app` access for App utilities
 
 #### 8.2: Update Component Constructors ✅
 
-- [x] Update all components to receive `{ reg: Registry, ...other }` instead of `{ app: App, ...other }`
-- [x] Components store `private reg: Registry` instead of `private app: App`
-- [x] Components call `this.fn = this.reg.use(...)` instead of `this.app.reg.use(...)`
-- [x] Components create dx via `this.dx = this.fn.dx.sub({ name: 'ComponentName' })`
-- [x] Components access app utilities via `this.reg.app` when needed (for templateDictReplace, forceNumber, etc.)
+- ✅ Update all components to receive `{ reg: Registry, ...other }` instead of `{ app: App, ...other }`
+- ✅ Components store `private reg: Registry` instead of `private app: App`
+- ✅ Components call `this.fn = this.reg.use(...)` instead of `this.app.reg.use(...)`
+- ✅ Components create dx via `this.dx = this.fn.dx.sub({ name: 'ComponentName' })`
+- ✅ Components access app utilities via `this.reg.app` when needed (for templateDictReplace, forceNumber, etc.)
 
 Components updated:
 
-- [x] VSCodeAPIs
-- [x] UI
-- [x] PDF
-- [x] PaperPrinter
-- [x] Stylize
-- [x] TabInspector
-- [x] UIMenuMgr
-- [x] UIWebView
-- [x] OS (base class and subclasses: OSMac, OSWin, OSLinux)
-- [x] Coords
-- [x] UIMenu
-- [x] DocInfo_PDF
-- [x] DocInfo_PaperPrinter
+- ✅ VSCodeAPIs
+- ✅ UI
+- ✅ PDF
+- ✅ PaperPrinter
+- ✅ Stylize
+- ✅ TabInspector
+- ✅ UIMenuMgr
+- ✅ UIWebView
+- ✅ OS (base class and subclasses: OSMac, OSWin, OSLinux)
+- ✅ Coords
+- ✅ UIMenu
+- ✅ DocInfo_PDF
+- ✅ DocInfo_PaperPrinter
 
 #### 8.3: Update Factory Pattern Classes ✅
 
-- [x] Yaml: Update create() to accept `{ reg: Registry, filePath: string, dataStruct: T }`
-- [x] Yaml: Update constructor to use `this.fn.os.fileRead` for file operations
-- [x] Persist: Update create() to accept `{ reg: Registry }`
-- [x] Persist: Update constructor to receive reg and use `this.fn.vscodeapis.method()` for global state
-- [x] Persist: Add static clear() method for global operations called from VSCodeAPIs
-- [x] Yaml and Persist removed from Registry component registration (called directly as factories)
-- [x] Components use `Yaml.create({ reg: this.reg, filePath, dataStruct })` directly
-- [x] Components use `Persist.create({ reg: this.reg })` directly
+- ✅ Yaml: Update create() to accept `{ reg: Registry, filePath: string, dataStruct: T }`
+- ✅ Yaml: Update constructor to use `this.fn.os.fileRead` for file operations
+- ✅ Persist: Update create() to accept `{ reg: Registry }`
+- ✅ Persist: Update constructor to receive reg and use `this.fn.vscodeapis.method()` for global state
+- ✅ Persist: Add static clear() method for global operations called from VSCodeAPIs
+- ✅ Yaml and Persist removed from Registry component registration (called directly as factories)
+- ✅ Components use `Yaml.create({ reg: this.reg, filePath, dataStruct })` directly
+- ✅ Components use `Persist.create({ reg: this.reg })` directly
 
 #### 8.4: Update Component Method Access ✅
 
-- [x] Replace `this.app.os.method()` with `this.fn.os.method()` throughout codebase
-- [x] Replace `this.app.ui.method()` with `this.fn.ui.method()` throughout codebase
-- [x] Replace `this.app.pdf.method()` with typed accessors and `this.pdf.method()`
-- [x] Replace `this.app.vscodeapis.method()` with `this.fn.vscodeapis.method()` throughout codebase
-- [x] Replace `this.app.uimenumgr.method()` with typed accessors and `this.uimenumgr.method()`
-- [x] For App utility methods (templateDictReplace, forceNumber, hasContent), use `this.reg.app.method()`
-- [x] For singleton access (coords, pdf, uimenumgr, uiwebview), use typed accessor properties with `this.reg.getInstance<Type>('id')`
+- ✅ Replace `this.app.os.method()` with `this.fn.os.method()` throughout codebase
+- ✅ Replace `this.app.ui.method()` with `this.fn.ui.method()` throughout codebase
+- ✅ Replace `this.app.pdf.method()` with typed accessors and `this.pdf.method()`
+- ✅ Replace `this.app.vscodeapis.method()` with `this.fn.vscodeapis.method()` throughout codebase
+- ✅ Replace `this.app.uimenumgr.method()` with typed accessors and `this.uimenumgr.method()`
+- ✅ For App utility methods (templateDictReplace, forceNumber, hasContent), use `this.reg.app.method()`
+- ✅ For singleton access (coords, pdf, uimenumgr, uiwebview), use typed accessor properties with `this.reg.getInstance<Type>('id')`
 
 #### 8.5: Update Registry use() Calls ✅
 
-- [x] Components request all methods they need in their use() call
-- [x] Yaml and Persist factories called directly (not via Registry)
-- [x] Successfully removed reliance on `this.app.xxx` for component access
-- [x] All component dependencies now declared explicitly via `this.reg.use(...)`
+- ✅ Components request all methods they need in their use() call
+- ✅ Yaml and Persist factories called directly (not via Registry)
+- ✅ Successfully removed reliance on `this.app.xxx` for component access
+- ✅ All component dependencies now declared explicitly via `this.reg.use(...)`
 
 #### 8.6: Testing and Verification ✅
 
-- [x] Run full test suite after each component migration
-- [x] Verify all 330 tests pass (PASSING)
-- [x] Verify no circular dependency issues
-- [x] Verify dx.sub() works correctly in all components
-- [x] Verify YAML and Persist factories work correctly
-- [x] Fix test mocking issue: Tests now recreate component instances after mocking for Registry binding
+- ✅ Run full test suite after each component migration
+- ✅ Verify all 330 tests pass (PASSING)
+- ✅ Verify no circular dependency issues
+- ✅ Verify dx.sub() works correctly in all components
+- ✅ Verify YAML and Persist factories work correctly
+- ✅ Fix test mocking issue: Tests now recreate component instances after mocking for Registry binding
 
 #### 8.7: Documentation Updates ✅
 
-- [x] Update plan document with completion status
-- [x] Update AGENTS.md with new constructor pattern
-- [x] Add examples showing { reg: Registry } pattern
-- [x] Document when to use this.reg.app for utilities vs. this.fn for components
+- ✅ Update plan document with completion status
+- ✅ Update AGENTS.md with new constructor pattern
+- ✅ Add examples showing { reg: Registry } pattern
+- ✅ Document when to use this.reg.app for utilities vs. this.fn for components
 
 **Implementation Notes:**
 
