@@ -328,6 +328,11 @@ All planning documents are stored in `docs/plans/` and follow a standardized nam
 - **Interfaces**: Follow same `_t` convention if used across files (e.g., `Persist_t`, `UI_t`)
 - **Class instances**: Use lowercase (e.g., `uiwebview`, not `currentWebView`)
 
+### Testing Principles
+
+- **No caching in tests**: Always call methods directly (e.g., `app.pdf.docInfo().property`) rather than caching results in variables. Caching adds unexpected complexity and can mask state changes between assertions.
+- **Test production code paths**: Tests should exercise the same code paths as production, not simplified or delegated versions.
+
 ### Code Organization
 
 - All VS Code API imports should be in `VSCodeAPIs.ts` only
