@@ -62,41 +62,289 @@ All core functionality for markdown printing in both raw and rendered modes has 
 
 ### 🚧 Phase 5: Fix Test Infrastructure
 
-**Root Cause**: Tests fail with `Cannot find module 'vscode'` because VSCodeAPIs.ts now imports types from vscode module directly (`Extension` type).
+**Problem**: Tests fail with `Cannot find module 'vscode'` because `VSCodeAPIs.ts` imports the `Extension` type from vscode module:
 
-**Options to Fix**:
+```typescript
+import type {
+  Disposable,
+  ExtensionContext,
+  TextEditor,
+  TextDocument,
+  Uri,
+  WebviewPanel,
+  Extension,  // <-- This import causes the test failure
+} from 'vscode';
+```
 
-#### Option 1: Update vscode-mock.cjs (Recommended)
+**Why It's Breaking**: The `Extension` type is imported at the top of `VSCodeAPIs.ts`. When tests try to import any module that depends on VSCodeAPIs (which is most of them through the Registry), Node.js tries to resolve the 'vscode' module and fails.
+
+**Solution Options**:
+
+#### Option 1: Fix vscode-mock.cjs (Quick Fix - Recommended)
+
+**Pros**: Minimal code changes, fixes root cause
+**Cons**: May need to keep updating as more types are used
+
+**Implementation**:
+
+```javascript
+// In vscode-mock.cjs, add:
+exports.Extension = class Extension {
+  constructor(id, exports) {
+    this.id = id;
+    this.exports = exports;
+    this.isActive = true;
+  }
+};
+```
+
+**Tasks**:
+
 - ☐ Add `Extension` type export to vscode-mock.cjs
 - ☐ Verify all vscode types used in codebase are exported
 - ☐ Ensure mock properly handles ES6 module imports
 
-#### Option 2: Update test-utils.ts and Add Mocks
+#### Option 2: Type-Only Imports (Better Fix)
+
+**Pros**: Clean separation, TypeScript best practice
+**Cons**: Requires careful review of all type imports
+
+**Implementation**:
+
+```typescript
+// VSCodeAPIs.ts - separate type-only imports
+import type {
+  Extension,     // Type-only
+  TextEditor,    // Type-only
+  TextDocument,  // Type-only
+  Uri,           // Type-only
+  WebviewPanel,  // Type-only
+} from 'vscode';
+import type { Disposable, ExtensionContext } from 'vscode'; // Actually used at runtime
+```
+
+**Tasks**:
+
+- ☐ Move `Extension` import to type-only import in VSCodeAPIs.ts
+- ☐ Use `import type { Extension }` instead of runtime import
+- ☐ Verify this allows tests to run without full vscode module
+
+#### Option 3: Enhance test-utils.ts (Comprehensive)
+
+**Pros**: Most complete, allows better test isolation
+**Cons**: More work, needs maintenance
+
+**Tasks**:
+
 - ☐ Add mock for `getExtension_Markdown()` returning mock extension object
 - ☐ Add mock for `renderMarkdownToHtml()` returning sample HTML
 - ☐ Update `extensions.getExtension()` to return proper Extension type
 - ☐ Add `extensions.all` array with mock extensions
 
-#### Option 3: Separate Type Imports from Runtime Imports
-- ☐ Move `Extension` import to type-only import in VSCodeAPIs.ts
-- ☐ Use `import type { Extension }` instead of runtime import
-- ☐ Verify this allows tests to run without full vscode module
+**Recommended Approach**: Hybrid of Option 1 + Option 2
 
-**Testing Tasks**:
-- ☐ **Create test for renderFromTokens**: Verify 2D array signature works correctly
-- ☐ **Create test for renderFromHTML**: Mock HTML parsing and verify element handlers
-- ☐ **Update PDF.test.ts**: Update existing tests to use new 2D token array signature
-- ☐ **Run npm test**: Ensure all tests pass
+1. **Immediate**: Fix vscode-mock.cjs to export missing types
+2. **Better**: Convert to type-only imports where appropriate
+3. **Best**: Add proper test coverage for new markdown functionality
+
+**New Tests Needed**:
+
+```typescript
+// tests/PDF-MarkdownRender.test.ts
+describe('PDF Markdown Rendering', () => {
+  test('renderFromTokens accepts 2D token array', () => {
+    // Test updated signature
+  });
+  
+  test('renderFromHTML parses and renders HTML', () => {
+    // Test HTML parsing
+  });
+  
+  test('renderHeading creates proper heading', () => {
+    // Test heading rendering
+  });
+  
+  test('renderList handles ordered and unordered lists', () => {
+    // Test list rendering
+  });
+});
+
+// tests/VSCodeAPIs-Markdown.test.ts
+describe('VSCodeAPIs Markdown', () => {
+  test('getExtension_Markdown returns markdown extension', () => {
+    // Test extension lookup
+  });
+  
+  test('renderMarkdownToHtml returns HTML', async () => {
+    // Test markdown to HTML conversion
+  });
+});
+```
+
+**Implementation Steps**:
+
+1. ☐ Fix vscode-mock.cjs to export Extension class
+2. ☐ Review all VSCodeAPIs imports and convert to type-only where appropriate
+3. ☐ Update PDF.test.ts to use new renderFromTokens signature
+4. ☐ Create PDF-MarkdownRender.test.ts with new tests
+5. ☐ Create VSCodeAPIs-Markdown.test.ts with new tests
+6. ☐ Run `npm test` and verify all tests pass
+7. ☐ Update test-utils.ts with markdown-specific mocks if needed
+
+**Time Estimate**:
+
+- vscode-mock.cjs fix: 30 minutes
+- Type-only imports conversion: 1 hour
+- New test creation: 2-3 hours
+- Debug and fix issues: 1-2 hours
+- **Total**: 4.5-6.5 hours
 
 ### 🚧 Phase 6: Testing & Polish
-- ⚠️ **Manual testing required** - Extension must be loaded in VS Code
-- ☐ Test with basic markdown (headings, paragraphs, bold, italic)
-- ☐ Test with lists (ordered and unordered, nested)
-- ☐ Test with code blocks with syntax highlighting
-- ☐ Test with complex markdown (blockquotes, tables, nested elements)
-- ✅ Polish - Respect `markdown.preview.fontFamily` and `fontSize` settings (implemented)
-- ☐ Polish - Get background colors from theme for code/blockquotes (TODO for future)
-- ☐ Polish - Test with different VS Code themes
+
+**Manual testing is required** - Extension must be loaded in VS Code.
+
+**Test Cases**:
+
+1. **Basic Markdown**
+   - ☐ Headings (h1-h6)
+   - ☐ Paragraphs
+   - ☐ Bold and italic text
+   - ☐ Inline code
+
+2. **Lists**
+   - ☐ Unordered lists
+   - ☐ Ordered lists
+   - ☐ Nested lists
+
+3. **Code Blocks**
+   - ☐ Fenced code blocks with language
+   - ☐ Syntax highlighting verification
+
+4. **Complex Elements**
+   - ☐ Blockquotes
+   - ☐ Horizontal rules
+   - ☐ Mixed content
+
+5. **Mode Switching**
+   - ☐ Raw markdown (syntax highlighted source)
+   - ☐ Rendered markdown (HTML output)
+
+6. **Preview Tabs**
+   - ☐ Screenshot prompt appears
+   - ☐ Screenshot captures correctly
+   - ☐ Print dialog opens
+
+**Polish**:
+
+- ✅ Respect `markdown.preview.fontFamily` and `fontSize` settings (implemented)
+- ☐ Get background colors from theme for code/blockquotes (future enhancement)
+- ☐ Test with different VS Code themes
+
+**Time Estimate**: 2 hours
+
+---
+
+## Implementation Details
+
+### What Was Implemented
+
+**Phase 2: HTML Rendering in PDF Class**
+
+- Installed `node-html-parser` dependency
+- Renamed `PDF.renderTokenizedLine()` → `PDF.renderFromTokens()` with 2D token array signature
+- Added `PDF.renderFromHTML(html: string)` method to parse and render HTML
+- Implemented HTML element handlers:
+  - `getMarkdownFontInfo()` and `getFontFromElementStyle()` - font extraction
+  - `renderHeading()` - h1-h6 with automatic sizing
+  - `renderParagraph()` - paragraphs with spacing
+  - `renderInlineContent()` - bold, italic, code inline elements
+  - `renderTextContent()` - reuses existing character wrapping logic
+  - `renderList()` - ul/ol with bullets and numbering
+  - `renderCodeBlock()` - reuses Shiki tokenization for syntax highlighting
+  - `renderBlockquote()` - indented content
+  - `renderHorizontalRule()` - hr element
+
+**Phase 3: VS Code Markdown API Integration**
+
+- Added `useRenderedMd: boolean` property to `DocInfo_PaperPrinter`
+- Added `VSCodeAPIs.getExtension_Markdown()` method
+- Added `VSCodeAPIs.renderMarkdownToHtml()` wrapper method
+- Updated `PaperPrinter.generatePdf()` to branch on `useRenderedMd` flag
+
+**Phase 4: Preview Tab Handling**
+
+- Added `OSMac.getCurrentAppName()` with caching
+- Added `OSMac.getEditorWindowBounds()` via AppleScript (gets window position and size)
+- Added `OSMac.getScreenDimensions()` via AppleScript (fallback for bounds)
+- Added `OSMac.screenshotWindow(bounds?)` using macOS `screencapture` command-line tool
+- Added `PaperPrinter.handlePreviewTabPrint()` with user prompt
+- Added `PaperPrinter.screenshotAndPrint()` with fallback
+
+**AppleScript Templates Added to OSMac.yaml**:
+
+```yaml
+apple_script_get_current_app: |
+  tell application "System Events"
+    name of first application process whose frontmost is true
+  end tell
+
+apple_script_get_editor_bounds: |
+  tell application "System Events"
+    tell process "{{app_name}}"
+      set frontWindow to front window
+      set windowPosition to position of frontWindow
+      set windowSize to size of frontWindow
+      return (item 1 of windowPosition) & "," & (item 2 of windowPosition) & "," & (item 1 of windowSize) & "," & (item 2 of windowSize)
+    end tell
+  end tell
+
+apple_script_get_screen_dimensions: |
+  tell application "Finder"
+    set screenBounds to bounds of window of desktop
+    set screenWidth to (item 3 of screenBounds) - (item 1 of screenBounds)
+    set screenHeight to (item 4 of screenBounds) - (item 2 of screenBounds)
+    return screenWidth & "," & screenHeight
+  end tell
+```
+
+**Note on Phase 4**: AppleScript is used to get window information, but the actual screenshot is taken using the macOS `screencapture` command-line tool, NOT AppleScript.
+
+### Known Limitations
+
+1. **Manual Mode Toggle**: Currently `useRenderedMd` must be set programmatically. A menu item toggle should be added in the future.
+
+2. **Background Colors**: Code blocks and blockquotes don't yet extract background colors from themes (noted as future enhancement).
+
+3. **Table Support**: Markdown tables are not yet implemented (would need additional HTML handlers).
+
+4. **Image Support**: Embedded images in markdown are not yet handled.
+
+### Architecture Notes
+
+**Unified Rendering Approach**:
+
+- Both `renderFromTokens()` and `renderFromHTML()` use the same underlying primitives
+- Character wrapping: `findCharacterBreakPoint()`
+- Page breaking: `shouldBreakPage()`, `addPageBreak()`
+- Text rendering: `renderTextContent()` reuses token rendering logic
+
+**Font Resolution**:
+
+1. Try to get font from HTML element's style attribute
+2. Fall back to `markdown.preview.fontFamily` and `markdown.preview.fontSize` settings
+3. Fall back to editor typography settings
+
+**AppleScript Safety**:
+
+⚠️ **CRITICAL**: The `app_name` variable in AppleScript templates comes directly from System Events and is **NOT sanitized**. It's safe because it's returned by the OS itself, not user input.
+
+### Future Enhancements
+
+- [ ] Add menu item to toggle `useRenderedMd` on/off
+- [ ] Extract background colors from theme for code/blockquotes
+- [ ] Add table support
+- [ ] Add image embedding support
+- [ ] Windows/Linux screenshot implementations
 
 ---
 
