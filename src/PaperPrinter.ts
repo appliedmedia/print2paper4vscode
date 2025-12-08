@@ -154,7 +154,7 @@ export class PaperPrinter {
     this.dx.done();
   }
 
-  get yaml() {
+  yaml() {
     return this._yaml.get();
   }
 
@@ -501,7 +501,7 @@ export class PaperPrinter {
     // Use centralized const with template replacement for SVG icons
     return kOrient.menuItems.map(item => ({
       id: item.id as MenuItemId_t,
-      displayName: this.fn.utils.templateDictReplace(item.displayName, this.yaml),
+      displayName: this.fn.utils.templateDictReplace(item.displayName, this.yaml()),
       iconSlotTriad: { begin: '', main: '', end: '' },
     }));
   }
@@ -510,7 +510,7 @@ export class PaperPrinter {
     // Use centralized const with template replacement for SVG icons
     return kMarginId.menuItems.map(item => ({
       id: item.id as MenuItemId_t,
-      displayName: this.fn.utils.templateDictReplace(item.displayName, this.yaml),
+      displayName: this.fn.utils.templateDictReplace(item.displayName, this.yaml()),
       iconSlotTriad: { begin: '', main: '', end: '' },
     }));
   }

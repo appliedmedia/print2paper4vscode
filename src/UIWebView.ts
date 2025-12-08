@@ -81,7 +81,7 @@ export class UIWebView {
     this.registerMessageHandlers();
   }
 
-  get yaml() {
+  yaml() {
     return this._yaml.get();
   }
 
@@ -176,7 +176,7 @@ export class UIWebView {
 
       // Get templates
       const base_css = this.fn.ui.yaml().base_css;
-      const templates = this.yaml;
+      const templates = this.yaml();
 
       // Get zoom level from zoomLevel menu persist
       const zoomMenuItemId =

@@ -563,8 +563,8 @@ export class UIMenuMgr {
       return '';
     }
 
-    // Get the generic handlers - yaml getter handles loading automatically
-    const js: string = anyMenu.yaml.uimenu_generic_handlers;
+    // Get the generic handlers - yaml method handles loading automatically
+    const js: string = anyMenu.yaml().uimenu_generic_handlers;
     if (!js) {
       return '';
     }
@@ -578,8 +578,8 @@ export class UIMenuMgr {
       return '';
     }
 
-    // Get the CSS - yaml getter handles loading automatically
-    const css: string = anyMenu.yaml.uimenu_css;
+    // Get the CSS - yaml method handles loading automatically
+    const css: string = anyMenu.yaml().uimenu_css;
     if (!css) {
       return '';
     }

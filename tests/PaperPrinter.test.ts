@@ -82,7 +82,7 @@ describe('PaperPrinter', () => {
   });
 
   it('should get YAML icons', () => {
-    const yaml = paperPrinter.yaml;
+    const yaml = paperPrinter.yaml();
     assert.ok(yaml);
     assert.ok(typeof yaml === 'object');
   });

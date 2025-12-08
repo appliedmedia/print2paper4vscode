@@ -89,7 +89,7 @@ export class PDF {
     this.tempPdfs = [];
   }
 
-  get yaml() {
+  yaml() {
     return this._yaml.get();
   }
   

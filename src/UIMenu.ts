@@ -249,7 +249,7 @@ export class UIMenu {
     this._yaml = this.fn.yaml.create({ filePath: 'src/UIMenu.yaml', dataStruct: UIMenu.kYaml });
   }
 
-  get yaml() {
+  yaml() {
     return this._yaml.get();
   }
 
@@ -321,7 +321,7 @@ export class UIMenu {
     const dx = this.dx.sub({ name: 'getItemHTML' });
     dx.require(args, ['item', 'flyout', 'defaultItemId', 'selectedItemId']);
     const { item, flyout, defaultItemId, selectedItemId } = args;
-    const yaml = this.yaml; // This will load and validate automatically
+    const yaml = this.yaml(); // This will load and validate automatically
 
     // Check if this item has a flyout by checking if its ID is in flyoutMenuItemIds
     const menuItemId = item.id;
@@ -514,7 +514,7 @@ export class UIMenu {
     }
     
     try {
-      const yaml = this.yaml;
+      const yaml = this.yaml();
       const html = this.fn.utils.templateDictReplace(yaml.uimenu_text_edit, {
         itemId,
         constrain,
@@ -593,7 +593,7 @@ export class UIMenu {
     visited.add(this._id);
 
     try {
-      const yaml = this.yaml; // This will load and validate automatically
+      const yaml = this.yaml(); // This will load and validate automatically
 
       // Generate flyout HTML for any menu items that have flyouts
       const flyoutCache: Record<string, string> = {};
@@ -659,7 +659,7 @@ export class UIMenu {
         icon: buttonContent,
         menuItems: hasItems ? menuItems : '', // Empty string if no items
         menuItemsContainer: hasItems
-          ? this.fn.utils.templateDictReplace(this.yaml.uimenu_items_container, {
+          ? this.fn.utils.templateDictReplace(this.yaml().uimenu_items_container, {
               menuId: this._id,
               menuItems,
             })
