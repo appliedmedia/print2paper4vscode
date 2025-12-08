@@ -1737,9 +1737,10 @@ This provides:
 ## Migration Stages (Historical Documentation)
 
 **Note**: This section contains the original planning documentation. For actual implementation status, see:
+
 - **Current Status Summary** (line 101)
 - **EXECUTION TODOS** (line 136)
-- All stages 0-8 are complete with [x] markers in those sections
+- All stages 0-8 are complete with [x] markers in those sections.
 
 The checkboxes below [ ] represent the original plan and are kept for reference only.
 
