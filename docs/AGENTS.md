@@ -433,7 +433,7 @@ const px = this.reg.app.coords.pdfPtsToCssPx(100);
 - **Keep done() methods** - explicit cleanup when needed
 - **Request specific methods** - not entire components
 - **Always available: dx.sub** - for creating diagnostics instances
-- **App utilities via this.reg.app** - templateDictReplace, forceNumber, hasContent
+- **Utils component methods via this.fn** - templateDictReplace, forceNumber, hasContent
 - **Component methods via this.fn** - all requested dependencies
 - **Lazy instantiation** - Registry creates components on first use
 
