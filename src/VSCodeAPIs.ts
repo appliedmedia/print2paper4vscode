@@ -6,6 +6,7 @@ import type {
   TextDocument,
   Uri,
   WebviewPanel,
+  Extension,
   // Position,
   // WorkspaceEdit,
 } from 'vscode';
@@ -124,6 +125,57 @@ export class VSCodeAPIs {
    */
   getGlobalState(key: GlobalStateKey_t): GlobalStateValue_t | undefined {
     return this.context.globalState.get(key);
+  }
+
+  /**
+   * Get workspace configuration for a given section
+   */
+  getConfiguration(section?: string): ReturnType<typeof import('vscode').workspace.getConfiguration> {
+    return this.vscode.workspace.getConfiguration(section);
+  }
+
+  /**
+   * Get VS Code markdown language features extension
+   */
+  getExtension_Markdown(): Extension<any> | undefined {
+    return this.vscode.extensions.getExtension('vscode.markdown-language-features');
+  }
+
+  /**
+   * Render markdown to HTML using VS Code's markdown extension
+   * @param markdown - Markdown source text
+   * @param document - VS Code TextDocument for context
+   * @returns HTML string
+   */
+  async renderMarkdownToHtml(args: { markdown: string; document: TextDocument }): Promise<string> {
+    const dx = this.dx.sub({ name: 'renderMarkdownToHtml' });
+    dx.require(args, ['markdown', 'document']);
+    const { markdown, document } = args;
+    
+    try {
+      const mdExtension = this.getExtension_Markdown();
+      
+      if (!mdExtension) {
+        throw new Error('VS Code markdown extension not found');
+      }
+      
+      if (!mdExtension.isActive) {
+        await mdExtension.activate();
+      }
+      
+      const mdApi = mdExtension.exports;
+      
+      if (!mdApi || !mdApi.render) {
+        throw new Error('Markdown render API not available');
+      }
+      
+      const html = await mdApi.render(markdown, document);
+      dx.out(`Rendered markdown to HTML (${html.length} chars)`);
+      
+      return html;
+    } finally {
+      dx.done();
+    }
   }
 
   getEditorTypography(): {

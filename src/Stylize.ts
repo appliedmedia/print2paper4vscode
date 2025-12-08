@@ -280,10 +280,8 @@ export class Stylize {
 
       // Render directly to PDF if PDF is initialized and ready
       if (this.fn.pdf.readyToPrint()) {
-        for (let lineNum = 0; lineNum < filteredTokens.length; lineNum++) {
-          const line = filteredTokens[lineNum];
-          this.fn.pdf.renderFromTokens({ lineNumber: lineNum, tokens: line });
-        }
+        // Pass all tokens at once - renderFromTokens iterates internally
+        this.fn.pdf.renderFromTokens(filteredTokens);
       }
 
       dx.out(`Tokenized ${filteredTokens.length} lines with theme ${themeToUse}`);

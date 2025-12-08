@@ -159,7 +159,8 @@ describe('PDF', () => {
       { content: ' =', color: '#000000', offset: 7 },
       { content: ' 42', color: '#008000', offset: 9 },
     ];
-    pdf.renderFromTokens({ lineNumber: 0, tokens });
+    // renderFromTokens now takes 2D array of all lines
+    pdf.renderFromTokens([tokens]);
     // Should not throw
     assert.ok(true);
   });

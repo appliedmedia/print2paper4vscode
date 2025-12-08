@@ -18,6 +18,11 @@ export class DocInfo_PaperPrinter {
   public rawCode: string = '';
   public languageId: LanguageId_t = 'typescript'; // Default to TypeScript for a coding extension
   public printTitle: string = 'Printable';
+  
+  // Flag to control markdown rendering mode
+  // false = raw source with syntax highlighting (default)
+  // true = rendered HTML from VS Code markdown API
+  public useRenderedMd: boolean = false;
 
   // Computed values (read-only)
   public pageWidthPx: number = 0;

@@ -115,11 +115,16 @@ export class PaperPrinter {
     this.fn = this.reg.use(
       'vscodeapis.getActiveTextEditor',
       'vscodeapis.getEditorTypography',
+      'vscodeapis.renderMarkdownToHtml',
       'tabinspector.detectActiveTabCategory',
       'tabinspector.getEditorSelectionOrAll',
       'stylize.getThemes',
       'os.dictReplace',
       'os.getLocale',
+      'os.getEditorWindowBounds',
+      'os.screenshotWindow',
+      'os.fileOpenPrintDialog',
+      'ui.showQuickPick',
       'yaml.create',
       'utils.templateDictReplace',
       'utils.forceNumber',
@@ -139,7 +144,11 @@ export class PaperPrinter {
       'pdf.printDirectly',
       'pdf.saveAsPDF',
       'pdf.generatePdf',
-      'pdf.resetCaches'
+      'pdf.resetCaches',
+      'pdf.setupPdf',
+      'pdf.addHeaderAndFooter',
+      'pdf.renderFromHTML',
+      'pdf.finishPdf'
     );
     this.dx = this.fn.dx.sub({ name: 'PaperPrinter' });
 
@@ -198,11 +207,8 @@ export class PaperPrinter {
     try {
       const category = this.fn.tabinspector.detectActiveTabCategory();
       if (category === 'preview') {
-        // TODO: Handle preview tab capture - need to extract raw code from HTML
-        // or implement HTML-to-PDF conversion for preview tabs
-        this.dx.error(
-          'Printing from preview tabs is not yet supported with the new PDF architecture'
-        );
+        // Preview tabs: screenshot and print
+        await this.handlePreviewTabPrint();
         return;
       }
 
@@ -299,14 +305,35 @@ export class PaperPrinter {
       this.fn.pdf.docInfo().languageId = this.docInfo().languageId;
       this.fn.pdf.docInfo().title = this.docInfo().printTitle;
 
-      // Generate complete PDF during tokenization (unified approach)
-      dx.out(`Generating complete PDF with unified tokenize + build approach`);
-
-      // Generate the complete PDF in one pass
-      await this.fn.pdf.generatePdf();
+      // Branch based on content type and useRenderedMd flag
+      if (this.docInfo().languageId === 'markdown' && this.docInfo().useRenderedMd) {
+        // Rendered markdown mode: Get HTML from VS Code markdown API
+        dx.out(`Generating PDF from rendered markdown HTML`);
+        const editor = this.fn.vscodeapis.getActiveTextEditor();
+        if (!editor) throw new Error('No active editor');
+        
+        const html = await this.fn.vscodeapis.renderMarkdownToHtml({
+          markdown: this.docInfo().rawCode,
+          document: editor.document
+        });
+        
+        // Setup PDF for HTML rendering
+        this.fn.pdf.setupPdf();
+        this.fn.pdf.addHeaderAndFooter();
+        
+        // Render HTML to PDF
+        this.fn.pdf.renderFromHTML(html);
+        
+        // Finish PDF
+        this.fn.pdf.finishPdf();
+      } else {
+        // Raw source mode: Tokenize with Shiki (works for all languages including markdown)
+        dx.out(`Generating complete PDF with unified tokenize + build approach`);
+        await this.fn.pdf.generatePdf();
+      }
 
       dx.out(
-        `PDF generation complete: ${this.fn.pdf.getPageTotal()} pages using unified approach`
+        `PDF generation complete: ${this.fn.pdf.getPageTotal()} pages`
       );
     } catch (error) {
       dx.out(`Error in generatePdf: ${error}`);
@@ -1041,6 +1068,55 @@ export class PaperPrinter {
 
     dx.done();
     return { id, value };
+  }
+
+  /**
+   * Handle preview tab printing via screenshot
+   */
+  private async handlePreviewTabPrint(): Promise<void> {
+    const dx = this.dx.sub({ name: 'handlePreviewTabPrint' });
+    
+    try {
+      const message = 'Due to VS Code\'s implementation of private data in Preview tabs, ' +
+                      'they cannot be printed except via screenshot. Do that?';
+      
+      const choice = await this.fn.ui.showQuickPick([
+        { label: 'Take Screenshot & Print', value: 'yes' },
+        { label: 'Cancel', value: 'no' }
+      ]);
+      
+      if (choice === 'yes') {
+        await this.screenshotAndPrint();
+      }
+    } finally {
+      dx.done();
+    }
+  }
+
+  /**
+   * Screenshot editor window and print
+   */
+  private async screenshotAndPrint(): Promise<void> {
+    const dx = this.dx.sub({ name: 'screenshotAndPrint' });
+    
+    try {
+      // Try to get window bounds (works for Cursor, VS Code, etc.)
+      let bounds = await this.fn.os.getEditorWindowBounds();
+      
+      // If bounds unavailable, fall back to full screen
+      if (!bounds) {
+        dx.out('Window bounds unavailable, using full screen screenshot');
+        bounds = undefined; // screenshotWindow will use full screen
+      }
+      
+      // Take screenshot (window bounds or full screen)
+      const screenshotPath = await this.fn.os.screenshotWindow(bounds);
+      
+      // Print screenshot using existing print workflow
+      await this.fn.os.fileOpenPrintDialog(screenshotPath);
+    } finally {
+      dx.done();
+    }
   }
 
   // Removed CSS hacks; rely on theme overrides
