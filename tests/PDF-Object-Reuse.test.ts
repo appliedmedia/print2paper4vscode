@@ -21,19 +21,19 @@ describe('PDF Object Reuse Tests', () => {
       (app.paperprinter as unknown as { createMenus(): void }).createMenus();
 
       const paperPrinter = app.paperprinter;
-      paperPrinter.docInfo.rawCode = `function test() {
+      paperPrinter.docInfo().rawCode = `function test() {
   console.log("Hello World");
   return 42;
 }`;
-      paperPrinter.docInfo.languageId = 'javascript';
+      paperPrinter.docInfo().languageId = 'javascript';
 
       // Generate PDF
       await paperPrinter['generatePdf']();
-      const pdfDoc1 = app.pdf.docInfo;
+      const pdfDoc1 = app.pdf.docInfo();
 
       // Generate PDF again (should reuse same object or create new one)
       await paperPrinter['generatePdf']();
-      const pdfDoc2 = app.pdf.docInfo;
+      const pdfDoc2 = app.pdf.docInfo();
 
       // Both should be valid PDFs
       assert.ok(pdfDoc1, 'First PDF should be generated');
@@ -51,11 +51,11 @@ describe('PDF Object Reuse Tests', () => {
       (app.paperprinter as unknown as { createMenus(): void }).createMenus();
 
       const paperPrinter = app.paperprinter;
-      paperPrinter.docInfo.rawCode = 'console.log("test");';
-      paperPrinter.docInfo.languageId = 'javascript';
+      paperPrinter.docInfo().rawCode = 'console.log("test");';
+      paperPrinter.docInfo().languageId = 'javascript';
 
       await paperPrinter['generatePdf']();
-      const pdfDoc = app.pdf.docInfo;
+      const pdfDoc = app.pdf.docInfo();
 
       assert.ok(pdfDoc, 'PDF should be generated');
 
@@ -102,14 +102,14 @@ describe('PDF Object Reuse Tests', () => {
       (app.paperprinter as unknown as { createMenus(): void }).createMenus();
 
       const paperPrinter = app.paperprinter;
-      paperPrinter.docInfo.rawCode = `function example() {
+      paperPrinter.docInfo().rawCode = `function example() {
   return "Hello World";
 }`;
-      paperPrinter.docInfo.languageId = 'javascript';
+      paperPrinter.docInfo().languageId = 'javascript';
 
       // Generate PDF
       await paperPrinter['generatePdf']();
-      const pdfDoc = app.pdf.docInfo;
+      const pdfDoc = app.pdf.docInfo();
 
       assert.ok(pdfDoc, 'PDF should be generated');
 
@@ -117,8 +117,8 @@ describe('PDF Object Reuse Tests', () => {
       const arrayBufferBefore = pdfDoc.asArrayBuffer();
 
       // Display in webview (this should use the same PDF object)
-      const uiWebView = new UIWebView({ reg: app.reg });
-      await uiWebView.displayPdfPanel();
+      // Use the singleton UIWebView instance from app
+      await app.uiwebview.displayPdfPanel();
 
       // Get ArrayBuffer after webview display
       const arrayBufferAfter = pdfDoc.asArrayBuffer();
@@ -158,11 +158,11 @@ describe('PDF Object Reuse Tests', () => {
       (app.paperprinter as unknown as { createMenus(): void }).createMenus();
 
       const paperPrinter = app.paperprinter;
-      paperPrinter.docInfo.rawCode = 'console.log("test");';
-      paperPrinter.docInfo.languageId = 'javascript';
+      paperPrinter.docInfo().rawCode = 'console.log("test");';
+      paperPrinter.docInfo().languageId = 'javascript';
 
       await paperPrinter['generatePdf']();
-      const pdfDoc = app.pdf.docInfo;
+      const pdfDoc = app.pdf.docInfo();
 
       assert.ok(pdfDoc, 'PDF should be generated');
 
@@ -179,8 +179,8 @@ describe('PDF Object Reuse Tests', () => {
       assert.ok(pageSizePx.heightPx > 0, 'Should have valid height');
 
       // Display in webview using DocInfo_PDF directly
-      const uiWebView = new UIWebView({ reg: app.reg });
-      const panelId = await uiWebView.displayPdfPanel();
+      // Use the singleton UIWebView instance from app
+      const panelId = await app.uiwebview.displayPdfPanel();
 
       assert.ok(panelId, 'Panel should be created');
       app.done();
@@ -195,15 +195,15 @@ describe('PDF Object Reuse Tests', () => {
       (app.paperprinter as unknown as { createMenus(): void }).createMenus();
 
       const paperPrinter = app.paperprinter;
-      paperPrinter.docInfo.rawCode = `function test() {
+      paperPrinter.docInfo().rawCode = `function test() {
   const x = 1;
   const y = 2;
   return x + y;
 }`;
-      paperPrinter.docInfo.languageId = 'javascript';
+      paperPrinter.docInfo().languageId = 'javascript';
 
       await paperPrinter['generatePdf']();
-      const pdfDoc = app.pdf.docInfo;
+      const pdfDoc = app.pdf.docInfo();
 
       assert.ok(pdfDoc, 'PDF should be generated');
 
@@ -251,11 +251,11 @@ describe('PDF Object Reuse Tests', () => {
       (app.paperprinter as unknown as { createMenus(): void }).createMenus();
 
       const paperPrinter = app.paperprinter;
-      paperPrinter.docInfo.rawCode = 'console.log("multiple conversions test");';
-      paperPrinter.docInfo.languageId = 'javascript';
+      paperPrinter.docInfo().rawCode = 'console.log("multiple conversions test");';
+      paperPrinter.docInfo().languageId = 'javascript';
 
       await paperPrinter['generatePdf']();
-      const pdfDoc = app.pdf.docInfo;
+      const pdfDoc = app.pdf.docInfo();
 
       assert.ok(pdfDoc, 'PDF should be generated');
 
@@ -301,17 +301,17 @@ describe('PDF Object Reuse Tests', () => {
       const app = new App({ context: mockContext, vscode: mockVSCode });
 
       const paperPrinter = app.paperprinter;
-      paperPrinter.docInfo.rawCode = 'console.log("test");';
-      paperPrinter.docInfo.languageId = 'javascript';
+      paperPrinter.docInfo().rawCode = 'console.log("test");';
+      paperPrinter.docInfo().languageId = 'javascript';
 
       // Don't generate PDF - pdfDoc should be null
-      assert.ok(app.pdf.docInfo.pdfDoc === null, 'PDF should be null before generation');
+      assert.ok(app.pdf.docInfo().pdfDoc === null, 'PDF should be null before generation');
 
       // Try to display webview without generating PDF first
       // This should fail because pdfDoc is null
       try {
-        const uiWebView = new UIWebView({ reg: app.reg });
-        await uiWebView.displayPdfPanel();
+        // Use the singleton UIWebView instance from app
+        await app.uiwebview.displayPdfPanel();
         assert.fail('Should throw error when PDF is not generated');
       } catch (error) {
         assert.ok(
@@ -332,12 +332,12 @@ describe('PDF Object Reuse Tests', () => {
       (app.paperprinter as unknown as { createMenus(): void }).createMenus();
 
       const paperPrinter = app.paperprinter;
-      paperPrinter.docInfo.rawCode = '';
-      paperPrinter.docInfo.languageId = 'javascript';
+      paperPrinter.docInfo().rawCode = '';
+      paperPrinter.docInfo().languageId = 'javascript';
 
       // Generate PDF with empty code
       await paperPrinter['generatePdf']();
-      const pdfDoc = app.pdf.docInfo;
+      const pdfDoc = app.pdf.docInfo();
 
       assert.ok(pdfDoc, 'PDF should be generated even with empty code');
 

@@ -100,12 +100,14 @@ export class PaperPrinter {
   private dx: Diagnostics;
   private _yaml: YamlInstance<typeof PaperPrinter.kYaml>;
 
-  public docInfo: DocInfo_PaperPrinter;
+  private _docInfo: DocInfo_PaperPrinter;
 
-  // Typed accessors for singleton components
-  private get pdf() { return this.reg.getInstance<import('./PDF').PDF>('pdf')!; }
-  private get uimenumgr() { return this.reg.getInstance<import('./UIMenuMgr').UIMenuMgr>('uimenumgr')!; }
-  private get uiwebview() { return this.reg.getInstance<import('./UIWebView').UIWebView>('uiwebview')!; }
+  /**
+   * Get the PaperPrinter document info
+   */
+  docInfo(): DocInfo_PaperPrinter {
+    return this._docInfo;
+  }
 
   constructor(args: { reg: Registry }) {
     this.reg = args.reg;
@@ -121,12 +123,28 @@ export class PaperPrinter {
       'yaml.create',
       'utils.templateDictReplace',
       'utils.forceNumber',
-      'utils.hasContent'
+      'utils.hasContent',
+      'uimenumgr.getMenuItemIdSelected',
+      'uimenumgr.getValueForMenuItemId',
+      'uimenumgr.getValueForMenuItemIdSelected',
+      'uimenumgr.setValueForPersistIdOnMenuId',
+      'uimenumgr.getUIMenus',
+      'uimenumgr.createMenu',
+      'uimenumgr.addMenu',
+      'uiwebview.displayPdfPanel',
+      'pdf.docInfo',
+      'pdf.readyToPrint',
+      'pdf.getPageTotal',
+      'pdf.printWithPreview',
+      'pdf.printDirectly',
+      'pdf.saveAsPDF',
+      'pdf.generatePdf',
+      'pdf.resetCaches'
     );
     this.dx = this.fn.dx.sub({ name: 'PaperPrinter' });
 
     // Initialize docInfo
-    this.docInfo = DocInfo_PaperPrinter.create({ reg: this.reg });
+    this._docInfo = DocInfo_PaperPrinter.create({ reg: this.reg });
 
     // Initialize YAML loader via Registry factory
     this._yaml = this.fn.yaml.create({ filePath: 'src/PaperPrinter.yaml', dataStruct: PaperPrinter.kYaml });
@@ -136,14 +154,14 @@ export class PaperPrinter {
     this.dx.done();
   }
 
-  get yaml() {
+  yaml() {
     return this._yaml.get();
   }
 
   // Computed line height from font size
   get lineHeightPx(): number {
     const editorTypo = this.fn.vscodeapis.getEditorTypography();
-    const fontSizeId = this.uimenumgr.getMenuItemIdSelected(kFontSizeId.id);
+    const fontSizeId = this.fn.uimenumgr.getMenuItemIdSelected(kFontSizeId.id);
     return parseInt(fontSizeId || kFontSizeId.altId, 10) * editorTypo.sizeToHeightRatio;
   }
 
@@ -155,26 +173,17 @@ export class PaperPrinter {
 
     try {
       await this.generatePdf();
-      if (!this.pdf.docInfo.pdfDoc) {
+      if (!this.fn.pdf.readyToPrint()) {
         dx.error('Failed to generate PDF');
         return;
       }
 
       if (printType === 'preview')
-        await this.pdf.printWithPreview({
-          pdfDoc: this.pdf.docInfo,
-          descriptiveName: this.docInfo.printTitle || 'Print Output'
-        });
+        await this.fn.pdf.printWithPreview(this.docInfo().printTitle || 'Print Output');
       else if (printType === 'direct')
-        await this.pdf.printDirectly({
-          pdfDoc: this.pdf.docInfo,
-          descriptiveName: this.docInfo.printTitle || 'Print Output'
-        });
+        await this.fn.pdf.printDirectly(this.docInfo().printTitle || 'Print Output');
       else if (printType === 'save')
-        await this.pdf.saveAsPDF({
-          pdfDoc: this.pdf.docInfo,
-          descriptiveName: this.docInfo.printTitle || 'Print Output'
-        });
+        await this.fn.pdf.saveAsPDF(this.docInfo().printTitle || 'Print Output');
 
       dx.out(`Print request handled: ${printType}`);
     } finally {
@@ -203,8 +212,8 @@ export class PaperPrinter {
         return;
       }
 
-      this.docInfo.rawCode = info.text.trim();
-      this.docInfo.languageId = info.languageId as LanguageId_t;
+      this.docInfo().rawCode = info.text.trim();
+      this.docInfo().languageId = info.languageId as LanguageId_t;
       const selection = this.fn.vscodeapis.getActiveTextEditor()?.selection;
       let printableLabel = info.name;
       if (selection && !selection.isEmpty) {
@@ -213,7 +222,7 @@ export class PaperPrinter {
         printableLabel =
           start === end ? `Line ${start} of ${info.name}` : `Lines ${start}-${end} of ${info.name}`;
       }
-      this.docInfo.printTitle = printableLabel;
+      this.docInfo().printTitle = printableLabel;
 
       // Create menus if they don't exist yet
       this.createMenus();
@@ -222,14 +231,14 @@ export class PaperPrinter {
       await this.generatePdf();
 
       // Validate we have a PDF document
-      if (!this.pdf.docInfo.pdfDoc) {
+      if (!this.fn.pdf.readyToPrint()) {
         this.dx.error('PDF document not generated');
         throw new Error('PDF document not generated');
       }
 
       // Display PDF in webview panel using singleton UIWebView
-      // (uses this.pdf.docInfo directly, including title)
-      await this.uiwebview.displayPdfPanel();
+      // (uses this.fn.pdf.docInfo() directly, including title)
+      await this.fn.uiwebview.displayPdfPanel();
 
       this.dx.out(`Opened webview for ${printableLabel}`);
     } catch (error) {
@@ -250,63 +259,54 @@ export class PaperPrinter {
 
     try {
       // Get current settings
-      const fontSizeValue = this.uimenumgr.getMenuItemIdSelected(kFontSizeId.id);
+      const fontSizeValue = this.fn.uimenumgr.getMenuItemIdSelected(kFontSizeId.id);
       const fontSize = parseInt(fontSizeValue || kFontSizeId.altId, 10);
       dx.out(`PDF GENERATION: Using font size ${fontSize}px`);
-      const theme = (this.uimenumgr.getMenuItemIdSelected(kTheme.id) || kTheme.altId) as string;
+      const theme = (this.fn.uimenumgr.getMenuItemIdSelected(kTheme.id) || kTheme.altId) as string;
 
       // Validate and normalize pageSizeId - use lookup table, fall back to default if invalid
-      const rawPageSizeId = this.uimenumgr.getMenuItemIdSelected(kPageSizeId.id);
+      const rawPageSizeId = this.fn.uimenumgr.getMenuItemIdSelected(kPageSizeId.id);
       const pageSizeId: PageSizeIdMenuItems_t =
         rawPageSizeId && rawPageSizeId in kPageSizeIdById
           ? (rawPageSizeId as PageSizeIdMenuItems_t)
           : (kPageSizeId.altId as PageSizeIdMenuItems_t);
 
       // Validate and normalize orient - clamp to valid values, fall back to default if invalid
-      const rawOrient = this.uimenumgr.getMenuItemIdSelected(kOrient.id);
+      const rawOrient = this.fn.uimenumgr.getMenuItemIdSelected(kOrient.id);
       const orient: 'portrait' | 'landscape' =
         rawOrient === 'portrait' || rawOrient === 'landscape'
           ? rawOrient
           : (kOrient.altId as 'portrait' | 'landscape');
 
       // Validate and normalize marginId - use lookup table, fall back to default if invalid
-      const rawMarginId = this.uimenumgr.getMenuItemIdSelected(kMarginId.id);
+      const rawMarginId = this.fn.uimenumgr.getMenuItemIdSelected(kMarginId.id);
       const marginId: MarginIdMenuItems_t =
         rawMarginId && rawMarginId in kMarginIdById
           ? (rawMarginId as MarginIdMenuItems_t)
           : (kMarginId.altId as MarginIdMenuItems_t);
 
       // Set properties on PDF's docInfo
-      this.pdf.docInfo.fontFamily = this.getCurrentFontFamily();
-      this.pdf.docInfo.fontSizePx = fontSize;
-      this.pdf.docInfo.lineHeightPx = this.lineHeightPx;
-      this.pdf.docInfo.theme = theme;
-      this.pdf.docInfo.pageSizeId = pageSizeId;
-      this.pdf.docInfo.orient = orient;
-      this.pdf.docInfo.marginId = marginId;
+      this.fn.pdf.docInfo().fontFamily = this.getCurrentFontFamily();
+      this.fn.pdf.docInfo().fontSizePx = fontSize;
+      this.fn.pdf.docInfo().lineHeightPx = this.lineHeightPx;
+      this.fn.pdf.docInfo().theme = theme;
+      this.fn.pdf.docInfo().pageSizeId = pageSizeId;
+      this.fn.pdf.docInfo().orient = orient;
+      this.fn.pdf.docInfo().marginId = marginId;
 
       // Set document content
-      this.pdf.docInfo.code = this.docInfo.rawCode;
-      this.pdf.docInfo.languageId = this.docInfo.languageId;
-      this.pdf.docInfo.title = this.docInfo.printTitle;
+      this.fn.pdf.docInfo().code = this.docInfo().rawCode;
+      this.fn.pdf.docInfo().languageId = this.docInfo().languageId;
+      this.fn.pdf.docInfo().title = this.docInfo().printTitle;
 
       // Generate complete PDF during tokenization (unified approach)
       dx.out(`Generating complete PDF with unified tokenize + build approach`);
 
-      // Generate the complete PDF in one pass (sets this.pdf.docInfo.pdfDoc)
-      await this.pdf.generatePdf();
-
-      // Log PDF object creation for reuse verification (Stage 4.3)
-      const pdfObjectId = this.pdf.docInfo
-        ? `pdfDoc@${this.pdf.docInfo.instanceId}`
-        : 'null';
-      dx.out(`PDF object created: ${pdfObjectId} (stored in app.pdf.docInfo for reuse)`);
-      dx.out(
-        `PDF object reuse verification: Same object will be used for webview display and print/save operations`
-      );
+      // Generate the complete PDF in one pass
+      await this.fn.pdf.generatePdf();
 
       dx.out(
-        `PDF generation complete: ${this.pdf.docInfo.pageTotal} pages using unified approach`
+        `PDF generation complete: ${this.fn.pdf.getPageTotal()} pages using unified approach`
       );
     } catch (error) {
       dx.out(`Error in generatePdf: ${error}`);
@@ -319,7 +319,7 @@ export class PaperPrinter {
   // Create menus when needed for the webview
   private createMenus(): void {
     // Avoid duplicates across multiple openings
-    if (this.uimenumgr.getUIMenus().length > 0) {
+    if (this.fn.uimenumgr.getUIMenus().length > 0) {
       return;
     }
 
@@ -384,7 +384,7 @@ export class PaperPrinter {
         `Creating menu: ${config.id} with iconSlotTriad: ${JSON.stringify(config.iconSlotTriad)}`
       );
 
-      const menu = this.uimenumgr.createMenu({
+      const menu = this.fn.uimenumgr.createMenu({
         id: config.id as MenuId_t,
         displayName: config.displayName,
         iconSlotTriad: config.iconSlotTriad,
@@ -393,7 +393,7 @@ export class PaperPrinter {
         flyoutMenuItemIds: [...config.flyoutMenuItemIds],
         selectionHandler: config.selectionHandler
       });
-      this.uimenumgr.addMenu(menu);
+      this.fn.uimenumgr.addMenu(menu);
     });
   }
 
@@ -501,7 +501,7 @@ export class PaperPrinter {
     // Use centralized const with template replacement for SVG icons
     return kOrient.menuItems.map(item => ({
       id: item.id as MenuItemId_t,
-      displayName: this.fn.utils.templateDictReplace(item.displayName, this.yaml),
+      displayName: this.fn.utils.templateDictReplace(item.displayName, this.yaml()),
       iconSlotTriad: { begin: '', main: '', end: '' },
     }));
   }
@@ -510,7 +510,7 @@ export class PaperPrinter {
     // Use centralized const with template replacement for SVG icons
     return kMarginId.menuItems.map(item => ({
       id: item.id as MenuItemId_t,
-      displayName: this.fn.utils.templateDictReplace(item.displayName, this.yaml),
+      displayName: this.fn.utils.templateDictReplace(item.displayName, this.yaml()),
       iconSlotTriad: { begin: '', main: '', end: '' },
     }));
   }
@@ -610,13 +610,13 @@ export class PaperPrinter {
     const dx = this.dx.sub({ name: 'regenerateAndUpdateWebview' });
     try {
       // Reset PDF caches and state
-      this.pdf.resetCaches();
+      this.fn.pdf.resetCaches();
 
       // Regenerate PDF with current settings
       await this.generatePdf();
 
       // Validate we have a PDF document
-      if (!this.pdf.docInfo.pdfDoc) {
+      if (!this.fn.pdf.readyToPrint()) {
         this.dx.error('PDF document not generated');
         throw new Error('PDF document not generated');
       }
@@ -626,7 +626,7 @@ export class PaperPrinter {
       dx.out('Updating webview with new PDF...');
 
       // Display PDF in webview (reuses existing panel, uses title from docInfo)
-      void this.uiwebview.displayPdfPanel();
+      void this.fn.uiwebview.displayPdfPanel();
     } catch (error) {
       dx.error(`Error regenerating PDF: ${error}`);
       throw error;
@@ -649,26 +649,17 @@ export class PaperPrinter {
       dx.out(`Print action: ${String(menuItemId)}`);
       await this.generatePdf();
 
-      if (this.pdf.docInfo.pdfDoc) {
+      if (this.fn.pdf.readyToPrint()) {
         try {
           if (menuItemId === 'preview') {
             dx.out('Printing with preview...');
-            await this.pdf.printWithPreview({
-              pdfDoc: this.pdf.docInfo,
-              descriptiveName: this.docInfo.printTitle || 'Print Output'
-            });
+            await this.fn.pdf.printWithPreview(this.docInfo().printTitle || 'Print Output');
           } else if (menuItemId === 'direct') {
             dx.out('Printing directly...');
-            await this.pdf.printDirectly({
-              pdfDoc: this.pdf.docInfo,
-              descriptiveName: this.docInfo.printTitle || 'Print Output'
-            });
+            await this.fn.pdf.printDirectly(this.docInfo().printTitle || 'Print Output');
           } else if (menuItemId === 'save') {
             dx.out('Saving as PDF...');
-            await this.pdf.saveAsPDF({
-              pdfDoc: this.pdf.docInfo,
-              descriptiveName: this.docInfo.printTitle || 'Print Output'
-            });
+            await this.fn.pdf.saveAsPDF(this.docInfo().printTitle || 'Print Output');
           }
           dx.out(`Print action ${String(menuItemId)} completed successfully`);
         } catch (error) {
@@ -722,7 +713,7 @@ export class PaperPrinter {
         value = id;
       } else {
         // Get current value from persist
-        const currentValue = this.uimenumgr.getMenuItemIdSelected(menuId) || kHeaderFooter.none;
+        const currentValue = this.fn.uimenumgr.getMenuItemIdSelected(menuId) || kHeaderFooter.none;
 
         // Toggle behavior: if clicking the same item that's already selected, deselect it (set to 'none')
         if (currentValue === menuItemId) {
@@ -734,7 +725,7 @@ export class PaperPrinter {
         }
 
         // Persist the value (including 'none')
-        this.uimenumgr.setValueForPersistIdOnMenuId({
+        this.fn.uimenumgr.setValueForPersistIdOnMenuId({
           menuId,
           persistId: menuId as UI_t,
           value: value as PersistValue_t
@@ -768,7 +759,7 @@ export class PaperPrinter {
     } else {
       // Update theme
       dx.out(`updating theme to ${menuItemId}`);
-      this.uimenumgr.setValueForPersistIdOnMenuId({
+      this.fn.uimenumgr.setValueForPersistIdOnMenuId({
         menuId: kTheme.id,
         persistId: kTheme.id as UI_t,
         value: menuItemId as PersistValue_t
@@ -797,7 +788,7 @@ export class PaperPrinter {
       id = String(editorTypo.fontSize);
       value = id;
     } else {
-      this.uimenumgr.setValueForPersistIdOnMenuId({
+      this.fn.uimenumgr.setValueForPersistIdOnMenuId({
         menuId: kFontSizeId.id,
         persistId: kFontSizeId.id as UI_t,
         value: menuItemId as PersistValue_t
@@ -842,7 +833,7 @@ export class PaperPrinter {
       value = id; // value is the page size ID
       dx.out(`Returning locale-based default page size: ${id}`);
     } else {
-      this.uimenumgr.setValueForPersistIdOnMenuId({
+      this.fn.uimenumgr.setValueForPersistIdOnMenuId({
         menuId: kPageSizeId.id,
         persistId: kPageSizeId.id as UI_t,
         value: menuItemId as PersistValue_t
@@ -870,7 +861,7 @@ export class PaperPrinter {
       value = id; // value is the orientation
     } else {
       // Update orientation
-      this.uimenumgr.setValueForPersistIdOnMenuId({
+      this.fn.uimenumgr.setValueForPersistIdOnMenuId({
         menuId: kOrient.id,
         persistId: kOrient.id as UI_t,
         value: menuItemId as PersistValue_t
@@ -899,7 +890,7 @@ export class PaperPrinter {
       value = id; // value is the margin ID
       dx.out(`returning default margin: ${id}`);
     } else {
-      this.uimenumgr.setValueForPersistIdOnMenuId({
+      this.fn.uimenumgr.setValueForPersistIdOnMenuId({
         menuId: kMarginId.id,
         persistId: kMarginId.id as UI_t,
         value: menuItemId as PersistValue_t
@@ -924,7 +915,7 @@ export class PaperPrinter {
       const persistId = triadMain.persistId;
       if (persistId) {
         const persistValue = this.fn.utils.forceNumber(zoomValue) as PersistValue_t;
-        this.uimenumgr.setValueForPersistIdOnMenuId({ menuId, persistId, value: persistValue });
+        this.fn.uimenumgr.setValueForPersistIdOnMenuId({ menuId, persistId, value: persistValue });
         dx.out(`Saved ${persistValue} to menu[${menuId}].persist[${persistId}]`);
       }
     }
@@ -953,7 +944,7 @@ export class PaperPrinter {
     dx.out(`ZoomLevel selection: menuItemId=${menuItemId}`);
 
     let id: MenuItemId_t = menuItemId;
-    let value: string | number | boolean = this.uimenumgr.getValueForMenuItemId({ menuId, menuItemId });
+    let value: string | number | boolean = this.fn.uimenumgr.getValueForMenuItemId({ menuId, menuItemId });
 
     if (menuItemId === UIMenu.defaultId()) {
       // Return default zoom level (100% = 1.0) - no side effects!
@@ -962,7 +953,7 @@ export class PaperPrinter {
       // Do NOT persist or regenerate - this is just a query for the default value
     } else {
       // Save menuItemId to menu.persist[menuId] for tracking which item is selected
-      this.uimenumgr.setValueForPersistIdOnMenuId({
+      this.fn.uimenumgr.setValueForPersistIdOnMenuId({
         menuId,
         persistId: menuId as UI_t,
         value: menuItemId as PersistValue_t
@@ -1006,7 +997,7 @@ export class PaperPrinter {
       }
 
       // Get current zoom value with proper validation
-      const rawZoom = this.uimenumgr.getValueForMenuItemIdSelected(kZoomLevel.id);
+      const rawZoom = this.fn.uimenumgr.getValueForMenuItemIdSelected(kZoomLevel.id);
       const currentZoom = this.fn.utils.forceNumber(rawZoom);
       
       // Validate currentZoom is numeric; fall back to altValue if not
@@ -1036,7 +1027,7 @@ export class PaperPrinter {
       dx.out(`${menuId}: newZoom=${newZoom}`);
 
       // Persist the new zoom level (custom value - menuItemId = menuId)
-      this.uimenumgr.setValueForPersistIdOnMenuId({
+      this.fn.uimenumgr.setValueForPersistIdOnMenuId({
         menuId: kZoomLevel.id,
         persistId: kZoomLevel.id as UI_t,
         value: kZoomLevel.id as PersistValue_t

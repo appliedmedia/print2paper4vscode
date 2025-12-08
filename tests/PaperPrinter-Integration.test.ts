@@ -12,19 +12,19 @@ describe('PaperPrinter Integration Tests', () => {
     const paperPrinter = app.paperprinter;
     
     // Set up test document
-    paperPrinter.docInfo.rawCode = `function test() {
+    paperPrinter.docInfo().rawCode = `function test() {
   console.log("Hello World");
   return 42;
 }`;
-    paperPrinter.docInfo.languageId = 'javascript';
-    paperPrinter.docInfo.printTitle = 'Test Document';
+    paperPrinter.docInfo().languageId = 'javascript';
+    paperPrinter.docInfo().printTitle = 'Test Document';
     
     // Create menus to avoid "Menu not found" errors
     paperPrinter['createMenus']();
     
     // Generate PDF
     await paperPrinter['generatePdf']();
-    const pdfDoc = app.pdf.docInfo;
+    const pdfDoc = app.pdf.docInfo();
     
     assert(pdfDoc, 'PDF document should be generated');
     assert.equal(typeof pdfDoc.getNumberOfPages(), 'number', 'Should have page count');
@@ -46,17 +46,17 @@ describe('PaperPrinter Integration Tests', () => {
     const app = new App({ context: mockContext, vscode: mockVSCode });
     
     const paperPrinter = app.paperprinter;
-    paperPrinter.docInfo.rawCode = `const message = "test";
+    paperPrinter.docInfo().rawCode = `const message = "test";
 console.log(message);`;
-    paperPrinter.docInfo.languageId = 'javascript';
-    paperPrinter.docInfo.printTitle = 'Test Document';
+    paperPrinter.docInfo().languageId = 'javascript';
+    paperPrinter.docInfo().printTitle = 'Test Document';
     
     // Create menus
     paperPrinter['createMenus']();
     
     // Generate initial PDF
     await paperPrinter['generatePdf']();
-    const pdf1 = app.pdf.docInfo;
+    const pdf1 = app.pdf.docInfo();
     const arrayBuffer1 = pdf1?.asArrayBuffer();
     
     assert(arrayBuffer1, 'Should generate initial PDF');
@@ -65,7 +65,7 @@ console.log(message);`;
     
     // Regenerate PDF (simulates settings change)
     await paperPrinter['generatePdf']();
-    const pdf2 = app.pdf.docInfo;
+    const pdf2 = app.pdf.docInfo();
     const arrayBuffer2 = pdf2?.asArrayBuffer();
     
     assert(arrayBuffer2, 'Should regenerate PDF');
@@ -84,7 +84,7 @@ console.log(message);`;
     const app = new App({ context: mockContext, vscode: mockVSCode });
     
     const paperPrinter = app.paperprinter;
-    paperPrinter.docInfo.rawCode = `// Test code with multiple lines
+    paperPrinter.docInfo().rawCode = `// Test code with multiple lines
 function calculateSum(a, b) {
   const result = a + b;
   console.log(\`Sum: \${result}\`);
@@ -93,8 +93,8 @@ function calculateSum(a, b) {
 
 const numbers = [1, 2, 3, 4, 5];
 const total = numbers.reduce(calculateSum, 0);`;
-    paperPrinter.docInfo.languageId = 'javascript';
-    paperPrinter.docInfo.printTitle = 'Test Document';
+    paperPrinter.docInfo().languageId = 'javascript';
+    paperPrinter.docInfo().printTitle = 'Test Document';
     
     // Create menus
     paperPrinter['createMenus']();
@@ -103,14 +103,14 @@ const total = numbers.reduce(calculateSum, 0);`;
     // Test with small font
     persist.set('fontSizeId', '10');
     await paperPrinter['generatePdf']();
-    const smallFontPdf = app.pdf.docInfo;
+    const smallFontPdf = app.pdf.docInfo();
     const smallFontPages = smallFontPdf?.getNumberOfPages() || 0;
     const smallArrayBuffer = smallFontPdf?.asArrayBuffer();
     
     // Test with large font
     persist.set('fontSizeId', '18');
     await paperPrinter['generatePdf']();
-    const largeFontPdf = app.pdf.docInfo;
+    const largeFontPdf = app.pdf.docInfo();
     const largeFontPages = largeFontPdf?.getNumberOfPages() || 0;
     const largeArrayBuffer = largeFontPdf?.asArrayBuffer();
     
@@ -128,15 +128,15 @@ const total = numbers.reduce(calculateSum, 0);`;
     const app = new App({ context: mockContext, vscode: mockVSCode });
     
     const paperPrinter = app.paperprinter;
-    paperPrinter.docInfo.rawCode = 'console.log("PDF conversion test");';
-    paperPrinter.docInfo.languageId = 'javascript';
-    paperPrinter.docInfo.printTitle = 'Test Document';
+    paperPrinter.docInfo().rawCode = 'console.log("PDF conversion test");';
+    paperPrinter.docInfo().languageId = 'javascript';
+    paperPrinter.docInfo().printTitle = 'Test Document';
     
     // Create menus to avoid "Menu not found" errors
     paperPrinter['createMenus']();
     
     await paperPrinter['generatePdf']();
-    const pdfDoc = app.pdf.docInfo;
+    const pdfDoc = app.pdf.docInfo();
     
     assert(pdfDoc, 'PDF should be generated');
     

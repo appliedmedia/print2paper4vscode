@@ -45,10 +45,11 @@ describe('System Integration Tests', () => {
 
   test('should validate template system integration', async () => {
     const app = new App({ context: mockContext, vscode: mockVSCode });
+    const utils = app.reg.getInstance<import('../src/Utils.js').Utils>('utils')!;
     
     // Test template replacement
     const template = 'Hello {{NAME}}, welcome to {{PRODUCT}}!';
-    const result = app.templateDictReplace(template, {
+    const result = utils.templateDictReplace(template, {
       NAME: 'Developer',
       PRODUCT: 'VSCode Extension',
     });
@@ -88,9 +89,9 @@ describe('System Integration Tests', () => {
     const app = new App({ context: mockContext, vscode: mockVSCode });
     
     // Set up document
-    app.paperprinter.docInfo.rawCode = 'const x = 42;';
-    app.paperprinter.docInfo.languageId = 'javascript';
-    app.paperprinter.docInfo.printTitle = 'Test';
+    app.paperprinter.docInfo().rawCode = 'const x = 42;';
+    app.paperprinter.docInfo().languageId = 'javascript';
+    app.paperprinter.docInfo().printTitle = 'Test';
     
     // Create menus
     (app.paperprinter as any).createMenus();
@@ -98,8 +99,8 @@ describe('System Integration Tests', () => {
     // Generate PDF
     await (app.paperprinter as any).generatePdf();
     
-    assert.ok(app.pdf.docInfo.pdfDoc, 'Should generate PDF');
-    assert.ok(app.pdf.docInfo.pageTotal > 0, 'Should have pages');
+    assert.ok(app.pdf.docInfo().pdfDoc, 'Should generate PDF');
+    assert.ok(app.pdf.docInfo().pageTotal > 0, 'Should have pages');
     
     app.done();
   });

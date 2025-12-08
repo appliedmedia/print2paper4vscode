@@ -15,7 +15,7 @@ describe('DocInfo_PaperPrinter', () => {
     // Create menus before tests that need them (menus are created on-demand in production)
     // Access private createMenus method through type assertion
     (app.paperprinter as unknown as { createMenus(): void }).createMenus();
-    docInfo = DocInfo_PaperPrinter.create(app);
+    docInfo = DocInfo_PaperPrinter.create({ reg: app.reg });
   });
 
   afterEach(() => {

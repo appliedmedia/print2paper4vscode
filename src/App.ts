@@ -116,27 +116,6 @@ export class App {
     this.reg.done();
     // dx is managed by Registry, will be cleaned up there
   }
-
-  // Utility methods - delegate to Utils singleton
-  forceNumber(value: ForceNumber_scalar_t): number {
-    return this.reg.getInstance<Utils>('utils')!.forceNumber(value);
-  }
-
-  forceNumbers(
-    dict: ForceNumber_dict_t,
-    useForZero = 0,
-    requiredKeys?: readonly string[]
-  ): ForceNumbers_t {
-    return this.reg.getInstance<Utils>('utils')!.forceNumbers(dict, useForZero, requiredKeys);
-  }
-
-  hasContent(content: string | number | boolean | undefined = ''): boolean {
-    return this.reg.getInstance<Utils>('utils')!.hasContent(content);
-  }
-
-  templateDictReplace(source: string, dictionary: Record<string, string>): string {
-    return this.reg.getInstance<Utils>('utils')!.templateDictReplace(source, dictionary);
-  }
 }
 
 // end, App.ts

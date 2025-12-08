@@ -10,7 +10,7 @@ describe('PDF Header and Footer', () => {
   beforeEach(() => {
     app = new App({ context: mockContext, vscode: mockVSCode });
     installHeaderFooterMenuStubs(app);
-    app.paperprinter.docInfo.printTitle = 'Test Document';
+    app.paperprinter.docInfo().printTitle = 'Test Document';
   });
 
   afterEach(() => {
@@ -18,38 +18,38 @@ describe('PDF Header and Footer', () => {
   });
 
   it('should generate PDF without headers/footers when set to none', async () => {
-    app.pdf.docInfo.pageSizeId = 'a4';
-    app.pdf.docInfo.orient = 'portrait';
-    app.pdf.docInfo.fontSizePx = 12;
-    app.pdf.docInfo.lineHeightPx = 18;
-    app.pdf.docInfo.fontFamily = 'Courier';
-    app.pdf.docInfo.theme = 'github-light';
-    app.pdf.docInfo.code = 'console.log("test");';
-    app.pdf.docInfo.languageId = 'javascript';
+    app.pdf.docInfo().pageSizeId = 'a4';
+    app.pdf.docInfo().orient = 'portrait';
+    app.pdf.docInfo().fontSizePx = 12;
+    app.pdf.docInfo().lineHeightPx = 18;
+    app.pdf.docInfo().fontFamily = 'Courier';
+    app.pdf.docInfo().theme = 'github-light';
+    app.pdf.docInfo().code = 'console.log("test");';
+    app.pdf.docInfo().languageId = 'javascript';
 
     await app.pdf.generatePdf();
     
-    assert.ok(app.pdf.docInfo.pdfDoc, 'Should generate PDF');
-    assert.ok(app.pdf.docInfo.pageTotal > 0, 'Should have pages');
+    assert.ok(app.pdf.docInfo().pdfDoc, 'Should generate PDF');
+    assert.ok(app.pdf.docInfo().pageTotal > 0, 'Should have pages');
   });
 
   it('should handle multi-page PDF generation', async () => {
-    app.pdf.docInfo.pageSizeId = 'a4';
-    app.pdf.docInfo.orient = 'portrait';
-    app.pdf.docInfo.fontSizePx = 12;
-    app.pdf.docInfo.lineHeightPx = 18;
-    app.pdf.docInfo.fontFamily = 'Courier';
-    app.pdf.docInfo.theme = 'github-light';
+    app.pdf.docInfo().pageSizeId = 'a4';
+    app.pdf.docInfo().orient = 'portrait';
+    app.pdf.docInfo().fontSizePx = 12;
+    app.pdf.docInfo().lineHeightPx = 18;
+    app.pdf.docInfo().fontFamily = 'Courier';
+    app.pdf.docInfo().theme = 'github-light';
     
     // Generate long code to trigger multi-page
     const longCode = Array(100).fill('console.log("This is a test line");').join('\n');
-    app.pdf.docInfo.code = longCode;
-    app.pdf.docInfo.languageId = 'javascript';
+    app.pdf.docInfo().code = longCode;
+    app.pdf.docInfo().languageId = 'javascript';
 
     await app.pdf.generatePdf();
     
-    assert.ok(app.pdf.docInfo.pdfDoc, 'Should generate PDF');
-    const pageCount = app.pdf.docInfo.pageTotal;
+    assert.ok(app.pdf.docInfo().pdfDoc, 'Should generate PDF');
+    const pageCount = app.pdf.docInfo().pageTotal;
     assert.ok(pageCount > 1, `Should have multiple pages, got ${pageCount}`);
   });
 
@@ -59,20 +59,20 @@ describe('PDF Header and Footer', () => {
     for (const marginId of marginIds) {
       app.pdf.resetCaches();
       
-      app.pdf.docInfo.pageSizeId = 'a4';
-      app.pdf.docInfo.orient = 'portrait';
-      app.pdf.docInfo.fontSizePx = 12;
-      app.pdf.docInfo.lineHeightPx = 18;
-      app.pdf.docInfo.fontFamily = 'Courier';
-      app.pdf.docInfo.theme = 'github-light';
-      app.pdf.docInfo.code = 'const x = 42;';
-      app.pdf.docInfo.languageId = 'javascript';
-      app.pdf.docInfo.marginId = marginId as any;
+      app.pdf.docInfo().pageSizeId = 'a4';
+      app.pdf.docInfo().orient = 'portrait';
+      app.pdf.docInfo().fontSizePx = 12;
+      app.pdf.docInfo().lineHeightPx = 18;
+      app.pdf.docInfo().fontFamily = 'Courier';
+      app.pdf.docInfo().theme = 'github-light';
+      app.pdf.docInfo().code = 'const x = 42;';
+      app.pdf.docInfo().languageId = 'javascript';
+      app.pdf.docInfo().marginId = marginId as any;
 
       await app.pdf.generatePdf();
       
-      assert.ok(app.pdf.docInfo.pdfDoc, `Should generate PDF with ${marginId} margins`);
-      assert.ok(app.pdf.docInfo.pageTotal > 0, `Should have pages with ${marginId} margins`);
+      assert.ok(app.pdf.docInfo().pdfDoc, `Should generate PDF with ${marginId} margins`);
+      assert.ok(app.pdf.docInfo().pageTotal > 0, `Should have pages with ${marginId} margins`);
     }
   });
 
@@ -82,18 +82,18 @@ describe('PDF Header and Footer', () => {
     for (const orient of orientations) {
       app.pdf.resetCaches();
       
-      app.pdf.docInfo.pageSizeId = 'a4';
-      app.pdf.docInfo.orient = orient;
-      app.pdf.docInfo.fontSizePx = 12;
-      app.pdf.docInfo.lineHeightPx = 18;
-      app.pdf.docInfo.fontFamily = 'Courier';
-      app.pdf.docInfo.theme = 'github-light';
-      app.pdf.docInfo.code = 'const x = 42;';
-      app.pdf.docInfo.languageId = 'javascript';
+      app.pdf.docInfo().pageSizeId = 'a4';
+      app.pdf.docInfo().orient = orient;
+      app.pdf.docInfo().fontSizePx = 12;
+      app.pdf.docInfo().lineHeightPx = 18;
+      app.pdf.docInfo().fontFamily = 'Courier';
+      app.pdf.docInfo().theme = 'github-light';
+      app.pdf.docInfo().code = 'const x = 42;';
+      app.pdf.docInfo().languageId = 'javascript';
 
       await app.pdf.generatePdf();
       
-      assert.ok(app.pdf.docInfo.pdfDoc, `Should generate PDF in ${orient} orientation`);
+      assert.ok(app.pdf.docInfo().pdfDoc, `Should generate PDF in ${orient} orientation`);
       
       const pageSizePx = await app.pdf.getPageSizePx();
       
@@ -111,18 +111,18 @@ describe('PDF Header and Footer', () => {
     for (const pageSize of pageSizes) {
       app.pdf.resetCaches();
       
-      app.pdf.docInfo.pageSizeId = pageSize as any;
-      app.pdf.docInfo.orient = 'portrait';
-      app.pdf.docInfo.fontSizePx = 12;
-      app.pdf.docInfo.lineHeightPx = 18;
-      app.pdf.docInfo.fontFamily = 'Courier';
-      app.pdf.docInfo.theme = 'github-light';
-      app.pdf.docInfo.code = 'const x = 42;';
-      app.pdf.docInfo.languageId = 'javascript';
+      app.pdf.docInfo().pageSizeId = pageSize as any;
+      app.pdf.docInfo().orient = 'portrait';
+      app.pdf.docInfo().fontSizePx = 12;
+      app.pdf.docInfo().lineHeightPx = 18;
+      app.pdf.docInfo().fontFamily = 'Courier';
+      app.pdf.docInfo().theme = 'github-light';
+      app.pdf.docInfo().code = 'const x = 42;';
+      app.pdf.docInfo().languageId = 'javascript';
 
       await app.pdf.generatePdf();
       
-      assert.ok(app.pdf.docInfo.pdfDoc, `Should generate PDF with ${pageSize} size`);
+      assert.ok(app.pdf.docInfo().pdfDoc, `Should generate PDF with ${pageSize} size`);
       
       const pageSizePx = await app.pdf.getPageSizePx();
       assert.ok(pageSizePx.widthPx > 0, `${pageSize} should have width`);

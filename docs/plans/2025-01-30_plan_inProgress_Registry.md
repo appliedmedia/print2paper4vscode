@@ -2,7 +2,13 @@
 
 **Status**: Stage 0.1-0.3 Complete | Stage 1 Complete | Stage 2 Complete | Stage 3 Complete | Stage 4 Complete | Stage 5 Complete | Stage 6 Complete | Stage 7 Complete | Stage 8 Complete | Stage 9 Optional
 
-**Quick Status**: Registry migration FULLY COMPLETE! Stage 8 completed: All components now receive `{ reg: Registry }` instead of `{ app: App }`, use `this.fn.component.method()` pattern for dependencies, and access App utilities via `this.reg.app.method()`. Yaml and Persist are factory classes (not Registry components). All 330 tests passing. Components declare dependencies explicitly via `this.reg.use()`. Stage 9 optimizations remain as optional future enhancements.
+**Quick Status**: Registry migration FULLY COMPLETE! ✅
+
+Stage 8 completed: All components now receive `{ reg: Registry }` instead of `{ app: App }`, use `this.fn.component.method()` pattern for dependencies, and access App utilities via `this.reg.app.method()`.
+
+Yaml and Persist are factory classes (not Registry components). All 330 tests passing (verified Dec 6, 2025). Components declare dependencies explicitly via `this.reg.use()`.
+
+Test fixes applied: factory method signatures corrected, singleton usage in integration tests, method call signatures fixed. Stage 9 optimizations remain as optional future enhancements.
 
 ---
 
@@ -97,6 +103,7 @@
 #### ✅ Registry Migration Complete (Stages 0-7)
 
 **Completed Work:**
+
 - ✅ Registry infrastructure created and tested (Stages 0-1)
 - ✅ Leaf components migrated: OS, Yaml (Stage 2)
 - ✅ Core infrastructure migrated: VSCodeAPIs, Persist, UI (Stage 3)
@@ -107,6 +114,7 @@
 - ✅ All 330 tests passing throughout migration
 
 **Architecture Decisions:**
+
 - Registry manages component lifecycle and lazy instantiation
 - Components use `static readonly id` for Registry identification
 - `dx.sub` always available via `always: ['dx.sub']` array
@@ -116,6 +124,7 @@
 - Singleton pattern for service classes (Coords, UIWebView, all core services)
 
 **Optional Future Enhancements (Stage 8):**
+
 - Add strong typing for dependency requests
 - Add dependency validation
 - Performance profiling and optimization
@@ -2123,6 +2132,7 @@ use<T>(request: DependencyRequest): T {
 - [x] Components access app utilities via `this.reg.app` when needed (for templateDictReplace, forceNumber, etc.)
 
 Components updated:
+
 - [x] VSCodeAPIs
 - [x] UI
 - [x] PDF
@@ -2174,14 +2184,22 @@ Components updated:
 - [x] Verify YAML and Persist factories work correctly
 - [x] Fix test mocking issue: Tests now recreate component instances after mocking for Registry binding
 
-#### 8.7: Documentation Updates ⏸️
+#### 8.7: Documentation Updates ✅
 
 - [x] Update plan document with completion status
-- [ ] Update AGENTS.md with new constructor pattern
-- [ ] Add examples showing { reg: Registry } pattern
-- [ ] Document when to use this.reg.app for utilities vs this.fn for components
+- [x] Update AGENTS.md with new constructor pattern
+- [x] Add examples showing { reg: Registry } pattern
+- [x] Document when to use this.reg.app for utilities vs. this.fn for components
+
+**Implementation Notes:**
+
+- Fixed test factory method calls to use `{ reg: app.reg }` instead of `app`
+- Fixed UIWebView singleton usage in integration tests (use `app.uiwebview` instead of `new UIWebView()`)
+- Fixed DocInfo_PDF method signature mismatch in `pdfPtsToCssPx()` calls (pass number directly, not object)
+- All 330 tests passing after fixes
 
 **Key Implementation Details:**
+
 - Registry.app changed from `private` to `public readonly` to enable `this.reg.app.utilityMethod()` access
 - Yaml and Persist are factory classes, not Registry components - called directly
 - Components use typed accessor properties for singleton instances: `private get pdf() { return this.reg.getInstance<PDF>('pdf')!; }`

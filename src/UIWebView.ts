@@ -49,11 +49,6 @@ export class UIWebView {
   private readonly handleMenuItemSelectedBound: MessageHandler_t;
   private readonly handleDxMessageBound: MessageHandler_t;
 
-  // Typed accessors for singleton components
-  private get pdf() { return this.reg.getInstance<import('./PDF').PDF>('pdf')!; }
-  private get ui() { return this.reg.getInstance<import('./UI').UI>('ui')!; }
-  private get uimenumgr() { return this.reg.getInstance<import('./UIMenuMgr').UIMenuMgr>('uimenumgr')!; }
-
   constructor(args: { reg: Registry }) {
     this.reg = args.reg;
     // Request methods via Registry
@@ -64,7 +59,15 @@ export class UIWebView {
       'yaml.create',
       'persist.set',
       'utils.forceNumber',
-      'utils.templateDictReplace'
+      'utils.templateDictReplace',
+      'uimenumgr.getMenuItemIdSelected',
+      'uimenumgr.getValueForMenuItemId',
+      'uimenumgr.handleMenuItemSelected',
+      'pdf.docInfo',
+      'ui.addToolbar',
+      'ui.registerMessageHandler',
+      'ui.unregisterMessageHandler',
+      'ui.yaml'
     );
     this.dx = this.fn.dx.sub({ name: 'UIWebView' });
     this._yaml = this.fn.yaml.create({ filePath: 'src/UIWebView.yaml', dataStruct: UIWebView.kYaml });
@@ -78,32 +81,8 @@ export class UIWebView {
     this.registerMessageHandlers();
   }
 
-  get yaml() {
+  yaml() {
     return this._yaml.get();
-  }
-
-  /**
-   * Create and configure menu manager (for external use)
-   * @deprecated Menu manager should be accessed via this.reg.getInstance('uimenumgr')!
-   */
-  createMenus() {
-    const dx = this.dx.sub({ name: 'createMenus' });
-
-    try {
-      // Menu manager is always available via this.reg.getInstance('uimenumgr')!
-      dx.out('Returning app menu manager');
-      return this.reg.getInstance('uimenumgr')!;
-    } finally {
-      dx.done();
-    }
-  }
-
-  /**
-   * Get the menu manager
-   * @deprecated Use this.reg.getInstance('uimenumgr')! directly
-   */
-  getMenus() {
-    return this.reg.getInstance('uimenumgr')!;
   }
 
   /**
@@ -116,8 +95,8 @@ export class UIWebView {
   async displayPdfPanel(): Promise<WebviewPanelId_t> {
     const dx = this.dx.sub({ name: 'displayPdfPanel' });
 
-    // Use DocInfo_PDF directly from app.pdf.docInfo
-    const docInfo = this.pdf.docInfo;
+    // Use DocInfo_PDF directly from app.pdf.docInfo()
+    const docInfo = this.fn.pdf.docInfo();
 
     if (!docInfo.pdfDoc) {
       dx.error('PDF document not generated');
@@ -161,7 +140,7 @@ export class UIWebView {
       const html = await this.generatePDFHTML(pdf_data_url, pdfData);
 
       // Add toolbar
-      const htmlWithToolbar = await this.ui.addToolbar(html);
+      const htmlWithToolbar = await this.fn.ui.addToolbar(html);
 
       // Create or reuse webview panel
       const panelId = await this.fn.vscodeapis.getOrCreateWebviewPanel({
@@ -196,13 +175,13 @@ export class UIWebView {
       }
 
       // Get templates
-      const base_css = this.ui.yaml.base_css;
-      const templates = this.yaml;
+      const base_css = this.fn.ui.yaml().base_css;
+      const templates = this.yaml();
 
       // Get zoom level from zoomLevel menu persist
       const zoomMenuItemId =
-        this.uimenumgr.getMenuItemIdSelected(kZoomLevel.id) || kZoomLevel.altId;
-      const rawZoom = this.uimenumgr.getValueForMenuItemId({ menuId: kZoomLevel.id, menuItemId: zoomMenuItemId });
+        this.fn.uimenumgr.getMenuItemIdSelected(kZoomLevel.id) || kZoomLevel.altId;
+      const rawZoom = this.fn.uimenumgr.getValueForMenuItemId({ menuId: kZoomLevel.id, menuItemId: zoomMenuItemId });
       // Coerce to number (forceNumber always returns valid number or 0)
       const coercedZoom = this.fn.utils.forceNumber(rawZoom);
       // Use coerced value if finite and positive, otherwise fall back to hardcoded default
@@ -280,7 +259,7 @@ export class UIWebView {
         ];
 
         messageHandlers.forEach(({ type, handler }) => {
-          this.ui.unregisterMessageHandler({ messageType: type, handler });
+          this.fn.ui.unregisterMessageHandler({ messageType: type, handler });
         });
 
         this.handlersRegistered = false;
@@ -311,7 +290,7 @@ export class UIWebView {
     ];
 
     messageHandlers.forEach(({ type, handler }) => {
-      this.ui.registerMessageHandler({ messageType: type, handler });
+      this.fn.ui.registerMessageHandler({ messageType: type, handler });
     });
 
     this.handlersRegistered = true;
@@ -342,7 +321,7 @@ export class UIWebView {
   private async handleMenuItemSelected(msg: SendToExt_menuItemSelected): Promise<void> {
     const { menuId, menuItemId, contextDict } = msg;
     // Forward to UIMenuMgr for handling
-    await this.uimenumgr.handleMenuItemSelected(menuId, menuItemId, contextDict);
+    await this.fn.uimenumgr.handleMenuItemSelected(menuId, menuItemId, contextDict);
   }
 
   /**

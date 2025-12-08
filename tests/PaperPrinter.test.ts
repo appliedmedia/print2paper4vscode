@@ -22,14 +22,14 @@ describe('PaperPrinter', () => {
   });
 
   it('should have docInfo property', () => {
-    assert.ok(paperPrinter.docInfo);
-    assert.ok(typeof paperPrinter.docInfo.rawCode === 'string');
-    assert.ok(typeof paperPrinter.docInfo.languageId === 'string');
+    assert.ok(paperPrinter.docInfo());
+    assert.ok(typeof paperPrinter.docInfo().rawCode === 'string');
+    assert.ok(typeof paperPrinter.docInfo().languageId === 'string');
   });
 
   it('should handle print command from VS Code', async () => {
-    paperPrinter.docInfo.rawCode = 'console.log("test");';
-    paperPrinter.docInfo.languageId = 'javascript';
+    paperPrinter.docInfo().rawCode = 'console.log("test");';
+    paperPrinter.docInfo().languageId = 'javascript';
 
     try {
       await paperPrinter.handlePrintCommandFromVSCode();
@@ -41,8 +41,8 @@ describe('PaperPrinter', () => {
   });
 
   it('should handle print request', async () => {
-    paperPrinter.docInfo.rawCode = 'console.log("test");';
-    paperPrinter.docInfo.languageId = 'javascript';
+    paperPrinter.docInfo().rawCode = 'console.log("test");';
+    paperPrinter.docInfo().languageId = 'javascript';
 
     // Mock PDF generation
     const originalGeneratePdf = (paperPrinter as any).generatePdf;
@@ -62,13 +62,13 @@ describe('PaperPrinter', () => {
   });
 
   it('should set document content', () => {
-    paperPrinter.docInfo.rawCode = 'const x = 42;';
-    paperPrinter.docInfo.languageId = 'javascript';
-    paperPrinter.docInfo.printTitle = 'Test Document';
+    paperPrinter.docInfo().rawCode = 'const x = 42;';
+    paperPrinter.docInfo().languageId = 'javascript';
+    paperPrinter.docInfo().printTitle = 'Test Document';
 
-    assert.strictEqual(paperPrinter.docInfo.rawCode, 'const x = 42;');
-    assert.strictEqual(paperPrinter.docInfo.languageId, 'javascript');
-    assert.strictEqual(paperPrinter.docInfo.printTitle, 'Test Document');
+    assert.strictEqual(paperPrinter.docInfo().rawCode, 'const x = 42;');
+    assert.strictEqual(paperPrinter.docInfo().languageId, 'javascript');
+    assert.strictEqual(paperPrinter.docInfo().printTitle, 'Test Document');
   });
 
   it('should compute line height from font size', () => {
@@ -82,7 +82,7 @@ describe('PaperPrinter', () => {
   });
 
   it('should get YAML icons', () => {
-    const yaml = paperPrinter.yaml;
+    const yaml = paperPrinter.yaml();
     assert.ok(yaml);
     assert.ok(typeof yaml === 'object');
   });
@@ -99,18 +99,18 @@ describe('PaperPrinter', () => {
   });
 
   it('should handle generatePdf', async () => {
-    paperPrinter.docInfo.rawCode = 'const x = 42;';
-    paperPrinter.docInfo.languageId = 'javascript';
-    paperPrinter.docInfo.printTitle = 'Test';
+    paperPrinter.docInfo().rawCode = 'const x = 42;';
+    paperPrinter.docInfo().languageId = 'javascript';
+    paperPrinter.docInfo().printTitle = 'Test';
 
     // Create menus first
     const paperPrinterPrivate = paperPrinter as any;
     paperPrinterPrivate.createMenus();
 
     await paperPrinterPrivate.generatePdf();
-    assert.ok(app.pdf.docInfo.pdfDoc !== null, 'PDF should be generated');
-    assert.strictEqual(app.pdf.docInfo.title, 'Test', 'Title should match');
-    assert.ok(app.pdf.docInfo.pageTotal > 0, 'Should have pages');
+    assert.ok(app.pdf.docInfo().pdfDoc !== null, 'PDF should be generated');
+    assert.strictEqual(app.pdf.docInfo().title, 'Test', 'Title should match');
+    assert.ok(app.pdf.docInfo().pageTotal > 0, 'Should have pages');
   });
 
   it('should get current font family', () => {

@@ -27,10 +27,10 @@ describe('UIWebView', () => {
     const doc = new jsPDF();
     doc.text('Test PDF Content', 10, 10);
     
-    // Set up app.pdf.docInfo with the PDF document
+    // Set up app.pdf.docInfo() with the PDF document
     // pageTotal and pageSizePx are computed getters, so just set pdfDoc
-    app.pdf.docInfo.pdfDoc = doc;
-    app.pdf.docInfo.title = 'Test PDF';
+    app.pdf.docInfo().pdfDoc = doc;
+    app.pdf.docInfo().title = 'Test PDF';
 
     try {
       await uiWebView.displayPdfPanel();
@@ -47,12 +47,12 @@ describe('UIWebView', () => {
     doc.addPage();
     doc.text('Page 2', 10, 10);
     
-    // Set up app.pdf.docInfo with the PDF document
+    // Set up app.pdf.docInfo() with the PDF document
     // pageTotal and pageSizePx are computed getters, so just set pdfDoc
-    app.pdf.docInfo.pdfDoc = doc;
-    app.pdf.docInfo.title = 'Multi-Page PDF';
+    app.pdf.docInfo().pdfDoc = doc;
+    app.pdf.docInfo().title = 'Multi-Page PDF';
 
-    assert.strictEqual(app.pdf.docInfo.pageTotal, 2);
+    assert.strictEqual(app.pdf.docInfo().pageTotal, 2);
     
     try {
       await uiWebView.displayPdfPanel();
@@ -63,8 +63,8 @@ describe('UIWebView', () => {
   });
 
   it('should validate PDF data requirements', async () => {
-    // Set up app.pdf.docInfo with no PDF document
-    app.pdf.docInfo.pdfDoc = null;
+    // Set up app.pdf.docInfo() with no PDF document
+    app.pdf.docInfo().pdfDoc = null;
 
     try {
       await uiWebView.displayPdfPanel();

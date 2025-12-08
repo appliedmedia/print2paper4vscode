@@ -11,7 +11,7 @@ describe('DocInfo_PDF', () => {
 
   beforeEach(() => {
     app = new App({ context: mockContext, vscode: mockVSCode });
-    docInfo = DocInfo_PDF.create(app);
+    docInfo = DocInfo_PDF.create({ reg: app.reg });
   });
 
   afterEach(() => {

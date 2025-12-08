@@ -58,9 +58,6 @@ export class Stylize {
   private highlighter: Highlighter | null = null;
   private dx: Diagnostics;
 
-  // Typed accessor for pdf singleton
-  private get pdf() { return this.reg.getInstance<import('./PDF').PDF>('pdf')!; }
-
   constructor(args: { reg: Registry }) {
     this.reg = args.reg;
     // Request methods via Registry
@@ -71,7 +68,9 @@ export class Stylize {
       'vscodeapis.getEditorTypography',
       'os.pathJoin',
       'os.fileRead',
-      'utils.templateDictReplace'
+      'utils.templateDictReplace',
+      'pdf.readyToPrint',
+      'pdf.renderTokenizedLine'
     );
     this.dx = this.fn.dx.sub({ name: 'Stylize' });
   }
@@ -280,10 +279,10 @@ export class Stylize {
       const filteredTokens = tokens;
 
       // Render directly to PDF if PDF is initialized and ready
-      if (this.pdf.docInfo.pdfDoc) {
+      if (this.fn.pdf.readyToPrint()) {
         for (let lineNum = 0; lineNum < filteredTokens.length; lineNum++) {
           const line = filteredTokens[lineNum];
-          this.pdf.renderTokenizedLine({ lineNumber: lineNum, tokens: line });
+          this.fn.pdf.renderTokenizedLine({ lineNumber: lineNum, tokens: line });
         }
       }
 

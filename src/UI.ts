@@ -62,9 +62,6 @@ export class UI {
   private dx: Diagnostics;
   private _yaml: YamlInstance<typeof UI.kYaml>;
 
-  // Typed accessor for uimenumgr singleton
-  private get uimenumgr() { return this.reg.getInstance<import('./UIMenuMgr').UIMenuMgr>('uimenumgr')!; }
-
   constructor(args: { reg: Registry }) {
     this.reg = args.reg;
     // Request methods via Registry
@@ -78,7 +75,10 @@ export class UI {
       'yaml.create',
       'persist.get',
       'persist.set',
-      'utils.templateDictReplace'
+      'utils.templateDictReplace',
+      'uimenumgr.getUIMenus_HTML',
+      'uimenumgr.getUIMenus_CSS',
+      'uimenumgr.getUIMenus_JS'
     );
     this.dx = this.fn.dx.sub({ name: 'UI' });
     
@@ -86,12 +86,15 @@ export class UI {
     this._yaml = this.fn.yaml.create({ filePath: 'src/UI.yaml', dataStruct: UI.kYaml });
   }
 
-  done(): void {
-    this.dx.done();
+  /**
+   * Get the UI yaml data
+   */
+  yaml() {
+    return this._yaml.get();
   }
 
-  get yaml() {
-    return this._yaml.get();
+  done(): void {
+    this.dx.done();
   }
 
   // Register a message handler for a specific message type
@@ -166,14 +169,14 @@ export class UI {
 
     try {
       // Get menu HTML from UIMenuMgr
-      const menuHtml = await this.uimenumgr.getUIMenus_HTML();
+      const menuHtml = await this.fn.uimenumgr.getUIMenus_HTML();
 
       // Get menu CSS and JS
-      const uiMenuCss = this.uimenumgr.getUIMenus_CSS();
-      const uiMenuJs = this.uimenumgr.getUIMenus_JS();
+      const uiMenuCss = this.fn.uimenumgr.getUIMenus_CSS();
+      const uiMenuJs = this.fn.uimenumgr.getUIMenus_JS();
 
-      // Get toolbar templates from yaml getter
-      const templates = this.yaml;
+      // Get toolbar templates from yaml method
+      const templates = this.yaml();
 
       // Get toolbar position, validate it's within bounds, else use default
       // Note: VS Code extensions run in Node.js and don't have access to window dimensions.
@@ -227,7 +230,7 @@ export class UI {
 
   // Get base CSS
   getBaseCSS(): string {
-    return this.yaml.base_css;
+    return this.yaml().base_css;
   }
 
   // Choose save location
