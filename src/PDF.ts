@@ -14,6 +14,7 @@ import { Coords } from './Coords';
 import jsPDF from 'jspdf';
 import { DocInfo_PDF } from './DocInfo_PDF';
 import type { ThemedToken } from 'shiki';
+import { parse, type HTMLElement, type Node, NodeType } from 'node-html-parser';
 
 type HeaderFooterRenderablePos = HeaderFooterPos_t;
 
@@ -637,8 +638,8 @@ export class PDF {
    * Render tokenized line content into PDF document
    * Called by tokenizer to add content to PDF as tokens are processed
    */
-  public renderTokenizedLine(args: { lineNumber: number; tokens: ThemedToken[] }): void {
-    const dx = this.dx.sub({ name: 'renderTokenizedLine' });
+  public renderFromTokens(args: { lineNumber: number; tokens: ThemedToken[] }): void {
+    const dx = this.dx.sub({ name: 'renderFromTokens' });
     dx.require(args, ['lineNumber', 'tokens']);
     const { lineNumber, tokens } = args;
 
@@ -750,6 +751,465 @@ export class PDF {
     } finally {
       dx.done();
     }
+  }
+
+  /**
+   * Get font info from markdown preview settings or editor settings
+   */
+  private getMarkdownFontInfo(): { fontFamily: string; fontSize: number } {
+    // Get markdown preview settings (these control what user sees in MD preview)
+    const mdConfig = this.reg.app.vscodeapis.vscode.workspace.getConfiguration('markdown');
+    const mdFontFamily = mdConfig.get<string>('preview.fontFamily');
+    const mdFontSize = mdConfig.get<number>('preview.fontSize');
+    
+    // Use markdown preview settings, or fall back to editor settings
+    const editorTypo = this.reg.app.vscodeapis.getEditorTypography();
+    const fontFamily = mdFontFamily || editorTypo.fontFamily;
+    const fontSize = mdFontSize || editorTypo.fontSize;
+    
+    return { fontFamily, fontSize };
+  }
+
+  /**
+   * Extract font info from HTML element's style attribute
+   * Returns null if no style info found
+   */
+  private getFontFromElementStyle(element: HTMLElement): { fontFamily?: string; fontSize?: number } | null {
+    const style = element.getAttribute('style');
+    if (!style) return null;
+    
+    const result: { fontFamily?: string; fontSize?: number } = {};
+    
+    // Parse font-family from style
+    const fontFamilyMatch = style.match(/font-family:\s*([^;]+)/i);
+    if (fontFamilyMatch) {
+      result.fontFamily = fontFamilyMatch[1].trim().replace(/['"]/g, '');
+    }
+    
+    // Parse font-size from style
+    const fontSizeMatch = style.match(/font-size:\s*(\d+(?:\.\d+)?)(px|pt|em)/i);
+    if (fontSizeMatch) {
+      const size = parseFloat(fontSizeMatch[1]);
+      const unit = fontSizeMatch[2];
+      
+      if (unit === 'px') {
+        result.fontSize = size;
+      } else if (unit === 'pt') {
+        result.fontSize = size * (96 / 72); // Convert pt to px
+      } else if (unit === 'em') {
+        const baseFontInfo = this.getMarkdownFontInfo();
+        result.fontSize = size * baseFontInfo.fontSize;
+      }
+    }
+    
+    return Object.keys(result).length > 0 ? result : null;
+  }
+
+  /**
+   * Render HTML-formatted markdown to PDF
+   * Uses VS Code's markdown renderer output
+   */
+  renderFromHTML(html: string): void {
+    const dx = this.dx.sub({ name: 'renderFromHTML' });
+    
+    try {
+      const root = parse(html);
+      
+      for (const element of root.childNodes) {
+        if (element.nodeType === NodeType.ELEMENT_NODE) {
+          this.renderHTMLElement(element as HTMLElement);
+        }
+      }
+      
+      dx.out('Rendered HTML to PDF');
+    } finally {
+      dx.done();
+    }
+  }
+
+  /**
+   * HTML element handlers - maps tag name to render function
+   */
+  private readonly htmlElementHandlers: Record<string, (element: HTMLElement) => void> = {
+    'h1': (el) => this.renderHeading(el, 1),
+    'h2': (el) => this.renderHeading(el, 2),
+    'h3': (el) => this.renderHeading(el, 3),
+    'h4': (el) => this.renderHeading(el, 4),
+    'h5': (el) => this.renderHeading(el, 5),
+    'h6': (el) => this.renderHeading(el, 6),
+    'p': (el) => this.renderParagraph(el),
+    'ul': (el) => this.renderList(el),
+    'ol': (el) => this.renderList(el),
+    'pre': (el) => this.renderCodeBlock(el),
+    'blockquote': (el) => this.renderBlockquote(el),
+    'hr': () => this.renderHorizontalRule(),
+  };
+
+  /**
+   * Render a single HTML element
+   */
+  private renderHTMLElement(element: HTMLElement): void {
+    const dx = this.dx.sub({ name: 'renderHTMLElement' });
+    
+    const handler = this.htmlElementHandlers[element.tagName.toLowerCase()];
+    if (handler) {
+      handler(element);
+    } else {
+      dx.out(`Unknown element: ${element.tagName}`);
+    }
+    
+    dx.done();
+  }
+
+  /**
+   * Render heading element
+   */
+  private renderHeading(element: HTMLElement, level: number): void {
+    if (!this.docInfo().pdfDoc) return;
+    
+    // Try to get font from element style first
+    const styleFont = this.getFontFromElementStyle(element);
+    
+    // Fall back to markdown preview settings
+    const baseFontInfo = this.getMarkdownFontInfo();
+    
+    const fontFamily = styleFont?.fontFamily || baseFontInfo.fontFamily;
+    const fontSize = styleFont?.fontSize || baseFontInfo.fontSize;
+    
+    // Calculate heading size if not specified in style
+    let headingSize: number;
+    if (styleFont?.fontSize) {
+      headingSize = this.fn.coords.cssPxToPdfPts(styleFont.fontSize);
+    } else {
+      const sizeMultipliers = [2.0, 1.5, 1.25, 1.1, 1.0, 0.9];
+      const multiplier = sizeMultipliers[level - 1] || 1.0;
+      headingSize = this.fn.coords.cssPxToPdfPts(fontSize * multiplier);
+    }
+    
+    // Spacing based on level
+    const spacingBefore = Math.max(12 - level * 2, 4);
+    const spacingAfter = Math.max(6 - level, 2);
+    
+    // Add spacing before
+    this.currentY += spacingBefore;
+    if (this.shouldBreakPage(this.currentY)) this.addPageBreak();
+    
+    // Set heading font
+    const jsPdfFont = this.mapFontFamilyToJsPDF(fontFamily, this.docInfo().pdfDoc!);
+    this.docInfo().pdfDoc!.setFont(jsPdfFont, 'bold');
+    this.docInfo().pdfDoc!.setFontSize(headingSize);
+    
+    // Render text with wrapping (reuse existing logic)
+    this.renderTextContent(element.text);
+    
+    // Add spacing after
+    this.currentY += spacingAfter;
+    
+    // Reset to normal font
+    this.docInfo().pdfDoc!.setFontSize(this.docInfo().fontSizePts);
+    this.docInfo().pdfDoc!.setFont(jsPdfFont, 'normal');
+  }
+
+  /**
+   * Render paragraph with inline formatting
+   */
+  private renderParagraph(element: HTMLElement): void {
+    if (!this.docInfo().pdfDoc) return;
+    
+    // Process inline content (text, bold, italic, code, etc.)
+    this.renderInlineContent(element);
+    
+    // Move to next line with spacing
+    this.currentY += this.currentLineHeight;
+    this.currentX = this.docInfo().marginPts.leftMarginPts;
+    this.currentY += 6; // Paragraph spacing
+    
+    if (this.shouldBreakPage(this.currentY)) this.addPageBreak();
+  }
+
+  /**
+   * Inline element handlers - maps tag name to render function
+   */
+  private getInlineElementHandlers(): Record<string, (element: HTMLElement, savedFont: any) => void> {
+    return {
+      'strong': (el, savedFont) => {
+        const styleFont = this.getFontFromElementStyle(el);
+        const fontName = styleFont?.fontFamily 
+          ? this.mapFontFamilyToJsPDF(styleFont.fontFamily, this.docInfo().pdfDoc!)
+          : savedFont.fontName;
+        
+        this.docInfo().pdfDoc!.setFont(fontName, 'bold');
+        this.renderTextContent(el.text);
+        this.docInfo().pdfDoc!.setFont(savedFont.fontName, savedFont.fontStyle);
+      },
+      'b': (el, savedFont) => {
+        const styleFont = this.getFontFromElementStyle(el);
+        const fontName = styleFont?.fontFamily 
+          ? this.mapFontFamilyToJsPDF(styleFont.fontFamily, this.docInfo().pdfDoc!)
+          : savedFont.fontName;
+        
+        this.docInfo().pdfDoc!.setFont(fontName, 'bold');
+        this.renderTextContent(el.text);
+        this.docInfo().pdfDoc!.setFont(savedFont.fontName, savedFont.fontStyle);
+      },
+      'em': (el, savedFont) => {
+        const styleFont = this.getFontFromElementStyle(el);
+        const fontName = styleFont?.fontFamily 
+          ? this.mapFontFamilyToJsPDF(styleFont.fontFamily, this.docInfo().pdfDoc!)
+          : savedFont.fontName;
+        
+        this.docInfo().pdfDoc!.setFont(fontName, 'italic');
+        this.renderTextContent(el.text);
+        this.docInfo().pdfDoc!.setFont(savedFont.fontName, savedFont.fontStyle);
+      },
+      'i': (el, savedFont) => {
+        const styleFont = this.getFontFromElementStyle(el);
+        const fontName = styleFont?.fontFamily 
+          ? this.mapFontFamilyToJsPDF(styleFont.fontFamily, this.docInfo().pdfDoc!)
+          : savedFont.fontName;
+        
+        this.docInfo().pdfDoc!.setFont(fontName, 'italic');
+        this.renderTextContent(el.text);
+        this.docInfo().pdfDoc!.setFont(savedFont.fontName, savedFont.fontStyle);
+      },
+      'code': (el, savedFont) => {
+        const styleFont = this.getFontFromElementStyle(el);
+        let monoFontFamily: string;
+        
+        if (styleFont?.fontFamily) {
+          monoFontFamily = styleFont.fontFamily;
+        } else {
+          const editorTypo = this.reg.app.vscodeapis.getEditorTypography();
+          monoFontFamily = editorTypo.fontFamily;
+        }
+        
+        const monoFont = this.mapFontFamilyToJsPDF(monoFontFamily, this.docInfo().pdfDoc!);
+        this.docInfo().pdfDoc!.setFont(monoFont, 'normal');
+        this.renderTextContent(el.text);
+        this.docInfo().pdfDoc!.setFont(savedFont.fontName, savedFont.fontStyle);
+      },
+    };
+  }
+
+  /**
+   * Render inline content (handles bold, italic, code, etc.)
+   */
+  private renderInlineContent(element: HTMLElement): void {
+    if (!this.docInfo().pdfDoc) return;
+    
+    const inlineHandlers = this.getInlineElementHandlers();
+    
+    for (const child of element.childNodes) {
+      if (child.nodeType === NodeType.TEXT_NODE) {
+        // Plain text
+        this.renderTextContent(child.text);
+      } else if (child.nodeType === NodeType.ELEMENT_NODE) {
+        const el = child as HTMLElement;
+        const savedFont = this.docInfo().pdfDoc!.getFont();
+        
+        const handler = inlineHandlers[el.tagName.toLowerCase()];
+        if (handler) {
+          handler(el, savedFont);
+        } else {
+          // Recursively process unknown inline elements
+          this.renderInlineContent(el);
+        }
+      }
+    }
+  }
+
+  /**
+   * Render text content with character wrapping
+   * REUSES existing character wrapping logic from renderFromTokens
+   */
+  private renderTextContent(text: string): void {
+    if (!this.docInfo().pdfDoc || !text) return;
+    
+    const marginsPts = this.docInfo().marginPts;
+    const pageSize = this.getPageDimensions(this.docInfo().pageSizeId, this.docInfo().orient);
+    const unit = this.getUnitForPageSize(this.docInfo().pageSizeId);
+    const { widthPts: pageWidthPts } = this.pageSizeToPts(pageSize.width, pageSize.height, unit);
+    const availableWidth = pageWidthPts - marginsPts.leftMarginPts - marginsPts.rightMarginPts;
+    
+    let content = text;
+    
+    while (content.length > 0) {
+      // REUSE existing findCharacterBreakPoint - same logic as tokens!
+      const charsToRender = this.findCharacterBreakPoint(
+        content,
+        this.currentX,
+        marginsPts.leftMarginPts,
+        availableWidth
+      );
+      
+      if (charsToRender === 0) {
+        // Wrap to next line
+        this.currentY += this.currentLineHeight;
+        this.currentX = marginsPts.leftMarginPts;
+        if (this.shouldBreakPage(this.currentY)) this.addPageBreak();
+        continue;
+      }
+      
+      const portion = content.substring(0, charsToRender);
+      this.docInfo().pdfDoc!.text(portion, this.currentX, this.currentY);
+      this.currentX += this.docInfo().pdfDoc!.getTextWidth(portion);
+      content = content.substring(charsToRender);
+    }
+  }
+
+  /**
+   * Render list (ul or ol)
+   */
+  private renderList(element: HTMLElement): void {
+    const isOrdered = element.tagName.toLowerCase() === 'ol';
+    let itemNumber = 1;
+    const indentSize = 20; // Points
+    
+    const items = element.querySelectorAll('li');
+    for (const item of items) {
+      // Render prefix (bullet or number)
+      const prefix = isOrdered ? `${itemNumber}. ` : '• ';
+      
+      // Save position for indent
+      const savedLeftMargin = this.docInfo().marginPts.leftMarginPts;
+      this.docInfo().marginPts.leftMarginPts += indentSize;
+      this.currentX = this.docInfo().marginPts.leftMarginPts;
+      
+      // Render prefix
+      if (this.docInfo().pdfDoc) {
+        this.docInfo().pdfDoc.text(prefix, this.currentX, this.currentY);
+        this.currentX += this.docInfo().pdfDoc.getTextWidth(prefix);
+      }
+      
+      // Render item content
+      this.renderInlineContent(item);
+      
+      // Move to next line
+      this.currentY += this.currentLineHeight;
+      this.currentX = this.docInfo().marginPts.leftMarginPts;
+      this.currentY += 3; // Item spacing
+      
+      if (this.shouldBreakPage(this.currentY)) this.addPageBreak();
+      
+      // Restore margin
+      this.docInfo().marginPts.leftMarginPts = savedLeftMargin;
+      
+      if (isOrdered) itemNumber++;
+    }
+    
+    // Add spacing after list
+    this.currentY += 6;
+  }
+
+  /**
+   * Render code block with syntax highlighting
+   * REUSES existing Shiki tokenization!
+   */
+  private async renderCodeBlock(element: HTMLElement): Promise<void> {
+    const codeElement = element.querySelector('code');
+    if (!codeElement) return;
+    
+    const code = codeElement.text;
+    const langClass = codeElement.classList.value.split(' ').find((c: string) => c.startsWith('language-'));
+    const lang = langClass ? langClass.replace('language-', '') : 'plaintext';
+    
+    // Add spacing before
+    this.currentY += 6;
+    if (this.shouldBreakPage(this.currentY)) this.addPageBreak();
+    
+    // Save left margin and indent
+    const savedLeftMargin = this.docInfo().marginPts.leftMarginPts;
+    this.docInfo().marginPts.leftMarginPts += 20;
+    this.currentX = this.docInfo().marginPts.leftMarginPts;
+    
+    // REUSE existing Shiki tokenization!
+    const tokens = await this.fn.stylize.tokenize({
+      code,
+      languageId: lang as LanguageId_t,
+      theme: this.docInfo().theme
+    });
+    
+    // Set monospace font
+    if (this.docInfo().pdfDoc) {
+      const editorTypo = this.reg.app.vscodeapis.getEditorTypography();
+      const monoFont = this.mapFontFamilyToJsPDF(editorTypo.fontFamily, this.docInfo().pdfDoc);
+      const savedFont = this.docInfo().pdfDoc.getFont();
+      const savedSize = this.docInfo().pdfDoc.getFontSize();
+      
+      this.docInfo().pdfDoc.setFont(monoFont, 'normal');
+      this.docInfo().pdfDoc.setFontSize(savedSize * 0.9);
+      
+      // REUSE existing renderFromTokens for each line!
+      for (let i = 0; i < tokens.length; i++) {
+        this.renderFromTokens({ lineNumber: i, tokens: tokens[i] });
+      }
+      
+      // Restore font
+      this.docInfo().pdfDoc.setFont(savedFont.fontName, savedFont.fontStyle);
+      this.docInfo().pdfDoc.setFontSize(savedSize);
+    }
+    
+    // Restore margin
+    this.docInfo().marginPts.leftMarginPts = savedLeftMargin;
+    this.currentX = savedLeftMargin;
+    
+    // Add spacing after
+    this.currentY += 6;
+  }
+
+  /**
+   * Render blockquote with indentation
+   */
+  private renderBlockquote(element: HTMLElement): void {
+    // Save left margin and indent
+    const savedLeftMargin = this.docInfo().marginPts.leftMarginPts;
+    this.docInfo().marginPts.leftMarginPts += 20;
+    this.currentX = this.docInfo().marginPts.leftMarginPts;
+    
+    // Add spacing before
+    this.currentY += 6;
+    if (this.shouldBreakPage(this.currentY)) this.addPageBreak();
+    
+    // Render children
+    for (const child of element.childNodes) {
+      if (child.nodeType === NodeType.ELEMENT_NODE) {
+        this.renderHTMLElement(child as HTMLElement);
+      }
+    }
+    
+    // Restore margin
+    this.docInfo().marginPts.leftMarginPts = savedLeftMargin;
+    this.currentX = savedLeftMargin;
+    
+    // Add spacing after
+    this.currentY += 6;
+  }
+
+  /**
+   * Render horizontal rule
+   */
+  private renderHorizontalRule(): void {
+    if (!this.docInfo().pdfDoc) return;
+    
+    const marginsPts = this.docInfo().marginPts;
+    const pageSize = this.getPageDimensions(this.docInfo().pageSizeId, this.docInfo().orient);
+    const unit = this.getUnitForPageSize(this.docInfo().pageSizeId);
+    const { widthPts: pageWidthPts } = this.pageSizeToPts(pageSize.width, pageSize.height, unit);
+    const availableWidth = pageWidthPts - marginsPts.leftMarginPts - marginsPts.rightMarginPts;
+    
+    this.currentY += 6; // Spacing before
+    if (this.shouldBreakPage(this.currentY)) this.addPageBreak();
+    
+    // Draw line
+    this.docInfo().pdfDoc.setDrawColor('#cccccc');
+    this.docInfo().pdfDoc.line(
+      marginsPts.leftMarginPts,
+      this.currentY,
+      marginsPts.leftMarginPts + availableWidth,
+      this.currentY
+    );
+    
+    this.currentY += 6; // Spacing after
   }
 
   private computePageBreakMetrics(): { maxContentY: number; bottomMarginY: number } {

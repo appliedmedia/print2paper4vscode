@@ -70,7 +70,7 @@ export class Stylize {
       'os.fileRead',
       'utils.templateDictReplace',
       'pdf.readyToPrint',
-      'pdf.renderTokenizedLine'
+      'pdf.renderFromTokens'
     );
     this.dx = this.fn.dx.sub({ name: 'Stylize' });
   }
@@ -282,7 +282,7 @@ export class Stylize {
       if (this.fn.pdf.readyToPrint()) {
         for (let lineNum = 0; lineNum < filteredTokens.length; lineNum++) {
           const line = filteredTokens[lineNum];
-          this.fn.pdf.renderTokenizedLine({ lineNumber: lineNum, tokens: line });
+          this.fn.pdf.renderFromTokens({ lineNumber: lineNum, tokens: line });
         }
       }
 

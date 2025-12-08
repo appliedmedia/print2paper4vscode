@@ -88,6 +88,7 @@
   "dependencies": {
     "@shikijs/vscode-textmate": "^10.0.2",
     "jspdf": "^3.0.3",
+    "node-html-parser": "^7.0.1",
     "shiki": "^3.11.0",
     "vscode-oniguruma": "^2.0.1",
     "yaml": "latest"

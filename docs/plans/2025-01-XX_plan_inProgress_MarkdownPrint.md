@@ -9,8 +9,8 @@
 
 
 ### 🚧 Phase 2: HTML Rendering in PDF Class
-- ☐▶ Install `node-html-parser` dependency
-- ☐ Rename `PDF.renderTokenizedLine()` → `PDF.renderFromTokens()` for clarity
+- ✅ Install `node-html-parser` dependency
+- ✅ Rename `PDF.renderTokenizedLine()` → `PDF.renderFromTokens()` for clarity
 - ☐ Add `PDF.renderFromHTML(html: string)` method to parse and render HTML
 - ☐ Add `htmlElementHandlers` map and `renderHTMLElement()` dispatcher method
 - ☐ Add `getMarkdownFontInfo()` and `getFontFromElementStyle()` font helper methods
