@@ -62,142 +62,23 @@ All core functionality for markdown printing in both raw and rendered modes has 
 
 ### 🚧 Phase 5: Fix Test Infrastructure
 
-**Problem**: Tests fail with `Cannot find module 'vscode'` because `VSCodeAPIs.ts` imports the `Extension` type from vscode module:
+**⚠️ DO NOT pursue the vscode mock approach - it will not work for multiple reasons:**
 
-```typescript
-import type {
-  Disposable,
-  ExtensionContext,
-  TextEditor,
-  TextDocument,
-  Uri,
-  WebviewPanel,
-  Extension,  // <-- This import causes the test failure
-} from 'vscode';
-```
+1. **Mocking complexity**: VS Code's Extension API and markdown renderer are complex runtime dependencies that cannot be properly mocked without the actual VS Code environment
+2. **Test accuracy**: Mocked tests would not validate actual behavior - markdown rendering happens through VS Code's extension, not our code
+3. **Maintenance burden**: Any changes to VS Code APIs would require updating mocks
+4. **False confidence**: Tests would pass but not validate real functionality
 
-**Why It's Breaking**: The `Extension` type is imported at the top of `VSCodeAPIs.ts`. When tests try to import any module that depends on VSCodeAPIs (which is most of them through the Registry), Node.js tries to resolve the 'vscode' module and fails.
+**The Right Approach**:
 
-**Solution Options**:
+- ☐ Tests should run in VS Code test environment using `@vscode/test-electron` or similar
+- ☐ Update test infrastructure to use VS Code's test runner instead of plain Node.js
+- ☐ Tests need actual VS Code extension host to test markdown rendering
+- ☐ Consider integration tests in VS Code environment rather than unit tests with mocks
 
-#### Option 1: Fix vscode-mock.cjs (Quick Fix - Recommended)
+**Current State**: Tests are broken due to vscode module imports, but fixing them requires proper VS Code test infrastructure, not mocks. This is a larger architectural change to the test system.
 
-**Pros**: Minimal code changes, fixes root cause
-**Cons**: May need to keep updating as more types are used
-
-**Implementation**:
-
-```javascript
-// In vscode-mock.cjs, add:
-exports.Extension = class Extension {
-  constructor(id, exports) {
-    this.id = id;
-    this.exports = exports;
-    this.isActive = true;
-  }
-};
-```
-
-**Tasks**:
-
-- ☐ Add `Extension` type export to vscode-mock.cjs
-- ☐ Verify all vscode types used in codebase are exported
-- ☐ Ensure mock properly handles ES6 module imports
-
-#### Option 2: Type-Only Imports (Better Fix)
-
-**Pros**: Clean separation, TypeScript best practice
-**Cons**: Requires careful review of all type imports
-
-**Implementation**:
-
-```typescript
-// VSCodeAPIs.ts - separate type-only imports
-import type {
-  Extension,     // Type-only
-  TextEditor,    // Type-only
-  TextDocument,  // Type-only
-  Uri,           // Type-only
-  WebviewPanel,  // Type-only
-} from 'vscode';
-import type { Disposable, ExtensionContext } from 'vscode'; // Actually used at runtime
-```
-
-**Tasks**:
-
-- ☐ Move `Extension` import to type-only import in VSCodeAPIs.ts
-- ☐ Use `import type { Extension }` instead of runtime import
-- ☐ Verify this allows tests to run without full vscode module
-
-#### Option 3: Enhance test-utils.ts (Comprehensive)
-
-**Pros**: Most complete, allows better test isolation
-**Cons**: More work, needs maintenance
-
-**Tasks**:
-
-- ☐ Add mock for `getExtension_Markdown()` returning mock extension object
-- ☐ Add mock for `renderMarkdownToHtml()` returning sample HTML
-- ☐ Update `extensions.getExtension()` to return proper Extension type
-- ☐ Add `extensions.all` array with mock extensions
-
-**Recommended Approach**: Hybrid of Option 1 + Option 2
-
-1. **Immediate**: Fix vscode-mock.cjs to export missing types
-2. **Better**: Convert to type-only imports where appropriate
-3. **Best**: Add proper test coverage for new markdown functionality
-
-**New Tests Needed**:
-
-```typescript
-// tests/PDF-MarkdownRender.test.ts
-describe('PDF Markdown Rendering', () => {
-  test('renderFromTokens accepts 2D token array', () => {
-    // Test updated signature
-  });
-  
-  test('renderFromHTML parses and renders HTML', () => {
-    // Test HTML parsing
-  });
-  
-  test('renderHeading creates proper heading', () => {
-    // Test heading rendering
-  });
-  
-  test('renderList handles ordered and unordered lists', () => {
-    // Test list rendering
-  });
-});
-
-// tests/VSCodeAPIs-Markdown.test.ts
-describe('VSCodeAPIs Markdown', () => {
-  test('getExtension_Markdown returns markdown extension', () => {
-    // Test extension lookup
-  });
-  
-  test('renderMarkdownToHtml returns HTML', async () => {
-    // Test markdown to HTML conversion
-  });
-});
-```
-
-**Implementation Steps**:
-
-1. ☐ Fix vscode-mock.cjs to export Extension class
-2. ☐ Review all VSCodeAPIs imports and convert to type-only where appropriate
-3. ☐ Update PDF.test.ts to use new renderFromTokens signature
-4. ☐ Create PDF-MarkdownRender.test.ts with new tests
-5. ☐ Create VSCodeAPIs-Markdown.test.ts with new tests
-6. ☐ Run `npm test` and verify all tests pass
-7. ☐ Update test-utils.ts with markdown-specific mocks if needed
-
-**Time Estimate**:
-
-- vscode-mock.cjs fix: 30 minutes
-- Type-only imports conversion: 1 hour
-- New test creation: 2-3 hours
-- Debug and fix issues: 1-2 hours
-- **Total**: 4.5-6.5 hours
+**Decision**: Defer test infrastructure overhaul to separate task. Current implementation compiles and can be manually tested in VS Code.
 
 ### 🚧 Phase 6: Testing & Polish
 
