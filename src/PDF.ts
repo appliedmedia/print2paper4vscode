@@ -406,16 +406,12 @@ export class PDF {
   /**
    * Render tokenized or HTML content to PDF
    * Handles both tokens (syntax highlighting) and HTML (rendered markdown)
+   * Assumes setupPdf() has already been called
    */
   async render(result: { tokens?: ThemedToken[][]; html?: string }): Promise<void> {
     const dx = this.dx.sub({ name: 'render' });
 
     try {
-      if (!this.readyToPrint()) {
-        dx.error('PDF not initialized. Call setupPdf() first.');
-        throw new Error('PDF not initialized');
-      }
-
       if (result.html) {
         // HTML rendering path (rendered markdown)
         dx.out('Rendering HTML to PDF');

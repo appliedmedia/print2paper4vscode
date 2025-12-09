@@ -144,11 +144,7 @@ export class PaperPrinter {
       'pdf.printDirectly',
       'pdf.saveAsPDF',
       'pdf.generatePdf',
-      'pdf.resetCaches',
-      'pdf.setupPdf',
-      'pdf.addHeaderAndFooter',
-      'pdf.renderFromHTML',
-      'pdf.finishPdf'
+      'pdf.resetCaches'
     );
     this.dx = this.fn.dx.sub({ name: 'PaperPrinter' });
 
@@ -305,32 +301,16 @@ export class PaperPrinter {
       this.fn.pdf.docInfo().languageId = this.docInfo().languageId;
       this.fn.pdf.docInfo().title = this.docInfo().printTitle;
 
-      // Branch based on content type and useRenderedMd flag
-      if (this.docInfo().languageId === 'markdown' && this.docInfo().useRenderedMd) {
-        // Rendered markdown mode: Get HTML from VS Code markdown API
-        dx.out(`Generating PDF from rendered markdown HTML`);
-        const editor = this.fn.vscodeapis.getActiveTextEditor();
-        if (!editor) throw new Error('No active editor');
-        
-        const html = await this.fn.vscodeapis.renderMarkdownToHtml({
-          markdown: this.docInfo().rawCode,
-          document: editor.document
-        });
-        
-        // Setup PDF for HTML rendering
-        this.fn.pdf.setupPdf();
-        this.fn.pdf.addHeaderAndFooter();
-        
-        // Render HTML to PDF (async to support code block tokenization)
-        await this.fn.pdf.renderFromHTML(html);
-        
-        // Finish PDF
-        this.fn.pdf.finishPdf();
-      } else {
-        // Raw source mode: Tokenize with Shiki (works for all languages including markdown)
-        dx.out(`Generating complete PDF with unified tokenize + build approach`);
-        await this.fn.pdf.generatePdf();
-      }
+      // Get active editor for markdown rendering context
+      const editor = this.fn.vscodeapis.getActiveTextEditor();
+      if (!editor) throw new Error('No active editor');
+
+      // Generate PDF - handles both tokenized and HTML rendering internally
+      dx.out(`Generating complete PDF`);
+      await this.fn.pdf.generatePdf({
+        useRenderedMd: this.docInfo().languageId === 'markdown' && this.docInfo().useRenderedMd,
+        document: editor.document
+      });
 
       dx.out(
         `PDF generation complete: ${this.fn.pdf.getPageTotal()} pages`

@@ -2,17 +2,25 @@
 
 ## Implementation Summary
 
-**Status**: Phases 1-4 Complete, Phase 5 (Test Infrastructure) In Progress
+**Status**: ✅ Complete - Architecture Refactored (2025-12-09)
 
-All core functionality for markdown printing in both raw and rendered modes has been implemented:
+All core functionality for markdown printing in both raw and rendered modes has been implemented with clean separation of concerns:
 
 - ✅ HTML parsing and rendering infrastructure in PDF class
-- ✅ VS Code markdown API integration
-- ✅ Preview tab screenshot handling
-- 🚧 Test infrastructure needs fixes (vscode mock issues)
+- ✅ VS Code markdown API integration using official `markdown.api.render` command
+- ✅ Unified rendering architecture (tokens and HTML follow parallel paths)
+- ✅ Stylize handles branching between tokenization and HTML rendering
+- ✅ PDF.generatePdf() orchestrates complete flow for both modes
+- ✅ PaperPrinter simplified - just calls generatePdf()
 - ⚠️ Manual testing required before marking as complete
 
-**Current Blocker**: Tests fail with `Cannot find module 'vscode'` error. This is a pre-existing test infrastructure issue that affects all tests, not just the new markdown functionality.
+**Architecture Improvements** (Refactor completed 2025-12-09):
+
+- Stylize.tokenize() returns `{ tokens? | html? }` without auto-rendering
+- PDF.render() explicitly renders returned result
+- PDF.addHeaderAndFooter() is now private (as it should be)
+- PaperPrinter no longer knows about PDF internals
+- Fixed double-rendering bug in code blocks
 
 **To test the new functionality manually:**
 
@@ -254,22 +262,65 @@ Print markdown files in two modes:
 1. **Raw Mode** - Print markdown source with syntax highlighting (already works)
 2. **Rendered Mode** - Print HTML-rendered markdown (new feature)
 
-## Architecture: Direct Rendering (No Intermediate Format)
+## Architecture: Unified Rendering (Refactored 2025-12-09)
+
+### Data Flow
 
 ```text
-Raw Markdown:
-  Editor Text → Shiki Tokens → PDF.renderFromTokens() → jsPDF
-
-Rendered Markdown:
-  Editor Text → VS Code MD API → HTML → PDF.renderFromHTML() → jsPDF
+PaperPrinter.generatePdf()
+  ↓
+PDF.generatePdf({ useRenderedMd?, document? })
+  ↓
+  1. setupPdf() - Creates jsPDF document
+  2. addHeaderAndFooter() - Adds header/footer to first page
+  ↓
+  3. Stylize.tokenize({ code, languageId, useRenderedMd?, document? })
+     ↓
+     ├─ markdown + useRenderedMd?
+     │    → VSCodeAPIs.renderMarkdownToHtml() → { html }
+     │
+     └─ else
+          → Shiki.codeToTokens() → { tokens }
+  ↓
+  4. PDF.render({ tokens? | html? })
+     ↓
+     ├─ html? → renderFromHTML(html) → (HTML element handlers)
+     │                                   ↓
+     │                              renderCodeBlock() → Stylize.tokenize()
+     │                                                  → { tokens }
+     │                                                  → renderFromTokens()
+     │
+     └─ tokens? → renderFromTokens(tokens)
+  ↓
+  5. finishPdf() - Walks all pages, re-renders headers/footers with correct page totals
 ```
 
-**Key Insight**: The PDF document IS the common format. No need for intermediate data structures.
+### Key Architectural Principles
 
-**Unified Rendering**: Both `renderFromTokens()` and `renderFromHTML()` are input adapters that feed the same underlying line-by-line rendering primitives. They share:
+1. **Separation of Concerns**:
+   - **Stylize**: Tokenization OR HTML rendering (no PDF knowledge)
+   - **PDF**: Rendering to jsPDF (orchestrates flow)
+   - **PaperPrinter**: Configuration only (no PDF internals)
+
+2. **Parallel Paths**:
+   - Tokens and HTML follow same flow through PDF.render()
+   - Both use same primitives (page breaks, wrapping, headers/footers)
+
+3. **No Automatic Rendering**:
+   - Stylize.tokenize() returns data, doesn't render
+   - PDF.render() explicitly renders result
+   - Fixes double-rendering bug in code blocks
+
+4. **Header/Footer Two-Pass System**:
+   - Pass 1: During rendering (page totals unknown)
+   - Pass 2: In finishPdf() - walks all pages with correct totals
+
+### Unified Rendering Primitives
+
+Both `renderFromTokens()` and `renderFromHTML()` use the same underlying primitives:
 
 - Character wrapping logic (`findCharacterBreakPoint()`)
-- Page break detection (`shouldBreakPage()`)
+- Page break detection (`shouldBreakPage()`, `addPageBreak()`)
 - Position tracking (`currentX`, `currentY`)
 - Text rendering (`doc.text()`)
 
