@@ -24,10 +24,11 @@ All core functionality for markdown printing in both raw and rendered modes has 
 
 **To test the new functionality manually:**
 
-1. Enable rendered markdown mode by setting `this.docInfo().useRenderedMd = true` (UI menu toggle not yet implemented - see Phase 6)
-2. Open a markdown file in VS Code
-3. Run the print command (Alt+P or context menu)
-4. Verify both raw (syntax highlighted) and rendered (HTML) modes work correctly
+1. Open a markdown file in VS Code
+2. Run the print command (Alt+P or context menu)
+3. Click the markdown mode toggle button (📝) in the webview menu bar
+4. Verify toggling between raw (syntax highlighted) and rendered (HTML) modes
+5. Verify PDF regenerates automatically when mode changes
 
 ## TODO List
 
@@ -106,24 +107,31 @@ All core functionality for markdown printing in both raw and rendered modes has 
 
 **Decision**: Defer test infrastructure overhaul to separate task. Current implementation compiles and can be manually tested in VS Code.
 
-### ☐ Phase 6: Add UI Menu Toggle (TODO)
+### ✅ Phase 6: Add UI Menu Toggle (COMPLETE)
 
 **Goal**: Add a top-level menu item that toggles between "Raw Markdown" and "Rendered Markdown" modes.
 
-**Requirements**:
+**Implemented** (Commit f73bb64):
 
-- ☐ Add new menu item to UIMenu system (appears only when viewing markdown files)
-- ☐ Menu item toggles `docInfo.useRenderedMd` on/off
-- ☐ Menu shows current mode (checkmark or icon)
-- ☐ Menu item label: "Markdown: Raw" vs "Markdown: Rendered"
-- ☐ Persist user preference (save to VS Code global state)
-- ☐ Update PaperPrinter to read persisted preference on startup
+- ✅ Added `kMarkdownMode` menu constant to PaperPrinter_t.ts
+- ✅ Menu button with 📝 icon in top-level menu bar
+- ✅ `handleSelection_MarkdownMode()` toggles `useRenderedMd` flag on click
+- ✅ Triggers PDF regeneration with new mode automatically
+- ✅ Pattern matches zoom in/out buttons (simple click toggle)
 
-**Implementation Notes**:
+**How It Works**:
 
-Currently `useRenderedMd` must be set programmatically. This menu will allow users to switch modes without code changes. The menu should only appear when the active editor contains a markdown file.
+1. User clicks markdown mode button (📝)
+2. Handler toggles `docInfo.useRenderedMd` between true/false
+3. PDF regenerates automatically with new mode
+4. Mode changes between raw (syntax highlighted) and rendered (HTML)
 
-**Location**: Top-level menu bar, next to existing print menus (zoom, orientation, etc.)
+**Future Enhancements**:
+
+- ☐ Visual feedback: Change icon or add checkmark to show current mode
+- ☐ Menu item label: Show "Raw" vs "Rendered" text
+- ☐ Conditional visibility: Only show when viewing markdown files
+- ☐ Persist preference: Save to VS Code global state across sessions
 
 ### 🚧 Phase 7: Testing & Polish
 
