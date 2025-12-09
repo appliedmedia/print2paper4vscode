@@ -147,7 +147,7 @@ All core functionality for markdown printing in both raw and rendered modes has 
 
 ### What Was Implemented
 
-**Phase 2: HTML Rendering in PDF Class**
+#### Phase 2: HTML Rendering in PDF Class
 
 - Installed `node-html-parser` dependency
 - Renamed `PDF.renderTokenizedLine()` → `PDF.renderFromTokens()` with 2D token array signature
@@ -163,14 +163,14 @@ All core functionality for markdown printing in both raw and rendered modes has 
   - `renderBlockquote()` - indented content
   - `renderHorizontalRule()` - hr element
 
-**Phase 3: VS Code Markdown API Integration**
+#### Phase 3: VS Code Markdown API Integration
 
 - Added `useRenderedMd: boolean` property to `DocInfo_PaperPrinter`
 - Added `VSCodeAPIs.getExtension_Markdown()` method
 - Added `VSCodeAPIs.renderMarkdownToHtml()` wrapper method
 - Updated `PaperPrinter.generatePdf()` to branch on `useRenderedMd` flag
 
-**Phase 4: Preview Tab Handling**
+#### Phase 4: Preview Tab Handling
 
 - Added `OSMac.getCurrentAppName()` with caching
 - Added `OSMac.getEditorWindowBounds()` via AppleScript (gets window position and size)
