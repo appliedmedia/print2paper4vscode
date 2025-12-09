@@ -52,15 +52,31 @@ All core functionality for markdown printing in both raw and rendered modes has 
 - ✅ **PaperPrinter**: Update `generatePdf()` to branch on `this.docInfo.useRenderedMd` flag
 - ☐ **Follow-up TODO**: Create menu item to toggle `useRenderedMd` (implement later)
 
-### ✅ Phase 4: Preview Tab Handling (COMPLETE)
+### ⚠️ Phase 4: Preview Tab Handling (INCORRECT APPROACH - TO BE REMOVED)
 
-- ✅ **OSMac**: Add `getCurrentAppName()` to detect Cursor/Code/etc and cache
-- ✅ **OSMac**: Add `getEditorWindowBounds()` via AppleScript with dynamic app name
-- ✅ **OSMac**: Add `getScreenDimensions()` via AppleScript as fallback
-- ✅ **OSMac**: Add `screenshotWindow(bounds?)` using screencapture command
-- ✅ **PaperPrinter**: When preview tab detected, prompt user for screenshot
-- ✅ **PaperPrinter**: Implement `screenshotAndPrint()` with window bounds or full screen fallback
-- ✅ Prompt: "Due to VS Code's implementation of private data in Preview tabs, they cannot be printed except via screenshot. Do that?"
+**The screenshot approach for preview tabs was implemented but is the WRONG solution.**
+
+**Why it's wrong:**
+
+- We should not screenshot preview tabs
+- Instead, we should control the markdown rendering ourselves
+- Need a menu toggle to switch between raw and rendered markdown views
+
+**Code that was implemented (TO BE REMOVED):**
+
+- ✅ **OSMac**: Add `getCurrentAppName()` - TO BE REMOVED
+- ✅ **OSMac**: Add `getEditorWindowBounds()` - TO BE REMOVED
+- ✅ **OSMac**: Add `getScreenDimensions()` - TO BE REMOVED
+- ✅ **OSMac**: Add `screenshotWindow(bounds?)` - TO BE REMOVED
+- ✅ **PaperPrinter**: `handlePreviewTabPrint()` - TO BE REMOVED
+- ✅ **PaperPrinter**: `screenshotAndPrint()` - TO BE REMOVED
+- ✅ AppleScript templates in OSMac.yaml - TO BE REMOVED
+
+**Correct approach:**
+
+- Add a top-level menu item that toggles between "Raw Markdown" and "Rendered Markdown"
+- When user prints markdown, they choose which mode via the menu
+- No need to detect or handle preview tabs differently
 
 ### 🚧 Phase 5: Fix Test Infrastructure
 
