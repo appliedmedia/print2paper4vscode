@@ -24,7 +24,7 @@ All core functionality for markdown printing in both raw and rendered modes has 
 
 **To test the new functionality manually:**
 
-1. Enable rendered markdown mode by setting `this.docInfo().useRenderedMd = true` (menu toggle TODO)
+1. Enable rendered markdown mode by setting `this.docInfo().useRenderedMd = true` (UI menu toggle not yet implemented - see Phase 6)
 2. Open a markdown file in VS Code
 3. Run the print command (Alt+P or context menu)
 4. Verify both raw (syntax highlighted) and rendered (HTML) modes work correctly
@@ -58,7 +58,7 @@ All core functionality for markdown printing in both raw and rendered modes has 
 - ✅ **VSCodeAPIs**: Add `getExtension_Markdown()` method to get extension reference
 - ✅ **VSCodeAPIs**: Add `renderMarkdownToHtml(markdown, document)` wrapper method
 - ✅ **PaperPrinter**: Update `generatePdf()` to branch on `this.docInfo.useRenderedMd` flag
-- ☐ **Follow-up TODO**: Create menu item to toggle `useRenderedMd` (implement later)
+- ☐ **Follow-up**: Create menu item to toggle `useRenderedMd` (see Phase 6 for details)
 
 ### ⚠️ Phase 4: Preview Tab Handling (INCORRECT APPROACH - TO BE REMOVED)
 
@@ -106,7 +106,26 @@ All core functionality for markdown printing in both raw and rendered modes has 
 
 **Decision**: Defer test infrastructure overhaul to separate task. Current implementation compiles and can be manually tested in VS Code.
 
-### 🚧 Phase 6: Testing & Polish
+### ☐ Phase 6: Add UI Menu Toggle (TODO)
+
+**Goal**: Add a top-level menu item that toggles between "Raw Markdown" and "Rendered Markdown" modes.
+
+**Requirements**:
+
+- ☐ Add new menu item to UIMenu system (appears only when viewing markdown files)
+- ☐ Menu item toggles `docInfo.useRenderedMd` on/off
+- ☐ Menu shows current mode (checkmark or icon)
+- ☐ Menu item label: "Markdown: Raw" vs "Markdown: Rendered"
+- ☐ Persist user preference (save to VS Code global state)
+- ☐ Update PaperPrinter to read persisted preference on startup
+
+**Implementation Notes**:
+
+Currently `useRenderedMd` must be set programmatically. This menu will allow users to switch modes without code changes. The menu should only appear when the active editor contains a markdown file.
+
+**Location**: Top-level menu bar, next to existing print menus (zoom, orientation, etc.)
+
+### 🚧 Phase 7: Testing & Polish
 
 **Manual testing is required** - Extension must be loaded in VS Code.
 
@@ -218,7 +237,7 @@ apple_script_get_screen_dimensions: |
 
 ### Known Limitations
 
-1. **Manual Mode Toggle**: Currently `useRenderedMd` must be set programmatically. A menu item toggle should be added in the future.
+1. **Manual Mode Toggle**: Currently `useRenderedMd` must be set programmatically. UI menu toggle not yet implemented (see Phase 6 TODO).
 
 2. **Background Colors**: Code blocks and blockquotes don't yet extract background colors from themes (noted as future enhancement).
 
@@ -247,11 +266,11 @@ apple_script_get_screen_dimensions: |
 
 ### Future Enhancements
 
-- [ ] Add menu item to toggle `useRenderedMd` on/off
+- [ ] UI menu toggle for `useRenderedMd` (Phase 6 TODO - detailed plan above)
 - [ ] Extract background colors from theme for code/blockquotes
-- [ ] Add table support
-- [ ] Add image embedding support
-- [ ] Windows/Linux screenshot implementations
+- [ ] Add table support for rendered markdown
+- [ ] Add image embedding support for rendered markdown
+- [ ] Windows/Linux screenshot implementations (if screenshot approach is kept)
 
 ---
 
@@ -968,8 +987,6 @@ async generatePdf(): Promise<void> {
   }
 }
 ```
-
-**Follow-up TODO**: Create a menu item in the toolbar that toggles `docInfo.useRenderedMd` on/off. This will allow users to switch between raw and rendered markdown modes without code changes. Menu should only appear when viewing markdown files.
 
 **PDF** - Two separate rendering methods:
 
