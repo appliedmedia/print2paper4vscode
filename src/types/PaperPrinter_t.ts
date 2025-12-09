@@ -316,7 +316,7 @@ export const kZoomIn = {
 export const kMarkdownMode = {
   id: 'markdownMode',
   displayName: 'Markdown Mode',
-  iconSlotTriad: { begin: '', main: '📝', end: '' },
+  iconSlotTriad: { begin: '', main: '🔄', end: '' },
   altId: 'raw', // Default to raw mode
   methodName: 'MarkdownMode',
   isFlyout: false,
