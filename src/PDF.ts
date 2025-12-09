@@ -403,9 +403,44 @@ export class PDF {
     doc.setTextColor(r, g, b);
   }
 
-  // UNIFIED: Generate complete PDF during tokenization
+  /**
+   * Render tokenized or HTML content to PDF
+   * Handles both tokens (syntax highlighting) and HTML (rendered markdown)
+   */
+  async render(result: { tokens?: ThemedToken[][]; html?: string }): Promise<void> {
+    const dx = this.dx.sub({ name: 'render' });
+
+    try {
+      if (!this.readyToPrint()) {
+        dx.error('PDF not initialized. Call setupPdf() first.');
+        throw new Error('PDF not initialized');
+      }
+
+      if (result.html) {
+        // HTML rendering path (rendered markdown)
+        dx.out('Rendering HTML to PDF');
+        await this.renderFromHTML(result.html);
+      } else if (result.tokens) {
+        // Tokenized path (syntax highlighting)
+        dx.out(`Rendering ${result.tokens.length} tokenized lines to PDF`);
+        this.renderFromTokens(result.tokens);
+      } else {
+        dx.error('No tokens or HTML to render');
+        throw new Error('No tokens or HTML to render');
+      }
+
+      dx.out('Content rendered to PDF');
+    } catch (error) {
+      dx.error(`Failed to render: ${String(error)}`);
+      throw error;
+    } finally {
+      dx.done();
+    }
+  }
+
+  // UNIFIED: Generate complete PDF
   // Caller should set docInfo properties (code, languageId, title, fontFamily, fontSizePx, theme, etc.) before calling this
-  async generatePdf(): Promise<void> {
+  async generatePdf(args?: { useRenderedMd?: boolean; document?: any }): Promise<void> {
     const dx = this.dx.sub({ name: 'generatePdf' });
     dx.require({ code: this.docInfo().code, languageId: this.docInfo().languageId }, [
       'code',
@@ -413,20 +448,25 @@ export class PDF {
     ]);
 
     try {
-      // Setup PDF document for line-by-line rendering (uses docInfo properties)
+      // Setup PDF document
       this.setupPdf();
 
       // Add header and footer to first page
       this.addHeaderAndFooter();
 
-      // Tokenize and build complete PDF in one pass
-      await this.fn.stylize.tokenize({
+      // Tokenize or render to HTML
+      const result = await this.fn.stylize.tokenize({
         code: this.docInfo().code,
         languageId: this.docInfo().languageId,
-        theme: this.docInfo().theme
+        theme: this.docInfo().theme,
+        useRenderedMd: args?.useRenderedMd,
+        document: args?.document
       });
 
-      // Finish the PDF (sets this.docInfo().pdfDoc)
+      // Render content to PDF
+      await this.render(result);
+
+      // Finish the PDF (re-renders headers/footers with correct page totals)
       this.finishPdf();
 
       dx.out(`Generated complete PDF with ${this.docInfo().pageTotal} pages`);
@@ -1142,11 +1182,17 @@ export class PDF {
     this.currentX = this.docInfo().marginPts.leftMarginPts;
     
     // REUSE existing Shiki tokenization!
-    const tokens = await this.fn.stylize.tokenize({
+    const result = await this.fn.stylize.tokenize({
       code,
       languageId: lang as LanguageId_t,
       theme: this.docInfo().theme
     });
+    
+    if (!result.tokens) {
+      return; // No tokens to render
+    }
+    
+    const tokens = result.tokens;
     
     // Set monospace font
     const editorTypo = this.fn.vscodeapis.getEditorTypography();
@@ -1286,13 +1332,8 @@ export class PDF {
    * Add header and footer to current page
    * Uses position-based content settings from docInfo
    * Each position (left, center, right) can have: title, page, total, pageTotal, or null
-   * 
-   * NOTE: This method was changed from private to public to allow PaperPrinter to call it
-   * directly in the rendered markdown path (renderFromHTML). In the normal tokenized rendering
-   * path, headers/footers are added automatically during page breaks. In the HTML rendering path,
-   * PaperPrinter controls when headers/footers are added after the initial page setup.
    */
-  public addHeaderAndFooter(): void {
+  private addHeaderAndFooter(): void {
     const docInfo = this.docInfo();
     if (!docInfo.pdfDoc) {
       return;
