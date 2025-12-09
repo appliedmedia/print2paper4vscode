@@ -335,8 +335,8 @@ export const kMd = {
   isFlyout: false,
   flyoutMenuItemIds: [] as const,
   menuItems: [
-    { id: kMd_Raw.id, displayName: kMd_Raw.displayName },
-    { id: kMd_Render.id, displayName: kMd_Render.displayName },
+    { id: kMd_Raw.id, displayName: kMd_Raw.displayName, value: kMd_Raw.value },
+    { id: kMd_Render.id, displayName: kMd_Render.displayName, value: kMd_Render.value },
   ],
 } as const;
 export type MdMenuItems_t = (typeof kMd.menuItems)[number]['id'];
