@@ -991,33 +991,24 @@ export class PaperPrinter {
   ): Promise<HandleSelection_t> {
     const dx = this.dx.sub({ name: 'handleSelection_Md' });
     dx.require(args, ['menuId', 'menuItemId']);
-    const { menuItemId } = args;
-    let id = menuItemId;
-    let value: string | number | boolean = menuItemId;
+    const { menuId, menuItemId } = args;
+    
+    // Set defaults: if requesting default, use kMd_Raw, otherwise use selected menuItemId
+    const id = menuItemId === UIMenu.defaultId() ? kMd_Raw.id : menuItemId;
+    const value = this.fn.uimenumgr.getValueForMenuItemId({ menuId, menuItemId: id });
 
     if (menuItemId === UIMenu.defaultId()) {
-      // Return default mode (raw = false)
-      id = kMd_Raw.id;
-      value = kMd_Raw.value;
       dx.out(`Returning default markdown mode: ${id} (${value})`);
     } else {
-      // User selected a mode from the menu - look up the boolean value
-      if (menuItemId === kMd_Raw.id) {
-        value = kMd_Raw.value;
-      } else if (menuItemId === kMd_Render.id) {
-        value = kMd_Render.value;
-      }
-      
       dx.out(`Markdown mode selected: ${menuItemId} (value: ${value})`);
       
-      // Save selection to persist (no need to set flag - we read from menu when needed)
+      // Save selection and regenerate
       this.fn.uimenumgr.setValueForPersistIdOnMenuId({
         menuId: kMd.id,
         persistId: kMd.id as UI_t,
         value: menuItemId as PersistValue_t
       });
       
-      // Regenerate PDF with new mode
       void this.regenerateAndUpdateWebview();
     }
 
