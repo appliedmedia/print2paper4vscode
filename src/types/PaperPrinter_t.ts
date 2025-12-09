@@ -312,6 +312,18 @@ export const kZoomIn = {
   shortcutCode: 'Equal' as const, // KeyboardEvent.code for =/+ key (main keyboard)
 } as const;
 
+// Markdown rendering mode toggle (only visible for markdown files)
+export const kMarkdownMode = {
+  id: 'markdownMode',
+  displayName: 'Markdown Mode',
+  iconSlotTriad: { begin: '', main: '📝', end: '' },
+  altId: 'raw', // Default to raw mode
+  methodName: 'MarkdownMode',
+  isFlyout: false,
+  flyoutMenuItemIds: [] as const,
+  menuItems: [],
+} as const;
+
 export const kZoomLevel = {
   id: 'zoomLevel',
   displayName: 'Zoom Level',
@@ -409,6 +421,7 @@ export const kMenus = [
   kZoomOut,
   kZoomLevel,
   kZoomIn,
+  kMarkdownMode,
 ] as const;
 
 // end, PaperPrinter_t.ts

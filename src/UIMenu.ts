@@ -21,6 +21,7 @@ import {
   kZoomOut,
   kZoomIn,
   kZoomLevel,
+  kMarkdownMode,
   kMenus,
   type UIMenuItemValueFxn_t,
 } from './types/PaperPrinter_t';

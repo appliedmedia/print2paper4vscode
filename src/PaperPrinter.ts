@@ -58,6 +58,7 @@ import {
   kZoomOut,
   kZoomIn,
   kZoomLevel,
+  kMarkdownMode,
   kMenus,
 } from './types/PaperPrinter_t';
 
@@ -599,6 +600,11 @@ export class PaperPrinter {
     return [];
   }
 
+  private menuItems_MarkdownMode(): UIMenuItem_t[] {
+    // Markdown mode toggle has no menu items - it's just a button
+    return [];
+  }
+
   // Selection handler methods for each menu type
   /**
    * Regenerate PDF and update webview after any option change
@@ -970,6 +976,39 @@ export class PaperPrinter {
       this.zoomLevel_setTextEdit(this.fn.utils.forceNumber(value));
       void this.regenerateAndUpdateWebview();
     }
+    dx.done();
+    return { id, value };
+  }
+
+  /**
+   * Handle markdown mode toggle button click
+   * Toggles between raw (syntax highlighted) and rendered (HTML) markdown
+   */
+  private async handleSelection_MarkdownMode(
+    args: { menuId: MenuId_t; menuItemId: MenuItemId_t }
+  ): Promise<HandleSelection_t> {
+    const dx = this.dx.sub({ name: 'handleSelection_MarkdownMode' });
+    dx.require(args, ['menuId', 'menuItemId']);
+    const { menuItemId } = args;
+    let id = '';
+    let value: string | number | boolean = '';
+
+    // Buttons have no default - only process actual clicks
+    if (menuItemId !== UIMenu.defaultId()) {
+      // Toggle the useRenderedMd flag
+      const currentMode = this.docInfo().useRenderedMd;
+      const newMode = !currentMode;
+      
+      dx.out(`Toggling markdown mode: ${currentMode ? 'rendered' : 'raw'} → ${newMode ? 'rendered' : 'raw'}`);
+      
+      // Update the flag
+      this.docInfo().useRenderedMd = newMode;
+      
+      // Return the new mode value
+      id = kMarkdownMode.id;
+      value = newMode ? 'rendered' : 'raw';
+    }
+
     dx.done();
     return { id, value };
   }
