@@ -122,8 +122,6 @@ export class PaperPrinter {
       'stylize.getThemes',
       'os.dictReplace',
       'os.getLocale',
-      'os.getEditorWindowBounds',
-      'os.screenshotWindow',
       'os.fileOpenPrintDialog',
       'ui.showQuickPick',
       'yaml.create',
@@ -202,13 +200,6 @@ export class PaperPrinter {
    */
   async handlePrintCommandFromVSCode(): Promise<void> {
     try {
-      const category = this.fn.tabinspector.detectActiveTabCategory();
-      if (category === 'preview') {
-        // Preview tabs: screenshot and print
-        await this.handlePreviewTabPrint();
-        return;
-      }
-
       const info = this.fn.tabinspector.getEditorSelectionOrAll();
       if (!info || !info.text || !info.languageId) {
         this.dx.error('No active editor or content found');
@@ -1098,55 +1089,6 @@ export class PaperPrinter {
 
     dx.done();
     return { id, value };
-  }
-
-  /**
-   * Handle preview tab printing via screenshot
-   */
-  private async handlePreviewTabPrint(): Promise<void> {
-    const dx = this.dx.sub({ name: 'handlePreviewTabPrint' });
-    
-    try {
-      const message = 'Due to VS Code\'s implementation of private data in Preview tabs, ' +
-                      'they cannot be printed except via screenshot. Do that?';
-      
-      const choice = await this.fn.ui.showQuickPick([
-        { label: 'Take Screenshot & Print', value: 'yes' },
-        { label: 'Cancel', value: 'no' }
-      ]);
-      
-      if (choice === 'yes') {
-        await this.screenshotAndPrint();
-      }
-    } finally {
-      dx.done();
-    }
-  }
-
-  /**
-   * Screenshot editor window and print
-   */
-  private async screenshotAndPrint(): Promise<void> {
-    const dx = this.dx.sub({ name: 'screenshotAndPrint' });
-    
-    try {
-      // Try to get window bounds (works for Cursor, VS Code, etc.)
-      let bounds = await this.fn.os.getEditorWindowBounds();
-      
-      // If bounds unavailable, fall back to full screen
-      if (!bounds) {
-        dx.out('Window bounds unavailable, using full screen screenshot');
-        bounds = undefined; // screenshotWindow will use full screen
-      }
-      
-      // Take screenshot (window bounds or full screen)
-      const screenshotPath = await this.fn.os.screenshotWindow(bounds);
-      
-      // Print screenshot using existing print workflow
-      await this.fn.os.fileOpenPrintDialog(screenshotPath);
-    } finally {
-      dx.done();
-    }
   }
 
   // Removed CSS hacks; rely on theme overrides

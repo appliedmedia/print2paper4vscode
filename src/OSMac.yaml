@@ -8,26 +8,3 @@ apple_script_open_preview_print_dialog: |
   tell application "Preview" to open POSIX file "{{file_path}}"
   tell application "Preview" to activate
   tell application "System Events" to keystroke "p" using command down
-
-apple_script_get_current_app: |
-  tell application "System Events"
-    name of first application process whose frontmost is true
-  end tell
-
-apple_script_get_editor_bounds: |
-  tell application "System Events"
-    tell process "{{app_name}}"
-      set frontWindow to front window
-      set windowPosition to position of frontWindow
-      set windowSize to size of frontWindow
-      return (item 1 of windowPosition) & "," & (item 2 of windowPosition) & "," & (item 1 of windowSize) & "," & (item 2 of windowSize)
-    end tell
-  end tell
-
-apple_script_get_screen_dimensions: |
-  tell application "Finder"
-    set screenBounds to bounds of window of desktop
-    set screenWidth to (item 3 of screenBounds) - (item 1 of screenBounds)
-    set screenHeight to (item 4 of screenBounds) - (item 2 of screenBounds)
-    return screenWidth & "," & screenHeight
-  end tell

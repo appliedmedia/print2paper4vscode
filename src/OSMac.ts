@@ -55,69 +55,6 @@ export class OSMac extends OS {
     return result.stdout;
   }
 
-  /**
-   * Get the name of the currently frontmost application (Cursor, Code, etc.)
-   * Cache it for subsequent operations
-   */
-  async getCurrentAppName(): Promise<string> {
-    if (this.currentAppName) {
-      return this.currentAppName;
-    }
-    
-    const result = await this.executeAppleScript('apple_script_get_current_app');
-    this.currentAppName = result.trim();
-    return this.currentAppName;
-  }
-
-  /**
-   * Get current editor window bounds via AppleScript
-   * Works with Cursor, VS Code, or any VS Code-based editor
-   */
-  async getEditorWindowBounds(): Promise<{ x: number; y: number; width: number; height: number } | null> {
-    try {
-      const appName = await this.getCurrentAppName();
-      const result = await this.executeAppleScript('apple_script_get_editor_bounds', { app_name: appName });
-      // Parse "x,y,width,height" from AppleScript output
-      const parts = result.trim().split(',').map(s => parseInt(s.trim()));
-      if (parts.length === 4) {
-        return { x: parts[0], y: parts[1], width: parts[2], height: parts[3] };
-      }
-      return null;
-    } catch {
-      return null;
-    }
-  }
-
-  /**
-   * Get screen dimensions via AppleScript
-   */
-  async getScreenDimensions(): Promise<{ width: number; height: number }> {
-    const result = await this.executeAppleScript('apple_script_get_screen_dimensions');
-    const parts = result.trim().split(',').map(s => parseInt(s.trim()));
-    if (parts.length === 2) {
-      return { width: parts[0], height: parts[1] };
-    }
-    // Fallback to reasonable defaults
-    return { width: 1920, height: 1080 };
-  }
-
-  /**
-   * Take screenshot of window or full screen
-   * Uses macOS screencapture command
-   */
-  async screenshotWindow(bounds?: { x: number; y: number; width: number; height: number }): Promise<string> {
-    const tempPath = this.pathJoin(this.fn.vscodeapis.getDir_Temp(), `screenshot_${Date.now()}.png`);
-    
-    if (bounds) {
-      // Targeted screenshot with window bounds
-      await this.execAsync(`screencapture -R${bounds.x},${bounds.y},${bounds.width},${bounds.height} "${tempPath}"`);
-    } else {
-      // Full screen screenshot
-      await this.execAsync(`screencapture "${tempPath}"`);
-    }
-    
-    return tempPath;
-  }
   async fileOpenInDefaultApp(path: string): Promise<void> {
     await this.execAsync(`open "${path}"`);
   }

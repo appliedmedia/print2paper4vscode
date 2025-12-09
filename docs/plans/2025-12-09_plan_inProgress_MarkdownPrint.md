@@ -61,31 +61,32 @@ All core functionality for markdown printing in both raw and rendered modes has 
 - ✅ **PaperPrinter**: Update `generatePdf()` to branch on `this.docInfo.useRenderedMd` flag
 - ☐ **Follow-up**: Create menu item to toggle `useRenderedMd` (see Phase 6 for details)
 
-### ⚠️ Phase 4: Preview Tab Handling (INCORRECT APPROACH - TO BE REMOVED)
+### ✅ Phase 4: Removed Screenshot Approach (COMPLETE)
 
-**The screenshot approach for preview tabs was implemented but is the WRONG solution.**
+**The screenshot approach for preview tabs was incorrectly implemented and has been REMOVED.**
 
-**Why it's wrong:**
+**Why it was wrong:**
 
-- We should not screenshot preview tabs
-- Instead, we should control the markdown rendering ourselves
-- Need a menu toggle to switch between raw and rendered markdown views
-
-**Code that was implemented (TO BE REMOVED):**
-
-- ✅ **OSMac**: Add `getCurrentAppName()` - TO BE REMOVED
-- ✅ **OSMac**: Add `getEditorWindowBounds()` - TO BE REMOVED
-- ✅ **OSMac**: Add `getScreenDimensions()` - TO BE REMOVED
-- ✅ **OSMac**: Add `screenshotWindow(bounds?)` - TO BE REMOVED
-- ✅ **PaperPrinter**: `handlePreviewTabPrint()` - TO BE REMOVED
-- ✅ **PaperPrinter**: `screenshotAndPrint()` - TO BE REMOVED
-- ✅ AppleScript templates in OSMac.yaml - TO BE REMOVED
-
-**Correct approach:**
-
-- Add a top-level menu item that toggles between "Raw Markdown" and "Rendered Markdown"
-- When user prints markdown, they choose which mode via the menu
+- Should not screenshot preview tabs
+- Proper solution: User controls markdown rendering via menu dropdown
 - No need to detect or handle preview tabs differently
+
+**Code REMOVED (Commit pending):**
+
+- ✅ **OSMac**: Removed `getCurrentAppName()`
+- ✅ **OSMac**: Removed `getEditorWindowBounds()`
+- ✅ **OSMac**: Removed `getScreenDimensions()`
+- ✅ **OSMac**: Removed `screenshotWindow()`
+- ✅ **PaperPrinter**: Removed `handlePreviewTabPrint()`
+- ✅ **PaperPrinter**: Removed `screenshotAndPrint()`
+- ✅ **PaperPrinter**: Removed preview tab detection in `handlePrintCommandFromVSCode()`
+- ✅ **OSMac.yaml**: Removed AppleScript templates: `apple_script_get_current_app`, `apple_script_get_editor_bounds`, `apple_script_get_screen_dimensions`
+
+**Correct implementation:**
+
+- ✅ Added `.md` dropdown menu with "Raw" and "Render" options (Phase 6)
+- ✅ User explicitly chooses rendering mode via menu
+- ✅ No special handling for preview tabs needed
 
 ### 🚧 Phase 5: Fix Test Infrastructure
 
