@@ -114,13 +114,15 @@ All core functionality for markdown printing in both raw and rendered modes has 
 
 **Implemented** (Commits f73bb64, 4a14541, TBD):
 
-- ✅ Added `kMd` menu constant to PaperPrinter_t.ts
+- ✅ Created `kMd_Raw` and `kMd_Render` constants with embedded boolean values (false/true)
+- ✅ Added `kMd` menu constant to PaperPrinter_t.ts using the above constants
 - ✅ Menu button with `.md` icon in top-level menu bar (indicates markdown-specific)
 - ✅ Dropdown menu items: "Raw" and "Render"
-- ✅ `handleSelection_Md()` persists selection to menu system
+- ✅ `handleSelection_Md()` uses const IDs and returns const boolean values
 - ✅ Triggers PDF regeneration with new mode automatically
 - ✅ Persists user selection across sessions
 - ✅ **Architecture**: Reads mode directly from menu system (`getMenuItemIdSelected('md')`) instead of duplicating state in `docInfo`
+- ✅ Boolean mapping centralized in type definitions (`kMd_Raw.value = false`, `kMd_Render.value = true`)
 
 **How It Works**:
 
@@ -133,6 +135,7 @@ All core functionality for markdown printing in both raw and rendered modes has 
 7. PDF regenerates automatically with selected mode
 
 **Mode Descriptions**:
+
 - **Raw**: Syntax-highlighted markdown source (uses Shiki)
 - **Render**: HTML output (uses VS Code markdown API)
 

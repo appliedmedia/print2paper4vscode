@@ -312,18 +312,31 @@ export const kZoomIn = {
   shortcutCode: 'Equal' as const, // KeyboardEvent.code for =/+ key (main keyboard)
 } as const;
 
-// Markdown rendering mode menu (only visible for markdown files)
+// Markdown rendering mode menu items (only visible for markdown files)
+export const kMd_Raw = {
+  id: 'raw',
+  displayName: 'Raw',
+  value: false, // false = use Shiki syntax highlighting
+} as const;
+
+export const kMd_Render = {
+  id: 'render',
+  displayName: 'Render',
+  value: true, // true = use VS Code markdown.api.render
+} as const;
+
+// Markdown rendering mode menu
 export const kMd = {
   id: 'md',
   displayName: 'Markdown',
   iconSlotTriad: { begin: '', main: '.md', end: '' },
-  altId: 'raw', // Default to raw mode
+  altId: kMd_Raw.id, // Default to raw mode
   methodName: 'Md',
   isFlyout: false,
   flyoutMenuItemIds: [] as const,
   menuItems: [
-    { id: 'raw', displayName: 'Raw' },
-    { id: 'render', displayName: 'Render' },
+    { id: kMd_Raw.id, displayName: kMd_Raw.displayName },
+    { id: kMd_Render.id, displayName: kMd_Render.displayName },
   ],
 } as const;
 export type MdMenuItems_t = (typeof kMd.menuItems)[number]['id'];

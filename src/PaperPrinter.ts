@@ -59,6 +59,8 @@ import {
   kZoomIn,
   kZoomLevel,
   kMd,
+  kMd_Raw,
+  kMd_Render,
   kMenus,
 } from './types/PaperPrinter_t';
 
@@ -299,7 +301,7 @@ export class PaperPrinter {
 
       // For markdown files, check menu selection to determine rendering mode
       const mdMode = this.fn.uimenumgr.getMenuItemIdSelected({ menuId: kMd.id });
-      const useRenderedMd = this.docInfo().languageId === 'markdown' && mdMode === 'render';
+      const useRenderedMd = this.docInfo().languageId === 'markdown' && mdMode === kMd_Render.id;
 
       // Generate PDF - handles both tokenized and HTML rendering internally
       dx.out(`Generating complete PDF`);
@@ -993,13 +995,19 @@ export class PaperPrinter {
     let value: string | number | boolean = menuItemId;
 
     if (menuItemId === UIMenu.defaultId()) {
-      // Return default mode (raw)
-      id = kMd.altId; // 'raw'
-      value = 'raw';
-      dx.out(`Returning default markdown mode: raw`);
+      // Return default mode (raw = false)
+      id = kMd_Raw.id;
+      value = kMd_Raw.value;
+      dx.out(`Returning default markdown mode: ${id} (${value})`);
     } else {
-      // User selected a mode from the menu
-      dx.out(`Markdown mode selected: ${menuItemId}`);
+      // User selected a mode from the menu - look up the boolean value
+      if (menuItemId === kMd_Raw.id) {
+        value = kMd_Raw.value;
+      } else if (menuItemId === kMd_Render.id) {
+        value = kMd_Render.value;
+      }
+      
+      dx.out(`Markdown mode selected: ${menuItemId} (value: ${value})`);
       
       // Save selection to persist (no need to set flag - we read from menu when needed)
       this.fn.uimenumgr.setValueForPersistIdOnMenuId({
