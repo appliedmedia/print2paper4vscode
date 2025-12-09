@@ -107,31 +107,36 @@ All core functionality for markdown printing in both raw and rendered modes has 
 
 **Decision**: Defer test infrastructure overhaul to separate task. Current implementation compiles and can be manually tested in VS Code.
 
-### ✅ Phase 6: Add UI Menu Toggle (COMPLETE)
+### ✅ Phase 6: Add UI Menu Dropdown (COMPLETE)
 
-**Goal**: Add a top-level menu item that toggles between "Raw Markdown" and "Rendered Markdown" modes.
+**Goal**: Add a top-level menu dropdown for selecting markdown rendering mode.
 
-**Implemented** (Commit f73bb64):
+**Implemented** (Commits f73bb64, 4a14541):
 
 - ✅ Added `kMarkdownMode` menu constant to PaperPrinter_t.ts
-- ✅ Menu button with 📝 icon in top-level menu bar
-- ✅ `handleSelection_MarkdownMode()` toggles `useRenderedMd` flag on click
+- ✅ Menu button with `.md` icon in top-level menu bar (indicates markdown-specific)
+- ✅ Dropdown menu items: "Raw" and "Render"
+- ✅ `handleSelection_MarkdownMode()` updates `useRenderedMd` flag based on selection
 - ✅ Triggers PDF regeneration with new mode automatically
-- ✅ Pattern matches zoom in/out buttons (simple click toggle)
+- ✅ Persists user selection across sessions
 
 **How It Works**:
 
-1. User clicks markdown mode button (📝)
-2. Handler toggles `docInfo.useRenderedMd` between true/false
-3. PDF regenerates automatically with new mode
-4. Mode changes between raw (syntax highlighted) and rendered (HTML)
+1. User clicks `.md` button in menu bar
+2. Dropdown shows: **Raw** | **Render**
+3. User selects mode
+4. Handler updates `docInfo.useRenderedMd` (false for Raw, true for Render)
+5. PDF regenerates automatically with selected mode
+6. Selection persisted to VS Code global state
+
+**Mode Descriptions**:
+- **Raw**: Syntax-highlighted markdown source (uses Shiki)
+- **Render**: HTML output (uses VS Code markdown API)
 
 **Future Enhancements**:
 
-- ☐ Visual feedback: Change icon or add checkmark to show current mode
-- ☐ Menu item label: Show "Raw" vs "Rendered" text
-- ☐ Conditional visibility: Only show when viewing markdown files
-- ☐ Persist preference: Save to VS Code global state across sessions
+- ☐ Conditional visibility: Only show menu when viewing markdown files
+- ☐ Visual indicator: Show checkmark next to currently selected mode
 
 ### 🚧 Phase 7: Testing & Polish
 
