@@ -301,8 +301,8 @@ export class PaperPrinter {
 
       // For markdown files, check menu selection to determine rendering mode
       // getValueForMenuItemIdSelected returns the boolean value (false for raw, true for render)
-      const mdModeValue = this.fn.uimenumgr.getValueForMenuItemIdSelected(kMd.id);
-      const useRenderedMd = this.docInfo().languageId === 'markdown' && mdModeValue === true;
+      const useRenderedMd = this.docInfo().languageId === 'markdown' && 
+        !!this.fn.uimenumgr.getValueForMenuItemIdSelected(kMd.id);
 
       // Generate PDF - handles both tokenized and HTML rendering internally
       dx.out(`Generating complete PDF`);
