@@ -601,8 +601,12 @@ export class PaperPrinter {
   }
 
   private menuItems_MarkdownMode(): UIMenuItem_t[] {
-    // Markdown mode toggle has no menu items - it's just a button
-    return [];
+    // Return the menu items defined in kMarkdownMode
+    return kMarkdownMode.menuItems.map(item => ({
+      id: item.id,
+      displayName: item.displayName,
+      iconSlotTriad: { begin: '', main: '', end: '' },
+    }));
   }
 
   // Selection handler methods for each menu type
@@ -981,8 +985,8 @@ export class PaperPrinter {
   }
 
   /**
-   * Handle markdown mode toggle button click
-   * Toggles between raw (syntax highlighted) and rendered (HTML) markdown
+   * Handle markdown mode menu selection
+   * User selects between Raw (syntax highlighted) and Render (HTML output)
    */
   private async handleSelection_MarkdownMode(
     args: { menuId: MenuId_t; menuItemId: MenuItemId_t }
@@ -990,27 +994,30 @@ export class PaperPrinter {
     const dx = this.dx.sub({ name: 'handleSelection_MarkdownMode' });
     dx.require(args, ['menuId', 'menuItemId']);
     const { menuItemId } = args;
-    let id = '';
-    let value: string | number | boolean = '';
+    let id = menuItemId;
+    let value: string | number | boolean = menuItemId;
 
     if (menuItemId === UIMenu.defaultId()) {
-      // Return default mode (raw = false)
+      // Return default mode (raw)
       id = kMarkdownMode.altId; // 'raw'
-      value = false;
-      dx.out(`Returning default markdown mode: raw (false)`);
+      value = 'raw';
+      dx.out(`Returning default markdown mode: raw`);
     } else {
-      // Toggle the useRenderedMd flag
-      const currentMode = this.docInfo().useRenderedMd;
-      const newMode = !currentMode;
+      // User selected a mode from the menu
+      dx.out(`Markdown mode selected: ${menuItemId}`);
       
-      dx.out(`Toggling markdown mode: ${currentMode ? 'rendered' : 'raw'} → ${newMode ? 'rendered' : 'raw'}`);
+      // Update the useRenderedMd flag based on selection
+      this.docInfo().useRenderedMd = (menuItemId === 'render');
       
-      // Update the flag
-      this.docInfo().useRenderedMd = newMode;
+      // Save selection to persist
+      this.fn.uimenumgr.setValueForPersistIdOnMenuId({
+        menuId: kMarkdownMode.id,
+        persistId: kMarkdownMode.id as UI_t,
+        value: menuItemId as PersistValue_t
+      });
       
-      // Return the new mode value
-      id = kMarkdownMode.id;
-      value = newMode;
+      // Regenerate PDF with new mode
+      void this.regenerateAndUpdateWebview();
     }
 
     dx.done();

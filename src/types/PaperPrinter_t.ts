@@ -312,17 +312,21 @@ export const kZoomIn = {
   shortcutCode: 'Equal' as const, // KeyboardEvent.code for =/+ key (main keyboard)
 } as const;
 
-// Markdown rendering mode toggle (only visible for markdown files)
+// Markdown rendering mode menu (only visible for markdown files)
 export const kMarkdownMode = {
   id: 'markdownMode',
   displayName: 'Markdown Mode',
-  iconSlotTriad: { begin: '', main: '🔄', end: '' },
+  iconSlotTriad: { begin: '', main: '.md', end: '' },
   altId: 'raw', // Default to raw mode
   methodName: 'MarkdownMode',
   isFlyout: false,
   flyoutMenuItemIds: [] as const,
-  menuItems: [],
+  menuItems: [
+    { id: 'raw', displayName: 'Raw' },
+    { id: 'render', displayName: 'Render' },
+  ],
 } as const;
+export type MarkdownModeMenuItems_t = (typeof kMarkdownMode.menuItems)[number]['id'];
 
 export const kZoomLevel = {
   id: 'zoomLevel',
