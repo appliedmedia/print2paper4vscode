@@ -58,7 +58,7 @@ import {
   kZoomOut,
   kZoomIn,
   kZoomLevel,
-  kMarkdownMode,
+  kMd,
   kMenus,
 } from './types/PaperPrinter_t';
 
@@ -297,10 +297,14 @@ export class PaperPrinter {
       const editor = this.fn.vscodeapis.getActiveTextEditor();
       if (!editor) throw new Error('No active editor');
 
+      // For markdown files, check menu selection to determine rendering mode
+      const mdMode = this.fn.uimenumgr.getMenuItemIdSelected({ menuId: kMd.id });
+      const useRenderedMd = this.docInfo().languageId === 'markdown' && mdMode === 'render';
+
       // Generate PDF - handles both tokenized and HTML rendering internally
       dx.out(`Generating complete PDF`);
       await this.fn.pdf.generatePdf({
-        useRenderedMd: this.docInfo().languageId === 'markdown' && this.docInfo().useRenderedMd,
+        useRenderedMd,
         document: editor.document
       });
 
@@ -591,9 +595,9 @@ export class PaperPrinter {
     return [];
   }
 
-  private menuItems_MarkdownMode(): UIMenuItem_t[] {
-    // Return the menu items defined in kMarkdownMode
-    return kMarkdownMode.menuItems.map(item => ({
+  private menuItems_Md(): UIMenuItem_t[] {
+    // Return the menu items defined in kMd
+    return kMd.menuItems.map(item => ({
       id: item.id,
       displayName: item.displayName,
       iconSlotTriad: { begin: '', main: '', end: '' },
@@ -979,10 +983,10 @@ export class PaperPrinter {
    * Handle markdown mode menu selection
    * User selects between Raw (syntax highlighted) and Render (HTML output)
    */
-  private async handleSelection_MarkdownMode(
+  private async handleSelection_Md(
     args: { menuId: MenuId_t; menuItemId: MenuItemId_t }
   ): Promise<HandleSelection_t> {
-    const dx = this.dx.sub({ name: 'handleSelection_MarkdownMode' });
+    const dx = this.dx.sub({ name: 'handleSelection_Md' });
     dx.require(args, ['menuId', 'menuItemId']);
     const { menuItemId } = args;
     let id = menuItemId;
@@ -990,20 +994,17 @@ export class PaperPrinter {
 
     if (menuItemId === UIMenu.defaultId()) {
       // Return default mode (raw)
-      id = kMarkdownMode.altId; // 'raw'
+      id = kMd.altId; // 'raw'
       value = 'raw';
       dx.out(`Returning default markdown mode: raw`);
     } else {
       // User selected a mode from the menu
       dx.out(`Markdown mode selected: ${menuItemId}`);
       
-      // Update the useRenderedMd flag based on selection
-      this.docInfo().useRenderedMd = (menuItemId === 'render');
-      
-      // Save selection to persist
+      // Save selection to persist (no need to set flag - we read from menu when needed)
       this.fn.uimenumgr.setValueForPersistIdOnMenuId({
-        menuId: kMarkdownMode.id,
-        persistId: kMarkdownMode.id as UI_t,
+        menuId: kMd.id,
+        persistId: kMd.id as UI_t,
         value: menuItemId as PersistValue_t
       });
       

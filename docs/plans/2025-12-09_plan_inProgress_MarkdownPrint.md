@@ -112,23 +112,25 @@ All core functionality for markdown printing in both raw and rendered modes has 
 
 **Goal**: Add a top-level menu dropdown for selecting markdown rendering mode.
 
-**Implemented** (Commits f73bb64, 4a14541):
+**Implemented** (Commits f73bb64, 4a14541, TBD):
 
-- ✅ Added `kMarkdownMode` menu constant to PaperPrinter_t.ts
+- ✅ Added `kMd` menu constant to PaperPrinter_t.ts
 - ✅ Menu button with `.md` icon in top-level menu bar (indicates markdown-specific)
 - ✅ Dropdown menu items: "Raw" and "Render"
-- ✅ `handleSelection_MarkdownMode()` updates `useRenderedMd` flag based on selection
+- ✅ `handleSelection_Md()` persists selection to menu system
 - ✅ Triggers PDF regeneration with new mode automatically
 - ✅ Persists user selection across sessions
+- ✅ **Architecture**: Reads mode directly from menu system (`getMenuItemIdSelected('md')`) instead of duplicating state in `docInfo`
 
 **How It Works**:
 
 1. User clicks `.md` button in menu bar
 2. Dropdown shows: **Raw** | **Render**
 3. User selects mode
-4. Handler updates `docInfo.useRenderedMd` (false for Raw, true for Render)
-5. PDF regenerates automatically with selected mode
-6. Selection persisted to VS Code global state
+4. Handler persists selection to menu system via `setValueForPersistIdOnMenuId()`
+5. When generating PDF, `PaperPrinter.generatePdf()` reads current selection via `getMenuItemIdSelected('md')`
+6. Passes `useRenderedMd` boolean to `PDF.generatePdf()` (true if mode === 'render')
+7. PDF regenerates automatically with selected mode
 
 **Mode Descriptions**:
 - **Raw**: Syntax-highlighted markdown source (uses Shiki)

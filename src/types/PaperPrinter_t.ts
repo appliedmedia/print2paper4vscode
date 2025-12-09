@@ -313,12 +313,12 @@ export const kZoomIn = {
 } as const;
 
 // Markdown rendering mode menu (only visible for markdown files)
-export const kMarkdownMode = {
-  id: 'markdownMode',
-  displayName: 'Markdown Mode',
+export const kMd = {
+  id: 'md',
+  displayName: 'Markdown',
   iconSlotTriad: { begin: '', main: '.md', end: '' },
   altId: 'raw', // Default to raw mode
-  methodName: 'MarkdownMode',
+  methodName: 'Md',
   isFlyout: false,
   flyoutMenuItemIds: [] as const,
   menuItems: [
@@ -326,7 +326,7 @@ export const kMarkdownMode = {
     { id: 'render', displayName: 'Render' },
   ],
 } as const;
-export type MarkdownModeMenuItems_t = (typeof kMarkdownMode.menuItems)[number]['id'];
+export type MdMenuItems_t = (typeof kMd.menuItems)[number]['id'];
 
 export const kZoomLevel = {
   id: 'zoomLevel',
@@ -425,7 +425,7 @@ export const kMenus = [
   kZoomOut,
   kZoomLevel,
   kZoomIn,
-  kMarkdownMode,
+  kMd,
 ] as const;
 
 // end, PaperPrinter_t.ts
