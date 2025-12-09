@@ -321,8 +321,8 @@ export class PaperPrinter {
         this.fn.pdf.setupPdf();
         this.fn.pdf.addHeaderAndFooter();
         
-        // Render HTML to PDF
-        this.fn.pdf.renderFromHTML(html);
+        // Render HTML to PDF (async to support code block tokenization)
+        await this.fn.pdf.renderFromHTML(html);
         
         // Finish PDF
         this.fn.pdf.finishPdf();

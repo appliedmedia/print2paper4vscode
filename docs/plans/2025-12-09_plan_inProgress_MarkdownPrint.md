@@ -5,6 +5,7 @@
 **Status**: Phases 1-4 Complete, Phase 5 (Test Infrastructure) In Progress
 
 All core functionality for markdown printing in both raw and rendered modes has been implemented:
+
 - ✅ HTML parsing and rendering infrastructure in PDF class
 - ✅ VS Code markdown API integration
 - ✅ Preview tab screenshot handling
@@ -14,6 +15,7 @@ All core functionality for markdown printing in both raw and rendered modes has 
 **Current Blocker**: Tests fail with `Cannot find module 'vscode'` error. This is a pre-existing test infrastructure issue that affects all tests, not just the new markdown functionality.
 
 **To test the new functionality manually:**
+
 1. Enable rendered markdown mode by setting `this.docInfo().useRenderedMd = true` (menu toggle TODO)
 2. Open a markdown file in VS Code
 3. Run the print command (Alt+P or context menu)
@@ -22,11 +24,12 @@ All core functionality for markdown printing in both raw and rendered modes has 
 ## TODO List
 
 ### ✅ Phase 1: Validation (COMPLETE)
+
 - ✅ Verify raw markdown printing works
 - ✅ Test Shiki markdown syntax highlighting
 
-
 ### 🚧 Phase 2: HTML Rendering in PDF Class
+
 - ✅ Install `node-html-parser` dependency
 - ✅ Rename `PDF.renderTokenizedLine()` → `PDF.renderFromTokens()` for clarity
 - ✅ Add `PDF.renderFromHTML(html: string)` method to parse and render HTML
@@ -41,16 +44,16 @@ All core functionality for markdown printing in both raw and rendered modes has 
 - ✅ Implement `renderBlockquote()` with indentation
 - ✅ Implement `renderHorizontalRule()` method
 
-
 ### ✅ Phase 3: VS Code Markdown API Integration (COMPLETE)
+
 - ✅ **DocInfo_PaperPrinter**: Add `useRenderedMd: boolean = false` property
 - ✅ **VSCodeAPIs**: Add `getExtension_Markdown()` method to get extension reference
 - ✅ **VSCodeAPIs**: Add `renderMarkdownToHtml(markdown, document)` wrapper method
 - ✅ **PaperPrinter**: Update `generatePdf()` to branch on `this.docInfo.useRenderedMd` flag
 - ☐ **Follow-up TODO**: Create menu item to toggle `useRenderedMd` (implement later)
 
-
 ### ✅ Phase 4: Preview Tab Handling (COMPLETE)
+
 - ✅ **OSMac**: Add `getCurrentAppName()` to detect Cursor/Code/etc and cache
 - ✅ **OSMac**: Add `getEditorWindowBounds()` via AppleScript with dynamic app name
 - ✅ **OSMac**: Add `getScreenDimensions()` via AppleScript as fallback
@@ -58,7 +61,6 @@ All core functionality for markdown printing in both raw and rendered modes has 
 - ✅ **PaperPrinter**: When preview tab detected, prompt user for screenshot
 - ✅ **PaperPrinter**: Implement `screenshotAndPrint()` with window bounds or full screen fallback
 - ✅ Prompt: "Due to VS Code's implementation of private data in Preview tabs, they cannot be printed except via screenshot. Do that?"
-
 
 ### 🚧 Phase 5: Fix Test Infrastructure
 
@@ -232,6 +234,7 @@ apple_script_get_screen_dimensions: |
 ## Overview
 
 Print markdown files in two modes:
+
 1. **Raw Mode** - Print markdown source with syntax highlighting (already works)
 2. **Rendered Mode** - Print HTML-rendered markdown (new feature)
 
@@ -248,6 +251,7 @@ Rendered Markdown:
 **Key Insight**: The PDF document IS the common format. No need for intermediate data structures.
 
 **Unified Rendering**: Both `renderFromTokens()` and `renderFromHTML()` are input adapters that feed the same underlying line-by-line rendering primitives. They share:
+
 - Character wrapping logic (`findCharacterBreakPoint()`)
 - Page break detection (`shouldBreakPage()`)
 - Position tracking (`currentX`, `currentY`)
@@ -260,6 +264,7 @@ The rendering logic is unified; only the input parsing differs.
 ## Phase 1: Validation (Already Works) ✅
 
 Raw markdown printing works through existing code path:
+
 - `TabInspector.detectActiveTabCategory()` returns `'editor-md'`
 - Shiki tokenizes markdown source
 - `PDF.renderFromTokens()` renders with syntax highlighting
@@ -782,6 +787,7 @@ class PDF {
 ### Architecture: Proper Separation of Concerns
 
 **VSCodeAPIs** - Wraps all VS Code API calls:
+
 ```typescript
 // src/VSCodeAPIs.ts
 
@@ -828,7 +834,6 @@ async renderMarkdownToHtml(markdown: string, document: TextDocument): Promise<st
 }
 ```
 
-
 **DocInfo_PaperPrinter** - Add markdown rendering flag:
 
 ```typescript
@@ -845,7 +850,6 @@ export class DocInfo_PaperPrinter {
   // ... rest of class ...
 }
 ```
-
 
 **PaperPrinter** - Orchestrates workflow (update existing method):
 
@@ -899,7 +903,6 @@ async generatePdf(): Promise<void> {
 ```
 
 **Follow-up TODO**: Create a menu item in the toolbar that toggles `docInfo.useRenderedMd` on/off. This will allow users to switch between raw and rendered markdown modes without code changes. Menu should only appear when viewing markdown files.
-
 
 **PDF** - Two separate rendering methods:
 
@@ -1120,6 +1123,7 @@ apple_script_get_screen_dimensions: |
 ### Fallback Strategy
 
 If window bounds cannot be obtained:
+
 - Get screen dimensions via AppleScript
 - Screenshot entire screen using `screencapture` (no bounds)
 - Print the screenshot as usual
@@ -1133,6 +1137,7 @@ No user interaction required - fully automated.
 ### What's Reused Between renderFromTokens and renderFromHTML?
 
 **Identical (100% reuse):**
+
 1. `findCharacterBreakPoint()` - character wrapping logic
 2. `shouldBreakPage()` - page break detection
 3. `addPageBreak()` - new page creation
@@ -1141,6 +1146,7 @@ No user interaction required - fully automated.
 6. Position tracking (`currentX`, `currentY`)
 
 **Different:**
+
 - `renderFromTokens()`: Just set color, render, next line
 - `renderFromHTML()`: Set font size/weight/style, handle spacing/indentation, then call `renderTextContent()`
 
@@ -1163,6 +1169,7 @@ No user interaction required - fully automated.
 ## Implementation Checklist
 
 ### Phase 1: Validation ✅
+
 - [x] Verify raw markdown printing works
 - [x] Test Shiki markdown syntax highlighting
 
@@ -1236,18 +1243,23 @@ No user interaction required - fully automated.
 ## Key Decisions
 
 ### ✅ Direct rendering (no intermediate format)
+
 Both `renderFromTokens()` and `renderFromHTML()` write directly to jsPDF.
 
 ### ✅ Maximum code reuse
+
 HTML rendering reuses all the existing wrapping/paging helpers.
 
 ### ✅ Markdown preview settings
+
 Respect user's `markdown.preview.*` configuration.
 
 ### ✅ Code blocks use existing tokenization
+
 When HTML has code blocks, we tokenize them with Shiki and render using `renderFromTokens()`.
 
 ### ✅ Simple architecture
+
 - `renderFromTokens()` - for code
 - `renderFromHTML()` - for markdown
 - Shared helpers - for wrapping, paging, text rendering

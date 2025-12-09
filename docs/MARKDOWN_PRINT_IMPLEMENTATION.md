@@ -30,11 +30,13 @@
 **The screenshot approach for preview tabs was implemented but is the WRONG solution.**
 
 **Why it's wrong:**
+
 - We should not screenshot preview tabs
 - Instead, we should control the markdown rendering ourselves
 - Need a menu toggle to switch between raw and rendered markdown views
 
 **Code to remove:**
+
 - `OSMac.getCurrentAppName()` - TO BE REMOVED
 - `OSMac.getEditorWindowBounds()` - TO BE REMOVED
 - `OSMac.getScreenDimensions()` - TO BE REMOVED
@@ -44,6 +46,7 @@
 - AppleScript templates in OSMac.yaml - TO BE REMOVED
 
 **Correct approach:**
+
 - Add a top-level menu item that toggles between "Raw Markdown" and "Rendered Markdown"
 - When user prints markdown, they choose which mode via the menu
 - No need to detect or handle preview tabs differently

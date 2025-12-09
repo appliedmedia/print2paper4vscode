@@ -19,9 +19,18 @@ export class DocInfo_PaperPrinter {
   public languageId: LanguageId_t = 'typescript'; // Default to TypeScript for a coding extension
   public printTitle: string = 'Printable';
   
-  // Flag to control markdown rendering mode
-  // false = raw source with syntax highlighting (default)
-  // true = rendered HTML from VS Code markdown API
+  /**
+   * Flag to control markdown rendering mode (only applies when languageId === 'markdown')
+   * 
+   * - false (default): Raw markdown source with Shiki syntax highlighting
+   * - true: Rendered HTML using VS Code's markdown.api.render command
+   * 
+   * This flag is currently set programmatically but will eventually be controlled
+   * by a top-level menu toggle allowing users to choose between raw and rendered views.
+   * 
+   * When languageId is not 'markdown', this flag is ignored and syntax highlighting
+   * is always used (see PaperPrinter.generatePdf branching logic).
+   */
   public useRenderedMd: boolean = false;
 
   // Computed values (read-only)

@@ -816,8 +816,11 @@ export class PDF {
   /**
    * Render HTML-formatted markdown to PDF
    * Uses VS Code's markdown renderer output
+   * 
+   * NOTE: This method is async to support code block rendering which requires
+   * asynchronous tokenization via Shiki.
    */
-  renderFromHTML(html: string): void {
+  async renderFromHTML(html: string): Promise<void> {
     const dx = this.dx.sub({ name: 'renderFromHTML' });
     
     try {
@@ -825,7 +828,7 @@ export class PDF {
       
       for (const element of root.childNodes) {
         if (element.nodeType === NodeType.ELEMENT_NODE) {
-          this.renderHTMLElement(element as HTMLElement);
+          await this.renderHTMLElement(element as HTMLElement);
         }
       }
       
@@ -837,8 +840,9 @@ export class PDF {
 
   /**
    * HTML element handlers - maps tag name to render function
+   * Handlers can be async to support operations like code tokenization
    */
-  private readonly htmlElementHandlers: Record<string, (element: HTMLElement) => void> = {
+  private readonly htmlElementHandlers: Record<string, (element: HTMLElement) => void | Promise<void>> = {
     'h1': (el) => this.renderHeading(el, 1),
     'h2': (el) => this.renderHeading(el, 2),
     'h3': (el) => this.renderHeading(el, 3),
@@ -855,13 +859,14 @@ export class PDF {
 
   /**
    * Render a single HTML element
+   * Supports both sync and async handlers
    */
-  private renderHTMLElement(element: HTMLElement): void {
+  private async renderHTMLElement(element: HTMLElement): Promise<void> {
     const dx = this.dx.sub({ name: 'renderHTMLElement' });
     
     const handler = this.htmlElementHandlers[element.tagName.toLowerCase()];
     if (handler) {
-      handler(element);
+      await handler(element);
     } else {
       dx.out(`Unknown element: ${element.tagName}`);
     }
@@ -1281,6 +1286,11 @@ export class PDF {
    * Add header and footer to current page
    * Uses position-based content settings from docInfo
    * Each position (left, center, right) can have: title, page, total, pageTotal, or null
+   * 
+   * NOTE: This method was changed from private to public to allow PaperPrinter to call it
+   * directly in the rendered markdown path (renderFromHTML). In the normal tokenized rendering
+   * path, headers/footers are added automatically during page breaks. In the HTML rendering path,
+   * PaperPrinter controls when headers/footers are added after the initial page setup.
    */
   public addHeaderAndFooter(): void {
     const docInfo = this.docInfo();
