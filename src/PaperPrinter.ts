@@ -993,8 +993,12 @@ export class PaperPrinter {
     let id = '';
     let value: string | number | boolean = '';
 
-    // Buttons have no default - only process actual clicks
-    if (menuItemId !== UIMenu.defaultId()) {
+    if (menuItemId === UIMenu.defaultId()) {
+      // Return default mode (raw = false)
+      id = kMarkdownMode.altId; // 'raw'
+      value = false;
+      dx.out(`Returning default markdown mode: raw (false)`);
+    } else {
       // Toggle the useRenderedMd flag
       const currentMode = this.docInfo().useRenderedMd;
       const newMode = !currentMode;
@@ -1006,7 +1010,7 @@ export class PaperPrinter {
       
       // Return the new mode value
       id = kMarkdownMode.id;
-      value = newMode ? 'rendered' : 'raw';
+      value = newMode;
     }
 
     dx.done();
