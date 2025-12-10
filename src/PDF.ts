@@ -890,7 +890,19 @@ export class PDF {
     const dx = this.dx.sub({ name: 'renderFromHTML' });
     
     try {
+      // Validate HTML input
+      if (!html || html.trim().length === 0) {
+        dx.out('Empty HTML, nothing to render');
+        return;
+      }
+      
       const root = parse(html);
+      
+      // Validate parse result
+      if (!root || !root.childNodes) {
+        dx.out('Failed to parse HTML or no child nodes');
+        return;
+      }
       
       for (const element of root.childNodes) {
         if (element.nodeType === NodeType.ELEMENT_NODE) {
@@ -1041,67 +1053,66 @@ export class PDF {
 
   /**
    * Inline element handlers - maps tag name to render function
+   * Readonly property to avoid recreating handlers on every call
    */
-  private getInlineElementHandlers(): Record<string, (element: HTMLElement, savedFont: any) => void> {
-    return {
-      'strong': (el, savedFont) => {
-        const styleFont = this.getFontFromElementStyle(el);
-        const fontName = styleFont?.fontFamily 
-          ? this.mapFontFamilyToJsPDF(styleFont.fontFamily, this.docInfo().pdfDoc!)
-          : savedFont.fontName;
-        
-        this.docInfo().pdfDoc!.setFont(fontName, 'bold');
-        this.renderTextContent(el.text);
-        this.docInfo().pdfDoc!.setFont(savedFont.fontName, savedFont.fontStyle);
-      },
-      'b': (el, savedFont) => {
-        const styleFont = this.getFontFromElementStyle(el);
-        const fontName = styleFont?.fontFamily 
-          ? this.mapFontFamilyToJsPDF(styleFont.fontFamily, this.docInfo().pdfDoc!)
-          : savedFont.fontName;
-        
-        this.docInfo().pdfDoc!.setFont(fontName, 'bold');
-        this.renderTextContent(el.text);
-        this.docInfo().pdfDoc!.setFont(savedFont.fontName, savedFont.fontStyle);
-      },
-      'em': (el, savedFont) => {
-        const styleFont = this.getFontFromElementStyle(el);
-        const fontName = styleFont?.fontFamily 
-          ? this.mapFontFamilyToJsPDF(styleFont.fontFamily, this.docInfo().pdfDoc!)
-          : savedFont.fontName;
-        
-        this.docInfo().pdfDoc!.setFont(fontName, 'italic');
-        this.renderTextContent(el.text);
-        this.docInfo().pdfDoc!.setFont(savedFont.fontName, savedFont.fontStyle);
-      },
-      'i': (el, savedFont) => {
-        const styleFont = this.getFontFromElementStyle(el);
-        const fontName = styleFont?.fontFamily 
-          ? this.mapFontFamilyToJsPDF(styleFont.fontFamily, this.docInfo().pdfDoc!)
-          : savedFont.fontName;
-        
-        this.docInfo().pdfDoc!.setFont(fontName, 'italic');
-        this.renderTextContent(el.text);
-        this.docInfo().pdfDoc!.setFont(savedFont.fontName, savedFont.fontStyle);
-      },
-      'code': (el, savedFont) => {
-        const styleFont = this.getFontFromElementStyle(el);
-        let monoFontFamily: string;
-        
-        if (styleFont?.fontFamily) {
-          monoFontFamily = styleFont.fontFamily;
-        } else {
-          const editorTypo = this.fn.vscodeapis.getEditorTypography();
-          monoFontFamily = editorTypo.fontFamily;
-        }
-        
-        const monoFont = this.mapFontFamilyToJsPDF(monoFontFamily, this.docInfo().pdfDoc!);
-        this.docInfo().pdfDoc!.setFont(monoFont, 'normal');
-        this.renderTextContent(el.text);
-        this.docInfo().pdfDoc!.setFont(savedFont.fontName, savedFont.fontStyle);
-      },
-    };
-  }
+  private readonly inlineElementHandlers: Record<string, (element: HTMLElement, savedFont: any) => void> = {
+    'strong': (el, savedFont) => {
+      const styleFont = this.getFontFromElementStyle(el);
+      const fontName = styleFont?.fontFamily 
+        ? this.mapFontFamilyToJsPDF(styleFont.fontFamily, this.docInfo().pdfDoc!)
+        : savedFont.fontName;
+      
+      this.docInfo().pdfDoc!.setFont(fontName, 'bold');
+      this.renderTextContent(el.text);
+      this.docInfo().pdfDoc!.setFont(savedFont.fontName, savedFont.fontStyle);
+    },
+    'b': (el, savedFont) => {
+      const styleFont = this.getFontFromElementStyle(el);
+      const fontName = styleFont?.fontFamily 
+        ? this.mapFontFamilyToJsPDF(styleFont.fontFamily, this.docInfo().pdfDoc!)
+        : savedFont.fontName;
+      
+      this.docInfo().pdfDoc!.setFont(fontName, 'bold');
+      this.renderTextContent(el.text);
+      this.docInfo().pdfDoc!.setFont(savedFont.fontName, savedFont.fontStyle);
+    },
+    'em': (el, savedFont) => {
+      const styleFont = this.getFontFromElementStyle(el);
+      const fontName = styleFont?.fontFamily 
+        ? this.mapFontFamilyToJsPDF(styleFont.fontFamily, this.docInfo().pdfDoc!)
+        : savedFont.fontName;
+      
+      this.docInfo().pdfDoc!.setFont(fontName, 'italic');
+      this.renderTextContent(el.text);
+      this.docInfo().pdfDoc!.setFont(savedFont.fontName, savedFont.fontStyle);
+    },
+    'i': (el, savedFont) => {
+      const styleFont = this.getFontFromElementStyle(el);
+      const fontName = styleFont?.fontFamily 
+        ? this.mapFontFamilyToJsPDF(styleFont.fontFamily, this.docInfo().pdfDoc!)
+        : savedFont.fontName;
+      
+      this.docInfo().pdfDoc!.setFont(fontName, 'italic');
+      this.renderTextContent(el.text);
+      this.docInfo().pdfDoc!.setFont(savedFont.fontName, savedFont.fontStyle);
+    },
+    'code': (el, savedFont) => {
+      const styleFont = this.getFontFromElementStyle(el);
+      let monoFontFamily: string;
+      
+      if (styleFont?.fontFamily) {
+        monoFontFamily = styleFont.fontFamily;
+      } else {
+        const editorTypo = this.fn.vscodeapis.getEditorTypography();
+        monoFontFamily = editorTypo.fontFamily;
+      }
+      
+      const monoFont = this.mapFontFamilyToJsPDF(monoFontFamily, this.docInfo().pdfDoc!);
+      this.docInfo().pdfDoc!.setFont(monoFont, 'normal');
+      this.renderTextContent(el.text);
+      this.docInfo().pdfDoc!.setFont(savedFont.fontName, savedFont.fontStyle);
+    },
+  };
 
   /**
    * Render inline content with formatting (bold, italic, code)
@@ -1123,8 +1134,6 @@ export class PDF {
   private renderInlineContent(element: HTMLElement): void {
     if (!this.docInfo().pdfDoc) return;
     
-    const inlineHandlers = this.getInlineElementHandlers();
-    
     for (const child of element.childNodes) {
       if (child.nodeType === NodeType.TEXT_NODE) {
         // Plain text
@@ -1133,7 +1142,7 @@ export class PDF {
         const el = child as HTMLElement;
         const savedFont = this.docInfo().pdfDoc!.getFont();
         
-        const handler = inlineHandlers[el.tagName.toLowerCase()];
+        const handler = this.inlineElementHandlers[el.tagName.toLowerCase()];
         if (handler) {
           handler(el, savedFont);
         } else {
@@ -1343,12 +1352,14 @@ export class PDF {
    * All children are rendered recursively with increased left margin.
    * Margin is restored after rendering.
    * 
+   * Async to support child elements that require async rendering (like code blocks).
+   * 
    * @param element - HTML blockquote element
    * @example
    * // <blockquote><p>Quoted text</p></blockquote>
-   * this.renderBlockquote(element); // Renders indented
+   * await this.renderBlockquote(element); // Renders indented
    */
-  private renderBlockquote(element: HTMLElement): void {
+  private async renderBlockquote(element: HTMLElement): Promise<void> {
     // Save left margin and indent
     const savedLeftMargin = this.docInfo().marginPts.leftMarginPts;
     this.docInfo().marginPts.leftMarginPts += 20;
@@ -1358,10 +1369,10 @@ export class PDF {
     this.currentY += 6;
     if (this.shouldBreakPage(this.currentY)) this.addPageBreak();
     
-    // Render children
+    // Render children (await for async elements like code blocks)
     for (const child of element.childNodes) {
       if (child.nodeType === NodeType.ELEMENT_NODE) {
-        this.renderHTMLElement(child as HTMLElement);
+        await this.renderHTMLElement(child as HTMLElement);
       }
     }
     
