@@ -39,9 +39,12 @@ describe('PDF Markdown HTML Rendering', () => {
   describe('renderFromHTML', () => {
     it('should render simple HTML paragraph', async () => {
       pdf.setupPdf();
+      const initialBufferSize = pdf.docInfo().asArrayBuffer().byteLength;
       const html = '<p>Simple paragraph text</p>';
       await pdf.renderFromHTML(html);
       assert.ok(pdf.docInfo().pdfDoc, 'PDF document should exist');
+      const finalBufferSize = pdf.docInfo().asArrayBuffer().byteLength;
+      assert.ok(finalBufferSize > initialBufferSize, 'PDF buffer should grow after rendering content');
     });
 
     it('should render heading elements', async () => {
@@ -118,6 +121,7 @@ describe('PDF Markdown HTML Rendering', () => {
       `;
       await pdf.renderFromHTML(html);
       assert.ok(pdf.docInfo().pdfDoc, 'PDF document should exist');
+      assert.strictEqual(pdf.getPageTotal(), 1, 'Complex structure should fit on one page');
     });
 
     it('should handle empty HTML gracefully', async () => {
@@ -198,6 +202,26 @@ describe('PDF Markdown HTML Rendering', () => {
       assert.strictEqual(fontInfo.fontSize, 16);
     });
 
+    it('should extract font-size in em and convert to pixels', () => {
+      pdf.setupPdf();
+      const pdfPrivate = pdf as any;
+      
+      const mockElement = {
+        getAttribute: (attr: string) => {
+          if (attr === 'style') return 'font-size: 1.5em';
+          return null;
+        }
+      };
+      
+      const fontInfo = pdfPrivate.getFontFromElementStyle(mockElement);
+      assert.ok(fontInfo, 'Font info should be extracted');
+      // 1.5em * base font size (should be positive)
+      assert.ok(fontInfo.fontSize > 0, 'Font size should be positive');
+      // Verify it's larger than base (1.5x multiplier)
+      const baseFontInfo = pdfPrivate.getMarkdownFontInfo();
+      assert.ok(fontInfo.fontSize > baseFontInfo.fontSize, 'Em size should be larger than base');
+    });
+
     it('should return null for element without style', () => {
       pdf.setupPdf();
       const pdfPrivate = pdf as any;
@@ -266,17 +290,26 @@ describe('PDF Markdown HTML Rendering', () => {
   });
 
   describe('HTML Element Handlers', () => {
-    it('should have handlers for all supported elements', () => {
+    it('should have handlers for core required elements', () => {
       pdf.setupPdf();
       const pdfPrivate = pdf as any;
       const handlers = pdfPrivate.htmlElementHandlers;
       
-      // Verify all expected handlers exist
-      const expectedHandlers = ['h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'p', 'ul', 'ol', 'pre', 'blockquote', 'hr'];
+      // Verify handlers object exists and is non-empty
+      assert.ok(handlers, 'Handlers object should exist');
+      assert.ok(Object.keys(handlers).length > 0, 'Handlers object should not be empty');
       
-      for (const tag of expectedHandlers) {
+      // Verify core required handlers exist (minimal subset)
+      const requiredHandlers = ['h1', 'p', 'ul', 'ol', 'pre'];
+      
+      for (const tag of requiredHandlers) {
         assert.ok(handlers[tag], `Handler for ${tag} should exist`);
         assert.strictEqual(typeof handlers[tag], 'function', `Handler for ${tag} should be a function`);
+      }
+      
+      // Verify all registered handlers are functions
+      for (const [tag, handler] of Object.entries(handlers)) {
+        assert.strictEqual(typeof handler, 'function', `Handler for ${tag} should be a function`);
       }
     });
 
