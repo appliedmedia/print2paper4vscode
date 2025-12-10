@@ -799,6 +799,14 @@ export class PDF {
 
   /**
    * Get font info from markdown preview settings or editor settings
+   * 
+   * Respects user's markdown.preview.fontFamily and markdown.preview.fontSize
+   * settings, falling back to editor settings if not configured.
+   * 
+   * @returns Font family and size for markdown rendering
+   * @example
+   * const { fontFamily, fontSize } = this.getMarkdownFontInfo();
+   * // Returns: { fontFamily: 'Helvetica', fontSize: 14 }
    */
   private getMarkdownFontInfo(): { fontFamily: string; fontSize: number } {
     // Get markdown preview settings (these control what user sees in MD preview)
@@ -816,7 +824,16 @@ export class PDF {
 
   /**
    * Extract font info from HTML element's style attribute
-   * Returns null if no style info found
+   * 
+   * Parses inline styles for font-family and font-size properties.
+   * Supports multiple units: px (pixels), pt (points), em (relative to base).
+   * 
+   * @param element - HTML element to extract font info from
+   * @returns Font family and size if found in element's style attribute, null otherwise
+   * @example
+   * const el = parse('<span style="font-family: Courier; font-size: 12px">text</span>');
+   * const font = this.getFontFromElementStyle(el);
+   * // Returns: { fontFamily: 'Courier', fontSize: 12 }
    */
   private getFontFromElementStyle(element: HTMLElement): { fontFamily?: string; fontSize?: number } | null {
     const style = element.getAttribute('style');
@@ -851,10 +868,23 @@ export class PDF {
 
   /**
    * Render HTML-formatted markdown to PDF
-   * Uses VS Code's markdown renderer output
    * 
-   * NOTE: This method is async to support code block rendering which requires
-   * asynchronous tokenization via Shiki.
+   * Parses HTML from VS Code's markdown renderer and converts it to PDF.
+   * Handles standard markdown elements: headings, paragraphs, lists, code blocks,
+   * blockquotes, horizontal rules, and inline formatting (bold, italic, code).
+   * 
+   * Architecture:
+   * - Uses node-html-parser to parse HTML into DOM tree
+   * - Dispatches each element to specialized handler via htmlElementHandlers map
+   * - Reuses existing PDF primitives: character wrapping, page breaking, text rendering
+   * - Code blocks are re-tokenized with Shiki for syntax highlighting
+   * 
+   * @param html - HTML string from VS Code's markdown.api.render command
+   * @throws Error if HTML parsing fails or required PDF document not initialized
+   * 
+   * @example
+   * const html = await vscode.commands.executeCommand('markdown.api.render', markdown);
+   * await pdf.renderFromHTML(html);
    */
   async renderFromHTML(html: string): Promise<void> {
     const dx = this.dx.sub({ name: 'renderFromHTML' });
@@ -894,8 +924,17 @@ export class PDF {
   };
 
   /**
-   * Render a single HTML element
-   * Supports both sync and async handlers
+   * Render a single HTML element using registered handlers
+   * 
+   * Dispatches element to appropriate handler based on tag name.
+   * Handlers can be sync or async (e.g., code blocks require async tokenization).
+   * 
+   * @param element - HTML element to render
+   * @example
+   * const root = parse('<h1>Title</h1><p>Text</p>');
+   * for (const el of root.childNodes) {
+   *   await this.renderHTMLElement(el as HTMLElement);
+   * }
    */
   private async renderHTMLElement(element: HTMLElement): Promise<void> {
     const dx = this.dx.sub({ name: 'renderHTMLElement' });
@@ -911,7 +950,17 @@ export class PDF {
   }
 
   /**
-   * Render heading element
+   * Render heading element (h1-h6) with automatic sizing and spacing
+   * 
+   * Font sizing uses multipliers: h1=2.0x, h2=1.5x, h3=1.25x, h4=1.1x, h5=1.0x, h6=0.9x
+   * Spacing before/after scales with heading level (larger headings get more space).
+   * Respects inline font styles if present in HTML, otherwise uses markdown preview settings.
+   * 
+   * @param element - HTML heading element
+   * @param level - Heading level (1-6)
+   * @example
+   * // <h1 style="font-size: 24px">Title</h1>
+   * this.renderHeading(element, 1); // Uses 24px from inline style
    */
   private renderHeading(element: HTMLElement, level: number): void {
     const pdfDoc = this.docInfo().pdfDoc;
@@ -961,7 +1010,20 @@ export class PDF {
   }
 
   /**
-   * Render paragraph with inline formatting
+   * Render paragraph with inline formatting support
+   * 
+   * Processes paragraph content including nested inline elements:
+   * - Plain text nodes
+   * - Bold/strong elements
+   * - Italic/em elements
+   * - Inline code elements
+   * 
+   * Adds line spacing after paragraph for visual separation.
+   * 
+   * @param element - HTML paragraph element
+   * @example
+   * // <p>This is <strong>bold</strong> and <em>italic</em> text</p>
+   * this.renderParagraph(element);
    */
   private renderParagraph(element: HTMLElement): void {
     if (!this.docInfo().pdfDoc) return;
@@ -1042,7 +1104,21 @@ export class PDF {
   }
 
   /**
-   * Render inline content (handles bold, italic, code, etc.)
+   * Render inline content with formatting (bold, italic, code)
+   * 
+   * Recursively processes child nodes:
+   * - Text nodes: rendered with current font
+   * - <strong>, <b>: rendered in bold
+   * - <em>, <i>: rendered in italic
+   * - <code>: rendered in monospace
+   * - Unknown elements: recursively processed
+   * 
+   * Font state is saved/restored around each formatted element.
+   * 
+   * @param element - HTML element containing inline content
+   * @example
+   * // <span>Text with <strong>bold</strong> and <code>code</code></span>
+   * this.renderInlineContent(element);
    */
   private renderInlineContent(element: HTMLElement): void {
     if (!this.docInfo().pdfDoc) return;
@@ -1069,8 +1145,22 @@ export class PDF {
   }
 
   /**
-   * Render text content with character wrapping
-   * REUSES existing character wrapping logic from renderFromTokens
+   * Render text content with intelligent character wrapping
+   * 
+   * Core text rendering primitive shared by all HTML element handlers.
+   * Implements word-aware line wrapping with automatic page breaks.
+   * 
+   * Algorithm:
+   * 1. Calculate remaining space on current line
+   * 2. Use findCharacterBreakPoint() to find optimal break position
+   * 3. Render text portion and advance position
+   * 4. Wrap to next line if needed, checking for page breaks
+   * 
+   * Reuses existing character wrapping logic from renderFromTokens for consistency.
+   * 
+   * @param text - Plain text content to render
+   * @example
+   * this.renderTextContent('This is a long line that will wrap automatically');
    */
   private renderTextContent(text: string): void {
     if (!this.docInfo().pdfDoc || !text) return;
@@ -1108,7 +1198,24 @@ export class PDF {
   }
 
   /**
-   * Render list (ul or ol)
+   * Render ordered or unordered list with automatic numbering/bullets
+   * 
+   * Features:
+   * - Unordered lists: bullet character (•)
+   * - Ordered lists: auto-incrementing numbers (1. 2. 3.)
+   * - 20-point indentation from left margin
+   * - Nested inline formatting support
+   * - Proper spacing between items
+   * 
+   * Margin is temporarily adjusted during list rendering and restored after.
+   * 
+   * @param element - HTML list element (ul or ol)
+   * @example
+   * // <ul><li>Item 1</li><li>Item 2</li></ul>
+   * this.renderList(element); // Renders with bullets
+   * 
+   * // <ol><li>First</li><li>Second</li></ol>
+   * this.renderList(element); // Renders with 1. 2. numbering
    */
   private renderList(element: HTMLElement): void {
     const pdfDoc = this.docInfo().pdfDoc;
@@ -1153,8 +1260,23 @@ export class PDF {
   }
 
   /**
-   * Render code block with syntax highlighting
-   * REUSES existing Shiki tokenization!
+   * Render fenced code block with syntax highlighting
+   * 
+   * Architecture:
+   * - Extracts language from class="language-xxx" attribute
+   * - Re-tokenizes code using Shiki (same as raw code rendering)
+   * - Renders tokens with existing renderFromTokens() method
+   * - Applies 20-point indentation
+   * - Uses monospace font at 90% of base size
+   * - Adds spacing before/after for visual separation
+   * 
+   * This approach ensures code blocks in rendered markdown have identical
+   * syntax highlighting to raw code files.
+   * 
+   * @param element - HTML pre element containing code
+   * @example
+   * // <pre><code class="language-javascript">const x = 42;</code></pre>
+   * await this.renderCodeBlock(element); // Renders with JS syntax highlighting
    */
   private async renderCodeBlock(element: HTMLElement): Promise<void> {
     const pdfDoc = this.docInfo().pdfDoc;
@@ -1215,7 +1337,16 @@ export class PDF {
   }
 
   /**
-   * Render blockquote with indentation
+   * Render blockquote with 20-point indentation
+   * 
+   * Blockquotes can contain any block-level elements (paragraphs, lists, code).
+   * All children are rendered recursively with increased left margin.
+   * Margin is restored after rendering.
+   * 
+   * @param element - HTML blockquote element
+   * @example
+   * // <blockquote><p>Quoted text</p></blockquote>
+   * this.renderBlockquote(element); // Renders indented
    */
   private renderBlockquote(element: HTMLElement): void {
     // Save left margin and indent
@@ -1243,7 +1374,15 @@ export class PDF {
   }
 
   /**
-   * Render horizontal rule
+   * Render horizontal rule as light gray line
+   * 
+   * Draws a line across the full content width (respecting margins).
+   * Color: #cccccc (light gray)
+   * Spacing: 6 points before and after
+   * 
+   * @example
+   * // <hr>
+   * this.renderHorizontalRule(); // Draws horizontal line
    */
   private renderHorizontalRule(): void {
     const doc = this.docInfo().pdfDoc;
