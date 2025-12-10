@@ -998,9 +998,9 @@ export class PaperPrinter {
 
     if (menuItemId !== UIMenu.defaultId()) {
       this.fn.uimenumgr.setValueForPersistIdOnMenuId({
-        menuId: kMd.id,
-        persistId: kMd.id as UI_t,
-        value: menuItemId as PersistValue_t
+        menuId,
+        persistId: menuId as UI_t,
+        value: id as PersistValue_t
       });
       
       void this.regenerateAndUpdateWebview();
