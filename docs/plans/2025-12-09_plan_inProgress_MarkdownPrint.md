@@ -55,11 +55,11 @@ All core functionality for markdown printing in both raw and rendered modes has 
 
 ### ✅ Phase 3: VS Code Markdown API Integration (COMPLETE)
 
-- ✅ **DocInfo_PaperPrinter**: Add `useRenderedMd: boolean = false` property
-- ✅ **VSCodeAPIs**: Add `getExtension_Markdown()` method to get extension reference
-- ✅ **VSCodeAPIs**: Add `renderMarkdownToHtml(markdown, document)` wrapper method
-- ✅ **PaperPrinter**: Update `generatePdf()` to branch on `this.docInfo.useRenderedMd` flag
-- ☐ **Follow-up**: Create menu item to toggle `useRenderedMd` (see Phase 6 for details)
+- ✅ **VSCodeAPIs**: Add `renderMarkdownToHtml(markdown, document)` using official `markdown.api.render` command
+- ✅ **VSCodeAPIs**: Add proper error handling with `dx.error` logging
+- ✅ **Stylize**: Modified `tokenize()` to accept `useRenderedMd` flag and branch accordingly
+- ✅ **PDF**: Add `generatePdf({ useRenderedMd?, document? })` optional args
+- ✅ **PaperPrinter**: Derive `useRenderedMd` from menu state (no DocInfo property needed)
 
 ### ✅ Phase 4: Removed Screenshot Approach (COMPLETE)
 
@@ -121,18 +121,21 @@ All core functionality for markdown printing in both raw and rendered modes has 
 - ✅ `handleSelection_Md()` uses const IDs and returns const boolean values
 - ✅ Triggers PDF regeneration with new mode automatically
 - ✅ Persists user selection across sessions
-- ✅ **Architecture**: Reads mode directly from menu system (`getMenuItemIdSelected('md')`) instead of duplicating state in `docInfo`
+- ✅ **Architecture**: Reads mode directly from menu system via `getValueForMenuItemIdSelected(kMd.id)` - no state duplication
 - ✅ Boolean mapping centralized in type definitions (`kMd_Raw.value = false`, `kMd_Render.value = true`)
+- ✅ Clean boolean coercion: `!!getValueForMenuItemIdSelected(kMd.id)`
 
 **How It Works**:
 
 1. User clicks `.md` button in menu bar
 2. Dropdown shows: **Raw** | **Render**
-3. User selects mode
-4. Handler persists selection to menu system via `setValueForPersistIdOnMenuId()`
-5. When generating PDF, `PaperPrinter.generatePdf()` reads current selection via `getMenuItemIdSelected('md')`
-6. Passes `useRenderedMd` boolean to `PDF.generatePdf()` (true if mode === 'render')
-7. PDF regenerates automatically with selected mode
+3. User selects mode → `handleSelection_Md()` called
+4. Handler persists selection via `setValueForPersistIdOnMenuId()` using passed-in `menuId` and resolved `id`
+5. Handler triggers PDF regeneration automatically
+6. When generating PDF, `PaperPrinter.generatePdf()`:
+   - Reads selection: `!!getValueForMenuItemIdSelected(kMd.id)` (returns boolean)
+   - Passes `useRenderedMd` to `PDF.generatePdf({ useRenderedMd, document })`
+7. `PDF.generatePdf()` orchestrates: `setupPdf()` → `addHeaderAndFooter()` → `Stylize.tokenize()` → `PDF.render()` → `finishPdf()`
 
 **Mode Descriptions**:
 
@@ -225,44 +228,19 @@ All core functionality for markdown printing in both raw and rendered modes has 
 - Added `PaperPrinter.handlePreviewTabPrint()` with user prompt
 - Added `PaperPrinter.screenshotAndPrint()` with fallback
 
-**AppleScript Templates Added to OSMac.yaml**:
-
-```yaml
-apple_script_get_current_app: |
-  tell application "System Events"
-    name of first application process whose frontmost is true
-  end tell
-
-apple_script_get_editor_bounds: |
-  tell application "System Events"
-    tell process "{{app_name}}"
-      set frontWindow to front window
-      set windowPosition to position of frontWindow
-      set windowSize to size of frontWindow
-      return (item 1 of windowPosition) & "," & (item 2 of windowPosition) & "," & (item 1 of windowSize) & "," & (item 2 of windowSize)
-    end tell
-  end tell
-
-apple_script_get_screen_dimensions: |
-  tell application "Finder"
-    set screenBounds to bounds of window of desktop
-    set screenWidth to (item 3 of screenBounds) - (item 1 of screenBounds)
-    set screenHeight to (item 4 of screenBounds) - (item 2 of screenBounds)
-    return screenWidth & "," & screenHeight
-  end tell
-```
-
-**Note on Phase 4**: AppleScript is used to get window information, but the actual screenshot is taken using the macOS `screencapture` command-line tool, NOT AppleScript.
+**Note**: The Phase 4 screenshot approach and all associated AppleScript templates have been **REMOVED** (see Phase 4 section above). Markdown rendering mode is now controlled via the `.md` menu dropdown (Phase 6).
 
 ### Known Limitations
 
-1. **Manual Mode Toggle**: Currently `useRenderedMd` must be set programmatically. UI menu toggle not yet implemented (see Phase 6 TODO).
+1. **Menu Visibility**: The `.md` menu is always visible (not conditional on markdown files). Future enhancement.
 
-2. **Background Colors**: Code blocks and blockquotes don't yet extract background colors from themes (noted as future enhancement).
+2. **Visual Indicator**: Selected mode doesn't show a checkmark. Future enhancement.
 
-3. **Table Support**: Markdown tables are not yet implemented (would need additional HTML handlers).
+3. **Background Colors**: Code blocks and blockquotes don't yet extract background colors from themes (noted as future enhancement).
 
-4. **Image Support**: Embedded images in markdown are not yet handled.
+4. **Table Support**: Markdown tables are not yet implemented (would need additional HTML handlers).
+
+5. **Image Support**: Embedded images in markdown are not yet handled.
 
 ### Architecture Notes
 
@@ -279,17 +257,20 @@ apple_script_get_screen_dimensions: |
 2. Fall back to `markdown.preview.fontFamily` and `markdown.preview.fontSize` settings
 3. Fall back to editor typography settings
 
-**AppleScript Safety**:
+**Menu State Management**:
 
-⚠️ **CRITICAL**: The `app_name` variable in AppleScript templates comes directly from System Events and is **NOT sanitized**. It's safe because it's returned by the OS itself, not user input.
+- No state duplication: `useRenderedMd` derived from menu system on-demand
+- Menu system persists user selection across sessions
+- Boolean values embedded in type constants (`kMd_Raw.value`, `kMd_Render.value`)
+- Clean coercion: `!!getValueForMenuItemIdSelected(kMd.id)`
 
 ### Future Enhancements
 
-- [ ] UI menu toggle for `useRenderedMd` (Phase 6 TODO - detailed plan above)
+- [ ] Conditional menu visibility: Only show `.md` menu for markdown files
+- [ ] Visual indicator: Show checkmark next to currently selected mode in dropdown
 - [ ] Extract background colors from theme for code/blockquotes
 - [ ] Add table support for rendered markdown
 - [ ] Add image embedding support for rendered markdown
-- [ ] Windows/Linux screenshot implementations (if screenshot approach is kept)
 
 ---
 
