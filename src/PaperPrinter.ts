@@ -993,16 +993,10 @@ export class PaperPrinter {
     dx.require(args, ['menuId', 'menuItemId']);
     const { menuId, menuItemId } = args;
     
-    // Set defaults: if requesting default, use kMd_Raw, otherwise use selected menuItemId
     const id = menuItemId === UIMenu.defaultId() ? kMd_Raw.id : menuItemId;
     const value = this.fn.uimenumgr.getValueForMenuItemId({ menuId, menuItemId: id });
 
-    if (menuItemId === UIMenu.defaultId()) {
-      dx.out(`Returning default markdown mode: ${id} (${value})`);
-    } else {
-      dx.out(`Markdown mode selected: ${menuItemId} (value: ${value})`);
-      
-      // Save selection and regenerate
+    if (menuItemId !== UIMenu.defaultId()) {
       this.fn.uimenumgr.setValueForPersistIdOnMenuId({
         menuId: kMd.id,
         persistId: kMd.id as UI_t,
