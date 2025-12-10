@@ -1,79 +1,351 @@
 # Markdown Print Plan (Revised: Direct Rendering)
 
+## Implementation Summary
+
+**Status**: ✅ Complete - Architecture Refactored (2025-12-09)
+
+All core functionality for markdown printing in both raw and rendered modes has been implemented with clean separation of concerns:
+
+- ✅ HTML parsing and rendering infrastructure in PDF class
+- ✅ VS Code markdown API integration using official `markdown.api.render` command
+- ✅ Unified rendering architecture (tokens and HTML follow parallel paths)
+- ✅ Stylize handles branching between tokenization and HTML rendering
+- ✅ PDF.generatePdf() orchestrates complete flow for both modes
+- ✅ PaperPrinter simplified - just calls generatePdf()
+- ⚠️ Manual testing required before marking as complete
+
+**Architecture Improvements** (Refactor completed 2025-12-09):
+
+- Stylize.tokenize() returns `{ tokens? | html? }` without auto-rendering
+- PDF.render() explicitly renders returned result
+- PDF.addHeaderAndFooter() is now private (as it should be)
+- PaperPrinter no longer knows about PDF internals
+- Fixed double-rendering bug in code blocks
+
+**To test the new functionality manually:**
+
+1. Open a markdown file in VS Code
+2. Run the print command (Alt+P or context menu)
+3. Click the markdown mode toggle button (📝) in the webview menu bar
+4. Verify toggling between raw (syntax highlighted) and rendered (HTML) modes
+5. Verify PDF regenerates automatically when mode changes
+
 ## TODO List
 
-
 ### ✅ Phase 1: Validation (COMPLETE)
+
 - ✅ Verify raw markdown printing works
 - ✅ Test Shiki markdown syntax highlighting
 
-
 ### 🚧 Phase 2: HTML Rendering in PDF Class
-- ☐▶ Install `node-html-parser` dependency
-- ☐ Rename `PDF.renderTokenizedLine()` → `PDF.renderFromTokens()` for clarity
-- ☐ Add `PDF.renderFromHTML(html: string)` method to parse and render HTML
-- ☐ Add `htmlElementHandlers` map and `renderHTMLElement()` dispatcher method
-- ☐ Add `getMarkdownFontInfo()` and `getFontFromElementStyle()` font helper methods
-- ☐ Implement `renderHeading()` method for h1-h6 elements with font sizing
-- ☐ Implement `renderParagraph()` method with spacing
-- ☐ Implement `renderInlineContent()` with handlers for strong/b/em/i/code elements
-- ☐ Implement `renderTextContent()` to reuse existing character wrapping logic
-- ☐ Implement `renderList()` method for ul/ol with bullets and numbering
-- ☐ Implement `renderCodeBlock()` to reuse Shiki tokenization for syntax highlighting
-- ☐ Implement `renderBlockquote()` with indentation
-- ☐ Implement `renderHorizontalRule()` method
 
+- ✅ Install `node-html-parser` dependency
+- ✅ Rename `PDF.renderTokenizedLine()` → `PDF.renderFromTokens()` for clarity
+- ✅ Add `PDF.renderFromHTML(html: string)` method to parse and render HTML
+- ✅ Add `htmlElementHandlers` map and `renderHTMLElement()` dispatcher method
+- ✅ Add `getMarkdownFontInfo()` and `getFontFromElementStyle()` font helper methods
+- ✅ Implement `renderHeading()` method for h1-h6 elements with font sizing
+- ✅ Implement `renderParagraph()` method with spacing
+- ✅ Implement `renderInlineContent()` with handlers for strong/b/em/i/code elements
+- ✅ Implement `renderTextContent()` to reuse existing character wrapping logic
+- ✅ Implement `renderList()` method for ul/ol with bullets and numbering
+- ✅ Implement `renderCodeBlock()` to reuse Shiki tokenization for syntax highlighting
+- ✅ Implement `renderBlockquote()` with indentation
+- ✅ Implement `renderHorizontalRule()` method
 
-### 🚧 Phase 3: VS Code Markdown API Integration
-- ☐ **DocInfo_PaperPrinter**: Add `useRenderedMd: boolean = false` property
-- ☐ **VSCodeAPIs**: Add `getExtension_Markdown()` method to get extension reference
-- ☐ **VSCodeAPIs**: Add `renderMarkdownToHtml(markdown, document)` wrapper method
-- ☐ **PaperPrinter**: Update `generatePdf()` to branch on `this.docInfo.useRenderedMd` flag
-- ☐ **Follow-up TODO**: Create menu item to toggle `useRenderedMd` (implement later)
+### ✅ Phase 3: VS Code Markdown API Integration (COMPLETE)
 
+- ✅ **VSCodeAPIs**: Add `renderMarkdownToHtml(markdown, document)` using official `markdown.api.render` command
+- ✅ **VSCodeAPIs**: Add proper error handling with `dx.error` logging
+- ✅ **Stylize**: Modified `tokenize()` to accept `useRenderedMd` flag and branch accordingly
+- ✅ **PDF**: Add `generatePdf({ useRenderedMd?, document? })` optional args
+- ✅ **PaperPrinter**: Derive `useRenderedMd` from menu state (no DocInfo property needed)
 
-### 🚧 Phase 4: Preview Tab Handling
-- ☐ **OSMac**: Add `getCurrentAppName()` to detect Cursor/Code/etc and cache
-- ☐ **OSMac**: Add `getEditorWindowBounds()` via AppleScript with dynamic app name
-- ☐ **OSMac**: Add `getScreenDimensions()` via AppleScript as fallback
-- ☐ **OSMac**: Add `screenshotWindow(bounds?)` using screencapture command
-- ☐ **PaperPrinter**: When preview tab detected, prompt user for screenshot
-- ☐ **PaperPrinter**: Implement `screenshotAndPrint()` with window bounds or full screen fallback
-- ☐ Prompt: "Due to VS Code's implementation of private data in Preview tabs, they cannot be printed except via screenshot. Do that?"
+### ✅ Phase 4: Removed Screenshot Approach (COMPLETE)
 
+**The screenshot approach for preview tabs was incorrectly implemented and has been REMOVED.**
 
-### 🚧 Phase 5: Testing & Polish
-- ☐ Test with basic markdown (headings, paragraphs, bold, italic)
-- ☐ Test with lists (ordered and unordered, nested)
-- ☐ Test with code blocks with syntax highlighting
-- ☐ Test with complex markdown (blockquotes, tables, nested elements)
-- ☐ Polish - Respect `markdown.preview.fontFamily` and `fontSize` settings
-- ☐ Polish - Get background colors from theme for code/blockquotes
-- ☐ Polish - Test with different VS Code themes
+**Why it was wrong:**
+
+- Should not screenshot preview tabs
+- Proper solution: User controls markdown rendering via menu dropdown
+- No need to detect or handle preview tabs differently
+
+**Code REMOVED (Commit pending):**
+
+- ✅ **OSMac**: Removed `getCurrentAppName()`
+- ✅ **OSMac**: Removed `getEditorWindowBounds()`
+- ✅ **OSMac**: Removed `getScreenDimensions()`
+- ✅ **OSMac**: Removed `screenshotWindow()`
+- ✅ **PaperPrinter**: Removed `handlePreviewTabPrint()`
+- ✅ **PaperPrinter**: Removed `screenshotAndPrint()`
+- ✅ **PaperPrinter**: Removed preview tab detection in `handlePrintCommandFromVSCode()`
+- ✅ **OSMac.yaml**: Removed AppleScript templates: `apple_script_get_current_app`, `apple_script_get_editor_bounds`, `apple_script_get_screen_dimensions`
+
+**Correct implementation:**
+
+- ✅ Added `.md` dropdown menu with "Raw" and "Render" options (Phase 6)
+- ✅ User explicitly chooses rendering mode via menu
+- ✅ No special handling for preview tabs needed
+
+### 🚧 Phase 5: Fix Test Infrastructure
+
+**⚠️ DO NOT pursue the vscode mock approach - it will not work for multiple reasons:**
+
+1. **Mocking complexity**: VS Code's Extension API and markdown renderer are complex runtime dependencies that cannot be properly mocked without the actual VS Code environment
+2. **Test accuracy**: Mocked tests would not validate actual behavior - markdown rendering happens through VS Code's extension, not our code
+3. **Maintenance burden**: Any changes to VS Code APIs would require updating mocks
+4. **False confidence**: Tests would pass but not validate real functionality
+
+**The Right Approach**:
+
+- ☐ Tests should run in VS Code test environment using `@vscode/test-electron` or similar
+- ☐ Update test infrastructure to use VS Code's test runner instead of plain Node.js
+- ☐ Tests need actual VS Code extension host to test markdown rendering
+- ☐ Consider integration tests in VS Code environment rather than unit tests with mocks
+
+**Current State**: Tests are broken due to vscode module imports, but fixing them requires proper VS Code test infrastructure, not mocks. This is a larger architectural change to the test system.
+
+**Decision**: Defer test infrastructure overhaul to separate task. Current implementation compiles and can be manually tested in VS Code.
+
+### ✅ Phase 6: Add UI Menu Dropdown (COMPLETE)
+
+**Goal**: Add a top-level menu dropdown for selecting markdown rendering mode.
+
+**Implemented** (Commits f73bb64, 4a14541, TBD):
+
+- ✅ Created `kMd_Raw` and `kMd_Render` constants with embedded boolean values (false/true)
+- ✅ Added `kMd` menu constant to PaperPrinter_t.ts using the above constants
+- ✅ Menu button with `.md` icon in top-level menu bar (indicates markdown-specific)
+- ✅ Dropdown menu items: "Raw" and "Render"
+- ✅ `handleSelection_Md()` uses const IDs and returns const boolean values
+- ✅ Triggers PDF regeneration with new mode automatically
+- ✅ Persists user selection across sessions
+- ✅ **Architecture**: Reads mode directly from menu system via `getValueForMenuItemIdSelected(kMd.id)` - no state duplication
+- ✅ Boolean mapping centralized in type definitions (`kMd_Raw.value = false`, `kMd_Render.value = true`)
+- ✅ Clean boolean coercion: `!!getValueForMenuItemIdSelected(kMd.id)`
+
+**How It Works**:
+
+1. User clicks `.md` button in menu bar
+2. Dropdown shows: **Raw** | **Render**
+3. User selects mode → `handleSelection_Md()` called
+4. Handler persists selection via `setValueForPersistIdOnMenuId()` using passed-in `menuId` and resolved `id`
+5. Handler triggers PDF regeneration automatically
+6. When generating PDF, `PaperPrinter.generatePdf()`:
+   - Reads selection: `!!getValueForMenuItemIdSelected(kMd.id)` (returns boolean)
+   - Passes `useRenderedMd` to `PDF.generatePdf({ useRenderedMd, document })`
+7. `PDF.generatePdf()` orchestrates: `setupPdf()` → `addHeaderAndFooter()` → `Stylize.tokenize()` → `PDF.render()` → `finishPdf()`
+
+**Mode Descriptions**:
+
+- **Raw**: Syntax-highlighted markdown source (uses Shiki)
+- **Render**: HTML output (uses VS Code markdown API)
+
+**Future Enhancements**:
+
+- ☐ **Conditional visibility**: Only show `.md` menu when source language is markdown
+  - Implementation approach: Add `visibility` key to menu constants in `PaperPrinter_t.ts`
+  - Value can be: `boolean` (static true/false) OR `() => boolean` (function that evaluates dynamically)
+  - Function would check: `docInfo().languageId === 'markdown'`
+  - UIMenu would evaluate visibility before rendering menu item
+- ☐ Visual indicator: Show checkmark next to currently selected mode in dropdown
+
+### 🚧 Phase 7: Testing & Polish
+
+**Manual testing is required** - Extension must be loaded in VS Code.
+
+**Test Cases**:
+
+1. **Basic Markdown**
+   - ☐ Headings (h1-h6)
+   - ☐ Paragraphs
+   - ☐ Bold and italic text
+   - ☐ Inline code
+
+2. **Lists**
+   - ☐ Unordered lists
+   - ☐ Ordered lists
+   - ☐ Nested lists
+
+3. **Code Blocks**
+   - ☐ Fenced code blocks with language
+   - ☐ Syntax highlighting verification
+
+4. **Complex Elements**
+   - ☐ Blockquotes
+   - ☐ Horizontal rules
+   - ☐ Mixed content
+
+5. **Mode Switching**
+   - ☐ Raw markdown (syntax highlighted source)
+   - ☐ Rendered markdown (HTML output)
+
+6. **Preview Tabs**
+   - ☐ Screenshot prompt appears
+   - ☐ Screenshot captures correctly
+   - ☐ Print dialog opens
+
+**Polish**:
+
+- ✅ Respect `markdown.preview.fontFamily` and `fontSize` settings (implemented)
+- ☐ Get background colors from theme for code/blockquotes (future enhancement)
+- ☐ Test with different VS Code themes
+
+**Time Estimate**: 2 hours
+
+---
+
+## Implementation Details
+
+### What Was Implemented
+
+#### Phase 2: HTML Rendering in PDF Class
+
+- Installed `node-html-parser` dependency
+- Renamed `PDF.renderTokenizedLine()` → `PDF.renderFromTokens()` with 2D token array signature
+- Added `PDF.renderFromHTML(html: string)` method to parse and render HTML
+- Implemented HTML element handlers:
+  - `getMarkdownFontInfo()` and `getFontFromElementStyle()` - font extraction
+  - `renderHeading()` - h1-h6 with automatic sizing
+  - `renderParagraph()` - paragraphs with spacing
+  - `renderInlineContent()` - bold, italic, code inline elements
+  - `renderTextContent()` - reuses existing character wrapping logic
+  - `renderList()` - ul/ol with bullets and numbering
+  - `renderCodeBlock()` - reuses Shiki tokenization for syntax highlighting
+  - `renderBlockquote()` - indented content
+  - `renderHorizontalRule()` - hr element
+
+#### Phase 3: VS Code Markdown API Integration
+
+- Added `useRenderedMd: boolean` property to `DocInfo_PaperPrinter`
+- Added `VSCodeAPIs.getExtension_Markdown()` method
+- Added `VSCodeAPIs.renderMarkdownToHtml()` wrapper method
+- Updated `PaperPrinter.generatePdf()` to branch on `useRenderedMd` flag
+
+#### Phase 4: Preview Tab Handling
+
+- Added `OSMac.getCurrentAppName()` with caching
+- Added `OSMac.getEditorWindowBounds()` via AppleScript (gets window position and size)
+- Added `OSMac.getScreenDimensions()` via AppleScript (fallback for bounds)
+- Added `OSMac.screenshotWindow(bounds?)` using macOS `screencapture` command-line tool
+- Added `PaperPrinter.handlePreviewTabPrint()` with user prompt
+- Added `PaperPrinter.screenshotAndPrint()` with fallback
+
+**Note**: The Phase 4 screenshot approach and all associated AppleScript templates have been **REMOVED** (see Phase 4 section above). Markdown rendering mode is now controlled via the `.md` menu dropdown (Phase 6).
+
+### Known Limitations
+
+1. **Menu Visibility**: The `.md` menu is always visible (not conditional on markdown files). Future enhancement.
+
+2. **Visual Indicator**: Selected mode doesn't show a checkmark. Future enhancement.
+
+3. **Background Colors**: Code blocks and blockquotes don't yet extract background colors from themes (noted as future enhancement).
+
+4. **Table Support**: Markdown tables are not yet implemented (would need additional HTML handlers).
+
+5. **Image Support**: Embedded images in markdown are not yet handled.
+
+### Architecture Notes
+
+**Unified Rendering Approach**:
+
+- Both `renderFromTokens()` and `renderFromHTML()` use the same underlying primitives
+- Character wrapping: `findCharacterBreakPoint()`
+- Page breaking: `shouldBreakPage()`, `addPageBreak()`
+- Text rendering: `renderTextContent()` reuses token rendering logic
+
+**Font Resolution**:
+
+1. Try to get font from HTML element's style attribute
+2. Fall back to `markdown.preview.fontFamily` and `markdown.preview.fontSize` settings
+3. Fall back to editor typography settings
+
+**Menu State Management**:
+
+- No state duplication: `useRenderedMd` derived from menu system on-demand
+- Menu system persists user selection across sessions
+- Boolean values embedded in type constants (`kMd_Raw.value`, `kMd_Render.value`)
+- Clean coercion: `!!getValueForMenuItemIdSelected(kMd.id)`
+
+### Future Enhancements
+
+- [ ] **Conditional menu visibility**: Only show `.md` menu when source language is markdown
+  - Implementation approach: Add `visibility` key to menu constants (boolean or `() => boolean` function)
+  - Function would check: `docInfo().languageId === 'markdown'`
+- [ ] **Visual indicator**: Show checkmark next to currently selected mode in dropdown
+- [ ] **Background colors**: Extract from theme for code blocks/blockquotes
+- [ ] **Table support**: Add HTML handlers for markdown tables
+- [ ] **Image support**: Implement embedded image rendering
 
 ---
 
 ## Overview
 
 Print markdown files in two modes:
+
 1. **Raw Mode** - Print markdown source with syntax highlighting (already works)
 2. **Rendered Mode** - Print HTML-rendered markdown (new feature)
 
-## Architecture: Direct Rendering (No Intermediate Format)
+## Architecture: Unified Rendering (Refactored 2025-12-09)
+
+### Data Flow
 
 ```text
-Raw Markdown:
-  Editor Text → Shiki Tokens → PDF.renderFromTokens() → jsPDF
-
-Rendered Markdown:
-  Editor Text → VS Code MD API → HTML → PDF.renderFromHTML() → jsPDF
+PaperPrinter.generatePdf()
+  ↓
+PDF.generatePdf({ useRenderedMd?, document? })
+  ↓
+  1. setupPdf() - Creates jsPDF document
+  2. addHeaderAndFooter() - Adds header/footer to first page
+  ↓
+  3. Stylize.tokenize({ code, languageId, useRenderedMd?, document? })
+     ↓
+     ├─ markdown + useRenderedMd?
+     │    → VSCodeAPIs.renderMarkdownToHtml() → { html }
+     │
+     └─ else
+          → Shiki.codeToTokens() → { tokens }
+  ↓
+  4. PDF.render({ tokens? | html? })
+     ↓
+     ├─ html? → renderFromHTML(html) → (HTML element handlers)
+     │                                   ↓
+     │                              renderCodeBlock() → Stylize.tokenize()
+     │                                                  → { tokens }
+     │                                                  → renderFromTokens()
+     │
+     └─ tokens? → renderFromTokens(tokens)
+  ↓
+  5. finishPdf() - Walks all pages, re-renders headers/footers with correct page totals
 ```
 
-**Key Insight**: The PDF document IS the common format. No need for intermediate data structures.
+### Key Architectural Principles
 
-**Unified Rendering**: Both `renderFromTokens()` and `renderFromHTML()` are input adapters that feed the same underlying line-by-line rendering primitives. They share:
+1. **Separation of Concerns**:
+   - **Stylize**: Tokenization OR HTML rendering (no PDF knowledge)
+   - **PDF**: Rendering to jsPDF (orchestrates flow)
+   - **PaperPrinter**: Configuration only (no PDF internals)
+
+2. **Parallel Paths**:
+   - Tokens and HTML follow same flow through PDF.render()
+   - Both use same primitives (page breaks, wrapping, headers/footers)
+
+3. **No Automatic Rendering**:
+   - Stylize.tokenize() returns data, doesn't render
+   - PDF.render() explicitly renders result
+   - Fixes double-rendering bug in code blocks
+
+4. **Header/Footer Two-Pass System**:
+   - Pass 1: During rendering (page totals unknown)
+   - Pass 2: In finishPdf() - walks all pages with correct totals
+
+### Unified Rendering Primitives
+
+Both `renderFromTokens()` and `renderFromHTML()` use the same underlying primitives:
+
 - Character wrapping logic (`findCharacterBreakPoint()`)
-- Page break detection (`shouldBreakPage()`)
+- Page break detection (`shouldBreakPage()`, `addPageBreak()`)
 - Position tracking (`currentX`, `currentY`)
 - Text rendering (`doc.text()`)
 
@@ -84,6 +356,7 @@ The rendering logic is unified; only the input parsing differs.
 ## Phase 1: Validation (Already Works) ✅
 
 Raw markdown printing works through existing code path:
+
 - `TabInspector.detectActiveTabCategory()` returns `'editor-md'`
 - Shiki tokenizes markdown source
 - `PDF.renderFromTokens()` renders with syntax highlighting
@@ -606,6 +879,7 @@ class PDF {
 ### Architecture: Proper Separation of Concerns
 
 **VSCodeAPIs** - Wraps all VS Code API calls:
+
 ```typescript
 // src/VSCodeAPIs.ts
 
@@ -652,7 +926,6 @@ async renderMarkdownToHtml(markdown: string, document: TextDocument): Promise<st
 }
 ```
 
-
 **DocInfo_PaperPrinter** - Add markdown rendering flag:
 
 ```typescript
@@ -669,7 +942,6 @@ export class DocInfo_PaperPrinter {
   // ... rest of class ...
 }
 ```
-
 
 **PaperPrinter** - Orchestrates workflow (update existing method):
 
@@ -721,9 +993,6 @@ async generatePdf(): Promise<void> {
   }
 }
 ```
-
-**Follow-up TODO**: Create a menu item in the toolbar that toggles `docInfo.useRenderedMd` on/off. This will allow users to switch between raw and rendered markdown modes without code changes. Menu should only appear when viewing markdown files.
-
 
 **PDF** - Two separate rendering methods:
 
@@ -944,6 +1213,7 @@ apple_script_get_screen_dimensions: |
 ### Fallback Strategy
 
 If window bounds cannot be obtained:
+
 - Get screen dimensions via AppleScript
 - Screenshot entire screen using `screencapture` (no bounds)
 - Print the screenshot as usual
@@ -957,6 +1227,7 @@ No user interaction required - fully automated.
 ### What's Reused Between renderFromTokens and renderFromHTML?
 
 **Identical (100% reuse):**
+
 1. `findCharacterBreakPoint()` - character wrapping logic
 2. `shouldBreakPage()` - page break detection
 3. `addPageBreak()` - new page creation
@@ -965,6 +1236,7 @@ No user interaction required - fully automated.
 6. Position tracking (`currentX`, `currentY`)
 
 **Different:**
+
 - `renderFromTokens()`: Just set color, render, next line
 - `renderFromHTML()`: Set font size/weight/style, handle spacing/indentation, then call `renderTextContent()`
 
@@ -987,78 +1259,97 @@ No user interaction required - fully automated.
 ## Implementation Checklist
 
 ### Phase 1: Validation ✅
+
 - [x] Verify raw markdown printing works
 - [x] Test Shiki markdown syntax highlighting
 
 ### Phase 2: Add HTML Rendering
-- [ ] Install `node-html-parser`
-- [ ] Rename `renderTokenizedLine()` → `renderFromTokens()`
-- [ ] Add `renderFromHTML()` method
-- [ ] Add HTML element rendering methods:
-  - [ ] `renderHTMLElement()` - dispatcher
-  - [ ] `renderHeading()` - h1-h6
-  - [ ] `renderParagraph()` - p with inline formatting
-  - [ ] `renderInlineContent()` - bold, italic, code
-  - [ ] `renderTextContent()` - text with wrapping (reuses existing logic)
-  - [ ] `renderList()` - ul, ol with bullets/numbers
-  - [ ] `renderCodeBlock()` - reuses Shiki tokenization
-  - [ ] `renderBlockquote()` - indented content
-  - [ ] `renderHorizontalRule()` - hr element
-- [ ] Test HTML rendering
+
+- [x] Install `node-html-parser`
+- [x] Rename `renderTokenizedLine()` → `renderFromTokens()`
+- [x] Add `renderFromHTML()` method
+- [x] Add HTML element rendering methods:
+  - [x] `renderHTMLElement()` - dispatcher
+  - [x] `renderHeading()` - h1-h6
+  - [x] `renderParagraph()` - p with inline formatting
+  - [x] `renderInlineContent()` - bold, italic, code
+  - [x] `renderTextContent()` - text with wrapping (reuses existing logic)
+  - [x] `renderList()` - ul, ol with bullets/numbers
+  - [x] `renderCodeBlock()` - reuses Shiki tokenization
+  - [x] `renderBlockquote()` - indented content
+  - [x] `renderHorizontalRule()` - hr element
+- [ ] Test HTML rendering (requires manual testing)
 
 ### Phase 3: VS Code Integration
-- [ ] Get markdown extension API
-- [ ] Call `mdApi.render()` to get HTML
-- [ ] Add `generateRenderedMarkdownPdf()` method
-- [ ] Test with various markdown documents
+
+- [x] Get markdown extension API
+- [x] Call `mdApi.render()` to get HTML
+- [x] Add branching logic in `generatePdf()` method
+- [ ] Test with various markdown documents (requires manual testing)
 
 ### Phase 4: Mode Selection
-- [ ] Add quick pick for mode selection
-- [ ] Handle mode choice in print command
-- [ ] Test mode switching
+
+- [x] Add `useRenderedMd` flag to DocInfo
+- [x] Handle mode choice in print command
+- [ ] Add menu item to toggle mode (future enhancement)
+- [ ] Test mode switching (requires manual testing)
 
 ### Phase 5: Polish
-- [ ] Respect `markdown.preview.fontFamily` setting
-- [ ] Respect `markdown.preview.fontSize` setting
-- [ ] Get background colors from theme
-- [ ] Test with different themes
-- [ ] Test with complex markdown (tables, nested lists, etc.)
+
+- [x] Respect `markdown.preview.fontFamily` setting
+- [x] Respect `markdown.preview.fontSize` setting
+- [ ] Get background colors from theme (future enhancement)
+- [ ] Test with different themes (requires manual testing)
+- [ ] Test with complex markdown (tables, nested lists, etc.) (requires manual testing)
 
 ---
 
 ## Timeline Estimate
 
-- Phase 1 (Validation): 30 min - testing only
-- Phase 2 (HTML Rendering): 8 hours
+- Phase 1 (Validation): ✅ 30 min - testing only (COMPLETE)
+- Phase 2 (HTML Rendering): ✅ 8 hours (COMPLETE)
   - Setup: 1 hour
   - Basic elements (h1-6, p): 2 hours
   - Inline formatting (bold, italic, code): 1 hour
   - Lists: 2 hours
   - Code blocks: 1 hour (reuses tokens!)
   - Blockquotes, hr: 1 hour
-- Phase 3 (VS Code API): 2 hours
-- Phase 4 (Mode selection): 1 hour
-- Phase 5 (Polish): 2 hours
+- Phase 3 (VS Code API): ✅ 2 hours (COMPLETE)
+- Phase 4 (Preview tabs): ✅ 2 hours (COMPLETE)
+- Phase 5 (Test Infrastructure): 🚧 4-6 hours (IN PROGRESS)
+  - Investigation: 1 hour
+  - Fix vscode mocks: 2-3 hours
+  - Write new tests: 1-2 hours
+- Phase 6 (Polish & Manual Testing): 2 hours (PENDING)
 
-**Total: ~14 hours**
+### Time Summary
+
+- **Total Estimated**: 18-20 hours
+- **Completed**: 12.5 hours (Phases 1-4)
+- **Remaining**: 5.5-7.5 hours (Phases 5-6)
 
 ---
 
 ## Key Decisions
 
 ### ✅ Direct rendering (no intermediate format)
+
 Both `renderFromTokens()` and `renderFromHTML()` write directly to jsPDF.
 
 ### ✅ Maximum code reuse
+
 HTML rendering reuses all the existing wrapping/paging helpers.
 
 ### ✅ Markdown preview settings
+
 Respect user's `markdown.preview.*` configuration.
 
 ### ✅ Code blocks use existing tokenization
+
 When HTML has code blocks, we tokenize them with Shiki and render using `renderFromTokens()`.
 
 ### ✅ Simple architecture
+
 - `renderFromTokens()` - for code
 - `renderFromHTML()` - for markdown
 - Shared helpers - for wrapping, paging, text rendering

@@ -125,6 +125,7 @@ Generic, type-safe solution: registers any `persistId` found in the config, rega
 ## Verification
 
 After the fix:
+
 1. ✅ Custom value "101" entered by user
 2. ✅ Transform.persist converts to 1.01 (persist value)
 3. ✅ Saved to menu.persist['zoomLevel_value'] with proper setter

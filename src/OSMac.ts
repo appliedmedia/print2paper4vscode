@@ -19,6 +19,8 @@ import type { Registry } from './Registry';
  * await os.filePrint('/path/to/file.pdf');
  */
 export class OSMac extends OS {
+  private currentAppName: string | null = null;
+
   constructor(args: { reg: Registry }) {
     super(args);
     // Override dx with OSMac-specific context
@@ -35,7 +37,7 @@ export class OSMac extends OS {
   private async executeAppleScript(
     templateKey: string,
     variables: Record<string, string> = {}
-  ): Promise<void> {
+  ): Promise<string> {
     const yaml = this.fileRead<Record<string, string>>({ path: 'src/OSMac.yaml' });
     if (!yaml?.[templateKey]) {
       this.dx.error(`Failed to load AppleScript template for ${templateKey}`);
@@ -49,8 +51,10 @@ export class OSMac extends OS {
     }
 
     const osa = `osascript -e '${appleScript}'`;
-    await this.execAsync(osa);
+    const result = await this.execAsync(osa);
+    return result.stdout;
   }
+
   async fileOpenInDefaultApp(path: string): Promise<void> {
     await this.execAsync(`open "${path}"`);
   }
@@ -60,11 +64,11 @@ export class OSMac extends OS {
   }
 
   async filePrint(path: string): Promise<void> {
-    await this.executeAppleScript('apple_script_print_via_finder', { file_path: path });
+    const _result = await this.executeAppleScript('apple_script_print_via_finder', { file_path: path });
   }
 
   async fileOpenPrintDialog(path: string): Promise<void> {
-    await this.executeAppleScript('apple_script_open_preview_print_dialog', { file_path: path });
+    const _result = await this.executeAppleScript('apple_script_open_preview_print_dialog', { file_path: path });
   }
 
   done(): void {

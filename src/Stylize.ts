@@ -66,11 +66,10 @@ export class Stylize {
       'vscodeapis.getVSCodeThemeJson',
       'vscodeapis.getActiveThemeId',
       'vscodeapis.getEditorTypography',
+      'vscodeapis.renderMarkdownToHtml',
       'os.pathJoin',
       'os.fileRead',
-      'utils.templateDictReplace',
-      'pdf.readyToPrint',
-      'pdf.renderTokenizedLine'
+      'utils.templateDictReplace'
     );
     this.dx = this.fn.dx.sub({ name: 'Stylize' });
   }
@@ -255,41 +254,50 @@ export class Stylize {
   }
 
   // Tokenize code and optionally render directly to PDF
+  /**
+   * Tokenize code or render markdown to HTML
+   * Returns either tokens (for syntax highlighting) or HTML (for rendered markdown)
+   * Does NOT render to PDF - that's handled by PDF.render()
+   */
   async tokenize(args: {
     code: string;
     languageId: LanguageId_t;
     theme?: string;
-  }): Promise<ThemedToken[][]> {
+    useRenderedMd?: boolean;
+    document?: any; // TextDocument for markdown rendering
+  }): Promise<{ tokens?: ThemedToken[][]; html?: string }> {
     const dx = this.dx.sub({ name: 'tokenize' });
     dx.require(args, ['code', 'languageId']);
-    const { code, languageId, theme } = args;
+    const { code, languageId, theme, useRenderedMd, document } = args;
 
     try {
-      await this.validateHighlighter(languageId);
-      const highlighter = this.highlighter!;
-      const themeToUse = theme || this.resolveActiveTheme();
+      // Branch: Rendered markdown vs tokenized code
+      if (languageId === 'markdown' && useRenderedMd && document) {
+        // Rendered markdown path: Get HTML from VS Code markdown API
+        dx.out('Rendering markdown to HTML via VS Code API');
+        const html = await this.fn.vscodeapis.renderMarkdownToHtml({
+          markdown: code,
+          document
+        });
+        dx.out(`Rendered markdown to HTML (${html.length} chars)`);
+        return { html };
+      } else {
+        // Tokenized path: Use Shiki for syntax highlighting
+        await this.validateHighlighter(languageId);
+        const highlighter = this.highlighter!;
+        const themeToUse = theme || this.resolveActiveTheme();
 
-      const tokenResult = highlighter.codeToTokens(code, {
-        lang: languageId,
-        theme: themeToUse,
-      });
-      const tokens = tokenResult?.tokens || [];
+        const tokenResult = highlighter.codeToTokens(code, {
+          lang: languageId,
+          theme: themeToUse,
+        });
+        const tokens = tokenResult?.tokens || [];
 
-      // Page-based filtering removed here; paging is handled by the renderer.
-      const filteredTokens = tokens;
-
-      // Render directly to PDF if PDF is initialized and ready
-      if (this.fn.pdf.readyToPrint()) {
-        for (let lineNum = 0; lineNum < filteredTokens.length; lineNum++) {
-          const line = filteredTokens[lineNum];
-          this.fn.pdf.renderTokenizedLine({ lineNumber: lineNum, tokens: line });
-        }
+        dx.out(`Tokenized ${tokens.length} lines with theme ${themeToUse}`);
+        return { tokens };
       }
-
-      dx.out(`Tokenized ${filteredTokens.length} lines with theme ${themeToUse}`);
-      return filteredTokens;
     } catch (error) {
-      dx.out(`Error tokenizing: ${error}`);
+      dx.out(`Error in tokenize: ${error}`);
       throw error;
     } finally {
       dx.done();

@@ -58,6 +58,9 @@ import {
   kZoomOut,
   kZoomIn,
   kZoomLevel,
+  kMd,
+  kMd_Raw,
+  kMd_Render,
   kMenus,
 } from './types/PaperPrinter_t';
 
@@ -115,11 +118,14 @@ export class PaperPrinter {
     this.fn = this.reg.use(
       'vscodeapis.getActiveTextEditor',
       'vscodeapis.getEditorTypography',
+      'vscodeapis.renderMarkdownToHtml',
       'tabinspector.detectActiveTabCategory',
       'tabinspector.getEditorSelectionOrAll',
       'stylize.getThemes',
       'os.dictReplace',
       'os.getLocale',
+      'os.fileOpenPrintDialog',
+      'ui.showQuickPick',
       'yaml.create',
       'utils.templateDictReplace',
       'utils.forceNumber',
@@ -196,16 +202,6 @@ export class PaperPrinter {
    */
   async handlePrintCommandFromVSCode(): Promise<void> {
     try {
-      const category = this.fn.tabinspector.detectActiveTabCategory();
-      if (category === 'preview') {
-        // TODO: Handle preview tab capture - need to extract raw code from HTML
-        // or implement HTML-to-PDF conversion for preview tabs
-        this.dx.error(
-          'Printing from preview tabs is not yet supported with the new PDF architecture'
-        );
-        return;
-      }
-
       const info = this.fn.tabinspector.getEditorSelectionOrAll();
       if (!info || !info.text || !info.languageId) {
         this.dx.error('No active editor or content found');
@@ -299,14 +295,24 @@ export class PaperPrinter {
       this.fn.pdf.docInfo().languageId = this.docInfo().languageId;
       this.fn.pdf.docInfo().title = this.docInfo().printTitle;
 
-      // Generate complete PDF during tokenization (unified approach)
-      dx.out(`Generating complete PDF with unified tokenize + build approach`);
+      // Get active editor for markdown rendering context
+      const editor = this.fn.vscodeapis.getActiveTextEditor();
+      if (!editor) throw new Error('No active editor');
 
-      // Generate the complete PDF in one pass
-      await this.fn.pdf.generatePdf();
+      // For markdown files, check menu selection to determine rendering mode
+      // getValueForMenuItemIdSelected returns the boolean value (false for raw, true for render)
+      const useRenderedMd = this.docInfo().languageId === 'markdown' && 
+        !!this.fn.uimenumgr.getValueForMenuItemIdSelected(kMd.id);
+
+      // Generate PDF - handles both tokenized and HTML rendering internally
+      dx.out(`Generating complete PDF`);
+      await this.fn.pdf.generatePdf({
+        useRenderedMd,
+        document: editor.document
+      });
 
       dx.out(
-        `PDF generation complete: ${this.fn.pdf.getPageTotal()} pages using unified approach`
+        `PDF generation complete: ${this.fn.pdf.getPageTotal()} pages`
       );
     } catch (error) {
       dx.out(`Error in generatePdf: ${error}`);
@@ -590,6 +596,15 @@ export class PaperPrinter {
   private menuItems_ZoomInOut(): UIMenuItem_t[] {
     // Zoom in/out buttons have no menu items - they're just buttons
     return [];
+  }
+
+  private menuItems_Md(): UIMenuItem_t[] {
+    // Return the menu items defined in kMd
+    return kMd.menuItems.map(item => ({
+      id: item.id,
+      displayName: item.displayName,
+      iconSlotTriad: { begin: '', main: '', end: '' },
+    }));
   }
 
   // Selection handler methods for each menu type
@@ -963,6 +978,34 @@ export class PaperPrinter {
       this.zoomLevel_setTextEdit(this.fn.utils.forceNumber(value));
       void this.regenerateAndUpdateWebview();
     }
+    dx.done();
+    return { id, value };
+  }
+
+  /**
+   * Handle markdown mode menu selection
+   * User selects between Raw (syntax highlighted) and Render (HTML output)
+   */
+  private async handleSelection_Md(
+    args: { menuId: MenuId_t; menuItemId: MenuItemId_t }
+  ): Promise<HandleSelection_t> {
+    const dx = this.dx.sub({ name: 'handleSelection_Md' });
+    dx.require(args, ['menuId', 'menuItemId']);
+    const { menuId, menuItemId } = args;
+    
+    const id = menuItemId === UIMenu.defaultId() ? kMd_Raw.id : menuItemId;
+    const value = this.fn.uimenumgr.getValueForMenuItemId({ menuId, menuItemId: id });
+
+    if (menuItemId !== UIMenu.defaultId()) {
+      this.fn.uimenumgr.setValueForPersistIdOnMenuId({
+        menuId,
+        persistId: menuId as UI_t,
+        value: id as PersistValue_t
+      });
+      
+      void this.regenerateAndUpdateWebview();
+    }
+
     dx.done();
     return { id, value };
   }

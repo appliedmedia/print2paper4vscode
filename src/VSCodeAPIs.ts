@@ -6,6 +6,7 @@ import type {
   TextDocument,
   Uri,
   WebviewPanel,
+  Extension,
   // Position,
   // WorkspaceEdit,
 } from 'vscode';
@@ -124,6 +125,58 @@ export class VSCodeAPIs {
    */
   getGlobalState(key: GlobalStateKey_t): GlobalStateValue_t | undefined {
     return this.context.globalState.get(key);
+  }
+
+  /**
+   * Get workspace configuration for a given section
+   */
+  getConfiguration(section?: string): ReturnType<typeof import('vscode').workspace.getConfiguration> {
+    return this.vscode.workspace.getConfiguration(section);
+  }
+
+  /**
+   * Get VS Code markdown language features extension
+   */
+  getExtension_Markdown(): Extension<any> | undefined {
+    return this.vscode.extensions.getExtension('vscode.markdown-language-features');
+  }
+
+  /**
+   * Render markdown to HTML using VS Code's official markdown.api.render command
+   * @param markdown - Markdown source text
+   * @param document - VS Code TextDocument for context (currently unused, for future enhancement)
+   * @returns HTML string
+   * @see https://code.visualstudio.com/api/extension-guides/markdown-extension
+   */
+  async renderMarkdownToHtml(args: { markdown: string; document: TextDocument }): Promise<string> {
+    const dx = this.dx.sub({ name: 'renderMarkdownToHtml' });
+    dx.require(args, ['markdown', 'document']);
+    const { markdown } = args;
+    
+    try {
+      // Use the official markdown.api.render command (available since VS Code 1.38)
+      // This is the documented approach instead of accessing extension.exports directly
+      const html = await this.vscode.commands.executeCommand<string>(
+        'markdown.api.render',
+        markdown
+      );
+      
+      if (!html) {
+        const errorMsg = 'Markdown render command returned empty result';
+        dx.error(errorMsg);
+        throw new Error(errorMsg);
+      }
+      
+      dx.out(`Rendered markdown to HTML (${html.length} chars)`);
+      
+      return html;
+    } catch (error) {
+      const errorMsg = `Failed to render markdown: ${error instanceof Error ? error.message : String(error)}`;
+      dx.error(errorMsg);
+      throw new Error(errorMsg);
+    } finally {
+      dx.done();
+    }
   }
 
   getEditorTypography(): {

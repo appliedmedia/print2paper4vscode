@@ -14,6 +14,8 @@ import { Coords } from './Coords';
 import jsPDF from 'jspdf';
 import { DocInfo_PDF } from './DocInfo_PDF';
 import type { ThemedToken } from 'shiki';
+import { parse, type HTMLElement, type Node, NodeType } from 'node-html-parser';
+import type { LanguageId_t } from './Stylize';
 
 type HeaderFooterRenderablePos = HeaderFooterPos_t;
 
@@ -75,6 +77,8 @@ export class PDF {
       'os.pathDirname',
       'os.fileReveal',
       'vscodeapis.getDir_Temp',
+      'vscodeapis.getEditorTypography',
+      'vscodeapis.getConfiguration',
       'stylize.tokenize',
       'yaml.create',
       'utils.templateDictReplace',
@@ -399,9 +403,40 @@ export class PDF {
     doc.setTextColor(r, g, b);
   }
 
-  // UNIFIED: Generate complete PDF during tokenization
+  /**
+   * Render tokenized or HTML content to PDF
+   * Handles both tokens (syntax highlighting) and HTML (rendered markdown)
+   * Assumes setupPdf() has already been called
+   */
+  async render(result: { tokens?: ThemedToken[][]; html?: string }): Promise<void> {
+    const dx = this.dx.sub({ name: 'render' });
+
+    try {
+      if (result.html) {
+        // HTML rendering path (rendered markdown)
+        dx.out('Rendering HTML to PDF');
+        await this.renderFromHTML(result.html);
+      } else if (result.tokens) {
+        // Tokenized path (syntax highlighting)
+        dx.out(`Rendering ${result.tokens.length} tokenized lines to PDF`);
+        this.renderFromTokens(result.tokens);
+      } else {
+        dx.error('No tokens or HTML to render');
+        throw new Error('No tokens or HTML to render');
+      }
+
+      dx.out('Content rendered to PDF');
+    } catch (error) {
+      dx.error(`Failed to render: ${String(error)}`);
+      throw error;
+    } finally {
+      dx.done();
+    }
+  }
+
+  // UNIFIED: Generate complete PDF
   // Caller should set docInfo properties (code, languageId, title, fontFamily, fontSizePx, theme, etc.) before calling this
-  async generatePdf(): Promise<void> {
+  async generatePdf(args?: { useRenderedMd?: boolean; document?: any }): Promise<void> {
     const dx = this.dx.sub({ name: 'generatePdf' });
     dx.require({ code: this.docInfo().code, languageId: this.docInfo().languageId }, [
       'code',
@@ -409,20 +444,25 @@ export class PDF {
     ]);
 
     try {
-      // Setup PDF document for line-by-line rendering (uses docInfo properties)
+      // Setup PDF document
       this.setupPdf();
 
       // Add header and footer to first page
       this.addHeaderAndFooter();
 
-      // Tokenize and build complete PDF in one pass
-      await this.fn.stylize.tokenize({
+      // Tokenize or render to HTML
+      const result = await this.fn.stylize.tokenize({
         code: this.docInfo().code,
         languageId: this.docInfo().languageId,
-        theme: this.docInfo().theme
+        theme: this.docInfo().theme,
+        useRenderedMd: args?.useRenderedMd,
+        document: args?.document
       });
 
-      // Finish the PDF (sets this.docInfo().pdfDoc)
+      // Render content to PDF
+      await this.render(result);
+
+      // Finish the PDF (re-renders headers/footers with correct page totals)
       this.finishPdf();
 
       dx.out(`Generated complete PDF with ${this.docInfo().pageTotal} pages`);
@@ -634,16 +674,14 @@ export class PDF {
   }
 
   /**
-   * Render tokenized line content into PDF document
-   * Called by tokenizer to add content to PDF as tokens are processed
+   * Render tokens to PDF (for code with syntax highlighting)
+   * @param tokens - 2D array from Shiki: tokens[lineIndex][tokenIndex]
    */
-  public renderTokenizedLine(args: { lineNumber: number; tokens: ThemedToken[] }): void {
-    const dx = this.dx.sub({ name: 'renderTokenizedLine' });
-    dx.require(args, ['lineNumber', 'tokens']);
-    const { lineNumber, tokens } = args;
-
+  public renderFromTokens(tokens: ThemedToken[][]): void {
+    const dx = this.dx.sub({ name: 'renderFromTokens' });
+    
     try {
-      // Initialize jsPDF document on first line
+      // Initialize jsPDF document check
       if (!this.docInfo().pdfDoc) {
         dx.error('PDF document not initialized. Call setupPdf() first.');
         throw new Error('PDF document not initialized. Call setupPdf() first.');
@@ -656,100 +694,580 @@ export class PDF {
       const marginsPts = this.docInfo().marginPts;
       const availableWidth = pageWidthPts - marginsPts.leftMarginPts - marginsPts.rightMarginPts;
 
-      // Each line starts at left margin, same Y position
-      let xPos = marginsPts.leftMarginPts;
-      let yPos = this.currentY; // Start at current Y position for this line
+      // Iterate through all lines
+      for (let lineNumber = 0; lineNumber < tokens.length; lineNumber++) {
+        const lineTokens = tokens[lineNumber];
+        
+        // Each line starts at left margin, same Y position
+        let xPos = marginsPts.leftMarginPts;
+        let yPos = this.currentY; // Start at current Y position for this line
 
-      dx.out(`Rendering line ${lineNumber} at Y position: ${yPos}`);
+        dx.out(`Rendering line ${lineNumber} at Y position: ${yPos}`);
 
-      // Process each token in the line
-      for (const token of tokens) {
-        const color = token.color || '#000000';
-        let content = token.content;
+        // Process each token in the line
+        for (const token of lineTokens) {
+          const color = token.color || '#000000';
+          let content = token.content;
 
-        if (content) {
-          // Set color for this token
-          this.setTextColorFromWebColor(this.docInfo().pdfDoc!, color);
+          if (content) {
+            // Set color for this token
+            this.setTextColorFromWebColor(this.docInfo().pdfDoc!, color);
 
-          // Process content character by character to wrap at proper line length
-          while (content.length > 0) {
-            // Find how many characters fit on current line
-            const charsToRender = this.findCharacterBreakPoint(
-              content,
-              xPos,
-              marginsPts.leftMarginPts,
-              availableWidth
-            );
-
-            if (charsToRender === 0) {
-              // Current position is at or beyond line end, wrap to next line
-              yPos += this.currentLineHeight;
-              xPos = marginsPts.leftMarginPts;
-
-              if (this.shouldBreakPage(yPos)) {
-                const bottomMargin = this.lastPageBreakMetrics?.bottomMarginY ?? 0;
-                dx.out(
-                  `Page break during wrapping at line ${lineNumber}: yPos=${yPos} > bottomMargin=${bottomMargin}`
-                );
-                this.addPageBreak();
-                yPos = this.currentY;
-                xPos = this.currentX;
-              }
-              continue; // Try again with new line position
-            }
-
-            // Render the portion that fits
-            const portionToRender = content.substring(0, charsToRender);
-            const portionWidth = this.docInfo().pdfDoc!.getTextWidth(portionToRender);
-
-            dx.out(`Rendering text "${portionToRender}" at (${xPos}, ${yPos})`);
-            if (lineNumber < 3) {
-              dx.out(
-                `First few lines - Line ${lineNumber}, Token portion: "${portionToRender}", Position: (${xPos}, ${yPos})`
+            // Process content character by character to wrap at proper line length
+            while (content.length > 0) {
+              // Find how many characters fit on current line
+              const charsToRender = this.findCharacterBreakPoint(
+                content,
+                xPos,
+                marginsPts.leftMarginPts,
+                availableWidth
               );
+
+              if (charsToRender === 0) {
+                // Current position is at or beyond line end, wrap to next line
+                yPos += this.currentLineHeight;
+                xPos = marginsPts.leftMarginPts;
+
+                if (this.shouldBreakPage(yPos)) {
+                  const bottomMargin = this.lastPageBreakMetrics?.bottomMarginY ?? 0;
+                  dx.out(
+                    `Page break during wrapping at line ${lineNumber}: yPos=${yPos} > bottomMargin=${bottomMargin}`
+                  );
+                  this.addPageBreak();
+                  yPos = this.currentY;
+                  xPos = this.currentX;
+                }
+                continue; // Try again with new line position
+              }
+
+              // Render the portion that fits
+              const portionToRender = content.substring(0, charsToRender);
+              const portionWidth = this.docInfo().pdfDoc!.getTextWidth(portionToRender);
+
+              dx.out(`Rendering text "${portionToRender}" at (${xPos}, ${yPos})`);
+              if (lineNumber < 3) {
+                dx.out(
+                  `First few lines - Line ${lineNumber}, Token portion: "${portionToRender}", Position: (${xPos}, ${yPos})`
+                );
+              }
+              this.docInfo().pdfDoc!.text(portionToRender, xPos, yPos);
+
+              // Advance x position
+              xPos += portionWidth;
+
+              // Remove rendered portion from content
+              content = content.substring(charsToRender);
             }
-            this.docInfo().pdfDoc!.text(portionToRender, xPos, yPos);
-
-            // Advance x position
-            xPos += portionWidth;
-
-            // Remove rendered portion from content
-            content = content.substring(charsToRender);
           }
         }
-      }
 
-      // Update current position to reflect actual end position after wrapping
-      // Note: We don't update currentX here because each line starts at left margin
-      this.currentY = yPos;
+        // Update current position to reflect actual end position after wrapping
+        // Note: We don't update currentX here because each line starts at left margin
+        this.currentY = yPos;
 
-      // Advance y position by lineHeight for next line
-      // jsPDF: Y increases downward, so we move DOWN by adding
-      const oldY = this.currentY;
-      this.currentY = this.currentY + this.currentLineHeight;
+        // Advance y position by lineHeight for next line
+        // jsPDF: Y increases downward, so we move DOWN by adding
+        const oldY = this.currentY;
+        this.currentY = this.currentY + this.currentLineHeight;
 
-      // Reset X to left margin for next line
-      this.currentX = marginsPts.leftMarginPts;
-      dx.out(
-        `Line ${lineNumber} complete: Y moved from ${oldY} to ${this.currentY} (down by ${this.currentLineHeight})`
-      );
-
-      if (this.shouldBreakPage(this.currentY)) {
-        const bottomMargin = this.lastPageBreakMetrics?.bottomMarginY ?? 0;
+        // Reset X to left margin for next line
+        this.currentX = marginsPts.leftMarginPts;
         dx.out(
-          `Page break at line ${lineNumber}: currentY=${this.currentY} > bottomMargin=${bottomMargin}`
+          `Line ${lineNumber} complete: Y moved from ${oldY} to ${this.currentY} (down by ${this.currentLineHeight})`
         );
-        this.addPageBreak();
-        dx.out(`Added page break at line ${lineNumber + 1}`);
-      }
 
-      dx.out(`Rendered line ${lineNumber}`);
+        if (this.shouldBreakPage(this.currentY)) {
+          const bottomMargin = this.lastPageBreakMetrics?.bottomMarginY ?? 0;
+          dx.out(
+            `Page break at line ${lineNumber}: currentY=${this.currentY} > bottomMargin=${bottomMargin}`
+          );
+          this.addPageBreak();
+          dx.out(`Added page break at line ${lineNumber + 1}`);
+        }
+
+        dx.out(`Rendered line ${lineNumber}`);
+      }
+      
+      dx.out(`Rendered ${tokens.length} lines to PDF`);
     } catch (error) {
-      dx.out(`Error rendering line ${lineNumber}: ${error}`);
+      dx.out(`Error rendering tokens: ${error}`);
       throw error;
     } finally {
       dx.done();
     }
+  }
+
+  /**
+   * Get font info from markdown preview settings or editor settings
+   */
+  private getMarkdownFontInfo(): { fontFamily: string; fontSize: number } {
+    // Get markdown preview settings (these control what user sees in MD preview)
+    const mdConfig = this.fn.vscodeapis.getConfiguration('markdown');
+    const mdFontFamily = mdConfig.get('preview.fontFamily') as string | undefined;
+    const mdFontSize = mdConfig.get('preview.fontSize') as number | undefined;
+    
+    // Use markdown preview settings, or fall back to editor settings
+    const editorTypo = this.fn.vscodeapis.getEditorTypography();
+    const fontFamily = mdFontFamily || editorTypo.fontFamily;
+    const fontSize = mdFontSize || editorTypo.fontSize;
+    
+    return { fontFamily, fontSize };
+  }
+
+  /**
+   * Extract font info from HTML element's style attribute
+   * Returns null if no style info found
+   */
+  private getFontFromElementStyle(element: HTMLElement): { fontFamily?: string; fontSize?: number } | null {
+    const style = element.getAttribute('style');
+    if (!style) return null;
+    
+    const result: { fontFamily?: string; fontSize?: number } = {};
+    
+    // Parse font-family from style
+    const fontFamilyMatch = style.match(/font-family:\s*([^;]+)/i);
+    if (fontFamilyMatch) {
+      result.fontFamily = fontFamilyMatch[1].trim().replace(/['"]/g, '');
+    }
+    
+    // Parse font-size from style
+    const fontSizeMatch = style.match(/font-size:\s*(\d+(?:\.\d+)?)(px|pt|em)/i);
+    if (fontSizeMatch) {
+      const size = parseFloat(fontSizeMatch[1]);
+      const unit = fontSizeMatch[2];
+      
+      if (unit === 'px') {
+        result.fontSize = size;
+      } else if (unit === 'pt') {
+        result.fontSize = size * (96 / 72); // Convert pt to px
+      } else if (unit === 'em') {
+        const baseFontInfo = this.getMarkdownFontInfo();
+        result.fontSize = size * baseFontInfo.fontSize;
+      }
+    }
+    
+    return Object.keys(result).length > 0 ? result : null;
+  }
+
+  /**
+   * Render HTML-formatted markdown to PDF
+   * Uses VS Code's markdown renderer output
+   * 
+   * NOTE: This method is async to support code block rendering which requires
+   * asynchronous tokenization via Shiki.
+   */
+  async renderFromHTML(html: string): Promise<void> {
+    const dx = this.dx.sub({ name: 'renderFromHTML' });
+    
+    try {
+      const root = parse(html);
+      
+      for (const element of root.childNodes) {
+        if (element.nodeType === NodeType.ELEMENT_NODE) {
+          await this.renderHTMLElement(element as HTMLElement);
+        }
+      }
+      
+      dx.out('Rendered HTML to PDF');
+    } finally {
+      dx.done();
+    }
+  }
+
+  /**
+   * HTML element handlers - maps tag name to render function
+   * Handlers can be async to support operations like code tokenization
+   */
+  private readonly htmlElementHandlers: Record<string, (element: HTMLElement) => void | Promise<void>> = {
+    'h1': (el) => this.renderHeading(el, 1),
+    'h2': (el) => this.renderHeading(el, 2),
+    'h3': (el) => this.renderHeading(el, 3),
+    'h4': (el) => this.renderHeading(el, 4),
+    'h5': (el) => this.renderHeading(el, 5),
+    'h6': (el) => this.renderHeading(el, 6),
+    'p': (el) => this.renderParagraph(el),
+    'ul': (el) => this.renderList(el),
+    'ol': (el) => this.renderList(el),
+    'pre': (el) => this.renderCodeBlock(el),
+    'blockquote': (el) => this.renderBlockquote(el),
+    'hr': () => this.renderHorizontalRule(),
+  };
+
+  /**
+   * Render a single HTML element
+   * Supports both sync and async handlers
+   */
+  private async renderHTMLElement(element: HTMLElement): Promise<void> {
+    const dx = this.dx.sub({ name: 'renderHTMLElement' });
+    
+    const handler = this.htmlElementHandlers[element.tagName.toLowerCase()];
+    if (handler) {
+      await handler(element);
+    } else {
+      dx.out(`Unknown element: ${element.tagName}`);
+    }
+    
+    dx.done();
+  }
+
+  /**
+   * Render heading element
+   */
+  private renderHeading(element: HTMLElement, level: number): void {
+    const pdfDoc = this.docInfo().pdfDoc;
+    if (!pdfDoc) return;
+    
+    // Try to get font from element style first
+    const styleFont = this.getFontFromElementStyle(element);
+    
+    // Fall back to markdown preview settings
+    const baseFontInfo = this.getMarkdownFontInfo();
+    
+    const fontFamily = styleFont?.fontFamily || baseFontInfo.fontFamily;
+    const fontSize = styleFont?.fontSize || baseFontInfo.fontSize;
+    
+    // Calculate heading size if not specified in style
+    let headingSize: number;
+    if (styleFont?.fontSize) {
+      headingSize = this.fn.coords.cssPxToPdfPts(styleFont.fontSize);
+    } else {
+      const sizeMultipliers = [2.0, 1.5, 1.25, 1.1, 1.0, 0.9];
+      const multiplier = sizeMultipliers[level - 1] || 1.0;
+      headingSize = this.fn.coords.cssPxToPdfPts(fontSize * multiplier);
+    }
+    
+    // Spacing based on level
+    const spacingBefore = Math.max(12 - level * 2, 4);
+    const spacingAfter = Math.max(6 - level, 2);
+    
+    // Add spacing before
+    this.currentY += spacingBefore;
+    if (this.shouldBreakPage(this.currentY)) this.addPageBreak();
+    
+    // Set heading font
+    const jsPdfFont = this.mapFontFamilyToJsPDF(fontFamily, pdfDoc);
+    pdfDoc.setFont(jsPdfFont, 'bold');
+    pdfDoc.setFontSize(headingSize);
+    
+    // Render text with wrapping (reuse existing logic)
+    this.renderTextContent(element.text);
+    
+    // Add spacing after
+    this.currentY += spacingAfter;
+    
+    // Reset to normal font
+    pdfDoc.setFontSize(this.docInfo().fontSizePts);
+    pdfDoc.setFont(jsPdfFont, 'normal');
+  }
+
+  /**
+   * Render paragraph with inline formatting
+   */
+  private renderParagraph(element: HTMLElement): void {
+    if (!this.docInfo().pdfDoc) return;
+    
+    // Process inline content (text, bold, italic, code, etc.)
+    this.renderInlineContent(element);
+    
+    // Move to next line with spacing
+    this.currentY += this.currentLineHeight;
+    this.currentX = this.docInfo().marginPts.leftMarginPts;
+    this.currentY += 6; // Paragraph spacing
+    
+    if (this.shouldBreakPage(this.currentY)) this.addPageBreak();
+  }
+
+  /**
+   * Inline element handlers - maps tag name to render function
+   */
+  private getInlineElementHandlers(): Record<string, (element: HTMLElement, savedFont: any) => void> {
+    return {
+      'strong': (el, savedFont) => {
+        const styleFont = this.getFontFromElementStyle(el);
+        const fontName = styleFont?.fontFamily 
+          ? this.mapFontFamilyToJsPDF(styleFont.fontFamily, this.docInfo().pdfDoc!)
+          : savedFont.fontName;
+        
+        this.docInfo().pdfDoc!.setFont(fontName, 'bold');
+        this.renderTextContent(el.text);
+        this.docInfo().pdfDoc!.setFont(savedFont.fontName, savedFont.fontStyle);
+      },
+      'b': (el, savedFont) => {
+        const styleFont = this.getFontFromElementStyle(el);
+        const fontName = styleFont?.fontFamily 
+          ? this.mapFontFamilyToJsPDF(styleFont.fontFamily, this.docInfo().pdfDoc!)
+          : savedFont.fontName;
+        
+        this.docInfo().pdfDoc!.setFont(fontName, 'bold');
+        this.renderTextContent(el.text);
+        this.docInfo().pdfDoc!.setFont(savedFont.fontName, savedFont.fontStyle);
+      },
+      'em': (el, savedFont) => {
+        const styleFont = this.getFontFromElementStyle(el);
+        const fontName = styleFont?.fontFamily 
+          ? this.mapFontFamilyToJsPDF(styleFont.fontFamily, this.docInfo().pdfDoc!)
+          : savedFont.fontName;
+        
+        this.docInfo().pdfDoc!.setFont(fontName, 'italic');
+        this.renderTextContent(el.text);
+        this.docInfo().pdfDoc!.setFont(savedFont.fontName, savedFont.fontStyle);
+      },
+      'i': (el, savedFont) => {
+        const styleFont = this.getFontFromElementStyle(el);
+        const fontName = styleFont?.fontFamily 
+          ? this.mapFontFamilyToJsPDF(styleFont.fontFamily, this.docInfo().pdfDoc!)
+          : savedFont.fontName;
+        
+        this.docInfo().pdfDoc!.setFont(fontName, 'italic');
+        this.renderTextContent(el.text);
+        this.docInfo().pdfDoc!.setFont(savedFont.fontName, savedFont.fontStyle);
+      },
+      'code': (el, savedFont) => {
+        const styleFont = this.getFontFromElementStyle(el);
+        let monoFontFamily: string;
+        
+        if (styleFont?.fontFamily) {
+          monoFontFamily = styleFont.fontFamily;
+        } else {
+          const editorTypo = this.fn.vscodeapis.getEditorTypography();
+          monoFontFamily = editorTypo.fontFamily;
+        }
+        
+        const monoFont = this.mapFontFamilyToJsPDF(monoFontFamily, this.docInfo().pdfDoc!);
+        this.docInfo().pdfDoc!.setFont(monoFont, 'normal');
+        this.renderTextContent(el.text);
+        this.docInfo().pdfDoc!.setFont(savedFont.fontName, savedFont.fontStyle);
+      },
+    };
+  }
+
+  /**
+   * Render inline content (handles bold, italic, code, etc.)
+   */
+  private renderInlineContent(element: HTMLElement): void {
+    if (!this.docInfo().pdfDoc) return;
+    
+    const inlineHandlers = this.getInlineElementHandlers();
+    
+    for (const child of element.childNodes) {
+      if (child.nodeType === NodeType.TEXT_NODE) {
+        // Plain text
+        this.renderTextContent(child.text);
+      } else if (child.nodeType === NodeType.ELEMENT_NODE) {
+        const el = child as HTMLElement;
+        const savedFont = this.docInfo().pdfDoc!.getFont();
+        
+        const handler = inlineHandlers[el.tagName.toLowerCase()];
+        if (handler) {
+          handler(el, savedFont);
+        } else {
+          // Recursively process unknown inline elements
+          this.renderInlineContent(el);
+        }
+      }
+    }
+  }
+
+  /**
+   * Render text content with character wrapping
+   * REUSES existing character wrapping logic from renderFromTokens
+   */
+  private renderTextContent(text: string): void {
+    if (!this.docInfo().pdfDoc || !text) return;
+    
+    const marginsPts = this.docInfo().marginPts;
+    const pageSize = this.getPageDimensions(this.docInfo().pageSizeId, this.docInfo().orient);
+    const unit = this.getUnitForPageSize(this.docInfo().pageSizeId);
+    const { widthPts: pageWidthPts } = this.pageSizeToPts(pageSize.width, pageSize.height, unit);
+    const availableWidth = pageWidthPts - marginsPts.leftMarginPts - marginsPts.rightMarginPts;
+    
+    let content = text;
+    
+    while (content.length > 0) {
+      // REUSE existing findCharacterBreakPoint - same logic as tokens!
+      const charsToRender = this.findCharacterBreakPoint(
+        content,
+        this.currentX,
+        marginsPts.leftMarginPts,
+        availableWidth
+      );
+      
+      if (charsToRender === 0) {
+        // Wrap to next line
+        this.currentY += this.currentLineHeight;
+        this.currentX = marginsPts.leftMarginPts;
+        if (this.shouldBreakPage(this.currentY)) this.addPageBreak();
+        continue;
+      }
+      
+      const portion = content.substring(0, charsToRender);
+      this.docInfo().pdfDoc!.text(portion, this.currentX, this.currentY);
+      this.currentX += this.docInfo().pdfDoc!.getTextWidth(portion);
+      content = content.substring(charsToRender);
+    }
+  }
+
+  /**
+   * Render list (ul or ol)
+   */
+  private renderList(element: HTMLElement): void {
+    const pdfDoc = this.docInfo().pdfDoc;
+    if (!pdfDoc) return;
+    
+    const isOrdered = element.tagName.toLowerCase() === 'ol';
+    let itemNumber = 1;
+    const indentSize = 20; // Points
+    
+    const items = element.querySelectorAll('li');
+    for (const item of items) {
+      // Render prefix (bullet or number)
+      const prefix = isOrdered ? `${itemNumber}. ` : '• ';
+      
+      // Save position for indent
+      const savedLeftMargin = this.docInfo().marginPts.leftMarginPts;
+      this.docInfo().marginPts.leftMarginPts += indentSize;
+      this.currentX = this.docInfo().marginPts.leftMarginPts;
+      
+      // Render prefix
+      pdfDoc.text(prefix, this.currentX, this.currentY);
+      this.currentX += pdfDoc.getTextWidth(prefix);
+      
+      // Render item content
+      this.renderInlineContent(item);
+      
+      // Move to next line
+      this.currentY += this.currentLineHeight;
+      this.currentX = this.docInfo().marginPts.leftMarginPts;
+      this.currentY += 3; // Item spacing
+      
+      if (this.shouldBreakPage(this.currentY)) this.addPageBreak();
+      
+      // Restore margin
+      this.docInfo().marginPts.leftMarginPts = savedLeftMargin;
+      
+      if (isOrdered) itemNumber++;
+    }
+    
+    // Add spacing after list
+    this.currentY += 6;
+  }
+
+  /**
+   * Render code block with syntax highlighting
+   * REUSES existing Shiki tokenization!
+   */
+  private async renderCodeBlock(element: HTMLElement): Promise<void> {
+    const pdfDoc = this.docInfo().pdfDoc;
+    if (!pdfDoc) return;
+    
+    const codeElement = element.querySelector('code');
+    if (!codeElement) return;
+    
+    const code = codeElement.text;
+    const classAttr = codeElement.getAttribute('class') || '';
+    const langClass = classAttr.split(' ').find((c: string) => c.startsWith('language-'));
+    const lang = langClass ? langClass.replace('language-', '') : 'plaintext';
+    
+    // Add spacing before
+    this.currentY += 6;
+    if (this.shouldBreakPage(this.currentY)) this.addPageBreak();
+    
+    // Save left margin and indent
+    const savedLeftMargin = this.docInfo().marginPts.leftMarginPts;
+    this.docInfo().marginPts.leftMarginPts += 20;
+    this.currentX = this.docInfo().marginPts.leftMarginPts;
+    
+    // REUSE existing Shiki tokenization!
+    const result = await this.fn.stylize.tokenize({
+      code,
+      languageId: lang as LanguageId_t,
+      theme: this.docInfo().theme
+    });
+    
+    if (!result.tokens) {
+      return; // No tokens to render
+    }
+    
+    const tokens = result.tokens;
+    
+    // Set monospace font
+    const editorTypo = this.fn.vscodeapis.getEditorTypography();
+    const monoFont = this.mapFontFamilyToJsPDF(editorTypo.fontFamily, pdfDoc);
+    const savedFont = pdfDoc.getFont();
+    const savedSize = pdfDoc.getFontSize();
+    
+    pdfDoc.setFont(monoFont, 'normal');
+    pdfDoc.setFontSize(savedSize * 0.9);
+    
+    // REUSE existing renderFromTokens - pass all tokens at once!
+    this.renderFromTokens(tokens);
+    
+    // Restore font
+    pdfDoc.setFont(savedFont.fontName, savedFont.fontStyle);
+    pdfDoc.setFontSize(savedSize);
+    
+    // Restore margin
+    this.docInfo().marginPts.leftMarginPts = savedLeftMargin;
+    this.currentX = savedLeftMargin;
+    
+    // Add spacing after
+    this.currentY += 6;
+  }
+
+  /**
+   * Render blockquote with indentation
+   */
+  private renderBlockquote(element: HTMLElement): void {
+    // Save left margin and indent
+    const savedLeftMargin = this.docInfo().marginPts.leftMarginPts;
+    this.docInfo().marginPts.leftMarginPts += 20;
+    this.currentX = this.docInfo().marginPts.leftMarginPts;
+    
+    // Add spacing before
+    this.currentY += 6;
+    if (this.shouldBreakPage(this.currentY)) this.addPageBreak();
+    
+    // Render children
+    for (const child of element.childNodes) {
+      if (child.nodeType === NodeType.ELEMENT_NODE) {
+        this.renderHTMLElement(child as HTMLElement);
+      }
+    }
+    
+    // Restore margin
+    this.docInfo().marginPts.leftMarginPts = savedLeftMargin;
+    this.currentX = savedLeftMargin;
+    
+    // Add spacing after
+    this.currentY += 6;
+  }
+
+  /**
+   * Render horizontal rule
+   */
+  private renderHorizontalRule(): void {
+    const doc = this.docInfo().pdfDoc;
+    if (!doc) return;
+    
+    const marginsPts = this.docInfo().marginPts;
+    const pageSize = this.getPageDimensions(this.docInfo().pageSizeId, this.docInfo().orient);
+    const unit = this.getUnitForPageSize(this.docInfo().pageSizeId);
+    const { widthPts: pageWidthPts } = this.pageSizeToPts(pageSize.width, pageSize.height, unit);
+    const availableWidth = pageWidthPts - marginsPts.leftMarginPts - marginsPts.rightMarginPts;
+    
+    this.currentY += 6; // Spacing before
+    if (this.shouldBreakPage(this.currentY)) this.addPageBreak();
+    
+    // Draw line - setDrawColor expects RGB values or a single string
+    doc.setDrawColor(204, 204, 204); // RGB for #cccccc
+    doc.line(
+      marginsPts.leftMarginPts,
+      this.currentY,
+      marginsPts.leftMarginPts + availableWidth,
+      this.currentY
+    );
+    
+    this.currentY += 6; // Spacing after
   }
 
   private computePageBreakMetrics(): { maxContentY: number; bottomMarginY: number } {
