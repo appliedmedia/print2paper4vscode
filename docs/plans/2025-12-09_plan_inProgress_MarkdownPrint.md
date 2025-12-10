@@ -144,8 +144,12 @@ All core functionality for markdown printing in both raw and rendered modes has 
 
 **Future Enhancements**:
 
-- ☐ Conditional visibility: Only show menu when viewing markdown files
-- ☐ Visual indicator: Show checkmark next to currently selected mode
+- ☐ **Conditional visibility**: Only show `.md` menu when source language is markdown
+  - Implementation approach: Add `visibility` key to menu constants in `PaperPrinter_t.ts`
+  - Value can be: `boolean` (static true/false) OR `() => boolean` (function that evaluates dynamically)
+  - Function would check: `docInfo().languageId === 'markdown'`
+  - UIMenu would evaluate visibility before rendering menu item
+- ☐ Visual indicator: Show checkmark next to currently selected mode in dropdown
 
 ### 🚧 Phase 7: Testing & Polish
 
@@ -266,11 +270,13 @@ All core functionality for markdown printing in both raw and rendered modes has 
 
 ### Future Enhancements
 
-- [ ] Conditional menu visibility: Only show `.md` menu for markdown files
-- [ ] Visual indicator: Show checkmark next to currently selected mode in dropdown
-- [ ] Extract background colors from theme for code/blockquotes
-- [ ] Add table support for rendered markdown
-- [ ] Add image embedding support for rendered markdown
+- [ ] **Conditional menu visibility**: Only show `.md` menu when source language is markdown
+  - Implementation approach: Add `visibility` key to menu constants (boolean or `() => boolean` function)
+  - Function would check: `docInfo().languageId === 'markdown'`
+- [ ] **Visual indicator**: Show checkmark next to currently selected mode in dropdown
+- [ ] **Background colors**: Extract from theme for code blocks/blockquotes
+- [ ] **Table support**: Add HTML handlers for markdown tables
+- [ ] **Image support**: Implement embedded image rendering
 
 ---
 
