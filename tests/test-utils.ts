@@ -19,6 +19,7 @@ interface MockVSCode {
     showErrorMessage: () => Promise<void>;
     showInformationMessage: () => Promise<void>;
     showWarningMessage: () => Promise<void>;
+    showQuickPick: (items: any[]) => Promise<any>;
     setStatusBarMessage: () => vscode.Disposable;
     createWebviewPanel: () => {
       webview: {
@@ -84,6 +85,7 @@ export const mockVSCode = {
     showInformationMessage: () => Promise.resolve(),
     showWarningMessage: () => Promise.resolve(),
     showSaveDialog: () => Promise.resolve(undefined),
+    showQuickPick: (items: any[]) => Promise.resolve(items[0]),
     setStatusBarMessage: () => ({ dispose: () => {} }),
     createWebviewPanel: () => ({
       webview: {

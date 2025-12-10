@@ -125,7 +125,6 @@ export class PaperPrinter {
       'os.dictReplace',
       'os.getLocale',
       'os.fileOpenPrintDialog',
-      'ui.showQuickPick',
       'yaml.create',
       'utils.templateDictReplace',
       'utils.forceNumber',
