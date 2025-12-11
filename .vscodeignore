@@ -1,0 +1,57 @@
+# Source files (only ship compiled JS)
+src/**
+tests/**
+.config/**
+scripts/**
+
+# Build artifacts
+out-deploy/
+coverage/
+.tmp/
+
+# Documentation (dev-only)
+docs/plans/**
+archives/**
+pocs/**
+*.md
+!README.md
+
+# Planning documents
+edm-refactor-todos.md
+fix-scroll.md
+scrollpoc-impl.md
+REFACTOR_TO_NAMED_PARAMS.md
+Full_Render_with_PDF.js_Plan.md
+PDF_GENERATION_FLOW.md
+PDF_Initial_Refactor_and_Flow.md
+DIAGNOSTICS_REFACTOR_PLAN.md
+DIAGNOSTICS_USAGE_EXAMPLE.md
+PR26.json
+
+# Dev dependencies
+node_modules/**
+.vscode/**
+.git/**
+.gitignore
+.prettierrc
+.stylelintrc.json
+.markdownlintignore
+
+# Environment
+.env
+.env.*
+environment.json
+
+# Test artifacts
+*.test.ts
+test-*.js
+test-*.ts
+vscode-mock.cjs
+VSCODE_MOCK_INVESTIGATION.md
+
+# Misc
+*.log
+.DS_Store
+core
+install-gh.sh
+setup.sh

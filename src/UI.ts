@@ -264,6 +264,8 @@ export class UI {
 
   // Static utility method for console output
   static out(message: string): void {
+    // Use console.log for static method (no dx instance available)
+    // This is intentional for static utility method
     console.log(message);
   }
 }
