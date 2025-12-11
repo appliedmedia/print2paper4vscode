@@ -96,7 +96,7 @@ All four major architectural refactors completed:
 - `icon` (optional)
 
 **Resolution:**
-- Created detailed `PACKAGE_JSON_UPDATES.md` guide
+- Created detailed guide: `docs/plans/2025-12-11_plan_todo_PackageJsonMetadata.md`
 - Provided complete updated package.json template
 - Step-by-step instructions with validation steps
 
@@ -334,7 +334,7 @@ Before publishing to VS Code Marketplace:
   - Update `package.json` `license` field to match
 
 - [ ] Update package.json metadata
-  - See `docs/PACKAGE_JSON_UPDATES.md` for complete guide
+  - See `docs/plans/2025-12-11_plan_todo_PackageJsonMetadata.md` for complete guide
   - Fields: version, repository, bugs, homepage, keywords
 
 - [ ] Test packaging
@@ -513,7 +513,7 @@ See `docs/plans/2025-12-11_plan_todo_GradeAPlus.md` for:
 
 ### Created Documentation
 
-- `docs/PACKAGE_JSON_UPDATES.md` - Complete guide for package.json updates
+- `docs/plans/2025-12-11_plan_todo_PackageJsonMetadata.md` - Complete guide for package.json updates
 - `docs/VSCodeAPIs.md` - VS Code publishing documentation
 - `docs/plans/2025-12-11_plan_todo_GradeAPlus.md` - Path to A+ grade
 - `CHANGELOG.md` - Version history
