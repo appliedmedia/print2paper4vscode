@@ -308,7 +308,7 @@ The project uses different documentation types for different purposes:
 - API references, coding standards, architecture guides
 - Examples: `AGENTS.md`, `VSCodeAPIs.md`, `INSTALL.md`
 
-**User Documentation (root)**: End-user facing content
+**User Documentation (root)**: End-user-facing content
 - Installation, usage, features, changelog
 - Examples: `README.md`, `CHANGELOG.md`, `LICENSE`
 

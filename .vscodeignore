@@ -15,6 +15,7 @@ archives/**
 pocs/**
 *.md
 !README.md
+!CHANGELOG.md
 
 # Planning documents
 edm-refactor-todos.md

@@ -331,10 +331,11 @@ The codebase demonstrates professional software engineering:
 
 ### Git Remote Token
 
-**⚠️ PRIVATE WORKSPACE ONLY**
+#### ⚠️ PRIVATE WORKSPACE ONLY
 
 The git remote URL contains an access token:
-```
+
+```bash
 https://x-access-token:ghs_ic8DkLhuzYPi1hztsdCa28HnhpYRUx3EVpDl@github.com/...
 ```
 
@@ -363,6 +364,7 @@ Before publishing to VS Code Marketplace:
   - Fields: version, repository, bugs, homepage, keywords
 
 - [ ] Test packaging
+
   ```bash
   npm install -g @vscode/vsce
   vsce package
@@ -377,17 +379,18 @@ Before publishing to VS Code Marketplace:
 ### Publishing Process
 
 1. **Create Publisher Account**
-   - Go to https://marketplace.visualstudio.com/manage
+   - Go to [https://marketplace.visualstudio.com/manage](https://marketplace.visualstudio.com/manage)
    - Sign in with Microsoft/GitHub account
    - Create publisher profile
 
 2. **Create Personal Access Token**
-   - Go to https://dev.azure.com/
+   - Go to [https://dev.azure.com/](https://dev.azure.com/)
    - User Settings → Personal Access Tokens
    - Create token with "Marketplace → Manage" scope
    - Save securely
 
 3. **Login and Publish**
+
    ```bash
    vsce login <publisher-name>
    # Enter PAT when prompted
@@ -429,7 +432,7 @@ Before publishing to VS Code Marketplace:
 
 **Total:** ~30 minutes
 
-### Optional Enhancements
+### Optional Enhancement Time Estimates
 
 - **Extension icon:** 15-30 minutes
 - **GitHub templates:** 30 minutes
@@ -575,7 +578,7 @@ See `docs/plans/2025-12-11_plan_todo_GradeAPlus.md` for:
 - [ ] Create publisher account (if not exists)
 - [ ] Publish to VS Code Marketplace
 
-### Optional Enhancements
+### Optional Future Enhancements
 
 - [ ] Create extension icon (128x128 PNG)
 - [ ] Add GitHub repository templates

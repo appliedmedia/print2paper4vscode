@@ -632,7 +632,7 @@ test('Print workflow executes', async () => {
 
 ### Current (A-)
 
-```
+```text
 Architecture:      95/100 ✅
 Code Quality:      95/100 ✅
 Documentation:     95/100 ✅
@@ -646,7 +646,7 @@ Total:            91.4/100 (A-)
 
 ### After Phase 1 (A)
 
-```
+```text
 Architecture:      95/100 ✅
 Code Quality:      95/100 ✅
 Documentation:     95/100 ✅
@@ -660,7 +660,7 @@ Total:            92.3/100 (A)
 
 ### After Phase 2 (A+)
 
-```
+```text
 Architecture:      95/100 ✅
 Code Quality:      95/100 ✅
 Documentation:     95/100 ✅
@@ -674,7 +674,7 @@ Total:            95.1/100 (A+)
 
 ### After Phase 3 (A++)
 
-```
+```text
 Architecture:      95/100 ✅
 Code Quality:      95/100 ✅
 Documentation:     95/100 ✅

@@ -1723,7 +1723,7 @@ vsce package
    - `publisher` - Your publisher ID
    - `version` - SemVer version number
    - `repository` - Git repository URL (recommended)
-   - `license` - License identifier (e.g., "MIT")
+   - `license` - SPDX identifier (e.g., "MIT") or "SEE LICENSE IN LICENSE" for custom licenses
    - `icon` - Path to 128x128 PNG icon (recommended)
    - `keywords` - Searchable keywords
    - `categories` - Extension categories
@@ -1738,6 +1738,7 @@ vsce package
   "version": "1.0.0",
   "publisher": "your-publisher-id",
   "license": "MIT",
+  // For custom licenses, use: "license": "SEE LICENSE IN LICENSE",
   
   "repository": {
     "type": "git",

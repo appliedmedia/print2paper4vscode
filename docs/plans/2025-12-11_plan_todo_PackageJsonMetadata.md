@@ -145,7 +145,7 @@ Here's the full file with all changes applied:
   "description": "Print code with syntax highlighting, generate PDFs, and render markdown - all with an interactive preview",
   "version": "1.0.0",
   "publisher": "acoven",
-  "license": "MIT",
+  "license": "SEE LICENSE IN LICENSE",
   
   "repository": {
     "type": "git",
