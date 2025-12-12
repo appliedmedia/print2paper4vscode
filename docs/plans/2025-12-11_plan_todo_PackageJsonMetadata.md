@@ -1,11 +1,15 @@
-# Package.json Updates Required for Deployment
+# Package.json Metadata Updates
 
-This document shows the exact changes needed in `package.json` before publishing.
+**Status:** TODO  
+**Created:** 2025-12-11  
+
+This plan tracks the required metadata updates to `package.json` before publishing.
 
 ## Current Status
 
 - Version: `0.0.1` → **CHANGE TO:** `1.0.0` or `0.1.0`
-- Missing: `repository`, `bugs`, `homepage`, `license`, `keywords`, `icon`
+- License: ✅ **COMPLETE** - `"license": "SEE LICENSE IN LICENSE"` added
+- Missing: `repository`, `bugs`, `homepage`, `keywords`, `icon` (optional)
 
 ## Required Updates
 
@@ -18,8 +22,7 @@ Add these fields to your `package.json`:
   "description": "Print code with syntax highlighting, generate PDFs, and render markdown - all with an interactive preview",
   "version": "1.0.0",
   "publisher": "acoven",
-  
-  "license": "MIT",
+  "license": "SEE LICENSE IN LICENSE",
   
   "repository": {
     "type": "git",
@@ -67,13 +70,12 @@ Choose one:
 
 ### `license`
 
-Options:
+✅ **ALREADY COMPLETE**
 
-- **`MIT`** - Most permissive, recommended for VS Code extensions
-- **`Apache-2.0`** - Similar to MIT but with patent grant
-- **`GPL-3.0`** - Copyleft license, requires derivatives to be open source
+Current value: `"license": "SEE LICENSE IN LICENSE"`
 
-**IMPORTANT:** Must match the LICENSE file you create.
+This references the custom source-available LICENSE file in the root directory.
+No changes needed to this field.
 
 ### `repository`
 
@@ -290,10 +292,12 @@ If you don't have an icon yet:
 
 ## Changes Already Applied
 
-The following fixes have already been applied:
+The following have already been completed:
 
 - ✅ Fixed `test` script glob pattern: Changed to `'out/tests/*.test.js'`
 - ✅ Added comment to `UI.ts` console.log explaining it's intentional for static method
+- ✅ Created custom source-available LICENSE file
+- ✅ Added `"license": "SEE LICENSE IN LICENSE"` to package.json
 
 ---
 
@@ -331,10 +335,10 @@ After making these changes:
 
 ---
 
-## Next Steps After Updates
+## Next Steps
 
-1. Choose and add LICENSE file (MIT recommended)
-2. Update package.json with above fields
+1. ✅ ~~Add LICENSE file~~ - Complete
+2. Update package.json with repository, bugs, homepage, keywords
 3. Create icon.png (optional)
 4. Test packaging with `vsce package`
 5. Publish to marketplace with `vsce publish`

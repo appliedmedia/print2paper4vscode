@@ -3,6 +3,7 @@
   "displayName": "Print2Paper4VSCode",
   "description": "Print selections or current tabs, including preview tabs",
   "version": "0.0.1",
+  "license": "SEE LICENSE IN LICENSE",
   "engines": {
     "vscode": "^1.60.0"
   },
