@@ -2,8 +2,27 @@
   "name": "print2paper4vscode",
   "displayName": "Print2Paper4VSCode",
   "description": "Print selections or current tabs, including preview tabs",
-  "version": "0.0.1",
+  "version": "1.0.0",
   "license": "SEE LICENSE IN LICENSE",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/appliedmedia/print2paper4vscode"
+  },
+  "bugs": {
+    "url": "https://github.com/appliedmedia/print2paper4vscode/issues"
+  },
+  "homepage": "https://github.com/appliedmedia/print2paper4vscode#readme",
+  "keywords": [
+    "print",
+    "pdf",
+    "export",
+    "syntax-highlighting",
+    "markdown",
+    "code-printing",
+    "shiki",
+    "jspdf",
+    "vscode-extension"
+  ],
   "engines": {
     "vscode": "^1.60.0"
   },
@@ -18,12 +37,12 @@
   "contributes": {
     "commands": [
       {
-        "command": "{{extId}}.print2paper",
+        "command": "p2p4vsc.print2paper",
         "title": "Print2Paper",
         "category": "Print"
       },
       {
-        "command": "{{extId}}.persistClear",
+        "command": "p2p4vsc.persistClear",
         "title": "Clear State",
         "category": "Print"
       }
@@ -31,13 +50,13 @@
     "menus": {
       "editor/context": [
         {
-          "command": "{{extId}}.print2paper",
+          "command": "p2p4vsc.print2paper",
           "group": "navigation"
         }
       ],
       "editor/title": [
         {
-          "command": "{{extId}}.print2paper",
+          "command": "p2p4vsc.print2paper",
           "group": "navigation",
           "when": "editorTextFocus",
           "title": "Print2Paper"
@@ -46,7 +65,7 @@
     },
     "keybindings": [
       {
-        "command": "{{extId}}.print2paper",
+        "command": "p2p4vsc.print2paper",
         "key": "alt+p",
         "mac": "alt+p"
       }
@@ -56,7 +75,7 @@
     "postinstall": "node scripts/setup-vscode-mock.js",
     "vscode:prepublish": "npm run compile:deploy",
     "compile": "rm -rf out && tsc -p ./.config/ && node scripts/templateDictReplace.mjs",
-    "compile:deploy": "rm -rf out-deploy && tsc -p ./.config/tsconfig.deploy.json && node scripts/templateDictReplace.mjs",
+    "compile:deploy": "rm -rf out && tsc -p ./.config/tsconfig.deploy.json && node scripts/templateDictReplace.mjs",
     "lint": "eslint --config ./.config/eslint.config.mjs src/**/*.ts",
     "lint:fix": "eslint --config ./.config/eslint.config.mjs src/**/*.ts --fix",
     "lint:md": "markdownlint *.md tests/**/*.md",

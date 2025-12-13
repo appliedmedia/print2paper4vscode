@@ -10,6 +10,7 @@ coverage/
 .tmp/
 
 # Documentation (dev-only)
+docs/**
 docs/plans/**
 archives/**
 pocs/**
@@ -31,11 +32,13 @@ PR26.json
 
 # Dev dependencies
 node_modules/**
+.cursor/**
 .vscode/**
 .git/**
 .gitignore
 .prettierrc
 .stylelintrc.json
+.markdownlint.json
 .markdownlintignore
 
 # Environment

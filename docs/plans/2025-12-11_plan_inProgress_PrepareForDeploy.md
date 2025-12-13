@@ -1,9 +1,9 @@
 # Prepare for Deployment Plan
 
-**Status:** IN PROGRESS  
-**Created:** 2025-12-11  
-**Branch:** cursor/review-and-prepare-for-deployment-6560  
-**Progress:** Assessment complete, agent work done, awaiting user actions
+- **Status**: IN PROGRESS
+- **Created**: 2025-12-11
+- **Branch**: cursor/review-and-prepare-for-deployment-6560
+- **Progress**: Phase 4 complete (package.json metadata). Packaging verified. Remaining work is publish + manual validation.
 
 ---
 
@@ -14,8 +14,8 @@ This document tracks the ENTIRE deployment preparation effort from assessment th
 1. ✅ **Plan Phase** - Define what deployment readiness means
 2. ✅ **Assessment Phase** - Evaluate current state, identify gaps
 3. ✅ **Agent Work Phase** - Fix agent-addressable issues, create supporting docs
-4. ⏳ **User Action Phase** - User adds LICENSE, updates package.json (CURRENT)
-5. ⏳ **Verification Phase** - Package, test, and publish
+4. ✅ **User Action Phase** - LICENSE + package.json metadata complete
+5. ⏳ **Verification Phase** - Package, test, and publish (CURRENT)
 6. ⏳ **Completion** - Extension live on VS Code Marketplace
 
 **This plan will be marked `done` only when the extension is successfully published.**
@@ -28,9 +28,9 @@ The codebase is production-ready with excellent architecture and comprehensive t
 
 **Current Status:**
 
-- ✅ Phase 1-3 Complete: Assessment, agent work, and LICENSE creation finished
-- ⏳ Phase 4 Pending: User must update package.json metadata
-- ⏳ Phase 5-6 Pending: Package, test, and publish
+- ✅ Phase 1-4 Complete: Assessment, agent work, LICENSE, and package.json metadata
+- ✅ Packaging verified: `npx @vscode/vsce package` produces `print2paper4vscode-1.0.0.vsix`
+- ⏳ Phase 5-6 Pending: Manual install test + publish to Marketplace
 
 This plan tracks all work needed to publish to VS Code Marketplace.
 
@@ -115,7 +115,7 @@ All four major architectural refactors completed:
 
 ---
 
-#### 2. package.json Missing Metadata ✅ ADDRESSED
+#### 2. package.json Missing Metadata ✅ COMPLETE
 
 **Issue:** Missing required fields for VS Code Marketplace:
 
@@ -125,12 +125,15 @@ All four major architectural refactors completed:
 
 **Resolution:**
 
-- Created detailed guide: `docs/plans/2025-12-11_plan_todo_PackageJsonMetadata.md`
-- Provided complete updated package.json template
-- Step-by-step instructions with validation steps
+- ✅ Created detailed guide: `docs/plans/2025-12-11_plan_todo_PackageJsonMetadata.md`
+- ✅ Updated `package.json`:
+  - Added: `repository`, `bugs`, `homepage`, `keywords`
+  - Set: `version` to `1.0.0`
+  - Fixed: command IDs (no `{{extId}}` templates in shipped manifest)
+- ✅ Verified: `npx @vscode/vsce package` succeeds
 
 **Priority:** CRITICAL  
-**Status:** Documentation provided
+**Status:** COMPLETE
 
 ---
 
@@ -157,11 +160,11 @@ All four major architectural refactors completed:
 
 **Resolution:**
 
-- Documented recommendation for `1.0.0` (stable) or `0.1.0` (beta)
-- Included in package.json update guide
+- ✅ Set `package.json` version to `1.0.0`
+- ✅ Left guidance in `docs/plans/2025-12-11_plan_todo_PackageJsonMetadata.md` for future versioning choices
 
 **Priority:** HIGH  
-**Status:** Documentation provided
+**Status:** COMPLETE
 
 ---
 
@@ -373,16 +376,17 @@ Before publishing to VS Code Marketplace:
   - ✅ Custom source-available license created
   - ✅ package.json updated with license field
 
-- [ ] Update package.json metadata
+- [x] Update package.json metadata
   - See `docs/plans/2025-12-11_plan_todo_PackageJsonMetadata.md` for complete guide
   - Fields: version, repository, bugs, homepage, keywords
+  - Also fixed command IDs in `package.json` (replaced `{{extId}}` with `p2p4vsc`)
+  - Also fixed deploy build so `vscode:prepublish` produces the configured `main` entrypoint
 
-- [ ] Test packaging
+- [x] Test packaging
 
   ```bash
-  npm install -g @vscode/vsce
-  vsce package
-  # Verify: print2paper4vscode-1.0.0.vsix created
+  npx @vscode/vsce package
+  # Verified: print2paper4vscode-1.0.0.vsix created
   ```
 
 - [ ] Test local installation
@@ -585,19 +589,23 @@ See `docs/plans/2025-12-11_plan_todo_CICD.md` for:
 - Creation of A+ improvement plan
 - Creation of custom source-available LICENSE
 - Addition of license field to package.json
+- Update package.json Marketplace metadata (version, repository, bugs, homepage, keywords)
+- Fix `package.json` command IDs (no `{{extId}}` templates in shipped manifest)
+- Fix deploy build (`compile:deploy`) so `vsce package` can succeed
+- Tighten `.vscodeignore` so the VSIX contains only runtime assets + README/CHANGELOG/LICENSE
 
 ### ⏳ Pending User Actions
 
-- [ ] Update package.json metadata (version, repository, bugs, homepage, keywords)
-- [ ] Test packaging with `vsce package`
 - [ ] Create publisher account (if not exists)
 - [ ] Publish to VS Code Marketplace
+- [ ] Test local installation from VSIX (sanity check before publishing)
 
 ### Optional Future Enhancements
 
 - [ ] Create extension icon (128x128 PNG)
 - [ ] Add GitHub repository templates
 - [ ] Set up CI/CD (see CICD plan)
+- [ ] Address `npm install` reported vulnerability (run `npm audit`, decide whether to `npm audit fix`)
 
 ---
 
@@ -605,7 +613,7 @@ See `docs/plans/2025-12-11_plan_todo_CICD.md` for:
 
 **Status:** IN PROGRESS - Ready for user actions
 
-The codebase is production-ready. Assessment complete, all agent-addressable issues resolved. Extension ready to be packaged and published once user completes final checklist items (LICENSE, package.json metadata).
+The codebase is production-ready. Assessment complete, and packaging is verified. Remaining work is manual validation (install from VSIX) and Marketplace publishing (publisher account + PAT).
 
 The code quality is excellent, architecture is professional, and test coverage is comprehensive. This is publication-ready software demonstrating strong software engineering practices.
 
@@ -631,5 +639,5 @@ The code quality is excellent, architecture is professional, and test coverage i
 **Assessment completed:** 2025-12-11  
 **Files created:** 6 deployment files + 2 TODO plans  
 **Agent work:** COMPLETE  
-**User actions:** 1 critical (package.json metadata)  
-**Deployment status:** READY pending user actions
+**User actions:** Marketplace publish + manual install validation  
+**Deployment status:** READY pending Marketplace steps

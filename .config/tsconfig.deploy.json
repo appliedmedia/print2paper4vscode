@@ -3,6 +3,9 @@
   "compilerOptions": {
     "module": "CommonJS",
     "moduleResolution": "node",
-    "outDir": "../out-deploy"
-  }
+    "outDir": "../out",
+    "rootDir": ".."
+  },
+  "include": ["../src/**/*.ts"],
+  "exclude": ["../tests/**", "../node_modules", "../.vscode-test"]
 }

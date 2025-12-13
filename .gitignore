@@ -5,6 +5,8 @@ out/
 dist/
 coverage/
 .tmp/
+# VS Code extension packages
+*.vsix
 # Logs
 *.log
 # OS

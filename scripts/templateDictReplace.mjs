@@ -48,32 +48,38 @@ for (const replacement of config.replacements) {
       throw new Error(`Source file not found: ${filePath}`);
     }
     const fileContent = JSON.parse(fs.readFileSync(filePath, 'utf8'));
-    
-    // Import variable from compiled module
-    const sourcePath = path.join(projectRoot, source);
-    if (!fs.existsSync(sourcePath)) {
-      throw new Error(`Source module not found: ${sourcePath}`);
-    }
-    const sourceModule = require(sourcePath);
-    const value = sourceModule[variable];
-    
-    if (value === undefined) {
-      throw new Error(`Variable '${variable}' not found in ${source}`);
-    }
-    
-    console.log(`  Value: ${value}`);
-    
-    // Replace template with value
+
+    // Determine whether this template is present before importing anything.
     let fileStr = JSON.stringify(fileContent, null, 2);
     const regex = new RegExp(template.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g');
     const beforeCount = (fileStr.match(regex) || []).length;
-    fileStr = fileStr.replace(regex, value);
-    const afterCount = (fileStr.match(regex) || []).length;
-    
-    console.log(`  Replaced: ${beforeCount} occurrences`);
-    
-    if (afterCount > 0) {
-      console.warn(`  WARNING: ${afterCount} templates remain after replacement`);
+
+    if (beforeCount === 0) {
+      console.log('  Replaced: 0 occurrences (template not present, skipping import)');
+    } else {
+      // Import variable from compiled module only when needed.
+      const sourcePath = path.join(projectRoot, source);
+      if (!fs.existsSync(sourcePath)) {
+        throw new Error(`Source module not found: ${sourcePath}`);
+      }
+      const sourceModule = require(sourcePath);
+      const value = sourceModule[variable];
+
+      if (value === undefined) {
+        throw new Error(`Variable '${variable}' not found in ${source}`);
+      }
+
+      console.log(`  Value: ${value}`);
+
+      // Replace template with value
+      fileStr = fileStr.replace(regex, value);
+      const afterCount = (fileStr.match(regex) || []).length;
+
+      console.log(`  Replaced: ${beforeCount} occurrences`);
+
+      if (afterCount > 0) {
+        console.warn(`  WARNING: ${afterCount} templates remain after replacement`);
+      }
     }
     
     // Write output
