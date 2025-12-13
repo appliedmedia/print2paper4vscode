@@ -361,7 +361,7 @@ jobs:
 [![CI](https://github.com/appliedmedia/print2paper4vscode/workflows/CI/badge.svg)](https://github.com/appliedmedia/print2paper4vscode/actions)
 [![codecov](https://codecov.io/gh/appliedmedia/print2paper4vscode/branch/main/graph/badge.svg)](https://codecov.io/gh/appliedmedia/print2paper4vscode)
 [![VS Code Marketplace](https://img.shields.io/visual-studio-marketplace/v/acoven.print2paper4vscode)](https://marketplace.visualstudio.com/items?itemName=acoven.print2paper4vscode)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![License: Code Transparency](https://img.shields.io/badge/License-Code%20Transparency-blue.svg)](https://github.com/appliedmedia/print2paper4vscode/blob/main/LICENSE)
 
 A VS Code extension that captures content from the active editor...
 ```
