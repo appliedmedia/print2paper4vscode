@@ -587,12 +587,18 @@ git push
 
 ### Custom Domain Configuration
 
-**For p2p4vsc.com (GitHub Pages):**
+**For p2p4vsc.com (apex domain - GitHub Pages):**
 
 1. Add CNAME file to gh-pages with content: `p2p4vsc.com`
-2. In DNS provider, add:
-   - A records: 185.199.108.153, 185.199.109.153, 185.199.110.153, 185.199.111.153
-   - Or CNAME: yourusername.github.io
+2. In DNS provider, add A records (CNAMEs don't work for apex domains):
+   - 185.199.108.153
+   - 185.199.109.153
+   - 185.199.110.153
+   - 185.199.111.153
+
+**For www.p2p4vsc.com (subdomain - optional):**
+
+- Add CNAME record pointing to: `appliedmedia.github.io`
 
 **For p2p4vsc.dev:**
 
