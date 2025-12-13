@@ -337,7 +337,7 @@ All planning documents are stored in `docs/plans/` and follow a standardized nam
 
 **❌ ANTI-PATTERN**: Do NOT create these as separate documents:
 
-- `DEPLOYMENT_ASSESSMENT.md` ← Should be INSIDE `plan_InProgress_PrepareForDeploy.md`
+- `DEPLOYMENT_ASSESSMENT.md` ← Should be INSIDE `plan_inProgress_PrepareForDeploy.md`
 - `DEPLOYMENT_SUMMARY.md` ← Should be INSIDE the plan
 - `PROJECT_STATUS.md` ← Status belongs IN the relevant plan
 - `PROGRESS_REPORT.md` ← Progress belongs IN the relevant plan
@@ -353,14 +353,14 @@ All planning documents are stored in `docs/plans/` and follow a standardized nam
 - **Date**: `YYYY-MM-DD` format when plan is created
 - **Status**: One of:
   - `done` - **All work completed and verified**
-  - `InProgress` - Work actively being done (agent or user actions pending)
+  - `inProgress` - Work actively being done (agent or user actions pending)
   - `todo` - Plan exists but work not yet started
 - **Name**: MixedCase descriptive name (e.g., `NamespaceFixes`, `PrepareForDeploy`, `NamedParamsRefactor`)
 
 #### Examples
 
 - `2025-11-27_plan_done_NamespaceFixes.md` - Namespace refactoring plan: ALL work complete
-- `2025-12-11_plan_InProgress_PrepareForDeploy.md` - Deployment prep: assessment done, user actions pending
+- `2025-12-11_plan_inProgress_PrepareForDeploy.md` - Deployment prep: assessment done, user actions pending
 - `2025-12-11_plan_todo_CICD.md` - CI/CD and automation roadmap: not yet started
 
 #### Status Transitions
@@ -368,15 +368,15 @@ All planning documents are stored in `docs/plans/` and follow a standardized nam
 Plans move through statuses as work progresses:
 
 ```text
-todo → InProgress → done
+todo → inProgress → done
   ↓         ↓         ↓
 Created   Working   Verified
 ```
 
 **When to change status**:
 
-- `todo` → `InProgress`: When first task begins
-- `InProgress` → `done`: When ALL tasks complete and are verified
+- `todo` → `inProgress`: When first task begins
+- `inProgress` → `done`: When ALL tasks complete and are verified
 - If work is abandoned: Rename to `_cancelled_` or document why in file
 
 #### File Management
