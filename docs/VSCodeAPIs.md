@@ -1619,3 +1619,346 @@ Menu items can be organized into groups. Common groups include:
 - `z_commands` - Command items (last position)
 
 Groups can be prefixed with numbers or letters to control ordering, where lower numbers/letters appear first.
+
+---
+
+## Publishing Extensions to VS Code Marketplace
+
+**Official Documentation:** <https://code.visualstudio.com/api/working-with-extensions/publishing-extension>
+
+### Prerequisites
+
+Before publishing an extension, you need:
+
+1. **Azure DevOps Account**
+   - VS Code uses Azure DevOps for Marketplace services
+   - Create account at <https://dev.azure.com/>
+   - Authentication, hosting, and management provided by Azure DevOps
+
+2. **Personal Access Token (PAT)**
+   - Required for publishing via `vsce` CLI
+   - Must have "Marketplace → Manage" permission
+   - Keep token secure (do not commit to repository)
+
+### Creating a Personal Access Token
+
+**Steps:**
+
+1. Create organization at <https://dev.azure.com/> (e.g., "vscode")
+2. Open User settings → Personal access tokens
+3. Click "New Token"
+4. Configure token:
+   - **Name:** Any descriptive name (e.g., "vsce-publishing")
+   - **Organization:** All accessible organizations
+   - **Expiration:** Custom defined (90 days, 1 year, etc.)
+   - **Scopes:** Custom defined
+     - ✅ **Marketplace → Manage** (REQUIRED)
+5. Click "Create"
+6. **IMPORTANT:** Copy token immediately (cannot retrieve later)
+
+### Creating a Publisher
+
+**Publisher:** Identity that publishes extensions to VS Code Marketplace. Every extension must include a `publisher` identifier in `package.json`.
+
+**Steps:**
+
+1. Go to <https://marketplace.visualstudio.com/manage>
+2. Sign in with Microsoft account (same as Azure DevOps)
+3. Click "Create publisher"
+4. Fill in publisher details:
+   - **ID:** Unique identifier (lowercase, no spaces)
+   - **Name:** Display name
+   - **Email:** Contact email
+5. Click "Create"
+6. Verify publisher with `vsce`:
+
+   ```bash
+   vsce login <publisher-id>
+   # Enter PAT when prompted
+   ```
+
+### Publishing Methods
+
+#### Method 1: Automatic Publishing (Recommended)
+
+```bash
+# Publish with automatic version increment
+vsce publish
+
+# Publish specific version
+vsce publish 1.0.0
+
+# Publish patch/minor/major version
+vsce publish patch  # 1.0.0 → 1.0.1
+vsce publish minor  # 1.0.0 → 1.1.0
+vsce publish major  # 1.0.0 → 2.0.0
+```
+
+**What happens:**
+
+- Validates extension files
+- Creates `.vsix` package
+- Uploads to Marketplace
+- Creates git tag (if in git repo)
+- Extension available immediately
+
+#### Method 2: Manual Publishing
+
+```bash
+# Package extension to .vsix
+vsce package
+
+# Upload manually:
+# 1. Go to https://marketplace.visualstudio.com/manage
+# 2. Click "New extension" → "Visual Studio Code"
+# 3. Upload .vsix file
+```
+
+### Required Files for Publishing
+
+1. **LICENSE** - Required license file
+2. **README.md** - Extension description (shown on marketplace)
+3. **CHANGELOG.md** - Version history (recommended)
+4. **package.json** - Must include:
+   - `publisher` - Your publisher ID
+   - `version` - SemVer version number
+   - `repository` - Git repository URL (recommended)
+   - `license` - SPDX identifier (e.g., "MIT") or "SEE LICENSE IN LICENSE" for custom licenses
+   - `icon` - Path to 128x128 PNG icon (recommended)
+   - `keywords` - Searchable keywords
+   - `categories` - Extension categories
+
+### package.json Requirements
+
+```json
+{
+  "name": "extension-name",
+  "displayName": "Extension Display Name",
+  "description": "Brief description",
+  "version": "1.0.0",
+  "publisher": "your-publisher-id",
+  "license": "MIT",
+  // Or for custom licenses: "license": "SEE LICENSE IN LICENSE",
+  
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/user/repo"
+  },
+  
+  "bugs": {
+    "url": "https://github.com/user/repo/issues"
+  },
+  
+  "homepage": "https://github.com/user/repo#readme",
+  
+  "keywords": [
+    "keyword1",
+    "keyword2"
+  ],
+  
+  "icon": "icon.png",
+  
+  "engines": {
+    "vscode": "^1.60.0"
+  }
+}
+```
+
+### .vscodeignore File
+
+Controls which files are included in the extension package.
+
+**Example:**
+
+```gitignore
+# Source files (exclude TypeScript, include compiled JS)
+src/**
+tests/**
+.vscode/**
+
+# Build artifacts
+node_modules/**
+out-deploy/**
+coverage/**
+
+# Documentation (keep only README.md)
+docs/**
+*.md
+!README.md
+!CHANGELOG.md
+
+# Config files
+.gitignore
+tsconfig.json
+.eslintrc.json
+```
+
+### Image Requirements
+
+**README.md and CHANGELOG.md images:**
+
+- ✅ Must use HTTPS URLs
+- ✅ PNG, JPG, GIF formats
+- ❌ SVG not allowed (unless from trusted badge providers)
+- ✅ Can use relative paths (converted automatically if `repository` in package.json)
+
+**Icon requirements:**
+
+- 128x128 pixels (PNG format)
+- Square aspect ratio
+- Simple, recognizable design
+- Shows in marketplace and Extensions view
+
+### Version Management
+
+**Semantic Versioning (SemVer):**
+
+- `MAJOR.MINOR.PATCH` format
+- **MAJOR** - Breaking changes
+- **MINOR** - New features (backward compatible)
+- **PATCH** - Bug fixes (backward compatible)
+
+**Publishing commands:**
+
+```bash
+vsce publish patch  # 1.0.0 → 1.0.1
+vsce publish minor  # 1.0.0 → 1.1.0
+vsce publish major  # 1.0.0 → 2.0.0
+vsce publish 2.0.1  # Explicit version
+```
+
+**Auto-versioning:**
+
+- Creates git commit and tag via npm-version
+- Default commit message: extension version
+- Custom message: `vsce publish -m "Version %s - Description"`
+- `%s` placeholder replaced with version number
+
+### Managing Published Extensions
+
+**Marketplace Management Page:** <https://marketplace.visualstudio.com/manage>
+
+**Available actions:**
+
+- ✅ View install/download statistics
+- ✅ View ratings and reviews
+- ✅ Update extension (publish new version)
+- ✅ Unpublish extension
+- ✅ View acquisition trends over time
+
+**Unpublishing:**
+
+1. Go to management page
+2. Select extension
+3. Click "More Actions" → "Unpublish"
+4. Extension becomes unavailable immediately
+
+**Note:** Unpublished extensions cannot be re-published with same version number.
+
+### Relative Links in README
+
+**Automatic conversion:**
+
+If `package.json` has `repository` pointing to public GitHub repo:
+
+- Relative links automatically adjusted
+- Uses `main` branch by default
+- Override with `--githubBranch` flag
+
+```bash
+vsce package --githubBranch develop
+vsce publish --baseContentUrl https://example.com/
+```
+
+### Best Practices
+
+1. **Test before publishing:**
+   - Package locally: `vsce package`
+   - Install .vsix: Extensions → Install from VSIX
+   - Test all features
+
+2. **Keep extension small:**
+   - Use `.vscodeignore` to exclude unnecessary files
+   - Only include compiled code, not source files
+   - Typical size: 1-5 MB
+
+3. **Update regularly:**
+   - Publish bug fixes promptly
+   - Keep dependencies up to date
+   - Respond to user feedback
+
+4. **Semantic versioning:**
+   - Follow SemVer strictly
+   - Document breaking changes
+   - Maintain CHANGELOG.md
+
+5. **Security:**
+   - Never commit PAT to repository
+   - Keep dependencies updated
+   - Scan for vulnerabilities
+
+### Common Issues
+
+**Problem:** "Extension validation failed"
+
+- Check all required fields in package.json
+- Verify icon is 128x128 PNG
+- Ensure README.md exists
+- Check for HTTPS image URLs
+
+**Problem:** "Publisher not found"
+
+- Verify publisher ID in package.json
+- Login with `vsce login <publisher-id>`
+- Create publisher at marketplace.visualstudio.com/manage
+
+**Problem:** "Version already exists"
+
+- Cannot republish same version
+- Increment version number
+- Or unpublish old version first
+
+### VS Code Extension CLI (vsce)
+
+**Installation:**
+
+```bash
+npm install -g @vscode/vsce
+```
+
+**Common commands:**
+
+```bash
+# Package extension
+vsce package
+
+# Publish extension
+vsce publish
+
+# Login to publisher
+vsce login <publisher-id>
+
+# Show extension info
+vsce show <extension-id>
+
+# List files in package
+vsce ls
+
+# Verify package
+vsce verify <vsix-file>
+```
+
+**Full documentation:** <https://github.com/microsoft/vscode-vsce>
+
+---
+
+## Summary: Key VS Code Publishing URLs
+
+- **Official Publishing Guide:** <https://code.visualstudio.com/api/working-with-extensions/publishing-extension>
+- **Marketplace Management:** <https://marketplace.visualstudio.com/manage>
+- **Azure DevOps (PAT):** <https://dev.azure.com/>
+- **Extension Manifest Reference:** <https://code.visualstudio.com/api/references/extension-manifest>
+- **vsce CLI GitHub:** <https://github.com/microsoft/vscode-vsce>
+- **Extension Guidelines:** <https://code.visualstudio.com/api/references/extension-guidelines>
+
+---

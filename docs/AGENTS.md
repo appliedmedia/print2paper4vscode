@@ -295,28 +295,94 @@ If you need to embed instructions for AI tooling (like repeated headings for sys
 
 ## Documentation Organization
 
+### Documentation Categories
+
+The project uses different documentation types for different purposes:
+
+**Plans (`docs/plans/`)**: Track work efforts from start to completion
+
+- Status, progress, todos, results
+- Assessments, summaries, progress reports all belong IN the plan
+- Examples: deployment preparation, refactoring work, feature implementation
+
+**Reference Documentation (`docs/`)**: Static informational content
+
+- API references, coding standards, architecture guides
+- Examples: `AGENTS.md`, `VSCodeAPIs.md`, `INSTALL.md`
+
+**User Documentation (root)**: End-user-facing content
+
+- Installation, usage, features, changelog
+- Examples: `README.md`, `CHANGELOG.md`, `LICENSE`
+
+**CRITICAL**: Do NOT create separate "assessment" or "summary" documents. Summaries, status, progress, and almost anything tracking work belongs INSIDE the plan document for that topic.
+
 ### Plan Documents
 
-All planning documents are stored in `docs/plans/` and follow a standardized naming convention:
+All planning documents are stored in `docs/plans/` and follow a standardized naming convention.
 
-**Naming Pattern**: `YYYY-MM-DD_plan_{status}_{MixedCaseName}.md`
+#### Plan Document Philosophy
 
-- **Date**: `YYYY-MM-DD` format (use `YYYY-MM-XX` if exact date unknown)
+**CRITICAL**: A plan document tracks the ENTIRE lifecycle of an effort from conception through completion. Creating a plan is merely the FIRST PART of executing on that plan, not a separate deliverable.
+
+**Each plan document should contain**:
+
+1. **The Plan** - What needs to be done and why
+2. **TODO Items** - Specific tasks to complete
+3. **Status** - Current state of work
+4. **Progress** - What's been completed, what's pending
+5. **Results** - Outcomes and learnings
+
+**A plan is only marked `done` when ALL the work is complete**, not when the plan is written.
+
+**❌ ANTI-PATTERN**: Do NOT create these as separate documents:
+
+- `DEPLOYMENT_ASSESSMENT.md` ← Should be INSIDE `plan_inProgress_PrepareForDeploy.md`
+- `DEPLOYMENT_SUMMARY.md` ← Should be INSIDE the plan
+- `PROJECT_STATUS.md` ← Status belongs IN the relevant plan
+- `PROGRESS_REPORT.md` ← Progress belongs IN the relevant plan
+
+**✅ CORRECT PATTERN**: One plan document per effort, containing ALL related content:
+
+- Assessment → Plan → TODOs → Progress → Status → Results (all in one file)
+
+#### Naming Convention
+
+**Pattern**: `YYYY-MM-DD_plan_{status}_{MixedCaseName}.md`
+
+- **Date**: `YYYY-MM-DD` format when plan is created
 - **Status**: One of:
-  - `done` - Plan completed and implemented
-  - `inProgress` - Plan actively being worked on
-  - `todo` - Plan not yet started
-- **Name**: MixedCase descriptive name (e.g., `NamespaceFixes`, `MarkdownPrint`, `NamedParamsRefactor`)
+  - `done` - **All work completed and verified**
+  - `inProgress` - Work actively being done (agent or user actions pending)
+  - `todo` - Plan exists but work not yet started
+- **Name**: MixedCase descriptive name (e.g., `NamespaceFixes`, `PrepareForDeploy`, `NamedParamsRefactor`)
 
-**Examples**:
+#### Examples
 
-- `2025-11-27_plan_done_NamespaceFixes.md` - Completed namespace refactoring plan
-- `2025-11-29_plan_done_NamedParamsRefactor.md` - Completed named parameters refactoring plan
-- `2025-01-XX_plan_inProgress_MarkdownPrint.md` - In-progress markdown printing plan
+- `2025-11-27_plan_done_NamespaceFixes.md` - Namespace refactoring plan: ALL work complete
+- `2025-12-11_plan_inProgress_PrepareForDeploy.md` - Deployment prep: assessment done, user actions pending
+- `2025-12-11_plan_todo_CICD.md` - CI/CD and automation roadmap: not yet started
 
-**File Management**:
+#### Status Transitions
 
-- Use `git mv` to move/rename plan documents to preserve git history
+Plans move through statuses as work progresses:
+
+```text
+todo → inProgress → done
+  ↓         ↓         ↓
+Created   Working   Verified
+```
+
+**When to change status**:
+
+- `todo` → `inProgress`: When first task begins
+- `inProgress` → `done`: When ALL tasks complete and are verified
+- If work is abandoned: Rename to `_cancelled_` or document why in file
+
+#### File Management
+
+- Use `git mv` to rename plans when status changes (preserves history)
+- Update status in file header when renaming
 - If a file isn't tracked by git, use regular `mv` then `git add`
 
 ## Development Guidelines

@@ -1,0 +1,92 @@
+# Print2Paper4VSCode Code Transparency License
+
+Copyright © 2025-2026 Applied Media. All Rights Reserved.
+
+## TL;DR
+
+You can view, audit, and submit pull requests for fixes and enhancements. You
+cannot use or sell derivatives of this code for your own work.
+
+## What You CAN Do
+
+1. **View and Audit**: You may view, study, and audit this source code for any purpose.
+
+2. **Use the Extension**: You may freely use the official Print2Paper4VSCode
+   extension published on the Visual Studio Code Marketplace.
+
+3. **Report Issues**: You may report bugs, security vulnerabilities, and suggest
+   improvements through GitHub issues.
+
+4. **Submit Contributions**: You may submit pull requests with bug fixes,
+   improvements, or new features (see Contributions section below).
+
+## What You CANNOT Do
+
+1. **No Derivative Works**: You may not use this source code to create derivative
+   works, modified versions, or competing products.
+
+2. **No Redistribution**: You may not distribute, publish, or sell this code or
+   modified versions of it.
+
+3. **No Competing Extensions**: You may not use this code to create or publish
+   any extension, plugin, or software that provides similar functionality to
+   Print2Paper4VSCode.
+
+4. **No Commercial Use**: You may not use this code for commercial purposes
+   without obtaining a separate commercial license from us.
+
+5. **No Republication**: You may not republish this extension under a different
+   name or through different distribution channels.
+
+## Contributions
+
+By submitting a pull request or contribution to this project, you agree that:
+
+**Note:** The "No Derivative Works" and "No Redistribution" restrictions in this
+license apply to third parties, not to the p2p4vsc maintainers. By contributing,
+you grant maintainers—and ONLY maintainers—the right to incorporate and
+redistribute contributions as part of the official project. Contributors
+themselves do NOT receive redistribution or relicensing rights.
+
+1. You grant the p2p4vsc maintainers (and only the maintainers) a perpetual,
+   worldwide, non-exclusive, royalty-free, irrevocable license to use, modify,
+   distribute, and relicense your contribution under any terms.
+
+2. Your contribution becomes part of the Print2Paper4VSCode project and may be
+   included in the official extension or licensed separately at our discretion.
+
+3. You represent that you have the right to grant this license and that your
+   contribution does not violate any third-party rights.
+
+## Commercial Licensing
+
+If you wish to use this code for purposes not permitted by this license,
+commercial licensing is available. Contact us to discuss licensing options.
+
+## Disclaimer
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+## Termination
+
+Your rights under this license automatically terminate if you violate any of
+its terms. Upon termination, you must cease all use of the source code and
+destroy any copies in your possession.
+
+## Contact
+
+For commercial licensing inquiries, questions about this license, or to report
+security vulnerabilities, please contact the p2p4vsc maintainers through the
+project's GitHub repository.
+
+---
+
+**Summary**: You can view the code and use the free extension. You cannot create
+competing products or redistribute the code. Commercial licensing is available
+upon request.
