@@ -1,8 +1,8 @@
 # Web Presence Plan
 
-**Status:** TODO  
-**Created:** 2025-12-12  
-**Priority:** Execute after PR #76 is merged  
+**Status:** TODO
+**Created:** 2025-12-12
+**Priority:** Execute after PR #76 is merged
 
 ---
 
