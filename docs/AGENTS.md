@@ -356,7 +356,7 @@ All planning documents are stored in `docs/plans/` and follow a standardized nam
 
 - `2025-11-27_plan_done_NamespaceFixes.md` - Namespace refactoring plan: ALL work complete
 - `2025-12-11_plan_InProgress_PrepareForDeploy.md` - Deployment prep: assessment done, user actions pending
-- `2025-12-11_plan_todo_GradeAPlus.md` - Improvement roadmap: not yet started
+- `2025-12-11_plan_todo_CICD.md` - CI/CD and automation roadmap: not yet started
 
 #### Status Transitions
 

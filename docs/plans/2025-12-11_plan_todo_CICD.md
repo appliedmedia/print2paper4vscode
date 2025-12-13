@@ -1,73 +1,74 @@
-# Grade A+ Improvement Plan
+# CI/CD & Automation Plan
 
 **Status:** TODO  
 **Created:** 2025-12-11  
-**Current Grade:** A- (91.4/100)  
-**Target Grade:** A+ (95+/100)
+**Priority:** Execute after initial deployment  
 
 ## Overview
 
-The codebase architecture is A+ quality. The A- grade is due to missing metrics, automation, and platform support documentation. This plan outlines the path to A+ grade.
+This plan establishes continuous integration, automated testing, code coverage tracking, and cross-platform support. While the current codebase is production-ready, adding CI/CD automation will improve development velocity, code quality assurance, and platform coverage.
 
 ---
 
-## Current Grade Breakdown
+## Current State Assessment
 
-| Category | Score | Notes |
-|----------|-------|-------|
-| Architecture | 95/100 | Registry, DI, clean separation |
-| Code Quality | 95/100 | TypeScript strict, comprehensive tests |
-| Documentation | 95/100 | Excellent docs |
-| Testing | 90/100 | 357 tests but no coverage metrics |
-| Platform Support | 70/100 | macOS only |
-| Deployment Ready | 95/100 | All files created/documented |
-| CI/CD | 0/100 | No automation |
-| **Overall** | **91.4/100** | **A-** |
+| Area | Status | Gap |
+|------|--------|-----|
+| Testing | ✅ 357 tests pass | ❌ No coverage metrics |
+| CI/CD | ❌ Manual only | ❌ No automation |
+| Platform | ✅ macOS complete | ⚠️ Win/Linux stubs only |
+| Code Quality | ✅ TypeScript strict | ✅ Good |
+| Architecture | ✅ Registry + DI | ✅ Excellent |
 
 ---
 
-## What Cost the A Grade
+## Goals of This Plan
 
-### 1. No Measured Code Coverage
+### 1. Automated Testing Pipeline
 
-- ✅ Tests exist (357 tests passing)
-- ❌ No coverage metrics tracked
-- ❌ Can't prove 80%+ coverage
-- ❌ Not documented
+**Current:** Manual testing only  
+**Goal:** Automated tests on every commit
 
-**Impact:** -5 points
+**Benefits:**
+- Catch regressions immediately
+- Faster development cycles
+- Confidence in changes
 
-### 2. No CI/CD Pipeline
+### 2. Code Coverage Tracking
 
-- ❌ No automated testing on commits
-- ❌ No automated linting
-- ❌ No automated publishing
-- ❌ Manual process only
+**Current:** 357 tests passing, coverage unknown  
+**Goal:** Measure and maintain 80%+ coverage
 
-**Impact:** -3 points
+**Benefits:**
+- Identify untested code paths
+- Prevent coverage regression
+- Document test quality
 
-### 3. Platform Limitation Not Clearly Documented
+### 3. Automated Publishing
 
-- ✅ macOS implementation complete
-- ⚠️ Windows/Linux stubs exist but untested
-- ❌ Not clearly marked as macOS-first
-- ❌ Not in package.json metadata
+**Current:** Manual vsce publish  
+**Goal:** Automated marketplace publishing
 
-**Impact:** -2 points
+**Benefits:**
+- Consistent release process
+- Version tagging automation
+- Reduced human error
 
-### 4. No VS Code Integration Tests
+### 4. Cross-Platform Support
 
-- ✅ Comprehensive unit tests with mocks
-- ❌ No integration tests in actual VS Code
-- ❌ No @vscode/test-electron setup
+**Current:** macOS only (Windows/Linux stubs)  
+**Goal:** Full Windows and Linux printing
 
-**Impact:** -1 point (minor)
+**Benefits:**
+- Broader user base
+- Market expansion
+- Feature parity
 
 ---
 
-## Path to A+ (Three Tracks)
+## Implementation Tracks
 
-### Track 1: Quick Win (1-2 hours) → A
+### Track 1: Code Coverage (1-2 hours)
 
 **Goal:** Document what already exists
 
@@ -371,7 +372,7 @@ A VS Code extension that captures content from the active editor...
 
 ---
 
-### Track 3: Excellence (Optional) (8-12 hours) → A++ Aspirational
+### Track 3: Cross-Platform Support (Future) - 8-12 hours
 
 **Goal:** Cross-platform support
 

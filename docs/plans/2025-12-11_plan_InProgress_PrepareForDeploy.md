@@ -412,7 +412,7 @@ Before publishing to VS Code Marketplace:
   - PR template
   - CONTRIBUTING.md
   - CODE_OF_CONDUCT.md
-- [ ] Set up CI/CD (see A+ plan for details)
+- [ ] Set up CI/CD (see CICD plan for details)
 - [ ] Add status badges to README.md
 - [ ] Measure and document code coverage
 
@@ -436,8 +436,8 @@ Before publishing to VS Code Marketplace:
 
 - **Extension icon:** 15-30 minutes
 - **GitHub templates:** 30 minutes
-- **CI/CD setup:** 2-4 hours (see A+ plan)
-- **Cross-platform support:** 8-12 hours (see A+ plan)
+- **CI/CD setup:** 2-4 hours (see CICD plan)
+- **Cross-platform support:** 8-12 hours (see CICD plan)
 
 ---
 
@@ -528,7 +528,7 @@ All success criteria met:
 
 ### Future Enhancements (Optional)
 
-See `docs/plans/2025-12-11_plan_todo_GradeAPlus.md` for:
+See `docs/plans/2025-12-11_plan_todo_CICD.md` for:
 - Measuring and documenting code coverage
 - Setting up CI/CD pipeline (GitHub Actions)
 - Adding cross-platform support (Windows/Linux)
@@ -543,7 +543,7 @@ See `docs/plans/2025-12-11_plan_todo_GradeAPlus.md` for:
 
 - `docs/plans/2025-12-11_plan_todo_PackageJsonMetadata.md` - Complete guide for package.json updates
 - `docs/VSCodeAPIs.md` - VS Code publishing documentation
-- `docs/plans/2025-12-11_plan_todo_GradeAPlus.md` - Path to A+ grade
+- `docs/plans/2025-12-11_plan_todo_CICD.md` - CI/CD and automation roadmap
 - `CHANGELOG.md` - Version history
 - `.vscodeignore` - Packaging configuration
 
@@ -582,7 +582,7 @@ See `docs/plans/2025-12-11_plan_todo_GradeAPlus.md` for:
 
 - [ ] Create extension icon (128x128 PNG)
 - [ ] Add GitHub repository templates
-- [ ] Set up CI/CD (see A+ plan)
+- [ ] Set up CI/CD (see CICD plan)
 
 ---
 
