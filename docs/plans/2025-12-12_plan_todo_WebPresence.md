@@ -368,7 +368,7 @@ Brief explanation of use cases...
 
 ## License
 
-Source Viewable License - See [LICENSE](LICENSE) file.
+Code Transparency License - See [LICENSE](LICENSE) file.
 
 You can view, audit, and contribute. Cannot create competing products.
 Commercial licensing available.
