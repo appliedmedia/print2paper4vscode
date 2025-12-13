@@ -55,7 +55,7 @@ Print Code. Trust the Source.
 Sometimes you need code on paper. Whether it's reviewing algorithms
 away from screens, annotating for team reviews, or archiving critical
 snippets—Print2Paper4VSCode makes it simple and safe.
-```text
+```
 
 **Trust & Transparency:**
 
@@ -107,7 +107,7 @@ Screenshot: VS Code Extensions sidebar
 2. Click Extensions icon (or press Ctrl+Shift+X / Cmd+Shift+X)
 3. Search for "Print2Paper4VSCode"
 4. Click "Install"
-```text
+```
 
 #### Step 2: Verify Installation
 
@@ -117,7 +117,7 @@ Screenshot: Command palette with print command
 1. Press Ctrl+Shift+P (Cmd+Shift+P on Mac)
 2. Type "Print2Paper"
 3. You should see the "Print2Paper" command
-```text
+```
 
 ---
 
@@ -136,7 +136,7 @@ Method 2: Right-Click Menu
 
 Method 3: Command Palette
 - Ctrl+Shift+P → "Print2Paper"
-```text
+```
 
 #### Understanding the Preview
 
@@ -152,7 +152,7 @@ Navigation:
 - Scroll to review all pages
 - Zoom in/out with mouse wheel
 - Click page numbers to jump
-```text
+```
 
 ---
 
@@ -168,7 +168,7 @@ Screenshot: Theme dropdown menu
 3. Click the "Theme" dropdown (🎨)
 4. Select your preferred theme
 5. Preview updates instantly
-```text
+```
 
 #### Adjusting Page Settings
 
@@ -186,7 +186,7 @@ Margins:
 Font Size:
 - Multiple sizes available
 - Click font icon to change
-```text
+```
 
 ---
 
@@ -202,7 +202,7 @@ For .md files, choose render mode:
 2. "Rendered" - Shows formatted HTML output
 
 Toggle via dropdown in preview panel
-```text
+```
 
 #### Printing Options
 
@@ -213,7 +213,7 @@ Print Button Options:
 - "Preview" - Opens PDF in system viewer
 - "Print" - Sends directly to printer (macOS)
 - "Save" - Downloads PDF file
-```text
+```
 
 ---
 
@@ -391,7 +391,7 @@ Commercial licensing available.
 ---
 
 Made in the USA 🇺🇸 | © 2025-2026 Applied Media
-```text
+```
 
 ---
 
@@ -563,7 +563,7 @@ git add docs/
 git commit -m "Add GitHub Pages site"
 git push
 # Configure in GitHub repo settings → Pages → Source: main/docs
-```text
+```
 
 ### Custom Domain Configuration
 
