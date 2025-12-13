@@ -596,7 +596,7 @@ git push
    - 185.199.110.153
    - 185.199.111.153
 
-**For www.p2p4vsc.com (subdomain - optional):**
+**For `www.p2p4vsc.com` (subdomain - optional):**
 
 - Add CNAME record pointing to: `appliedmedia.github.io`
 
