@@ -1738,7 +1738,7 @@ vsce package
   "version": "1.0.0",
   "publisher": "your-publisher-id",
   "license": "MIT",
-  // For custom licenses, use: "license": "SEE LICENSE IN LICENSE",
+  // Or for custom licenses: "license": "SEE LICENSE IN LICENSE",
   
   "repository": {
     "type": "git",

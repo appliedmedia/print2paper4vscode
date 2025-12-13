@@ -404,7 +404,7 @@ Before publishing to VS Code Marketplace:
    - Install from marketplace
    - Test functionality
 
-### Optional Enhancements
+### Optional Enhancements (Pre-Publish)
 
 - [ ] Create extension icon (128x128 PNG)
 - [ ] Add GitHub repository templates

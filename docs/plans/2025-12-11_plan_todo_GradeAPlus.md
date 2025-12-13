@@ -529,7 +529,8 @@ npm install --save-dev @vscode/test-electron
 
 ```typescript
 import * as path from 'path';
-import * as Mocha from 'mocha';
+// Note: This is example/placeholder code for VS Code integration tests
+// This repo uses node:test, not Mocha. If implementing, adapt to node:test or use @vscode/test-electron's approach
 import { runTests } from '@vscode/test-electron';
 
 async function main() {
