@@ -362,7 +362,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
 > Print code with syntax highlighting. Trust the source.
 
-[Install](marketplace-link) | [Documentation](p2p4vsc.com) | [Source Code](p2p4vsc.dev) | [Support](p2p4vsc.support)
+[Install](https://p2p4vsc.info) | [Documentation](https://p2p4vsc.com) | [Source Code](https://p2p4vsc.dev) | [Support](https://p2p4vsc.support)
 
 ## Why Print Code?
 
@@ -651,7 +651,8 @@ Here's a minimal but professional starting template:
     <section class="hero">
         <h1>Print Code. Trust the Source.</h1>
         <p>Sometimes you need code on paper. Print2Paper4VSCode makes it simple, safe, and beautiful.</p>
-        <a href="[MARKETPLACE_LINK]" class="cta-button">Install Extension</a>
+        <!-- Redirects to: https://marketplace.visualstudio.com/items?itemName=acoven.print2paper4vscode -->
+        <a href="https://p2p4vsc.info" class="cta-button">Install Extension</a>
         <a href="https://p2p4vsc.dev" class="cta-button">View Source Code</a>
     </section>
 
