@@ -13,7 +13,7 @@ This plan establishes continuous integration, automated testing, code coverage t
 ## Current State Assessment
 
 | Area | Status | Gap |
-|------|--------|-----|
+| --- | --- | --- |
 | Testing | ✅ 357 tests pass | ❌ No coverage metrics |
 | CI/CD | ❌ Manual only | ❌ No automation |
 | Platform | ✅ macOS complete | ⚠️ Win/Linux stubs only |
@@ -30,6 +30,7 @@ This plan establishes continuous integration, automated testing, code coverage t
 **Goal:** Automated tests on every commit
 
 **Benefits:**
+
 - Catch regressions immediately
 - Faster development cycles
 - Confidence in changes
@@ -40,6 +41,7 @@ This plan establishes continuous integration, automated testing, code coverage t
 **Goal:** Measure and maintain 80%+ coverage
 
 **Benefits:**
+
 - Identify untested code paths
 - Prevent coverage regression
 - Document test quality
@@ -50,6 +52,7 @@ This plan establishes continuous integration, automated testing, code coverage t
 **Goal:** Automated marketplace publishing
 
 **Benefits:**
+
 - Consistent release process
 - Version tagging automation
 - Reduced human error
@@ -60,6 +63,7 @@ This plan establishes continuous integration, automated testing, code coverage t
 **Goal:** Full Windows and Linux printing
 
 **Benefits:**
+
 - Broader user base
 - Market expansion
 - Feature parity

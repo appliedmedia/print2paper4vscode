@@ -367,9 +367,9 @@ vsce publish 1.0.0
 
 Before publishing, you need:
 
-1. **Publisher account:** https://marketplace.visualstudio.com/manage
+1. **Publisher account:** [VS Code Marketplace Publisher Management](https://marketplace.visualstudio.com/manage)
 2. **Personal Access Token (PAT):**
-   - Go to https://dev.azure.com/
+   - Go to [Azure DevOps](https://dev.azure.com/)
    - Create PAT with "Marketplace → Manage" permission
    - Keep it secure (don't commit to repo)
 

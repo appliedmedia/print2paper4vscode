@@ -17,6 +17,7 @@ Establish a professional web presence for Print2Paper4VSCode (p2p4vsc) with clea
 ### Primary Domains
 
 **p2p4vsc.com** - Main Marketing Website
+
 - **Purpose:** Professional landing page and marketing site
 - **Platform Options:**
   1. GitHub Pages with custom index.html (free, full control)
@@ -25,12 +26,14 @@ Establish a professional web presence for Print2Paper4VSCode (p2p4vsc) with clea
 - **User Action:** Point DNS to chosen platform
 
 **p2p4vsc.dev** - Developer Documentation
+
 - **Purpose:** Direct link to GitHub repository and technical docs
 - **Target:** `https://github.com/appliedmedia/print2paper4vscode`
 - **Content:** README, code, issues, pull requests
 - **User Action:** Configure DNS redirect
 
 **p2p4vsc.support** - Support Portal
+
 - **Purpose:** Easy-to-remember support entry point
 - **Target:** `https://github.com/appliedmedia/print2paper4vscode/issues/new`
 - **Benefit:** Non-technical users don't need to navigate GitHub
@@ -45,27 +48,31 @@ Establish a professional web presence for Print2Paper4VSCode (p2p4vsc) with clea
 #### Key Messages
 
 **Hero Section:**
-```
+
+```text
 Print Code. Trust the Source.
 
-Sometimes you need code on paper. Whether it's reviewing algorithms 
-away from screens, annotating for team reviews, or archiving critical 
+Sometimes you need code on paper. Whether it's reviewing algorithms
+away from screens, annotating for team reviews, or archiving critical
 snippets—Print2Paper4VSCode makes it simple and safe.
-```
+```text
 
 **Trust & Transparency:**
+
 - ⚠️ **Security Story:** Reference [real incident of malicious VSCode extensions removed from marketplace](https://www.bleepingcomputer.com/news/security/microsoft-finds-dozens-of-malicious-vs-code-extensions/)
 - ✅ **Full Source Available:** Every line of code is viewable at [p2p4vsc.dev](https://p2p4vsc.dev)
 - ✅ **Made in the USA** 🇺🇸 (display flag in header and footer)
 - ✅ **Community Driven:** We welcome fixes, features, and security reviews
 
 **Call to Actions:**
+
 1. **Install Extension** → Link to VS Code Marketplace
 2. **View Source Code** → Link to p2p4vsc.dev
 3. **Get Installation Guide** → Link to /install page
 4. **Stay Updated** → Mailing list signup form
 
 **Features Highlight:**
+
 - 🎨 Syntax highlighting for 100+ languages
 - 📄 Professional PDF generation
 - 👁️ Live preview before printing
@@ -73,11 +80,13 @@ snippets—Print2Paper4VSCode makes it simple and safe.
 - 📝 Markdown support (raw + rendered)
 
 **Community & Support:**
+
 - Found a bug? → p2p4vsc.support
 - Want a feature? → Submit request at p2p4vsc.dev
 - Pull requests welcome → See contribution guidelines
 
 **Footer:**
+
 - Made in the USA 🇺🇸
 - © 2025-2026 Applied Media
 - Links: Install | Docs | Support | Privacy | Source Code
@@ -89,36 +98,36 @@ snippets—Print2Paper4VSCode makes it simple and safe.
 
 #### Section 1: Installation
 
-**Step 1: Install from VS Code Marketplace**
+#### Step 1: Install from VS Code Marketplace
 
 Screenshot: VS Code Extensions sidebar
 
-```
+```text
 1. Open VS Code
 2. Click Extensions icon (or press Ctrl+Shift+X / Cmd+Shift+X)
 3. Search for "Print2Paper4VSCode"
 4. Click "Install"
-```
+```text
 
-**Step 2: Verify Installation**
+#### Step 2: Verify Installation
 
 Screenshot: Command palette with print command
 
-```
+```text
 1. Press Ctrl+Shift+P (Cmd+Shift+P on Mac)
 2. Type "Print2Paper"
 3. You should see the "Print2Paper" command
-```
+```text
 
 ---
 
 #### Section 2: Basic Usage
 
-**Quick Start: Print Current File**
+#### Quick Start: Print Current File
 
 Screenshot: Code file with keyboard shortcut
 
-```
+```text
 Method 1: Keyboard Shortcut
 - Press Alt+P (Option+P on Mac)
 
@@ -127,13 +136,13 @@ Method 2: Right-Click Menu
 
 Method 3: Command Palette
 - Ctrl+Shift+P → "Print2Paper"
-```
+```text
 
-**Understanding the Preview**
+#### Understanding the Preview
 
 Screenshot: PDF preview panel
 
-```
+```text
 The preview panel shows:
 - Your code with syntax highlighting
 - Page breaks and layout
@@ -143,29 +152,29 @@ Navigation:
 - Scroll to review all pages
 - Zoom in/out with mouse wheel
 - Click page numbers to jump
-```
+```text
 
 ---
 
 #### Section 3: Customization
 
-**Changing Themes**
+#### Changing Themes
 
 Screenshot: Theme dropdown menu
 
-```
+```text
 1. Open a code file
 2. Press Alt+P to open print preview
 3. Click the "Theme" dropdown (🎨)
 4. Select your preferred theme
 5. Preview updates instantly
-```
+```text
 
-**Adjusting Page Settings**
+#### Adjusting Page Settings
 
 Screenshot: Page size and margin menus
 
-```
+```text
 Paper Size:
 - Letter, A4, Legal, and more
 - Click 📄 dropdown to select
@@ -177,34 +186,34 @@ Margins:
 Font Size:
 - Multiple sizes available
 - Click font icon to change
-```
+```text
 
 ---
 
 #### Section 4: Advanced Features
 
-**Printing Markdown Files**
+#### Printing Markdown Files
 
 Screenshot: Markdown mode dropdown
 
-```
+```text
 For .md files, choose render mode:
 1. "Raw" - Shows markdown syntax with highlighting
 2. "Rendered" - Shows formatted HTML output
 
 Toggle via dropdown in preview panel
-```
+```text
 
-**Printing Options**
+#### Printing Options
 
 Screenshot: Print button menu
 
-```
+```text
 Print Button Options:
 - "Preview" - Opens PDF in system viewer
 - "Print" - Sends directly to printer (macOS)
 - "Save" - Downloads PDF file
-```
+```text
 
 ---
 
@@ -242,6 +251,7 @@ Visit [p2p4vsc.support](https://p2p4vsc.support) to report issues or ask questio
 **p2p4vsc.support** → Redirects to GitHub Issues
 
 Optional: Add intermediate page with quick links:
+
 - 🐛 Report a Bug
 - 💡 Request a Feature  
 - ❓ Ask a Question
@@ -254,6 +264,7 @@ Optional: Add intermediate page with quick links:
 ### Recommended Option: Buttondown
 
 **Why Buttondown:**
+
 - ✅ **Simple:** Markdown-based, minimal setup
 - ✅ **Privacy-focused:** No tracking pixels by default
 - ✅ **Free tier:** Up to 1,000 subscribers
@@ -290,6 +301,7 @@ Optional: Add intermediate page with quick links:
 ### Recommended: Start with Buttondown
 
 **Setup Steps:**
+
 1. Create account at [buttondown.email](https://buttondown.email)
 2. Configure newsletter name and description
 3. Get embed code for subscription form
@@ -297,6 +309,7 @@ Optional: Add intermediate page with quick links:
 5. (Optional) Set up welcome email
 
 **Embed Example:**
+
 ```html
 <form
   action="https://buttondown.email/api/emails/embed-subscribe/p2p4vsc"
@@ -308,13 +321,14 @@ Optional: Add intermediate page with quick links:
   <input type="email" name="email" id="bd-email" placeholder="your@email.com" required />
   <input type="submit" value="Subscribe" />
 </form>
-```
+```text
 
 ---
 
 ## README Cleanup
 
 ### Current State
+
 - Comprehensive but dense
 - Mixed audience (users + developers)
 - Some sections could be more prominent
@@ -322,6 +336,7 @@ Optional: Add intermediate page with quick links:
 ### Proposed Changes
 
 **Structure:**
+
 ```markdown
 # Print2Paper4VSCode
 
@@ -376,7 +391,7 @@ Commercial licensing available.
 ---
 
 Made in the USA 🇺🇸 | © 2025-2026 Applied Media
-```
+```text
 
 ---
 
@@ -385,6 +400,7 @@ Made in the USA 🇺🇸 | © 2025-2026 Applied Media
 ### GitHub Pages (Recommended)
 
 **Pros:**
+
 - ✅ Free, unlimited bandwidth
 - ✅ Full control over HTML/CSS/JS
 - ✅ Version controlled (same repo or separate)
@@ -394,18 +410,21 @@ Made in the USA 🇺🇸 | © 2025-2026 Applied Media
 - ✅ Easy deployment (just push to gh-pages branch)
 
 **Cons:**
+
 - ⚠️ Requires HTML/CSS knowledge (minimal)
 - ⚠️ Static only (but that's fine for this use case)
 
 ### Google Sites (Alternative)
 
 **Pros:**
+
 - ✅ No coding required
 - ✅ WYSIWYG editor
 - ✅ Free, custom domain support
 - ✅ Quick to set up
 
 **Cons:**
+
 - ⚠️ Less control over design
 - ⚠️ Can look generic
 - ⚠️ Limited customization
@@ -414,6 +433,7 @@ Made in the USA 🇺🇸 | © 2025-2026 Applied Media
 ### Recommendation: GitHub Pages
 
 Use GitHub Pages with custom HTML for:
+
 1. Professional appearance
 2. Full control
 3. Easy updates (just edit HTML)
@@ -442,7 +462,8 @@ Use GitHub Pages with custom HTML for:
 
 ### Phase 3: Website Development (Day 2-3)
 
-**Option A: GitHub Pages (Recommended)**
+#### Option A: GitHub Pages (Recommended)
+
 - [ ] Create gh-pages branch or docs/ folder
 - [ ] Design/code landing page HTML
 - [ ] Design/code installation guide page
@@ -451,7 +472,8 @@ Use GitHub Pages with custom HTML for:
 - [ ] Add mailing list form
 - [ ] Test on mobile
 
-**Option B: Google Sites**
+#### Option B: Google Sites
+
 - [ ] Create new Google Site
 - [ ] Build landing page
 - [ ] Build installation guide page
@@ -489,6 +511,7 @@ Use GitHub Pages with custom HTML for:
 ## Assets Needed
 
 ### Content
+
 - [ ] High-quality screenshots of extension in use
 - [ ] GIF/video of installation process
 - [ ] GIF/video of basic usage (Alt+P → preview → print)
@@ -496,6 +519,7 @@ Use GitHub Pages with custom HTML for:
 - [ ] Extension icon (already have)
 
 ### Text
+
 - [ ] Landing page hero copy
 - [ ] Feature descriptions
 - [ ] Installation guide step-by-step
@@ -503,6 +527,7 @@ Use GitHub Pages with custom HTML for:
 - [ ] Cleaned up README
 
 ### Links
+
 - [ ] Find real article about malicious VS Code extensions
   - Suggested: [BleepingComputer article](https://www.bleepingcomputer.com/news/security/microsoft-finds-dozens-of-malicious-vs-code-extensions/)
   - Or: [The Register article on malicious extensions](https://www.theregister.com/2023/08/02/malicious_vscode_extensions/)
@@ -515,7 +540,8 @@ Use GitHub Pages with custom HTML for:
 
 ### GitHub Pages Setup
 
-**Method 1: gh-pages branch**
+#### Method 1: gh-pages branch
+
 ```bash
 # Create orphan gh-pages branch
 git checkout --orphan gh-pages
@@ -524,9 +550,10 @@ git rm -rf .
 git add index.html install.html style.css
 git commit -m "Initial GitHub Pages commit"
 git push origin gh-pages
-```
+```text
 
-**Method 2: docs/ folder on main**
+#### Method 2: docs/ folder on main
+
 ```bash
 # In main branch
 mkdir docs
@@ -536,20 +563,23 @@ git add docs/
 git commit -m "Add GitHub Pages site"
 git push
 # Configure in GitHub repo settings → Pages → Source: main/docs
-```
+```text
 
 ### Custom Domain Configuration
 
 **For p2p4vsc.com (GitHub Pages):**
+
 1. Add CNAME file to gh-pages with content: `p2p4vsc.com`
 2. In DNS provider, add:
    - A records: 185.199.108.153, 185.199.109.153, 185.199.110.153, 185.199.111.153
    - Or CNAME: yourusername.github.io
 
 **For p2p4vsc.dev:**
+
 - Add URL redirect record → `https://github.com/appliedmedia/print2paper4vscode`
 
 **For p2p4vsc.support:**
+
 - Add URL redirect record → `https://github.com/appliedmedia/print2paper4vscode/issues/new`
 
 ---
@@ -663,19 +693,21 @@ Here's a minimal but professional starting template:
     </footer>
 </body>
 </html>
-```
+```text
 
 ---
 
 ## Success Metrics
 
 ### Initial Goals (Month 1)
+
 - [ ] Website live and accessible
 - [ ] 100+ mailing list subscribers
 - [ ] 50+ extension installs from website referrals
 - [ ] Zero broken links reported
 
 ### Ongoing Metrics
+
 - Track via VS Code Marketplace analytics
 - Monitor mailing list growth
 - Track support requests via GitHub issues
@@ -686,6 +718,7 @@ Here's a minimal but professional starting template:
 ## Maintenance Plan
 
 ### Regular Updates
+
 - **Weekly:** Check GitHub issues, respond to support
 - **Monthly:** Send newsletter if significant updates
 - **Quarterly:** Review and update screenshots/guides
@@ -696,11 +729,13 @@ Here's a minimal but professional starting template:
 ## Budget Estimate
 
 ### One-Time Costs
+
 - Domain registrations: ~$30-50/year (if not already owned)
 - USA flag SVG: Free (public domain)
 - Screenshots/assets: Free (DIY)
 
 ### Ongoing Costs
+
 - **Buttondown mailing list:**
   - Free (up to 1,000 subscribers)
   - $9/mo if upgrade needed

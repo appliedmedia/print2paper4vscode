@@ -300,15 +300,18 @@ If you need to embed instructions for AI tooling (like repeated headings for sys
 The project uses different documentation types for different purposes:
 
 **Plans (`docs/plans/`)**: Track work efforts from start to completion
+
 - Status, progress, todos, results
 - Assessments, summaries, progress reports all belong IN the plan
 - Examples: deployment preparation, refactoring work, feature implementation
 
 **Reference Documentation (`docs/`)**: Static informational content
+
 - API references, coding standards, architecture guides
 - Examples: `AGENTS.md`, `VSCodeAPIs.md`, `INSTALL.md`
 
 **User Documentation (root)**: End-user-facing content
+
 - Installation, usage, features, changelog
 - Examples: `README.md`, `CHANGELOG.md`, `LICENSE`
 
@@ -333,12 +336,14 @@ All planning documents are stored in `docs/plans/` and follow a standardized nam
 **A plan is only marked `done` when ALL the work is complete**, not when the plan is written.
 
 **❌ ANTI-PATTERN**: Do NOT create these as separate documents:
+
 - `DEPLOYMENT_ASSESSMENT.md` ← Should be INSIDE `plan_InProgress_PrepareForDeploy.md`
 - `DEPLOYMENT_SUMMARY.md` ← Should be INSIDE the plan
 - `PROJECT_STATUS.md` ← Status belongs IN the relevant plan
 - `PROGRESS_REPORT.md` ← Progress belongs IN the relevant plan
 
 **✅ CORRECT PATTERN**: One plan document per effort, containing ALL related content:
+
 - Assessment → Plan → TODOs → Progress → Status → Results (all in one file)
 
 #### Naming Convention
@@ -362,7 +367,7 @@ All planning documents are stored in `docs/plans/` and follow a standardized nam
 
 Plans move through statuses as work progresses:
 
-```
+```text
 todo → InProgress → done
   ↓         ↓         ↓
 Created   Working   Verified

@@ -27,6 +27,7 @@ This document tracks the ENTIRE deployment preparation effort from assessment th
 The codebase is production-ready with excellent architecture and comprehensive test coverage. All 357 tests pass, code compiles without errors, and documentation is comprehensive.
 
 **Current Status:**
+
 - ✅ Phase 1-3 Complete: Assessment, agent work, and LICENSE creation finished
 - ⏳ Phase 4 Pending: User must update package.json metadata
 - ⏳ Phase 5-6 Pending: Package, test, and publish
@@ -101,6 +102,7 @@ All four major architectural refactors completed:
 **Issue:** No LICENSE file existed, blocking release.
 
 **Resolution:**
+
 - ✅ Created custom source-available LICENSE
 - ✅ Copyright: "Copyright © 2025-2026 Applied Media. All Rights Reserved."
 - ✅ Allows: Viewing/auditing code, using official extension, submitting PRs
@@ -116,11 +118,13 @@ All four major architectural refactors completed:
 #### 2. package.json Missing Metadata ✅ ADDRESSED
 
 **Issue:** Missing required fields for VS Code Marketplace:
+
 - `repository`, `bugs`, `homepage`
 - `license`, `keywords`
 - `icon` (optional)
 
 **Resolution:**
+
 - Created detailed guide: `docs/plans/2025-12-11_plan_todo_PackageJsonMetadata.md`
 - Provided complete updated package.json template
 - Step-by-step instructions with validation steps
@@ -135,6 +139,7 @@ All four major architectural refactors completed:
 **Issue:** No `.vscodeignore` file to control extension packaging.
 
 **Resolution:**
+
 - ✅ Created `.vscodeignore` with proper exclusions:
   - Excludes: `src/`, `tests/`, `.config/`, `scripts/`, `archives/`, `docs/plans/`, dev docs
   - Includes: `out/`, `README.md`, `CHANGELOG.md`, `LICENSE`, `package.json`
@@ -151,6 +156,7 @@ All four major architectural refactors completed:
 **Issue:** Version set to `0.0.1` (development placeholder)
 
 **Resolution:**
+
 - Documented recommendation for `1.0.0` (stable) or `0.1.0` (beta)
 - Included in package.json update guide
 
@@ -164,6 +170,7 @@ All four major architectural refactors completed:
 **Issue:** Found console.log in `src/UI.ts` line 267
 
 **Resolution:**
+
 - ✅ Investigated: Static method with no access to Diagnostics instance
 - ✅ Added explanatory comment documenting intentional use
 - ✅ Verified: Appropriate for static utility method
@@ -178,6 +185,7 @@ All four major architectural refactors completed:
 **Issue:** Test script using incorrect glob pattern, failed to run tests via npm
 
 **Resolution:**
+
 - ✅ Changed from: `"test": "node --test out/tests/**/*.test.js"`
 - ✅ Changed to: `"test": "node --test 'out/tests/*.test.js'"`
 - ✅ Verified: All 357 tests now run correctly via `npm test`
@@ -192,6 +200,7 @@ All four major architectural refactors completed:
 **Issue:** 6 warnings for `*_t.ts` type files not matching ESLint config
 
 **Resolution:**
+
 - Documented as minor non-blocking issue
 - TypeScript compilation succeeds (strict mode)
 - Tests pass completely
@@ -207,6 +216,7 @@ All four major architectural refactors completed:
 #### 8. CHANGELOG.md ✅ CREATED
 
 **Resolution:**
+
 - ✅ Created comprehensive `CHANGELOG.md` for v1.0.0
 - Follows Keep a Changelog format
 - Semantic Versioning compliant
@@ -221,6 +231,7 @@ All four major architectural refactors completed:
 #### 9. Extension Icon (Optional)
 
 **Recommendation:**
+
 - Create 128x128 PNG icon for better marketplace visibility
 - Theme: Printer, paper, or document
 - Simple, recognizable at small sizes
@@ -233,6 +244,7 @@ All four major architectural refactors completed:
 #### 10. GitHub Repository Setup (Optional)
 
 **Recommendation:**
+
 - Issue templates (`.github/ISSUE_TEMPLATE/`)
 - Pull request template
 - CONTRIBUTING.md
@@ -256,6 +268,7 @@ All four major architectural refactors completed:
 ### This Plan Document
 
 This consolidated plan combines:
+
 - Original deployment assessment
 - Ready summary with action items
 - Resolution status for all issues
@@ -313,7 +326,7 @@ The codebase demonstrates professional software engineering:
 **Breakdown:**
 
 | Category | Score | Notes |
-|----------|-------|-------|
+| --- | --- | --- |
 | Architecture | 95/100 | Registry pattern, DI, clean separation |
 | Code Quality | 95/100 | TypeScript strict, comprehensive tests |
 | Documentation | 95/100 | Excellent inline and external docs |
@@ -336,10 +349,11 @@ The codebase demonstrates professional software engineering:
 The git remote URL contains an access token:
 
 ```bash
-https://x-access-token:ghs_ic8DkLhuzYPi1hztsdCa28HnhpYRUx3EVpDl@github.com/...
+https://x-access-token:$GH_TOKEN@github.com/...
 ```
 
 **Status:**
+
 - ✅ Token is in `.git/config` only (not committed to source)
 - ✅ No secrets in source code
 - ⚠️ Do NOT push `.git/config` to public repositories
@@ -529,6 +543,7 @@ All success criteria met:
 ### Future Enhancements (Optional)
 
 See `docs/plans/2025-12-11_plan_todo_CICD.md` for:
+
 - Measuring and documenting code coverage
 - Setting up CI/CD pipeline (GitHub Actions)
 - Adding cross-platform support (Windows/Linux)
@@ -599,7 +614,7 @@ The code quality is excellent, architecture is professional, and test coverage i
 ## Appendix: Issue Resolution Log
 
 | Issue | Priority | Agent Status | User Action Required |
-|-------|----------|--------------|---------------------|
+| --- | --- | --- | --- |
 | LICENSE missing | Critical | ✅ Created | None |
 | package.json metadata | Critical | Guide created | Update package.json |
 | .vscodeignore missing | High | ✅ Created | None |
