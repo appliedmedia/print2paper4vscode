@@ -308,20 +308,40 @@ Optional: Add intermediate page with quick links:
 4. Add to website footer/dedicated section
 5. (Optional) Set up welcome email
 
-**Embed Example:**
+**CSP-Safe Embed Example:**
 
 ```html
+<!-- HTML: Add to your page -->
 <form
+  id="p2p4vsc-newsletter-form"
   action="https://buttondown.email/api/emails/embed-subscribe/p2p4vsc"
   method="post"
-  target="popupwindow"
-  onsubmit="window.open('https://buttondown.email/p2p4vsc', 'popupwindow', 'scrollbars=yes,width=800,height=600');return true"
+  data-popup-url="https://buttondown.email/p2p4vsc"
 >
   <label for="bd-email">Get extension updates:</label>
   <input type="email" name="email" id="bd-email" placeholder="your@email.com" required />
   <input type="submit" value="Subscribe" />
 </form>
-```text
+
+<!-- JavaScript: Add to external script file (e.g., newsletter.js) -->
+<script src="newsletter.js"></script>
+```
+
+**newsletter.js (external script for CSP compliance):**
+
+```javascript
+// CSP-safe implementation - attach event listener externally
+document.addEventListener('DOMContentLoaded', function() {
+  const form = document.getElementById('p2p4vsc-newsletter-form');
+  if (form) {
+    form.addEventListener('submit', function(e) {
+      const popupUrl = form.getAttribute('data-popup-url');
+      window.open(popupUrl, 'popupwindow', 'scrollbars=yes,width=800,height=600');
+      return true;
+    });
+  }
+});
+```
 
 ---
 
@@ -373,9 +393,9 @@ Brief explanation of use cases...
 
 ## Documentation
 
-- 📖 **User Guide:** [p2p4vsc.com/install](http://p2p4vsc.com/install)
+- 📖 **User Guide:** [p2p4vsc.com/install](https://p2p4vsc.com/install)
 - 🔧 **Developer Docs:** See AGENTS.md
-- 🐛 **Report Issues:** [p2p4vsc.support](http://p2p4vsc.support)
+- 🐛 **Report Issues:** [p2p4vsc.support](https://p2p4vsc.support)
 
 ## For Developers
 
