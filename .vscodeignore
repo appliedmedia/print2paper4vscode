@@ -9,6 +9,9 @@ out-deploy/
 out/tests/**
 coverage/
 .tmp/
+dist/
+*.bak
+*.template.bak
 
 # Documentation (dev-only)
 docs/**
@@ -31,7 +34,7 @@ DIAGNOSTICS_USAGE_EXAMPLE.md
 PR26.json
 
 # Dev dependencies
-node_modules/**
+# node_modules/** - REMOVED: Let vsce handle dependency detection (includes prod, excludes dev)
 .vscode/**
 .cursor/**
 .git/**
