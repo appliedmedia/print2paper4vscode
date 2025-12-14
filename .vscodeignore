@@ -6,11 +6,12 @@ scripts/**
 
 # Build artifacts
 out-deploy/
+out/tests/**
 coverage/
 .tmp/
 
 # Documentation (dev-only)
-docs/plans/**
+docs/**
 archives/**
 pocs/**
 *.md
@@ -32,11 +33,13 @@ PR26.json
 # Dev dependencies
 node_modules/**
 .vscode/**
+.cursor/**
 .git/**
 .gitignore
 .prettierrc
 .stylelintrc.json
 .markdownlintignore
+.markdownlint.json
 
 # Environment
 .env

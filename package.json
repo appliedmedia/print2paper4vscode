@@ -1,8 +1,8 @@
 {
   "name": "print2paper4vscode",
   "displayName": "Print2Paper4VSCode",
-  "description": "Print selections or current tabs, including preview tabs",
-  "version": "0.0.1",
+  "description": "Print selections or current tabs with syntax highlighting and interactive PDF preview",
+  "version": "1.0.0",
   "license": "SEE LICENSE IN LICENSE",
   "engines": {
     "vscode": "^1.60.0"
@@ -11,6 +11,26 @@
   "categories": [
     "Other"
   ],
+  "keywords": [
+    "print",
+    "pdf",
+    "syntax highlighting",
+    "code printing",
+    "export pdf",
+    "shiki",
+    "jspdf",
+    "print preview",
+    "code export",
+    "document printing"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/appliedmedia/print2paper4vscode"
+  },
+  "bugs": {
+    "url": "https://github.com/appliedmedia/print2paper4vscode/issues"
+  },
+  "homepage": "https://github.com/appliedmedia/print2paper4vscode#readme",
   "activationEvents": [
     "onStartupFinished"
   ],
