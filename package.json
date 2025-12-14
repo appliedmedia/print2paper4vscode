@@ -34,16 +34,16 @@
   "activationEvents": [
     "onStartupFinished"
   ],
-  "main": "./out/src/-entrypoint.js",
+  "main": "./dist/extension.js",
   "contributes": {
     "commands": [
       {
-        "command": "{{extId}}.print2paper",
+        "command": "p2p4vsc.print2paper",
         "title": "Print2Paper",
         "category": "Print"
       },
       {
-        "command": "{{extId}}.persistClear",
+        "command": "p2p4vsc.persistClear",
         "title": "Clear State",
         "category": "Print"
       }
@@ -51,13 +51,13 @@
     "menus": {
       "editor/context": [
         {
-          "command": "{{extId}}.print2paper",
+          "command": "p2p4vsc.print2paper",
           "group": "navigation"
         }
       ],
       "editor/title": [
         {
-          "command": "{{extId}}.print2paper",
+          "command": "p2p4vsc.print2paper",
           "group": "navigation",
           "when": "editorTextFocus",
           "title": "Print2Paper"
@@ -66,7 +66,7 @@
     },
     "keybindings": [
       {
-        "command": "{{extId}}.print2paper",
+        "command": "p2p4vsc.print2paper",
         "key": "alt+p",
         "mac": "alt+p"
       }
@@ -74,9 +74,12 @@
   },
   "scripts": {
     "postinstall": "node scripts/setup-vscode-mock.js",
-    "vscode:prepublish": "npm run compile:deploy",
+    "vscode:prepublish": "npm run package",
     "compile": "rm -rf out && tsc -p ./.config/ && node scripts/templateDictReplace.mjs",
-    "compile:deploy": "rm -rf out-deploy && tsc -p ./.config/tsconfig.deploy.json && node scripts/templateDictReplace.mjs",
+    "compile:deploy": "rm -rf out && tsc -p ./.config/ && node scripts/templateDictReplace.mjs",
+    "package": "npm run compile:deploy && npm run esbuild",
+    "esbuild": "node .config/esbuild.mjs --production",
+    "esbuild:watch": "node .config/esbuild.mjs --watch",
     "lint": "eslint --config ./.config/eslint.config.mjs src/**/*.ts",
     "lint:fix": "eslint --config ./.config/eslint.config.mjs src/**/*.ts --fix",
     "lint:md": "markdownlint *.md tests/**/*.md",
@@ -97,6 +100,7 @@
     "@typescript-eslint/eslint-plugin": "latest",
     "@typescript-eslint/parser": "latest",
     "c8": "^10.1.3",
+    "esbuild": "^0.27.1",
     "eslint": "latest",
     "htmlparser2": "^10.0.0",
     "js-yaml": "^4.1.0",
