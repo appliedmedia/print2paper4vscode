@@ -1,22 +1,25 @@
 #!/bin/bash
 
 # Prepublish script for vsce packaging
-# 1. Compile TypeScript
-# 2. Replace templates in package.json IN-PLACE (backed up)
-# 3. vsce will package with processed package.json
-# 4. Caller should run postpublish.sh to restore
+# 1. Generate package.json from template
+# 2. Compile TypeScript
+# 3. Replace templates in generated package.json
+# 4. Bundle with esbuild (if using bundling)
 
 set -e
 
-echo "=== Prepublish: Compile and process templates ==="
+echo "=== Prepublish: Build extension for deployment ==="
 
-# Compile TypeScript (no bundling, just include node_modules)
+# Generate package.json from template
+node scripts/generate-package-json.mjs
+
+# Compile TypeScript
 npm run compile:deploy
 
-# Backup original package.json
-cp package.json package.json.template.bak
-
-# Process templates in root package.json (in-place)
+# Replace templates (template.package.json → package.json with {{extId}} → p2p4vsc)
 node scripts/templateDictReplace.mjs
 
-echo "=== Prepublish complete. Run postpublish.sh after packaging to restore. ==="
+# Bundle with esbuild (produces dist/extension.js)
+npm run esbuild
+
+echo "=== Prepublish complete ==="

@@ -12,14 +12,8 @@
 # To add more replacements, just add entries to this array
 
 replacements:
-  # Process out/package.json for test builds
-  - file: package.json
-    output: out/package.json
-    template: "{{extId}}"
-    source: out/src/_entrypoint_extId_t.js
-    variable: kExtId
-  # Process root package.json for deployment (vsce reads this)
-  - file: package.json
+  # Process template → root package.json (used by vsce and npm)
+  - file: .config/template.package.json
     output: package.json
     template: "{{extId}}"
     source: out/src/_entrypoint_extId_t.js
