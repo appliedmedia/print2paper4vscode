@@ -37,12 +37,12 @@
   "contributes": {
     "commands": [
       {
-        "command": "{{extId}}.print2paper",
+        "command": "p2p4vsc.print2paper",
         "title": "Print2Paper",
         "category": "Print"
       },
       {
-        "command": "{{extId}}.persistClear",
+        "command": "p2p4vsc.persistClear",
         "title": "Clear State",
         "category": "Print"
       }
@@ -50,13 +50,13 @@
     "menus": {
       "editor/context": [
         {
-          "command": "{{extId}}.print2paper",
+          "command": "p2p4vsc.print2paper",
           "group": "navigation"
         }
       ],
       "editor/title": [
         {
-          "command": "{{extId}}.print2paper",
+          "command": "p2p4vsc.print2paper",
           "group": "navigation",
           "when": "editorTextFocus",
           "title": "Print2Paper"
@@ -65,7 +65,7 @@
     },
     "keybindings": [
       {
-        "command": "{{extId}}.print2paper",
+        "command": "p2p4vsc.print2paper",
         "key": "alt+p",
         "mac": "alt+p"
       }
@@ -75,7 +75,7 @@
     "postinstall": "node scripts/setup-vscode-mock.js",
     "vscode:prepublish": "npm run compile:deploy",
     "compile": "rm -rf out && tsc -p ./.config/ && node scripts/templateDictReplace.mjs",
-    "compile:deploy": "rm -rf out/src out/package.json && tsc -p ./.config/tsconfig.deploy.json && node scripts/templateDictReplace.mjs",
+    "compile:deploy": "rm -rf out-deploy && tsc -p ./.config/tsconfig.deploy.json && node scripts/templateDictReplace.mjs",
     "vsce:package": "node scripts/vsce-package.mjs",
     "lint": "eslint --config ./.config/eslint.config.mjs src/**/*.ts",
     "lint:fix": "eslint --config ./.config/eslint.config.mjs src/**/*.ts --fix",

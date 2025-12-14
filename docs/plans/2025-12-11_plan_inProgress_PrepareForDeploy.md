@@ -29,7 +29,7 @@ The codebase is production-ready with excellent architecture and comprehensive t
 **Current Status:**
 
 - ✅ Phase 1-4 Complete: Assessment, agent work, LICENSE, and package.json metadata
-- ✅ Packaging verified: `npx @vscode/vsce package` produces `print2paper4vscode-1.0.0.vsix`
+- ✅ Packaging verified: `npm run vsce:package` produces `print2paper4vscode-1.0.0.vsix`
 - ⏳ Phase 5-6 Pending: Manual install test + publish to Marketplace
 
 This plan tracks all work needed to publish to VS Code Marketplace.
@@ -129,8 +129,8 @@ All four major architectural refactors completed:
 - ✅ Updated `package.json`:
   - Added: `repository`, `bugs`, `homepage`, `keywords`
   - Set: `version` to `1.0.0`
-  - Fixed: command IDs (no `{{extId}}` templates in shipped manifest)
-- ✅ Verified: `npx @vscode/vsce package` succeeds
+  - Kept: command IDs templated via `{{extId}}` (resolved at packaging time from `src/_entrypoint_extId_t.ts`)
+- ✅ Verified: `npm run vsce:package` succeeds
 
 **Priority:** CRITICAL  
 **Status:** COMPLETE
@@ -379,13 +379,13 @@ Before publishing to VS Code Marketplace:
 - [x] Update package.json metadata
   - See `docs/plans/2025-12-11_plan_todo_PackageJsonMetadata.md` for complete guide
   - Fields: version, repository, bugs, homepage, keywords
-  - Also fixed command IDs in `package.json` (replaced `{{extId}}` with `p2p4vsc`)
-  - Also fixed deploy build so `vscode:prepublish` produces the configured `main` entrypoint
+  - Manifest uses `{{extId}}` templates (single source of truth remains `src/_entrypoint_extId_t.ts`)
+  - Packaging is wired to generate a resolved staging `package.json` (see `npm run vsce:package`)
 
 - [x] Test packaging
 
   ```bash
-  npx @vscode/vsce package
+  npm run vsce:package
   # Verified: print2paper4vscode-1.0.0.vsix created
   ```
 
@@ -540,7 +540,7 @@ All success criteria met:
 
 1. User chooses and adds LICENSE file
 2. User updates package.json with metadata
-3. User tests packaging (`vsce package`)
+3. User tests packaging (`npm run vsce:package`)
 4. User creates publisher account
 5. User publishes to marketplace (`vsce publish`)
 
@@ -590,8 +590,7 @@ See `docs/plans/2025-12-11_plan_todo_CICD.md` for:
 - Creation of custom source-available LICENSE
 - Addition of license field to package.json
 - Update package.json Marketplace metadata (version, repository, bugs, homepage, keywords)
-- Fix `package.json` command IDs (no `{{extId}}` templates in shipped manifest)
-- Fix deploy build (`compile:deploy`) so `vsce package` can succeed
+- Wire `vsce` packaging to use template replacement system (staging manifest, no source mutation)
 - Tighten `.vscodeignore` so the VSIX contains only runtime assets + README/CHANGELOG/LICENSE
 
 ### ⏳ Pending User Actions

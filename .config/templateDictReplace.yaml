@@ -17,3 +17,8 @@ replacements:
     template: "{{extId}}"
     source: out/src/_entrypoint_extId_t.js
     variable: kExtId
+  - file: package.json
+    output: .tmp/vsce/package.json
+    template: "{{extId}}"
+    source: out/src/_entrypoint_extId_t.js
+    variable: kExtId

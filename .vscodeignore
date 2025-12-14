@@ -6,6 +6,7 @@ scripts/**
 
 # Build artifacts
 out-deploy/
+out/tests/**
 coverage/
 .tmp/
 

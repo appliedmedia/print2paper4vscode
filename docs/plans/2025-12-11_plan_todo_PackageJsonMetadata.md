@@ -228,7 +228,7 @@ Here's the full file with all changes applied:
     "postinstall": "node scripts/setup-vscode-mock.js",
     "vscode:prepublish": "npm run compile:deploy",
     "compile": "rm -rf out && tsc -p ./.config/ && node scripts/templateDictReplace.mjs",
-    "compile:deploy": "rm -rf out-deploy && tsc -p ./.config/tsconfig.deploy.json && node scripts/templateDictReplace.mjs",
+    "compile:deploy": "rm -rf out/src out/package.json && tsc -p ./.config/tsconfig.deploy.json && node scripts/templateDictReplace.mjs",
     "lint": "eslint --config ./.config/eslint.config.mjs src/**/*.ts",
     "lint:fix": "eslint --config ./.config/eslint.config.mjs src/**/*.ts --fix",
     "lint:md": "markdownlint *.md tests/**/*.md",
@@ -322,8 +322,7 @@ After making these changes:
 3. **Package the extension:**
 
    ```bash
-   npm install -g @vscode/vsce
-   vsce package
+   npm run vsce:package
    # Should create print2paper4vscode-1.0.0.vsix
    ```
 
@@ -340,7 +339,7 @@ After making these changes:
 1. ✅ ~~Add LICENSE file~~ - Complete
 2. Update package.json with repository, bugs, homepage, keywords
 3. Create icon.png (optional)
-4. Test packaging with `vsce package`
+4. Test packaging with `npm run vsce:package`
 5. Publish to marketplace with `vsce publish`
 
 ---
@@ -352,7 +351,7 @@ After making these changes:
 npm install -g @vscode/vsce
 
 # Package extension (creates .vsix file)
-vsce package
+npm run vsce:package
 
 # Publish to VS Code marketplace (requires publisher account)
 vsce publish
