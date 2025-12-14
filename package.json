@@ -38,12 +38,12 @@
   "contributes": {
     "commands": [
       {
-        "command": "p2p4vsc.print2paper",
+        "command": "{{extId}}.print2paper",
         "title": "Print2Paper",
         "category": "Print"
       },
       {
-        "command": "p2p4vsc.persistClear",
+        "command": "{{extId}}.persistClear",
         "title": "Clear State",
         "category": "Print"
       }
@@ -51,13 +51,13 @@
     "menus": {
       "editor/context": [
         {
-          "command": "p2p4vsc.print2paper",
+          "command": "{{extId}}.print2paper",
           "group": "navigation"
         }
       ],
       "editor/title": [
         {
-          "command": "p2p4vsc.print2paper",
+          "command": "{{extId}}.print2paper",
           "group": "navigation",
           "when": "editorTextFocus",
           "title": "Print2Paper"
@@ -66,7 +66,7 @@
     },
     "keybindings": [
       {
-        "command": "p2p4vsc.print2paper",
+        "command": "{{extId}}.print2paper",
         "key": "alt+p",
         "mac": "alt+p"
       }
