@@ -592,6 +592,8 @@ See `docs/plans/2025-12-11_plan_todo_CICD.md` for:
 - Update package.json Marketplace metadata (version, repository, bugs, homepage, keywords)
 - Wire `vsce` packaging to use template replacement system (staging manifest, no source mutation)
 - Tighten `.vscodeignore` so the VSIX contains only runtime assets + README/CHANGELOG/LICENSE
+- Remove `out-deploy/` from git tracking (build output should not be committed)
+- Add `out-deploy/` to `.gitignore`
 
 ### ⏳ Pending User Actions
 
