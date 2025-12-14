@@ -6,10 +6,9 @@ scripts/**
 
 # Build artifacts
 out-deploy/
-out/tests/**
+out/
 coverage/
 .tmp/
-dist/
 *.bak
 *.template.bak
 
@@ -34,7 +33,7 @@ DIAGNOSTICS_USAGE_EXAMPLE.md
 PR26.json
 
 # Dev dependencies
-# node_modules/** - REMOVED: Let vsce handle dependency detection (includes prod, excludes dev)
+node_modules/**
 .vscode/**
 .cursor/**
 .git/**

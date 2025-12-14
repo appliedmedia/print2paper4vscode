@@ -279,9 +279,11 @@ This consolidated plan combines:
 
 ---
 
-## Work Completed 2025-12-14
+## Work Completed 2025-12-14 (Updated)
 
-### Agent Tasks Executed
+### Phase 1: Initial Package Setup
+
+#### Agent Tasks Executed
 
 1. **package.json Updates**
    - Version bumped: 0.0.1 → 1.0.0
@@ -323,15 +325,78 @@ This consolidated plan combines:
 | **File Count** | 143 files | 67 files | -53.1% |
 | **Excluded** | Basic | Optimized | Tests, docs, dev files removed |
 
+### Phase 2: Architecture Improvements (Template System + Bundling)
+
+User identified two critical issues:
+
+1. **Template replacement needed for root package.json** - vsce packages root package.json, not out/package.json
+2. **Dependencies should be bundled** - Extension includes 179MB node_modules unnecessarily
+
+#### Solution Implemented
+
+**Template System:**
+
+- Created `.config/template.package.json` as source of truth with `{{extId}}` templates
+- Added `scripts/generate-package-json.mjs` to generate root package.json from template
+- Modified `templateDictReplace.mjs` config to process template → root package.json
+- Added package.json to `.gitignore` (generated file, not source)
+- Template system preserves single source of truth architecture
+
+**esbuild Bundling:**
+
+- Installed esbuild as dev dependency
+- Created `.config/esbuild.mjs` configuration
+- Bundles all dependencies (shiki, jspdf, yaml, etc.) into single `dist/extension.js`
+- Tree-shaking removes unused code
+- Production mode with minification
+- Updated `main` entry point: `./out/src/-entrypoint.js` → `./dist/extension.js`
+
+**Build Workflow:**
+
+- Updated `scripts/prepublish.sh` to: generate package.json → compile TS → replace templates → bundle with esbuild
+- Updated package.json scripts with `precompile`, `package`, `esbuild` commands
+- Removed obsolete `postpublish.sh` (no longer needed)
+
+#### Results
+
+| Metric | Before | After | Improvement |
+| --- | --- | --- | --- |
+| **Package Size** | 14.06 MB | 2.0 MB | **-85.8%** |
+| **File Count** | 7,723 files | 7 files | **-99.9%** |
+| **Startup Performance** | Multiple file loads | Single bundle | **Faster** |
+| **Template System** | Broken (vsce used wrong file) | Working | **Fixed** |
+| **Tests** | 357/357 passing | 357/357 passing | **✅** |
+
+#### Final Package Contents
+
+```
+print2paper4vscode-1.0.0.vsix (2.0 MB, 7 files)
+├── CHANGELOG.md
+├── LICENSE
+├── README.md
+├── package.json (templates replaced: p2p4vsc)
+└── dist/extension.js (10.34 MB bundled code)
+```
+
 ### Files Modified
 
-- `package.json` - Added all required marketplace metadata
-- `.vscodeignore` - Optimized exclusions for cleaner package
+- `.config/template.package.json` - NEW: Source template with {{extId}} placeholders
+- `.config/templateDictReplace.yaml` - Process template → root package.json
+- `.config/esbuild.mjs` - NEW: esbuild bundling configuration
+- `.gitignore` - Added package.json (generated file)
+- `.vscodeignore` - Exclude node_modules, out/, keep dist/
+- `scripts/generate-package-json.mjs` - NEW: Generate package.json from template
+- `scripts/prepublish.sh` - Updated: Full build pipeline
 - `docs/plans/2025-12-11_plan_inProgress_PrepareForDeploy.md` - Updated with progress
 
 ### Files Created
 
-- `print2paper4vscode-1.0.0.vsix` - Production-ready extension package
+- `print2paper4vscode-1.0.0.vsix` - Production-ready extension package (2 MB, bundled)
+- `dist/extension.js` - Bundled extension code (10.34 MB)
+
+### Files Deleted
+
+- `scripts/postpublish.sh` - No longer needed with template system
 
 ---
 
