@@ -323,7 +323,7 @@ After making these changes:
 
    ```bash
    npm run vsce:package
-   # Should create print2paper4vscode-1.0.0.vsix
+   # Should create a .vsix for the current version
    ```
 
 4. **Test installation:**

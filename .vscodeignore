@@ -31,8 +31,9 @@ DIAGNOSTICS_REFACTOR_PLAN.md
 DIAGNOSTICS_USAGE_EXAMPLE.md
 PR26.json
 
-# Dev dependencies
-node_modules/**
+# Dependencies
+# Note: We must ship runtime `node_modules` because this extension is not bundled.
+# (The packaging script installs production dependencies into the staging dir.)
 .cursor/**
 .vscode/**
 .git/**

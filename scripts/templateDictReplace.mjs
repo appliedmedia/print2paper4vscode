@@ -72,7 +72,7 @@ for (const replacement of config.replacements) {
       console.log(`  Value: ${value}`);
 
       // Replace template with value
-      fileStr = fileStr.replace(regex, value);
+      fileStr = fileStr.replace(regex, () => String(value));
       const afterCount = (fileStr.match(regex) || []).length;
 
       console.log(`  Replaced: ${beforeCount} occurrences`);

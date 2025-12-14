@@ -47,6 +47,10 @@ function run(cmd, args, opts = {}) {
     shell: false,
     env: process.env
   });
+  if (res.error) {
+    console.error(`✗ Failed to run ${cmd}: ${res.error.message}`);
+    process.exit(1);
+  }
   if (res.status !== 0) process.exit(res.status ?? 1);
 }
 
@@ -67,6 +71,7 @@ run('npm', ['run', 'compile:deploy'], { cwd: projectRoot });
 copyFile('README.md', `${stageDirRel}/README.md`);
 copyFile('CHANGELOG.md', `${stageDirRel}/CHANGELOG.md`);
 copyFile('LICENSE', `${stageDirRel}/LICENSE`);
+copyFile('package-lock.json', `${stageDirRel}/package-lock.json`);
 
 // Optional: reuse ignore rules to ensure stage stays minimal
 if (fs.existsSync(path.join(projectRoot, '.vscodeignore'))) {
@@ -85,8 +90,10 @@ if (!fs.existsSync(stagePkgPath)) {
 }
 
 const stagePkgStr = fs.readFileSync(stagePkgPath, 'utf8');
-if (stagePkgStr.includes('{{extId}}')) {
-  console.error('✗ Staging manifest still contains {{extId}} after replacement');
+const templateMatches = stagePkgStr.match(/\{\{[^}]+\}\}/g);
+if (templateMatches) {
+  const uniq = [...new Set(templateMatches)].sort();
+  console.error(`✗ Staging manifest still contains unresolved {{...}} templates: ${uniq.join(', ')}`);
   process.exit(1);
 }
 
@@ -94,20 +101,22 @@ if (stagePkgStr.includes('{{extId}}')) {
 // The staging directory intentionally does not contain build config.
 try {
   const stagePkg = JSON.parse(stagePkgStr);
-  if (stagePkg.scripts && stagePkg.scripts['vscode:prepublish']) {
-    delete stagePkg.scripts['vscode:prepublish'];
-    if (Object.keys(stagePkg.scripts).length === 0) delete stagePkg.scripts;
-    fs.writeFileSync(stagePkgPath, JSON.stringify(stagePkg, null, 2) + '\n', 'utf8');
-  }
+  // Avoid running lifecycle scripts in staging; also keep the staging root minimal.
+  delete stagePkg.scripts;
+  delete stagePkg.devDependencies;
+  fs.writeFileSync(stagePkgPath, JSON.stringify(stagePkg, null, 2) + '\n', 'utf8');
 } catch (e) {
   console.error(`✗ Failed to sanitize staging package.json scripts: ${e?.message ?? e}`);
   process.exit(1);
 }
 
+// 4c) Install production dependencies into staging, so VSIX includes runtime node_modules.
+run('npm', ['ci', '--omit=dev', '--ignore-scripts'], { cwd: stageDir });
+
 // 5) Package from staging, writing VSIX to project root
 const rootPkg = readJson('package.json');
 const outName = `${rootPkg.name}-${rootPkg.version}.vsix`;
-run('npx', ['--yes', '@vscode/vsce', 'package', '--no-dependencies', '--out', path.join(projectRoot, outName)], {
+run('npx', ['--yes', '@vscode/vsce', 'package', '--dependencies', '--out', path.join(projectRoot, outName)], {
   cwd: stageDir
 });
 
