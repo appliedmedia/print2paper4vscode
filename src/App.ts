@@ -54,58 +54,6 @@ export class App {
   private fn: FnImport_t;
   public readonly dx: Diagnostics;
 
-  // Lazy accessors for components (fail-fast if not registered)
-  get vscodeapis(): VSCodeAPIs { 
-    const c = this.reg.getInstance<VSCodeAPIs>('vscodeapis');
-    if (!c) throw new Error("Component 'vscodeapis' not registered");
-    return c;
-  }
-  get ui(): UI { 
-    const c = this.reg.getInstance<UI>('ui');
-    if (!c) throw new Error("Component 'ui' not registered");
-    return c;
-  }
-  get pdf(): PDF { 
-    const c = this.reg.getInstance<PDF>('pdf');
-    if (!c) throw new Error("Component 'pdf' not registered");
-    return c;
-  }
-  get paperprinter(): PaperPrinter { 
-    const c = this.reg.getInstance<PaperPrinter>('paperprinter');
-    if (!c) throw new Error("Component 'paperprinter' not registered");
-    return c;
-  }
-  get stylize(): Stylize { 
-    const c = this.reg.getInstance<Stylize>('stylize');
-    if (!c) throw new Error("Component 'stylize' not registered");
-    return c;
-  }
-  get tabinspector(): TabInspector { 
-    const c = this.reg.getInstance<TabInspector>('tabinspector');
-    if (!c) throw new Error("Component 'tabinspector' not registered");
-    return c;
-  }
-  get os(): OS { 
-    const c = this.reg.getInstance<OS>('os');
-    if (!c) throw new Error("Component 'os' not registered");
-    return c;
-  }
-  get uimenumgr(): UIMenuMgr { 
-    const c = this.reg.getInstance<UIMenuMgr>('uimenumgr');
-    if (!c) throw new Error("Component 'uimenumgr' not registered");
-    return c;
-  }
-  get coords(): Coords { 
-    const c = this.reg.getInstance<Coords>('coords');
-    if (!c) throw new Error("Component 'coords' not registered");
-    return c;
-  }
-  get uiwebview(): UIWebView { 
-    const c = this.reg.getInstance<UIWebView>('uiwebview');
-    if (!c) throw new Error("Component 'uiwebview' not registered");
-    return c;
-  }
-
   constructor(args: { context: ExtensionContext; vscode: typeof import('vscode') }) {
     const { context, vscode } = args;
 

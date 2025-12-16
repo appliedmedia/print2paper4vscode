@@ -1,6 +1,6 @@
 import { test, describe } from 'node:test';
 import * as assert from 'node:assert';
-import { App } from '../src/App.js';
+import { createTestApp, TestApp } from './test-utils.js';
 import { PaperPrinter } from '../src/PaperPrinter.js';
 import { UIWebView } from '../src/UIWebView.js';
 import { mockContext, mockVSCode } from './test-utils.js';
@@ -15,7 +15,7 @@ describe('PDF Object Reuse Tests', () => {
 
   describe('Single PDF Generation', () => {
     test('should generate PDF only once per user action', async () => {
-      const app = new App({ context: mockContext, vscode: mockVSCode });
+      const app = createTestApp({ context: mockContext, vscode: mockVSCode });
 
       // Create menus before generating PDF (menus are created on-demand in production)
       (app.paperprinter as unknown as { createMenus(): void }).createMenus();
@@ -45,7 +45,7 @@ describe('PDF Object Reuse Tests', () => {
     });
 
     test('should reuse same PDF object for multiple ArrayBuffer calls', async () => {
-      const app = new App({ context: mockContext, vscode: mockVSCode });
+      const app = createTestApp({ context: mockContext, vscode: mockVSCode });
 
       // Create menus before generating PDF (menus are created on-demand in production)
       (app.paperprinter as unknown as { createMenus(): void }).createMenus();
@@ -96,7 +96,7 @@ describe('PDF Object Reuse Tests', () => {
 
   describe('Webview Display Integration', () => {
     test('should use same PDF object for webview display', async () => {
-      const app = new App({ context: mockContext, vscode: mockVSCode });
+      const app = createTestApp({ context: mockContext, vscode: mockVSCode });
 
       // Create menus before generating PDF (menus are created on-demand in production)
       (app.paperprinter as unknown as { createMenus(): void }).createMenus();
@@ -152,7 +152,7 @@ describe('PDF Object Reuse Tests', () => {
     });
 
     test('should extract correct data from DocInfo_PDF for webview', async () => {
-      const app = new App({ context: mockContext, vscode: mockVSCode });
+      const app = createTestApp({ context: mockContext, vscode: mockVSCode });
 
       // Create menus before generating PDF (menus are created on-demand in production)
       (app.paperprinter as unknown as { createMenus(): void }).createMenus();
@@ -189,7 +189,7 @@ describe('PDF Object Reuse Tests', () => {
 
   describe('PDF Consistency Across Operations', () => {
     test('should maintain PDF consistency across multiple operations', async () => {
-      const app = new App({ context: mockContext, vscode: mockVSCode });
+      const app = createTestApp({ context: mockContext, vscode: mockVSCode });
 
       // Create menus before generating PDF (menus are created on-demand in production)
       (app.paperprinter as unknown as { createMenus(): void }).createMenus();
@@ -245,7 +245,7 @@ describe('PDF Object Reuse Tests', () => {
     });
 
     test('should handle multiple ArrayBuffer conversions without issues', async () => {
-      const app = new App({ context: mockContext, vscode: mockVSCode });
+      const app = createTestApp({ context: mockContext, vscode: mockVSCode });
 
       // Create menus before generating PDF (menus are created on-demand in production)
       (app.paperprinter as unknown as { createMenus(): void }).createMenus();
@@ -298,7 +298,7 @@ describe('PDF Object Reuse Tests', () => {
 
   describe('Error Handling for PDF Object Reuse', () => {
     test('should handle missing PDF object gracefully', async () => {
-      const app = new App({ context: mockContext, vscode: mockVSCode });
+      const app = createTestApp({ context: mockContext, vscode: mockVSCode });
 
       const paperPrinter = app.paperprinter;
       paperPrinter.docInfo().rawCode = 'console.log("test");';
@@ -326,7 +326,7 @@ describe('PDF Object Reuse Tests', () => {
     });
 
     test('should validate PDF data before reuse', async () => {
-      const app = new App({ context: mockContext, vscode: mockVSCode });
+      const app = createTestApp({ context: mockContext, vscode: mockVSCode });
 
       // Create menus before generating PDF (menus are created on-demand in production)
       (app.paperprinter as unknown as { createMenus(): void }).createMenus();

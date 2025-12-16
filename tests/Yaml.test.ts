@@ -1,19 +1,19 @@
 import { describe, it, beforeEach, afterEach } from 'node:test';
 import * as assert from 'node:assert';
 import { Yaml, YamlInstance } from '../src/Yaml.js';
-import { App } from '../src/App.js';
+import { createTestApp, TestApp } from './test-utils.js';
 import * as fs from 'fs';
 import * as path from 'path';
 import { tmpdir } from 'os';
 import { mockContext, mockVSCode } from './test-utils.js';
 
 describe('Yaml', () => {
-  let app: App;
+  let app: TestApp;
   let tempDir: string;
   let yamlPath: string;
 
   beforeEach(() => {
-    app = new App({ context: mockContext, vscode: mockVSCode });
+    app = createTestApp({ context: mockContext, vscode: mockVSCode });
     tempDir = path.join(tmpdir(), `yaml-test-${Date.now()}`);
     fs.mkdirSync(tempDir, { recursive: true });
     yamlPath = path.join(tempDir, 'test.yaml');

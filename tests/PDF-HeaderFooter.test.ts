@@ -1,14 +1,14 @@
 import { describe, it, beforeEach, afterEach } from 'node:test';
 import * as assert from 'node:assert';
-import { App } from '../src/App.js';
+import { createTestApp, TestApp } from './test-utils.js';
 import { mockContext, mockVSCode } from './test-utils.js';
 import { installHeaderFooterMenuStubs } from './test-helpers.js';
 
 describe('PDF Header and Footer', () => {
-  let app: App;
+  let app: TestApp;
 
   beforeEach(() => {
-    app = new App({ context: mockContext, vscode: mockVSCode });
+    app = createTestApp({ context: mockContext, vscode: mockVSCode });
     installHeaderFooterMenuStubs(app);
     app.paperprinter.docInfo().printTitle = 'Test Document';
   });
