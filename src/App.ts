@@ -54,7 +54,8 @@ export class App {
   private fn: FnImport_t;
   public readonly dx: Diagnostics;
 
-  // Lazy accessors for components (fail-fast if not registered)
+  // Component getters for test convenience (tests use app.pdf.method() pattern)
+  // Production code should use this.fn.component.method() pattern
   get vscodeapis(): VSCodeAPIs { 
     const c = this.reg.getInstance<VSCodeAPIs>('vscodeapis');
     if (!c) throw new Error("Component 'vscodeapis' not registered");

@@ -219,7 +219,8 @@ export class Diagnostics {
       UI.out(formattedMessage);
       // Show error dialog to user (only if UI is already instantiated to avoid circular deps)
       if (this.app?.reg?.hasInstance?.('ui')) {
-        this.app.ui.showErrorMessage(formattedMessage);
+        const ui = this.app.reg.getInstance('ui') as { showErrorMessage: (msg: string) => void };
+        ui.showErrorMessage(formattedMessage);
       }
     }
 
