@@ -23,14 +23,14 @@ describe('Stylize Simple Unit Tests', () => {
     const themes = fn.stylize.getShikiThemes();
     
     assert.ok(themes.length > 0, 'Should have Shiki themes');
-    assert.ok(themes.some(t => t.id.includes('light')), 'Should have light themes');
+    assert.ok(themes.some((t: any) => t.id.includes('light')), 'Should have light themes');
   });
 
   it('should filter themes by regex pattern', async () => {
     const lightThemes = fn.stylize.getShikiThemes('light|bright|day');
     assert.ok(lightThemes.length > 0, 'Should have light themes');
     
-    lightThemes.forEach(theme => {
+    lightThemes.forEach((theme: any) => {
       const name = theme.displayName.toLowerCase();
       assert.ok(
         name.includes('light') || name.includes('bright') || name.includes('day'),
