@@ -2,6 +2,7 @@ import { describe, it, beforeEach, afterEach } from 'node:test';
 import * as assert from 'node:assert';
 import { Persist } from '../src/Persist.js';
 import { App } from '../src/App.js';
+import type { FnImport_t } from '../src/types/Registry_t.js';
 import type * as vscode from 'vscode';
 
 // Mock VS Code context and APIs with state tracking
@@ -42,12 +43,14 @@ const mockVSCode = {
 
 describe('Persist', () => {
   let app: App;
+  let fn: FnImport_t;
   let persist: Persist;
 
   beforeEach(() => {
     mockGlobalState = {}; // Reset state before each test
     mockUpdateCallCount = 0; // Reset call count before each test
     app = new App({ context: mockContext, vscode: mockVSCode });
+    fn = getFn(app);
     persist = app.reg.getInstance<Persist>('persist')!;
   });
 

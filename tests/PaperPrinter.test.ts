@@ -2,14 +2,17 @@ import { describe, it, beforeEach, afterEach } from 'node:test';
 import * as assert from 'node:assert';
 import { PaperPrinter } from '../src/PaperPrinter.js';
 import { App } from '../src/App.js';
+import type { FnImport_t } from '../src/types/Registry_t.js';
 import { mockContext, mockVSCode } from './test-utils.js';
 
 describe('PaperPrinter', () => {
   let app: App;
+  let fn: FnImport_t;
   let paperPrinter: PaperPrinter;
 
   beforeEach(() => {
     app = new App({ context: mockContext, vscode: mockVSCode });
+    fn = getFn(app);
     paperPrinter = app.paperprinter;
   });
 
@@ -88,13 +91,13 @@ describe('PaperPrinter', () => {
   });
 
   it('should create menus', () => {
-    const menusBefore = app.uimenumgr.getUIMenus().length;
+    const menusBefore = fn.uimenumgr.getUIMenus().length;
 
     // Access private method through type assertion
     const paperPrinterPrivate = paperPrinter as any;
     paperPrinterPrivate.createMenus();
 
-    const menusAfter = app.uimenumgr.getUIMenus().length;
+    const menusAfter = fn.uimenumgr.getUIMenus().length;
     assert.ok(menusAfter > menusBefore || menusAfter > 0);
   });
 
@@ -108,9 +111,9 @@ describe('PaperPrinter', () => {
     paperPrinterPrivate.createMenus();
 
     await paperPrinterPrivate.generatePdf();
-    assert.ok(app.pdf.docInfo().pdfDoc !== null, 'PDF should be generated');
-    assert.strictEqual(app.pdf.docInfo().title, 'Test', 'Title should match');
-    assert.ok(app.pdf.docInfo().pageTotal > 0, 'Should have pages');
+    assert.ok(fn.pdf.docInfo().pdfDoc !== null, 'PDF should be generated');
+    assert.strictEqual(fn.pdf.docInfo().title, 'Test', 'Title should match');
+    assert.ok(fn.pdf.docInfo().pageTotal > 0, 'Should have pages');
   });
 
   it('should get current font family', () => {

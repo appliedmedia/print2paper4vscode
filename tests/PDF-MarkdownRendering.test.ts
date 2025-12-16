@@ -1,9 +1,10 @@
-import { describe, it, beforeEach, afterEach } from 'node:test';
+import {  describe, it, beforeEach, afterEach } from 'node:test';
 import * as assert from 'node:assert';
-import { PDF } from '../src/PDF.js';
-import { App } from '../src/App.js';
-import { mockContext, mockVSCode } from './test-utils.js';
-import { installHeaderFooterMenuStubs } from './test-helpers.js';
+import {  PDF } from '../src/PDF.js';
+import {  App } from '../src/App.js';
+import type { FnImport_t } from '../src/types/Registry_t.js';
+import {  mockContext, mockVSCode } from './test-utils.js';
+import {  installHeaderFooterMenuStubs, getFn } from './test-helpers.js';
 
 /**
  * Tests for PDF markdown HTML rendering functionality
@@ -13,10 +14,12 @@ import { installHeaderFooterMenuStubs } from './test-helpers.js';
  */
 describe('PDF Markdown HTML Rendering', () => {
   let app: App;
+  let fn: FnImport_t;
   let pdf: PDF;
 
   beforeEach(() => {
     app = new App({ context: mockContext, vscode: mockVSCode });
+    fn = getFn(app);
     installHeaderFooterMenuStubs(app);
 
     pdf = new PDF({ reg: app.reg });
@@ -265,8 +268,8 @@ describe('PDF Markdown HTML Rendering', () => {
       pdf.docInfo().languageId = 'markdown';
       
       // Mock the markdown rendering to return HTML
-      const originalRenderMd = app.vscodeapis.renderMarkdownToHtml;
-      app.vscodeapis.renderMarkdownToHtml = async () => {
+      const originalRenderMd = fn.vscodeapis.renderMarkdownToHtml;
+      fn.vscodeapis.renderMarkdownToHtml = async () => {
         return '<h1>Heading</h1><p>Paragraph with <strong>bold</strong> text.</p>';
       };
       
@@ -275,7 +278,7 @@ describe('PDF Markdown HTML Rendering', () => {
       assert.ok(pdf.docInfo().pdfDoc, 'PDF document should be generated');
       assert.ok(pdf.getPageTotal() > 0, 'Should have at least one page');
       
-      app.vscodeapis.renderMarkdownToHtml = originalRenderMd;
+      fn.vscodeapis.renderMarkdownToHtml = originalRenderMd;
     });
 
     it('should generate PDF with token rendering mode (raw markdown)', async () => {

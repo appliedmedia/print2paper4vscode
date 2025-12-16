@@ -3,22 +3,25 @@ import * as assert from 'node:assert';
 import { PDF } from '../src/PDF.js';
 import { DocInfo_PDF } from '../src/DocInfo_PDF.js';
 import { App } from '../src/App.js';
+import type { FnImport_t } from '../src/types/Registry_t.js';
 import jsPDF from 'jspdf';
 import { mockContext, mockVSCode } from './test-utils.js';
-import { installHeaderFooterMenuStubs } from './test-helpers.js';
+import { installHeaderFooterMenuStubs, getFn } from './test-helpers.js';
 
 describe('PDF', () => {
   let app: App;
+  let fn: FnImport_t;
   let pdf: PDF;
 
   beforeEach(() => {
     app = new App({ context: mockContext, vscode: mockVSCode });
     installHeaderFooterMenuStubs(app);
+    fn = getFn(app);
 
     pdf = new PDF({ reg: app.reg });
     
     // Set up paperprinter docInfo for tests
-    app.paperprinter.docInfo().printTitle = 'Test Document';
+    fn.paperprinter.docInfo().printTitle = 'Test Document';
   });
 
   afterEach(() => {

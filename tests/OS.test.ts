@@ -2,6 +2,7 @@ import { describe, it, beforeEach, afterEach } from 'node:test';
 import * as assert from 'node:assert';
 import { OS } from '../src/OS.js';
 import { App } from '../src/App.js';
+import type { FnImport_t } from '../src/types/Registry_t.js';
 import * as fs from 'fs';
 import * as path from 'path';
 import { tmpdir } from 'os';
@@ -9,11 +10,13 @@ import { mockContext, mockVSCode } from './test-utils.js';
 
 describe('OS Base Class', () => {
   let app: App;
+  let fn: FnImport_t;
   let os: OS;
   let tempDir: string;
 
   beforeEach(() => {
     app = new App({ context: mockContext, vscode: mockVSCode });
+    fn = getFn(app);
     os = OS.create({ reg: app.reg });
     tempDir = path.join(tmpdir(), `os-test-${Date.now()}`);
     fs.mkdirSync(tempDir, { recursive: true });
@@ -218,7 +221,7 @@ describe('OS Base Class', () => {
     it('should convert src attributes to webview URIs', async () => {
       const html = '<img src="test.png">';
       // Create a panel first so htmlSrcPathToURI can find it
-      const panelId = await app.vscodeapis.getOrCreateWebviewPanel({ title: 'Test Panel', html: '<html></html>' });
+      const panelId = await fn.vscodeapis.getOrCreateWebviewPanel({ title: 'Test Panel', html: '<html></html>' });
       const result = os.htmlSrcPathToURI({ html, webviewPanelId: panelId });
       assert.ok(typeof result === 'string');
       // Should have converted the src path

@@ -1,19 +1,22 @@
-import { describe, it, beforeEach, afterEach } from 'node:test';
+import {  describe, it, beforeEach, afterEach } from 'node:test';
 import * as assert from 'node:assert';
-import { App } from '../src/App.js';
-import { Utils } from '../src/Utils.js';
-import { mockContext, mockVSCode } from './test-utils.js';
-import { installHeaderFooterMenuStubs } from './test-helpers.js';
+import {  App } from '../src/App.js';
+import type { FnImport_t } from '../src/types/Registry_t.js';
+import {  Utils } from '../src/Utils.js';
+import {  mockContext, mockVSCode } from './test-utils.js';
+import {  installHeaderFooterMenuStubs, getFn } from './test-helpers.js';
 
 describe('Edge Cases and Error Handling', () => {
   let app: App;
+  let fn: FnImport_t;
   let utils: Utils;
 
   beforeEach(() => {
     app = new App({ context: mockContext, vscode: mockVSCode });
+    fn = getFn(app);
     utils = app.reg.getInstance<Utils>('utils')!;
     installHeaderFooterMenuStubs(app);
-    app.paperprinter.docInfo().printTitle = 'Test Document';
+    fn.paperprinter.docInfo().printTitle = 'Test Document';
   });
 
   afterEach(() => {
@@ -22,146 +25,146 @@ describe('Edge Cases and Error Handling', () => {
 
   describe('Empty and Invalid Input', () => {
     it('should handle empty source code', async () => {
-      app.pdf.docInfo().pageSizeId = 'a4';
-      app.pdf.docInfo().orient = 'portrait';
-      app.pdf.docInfo().fontSizePx = 12;
-      app.pdf.docInfo().lineHeightPx = 18;
-      app.pdf.docInfo().fontFamily = 'Courier';
-      app.pdf.docInfo().theme = 'github-light';
-      app.pdf.docInfo().code = '';
-      app.pdf.docInfo().languageId = 'javascript';
+      fn.pdf.docInfo().pageSizeId = 'a4';
+      fn.pdf.docInfo().orient = 'portrait';
+      fn.pdf.docInfo().fontSizePx = 12;
+      fn.pdf.docInfo().lineHeightPx = 18;
+      fn.pdf.docInfo().fontFamily = 'Courier';
+      fn.pdf.docInfo().theme = 'github-light';
+      fn.pdf.docInfo().code = '';
+      fn.pdf.docInfo().languageId = 'javascript';
 
-      await app.pdf.generatePdf();
+      await fn.pdf.generatePdf();
       
-      assert.ok(app.pdf.docInfo().pdfDoc, 'Should generate PDF for empty code');
-      assert.ok(app.pdf.docInfo().pageTotal > 0, 'Should have at least one page');
+      assert.ok(fn.pdf.docInfo().pdfDoc, 'Should generate PDF for empty code');
+      assert.ok(fn.pdf.docInfo().pageTotal > 0, 'Should have at least one page');
     });
 
     it('should handle whitespace-only source code', async () => {
-      app.pdf.docInfo().pageSizeId = 'a4';
-      app.pdf.docInfo().orient = 'portrait';
-      app.pdf.docInfo().fontSizePx = 12;
-      app.pdf.docInfo().lineHeightPx = 18;
-      app.pdf.docInfo().fontFamily = 'Courier';
-      app.pdf.docInfo().theme = 'github-light';
-      app.pdf.docInfo().code = '   \n\n   \t\t   \n   ';
-      app.pdf.docInfo().languageId = 'javascript';
+      fn.pdf.docInfo().pageSizeId = 'a4';
+      fn.pdf.docInfo().orient = 'portrait';
+      fn.pdf.docInfo().fontSizePx = 12;
+      fn.pdf.docInfo().lineHeightPx = 18;
+      fn.pdf.docInfo().fontFamily = 'Courier';
+      fn.pdf.docInfo().theme = 'github-light';
+      fn.pdf.docInfo().code = '   \n\n   \t\t   \n   ';
+      fn.pdf.docInfo().languageId = 'javascript';
 
-      await app.pdf.generatePdf();
+      await fn.pdf.generatePdf();
       
-      assert.ok(app.pdf.docInfo().pdfDoc, 'Should generate PDF for whitespace-only code');
+      assert.ok(fn.pdf.docInfo().pdfDoc, 'Should generate PDF for whitespace-only code');
     });
 
     it('should handle single character code', async () => {
-      app.pdf.docInfo().pageSizeId = 'a4';
-      app.pdf.docInfo().orient = 'portrait';
-      app.pdf.docInfo().fontSizePx = 12;
-      app.pdf.docInfo().lineHeightPx = 18;
-      app.pdf.docInfo().fontFamily = 'Courier';
-      app.pdf.docInfo().theme = 'github-light';
-      app.pdf.docInfo().code = 'x';
-      app.pdf.docInfo().languageId = 'javascript';
+      fn.pdf.docInfo().pageSizeId = 'a4';
+      fn.pdf.docInfo().orient = 'portrait';
+      fn.pdf.docInfo().fontSizePx = 12;
+      fn.pdf.docInfo().lineHeightPx = 18;
+      fn.pdf.docInfo().fontFamily = 'Courier';
+      fn.pdf.docInfo().theme = 'github-light';
+      fn.pdf.docInfo().code = 'x';
+      fn.pdf.docInfo().languageId = 'javascript';
 
-      await app.pdf.generatePdf();
+      await fn.pdf.generatePdf();
       
-      assert.ok(app.pdf.docInfo().pdfDoc, 'Should generate PDF for single character');
+      assert.ok(fn.pdf.docInfo().pdfDoc, 'Should generate PDF for single character');
     });
   });
 
   describe('Special Characters and Unicode', () => {
     it('should handle unicode characters', async () => {
-      app.pdf.docInfo().pageSizeId = 'a4';
-      app.pdf.docInfo().orient = 'portrait';
-      app.pdf.docInfo().fontSizePx = 12;
-      app.pdf.docInfo().lineHeightPx = 18;
-      app.pdf.docInfo().fontFamily = 'Courier';
-      app.pdf.docInfo().theme = 'github-light';
-      app.pdf.docInfo().code = '// 你好世界\n// こんにちは世界\n// Привет мир\nconst emoji = "🎉🚀";';
-      app.pdf.docInfo().languageId = 'javascript';
+      fn.pdf.docInfo().pageSizeId = 'a4';
+      fn.pdf.docInfo().orient = 'portrait';
+      fn.pdf.docInfo().fontSizePx = 12;
+      fn.pdf.docInfo().lineHeightPx = 18;
+      fn.pdf.docInfo().fontFamily = 'Courier';
+      fn.pdf.docInfo().theme = 'github-light';
+      fn.pdf.docInfo().code = '// 你好世界\n// こんにちは世界\n// Привет мир\nconst emoji = "🎉🚀";';
+      fn.pdf.docInfo().languageId = 'javascript';
 
-      await app.pdf.generatePdf();
+      await fn.pdf.generatePdf();
       
-      assert.ok(app.pdf.docInfo().pdfDoc, 'Should generate PDF with unicode');
+      assert.ok(fn.pdf.docInfo().pdfDoc, 'Should generate PDF with unicode');
     });
 
     it('should handle special characters', async () => {
-      app.pdf.docInfo().pageSizeId = 'a4';
-      app.pdf.docInfo().orient = 'portrait';
-      app.pdf.docInfo().fontSizePx = 12;
-      app.pdf.docInfo().lineHeightPx = 18;
-      app.pdf.docInfo().fontFamily = 'Courier';
-      app.pdf.docInfo().theme = 'github-light';
-      app.pdf.docInfo().code = 'const str = "\\n\\t\\r\\f\\b\\\\\\\'\\\"";';
-      app.pdf.docInfo().languageId = 'javascript';
+      fn.pdf.docInfo().pageSizeId = 'a4';
+      fn.pdf.docInfo().orient = 'portrait';
+      fn.pdf.docInfo().fontSizePx = 12;
+      fn.pdf.docInfo().lineHeightPx = 18;
+      fn.pdf.docInfo().fontFamily = 'Courier';
+      fn.pdf.docInfo().theme = 'github-light';
+      fn.pdf.docInfo().code = 'const str = "\\n\\t\\r\\f\\b\\\\\\\'\\\"";';
+      fn.pdf.docInfo().languageId = 'javascript';
 
-      await app.pdf.generatePdf();
+      await fn.pdf.generatePdf();
       
-      assert.ok(app.pdf.docInfo().pdfDoc, 'Should generate PDF with special chars');
+      assert.ok(fn.pdf.docInfo().pdfDoc, 'Should generate PDF with special chars');
     });
 
     it('should handle very long lines', async () => {
-      app.pdf.docInfo().pageSizeId = 'a4';
-      app.pdf.docInfo().orient = 'portrait';
-      app.pdf.docInfo().fontSizePx = 12;
-      app.pdf.docInfo().lineHeightPx = 18;
-      app.pdf.docInfo().fontFamily = 'Courier';
-      app.pdf.docInfo().theme = 'github-light';
+      fn.pdf.docInfo().pageSizeId = 'a4';
+      fn.pdf.docInfo().orient = 'portrait';
+      fn.pdf.docInfo().fontSizePx = 12;
+      fn.pdf.docInfo().lineHeightPx = 18;
+      fn.pdf.docInfo().fontFamily = 'Courier';
+      fn.pdf.docInfo().theme = 'github-light';
       // Create a very long line
-      app.pdf.docInfo().code = `const longString = "${'x'.repeat(500)}";`;
-      app.pdf.docInfo().languageId = 'javascript';
+      fn.pdf.docInfo().code = `const longString = "${'x'.repeat(500)}";`;
+      fn.pdf.docInfo().languageId = 'javascript';
 
-      await app.pdf.generatePdf();
+      await fn.pdf.generatePdf();
       
-      assert.ok(app.pdf.docInfo().pdfDoc, 'Should generate PDF with very long lines');
+      assert.ok(fn.pdf.docInfo().pdfDoc, 'Should generate PDF with very long lines');
     });
   });
 
   describe('Language Support', () => {
     it('should handle markdown language', async () => {
-      app.pdf.docInfo().pageSizeId = 'a4';
-      app.pdf.docInfo().orient = 'portrait';
-      app.pdf.docInfo().fontSizePx = 12;
-      app.pdf.docInfo().lineHeightPx = 18;
-      app.pdf.docInfo().fontFamily = 'Courier';
-      app.pdf.docInfo().theme = 'github-light';
-      app.pdf.docInfo().code = '# Heading\n\n**Bold text**\n\n*Italic*';
-      app.pdf.docInfo().languageId = 'markdown';
+      fn.pdf.docInfo().pageSizeId = 'a4';
+      fn.pdf.docInfo().orient = 'portrait';
+      fn.pdf.docInfo().fontSizePx = 12;
+      fn.pdf.docInfo().lineHeightPx = 18;
+      fn.pdf.docInfo().fontFamily = 'Courier';
+      fn.pdf.docInfo().theme = 'github-light';
+      fn.pdf.docInfo().code = '# Heading\n\n**Bold text**\n\n*Italic*';
+      fn.pdf.docInfo().languageId = 'markdown';
 
-      await app.pdf.generatePdf();
+      await fn.pdf.generatePdf();
       
-      assert.ok(app.pdf.docInfo().pdfDoc, 'Should generate PDF for markdown');
+      assert.ok(fn.pdf.docInfo().pdfDoc, 'Should generate PDF for markdown');
     });
   });
 
   describe('Boundary Conditions', () => {
     it('should handle minimum font size', async () => {
-      app.pdf.docInfo().pageSizeId = 'a4';
-      app.pdf.docInfo().orient = 'portrait';
-      app.pdf.docInfo().fontSizePx = 1;
-      app.pdf.docInfo().lineHeightPx = 2;
-      app.pdf.docInfo().fontFamily = 'Courier';
-      app.pdf.docInfo().theme = 'github-light';
-      app.pdf.docInfo().code = 'const x = 42;';
-      app.pdf.docInfo().languageId = 'javascript';
+      fn.pdf.docInfo().pageSizeId = 'a4';
+      fn.pdf.docInfo().orient = 'portrait';
+      fn.pdf.docInfo().fontSizePx = 1;
+      fn.pdf.docInfo().lineHeightPx = 2;
+      fn.pdf.docInfo().fontFamily = 'Courier';
+      fn.pdf.docInfo().theme = 'github-light';
+      fn.pdf.docInfo().code = 'const x = 42;';
+      fn.pdf.docInfo().languageId = 'javascript';
 
-      await app.pdf.generatePdf();
+      await fn.pdf.generatePdf();
       
-      assert.ok(app.pdf.docInfo().pdfDoc, 'Should generate PDF with very small font');
+      assert.ok(fn.pdf.docInfo().pdfDoc, 'Should generate PDF with very small font');
     });
 
     it('should handle large font size', async () => {
-      app.pdf.docInfo().pageSizeId = 'a4';
-      app.pdf.docInfo().orient = 'portrait';
-      app.pdf.docInfo().fontSizePx = 72;
-      app.pdf.docInfo().lineHeightPx = 100;
-      app.pdf.docInfo().fontFamily = 'Courier';
-      app.pdf.docInfo().theme = 'github-light';
-      app.pdf.docInfo().code = 'X';
-      app.pdf.docInfo().languageId = 'javascript';
+      fn.pdf.docInfo().pageSizeId = 'a4';
+      fn.pdf.docInfo().orient = 'portrait';
+      fn.pdf.docInfo().fontSizePx = 72;
+      fn.pdf.docInfo().lineHeightPx = 100;
+      fn.pdf.docInfo().fontFamily = 'Courier';
+      fn.pdf.docInfo().theme = 'github-light';
+      fn.pdf.docInfo().code = 'X';
+      fn.pdf.docInfo().languageId = 'javascript';
 
-      await app.pdf.generatePdf();
+      await fn.pdf.generatePdf();
       
-      assert.ok(app.pdf.docInfo().pdfDoc, 'Should generate PDF with very large font');
+      assert.ok(fn.pdf.docInfo().pdfDoc, 'Should generate PDF with very large font');
     });
 
     it('should handle different zoom levels in PDF generation', async () => {
@@ -169,23 +172,23 @@ describe('Edge Cases and Error Handling', () => {
       const zoomLevels = [0.5, 1.0, 2.0];
       
       for (const zoom of zoomLevels) {
-        app.pdf.resetCaches();
+        fn.pdf.resetCaches();
         
-        app.pdf.docInfo().pageSizeId = 'a4';
-        app.pdf.docInfo().orient = 'portrait';
-        app.pdf.docInfo().fontSizePx = 12;
-        app.pdf.docInfo().lineHeightPx = 18;
-        app.pdf.docInfo().fontFamily = 'Courier';
-        app.pdf.docInfo().theme = 'github-light';
-        app.pdf.docInfo().code = 'const x = 42;';
-        app.pdf.docInfo().languageId = 'javascript';
+        fn.pdf.docInfo().pageSizeId = 'a4';
+        fn.pdf.docInfo().orient = 'portrait';
+        fn.pdf.docInfo().fontSizePx = 12;
+        fn.pdf.docInfo().lineHeightPx = 18;
+        fn.pdf.docInfo().fontFamily = 'Courier';
+        fn.pdf.docInfo().theme = 'github-light';
+        fn.pdf.docInfo().code = 'const x = 42;';
+        fn.pdf.docInfo().languageId = 'javascript';
         
         // Set zoom via docInfo
-        (app.pdf.docInfo() as any).zoomLevel = zoom;
+        (fn.pdf.docInfo() as any).zoomLevel = zoom;
 
-        await app.pdf.generatePdf();
+        await fn.pdf.generatePdf();
         
-        assert.ok(app.pdf.docInfo().pdfDoc, `Should generate PDF at zoom ${zoom}`);
+        assert.ok(fn.pdf.docInfo().pdfDoc, `Should generate PDF at zoom ${zoom}`);
       }
     });
   });
@@ -228,7 +231,7 @@ describe('Edge Cases and Error Handling', () => {
   describe('File System Edge Cases', () => {
     it('should sanitize invalid file names', () => {
       const invalidName = 'file<with>invalid:chars|and*special?chars/test.pdf';
-      const sanitized = app.os.sanitizeFileName(invalidName);
+      const sanitized = fn.os.sanitizeFileName(invalidName);
       
       assert.ok(!sanitized.includes('<'), 'Should remove <');
       assert.ok(!sanitized.includes('>'), 'Should remove >');
@@ -241,14 +244,14 @@ describe('Edge Cases and Error Handling', () => {
 
     it('should handle very long file names', () => {
       const longName = 'a'.repeat(200) + '.pdf';
-      const sanitized = app.os.sanitizeFileName(longName);
+      const sanitized = fn.os.sanitizeFileName(longName);
       
       assert.ok(sanitized.length <= 120, `File name should be capped at 120 chars, got ${sanitized.length}`);
     });
 
     it('should handle file names with only invalid characters', () => {
       const invalidName = '<<::>>||??**';
-      const sanitized = app.os.sanitizeFileName(invalidName);
+      const sanitized = fn.os.sanitizeFileName(invalidName);
       
       assert.strictEqual(sanitized, 'output', 'Should return default name for all-invalid input');
     });
@@ -256,7 +259,7 @@ describe('Edge Cases and Error Handling', () => {
 
   describe('Date Formatting', () => {
     it('should generate timestamp in correct format', () => {
-      const timestamp = app.os.dateAsYYYYMMDDHHMMSS();
+      const timestamp = fn.os.dateAsYYYYMMDDHHMMSS();
       
       // Check format: YYYY-MM-DD_HHMMSSMSa/p
       const pattern = /^\d{4}-\d{2}-\d{2}_\d{6}\.\d{3}[ap]$/;
@@ -265,8 +268,8 @@ describe('Edge Cases and Error Handling', () => {
 
     it('should handle midnight hour correctly', () => {
       // Can't easily test specific time, but verify format consistency
-      const timestamp1 = app.os.dateAsYYYYMMDDHHMMSS();
-      const timestamp2 = app.os.dateAsYYYYMMDDHHMMSS();
+      const timestamp1 = fn.os.dateAsYYYYMMDDHHMMSS();
+      const timestamp2 = fn.os.dateAsYYYYMMDDHHMMSS();
       
       assert.ok(timestamp1.length === timestamp2.length, 'Timestamps should have consistent length');
     });

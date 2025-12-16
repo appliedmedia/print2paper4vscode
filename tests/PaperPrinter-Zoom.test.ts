@@ -1,13 +1,16 @@
 import { describe, it, beforeEach, afterEach } from 'node:test';
 import * as assert from 'node:assert';
 import { App } from '../src/App.js';
+import type { FnImport_t } from '../src/types/Registry_t.js';
 import { mockContext, mockVSCode } from './test-utils.js';
 
 describe('PaperPrinter Zoom Unit Tests', () => {
   let app: App;
+  let fn: FnImport_t;
 
   beforeEach(() => {
     app = new App({ context: mockContext, vscode: mockVSCode });
+    fn = getFn(app);
     // Create menus so zoom menus exist
     (app.paperprinter as any).createMenus();
   });

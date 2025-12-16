@@ -1,15 +1,18 @@
 import { describe, it, beforeEach, afterEach } from 'node:test';
 import * as assert from 'node:assert';
 import { App } from '../src/App.js';
+import type { FnImport_t } from '../src/types/Registry_t.js';
 import { Utils } from '../src/Utils.js';
 import { mockContext, mockVSCode } from './test-utils.js';
 
 describe('Template Dictionary Replacement', () => {
   let app: App;
+  let fn: FnImport_t;
   let utils: Utils;
 
   beforeEach(() => {
     app = new App({ context: mockContext, vscode: mockVSCode });
+    fn = getFn(app);
     utils = app.reg.getInstance<Utils>('utils')!;
   });
 

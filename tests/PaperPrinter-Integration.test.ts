@@ -1,6 +1,7 @@
 import { test, describe } from 'node:test';
 import { strict as assert } from 'node:assert';
 import { App } from '../src/App.js';
+import type { FnImport_t } from '../src/types/Registry_t.js';
 import { PaperPrinter } from '../src/PaperPrinter.js';
 import { Persist } from '../src/Persist.js';
 import { mockContext, mockVSCode } from './test-utils.js';
@@ -8,6 +9,7 @@ import { mockContext, mockVSCode } from './test-utils.js';
 describe('PaperPrinter Integration Tests', () => {
   test('should generate same PDF for webview and print operations', async () => {
     const app = new App({ context: mockContext, vscode: mockVSCode });
+    fn = getFn(app);
     
     const paperPrinter = app.paperprinter;
     
@@ -24,7 +26,7 @@ describe('PaperPrinter Integration Tests', () => {
     
     // Generate PDF
     await paperPrinter['generatePdf']();
-    const pdfDoc = app.pdf.docInfo();
+    const pdfDoc = fn.pdf.docInfo();
     
     assert(pdfDoc, 'PDF document should be generated');
     assert.equal(typeof pdfDoc.getNumberOfPages(), 'number', 'Should have page count');
@@ -44,6 +46,7 @@ describe('PaperPrinter Integration Tests', () => {
 
   test('should regenerate PDF when settings change', async () => {
     const app = new App({ context: mockContext, vscode: mockVSCode });
+    fn = getFn(app);
     
     const paperPrinter = app.paperprinter;
     paperPrinter.docInfo().rawCode = `const message = "test";
@@ -56,7 +59,7 @@ console.log(message);`;
     
     // Generate initial PDF
     await paperPrinter['generatePdf']();
-    const pdf1 = app.pdf.docInfo();
+    const pdf1 = fn.pdf.docInfo();
     const arrayBuffer1 = pdf1?.asArrayBuffer();
     
     assert(arrayBuffer1, 'Should generate initial PDF');
@@ -65,7 +68,7 @@ console.log(message);`;
     
     // Regenerate PDF (simulates settings change)
     await paperPrinter['generatePdf']();
-    const pdf2 = app.pdf.docInfo();
+    const pdf2 = fn.pdf.docInfo();
     const arrayBuffer2 = pdf2?.asArrayBuffer();
     
     assert(arrayBuffer2, 'Should regenerate PDF');
@@ -82,6 +85,7 @@ console.log(message);`;
 
   test('should regenerate PDF when font size changes', async () => {
     const app = new App({ context: mockContext, vscode: mockVSCode });
+    fn = getFn(app);
     
     const paperPrinter = app.paperprinter;
     paperPrinter.docInfo().rawCode = `// Test code with multiple lines
@@ -103,14 +107,14 @@ const total = numbers.reduce(calculateSum, 0);`;
     // Test with small font
     persist.set('fontSizeId', '10');
     await paperPrinter['generatePdf']();
-    const smallFontPdf = app.pdf.docInfo();
+    const smallFontPdf = fn.pdf.docInfo();
     const smallFontPages = smallFontPdf?.getNumberOfPages() || 0;
     const smallArrayBuffer = smallFontPdf?.asArrayBuffer();
     
     // Test with large font
     persist.set('fontSizeId', '18');
     await paperPrinter['generatePdf']();
-    const largeFontPdf = app.pdf.docInfo();
+    const largeFontPdf = fn.pdf.docInfo();
     const largeFontPages = largeFontPdf?.getNumberOfPages() || 0;
     const largeArrayBuffer = largeFontPdf?.asArrayBuffer();
     
@@ -126,6 +130,7 @@ const total = numbers.reduce(calculateSum, 0);`;
 
   test('should handle PDF ArrayBuffer conversion for webview', async () => {
     const app = new App({ context: mockContext, vscode: mockVSCode });
+    fn = getFn(app);
     
     const paperPrinter = app.paperprinter;
     paperPrinter.docInfo().rawCode = 'console.log("PDF conversion test");';
@@ -136,7 +141,7 @@ const total = numbers.reduce(calculateSum, 0);`;
     paperPrinter['createMenus']();
     
     await paperPrinter['generatePdf']();
-    const pdfDoc = app.pdf.docInfo();
+    const pdfDoc = fn.pdf.docInfo();
     
     assert(pdfDoc, 'PDF should be generated');
     

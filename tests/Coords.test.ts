@@ -2,14 +2,17 @@ import { describe, it, beforeEach, afterEach } from 'node:test';
 import * as assert from 'node:assert';
 import { Coords } from '../src/Coords.js';
 import { App } from '../src/App.js';
+import type { FnImport_t } from '../src/types/Registry_t.js';
 import { mockContext, mockVSCode } from './test-utils.js';
 
 describe('Coords', () => {
   let app: App;
+  let fn: FnImport_t;
   let coords: Coords;
 
   beforeEach(() => {
     app = new App({ context: mockContext, vscode: mockVSCode });
+    fn = getFn(app);
     coords = new Coords({ reg: app.reg });
   });
 

@@ -3,6 +3,7 @@ import * as assert from 'node:assert';
 import { Registry } from '../src/Registry';
 import { Diagnostics } from '../src/Diagnostics';
 import { App } from '../src/App';
+import type { FnImport_t } from '../src/types/Registry_t.js';
 import { mockVSCode } from './test-utils.js';
 import type { ExtensionContext } from 'vscode';
 
@@ -25,9 +26,11 @@ const mockContext = {
 
 describe('Registry', () => {
   let app: App;
+  let fn: FnImport_t;
 
   beforeEach(() => {
     app = new App({ context: mockContext, vscode: mockVSCode });
+    fn = getFn(app);
   });
 
   afterEach(() => {

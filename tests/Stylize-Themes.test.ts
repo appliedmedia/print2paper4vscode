@@ -1,13 +1,16 @@
 import { describe, it, beforeEach, afterEach } from 'node:test';
 import * as assert from 'node:assert';
 import { App } from '../src/App.js';
+import type { FnImport_t } from '../src/types/Registry_t.js';
 import { mockContext, mockVSCode } from './test-utils.js';
 
 describe('Stylize Simple Unit Tests', () => {
   let app: App;
+  let fn: FnImport_t;
 
   beforeEach(async () => {
     app = new App({ context: mockContext, vscode: mockVSCode });
+    fn = getFn(app);
     // Note: Stylize no longer has init() - highlighter initialized lazily when needed
   });
 
@@ -16,14 +19,14 @@ describe('Stylize Simple Unit Tests', () => {
   });
 
   it('should initialize and load Shiki themes', async () => {
-    const themes = app.stylize.getShikiThemes();
+    const themes = fn.stylize.getShikiThemes();
     
     assert.ok(themes.length > 0, 'Should have Shiki themes');
     assert.ok(themes.some(t => t.id.includes('light')), 'Should have light themes');
   });
 
   it('should filter themes by regex pattern', async () => {
-    const lightThemes = app.stylize.getShikiThemes('light|bright|day');
+    const lightThemes = fn.stylize.getShikiThemes('light|bright|day');
     assert.ok(lightThemes.length > 0, 'Should have light themes');
     
     lightThemes.forEach(theme => {
@@ -36,7 +39,7 @@ describe('Stylize Simple Unit Tests', () => {
   });
 
   it('should get all themes including Shiki themes', async () => {
-    const allThemes = app.stylize.getThemes();
+    const allThemes = fn.stylize.getThemes();
     assert.ok(allThemes.length > 0, 'Should have themes');
     
     // Themes should have required structure
@@ -47,7 +50,7 @@ describe('Stylize Simple Unit Tests', () => {
 
   it('should tokenize code with a theme', async () => {
     const code = 'const x = 42;';
-    const result = await app.stylize.tokenize({ code, languageId: 'javascript', theme: 'github-light' });
+    const result = await fn.stylize.tokenize({ code, languageId: 'javascript', theme: 'github-light' });
     
     assert.ok(result.tokens, 'Should return tokens');
     assert.ok(Array.isArray(result.tokens), 'Tokens should be array');
@@ -56,15 +59,15 @@ describe('Stylize Simple Unit Tests', () => {
   });
 
   it('should resolve active theme', async () => {
-    const theme = app.stylize.resolveActiveTheme();
+    const theme = fn.stylize.resolveActiveTheme();
     assert.ok(typeof theme === 'string', 'Should return theme ID');
     assert.ok(theme.length > 0, 'Theme ID should not be empty');
   });
 
   it('should get font family from theme', async () => {
-    const themes = app.stylize.getThemes();
+    const themes = fn.stylize.getThemes();
     if (themes.length > 0) {
-      const fontFamily = app.stylize.getFontFamilyFromTheme(themes[0]);
+      const fontFamily = fn.stylize.getFontFamilyFromTheme(themes[0]);
       assert.ok(typeof fontFamily === 'string', 'Should return font family string');
     }
   });
@@ -86,7 +89,7 @@ describe('Stylize Simple Unit Tests', () => {
       ],
     };
 
-    const converted = app.stylize.convertVSCodeThemeToShiki(vscodeTheme);
+    const converted = fn.stylize.convertVSCodeThemeToShiki(vscodeTheme);
     
     assert.ok(converted, 'Should convert theme');
     assert.strictEqual(converted.name, 'test-theme', 'Should preserve name');
@@ -95,8 +98,8 @@ describe('Stylize Simple Unit Tests', () => {
   });
 
   it('should handle empty filter to return all themes', async () => {
-    const allThemes = app.stylize.getShikiThemes();
-    const filteredThemes = app.stylize.getShikiThemes('');
+    const allThemes = fn.stylize.getShikiThemes();
+    const filteredThemes = fn.stylize.getShikiThemes('');
     
     assert.strictEqual(allThemes.length, filteredThemes.length, 'Empty filter should return all');
   });

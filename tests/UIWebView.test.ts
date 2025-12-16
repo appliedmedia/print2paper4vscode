@@ -2,16 +2,19 @@ import { describe, it, beforeEach, afterEach } from 'node:test';
 import * as assert from 'node:assert';
 import { UIWebView } from '../src/UIWebView.js';
 import { App } from '../src/App.js';
+import type { FnImport_t } from '../src/types/Registry_t.js';
 import jsPDF from 'jspdf';
 import type { PDFData_t } from '../src/UIWebView.js';
 import { mockContext, mockVSCode } from './test-utils.js';
 
 describe('UIWebView', () => {
   let app: App;
+  let fn: FnImport_t;
   let uiWebView: UIWebView;
 
   beforeEach(() => {
     app = new App({ context: mockContext, vscode: mockVSCode });
+    fn = getFn(app);
     uiWebView = new UIWebView({ reg: app.reg });
   });
 
@@ -27,10 +30,10 @@ describe('UIWebView', () => {
     const doc = new jsPDF();
     doc.text('Test PDF Content', 10, 10);
     
-    // Set up app.pdf.docInfo() with the PDF document
+    // Set up fn.pdf.docInfo() with the PDF document
     // pageTotal and pageSizePx are computed getters, so just set pdfDoc
-    app.pdf.docInfo().pdfDoc = doc;
-    app.pdf.docInfo().title = 'Test PDF';
+    fn.pdf.docInfo().pdfDoc = doc;
+    fn.pdf.docInfo().title = 'Test PDF';
 
     try {
       await uiWebView.displayPdfPanel();
@@ -47,12 +50,12 @@ describe('UIWebView', () => {
     doc.addPage();
     doc.text('Page 2', 10, 10);
     
-    // Set up app.pdf.docInfo() with the PDF document
+    // Set up fn.pdf.docInfo() with the PDF document
     // pageTotal and pageSizePx are computed getters, so just set pdfDoc
-    app.pdf.docInfo().pdfDoc = doc;
-    app.pdf.docInfo().title = 'Multi-Page PDF';
+    fn.pdf.docInfo().pdfDoc = doc;
+    fn.pdf.docInfo().title = 'Multi-Page PDF';
 
-    assert.strictEqual(app.pdf.docInfo().pageTotal, 2);
+    assert.strictEqual(fn.pdf.docInfo().pageTotal, 2);
     
     try {
       await uiWebView.displayPdfPanel();
@@ -63,8 +66,8 @@ describe('UIWebView', () => {
   });
 
   it('should validate PDF data requirements', async () => {
-    // Set up app.pdf.docInfo() with no PDF document
-    app.pdf.docInfo().pdfDoc = null;
+    // Set up fn.pdf.docInfo() with no PDF document
+    fn.pdf.docInfo().pdfDoc = null;
 
     try {
       await uiWebView.displayPdfPanel();

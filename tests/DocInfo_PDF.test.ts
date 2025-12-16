@@ -2,15 +2,18 @@ import { describe, it, beforeEach, afterEach } from 'node:test';
 import * as assert from 'node:assert';
 import { DocInfo_PDF } from '../src/DocInfo_PDF.js';
 import { App } from '../src/App.js';
+import type { FnImport_t } from '../src/types/Registry_t.js';
 import jsPDF from 'jspdf';
 import { mockContext, mockVSCode } from './test-utils.js';
 
 describe('DocInfo_PDF', () => {
   let app: App;
+  let fn: FnImport_t;
   let docInfo: DocInfo_PDF;
 
   beforeEach(() => {
     app = new App({ context: mockContext, vscode: mockVSCode });
+    fn = getFn(app);
     docInfo = DocInfo_PDF.create({ reg: app.reg });
   });
 

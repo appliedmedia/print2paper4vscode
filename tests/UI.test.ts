@@ -2,14 +2,17 @@ import { describe, it, beforeEach, afterEach } from 'node:test';
 import * as assert from 'node:assert';
 import { UI } from '../src/UI.js';
 import { App } from '../src/App.js';
+import type { FnImport_t } from '../src/types/Registry_t.js';
 import { mockContext, mockVSCode } from './test-utils.js';
 
 describe('UI', () => {
   let app: App;
+  let fn: FnImport_t;
   let ui: UI;
 
   beforeEach(() => {
     app = new App({ context: mockContext, vscode: mockVSCode });
+    fn = getFn(app);
     ui = new UI({ reg: app.reg });
     // UI no longer has init() method (migrated to Registry pattern)
   });
@@ -35,13 +38,13 @@ describe('UI', () => {
 
   it('should choose save location', async () => {
     // Mock showSaveDialog to return a URI
-    const originalShowSaveDialog = app.vscodeapis.showSaveDialog;
+    const originalShowSaveDialog = fn.vscodeapis.showSaveDialog;
     const mockUri = {
       fsPath: '/test/save.pdf',
       path: '/test/save.pdf',
       toString: () => 'file:///test/save.pdf'
     } as any;
-    app.vscodeapis.showSaveDialog = async (options?: any) => mockUri;
+    fn.vscodeapis.showSaveDialog = async (options?: any) => mockUri;
 
     // Recreate UI instance after mocking so it picks up the mocked method
     const testUi = new UI({ reg: app.reg });
@@ -51,18 +54,18 @@ describe('UI', () => {
     assert.strictEqual(path, '/test/save.pdf');
     
     testUi.done();
-    app.vscodeapis.showSaveDialog = originalShowSaveDialog;
+    fn.vscodeapis.showSaveDialog = originalShowSaveDialog;
   });
 
   it('should return null when save dialog is cancelled', async () => {
-    const originalShowSaveDialog = app.vscodeapis.showSaveDialog;
-    app.vscodeapis.showSaveDialog = async () => undefined;
+    const originalShowSaveDialog = fn.vscodeapis.showSaveDialog;
+    fn.vscodeapis.showSaveDialog = async () => undefined;
 
     try {
       const path = await ui.chooseSaveLocation('test.pdf');
       assert.strictEqual(path, null);
     } finally {
-      app.vscodeapis.showSaveDialog = originalShowSaveDialog;
+      fn.vscodeapis.showSaveDialog = originalShowSaveDialog;
     }
   });
 

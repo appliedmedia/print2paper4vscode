@@ -1,11 +1,13 @@
 import { test, describe } from 'node:test';
 import * as assert from 'node:assert';
 import { App } from '../src/App.js';
+import type { FnImport_t } from '../src/types/Registry_t.js';
 import { mockContext, mockVSCode } from './test-utils.js';
 
 describe('System Integration Tests', () => {
   test('should initialize all components correctly', async () => {
     const app = new App({ context: mockContext, vscode: mockVSCode });
+    fn = getFn(app);
     
     // Verify all major components are created
     assert.ok(app.vscodeapis, 'Should have VSCodeAPIs');
@@ -22,10 +24,11 @@ describe('System Integration Tests', () => {
 
   test('should handle Shiki theme workflow', async () => {
     const app = new App({ context: mockContext, vscode: mockVSCode });
+    fn = getFn(app);
     // Note: Stylize no longer has init() - highlighter initialized lazily when needed
     
     // Test that Shiki themes are loaded
-    const shikiThemes = app.stylize.getShikiThemes();
+    const shikiThemes = fn.stylize.getShikiThemes();
     assert.ok(shikiThemes.length > 0, 'Should have Shiki themes');
     assert.ok(
       shikiThemes.some(t => t.id.includes('light')),
@@ -33,7 +36,7 @@ describe('System Integration Tests', () => {
     );
 
     // Test theme filtering
-    const lightThemes = app.stylize.getShikiThemes('light|bright|day');
+    const lightThemes = fn.stylize.getShikiThemes('light|bright|day');
     assert.ok(lightThemes.length > 0, 'Should have filtered themes');
     assert.ok(
       lightThemes.every(t => /light|bright|day/i.test(t.id)),
@@ -45,6 +48,7 @@ describe('System Integration Tests', () => {
 
   test('should validate template system integration', async () => {
     const app = new App({ context: mockContext, vscode: mockVSCode });
+    fn = getFn(app);
     const utils = app.reg.getInstance<import('../src/Utils.js').Utils>('utils')!;
     
     // Test template replacement
@@ -65,6 +69,7 @@ describe('System Integration Tests', () => {
 
   test('should handle page size and orient functionality', async () => {
     const app = new App({ context: mockContext, vscode: mockVSCode });
+    fn = getFn(app);
 
     // Test page size menu items
     const pageMenuItems = (app.paperprinter as any).menuItems_Page();
@@ -87,11 +92,12 @@ describe('System Integration Tests', () => {
 
   test('should handle PDF generation workflow', async () => {
     const app = new App({ context: mockContext, vscode: mockVSCode });
+    fn = getFn(app);
     
     // Set up document
-    app.paperprinter.docInfo().rawCode = 'const x = 42;';
-    app.paperprinter.docInfo().languageId = 'javascript';
-    app.paperprinter.docInfo().printTitle = 'Test';
+    fn.paperprinter.docInfo().rawCode = 'const x = 42;';
+    fn.paperprinter.docInfo().languageId = 'javascript';
+    fn.paperprinter.docInfo().printTitle = 'Test';
     
     // Create menus
     (app.paperprinter as any).createMenus();
@@ -99,14 +105,15 @@ describe('System Integration Tests', () => {
     // Generate PDF
     await (app.paperprinter as any).generatePdf();
     
-    assert.ok(app.pdf.docInfo().pdfDoc, 'Should generate PDF');
-    assert.ok(app.pdf.docInfo().pageTotal > 0, 'Should have pages');
+    assert.ok(fn.pdf.docInfo().pdfDoc, 'Should generate PDF');
+    assert.ok(fn.pdf.docInfo().pageTotal > 0, 'Should have pages');
     
     app.done();
   });
 
   test('should coordinate between components', async () => {
     const app = new App({ context: mockContext, vscode: mockVSCode });
+    fn = getFn(app);
     
     // Test that components can access registry
     assert.strictEqual(app.stylize['reg'], app.reg, 'Stylize should reference registry');
@@ -114,7 +121,7 @@ describe('System Integration Tests', () => {
     assert.strictEqual(app.paperprinter['reg'], app.reg, 'PaperPrinter should reference registry');
     
     // Test that shared services work
-    const typography = app.vscodeapis.getEditorTypography();
+    const typography = fn.vscodeapis.getEditorTypography();
     assert.ok(typography.fontSize > 0, 'Should get typography');
     assert.ok(typography.sizeToHeightRatio > 0, 'Should have ratio');
     
