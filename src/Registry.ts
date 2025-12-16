@@ -175,8 +175,8 @@ export class Registry {
           if (typeof value === 'function') {
             result[id][actualMethodName] = value.bind(instance);
           } else {
-            this.dx.error(`'${id}.${actualMethodName}' is not a function`);
-            throw new Error(`'${id}.${actualMethodName}' is not a function`);
+            this.dx.error(`'${id}.${actualMethodName}' is not a function - check that it's specified in reg.use()`);
+            throw new Error(`'${id}.${actualMethodName}' is not a function - check that it's specified in reg.use()`);
           }
         }
         continue;
@@ -217,8 +217,8 @@ export class Registry {
         }
         const method = (instance as Record<string, unknown>)[actualMethodName];
         if (typeof method !== 'function') {
-          this.dx.error(`'${componentId}.${actualMethodName}' is not a function`);
-          throw new Error(`'${componentId}.${actualMethodName}' is not a function`);
+          this.dx.error(`'${componentId}.${actualMethodName}' is not a function - check that it's specified in reg.use()`);
+          throw new Error(`'${componentId}.${actualMethodName}' is not a function - check that it's specified in reg.use()`);
         }
         return method.apply(instance, args);
       }) as Function;
