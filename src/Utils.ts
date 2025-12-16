@@ -24,6 +24,19 @@ export class Utils {
   }
 
   /**
+   * Escape HTML special characters to prevent XSS
+   * Converts: & < > " ' to HTML entities
+   */
+  htmlEscape(str: string): string {
+    return str
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#x27;');
+  }
+
+  /**
    * Generic template replacement function
    * Replaces all {{key}} placeholders in source text with values from dictionary
    * Supports nested placeholders by performing multiple passes until no changes occur
@@ -82,17 +95,20 @@ export class Utils {
       return !Number.isFinite(parsed) || parsed === 0 ? useForZero : parsed;
     };
 
+    // Don't mutate input - create local copy
+    const dictLocal = { ...dict };
+
     const dictResult: ForceNumbers_t = {};
 
     if (requiredKeys) {
       for (const key of requiredKeys) {
-        if (!(key in dict)) {
-          dict[key] = useForZero;
+        if (!(key in dictLocal)) {
+          dictLocal[key] = useForZero;
         }
       }
     }
 
-    for (const [key, value] of Object.entries(dict)) {
+    for (const [key, value] of Object.entries(dictLocal)) {
       dictResult[key] = force1Number(value);
     }
 

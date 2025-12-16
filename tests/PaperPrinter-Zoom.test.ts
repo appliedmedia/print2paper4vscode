@@ -1,13 +1,13 @@
 import { describe, it, beforeEach, afterEach } from 'node:test';
 import * as assert from 'node:assert';
-import { App } from '../src/App.js';
+import { createTestApp, TestApp } from './test-utils.js';
 import { mockContext, mockVSCode } from './test-utils.js';
 
 describe('PaperPrinter Zoom Unit Tests', () => {
-  let app: App;
+  let app: TestApp;
 
   beforeEach(() => {
-    app = new App({ context: mockContext, vscode: mockVSCode });
+    app = createTestApp({ context: mockContext, vscode: mockVSCode });
     // Create menus so zoom menus exist
     (app.paperprinter as any).createMenus();
   });

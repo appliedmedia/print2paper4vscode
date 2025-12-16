@@ -1,7 +1,7 @@
 import { describe, it, beforeEach, afterEach } from 'node:test';
 import * as assert from 'node:assert';
 import { Persist } from '../src/Persist.js';
-import { App } from '../src/App.js';
+import { createTestApp, TestApp } from './test-utils.js';
 import type * as vscode from 'vscode';
 
 // Mock VS Code context and APIs with state tracking
@@ -41,13 +41,13 @@ const mockVSCode = {
 } as unknown as typeof vscode;
 
 describe('Persist', () => {
-  let app: App;
+  let app: TestApp;
   let persist: Persist;
 
   beforeEach(() => {
     mockGlobalState = {}; // Reset state before each test
     mockUpdateCallCount = 0; // Reset call count before each test
-    app = new App({ context: mockContext, vscode: mockVSCode });
+    app = createTestApp({ context: mockContext, vscode: mockVSCode });
     persist = app.reg.getInstance<Persist>('persist')!;
   });
 

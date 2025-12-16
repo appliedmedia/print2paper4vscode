@@ -95,25 +95,9 @@ export interface UIMenuItem_t {
 }
 
 // Menu ID types - UI component identifiers
-// Auto-constructed from PaperPrinter_t.ts _id constants
+// Auto-constructed from PaperPrinter_t.ts kMenus array
 export const kMenuId = [
-  // Top-level menus
-  kPrint.id,
-  kPage.id,
-  kTheme.id,
-  kFontSizeId.id,
-  // Page submenus
-  kPageSizeId.id,
-  kOrient.id,
-  kMarginId.id,
-  // Header/Footer locations
-  kHeader.id,
-  kFooter.id,
-  // Zoom menus
-  kZoomOut.id,
-  kZoomIn.id,
-  kZoomLevel.id,
-  // Composed from header/footer + kHeaderFooter positions
+  ...kMenus.map(menu => menu.id),
   ...kHeaderFooterMenuIds,
 ] as const;
 
@@ -516,11 +500,13 @@ export class UIMenu {
     
     try {
       const yaml = this.yaml();
+      // Security: HTML-escape value to prevent XSS in webview
+      const escapedValue = value ? this.fn.utils.htmlEscape(String(value)) : '';
       const html = this.fn.utils.templateDictReplace(yaml.uimenu_text_edit, {
         itemId,
         constrain,
         width: width ?? '',
-        value: value ? ` value="${value}"` : '',
+        value: value ? ` value="${escapedValue}"` : '',
       });
       dx.done();
       return {

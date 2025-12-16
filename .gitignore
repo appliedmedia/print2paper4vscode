@@ -5,6 +5,7 @@ out/
 dist/
 coverage/
 .tmp/
+package.json
 # Logs
 *.log
 # OS

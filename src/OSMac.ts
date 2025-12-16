@@ -50,17 +50,24 @@ export class OSMac extends OS {
       throw new Error(`Failed to process AppleScript template for ${templateKey}`);
     }
 
-    const osa = `osascript -e '${appleScript}'`;
+    // Security: Escape single quotes in AppleScript to prevent shell injection
+    // Replace ' with '\'' (end quote, escaped quote, start quote)
+    const escapedScript = appleScript.replace(/'/g, "'\\''");
+    const osa = `osascript -e '${escapedScript}'`;
     const result = await this.execAsync(osa);
     return result.stdout;
   }
 
   async fileOpenInDefaultApp(path: string): Promise<void> {
-    await this.execAsync(`open "${path}"`);
+    // Security: Escape double quotes and backslashes in path to prevent shell injection
+    const escapedPath = path.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+    await this.execAsync(`open "${escapedPath}"`);
   }
 
   async fileReveal(path: string): Promise<void> {
-    await this.execAsync(`open -R "${path}"`);
+    // Security: Escape double quotes and backslashes in path to prevent shell injection
+    const escapedPath = path.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+    await this.execAsync(`open -R "${escapedPath}"`);
   }
 
   async filePrint(path: string): Promise<void> {

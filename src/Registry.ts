@@ -62,8 +62,13 @@ export class Registry {
     this.dx = this.fn.dx.sub({ name: 'Registry' });
 
     // Build placeholder structure for intellisense
+    // Guard against component IDs that collide with Registry's own properties/methods
+    const reservedNames = ['components', 'always', 'init', 'fn', 'dx', 'app', 'use', 'done', 'registerInstance', 'hasInstance'];
     for (const Component of this.components) {
       if (Component.id) {
+        if (reservedNames.includes(Component.id)) {
+          throw new Error(`Component ID '${Component.id}' collides with Registry property/method`);
+        }
         (this as Record<string, unknown>)[Component.id] = {};
       }
     }

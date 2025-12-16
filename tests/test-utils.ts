@@ -1,4 +1,15 @@
 import type * as vscode from 'vscode';
+import { App } from '../src/App.js';
+import type { VSCodeAPIs } from '../src/VSCodeAPIs.js';
+import type { UI } from '../src/UI.js';
+import type { PDF } from '../src/PDF.js';
+import type { PaperPrinter } from '../src/PaperPrinter.js';
+import type { Stylize } from '../src/Stylize.js';
+import type { TabInspector } from '../src/TabInspector.js';
+import type { OS } from '../src/OS.js';
+import type { UIMenuMgr } from '../src/UIMenuMgr.js';
+import type { Coords } from '../src/Coords.js';
+import type { UIWebView } from '../src/UIWebView.js';
 
 // Mock VS Code context and APIs
 export const mockContext = {
@@ -156,3 +167,106 @@ export const mockVSCode = {
     language: 'en',
   },
 } as unknown as typeof vscode;
+
+/**
+ * Test-only App wrapper that adds component getters for convenience.
+ * Production code uses this.fn.component.method() pattern.
+ * Tests need direct instance access for checking state.
+ */
+export interface TestApp extends App {
+  readonly vscodeapis: VSCodeAPIs;
+  readonly ui: UI;
+  readonly pdf: PDF;
+  readonly paperprinter: PaperPrinter;
+  readonly stylize: Stylize;
+  readonly tabinspector: TabInspector;
+  readonly os: OS;
+  readonly uimenumgr: UIMenuMgr;
+  readonly coords: Coords;
+  readonly uiwebview: UIWebView;
+}
+
+/**
+ * Create App instance with test-only component getters.
+ * Use this instead of `new App()` in tests.
+ */
+export function createTestApp(args: { context: vscode.ExtensionContext; vscode: typeof import('vscode') }): TestApp {
+  const app = new App(args);
+  const reg = app.reg;
+  
+  // Add test-only getters for component access
+  Object.defineProperties(app, {
+    vscodeapis: {
+      get() { 
+        const c = reg.getInstance('vscodeapis');
+        if (!c) throw new Error("Component 'vscodeapis' not registered");
+        return c as VSCodeAPIs;
+      }
+    },
+    ui: {
+      get() { 
+        const c = reg.getInstance('ui');
+        if (!c) throw new Error("Component 'ui' not registered");
+        return c as UI;
+      }
+    },
+    pdf: {
+      get() { 
+        const c = reg.getInstance('pdf');
+        if (!c) throw new Error("Component 'pdf' not registered");
+        return c as PDF;
+      }
+    },
+    paperprinter: {
+      get() { 
+        const c = reg.getInstance('paperprinter');
+        if (!c) throw new Error("Component 'paperprinter' not registered");
+        return c as PaperPrinter;
+      }
+    },
+    stylize: {
+      get() { 
+        const c = reg.getInstance('stylize');
+        if (!c) throw new Error("Component 'stylize' not registered");
+        return c as Stylize;
+      }
+    },
+    tabinspector: {
+      get() { 
+        const c = reg.getInstance('tabinspector');
+        if (!c) throw new Error("Component 'tabinspector' not registered");
+        return c as TabInspector;
+      }
+    },
+    os: {
+      get() { 
+        const c = reg.getInstance('os');
+        if (!c) throw new Error("Component 'os' not registered");
+        return c as OS;
+      }
+    },
+    uimenumgr: {
+      get() { 
+        const c = reg.getInstance('uimenumgr');
+        if (!c) throw new Error("Component 'uimenumgr' not registered");
+        return c as UIMenuMgr;
+      }
+    },
+    coords: {
+      get() { 
+        const c = reg.getInstance('coords');
+        if (!c) throw new Error("Component 'coords' not registered");
+        return c as Coords;
+      }
+    },
+    uiwebview: {
+      get() { 
+        const c = reg.getInstance('uiwebview');
+        if (!c) throw new Error("Component 'uiwebview' not registered");
+        return c as UIWebView;
+      }
+    },
+  });
+  
+  return app as TestApp;
+}

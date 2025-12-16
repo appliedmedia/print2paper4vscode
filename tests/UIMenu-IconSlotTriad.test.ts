@@ -17,15 +17,15 @@ import {
   type MenuItemId_t,
   type iconSlotTriad_t,
 } from '../src/UIMenu.js';
-import { App } from '../src/App.js';
+import { createTestApp, TestApp } from './test-utils.js';
 import { mockContext, mockVSCode } from './test-utils.js';
 
-let app: App;
+let app: TestApp;
 
 describe('UIMenu Icon Slot Triad', () => {
   
   beforeEach(() => {
-    app = new App({ context: mockContext, vscode: mockVSCode });
+    app = createTestApp({ context: mockContext, vscode: mockVSCode });
   });
 
   // Helper to create a menu

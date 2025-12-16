@@ -12,8 +12,9 @@
 # To add more replacements, just add entries to this array
 
 replacements:
-  - file: package.json
-    output: out/package.json
+  # Process template → root package.json (used by vsce and npm)
+  - file: .config/template.package.json
+    output: package.json
     template: "{{extId}}"
     source: out/src/_entrypoint_extId_t.js
     variable: kExtId

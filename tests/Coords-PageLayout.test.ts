@@ -1,15 +1,15 @@
 import { describe, it, beforeEach, afterEach } from 'node:test';
 import * as assert from 'node:assert';
-import { App } from '../src/App.js';
+import { createTestApp, TestApp } from './test-utils.js';
 import { Coords } from '../src/Coords.js';
 import { mockContext, mockVSCode } from './test-utils.js';
 
 describe('Coords Advanced Unit Tests', () => {
-  let app: App;
+  let app: TestApp;
   let coords: Coords;
 
   beforeEach(() => {
-    app = new App({ context: mockContext, vscode: mockVSCode });
+    app = createTestApp({ context: mockContext, vscode: mockVSCode });
     coords = new Coords({ reg: app.reg });
   });
 

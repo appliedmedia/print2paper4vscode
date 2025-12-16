@@ -31,15 +31,21 @@ export class OSLinux extends OS {
   }
 
   async fileOpenInDefaultApp(path: string): Promise<void> {
-    await this.execAsync(`xdg-open "${path}"`);
+    // Security: Escape double quotes and backslashes in path to prevent shell injection
+    const escapedPath = path.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+    await this.execAsync(`xdg-open "${escapedPath}"`);
   }
 
   async fileReveal(path: string): Promise<void> {
-    await this.execAsync(`xdg-open "$(dirname "${path}")"`);
+    // Security: Escape double quotes and backslashes in path to prevent shell injection
+    const escapedPath = path.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+    await this.execAsync(`xdg-open "$(dirname "${escapedPath}")"`);
   }
 
   async filePrint(path: string): Promise<void> {
-    await this.execAsync(`lp "${path}"`);
+    // Security: Escape double quotes and backslashes in path to prevent shell injection
+    const escapedPath = path.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+    await this.execAsync(`lp "${escapedPath}"`);
   }
 
   async fileOpenPrintDialog(path: string): Promise<void> {

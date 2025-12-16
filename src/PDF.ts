@@ -256,8 +256,8 @@ export class PDF {
       // Save PDF document directly to chosen location
       this.fn.os.fileWrite({ filePath: targetPath, content: Buffer.from(pdfBuffer) });
 
-      // Track file for cleanup (optional)
-      this.trackTempPdf(targetPath);
+      // DO NOT track user-saved PDFs for cleanup - only track temp files
+      // User explicitly saved this file, we should NOT delete it on shutdown
 
       // Reveal file in file explorer
       await this.fn.os.fileReveal(targetPath);

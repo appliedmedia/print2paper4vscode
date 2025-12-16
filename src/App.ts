@@ -54,18 +54,6 @@ export class App {
   private fn: FnImport_t;
   public readonly dx: Diagnostics;
 
-  // Lazy accessors for components (for backwards compatibility during migration)
-  get vscodeapis(): VSCodeAPIs { return this.reg.getInstance<VSCodeAPIs>('vscodeapis')!; }
-  get ui(): UI { return this.reg.getInstance<UI>('ui')!; }
-  get pdf(): PDF { return this.reg.getInstance<PDF>('pdf')!; }
-  get paperprinter(): PaperPrinter { return this.reg.getInstance<PaperPrinter>('paperprinter')!; }
-  get stylize(): Stylize { return this.reg.getInstance<Stylize>('stylize')!; }
-  get tabinspector(): TabInspector { return this.reg.getInstance<TabInspector>('tabinspector')!; }
-  get os(): OS { return this.reg.getInstance<OS>('os')!; }
-  get uimenumgr(): UIMenuMgr { return this.reg.getInstance<UIMenuMgr>('uimenumgr')!; }
-  get coords(): Coords { return this.reg.getInstance<Coords>('coords')!; }
-  get uiwebview(): UIWebView { return this.reg.getInstance<UIWebView>('uiwebview')!; }
-
   constructor(args: { context: ExtensionContext; vscode: typeof import('vscode') }) {
     const { context, vscode } = args;
 

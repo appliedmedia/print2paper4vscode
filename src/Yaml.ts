@@ -51,7 +51,8 @@ export class YamlInstance<T extends Record<string, string>> {
   get(): T {
     if (this.cached === undefined) {
       const fileRead = this.fn.os.fileRead as import('./OS').FileRead_t;
-      this.cached = fileRead<T>({ path: this.filePath }) || this.dataStruct;
+      // Use nullish coalescing to preserve falsy values (false, 0, "")
+      this.cached = fileRead<T>({ path: this.filePath }) ?? this.dataStruct;
     }
     return this.cached as T;
   }
