@@ -131,19 +131,19 @@ All core functionality for markdown printing in both raw and rendered modes has 
 - ✅ `handleSelection_Md()` uses const IDs and returns const boolean values
 - ✅ Triggers PDF regeneration with new mode automatically
 - ✅ Persists user selection across sessions
-- ✅ **Architecture**: Reads mode directly from menu system via `getValueForMenuItemIdSelected(kMd.id)` - no state duplication
+- ✅ **Architecture**: Reads mode directly from menu system via `getValueOfMenuItemIdSelected(kMd.id)` - no state duplication
 - ✅ Boolean mapping centralized in type definitions (`kMd_Raw.value = false`, `kMd_Render.value = true`)
-- ✅ Clean boolean coercion: `!!getValueForMenuItemIdSelected(kMd.id)`
+- ✅ Clean boolean coercion: `!!getValueOfMenuItemIdSelected(kMd.id)`
 
 **How It Works**:
 
 1. User clicks `.md` button in menu bar
 2. Dropdown shows: **Raw** | **Render**
 3. User selects mode → `handleSelection_Md()` called
-4. Handler persists selection via `setValueForPersistIdOnMenuId()` using passed-in `menuId` and resolved `id`
+4. Handler persists selection via `setValueOfPersistIdForMenuId()` using passed-in `menuId` and resolved `id`
 5. Handler triggers PDF regeneration automatically
 6. When generating PDF, `PaperPrinter.generatePdf()`:
-   - Reads selection: `!!getValueForMenuItemIdSelected(kMd.id)` (returns boolean)
+   - Reads selection: `!!getValueOfMenuItemIdSelected(kMd.id)` (returns boolean)
    - Passes `useRenderedMd` to `PDF.generatePdf({ useRenderedMd, document })`
 7. `PDF.generatePdf()` orchestrates: `setupPdf()` → `addHeaderAndFooter()` → `Stylize.tokenize()` → `PDF.render()` → `finishPdf()`
 
@@ -271,7 +271,7 @@ All core functionality for markdown printing in both raw and rendered modes has 
 - No state duplication: `useRenderedMd` derived from menu system on-demand
 - Menu system persists user selection across sessions
 - Boolean values embedded in type constants (`kMd_Raw.value`, `kMd_Render.value`)
-- Clean coercion: `!!getValueForMenuItemIdSelected(kMd.id)`
+- Clean coercion: `!!getValueOfMenuItemIdSelected(kMd.id)`
 
 ### Future Enhancements
 

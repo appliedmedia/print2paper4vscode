@@ -78,6 +78,7 @@
     "precompile": "node scripts/generate-package-json.mjs",
     "compile": "npm run precompile && rm -rf out && tsc -p ./.config/ && node scripts/templateDictReplace.mjs",
     "compile:deploy": "npm run precompile && rm -rf out && tsc -p ./.config/ && node scripts/templateDictReplace.mjs",
+    "build": "npm run compile && npm run esbuild",
     "package": "bash scripts/prepublish.sh",
     "esbuild": "node .config/esbuild.mjs --production",
     "esbuild:watch": "node .config/esbuild.mjs --watch",

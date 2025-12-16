@@ -812,7 +812,7 @@ export class PDF {
 - `vscodeapis.removePanel`
 - `os.fileRead`
 - `uimenumgr.getMenuItemIdSelected`
-- `uimenumgr.getValueForMenuItemId`
+- `uimenumgr.getValueOfMenuItemIdForMenuId`
 - `uimenumgr.handleMenuItemSelected`
 - `yaml.create` (factory)
 
@@ -858,8 +858,8 @@ export class UIWebView {
 - `tabinspector.getEditorSelectionOrAll`
 - `uimenumgr.getMenuItemIdSelected`
 - `uimenumgr.setValueForPersistIdOnMenuId`
-- `uimenumgr.getValueForMenuItemId`
-- `uimenumgr.getValueForMenuItemIdSelected`
+- `uimenumgr.getValueOfMenuItemIdForMenuId`
+- `uimenumgr.getValueOfMenuItemIdSelected`
 - `uimenumgr.createMenu`
 - `uimenumgr.addMenu`
 - `uimenumgr.getUIMenus`

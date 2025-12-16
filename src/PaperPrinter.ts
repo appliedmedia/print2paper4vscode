@@ -130,9 +130,9 @@ export class PaperPrinter {
       'utils.forceNumber',
       'utils.hasContent',
       'uimenumgr.getMenuItemIdSelected',
-      'uimenumgr.getValueForMenuItemId',
-      'uimenumgr.getValueForMenuItemIdSelected',
-      'uimenumgr.setValueForPersistIdOnMenuId',
+      'uimenumgr.getValueOfMenuItemIdForMenuId',
+      'uimenumgr.getValueOfMenuItemIdSelected',
+      'uimenumgr.setValueOfPersistIdForMenuId',
       'uimenumgr.getUIMenus',
       'uimenumgr.createMenu',
       'uimenumgr.addMenu',
@@ -152,7 +152,10 @@ export class PaperPrinter {
     this._docInfo = DocInfo_PaperPrinter.create({ reg: this.reg });
 
     // Initialize YAML loader via Registry factory
-    this._yaml = this.fn.yaml.create({ filePath: 'src/PaperPrinter.yaml', dataStruct: PaperPrinter.kYaml });
+    this._yaml = this.fn.yaml.create({
+      filePath: 'src/PaperPrinter.yaml',
+      dataStruct: PaperPrinter.kYaml,
+    });
   }
 
   done(): void {
@@ -300,19 +303,18 @@ export class PaperPrinter {
 
       // For markdown files, check menu selection to determine rendering mode
       // getValueForMenuItemIdSelected returns the boolean value (false for raw, true for render)
-      const useRenderedMd = this.docInfo().languageId === 'markdown' && 
-        !!this.fn.uimenumgr.getValueForMenuItemIdSelected(kMd.id);
+      const useRenderedMd =
+        this.docInfo().languageId === 'markdown' &&
+        !!this.fn.uimenumgr.getValueOfMenuItemIdSelected(kMd.id);
 
       // Generate PDF - handles both tokenized and HTML rendering internally
       dx.out(`Generating complete PDF`);
       await this.fn.pdf.generatePdf({
         useRenderedMd,
-        document: editor.document
+        document: editor.document,
       });
 
-      dx.out(
-        `PDF generation complete: ${this.fn.pdf.getPageTotal()} pages`
-      );
+      dx.out(`PDF generation complete: ${this.fn.pdf.getPageTotal()} pages`);
     } catch (error) {
       dx.out(`Error in generatePdf: ${error}`);
       throw error;
@@ -356,9 +358,10 @@ export class PaperPrinter {
           menuItemId: MenuItemId_t,
           contextDict?: contextDict_t
         ) => {
-          const handler = this[`handleSelection_${methodName}` as keyof this] as (
-            args: { menuId: MenuId_t; menuItemId: MenuItemId_t }
-          ) => Promise<HandleSelection_t>;
+          const handler = this[`handleSelection_${methodName}` as keyof this] as (args: {
+            menuId: MenuId_t;
+            menuItemId: MenuItemId_t;
+          }) => Promise<HandleSelection_t>;
           return handler.call(this, { menuId, menuItemId });
         }).bind(this),
       };
@@ -396,7 +399,7 @@ export class PaperPrinter {
         isFlyout: config.isFlyout,
         menuItems: config.menuItems,
         flyoutMenuItemIds: [...config.flyoutMenuItemIds],
-        selectionHandler: config.selectionHandler
+        selectionHandler: config.selectionHandler,
       });
       this.fn.uimenumgr.addMenu(menu);
     });
@@ -649,9 +652,10 @@ export class PaperPrinter {
     }
   }
 
-  private async handleSelection_Print(
-    args: { menuId: MenuId_t; menuItemId: MenuItemId_t }
-  ): Promise<HandleSelection_t> {
+  private async handleSelection_Print(args: {
+    menuId: MenuId_t;
+    menuItemId: MenuItemId_t;
+  }): Promise<HandleSelection_t> {
     const dx = this.dx.sub({ name: 'handleSelection_Print' });
     dx.require(args, ['menuId', 'menuItemId']);
     const { menuId, menuItemId } = args;
@@ -700,9 +704,10 @@ export class PaperPrinter {
     return { id: kEmptyNoPersist, value: kEmptyNoPersist };
   }
 
-  private async handleSelection_HeaderFooter(
-    args: { menuId: MenuId_t; menuItemId: MenuItemId_t }
-  ): Promise<HandleSelection_t> {
+  private async handleSelection_HeaderFooter(args: {
+    menuId: MenuId_t;
+    menuItemId: MenuItemId_t;
+  }): Promise<HandleSelection_t> {
     const dx = this.dx.sub({ name: 'handleSelection_HeaderFooter' });
     dx.require(args, ['menuId', 'menuItemId']);
     const { menuId, menuItemId } = args;
@@ -739,10 +744,10 @@ export class PaperPrinter {
         }
 
         // Persist the value (including 'none')
-        this.fn.uimenumgr.setValueForPersistIdOnMenuId({
+        this.fn.uimenumgr.setValueOfPersistIdForMenuId({
           menuId,
           persistId: menuId as UI_t,
-          value: value as PersistValue_t
+          value: value as PersistValue_t,
         });
         void this.regenerateAndUpdateWebview();
       }
@@ -752,9 +757,10 @@ export class PaperPrinter {
     return { id, value };
   }
 
-  private async handleSelection_Theme(
-    args: { menuId: MenuId_t; menuItemId: MenuItemId_t }
-  ): Promise<HandleSelection_t> {
+  private async handleSelection_Theme(args: {
+    menuId: MenuId_t;
+    menuItemId: MenuItemId_t;
+  }): Promise<HandleSelection_t> {
     const dx = this.dx.sub({ name: 'handleSelection_Theme' });
     dx.require(args, ['menuId', 'menuItemId']);
     const { menuId, menuItemId } = args;
@@ -773,10 +779,10 @@ export class PaperPrinter {
     } else {
       // Update theme
       dx.out(`updating theme to ${menuItemId}`);
-      this.fn.uimenumgr.setValueForPersistIdOnMenuId({
+      this.fn.uimenumgr.setValueOfPersistIdForMenuId({
         menuId: kTheme.id,
         persistId: kTheme.id as UI_t,
-        value: menuItemId as PersistValue_t
+        value: menuItemId as PersistValue_t,
       });
       // Regenerate everything (fire and forget)
       void this.regenerateAndUpdateWebview();
@@ -786,9 +792,10 @@ export class PaperPrinter {
     return { id, value };
   }
 
-  private async handleSelection_Text(
-    args: { menuId: MenuId_t; menuItemId: MenuItemId_t }
-  ): Promise<HandleSelection_t> {
+  private async handleSelection_Text(args: {
+    menuId: MenuId_t;
+    menuItemId: MenuItemId_t;
+  }): Promise<HandleSelection_t> {
     const dx = this.dx.sub({ name: 'handleSelection_Text' });
     dx.require(args, ['menuId', 'menuItemId']);
     const { menuId, menuItemId } = args;
@@ -802,10 +809,10 @@ export class PaperPrinter {
       id = String(editorTypo.fontSize);
       value = id;
     } else {
-      this.fn.uimenumgr.setValueForPersistIdOnMenuId({
+      this.fn.uimenumgr.setValueOfPersistIdForMenuId({
         menuId: kFontSizeId.id,
         persistId: kFontSizeId.id as UI_t,
-        value: menuItemId as PersistValue_t
+        value: menuItemId as PersistValue_t,
       });
       void this.regenerateAndUpdateWebview();
     }
@@ -820,9 +827,10 @@ export class PaperPrinter {
     return { id: kEmptyNoPersist, value: kEmptyNoPersist };
   }
 
-  private async handleSelection_PageSizeId(
-    args: { menuId: MenuId_t; menuItemId: MenuItemId_t }
-  ): Promise<HandleSelection_t> {
+  private async handleSelection_PageSizeId(args: {
+    menuId: MenuId_t;
+    menuItemId: MenuItemId_t;
+  }): Promise<HandleSelection_t> {
     const dx = this.dx.sub({ name: 'handleSelection_PageSizeId' });
     dx.require(args, ['menuId', 'menuItemId']);
     const { menuId, menuItemId } = args;
@@ -847,10 +855,10 @@ export class PaperPrinter {
       value = id; // value is the page size ID
       dx.out(`Returning locale-based default page size: ${id}`);
     } else {
-      this.fn.uimenumgr.setValueForPersistIdOnMenuId({
+      this.fn.uimenumgr.setValueOfPersistIdForMenuId({
         menuId: kPageSizeId.id,
         persistId: kPageSizeId.id as UI_t,
-        value: menuItemId as PersistValue_t
+        value: menuItemId as PersistValue_t,
       });
       void this.regenerateAndUpdateWebview();
     }
@@ -859,9 +867,10 @@ export class PaperPrinter {
     return { id, value };
   }
 
-  private async handleSelection_Orient(
-    args: { menuId: MenuId_t; menuItemId: MenuItemId_t }
-  ): Promise<HandleSelection_t> {
+  private async handleSelection_Orient(args: {
+    menuId: MenuId_t;
+    menuItemId: MenuItemId_t;
+  }): Promise<HandleSelection_t> {
     const dx = this.dx.sub({ name: 'handleSelection_Orient' });
     dx.require(args, ['menuId', 'menuItemId']);
     const { menuId, menuItemId } = args;
@@ -875,10 +884,10 @@ export class PaperPrinter {
       value = id; // value is the orientation
     } else {
       // Update orientation
-      this.fn.uimenumgr.setValueForPersistIdOnMenuId({
+      this.fn.uimenumgr.setValueOfPersistIdForMenuId({
         menuId: kOrient.id,
         persistId: kOrient.id as UI_t,
-        value: menuItemId as PersistValue_t
+        value: menuItemId as PersistValue_t,
       });
       void this.regenerateAndUpdateWebview();
     }
@@ -887,9 +896,10 @@ export class PaperPrinter {
     return { id, value };
   }
 
-  private async handleSelection_MarginId(
-    args: { menuId: MenuId_t; menuItemId: MenuItemId_t }
-  ): Promise<HandleSelection_t> {
+  private async handleSelection_MarginId(args: {
+    menuId: MenuId_t;
+    menuItemId: MenuItemId_t;
+  }): Promise<HandleSelection_t> {
     const dx = this.dx.sub({ name: 'handleSelection_MarginId' });
     dx.require(args, ['menuId', 'menuItemId']);
     const { menuId, menuItemId } = args;
@@ -904,10 +914,10 @@ export class PaperPrinter {
       value = id; // value is the margin ID
       dx.out(`returning default margin: ${id}`);
     } else {
-      this.fn.uimenumgr.setValueForPersistIdOnMenuId({
+      this.fn.uimenumgr.setValueOfPersistIdForMenuId({
         menuId: kMarginId.id,
         persistId: kMarginId.id as UI_t,
-        value: menuItemId as PersistValue_t
+        value: menuItemId as PersistValue_t,
       });
       void this.regenerateAndUpdateWebview();
     }
@@ -929,7 +939,7 @@ export class PaperPrinter {
       const persistId = triadMain.persistId;
       if (persistId) {
         const persistValue = this.fn.utils.forceNumber(zoomValue) as PersistValue_t;
-        this.fn.uimenumgr.setValueForPersistIdOnMenuId({ menuId, persistId, value: persistValue });
+        this.fn.uimenumgr.setValueOfPersistIdForMenuId({ menuId, persistId, value: persistValue });
         dx.out(`Saved ${persistValue} to menu[${menuId}].persist[${persistId}]`);
       }
     }
@@ -949,16 +959,20 @@ export class PaperPrinter {
    * - Value lookup handles: menu item values, calc templates, numeric parsing
    * - fitPage/fitWidth use {{calc:...}} templates evaluated with viewport dimensions
    */
-  private async handleSelection_ZoomLevel(
-    menuId: MenuId_t,
-    menuItemId: MenuItemId_t,
-    contextDict: contextDict_t
-  ): Promise<HandleSelection_t> {
+  private async handleSelection_ZoomLevel(args: {
+    menuId: MenuId_t;
+    menuItemId: MenuItemId_t;
+  }): Promise<HandleSelection_t> {
     const dx = this.dx.sub({ name: 'handleSelection_ZoomLevel' });
+    dx.require(args, ['menuId', 'menuItemId']);
+    const { menuId, menuItemId } = args;
     dx.out(`ZoomLevel selection: menuItemId=${menuItemId}`);
 
     let id: MenuItemId_t = menuItemId;
-    let value: string | number | boolean = this.fn.uimenumgr.getValueForMenuItemId({ menuId, menuItemId });
+    let value: string | number | boolean = this.fn.uimenumgr.getValueOfMenuItemIdForMenuId({
+      menuId,
+      menuItemId,
+    });
 
     if (menuItemId === UIMenu.defaultId()) {
       // Return default zoom level (100% = 1.0) - no side effects!
@@ -967,10 +981,10 @@ export class PaperPrinter {
       // Do NOT persist or regenerate - this is just a query for the default value
     } else {
       // Save menuItemId to menu.persist[menuId] for tracking which item is selected
-      this.fn.uimenumgr.setValueForPersistIdOnMenuId({
+      this.fn.uimenumgr.setValueOfPersistIdForMenuId({
         menuId,
         persistId: menuId as UI_t,
-        value: menuItemId as PersistValue_t
+        value: menuItemId as PersistValue_t,
       });
 
       // Save actual zoom value to persistId (zoomLevel_setTextEdit handles this)
@@ -985,23 +999,24 @@ export class PaperPrinter {
    * Handle markdown mode menu selection
    * User selects between Raw (syntax highlighted) and Render (HTML output)
    */
-  private async handleSelection_Md(
-    args: { menuId: MenuId_t; menuItemId: MenuItemId_t }
-  ): Promise<HandleSelection_t> {
+  private async handleSelection_Md(args: {
+    menuId: MenuId_t;
+    menuItemId: MenuItemId_t;
+  }): Promise<HandleSelection_t> {
     const dx = this.dx.sub({ name: 'handleSelection_Md' });
     dx.require(args, ['menuId', 'menuItemId']);
     const { menuId, menuItemId } = args;
-    
+
     const id = menuItemId === UIMenu.defaultId() ? kMd_Raw.id : menuItemId;
-    const value = this.fn.uimenumgr.getValueForMenuItemId({ menuId, menuItemId: id });
+    const value = this.fn.uimenumgr.getValueOfMenuItemIdForMenuId({ menuId, menuItemId: id });
 
     if (menuItemId !== UIMenu.defaultId()) {
-      this.fn.uimenumgr.setValueForPersistIdOnMenuId({
+      this.fn.uimenumgr.setValueOfPersistIdForMenuId({
         menuId,
         persistId: menuId as UI_t,
-        value: id as PersistValue_t
+        value: id as PersistValue_t,
       });
-      
+
       void this.regenerateAndUpdateWebview();
     }
 
@@ -1015,9 +1030,10 @@ export class PaperPrinter {
    * Shared handler for both zoom in and zoom out buttons.
    * Direction is determined by menuId: zoomOut = -1, zoomIn = +1
    */
-  private async handleSelection_ZoomInOut(
-    args: { menuId: MenuId_t; menuItemId: MenuItemId_t }
-  ): Promise<HandleSelection_t> {
+  private async handleSelection_ZoomInOut(args: {
+    menuId: MenuId_t;
+    menuItemId: MenuItemId_t;
+  }): Promise<HandleSelection_t> {
     const dx = this.dx.sub({ name: 'handleSelection_ZoomInOut' });
     dx.require(args, ['menuId', 'menuItemId']);
     const { menuId, menuItemId } = args;
@@ -1039,9 +1055,9 @@ export class PaperPrinter {
       }
 
       // Get current zoom value with proper validation
-      const rawZoom = this.fn.uimenumgr.getValueForMenuItemIdSelected(kZoomLevel.id);
+      const rawZoom = this.fn.uimenumgr.getValueOfMenuItemIdSelected(kZoomLevel.id);
       const currentZoom = this.fn.utils.forceNumber(rawZoom);
-      
+
       // Validate currentZoom is numeric; fall back to altValue if not
       if (Number.isNaN(currentZoom) || currentZoom === 0) {
         dx.out(`Invalid currentZoom (${rawZoom}), using altValue: ${kZoomLevel.altValue}`);
@@ -1052,11 +1068,10 @@ export class PaperPrinter {
           return { id, value };
         }
       }
-      
-      const validCurrentZoom = Number.isNaN(currentZoom) || currentZoom === 0 
-        ? Number(kZoomLevel.altValue) 
-        : currentZoom;
-      
+
+      const validCurrentZoom =
+        Number.isNaN(currentZoom) || currentZoom === 0 ? Number(kZoomLevel.altValue) : currentZoom;
+
       dx.out(`${menuId}: currentZoom=${validCurrentZoom}, direction=${direction}`);
 
       // Apply stepAmount in the specified direction, clamp to min/max
@@ -1069,10 +1084,10 @@ export class PaperPrinter {
       dx.out(`${menuId}: newZoom=${newZoom}`);
 
       // Persist the new zoom level (custom value - menuItemId = menuId)
-      this.fn.uimenumgr.setValueForPersistIdOnMenuId({
+      this.fn.uimenumgr.setValueOfPersistIdForMenuId({
         menuId: kZoomLevel.id,
         persistId: kZoomLevel.id as UI_t,
-        value: kZoomLevel.id as PersistValue_t
+        value: kZoomLevel.id as PersistValue_t,
       });
       this.zoomLevel_setTextEdit(newZoom);
       void this.regenerateAndUpdateWebview();

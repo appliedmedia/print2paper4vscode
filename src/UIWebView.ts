@@ -61,7 +61,7 @@ export class UIWebView {
       'utils.forceNumber',
       'utils.templateDictReplace',
       'uimenumgr.getMenuItemIdSelected',
-      'uimenumgr.getValueForMenuItemId',
+      'uimenumgr.getValueOfMenuItemIdForMenuId',
       'uimenumgr.handleMenuItemSelected',
       'pdf.docInfo',
       'ui.addToolbar',
@@ -181,7 +181,7 @@ export class UIWebView {
       // Get zoom level from zoomLevel menu persist
       const zoomMenuItemId =
         this.fn.uimenumgr.getMenuItemIdSelected(kZoomLevel.id) || kZoomLevel.altId;
-      const rawZoom = this.fn.uimenumgr.getValueForMenuItemId({ menuId: kZoomLevel.id, menuItemId: zoomMenuItemId });
+      const rawZoom = this.fn.uimenumgr.getValueOfMenuItemIdForMenuId({ menuId: kZoomLevel.id, menuItemId: zoomMenuItemId });
       // Coerce to number (forceNumber always returns valid number or 0)
       const coercedZoom = this.fn.utils.forceNumber(rawZoom);
       // Use coerced value if finite and positive, otherwise fall back to hardcoded default

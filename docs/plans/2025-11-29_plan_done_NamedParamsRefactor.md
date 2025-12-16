@@ -71,7 +71,7 @@ The following methods meet one or more exclusion criteria and should remain with
 - `getMenuById(id)` - UIMenuMgr.ts
 - `getPersistForMenuId(menuId)` - UIMenuMgr.ts
 - `getMenuItemIdSelected(menuId)` - UIMenuMgr.ts
-- `getValueForMenuItemIdSelected(menuId)` - UIMenuMgr.ts
+- `getValueOfMenuItemIdSelected(menuId)` - UIMenuMgr.ts
 - `addMenu(menu)` - UIMenuMgr.ts
 - `getUIMenu_HTML(menuId)` - UIMenuMgr.ts
 - `setContextDict(contextDict?)` - UIMenuMgr.ts
@@ -817,14 +817,14 @@ Additional consideration:
 
 ---
 
-### ✅ `getValueForPersistIdOnMenuId(menuId, persistId)`
+### ✅ `getValueOfPersistIdForMenuId(menuId, persistId)`
 
-- Previous signature: `getValueForPersistIdOnMenuId(menuId: MenuId_t, persistId: UI_t): PersistValue_t | undefined`
+- Previous signature: `getValueOfPersistIdForMenuId(menuId: MenuId_t, persistId: UI_t): PersistValue_t | undefined`
 
 - Updated signature:
 
 ```typescript
-getValueForPersistIdOnMenuId(args: {
+getValueOfPersistIdForMenuId(args: {
   menuId: MenuId_t;
   persistId: UI_t;
 }): PersistValue_t | undefined
@@ -842,14 +842,14 @@ getValueForPersistIdOnMenuId(args: {
 
 ---
 
-### ✅ `setValueForPersistIdOnMenuId(menuId, persistId, value)`
+### ✅ `setValueOfPersistIdForMenuId(menuId, persistId, value)`
 
-- Previous signature: `setValueForPersistIdOnMenuId(menuId: MenuId_t, persistId: UI_t, value: PersistValue_t): void`
+- Previous signature: `setValueOfPersistIdForMenuId(menuId: MenuId_t, persistId: UI_t, value: PersistValue_t): void`
 
 - Updated signature:
 
 ```typescript
-setValueForPersistIdOnMenuId(args: {
+setValueOfPersistIdForMenuId(args: {
   menuId: MenuId_t;
   persistId: UI_t;
   value: PersistValue_t;
@@ -868,14 +868,14 @@ setValueForPersistIdOnMenuId(args: {
 
 ---
 
-### ✅ `getValueForMenuItemId(menuId, menuItemId)`
+### ✅ `getValueOfMenuItemIdForMenuId(menuId, menuItemId)`
 
-- Previous signature: `getValueForMenuItemId(menuId: MenuId_t, menuItemId: string): number | string`
+- Previous signature: `getValueOfMenuItemIdForMenuId(menuId: MenuId_t, menuItemId: string): number | string`
 
 - Updated signature:
 
 ```typescript
-getValueForMenuItemId(args: {
+getValueOfMenuItemIdForMenuId(args: {
   menuId: MenuId_t;
   menuItemId: string;
 }): number | string

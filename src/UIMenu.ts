@@ -236,7 +236,7 @@ export class UIMenu {
       'persist.set',
       'persist.validateDefault',
       'utils.templateDictReplace',
-      'uimenumgr.getValueForMenuItemIdSelected',
+      'uimenumgr.getValueOfMenuItemIdSelected',
       'uimenumgr.getMenuById'
     );
     this._id = id;
@@ -453,7 +453,7 @@ export class UIMenu {
     let value: string | undefined = undefined;
     
     try {
-      const persistedValue = this.fn.uimenumgr.getValueForMenuItemIdSelected(this._id);
+      const persistedValue = this.fn.uimenumgr.getValueOfMenuItemIdSelected(this._id);
       
       if (persistedValue === undefined || persistedValue === null) {
         dx.out(`No persisted value for ${this._id}`);

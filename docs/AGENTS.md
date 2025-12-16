@@ -394,6 +394,35 @@ Created   Working   Verified
 - **Interfaces**: Follow same `_t` convention if used across files (e.g., `Persist_t`, `UI_t`)
 - **Class instances**: Use lowercase (e.g., `uiwebview`, not `currentWebView`)
 
+#### Method Naming Pattern
+
+**Pattern**: `[action]Of[what]For[context]`
+
+Methods that get or set values should follow this naming structure:
+
+1. **Action**: What the method does (`get`, `set`, `create`, etc.)
+2. **Of**: What it's getting/setting (the direct object)
+3. **For**: Required context parameters (if needed)
+
+**Examples**:
+
+- `getValueOfPersistIdForMenuId` - get the value OF a persistId FOR a specific menuId
+- `setValueOfPersistIdForMenuId` - set the value OF a persistId FOR a specific menuId
+- `getValueOfMenuItemIdForMenuId` - get the value OF a menuItemId FOR a specific menuId
+
+**Rationale**:
+
+- Starts with the action (what you're doing)
+- Identifies the direct object (what you're acting on)
+- Provides context parameters (additional required info)
+- Reads naturally: "Get value of X for Y"
+
+**Anti-patterns**:
+
+- ❌ `getValueForPersistIdOnMenuId` - unclear preposition "On"
+- ❌ `getMenuItemValue` - missing context (which menu?)
+- ❌ `getValueForMenuItemId` - ambiguous (which value? which menu?)
+
 ### Testing Principles
 
 - **No caching in tests**: Always call methods directly (e.g., `app.pdf.docInfo().property`) rather than caching results in variables. Caching adds unexpected complexity and can mask state changes between assertions.
@@ -458,30 +487,82 @@ export class MyComponent {
 }
 ```
 
-#### Factory Pattern for Per-Instance Classes
+#### Generic Factory Pattern (Shared Utilities)
 
-Classes like Yaml and Persist use factory pattern:
+**When to use**: Generic utilities that create customized instances for multiple components
+
+**Example**: `Yaml` - registered in Registry, provides `create()` method that each component uses with their own file/dataStruct:
 
 ```typescript
-export class Yaml<T> {
+export class Yaml {
   static readonly id = 'yaml';
   
-  private constructor(args: { reg: Registry; filePath: string; dataStruct: T }) {
-    // ...
-  }
-  
-  static create<T>(args: { reg: Registry; filePath: string; dataStruct: T }): Yaml<T> {
-    return new Yaml(args);
+  // Factory method exposed via Registry
+  create<T>(args: { filePath: string; dataStruct: T }): YamlInstance<T> {
+    return new YamlInstance({ reg: this.reg, ...args });
   }
 }
 
-// Usage in component
-this._yaml = Yaml.create({ 
-  reg: this.reg, 
+// Usage - each component creates their own instance
+this._yaml = this.fn.yaml.create({ 
   filePath: 'src/MyComponent.yaml',
   dataStruct: MyComponent.kYaml 
 });
 ```
+
+**Characteristics**:
+- Registered in Registry (accessible via `this.fn.yaml`)
+- Generic/reusable across many components
+- Each component gets a customized instance (different file, different dataStruct)
+- Examples: `Yaml`, `Persist` (though Persist is singleton now)
+
+#### Component-Specific Helper Pattern
+
+**When to use**: Helper classes tightly coupled to a single parent component
+
+**Example**: `DocInfo_PDF`, `DocInfo_PaperPrinter` - NOT registered in Registry, created directly by parent:
+
+```typescript
+// Helper class - only used by PDF component
+export class DocInfo_PDF {
+  static readonly id = 'docinfo_pdf';
+  
+  private constructor(args: { reg: Registry }) { /* ... */ }
+  
+  static create(args: { reg: Registry }): DocInfo_PDF {
+    return new DocInfo_PDF(args);
+  }
+}
+
+// In PDF class - create directly, NOT via Registry
+export class PDF {
+  private _docInfo: DocInfo_PDF;
+  
+  constructor(args: { reg: Registry }) {
+    // Create helper directly (not via this.fn)
+    this._docInfo = DocInfo_PDF.create({ reg: this.reg });
+  }
+  
+  // Expose via method so other components can access via Registry
+  docInfo(): DocInfo_PDF {
+    return this._docInfo;
+  }
+}
+
+// Other components access parent's helper via Registry
+const pageWidth = this.fn.pdf.docInfo().pageWidthPx;
+```
+
+**Characteristics**:
+- NOT registered in Registry
+- Tightly coupled to single parent component (PDF has DocInfo_PDF, PaperPrinter has DocInfo_PaperPrinter)
+- Created directly by parent using static `create()` method
+- Parent exposes it via method so others can access through Registry
+- Examples: `DocInfo_PDF`, `DocInfo_PaperPrinter`
+
+**Key distinction**: 
+- **Generic factories** (Yaml): Registered in Registry, used by many components with different configs
+- **Helper classes** (DocInfo): Not registered, owned by one component, exposed via parent's method
 
 #### Singleton Pattern
 

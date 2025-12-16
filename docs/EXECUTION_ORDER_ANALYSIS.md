@@ -79,10 +79,10 @@ PaperPrinter.handlePrintCommandFromVSCode()
 8. Applies transform.persist: "{{display}}/100" → eval("101/100") = 1.01
 9. Calls PaperPrinter.handleSelection_ZoomLevel(menuId, '1.01', contextDict)
    ↓
-   a. setValueForPersistIdOnMenuId('zoomLevel', 'zoomLevel', 1.01)
+   a. setValueOfPersistIdForMenuId('zoomLevel', 'zoomLevel', 1.01)
       → Stores persist value in menu.persist['zoomLevel']
    b. zoomLevel_setTextEdit(1.01)
-      → setValueForPersistIdOnMenuId('zoomLevel', 'zoomLevel_value', 1.01)
+      → setValueOfPersistIdForMenuId('zoomLevel', 'zoomLevel_value', 1.01)
       → **WRITES TO**: menu.persist['zoomLevel_value'] = 1.01
       → **BUG**: Property not registered, no setter to sync to global state
    c. regenerateAndUpdateWebview()
@@ -96,9 +96,9 @@ PaperPrinter.handlePrintCommandFromVSCode()
     a. generatePdf() - creates new PDF with zoom 1.01
     b. displayPdfPanel() - regenerates HTML
        → handleIconSlotTypes() for text_edit
-       → getValueForMenuItemIdSelected('zoomLevel')
+       → getValueOfMenuItemIdSelected('zoomLevel')
           → getMenuItemIdSelected('zoomLevel') returns 'zoomLevel' (custom value)
-          → getValueForMenuItemId('zoomLevel', 'zoomLevel')
+          → getValueOfMenuItemIdForMenuId('zoomLevel', 'zoomLevel')
              → Detects menuItemId === menuId
              → Reads from persistId: menu.persist['zoomLevel_value']
              → **READS**: undefined (getter not defined)
