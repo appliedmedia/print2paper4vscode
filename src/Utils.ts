@@ -24,6 +24,19 @@ export class Utils {
   }
 
   /**
+   * Escape HTML special characters to prevent XSS
+   * Converts: & < > " ' to HTML entities
+   */
+  htmlEscape(str: string): string {
+    return str
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#x27;');
+  }
+
+  /**
    * Generic template replacement function
    * Replaces all {{key}} placeholders in source text with values from dictionary
    * Supports nested placeholders by performing multiple passes until no changes occur

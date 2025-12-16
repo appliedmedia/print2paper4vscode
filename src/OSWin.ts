@@ -30,16 +30,22 @@ export class OSWin extends OS {
     };
   }
   async fileOpenInDefaultApp(path: string): Promise<void> {
-    await this.execAsync(`start "" "${path}"`);
+    // Security: Escape double quotes and backslashes in path to prevent shell injection
+    const escapedPath = path.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+    await this.execAsync(`start "" "${escapedPath}"`);
   }
 
   async fileReveal(path: string): Promise<void> {
-    await this.execAsync(`explorer.exe /select,"${path}"`);
+    // Security: Escape double quotes and backslashes in path to prevent shell injection
+    const escapedPath = path.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+    await this.execAsync(`explorer.exe /select,"${escapedPath}"`);
   }
 
   async filePrint(path: string): Promise<void> {
+    // Security: Escape double quotes and backslashes in path to prevent shell injection
+    const escapedPath = path.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
     await this.execAsync(
-      `rundll32.exe %systemroot%\\system32\\shimgvw.dll,ImageView_PrintTo /pt "${path}"`
+      `rundll32.exe %systemroot%\\system32\\shimgvw.dll,ImageView_PrintTo /pt "${escapedPath}"`
     );
   }
 

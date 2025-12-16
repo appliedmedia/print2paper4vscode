@@ -342,20 +342,8 @@ export class UIMenuMgr {
           if (resolvedValue !== undefined) {
             result = resolvedValue;
           }
-        } else if (
-          typeof value === 'string' &&
-          (value.includes('{{calc:') || value.includes('{{'))
-        ) {
-          const evalResult = this.evaluateCalcTemplate(value, menuId, menuItemId);
-          if (evalResult !== undefined) {
-            result = evalResult;
-          } else {
-            this.dx.error(
-              `Template evaluation failed for ${menuId}.${menuItemId}, value: ${value}`
-            );
-            result = menuItemId;
-          }
         } else {
+          // Direct value (number or string literal)
           result = value;
         }
       }
@@ -427,104 +415,9 @@ export class UIMenuMgr {
     }
   }
 
-  // Evaluate calc template like {{calc:{{pageHeight}}/{{windowHeight}}}}
-  //
-  // SECURITY NOTE: eval() is safe here because:
-  // - Templates are DEVELOPER-DEFINED in PaperPrinter_t.ts constants (not user input)
-  // - Users only SELECT which template to use (pick "fitPage" menuItemId)
-  // - No user-entered formulas can reach eval()
-  //
-  // Process:
-  // 1. Merge contextDict (from webview) with known page dimensions (from PDF)
-  // 2. Always call templateDictReplace on value (replaces all {{vars}})
-  // 3. Look for {{calc:...}} pattern and extract expression
-  // 4. eval() the expression (developer-defined formula)
-  // 5. Replace {{calc:...}} with result
-  // 6. Return final string, or undefined on error
-  //    - If result contains "{{", it's clear which variable didn't have a dict entry
-  //
-  // @param value - Template string to evaluate
-  // @param menuId - Menu ID for error logging context
-  // @param menuItemId - Menu item ID for error logging context
-  // @returns Evaluated result string, or undefined if evaluation fails
-  private evaluateCalcTemplate(
-    value: string,
-    menuId: string,
-    menuItemId: string
-  ): string | undefined {
-    const dx = this.dx.sub({ name: 'evaluateCalcTemplate' });
-
-    try {
-      // Build complete context dictionary: merge contextDict with page dimensions
-      const pageSizePx = this.fn.pdf?.docInfo()?.pageSizePx || { widthPx: 0, heightPx: 0 };
-      dx.out(`PDF page dimensions: ${pageSizePx.widthPx}px x ${pageSizePx.heightPx}px`);
-      const fullContext: Record<string, string> = {
-        // Page dimensions (known on extension side from PDF)
-        pageWidth: String(pageSizePx.widthPx),
-        pageHeight: String(pageSizePx.heightPx),
-      };
-
-      // Add contextDict (window dimensions from webview)
-      // contextDict persists across calls - set once from webview message, used for all subsequent calcs
-      dx.out(`contextDict available: ${this.contextDict ? 'yes' : 'no'}`);
-      if (this.contextDict) {
-        dx.out(`Adding contextDict: ${JSON.stringify(this.contextDict)}`);
-        for (const [key, val] of Object.entries(this.contextDict)) {
-          fullContext[key] = String(val);
-        }
-      }
-
-      // Always replace template variables first (regardless of calc or not)
-      dx.out(`fullContext keys: ${Object.keys(fullContext).join(', ')}`);
-      dx.out(`fullContext: ${JSON.stringify(fullContext)}`);
-      dx.out(`Template to replace: ${value}`);
-      let result = this.fn.utils.templateDictReplace(value, fullContext);
-      dx.out(`After template replacement: ${result}`);
-
-      // Look for {{calc:...}} pattern
-      const calcMatch = result.match(/\{\{calc:\s*(.+?)\s*\}\}/);
-      if (calcMatch) {
-        const expression = calcMatch[1].trim();
-
-        // Check for unreplaced template variables ({{ or }}) inside the expression
-        if (expression.includes('{{') || expression.includes('}}')) {
-          dx.error(`Template has unreplaced vars for ${menuId}.${menuItemId}: ${expression}`);
-          dx.done();
-          return undefined;
-        } else {
-          dx.out(`Extracted calc expression: "${expression}"`);
-
-          try {
-            // biome-ignore lint/security/noGlobalEval: Templates are developer-defined constants; users only select which template to use -- eslint-disable-next-line no-eval
-            const calcResult = eval(expression);
-            result = result.replace(calcMatch[0], String(calcResult));
-            dx.out(`Calc evaluated: ${expression} = ${calcResult}`);
-          } catch (evalError) {
-            dx.error(`Eval failed for ${menuId}.${menuItemId}: ${String(evalError)}`);
-            dx.out(`Template: ${value}`);
-            dx.out(`After replacement: ${result}`);
-            dx.out(`Expression to eval: "${expression}"`);
-            dx.out(`Context dictionary: ${JSON.stringify(fullContext, null, 2)}`);
-            dx.done();
-            return undefined;
-          }
-        }
-      } else if (result.includes('{{') || result.includes('}}')) {
-        // If there are still unreplaced template variables, fail validation
-        dx.error(`Template has unreplaced vars for ${menuId}.${menuItemId}: ${result}`);
-        dx.done();
-        return undefined;
-      }
-
-      dx.out(`Template value resolved: ${value} -> ${result}`);
-      dx.done();
-      return result;
-    } catch (error) {
-      dx.error(`Template evaluation failed for ${menuId}.${menuItemId}: ${String(error)}`);
-      dx.done();
-      return undefined;
-    }
-  }
+  // REMOVED: evaluateCalcTemplate() method
+  // Migrated from eval()-based string templates to type-safe function-based values.
+  // See: resolveUIMenuItemValue() for current implementation using UIMenuItemValueFxn_t.
 
   // Add a menu to the list (called by PaperPrinter)
   addMenu(menu: UIMenu): void {

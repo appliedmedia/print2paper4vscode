@@ -516,11 +516,13 @@ export class UIMenu {
     
     try {
       const yaml = this.yaml();
+      // Security: HTML-escape value to prevent XSS in webview
+      const escapedValue = value ? this.fn.utils.htmlEscape(String(value)) : '';
       const html = this.fn.utils.templateDictReplace(yaml.uimenu_text_edit, {
         itemId,
         constrain,
         width: width ?? '',
-        value: value ? ` value="${value}"` : '',
+        value: value ? ` value="${escapedValue}"` : '',
       });
       dx.done();
       return {
