@@ -95,17 +95,20 @@ export class Utils {
       return !Number.isFinite(parsed) || parsed === 0 ? useForZero : parsed;
     };
 
+    // Don't mutate input - create local copy
+    const dictLocal = { ...dict };
+
     const dictResult: ForceNumbers_t = {};
 
     if (requiredKeys) {
       for (const key of requiredKeys) {
-        if (!(key in dict)) {
-          dict[key] = useForZero;
+        if (!(key in dictLocal)) {
+          dictLocal[key] = useForZero;
         }
       }
     }
 
-    for (const [key, value] of Object.entries(dict)) {
+    for (const [key, value] of Object.entries(dictLocal)) {
       dictResult[key] = force1Number(value);
     }
 
