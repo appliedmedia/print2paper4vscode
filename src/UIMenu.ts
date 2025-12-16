@@ -95,25 +95,9 @@ export interface UIMenuItem_t {
 }
 
 // Menu ID types - UI component identifiers
-// Auto-constructed from PaperPrinter_t.ts _id constants
+// Auto-constructed from PaperPrinter_t.ts kMenus array
 export const kMenuId = [
-  // Top-level menus
-  kPrint.id,
-  kPage.id,
-  kTheme.id,
-  kFontSizeId.id,
-  // Page submenus
-  kPageSizeId.id,
-  kOrient.id,
-  kMarginId.id,
-  // Header/Footer locations
-  kHeader.id,
-  kFooter.id,
-  // Zoom menus
-  kZoomOut.id,
-  kZoomIn.id,
-  kZoomLevel.id,
-  // Composed from header/footer + kHeaderFooter positions
+  ...kMenus.map(menu => menu.id),
   ...kHeaderFooterMenuIds,
 ] as const;
 
