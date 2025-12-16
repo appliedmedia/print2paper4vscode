@@ -5,6 +5,7 @@ import type { FnImport_t } from '../src/types/Registry_t.js';
 import { PaperPrinter } from '../src/PaperPrinter.js';
 import { UIWebView } from '../src/UIWebView.js';
 import { mockContext, mockVSCode } from './test-utils.js';
+import { getFn } from './test-helpers.js';
 
 /**
  * Comprehensive tests for PDF object reuse (Stage 4.3)

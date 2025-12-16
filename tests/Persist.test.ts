@@ -1,4 +1,5 @@
 import { describe, it, beforeEach, afterEach } from 'node:test';
+import { getFn } from './test-helpers.js';
 import * as assert from 'node:assert';
 import { Persist } from '../src/Persist.js';
 import { App } from '../src/App.js';

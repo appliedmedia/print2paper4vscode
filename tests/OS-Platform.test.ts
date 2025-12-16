@@ -5,6 +5,7 @@ import type { FnImport_t } from '../src/types/Registry_t.js';
 import { OSLinux } from '../src/OSLinux.js';
 import { OSWin } from '../src/OSWin.js';
 import { mockContext, mockVSCode } from './test-utils.js';
+import { getFn } from './test-helpers.js';
 
 describe('OS Platform-Specific Classes', () => {
   let app: App;

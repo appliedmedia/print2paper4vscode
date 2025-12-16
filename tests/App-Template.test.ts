@@ -4,6 +4,7 @@ import { App } from '../src/App.js';
 import type { FnImport_t } from '../src/types/Registry_t.js';
 import { Utils } from '../src/Utils.js';
 import { mockContext, mockVSCode } from './test-utils.js';
+import { getFn } from './test-helpers.js';
 
 describe('Template Dictionary Replacement', () => {
   let app: App;

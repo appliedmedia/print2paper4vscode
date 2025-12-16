@@ -6,6 +6,7 @@ import type { FnImport_t } from '../src/types/Registry_t.js';
 import { PaperPrinter } from '../src/PaperPrinter.js';
 import { Persist } from '../src/Persist.js';
 import { mockContext, mockVSCode } from './test-utils.js';
+import { getFn } from './test-helpers.js';
 
 describe('DocInfo_PaperPrinter', () => {
   let app: App;

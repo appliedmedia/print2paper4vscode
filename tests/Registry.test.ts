@@ -5,6 +5,7 @@ import { Diagnostics } from '../src/Diagnostics';
 import { App } from '../src/App';
 import type { FnImport_t } from '../src/types/Registry_t.js';
 import { mockVSCode } from './test-utils.js';
+import { getFn } from './test-helpers.js';
 import type { ExtensionContext } from 'vscode';
 
 // Mock VS Code context

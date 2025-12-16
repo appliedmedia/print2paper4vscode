@@ -5,6 +5,7 @@ import { App } from '../src/App.js';
 import type { FnImport_t } from '../src/types/Registry_t.js';
 import jsPDF from 'jspdf';
 import { mockContext, mockVSCode } from './test-utils.js';
+import { getFn } from './test-helpers.js';
 
 describe('DocInfo_PDF', () => {
   let app: App;

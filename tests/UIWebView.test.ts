@@ -6,6 +6,7 @@ import type { FnImport_t } from '../src/types/Registry_t.js';
 import jsPDF from 'jspdf';
 import type { PDFData_t } from '../src/UIWebView.js';
 import { mockContext, mockVSCode } from './test-utils.js';
+import { getFn } from './test-helpers.js';
 
 describe('UIWebView', () => {
   let app: App;
