@@ -236,6 +236,7 @@ export class UIMenu {
       'persist.set',
       'persist.validateDefault',
       'utils.templateDictReplace',
+      'utils.htmlEscape',
       'uimenumgr.getValueOfMenuItemIdSelected',
       'uimenumgr.getMenuById'
     );
