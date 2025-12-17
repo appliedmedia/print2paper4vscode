@@ -186,6 +186,8 @@ export const kHeaderFooter = {
   },
   iconSlotTriad: { begin: '', main: '', end: '' },
   altId: '',
+  methodName: '',
+  isFlyout: true,
   none: 'none',
   menuItems: [
     { id: 'begin', displayName: '⇤' },
@@ -206,14 +208,11 @@ export const kHeaderFooterMenuItemsById = Object.fromEntries(
   kHeaderFooter.menuItems.map(item => [item.id, item])
 ) as unknown as Record<HeaderFooterPos_t, { id: string; displayName: string }>;
 
-// Header menu definition
+// Header menu definition - spreads shared config from kHeaderFooter
 export const kHeader = {
+  ...kHeaderFooter,
   id: kHeaderFooter.id.header,
   displayName: kHeaderFooter.displayName.header,
-  iconSlotTriad: { begin: '', main: '', end: '' },
-  altId: '',
-  methodName: '',
-  isFlyout: true,
   flyoutMenuItemIds: kHeaderFooter.menuItems.map(
     item => `${kHeaderFooter.id.header}_${item.id}`
   ) as readonly string[],
@@ -223,14 +222,11 @@ export const kHeader = {
   })),
 } as const;
 
-// Footer menu definition
+// Footer menu definition - spreads shared config from kHeaderFooter
 export const kFooter = {
+  ...kHeaderFooter,
   id: kHeaderFooter.id.footer,
   displayName: kHeaderFooter.displayName.footer,
-  iconSlotTriad: { begin: '', main: '', end: '' },
-  altId: '',
-  methodName: '',
-  isFlyout: true,
   flyoutMenuItemIds: kHeaderFooter.menuItems.map(
     item => `${kHeaderFooter.id.footer}_${item.id}`
   ) as readonly string[],

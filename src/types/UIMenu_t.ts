@@ -72,24 +72,9 @@ export interface UIMenuItem_t {
 }
 
 // Menu ID types - UI component identifiers
-// Auto-constructed from PaperPrinter_t.ts _id constants
+// Auto-constructed from kMenus array
 export const kMenuId = [
-  // Top-level menus
-  kPrint.id,
-  kPage.id,
-  kTheme.id,
-  kFontSizeId.id,
-  // Page submenus
-  kPageSizeId.id,
-  kOrient.id,
-  kMarginId.id,
-  // Header/Footer locations
-  kHeader.id,
-  kFooter.id,
-  // Zoom menus
-  kZoomOut.id,
-  kZoomIn.id,
-  kZoomLevel.id,
+  ...kMenus.map(m => m.id),
   // Composed from header/footer + kHeaderFooter positions
   ...kHeaderFooterMenuIds,
 ] as const;
@@ -108,7 +93,8 @@ export const kMenuItemId = [
 
     // If menu has constrained input widget, include menu.id as valid menuItemId (for custom values)
     const hasConstrainedInput =
-      typeof menu.iconSlotTriad.main === 'object' && menu.iconSlotTriad.main.constrain !== undefined;
+      typeof menu.iconSlotTriad.main === 'object' &&
+      menu.iconSlotTriad.main.constrain !== undefined;
 
     if (hasConstrainedInput || menuItemIds.length === 0) {
       // Include menu.id for: text_edit menus OR button-only menus
@@ -130,4 +116,3 @@ export interface HandleSelection_t {
   id: string;
   value: string | number | boolean;
 }
-

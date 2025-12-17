@@ -5,13 +5,10 @@ import { YamlInstance } from './Yaml';
 import type { FnImport_t } from './types/Registry_t';
 import { kMenus } from './types/PaperPrinter_t';
 import type {
-  TextEditConstraint_t,
   iconSlotTriad_main_t,
   iconSlotTriad_t,
   UIMenuItem_t,
-  kMenuId,
   MenuId_t,
-  kMenuItemId,
   MenuItemId_t,
   HandleSelection_t,
 } from './types/UIMenu_t';
