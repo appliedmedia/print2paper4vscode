@@ -133,7 +133,7 @@ export abstract class OS {
 
   // Common filesystem helpers consolidated here
   ensureDir(dirPath: string): void {
-    fs.mkdirSync(dirPath, { recursive: true });
+    fs.mkdirSync(dirPath, { recursive: true, mode: 0o755 });
   }
 
   fileWrite(args: { filePath: string; content: string | Buffer }): void {
@@ -141,7 +141,7 @@ export abstract class OS {
     dx.require(args, ['filePath', 'content']);
     const { filePath, content } = args;
     try {
-      fs.writeFileSync(filePath, content);
+      fs.writeFileSync(filePath, content, { mode: 0o644 });
     } catch (err) {
       dx.error(`Failed to write ${filePath}: ${err}`);
       throw err; // Re-throw to preserve existing behavior

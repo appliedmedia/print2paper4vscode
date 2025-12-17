@@ -1,12 +1,13 @@
 # OSMac.yaml - AppleScript templates for macOS operations
 # ⚠️ Keep comments in this file minimal because it has to get copied at runtime. ⚠️
 
-apple_script_print_via_finder: |
-  tell application "Finder" to print POSIX file "{{file_path}}"
-
 apple_script_open_preview_print_dialog: |
   tell application "Preview"
-    open POSIX file "{{file_path}}"
     activate
-    print POSIX file "{{file_path}}"
+    open POSIX file "{{file_path}}"
   end tell
+  tell application "System Events"
+    delay 0.5
+    keystroke "p" using command down
+  end tell
+  # Note: Using 'print POSIX file' causes "could not be opened" error; use Cmd-P instead

@@ -279,24 +279,26 @@ export class UIMenu {
   private handleIconSlotTypes_main_constrain(
     iconSlotTriadMain: iconSlotTriad_main_t
   ): string | undefined {
-    if (!iconSlotTriadMain.constrain) {
-      return undefined;
+    let result: string | undefined = undefined;
+
+    if (iconSlotTriadMain.constrain) {
+      // Validate regex pattern
+      try {
+        void new RegExp(iconSlotTriadMain.constrain.regex);
+        // Build data attributes from constrain object (all three work together)
+        result = [
+          ` data-{{ns_}}constrain_regex="${iconSlotTriadMain.constrain.regex}"`,
+          ` data-{{ns_}}constrain_min="${iconSlotTriadMain.constrain.min}"`,
+          ` data-{{ns_}}constrain_max="${iconSlotTriadMain.constrain.max}"`,
+        ].join('');
+      } catch (regexError) {
+        const message = `ERROR: ${regexError} - Invalid constrain.regex: ${iconSlotTriadMain.constrain.regex}`;
+        this.dx.error(message);
+        throw new Error(message);
+      }
     }
 
-    // Validate regex pattern
-    try {
-      void new RegExp(iconSlotTriadMain.constrain.regex);
-    } catch (regexError) {
-      this.dx.error(`Invalid constrain.regex: ${iconSlotTriadMain.constrain.regex}`);
-      throw new Error(`Invalid constrain.regex: ${iconSlotTriadMain.constrain.regex}`);
-    }
-
-    // Build data attributes from constrain object (all three work together)
-    return [
-      ` data-{{ns_}}constrain_regex="${iconSlotTriadMain.constrain.regex}"`,
-      ` data-{{ns_}}constrain_min="${iconSlotTriadMain.constrain.min}"`,
-      ` data-{{ns_}}constrain_max="${iconSlotTriadMain.constrain.max}"`,
-    ].join('');
+    return result;
   }
 
   /**
@@ -480,16 +482,9 @@ export class UIMenu {
       // Generate flyout HTML for any menu items that have flyouts
       const flyoutCache: Record<string, string> = {};
       for (const flyoutMenuItemId of this.flyoutMenuItemIds) {
-        try {
-          const flyoutMenu = this.fn.uimenumgr.getMenuById(flyoutMenuItemId);
-          const flyoutHtml = await flyoutMenu.getHTML(visited);
-          flyoutCache[flyoutMenuItemId] = flyoutHtml;
-        } catch (error) {
-          this.dx.out(
-            `ERROR generating flyout ${flyoutMenuItemId} for menu ${this._id}: ${String(error)}`
-          );
-          flyoutCache[flyoutMenuItemId] = `<!-- ERROR: ${error} -->`;
-        }
+        const flyoutMenu = this.fn.uimenumgr.getMenuById(flyoutMenuItemId);
+        const flyoutHtml = await flyoutMenu.getHTML(visited);
+        flyoutCache[flyoutMenuItemId] = flyoutHtml;
       }
 
       // Generate menu items HTML using the new getItemHTML function

@@ -70,18 +70,13 @@ export class OSMac extends OS {
   }
 
   async filePrint(path: string): Promise<void> {
-    await this.executeAppleScript('apple_script_print_via_finder', { file_path: path });
+    // Security: Escape double quotes and backslashes in path to prevent shell injection
+    const escapedPath = path.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+    await this.execAsync(`lpr "${escapedPath}"`);
   }
 
   async fileOpenPrintDialog(path: string): Promise<void> {
-    try {
-      await this.executeAppleScript('apple_script_open_preview_print_dialog', { file_path: path });
-    } catch (error) {
-      // AppleScript 'print' command is asynchronous and exits before dialog closes
-      // This causes an error even though the print dialog opens successfully
-      // Ignore the error if it's just the expected async completion issue
-      this.dx.out(`Print dialog opened (AppleScript async completion): ${error}`);
-    }
+    await this.executeAppleScript('apple_script_open_preview_print_dialog', { file_path: path });
   }
 
   done(): void {
