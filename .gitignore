@@ -10,8 +10,6 @@ package.json
 *.log
 # OS
 .DS_Store
-# IDE
-.vscode/
 # Env
 .env
 .env.*
