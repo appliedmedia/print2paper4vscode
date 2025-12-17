@@ -7,21 +7,8 @@
 import type { ForceNumber_scalar_t } from '../Utils';
 import type { UI_t } from '../UI';
 import {
-  kPageSizeId,
-  kOrient,
-  kMarginId,
   kHeaderFooter,
   kHeaderFooterMenuIds,
-  kFontSizeId,
-  kHeader,
-  kFooter,
-  kPrint,
-  kPage,
-  kTheme,
-  kZoomOut,
-  kZoomIn,
-  kZoomLevel,
-  kMd,
   kMenus,
   type UIMenuItemValueFxn_t,
 } from './PaperPrinter_t';

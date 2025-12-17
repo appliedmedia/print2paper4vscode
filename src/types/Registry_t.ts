@@ -18,6 +18,7 @@
  */
 export type FnImport_t = {
   [componentId: string]: {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
     [methodName: string]: Function;
   };
 };
