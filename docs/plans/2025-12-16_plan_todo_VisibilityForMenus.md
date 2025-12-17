@@ -207,8 +207,6 @@ export const kMd = {
 
 **Location**: `src/UIMenuMgr.ts` (around line 389)
 
-**Note**: Current branch has `dict_nums` renamed to `dict` - will need to undo those renames before implementing this step, then apply proper combined dict pattern.
-
 **Change from:**
 
 ```typescript
