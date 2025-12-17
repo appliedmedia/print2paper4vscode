@@ -3,7 +3,6 @@ import * as assert from 'node:assert';
 import { UI } from '../src/UI.js';
 import { createTestApp, TestApp } from './test-utils.js';
 import { mockContext, mockVSCode } from './test-utils.js';
-import { getFn } from './test-helpers.js';
 
 describe('UI', () => {
   let app: TestApp;
@@ -36,13 +35,13 @@ describe('UI', () => {
 
   it('should choose save location', async () => {
     // Mock showSaveDialog to return a URI
-    const originalShowSaveDialog = fn.vscodeapis.showSaveDialog;
+    const originalShowSaveDialog = app.vscodeapis.showSaveDialog;
     const mockUri = {
       fsPath: '/test/save.pdf',
       path: '/test/save.pdf',
       toString: () => 'file:///test/save.pdf'
     } as any;
-    fn.vscodeapis.showSaveDialog = async (options?: any) => mockUri;
+    app.vscodeapis.showSaveDialog = async (options?: any) => mockUri;
 
     // Recreate UI instance after mocking so it picks up the mocked method
     const testUi = new UI({ reg: app.reg });
@@ -52,18 +51,18 @@ describe('UI', () => {
     assert.strictEqual(path, '/test/save.pdf');
     
     testUi.done();
-    fn.vscodeapis.showSaveDialog = originalShowSaveDialog;
+    app.vscodeapis.showSaveDialog = originalShowSaveDialog;
   });
 
   it('should return null when save dialog is cancelled', async () => {
-    const originalShowSaveDialog = fn.vscodeapis.showSaveDialog;
-    fn.vscodeapis.showSaveDialog = async () => undefined;
+    const originalShowSaveDialog = app.vscodeapis.showSaveDialog;
+    app.vscodeapis.showSaveDialog = async () => undefined;
 
     try {
       const path = await ui.chooseSaveLocation('test.pdf');
       assert.strictEqual(path, null);
     } finally {
-      fn.vscodeapis.showSaveDialog = originalShowSaveDialog;
+      app.vscodeapis.showSaveDialog = originalShowSaveDialog;
     }
   });
 

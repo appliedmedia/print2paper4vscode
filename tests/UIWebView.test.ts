@@ -5,7 +5,6 @@ import { createTestApp, TestApp } from './test-utils.js';
 import jsPDF from 'jspdf';
 import type { PDFData_t } from '../src/UIWebView.js';
 import { mockContext, mockVSCode } from './test-utils.js';
-import { getFn } from './test-helpers.js';
 
 describe('UIWebView', () => {
   let app: TestApp;
@@ -28,10 +27,10 @@ describe('UIWebView', () => {
     const doc = new jsPDF();
     doc.text('Test PDF Content', 10, 10);
     
-    // Set up fn.pdf.docInfo() with the PDF document
+    // Set up app.pdf.docInfo() with the PDF document
     // pageTotal and pageSizePx are computed getters, so just set pdfDoc
-    fn.pdf.docInfo().pdfDoc = doc;
-    fn.pdf.docInfo().title = 'Test PDF';
+    app.pdf.docInfo().pdfDoc = doc;
+    app.pdf.docInfo().title = 'Test PDF';
 
     try {
       await uiWebView.displayPdfPanel();
@@ -48,12 +47,12 @@ describe('UIWebView', () => {
     doc.addPage();
     doc.text('Page 2', 10, 10);
     
-    // Set up fn.pdf.docInfo() with the PDF document
+    // Set up app.pdf.docInfo() with the PDF document
     // pageTotal and pageSizePx are computed getters, so just set pdfDoc
-    fn.pdf.docInfo().pdfDoc = doc;
-    fn.pdf.docInfo().title = 'Multi-Page PDF';
+    app.pdf.docInfo().pdfDoc = doc;
+    app.pdf.docInfo().title = 'Multi-Page PDF';
 
-    assert.strictEqual(fn.pdf.docInfo().pageTotal, 2);
+    assert.strictEqual(app.pdf.docInfo().pageTotal, 2);
     
     try {
       await uiWebView.displayPdfPanel();
@@ -64,8 +63,8 @@ describe('UIWebView', () => {
   });
 
   it('should validate PDF data requirements', async () => {
-    // Set up fn.pdf.docInfo() with no PDF document
-    fn.pdf.docInfo().pdfDoc = null;
+    // Set up app.pdf.docInfo() with no PDF document
+    app.pdf.docInfo().pdfDoc = null;
 
     try {
       await uiWebView.displayPdfPanel();

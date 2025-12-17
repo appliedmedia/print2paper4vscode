@@ -1,5 +1,7 @@
 import type { Registry } from './Registry';
 import type { contextDict_t } from './types/UI_t';
+import type { UI_t } from './UI';
+import type { ForceNumber_scalar_t } from './App';
 import { Diagnostics } from './Diagnostics';
 import { YamlInstance } from './Yaml';
 import type { FnImport_t } from './types/Registry_t';

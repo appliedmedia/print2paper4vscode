@@ -4,7 +4,6 @@ import { createTestApp, TestApp } from './test-utils.js';
 import { OSLinux } from '../src/OSLinux.js';
 import { OSWin } from '../src/OSWin.js';
 import { mockContext, mockVSCode } from './test-utils.js';
-import { getFn } from './test-helpers.js';
 
 describe('OS Platform-Specific Classes', () => {
   let app: TestApp;
@@ -82,8 +81,8 @@ describe('OS Platform-Specific Classes', () => {
     it('should create correct OS instance for platform', () => {
       // The app.os should be one of the platform-specific classes
       assert.ok(app.os, 'Should have OS instance');
-      assert.ok(typeof fn.os.fileOpenInDefaultApp === 'function');
-      assert.ok(typeof fn.os.fileReveal === 'function');
+      assert.ok(typeof app.os.fileOpenInDefaultApp === 'function');
+      assert.ok(typeof app.os.fileReveal === 'function');
     });
   });
 });

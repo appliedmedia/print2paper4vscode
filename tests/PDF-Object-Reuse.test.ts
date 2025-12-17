@@ -4,7 +4,6 @@ import { createTestApp, TestApp } from './test-utils.js';
 import { PaperPrinter } from '../src/PaperPrinter.js';
 import { UIWebView } from '../src/UIWebView.js';
 import { mockContext, mockVSCode } from './test-utils.js';
-import { getFn } from './test-helpers.js';
 
 /**
  * Comprehensive tests for PDF object reuse (Stage 4.3)
@@ -30,11 +29,11 @@ describe('PDF Object Reuse Tests', () => {
 
       // Generate PDF
       await paperPrinter['generatePdf']();
-      const pdfDoc1 = fn.pdf.docInfo();
+      const pdfDoc1 = app.pdf.docInfo();
 
       // Generate PDF again (should reuse same object or create new one)
       await paperPrinter['generatePdf']();
-      const pdfDoc2 = fn.pdf.docInfo();
+      const pdfDoc2 = app.pdf.docInfo();
 
       // Both should be valid PDFs
       assert.ok(pdfDoc1, 'First PDF should be generated');
@@ -56,7 +55,7 @@ describe('PDF Object Reuse Tests', () => {
       paperPrinter.docInfo().languageId = 'javascript';
 
       await paperPrinter['generatePdf']();
-      const pdfDoc = fn.pdf.docInfo();
+      const pdfDoc = app.pdf.docInfo();
 
       assert.ok(pdfDoc, 'PDF should be generated');
 
@@ -110,7 +109,7 @@ describe('PDF Object Reuse Tests', () => {
 
       // Generate PDF
       await paperPrinter['generatePdf']();
-      const pdfDoc = fn.pdf.docInfo();
+      const pdfDoc = app.pdf.docInfo();
 
       assert.ok(pdfDoc, 'PDF should be generated');
 
@@ -119,7 +118,7 @@ describe('PDF Object Reuse Tests', () => {
 
       // Display in webview (this should use the same PDF object)
       // Use the singleton UIWebView instance from app
-      await fn.uiwebview.displayPdfPanel();
+      await app.uiwebview.displayPdfPanel();
 
       // Get ArrayBuffer after webview display
       const arrayBufferAfter = pdfDoc.asArrayBuffer();
@@ -163,7 +162,7 @@ describe('PDF Object Reuse Tests', () => {
       paperPrinter.docInfo().languageId = 'javascript';
 
       await paperPrinter['generatePdf']();
-      const pdfDoc = fn.pdf.docInfo();
+      const pdfDoc = app.pdf.docInfo();
 
       assert.ok(pdfDoc, 'PDF should be generated');
 
@@ -181,7 +180,7 @@ describe('PDF Object Reuse Tests', () => {
 
       // Display in webview using DocInfo_PDF directly
       // Use the singleton UIWebView instance from app
-      const panelId = await fn.uiwebview.displayPdfPanel();
+      const panelId = await app.uiwebview.displayPdfPanel();
 
       assert.ok(panelId, 'Panel should be created');
       app.done();
@@ -204,7 +203,7 @@ describe('PDF Object Reuse Tests', () => {
       paperPrinter.docInfo().languageId = 'javascript';
 
       await paperPrinter['generatePdf']();
-      const pdfDoc = fn.pdf.docInfo();
+      const pdfDoc = app.pdf.docInfo();
 
       assert.ok(pdfDoc, 'PDF should be generated');
 
@@ -256,7 +255,7 @@ describe('PDF Object Reuse Tests', () => {
       paperPrinter.docInfo().languageId = 'javascript';
 
       await paperPrinter['generatePdf']();
-      const pdfDoc = fn.pdf.docInfo();
+      const pdfDoc = app.pdf.docInfo();
 
       assert.ok(pdfDoc, 'PDF should be generated');
 
@@ -306,13 +305,13 @@ describe('PDF Object Reuse Tests', () => {
       paperPrinter.docInfo().languageId = 'javascript';
 
       // Don't generate PDF - pdfDoc should be null
-      assert.ok(fn.pdf.docInfo().pdfDoc === null, 'PDF should be null before generation');
+      assert.ok(app.pdf.docInfo().pdfDoc === null, 'PDF should be null before generation');
 
       // Try to display webview without generating PDF first
       // This should fail because pdfDoc is null
       try {
         // Use the singleton UIWebView instance from app
-        await fn.uiwebview.displayPdfPanel();
+        await app.uiwebview.displayPdfPanel();
         assert.fail('Should throw error when PDF is not generated');
       } catch (error) {
         assert.ok(
@@ -338,7 +337,7 @@ describe('PDF Object Reuse Tests', () => {
 
       // Generate PDF with empty code
       await paperPrinter['generatePdf']();
-      const pdfDoc = fn.pdf.docInfo();
+      const pdfDoc = app.pdf.docInfo();
 
       assert.ok(pdfDoc, 'PDF should be generated even with empty code');
 

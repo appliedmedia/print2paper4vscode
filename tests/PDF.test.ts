@@ -5,7 +5,7 @@ import { DocInfo_PDF } from '../src/DocInfo_PDF.js';
 import { createTestApp, TestApp } from './test-utils.js';
 import jsPDF from 'jspdf';
 import { mockContext, mockVSCode } from './test-utils.js';
-import { installHeaderFooterMenuStubs, getFn } from './test-helpers.js';
+import { installHeaderFooterMenuStubs } from './test-helpers.js';
 
 describe('PDF', () => {
   let app: TestApp;
@@ -14,12 +14,11 @@ describe('PDF', () => {
   beforeEach(() => {
     app = createTestApp({ context: mockContext, vscode: mockVSCode });
     installHeaderFooterMenuStubs(app);
-    fn = getFn(app);
 
     pdf = new PDF({ reg: app.reg });
     
     // Set up paperprinter docInfo for tests
-    fn.paperprinter.docInfo().printTitle = 'Test Document';
+    app.paperprinter.docInfo().printTitle = 'Test Document';
   });
 
   afterEach(() => {

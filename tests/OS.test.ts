@@ -6,7 +6,6 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { tmpdir } from 'os';
 import { mockContext, mockVSCode } from './test-utils.js';
-import { getFn } from './test-helpers.js';
 
 describe('OS Base Class', () => {
   let app: TestApp;
@@ -219,7 +218,7 @@ describe('OS Base Class', () => {
     it('should convert src attributes to webview URIs', async () => {
       const html = '<img src="test.png">';
       // Create a panel first so htmlSrcPathToURI can find it
-      const panelId = await fn.vscodeapis.getOrCreateWebviewPanel({ title: 'Test Panel', html: '<html></html>' });
+      const panelId = await app.vscodeapis.getOrCreateWebviewPanel({ title: 'Test Panel', html: '<html></html>' });
       const result = os.htmlSrcPathToURI({ html, webviewPanelId: panelId });
       assert.ok(typeof result === 'string');
       // Should have converted the src path

@@ -2,7 +2,6 @@ import { test, describe } from 'node:test';
 import * as assert from 'node:assert';
 import { createTestApp, TestApp } from './test-utils.js';
 import { mockContext, mockVSCode } from './test-utils.js';
-import { getFn } from './test-helpers.js';
 
 describe('System Integration Tests', () => {
   test('should initialize all components correctly', async () => {
@@ -26,18 +25,18 @@ describe('System Integration Tests', () => {
     // Note: Stylize no longer has init() - highlighter initialized lazily when needed
     
     // Test that Shiki themes are loaded
-    const shikiThemes = fn.stylize.getShikiThemes();
+    const shikiThemes = app.stylize.getShikiThemes();
     assert.ok(shikiThemes.length > 0, 'Should have Shiki themes');
     assert.ok(
-      shikiThemes.some((t: any) => t.id.includes('light')),
+      shikiThemes.some(t => t.id.includes('light')),
       'Should have light themes'
     );
 
     // Test theme filtering
-    const lightThemes = fn.stylize.getShikiThemes('light|bright|day');
+    const lightThemes = app.stylize.getShikiThemes('light|bright|day');
     assert.ok(lightThemes.length > 0, 'Should have filtered themes');
     assert.ok(
-      lightThemes.every((t: any) => /light|bright|day/i.test(t.id)),
+      lightThemes.every(t => /light|bright|day/i.test(t.id)),
       'Themes should match filter'
     );
     
@@ -90,9 +89,9 @@ describe('System Integration Tests', () => {
     const app = createTestApp({ context: mockContext, vscode: mockVSCode });
     
     // Set up document
-    fn.paperprinter.docInfo().rawCode = 'const x = 42;';
-    fn.paperprinter.docInfo().languageId = 'javascript';
-    fn.paperprinter.docInfo().printTitle = 'Test';
+    app.paperprinter.docInfo().rawCode = 'const x = 42;';
+    app.paperprinter.docInfo().languageId = 'javascript';
+    app.paperprinter.docInfo().printTitle = 'Test';
     
     // Create menus
     (app.paperprinter as any).createMenus();
@@ -100,8 +99,8 @@ describe('System Integration Tests', () => {
     // Generate PDF
     await (app.paperprinter as any).generatePdf();
     
-    assert.ok(fn.pdf.docInfo().pdfDoc, 'Should generate PDF');
-    assert.ok(fn.pdf.docInfo().pageTotal > 0, 'Should have pages');
+    assert.ok(app.pdf.docInfo().pdfDoc, 'Should generate PDF');
+    assert.ok(app.pdf.docInfo().pageTotal > 0, 'Should have pages');
     
     app.done();
   });
@@ -115,7 +114,7 @@ describe('System Integration Tests', () => {
     assert.strictEqual(app.paperprinter['reg'], app.reg, 'PaperPrinter should reference registry');
     
     // Test that shared services work
-    const typography = fn.vscodeapis.getEditorTypography();
+    const typography = app.vscodeapis.getEditorTypography();
     assert.ok(typography.fontSize > 0, 'Should get typography');
     assert.ok(typography.sizeToHeightRatio > 0, 'Should have ratio');
     

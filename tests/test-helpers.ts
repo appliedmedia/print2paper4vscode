@@ -3,7 +3,7 @@ import type { TestApp } from './test-utils.js';
 /**
  * Installs header/footer menu stubs to prevent "Menu not found" errors in tests.
  * 
- * This helper mocks the uimenumgr.getMenuItemIdSelected to return 'none' for all
+ * This helper mocks app.uimenumgr.getMenuItemIdSelected to return 'none' for all
  * header_ and footer_ menu items, while falling back to the original implementation
  * for other menus.
  * 
@@ -21,12 +21,4 @@ export function installHeaderFooterMenuStubs(app: TestApp): void {
       return undefined;
     }
   };
-}
-
-/**
- * Get fn (function imports) from app for use in tests.
- * This exercises the same Registry code path as production.
- */
-export function getFn(app: App): FnImport_t {
-  return app.reg.use();
 }
