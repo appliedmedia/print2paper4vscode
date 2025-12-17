@@ -30,7 +30,6 @@ import type {
   iconSlotTriad_main_t,
 } from './types/UIMenu_t';
 import { UIMenu } from './UIMenu';
-import { UIWebView } from './UIWebView';
 import { DocInfo_PaperPrinter } from './DocInfo_PaperPrinter';
 import type { LanguageId_t } from './Stylize';
 import { YamlInstance } from './Yaml';
@@ -38,29 +37,24 @@ import { kEmptyNoPersist } from './Persist';
 import {
   type PageSizeIdMenuItems_t,
   type MarginIdMenuItems_t,
-  type HeaderFooterPos_t,
   type HeaderFooterSubmenu_t,
   type UIMenuItemValueFxn_t,
   kPageSizeId,
   kOrient,
   kMarginId,
   kHeaderFooter,
-  kHeaderFooterMenuIds,
   kFontSizeId,
   kPrint,
   kPageSizeIdById,
   kMarginIdById,
-  kHeaderFooterMenuItemsById,
   kHeader,
   kFooter,
-  kPage,
   kTheme,
   kZoomOut,
   kZoomIn,
   kZoomLevel,
   kMd,
   kMd_Raw,
-  kMd_Render,
   kMenus,
 } from './types/PaperPrinter_t';
 
@@ -353,6 +347,7 @@ export class PaperPrinter {
           const handler = this[`handleSelection_${methodName}` as keyof this] as (args: {
             menuId: MenuId_t;
             menuItemId: MenuItemId_t;
+            contextDict?: contextDict_t;
           }) => Promise<HandleSelection_t>;
           return handler.call(this, { menuId, menuItemId });
         }).bind(this),
@@ -629,8 +624,8 @@ export class PaperPrinter {
     menuItemId: MenuItemId_t;
   }): Promise<HandleSelection_t> {
     const dx = this.dx.sub({ name: 'handleSelection_Print' });
-    dx.require(args, ['menuId', 'menuItemId']);
-    const { menuId, menuItemId } = args;
+    dx.require(args, ['menuItemId']);
+    const { menuItemId } = args;
     let id = kEmptyNoPersist;
     let value: string | number | boolean = kEmptyNoPersist;
     // defaultId will return empty id, empty value,
@@ -641,15 +636,16 @@ export class PaperPrinter {
 
       if (this.fn.pdf.readyToPrint()) {
         try {
+            const defaultString = 'Print Output';
           if (menuItemId === 'preview') {
             dx.out('Printing with preview...');
-            await this.fn.pdf.printWithPreview(this.docInfo().printTitle || 'Print Output');
+            await this.fn.pdf.printWithPreview(this.docInfo().printTitle || defaultString);
           } else if (menuItemId === 'direct') {
             dx.out('Printing directly...');
-            await this.fn.pdf.printDirectly(this.docInfo().printTitle || 'Print Output');
+            await this.fn.pdf.printDirectly(this.docInfo().printTitle || defaultString);
           } else if (menuItemId === 'save') {
             dx.out('Saving as PDF...');
-            await this.fn.pdf.saveAsPDF(this.docInfo().printTitle || 'Print Output');
+            await this.fn.pdf.saveAsPDF(this.docInfo().printTitle || defaultString);
           }
           dx.out(`Print action ${String(menuItemId)} completed successfully`);
         } catch (error) {
@@ -734,8 +730,8 @@ export class PaperPrinter {
     menuItemId: MenuItemId_t;
   }): Promise<HandleSelection_t> {
     const dx = this.dx.sub({ name: 'handleSelection_Theme' });
-    dx.require(args, ['menuId', 'menuItemId']);
-    const { menuId, menuItemId } = args;
+    dx.require(args, ['menuItemId']);
+    const { menuItemId } = args;
 
     let id = menuItemId;
     let value: string | number | boolean = id; // value is the theme ID
@@ -769,8 +765,8 @@ export class PaperPrinter {
     menuItemId: MenuItemId_t;
   }): Promise<HandleSelection_t> {
     const dx = this.dx.sub({ name: 'handleSelection_Text' });
-    dx.require(args, ['menuId', 'menuItemId']);
-    const { menuId, menuItemId } = args;
+    dx.require(args, ['menuItemId']);
+    const { menuItemId } = args;
 
     let id = menuItemId; // If we're here, someone picked a valid menu item, we don't need to be so overly checking
     let value: string | number | boolean = id; // In this case, the value is the fontSizePx which happens to be the id
@@ -804,8 +800,8 @@ export class PaperPrinter {
     menuItemId: MenuItemId_t;
   }): Promise<HandleSelection_t> {
     const dx = this.dx.sub({ name: 'handleSelection_PageSizeId' });
-    dx.require(args, ['menuId', 'menuItemId']);
-    const { menuId, menuItemId } = args;
+    dx.require(args, ['menuItemId']);
+    const { menuItemId } = args;
 
     let id = menuItemId;
     let value: string | number | boolean = id; // value is the page size ID
@@ -844,8 +840,8 @@ export class PaperPrinter {
     menuItemId: MenuItemId_t;
   }): Promise<HandleSelection_t> {
     const dx = this.dx.sub({ name: 'handleSelection_Orient' });
-    dx.require(args, ['menuId', 'menuItemId']);
-    const { menuId, menuItemId } = args;
+    dx.require(args, ['menuItemId']);
+    const { menuItemId } = args;
 
     let id = menuItemId;
     let value: string | number | boolean = id; // value is the orient ID
@@ -873,8 +869,8 @@ export class PaperPrinter {
     menuItemId: MenuItemId_t;
   }): Promise<HandleSelection_t> {
     const dx = this.dx.sub({ name: 'handleSelection_MarginId' });
-    dx.require(args, ['menuId', 'menuItemId']);
-    const { menuId, menuItemId } = args;
+    dx.require(args, ['menuItemId']);
+    const { menuItemId } = args;
     const defaultMarginId: MarginIdMenuItems_t = 'normal';
 
     let id = menuItemId;
