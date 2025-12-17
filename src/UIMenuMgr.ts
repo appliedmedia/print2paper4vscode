@@ -11,12 +11,10 @@ import type {
   HandleSelection_t,
   UIMenuItem_t,
   iconSlotTriad_t,
-  iconSlotTriad_main_t,
 } from './types/UIMenu_t';
 import { kMenuId, kMenuItemId } from './types/UIMenu_t';
 import { Diagnostics } from './Diagnostics';
 import {
-  kFontSizeId,
   type UIMenuItemDict_t,
   type UIMenuItemValueFxn_t,
 } from './types/PaperPrinter_t';
@@ -104,7 +102,7 @@ export class UIMenuMgr {
     }
     // 3. Check against theme IDs
     else {
-      const validThemes = this.fn.stylize.getThemes().map((t: any) => t.id);
+      const validThemes = this.fn.stylize.getThemes().map(t => t.id);
       isValid = validThemes.includes(id);
     }
 
@@ -197,7 +195,7 @@ export class UIMenuMgr {
         dx.out(`Text_edit input detected`);
         // Apply transform.persist if present (e.g., for text_edit input)
         const menu = this.getMenuById(menuId);
-        const iconSlotMain = (menu as any)._iconSlotTriad?.main;
+        const iconSlotMain = (menu as UIMenu)['_iconSlotTriad']?.main;
         if (typeof iconSlotMain !== 'string' && iconSlotMain.transform?.persist) {
           try {
             const displayValue = parseFloat(String(contextDict[kDisplay]));
