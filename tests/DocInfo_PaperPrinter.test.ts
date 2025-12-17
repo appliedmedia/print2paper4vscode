@@ -2,20 +2,16 @@ import { describe, it, beforeEach, afterEach } from 'node:test';
 import * as assert from 'node:assert';
 import { DocInfo_PaperPrinter } from '../src/DocInfo_PaperPrinter.js';
 import { App } from '../src/App.js';
-import type { FnImport_t } from '../src/types/Registry_t.js';
 import { PaperPrinter } from '../src/PaperPrinter.js';
 import { Persist } from '../src/Persist.js';
 import { mockContext, mockVSCode } from './test-utils.js';
-import { getFn } from './test-helpers.js';
 
 describe('DocInfo_PaperPrinter', () => {
   let app: App;
-  let fn: FnImport_t;
   let docInfo: DocInfo_PaperPrinter;
 
   beforeEach(() => {
     app = new App({ context: mockContext, vscode: mockVSCode });
-    fn = getFn(app);
     // Create menus before tests that need them (menus are created on-demand in production)
     // Access private createMenus method through type assertion
     (app.paperprinter as unknown as { createMenus(): void }).createMenus();

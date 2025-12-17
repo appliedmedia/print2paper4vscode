@@ -10,8 +10,6 @@
  * - Percentage to decimal conversion
  */
 import { test, describe } from 'node:test';
-import type { FnImport_t } from '../src/types/Registry_t.js';
-import { getFn } from './test-helpers.js';
 import * as assert from 'node:assert';
 import { kZoomLevel } from '../src/types/PaperPrinter_t';
 

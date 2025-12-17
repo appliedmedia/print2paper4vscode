@@ -1,6 +1,4 @@
 import { test, describe } from 'node:test';
-import type { FnImport_t } from '../src/types/Registry_t.js';
-import { getFn } from './test-helpers.js';
 import { strict as assert } from 'node:assert';
 
 describe('OSMac AppleScript Functionality', () => {

@@ -18,18 +18,14 @@ import type {
   iconSlotTriad_t,
 } from '../src/types/UIMenu_t.js';
 import { App } from '../src/App.js';
-import type { FnImport_t } from '../src/types/Registry_t.js';
 import { mockContext, mockVSCode } from './test-utils.js';
-import { getFn } from './test-helpers.js';
 
 let app: App;
-  let fn: FnImport_t;
 
 describe('UIMenu Icon Slot Triad', () => {
   
   beforeEach(() => {
     app = new App({ context: mockContext, vscode: mockVSCode });
-    fn = getFn(app);
   });
 
   // Helper to create a menu
