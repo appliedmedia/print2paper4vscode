@@ -20,7 +20,7 @@ import type { FnImport_t } from './types/Registry_t';
 import { Diagnostics } from './Diagnostics';
 import { YamlInstance } from './Yaml';
 import type { Persist, Persist_t } from './Persist';
-import { kMenuId } from './UIMenu';
+import { kMenuId } from './types/UIMenu_t';
 
 // UI persist keys - union of menu IDs and toolbar position
 export const kUI = [...kMenuId, 'toolbar_pos', 'zoomLevel_value'] as const;

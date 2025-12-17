@@ -21,15 +21,15 @@ import type { PersistValue_t } from './Persist';
 import type { contextDict_t } from './types/UI_t';
 import type { FnImport_t } from './types/Registry_t';
 import { Diagnostics } from './Diagnostics';
-import {
-  UIMenu,
-  type MenuId_t,
-  type MenuItemId_t,
-  type HandleSelection_t,
-  type UIMenuItem_t,
-  type iconSlotTriad_t,
-  type iconSlotTriad_main_t,
-} from './UIMenu';
+import type {
+  MenuId_t,
+  MenuItemId_t,
+  HandleSelection_t,
+  UIMenuItem_t,
+  iconSlotTriad_t,
+  iconSlotTriad_main_t,
+} from './types/UIMenu_t';
+import { UIMenu } from './UIMenu';
 import { UIWebView } from './UIWebView';
 import { DocInfo_PaperPrinter } from './DocInfo_PaperPrinter';
 import type { LanguageId_t } from './Stylize';

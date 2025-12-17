@@ -4,17 +4,16 @@ import type { FnImport_t } from './types/Registry_t';
 import type { UI_t } from './UI';
 import type { PersistValue_t } from './Persist';
 import { contextDict_t, kContextDict_None } from './types/UI_t';
-import {
-  UIMenu,
-  type MenuId_t,
-  type MenuItemId_t,
-  type HandleSelection_t,
-  type UIMenuItem_t,
-  type iconSlotTriad_t,
-  type iconSlotTriad_main_t,
-  kMenuId,
-  kMenuItemId,
-} from './UIMenu';
+import { UIMenu } from './UIMenu';
+import type {
+  MenuId_t,
+  MenuItemId_t,
+  HandleSelection_t,
+  UIMenuItem_t,
+  iconSlotTriad_t,
+  iconSlotTriad_main_t,
+} from './types/UIMenu_t';
+import { kMenuId, kMenuItemId } from './types/UIMenu_t';
 import { Diagnostics } from './Diagnostics';
 import {
   kFontSizeId,
@@ -316,8 +315,7 @@ export class UIMenuMgr {
   // numeric values, or legacy calc templates. Returns the resolved value or menuItemId as fallback.
   // Never returns undefined - defaults to menuItemId if value not found or resolution fails.
   getValueOfMenuItemIdForMenuId(args: { menuId: MenuId_t; menuItemId: string }): number | string {
-    const dx = this.dx.sub({ name: 'getValueOfMenuItemIdForMenuId', debugOn: true });
-    dx.out(`Called with: ${JSON.stringify(args)}`);
+    const dx = this.dx.sub({ name: 'getValueOfMenuItemIdForMenuId' });
     if (!dx.require(args, ['menuId', 'menuItemId'])) {
       dx.error(`Invalid args: ${JSON.stringify(args)}`);
       throw new Error(`getValueOfMenuItemIdForMenuId: invalid arguments`);

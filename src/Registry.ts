@@ -56,14 +56,24 @@ export class Registry {
     this._instances.set('dx', rootDx);
     this._initialized.add('dx');
 
-
     // Now Registry can use fn.dx.sub() like everyone else
     this.fn = this.use();
     this.dx = this.fn.dx.sub({ name: 'Registry' });
 
     // Build placeholder structure for intellisense
     // Guard against component IDs that collide with Registry's own properties/methods
-    const reservedNames = ['components', 'always', 'init', 'fn', 'dx', 'app', 'use', 'done', 'registerInstance', 'hasInstance'];
+    const reservedNames = [
+      'components',
+      'always',
+      'init',
+      'fn',
+      'dx',
+      'app',
+      'use',
+      'done',
+      'registerInstance',
+      'hasInstance',
+    ];
     for (const Component of this.components) {
       if (Component.id) {
         if (reservedNames.includes(Component.id)) {
@@ -97,7 +107,7 @@ export class Registry {
       return this._instances.get(componentId) as T;
     }
 
-    const Component = this.components.find((c) => c.id === componentId);
+    const Component = this.components.find(c => c.id === componentId);
     if (!Component) {
       return undefined;
     }
@@ -128,13 +138,13 @@ export class Registry {
       // Components can access app utilities via reg.app
       const args = { reg: this, ...this.init[componentId] };
       let instance: unknown;
-      
+
       if ('create' in Component && typeof Component.create === 'function') {
         instance = Component.create(args);
       } else {
         instance = new Component(args);
       }
-      
+
       this._instances.set(componentId, instance);
       this._initialized.add(componentId);
     } catch (err) {
@@ -175,8 +185,13 @@ export class Registry {
           if (typeof value === 'function') {
             result[id][actualMethodName] = value.bind(instance);
           } else {
-            this.dx.error(`'${id}.${actualMethodName}' is not a function - check that it's specified in reg.use()`);
-            throw new Error(`'${id}.${actualMethodName}' is not a function - check that it's specified in reg.use()`);
+            const componentAndMethod = `${id}.${actualMethodName}`;
+            this.dx.error(
+              `'${componentAndMethod}' is not a function - confirm "${componentAndMethod}" is specified in reg.use()`
+            );
+            throw new Error(
+              `'${componentAndMethod}' is not a function - confirm "${componentAndMethod}" is specified in reg.use()`
+            );
           }
         }
         continue;
@@ -186,7 +201,7 @@ export class Registry {
       let foundComponent: ComponentClass | undefined;
 
       if (id) {
-        foundComponent = this.components.find((c) => c.id === id);
+        foundComponent = this.components.find(c => c.id === id);
         if (!foundComponent) {
           this.dx.error(`Component '${id}' not found`);
           throw new Error(`Component '${id}' not found`);
@@ -217,8 +232,13 @@ export class Registry {
         }
         const method = (instance as Record<string, unknown>)[actualMethodName];
         if (typeof method !== 'function') {
-          this.dx.error(`'${componentId}.${actualMethodName}' is not a function - check that it's specified in reg.use()`);
-          throw new Error(`'${componentId}.${actualMethodName}' is not a function - check that it's specified in reg.use()`);
+          const componentAndMethod = `${componentId}.${actualMethodName}`;
+          this.dx.error(
+            `'${componentAndMethod}' is not a function - confirm "${componentAndMethod}" is specified in reg.use()`
+          );
+          throw new Error(
+            `'${componentAndMethod}' is not a function - confirm "${componentAndMethod}" is specified in reg.use()`
+          );
         }
         return method.apply(instance, args);
       }) as Function;

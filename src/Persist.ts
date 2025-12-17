@@ -3,7 +3,7 @@ import type { FnImport_t } from './types/Registry_t';
 import { Diagnostics } from './Diagnostics';
 import type { UI_t } from './UI';
 import type { GlobalStateKey_t, GlobalStateValue_t } from './VSCodeAPIs';
-import { kMenuId } from './UIMenu';
+import { kMenuId } from './types/UIMenu_t';
 
 // Persist value types - what we store locally
 // NOTE: No booleans - we have no global persist bools in this codebase.

@@ -1,4 +1,4 @@
-import type { MenuId_t, MenuItemId_t } from '../UIMenu';
+import type { MenuId_t, MenuItemId_t } from './UIMenu_t';
 
 export interface UIMenuItem {
   id: string;

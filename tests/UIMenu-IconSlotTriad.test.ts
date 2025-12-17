@@ -9,14 +9,14 @@
 
 import { describe, it, beforeEach } from 'node:test';
 import * as assert from 'node:assert';
-import {
-  UIMenu,
-  type HandleSelection_t,
-  type UIMenuItem_t,
-  type MenuId_t,
-  type MenuItemId_t,
-  type iconSlotTriad_t,
-} from '../src/UIMenu.js';
+import { UIMenu } from '../src/UIMenu.js';
+import type {
+  HandleSelection_t,
+  UIMenuItem_t,
+  MenuId_t,
+  MenuItemId_t,
+  iconSlotTriad_t,
+} from '../src/types/UIMenu_t.js';
 import { App } from '../src/App.js';
 import type { FnImport_t } from '../src/types/Registry_t.js';
 import { mockContext, mockVSCode } from './test-utils.js';

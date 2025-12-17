@@ -1,158 +1,20 @@
 import type { Registry } from './Registry';
-import type { ForceNumber_scalar_t } from './App';
-import type { UI_t } from './UI';
 import type { contextDict_t } from './types/UI_t';
 import { Diagnostics } from './Diagnostics';
-import type { Persist, Persist_t } from './Persist';
 import { YamlInstance } from './Yaml';
 import type { FnImport_t } from './types/Registry_t';
-import {
-  kPageSizeId,
-  kOrient,
-  kMarginId,
-  kHeaderFooter,
-  kHeaderFooterMenuIds,
-  kFontSizeId,
-  kHeader,
-  kFooter,
-  kPrint,
-  kPage,
-  kTheme,
-  kZoomOut,
-  kZoomIn,
-  kZoomLevel,
-  kMd,
-  kMenus,
-  type UIMenuItemValueFxn_t,
-} from './types/PaperPrinter_t';
-
-/**
- * Text edit config type for text input widgets in menu items
- *
- * Configuration object for text_edit widgets that appear in menu button iconSlotTriads.
- * Supports input validation, display formatting, and value conversion between
- * persisted storage format and user-visible display format.
- *
- * @property type - Must be 'text_edit' to identify this as a text input widget
- * @property width - Optional CSS width (e.g., '4ch', '50px'). Auto-calculated from constrain.max if not provided
- * @property constrain - Validation strategy (regex for real-time, min/max for blur clamping)
- * @property transform - Optional bidirectional value conversion
- *
- * @example
- * // Zoom level with scale-to-percentage conversion
- * {
- *   type: 'text_edit',
- *   constrain: { regex: '^\\d{0,4}$', min: 50, max: 300 },
- *   transform: {
- *     display: (persist) => Math.round(persist * 100),
- *     persist: (display) => display / 100
- *   }
- * }
- */
-/**
- * Text edit constraint configuration
- *
- * All three properties work together as a cohesive validation strategy:
- * - regex: Real-time validation during typing (blocks invalid keystrokes)
- * - min/max: Final validation on blur (clamps value to valid range)
- *
- * Note: For max digits, use regex with one extra digit (e.g., \d{0,4} for max value 300)
- * to allow users to temporarily type an extra character during editing.
- */
-export type TextEditConstraint_t = {
-  regex: string; // Regex pattern for real-time validation (e.g., '^\d{0,4}$')
-  min: number; // Minimum value (enforced on blur)
-  max: number; // Maximum value (enforced on blur)
-};
-
-export type iconSlotTriad_main_t = {
-  type: 'text_edit'; // Tells us what UI element to render
-  width?: string;
-  persistId?: UI_t; // Separate persist key for value storage (e.g., 'zoomLevel_value')
-  constrain: TextEditConstraint_t; // Validation strategy (regex + min/max work together)
-  transform?: {
-    // Transforms handle their own type conversion - they receive raw persisted values
-    display?: (persist: ForceNumber_scalar_t) => ForceNumber_scalar_t; // Convert persist value to display value
-    persist?: (display: ForceNumber_scalar_t) => ForceNumber_scalar_t; // Convert display value to persist value
-  };
-};
-
-// IconSlotTriad type - three-part slot structure
-export interface iconSlotTriad_t {
-  begin: string;
-  main: string | iconSlotTriad_main_t; // Can be string icon or text_edit object
-  end: string;
-}
-
-// UIMenuItem type - menu item structure
-export interface UIMenuItem_t {
-  id: string;
-  displayName: string;
-  iconSlotTriad: iconSlotTriad_t; // Button content: icon, text_edit widget (e.g., "text_edit: {...}"), or empty for non-button
-  shortcutCode?: string; // Optional KeyboardEvent.code for keyboard shortcuts (e.g., "Digit0", "Minus", "Equal")
-  shortcut?: string; // Optional display string for keyboard shortcut (e.g., "Ctrl/Cmd + 0")
-  value?: number | string | UIMenuItemValueFxn_t;
-}
-
-// Menu ID types - UI component identifiers
-// Auto-constructed from PaperPrinter_t.ts _id constants
-export const kMenuId = [
-  // Top-level menus
-  kPrint.id,
-  kPage.id,
-  kTheme.id,
-  kFontSizeId.id,
-  // Page submenus
-  kPageSizeId.id,
-  kOrient.id,
-  kMarginId.id,
-  // Header/Footer locations
-  kHeader.id,
-  kFooter.id,
-  // Zoom menus
-  kZoomOut.id,
-  kZoomIn.id,
-  kZoomLevel.id,
-  // Composed from header/footer + kHeaderFooter positions
-  ...kHeaderFooterMenuIds,
-] as const;
-
-export type MenuId_t = (typeof kMenuId)[number];
-
-// Menu Item ID types - Individual menu item identifiers
-// Auto-constructed from PaperPrinter_t.ts constants using shared kMenus
-export const kMenuItemId = [
-  // System sentinel
-  'default',
-  // Extract menuItems from all menu constants
-  ...kMenus.flatMap(menu => {
-    const menuItemIds =
-      menu.menuItems && menu.menuItems.length > 0 ? menu.menuItems.map(item => item.id) : [];
-
-    // If menu has constrained input widget, include menu.id as valid menuItemId (for custom values)
-    const hasConstrainedInput =
-      typeof menu.iconSlotTriad.main === 'object' && menu.iconSlotTriad.main.constrain !== undefined;
-
-    if (hasConstrainedInput || menuItemIds.length === 0) {
-      // Include menu.id for: text_edit menus OR button-only menus
-      return [menu.id, ...menuItemIds];
-    } else {
-      return menuItemIds;
-    }
-  }),
-  // From kHeaderFooter (for header/footer position menus)
-  ...kHeaderFooterMenuIds,
-  // From kHeaderFooter.subMenuItems (for header/footer content selections)
-  ...kHeaderFooter.subMenuItems.map(item => item.id),
-] as const;
-
-export type MenuItemId_t = (typeof kMenuItemId)[number] | string;
-
-// Selection handler return type - id is what's selected, value is what to use
-export interface HandleSelection_t {
-  id: string;
-  value: string | number | boolean;
-}
+import { kMenus } from './types/PaperPrinter_t';
+import type {
+  TextEditConstraint_t,
+  iconSlotTriad_main_t,
+  iconSlotTriad_t,
+  UIMenuItem_t,
+  kMenuId,
+  MenuId_t,
+  kMenuItemId,
+  MenuItemId_t,
+  HandleSelection_t,
+} from './types/UIMenu_t';
 
 /**
  * UIMenu - Generic menu component for webview toolbar
@@ -191,7 +53,6 @@ export class UIMenu {
   private dx: Diagnostics;
   private _yaml: YamlInstance<typeof UIMenu.kYaml>;
 
-
   // Public getter for id
   get id(): MenuId_t {
     return this._id;
@@ -223,13 +84,7 @@ export class UIMenu {
       contextDict: contextDict_t
     ) => Promise<HandleSelection_t>;
   }) {
-    // Note: Cannot use dx.require here as Diagnostics is not yet initialized
-    if (!args.reg || !args.id || !args.displayName || !args.iconSlotTriad || !args.menuItems || !args.selectionHandler) {
-      throw new Error('UIMenu constructor requires reg, id, displayName, iconSlotTriad, menuItems, and selectionHandler');
-    }
-    const { reg, id, displayName, iconSlotTriad, isFlyout = false, menuItems, flyoutMenuItemIds = [], selectionHandler } = args;
-    
-    this.reg = reg;
+    this.reg = args.reg;
     this.fn = this.reg.use(
       'yaml.create',
       'persist.get',
@@ -240,6 +95,32 @@ export class UIMenu {
       'uimenumgr.getValueOfMenuItemIdSelected',
       'uimenumgr.getMenuById'
     );
+    this.dx = this.fn.dx.sub({ name: 'UIMenu' });
+
+    // Validate args using dx.require
+    if (
+      !this.dx.require(args, [
+        'reg',
+        'id',
+        'displayName',
+        'iconSlotTriad',
+        'menuItems',
+        'selectionHandler',
+      ])
+    ) {
+      throw new Error('UIMenu constructor: invalid arguments');
+    }
+
+    const {
+      id,
+      displayName,
+      iconSlotTriad,
+      isFlyout = false,
+      menuItems,
+      flyoutMenuItemIds = [],
+      selectionHandler,
+    } = args;
+
     this._id = id;
     this._displayName = displayName;
     this._iconSlotTriad = iconSlotTriad;
@@ -247,7 +128,6 @@ export class UIMenu {
     this._menuItems = menuItems;
     this._flyoutMenuItemIds = flyoutMenuItemIds;
     this._selectionHandler = selectionHandler;
-    this.dx = this.fn.dx.sub({ name: 'UIMenu' });
     this._yaml = this.fn.yaml.create({ filePath: 'src/UIMenu.yaml', dataStruct: UIMenu.kYaml });
   }
 
@@ -429,17 +309,17 @@ export class UIMenu {
     iconSlotTriadMain: iconSlotTriad_main_t
   ): string | undefined {
     let width = iconSlotTriadMain.width;
-    
+
     // If no explicit width, try to auto-calculate from constrain.max
     if (!width && iconSlotTriadMain.constrain) {
       const maxDigits = String(iconSlotTriadMain.constrain.max).length;
       width = `${maxDigits + 1}ch`;
     }
-    
+
     if (!width) {
       return undefined;
     }
-    
+
     return ` style="width: ${width};"`;
   }
 
@@ -452,18 +332,18 @@ export class UIMenu {
   ): string | undefined {
     const dx = this.dx.sub({ name: 'handleIconSlotTypes_main_transform' });
     let value: string | undefined = undefined;
-    
+
     try {
       const persistedValue = this.fn.uimenumgr.getValueOfMenuItemIdSelected(this._id);
-      
+
       if (persistedValue === undefined || persistedValue === null) {
         dx.out(`No persisted value for ${this._id}`);
         dx.done();
         return undefined;
       }
-      
+
       dx.out(`Transform for ${this._id}: value=${persistedValue}, type=${typeof persistedValue}`);
-      
+
       // Pass value to transform as-is (string | number | undefined)
       // Transform functions handle their own type conversion
       if (iconSlotTriadMain.transform?.display) {
@@ -485,7 +365,7 @@ export class UIMenu {
       // If menu lookup fails (e.g., in test scenarios), just return undefined
       dx.out(`Could not get value for ${this._id}: ${String(error)}`);
     }
-    
+
     dx.done();
     return value;
   }
@@ -504,7 +384,7 @@ export class UIMenu {
     configAttr: string;
   } {
     const dx = this.dx.sub({ name: 'handleIconSlotTypes_main_text_edit' });
-    
+
     if (!constrain) {
       dx.error('text_edit requires constrain');
       dx.done();
@@ -514,7 +394,7 @@ export class UIMenu {
         configAttr: '',
       };
     }
-    
+
     try {
       const yaml = this.yaml();
       // Security: HTML-escape value to prevent XSS in webview
@@ -573,7 +453,7 @@ export class UIMenu {
           const constrain = this.handleIconSlotTypes_main_constrain(iconSlotTriadMain);
           const width = this.handleIconSlotTypes_main_width(iconSlotTriadMain);
           const value = this.handleIconSlotTypes_main_transform(iconSlotTriadMain);
-          
+
           if (iconSlotTriadMain.type === 'text_edit') {
             returnVals = this.handleIconSlotTypes_main_text_edit(itemId, constrain, width, value);
           }
@@ -632,7 +512,12 @@ export class UIMenu {
       const hasGutterAfter = hasFlyout || hasDefaultItem; // Menus with flyout items OR default items get gutter-after
       const processedMenuItemsHtml = await Promise.all(
         menuItemsList.map(item =>
-          this.getItemHTML({ item, flyout: flyoutCache[item.id] || '', defaultItemId, selectedItemId })
+          this.getItemHTML({
+            item,
+            flyout: flyoutCache[item.id] || '',
+            defaultItemId,
+            selectedItemId,
+          })
         )
       );
       const menuItems = processedMenuItemsHtml.join('\n');

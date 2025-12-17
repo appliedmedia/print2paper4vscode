@@ -147,7 +147,7 @@ describe('Persist', () => {
 
   it('should clear persist state', async () => {
     // Import kMenuId to know what keys clear() actually clears
-    const { kMenuId } = await import('../src/UIMenu.js');
+    const { kMenuId } = await import('../src/types/UIMenu_t.js');
     
     // Set actual menu keys that clear() will remove
     const menuKey1 = kMenuId[0];
