@@ -1,21 +1,18 @@
 import { describe, it, beforeEach, afterEach } from 'node:test';
 import * as assert from 'node:assert';
 import { UIWebView } from '../src/UIWebView.js';
-import { App } from '../src/App.js';
-import type { FnImport_t } from '../src/types/Registry_t.js';
+import { createTestApp, TestApp } from './test-utils.js';
 import jsPDF from 'jspdf';
 import type { PDFData_t } from '../src/UIWebView.js';
 import { mockContext, mockVSCode } from './test-utils.js';
 import { getFn } from './test-helpers.js';
 
 describe('UIWebView', () => {
-  let app: App;
-  let fn: FnImport_t;
+  let app: TestApp;
   let uiWebView: UIWebView;
 
   beforeEach(() => {
-    app = new App({ context: mockContext, vscode: mockVSCode });
-    fn = getFn(app);
+    app = createTestApp({ context: mockContext, vscode: mockVSCode });
     uiWebView = new UIWebView({ reg: app.reg });
   });
 

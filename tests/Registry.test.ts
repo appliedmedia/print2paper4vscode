@@ -1,8 +1,9 @@
 import { test, describe, beforeEach, afterEach } from 'node:test';
 import * as assert from 'node:assert';
-import { Registry } from '../src/Registry';
-import { Diagnostics } from '../src/Diagnostics';
-import { App } from '../src/App';
+import { Registry } from '../src/Registry.js';
+import { Diagnostics } from '../src/Diagnostics.js';
+import { App } from '../src/App.js';
+import { createTestApp, TestApp } from './test-utils.js';
 import { mockVSCode } from './test-utils.js';
 import type { ExtensionContext } from 'vscode';
 
@@ -24,10 +25,10 @@ const mockContext = {
 } as unknown as ExtensionContext;
 
 describe('Registry', () => {
-  let app: App;
+  let app: TestApp;
 
   beforeEach(() => {
-    app = new App({ context: mockContext, vscode: mockVSCode });
+    app = createTestApp({ context: mockContext, vscode: mockVSCode });
   });
 
   afterEach(() => {

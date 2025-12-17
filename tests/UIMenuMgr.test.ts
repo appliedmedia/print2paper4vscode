@@ -1,16 +1,16 @@
 import { describe, it, beforeEach, afterEach } from 'node:test';
 import * as assert from 'node:assert';
 import { UIMenuMgr } from '../src/UIMenuMgr.js';
-import { App } from '../src/App.js';
-import type { MenuId_t, UIMenuItem_t, iconSlotTriad_t } from '../src/types/UIMenu_t.js';
+import { createTestApp, TestApp } from './test-utils.js';
+import type { MenuId_t, UIMenuItem_t, iconSlotTriad_t } from '../src/UIMenu.js';
 import { mockContext, mockVSCode } from './test-utils.js';
 
 describe('UIMenuMgr', () => {
-  let app: App;
+  let app: TestApp;
   let menuMgr: UIMenuMgr;
 
   beforeEach(() => {
-    app = new App({ context: mockContext, vscode: mockVSCode });
+    app = createTestApp({ context: mockContext, vscode: mockVSCode });
     menuMgr = new UIMenuMgr({ reg: app.reg });
   });
 

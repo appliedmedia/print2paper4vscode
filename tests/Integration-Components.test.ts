@@ -1,14 +1,12 @@
 import { test, describe } from 'node:test';
 import * as assert from 'node:assert';
-import { App } from '../src/App.js';
-import type { FnImport_t } from '../src/types/Registry_t.js';
+import { createTestApp, TestApp } from './test-utils.js';
 import { mockContext, mockVSCode } from './test-utils.js';
 import { getFn } from './test-helpers.js';
 
 describe('System Integration Tests', () => {
   test('should initialize all components correctly', async () => {
-    const app = new App({ context: mockContext, vscode: mockVSCode });
-    const fn = getFn(app);
+    const app = createTestApp({ context: mockContext, vscode: mockVSCode });
     
     // Verify all major components are created
     assert.ok(app.vscodeapis, 'Should have VSCodeAPIs');
@@ -24,8 +22,7 @@ describe('System Integration Tests', () => {
   });
 
   test('should handle Shiki theme workflow', async () => {
-    const app = new App({ context: mockContext, vscode: mockVSCode });
-    const fn = getFn(app);
+    const app = createTestApp({ context: mockContext, vscode: mockVSCode });
     // Note: Stylize no longer has init() - highlighter initialized lazily when needed
     
     // Test that Shiki themes are loaded
@@ -48,8 +45,7 @@ describe('System Integration Tests', () => {
   });
 
   test('should validate template system integration', async () => {
-    const app = new App({ context: mockContext, vscode: mockVSCode });
-    const fn = getFn(app);
+    const app = createTestApp({ context: mockContext, vscode: mockVSCode });
     const utils = app.reg.getInstance<import('../src/Utils.js').Utils>('utils')!;
     
     // Test template replacement
@@ -69,8 +65,7 @@ describe('System Integration Tests', () => {
   });
 
   test('should handle page size and orient functionality', async () => {
-    const app = new App({ context: mockContext, vscode: mockVSCode });
-    const fn = getFn(app);
+    const app = createTestApp({ context: mockContext, vscode: mockVSCode });
 
     // Test page size menu items
     const pageMenuItems = (app.paperprinter as any).menuItems_Page();
@@ -92,8 +87,7 @@ describe('System Integration Tests', () => {
   });
 
   test('should handle PDF generation workflow', async () => {
-    const app = new App({ context: mockContext, vscode: mockVSCode });
-    const fn = getFn(app);
+    const app = createTestApp({ context: mockContext, vscode: mockVSCode });
     
     // Set up document
     fn.paperprinter.docInfo().rawCode = 'const x = 42;';
@@ -113,8 +107,7 @@ describe('System Integration Tests', () => {
   });
 
   test('should coordinate between components', async () => {
-    const app = new App({ context: mockContext, vscode: mockVSCode });
-    const fn = getFn(app);
+    const app = createTestApp({ context: mockContext, vscode: mockVSCode });
     
     // Test that components can access registry
     assert.strictEqual(app.stylize['reg'], app.reg, 'Stylize should reference registry');

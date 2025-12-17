@@ -2,19 +2,17 @@ import { describe, it, beforeEach, afterEach } from 'node:test';
 import * as assert from 'node:assert';
 import { PDF } from '../src/PDF.js';
 import { DocInfo_PDF } from '../src/DocInfo_PDF.js';
-import { App } from '../src/App.js';
-import type { FnImport_t } from '../src/types/Registry_t.js';
+import { createTestApp, TestApp } from './test-utils.js';
 import jsPDF from 'jspdf';
 import { mockContext, mockVSCode } from './test-utils.js';
 import { installHeaderFooterMenuStubs, getFn } from './test-helpers.js';
 
 describe('PDF', () => {
-  let app: App;
-  let fn: FnImport_t;
+  let app: TestApp;
   let pdf: PDF;
 
   beforeEach(() => {
-    app = new App({ context: mockContext, vscode: mockVSCode });
+    app = createTestApp({ context: mockContext, vscode: mockVSCode });
     installHeaderFooterMenuStubs(app);
     fn = getFn(app);
 

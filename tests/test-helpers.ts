@@ -1,5 +1,4 @@
-import type { App } from '../src/App.js';
-import type { FnImport_t } from '../src/types/Registry_t.js';
+import type { TestApp } from './test-utils.js';
 
 /**
  * Installs header/footer menu stubs to prevent "Menu not found" errors in tests.
@@ -8,12 +7,11 @@ import type { FnImport_t } from '../src/types/Registry_t.js';
  * header_ and footer_ menu items, while falling back to the original implementation
  * for other menus.
  * 
- * @param app - Application instance to install stubs on
+ * @param app - Test application instance to install stubs on
  */
-export function installHeaderFooterMenuStubs(app: App): void {
-  const uimenumgr = app.reg.getInstance('uimenumgr') as any;
-  const originalGetMenuItemIdSelected = uimenumgr.getMenuItemIdSelected.bind(uimenumgr);
-  uimenumgr.getMenuItemIdSelected = (menuId: any) => {
+export function installHeaderFooterMenuStubs(app: TestApp): void {
+  const originalGetMenuItemIdSelected = app.uimenumgr.getMenuItemIdSelected.bind(app.uimenumgr);
+  app.uimenumgr.getMenuItemIdSelected = (menuId: any) => {
     if (typeof menuId === 'string' && (menuId.startsWith('header_') || menuId.startsWith('footer_'))) {
       return 'none';
     }

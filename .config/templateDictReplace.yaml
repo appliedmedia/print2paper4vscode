@@ -16,5 +16,5 @@ replacements:
   - file: .config/template.package.json
     output: package.json
     template: "{{extId}}"
-    source: out-deploy/src/_entrypoint_extId_t.js
+    source: out/src/_entrypoint_extId_t.js
     variable: kExtId

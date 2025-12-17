@@ -1,17 +1,14 @@
 import { describe, it, beforeEach, afterEach } from 'node:test';
 import * as assert from 'node:assert';
-import { App } from '../src/App.js';
-import type { FnImport_t } from '../src/types/Registry_t.js';
+import { createTestApp, TestApp } from './test-utils.js';
 import { mockContext, mockVSCode } from './test-utils.js';
 import { getFn } from './test-helpers.js';
 
 describe('Stylize Simple Unit Tests', () => {
-  let app: App;
-  let fn: FnImport_t;
+  let app: TestApp;
 
   beforeEach(async () => {
-    app = new App({ context: mockContext, vscode: mockVSCode });
-    fn = getFn(app);
+    app = createTestApp({ context: mockContext, vscode: mockVSCode });
     // Note: Stylize no longer has init() - highlighter initialized lazily when needed
   });
 

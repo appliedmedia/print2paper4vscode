@@ -1,19 +1,16 @@
 import { describe, it, beforeEach, afterEach } from 'node:test';
 import * as assert from 'node:assert';
-import { App } from '../src/App.js';
-import type { FnImport_t } from '../src/types/Registry_t.js';
+import { createTestApp, TestApp } from './test-utils.js';
 import { OSLinux } from '../src/OSLinux.js';
 import { OSWin } from '../src/OSWin.js';
 import { mockContext, mockVSCode } from './test-utils.js';
 import { getFn } from './test-helpers.js';
 
 describe('OS Platform-Specific Classes', () => {
-  let app: App;
-  let fn: FnImport_t;
+  let app: TestApp;
 
   beforeEach(() => {
-    app = new App({ context: mockContext, vscode: mockVSCode });
-    fn = getFn(app);
+    app = createTestApp({ context: mockContext, vscode: mockVSCode });
   });
 
   afterEach(() => {
