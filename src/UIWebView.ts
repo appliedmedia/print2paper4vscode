@@ -70,13 +70,16 @@ export class UIWebView {
       'ui.yaml'
     );
     this.dx = this.fn.dx.sub({ name: 'UIWebView' });
-    this._yaml = this.fn.yaml.create({ filePath: 'src/UIWebView.yaml', dataStruct: UIWebView.kYaml });
+    this._yaml = this.fn.yaml.create({
+      filePath: 'src/UIWebView.yaml',
+      dataStruct: UIWebView.kYaml,
+    });
 
     // Bind handlers once in constructor to maintain same reference
     this.handleDragEndBound = this.handleDragEnd.bind(this) as MessageHandler_t;
     this.handleMenuItemSelectedBound = this.handleMenuItemSelected.bind(this) as MessageHandler_t;
     this.handleDxMessageBound = this.handleDxMessage.bind(this) as MessageHandler_t;
-    
+
     // All initialization happens here - no separate init() needed
     this.registerMessageHandlers();
   }
@@ -144,9 +147,9 @@ export class UIWebView {
 
       // Create or reuse webview panel
       const panelId = await this.fn.vscodeapis.getOrCreateWebviewPanel({
-        title: pdfData.title,
+        title: `Print: ${pdfData.title}`,
         html: htmlWithToolbar,
-        existingPanelId: this.panelId || undefined,
+        existingPanelId: this.panelId,
       });
       this.panelId = panelId;
 
@@ -181,7 +184,10 @@ export class UIWebView {
       // Get zoom level from zoomLevel menu persist
       const zoomMenuItemId =
         this.fn.uimenumgr.getMenuItemIdSelected(kZoomLevel.id) || kZoomLevel.altId;
-      const rawZoom = this.fn.uimenumgr.getValueOfMenuItemIdForMenuId({ menuId: kZoomLevel.id, menuItemId: zoomMenuItemId });
+      const rawZoom = this.fn.uimenumgr.getValueOfMenuItemIdForMenuId({
+        menuId: kZoomLevel.id,
+        menuItemId: zoomMenuItemId,
+      });
       // Coerce to number (forceNumber always returns valid number or 0)
       const coercedZoom = this.fn.utils.forceNumber(rawZoom);
       // Use coerced value if finite and positive, otherwise fall back to hardcoded default
