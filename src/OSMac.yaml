@@ -10,4 +10,4 @@ apple_script_open_preview_print_dialog: |
     delay 0.5
     keystroke "p" using command down
   end tell
-  # Note: Using 'print POSIX file' causes "could not be opened" error; use Cmd-P instead
+  -- Note: Using 'print POSIX file' causes "could not be opened" error; use Cmd-P instead

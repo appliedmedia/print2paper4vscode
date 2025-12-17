@@ -448,7 +448,7 @@ export class UIMenuMgr {
 
   // Generate all HTML at once using recursive flyout strategy
   async getUIMenus_HTML(): Promise<string> {
-    const dx = this.dx.sub({ name: 'getUIMenus_HTML', debugOn: true });
+    const dx = this.dx.sub({ name: 'getUIMenus_HTML' });
     const allMenus = this.getUIMenus();
     dx.out(`Total menus: ${allMenus.length}, non-flyout menus: ${allMenus.filter(m => !m.isFlyout).length}`);
     

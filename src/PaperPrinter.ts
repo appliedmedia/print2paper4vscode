@@ -322,7 +322,7 @@ export class PaperPrinter {
 
   // Create menus when needed for the webview
   private createMenus(): void {
-    const dx = this.dx.sub({ name: 'createMenus', debugOn: true });
+    const dx = this.dx.sub({ name: 'createMenus' });
     
     // Avoid duplicates across multiple openings
     if (this.fn.uimenumgr.getUIMenus().length > 0) {
@@ -393,7 +393,7 @@ export class PaperPrinter {
   }
 
   private menuItems_Theme(): UIMenuItem_t[] {
-    const dx = this.dx.sub({ name: 'menuItems_Theme', debugOn: true });
+    const dx = this.dx.sub({ name: 'menuItems_Theme' });
     const themes = this.fn.stylize.getThemes();
     dx.out(`Got ${themes.length} themes from stylize.getThemes()`);
 

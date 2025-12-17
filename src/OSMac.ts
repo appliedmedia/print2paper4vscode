@@ -76,7 +76,9 @@ export class OSMac extends OS {
   }
 
   async fileOpenPrintDialog(path: string): Promise<void> {
-    await this.executeAppleScript('apple_script_open_preview_print_dialog', { file_path: path });
+    // Security: Escape backslashes and double quotes for AppleScript string literal
+    const escapedPath = path.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+    await this.executeAppleScript('apple_script_open_preview_print_dialog', { file_path: escapedPath });
   }
 
   done(): void {
