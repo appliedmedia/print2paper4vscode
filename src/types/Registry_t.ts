@@ -18,6 +18,10 @@
  */
 export type FnImport_t = {
   [componentId: string]: {
+    // Generic Function type is intentional - Registry proxies methods with varying signatures:
+    // - Named params: fn.persist.validateDefault({ name })
+    // - Positional params: fn.persist.get(menuId)
+    // - No params: fn.stylize.getThemes()
     // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
     [methodName: string]: Function;
   };
