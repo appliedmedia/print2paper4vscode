@@ -12,13 +12,10 @@ import type { Diagnostics } from './Diagnostics';
 import { Registry, type ComponentClass } from './Registry';
 import { Persist } from './Persist';
 import { Yaml } from './Yaml';
-import { Utils, type ForceNumber_scalar_t, type ForceNumber_dict_t, type ForceNumbers_t } from './Utils';
+import { Utils } from './Utils';
 import type { FnImport_t } from './types/Registry_t';
 import type { ExtensionContext } from 'vscode';
 import { kExtId } from './_entrypoint_extId_t';
-
-// Re-export type aliases from Utils for backward compatibility
-export type { ForceNumber_scalar_t, ForceNumber_dict_t, ForceNumbers_t } from './Utils';
 
 /**
  * App - Main application container and component manager

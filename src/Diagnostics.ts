@@ -53,6 +53,11 @@ export class Diagnostics {
       }
       return result;
     },
+    isValidObject: (value: unknown): value is Record<string, unknown> => {
+      return (
+        value !== null && value !== undefined && typeof value === 'object' && !Array.isArray(value)
+      );
+    },
   };
 
   /**
@@ -93,7 +98,7 @@ export class Diagnostics {
       throw new Error('Diagnostics constructor requires name parameter');
     }
     const { name, debugOn, parent, app } = args;
-    
+
     this._name = name;
     this.parent = parent || null;
     this.startTime = OS.performance.now();
@@ -134,8 +139,11 @@ export class Diagnostics {
    * @param requiredKeys - Array of required argument key names
    * @returns true if all required arguments are present, false otherwise
    */
-  require(args: Record<string, unknown>, requiredKeys: string[]): boolean {
+  require(args: Record<string, unknown> = {}, requiredKeys: string[]): boolean {
+    // Validate args is an object (not null, not undefined, not a primitive)
+    const isValidObject = this.util.isValidObject(args);
     let missingKeys: string[] = [];
+
     for (const key of requiredKeys) {
       if (!(key in args) || args[key] === undefined) {
         missingKeys.push(key);
@@ -144,7 +152,8 @@ export class Diagnostics {
 
     if (missingKeys.length > 0) {
       const missingKeysString = `"${missingKeys.join('", "')}"`;
-      this.print(`❌ missing: ${missingKeysString}`);
+      const argsMessage = isValidObject ? '' : `. "args" must be an object`;
+      this.print(`❌ missing: ${missingKeysString}${argsMessage}`);
     }
 
     return missingKeys.length === 0;
@@ -219,7 +228,8 @@ export class Diagnostics {
       UI.out(formattedMessage);
       // Show error dialog to user (only if UI is already instantiated to avoid circular deps)
       if (this.app?.reg?.hasInstance?.('ui')) {
-        this.app.ui.showErrorMessage(formattedMessage);
+        const ui = this.app.reg.getInstance('ui') as { showErrorMessage: (msg: string) => void };
+        ui.showErrorMessage(formattedMessage);
       }
     }
 

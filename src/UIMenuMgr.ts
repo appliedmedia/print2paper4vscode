@@ -1,20 +1,19 @@
 import type { Registry } from './Registry';
-import type { ForceNumber_dict_t } from './App';
+import type { ForceNumber_dict_t } from './Utils';
 import type { FnImport_t } from './types/Registry_t';
 import type { UI_t } from './UI';
 import type { PersistValue_t } from './Persist';
 import { contextDict_t, kContextDict_None } from './types/UI_t';
-import {
-  UIMenu,
-  type MenuId_t,
-  type MenuItemId_t,
-  type HandleSelection_t,
-  type UIMenuItem_t,
-  type iconSlotTriad_t,
-  type iconSlotTriad_main_t,
-  kMenuId,
-  kMenuItemId,
-} from './UIMenu';
+import { UIMenu } from './UIMenu';
+import type {
+  MenuId_t,
+  MenuItemId_t,
+  HandleSelection_t,
+  UIMenuItem_t,
+  iconSlotTriad_t,
+  iconSlotTriad_main_t,
+} from './types/UIMenu_t';
+import { kMenuId, kMenuItemId } from './types/UIMenu_t';
 import { Diagnostics } from './Diagnostics';
 import {
   kFontSizeId,
@@ -138,7 +137,15 @@ export class UIMenuMgr {
   }): UIMenu {
     const dx = this.dx.sub({ name: 'createMenu' });
     dx.require(args, ['id', 'displayName', 'iconSlotTriad', 'menuItems', 'selectionHandler']);
-    const { id, displayName, iconSlotTriad, isFlyout = false, menuItems, flyoutMenuItemIds = [], selectionHandler } = args;
+    const {
+      id,
+      displayName,
+      iconSlotTriad,
+      isFlyout = false,
+      menuItems,
+      flyoutMenuItemIds = [],
+      selectionHandler,
+    } = args;
     return new UIMenu({
       reg: this.reg,
       id,
@@ -147,7 +154,7 @@ export class UIMenuMgr {
       isFlyout,
       menuItems,
       flyoutMenuItemIds,
-      selectionHandler
+      selectionHandler,
     });
   }
 
@@ -238,7 +245,7 @@ export class UIMenuMgr {
   getMenuById(id: string): UIMenu {
     const menu = this.getUIMenus().find(menu => menu.id === id);
     if (!menu) {
-      this.dx.error(`Menu not found: ${id}`);
+      this.dx.error(`Menu not found: ${JSON.stringify(id)}`);
       throw new Error(`Menu not found: ${id}`);
     }
     return menu;
@@ -250,8 +257,11 @@ export class UIMenuMgr {
   }
 
   // Get persist value for a persistId from persist singleton
-  getValueForPersistIdOnMenuId(args: { menuId: MenuId_t; persistId: UI_t }): PersistValue_t | undefined {
-    const dx = this.dx.sub({ name: 'getValueForPersistIdOnMenuId' });
+  getValueOfPersistIdForMenuId(args: {
+    menuId: MenuId_t;
+    persistId: UI_t;
+  }): PersistValue_t | undefined {
+    const dx = this.dx.sub({ name: 'getValueOfPersistIdForMenuId' });
     dx.require(args, ['menuId', 'persistId']);
     const { persistId } = args;
     const result = this.fn.persist.get(persistId);
@@ -260,8 +270,12 @@ export class UIMenuMgr {
   }
 
   // Set persist value for a persistId on persist singleton
-  setValueForPersistIdOnMenuId(args: { menuId: MenuId_t; persistId: UI_t; value: PersistValue_t }): void {
-    const dx = this.dx.sub({ name: 'setValueForPersistIdOnMenuId' });
+  setValueOfPersistIdForMenuId(args: {
+    menuId: MenuId_t;
+    persistId: UI_t;
+    value: PersistValue_t;
+  }): void {
+    const dx = this.dx.sub({ name: 'setValueOfPersistIdForMenuId' });
     dx.require(args, ['menuId', 'persistId', 'value']);
     const { menuId, persistId, value } = args;
     const oldValue = this.fn.persist.get(persistId);
@@ -278,10 +292,10 @@ export class UIMenuMgr {
   }
 
   // Get the value for the currently selected menu item
-  // Combines getMenuItemIdSelected + getValueForMenuItemId
+  // Combines getMenuItemIdSelected + getValueOfMenuItemIdForMenuId
   // Returns string or number, or undefined if empty/missing
-  getValueForMenuItemIdSelected(menuId: MenuId_t): number | string | undefined {
-    const dx = this.dx.sub({ name: 'getValueForMenuItemIdSelected' });
+  getValueOfMenuItemIdSelected(menuId: MenuId_t): number | string | undefined {
+    const dx = this.dx.sub({ name: 'getValueOfMenuItemIdSelected' });
     const menuItemId = this.getMenuItemIdSelected(menuId);
     dx.out(`menuId=${menuId}, menuItemId=${menuItemId}`);
     if (!menuItemId) {
@@ -290,7 +304,7 @@ export class UIMenuMgr {
       return undefined;
     }
 
-    const value = this.getValueForMenuItemId({ menuId, menuItemId });
+    const value = this.getValueOfMenuItemIdForMenuId({ menuId, menuItemId });
     dx.out(`Final result: menuItemId=${menuItemId}, value=${value}`);
     dx.done();
     return value;
@@ -300,9 +314,12 @@ export class UIMenuMgr {
   // Resolves menu item values via resolver functions (for dynamic values like fitWidth/fitPage),
   // numeric values, or legacy calc templates. Returns the resolved value or menuItemId as fallback.
   // Never returns undefined - defaults to menuItemId if value not found or resolution fails.
-  getValueForMenuItemId(args: { menuId: MenuId_t; menuItemId: string }): number | string {
-    const dx = this.dx.sub({ name: 'getValueForMenuItemId' });
-    dx.require(args, ['menuId', 'menuItemId']);
+  getValueOfMenuItemIdForMenuId(args: { menuId: MenuId_t; menuItemId: string }): number | string {
+    const dx = this.dx.sub({ name: 'getValueOfMenuItemIdForMenuId' });
+    if (!dx.require(args, ['menuId', 'menuItemId'])) {
+      dx.error(`Invalid args: ${JSON.stringify(args)}`);
+      throw new Error(`getValueOfMenuItemIdForMenuId: invalid arguments`);
+    }
     const { menuId, menuItemId } = args;
     let result: number | string = menuItemId;
 
@@ -311,13 +328,16 @@ export class UIMenuMgr {
     // Check if menuItemId === menuId (custom text_edit value)
     // Read from persistId instead of menu items
     if (menuItemId === menuId) {
-      const dx = this.dx.sub({ name: 'getValueForMenuItemId[iconSlotTriad]' });
+      const dx = this.dx.sub({ name: 'getValueOfMenuItemIdForMenuId[iconSlotTriad]' });
       const iconSlotMain = (menu as unknown as { _iconSlotTriad: iconSlotTriad_t })._iconSlotTriad
         ?.main;
       dx.out(`menuItemId === menuId, checking for persistId`);
       if (typeof iconSlotMain !== 'string' && iconSlotMain.persistId) {
         dx.out(`Found persistId: ${iconSlotMain.persistId}`);
-        const persistValue = this.getValueForPersistIdOnMenuId({ menuId, persistId: iconSlotMain.persistId });
+        const persistValue = this.getValueOfPersistIdForMenuId({
+          menuId,
+          persistId: iconSlotMain.persistId,
+        });
         dx.out(`Read from menu.persist[${iconSlotMain.persistId}] = ${persistValue}`);
         if (this.fn.utils.hasContent(persistValue)) {
           result = persistValue as string | number;

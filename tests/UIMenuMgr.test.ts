@@ -2,7 +2,7 @@ import { describe, it, beforeEach, afterEach } from 'node:test';
 import * as assert from 'node:assert';
 import { UIMenuMgr } from '../src/UIMenuMgr.js';
 import { createTestApp, TestApp } from './test-utils.js';
-import type { MenuId_t, UIMenuItem_t, iconSlotTriad_t } from '../src/UIMenu.js';
+import type { MenuId_t, UIMenuItem_t, iconSlotTriad_t } from '../src/types/UIMenu_t.js';
 import { mockContext, mockVSCode } from './test-utils.js';
 
 describe('UIMenuMgr', () => {

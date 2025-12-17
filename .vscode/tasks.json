@@ -1,0 +1,39 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "npm: compile",
+            "type": "shell",
+            "command": "npm run compile",
+            "group": "build",
+            "presentation": {
+                "panel": "shared",
+                "reveal": "silent"
+            },
+            "problemMatcher": "$tsc",
+            "dependsOn": "generate-package-json"
+        },
+        {
+            "label": "npm: build",
+            "type": "shell",
+            "command": "npm run compile && npm run esbuild",
+            "group": "build",
+            "presentation": {
+                "panel": "shared",
+                "reveal": "silent"
+            },
+            "problemMatcher": "$tsc",
+            "dependsOn": "generate-package-json"
+        },
+        {
+            "label": "generate-package-json",
+            "type": "shell",
+            "command": "node scripts/generate-package-json.mjs",
+            "group": "build",
+            "presentation": {
+                "panel": "shared",
+                "reveal": "silent"
+            }
+        }
+    ]
+}
