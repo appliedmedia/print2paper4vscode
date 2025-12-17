@@ -297,21 +297,24 @@ export class PaperPrinter {
       this.fn.pdf.docInfo().languageId = this.docInfo().languageId;
       this.fn.pdf.docInfo().title = this.docInfo().printTitle;
 
-      // Get active editor for markdown rendering context
-      const editor = this.fn.vscodeapis.getActiveTextEditor();
-      if (!editor) throw new Error('No active editor');
-
       // For markdown files, check menu selection to determine rendering mode
-      // getValueForMenuItemIdSelected returns the boolean value (false for raw, true for render)
+      // getValueOfMenuItemIdSelected returns the boolean value (false for raw, true for render)
       const useRenderedMd =
         this.docInfo().languageId === 'markdown' &&
         !!this.fn.uimenumgr.getValueOfMenuItemIdSelected(kMd.id);
 
+      // Get active editor only if needed for markdown rendering
+      // For regeneration from menu changes, editor might not be active (user switched to webview)
+      const editor = useRenderedMd ? this.fn.vscodeapis.getActiveTextEditor() : undefined;
+      if (useRenderedMd && !editor) {
+        dx.out('No active editor for markdown rendering, falling back to raw mode');
+      }
+
       // Generate PDF - handles both tokenized and HTML rendering internally
       dx.out(`Generating complete PDF`);
       await this.fn.pdf.generatePdf({
-        useRenderedMd,
-        document: editor.document,
+        useRenderedMd: useRenderedMd && !!editor,
+        document: editor?.document,
       });
 
       dx.out(`PDF generation complete: ${this.fn.pdf.getPageTotal()} pages`);
