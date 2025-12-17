@@ -270,7 +270,7 @@ describe('PDF Markdown HTML Rendering', () => {
         return '<h1>Heading</h1><p>Paragraph with <strong>bold</strong> text.</p>';
       };
       
-      await pdf.generatePdf({ useRenderedMd: true, document: {} as any });
+      await pdf.generatePdf({ useRenderedMd: true });
       
       assert.ok(pdf.docInfo().pdfDoc, 'PDF document should be generated');
       assert.ok(pdf.getPageTotal() > 0, 'Should have at least one page');

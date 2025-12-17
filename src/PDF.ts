@@ -10,11 +10,11 @@ import type { MenuId_t } from './types/UIMenu_t';
 import type { FnImport_t } from './types/Registry_t';
 import { Diagnostics } from './Diagnostics';
 import { YamlInstance } from './Yaml';
-import { Coords } from './Coords';
 import jsPDF from 'jspdf';
+import type { jsPDF_t } from './types/PDF_t';
 import { DocInfo_PDF } from './DocInfo_PDF';
 import type { ThemedToken } from 'shiki';
-import { parse, type HTMLElement, type Node, NodeType } from 'node-html-parser';
+import { parse, type HTMLElement, NodeType } from 'node-html-parser';
 import type { LanguageId_t } from './Stylize';
 
 type HeaderFooterRenderablePos = HeaderFooterPos_t;
@@ -88,7 +88,7 @@ export class PDF {
     this.dx = this.fn.dx.sub({ name: 'PDF' });
     this._docInfo = DocInfo_PDF.create({ reg: this.reg });
     this._yaml = this.fn.yaml.create({ filePath: 'src/PDF.yaml', dataStruct: PDF.kYaml });
-    
+
     // All initialization happens here - no separate init() needed
     this.tempPdfs = [];
   }
@@ -96,7 +96,6 @@ export class PDF {
   yaml() {
     return this._yaml.get();
   }
-  
 
   /**
    * Get the PDF document info
@@ -160,9 +159,7 @@ export class PDF {
         throw new Error('PDF document not generated');
       }
       const pdfBuffer = this.docInfo().asArrayBuffer();
-      dx.out(
-        `Using PDF ArrayBuffer for printWithPreview (${pdfBuffer.byteLength} bytes)`
-      );
+      dx.out(`Using PDF ArrayBuffer for printWithPreview (${pdfBuffer.byteLength} bytes)`);
 
       // Generate filename with timestamp
       const timestamp = this.fn.os.dateAsYYYYMMDDHHMMSS();
@@ -195,9 +192,7 @@ export class PDF {
         throw new Error('PDF document not generated');
       }
       const pdfBuffer = this.docInfo().asArrayBuffer();
-      dx.out(
-        `Using PDF ArrayBuffer for printDirectly (${pdfBuffer.byteLength} bytes)`
-      );
+      dx.out(`Using PDF ArrayBuffer for printDirectly (${pdfBuffer.byteLength} bytes)`);
 
       // Generate filename with timestamp
       const timestamp = this.fn.os.dateAsYYYYMMDDHHMMSS();
@@ -232,9 +227,7 @@ export class PDF {
         throw new Error('PDF document not generated');
       }
       const pdfBuffer = this.docInfo().asArrayBuffer();
-      dx.out(
-        `Using PDF ArrayBuffer for saveAsPDF (${pdfBuffer.byteLength} bytes)`
-      );
+      dx.out(`Using PDF ArrayBuffer for saveAsPDF (${pdfBuffer.byteLength} bytes)`);
 
       // Generate default filename with timestamp
       const timestamp = this.fn.os.dateAsYYYYMMDDHHMMSS();
@@ -436,36 +429,35 @@ export class PDF {
 
   // UNIFIED: Generate complete PDF
   // Caller should set docInfo properties (code, languageId, title, fontFamily, fontSizePx, theme, etc.) before calling this
-  async generatePdf(args?: { useRenderedMd?: boolean; document?: any }): Promise<void> {
+  async generatePdf(args?: { useRenderedMd?: boolean }): Promise<void> {
     const dx = this.dx.sub({ name: 'generatePdf' });
-    dx.require({ code: this.docInfo().code, languageId: this.docInfo().languageId }, [
-      'code',
-      'languageId',
-    ]);
 
+    const code = this.docInfo().code;
+    const languageId = this.docInfo().languageId;
     try {
-      // Setup PDF document
-      this.setupPdf();
+      if (dx.require({ code, languageId }, ['code', 'languageId'])) {
+        // Setup PDF document
+        this.setupPdf();
 
-      // Add header and footer to first page
-      this.addHeaderAndFooter();
+        // Add header and footer to first page
+        this.addHeaderAndFooter();
 
-      // Tokenize or render to HTML
-      const result = await this.fn.stylize.tokenize({
-        code: this.docInfo().code,
-        languageId: this.docInfo().languageId,
-        theme: this.docInfo().theme,
-        useRenderedMd: args?.useRenderedMd,
-        document: args?.document
-      });
+        // Tokenize or render to HTML
+        const result = await this.fn.stylize.tokenize({
+          code,
+          languageId,
+          theme: this.docInfo().theme,
+          useRenderedMd: args?.useRenderedMd,
+        });
 
-      // Render content to PDF
-      await this.render(result);
+        // Render content to PDF
+        await this.render(result);
 
-      // Finish the PDF (re-renders headers/footers with correct page totals)
-      this.finishPdf();
+        // Finish the PDF (re-renders headers/footers with correct page totals)
+        this.finishPdf();
 
-      dx.out(`Generated complete PDF with ${this.docInfo().pageTotal} pages`);
+        dx.out(`Generated complete PDF with ${this.docInfo().pageTotal} pages`);
+      }
     } catch (error) {
       dx.error(`Failed to generate complete PDF: ${String(error)}`);
       throw error;
@@ -504,9 +496,10 @@ export class PDF {
 
     try {
       // Prefer actual PDF dimensions if available
-      if (this.docInfo().pdfDoc) {
-        const pageWidthPts = (this.docInfo().pdfDoc as any).getPageWidth();
-        const pageHeightPts = (this.docInfo().pdfDoc as any).getPageHeight();
+      const pdfDoc = this.docInfo().pdfDoc;
+      if (pdfDoc) {
+        const pageWidthPts = (pdfDoc as jsPDF_t).getPageWidth();
+        const pageHeightPts = (pdfDoc as jsPDF_t).getPageHeight();
         const pageWidthPx = Math.round(this.fn.coords.pdfPtsToCssPx(pageWidthPts));
         const pageHeightPx = Math.round(this.fn.coords.pdfPtsToCssPx(pageHeightPts));
         dx.out(`Page dimensions (from PDF): ${pageWidthPx}x${pageHeightPx}px`);
@@ -520,7 +513,7 @@ export class PDF {
       for (const key of menuKeys) {
         selections[key] = this.fn.uimenumgr.getMenuItemIdSelected(key);
       }
-      
+
       const pageSizeId = selections.pageSizeId as PageSizeIdMenuItems_t;
       const orient = selections.orient as 'portrait' | 'landscape';
       const pageSize = this.getPageDimensions(pageSizeId, orient);
@@ -679,7 +672,7 @@ export class PDF {
    */
   public renderFromTokens(tokens: ThemedToken[][]): void {
     const dx = this.dx.sub({ name: 'renderFromTokens' });
-    
+
     try {
       // Initialize jsPDF document check
       if (!this.docInfo().pdfDoc) {
@@ -697,7 +690,7 @@ export class PDF {
       // Iterate through all lines
       for (let lineNumber = 0; lineNumber < tokens.length; lineNumber++) {
         const lineTokens = tokens[lineNumber];
-        
+
         // Each line starts at left margin, same Y position
         let xPos = marginsPts.leftMarginPts;
         let yPos = this.currentY; // Start at current Y position for this line
@@ -787,7 +780,7 @@ export class PDF {
 
         dx.out(`Rendered line ${lineNumber}`);
       }
-      
+
       dx.out(`Rendered ${tokens.length} lines to PDF`);
     } catch (error) {
       dx.out(`Error rendering tokens: ${error}`);
@@ -799,10 +792,10 @@ export class PDF {
 
   /**
    * Get font info from markdown preview settings or editor settings
-   * 
+   *
    * Respects user's markdown.preview.fontFamily and markdown.preview.fontSize
    * settings, falling back to editor settings if not configured.
-   * 
+   *
    * @returns Font family and size for markdown rendering
    * @example
    * const { fontFamily, fontSize } = this.getMarkdownFontInfo();
@@ -813,21 +806,21 @@ export class PDF {
     const mdConfig = this.fn.vscodeapis.getConfiguration('markdown');
     const mdFontFamily = mdConfig.get('preview.fontFamily') as string | undefined;
     const mdFontSize = mdConfig.get('preview.fontSize') as number | undefined;
-    
+
     // Use markdown preview settings, or fall back to editor settings
     const editorTypo = this.fn.vscodeapis.getEditorTypography();
     const fontFamily = mdFontFamily || editorTypo.fontFamily;
     const fontSize = mdFontSize || editorTypo.fontSize;
-    
+
     return { fontFamily, fontSize };
   }
 
   /**
    * Extract font info from HTML element's style attribute
-   * 
+   *
    * Parses inline styles for font-family and font-size properties.
    * Supports multiple units: px (pixels), pt (points), em (relative to base).
-   * 
+   *
    * @param element - HTML element to extract font info from
    * @returns Font family and size if found in element's style attribute, null otherwise
    * @example
@@ -835,24 +828,26 @@ export class PDF {
    * const font = this.getFontFromElementStyle(el);
    * // Returns: { fontFamily: 'Courier', fontSize: 12 }
    */
-  private getFontFromElementStyle(element: HTMLElement): { fontFamily?: string; fontSize?: number } | null {
+  private getFontFromElementStyle(
+    element: HTMLElement
+  ): { fontFamily?: string; fontSize?: number } | null {
     const style = element.getAttribute('style');
     if (!style) return null;
-    
+
     const result: { fontFamily?: string; fontSize?: number } = {};
-    
+
     // Parse font-family from style
     const fontFamilyMatch = style.match(/font-family:\s*([^;]+)/i);
     if (fontFamilyMatch) {
       result.fontFamily = fontFamilyMatch[1].trim().replace(/['"]/g, '');
     }
-    
+
     // Parse font-size from style
     const fontSizeMatch = style.match(/font-size:\s*(\d+(?:\.\d+)?)(px|pt|em)/i);
     if (fontSizeMatch) {
       const size = parseFloat(fontSizeMatch[1]);
       const unit = fontSizeMatch[2];
-      
+
       if (unit === 'px') {
         result.fontSize = size;
       } else if (unit === 'pt') {
@@ -862,54 +857,54 @@ export class PDF {
         result.fontSize = size * baseFontInfo.fontSize;
       }
     }
-    
+
     return Object.keys(result).length > 0 ? result : null;
   }
 
   /**
    * Render HTML-formatted markdown to PDF
-   * 
+   *
    * Parses HTML from VS Code's markdown renderer and converts it to PDF.
    * Handles standard markdown elements: headings, paragraphs, lists, code blocks,
    * blockquotes, horizontal rules, and inline formatting (bold, italic, code).
-   * 
+   *
    * Architecture:
    * - Uses node-html-parser to parse HTML into DOM tree
    * - Dispatches each element to specialized handler via htmlElementHandlers map
    * - Reuses existing PDF primitives: character wrapping, page breaking, text rendering
    * - Code blocks are re-tokenized with Shiki for syntax highlighting
-   * 
+   *
    * @param html - HTML string from VS Code's markdown.api.render command
    * @throws Error if HTML parsing fails or required PDF document not initialized
-   * 
+   *
    * @example
    * const html = await vscode.commands.executeCommand('markdown.api.render', markdown);
    * await pdf.renderFromHTML(html);
    */
   async renderFromHTML(html: string): Promise<void> {
     const dx = this.dx.sub({ name: 'renderFromHTML' });
-    
+
     try {
       // Validate HTML input
       if (!html || html.trim().length === 0) {
         dx.out('Empty HTML, nothing to render');
         return;
       }
-      
+
       const root = parse(html);
-      
+
       // Validate parse result
       if (!root || !root.childNodes) {
         dx.out('Failed to parse HTML or no child nodes');
         return;
       }
-      
+
       for (const element of root.childNodes) {
         if (element.nodeType === NodeType.ELEMENT_NODE) {
           await this.renderHTMLElement(element as HTMLElement);
         }
       }
-      
+
       dx.out('Rendered HTML to PDF');
     } finally {
       dx.done();
@@ -920,27 +915,30 @@ export class PDF {
    * HTML element handlers - maps tag name to render function
    * Handlers can be async to support operations like code tokenization
    */
-  private readonly htmlElementHandlers: Record<string, (element: HTMLElement) => void | Promise<void>> = {
-    'h1': (el) => this.renderHeading(el, 1),
-    'h2': (el) => this.renderHeading(el, 2),
-    'h3': (el) => this.renderHeading(el, 3),
-    'h4': (el) => this.renderHeading(el, 4),
-    'h5': (el) => this.renderHeading(el, 5),
-    'h6': (el) => this.renderHeading(el, 6),
-    'p': (el) => this.renderParagraph(el),
-    'ul': (el) => this.renderList(el),
-    'ol': (el) => this.renderList(el),
-    'pre': (el) => this.renderCodeBlock(el),
-    'blockquote': (el) => this.renderBlockquote(el),
-    'hr': () => this.renderHorizontalRule(),
+  private readonly htmlElementHandlers: Record<
+    string,
+    (element: HTMLElement) => void | Promise<void>
+  > = {
+    h1: el => this.renderHeading(el, 1),
+    h2: el => this.renderHeading(el, 2),
+    h3: el => this.renderHeading(el, 3),
+    h4: el => this.renderHeading(el, 4),
+    h5: el => this.renderHeading(el, 5),
+    h6: el => this.renderHeading(el, 6),
+    p: el => this.renderParagraph(el),
+    ul: el => this.renderList(el),
+    ol: el => this.renderList(el),
+    pre: el => this.renderCodeBlock(el),
+    blockquote: el => this.renderBlockquote(el),
+    hr: () => this.renderHorizontalRule(),
   };
 
   /**
    * Render a single HTML element using registered handlers
-   * 
+   *
    * Dispatches element to appropriate handler based on tag name.
    * Handlers can be sync or async (e.g., code blocks require async tokenization).
-   * 
+   *
    * @param element - HTML element to render
    * @example
    * const root = parse('<h1>Title</h1><p>Text</p>');
@@ -950,24 +948,24 @@ export class PDF {
    */
   private async renderHTMLElement(element: HTMLElement): Promise<void> {
     const dx = this.dx.sub({ name: 'renderHTMLElement' });
-    
+
     const handler = this.htmlElementHandlers[element.tagName.toLowerCase()];
     if (handler) {
       await handler(element);
     } else {
       dx.out(`Unknown element: ${element.tagName}`);
     }
-    
+
     dx.done();
   }
 
   /**
    * Render heading element (h1-h6) with automatic sizing and spacing
-   * 
+   *
    * Font sizing uses multipliers: h1=2.0x, h2=1.5x, h3=1.25x, h4=1.1x, h5=1.0x, h6=0.9x
    * Spacing before/after scales with heading level (larger headings get more space).
    * Respects inline font styles if present in HTML, otherwise uses markdown preview settings.
-   * 
+   *
    * @param element - HTML heading element
    * @param level - Heading level (1-6)
    * @example
@@ -977,16 +975,16 @@ export class PDF {
   private renderHeading(element: HTMLElement, level: number): void {
     const pdfDoc = this.docInfo().pdfDoc;
     if (!pdfDoc) return;
-    
+
     // Try to get font from element style first
     const styleFont = this.getFontFromElementStyle(element);
-    
+
     // Fall back to markdown preview settings
     const baseFontInfo = this.getMarkdownFontInfo();
-    
+
     const fontFamily = styleFont?.fontFamily || baseFontInfo.fontFamily;
     const fontSize = styleFont?.fontSize || baseFontInfo.fontSize;
-    
+
     // Calculate heading size if not specified in style
     let headingSize: number;
     if (styleFont?.fontSize) {
@@ -996,26 +994,26 @@ export class PDF {
       const multiplier = sizeMultipliers[level - 1] || 1.0;
       headingSize = this.fn.coords.cssPxToPdfPts(fontSize * multiplier);
     }
-    
+
     // Spacing based on level
     const spacingBefore = Math.max(12 - level * 2, 4);
     const spacingAfter = Math.max(6 - level, 2);
-    
+
     // Add spacing before
     this.currentY += spacingBefore;
     if (this.shouldBreakPage(this.currentY)) this.addPageBreak();
-    
+
     // Set heading font
     const jsPdfFont = this.mapFontFamilyToJsPDF(fontFamily, pdfDoc);
     pdfDoc.setFont(jsPdfFont, 'bold');
     pdfDoc.setFontSize(headingSize);
-    
+
     // Render text with wrapping (reuse existing logic)
     this.renderTextContent(element.text);
-    
+
     // Add spacing after
     this.currentY += spacingAfter;
-    
+
     // Reset to normal font
     pdfDoc.setFontSize(this.docInfo().fontSizePts);
     pdfDoc.setFont(jsPdfFont, 'normal');
@@ -1023,15 +1021,15 @@ export class PDF {
 
   /**
    * Render paragraph with inline formatting support
-   * 
+   *
    * Processes paragraph content including nested inline elements:
    * - Plain text nodes
    * - Bold/strong elements
    * - Italic/em elements
    * - Inline code elements
-   * 
+   *
    * Adds line spacing after paragraph for visual separation.
-   * 
+   *
    * @param element - HTML paragraph element
    * @example
    * // <p>This is <strong>bold</strong> and <em>italic</em> text</p>
@@ -1039,15 +1037,15 @@ export class PDF {
    */
   private renderParagraph(element: HTMLElement): void {
     if (!this.docInfo().pdfDoc) return;
-    
+
     // Process inline content (text, bold, italic, code, etc.)
     this.renderInlineContent(element);
-    
+
     // Move to next line with spacing
     this.currentY += this.currentLineHeight;
     this.currentX = this.docInfo().marginPts.leftMarginPts;
     this.currentY += 6; // Paragraph spacing
-    
+
     if (this.shouldBreakPage(this.currentY)) this.addPageBreak();
   }
 
@@ -1055,58 +1053,61 @@ export class PDF {
    * Inline element handlers - maps tag name to render function
    * Readonly property to avoid recreating handlers on every call
    */
-  private readonly inlineElementHandlers: Record<string, (element: HTMLElement, savedFont: any) => void> = {
-    'strong': (el, savedFont) => {
+  private readonly inlineElementHandlers: Record<
+    string,
+    (element: HTMLElement, savedFont: { fontName: string; fontStyle: string }) => void
+  > = {
+    strong: (el, savedFont) => {
       const styleFont = this.getFontFromElementStyle(el);
-      const fontName = styleFont?.fontFamily 
+      const fontName = styleFont?.fontFamily
         ? this.mapFontFamilyToJsPDF(styleFont.fontFamily, this.docInfo().pdfDoc!)
         : savedFont.fontName;
-      
+
       this.docInfo().pdfDoc!.setFont(fontName, 'bold');
       this.renderTextContent(el.text);
       this.docInfo().pdfDoc!.setFont(savedFont.fontName, savedFont.fontStyle);
     },
-    'b': (el, savedFont) => {
+    b: (el, savedFont) => {
       const styleFont = this.getFontFromElementStyle(el);
-      const fontName = styleFont?.fontFamily 
+      const fontName = styleFont?.fontFamily
         ? this.mapFontFamilyToJsPDF(styleFont.fontFamily, this.docInfo().pdfDoc!)
         : savedFont.fontName;
-      
+
       this.docInfo().pdfDoc!.setFont(fontName, 'bold');
       this.renderTextContent(el.text);
       this.docInfo().pdfDoc!.setFont(savedFont.fontName, savedFont.fontStyle);
     },
-    'em': (el, savedFont) => {
+    em: (el, savedFont) => {
       const styleFont = this.getFontFromElementStyle(el);
-      const fontName = styleFont?.fontFamily 
+      const fontName = styleFont?.fontFamily
         ? this.mapFontFamilyToJsPDF(styleFont.fontFamily, this.docInfo().pdfDoc!)
         : savedFont.fontName;
-      
+
       this.docInfo().pdfDoc!.setFont(fontName, 'italic');
       this.renderTextContent(el.text);
       this.docInfo().pdfDoc!.setFont(savedFont.fontName, savedFont.fontStyle);
     },
-    'i': (el, savedFont) => {
+    i: (el, savedFont) => {
       const styleFont = this.getFontFromElementStyle(el);
-      const fontName = styleFont?.fontFamily 
+      const fontName = styleFont?.fontFamily
         ? this.mapFontFamilyToJsPDF(styleFont.fontFamily, this.docInfo().pdfDoc!)
         : savedFont.fontName;
-      
+
       this.docInfo().pdfDoc!.setFont(fontName, 'italic');
       this.renderTextContent(el.text);
       this.docInfo().pdfDoc!.setFont(savedFont.fontName, savedFont.fontStyle);
     },
-    'code': (el, savedFont) => {
+    code: (el, savedFont) => {
       const styleFont = this.getFontFromElementStyle(el);
       let monoFontFamily: string;
-      
+
       if (styleFont?.fontFamily) {
         monoFontFamily = styleFont.fontFamily;
       } else {
         const editorTypo = this.fn.vscodeapis.getEditorTypography();
         monoFontFamily = editorTypo.fontFamily;
       }
-      
+
       const monoFont = this.mapFontFamilyToJsPDF(monoFontFamily, this.docInfo().pdfDoc!);
       this.docInfo().pdfDoc!.setFont(monoFont, 'normal');
       this.renderTextContent(el.text);
@@ -1116,16 +1117,16 @@ export class PDF {
 
   /**
    * Render inline content with formatting (bold, italic, code)
-   * 
+   *
    * Recursively processes child nodes:
    * - Text nodes: rendered with current font
    * - <strong>, <b>: rendered in bold
    * - <em>, <i>: rendered in italic
    * - <code>: rendered in monospace
    * - Unknown elements: recursively processed
-   * 
+   *
    * Font state is saved/restored around each formatted element.
-   * 
+   *
    * @param element - HTML element containing inline content
    * @example
    * // <span>Text with <strong>bold</strong> and <code>code</code></span>
@@ -1133,7 +1134,7 @@ export class PDF {
    */
   private renderInlineContent(element: HTMLElement): void {
     if (!this.docInfo().pdfDoc) return;
-    
+
     for (const child of element.childNodes) {
       if (child.nodeType === NodeType.TEXT_NODE) {
         // Plain text
@@ -1141,7 +1142,7 @@ export class PDF {
       } else if (child.nodeType === NodeType.ELEMENT_NODE) {
         const el = child as HTMLElement;
         const savedFont = this.docInfo().pdfDoc!.getFont();
-        
+
         const handler = this.inlineElementHandlers[el.tagName.toLowerCase()];
         if (handler) {
           handler(el, savedFont);
@@ -1155,33 +1156,33 @@ export class PDF {
 
   /**
    * Render text content with intelligent character wrapping
-   * 
+   *
    * Core text rendering primitive shared by all HTML element handlers.
    * Implements word-aware line wrapping with automatic page breaks.
-   * 
+   *
    * Algorithm:
    * 1. Calculate remaining space on current line
    * 2. Use findCharacterBreakPoint() to find optimal break position
    * 3. Render text portion and advance position
    * 4. Wrap to next line if needed, checking for page breaks
-   * 
+   *
    * Reuses existing character wrapping logic from renderFromTokens for consistency.
-   * 
+   *
    * @param text - Plain text content to render
    * @example
    * this.renderTextContent('This is a long line that will wrap automatically');
    */
   private renderTextContent(text: string): void {
     if (!this.docInfo().pdfDoc || !text) return;
-    
+
     const marginsPts = this.docInfo().marginPts;
     const pageSize = this.getPageDimensions(this.docInfo().pageSizeId, this.docInfo().orient);
     const unit = this.getUnitForPageSize(this.docInfo().pageSizeId);
     const { widthPts: pageWidthPts } = this.pageSizeToPts(pageSize.width, pageSize.height, unit);
     const availableWidth = pageWidthPts - marginsPts.leftMarginPts - marginsPts.rightMarginPts;
-    
+
     let content = text;
-    
+
     while (content.length > 0) {
       // REUSE existing findCharacterBreakPoint - same logic as tokens!
       const charsToRender = this.findCharacterBreakPoint(
@@ -1190,7 +1191,7 @@ export class PDF {
         marginsPts.leftMarginPts,
         availableWidth
       );
-      
+
       if (charsToRender === 0) {
         // Wrap to next line
         this.currentY += this.currentLineHeight;
@@ -1198,7 +1199,7 @@ export class PDF {
         if (this.shouldBreakPage(this.currentY)) this.addPageBreak();
         continue;
       }
-      
+
       const portion = content.substring(0, charsToRender);
       this.docInfo().pdfDoc!.text(portion, this.currentX, this.currentY);
       this.currentX += this.docInfo().pdfDoc!.getTextWidth(portion);
@@ -1208,69 +1209,69 @@ export class PDF {
 
   /**
    * Render ordered or unordered list with automatic numbering/bullets
-   * 
+   *
    * Features:
    * - Unordered lists: bullet character (•)
    * - Ordered lists: auto-incrementing numbers (1. 2. 3.)
    * - 20-point indentation from left margin
    * - Nested inline formatting support
    * - Proper spacing between items
-   * 
+   *
    * Margin is temporarily adjusted during list rendering and restored after.
-   * 
+   *
    * @param element - HTML list element (ul or ol)
    * @example
    * // <ul><li>Item 1</li><li>Item 2</li></ul>
    * this.renderList(element); // Renders with bullets
-   * 
+   *
    * // <ol><li>First</li><li>Second</li></ol>
    * this.renderList(element); // Renders with 1. 2. numbering
    */
   private renderList(element: HTMLElement): void {
     const pdfDoc = this.docInfo().pdfDoc;
     if (!pdfDoc) return;
-    
+
     const isOrdered = element.tagName.toLowerCase() === 'ol';
     let itemNumber = 1;
     const indentSize = 20; // Points
-    
+
     const items = element.querySelectorAll('li');
     for (const item of items) {
       // Render prefix (bullet or number)
       const prefix = isOrdered ? `${itemNumber}. ` : '• ';
-      
+
       // Save position for indent
       const savedLeftMargin = this.docInfo().marginPts.leftMarginPts;
       this.docInfo().marginPts.leftMarginPts += indentSize;
       this.currentX = this.docInfo().marginPts.leftMarginPts;
-      
+
       // Render prefix
       pdfDoc.text(prefix, this.currentX, this.currentY);
       this.currentX += pdfDoc.getTextWidth(prefix);
-      
+
       // Render item content
       this.renderInlineContent(item);
-      
+
       // Move to next line
       this.currentY += this.currentLineHeight;
       this.currentX = this.docInfo().marginPts.leftMarginPts;
       this.currentY += 3; // Item spacing
-      
+
       if (this.shouldBreakPage(this.currentY)) this.addPageBreak();
-      
+
       // Restore margin
       this.docInfo().marginPts.leftMarginPts = savedLeftMargin;
-      
+
       if (isOrdered) itemNumber++;
     }
-    
+
     // Add spacing after list
     this.currentY += 6;
   }
 
   /**
    * Render fenced code block with syntax highlighting
-   * 
+   *
    * Architecture:
    * - Extracts language from class="language-xxx" attribute
    * - Re-tokenizes code using Shiki (same as raw code rendering)
@@ -1278,10 +1279,10 @@ export class PDF {
    * - Applies 20-point indentation
    * - Uses monospace font at 90% of base size
    * - Adds spacing before/after for visual separation
-   * 
+   *
    * This approach ensures code blocks in rendered markdown have identical
    * syntax highlighting to raw code files.
-   * 
+   *
    * @param element - HTML pre element containing code
    * @example
    * // <pre><code class="language-javascript">const x = 42;</code></pre>
@@ -1290,70 +1291,70 @@ export class PDF {
   private async renderCodeBlock(element: HTMLElement): Promise<void> {
     const pdfDoc = this.docInfo().pdfDoc;
     if (!pdfDoc) return;
-    
+
     const codeElement = element.querySelector('code');
     if (!codeElement) return;
-    
+
     const code = codeElement.text;
     const classAttr = codeElement.getAttribute('class') || '';
     const langClass = classAttr.split(' ').find((c: string) => c.startsWith('language-'));
     const lang = langClass ? langClass.replace('language-', '') : 'plaintext';
-    
+
     // Add spacing before
     this.currentY += 6;
     if (this.shouldBreakPage(this.currentY)) this.addPageBreak();
-    
+
     // Save left margin and indent
     const savedLeftMargin = this.docInfo().marginPts.leftMarginPts;
     this.docInfo().marginPts.leftMarginPts += 20;
     this.currentX = this.docInfo().marginPts.leftMarginPts;
-    
+
     // REUSE existing Shiki tokenization!
     const result = await this.fn.stylize.tokenize({
       code,
       languageId: lang as LanguageId_t,
-      theme: this.docInfo().theme
+      theme: this.docInfo().theme,
     });
-    
+
     if (!result.tokens) {
       return; // No tokens to render
     }
-    
+
     const tokens = result.tokens;
-    
+
     // Set monospace font
     const editorTypo = this.fn.vscodeapis.getEditorTypography();
     const monoFont = this.mapFontFamilyToJsPDF(editorTypo.fontFamily, pdfDoc);
     const savedFont = pdfDoc.getFont();
     const savedSize = pdfDoc.getFontSize();
-    
+
     pdfDoc.setFont(monoFont, 'normal');
     pdfDoc.setFontSize(savedSize * 0.9);
-    
+
     // REUSE existing renderFromTokens - pass all tokens at once!
     this.renderFromTokens(tokens);
-    
+
     // Restore font
     pdfDoc.setFont(savedFont.fontName, savedFont.fontStyle);
     pdfDoc.setFontSize(savedSize);
-    
+
     // Restore margin
     this.docInfo().marginPts.leftMarginPts = savedLeftMargin;
     this.currentX = savedLeftMargin;
-    
+
     // Add spacing after
     this.currentY += 6;
   }
 
   /**
    * Render blockquote with 20-point indentation
-   * 
+   *
    * Blockquotes can contain any block-level elements (paragraphs, lists, code).
    * All children are rendered recursively with increased left margin.
    * Margin is restored after rendering.
-   * 
+   *
    * Async to support child elements that require async rendering (like code blocks).
-   * 
+   *
    * @param element - HTML blockquote element
    * @example
    * // <blockquote><p>Quoted text</p></blockquote>
@@ -1364,33 +1365,33 @@ export class PDF {
     const savedLeftMargin = this.docInfo().marginPts.leftMarginPts;
     this.docInfo().marginPts.leftMarginPts += 20;
     this.currentX = this.docInfo().marginPts.leftMarginPts;
-    
+
     // Add spacing before
     this.currentY += 6;
     if (this.shouldBreakPage(this.currentY)) this.addPageBreak();
-    
+
     // Render children (await for async elements like code blocks)
     for (const child of element.childNodes) {
       if (child.nodeType === NodeType.ELEMENT_NODE) {
         await this.renderHTMLElement(child as HTMLElement);
       }
     }
-    
+
     // Restore margin
     this.docInfo().marginPts.leftMarginPts = savedLeftMargin;
     this.currentX = savedLeftMargin;
-    
+
     // Add spacing after
     this.currentY += 6;
   }
 
   /**
    * Render horizontal rule as light gray line
-   * 
+   *
    * Draws a line across the full content width (respecting margins).
    * Color: #cccccc (light gray)
    * Spacing: 6 points before and after
-   * 
+   *
    * @example
    * // <hr>
    * this.renderHorizontalRule(); // Draws horizontal line
@@ -1398,16 +1399,16 @@ export class PDF {
   private renderHorizontalRule(): void {
     const doc = this.docInfo().pdfDoc;
     if (!doc) return;
-    
+
     const marginsPts = this.docInfo().marginPts;
     const pageSize = this.getPageDimensions(this.docInfo().pageSizeId, this.docInfo().orient);
     const unit = this.getUnitForPageSize(this.docInfo().pageSizeId);
     const { widthPts: pageWidthPts } = this.pageSizeToPts(pageSize.width, pageSize.height, unit);
     const availableWidth = pageWidthPts - marginsPts.leftMarginPts - marginsPts.rightMarginPts;
-    
+
     this.currentY += 6; // Spacing before
     if (this.shouldBreakPage(this.currentY)) this.addPageBreak();
-    
+
     // Draw line - setDrawColor expects RGB values or a single string
     doc.setDrawColor(204, 204, 204); // RGB for #cccccc
     doc.line(
@@ -1416,7 +1417,7 @@ export class PDF {
       marginsPts.leftMarginPts + availableWidth,
       this.currentY
     );
-    
+
     this.currentY += 6; // Spacing after
   }
 
@@ -1452,26 +1453,43 @@ export class PDF {
     return yPos > metrics.maxContentY;
   }
 
-  private addPageBreak(): void {
-    if (!this.docInfo().pdfDoc) {
-      return;
+/**
+   * Render header or footer elements at their positions
+   */
+private renderHeaderFooterElements(
+    elements: Record<HeaderFooterRenderablePos, string[]>,
+    y: number,
+    widthPts: number,
+    margins: { leftMarginPts: number; rightMarginPts: number }
+  ): void {
+    if (this.docInfo().pdfDoc) {
+
+        // Combine elements at each position with " | " separator
+        const beginText = elements.begin.join(' | ');
+        const middleText = elements.middle.join(' | ');
+        const endText = elements.end.join(' | ');
+
+        const pdfDoc = this.docInfo().pdfDoc!;
+
+        // Render begin (left) position
+        if (beginText) {
+        pdfDoc.text(beginText, margins.leftMarginPts, y);
+        }
+
+        // Render middle position
+        if (middleText) {
+        const middleWidth = pdfDoc.getTextWidth(middleText);
+        const middleX = (widthPts - middleWidth) / 2;
+        pdfDoc.text(middleText, middleX, y);
+        }
+
+        // Render end (right) position
+        if (endText) {
+        const endWidth = pdfDoc.getTextWidth(endText);
+        const endX = widthPts - margins.rightMarginPts - endWidth;
+        pdfDoc.text(endText, endX, y);
+        }
     }
-
-    this.lastPageBreakMetrics = null;
-
-    const margins = this.docInfo().marginPts;
-
-    this.docInfo().pdfDoc!.addPage();
-
-    const headerFontSizePts = 8;
-    const headerY = margins.topMarginPts - 5;
-    const headerBottom = headerY + headerFontSizePts;
-    const headerSpacing = 3;
-
-    this.currentY = headerBottom + headerSpacing + this.currentLineHeight;
-    this.currentX = margins.leftMarginPts;
-
-    this.addHeaderAndFooter();
   }
 
   /**
@@ -1505,8 +1523,7 @@ export class PDF {
 
     // Helper function to format content based on element type using templates
     const formatContent = (
-      element: HeaderFooterSubmenu_t | typeof kHeaderFooter.none | null,
-      position: 'begin' | 'middle' | 'end'
+      element: HeaderFooterSubmenu_t | typeof kHeaderFooter.none | null
     ): string | null => {
       if (!element || element === kHeaderFooter.none) return null;
 
@@ -1534,13 +1551,6 @@ export class PDF {
       return formatted;
     };
 
-    // Build header elements by position
-    const headerElements: Record<HeaderFooterRenderablePos, string[]> = {
-      begin: [],
-      middle: [],
-      end: [],
-    };
-
     // Read header/footer values from persist (single source of truth)
     const getHeaderFooterValue = (
       menuId: MenuId_t
@@ -1548,83 +1558,56 @@ export class PDF {
       const value = this.fn.uimenumgr.getMenuItemIdSelected(menuId);
       return (value as HeaderFooterSubmenu_t | typeof kHeaderFooter.none) || kHeaderFooter.none;
     };
-    // Process header positions
-    const headerBeginContent = formatContent(getHeaderFooterValue('header_begin'), 'begin');
-    if (headerBeginContent) headerElements.begin.push(headerBeginContent);
 
-    const headerMiddleContent = formatContent(getHeaderFooterValue('header_middle'), 'middle');
-    if (headerMiddleContent) headerElements.middle.push(headerMiddleContent);
+    // Build and render header/footer elements generically
+    const positions: HeaderFooterRenderablePos[] = ['begin', 'middle', 'end'];
+    const types = [
+      { prefix: 'header', y: margins.topMarginPts - 5 },
+      { prefix: 'footer', y: heightPts - margins.bottomMarginPts + 5 },
+    ] as const;
 
-    const headerEndContent = formatContent(getHeaderFooterValue('header_end'), 'end');
-    if (headerEndContent) headerElements.end.push(headerEndContent);
+    for (const type of types) {
+      const elements: Record<HeaderFooterRenderablePos, string[]> = {
+        begin: [],
+        middle: [],
+        end: [],
+      };
 
-    // Build footer elements by position
-    const footerElements: Record<HeaderFooterRenderablePos, string[]> = {
-      begin: [],
-      middle: [],
-      end: [],
-    };
+      for (const position of positions) {
+        const menuId = `${type.prefix}_${position}` as MenuId_t;
+        const content = formatContent(getHeaderFooterValue(menuId));
+        if (content) {
+          elements[position].push(content);
+        }
+      }
 
-    // Process footer positions
-    const footerBeginContent = formatContent(getHeaderFooterValue('footer_begin'), 'begin');
-    if (footerBeginContent) footerElements.begin.push(footerBeginContent);
-
-    const footerMiddleContent = formatContent(getHeaderFooterValue('footer_middle'), 'middle');
-    if (footerMiddleContent) footerElements.middle.push(footerMiddleContent);
-
-    const footerEndContent = formatContent(getHeaderFooterValue('footer_end'), 'end');
-    if (footerEndContent) footerElements.end.push(footerEndContent);
-
-    // Render header
-    const headerY = margins.topMarginPts - 5;
-    this.renderHeaderFooterElements(headerElements, headerY, widthPts, margins);
-
-    // Render footer
-    const footerY = heightPts - margins.bottomMarginPts + 5;
-    this.renderHeaderFooterElements(footerElements, footerY, widthPts, margins);
+      this.renderHeaderFooterElements(elements, type.y, widthPts, margins);
+    }
 
     // Restore original font size
     pdfDoc.setFontSize(this.fn.coords.cssPxToPdfPts(originalFontSizePx));
   }
 
-  /**
-   * Render header or footer elements at their positions
-   */
-  private renderHeaderFooterElements(
-    elements: Record<HeaderFooterRenderablePos, string[]>,
-    y: number,
-    widthPts: number,
-    margins: { leftMarginPts: number; rightMarginPts: number }
-  ): void {
+  private addPageBreak(): void {
     if (!this.docInfo().pdfDoc) {
       return;
     }
 
-    // Combine elements at each position with " | " separator
-    const beginText = elements.begin.join(' | ');
-    const middleText = elements.middle.join(' | ');
-    const endText = elements.end.join(' | ');
+    this.lastPageBreakMetrics = null;
 
-    const pdfDoc = this.docInfo().pdfDoc!;
-    
-    // Render begin (left) position
-    if (beginText) {
-      pdfDoc.text(beginText, margins.leftMarginPts, y);
-    }
+    const margins = this.docInfo().marginPts;
 
-    // Render middle position
-    if (middleText) {
-      const middleWidth = pdfDoc.getTextWidth(middleText);
-      const middleX = (widthPts - middleWidth) / 2;
-      pdfDoc.text(middleText, middleX, y);
-    }
+    this.docInfo().pdfDoc!.addPage();
 
-    // Render end (right) position
-    if (endText) {
-      const endWidth = pdfDoc.getTextWidth(endText);
-      const endX = widthPts - margins.rightMarginPts - endWidth;
-      pdfDoc.text(endText, endX, y);
-    }
+    const headerFontSizePts = 8;
+    const headerY = margins.topMarginPts - 5;
+    const headerBottom = headerY + headerFontSizePts;
+    const headerSpacing = 3;
+
+    this.currentY = headerBottom + headerSpacing + this.currentLineHeight;
+    this.currentX = margins.leftMarginPts;
+
+    this.addHeaderAndFooter();
   }
 
   /**

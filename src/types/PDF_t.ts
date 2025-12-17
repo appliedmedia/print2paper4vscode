@@ -1,14 +1,13 @@
+import type jsPDF from 'jspdf';
+
 /**
- * PDF abstraction types
- * Hides jsPDF implementation details behind our own interface
+ * Extended jsPDF type with methods that exist at runtime but aren't in TypeScript definitions
+ *
+ * jsPDF has getPageWidth() and getPageHeight() methods at runtime, but the @types/jspdf
+ * package doesn't include them in the type definitions. This type extends jsPDF to include
+ * these missing methods.
  */
-
-export interface PDFDoc {
-  /**
-   * Get the number of pages in the document
-   */
-  getNumberOfPages(): number;
-
+export interface jsPDF_t extends jsPDF {
   /**
    * Get the width of the current page in points
    */
@@ -18,39 +17,6 @@ export interface PDFDoc {
    * Get the height of the current page in points
    */
   getPageHeight(): number;
-
-  /**
-   * Set the current page number
-   * @param pageNumber The page number to set (1-indexed)
-   */
-  setPage(pageNumber: number): void;
-
-  /**
-   * Get information about the current page
-   */
-  getCurrentPageInfo(): { pageNumber: number };
-
-  /**
-   * Get the PDF as an ArrayBuffer
-   */
-  asArrayBuffer(): ArrayBuffer;
-
-  /**
-   * Get the PDF as a data URL string
-   */
-  asDataUrl(): string;
-}
-
-/**
- * PDF generation options [NOTE (Ace, 2025-10-30): Do we even use this?]
- */
-export interface PDFGenOptions {
-  title?: string;
-  theme?: string;
-  fontSize?: number;
-  lineHeight?: number;
-  pageSize?: 'letter' | 'legal' | 'a3' | 'a4' | 'a5';
-  orient?: 'portrait' | 'landscape';
 }
 
 // end, PDF_t.ts

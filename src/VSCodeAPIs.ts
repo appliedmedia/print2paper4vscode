@@ -6,7 +6,6 @@ import type {
   TextDocument,
   Uri,
   WebviewPanel,
-  Extension,
   // Position,
   // WorkspaceEdit,
 } from 'vscode';
@@ -135,22 +134,14 @@ export class VSCodeAPIs {
   }
 
   /**
-   * Get VS Code markdown language features extension
-   */
-  getExtension_Markdown(): Extension<any> | undefined {
-    return this.vscode.extensions.getExtension('vscode.markdown-language-features');
-  }
-
-  /**
    * Render markdown to HTML using VS Code's official markdown.api.render command
    * @param markdown - Markdown source text
-   * @param document - VS Code TextDocument for context (currently unused, for future enhancement)
    * @returns HTML string
    * @see https://code.visualstudio.com/api/extension-guides/markdown-extension
    */
-  async renderMarkdownToHtml(args: { markdown: string; document: TextDocument }): Promise<string> {
+  async renderMarkdownToHtml(args: { markdown: string }): Promise<string> {
     const dx = this.dx.sub({ name: 'renderMarkdownToHtml' });
-    dx.require(args, ['markdown', 'document']);
+    dx.require(args, ['markdown']);
     const { markdown } = args;
     
     try {

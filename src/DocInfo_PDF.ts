@@ -10,6 +10,7 @@ import { kMarginIdById, kHeaderFooter } from './types/PaperPrinter_t';
 import { Coords } from './Coords';
 import type { ThemedToken } from 'shiki';
 import type jsPDF from 'jspdf';
+import type { jsPDF_t } from './types/PDF_t';
 import type { LanguageId_t } from './Stylize';
 
 /**
@@ -156,7 +157,7 @@ export class DocInfo_PDF {
    */
   getPageWidth(): number {
     if (!this.pdfDoc) return 0;
-    return (this.pdfDoc as any).getPageWidth();
+    return (this.pdfDoc as jsPDF_t).getPageWidth();
   }
 
   /**
@@ -164,7 +165,7 @@ export class DocInfo_PDF {
    */
   getPageHeight(): number {
     if (!this.pdfDoc) return 0;
-    return (this.pdfDoc as any).getPageHeight();
+    return (this.pdfDoc as jsPDF_t).getPageHeight();
   }
 
   /**

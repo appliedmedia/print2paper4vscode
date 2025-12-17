@@ -264,20 +264,18 @@ export class Stylize {
     languageId: LanguageId_t;
     theme?: string;
     useRenderedMd?: boolean;
-    document?: any; // TextDocument for markdown rendering
   }): Promise<{ tokens?: ThemedToken[][]; html?: string }> {
     const dx = this.dx.sub({ name: 'tokenize' });
     dx.require(args, ['code', 'languageId']);
-    const { code, languageId, theme, useRenderedMd, document } = args;
+    const { code, languageId, theme, useRenderedMd } = args;
 
     try {
       // Branch: Rendered markdown vs tokenized code
-      if (languageId === 'markdown' && useRenderedMd && document) {
+      if (languageId === 'markdown' && useRenderedMd) {
         // Rendered markdown path: Get HTML from VS Code markdown API
         dx.out('Rendering markdown to HTML via VS Code API');
         const html = await this.fn.vscodeapis.renderMarkdownToHtml({
           markdown: code,
-          document
         });
         dx.out(`Rendered markdown to HTML (${html.length} chars)`);
         return { html };

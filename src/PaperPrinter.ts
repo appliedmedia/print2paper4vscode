@@ -308,7 +308,6 @@ export class PaperPrinter {
       dx.out(`Generating complete PDF`);
       await this.fn.pdf.generatePdf({
         useRenderedMd: useRenderedMd && !!editor,
-        document: editor?.document,
       });
 
       dx.out(`PDF generation complete: ${this.fn.pdf.getPageTotal()} pages`);
