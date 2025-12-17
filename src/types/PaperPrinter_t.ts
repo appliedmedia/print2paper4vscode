@@ -236,28 +236,19 @@ export const kFooter = {
   })),
 } as const;
 
-// Page menu definition
-export const kPage = {
-  id: 'page',
-  displayName: 'Page',
-  iconSlotTriad: { begin: '', main: '📄', end: '' },
-  altId: '',
-  methodName: '',
-  isFlyout: false,
-  flyoutMenuItemIds: [kPageSizeId.id, kOrient.id, kMarginId.id, kHeader.id, kFooter.id] as const,
-  menuItems: [
-    { id: 'header', displayName: 'Header' },
-    { id: 'footer', displayName: 'Footer' },
-    { id: 'pageSizeId', displayName: 'Size' },
-    { id: 'orient', displayName: 'Orient' },
-    { id: 'marginId', displayName: 'Margin' },
-  ],
-} as const;
-export type PageMenuItems_t = (typeof kPage.menuItems)[number]['id'];
-// Lookup helper for metadata by id
-export const kPageMenuItemsById = Object.fromEntries(
-  kPage.menuItems.map(item => [item.id, item])
-) as unknown as Record<PageMenuItems_t, { id: string; displayName: string }>;
+// Header/Footer position menu constants
+// These are the flyout menus that appear when clicking Header or Footer
+// Header/Footer position menus - all 6 combinations (header × 3 positions, footer × 3 positions)
+const kHeaderFooterPosMenus = [kHeader, kFooter].flatMap(parent =>
+  kHeaderFooter.menuItems.map(menu => ({
+    ...kHeaderFooter,
+    id: `${parent.id}_${menu.id}`,
+    displayName: menu.displayName,
+    methodName: 'HeaderFooter',
+    flyoutMenuItemIds: [],
+    menuItems: kHeaderFooter.subMenuItems,
+  }))
+);
 
 // Header/Footer position menu IDs (all combinations of location + position)
 export const kHeaderFooterMenuIds = [kHeader.id, kFooter.id].flatMap(location =>
@@ -271,6 +262,29 @@ export type HeaderFooterSubmenu_t = HeaderFooterSubmenuMenuItems_t;
 export const kHeaderFooterSubmenuById = Object.fromEntries(
   kHeaderFooter.subMenuItems.map(item => [item.id, item])
 ) as unknown as Record<HeaderFooterSubmenu_t, { template: string }>;
+
+// Page menu definition
+export const kPage = {
+  id: 'page',
+  displayName: 'Page',
+  iconSlotTriad: { begin: '', main: '📄', end: '' },
+  altId: '',
+  methodName: '',
+  isFlyout: false,
+  flyoutMenuItemIds: [kHeader.id, kFooter.id, kPageSizeId.id, kOrient.id, kMarginId.id] as const,
+  menuItems: [
+    { id: 'header', displayName: 'Header' },
+    { id: 'footer', displayName: 'Footer' },
+    { id: 'pageSizeId', displayName: 'Size' },
+    { id: 'orient', displayName: 'Orient' },
+    { id: 'marginId', displayName: 'Margin' },
+  ],
+} as const;
+export type PageMenuItems_t = (typeof kPage.menuItems)[number]['id'];
+// Lookup helper for metadata by id
+export const kPageMenuItemsById = Object.fromEntries(
+  kPage.menuItems.map(item => [item.id, item])
+) as unknown as Record<PageMenuItems_t, { id: string; displayName: string }>;
 
 // Theme menu definition
 export const kTheme = {
@@ -427,14 +441,15 @@ export const kMenus = [
   kPageSizeId,
   kOrient,
   kMarginId,
-  kHeader,
-  kFooter,
   kTheme,
   kFontSizeId,
   kZoomOut,
   kZoomLevel,
   kZoomIn,
   kMd,
+  kHeader,
+  kFooter,
+  ...kHeaderFooterPosMenus,
 ] as const;
 
 // end, PaperPrinter_t.ts

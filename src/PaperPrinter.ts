@@ -333,19 +333,8 @@ export class PaperPrinter {
       return;
     }
 
-    // Menu configs - use shared kMenus array
-    const menus = kMenus;
-
     // Build menu configs from constants
-    const menuConfigs: Array<{
-      id: MenuId_t | string;
-      displayName: string;
-      iconSlotTriad: iconSlotTriad_t;
-      isFlyout: boolean;
-      menuItems: () => UIMenuItem_t[];
-      flyoutMenuItemIds: readonly string[];
-      selectionHandler: (menuId: MenuId_t, menuItemId: MenuItemId_t) => Promise<HandleSelection_t>;
-    }> = menus.map(menuConst => {
+    const menus = kMenus.map(menuConst => {
       const methodName = menuConst.methodName || menuConst.displayName;
       return {
         id: menuConst.id,
@@ -370,27 +359,7 @@ export class PaperPrinter {
       };
     });
 
-    // Add header/footer position menus (these don't have constants)
-    kHeaderFooterMenuIds.forEach(menuId => {
-      const [, pos] = menuId.split('_') as [string, HeaderFooterPos_t];
-      menuConfigs.push({
-        id: menuId as MenuId_t,
-        displayName: kHeaderFooterMenuItemsById[pos].displayName as string,
-        iconSlotTriad: { begin: '', main: '', end: '' },
-        isFlyout: true,
-        menuItems: this.menuItems_HeaderFooterContent.bind(this),
-        flyoutMenuItemIds: [],
-        selectionHandler: ((
-          menuId: MenuId_t,
-          menuItemId: MenuItemId_t,
-          contextDict?: contextDict_t
-        ) => {
-          return this.handleSelection_HeaderFooter({ menuId, menuItemId });
-        }).bind(this),
-      });
-    });
-
-    menuConfigs.forEach(config => {
+    menus.forEach(config => {
       this.dx.out(
         `Creating menu: ${config.id} with iconSlotTriad: ${JSON.stringify(config.iconSlotTriad)}`
       );
@@ -544,7 +513,7 @@ export class PaperPrinter {
     })) as UIMenuItem_t[];
   }
 
-  private menuItems_HeaderFooterContent(): UIMenuItem_t[] {
+  private menuItems_HeaderFooter(): UIMenuItem_t[] {
     // Return content choices: title, #, total, #+total
     // Note: No "None" option - clicking the selected item again will deselect it
     return kHeaderFooter.subMenuItems.map(item => ({
