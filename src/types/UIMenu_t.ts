@@ -4,7 +4,7 @@
  * All types and constants related to UIMenu component
  */
 
-import type { ForceNumber_scalar_t } from '../App';
+import type { ForceNumber_scalar_t } from '../Utils';
 import type { UI_t } from '../UI';
 import {
   kPageSizeId,

@@ -1,9 +1,9 @@
 /**
  * UIMenu Icon Slot Triad Unit Tests
- * 
+ *
  * Tests the new iconSlotTriad functionality that replaces the simple icon string
  * with a flexible three-slot structure (begin, main, end) for menu items.
- * 
+ *
  * @module tests/UIMenu-IconSlotTriad.test
  */
 
@@ -23,16 +23,12 @@ import { mockContext, mockVSCode } from './test-utils.js';
 let app: TestApp;
 
 describe('UIMenu Icon Slot Triad', () => {
-  
   beforeEach(() => {
     app = createTestApp({ context: mockContext, vscode: mockVSCode });
   });
 
   // Helper to create a menu
-  const createTestMenu = (
-    menuIconSlotTriad: iconSlotTriad_t, 
-    items: UIMenuItem_t[]
-  ): UIMenu => {
+  const createTestMenu = (menuIconSlotTriad: iconSlotTriad_t, items: UIMenuItem_t[]): UIMenu => {
     const listBuilder = (): UIMenuItem_t[] => items;
     return new UIMenu({
       reg: app.reg,
@@ -45,106 +41,106 @@ describe('UIMenu Icon Slot Triad', () => {
       selectionHandler: async () => ({ id: '', value: '' }),
     });
   };
-  
+
   describe('Icon Slot Structure', () => {
     it('should handle empty iconSlotTriad', async () => {
       const items: UIMenuItem_t[] = [
-        { 
-          id: 'empty', 
+        {
+          id: 'empty',
           displayName: 'Empty Icons',
-          iconSlotTriad: { begin: '', main: '', end: '' }
+          iconSlotTriad: { begin: '', main: '', end: '' },
         },
       ];
       const menuIcon: iconSlotTriad_t = { begin: '', main: '', end: '' };
       const menu = createTestMenu(menuIcon, items);
       const html = await menu.getHTML();
-      
+
       assert.ok(html.includes('theme'));
     });
 
     it('should handle begin slot only', async () => {
       const items: UIMenuItem_t[] = [
-        { 
-          id: 'begin-only', 
+        {
+          id: 'begin-only',
           displayName: 'Begin Icon',
-          iconSlotTriad: { begin: '◀', main: '', end: '' }
+          iconSlotTriad: { begin: '◀', main: '', end: '' },
         },
       ];
       const menuIcon: iconSlotTriad_t = { begin: '◀', main: '', end: '' };
       const menu = createTestMenu(menuIcon, items);
       const html = await menu.getHTML();
-      
+
       assert.ok(html.length > 0);
     });
 
     it('should handle main slot only', async () => {
       const items: UIMenuItem_t[] = [
-        { 
-          id: 'main-only', 
+        {
+          id: 'main-only',
           displayName: 'Main Icon',
-          iconSlotTriad: { begin: '', main: '●', end: '' }
+          iconSlotTriad: { begin: '', main: '●', end: '' },
         },
       ];
       const menuIcon: iconSlotTriad_t = { begin: '', main: '●', end: '' };
       const menu = createTestMenu(menuIcon, items);
       const html = await menu.getHTML();
-      
+
       assert.ok(html.length > 0);
     });
 
     it('should handle end slot only', async () => {
       const items: UIMenuItem_t[] = [
-        { 
-          id: 'end-only', 
+        {
+          id: 'end-only',
           displayName: 'End Icon',
-          iconSlotTriad: { begin: '', main: '', end: '▶' }
+          iconSlotTriad: { begin: '', main: '', end: '▶' },
         },
       ];
       const menuIcon: iconSlotTriad_t = { begin: '', main: '', end: '▶' };
       const menu = createTestMenu(menuIcon, items);
       const html = await menu.getHTML();
-      
+
       assert.ok(html.length > 0);
     });
 
     it('should handle all three slots populated', async () => {
       const items: UIMenuItem_t[] = [
-        { 
-          id: 'all-slots', 
+        {
+          id: 'all-slots',
           displayName: 'All Icons',
-          iconSlotTriad: { begin: '◀', main: '●', end: '▶' }
+          iconSlotTriad: { begin: '◀', main: '●', end: '▶' },
         },
       ];
       const menuIcon: iconSlotTriad_t = { begin: '◀', main: '●', end: '▶' };
       const menu = createTestMenu(menuIcon, items);
       const html = await menu.getHTML();
-      
+
       assert.ok(html.length > 0);
       assert.strictEqual(menu.id, 'theme');
     });
 
     it('should handle multiple items with different icon configurations', async () => {
       const items: UIMenuItem_t[] = [
-        { 
-          id: 'item1', 
+        {
+          id: 'item1',
           displayName: 'Item 1',
-          iconSlotTriad: { begin: '1', main: '', end: '' }
+          iconSlotTriad: { begin: '1', main: '', end: '' },
         },
-        { 
-          id: 'item2', 
+        {
+          id: 'item2',
           displayName: 'Item 2',
-          iconSlotTriad: { begin: '', main: '2', end: '' }
+          iconSlotTriad: { begin: '', main: '2', end: '' },
         },
-        { 
-          id: 'item3', 
+        {
+          id: 'item3',
           displayName: 'Item 3',
-          iconSlotTriad: { begin: '', main: '', end: '3' }
+          iconSlotTriad: { begin: '', main: '', end: '3' },
         },
       ];
       const menuIcon: iconSlotTriad_t = { begin: '', main: '', end: '' };
       const menu = createTestMenu(menuIcon, items);
       const html = await menu.getHTML();
-      
+
       assert.ok(html.length > 0);
       // Verify menu contains all three items
       assert.strictEqual(items.length, 3);
@@ -154,28 +150,28 @@ describe('UIMenu Icon Slot Triad', () => {
   describe('Text Edit Widget', () => {
     it('should detect text_edit object in main slot', async () => {
       const items: UIMenuItem_t[] = [
-        { 
-          id: 'zoom', 
+        {
+          id: 'zoom',
           displayName: 'Zoom',
-          iconSlotTriad: { 
-            begin: '', 
+          iconSlotTriad: {
+            begin: '',
             main: {
               type: 'text_edit' as const,
               width: '3ch',
               constrain: {
-                regex: '^\\d{0,3}$',  // Only 2 backslashes - clean and readable!
+                regex: '^\\d{0,3}$', // Only 2 backslashes - clean and readable!
                 min: 10,
                 max: 300,
               },
             },
-            end: '%' 
-          }
+            end: '%',
+          },
         },
       ];
       const menuIcon: iconSlotTriad_t = { begin: '', main: '', end: '' };
       const menu = createTestMenu(menuIcon, items);
       const html = await menu.getHTML();
-      
+
       // Should contain input element with separate data attributes
       assert.ok(html.includes('<input'));
       assert.ok(html.includes('data-p2p4vsc_constrain_regex'));
@@ -185,28 +181,28 @@ describe('UIMenu Icon Slot Triad', () => {
 
     it('should generate correct data attributes from constrain object', async () => {
       const items: UIMenuItem_t[] = [
-        { 
-          id: 'zoom', 
+        {
+          id: 'zoom',
           displayName: 'Zoom',
-          iconSlotTriad: { 
-            begin: ' ', 
+          iconSlotTriad: {
+            begin: ' ',
             main: {
               type: 'text_edit' as const,
               width: '5ch',
               constrain: {
-                regex: '^\\d{1,3}$',  // Only 2 backslashes - clean!
+                regex: '^\\d{1,3}$', // Only 2 backslashes - clean!
                 min: 1,
                 max: 500,
               },
             },
-            end: '%▼' 
-          }
+            end: '%▼',
+          },
         },
       ];
       const menuIcon: iconSlotTriad_t = { begin: '', main: '', end: '' };
       const menu = createTestMenu(menuIcon, items);
       const html = await menu.getHTML();
-      
+
       assert.ok(html.includes('<input'));
       assert.ok(html.includes('data-p2p4vsc_constrain_regex="^\\d{1,3}$"'));
       assert.ok(html.includes('data-p2p4vsc_constrain_min="1"'));
@@ -215,11 +211,11 @@ describe('UIMenu Icon Slot Triad', () => {
 
     it('should handle text_edit with minimal config', async () => {
       const items: UIMenuItem_t[] = [
-        { 
-          id: 'simple', 
+        {
+          id: 'simple',
           displayName: 'Simple',
-          iconSlotTriad: { 
-            begin: '', 
+          iconSlotTriad: {
+            begin: '',
             main: {
               type: 'text_edit' as const,
               width: '2ch',
@@ -229,14 +225,14 @@ describe('UIMenu Icon Slot Triad', () => {
                 max: 99,
               },
             },
-            end: '' 
-          }
+            end: '',
+          },
         },
       ];
       const menuIcon: iconSlotTriad_t = { begin: '', main: '', end: '' };
       const menu = createTestMenu(menuIcon, items);
       const html = await menu.getHTML();
-      
+
       assert.ok(html.includes('<input'));
       assert.ok(html.includes('style="width: 2ch;"'));
       assert.ok(html.includes('data-p2p4vsc_constrain_min="0"'));
@@ -245,28 +241,28 @@ describe('UIMenu Icon Slot Triad', () => {
 
     it('should validate regex patterns in text_edit config', async () => {
       const items: UIMenuItem_t[] = [
-        { 
-          id: 'validated', 
+        {
+          id: 'validated',
           displayName: 'Validated',
-          iconSlotTriad: { 
-            begin: '', 
+          iconSlotTriad: {
+            begin: '',
             main: {
               type: 'text_edit' as const,
               width: '3ch',
               constrain: {
-                regex: '^\\d{0,3}$',  // Only 2 backslashes - clean!
+                regex: '^\\d{0,3}$', // Only 2 backslashes - clean!
                 min: 0,
                 max: 999,
               },
             },
-            end: '' 
-          }
+            end: '',
+          },
         },
       ];
       const menuIcon: iconSlotTriad_t = { begin: '', main: '', end: '' };
       const menu = createTestMenu(menuIcon, items);
       const html = await menu.getHTML();
-      
+
       assert.ok(html.includes('data-p2p4vsc_constrain_regex="^\\d{0,3}$"'));
       assert.ok(html.includes('data-p2p4vsc_constrain_min="0"'));
       assert.ok(html.includes('data-p2p4vsc_constrain_max="999"'));
@@ -276,62 +272,62 @@ describe('UIMenu Icon Slot Triad', () => {
   describe('Edge Cases', () => {
     it('should handle special characters in icon slots', async () => {
       const items: UIMenuItem_t[] = [
-        { 
-          id: 'special', 
+        {
+          id: 'special',
           displayName: 'Special Chars',
-          iconSlotTriad: { begin: '←↑↓→', main: '⌘⇧⌥⌃', end: '✓✗✔✘' }
+          iconSlotTriad: { begin: '←↑↓→', main: '⌘⇧⌥⌃', end: '✓✗✔✘' },
         },
       ];
       const menuIcon: iconSlotTriad_t = { begin: '', main: '', end: '' };
       const menu = createTestMenu(menuIcon, items);
       const html = await menu.getHTML();
-      
+
       assert.ok(html.length > 0);
     });
 
     it('should handle emoji in icon slots', async () => {
       const items: UIMenuItem_t[] = [
-        { 
-          id: 'emoji', 
+        {
+          id: 'emoji',
           displayName: 'Emoji',
-          iconSlotTriad: { begin: '🎯', main: '⚡', end: '🚀' }
+          iconSlotTriad: { begin: '🎯', main: '⚡', end: '🚀' },
         },
       ];
       const menuIcon: iconSlotTriad_t = { begin: '', main: '', end: '' };
       const menu = createTestMenu(menuIcon, items);
       const html = await menu.getHTML();
-      
+
       assert.ok(html.length > 0);
     });
 
     it('should handle whitespace-only slots', async () => {
       const items: UIMenuItem_t[] = [
-        { 
-          id: 'whitespace', 
+        {
+          id: 'whitespace',
           displayName: 'Whitespace',
-          iconSlotTriad: { begin: '   ', main: ' ', end: '  ' }
+          iconSlotTriad: { begin: '   ', main: ' ', end: '  ' },
         },
       ];
       const menuIcon: iconSlotTriad_t = { begin: '', main: '', end: '' };
       const menu = createTestMenu(menuIcon, items);
       const html = await menu.getHTML();
-      
+
       assert.ok(html.length > 0);
     });
 
     it('should handle very long icon strings', async () => {
       const longString = 'A'.repeat(100);
       const items: UIMenuItem_t[] = [
-        { 
-          id: 'long', 
+        {
+          id: 'long',
           displayName: 'Long',
-          iconSlotTriad: { begin: longString, main: longString, end: longString }
+          iconSlotTriad: { begin: longString, main: longString, end: longString },
         },
       ];
       const menuIcon: iconSlotTriad_t = { begin: '', main: '', end: '' };
       const menu = createTestMenu(menuIcon, items);
       const html = await menu.getHTML();
-      
+
       assert.ok(html.length > 0);
     });
   });
@@ -339,15 +335,15 @@ describe('UIMenu Icon Slot Triad', () => {
   describe('Menu Properties', () => {
     it('should have correct menu ID and display name', async () => {
       const items: UIMenuItem_t[] = [
-        { 
-          id: 'test', 
+        {
+          id: 'test',
           displayName: 'Test',
-          iconSlotTriad: { begin: '', main: '', end: '' }
+          iconSlotTriad: { begin: '', main: '', end: '' },
         },
       ];
       const menuIcon: iconSlotTriad_t = { begin: '', main: '📝', end: '' };
       const menu = createTestMenu(menuIcon, items);
-      
+
       assert.strictEqual(menu.id, 'theme');
       assert.strictEqual(menu.displayName, 'Test Menu');
     });

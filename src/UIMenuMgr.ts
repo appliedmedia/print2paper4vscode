@@ -1,5 +1,5 @@
 import type { Registry } from './Registry';
-import type { ForceNumber_dict_t } from './App';
+import type { ForceNumber_dict_t } from './Utils';
 import type { FnImport_t } from './types/Registry_t';
 import type { UI_t } from './UI';
 import type { PersistValue_t } from './Persist';
