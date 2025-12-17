@@ -328,7 +328,7 @@ export class UIMenuMgr {
     // Check if menuItemId === menuId (custom text_edit value)
     // Read from persistId instead of menu items
     if (menuItemId === menuId) {
-      const dx = this.dx.sub({ name: 'getValueForMenuItemId[iconSlotTriad]' });
+      const dx = this.dx.sub({ name: 'getValueOfMenuItemIdForMenuId[iconSlotTriad]' });
       const iconSlotMain = (menu as unknown as { _iconSlotTriad: iconSlotTriad_t })._iconSlotTriad
         ?.main;
       dx.out(`menuItemId === menuId, checking for persistId`);

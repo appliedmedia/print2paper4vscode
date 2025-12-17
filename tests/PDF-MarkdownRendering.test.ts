@@ -1,10 +1,10 @@
-import {  describe, it, beforeEach, afterEach } from 'node:test';
+import { describe, it, beforeEach, afterEach } from 'node:test';
 import * as assert from 'node:assert';
-import {  PDF } from '../src/PDF.js';
-import {  App } from '../src/App.js';
+import { PDF } from '../src/PDF.js';
+import { App } from '../src/App.js';
 import type { FnImport_t } from '../src/types/Registry_t.js';
-import {  mockContext, mockVSCode } from './test-utils.js';
-import {  installHeaderFooterMenuStubs, getFn } from './test-helpers.js';
+import { mockContext, mockVSCode } from './test-utils.js';
+import { installHeaderFooterMenuStubs, getFn } from './test-helpers.js';
 
 /**
  * Tests for PDF markdown HTML rendering functionality

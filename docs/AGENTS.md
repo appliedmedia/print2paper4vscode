@@ -560,7 +560,8 @@ const pageWidth = this.fn.pdf.docInfo().pageWidthPx;
 - Parent exposes it via method so others can access through Registry
 - Examples: `DocInfo_PDF`, `DocInfo_PaperPrinter`
 
-**Key distinction**: 
+**Key distinction**:
+
 - **Generic factories** (Yaml): Registered in Registry, used by many components with different configs
 - **Helper classes** (DocInfo): Not registered, owned by one component, exposed via parent's method
 

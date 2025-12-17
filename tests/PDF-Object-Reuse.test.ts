@@ -18,7 +18,7 @@ describe('PDF Object Reuse Tests', () => {
   describe('Single PDF Generation', () => {
     test('should generate PDF only once per user action', async () => {
       const app = new App({ context: mockContext, vscode: mockVSCode });
-    const fn = getFn(app);
+      const fn = getFn(app);
 
       // Create menus before generating PDF (menus are created on-demand in production)
       (app.paperprinter as unknown as { createMenus(): void }).createMenus();

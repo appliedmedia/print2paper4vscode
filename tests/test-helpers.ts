@@ -11,7 +11,6 @@ import type { FnImport_t } from '../src/types/Registry_t.js';
  * @param app - Application instance to install stubs on
  */
 export function installHeaderFooterMenuStubs(app: App): void {
-  const fn = app.reg.use('uimenumgr.getMenuItemIdSelected');
   const uimenumgr = app.reg.getInstance('uimenumgr') as any;
   const originalGetMenuItemIdSelected = uimenumgr.getMenuItemIdSelected.bind(uimenumgr);
   uimenumgr.getMenuItemIdSelected = (menuId: any) => {
