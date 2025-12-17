@@ -3,102 +3,15 @@ import type { contextDict_t } from './types/UI_t';
 import { Diagnostics } from './Diagnostics';
 import { YamlInstance } from './Yaml';
 import type { FnImport_t } from './types/Registry_t';
-import {
-  kPageSizeId,
-  kOrient,
-  kMarginId,
-  kHeaderFooter,
-  kHeaderFooterMenuIds,
-  kFontSizeId,
-  kHeader,
-  kFooter,
-  kPrint,
-  kPage,
-  kTheme,
-  kZoomOut,
-  kZoomIn,
-  kZoomLevel,
-  kMd,
-  kMenus,
-  type UIMenuItemValueFxn_t,
-} from './types/PaperPrinter_t';
-import type { TextEditConstraint_t, iconSlotTriad_main_t, iconSlotTriad_t } from './types/UIMenu_t';
-
-/**
- * Text edit config type for text input widgets in menu items
- *
- * Configuration object for text_edit widgets that appear in menu button iconSlotTriads.
- * Supports input validation, display formatting, and value conversion between
- * persisted storage format and user-visible display format.
- *
- * @property type - Must be 'text_edit' to identify this as a text input widget
- * @property width - Optional CSS width (e.g., '4ch', '50px'). Auto-calculated from constrain.max if not provided
- * @property constrain - Validation strategy (regex for real-time, min/max for blur clamping)
- * @property transform - Optional bidirectional value conversion
- *
- * @example
- * // Zoom level with scale-to-percentage conversion
- * {
- *   type: 'text_edit',
- *   constrain: { regex: '^\\d{0,4}$', min: 50, max: 300 },
- *   transform: {
- *     display: (persist) => Math.round(persist * 100),
- *     persist: (display) => display / 100
- *   }
- * }
- */
-
-// UIMenuItem type - menu item structure
-export interface UIMenuItem_t {
-  id: string;
-  displayName: string;
-  iconSlotTriad: iconSlotTriad_t; // Button content: icon, text_edit widget (e.g., "text_edit: {...}"), or empty for non-button
-  shortcutCode?: string; // Optional KeyboardEvent.code for keyboard shortcuts (e.g., "Digit0", "Minus", "Equal")
-  shortcut?: string; // Optional display string for keyboard shortcut (e.g., "Ctrl/Cmd + 0")
-  value?: number | string | UIMenuItemValueFxn_t;
-}
-
-// Menu ID types - UI component identifiers
-// Auto-constructed from PaperPrinter_t.ts kMenus array
-export const kMenuId = [...kMenus.map(menu => menu.id), ...kHeaderFooterMenuIds] as const;
-
-export type MenuId_t = (typeof kMenuId)[number];
-
-// Menu Item ID types - Individual menu item identifiers
-// Auto-constructed from PaperPrinter_t.ts constants using shared kMenus
-export const kMenuItemId = [
-  // System sentinel
-  'default',
-  // Extract menuItems from all menu constants
-  ...kMenus.flatMap(menu => {
-    const menuItemIds =
-      menu.menuItems && menu.menuItems.length > 0 ? menu.menuItems.map(item => item.id) : [];
-
-    // If menu has constrained input widget, include menu.id as valid menuItemId (for custom values)
-    const hasConstrainedInput =
-      typeof menu.iconSlotTriad.main === 'object' &&
-      menu.iconSlotTriad.main.constrain !== undefined;
-
-    if (hasConstrainedInput || menuItemIds.length === 0) {
-      // Include menu.id for: text_edit menus OR button-only menus
-      return [menu.id, ...menuItemIds];
-    } else {
-      return menuItemIds;
-    }
-  }),
-  // From kHeaderFooter (for header/footer position menus)
-  ...kHeaderFooterMenuIds,
-  // From kHeaderFooter.subMenuItems (for header/footer content selections)
-  ...kHeaderFooter.subMenuItems.map(item => item.id),
-] as const;
-
-export type MenuItemId_t = (typeof kMenuItemId)[number] | string;
-
-// Selection handler return type - id is what's selected, value is what to use
-export interface HandleSelection_t {
-  id: string;
-  value: string | number | boolean;
-}
+import { kMenus } from './types/PaperPrinter_t';
+import type {
+  iconSlotTriad_main_t,
+  iconSlotTriad_t,
+  UIMenuItem_t,
+  MenuId_t,
+  MenuItemId_t,
+  HandleSelection_t,
+} from './types/UIMenu_t';
 
 /**
  * UIMenu - Generic menu component for webview toolbar

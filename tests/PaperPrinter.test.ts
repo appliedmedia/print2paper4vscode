@@ -185,7 +185,7 @@ describe('PaperPrinter', () => {
 
   it('should generate menu items for HeaderFooterContent', () => {
     const paperPrinterPrivate = paperPrinter as any;
-    const menuItems = paperPrinterPrivate.menuItems_HeaderFooterContent();
+    const menuItems = paperPrinterPrivate.menuItems_HeaderFooter();
     assert.ok(Array.isArray(menuItems));
     assert.ok(menuItems.length > 0);
   });
