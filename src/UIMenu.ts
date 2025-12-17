@@ -1,7 +1,5 @@
 import type { Registry } from './Registry';
 import type { contextDict_t } from './types/UI_t';
-import type { UI_t } from './UI';
-import type { ForceNumber_scalar_t } from './App';
 import { Diagnostics } from './Diagnostics';
 import { YamlInstance } from './Yaml';
 import type { FnImport_t } from './types/Registry_t';
@@ -24,6 +22,7 @@ import {
   kMenus,
   type UIMenuItemValueFxn_t,
 } from './types/PaperPrinter_t';
+import type { TextEditConstraint_t, iconSlotTriad_main_t, iconSlotTriad_t } from './types/UIMenu_t';
 
 /**
  * Text edit config type for text input widgets in menu items
@@ -48,40 +47,6 @@ import {
  *   }
  * }
  */
-/**
- * Text edit constraint configuration
- *
- * All three properties work together as a cohesive validation strategy:
- * - regex: Real-time validation during typing (blocks invalid keystrokes)
- * - min/max: Final validation on blur (clamps value to valid range)
- *
- * Note: For max digits, use regex with one extra digit (e.g., \d{0,4} for max value 300)
- * to allow users to temporarily type an extra character during editing.
- */
-export type TextEditConstraint_t = {
-  regex: string; // Regex pattern for real-time validation (e.g., '^\d{0,4}$')
-  min: number; // Minimum value (enforced on blur)
-  max: number; // Maximum value (enforced on blur)
-};
-
-export type iconSlotTriad_main_t = {
-  type: 'text_edit'; // Tells us what UI element to render
-  width?: string;
-  persistId?: UI_t; // Separate persist key for value storage (e.g., 'zoomLevel_value')
-  constrain: TextEditConstraint_t; // Validation strategy (regex + min/max work together)
-  transform?: {
-    // Transforms handle their own type conversion - they receive raw persisted values
-    display?: (persist: ForceNumber_scalar_t) => ForceNumber_scalar_t; // Convert persist value to display value
-    persist?: (display: ForceNumber_scalar_t) => ForceNumber_scalar_t; // Convert display value to persist value
-  };
-};
-
-// IconSlotTriad type - three-part slot structure
-export interface iconSlotTriad_t {
-  begin: string;
-  main: string | iconSlotTriad_main_t; // Can be string icon or text_edit object
-  end: string;
-}
 
 // UIMenuItem type - menu item structure
 export interface UIMenuItem_t {
@@ -95,10 +60,7 @@ export interface UIMenuItem_t {
 
 // Menu ID types - UI component identifiers
 // Auto-constructed from PaperPrinter_t.ts kMenus array
-export const kMenuId = [
-  ...kMenus.map(menu => menu.id),
-  ...kHeaderFooterMenuIds,
-] as const;
+export const kMenuId = [...kMenus.map(menu => menu.id), ...kHeaderFooterMenuIds] as const;
 
 export type MenuId_t = (typeof kMenuId)[number];
 
@@ -114,7 +76,8 @@ export const kMenuItemId = [
 
     // If menu has constrained input widget, include menu.id as valid menuItemId (for custom values)
     const hasConstrainedInput =
-      typeof menu.iconSlotTriad.main === 'object' && menu.iconSlotTriad.main.constrain !== undefined;
+      typeof menu.iconSlotTriad.main === 'object' &&
+      menu.iconSlotTriad.main.constrain !== undefined;
 
     if (hasConstrainedInput || menuItemIds.length === 0) {
       // Include menu.id for: text_edit menus OR button-only menus

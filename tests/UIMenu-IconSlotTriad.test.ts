@@ -15,8 +15,8 @@ import {
   type UIMenuItem_t,
   type MenuId_t,
   type MenuItemId_t,
-  type iconSlotTriad_t,
 } from '../src/UIMenu.js';
+import type { iconSlotTriad_t } from '../src/types/UIMenu_t.js';
 import { createTestApp, TestApp } from './test-utils.js';
 import { mockContext, mockVSCode } from './test-utils.js';
 
