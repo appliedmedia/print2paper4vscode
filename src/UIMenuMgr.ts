@@ -18,6 +18,7 @@ import {
   type UIMenuItemDict_t,
   type UIMenuItemValueFxn_t,
 } from './types/PaperPrinter_t';
+import type { Theme } from './types/theme_t';
 
 const kUIMenuItemDictRequiredKeys = [
   'windowWidth',
@@ -102,7 +103,7 @@ export class UIMenuMgr {
     }
     // 3. Check against theme IDs
     else {
-      const validThemes = this.fn.stylize.getThemes().map(t => t.id);
+      const validThemes = this.fn.stylize.getThemes().map((t: Theme) => t.id);
       isValid = validThemes.includes(id);
     }
 
