@@ -204,10 +204,9 @@ export class UIMenu {
 
     // Check if this item has a flyout by checking if its ID is in flyoutMenuItemIds
     const menuItemId = item.id;
-    // Flyout menu IDs are in format "parentMenuId_itemId" (e.g., "header_begin")
-    const fullFlyoutMenuId = `${this._id}_${menuItemId}`;
-    const isFlyout = this.flyoutMenuItemIds.includes(fullFlyoutMenuId);
-    const flyoutMenuId = isFlyout ? ` data-{{ns_}}flyoutMenuId="${fullFlyoutMenuId}"` : ``;
+    // Flyout menu IDs are already in full format (e.g., "header_begin") in flyoutMenuItemIds
+    const isFlyout = this.flyoutMenuItemIds.includes(menuItemId);
+    const flyoutMenuId = isFlyout ? ` data-{{ns_}}flyoutMenuId="${menuItemId}"` : ``;
     const isDefault = menuItemId === defaultItemId;
     const isSelected = menuItemId === selectedItemId;
 
