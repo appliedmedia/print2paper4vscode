@@ -70,14 +70,24 @@ export class OSMac extends OS {
   }
 
   async filePrint(path: string): Promise<void> {
-    // Security: Escape double quotes and backslashes in path to prevent shell injection
-    const escapedPath = path.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+    // Security: Escape shell-special characters to prevent command injection
+    const escapedPath = path
+      .replace(/\\/g, '\\\\')
+      .replace(/"/g, '\\"')
+      .replace(/\$/g, '\\$')
+      .replace(/`/g, '\\`')
+      .replace(/\n/g, '\\n');
     await this.execAsync(`lpr "${escapedPath}"`);
   }
 
   async fileOpenPrintDialog(path: string): Promise<void> {
-    // Security: Escape backslashes and double quotes for AppleScript string literal
-    const escapedPath = path.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+    // Security: Escape shell-special characters for AppleScript string literal
+    const escapedPath = path
+      .replace(/\\/g, '\\\\')
+      .replace(/"/g, '\\"')
+      .replace(/\$/g, '\\$')
+      .replace(/`/g, '\\`')
+      .replace(/\n/g, '\\n');
     await this.executeAppleScript('apple_script_open_preview_print_dialog', { file_path: escapedPath });
   }
 
