@@ -1,7 +1,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import { homedir } from 'os';
-import { exec as cpExec, execSync as cpExecSync } from 'child_process';
+import { exec as cpExec, execSync as cpExecSync, execFile as cpExecFile } from 'child_process';
 import { promisify } from 'util';
 import { parse as yamlParse } from 'yaml';
 import { performance } from 'node:perf_hooks';
@@ -65,6 +65,11 @@ export abstract class OS {
   protected execAsync(cmd: string): Promise<{ stdout: string; stderr: string }> {
     const execP = promisify(cpExec);
     return execP(cmd);
+  }
+
+  protected execFileAsync(file: string, args: string[]): Promise<{ stdout: string; stderr: string }> {
+    const execFileP = promisify(cpExecFile);
+    return execFileP(file, args);
   }
 
   protected execSync(cmd: string): string {
