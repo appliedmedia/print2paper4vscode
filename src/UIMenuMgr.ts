@@ -448,22 +448,26 @@ export class UIMenuMgr {
 
   // Generate all HTML at once using recursive flyout strategy
   async getUIMenus_HTML(): Promise<string> {
+    const dx = this.dx.sub({ name: 'getUIMenus_HTML' });
     const allMenus = this.getUIMenus();
-    const visited = new Set<string>(); // Prevent infinite loops
-    let result = '';
+    dx.out(`Total menus: ${allMenus.length}, non-flyout menus: ${allMenus.filter(m => !m.isFlyout).length}`);
+    
+    try {
+      const visited = new Set<string>(); // Prevent infinite loops
+      let result = '';
 
-    // Generate only main menus (those that are not flyouts) - flyouts will be generated recursively
-    for (const menu of allMenus.filter(menu => !menu.isFlyout)) {
-      try {
+      // Generate only main menus (those that are not flyouts) - flyouts will be generated recursively
+      for (const menu of allMenus.filter(menu => !menu.isFlyout)) {
+        dx.out(`Generating HTML for menu: ${menu.id}`);
         const html = await menu.getHTML(visited);
         result += (result ? '\n' : '') + html;
-      } catch (error) {
-        this.dx.out(`ERROR generating HTML for menu ${menu.id}: ${String(error)}`);
-        result += (result ? '\n' : '') + `<!-- ERROR generating menu ${menu.id}: ${error} -->`;
+        dx.out(`Successfully generated HTML for menu: ${menu.id}`);
       }
-    }
 
-    return result;
+      return result;
+    } finally {
+      dx.done();
+    }
   }
 
   // Generate all JavaScript at once

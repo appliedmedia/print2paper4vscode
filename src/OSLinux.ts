@@ -30,22 +30,22 @@ export class OSLinux extends OS {
     };
   }
 
+  protected escapePath(path: string): string {
+    // Not needed - Linux uses execFile with argv arrays (no shell parsing)
+    return path;
+  }
+
   async fileOpenInDefaultApp(path: string): Promise<void> {
-    // Security: Escape double quotes and backslashes in path to prevent shell injection
-    const escapedPath = path.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
-    await this.execAsync(`xdg-open "${escapedPath}"`);
+    await this.execFileAsync('xdg-open', [path]);
   }
 
   async fileReveal(path: string): Promise<void> {
-    // Security: Escape double quotes and backslashes in path to prevent shell injection
-    const escapedPath = path.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
-    await this.execAsync(`xdg-open "$(dirname "${escapedPath}")"`);
+    const dir = this.pathDirname(path);
+    await this.execFileAsync('xdg-open', [dir]);
   }
 
   async filePrint(path: string): Promise<void> {
-    // Security: Escape double quotes and backslashes in path to prevent shell injection
-    const escapedPath = path.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
-    await this.execAsync(`lp "${escapedPath}"`);
+    await this.execFileAsync('lp', [path]);
   }
 
   async fileOpenPrintDialog(path: string): Promise<void> {

@@ -1,7 +1,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import { homedir } from 'os';
-import { exec as cpExec, execSync as cpExecSync } from 'child_process';
+import { exec as cpExec, execSync as cpExecSync, execFile as cpExecFile } from 'child_process';
 import { promisify } from 'util';
 import { parse as yamlParse } from 'yaml';
 import { performance } from 'node:perf_hooks';
@@ -67,6 +67,11 @@ export abstract class OS {
     return execP(cmd);
   }
 
+  protected execFileAsync(file: string, args: string[]): Promise<{ stdout: string; stderr: string }> {
+    const execFileP = promisify(cpExecFile);
+    return execFileP(file, args);
+  }
+
   protected execSync(cmd: string): string {
     return cpExecSync(cmd, { encoding: 'utf8' }) as unknown as string;
   }
@@ -97,6 +102,15 @@ export abstract class OS {
   abstract fileReveal(path: string): Promise<void>;
   abstract filePrint(path: string): Promise<void>;
   abstract fileOpenPrintDialog(path: string): Promise<void>;
+
+  /**
+   * Escape file path for safe shell command execution
+   * Platform-specific escaping for shell-special characters
+   *
+   * @param path - File path to escape
+   * @returns Escaped path safe for shell command interpolation
+   */
+  protected abstract escapePath(path: string): string;
 
   // Get system locale with region (e.g., "en-US", "fr-FR")
   // Uses Intl API which actually provides region codes unlike vscode.env.language
@@ -133,7 +147,7 @@ export abstract class OS {
 
   // Common filesystem helpers consolidated here
   ensureDir(dirPath: string): void {
-    fs.mkdirSync(dirPath, { recursive: true });
+    fs.mkdirSync(dirPath, { recursive: true, mode: 0o755 });
   }
 
   fileWrite(args: { filePath: string; content: string | Buffer }): void {
@@ -141,7 +155,7 @@ export abstract class OS {
     dx.require(args, ['filePath', 'content']);
     const { filePath, content } = args;
     try {
-      fs.writeFileSync(filePath, content);
+      fs.writeFileSync(filePath, content, { mode: 0o644 });
     } catch (err) {
       dx.error(`Failed to write ${filePath}: ${err}`);
       throw err; // Re-throw to preserve existing behavior

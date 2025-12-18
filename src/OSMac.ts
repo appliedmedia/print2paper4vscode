@@ -32,6 +32,25 @@ export class OSMac extends OS {
     };
   }
 
+  protected escapePath(path: string): string {
+    // Escape shell-special characters for macOS shell commands (lpr, open, etc.)
+    return path
+      .replace(/\\/g, '\\\\')
+      .replace(/"/g, '\\"')
+      .replace(/\$/g, '\\$')
+      .replace(/`/g, '\\`')
+      .replace(/\n/g, '\\n')
+      .replace(/\r/g, '\\r');
+  }
+
+  private escapePathForAppleScript(path: string): string {
+    // AppleScript escaping: only backslash and double quote
+    // AppleScript is wrapped in single quotes by executeAppleScript, so $ and ` are literal
+    return path
+      .replace(/\\/g, '\\\\')
+      .replace(/"/g, '\\"');
+  }
+
   // Centralized AppleScript execution helper
   private async executeAppleScript(
     templateKey: string,
@@ -58,30 +77,23 @@ export class OSMac extends OS {
   }
 
   async fileOpenInDefaultApp(path: string): Promise<void> {
-    // Security: Escape double quotes and backslashes in path to prevent shell injection
-    const escapedPath = path.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+    const escapedPath = this.escapePath(path);
     await this.execAsync(`open "${escapedPath}"`);
   }
 
   async fileReveal(path: string): Promise<void> {
-    // Security: Escape double quotes and backslashes in path to prevent shell injection
-    const escapedPath = path.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+    const escapedPath = this.escapePath(path);
     await this.execAsync(`open -R "${escapedPath}"`);
   }
 
   async filePrint(path: string): Promise<void> {
-    await this.executeAppleScript('apple_script_print_via_finder', { file_path: path });
+    const escapedPath = this.escapePath(path);
+    await this.execAsync(`lpr "${escapedPath}"`);
   }
 
   async fileOpenPrintDialog(path: string): Promise<void> {
-    try {
-      await this.executeAppleScript('apple_script_open_preview_print_dialog', { file_path: path });
-    } catch (error) {
-      // AppleScript 'print' command is asynchronous and exits before dialog closes
-      // This causes an error even though the print dialog opens successfully
-      // Ignore the error if it's just the expected async completion issue
-      this.dx.out(`Print dialog opened (AppleScript async completion): ${error}`);
-    }
+    const escapedPath = this.escapePathForAppleScript(path);
+    await this.executeAppleScript('apple_script_open_preview_print_dialog', { file_path: escapedPath });
   }
 
   done(): void {

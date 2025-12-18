@@ -111,6 +111,7 @@ export class PaperPrinter {
     // Request methods via Registry
     this.fn = this.reg.use(
       'vscodeapis.getActiveTextEditor',
+      'vscodeapis.getActiveThemeId',
       'vscodeapis.getEditorTypography',
       'vscodeapis.renderMarkdownToHtml',
       'tabinspector.detectActiveTabCategory',
@@ -321,14 +322,21 @@ export class PaperPrinter {
 
   // Create menus when needed for the webview
   private createMenus(): void {
+    const dx = this.dx.sub({ name: 'createMenus' });
+    
     // Avoid duplicates across multiple openings
     if (this.fn.uimenumgr.getUIMenus().length > 0) {
+      dx.out('Menus already exist, skipping creation');
+      dx.done();
       return;
     }
 
+    dx.out(`Creating ${kMenus.length} menus from kMenus array`);
+    
     // Build menu configs from constants
     const menus = kMenus.map(menuConst => {
       const methodName = menuConst.methodName || menuConst.displayName;
+      dx.out(`Processing menu: ${menuConst.id}, methodName: ${methodName}`);
       return {
         id: menuConst.id,
         displayName: menuConst.displayName,
@@ -354,7 +362,7 @@ export class PaperPrinter {
     });
 
     menus.forEach(config => {
-      this.dx.out(
+      dx.out(
         `Creating menu: ${config.id} with iconSlotTriad: ${JSON.stringify(config.iconSlotTriad)}`
       );
 
@@ -368,7 +376,11 @@ export class PaperPrinter {
         selectionHandler: config.selectionHandler,
       });
       this.fn.uimenumgr.addMenu(menu);
+      dx.out(`Added menu: ${config.id} to UIMenuMgr`);
     });
+    
+    dx.out(`Total menus created: ${this.fn.uimenumgr.getUIMenus().length}`);
+    dx.done();
   }
 
   // Build list methods for each menu type
@@ -381,9 +393,11 @@ export class PaperPrinter {
   }
 
   private menuItems_Theme(): UIMenuItem_t[] {
+    const dx = this.dx.sub({ name: 'menuItems_Theme' });
     const themes = this.fn.stylize.getThemes();
+    dx.out(`Got ${themes.length} themes from stylize.getThemes()`);
 
-    return themes.map((theme: ThemeMenuItem_t) => {
+    const items = themes.map((theme: ThemeMenuItem_t) => {
       // UIMenu.ts will handle default selection marker in displayName
       return {
         id: theme.id,
@@ -391,6 +405,10 @@ export class PaperPrinter {
         iconSlotTriad: { begin: '', main: '', end: '' },
       };
     });
+    
+    dx.out(`Returning ${items.length} theme menu items`);
+    dx.done();
+    return items;
   }
 
   private menuItems_Text(): UIMenuItem_t[] {
