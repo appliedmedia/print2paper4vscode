@@ -452,19 +452,22 @@ export class UIMenuMgr {
     const allMenus = this.getUIMenus();
     dx.out(`Total menus: ${allMenus.length}, non-flyout menus: ${allMenus.filter(m => !m.isFlyout).length}`);
     
-    const visited = new Set<string>(); // Prevent infinite loops
-    let result = '';
+    try {
+      const visited = new Set<string>(); // Prevent infinite loops
+      let result = '';
 
-    // Generate only main menus (those that are not flyouts) - flyouts will be generated recursively
-    for (const menu of allMenus.filter(menu => !menu.isFlyout)) {
-      dx.out(`Generating HTML for menu: ${menu.id}`);
-      const html = await menu.getHTML(visited);
-      result += (result ? '\n' : '') + html;
-      dx.out(`Successfully generated HTML for menu: ${menu.id}`);
+      // Generate only main menus (those that are not flyouts) - flyouts will be generated recursively
+      for (const menu of allMenus.filter(menu => !menu.isFlyout)) {
+        dx.out(`Generating HTML for menu: ${menu.id}`);
+        const html = await menu.getHTML(visited);
+        result += (result ? '\n' : '') + html;
+        dx.out(`Successfully generated HTML for menu: ${menu.id}`);
+      }
+
+      return result;
+    } finally {
+      dx.done();
     }
-
-    dx.done();
-    return result;
   }
 
   // Generate all JavaScript at once
