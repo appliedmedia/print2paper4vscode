@@ -31,14 +31,8 @@ export class OSLinux extends OS {
   }
 
   protected escapePath(path: string): string {
-    // Linux shell escaping - escape backslashes, double quotes, and shell-special chars
-    return path
-      .replace(/\\/g, '\\\\')
-      .replace(/"/g, '\\"')
-      .replace(/\$/g, '\\$')
-      .replace(/`/g, '\\`')
-      .replace(/\n/g, '\\n')
-      .replace(/\r/g, '\\r');
+    // Not needed - Linux uses execFile with argv arrays (no shell parsing)
+    return path;
   }
 
   async fileOpenInDefaultApp(path: string): Promise<void> {
