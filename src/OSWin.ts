@@ -29,21 +29,24 @@ export class OSWin extends OS {
       'os-ctrl-cmd': 'Ctrl',
     };
   }
+
+  protected escapePath(path: string): string {
+    // Windows shell escaping - escape backslashes and double quotes
+    return path.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+  }
+
   async fileOpenInDefaultApp(path: string): Promise<void> {
-    // Security: Escape double quotes and backslashes in path to prevent shell injection
-    const escapedPath = path.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+    const escapedPath = this.escapePath(path);
     await this.execAsync(`start "" "${escapedPath}"`);
   }
 
   async fileReveal(path: string): Promise<void> {
-    // Security: Escape double quotes and backslashes in path to prevent shell injection
-    const escapedPath = path.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+    const escapedPath = this.escapePath(path);
     await this.execAsync(`explorer.exe /select,"${escapedPath}"`);
   }
 
   async filePrint(path: string): Promise<void> {
-    // Security: Escape double quotes and backslashes in path to prevent shell injection
-    const escapedPath = path.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+    const escapedPath = this.escapePath(path);
     await this.execAsync(
       `rundll32.exe %systemroot%\\system32\\shimgvw.dll,ImageView_PrintTo /pt "${escapedPath}"`
     );

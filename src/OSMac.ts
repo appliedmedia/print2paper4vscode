@@ -32,6 +32,16 @@ export class OSMac extends OS {
     };
   }
 
+  protected escapePath(path: string): string {
+    // Escape shell-special characters for macOS shell commands and AppleScript
+    return path
+      .replace(/\\/g, '\\\\')
+      .replace(/"/g, '\\"')
+      .replace(/\$/g, '\\$')
+      .replace(/`/g, '\\`')
+      .replace(/\n/g, '\\n');
+  }
+
   // Centralized AppleScript execution helper
   private async executeAppleScript(
     templateKey: string,
@@ -58,36 +68,22 @@ export class OSMac extends OS {
   }
 
   async fileOpenInDefaultApp(path: string): Promise<void> {
-    // Security: Escape double quotes and backslashes in path to prevent shell injection
-    const escapedPath = path.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+    const escapedPath = this.escapePath(path);
     await this.execAsync(`open "${escapedPath}"`);
   }
 
   async fileReveal(path: string): Promise<void> {
-    // Security: Escape double quotes and backslashes in path to prevent shell injection
-    const escapedPath = path.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+    const escapedPath = this.escapePath(path);
     await this.execAsync(`open -R "${escapedPath}"`);
   }
 
   async filePrint(path: string): Promise<void> {
-    // Security: Escape shell-special characters to prevent command injection
-    const escapedPath = path
-      .replace(/\\/g, '\\\\')
-      .replace(/"/g, '\\"')
-      .replace(/\$/g, '\\$')
-      .replace(/`/g, '\\`')
-      .replace(/\n/g, '\\n');
+    const escapedPath = this.escapePath(path);
     await this.execAsync(`lpr "${escapedPath}"`);
   }
 
   async fileOpenPrintDialog(path: string): Promise<void> {
-    // Security: Escape shell-special characters for AppleScript string literal
-    const escapedPath = path
-      .replace(/\\/g, '\\\\')
-      .replace(/"/g, '\\"')
-      .replace(/\$/g, '\\$')
-      .replace(/`/g, '\\`')
-      .replace(/\n/g, '\\n');
+    const escapedPath = this.escapePath(path);
     await this.executeAppleScript('apple_script_open_preview_print_dialog', { file_path: escapedPath });
   }
 
