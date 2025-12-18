@@ -47,8 +47,9 @@ export class OSLinux extends OS {
   }
 
   async fileReveal(path: string): Promise<void> {
-    const escapedPath = this.escapePath(path);
-    await this.execAsync(`xdg-open "$(dirname "${escapedPath}")"`);
+    const dir = this.pathDirname(path);
+    const escapedDir = this.escapePath(dir);
+    await this.execAsync(`xdg-open "${escapedDir}"`);
   }
 
   async filePrint(path: string): Promise<void> {
