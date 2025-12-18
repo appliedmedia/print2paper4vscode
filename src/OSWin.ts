@@ -31,8 +31,18 @@ export class OSWin extends OS {
   }
 
   protected escapePath(path: string): string {
-    // Windows shell escaping - escape backslashes and double quotes
-    return path.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+    // Windows cmd.exe escaping - escape metacharacters with caret (^)
+    return path
+      .replace(/\\/g, '\\\\')
+      .replace(/"/g, '\\"')
+      .replace(/%/g, '^%')
+      .replace(/\^/g, '^^')
+      .replace(/&/g, '^&')
+      .replace(/\|/g, '^|')
+      .replace(/</g, '^<')
+      .replace(/>/g, '^>')
+      .replace(/\r/g, '')
+      .replace(/\n/g, '');
   }
 
   async fileOpenInDefaultApp(path: string): Promise<void> {

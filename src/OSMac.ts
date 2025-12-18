@@ -33,13 +33,22 @@ export class OSMac extends OS {
   }
 
   protected escapePath(path: string): string {
-    // Escape shell-special characters for macOS shell commands and AppleScript
+    // Escape shell-special characters for macOS shell commands (lpr, open, etc.)
     return path
       .replace(/\\/g, '\\\\')
       .replace(/"/g, '\\"')
       .replace(/\$/g, '\\$')
       .replace(/`/g, '\\`')
-      .replace(/\n/g, '\\n');
+      .replace(/\n/g, '\\n')
+      .replace(/\r/g, '\\r');
+  }
+
+  private escapePathForAppleScript(path: string): string {
+    // AppleScript escaping: only backslash and double quote
+    // AppleScript is wrapped in single quotes by executeAppleScript, so $ and ` are literal
+    return path
+      .replace(/\\/g, '\\\\')
+      .replace(/"/g, '\\"');
   }
 
   // Centralized AppleScript execution helper
@@ -83,7 +92,7 @@ export class OSMac extends OS {
   }
 
   async fileOpenPrintDialog(path: string): Promise<void> {
-    const escapedPath = this.escapePath(path);
+    const escapedPath = this.escapePathForAppleScript(path);
     await this.executeAppleScript('apple_script_open_preview_print_dialog', { file_path: escapedPath });
   }
 

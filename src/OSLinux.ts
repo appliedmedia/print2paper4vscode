@@ -37,7 +37,8 @@ export class OSLinux extends OS {
       .replace(/"/g, '\\"')
       .replace(/\$/g, '\\$')
       .replace(/`/g, '\\`')
-      .replace(/\n/g, '\\n');
+      .replace(/\n/g, '\\n')
+      .replace(/\r/g, '\\r');
   }
 
   async fileOpenInDefaultApp(path: string): Promise<void> {
