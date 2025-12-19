@@ -369,7 +369,7 @@ User identified two critical issues:
 
 #### Final Package Contents
 
-```
+```text
 print2paper4vscode-1.0.0.vsix (2.0 MB, 7 files)
 ├── CHANGELOG.md
 ├── LICENSE
@@ -378,7 +378,7 @@ print2paper4vscode-1.0.0.vsix (2.0 MB, 7 files)
 └── dist/extension.js (10.34 MB bundled code)
 ```
 
-### Files Modified
+### Files Changed
 
 - `.config/template.package.json` - NEW: Source template with {{extId}} placeholders
 - `.config/templateDictReplace.yaml` - Process template → root package.json
@@ -637,7 +637,7 @@ Based on optimized `.vscodeignore`, the packaged extension includes:
 - [x] Git history review
 - [x] Documentation quality review
 
-### Results
+## Validation Results
 
 - ✅ Zero compilation errors
 - ✅ All 357 tests passing
@@ -822,11 +822,11 @@ Systematically addressed all 100+ CodeRabbit inline review comments from PR #78.
 
 ### Major Quality Fixes (15 items)
 
-10. **Utils.forceNumbers mutation** - Added local copy to avoid mutating input object
-11. **Yaml.get() fallback** - Changed `||` to `??` (nullish coalescing) to preserve falsy values
-12. **App getter validation** - All component getters now fail-fast with proper error messages
-13. **esbuild error handler** - Added null check for location
-14. **OS.fileWrite/fileRead** - Now checks dx.require() return value
+1. **Utils.forceNumbers mutation** - Added local copy to avoid mutating input object
+2. **Yaml.get() fallback** - Changed `||` to `??` (nullish coalescing) to preserve falsy values
+3. **App getter validation** - All component getters now fail-fast with proper error messages
+4. **esbuild error handler** - Added null check for location
+5. **OS.fileWrite/fileRead** - Now checks dx.require() return value
 
 ### Test Results
 
@@ -835,9 +835,10 @@ Systematically addressed all 100+ CodeRabbit inline review comments from PR #78.
 - ✅ Package verified: 2.0 MB bundled (7 files)
 - ✅ No security vulnerabilities in shipped code
 
-### Files Modified
+## Files Modified
 
 **Security & Core Fixes:**
+
 - `src/OSMac.ts`, `src/OSLinux.ts`, `src/OSWin.ts` - Shell injection prevention
 - `src/OSMac.yaml` - AppleScript print command fix
 - `src/UIMenuMgr.ts` - eval() removal
@@ -855,4 +856,3 @@ Systematically addressed all 100+ CodeRabbit inline review comments from PR #78.
 ### GitHub PR Response
 
 Posted comprehensive response to PR #78 addressing all critical/major issues: <https://github.com/appliedmedia/print2paper4vscode/pull/78#issuecomment-3658468994>
-
