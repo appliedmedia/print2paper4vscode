@@ -511,6 +511,7 @@ this._yaml = this.fn.yaml.create({
 ```
 
 **Characteristics**:
+
 - Registered in Registry (accessible via `this.fn.yaml`)
 - Generic/reusable across many components
 - Each component gets a customized instance (different file, different dataStruct)
@@ -554,6 +555,7 @@ const pageWidth = this.fn.pdf.docInfo().pageWidthPx;
 ```
 
 **Characteristics**:
+
 - NOT registered in Registry
 - Tightly coupled to single parent component (PDF has DocInfo_PDF, PaperPrinter has DocInfo_PaperPrinter)
 - Created directly by parent using static `create()` method
