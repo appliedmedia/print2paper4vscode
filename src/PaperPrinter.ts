@@ -39,6 +39,7 @@ import {
   type MarginIdMenuItems_t,
   type HeaderFooterSubmenu_t,
   type UIMenuItemValueFxn_t,
+  type UIMenuIsVisibleFxn_t,
   kPageSizeId,
   kOrient,
   kMarginId,
@@ -323,7 +324,7 @@ export class PaperPrinter {
   // Create menus when needed for the webview
   private createMenus(): void {
     const dx = this.dx.sub({ name: 'createMenus' });
-    
+
     // Avoid duplicates across multiple openings
     if (this.fn.uimenumgr.getUIMenus().length > 0) {
       dx.out('Menus already exist, skipping creation');
@@ -332,7 +333,7 @@ export class PaperPrinter {
     }
 
     dx.out(`Creating ${kMenus.length} menus from kMenus array`);
-    
+
     // Build menu configs from constants
     const menus = kMenus.map(menuConst => {
       const methodName = menuConst.methodName || menuConst.displayName;
@@ -342,6 +343,7 @@ export class PaperPrinter {
         displayName: menuConst.displayName,
         iconSlotTriad: (menuConst as { iconSlotTriad: iconSlotTriad_t }).iconSlotTriad,
         isFlyout: menuConst.isFlyout,
+        isVisible: (menuConst as { isVisible?: boolean | UIMenuIsVisibleFxn_t }).isVisible,
         menuItems: (this[`menuItems_${methodName}` as keyof this] as () => UIMenuItem_t[]).bind(
           this
         ),
@@ -371,6 +373,7 @@ export class PaperPrinter {
         displayName: config.displayName,
         iconSlotTriad: config.iconSlotTriad,
         isFlyout: config.isFlyout,
+        isVisible: config.isVisible,
         menuItems: config.menuItems,
         flyoutMenuItemIds: [...config.flyoutMenuItemIds],
         selectionHandler: config.selectionHandler,
@@ -378,7 +381,7 @@ export class PaperPrinter {
       this.fn.uimenumgr.addMenu(menu);
       dx.out(`Added menu: ${config.id} to UIMenuMgr`);
     });
-    
+
     dx.out(`Total menus created: ${this.fn.uimenumgr.getUIMenus().length}`);
     dx.done();
   }
@@ -405,7 +408,7 @@ export class PaperPrinter {
         iconSlotTriad: { begin: '', main: '', end: '' },
       };
     });
-    
+
     dx.out(`Returning ${items.length} theme menu items`);
     dx.done();
     return items;

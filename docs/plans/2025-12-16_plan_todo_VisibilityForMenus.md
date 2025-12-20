@@ -1,10 +1,26 @@
 # Menu Visibility System Implementation Plan
 
-**Status**: todo
+**Status**: inProgress
 
 **Created**: 2025-12-16
 
 **Goal**: Add conditional visibility to menu system allowing menus to show/hide based on context (e.g., markdown menu only visible for markdown files).
+
+## TODO Checklist
+
+- [x] Refactor `ForceNumber_*_t` to `Force_*_t` in `Utils.ts` and update usages
+- [x] Implement `forceContent` and `forceContents` in `Utils.ts`
+- [x] Update `UIMenuItemDict_t` type to include string values
+- [x] Add `UIMenuIsVisibleFxn_t` type
+- [x] Add `isVisible` property to `kMd` menu constant
+- [x] Update `UIMenuMgr.buildUIMenuItemDict()` to handle numeric and textual inputs
+- [x] Add `resolveUIMenuIsVisible()` to `UIMenuMgr`
+- [x] Update `UIMenu` constructor to accept and store `isVisible`
+- [x] Update `UIMenu.getHTML()` to add CSS class based on visibility
+- [x] Update `UIMenuMgr.createMenu()` to resolve visibility
+- [x] Update `PaperPrinter` menu creation
+- [x] Add CSS to `UIMenu.yaml`
+- [ ] Test with markdown and non-markdown files
 
 ## Overview
 
@@ -56,7 +72,16 @@ const dict = {
 
 ## Implementation Steps
 
-### Step 1: Add forceContent/forceContents to Utils.ts
+### Step 1: Refactor Force Types and Add forceContent/forceContents to Utils.ts
+
+**Refactor Types in `src/Utils.ts`**:
+
+Rename specific types to be more generic since they cover string/number/undefined:
+
+- `ForceNumber_scalar_t` -> `Force_scalar_t`
+- `ForceNumber_dict_t` -> `Force_dict_t`
+
+**Add `forceContent` and `forceContents`**:
 
 Create string validation utilities mirroring existing `forceNumber`/`forceNumbers` pattern.
 
@@ -75,7 +100,7 @@ Create string validation utilities mirroring existing `forceNumber`/`forceNumber
  * @param useForEmpty - Value to use for empty/null/undefined (default: '')
  * @returns String value or useForEmpty
  */
-forceContent(val: ForceNumber_scalar_t, useForEmpty: string = ''): string {
+forceContent(val: Force_scalar_t, useForEmpty: string = ''): string {
   if (val === null || val === undefined || val === '') {
     return useForEmpty;
   }
@@ -94,7 +119,7 @@ forceContent(val: ForceNumber_scalar_t, useForEmpty: string = ''): string {
  * @returns Dictionary with all values as strings
  */
 forceContents(
-  dict: ForceNumber_dict_t,
+  dict: Force_dict_t,
   useForEmpty: string = '',
   requiredKeys?: readonly string[]
 ): Record<string, string> {
@@ -116,15 +141,6 @@ forceContents(
   dx.done();
   return result;
 }
-```
-
-**Register in Registry.ts:**
-
-Add to Utils registration:
-
-```typescript
-'utils.forceContent',
-'utils.forceContents',
 ```
 
 ### Step 2: Update UIMenuItemDict_t Type
@@ -214,7 +230,7 @@ private buildUIMenuItemDict(): UIMenuItemDict_t {
   const dx = this.dx.sub({ name: 'buildUIMenuItemDict' });
   const pageSizePx = this.fn.pdf?.docInfo()?.pageSizePx;
   const context = this.contextDict ?? {};
-  const inputs: ForceNumber_dict_t = {
+  const inputs: Force_dict_t = {
     windowWidth: context.windowWidth,
     windowHeight: context.windowHeight,
     pageWidth: pageSizePx?.widthPx,
@@ -236,7 +252,7 @@ private buildUIMenuItemDict(): UIMenuItemDict_t {
   const context = this.contextDict ?? {};
 
   // Numeric keys - validate with forceNumbers
-  const numericInputs: ForceNumber_dict_t = {
+  const numericInputs: Force_dict_t = {
     windowWidth: context.windowWidth,
     windowHeight: context.windowHeight,
     pageWidth: pageSizePx?.widthPx,
@@ -245,7 +261,7 @@ private buildUIMenuItemDict(): UIMenuItemDict_t {
   const dict_nums = this.fn.utils.forceNumbers(numericInputs, 1, kUIMenuItemDictRequiredKeys);
 
   // Textual keys - validate with forceContents
-  const textualInputs: ForceNumber_dict_t = {
+  const textualInputs: Force_dict_t = {
     languageId: docInfo?.languageId,
   };
   const dict_text = this.fn.utils.forceContents(textualInputs, '');
@@ -606,3 +622,4 @@ If issues arise, revert changes in reverse order:
 ## Status Updates
 
 - **2025-12-16**: Plan created, ready to implement
+- **2025-12-20**: Implemented all code changes including Force type refactoring and menu visibility logic.

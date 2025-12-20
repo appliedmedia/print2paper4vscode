@@ -1,5 +1,5 @@
 import type { Registry } from './Registry';
-import type { ForceNumber_dict_t } from './Utils';
+import type { Force_dict_t } from './Utils';
 import type { FnImport_t } from './types/Registry_t';
 import type { UI_t } from './UI';
 import type { PersistValue_t } from './Persist';
@@ -17,6 +17,7 @@ import { Diagnostics } from './Diagnostics';
 import {
   type UIMenuItemDict_t,
   type UIMenuItemValueFxn_t,
+  type UIMenuIsVisibleFxn_t,
 } from './types/PaperPrinter_t';
 import type { Theme } from './types/theme_t';
 
@@ -63,6 +64,8 @@ export class UIMenuMgr {
       'persist.set',
       'utils.hasContent',
       'utils.forceNumbers',
+      'utils.forceContent',
+      'utils.forceContents',
       'utils.templateDictReplace',
       'pdf.docInfo'
     );
@@ -130,6 +133,7 @@ export class UIMenuMgr {
     displayName: string;
     iconSlotTriad: iconSlotTriad_t;
     isFlyout?: boolean;
+    isVisible?: boolean | UIMenuIsVisibleFxn_t;
     menuItems: () => UIMenuItem_t[];
     flyoutMenuItemIds?: string[];
     selectionHandler: (menuId: MenuId_t, menuItemId: MenuItemId_t) => Promise<HandleSelection_t>;
@@ -141,16 +145,22 @@ export class UIMenuMgr {
       displayName,
       iconSlotTriad,
       isFlyout = false,
+      isVisible,
       menuItems,
       flyoutMenuItemIds = [],
       selectionHandler,
     } = args;
+
+    // Resolve isVisible to boolean
+    const isVisibleResolved = this.resolveUIMenuIsVisible(isVisible, id);
+
     return new UIMenu({
       reg: this.reg,
       id,
       displayName,
       iconSlotTriad,
       isFlyout,
+      isVisible: isVisibleResolved,
       menuItems,
       flyoutMenuItemIds,
       selectionHandler,
@@ -387,19 +397,71 @@ export class UIMenuMgr {
    */
   private buildUIMenuItemDict(): UIMenuItemDict_t {
     const dx = this.dx.sub({ name: 'buildUIMenuItemDict' });
-    const pageSizePx = this.fn.pdf?.docInfo()?.pageSizePx;
+    const docInfo = this.fn.pdf.docInfo();
+    const pageSizePx = docInfo?.pageSizePx;
     const context = this.contextDict ?? {};
-    const inputs: ForceNumber_dict_t = {
+
+    // Numeric keys - validate with forceNumbers
+    const numericInputs: Force_dict_t = {
       windowWidth: context.windowWidth,
       windowHeight: context.windowHeight,
       pageWidth: pageSizePx?.widthPx,
       pageHeight: pageSizePx?.heightPx,
     };
-    // forceNumbers with requiredKeys ensures all keys exist, coerces to numbers (non-zero or useForZero)
-    // Missing keys are added with useForZero=1, invalid/zero values become 1
-    const dict_nums = this.fn.utils.forceNumbers(inputs, 1, kUIMenuItemDictRequiredKeys);
+    const dict_nums = this.fn.utils.forceNumbers(numericInputs, 1, kUIMenuItemDictRequiredKeys);
+
+    // Textual keys - validate with forceContents
+    const textualInputs: Force_dict_t = {
+      languageId: docInfo?.languageId,
+    };
+    const dict_text = this.fn.utils.forceContents(textualInputs, '');
+
+    // Combine both dicts
+    const combined = { ...dict_nums, ...dict_text };
+
     dx.done();
-    return dict_nums;
+    return combined as UIMenuItemDict_t;
+  }
+
+  /**
+   * Resolve menu visibility using isVisible function or boolean
+   *
+   * Executes isVisible function with validated dict (numeric + textual context).
+   * Returns boolean indicating whether menu should be visible.
+   *
+   * @param isVisible - Boolean or function that determines visibility from context
+   * @param menuId - Menu ID for error logging context
+   * @returns true if menu should be visible, false otherwise (default: true)
+   */
+  private resolveUIMenuIsVisible(
+    isVisible: boolean | UIMenuIsVisibleFxn_t | undefined,
+    menuId: string
+  ): boolean {
+    const dx = this.dx.sub({ name: 'resolveUIMenuIsVisible' });
+
+    // Handle undefined - default to visible
+    if (isVisible === undefined) {
+      dx.done();
+      return true;
+    }
+
+    // Handle boolean literal
+    if (typeof isVisible === 'boolean') {
+      dx.done();
+      return isVisible;
+    }
+
+    // Handle function - build dict and execute
+    const dict = this.buildUIMenuItemDict();
+    try {
+      const result = isVisible(dict);
+      dx.done();
+      return result;
+    } catch (error) {
+      this.dx.error(`Menu isVisible resolver failed for ${menuId}: ${String(error)}`);
+      dx.done();
+      return true; // Default to visible on error
+    }
   }
 
   /**

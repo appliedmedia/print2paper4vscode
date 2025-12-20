@@ -28,15 +28,16 @@
  * 3. **Resolver function**: `value: (dict) => ...` - Dynamic value computed from context
  *
  * Resolver Function Contract:
- * - Receives UIMenuItemDict_t validated by forceNumber() with all required keys present
- * - All dict values guaranteed to be finite numbers (non-zero unless explicitly set)
- * - Required keys: windowWidth, windowHeight, pageWidth, pageHeight
+ * - Receives UIMenuItemDict_t validated by forceNumber/forceContent with all required keys present
+ * - All numeric dict values guaranteed to be finite numbers (non-zero unless explicitly set)
+ * - Required keys (numeric): windowWidth, windowHeight, pageWidth, pageHeight
+ * - Required keys (textual): languageId
  * - Returns number | string | undefined based on computation
  * - NO defensive checks needed - dict is always valid when resolver is called
  *
  * Value Resolution Flow:
  * 1. UIMenuMgr.buildUIMenuItemDict() creates dict from context + PDF dimensions
- * 2. App.forceNumber(dict, useForZero=1, requiredKeys) validates all inputs
+ * 2. App.forceNumbers() + App.forceContents() validates all inputs
  * 3. Resolver function executes with guaranteed-valid dict
  * 4. Result flows to consumer who decides if/when to call forceNumber() on result
  *
@@ -45,8 +46,9 @@
  * - Only call forceNumber() at consumer level when numeric value is required
  * - This preserves flexibility for string values (headers/footers) vs numeric (zoom)
  */
-export type UIMenuItemDict_t = Record<string, number>;
+export type UIMenuItemDict_t = Record<string, number | string>;
 export type UIMenuItemValueFxn_t = (dict: UIMenuItemDict_t) => number | string | undefined;
+export type UIMenuIsVisibleFxn_t = (dict: UIMenuItemDict_t) => boolean;
 
 // Print menu definition
 export const kPrint = {
@@ -343,6 +345,7 @@ export const kMd = {
   altId: kMd_Raw.id, // Default to raw mode
   methodName: 'Md',
   isFlyout: false,
+  isVisible: (dict: UIMenuItemDict_t) => dict.languageId === 'markdown',
   flyoutMenuItemIds: [] as const,
   menuItems: [
     { id: kMd_Raw.id, displayName: kMd_Raw.displayName, value: kMd_Raw.value },
@@ -416,7 +419,7 @@ export const kZoomLevel = {
     {
       id: 'fitWidth',
       displayName: 'Fit Width',
-      value: (dict: UIMenuItemDict_t) => dict.windowWidth / dict.pageWidth,
+      value: (dict: UIMenuItemDict_t) => (dict.windowWidth as number) / (dict.pageWidth as number),
     },
     // fitPage: scale page to fit both width and height in viewport (use smaller ratio)
     // Formula: Math.min of width and height ratios (ensures entire page visible)
@@ -425,8 +428,8 @@ export const kZoomLevel = {
       id: 'fitPage',
       displayName: 'Fit Page',
       value: (dict: UIMenuItemDict_t) => {
-        const widthScale = dict.windowWidth / dict.pageWidth;
-        const heightScale = dict.windowHeight / dict.pageHeight;
+        const widthScale = (dict.windowWidth as number) / (dict.pageWidth as number);
+        const heightScale = (dict.windowHeight as number) / (dict.pageHeight as number);
         return Math.min(widthScale, heightScale);
       },
     },

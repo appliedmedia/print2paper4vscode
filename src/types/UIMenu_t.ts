@@ -4,7 +4,7 @@
  * All types and constants related to UIMenu component
  */
 
-import type { ForceNumber_scalar_t } from '../Utils';
+import type { Force_scalar_t } from '../Utils';
 import type { UI_t } from '../UI';
 import {
   kHeaderFooter,
@@ -36,8 +36,8 @@ export type iconSlotTriad_main_t = {
   constrain: TextEditConstraint_t; // Validation strategy (regex + min/max work together)
   transform?: {
     // Transforms handle their own type conversion - they receive raw persisted values
-    display?: (persist: ForceNumber_scalar_t) => ForceNumber_scalar_t; // Convert persist value to display value
-    persist?: (display: ForceNumber_scalar_t) => ForceNumber_scalar_t; // Convert display value to persist value
+    display?: (persist: Force_scalar_t) => Force_scalar_t; // Convert persist value to display value
+    persist?: (display: Force_scalar_t) => Force_scalar_t; // Convert display value to persist value
   };
 };
 
