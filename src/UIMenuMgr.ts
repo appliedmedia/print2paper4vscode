@@ -132,7 +132,7 @@ export class UIMenuMgr {
     displayName: string;
     iconSlotTriad: iconSlotTriad_t;
     isFlyout?: boolean;
-    isVisible?: boolean | UIMenuFxn_t<boolean>;
+    isVisible?: boolean | UIMenuFxn_t;
     menuItems: () => UIMenuItem_t[];
     flyoutMenuItemIds?: string[];
     selectionHandler: (menuId: MenuId_t, menuItemId: MenuItemId_t) => Promise<HandleSelection_t>;
@@ -361,7 +361,7 @@ export class UIMenuMgr {
 
       if (menuItem && 'value' in menuItem) {
         const itemWithValue = menuItem as UIMenuItem_t & {
-          value: number | string | UIMenuFxn_t<number | string | undefined>;
+          value: number | string | UIMenuFxn_t;
         };
         const value = itemWithValue.value;
 
@@ -433,7 +433,7 @@ export class UIMenuMgr {
    * @returns true if menu should be visible, false otherwise (default: true)
    */
   private resolveUIMenuIsVisible(
-    isVisible: boolean | UIMenuFxn_t<boolean> | undefined,
+    isVisible: boolean | UIMenuFxn_t | undefined,
     menuId: string
   ): boolean {
     const dx = this.dx.sub({ name: 'resolveUIMenuIsVisible' });
@@ -455,7 +455,7 @@ export class UIMenuMgr {
     try {
       const result = isVisible(dict);
       dx.done();
-      return result;
+      return Boolean(result);
     } catch (error) {
       this.dx.error(`Menu isVisible resolver failed for ${menuId}: ${String(error)}`);
       dx.done();
@@ -476,7 +476,7 @@ export class UIMenuMgr {
    * @returns Resolved value (number | string | undefined) or undefined on error
    */
   private resolveUIMenuItemValue(
-    resolver: UIMenuFxn_t<number | string | undefined>,
+    resolver: UIMenuFxn_t,
     menuId: string,
     menuItemId: string
   ): number | string | undefined {
@@ -485,7 +485,11 @@ export class UIMenuMgr {
     try {
       const result = resolver(dict_nums);
       dx.done();
-      return result;
+      // Ensure we only return supported types
+      if (typeof result === 'number' || typeof result === 'string' || result === undefined) {
+        return result;
+      }
+      return undefined; // Filter out boolean or other types not supported for values
     } catch (error) {
       this.dx.error(
         `Menu item value resolver failed for ${menuId}.${menuItemId}: ${String(error)}`

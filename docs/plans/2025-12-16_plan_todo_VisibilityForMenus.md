@@ -11,7 +11,7 @@
 - [x] Refactor `ForceNumber_*_t` to `Force_*_t` in `Utils.ts` and update usages
 - [x] Implement `forceContent` and `forceContents` in `Utils.ts`
 - [x] Update `UIMenuItemDict_t` type to include string values
-- [x] Refactor `UIMenuItemValueFxn_t` and `UIMenuIsVisibleFxn_t` to generic `UIMenuFxn_t<T>`
+- [x] Refactor `UIMenuItemValueFxn_t` and `UIMenuIsVisibleFxn_t` to generic `UIMenuFxn_t<T>` (Note: Changed to non-generic union type per request)
 - [x] Add `isVisible` property to `kMd` menu constant
 - [x] Update `UIMenuMgr.buildUIMenuItemDict()` to handle numeric and textual inputs
 - [x] Add `resolveUIMenuIsVisible()` to `UIMenuMgr`
@@ -20,7 +20,7 @@
 - [x] Update `UIMenuMgr.createMenu()` to resolve visibility
 - [x] Update `PaperPrinter` menu creation
 - [x] Add CSS to `UIMenu.yaml`
-- [ ] Test with markdown and non-markdown files
+- [x] Test with markdown and non-markdown files
 
 ## Overview
 
@@ -32,8 +32,8 @@ Add `isVisible` property to menu constants that can be a boolean or function rec
 
 Follow existing `value` resolver pattern:
 
-- **Menu items** use `value: number | string | UIMenuFxn_t<number | string | undefined>`
-- **Menus** will use `isVisible: boolean | UIMenuFxn_t<boolean>`
+- **Menu items** use `value: number | string | UIMenuFxn_t`
+- **Menus** will use `isVisible: boolean | UIMenuFxn_t`
 - Both receive `UIMenuItemDict_t` context with validated data
 - Functions execute at appropriate time (value at selection, isVisible at creation)
 
@@ -175,7 +175,7 @@ Add to "Required keys" section:
 **Add:**
 
 ```typescript
-export type UIMenuFxn_t<T> = (dict: UIMenuItemDict_t) => T;
+export type UIMenuFxn_t = (dict: UIMenuItemDict_t) => number | string | boolean | unknown;
 ```
 
 ### Step 4: Add isVisible to kMd Menu Constant
@@ -301,7 +301,7 @@ Add to `this.reg.use()` call:
  * @returns true if menu should be visible, false otherwise (default: true)
  */
 private resolveUIMenuIsVisible(
-  isVisible: boolean | UIMenuFxn_t<boolean> | undefined,
+  isVisible: boolean | UIMenuFxn_t | undefined,
   menuId: string
 ): boolean {
   const dx = this.dx.sub({ name: 'resolveUIMenuIsVisible' });
@@ -323,7 +323,7 @@ private resolveUIMenuIsVisible(
   try {
     const result = isVisible(dict);
     dx.done();
-    return result;
+    return Boolean(result);
   } catch (error) {
     this.dx.error(`Menu isVisible resolver failed for ${menuId}: ${String(error)}`);
     dx.done();
@@ -447,7 +447,7 @@ createMenu(args: {
   displayName: string;
   iconSlotTriad: iconSlotTriad_t;
   isFlyout?: boolean;
-  isVisible?: boolean | UIMenuFxn_t<boolean>;  // NEW
+  isVisible?: boolean | UIMenuFxn_t;  // NEW
   menuItems: () => UIMenuItem_t[];
   flyoutMenuItemIds?: string[];
   selectionHandler: (menuId: MenuId_t, menuItemId: MenuItemId_t) => Promise<HandleSelection_t>;
@@ -623,3 +623,4 @@ If issues arise, revert changes in reverse order:
 - **2025-12-16**: Plan created, ready to implement
 - **2025-12-20**: Implemented all code changes including Force type refactoring and menu visibility logic.
 - **2025-12-20**: Refactoring UIMenuItemValueFxn_t/UIMenuIsVisibleFxn_t to generic UIMenuFxn_t<T>.
+- **2025-12-21**: Completed refactoring to non-generic UIMenuFxn_t and verified implementation with tests.

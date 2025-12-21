@@ -38,8 +38,7 @@ import {
   type PageSizeIdMenuItems_t,
   type MarginIdMenuItems_t,
   type HeaderFooterSubmenu_t,
-  type UIMenuItemValueFxn_t,
-  type UIMenuIsVisibleFxn_t,
+  type UIMenuFxn_t,
   kPageSizeId,
   kOrient,
   kMarginId,
@@ -343,7 +342,7 @@ export class PaperPrinter {
         displayName: menuConst.displayName,
         iconSlotTriad: (menuConst as { iconSlotTriad: iconSlotTriad_t }).iconSlotTriad,
         isFlyout: menuConst.isFlyout,
-        isVisible: (menuConst as { isVisible?: boolean | UIMenuIsVisibleFxn_t }).isVisible,
+        isVisible: (menuConst as { isVisible?: boolean | UIMenuFxn_t }).isVisible,
         menuItems: (this[`menuItems_${methodName}` as keyof this] as () => UIMenuItem_t[]).bind(
           this
         ),
@@ -572,7 +571,7 @@ export class PaperPrinter {
       if ('value' in item && item.value !== undefined) {
         const value = item.value;
         if (typeof value === 'number' || typeof value === 'string' || typeof value === 'function') {
-          menuItem.value = value as number | string | UIMenuItemValueFxn_t;
+          menuItem.value = value as number | string | UIMenuFxn_t;
         } else {
           this.dx.error(`Invalid zoom level value type: ${typeof value} for item ${itemId}`);
         }

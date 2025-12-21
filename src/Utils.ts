@@ -5,6 +5,7 @@
  */
 
 import type { Registry } from './Registry';
+import type { FnImport_t } from './types/Registry_t';
 
 // Type aliases
 export type Force_scalar_t = number | string | undefined;
@@ -14,6 +15,7 @@ export type ForceNumbers_t = Record<string, number>;
 export class Utils {
   static readonly id = 'utils';
   private reg: Registry;
+  private fn: FnImport_t;
   private ns: string;
   private ns_: string;
 
@@ -21,6 +23,8 @@ export class Utils {
     this.reg = args.reg;
     this.ns = args.ns;
     this.ns_ = args.ns_;
+    // Initialize fn to access diagnostics.sub method
+    this.fn = this.reg.use('dx.sub');
   }
 
   /**
@@ -152,7 +156,7 @@ export class Utils {
     useForEmpty: string = '',
     requiredKeys?: readonly string[]
   ): Record<string, string> {
-    const dx = this.reg.fn.dx.sub({ name: 'forceContents' });
+    const dx = this.fn.dx.sub({ name: 'forceContents' });
     const result: Record<string, string> = {};
 
     // Add all required keys first with useForEmpty

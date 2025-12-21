@@ -55,7 +55,7 @@ export interface UIMenuItem_t {
   iconSlotTriad: iconSlotTriad_t; // Button content: icon, text_edit widget (e.g., "text_edit: {...}"), or empty for non-button
   shortcutCode?: string; // Optional KeyboardEvent.code for keyboard shortcuts (e.g., "Digit0", "Minus", "Equal")
   shortcut?: string; // Optional display string for keyboard shortcut (e.g., "Ctrl/Cmd + 0")
-  value?: number | string | UIMenuFxn_t<number | string | undefined>;
+  value?: number | string | UIMenuFxn_t;
 }
 
 // Menu ID types - UI component identifiers
