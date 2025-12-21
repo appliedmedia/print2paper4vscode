@@ -12,19 +12,21 @@
 - [x] Implement `forceContent` and `forceContents` in `Utils.ts`
 - [x] Update `UIMenuItemDict_t` type to include string values
 - [x] Refactor `UIMenuItemValueFxn_t` and `UIMenuIsVisibleFxn_t` to generic `UIMenuFxn_t<T>` (Note: Changed to non-generic union type per request)
-- [x] Add `isVisible` property to `kMd` menu constant
+- [x] Add `isHidden` property to `kMd` menu constant (refactored from `isVisible`)
 - [x] Update `UIMenuMgr.buildUIMenuItemDict()` to handle numeric and textual inputs
-- [x] Add `resolveUIMenuIsVisible()` to `UIMenuMgr`
-- [x] Update `UIMenu` constructor to accept and store `isVisible`
+- [x] Add `resolveUIMenuIsHidden()` to `UIMenuMgr` (refactored from `resolveUIMenuIsVisible`)
+- [x] Update `UIMenu` constructor to accept and store `isHidden`
 - [x] Update `UIMenu.getHTML()` to add CSS class based on visibility
 - [x] Update `UIMenuMgr.createMenu()` to resolve visibility
 - [x] Update `PaperPrinter` menu creation
 - [x] Add CSS to `UIMenu.yaml`
 - [x] Test with markdown and non-markdown files
+- [x] Refactor to use `isHidden` property and CSS class (inverted logic)
+- [x] Explicitly set `isHidden: false` for all menu constants
 
 ## Overview
 
-Add `isVisible` property to menu constants that can be a boolean or function receiving context dict. Menus evaluate visibility at creation time and add CSS class to hide when needed.
+Add `isHidden` property to menu constants that can be a boolean or function receiving context dict. Menus evaluate visibility at creation time and add CSS class to hide when needed.
 
 ## Architecture
 
@@ -33,9 +35,9 @@ Add `isVisible` property to menu constants that can be a boolean or function rec
 Follow existing `value` resolver pattern:
 
 - **Menu items** use `value: number | string | UIMenuFxn_t`
-- **Menus** will use `isVisible: boolean | UIMenuFxn_t`
+- **Menus** will use `isHidden: boolean | UIMenuFxn_t`
 - Both receive `UIMenuItemDict_t` context with validated data
-- Functions execute at appropriate time (value at selection, isVisible at creation)
+- Functions execute at appropriate time (value at selection, isHidden at creation)
 
 ### Context Dictionary Enhancement
 
@@ -178,7 +180,7 @@ Add to "Required keys" section:
 export type UIMenuFxn_t = (dict: UIMenuItemDict_t) => number | string | boolean | unknown;
 ```
 
-### Step 4: Add isVisible to kMd Menu Constant
+### Step 4: Add isHidden to kMd Menu Constant
 
 **Location**: `src/types/PaperPrinter_t.ts` (kMd definition around line 339)
 
@@ -210,7 +212,7 @@ export const kMd = {
   altId: kMd_Raw.id,
   methodName: 'Md',
   isFlyout: false,
-  isVisible: (dict: UIMenuItemDict_t) => dict.languageId === 'markdown',
+  isHidden: (dict: UIMenuItemDict_t) => dict.languageId !== 'markdown',
   flyoutMenuItemIds: [] as const,
   menuItems: [
     { id: kMd_Raw.id, displayName: kMd_Raw.displayName, value: kMd_Raw.value },
@@ -283,7 +285,7 @@ Add to `this.reg.use()` call:
 'utils.forceContents',
 ```
 
-### Step 6: Add resolveUIMenuIsVisible() to UIMenuMgr
+### Step 6: Add resolveUIMenuIsHidden() to UIMenuMgr
 
 **Location**: `src/UIMenuMgr.ts` (after resolveUIMenuItemValue around line 437)
 
@@ -291,43 +293,43 @@ Add to `this.reg.use()` call:
 
 ```typescript
 /**
- * Resolve menu visibility using isVisible function or boolean
+ * Resolve menu visibility using isHidden function or boolean
  *
- * Executes isVisible function with validated dict (numeric + textual context).
- * Returns boolean indicating whether menu should be visible.
+ * Executes isHidden function with validated dict (numeric + textual context).
+ * Returns boolean indicating whether menu should be hidden.
  *
- * @param isVisible - Boolean or function that determines visibility from context
+ * @param isHidden - Boolean or function that determines visibility from context
  * @param menuId - Menu ID for error logging context
- * @returns true if menu should be visible, false otherwise (default: true)
+ * @returns true if menu should be hidden, false otherwise (default: false)
  */
-private resolveUIMenuIsVisible(
-  isVisible: boolean | UIMenuFxn_t | undefined,
+private resolveUIMenuIsHidden(
+  isHidden: boolean | UIMenuFxn_t | undefined,
   menuId: string
 ): boolean {
-  const dx = this.dx.sub({ name: 'resolveUIMenuIsVisible' });
+  const dx = this.dx.sub({ name: 'resolveUIMenuIsHidden' });
 
-  // Handle undefined - default to visible
-  if (isVisible === undefined) {
+  // Handle undefined - default to visible (isHidden = false)
+  if (isHidden === undefined) {
     dx.done();
-    return true;
+    return false;
   }
 
   // Handle boolean literal
-  if (typeof isVisible === 'boolean') {
+  if (typeof isHidden === 'boolean') {
     dx.done();
-    return isVisible;
+    return isHidden;
   }
 
   // Handle function - build dict and execute
   const dict = this.buildUIMenuItemDict();
   try {
-    const result = isVisible(dict);
+    const result = isHidden(dict);
     dx.done();
     return Boolean(result);
   } catch (error) {
-    this.dx.error(`Menu isVisible resolver failed for ${menuId}: ${String(error)}`);
+    this.dx.error(`Menu isHidden resolver failed for ${menuId}: ${String(error)}`);
     dx.done();
-    return true; // Default to visible on error
+    return false; // Default to visible on error
   }
 }
 ```
@@ -346,10 +348,10 @@ import {
 
 **Location**: `src/UIMenu.ts`
 
-**Add isVisible property (around line 61):**
+**Add isHidden property (around line 61):**
 
 ```typescript
-private _isVisible: boolean;
+private _isHidden: boolean;
 ```
 
 **Update constructor signature (around line 70):**
@@ -361,7 +363,7 @@ constructor(args: {
   displayName: string;
   iconSlotTriad: iconSlotTriad_t;
   isFlyout?: boolean;
-  isVisible?: boolean;  // NEW
+  isHidden?: boolean;  // NEW
   menuItems: () => UIMenuItem_t[];
   flyoutMenuItemIds?: string[];
   selectionHandler: (
@@ -380,7 +382,7 @@ const {
   displayName,
   iconSlotTriad,
   isFlyout = false,
-  isVisible = true,  // NEW - default to visible
+  isHidden = false,  // NEW - default to visible (isHidden = false)
   menuItems,
   flyoutMenuItemIds = [],
   selectionHandler,
@@ -390,7 +392,7 @@ this._id = id;
 this._displayName = displayName;
 this._iconSlotTriad = iconSlotTriad;
 this._isFlyout = isFlyout;
-this._isVisible = isVisible;  // NEW
+this._isHidden = isHidden;  // NEW
 this._menuItems = menuItems;
 this._flyoutMenuItemIds = flyoutMenuItemIds;
 this._selectionHandler = selectionHandler;
@@ -399,8 +401,8 @@ this._selectionHandler = selectionHandler;
 **Add getter (around line 145):**
 
 ```typescript
-get isVisible(): boolean {
-  return this._isVisible;
+get isHidden(): boolean {
+  return this._isHidden;
 }
 ```
 
@@ -427,7 +429,7 @@ const menuClasses = [
   isFlyout ? 'isFlyout' : '',
   hasGutterBefore ? 'has-gutter-before' : '',
   hasGutterAfter ? 'has-gutter-after' : '',
-  !this._isVisible ? 'isVisible-false' : '',  // NEW
+  this._isHidden ? 'isHidden' : '',  // NEW
 ]
   .filter(Boolean)
   .join(' ');
@@ -437,9 +439,9 @@ const menuClasses = [
 
 **Location**: `src/UIMenuMgr.ts` (createMenu method around line 129)
 
-**Update to call resolveUIMenuIsVisible:**
+**Update to call resolveUIMenuIsHidden:**
 
-Find where UIMenu is instantiated and add isVisible parameter:
+Find where UIMenu is instantiated and add isHidden parameter:
 
 ```typescript
 createMenu(args: {
@@ -447,7 +449,7 @@ createMenu(args: {
   displayName: string;
   iconSlotTriad: iconSlotTriad_t;
   isFlyout?: boolean;
-  isVisible?: boolean | UIMenuFxn_t;  // NEW
+  isHidden?: boolean | UIMenuFxn_t;  // NEW
   menuItems: () => UIMenuItem_t[];
   flyoutMenuItemIds?: string[];
   selectionHandler: (menuId: MenuId_t, menuItemId: MenuItemId_t) => Promise<HandleSelection_t>;
@@ -459,14 +461,14 @@ createMenu(args: {
     displayName,
     iconSlotTriad,
     isFlyout = false,
-    isVisible,  // NEW
+    isHidden,  // NEW
     menuItems,
     flyoutMenuItemIds = [],
     selectionHandler,
   } = args;
 
-  // Resolve isVisible to boolean
-  const isVisibleResolved = this.resolveUIMenuIsVisible(isVisible, id);  // NEW
+  // Resolve isHidden to boolean
+  const isHiddenResolved = this.resolveUIMenuIsHidden(isHidden, id);  // NEW
 
   return new UIMenu({
     reg: this.reg,
@@ -474,7 +476,7 @@ createMenu(args: {
     displayName,
     iconSlotTriad,
     isFlyout,
-    isVisible: isVisibleResolved,  // NEW
+    isHidden: isHiddenResolved,  // NEW
     menuItems,
     flyoutMenuItemIds,
     selectionHandler: async (menuId: MenuId_t, menuItemId: MenuItemId_t, contextDict: contextDict_t) => {
@@ -489,9 +491,9 @@ createMenu(args: {
 
 **Location**: `src/PaperPrinter.ts` (where menus are created)
 
-**Find menu creation calls and add isVisible:**
+**Find menu creation calls and add isHidden:**
 
-Search for where `kMd` menu is created and ensure `isVisible` is passed:
+Search for where `kMd` menu is created and ensure `isHidden` is passed:
 
 ```typescript
 this.fn.uimenumgr.createMenu({
@@ -499,7 +501,7 @@ this.fn.uimenumgr.createMenu({
   displayName: kMd.displayName,
   iconSlotTriad: kMd.iconSlotTriad,
   isFlyout: kMd.isFlyout,
-  isVisible: kMd.isVisible,  // NEW - pass from constant
+  isHidden: kMd.isHidden,  // NEW - pass from constant
   menuItems: () => kMd.menuItems,
   flyoutMenuItemIds: kMd.flyoutMenuItemIds as unknown as string[],
   selectionHandler: async (menuId, menuItemId) => this.handleMenuItemSelected(menuId, menuItemId),
@@ -513,7 +515,7 @@ this.fn.uimenumgr.createMenu({
 **Add after existing menu CSS (before uimenu_html):**
 
 ```css
-.{{ns_}}menu.isVisible-false {
+.{{ns_}}menu.isHidden {
   display: none;
 }
 ```
@@ -582,17 +584,17 @@ Currently visibility is evaluated once at menu creation. Could add:
 Pattern supports any conditional menu:
 
 ```typescript
-// Only show for specific languages
-isVisible: (dict) => ['javascript', 'typescript', 'jsx', 'tsx'].includes(dict.languageId)
+// Only show for specific languages (inverted logic for isHidden)
+isHidden: (dict) => !['javascript', 'typescript', 'jsx', 'tsx'].includes(dict.languageId)
 
 // Show based on multiple conditions
-isVisible: (dict) => dict.languageId === 'html' && dict.hasSelection === 'true'
+isHidden: (dict) => !(dict.languageId === 'html' && dict.hasSelection === 'true')
 
 // Always show (explicit)
-isVisible: true
+isHidden: false
 
 // Always hide (for testing/development)
-isVisible: false
+isHidden: true
 ```
 
 ## Rollback Plan
@@ -600,23 +602,23 @@ isVisible: false
 If issues arise, revert changes in reverse order:
 
 1. Remove CSS from UIMenu.yaml
-2. Remove isVisible from PaperPrinter menu creation
-3. Remove isVisible handling from UIMenuMgr.createMenu
-4. Remove isVisible from UIMenu class
-5. Remove resolveUIMenuIsVisible from UIMenuMgr
+2. Remove isHidden from PaperPrinter menu creation
+3. Remove isHidden handling from UIMenuMgr.createMenu
+4. Remove isHidden from UIMenu class
+5. Remove resolveUIMenuIsHidden from UIMenuMgr
 6. Remove languageId from buildUIMenuItemDict
-7. Remove isVisible from kMd constant
+7. Remove isHidden from kMd constant
 8. Remove UIMenuFxn_t type and restore UIMenuItemValueFxn_t/UIMenuIsVisibleFxn_t
 9. Revert UIMenuItemDict_t to numeric only
 10. Remove forceContent/forceContents from Utils
 
 ## Notes
 
-- Keep `isFlyout` and `isVisible` as separate concerns
+- Keep `isFlyout` and `isHidden` as separate concerns
 - `isFlyout` controls flyout behavior (existing)
-- `isVisible` controls conditional visibility (new)
+- `isHidden` controls conditional visibility (new)
 - Both can be true simultaneously (hidden flyout is still a flyout)
-- CSS class `isVisible-false` chosen over `hidden` to be explicit about source
+- CSS class `isHidden` chosen to be explicit about state
 
 ## Status Updates
 
@@ -624,3 +626,5 @@ If issues arise, revert changes in reverse order:
 - **2025-12-20**: Implemented all code changes including Force type refactoring and menu visibility logic.
 - **2025-12-20**: Refactoring UIMenuItemValueFxn_t/UIMenuIsVisibleFxn_t to generic UIMenuFxn_t<T>.
 - **2025-12-21**: Completed refactoring to non-generic UIMenuFxn_t and verified implementation with tests.
+- **2025-12-21**: Renamed `isVisible` to `isHidden` for better CSS class alignment and simplicity. Inverted logic accordingly.
+- **2025-12-21**: Updated all menu constants to explicitly include `isHidden: false` to remove implicit behavior.

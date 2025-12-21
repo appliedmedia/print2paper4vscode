@@ -59,6 +59,7 @@ export const kPrint = {
   altId: '',
   methodName: '',
   isFlyout: false,
+  isHidden: false,
   flyoutMenuItemIds: [] as const,
   menuItems: [
     { id: 'preview', displayName: 'Print with Preview' },
@@ -76,6 +77,7 @@ export const kPageSizeId = {
   altId: 'a4',
   methodName: 'PageSizeId',
   isFlyout: true,
+  isHidden: false,
   flyoutMenuItemIds: [] as const,
   menuItems: [
     {
@@ -121,6 +123,7 @@ export const kOrient = {
   altId: 'portrait',
   methodName: '',
   isFlyout: true,
+  isHidden: false,
   flyoutMenuItemIds: [] as const,
   menuItems: [
     { id: 'portrait', displayName: '{{icon_orient_portrait_svg}} Portrait' },
@@ -137,6 +140,7 @@ export const kMarginId = {
   altId: 'normal',
   methodName: 'MarginId',
   isFlyout: true,
+  isHidden: false,
   flyoutMenuItemIds: [] as const,
   menuItems: [
     { id: 'none', displayName: '{{icon_margin_none_svg}} None', marginPts: 0 },
@@ -160,6 +164,7 @@ export const kFontSizeId = {
   altValue: 12,
   methodName: '',
   isFlyout: false,
+  isHidden: false,
   flyoutMenuItemIds: [] as const,
   menuItems: [
     { id: '8', displayName: '8px' },
@@ -191,6 +196,7 @@ export const kHeaderFooter = {
   altId: '',
   methodName: '',
   isFlyout: true,
+  isHidden: false,
   none: 'none',
   menuItems: [
     { id: 'begin', displayName: '⇤' },
@@ -274,6 +280,7 @@ export const kPage = {
   altId: '',
   methodName: '',
   isFlyout: false,
+  isHidden: false,
   flyoutMenuItemIds: [kHeader.id, kFooter.id, kPageSizeId.id, kOrient.id, kMarginId.id] as const,
   menuItems: [
     { id: 'header', displayName: 'Header' },
@@ -297,6 +304,7 @@ export const kTheme = {
   altId: 'github-light',
   methodName: '',
   isFlyout: false,
+  isHidden: false,
   flyoutMenuItemIds: [] as const,
   menuItems: [], // Themes are dynamically loaded from Shiki
 } as const;
@@ -308,6 +316,7 @@ export const kZoomOut = {
   altId: '',
   methodName: 'ZoomInOut', // Shared handler with zoomIn
   isFlyout: false,
+  isHidden: false,
   flyoutMenuItemIds: [] as const,
   menuItems: [],
   shortcutCode: 'Minus' as const, // KeyboardEvent.code for minus key
@@ -320,6 +329,7 @@ export const kZoomIn = {
   altId: '',
   methodName: 'ZoomInOut', // Shared handler with zoomOut
   isFlyout: false,
+  isHidden: false,
   flyoutMenuItemIds: [] as const,
   menuItems: [],
   shortcutCode: 'Equal' as const, // KeyboardEvent.code for =/+ key (main keyboard)
@@ -395,6 +405,7 @@ export const kZoomLevel = {
   altValue: 1.0,
   methodName: 'ZoomLevel',
   isFlyout: false,
+  isHidden: false,
   flyoutMenuItemIds: [] as const,
   min: 0.5,
   max: 2.5,
