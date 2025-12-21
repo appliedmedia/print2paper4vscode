@@ -1,4 +1,4 @@
-# Menu Visibility System Implementation Plan
+# Menu Hidden System Implementation Plan
 
 **Status**: inProgress
 
@@ -627,4 +627,5 @@ If issues arise, revert changes in reverse order:
 - **2025-12-20**: Refactoring UIMenuItemValueFxn_t/UIMenuIsVisibleFxn_t to generic UIMenuFxn_t<T>.
 - **2025-12-21**: Completed refactoring to non-generic UIMenuFxn_t and verified implementation with tests.
 - **2025-12-21**: Renamed `isVisible` to `isHidden` for better CSS class alignment and simplicity. Inverted logic accordingly.
-- **2025-12-21**: Updated all menu constants to explicitly include `isHidden: false` to remove implicit behavior.
+- **2025-12-21**: Defined `kMd_languageId` constant for use in place of magical "markdown" strings.
+- **2025-12-21**: Renamed test file to `MenuHidden.test.ts` and plan file to `MenuHidden.md` for clarity.

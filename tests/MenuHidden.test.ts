@@ -4,7 +4,7 @@ import { createTestApp, TestApp, mockContext, mockVSCode } from './test-utils.js
 import { kMd, kMd_languageId, UIMenuItemDict_t } from '../src/types/PaperPrinter_t.js';
 import { UIMenu } from '../src/UIMenu.js';
 
-describe('Menu Visibility', () => {
+describe('Menu Hidden', () => {
   let app: TestApp;
 
   beforeEach(() => {
