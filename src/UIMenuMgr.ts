@@ -132,7 +132,7 @@ export class UIMenuMgr {
     displayName: string;
     iconSlotTriad: iconSlotTriad_t;
     isFlyout?: boolean;
-    isVisible?: boolean | UIMenuFxn_t;
+    isHidden?: boolean | UIMenuFxn_t;
     menuItems: () => UIMenuItem_t[];
     flyoutMenuItemIds?: string[];
     selectionHandler: (menuId: MenuId_t, menuItemId: MenuItemId_t) => Promise<HandleSelection_t>;
@@ -144,14 +144,14 @@ export class UIMenuMgr {
       displayName,
       iconSlotTriad,
       isFlyout = false,
-      isVisible,
+      isHidden,
       menuItems,
       flyoutMenuItemIds = [],
       selectionHandler,
     } = args;
 
-    // Resolve isVisible to boolean
-    const isVisibleResolved = this.resolveUIMenuIsVisible(isVisible, id);
+    // Resolve isHidden to boolean
+    const isHiddenResolved = this.resolveUIMenuIsHidden(isHidden, id);
 
     return new UIMenu({
       reg: this.reg,
@@ -159,7 +159,7 @@ export class UIMenuMgr {
       displayName,
       iconSlotTriad,
       isFlyout,
-      isVisible: isVisibleResolved,
+      isHidden: isHiddenResolved,
       menuItems,
       flyoutMenuItemIds,
       selectionHandler,
@@ -423,43 +423,43 @@ export class UIMenuMgr {
   }
 
   /**
-   * Resolve menu visibility using isVisible function or boolean
+   * Resolve menu hidden state using isHidden function or boolean
    *
-   * Executes isVisible function with validated dict (numeric + textual context).
-   * Returns boolean indicating whether menu should be visible.
+   * Executes isHidden function with validated dict (numeric + textual context).
+   * Returns boolean indicating whether menu should be hidden.
    *
-   * @param isVisible - Boolean or function that determines visibility from context
+   * @param isHidden - Boolean or function that determines hidden state from context
    * @param menuId - Menu ID for error logging context
-   * @returns true if menu should be visible, false otherwise (default: true)
+   * @returns true if menu should be hidden, false otherwise (default: false)
    */
-  private resolveUIMenuIsVisible(
-    isVisible: boolean | UIMenuFxn_t | undefined,
+  private resolveUIMenuIsHidden(
+    isHidden: boolean | UIMenuFxn_t | undefined,
     menuId: string
   ): boolean {
-    const dx = this.dx.sub({ name: 'resolveUIMenuIsVisible' });
+    const dx = this.dx.sub({ name: 'resolveUIMenuIsHidden' });
 
-    // Handle undefined - default to visible
-    if (isVisible === undefined) {
+    // Handle undefined - default to visible (isHidden = false)
+    if (isHidden === undefined) {
       dx.done();
-      return true;
+      return false;
     }
 
     // Handle boolean literal
-    if (typeof isVisible === 'boolean') {
+    if (typeof isHidden === 'boolean') {
       dx.done();
-      return isVisible;
+      return isHidden;
     }
 
     // Handle function - build dict and execute
     const dict = this.buildUIMenuItemDict();
     try {
-      const result = isVisible(dict);
+      const result = isHidden(dict);
       dx.done();
       return Boolean(result);
     } catch (error) {
-      this.dx.error(`Menu isVisible resolver failed for ${menuId}: ${String(error)}`);
+      this.dx.error(`Menu isHidden resolver failed for ${menuId}: ${String(error)}`);
       dx.done();
-      return true; // Default to visible on error
+      return false; // Default to visible (isHidden = false) on error
     }
   }
 

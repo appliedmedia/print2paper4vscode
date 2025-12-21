@@ -26,15 +26,15 @@ describe('Menu Visibility', () => {
     
     // Function to create/recreate the menu (simulating dynamic evaluation)
     const createMdMenu = () => {
-      // kMd.isVisible is now: (dict: UIMenuItemDict_t) => dict.languageId === 'markdown'
-      const isVisible = kMd.isVisible;
+      // kMd.isHidden is now: (dict: UIMenuItemDict_t) => dict.languageId !== 'markdown'
+      const isHidden = kMd.isHidden;
       
       return menuMgr.createMenu({
         id: kMd.id as any,
         displayName: kMd.displayName,
         iconSlotTriad: kMd.iconSlotTriad,
         isFlyout: kMd.isFlyout,
-        isVisible: isVisible,
+        isHidden: isHidden,
         menuItems: () => [], // Dummy items
         flyoutMenuItemIds: [],
         selectionHandler: async () => ({ id: '', value: '' }),
@@ -48,8 +48,8 @@ describe('Menu Visibility', () => {
     // Create menu
     const mdMenuVisible = createMdMenu();
     
-    // Verify it is visible
-    assert.strictEqual(mdMenuVisible.isVisible, true, 'Markdown menu should be visible for markdown files');
+    // Verify it is visible (not hidden)
+    assert.strictEqual(mdMenuVisible.isHidden, false, 'Markdown menu should be visible (not hidden) for markdown files');
     
     // Verify HTML has correct class (or lack thereof)
     const htmlVisible = await mdMenuVisible.getHTML();
@@ -62,56 +62,56 @@ describe('Menu Visibility', () => {
     // Create menu
     const mdMenuHidden = createMdMenu();
     
-    // Verify it is NOT visible
-    assert.strictEqual(mdMenuHidden.isVisible, false, 'Markdown menu should be hidden for non-markdown files');
+    // Verify it is hidden
+    assert.strictEqual(mdMenuHidden.isHidden, true, 'Markdown menu should be hidden for non-markdown files');
     
     // Verify HTML has correct class
     const htmlHidden = await mdMenuHidden.getHTML();
     assert.ok(htmlHidden.includes('isHidden'), 'Hidden menu should have isHidden class');
   });
 
-  it('should handle boolean isVisible correctly', async () => {
+  it('should handle boolean isHidden correctly', async () => {
     const menuMgr = app.uimenumgr;
     
-    // Visible menu (isVisible = true)
+    // Visible menu (isHidden = false)
     const visibleMenu = menuMgr.createMenu({
       id: 'test-visible' as any,
       displayName: 'Visible',
       iconSlotTriad: { begin: '', main: '', end: '' },
-      isVisible: true,
+      isHidden: false,
       menuItems: () => [],
       selectionHandler: async () => ({ id: '', value: '' }),
     });
     
-    assert.strictEqual(visibleMenu.isVisible, true);
+    assert.strictEqual(visibleMenu.isHidden, false);
     
-    // Hidden menu (isVisible = false)
+    // Hidden menu (isHidden = true)
     const hiddenMenu = menuMgr.createMenu({
       id: 'test-hidden' as any,
       displayName: 'Hidden',
       iconSlotTriad: { begin: '', main: '', end: '' },
-      isVisible: false,
+      isHidden: true,
       menuItems: () => [],
       selectionHandler: async () => ({ id: '', value: '' }),
     });
     
-    assert.strictEqual(hiddenMenu.isVisible, false);
+    assert.strictEqual(hiddenMenu.isHidden, true);
     const htmlHidden = await hiddenMenu.getHTML();
     assert.ok(htmlHidden.includes('isHidden'));
   });
 
-  it('should default to visible if isVisible is undefined', () => {
+  it('should default to visible (isHidden=false) if isHidden is undefined', () => {
     const menuMgr = app.uimenumgr;
     
     const menu = menuMgr.createMenu({
       id: 'test-default' as any,
       displayName: 'Default',
       iconSlotTriad: { begin: '', main: '', end: '' },
-      // isVisible undefined
+      // isHidden undefined
       menuItems: () => [],
       selectionHandler: async () => ({ id: '', value: '' }),
     });
     
-    assert.strictEqual(menu.isVisible, true);
+    assert.strictEqual(menu.isHidden, false);
   });
 });

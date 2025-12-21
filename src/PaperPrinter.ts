@@ -342,7 +342,7 @@ export class PaperPrinter {
         displayName: menuConst.displayName,
         iconSlotTriad: (menuConst as { iconSlotTriad: iconSlotTriad_t }).iconSlotTriad,
         isFlyout: menuConst.isFlyout,
-        isVisible: (menuConst as { isVisible?: boolean | UIMenuFxn_t }).isVisible,
+        isHidden: (menuConst as { isHidden?: boolean | UIMenuFxn_t }).isHidden,
         menuItems: (this[`menuItems_${methodName}` as keyof this] as () => UIMenuItem_t[]).bind(
           this
         ),
@@ -372,7 +372,7 @@ export class PaperPrinter {
         displayName: config.displayName,
         iconSlotTriad: config.iconSlotTriad,
         isFlyout: config.isFlyout,
-        isVisible: config.isVisible,
+        isHidden: config.isHidden,
         menuItems: config.menuItems,
         flyoutMenuItemIds: [...config.flyoutMenuItemIds],
         selectionHandler: config.selectionHandler,

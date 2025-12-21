@@ -346,7 +346,7 @@ export const kMd = {
   altId: kMd_Raw.id, // Default to raw mode
   methodName: 'Md',
   isFlyout: false,
-  isVisible: (dict: UIMenuItemDict_t) => dict.languageId === 'markdown',
+  isHidden: (dict: UIMenuItemDict_t) => dict.languageId !== 'markdown',
   flyoutMenuItemIds: [] as const,
   menuItems: [
     { id: kMd_Raw.id, displayName: kMd_Raw.displayName, value: kMd_Raw.value },
