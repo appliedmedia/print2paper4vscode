@@ -16,8 +16,7 @@ import { kMenuId, kMenuItemId } from './types/UIMenu_t';
 import { Diagnostics } from './Diagnostics';
 import {
   type UIMenuItemDict_t,
-  type UIMenuItemValueFxn_t,
-  type UIMenuIsVisibleFxn_t,
+  type UIMenuFxn_t,
 } from './types/PaperPrinter_t';
 import type { Theme } from './types/theme_t';
 
@@ -133,7 +132,7 @@ export class UIMenuMgr {
     displayName: string;
     iconSlotTriad: iconSlotTriad_t;
     isFlyout?: boolean;
-    isVisible?: boolean | UIMenuIsVisibleFxn_t;
+    isVisible?: boolean | UIMenuFxn_t<boolean>;
     menuItems: () => UIMenuItem_t[];
     flyoutMenuItemIds?: string[];
     selectionHandler: (menuId: MenuId_t, menuItemId: MenuItemId_t) => Promise<HandleSelection_t>;
@@ -362,7 +361,7 @@ export class UIMenuMgr {
 
       if (menuItem && 'value' in menuItem) {
         const itemWithValue = menuItem as UIMenuItem_t & {
-          value: number | string | UIMenuItemValueFxn_t;
+          value: number | string | UIMenuFxn_t<number | string | undefined>;
         };
         const value = itemWithValue.value;
 
@@ -434,7 +433,7 @@ export class UIMenuMgr {
    * @returns true if menu should be visible, false otherwise (default: true)
    */
   private resolveUIMenuIsVisible(
-    isVisible: boolean | UIMenuIsVisibleFxn_t | undefined,
+    isVisible: boolean | UIMenuFxn_t<boolean> | undefined,
     menuId: string
   ): boolean {
     const dx = this.dx.sub({ name: 'resolveUIMenuIsVisible' });
@@ -477,7 +476,7 @@ export class UIMenuMgr {
    * @returns Resolved value (number | string | undefined) or undefined on error
    */
   private resolveUIMenuItemValue(
-    resolver: UIMenuItemValueFxn_t,
+    resolver: UIMenuFxn_t<number | string | undefined>,
     menuId: string,
     menuItemId: string
   ): number | string | undefined {

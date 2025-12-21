@@ -11,7 +11,7 @@
 - [x] Refactor `ForceNumber_*_t` to `Force_*_t` in `Utils.ts` and update usages
 - [x] Implement `forceContent` and `forceContents` in `Utils.ts`
 - [x] Update `UIMenuItemDict_t` type to include string values
-- [x] Add `UIMenuIsVisibleFxn_t` type
+- [x] Refactor `UIMenuItemValueFxn_t` and `UIMenuIsVisibleFxn_t` to generic `UIMenuFxn_t<T>`
 - [x] Add `isVisible` property to `kMd` menu constant
 - [x] Update `UIMenuMgr.buildUIMenuItemDict()` to handle numeric and textual inputs
 - [x] Add `resolveUIMenuIsVisible()` to `UIMenuMgr`
@@ -32,8 +32,8 @@ Add `isVisible` property to menu constants that can be a boolean or function rec
 
 Follow existing `value` resolver pattern:
 
-- **Menu items** use `value: number | string | UIMenuItemValueFxn_t`
-- **Menus** will use `isVisible: boolean | UIMenuIsVisibleFxn_t`
+- **Menu items** use `value: number | string | UIMenuFxn_t<number | string | undefined>`
+- **Menus** will use `isVisible: boolean | UIMenuFxn_t<boolean>`
 - Both receive `UIMenuItemDict_t` context with validated data
 - Functions execute at appropriate time (value at selection, isVisible at creation)
 
@@ -168,14 +168,14 @@ Add to "Required keys" section:
 * - Required keys (textual): languageId
 ```
 
-### Step 3: Add UIMenuIsVisibleFxn_t Type
+### Step 3: Add UIMenuFxn_t Type
 
 **Location**: `src/types/PaperPrinter_t.ts` (after line 49)
 
 **Add:**
 
 ```typescript
-export type UIMenuIsVisibleFxn_t = (dict: UIMenuItemDict_t) => boolean;
+export type UIMenuFxn_t<T> = (dict: UIMenuItemDict_t) => T;
 ```
 
 ### Step 4: Add isVisible to kMd Menu Constant
@@ -301,7 +301,7 @@ Add to `this.reg.use()` call:
  * @returns true if menu should be visible, false otherwise (default: true)
  */
 private resolveUIMenuIsVisible(
-  isVisible: boolean | UIMenuIsVisibleFxn_t | undefined,
+  isVisible: boolean | UIMenuFxn_t<boolean> | undefined,
   menuId: string
 ): boolean {
   const dx = this.dx.sub({ name: 'resolveUIMenuIsVisible' });
@@ -332,14 +332,13 @@ private resolveUIMenuIsVisible(
 }
 ```
 
-**Import UIMenuIsVisibleFxn_t at top of file:**
+**Import UIMenuFxn_t at top of file:**
 
 ```typescript
 import {
   kFontSizeId,
   type UIMenuItemDict_t,
-  type UIMenuItemValueFxn_t,
-  type UIMenuIsVisibleFxn_t,
+  type UIMenuFxn_t,
 } from './types/PaperPrinter_t';
 ```
 
@@ -448,7 +447,7 @@ createMenu(args: {
   displayName: string;
   iconSlotTriad: iconSlotTriad_t;
   isFlyout?: boolean;
-  isVisible?: boolean | UIMenuIsVisibleFxn_t;  // NEW
+  isVisible?: boolean | UIMenuFxn_t<boolean>;  // NEW
   menuItems: () => UIMenuItem_t[];
   flyoutMenuItemIds?: string[];
   selectionHandler: (menuId: MenuId_t, menuItemId: MenuItemId_t) => Promise<HandleSelection_t>;
@@ -607,7 +606,7 @@ If issues arise, revert changes in reverse order:
 5. Remove resolveUIMenuIsVisible from UIMenuMgr
 6. Remove languageId from buildUIMenuItemDict
 7. Remove isVisible from kMd constant
-8. Remove UIMenuIsVisibleFxn_t type
+8. Remove UIMenuFxn_t type and restore UIMenuItemValueFxn_t/UIMenuIsVisibleFxn_t
 9. Revert UIMenuItemDict_t to numeric only
 10. Remove forceContent/forceContents from Utils
 
@@ -623,3 +622,4 @@ If issues arise, revert changes in reverse order:
 
 - **2025-12-16**: Plan created, ready to implement
 - **2025-12-20**: Implemented all code changes including Force type refactoring and menu visibility logic.
+- **2025-12-20**: Refactoring UIMenuItemValueFxn_t/UIMenuIsVisibleFxn_t to generic UIMenuFxn_t<T>.

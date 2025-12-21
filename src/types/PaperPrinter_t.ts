@@ -47,8 +47,8 @@
  * - This preserves flexibility for string values (headers/footers) vs numeric (zoom)
  */
 export type UIMenuItemDict_t = Record<string, number | string>;
-export type UIMenuItemValueFxn_t = (dict: UIMenuItemDict_t) => number | string | undefined;
-export type UIMenuIsVisibleFxn_t = (dict: UIMenuItemDict_t) => boolean;
+// Generic function type for any menu function that needs context (value resolver, visibility, etc.)
+export type UIMenuFxn_t<T> = (dict: UIMenuItemDict_t) => T;
 
 // Print menu definition
 export const kPrint = {
