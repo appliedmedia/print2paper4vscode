@@ -5,7 +5,7 @@ import type {
   HeaderFooterPos_t,
   HeaderFooterSubmenu_t,
 } from './types/PaperPrinter_t';
-import { kPageSizeIdById, kHeaderFooterSubmenuById, kHeaderFooter } from './types/PaperPrinter_t';
+import { kPageSizeIdById, kHeaderFooterSubmenuById, kHeaderFooter, kMd_languageId } from './types/PaperPrinter_t';
 import type { MenuId_t } from './types/UIMenu_t';
 import type { FnImport_t } from './types/Registry_t';
 import { Diagnostics } from './Diagnostics';
@@ -803,7 +803,7 @@ export class PDF {
    */
   private getMarkdownFontInfo(): { fontFamily: string; fontSize: number } {
     // Get markdown preview settings (these control what user sees in MD preview)
-    const mdConfig = this.fn.vscodeapis.getConfiguration('markdown');
+    const mdConfig = this.fn.vscodeapis.getConfiguration(kMd_languageId);
     const mdFontFamily = mdConfig.get('preview.fontFamily') as string | undefined;
     const mdFontSize = mdConfig.get('preview.fontSize') as number | undefined;
 

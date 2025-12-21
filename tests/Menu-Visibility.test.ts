@@ -1,7 +1,7 @@
 import { describe, it, beforeEach, afterEach } from 'node:test';
 import * as assert from 'node:assert';
 import { createTestApp, TestApp, mockContext, mockVSCode } from './test-utils.js';
-import { kMd, UIMenuItemDict_t } from '../src/types/PaperPrinter_t.js';
+import { kMd, kMd_languageId, UIMenuItemDict_t } from '../src/types/PaperPrinter_t.js';
 import { UIMenu } from '../src/UIMenu.js';
 
 describe('Menu Visibility', () => {
@@ -26,7 +26,7 @@ describe('Menu Visibility', () => {
     
     // Function to create/recreate the menu (simulating dynamic evaluation)
     const createMdMenu = () => {
-      // kMd.isHidden is now: (dict: UIMenuItemDict_t) => dict.languageId !== 'markdown'
+      // kMd.isHidden is now: (dict: UIMenuItemDict_t) => dict.languageId !== kMd_languageId
       const isHidden = kMd.isHidden;
       
       return menuMgr.createMenu({
@@ -43,7 +43,7 @@ describe('Menu Visibility', () => {
 
     // 2. Test Case: Markdown file
     // Set languageId to markdown
-    app.pdf.docInfo().languageId = 'markdown';
+    app.pdf.docInfo().languageId = kMd_languageId;
     
     // Create menu
     const mdMenuVisible = createMdMenu();

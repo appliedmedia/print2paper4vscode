@@ -54,6 +54,7 @@ import {
   kZoomIn,
   kZoomLevel,
   kMd,
+  kMd_languageId,
   kMd_Raw,
   kMenus,
 } from './types/PaperPrinter_t';
@@ -295,7 +296,7 @@ export class PaperPrinter {
       // For markdown files, check menu selection to determine rendering mode
       // getValueOfMenuItemIdSelected returns the boolean value (false for raw, true for render)
       const useRenderedMd =
-        this.docInfo().languageId === 'markdown' &&
+        this.docInfo().languageId === kMd_languageId &&
         !!this.fn.uimenumgr.getValueOfMenuItemIdSelected(kMd.id);
 
       // Get active editor only if needed for markdown rendering

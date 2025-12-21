@@ -1,6 +1,7 @@
 import type { Registry } from './Registry';
 import type { FnImport_t } from './types/Registry_t';
 import { Diagnostics } from './Diagnostics';
+import { kMd_languageId } from './types/PaperPrinter_t';
 
 export type TabCategory = 'editor-nonmd' | 'editor-md' | 'preview';
 
@@ -44,7 +45,7 @@ export class TabInspector {
     const editor = this.fn.vscodeapis.getActiveTextEditor();
     if (editor) {
       const lang = editor.document.languageId;
-      if (lang === 'markdown') return 'editor-md';
+      if (lang === kMd_languageId) return 'editor-md';
       return 'editor-nonmd';
     }
     // No text editor; likely a webview/preview

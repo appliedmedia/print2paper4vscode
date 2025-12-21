@@ -336,6 +336,8 @@ export const kZoomIn = {
 } as const;
 
 // Markdown rendering mode menu items (only visible for markdown files)
+export const kMd_languageId = 'markdown';
+
 export const kMd_Raw = {
   id: 'raw',
   displayName: 'Raw',
@@ -356,7 +358,7 @@ export const kMd = {
   altId: kMd_Raw.id, // Default to raw mode
   methodName: 'Md',
   isFlyout: false,
-  isHidden: (dict: UIMenuItemDict_t) => dict.languageId !== 'markdown',
+  isHidden: (dict: UIMenuItemDict_t) => dict.languageId !== kMd_languageId,
   flyoutMenuItemIds: [] as const,
   menuItems: [
     { id: kMd_Raw.id, displayName: kMd_Raw.displayName, value: kMd_Raw.value },

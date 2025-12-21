@@ -10,6 +10,7 @@ import {
 } from 'shiki';
 import { Diagnostics } from './Diagnostics';
 import type { Theme, ThemeData, TokenColor } from './types/theme_t';
+import { kMd_languageId } from './types/PaperPrinter_t';
 
 // Language ID type - abstraction over Shiki's BundledLanguage
 export type LanguageId_t = BundledLanguage;
@@ -271,7 +272,7 @@ export class Stylize {
 
     try {
       // Branch: Rendered markdown vs tokenized code
-      if (languageId === 'markdown' && useRenderedMd) {
+      if (languageId === kMd_languageId && useRenderedMd) {
         // Rendered markdown path: Get HTML from VS Code markdown API
         dx.out('Rendering markdown to HTML via VS Code API');
         const html = await this.fn.vscodeapis.renderMarkdownToHtml({
