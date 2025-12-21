@@ -528,7 +528,7 @@ export class UIMenu {
         isFlyout ? 'isFlyout' : '',
         hasGutterBefore ? 'has-gutter-before' : '',
         hasGutterAfter ? 'has-gutter-after' : '',
-        !this._isVisible ? 'isVisible-false' : '',
+        !this._isVisible ? 'isHidden' : '',
       ]
         .filter(Boolean)
         .join(' ');

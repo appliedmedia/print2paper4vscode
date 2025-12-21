@@ -53,7 +53,7 @@ describe('Menu Visibility', () => {
     
     // Verify HTML has correct class (or lack thereof)
     const htmlVisible = await mdMenuVisible.getHTML();
-    assert.ok(!htmlVisible.includes('isVisible-false'), 'Visible menu should not have isVisible-false class');
+    assert.ok(!htmlVisible.includes('isHidden'), 'Visible menu should not have isHidden class');
 
     // 3. Test Case: Non-markdown file
     // Set languageId to something else
@@ -67,7 +67,7 @@ describe('Menu Visibility', () => {
     
     // Verify HTML has correct class
     const htmlHidden = await mdMenuHidden.getHTML();
-    assert.ok(htmlHidden.includes('isVisible-false'), 'Hidden menu should have isVisible-false class');
+    assert.ok(htmlHidden.includes('isHidden'), 'Hidden menu should have isHidden class');
   });
 
   it('should handle boolean isVisible correctly', async () => {
@@ -97,7 +97,7 @@ describe('Menu Visibility', () => {
     
     assert.strictEqual(hiddenMenu.isVisible, false);
     const htmlHidden = await hiddenMenu.getHTML();
-    assert.ok(htmlHidden.includes('isVisible-false'));
+    assert.ok(htmlHidden.includes('isHidden'));
   });
 
   it('should default to visible if isVisible is undefined', () => {
