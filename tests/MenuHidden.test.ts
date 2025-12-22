@@ -103,7 +103,7 @@ describe('Menu Hidden', () => {
     assert.ok(htmlHidden.includes('isHidden'));
   });
 
-  it('should default to visible (isHidden=false) if isHidden is undefined', () => {
+  it('should default to visible (isHidden=false) if isHidden is undefined', async () => {
     const menuMgr = app.uimenumgr;
     
     const menu = menuMgr.createMenu({
@@ -116,5 +116,8 @@ describe('Menu Hidden', () => {
     });
     
     assert.strictEqual(menu.isHidden, false);
+    
+    const html = await menu.getHTML();
+    assert.ok(!html.includes('isHidden'), 'Default visible menu should not have isHidden class');
   });
 });

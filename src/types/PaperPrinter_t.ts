@@ -49,7 +49,7 @@
 export type UIMenuItemDict_t = Record<string, number | string>;
 // Generic function type for any menu function that needs context (value resolver, visibility, etc.)
 // User requested non-generic return type: number | string | Boolean | unknown
-export type UIMenuFxn_t = (dict: UIMenuItemDict_t) => number | string | boolean | unknown;
+export type UIMenuFxn_t = (dict: UIMenuItemDict_t) => number | string | boolean;
 
 // Print menu definition
 export const kPrint = {
