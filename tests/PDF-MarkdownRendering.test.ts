@@ -281,7 +281,7 @@ describe('PDF Markdown HTML Rendering', () => {
 
     it('should generate PDF with token rendering mode (raw markdown)', async () => {
       pdf.docInfo().code = '# Heading\n\nParagraph text.';
-      pdf.docInfo().languageId = 'markdown';
+      pdf.docInfo().languageId = kMd_languageId;
       
       await pdf.generatePdf({ useRenderedMd: false });
       

@@ -624,7 +624,7 @@ If issues arise, revert changes in reverse order:
 
 - **2025-12-16**: Plan created, ready to implement
 - **2025-12-20**: Implemented all code changes including Force type refactoring and menu visibility logic.
-- **2025-12-20**: Refactoring UIMenuItemValueFxn_t/UIMenuIsVisibleFxn_t to generic UIMenuFxn_t<T>.
+- **2025-12-20**: Refactoring UIMenuItemValueFxn_t/UIMenuIsVisibleFxn_t to generic UIMenuFxn_t\<T\>.
 - **2025-12-21**: Completed refactoring to non-generic UIMenuFxn_t and verified implementation with tests.
 - **2025-12-21**: Renamed `isVisible` to `isHidden` for better CSS class alignment and simplicity. Inverted logic accordingly.
 - **2025-12-21**: Defined `kMd_languageId` constant for use in place of magical "markdown" strings.

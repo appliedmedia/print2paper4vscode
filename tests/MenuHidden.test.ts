@@ -30,7 +30,7 @@ describe('Menu Hidden', () => {
       const isHidden = kMd.isHidden;
       
       return menuMgr.createMenu({
-        id: kMd.id as any,
+        id: kMd.id as any, // Cast needed because we're mocking kMd which has stricter typing than the test dummy
         displayName: kMd.displayName,
         iconSlotTriad: kMd.iconSlotTriad,
         isFlyout: kMd.isFlyout,
@@ -78,7 +78,7 @@ describe('Menu Hidden', () => {
     
     // Visible menu (isHidden = false)
     const visibleMenu = menuMgr.createMenu({
-      id: 'test-visible' as any,
+      id: 'test-visible' as any, // Cast needed because test IDs are not in MenuId_t union
       displayName: 'Visible',
       iconSlotTriad: { begin: '', main: '', end: '' },
       isHidden: false,
@@ -90,7 +90,7 @@ describe('Menu Hidden', () => {
     
     // Hidden menu (isHidden = true)
     const hiddenMenu = menuMgr.createMenu({
-      id: 'test-hidden' as any,
+      id: 'test-hidden' as any, // Cast needed because test IDs are not in MenuId_t union
       displayName: 'Hidden',
       iconSlotTriad: { begin: '', main: '', end: '' },
       isHidden: true,
@@ -107,7 +107,7 @@ describe('Menu Hidden', () => {
     const menuMgr = app.uimenumgr;
     
     const menu = menuMgr.createMenu({
-      id: 'test-default' as any,
+      id: 'test-default' as any, // Cast needed because test IDs are not in MenuId_t union
       displayName: 'Default',
       iconSlotTriad: { begin: '', main: '', end: '' },
       // isHidden undefined
