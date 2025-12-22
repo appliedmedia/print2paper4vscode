@@ -35,9 +35,12 @@ describe('Menu Hidden', () => {
         iconSlotTriad: kMd.iconSlotTriad,
         isFlyout: kMd.isFlyout,
         isHidden: isHidden,
-        menuItems: () => [], // Dummy items
+        menuItems: () => kMd.menuItems.map(item => ({
+          ...item,
+          iconSlotTriad: { begin: '', main: '', end: '' }
+        })) as any, // Realistic items with required iconSlotTriad
         flyoutMenuItemIds: [],
-        selectionHandler: async () => ({ id: '', value: '' }),
+        selectionHandler: async (menuId, menuItemId) => ({ id: menuItemId, value: 0 }),
       });
     };
 
