@@ -152,7 +152,7 @@ export class UIMenuMgr {
     } = args;
 
     // Resolve isHidden to boolean
-    const isHiddenResolved = this.resolveUIMenuIsHidden(isHidden, id);
+    const isHiddenResolved = this.getValueOfUIMenuItemForCalcIsHidden(isHidden, id);
 
     return new UIMenu({
       reg: this.reg,
@@ -367,7 +367,7 @@ export class UIMenuMgr {
         const value = itemWithValue.value;
 
         if (typeof value === 'function') {
-          const resolvedValue = this.resolveUIMenuItemValue(value, menuId, menuItemId);
+          const resolvedValue = this.getValueOfUIMenuItemForCalcValue(value, menuId, menuItemId);
           if (resolvedValue !== undefined) {
             result = resolvedValue;
           }
@@ -433,11 +433,11 @@ export class UIMenuMgr {
    * @param menuId - Menu ID for error logging context
    * @returns true if menu should be hidden, false otherwise (default: false)
    */
-  private resolveUIMenuIsHidden(
+  private getValueOfUIMenuItemForCalcIsHidden(
     isHidden: boolean | UIMenuFxn_t | undefined,
     menuId: string
   ): boolean {
-    const dx = this.dx.sub({ name: 'resolveUIMenuIsHidden' });
+    const dx = this.dx.sub({ name: 'getValueOfUIMenuItemForCalcIsHidden' });
 
     // Handle undefined - default to visible (isHidden = false)
     if (isHidden === undefined) {
@@ -476,12 +476,12 @@ export class UIMenuMgr {
    * @param menuItemId - Menu item ID for error logging context
    * @returns Resolved value (number | string | undefined) or undefined on error
    */
-  private resolveUIMenuItemValue(
+  private getValueOfUIMenuItemForCalcValue(
     resolver: UIMenuFxn_t,
     menuId: string,
     menuItemId: string
   ): UIMenuItemValue_t | undefined {
-    const dx = this.dx.sub({ name: 'resolveUIMenuItemValue' });
+    const dx = this.dx.sub({ name: 'getValueOfUIMenuItemForCalcValue' });
     const dict_nums = this.buildUIMenuItemDict();
     try {
       const result = resolver(dict_nums);
