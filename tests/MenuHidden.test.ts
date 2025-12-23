@@ -2,6 +2,7 @@ import { describe, it, beforeEach, afterEach } from 'node:test';
 import * as assert from 'node:assert';
 import { createTestApp, TestApp, mockContext, mockVSCode } from './test-utils.js';
 import { kMd, kMd_languageId, UIMenuItemDict_t } from '../src/types/PaperPrinter_t.js';
+import { MenuId_t, UIMenuItem_t } from '../src/types/UIMenu_t.js';
 import { UIMenu } from '../src/UIMenu.js';
 
 describe('Menu Hidden', () => {
@@ -30,7 +31,7 @@ describe('Menu Hidden', () => {
       const isHidden = kMd.isHidden;
       
       return menuMgr.createMenu({
-        id: kMd.id as any, // Cast needed because we're mocking kMd which has stricter typing than the test dummy
+        id: kMd.id,
         displayName: kMd.displayName,
         iconSlotTriad: kMd.iconSlotTriad,
         isFlyout: kMd.isFlyout,
@@ -38,7 +39,7 @@ describe('Menu Hidden', () => {
         menuItems: () => kMd.menuItems.map(item => ({
           ...item,
           iconSlotTriad: { begin: '', main: '', end: '' }
-        })) as any, // Realistic items with required iconSlotTriad
+        })) as UIMenuItem_t[], // Realistic items with required iconSlotTriad
         flyoutMenuItemIds: [],
         selectionHandler: async (menuId, menuItemId) => ({ id: menuItemId, value: 0 }),
       });
@@ -78,7 +79,7 @@ describe('Menu Hidden', () => {
     
     // Visible menu (isHidden = false)
     const visibleMenu = menuMgr.createMenu({
-      id: 'test-visible' as any, // Cast needed because test IDs are not in MenuId_t union
+      id: 'test-visible' as MenuId_t, // Cast needed because test IDs are not in MenuId_t union
       displayName: 'Visible',
       iconSlotTriad: { begin: '', main: '', end: '' },
       isHidden: false,
@@ -90,7 +91,7 @@ describe('Menu Hidden', () => {
     
     // Hidden menu (isHidden = true)
     const hiddenMenu = menuMgr.createMenu({
-      id: 'test-hidden' as any, // Cast needed because test IDs are not in MenuId_t union
+      id: 'test-hidden' as MenuId_t, // Cast needed because test IDs are not in MenuId_t union
       displayName: 'Hidden',
       iconSlotTriad: { begin: '', main: '', end: '' },
       isHidden: true,
@@ -107,7 +108,7 @@ describe('Menu Hidden', () => {
     const menuMgr = app.uimenumgr;
     
     const menu = menuMgr.createMenu({
-      id: 'test-default' as any, // Cast needed because test IDs are not in MenuId_t union
+      id: 'test-default' as MenuId_t, // Cast needed because test IDs are not in MenuId_t union
       displayName: 'Default',
       iconSlotTriad: { begin: '', main: '', end: '' },
       // isHidden undefined

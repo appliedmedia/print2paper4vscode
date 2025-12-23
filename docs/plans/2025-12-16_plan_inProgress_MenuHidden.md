@@ -629,3 +629,4 @@ If issues arise, revert changes in reverse order:
 - **2025-12-21**: Renamed `isVisible` to `isHidden` for better CSS class alignment and simplicity. Inverted logic accordingly.
 - **2025-12-21**: Defined `kMd_languageId` constant for use in place of magical "markdown" strings.
 - **2025-12-21**: Renamed test file to `MenuHidden.test.ts` and plan file to `MenuHidden.md` for clarity.
+- **2025-12-21**: Refined type system to support boolean values in `UIMenuItem_t` and `UIMenuMgr`, removing `as any` casts in tests for strict type compliance.

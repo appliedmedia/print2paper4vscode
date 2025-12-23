@@ -302,7 +302,7 @@ export class UIMenuMgr {
   // Get the value for the currently selected menu item
   // Combines getMenuItemIdSelected + getValueOfMenuItemIdForMenuId
   // Returns string or number, or undefined if empty/missing
-  getValueOfMenuItemIdSelected(menuId: MenuId_t): number | string | undefined {
+  getValueOfMenuItemIdSelected(menuId: MenuId_t): number | string | boolean | undefined {
     const dx = this.dx.sub({ name: 'getValueOfMenuItemIdSelected' });
     const menuItemId = this.getMenuItemIdSelected(menuId);
     dx.out(`menuId=${menuId}, menuItemId=${menuItemId}`);
@@ -322,14 +322,14 @@ export class UIMenuMgr {
   // Resolves menu item values via resolver functions (for dynamic values like fitWidth/fitPage),
   // numeric values, or legacy calc templates. Returns the resolved value or menuItemId as fallback.
   // Never returns undefined - defaults to menuItemId if value not found or resolution fails.
-  getValueOfMenuItemIdForMenuId(args: { menuId: MenuId_t; menuItemId: string }): number | string {
+  getValueOfMenuItemIdForMenuId(args: { menuId: MenuId_t; menuItemId: string }): number | string | boolean {
     const dx = this.dx.sub({ name: 'getValueOfMenuItemIdForMenuId' });
     if (!dx.require(args, ['menuId', 'menuItemId'])) {
       dx.error(`Invalid args: ${JSON.stringify(args)}`);
       throw new Error(`getValueOfMenuItemIdForMenuId: invalid arguments`);
     }
     const { menuId, menuItemId } = args;
-    let result: number | string = menuItemId;
+    let result: number | string | boolean = menuItemId;
 
     const menu = this.getMenuById(menuId);
 
@@ -361,7 +361,7 @@ export class UIMenuMgr {
 
       if (menuItem && 'value' in menuItem) {
         const itemWithValue = menuItem as UIMenuItem_t & {
-          value: number | string | UIMenuFxn_t;
+          value: number | string | boolean | UIMenuFxn_t;
         };
         const value = itemWithValue.value;
 
@@ -479,14 +479,14 @@ export class UIMenuMgr {
     resolver: UIMenuFxn_t,
     menuId: string,
     menuItemId: string
-  ): number | string | undefined {
+  ): number | string | boolean | undefined {
     const dx = this.dx.sub({ name: 'resolveUIMenuItemValue' });
     const dict_nums = this.buildUIMenuItemDict();
     try {
       const result = resolver(dict_nums);
       dx.done();
       // Ensure we only return supported types
-      if (typeof result === 'number' || typeof result === 'string' || result === undefined) {
+      if (typeof result === 'number' || typeof result === 'string' || typeof result === 'boolean' || result === undefined) {
         return result;
       }
       return undefined; // Filter out boolean or other types not supported for values
