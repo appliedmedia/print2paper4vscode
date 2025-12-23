@@ -137,10 +137,10 @@ After the fix:
 
 ## Testing Checklist
 
-- [x] Enter custom zoom value (e.g., 101)
-- [x] Verify text_edit displays "101" after regeneration
-- [x] Verify zoom scales correctly to 1.01x
-- [x] Close and reopen preview
-- [x] Verify custom zoom value persists and displays correctly
-- [x] Test with predefined values (100%, 125%, etc.)
-- [x] Verify predefined values still work correctly
+- ✅ Enter custom zoom value (e.g., 101)
+- ✅ Verify text_edit displays "101" after regeneration
+- ✅ Verify zoom scales correctly to 1.01x
+- ✅ Close and reopen preview
+- ✅ Verify custom zoom value persists and displays correctly
+- ✅ Test with predefined values (100%, 125%, etc.)
+- ✅ Verify predefined values still work correctly

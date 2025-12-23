@@ -8,21 +8,21 @@
 
 ## TODO Checklist
 
-- [x] Refactor `ForceNumber_*_t` to `Force_*_t` in `Utils.ts` and update usages
-- [x] Implement `forceContent` and `forceContents` in `Utils.ts`
-- [x] Update `UIMenuItemDict_t` type to include string values
-- [x] Refactor `UIMenuItemValueFxn_t` and `UIMenuIsVisibleFxn_t` to generic `UIMenuFxn_t<T>` (Note: Changed to non-generic union type per request)
-- [x] Add `isHidden` property to `kMd` menu constant (refactored from `isVisible`)
-- [x] Update `UIMenuMgr.buildUIMenuItemDict()` to handle numeric and textual inputs
-- [x] Add `resolveUIMenuIsHidden()` to `UIMenuMgr` (refactored from `resolveUIMenuIsVisible`)
-- [x] Update `UIMenu` constructor to accept and store `isHidden`
-- [x] Update `UIMenu.getHTML()` to add CSS class based on visibility
-- [x] Update `UIMenuMgr.createMenu()` to resolve visibility
-- [x] Update `PaperPrinter` menu creation
-- [x] Add CSS to `UIMenu.yaml`
-- [x] Test with markdown and non-markdown files
-- [x] Refactor to use `isHidden` property and CSS class (inverted logic)
-- [x] Explicitly set `isHidden: false` for all menu constants
+- ✅ Refactor `ForceNumber_*_t` to `Force_*_t` in `Utils.ts` and update usages
+- ✅ Implement `forceContent` and `forceContents` in `Utils.ts`
+- ✅ Update `UIMenuItemDict_t` type to include string values
+- ✅ Refactor `UIMenuItemValueFxn_t` and `UIMenuIsVisibleFxn_t` to generic `UIMenuFxn_t<T>` (Note: Changed to non-generic union type per request)
+- ✅ Add `isHidden` property to `kMd` menu constant (refactored from `isVisible`)
+- ✅ Update `UIMenuMgr.buildUIMenuItemDict()` to handle numeric and textual inputs
+- ✅ Add `resolveUIMenuIsHidden()` to `UIMenuMgr` (refactored from `resolveUIMenuIsVisible`)
+- ✅ Update `UIMenu` constructor to accept and store `isHidden`
+- ✅ Update `UIMenu.getHTML()` to add CSS class based on visibility
+- ✅ Update `UIMenuMgr.createMenu()` to resolve visibility
+- ✅ Update `PaperPrinter` menu creation
+- ✅ Add CSS to `UIMenu.yaml`
+- ✅ Test with markdown and non-markdown files
+- ✅ Refactor to use `isHidden` property and CSS class (inverted logic)
+- ✅ Explicitly set `isHidden: false` for all menu constants
 
 ## Overview
 
