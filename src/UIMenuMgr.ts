@@ -17,6 +17,7 @@ import { Diagnostics } from './Diagnostics';
 import {
   type UIMenuItemDict_t,
   type UIMenuFxn_t,
+  type UIMenuItemValue_t,
 } from './types/PaperPrinter_t';
 import type { Theme } from './types/theme_t';
 
@@ -302,7 +303,7 @@ export class UIMenuMgr {
   // Get the value for the currently selected menu item
   // Combines getMenuItemIdSelected + getValueOfMenuItemIdForMenuId
   // Returns string or number, or undefined if empty/missing
-  getValueOfMenuItemIdSelected(menuId: MenuId_t): number | string | boolean | undefined {
+  getValueOfMenuItemIdSelected(menuId: MenuId_t): UIMenuItemValue_t | undefined {
     const dx = this.dx.sub({ name: 'getValueOfMenuItemIdSelected' });
     const menuItemId = this.getMenuItemIdSelected(menuId);
     dx.out(`menuId=${menuId}, menuItemId=${menuItemId}`);
@@ -322,14 +323,14 @@ export class UIMenuMgr {
   // Resolves menu item values via resolver functions (for dynamic values like fitWidth/fitPage),
   // numeric values, or legacy calc templates. Returns the resolved value or menuItemId as fallback.
   // Never returns undefined - defaults to menuItemId if value not found or resolution fails.
-  getValueOfMenuItemIdForMenuId(args: { menuId: MenuId_t; menuItemId: string }): number | string | boolean {
+  getValueOfMenuItemIdForMenuId(args: { menuId: MenuId_t; menuItemId: string }): UIMenuItemValue_t {
     const dx = this.dx.sub({ name: 'getValueOfMenuItemIdForMenuId' });
     if (!dx.require(args, ['menuId', 'menuItemId'])) {
       dx.error(`Invalid args: ${JSON.stringify(args)}`);
       throw new Error(`getValueOfMenuItemIdForMenuId: invalid arguments`);
     }
     const { menuId, menuItemId } = args;
-    let result: number | string | boolean = menuItemId;
+    let result: UIMenuItemValue_t = menuItemId;
 
     const menu = this.getMenuById(menuId);
 
@@ -361,7 +362,7 @@ export class UIMenuMgr {
 
       if (menuItem && 'value' in menuItem) {
         const itemWithValue = menuItem as UIMenuItem_t & {
-          value: number | string | boolean | UIMenuFxn_t;
+          value: UIMenuItemValue_t | UIMenuFxn_t;
         };
         const value = itemWithValue.value;
 
@@ -479,7 +480,7 @@ export class UIMenuMgr {
     resolver: UIMenuFxn_t,
     menuId: string,
     menuItemId: string
-  ): number | string | boolean | undefined {
+  ): UIMenuItemValue_t | undefined {
     const dx = this.dx.sub({ name: 'resolveUIMenuItemValue' });
     const dict_nums = this.buildUIMenuItemDict();
     try {

@@ -11,6 +11,7 @@ import {
   kHeaderFooterMenuIds,
   kMenus,
   type UIMenuFxn_t,
+  type UIMenuItemValue_t,
 } from './PaperPrinter_t';
 
 /**
@@ -55,7 +56,7 @@ export interface UIMenuItem_t {
   iconSlotTriad: iconSlotTriad_t; // Button content: icon, text_edit widget (e.g., "text_edit: {...}"), or empty for non-button
   shortcutCode?: string; // Optional KeyboardEvent.code for keyboard shortcuts (e.g., "Digit0", "Minus", "Equal")
   shortcut?: string; // Optional display string for keyboard shortcut (e.g., "Ctrl/Cmd + 0")
-  value?: number | string | boolean | UIMenuFxn_t;
+  value?: UIMenuItemValue_t | UIMenuFxn_t;
 }
 
 // Menu ID types - UI component identifiers
@@ -101,5 +102,5 @@ export type MenuItemId_t = (typeof kMenuItemId)[number] | string;
 // Selection handler return type - id is what's selected, value is what to use
 export interface HandleSelection_t {
   id: string;
-  value: string | number | boolean;
+  value: UIMenuItemValue_t;
 }
