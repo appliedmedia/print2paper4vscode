@@ -1,8 +1,10 @@
 # Menu Hidden System Implementation Plan
 
-**Status**: inProgress
+**Status**: done
 
 **Created**: 2025-12-16
+
+**Completed**: 2025-12-24
 
 **Goal**: Add conditional visibility to menu system allowing menus to show/hide based on context (e.g., markdown menu only visible for markdown files).
 
@@ -630,3 +632,4 @@ If issues arise, revert changes in reverse order:
 - **2025-12-21**: Defined `kMd_languageId` constant for use in place of magical "markdown" strings.
 - **2025-12-21**: Renamed test file to `MenuHidden.test.ts` and plan file to `MenuHidden.md` for clarity.
 - **2025-12-21**: Refined type system to support boolean values in `UIMenuItem_t` and `UIMenuMgr`, removing `as any` casts in tests for strict type compliance.
+- **2025-12-24**: COMPLETED - All 25 checklist items done, all tests passing (360/360), markdown lint clean, plan renamed to done status.
