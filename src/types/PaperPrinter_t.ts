@@ -28,15 +28,16 @@
  * 3. **Resolver function**: `value: (dict) => ...` - Dynamic value computed from context
  *
  * Resolver Function Contract:
- * - Receives UIMenuItemDict_t validated by forceNumber() with all required keys present
- * - All dict values guaranteed to be finite numbers (non-zero unless explicitly set)
- * - Required keys: windowWidth, windowHeight, pageWidth, pageHeight
+ * - Receives UIMenuItemDict_t validated by forceNumber/forceContent with all required keys present
+ * - All numeric dict values guaranteed to be finite numbers (non-zero unless explicitly set)
+ * - Required keys (numeric): windowWidth, windowHeight, pageWidth, pageHeight
+ * - Required keys (textual): languageId
  * - Returns number | string | undefined based on computation
  * - NO defensive checks needed - dict is always valid when resolver is called
  *
  * Value Resolution Flow:
  * 1. UIMenuMgr.buildUIMenuItemDict() creates dict from context + PDF dimensions
- * 2. App.forceNumber(dict, useForZero=1, requiredKeys) validates all inputs
+ * 2. App.forceNumbers() + App.forceContents() validates all inputs
  * 3. Resolver function executes with guaranteed-valid dict
  * 4. Result flows to consumer who decides if/when to call forceNumber() on result
  *
@@ -45,8 +46,11 @@
  * - Only call forceNumber() at consumer level when numeric value is required
  * - This preserves flexibility for string values (headers/footers) vs numeric (zoom)
  */
-export type UIMenuItemDict_t = Record<string, number>;
-export type UIMenuItemValueFxn_t = (dict: UIMenuItemDict_t) => number | string | undefined;
+export type UIMenuItemDict_t = Record<string, number | string>;
+// Generic function type for any menu function that needs context (value resolver, visibility, etc.)
+// User requested non-generic return type: number | string | Boolean | unknown
+export type UIMenuItemValue_t = number | string | boolean;
+export type UIMenuFxn_t = (dict: UIMenuItemDict_t) => UIMenuItemValue_t;
 
 // Print menu definition
 export const kPrint = {
@@ -56,6 +60,7 @@ export const kPrint = {
   altId: '',
   methodName: '',
   isFlyout: false,
+  isHidden: false,
   flyoutMenuItemIds: [] as const,
   menuItems: [
     { id: 'preview', displayName: 'Print with Preview' },
@@ -73,6 +78,7 @@ export const kPageSizeId = {
   altId: 'a4',
   methodName: 'PageSizeId',
   isFlyout: true,
+  isHidden: false,
   flyoutMenuItemIds: [] as const,
   menuItems: [
     {
@@ -118,6 +124,7 @@ export const kOrient = {
   altId: 'portrait',
   methodName: '',
   isFlyout: true,
+  isHidden: false,
   flyoutMenuItemIds: [] as const,
   menuItems: [
     { id: 'portrait', displayName: '{{icon_orient_portrait_svg}} Portrait' },
@@ -134,6 +141,7 @@ export const kMarginId = {
   altId: 'normal',
   methodName: 'MarginId',
   isFlyout: true,
+  isHidden: false,
   flyoutMenuItemIds: [] as const,
   menuItems: [
     { id: 'none', displayName: '{{icon_margin_none_svg}} None', marginPts: 0 },
@@ -157,6 +165,7 @@ export const kFontSizeId = {
   altValue: 12,
   methodName: '',
   isFlyout: false,
+  isHidden: false,
   flyoutMenuItemIds: [] as const,
   menuItems: [
     { id: '8', displayName: '8px' },
@@ -188,6 +197,7 @@ export const kHeaderFooter = {
   altId: '',
   methodName: '',
   isFlyout: true,
+  isHidden: false,
   none: 'none',
   menuItems: [
     { id: 'begin', displayName: '⇤' },
@@ -271,6 +281,7 @@ export const kPage = {
   altId: '',
   methodName: '',
   isFlyout: false,
+  isHidden: false,
   flyoutMenuItemIds: [kHeader.id, kFooter.id, kPageSizeId.id, kOrient.id, kMarginId.id] as const,
   menuItems: [
     { id: 'header', displayName: 'Header' },
@@ -294,6 +305,7 @@ export const kTheme = {
   altId: 'github-light',
   methodName: '',
   isFlyout: false,
+  isHidden: false,
   flyoutMenuItemIds: [] as const,
   menuItems: [], // Themes are dynamically loaded from Shiki
 } as const;
@@ -305,6 +317,7 @@ export const kZoomOut = {
   altId: '',
   methodName: 'ZoomInOut', // Shared handler with zoomIn
   isFlyout: false,
+  isHidden: false,
   flyoutMenuItemIds: [] as const,
   menuItems: [],
   shortcutCode: 'Minus' as const, // KeyboardEvent.code for minus key
@@ -317,12 +330,15 @@ export const kZoomIn = {
   altId: '',
   methodName: 'ZoomInOut', // Shared handler with zoomOut
   isFlyout: false,
+  isHidden: false,
   flyoutMenuItemIds: [] as const,
   menuItems: [],
   shortcutCode: 'Equal' as const, // KeyboardEvent.code for =/+ key (main keyboard)
 } as const;
 
 // Markdown rendering mode menu items (only visible for markdown files)
+export const kMd_languageId = 'markdown';
+
 export const kMd_Raw = {
   id: 'raw',
   displayName: 'Raw',
@@ -343,6 +359,7 @@ export const kMd = {
   altId: kMd_Raw.id, // Default to raw mode
   methodName: 'Md',
   isFlyout: false,
+  isHidden: (dict: UIMenuItemDict_t) => dict.languageId !== kMd_languageId,
   flyoutMenuItemIds: [] as const,
   menuItems: [
     { id: kMd_Raw.id, displayName: kMd_Raw.displayName, value: kMd_Raw.value },
@@ -391,6 +408,7 @@ export const kZoomLevel = {
   altValue: 1.0,
   methodName: 'ZoomLevel',
   isFlyout: false,
+  isHidden: false,
   flyoutMenuItemIds: [] as const,
   min: 0.5,
   max: 2.5,
@@ -416,7 +434,7 @@ export const kZoomLevel = {
     {
       id: 'fitWidth',
       displayName: 'Fit Width',
-      value: (dict: UIMenuItemDict_t) => dict.windowWidth / dict.pageWidth,
+      value: (dict: UIMenuItemDict_t) => (dict.windowWidth as number) / (dict.pageWidth as number),
     },
     // fitPage: scale page to fit both width and height in viewport (use smaller ratio)
     // Formula: Math.min of width and height ratios (ensures entire page visible)
@@ -425,8 +443,8 @@ export const kZoomLevel = {
       id: 'fitPage',
       displayName: 'Fit Page',
       value: (dict: UIMenuItemDict_t) => {
-        const widthScale = dict.windowWidth / dict.pageWidth;
-        const heightScale = dict.windowHeight / dict.pageHeight;
+        const widthScale = (dict.windowWidth as number) / (dict.pageWidth as number);
+        const heightScale = (dict.windowHeight as number) / (dict.pageHeight as number);
         return Math.min(widthScale, heightScale);
       },
     },

@@ -59,6 +59,7 @@ export class UIMenu {
   private _displayName: string;
   private _iconSlotTriad: iconSlotTriad_t;
   private _isFlyout: boolean;
+  private _isHidden: boolean;
   private _menuItems: () => UIMenuItem_t[];
   private _flyoutMenuItemIds: string[];
   private _selectionHandler: (
@@ -73,6 +74,7 @@ export class UIMenu {
     displayName: string;
     iconSlotTriad: iconSlotTriad_t;
     isFlyout?: boolean;
+    isHidden?: boolean;
     menuItems: () => UIMenuItem_t[];
     flyoutMenuItemIds?: string[];
     selectionHandler: (
@@ -113,6 +115,7 @@ export class UIMenu {
       displayName,
       iconSlotTriad,
       isFlyout = false,
+      isHidden = false,
       menuItems,
       flyoutMenuItemIds = [],
       selectionHandler,
@@ -122,6 +125,7 @@ export class UIMenu {
     this._displayName = displayName;
     this._iconSlotTriad = iconSlotTriad;
     this._isFlyout = isFlyout;
+    this._isHidden = isHidden;
     this._menuItems = menuItems;
     this._flyoutMenuItemIds = flyoutMenuItemIds;
     this._selectionHandler = selectionHandler;
@@ -141,6 +145,9 @@ export class UIMenu {
   }
   get isFlyout(): boolean {
     return this._isFlyout;
+  }
+  get isHidden(): boolean {
+    return this._isHidden;
   }
 
   // Get the menu items from the injected listBuilder
@@ -521,6 +528,7 @@ export class UIMenu {
         isFlyout ? 'isFlyout' : '',
         hasGutterBefore ? 'has-gutter-before' : '',
         hasGutterAfter ? 'has-gutter-after' : '',
+        this._isHidden ? 'isHidden' : '',
       ]
         .filter(Boolean)
         .join(' ');
@@ -563,5 +571,3 @@ export class UIMenu {
     this.dx.done();
   }
 }
-
-// end, UIMenu.ts

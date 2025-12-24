@@ -5,15 +5,17 @@
  */
 
 import type { Registry } from './Registry';
+import type { FnImport_t } from './types/Registry_t';
 
 // Type aliases
-export type ForceNumber_scalar_t = number | string | undefined;
-export type ForceNumber_dict_t = Record<string, ForceNumber_scalar_t>;
+export type Force_scalar_t = number | string | undefined;
+export type Force_dict_t = Record<string, Force_scalar_t>;
 export type ForceNumbers_t = Record<string, number>;
 
 export class Utils {
   static readonly id = 'utils';
   private reg: Registry;
+  private fn: FnImport_t;
   private ns: string;
   private ns_: string;
 
@@ -21,6 +23,8 @@ export class Utils {
     this.reg = args.reg;
     this.ns = args.ns;
     this.ns_ = args.ns_;
+    // Initialize fn to access diagnostics.sub method
+    this.fn = this.reg.use('dx.sub');
   }
 
   /**
@@ -76,7 +80,7 @@ export class Utils {
    * Force a single value to number, ensuring finite result
    * Converts strings to numbers. Replaces undefined, NaN, Infinity, or zero with 0.
    */
-  forceNumber(value: ForceNumber_scalar_t): number {
+  forceNumber(value: Force_scalar_t): number {
     return this.forceNumbers({ value }).value;
   }
 
@@ -86,11 +90,11 @@ export class Utils {
    * If requiredKeys specified, missing keys are added and set to useForZero.
    */
   forceNumbers(
-    dict: ForceNumber_dict_t,
+    dict: Force_dict_t,
     useForZero = 0,
     requiredKeys?: readonly string[]
   ): ForceNumbers_t {
-    const force1Number = (value: ForceNumber_scalar_t): number => {
+    const force1Number = (value: Force_scalar_t): number => {
       const parsed = typeof value === 'number' ? value : parseFloat(String(value));
       return !Number.isFinite(parsed) || parsed === 0 ? useForZero : parsed;
     };
@@ -117,6 +121,58 @@ export class Utils {
     }
 
     return dictResult;
+  }
+
+  /**
+   * Force a value to be a string, returning useForEmpty if invalid
+   *
+   * Mirrors forceNumber() but for string content validation.
+   * Ensures values are strings and provides fallback for empty/null/undefined.
+   *
+   * @param val - Value to force to string
+   * @param useForEmpty - Value to use for empty/null/undefined (default: '')
+   * @returns String value or useForEmpty
+   */
+  forceContent(val: Force_scalar_t, useForEmpty: string = ''): string {
+    if (val === null || val === undefined || val === '') {
+      return useForEmpty;
+    }
+    return String(val);
+  }
+
+  /**
+   * Force all values in dict to strings with required keys validation
+   *
+   * Mirrors forceNumbers() but for string content validation.
+   * Ensures all values are strings and adds missing required keys with useForEmpty.
+   *
+   * @param dict - Dictionary to process
+   * @param useForEmpty - Value to use for empty/null/undefined (default: '')
+   * @param requiredKeys - Keys that must exist (will be added with useForEmpty if missing)
+   * @returns Dictionary with all values as strings
+   */
+  forceContents(
+    dict: Force_dict_t,
+    useForEmpty: string = '',
+    requiredKeys?: readonly string[]
+  ): Record<string, string> {
+    const dx = this.fn.dx.sub({ name: 'forceContents' });
+    const result: Record<string, string> = {};
+
+    // Add all required keys first with useForEmpty
+    if (requiredKeys) {
+      for (const key of requiredKeys) {
+        result[key] = useForEmpty;
+      }
+    }
+
+    // Process all dict values, converting to strings
+    for (const [key, val] of Object.entries(dict)) {
+      result[key] = this.forceContent(val, useForEmpty);
+    }
+
+    dx.done();
+    return result;
   }
 
   /**

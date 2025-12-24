@@ -1,6 +1,7 @@
 import { describe, it, beforeEach, afterEach } from 'node:test';
 import * as assert from 'node:assert';
 import { PDF } from '../src/PDF.js';
+import { kMd_languageId } from '../src/types/PaperPrinter_t.js';
 import { createTestApp, TestApp } from './test-utils.js';
 import { mockContext, mockVSCode } from './test-utils.js';
 import { installHeaderFooterMenuStubs } from './test-helpers.js';
@@ -262,7 +263,7 @@ describe('PDF Markdown HTML Rendering', () => {
   describe('Markdown vs Token rendering integration', () => {
     it('should generate PDF with markdown rendering mode', async () => {
       pdf.docInfo().code = '# Heading\n\nParagraph with **bold** text.';
-      pdf.docInfo().languageId = 'markdown';
+      pdf.docInfo().languageId = kMd_languageId;
       
       // Mock the markdown rendering to return HTML
       const originalRenderMd = app.vscodeapis.renderMarkdownToHtml;
@@ -280,7 +281,7 @@ describe('PDF Markdown HTML Rendering', () => {
 
     it('should generate PDF with token rendering mode (raw markdown)', async () => {
       pdf.docInfo().code = '# Heading\n\nParagraph text.';
-      pdf.docInfo().languageId = 'markdown';
+      pdf.docInfo().languageId = kMd_languageId;
       
       await pdf.generatePdf({ useRenderedMd: false });
       

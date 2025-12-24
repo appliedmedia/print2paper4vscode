@@ -1,5 +1,5 @@
 import type { Registry } from './Registry';
-import type { ForceNumber_dict_t } from './Utils';
+import type { Force_dict_t } from './Utils';
 import type { FnImport_t } from './types/Registry_t';
 import type { UI_t } from './UI';
 import type { PersistValue_t } from './Persist';
@@ -16,7 +16,8 @@ import { kMenuId, kMenuItemId } from './types/UIMenu_t';
 import { Diagnostics } from './Diagnostics';
 import {
   type UIMenuItemDict_t,
-  type UIMenuItemValueFxn_t,
+  type UIMenuFxn_t,
+  type UIMenuItemValue_t,
 } from './types/PaperPrinter_t';
 import type { Theme } from './types/theme_t';
 
@@ -63,6 +64,8 @@ export class UIMenuMgr {
       'persist.set',
       'utils.hasContent',
       'utils.forceNumbers',
+      'utils.forceContent',
+      'utils.forceContents',
       'utils.templateDictReplace',
       'pdf.docInfo'
     );
@@ -130,6 +133,7 @@ export class UIMenuMgr {
     displayName: string;
     iconSlotTriad: iconSlotTriad_t;
     isFlyout?: boolean;
+    isHidden?: boolean | UIMenuFxn_t;
     menuItems: () => UIMenuItem_t[];
     flyoutMenuItemIds?: string[];
     selectionHandler: (menuId: MenuId_t, menuItemId: MenuItemId_t) => Promise<HandleSelection_t>;
@@ -141,16 +145,22 @@ export class UIMenuMgr {
       displayName,
       iconSlotTriad,
       isFlyout = false,
+      isHidden,
       menuItems,
       flyoutMenuItemIds = [],
       selectionHandler,
     } = args;
+
+    // Resolve isHidden to boolean
+    const isHiddenResolved = this.getValueOfMenuFxnByCalcIsHidden(isHidden, id);
+
     return new UIMenu({
       reg: this.reg,
       id,
       displayName,
       iconSlotTriad,
       isFlyout,
+      isHidden: isHiddenResolved,
       menuItems,
       flyoutMenuItemIds,
       selectionHandler,
@@ -293,7 +303,7 @@ export class UIMenuMgr {
   // Get the value for the currently selected menu item
   // Combines getMenuItemIdSelected + getValueOfMenuItemIdForMenuId
   // Returns string or number, or undefined if empty/missing
-  getValueOfMenuItemIdSelected(menuId: MenuId_t): number | string | undefined {
+  getValueOfMenuItemIdSelected(menuId: MenuId_t): UIMenuItemValue_t | undefined {
     const dx = this.dx.sub({ name: 'getValueOfMenuItemIdSelected' });
     const menuItemId = this.getMenuItemIdSelected(menuId);
     dx.out(`menuId=${menuId}, menuItemId=${menuItemId}`);
@@ -313,14 +323,14 @@ export class UIMenuMgr {
   // Resolves menu item values via resolver functions (for dynamic values like fitWidth/fitPage),
   // numeric values, or legacy calc templates. Returns the resolved value or menuItemId as fallback.
   // Never returns undefined - defaults to menuItemId if value not found or resolution fails.
-  getValueOfMenuItemIdForMenuId(args: { menuId: MenuId_t; menuItemId: string }): number | string {
+  getValueOfMenuItemIdForMenuId(args: { menuId: MenuId_t; menuItemId: string }): UIMenuItemValue_t {
     const dx = this.dx.sub({ name: 'getValueOfMenuItemIdForMenuId' });
     if (!dx.require(args, ['menuId', 'menuItemId'])) {
       dx.error(`Invalid args: ${JSON.stringify(args)}`);
       throw new Error(`getValueOfMenuItemIdForMenuId: invalid arguments`);
     }
     const { menuId, menuItemId } = args;
-    let result: number | string = menuItemId;
+    let result: UIMenuItemValue_t = menuItemId;
 
     const menu = this.getMenuById(menuId);
 
@@ -352,12 +362,12 @@ export class UIMenuMgr {
 
       if (menuItem && 'value' in menuItem) {
         const itemWithValue = menuItem as UIMenuItem_t & {
-          value: number | string | UIMenuItemValueFxn_t;
+          value: UIMenuItemValue_t | UIMenuFxn_t;
         };
         const value = itemWithValue.value;
 
         if (typeof value === 'function') {
-          const resolvedValue = this.resolveUIMenuItemValue(value, menuId, menuItemId);
+          const resolvedValue = this.getValueOfMenuFxnByCalcValue(value, menuId, menuItemId);
           if (resolvedValue !== undefined) {
             result = resolvedValue;
           }
@@ -387,19 +397,71 @@ export class UIMenuMgr {
    */
   private buildUIMenuItemDict(): UIMenuItemDict_t {
     const dx = this.dx.sub({ name: 'buildUIMenuItemDict' });
-    const pageSizePx = this.fn.pdf?.docInfo()?.pageSizePx;
+    const docInfo = this.fn.pdf.docInfo();
+    const pageSizePx = docInfo?.pageSizePx;
     const context = this.contextDict ?? {};
-    const inputs: ForceNumber_dict_t = {
+
+    // Numeric keys - validate with forceNumbers
+    const numericInputs: Force_dict_t = {
       windowWidth: context.windowWidth,
       windowHeight: context.windowHeight,
       pageWidth: pageSizePx?.widthPx,
       pageHeight: pageSizePx?.heightPx,
     };
-    // forceNumbers with requiredKeys ensures all keys exist, coerces to numbers (non-zero or useForZero)
-    // Missing keys are added with useForZero=1, invalid/zero values become 1
-    const dict_nums = this.fn.utils.forceNumbers(inputs, 1, kUIMenuItemDictRequiredKeys);
+    const dict_nums = this.fn.utils.forceNumbers(numericInputs, 1, kUIMenuItemDictRequiredKeys);
+
+    // Textual keys - validate with forceContents
+    const textualInputs: Force_dict_t = {
+      languageId: docInfo?.languageId,
+    };
+    const dict_text = this.fn.utils.forceContents(textualInputs, '');
+
+    // Combine both dicts
+    const combined = { ...dict_nums, ...dict_text };
+
     dx.done();
-    return dict_nums;
+    return combined as UIMenuItemDict_t;
+  }
+
+  /**
+   * Resolve menu hidden state using isHidden function or boolean
+   *
+   * Executes isHidden function with validated dict (numeric + textual context).
+   * Returns boolean indicating whether menu should be hidden.
+   *
+   * @param isHidden - Boolean or function that determines hidden state from context
+   * @param menuId - Menu ID for error logging context
+   * @returns true if menu should be hidden, false otherwise (default: false)
+   */
+  private getValueOfMenuFxnByCalcIsHidden(
+    isHidden: boolean | UIMenuFxn_t | undefined,
+    menuId: string
+  ): boolean {
+    const dx = this.dx.sub({ name: 'getValueOfMenuFxnByCalcIsHidden' });
+
+    // Handle undefined - default to visible (isHidden = false)
+    if (isHidden === undefined) {
+      dx.done();
+      return false;
+    }
+
+    // Handle boolean literal
+    if (typeof isHidden === 'boolean') {
+      dx.done();
+      return isHidden;
+    }
+
+    // Handle function - build dict and execute
+    const dict = this.buildUIMenuItemDict();
+    try {
+      const result = isHidden(dict);
+      dx.done();
+      return Boolean(result);
+    } catch (error) {
+      this.dx.error(`Menu isHidden resolver failed for ${menuId}: ${String(error)}`);
+      dx.done();
+      return false; // Default to visible (isHidden = false) on error
+    }
   }
 
   /**
@@ -414,17 +476,21 @@ export class UIMenuMgr {
    * @param menuItemId - Menu item ID for error logging context
    * @returns Resolved value (number | string | undefined) or undefined on error
    */
-  private resolveUIMenuItemValue(
-    resolver: UIMenuItemValueFxn_t,
+  private getValueOfMenuFxnByCalcValue(
+    resolver: UIMenuFxn_t,
     menuId: string,
     menuItemId: string
-  ): number | string | undefined {
-    const dx = this.dx.sub({ name: 'resolveUIMenuItemValue' });
+  ): UIMenuItemValue_t | undefined {
+    const dx = this.dx.sub({ name: 'getValueOfMenuFxnByCalcValue' });
     const dict_nums = this.buildUIMenuItemDict();
     try {
       const result = resolver(dict_nums);
       dx.done();
-      return result;
+      // Ensure we only return supported types
+      if (typeof result === 'number' || typeof result === 'string' || typeof result === 'boolean' || result === undefined) {
+        return result;
+      }
+      return undefined; // Filter out boolean or other types not supported for values
     } catch (error) {
       this.dx.error(
         `Menu item value resolver failed for ${menuId}.${menuItemId}: ${String(error)}`

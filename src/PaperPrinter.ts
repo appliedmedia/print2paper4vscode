@@ -38,7 +38,7 @@ import {
   type PageSizeIdMenuItems_t,
   type MarginIdMenuItems_t,
   type HeaderFooterSubmenu_t,
-  type UIMenuItemValueFxn_t,
+  type UIMenuFxn_t,
   kPageSizeId,
   kOrient,
   kMarginId,
@@ -54,6 +54,7 @@ import {
   kZoomIn,
   kZoomLevel,
   kMd,
+  kMd_languageId,
   kMd_Raw,
   kMenus,
 } from './types/PaperPrinter_t';
@@ -295,7 +296,7 @@ export class PaperPrinter {
       // For markdown files, check menu selection to determine rendering mode
       // getValueOfMenuItemIdSelected returns the boolean value (false for raw, true for render)
       const useRenderedMd =
-        this.docInfo().languageId === 'markdown' &&
+        this.docInfo().languageId === kMd_languageId &&
         !!this.fn.uimenumgr.getValueOfMenuItemIdSelected(kMd.id);
 
       // Get active editor only if needed for markdown rendering
@@ -323,7 +324,7 @@ export class PaperPrinter {
   // Create menus when needed for the webview
   private createMenus(): void {
     const dx = this.dx.sub({ name: 'createMenus' });
-    
+
     // Avoid duplicates across multiple openings
     if (this.fn.uimenumgr.getUIMenus().length > 0) {
       dx.out('Menus already exist, skipping creation');
@@ -332,7 +333,7 @@ export class PaperPrinter {
     }
 
     dx.out(`Creating ${kMenus.length} menus from kMenus array`);
-    
+
     // Build menu configs from constants
     const menus = kMenus.map(menuConst => {
       const methodName = menuConst.methodName || menuConst.displayName;
@@ -342,6 +343,7 @@ export class PaperPrinter {
         displayName: menuConst.displayName,
         iconSlotTriad: (menuConst as { iconSlotTriad: iconSlotTriad_t }).iconSlotTriad,
         isFlyout: menuConst.isFlyout,
+        isHidden: (menuConst as { isHidden?: boolean | UIMenuFxn_t }).isHidden,
         menuItems: (this[`menuItems_${methodName}` as keyof this] as () => UIMenuItem_t[]).bind(
           this
         ),
@@ -371,6 +373,7 @@ export class PaperPrinter {
         displayName: config.displayName,
         iconSlotTriad: config.iconSlotTriad,
         isFlyout: config.isFlyout,
+        isHidden: config.isHidden,
         menuItems: config.menuItems,
         flyoutMenuItemIds: [...config.flyoutMenuItemIds],
         selectionHandler: config.selectionHandler,
@@ -378,7 +381,7 @@ export class PaperPrinter {
       this.fn.uimenumgr.addMenu(menu);
       dx.out(`Added menu: ${config.id} to UIMenuMgr`);
     });
-    
+
     dx.out(`Total menus created: ${this.fn.uimenumgr.getUIMenus().length}`);
     dx.done();
   }
@@ -405,7 +408,7 @@ export class PaperPrinter {
         iconSlotTriad: { begin: '', main: '', end: '' },
       };
     });
-    
+
     dx.out(`Returning ${items.length} theme menu items`);
     dx.done();
     return items;
@@ -569,7 +572,7 @@ export class PaperPrinter {
       if ('value' in item && item.value !== undefined) {
         const value = item.value;
         if (typeof value === 'number' || typeof value === 'string' || typeof value === 'function') {
-          menuItem.value = value as number | string | UIMenuItemValueFxn_t;
+          menuItem.value = value as number | string | UIMenuFxn_t;
         } else {
           this.dx.error(`Invalid zoom level value type: ${typeof value} for item ${itemId}`);
         }

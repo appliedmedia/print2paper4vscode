@@ -4,13 +4,14 @@
  * All types and constants related to UIMenu component
  */
 
-import type { ForceNumber_scalar_t } from '../Utils';
+import type { Force_scalar_t } from '../Utils';
 import type { UI_t } from '../UI';
 import {
   kHeaderFooter,
   kHeaderFooterMenuIds,
   kMenus,
-  type UIMenuItemValueFxn_t,
+  type UIMenuFxn_t,
+  type UIMenuItemValue_t,
 } from './PaperPrinter_t';
 
 /**
@@ -36,8 +37,8 @@ export type iconSlotTriad_main_t = {
   constrain: TextEditConstraint_t; // Validation strategy (regex + min/max work together)
   transform?: {
     // Transforms handle their own type conversion - they receive raw persisted values
-    display?: (persist: ForceNumber_scalar_t) => ForceNumber_scalar_t; // Convert persist value to display value
-    persist?: (display: ForceNumber_scalar_t) => ForceNumber_scalar_t; // Convert display value to persist value
+    display?: (persist: Force_scalar_t) => Force_scalar_t; // Convert persist value to display value
+    persist?: (display: Force_scalar_t) => Force_scalar_t; // Convert display value to persist value
   };
 };
 
@@ -55,7 +56,7 @@ export interface UIMenuItem_t {
   iconSlotTriad: iconSlotTriad_t; // Button content: icon, text_edit widget (e.g., "text_edit: {...}"), or empty for non-button
   shortcutCode?: string; // Optional KeyboardEvent.code for keyboard shortcuts (e.g., "Digit0", "Minus", "Equal")
   shortcut?: string; // Optional display string for keyboard shortcut (e.g., "Ctrl/Cmd + 0")
-  value?: number | string | UIMenuItemValueFxn_t;
+  value?: UIMenuItemValue_t | UIMenuFxn_t;
 }
 
 // Menu ID types - UI component identifiers
@@ -101,5 +102,5 @@ export type MenuItemId_t = (typeof kMenuItemId)[number] | string;
 // Selection handler return type - id is what's selected, value is what to use
 export interface HandleSelection_t {
   id: string;
-  value: string | number | boolean;
+  value: UIMenuItemValue_t;
 }

@@ -1,14 +1,32 @@
-# Menu Visibility System Implementation Plan
+# Menu Hidden System Implementation Plan
 
-**Status**: todo
+**Status**: inProgress
 
 **Created**: 2025-12-16
 
 **Goal**: Add conditional visibility to menu system allowing menus to show/hide based on context (e.g., markdown menu only visible for markdown files).
 
+## TODO Checklist
+
+- ✅ Refactor `ForceNumber_*_t` to `Force_*_t` in `Utils.ts` and update usages
+- ✅ Implement `forceContent` and `forceContents` in `Utils.ts`
+- ✅ Update `UIMenuItemDict_t` type to include string values
+- ✅ Refactor `UIMenuItemValueFxn_t` and `UIMenuIsVisibleFxn_t` to generic `UIMenuFxn_t<T>` (Note: Changed to non-generic union type per request)
+- ✅ Add `isHidden` property to `kMd` menu constant (refactored from `isVisible`)
+- ✅ Update `UIMenuMgr.buildUIMenuItemDict()` to handle numeric and textual inputs
+- ✅ Add `resolveUIMenuIsHidden()` to `UIMenuMgr` (refactored from `resolveUIMenuIsVisible`)
+- ✅ Update `UIMenu` constructor to accept and store `isHidden`
+- ✅ Update `UIMenu.getHTML()` to add CSS class based on visibility
+- ✅ Update `UIMenuMgr.createMenu()` to resolve visibility
+- ✅ Update `PaperPrinter` menu creation
+- ✅ Add CSS to `UIMenu.yaml`
+- ✅ Test with markdown and non-markdown files
+- ✅ Refactor to use `isHidden` property and CSS class (inverted logic)
+- ✅ Explicitly set `isHidden: false` for all menu constants
+
 ## Overview
 
-Add `isVisible` property to menu constants that can be a boolean or function receiving context dict. Menus evaluate visibility at creation time and add CSS class to hide when needed.
+Add `isHidden` property to menu constants that can be a boolean or function receiving context dict. Menus evaluate visibility at creation time and add CSS class to hide when needed.
 
 ## Architecture
 
@@ -16,10 +34,10 @@ Add `isVisible` property to menu constants that can be a boolean or function rec
 
 Follow existing `value` resolver pattern:
 
-- **Menu items** use `value: number | string | UIMenuItemValueFxn_t`
-- **Menus** will use `isVisible: boolean | UIMenuIsVisibleFxn_t`
+- **Menu items** use `value: number | string | UIMenuFxn_t`
+- **Menus** will use `isHidden: boolean | UIMenuFxn_t`
 - Both receive `UIMenuItemDict_t` context with validated data
-- Functions execute at appropriate time (value at selection, isVisible at creation)
+- Functions execute at appropriate time (value at selection, isHidden at creation)
 
 ### Context Dictionary Enhancement
 
@@ -56,7 +74,16 @@ const dict = {
 
 ## Implementation Steps
 
-### Step 1: Add forceContent/forceContents to Utils.ts
+### Step 1: Refactor Force Types and Add forceContent/forceContents to Utils.ts
+
+**Refactor Types in `src/Utils.ts`**:
+
+Rename specific types to be more generic since they cover string/number/undefined:
+
+- `ForceNumber_scalar_t` -> `Force_scalar_t`
+- `ForceNumber_dict_t` -> `Force_dict_t`
+
+**Add `forceContent` and `forceContents`**:
 
 Create string validation utilities mirroring existing `forceNumber`/`forceNumbers` pattern.
 
@@ -75,7 +102,7 @@ Create string validation utilities mirroring existing `forceNumber`/`forceNumber
  * @param useForEmpty - Value to use for empty/null/undefined (default: '')
  * @returns String value or useForEmpty
  */
-forceContent(val: ForceNumber_scalar_t, useForEmpty: string = ''): string {
+forceContent(val: Force_scalar_t, useForEmpty: string = ''): string {
   if (val === null || val === undefined || val === '') {
     return useForEmpty;
   }
@@ -94,7 +121,7 @@ forceContent(val: ForceNumber_scalar_t, useForEmpty: string = ''): string {
  * @returns Dictionary with all values as strings
  */
 forceContents(
-  dict: ForceNumber_dict_t,
+  dict: Force_dict_t,
   useForEmpty: string = '',
   requiredKeys?: readonly string[]
 ): Record<string, string> {
@@ -116,15 +143,6 @@ forceContents(
   dx.done();
   return result;
 }
-```
-
-**Register in Registry.ts:**
-
-Add to Utils registration:
-
-```typescript
-'utils.forceContent',
-'utils.forceContents',
 ```
 
 ### Step 2: Update UIMenuItemDict_t Type
@@ -152,17 +170,17 @@ Add to "Required keys" section:
 * - Required keys (textual): languageId
 ```
 
-### Step 3: Add UIMenuIsVisibleFxn_t Type
+### Step 3: Add UIMenuFxn_t Type
 
 **Location**: `src/types/PaperPrinter_t.ts` (after line 49)
 
 **Add:**
 
 ```typescript
-export type UIMenuIsVisibleFxn_t = (dict: UIMenuItemDict_t) => boolean;
+export type UIMenuFxn_t = (dict: UIMenuItemDict_t) => number | string | boolean | unknown;
 ```
 
-### Step 4: Add isVisible to kMd Menu Constant
+### Step 4: Add isHidden to kMd Menu Constant
 
 **Location**: `src/types/PaperPrinter_t.ts` (kMd definition around line 339)
 
@@ -194,7 +212,7 @@ export const kMd = {
   altId: kMd_Raw.id,
   methodName: 'Md',
   isFlyout: false,
-  isVisible: (dict: UIMenuItemDict_t) => dict.languageId === 'markdown',
+  isHidden: (dict: UIMenuItemDict_t) => dict.languageId !== 'markdown',
   flyoutMenuItemIds: [] as const,
   menuItems: [
     { id: kMd_Raw.id, displayName: kMd_Raw.displayName, value: kMd_Raw.value },
@@ -214,7 +232,7 @@ private buildUIMenuItemDict(): UIMenuItemDict_t {
   const dx = this.dx.sub({ name: 'buildUIMenuItemDict' });
   const pageSizePx = this.fn.pdf?.docInfo()?.pageSizePx;
   const context = this.contextDict ?? {};
-  const inputs: ForceNumber_dict_t = {
+  const inputs: Force_dict_t = {
     windowWidth: context.windowWidth,
     windowHeight: context.windowHeight,
     pageWidth: pageSizePx?.widthPx,
@@ -236,7 +254,7 @@ private buildUIMenuItemDict(): UIMenuItemDict_t {
   const context = this.contextDict ?? {};
 
   // Numeric keys - validate with forceNumbers
-  const numericInputs: ForceNumber_dict_t = {
+  const numericInputs: Force_dict_t = {
     windowWidth: context.windowWidth,
     windowHeight: context.windowHeight,
     pageWidth: pageSizePx?.widthPx,
@@ -245,7 +263,7 @@ private buildUIMenuItemDict(): UIMenuItemDict_t {
   const dict_nums = this.fn.utils.forceNumbers(numericInputs, 1, kUIMenuItemDictRequiredKeys);
 
   // Textual keys - validate with forceContents
-  const textualInputs: ForceNumber_dict_t = {
+  const textualInputs: Force_dict_t = {
     languageId: docInfo?.languageId,
   };
   const dict_text = this.fn.utils.forceContents(textualInputs, '');
@@ -267,7 +285,7 @@ Add to `this.reg.use()` call:
 'utils.forceContents',
 ```
 
-### Step 6: Add resolveUIMenuIsVisible() to UIMenuMgr
+### Step 6: Add resolveUIMenuIsHidden() to UIMenuMgr
 
 **Location**: `src/UIMenuMgr.ts` (after resolveUIMenuItemValue around line 437)
 
@@ -275,55 +293,54 @@ Add to `this.reg.use()` call:
 
 ```typescript
 /**
- * Resolve menu visibility using isVisible function or boolean
+ * Resolve menu visibility using isHidden function or boolean
  *
- * Executes isVisible function with validated dict (numeric + textual context).
- * Returns boolean indicating whether menu should be visible.
+ * Executes isHidden function with validated dict (numeric + textual context).
+ * Returns boolean indicating whether menu should be hidden.
  *
- * @param isVisible - Boolean or function that determines visibility from context
+ * @param isHidden - Boolean or function that determines visibility from context
  * @param menuId - Menu ID for error logging context
- * @returns true if menu should be visible, false otherwise (default: true)
+ * @returns true if menu should be hidden, false otherwise (default: false)
  */
-private resolveUIMenuIsVisible(
-  isVisible: boolean | UIMenuIsVisibleFxn_t | undefined,
+private resolveUIMenuIsHidden(
+  isHidden: boolean | UIMenuFxn_t | undefined,
   menuId: string
 ): boolean {
-  const dx = this.dx.sub({ name: 'resolveUIMenuIsVisible' });
+  const dx = this.dx.sub({ name: 'resolveUIMenuIsHidden' });
 
-  // Handle undefined - default to visible
-  if (isVisible === undefined) {
+  // Handle undefined - default to visible (isHidden = false)
+  if (isHidden === undefined) {
     dx.done();
-    return true;
+    return false;
   }
 
   // Handle boolean literal
-  if (typeof isVisible === 'boolean') {
+  if (typeof isHidden === 'boolean') {
     dx.done();
-    return isVisible;
+    return isHidden;
   }
 
   // Handle function - build dict and execute
   const dict = this.buildUIMenuItemDict();
   try {
-    const result = isVisible(dict);
+    const result = isHidden(dict);
     dx.done();
-    return result;
+    return Boolean(result);
   } catch (error) {
-    this.dx.error(`Menu isVisible resolver failed for ${menuId}: ${String(error)}`);
+    this.dx.error(`Menu isHidden resolver failed for ${menuId}: ${String(error)}`);
     dx.done();
-    return true; // Default to visible on error
+    return false; // Default to visible on error
   }
 }
 ```
 
-**Import UIMenuIsVisibleFxn_t at top of file:**
+**Import UIMenuFxn_t at top of file:**
 
 ```typescript
 import {
   kFontSizeId,
   type UIMenuItemDict_t,
-  type UIMenuItemValueFxn_t,
-  type UIMenuIsVisibleFxn_t,
+  type UIMenuFxn_t,
 } from './types/PaperPrinter_t';
 ```
 
@@ -331,10 +348,10 @@ import {
 
 **Location**: `src/UIMenu.ts`
 
-**Add isVisible property (around line 61):**
+**Add isHidden property (around line 61):**
 
 ```typescript
-private _isVisible: boolean;
+private _isHidden: boolean;
 ```
 
 **Update constructor signature (around line 70):**
@@ -346,7 +363,7 @@ constructor(args: {
   displayName: string;
   iconSlotTriad: iconSlotTriad_t;
   isFlyout?: boolean;
-  isVisible?: boolean;  // NEW
+  isHidden?: boolean;  // NEW
   menuItems: () => UIMenuItem_t[];
   flyoutMenuItemIds?: string[];
   selectionHandler: (
@@ -365,7 +382,7 @@ const {
   displayName,
   iconSlotTriad,
   isFlyout = false,
-  isVisible = true,  // NEW - default to visible
+  isHidden = false,  // NEW - default to visible (isHidden = false)
   menuItems,
   flyoutMenuItemIds = [],
   selectionHandler,
@@ -375,7 +392,7 @@ this._id = id;
 this._displayName = displayName;
 this._iconSlotTriad = iconSlotTriad;
 this._isFlyout = isFlyout;
-this._isVisible = isVisible;  // NEW
+this._isHidden = isHidden;  // NEW
 this._menuItems = menuItems;
 this._flyoutMenuItemIds = flyoutMenuItemIds;
 this._selectionHandler = selectionHandler;
@@ -384,8 +401,8 @@ this._selectionHandler = selectionHandler;
 **Add getter (around line 145):**
 
 ```typescript
-get isVisible(): boolean {
-  return this._isVisible;
+get isHidden(): boolean {
+  return this._isHidden;
 }
 ```
 
@@ -412,7 +429,7 @@ const menuClasses = [
   isFlyout ? 'isFlyout' : '',
   hasGutterBefore ? 'has-gutter-before' : '',
   hasGutterAfter ? 'has-gutter-after' : '',
-  !this._isVisible ? 'isVisible-false' : '',  // NEW
+  this._isHidden ? 'isHidden' : '',  // NEW
 ]
   .filter(Boolean)
   .join(' ');
@@ -422,9 +439,9 @@ const menuClasses = [
 
 **Location**: `src/UIMenuMgr.ts` (createMenu method around line 129)
 
-**Update to call resolveUIMenuIsVisible:**
+**Update to call resolveUIMenuIsHidden:**
 
-Find where UIMenu is instantiated and add isVisible parameter:
+Find where UIMenu is instantiated and add isHidden parameter:
 
 ```typescript
 createMenu(args: {
@@ -432,7 +449,7 @@ createMenu(args: {
   displayName: string;
   iconSlotTriad: iconSlotTriad_t;
   isFlyout?: boolean;
-  isVisible?: boolean | UIMenuIsVisibleFxn_t;  // NEW
+  isHidden?: boolean | UIMenuFxn_t;  // NEW
   menuItems: () => UIMenuItem_t[];
   flyoutMenuItemIds?: string[];
   selectionHandler: (menuId: MenuId_t, menuItemId: MenuItemId_t) => Promise<HandleSelection_t>;
@@ -444,14 +461,14 @@ createMenu(args: {
     displayName,
     iconSlotTriad,
     isFlyout = false,
-    isVisible,  // NEW
+    isHidden,  // NEW
     menuItems,
     flyoutMenuItemIds = [],
     selectionHandler,
   } = args;
 
-  // Resolve isVisible to boolean
-  const isVisibleResolved = this.resolveUIMenuIsVisible(isVisible, id);  // NEW
+  // Resolve isHidden to boolean
+  const isHiddenResolved = this.resolveUIMenuIsHidden(isHidden, id);  // NEW
 
   return new UIMenu({
     reg: this.reg,
@@ -459,7 +476,7 @@ createMenu(args: {
     displayName,
     iconSlotTriad,
     isFlyout,
-    isVisible: isVisibleResolved,  // NEW
+    isHidden: isHiddenResolved,  // NEW
     menuItems,
     flyoutMenuItemIds,
     selectionHandler: async (menuId: MenuId_t, menuItemId: MenuItemId_t, contextDict: contextDict_t) => {
@@ -474,9 +491,9 @@ createMenu(args: {
 
 **Location**: `src/PaperPrinter.ts` (where menus are created)
 
-**Find menu creation calls and add isVisible:**
+**Find menu creation calls and add isHidden:**
 
-Search for where `kMd` menu is created and ensure `isVisible` is passed:
+Search for where `kMd` menu is created and ensure `isHidden` is passed:
 
 ```typescript
 this.fn.uimenumgr.createMenu({
@@ -484,7 +501,7 @@ this.fn.uimenumgr.createMenu({
   displayName: kMd.displayName,
   iconSlotTriad: kMd.iconSlotTriad,
   isFlyout: kMd.isFlyout,
-  isVisible: kMd.isVisible,  // NEW - pass from constant
+  isHidden: kMd.isHidden,  // NEW - pass from constant
   menuItems: () => kMd.menuItems,
   flyoutMenuItemIds: kMd.flyoutMenuItemIds as unknown as string[],
   selectionHandler: async (menuId, menuItemId) => this.handleMenuItemSelected(menuId, menuItemId),
@@ -498,7 +515,7 @@ this.fn.uimenumgr.createMenu({
 **Add after existing menu CSS (before uimenu_html):**
 
 ```css
-.{{ns_}}menu.isVisible-false {
+.{{ns_}}menu.isHidden {
   display: none;
 }
 ```
@@ -567,17 +584,17 @@ Currently visibility is evaluated once at menu creation. Could add:
 Pattern supports any conditional menu:
 
 ```typescript
-// Only show for specific languages
-isVisible: (dict) => ['javascript', 'typescript', 'jsx', 'tsx'].includes(dict.languageId)
+// Only show for specific languages (inverted logic for isHidden)
+isHidden: (dict) => !['javascript', 'typescript', 'jsx', 'tsx'].includes(dict.languageId)
 
 // Show based on multiple conditions
-isVisible: (dict) => dict.languageId === 'html' && dict.hasSelection === 'true'
+isHidden: (dict) => !(dict.languageId === 'html' && dict.hasSelection === 'true')
 
 // Always show (explicit)
-isVisible: true
+isHidden: false
 
 // Always hide (for testing/development)
-isVisible: false
+isHidden: true
 ```
 
 ## Rollback Plan
@@ -585,24 +602,31 @@ isVisible: false
 If issues arise, revert changes in reverse order:
 
 1. Remove CSS from UIMenu.yaml
-2. Remove isVisible from PaperPrinter menu creation
-3. Remove isVisible handling from UIMenuMgr.createMenu
-4. Remove isVisible from UIMenu class
-5. Remove resolveUIMenuIsVisible from UIMenuMgr
+2. Remove isHidden from PaperPrinter menu creation
+3. Remove isHidden handling from UIMenuMgr.createMenu
+4. Remove isHidden from UIMenu class
+5. Remove resolveUIMenuIsHidden from UIMenuMgr
 6. Remove languageId from buildUIMenuItemDict
-7. Remove isVisible from kMd constant
-8. Remove UIMenuIsVisibleFxn_t type
+7. Remove isHidden from kMd constant
+8. Remove UIMenuFxn_t type and restore UIMenuItemValueFxn_t/UIMenuIsVisibleFxn_t
 9. Revert UIMenuItemDict_t to numeric only
 10. Remove forceContent/forceContents from Utils
 
 ## Notes
 
-- Keep `isFlyout` and `isVisible` as separate concerns
+- Keep `isFlyout` and `isHidden` as separate concerns
 - `isFlyout` controls flyout behavior (existing)
-- `isVisible` controls conditional visibility (new)
+- `isHidden` controls conditional visibility (new)
 - Both can be true simultaneously (hidden flyout is still a flyout)
-- CSS class `isVisible-false` chosen over `hidden` to be explicit about source
+- CSS class `isHidden` chosen to be explicit about state
 
 ## Status Updates
 
 - **2025-12-16**: Plan created, ready to implement
+- **2025-12-20**: Implemented all code changes including Force type refactoring and menu visibility logic.
+- **2025-12-20**: Refactoring UIMenuItemValueFxn_t/UIMenuIsVisibleFxn_t to generic UIMenuFxn_t\<T\>.
+- **2025-12-21**: Completed refactoring to non-generic UIMenuFxn_t and verified implementation with tests.
+- **2025-12-21**: Renamed `isVisible` to `isHidden` for better CSS class alignment and simplicity. Inverted logic accordingly.
+- **2025-12-21**: Defined `kMd_languageId` constant for use in place of magical "markdown" strings.
+- **2025-12-21**: Renamed test file to `MenuHidden.test.ts` and plan file to `MenuHidden.md` for clarity.
+- **2025-12-21**: Refined type system to support boolean values in `UIMenuItem_t` and `UIMenuMgr`, removing `as any` casts in tests for strict type compliance.

@@ -11,6 +11,9 @@ uimenu_css: |
     position: relative;
     display: inline-block;
   }
+  .{{ns_}}menu.isHidden {
+    display: none;
+  }
   .{{ns_}}menuItems {
     position: absolute;
     background: #222;
