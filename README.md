@@ -1,11 +1,42 @@
 # Print2Paper4VSCode
 
+[![CI](https://github.com/appliedmedia/print2paper4vscode/workflows/CI/badge.svg)](https://github.com/appliedmedia/print2paper4vscode/actions)
+[![codecov](https://codecov.io/gh/appliedmedia/print2paper4vscode/branch/main/graph/badge.svg)](https://codecov.io/gh/appliedmedia/print2paper4vscode)
+[![VS Code Marketplace](https://img.shields.io/visual-studio-marketplace/v/acoven.print2paper4vscode)](https://marketplace.visualstudio.com/items?itemName=acoven.print2paper4vscode)
+[![License: Code Transparency](https://img.shields.io/badge/License-Code%20Transparency-blue.svg)](https://github.com/appliedmedia/print2paper4vscode/blob/main/LICENSE)
+
 A VS Code extension that captures content from the active editor, applies syntax highlighting, generates a vector PDF, and provides multiple printing options through an interactive webview interface.
 
 ## Quick Links
 
 - **[Developer Guide](docs/AGENTS.md)** - Complete developer documentation
 - **[VSCode APIs](docs/VSCodeAPIs.md)** - API integration details
+
+## Test Coverage
+
+- **Lines:** 85%
+- **Functions:** 83%
+- **Branches:** 74%
+- **Statements:** 85%
+
+Run `npm run test:coverage` to generate full report.
+
+## Platform Support
+
+### macOS (Full Support)
+
+- ✅ Native AppleScript integration
+- ✅ Preview app integration
+- ✅ Direct printing support
+- ✅ Print dialog support
+
+### Windows & Linux (Planned)
+
+- ⏳ Core functionality works (PDF generation, syntax highlighting)
+- ⏳ Platform-specific printing commands in development
+- ⏳ Contributions welcome
+
+**Current recommendation:** macOS for full printing workflow, all platforms for PDF export.
 
 ## How It Actually Works
 
@@ -26,6 +57,7 @@ The extension follows this workflow:
    - Maps themed tokens to PDF text with colors
    - Supports configurable page sizes and orientations
    - Applies user-selected font sizes and line heights
+   - **Multi-page support:** Automatically calculates page breaks
 
 4. **Interactive Webview Preview**:
    - Opens webview panel titled "Printable: {document name}"
@@ -43,6 +75,7 @@ The extension follows this workflow:
 - **Direct Editor Access**: Captures content directly from VS Code editor using APIs
 - **Syntax Highlighting**: Shiki-based highlighting with VS Code theme integration
 - **Vector PDF Generation**: Creates scalable PDFs using jsPDF
+- **Multi-Page Support**: Handles long documents with accurate page breaking
 - **Interactive Webview**: PDF.js-powered preview with live toolbar menus
 - **Dynamic Menu System**: Real-time theme, page size, and font size switching
 - **Multiple Print Options**: Preview dialog, direct printing, or PDF saving
@@ -330,22 +363,20 @@ Error Recovery:
 - ✅ Page size and orientation configuration
 - ✅ Font size adjustment (8px to 24px)
 - ✅ AppleScript integration for macOS printing
+- ✅ Multi-page PDF generation
 
 ### Known Limitations
 
 - **Preview Tabs**: Printing from preview/webview tabs not yet supported
 - **Platform Support**: Print commands currently optimized for macOS only
-- **Single-Page PDFs**: Large files are truncated to fit single page dimensions
 - **Font Support**: Limited to jsPDF-supported fonts (Courier, Helvetica, Times)
-- **No Multi-Page Support**: Current PDF generation creates only single-page output
 
 ## Documentation
 
 - **[Developer Guide](docs/AGENTS.md)** - Complete developer documentation and architecture
 - **[Developer Installation](docs/INSTALL.md)** - Developer setup and installation instructions
 - **[VSCode APIs](docs/VSCodeAPIs.md)** - VS Code API integration details
-- **[Implementation Plan](docs/IMPLEMENTATION_PLAN.md)** - Development roadmap and plans
-- **[PDF Generation Flow](docs/PDF_GENERATION_FLOW.md)** - PDF creation process documentation
+- **[Implementation Plan](docs/plans/2025-12-11_plan_inProgress_CICD.md)** - Current CI/CD plan
 
 ## Development
 

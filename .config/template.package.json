@@ -21,7 +21,9 @@
     "jspdf",
     "print preview",
     "code export",
-    "document printing"
+    "document printing",
+    "macos",
+    "markdown"
   ],
   "repository": {
     "type": "git",
