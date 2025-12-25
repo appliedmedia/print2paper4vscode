@@ -20,10 +20,7 @@
     "shiki",
     "jspdf",
     "print preview",
-    "code export",
-    "document printing",
-    "macos",
-    "markdown"
+    "code export"
   ],
   "repository": {
     "type": "git",

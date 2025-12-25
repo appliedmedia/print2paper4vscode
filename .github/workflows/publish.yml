@@ -30,11 +30,23 @@ jobs:
       
       - name: Compile TypeScript
         run: npm run compile
+
+      - name: Run tests
+        run: npm test
       
       - name: Install vsce
         run: npm install -g @vscode/vsce
       
+      - name: Verify secret configured
+        if: env.VSCE_PAT == ''
+        run: |
+          echo "::error::VSCE_PAT secret is not configured"
+          exit 1
+        env:
+          VSCE_PAT: ${{ secrets.VSCE_PAT }}
+
       - name: Publish to VS Code Marketplace
+        if: env.VSCE_PAT != ''
         run: vsce publish ${{ github.event.inputs.version || 'patch' }}
         env:
           VSCE_PAT: ${{ secrets.VSCE_PAT }}

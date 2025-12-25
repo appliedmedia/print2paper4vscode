@@ -554,13 +554,16 @@ Before publishing to VS Code Marketplace:
 
 - [ ] Create extension icon (128x128 PNG)
 - [x] Add GitHub repository templates
-  - Issue templates
-  - PR template
-  - CONTRIBUTING.md
-  - CODE_OF_CONDUCT.md
+  - ✅ Issue templates
+  - ✅ PR template
+  - ✅ CONTRIBUTING.md
+  - ✅ CODE_OF_CONDUCT.md
 - [x] Set up CI/CD (see CICD plan for details)
+  - ✅ ci.yml and publish.yml created
 - [x] Add status badges to README.md
+  - ✅ Added (commented out until active)
 - [x] Measure and document code coverage
+  - ✅ Configured in CI pipeline
 
 ---
 

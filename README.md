@@ -1,8 +1,11 @@
 # Print2Paper4VSCode
 
+<!-- 
+Badges to add after CI/CD is running:
 [![CI](https://github.com/appliedmedia/print2paper4vscode/workflows/CI/badge.svg)](https://github.com/appliedmedia/print2paper4vscode/actions)
 [![codecov](https://codecov.io/gh/appliedmedia/print2paper4vscode/branch/main/graph/badge.svg)](https://codecov.io/gh/appliedmedia/print2paper4vscode)
 [![VS Code Marketplace](https://img.shields.io/visual-studio-marketplace/v/acoven.print2paper4vscode)](https://marketplace.visualstudio.com/items?itemName=acoven.print2paper4vscode)
+-->
 [![License: Code Transparency](https://img.shields.io/badge/License-Code%20Transparency-blue.svg)](https://github.com/appliedmedia/print2paper4vscode/blob/main/LICENSE)
 
 A VS Code extension that captures content from the active editor, applies syntax highlighting, generates a vector PDF, and provides multiple printing options through an interactive webview interface.
@@ -12,6 +15,7 @@ A VS Code extension that captures content from the active editor, applies syntax
 - **[Developer Guide](docs/AGENTS.md)** - Complete developer documentation
 - **[VSCode APIs](docs/VSCodeAPIs.md)** - API integration details
 
+<!--
 ## Test Coverage
 
 - **Lines:** 85%
@@ -20,6 +24,7 @@ A VS Code extension that captures content from the active editor, applies syntax
 - **Statements:** 85%
 
 Run `npm run test:coverage` to generate full report.
+-->
 
 ## Platform Support
 
@@ -376,7 +381,7 @@ Error Recovery:
 - **[Developer Guide](docs/AGENTS.md)** - Complete developer documentation and architecture
 - **[Developer Installation](docs/INSTALL.md)** - Developer setup and installation instructions
 - **[VSCode APIs](docs/VSCodeAPIs.md)** - VS Code API integration details
-- **[Implementation Plan](docs/plans/2025-12-11_plan_inProgress_CICD.md)** - Current CI/CD plan
+- **[CI/CD Plan](docs/plans/2025-12-11_plan_inProgress_CICD.md)** - CI/CD automation and testing plan
 
 ## Development
 
