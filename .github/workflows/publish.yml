@@ -48,6 +48,11 @@ jobs:
 
       - name: Publish to VS Code Marketplace
         if: "${{ secrets.VSCE_PAT != '' }}"
-        run: vsce publish ${{ github.event.inputs.version || 'patch' }}
+        run: |
+          VERSION="${{ github.event.inputs.version }}"
+          if [ -z "$VERSION" ] && [ "${{ github.event_name }}" = "release" ]; then
+            VERSION="${{ github.event.release.tag_name }}"
+          fi
+          vsce publish ${VERSION:-patch}
         env:
           VSCE_PAT: ${{ secrets.VSCE_PAT }}
