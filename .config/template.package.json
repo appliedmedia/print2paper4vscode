@@ -97,8 +97,8 @@
     "test:coverage:check": "c8 --reporter=text --reporter=html --reporter=json-summary --check-coverage --lines 80 --functions 80 --branches 80 --statements 80 npm run test"
   },
   "devDependencies": {
-    "@types/node": "^25.0.3",
-    "@types/vscode": "^1.107.0",
+    "@types/node": "^20.14.0",
+    "@types/vscode": "^1.90.0",
     "@typescript-eslint/eslint-plugin": "latest",
     "@typescript-eslint/parser": "latest",
     "c8": "^10.1.3",
