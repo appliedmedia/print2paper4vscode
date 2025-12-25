@@ -8,6 +8,7 @@ base_css: |
   }
 
 toolbar_css: |
+  /* stylelint-disable selector-id-pattern */
   #{{ns_}}toolbar {
     position: fixed;
     top: 12px;

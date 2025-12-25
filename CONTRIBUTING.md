@@ -22,7 +22,9 @@ See [INSTALL.md](docs/INSTALL.md) for detailed setup instructions.
 - Run `npm run lint` and `npm run format` before committing.
 
 ## Pull Request Process
+     
+1. Ensure your code adheres to the project's coding standards.
+2. Update the README.md with details of changes to commands, configuration settings, or user-facing features if applicable.
+3. Ensure all tests pass locally (`npm test`).
+4. Submit your Pull Request. It will be reviewed by the maintainers.
 
-1. Update the README.md with details of changes to commands, configuration settings, or user-facing features.
-2. Increase the version numbers in any examples files and the README.md to the new version that this Pull Request would represent.
-3. You may merge the Pull Request in once you have the sign-off of two other developers, or if you do not have permission to do that, you may request the second reviewer to merge it for you.

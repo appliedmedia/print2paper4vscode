@@ -30,6 +30,7 @@ Examples of unacceptable behavior include:
 * The use of sexualized language or imagery, and sexual attention or
   advances of any kind
 * Trolling, insulting or derogatory comments, and personal or political attacks
+* Sexual or crude comments or jokes
 * Public or private harassment
 * Publishing others' private information, such as a physical or email
   address, without their explicit permission
@@ -43,10 +44,7 @@ acceptable behavior and will take appropriate and fair corrective action in
 response to any behavior that they deem inappropriate, threatening, offensive,
 or harmful.
 
-Community leaders have the right and responsibility to remove, edit, or reject
-comments, commits, code, wiki edits, issues, and other contributions that are
-not aligned to this Code of Conduct, and will communicate reasons for moderation
-decisions when appropriate.
+Community leaders have the right and responsibility to remove, edit, or reject comments, commits, code, wiki edits, issues, and other contributions that are not aligned to this Code of Conduct, or to ban temporarily or permanently any contributor for other behaviors that they deem inappropriate, threatening, offensive, or harmful. This includes **ZERO TOLERANCE** for derogatory comments.
 
 ## Scope
 
