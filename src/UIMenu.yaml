@@ -92,8 +92,7 @@ uimenu_css: |
     content: "" !important;
   }
 
-  .{{ns_}}menuItem.isSelected {
-  }
+  /* .{{ns_}}menuItem.isSelected {} - removed empty block */
   .{{ns_}}menuItem.isSelected .gutter-before::before {
     content: "✓";
     display: inline-block;

@@ -553,14 +553,17 @@ Before publishing to VS Code Marketplace:
 ### Optional Enhancements (Pre-Publish)
 
 - [ ] Create extension icon (128x128 PNG)
-- [ ] Add GitHub repository templates
-  - Issue templates
-  - PR template
-  - CONTRIBUTING.md
-  - CODE_OF_CONDUCT.md
-- [ ] Set up CI/CD (see CICD plan for details)
-- [ ] Add status badges to README.md
-- [ ] Measure and document code coverage
+- [x] Add GitHub repository templates
+  - ✅ Issue templates
+  - ✅ PR template
+  - ✅ CONTRIBUTING.md
+  - ✅ CODE_OF_CONDUCT.md
+- [x] Set up CI/CD (see CICD plan for details)
+  - ✅ ci.yml and publish.yml created
+- [x] Add status badges to README.md
+  - ✅ Added (commented out until active)
+- [x] Measure and document code coverage
+  - ✅ Configured in CI pipeline
 
 ---
 
@@ -752,8 +755,8 @@ See `docs/plans/2025-12-11_plan_todo_CICD.md` for:
 ### Optional Future Enhancements
 
 - [ ] Create extension icon (128x128 PNG)
-- [ ] Add GitHub repository templates
-- [ ] Set up CI/CD (see CICD plan)
+- [x] Add GitHub repository templates
+- [x] Set up CI/CD (see CICD plan)
 
 ---
 
