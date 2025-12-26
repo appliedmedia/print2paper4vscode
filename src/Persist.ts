@@ -2,8 +2,7 @@ import type { Registry } from './Registry';
 import type { FnImport_t } from './types/Registry_t';
 import { Diagnostics } from './Diagnostics';
 import type { UI_t } from './UI';
-import { kLastSaveDir } from './UI';
-import { kToolbar } from './types/UI_t';
+import { kToolbar, kLastSaveDir } from './types/UI_t';
 import type { GlobalStateKey_t, GlobalStateValue_t } from './VSCodeAPIs';
 import { kMenuId } from './types/UIMenu_t';
 

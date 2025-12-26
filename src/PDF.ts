@@ -76,7 +76,6 @@ export class PDF {
       'os.filePrint',
       'os.pathDirname',
       'os.fileReveal',
-      'os.getDir_Documents',
       'vscodeapis.getDir_Temp',
       'vscodeapis.getEditorTypography',
       'vscodeapis.getConfiguration',
@@ -84,8 +83,7 @@ export class PDF {
       'yaml.create',
       'utils.templateDictReplace',
       'utils.hasContent',
-      'uimenumgr.getMenuItemIdSelected',
-      'persist.set'
+      'uimenumgr.getMenuItemIdSelected'
     );
     this.dx = this.fn.dx.sub({ name: 'PDF' });
     this._docInfo = DocInfo_PDF.create({ reg: this.reg });
@@ -236,77 +234,28 @@ export class PDF {
       const safeName = this.fn.os.sanitizeFileName(descriptiveName || 'print_output');
       const defaultFilename = `${timestamp}_${safeName}.pdf`;
 
-      let targetPath: string | null = null;
-      let saveSuccessful = false;
-      let attemptCount = 0;
-      const maxAttempts = 5; // Prevent infinite loop
+      // Define save operation
+      const saveOperation = async (path: string): Promise<void> => {
+        // Ensure directory exists
+        const targetDir = this.fn.os.pathDirname(path);
+        this.fn.os.ensureDir(targetDir);
 
-      // Retry loop for save errors
-      while (!saveSuccessful && attemptCount < maxAttempts) {
-        attemptCount++;
+        // Save PDF document directly to chosen location
+        this.fn.os.fileWrite({ filePath: path, content: Buffer.from(pdfBuffer) });
 
-        // Ask user for save location using UI method
-        // chooseSaveLocation handles persist logic for lastSaveDir
-        targetPath = await this.fn.ui.chooseSaveLocation(defaultFilename);
+        // DO NOT track user-saved PDFs for cleanup - only track temp files
+        // User explicitly saved this file, we should NOT delete it on shutdown
 
-        if (!targetPath) {
-          dx.out('Save cancelled by user');
-          return;
-        }
+        // Reveal file in file explorer
+        await this.fn.os.fileReveal(path);
 
-        try {
-          // Ensure directory exists
-          const targetDir = this.fn.os.pathDirname(targetPath);
-          this.fn.os.ensureDir(targetDir);
+        dx.out(`Saved PDF document to ${path}`);
+      };
 
-          // Save PDF document directly to chosen location
-          this.fn.os.fileWrite({ filePath: targetPath, content: Buffer.from(pdfBuffer) });
+      // chooseSaveLocation handles retry logic and persist management
+      await this.fn.ui.chooseSaveLocation(defaultFilename, saveOperation);
 
-          saveSuccessful = true;
-
-          // DO NOT track user-saved PDFs for cleanup - only track temp files
-          // User explicitly saved this file, we should NOT delete it on shutdown
-
-          // Reveal file in file explorer
-          await this.fn.os.fileReveal(targetPath);
-
-          dx.out(`Saved PDF document to ${targetPath}`);
-        } catch (error) {
-          const errorStr = String(error);
-          dx.error(`Save failed on attempt ${attemptCount}: ${errorStr}`);
-          
-          if (attemptCount < maxAttempts) {
-            // Update lastSaveDir to Documents for next attempt
-            const docsDir = this.fn.os.getDir_Documents();
-            this.fn.persist.set('lastSaveDir', docsDir);
-            
-            // Show error and ask if they want to try again
-            const retry = await this.fn.ui.showErrorMessage(
-              'Please pick a directory you have access to (e.g., Documents folder).',
-              'Choose Different Location',
-              'Cancel'
-            );
-
-            if (retry !== 'Choose Different Location') {
-              dx.out('User chose not to retry save');
-              throw error;
-            }
-            // Loop will continue and chooseSaveLocation will use Documents as default
-          } else {
-            // Max attempts reached
-            await this.fn.ui.showErrorMessage(`Failed to save PDF: ${errorStr}`);
-            throw error;
-          }
-        }
-      }
-
-      if (!saveSuccessful) {
-        const maxAttemptsError = `Failed to save PDF after ${maxAttempts} attempts`;
-        await this.fn.ui.showErrorMessage(maxAttemptsError);
-        throw new Error(maxAttemptsError);
-      }
     } catch (error) {
-      // Final error logging - error message already shown in inner catch
       dx.error(`saveAsPDF failed: ${String(error)}`);
       throw error;
     } finally {

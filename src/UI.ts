@@ -16,15 +16,12 @@
 
 import type { Registry } from './Registry';
 import type { SendToExt_t, MessageHandler_t } from './types/UI_t';
-import { kToolbar } from './types/UI_t';
+import { kToolbar, kLastSaveDir } from './types/UI_t';
 import type { FnImport_t } from './types/Registry_t';
 import { Diagnostics } from './Diagnostics';
 import { YamlInstance } from './Yaml';
 import { kMenuId } from './types/UIMenu_t';
 import { kZoomLevel } from './types/PaperPrinter_t';
-
-// UI persist key constants
-export const kLastSaveDir = 'lastSaveDir' as const;
 
 // UI persist keys - union of menu IDs and toolbar position
 export const kUI = [...kMenuId, kToolbar.pos.persistId, kZoomLevel.iconSlotTriad.main.persistId, kLastSaveDir] as const;
@@ -237,43 +234,92 @@ export class UI {
     return this.yaml().base_css;
   }
 
-  // Choose save location
-  async chooseSaveLocation(defaultFilename: string, defaultDir?: string): Promise<string | null> {
+  // Choose save location with retry on error
+  async chooseSaveLocation(
+    defaultFilename: string,
+    saveOperation?: (path: string) => Promise<void>
+  ): Promise<string | null> {
     const dx = this.dx.sub({ name: 'chooseSaveLocation' });
 
     try {
-      // Use provided defaultDir, or last saved dir, or Documents dir
-      let targetDir = defaultDir;
-      if (!targetDir) {
+      let attemptCount = 0;
+      const maxAttempts = 5; // Prevent infinite loop
+
+      // Retry loop for save errors
+      while (attemptCount < maxAttempts) {
+        attemptCount++;
+
+        // Use last saved dir or Documents dir
         const lastSaveDir = this.fn.persist.get(kLastSaveDir);
-        targetDir = lastSaveDir || this.fn.os.getDir_Documents();
-      }
+        const targetDir = lastSaveDir || this.fn.os.getDir_Documents();
+        const defaultPath = this.fn.os.pathJoin(targetDir, defaultFilename);
 
-      const defaultPath = this.fn.os.pathJoin(targetDir, defaultFilename);
+        const uri = await this.fn.vscodeapis.showSaveDialog({
+          defaultUri: this.fn.vscodeapis.uriFromPath(defaultPath),
+          filters: {
+            'PDF files': ['pdf'],
+          },
+          title: 'Save PDF As',
+        });
 
-      const uri = await this.fn.vscodeapis.showSaveDialog({
-        defaultUri: this.fn.vscodeapis.uriFromPath(defaultPath),
-        filters: {
-          'PDF files': ['pdf'],
-        },
-        title: 'Save PDF As',
-      });
+        if (!uri) {
+          dx.out('Save cancelled by user');
+          return null;
+        }
 
-      if (uri) {
         const path = this.fn.vscodeapis.uriToPath(uri);
-        
-        // Save the directory for next time
-        const savedDir = this.fn.os.pathDirname(path);
-        this.fn.persist.set(kLastSaveDir, savedDir);
-        
-        dx.out(`User chose save location: ${path}`);
-        return path;
-      } else {
-        dx.out('User cancelled save dialog');
-        return null;
+
+        // If no save operation provided, just return the path
+        if (!saveOperation) {
+          const savedDir = this.fn.os.pathDirname(path);
+          this.fn.persist.set(kLastSaveDir, savedDir);
+          dx.out(`User chose save location: ${path}`);
+          return path;
+        }
+
+        // Try to save using the provided operation
+        try {
+          await saveOperation(path);
+
+          // Save succeeded - update lastSaveDir
+          const savedDir = this.fn.os.pathDirname(path);
+          this.fn.persist.set(kLastSaveDir, savedDir);
+          dx.out(`Saved successfully to: ${path}`);
+          return path;
+        } catch (error) {
+          const errorStr = String(error);
+          dx.error(`Save failed on attempt ${attemptCount}: ${errorStr}`);
+
+          if (attemptCount < maxAttempts) {
+            // Update lastSaveDir to Documents for next attempt
+            const docsDir = this.fn.os.getDir_Documents();
+            this.fn.persist.set(kLastSaveDir, docsDir);
+
+            // Show error and ask if they want to try again
+            const retry = await this.showErrorMessage(
+              'Please pick a directory you have access to (e.g., Documents folder).',
+              'Choose Different Location',
+              'Cancel'
+            );
+
+            if (retry !== 'Choose Different Location') {
+              dx.out('User chose not to retry save');
+              throw error;
+            }
+            // Loop will continue and re-prompt with Documents as default
+          } else {
+            // Max attempts reached
+            await this.showErrorMessage(`Failed to save PDF: ${errorStr}`);
+            throw error;
+          }
+        }
       }
+
+      const maxAttemptsError = `Failed to save PDF after ${maxAttempts} attempts`;
+      await this.showErrorMessage(maxAttemptsError);
+      throw new Error(maxAttemptsError);
     } catch (error) {
-      dx.out(`Error in save dialog: ${String(error)}`);
+      dx.error(`chooseSaveLocation failed: ${String(error)}`);
       throw error;
     } finally {
       dx.done();
