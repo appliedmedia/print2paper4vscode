@@ -76,7 +76,6 @@ export class PDF {
       'os.filePrint',
       'os.pathDirname',
       'os.fileReveal',
-      'os.getDir_Documents',
       'vscodeapis.getDir_Temp',
       'vscodeapis.getEditorTypography',
       'vscodeapis.getConfiguration',
@@ -239,14 +238,14 @@ export class PDF {
       let saveSuccessful = false;
       let attemptCount = 0;
       const maxAttempts = 5; // Prevent infinite loop
-      let defaultDirectory: string | undefined = undefined;
 
-      // Retry loop for permission errors
+      // Retry loop for save errors
       while (!saveSuccessful && attemptCount < maxAttempts) {
         attemptCount++;
 
         // Ask user for save location using UI method
-        targetPath = await this.fn.ui.chooseSaveLocation(defaultFilename, defaultDirectory);
+        // chooseSaveLocation handles persist logic for lastSaveDir
+        targetPath = await this.fn.ui.chooseSaveLocation(defaultFilename);
 
         if (!targetPath) {
           dx.out('Save cancelled by user');
@@ -271,21 +270,10 @@ export class PDF {
 
           dx.out(`Saved PDF document to ${targetPath}`);
         } catch (error) {
-          // Check if it's a permission error
           const errorStr = String(error);
-          const isPermissionError =
-            errorStr.includes('EACCES') ||
-            errorStr.includes('EPERM') ||
-            errorStr.includes('EROFS') ||
-            errorStr.includes('permission denied') ||
-            errorStr.includes('read-only file system');
-
-          if (isPermissionError && attemptCount < maxAttempts) {
-            dx.out(`Permission error on attempt ${attemptCount}: ${errorStr}`);
-
-            // Default to Documents directory on retry
-            defaultDirectory = this.fn.os.getDir_Documents();
-
+          dx.error(`Save failed on attempt ${attemptCount}: ${errorStr}`);
+          
+          if (attemptCount < maxAttempts) {
             // Show error and ask if they want to try again
             const retry = await this.fn.ui.showErrorMessage(
               'Please pick a directory you have access to (e.g., Documents folder).',
@@ -299,7 +287,7 @@ export class PDF {
             }
             // Loop will continue and re-prompt with Documents directory as default
           } else {
-            // Non-permission error or max attempts reached
+            // Max attempts reached
             await this.fn.ui.showErrorMessage(`Failed to save PDF: ${errorStr}`);
             throw error;
           }

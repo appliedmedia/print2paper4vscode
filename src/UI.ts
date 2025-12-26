@@ -16,14 +16,18 @@
 
 import type { Registry } from './Registry';
 import type { SendToExt_t, MessageHandler_t } from './types/UI_t';
+import { kToolbar } from './types/UI_t';
 import type { FnImport_t } from './types/Registry_t';
 import { Diagnostics } from './Diagnostics';
 import { YamlInstance } from './Yaml';
-import type { Persist, Persist_t } from './Persist';
 import { kMenuId } from './types/UIMenu_t';
+import { kZoomLevel } from './types/PaperPrinter_t';
+
+// UI persist key constants
+export const kLastSaveDir = 'lastSaveDir' as const;
 
 // UI persist keys - union of menu IDs and toolbar position
-export const kUI = [...kMenuId, 'toolbar_pos', 'zoomLevel_value'] as const;
+export const kUI = [...kMenuId, kToolbar.pos.persistId, kZoomLevel.iconSlotTriad.main.persistId!, kLastSaveDir] as const;
 
 export type UI_t = (typeof kUI)[number];
 
@@ -52,9 +56,6 @@ export class UI {
     toolbar_html: '',
   } as const;
 
-  // Toolbar positioning constants
-  private static readonly kToolbar_pos_min_px = 8;
-  private static readonly kToolbar_pos_max_px = 5120; // Reasonable max for 5K displays
 
   private reg: Registry;
   private fn: FnImport_t;
@@ -79,7 +80,9 @@ export class UI {
       'uimenumgr.getUIMenus_HTML',
       'uimenumgr.getUIMenus_CSS',
       'uimenumgr.getUIMenus_JS',
-      'os.pathJoin'
+      'os.pathJoin',
+      'os.pathDirname',
+      'os.getDir_Documents'
     );
     this.dx = this.fn.dx.sub({ name: 'UI' });
     
@@ -149,18 +152,18 @@ export class UI {
   }
 
   // Show information message
-  showInfoMessage(message: string, ...items: string[]): Thenable<string | undefined> {
-    return this.fn.vscodeapis.showInformationMessage(message, ...items);
+  async showInfoMessage(message: string, ...items: string[]): Promise<string | undefined> {
+    return await this.fn.vscodeapis.showInformationMessage(message, ...items);
   }
 
   // Show error message
-  showErrorMessage(message: string, ...items: string[]): Thenable<string | undefined> {
-    return this.fn.vscodeapis.showErrorMessage(message, ...items);
+  async showErrorMessage(message: string, ...items: string[]): Promise<string | undefined> {
+    return await this.fn.vscodeapis.showErrorMessage(message, ...items);
   }
 
   // Show warning message
-  showWarningMessage(message: string, ...items: string[]): Thenable<string | undefined> {
-    return this.fn.vscodeapis.showWarningMessage(message, ...items);
+  async showWarningMessage(message: string, ...items: string[]): Promise<string | undefined> {
+    return await this.fn.vscodeapis.showWarningMessage(message, ...items);
   }
 
   // Add toolbar to HTML content
@@ -182,13 +185,13 @@ export class UI {
       // Get toolbar position, validate it's within bounds, else use default
       // Note: VS Code extensions run in Node.js and don't have access to window dimensions.
       // Client-side code in toolbar_js/yaml dynamically clamps to actual window.innerWidth.
-      let toolbar_pos = Number(this.fn.persist.get('toolbar_pos'));
+      let toolbar_pos = Number(this.fn.persist.get(kToolbar.pos.persistId));
       if (
         isNaN(toolbar_pos) ||
-        toolbar_pos < UI.kToolbar_pos_min_px ||
-        toolbar_pos >= UI.kToolbar_pos_max_px
+        toolbar_pos < kToolbar.pos.min_px ||
+        toolbar_pos >= kToolbar.pos.max_px
       ) {
-        toolbar_pos = UI.kToolbar_pos_min_px;
+        toolbar_pos = kToolbar.pos.min_px;
       }
 
       // Replace toolbar_pos in toolbar_css before combining with menu CSS
@@ -200,7 +203,7 @@ export class UI {
       // Replace toolbar positioning constant in toolbar_js
       const toolbarJsWithConstants = templates.toolbar_js.replace(
         /\{\{toolbar_pos_min_px\}\}/g,
-        UI.kToolbar_pos_min_px.toString()
+        kToolbar.pos.min_px.toString()
       );
 
       // Inject toolbar into HTML using template
@@ -235,14 +238,18 @@ export class UI {
   }
 
   // Choose save location
-  async chooseSaveLocation(defaultFilename: string, defaultDirectory?: string): Promise<string | null> {
+  async chooseSaveLocation(defaultFilename: string, defaultDir?: string): Promise<string | null> {
     const dx = this.dx.sub({ name: 'chooseSaveLocation' });
 
     try {
-      // If a default directory is provided, use it; otherwise just use the filename
-      const defaultPath = defaultDirectory
-        ? this.fn.os.pathJoin(defaultDirectory, defaultFilename)
-        : defaultFilename;
+      // Use provided defaultDir, or last saved dir, or Documents dir
+      let targetDir = defaultDir;
+      if (!targetDir) {
+        const lastSaveDir = this.fn.persist.get(kLastSaveDir);
+        targetDir = lastSaveDir || this.fn.os.getDir_Documents();
+      }
+
+      const defaultPath = this.fn.os.pathJoin(targetDir, defaultFilename);
 
       const uri = await this.fn.vscodeapis.showSaveDialog({
         defaultUri: this.fn.vscodeapis.uriFromPath(defaultPath),
@@ -254,6 +261,11 @@ export class UI {
 
       if (uri) {
         const path = this.fn.vscodeapis.uriToPath(uri);
+        
+        // Save the directory for next time
+        const savedDir = this.fn.os.pathDirname(path);
+        this.fn.persist.set(kLastSaveDir, savedDir);
+        
         dx.out(`User chose save location: ${path}`);
         return path;
       } else {

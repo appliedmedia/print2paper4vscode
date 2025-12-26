@@ -2,6 +2,7 @@ import type { Registry } from './Registry';
 import type { FnImport_t } from './types/Registry_t';
 import { Diagnostics } from './Diagnostics';
 import type { UI_t } from './UI';
+import { kToolbar } from './types/UI_t';
 import type { GlobalStateKey_t, GlobalStateValue_t } from './VSCodeAPIs';
 import { kMenuId } from './types/UIMenu_t';
 
@@ -128,7 +129,7 @@ export class Persist {
    */
   async clear(): Promise<void> {
     // Clear all menu-related state
-    const keysToReset: GlobalStateKey_t[] = [...kMenuId, 'toolbar_pos'];
+    const keysToReset: GlobalStateKey_t[] = [...kMenuId, kToolbar.pos.persistId];
 
     for (const key of keysToReset) {
       await this.fn.vscodeapis.deleteGlobalState({

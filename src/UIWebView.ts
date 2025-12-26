@@ -1,7 +1,6 @@
 import type { Registry } from './Registry';
 import type { WebviewPanelId_t } from './VSCodeAPIs';
 import type {
-  SendToExt_t,
   SendToExt_dragEnd,
   SendToExt_menuItemSelected,
   SendToExt_dx,
@@ -11,6 +10,7 @@ import type { FnImport_t } from './types/Registry_t';
 import { Diagnostics } from './Diagnostics';
 import { YamlInstance } from './Yaml';
 import { kZoomLevel, kZoomIn, kZoomOut } from './types/PaperPrinter_t';
+import { kToolbar } from './types/UI_t';
 
 /**
  * PDF Data for webview display
@@ -313,7 +313,7 @@ export class UIWebView {
       const left = msg.left;
       if (typeof left === 'number') {
         // Save toolbar position via persist
-        this.fn.persist.set('toolbar_pos', left);
+        this.fn.persist.set(kToolbar.pos.persistId, left);
         dx.out(`Toolbar position saved: ${left}px`);
       }
     } finally {
