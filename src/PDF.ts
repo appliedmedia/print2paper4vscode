@@ -493,9 +493,6 @@ export class PDF {
         // Setup PDF document
         this.setupPdf();
 
-        // Add header and footer to first page
-        this.addHeaderAndFooter();
-
         // Tokenize or render to HTML
         const result = await this.fn.stylize.tokenize({
           code,
@@ -1661,7 +1658,7 @@ private renderHeaderFooterElements(
     this.currentY = headerBottom + headerSpacing + this.currentLineHeight;
     this.currentX = margins.leftMarginPts;
 
-    this.addHeaderAndFooter();
+    // Note: Headers/footers are added later in renderPageTotals() after we know the total page count
   }
 
   /**
