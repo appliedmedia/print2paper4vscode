@@ -27,7 +27,7 @@ import { kZoomLevel } from './types/PaperPrinter_t';
 export const kLastSaveDir = 'lastSaveDir' as const;
 
 // UI persist keys - union of menu IDs and toolbar position
-export const kUI = [...kMenuId, kToolbar.pos.persistId, kZoomLevel.iconSlotTriad.main.persistId!, kLastSaveDir] as const;
+export const kUI = [...kMenuId, kToolbar.pos.persistId, kZoomLevel.iconSlotTriad.main.persistId, kLastSaveDir] as const;
 
 export type UI_t = (typeof kUI)[number];
 
