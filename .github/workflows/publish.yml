@@ -14,10 +14,21 @@ jobs:
   publish:
     name: Publish to VS Code Marketplace
     runs-on: ubuntu-latest
+    environment:
+      name: production
+      url: https://marketplace.visualstudio.com/items?itemName=${{ github.repository }}
     env:
       VSCE_PAT: ${{ secrets.VSCE_PAT }}
     
     steps:
+      - name: Check repository ownership
+        if: github.repository_owner != 'appliedmedia'
+        run: |
+          echo "::error::This workflow can only publish from the official repository"
+          echo "::error::Current repository: ${{ github.repository }}"
+          echo "::error::This appears to be a fork. Forks cannot publish to the VS Code Marketplace."
+          exit 1
+      
       - name: Checkout code
         uses: actions/checkout@v4
       
