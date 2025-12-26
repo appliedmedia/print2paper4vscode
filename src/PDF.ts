@@ -276,7 +276,9 @@ export class PDF {
           const isPermissionError =
             errorStr.includes('EACCES') ||
             errorStr.includes('EPERM') ||
-            errorStr.includes('permission denied');
+            errorStr.includes('EROFS') ||
+            errorStr.includes('permission denied') ||
+            errorStr.includes('read-only file system');
 
           if (isPermissionError && attemptCount < maxAttempts) {
             dx.out(`Permission error on attempt ${attemptCount}: ${errorStr}`);
