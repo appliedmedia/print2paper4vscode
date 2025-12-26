@@ -272,7 +272,7 @@ export class UI {
         // If no save operation provided, just return the path
         if (!saveOperation) {
           const savedDir = this.fn.os.pathDirname(path);
-          this.fn.persist.set(kLastSaveDir, savedDir);
+          this.fn.persist.set(kLastSaveDir.persistId, savedDir);
           dx.out(`User chose save location: ${path}`);
           return path;
         }
