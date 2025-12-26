@@ -24,7 +24,7 @@ import { kMenuId } from './types/UIMenu_t';
 import { kZoomLevel } from './types/PaperPrinter_t';
 
 // UI persist keys - union of menu IDs and toolbar position
-export const kUI = [...kMenuId, kToolbar.pos.persistId, kZoomLevel.iconSlotTriad.main.persistId, kLastSaveDir] as const;
+export const kUI = [...kMenuId, kToolbar.pos.persistId, kZoomLevel.iconSlotTriad.main.persistId, kLastSaveDir.persistId] as const;
 
 export type UI_t = (typeof kUI)[number];
 
@@ -283,7 +283,7 @@ export class UI {
 
           // Save succeeded - update lastSaveDir
           const savedDir = this.fn.os.pathDirname(path);
-          this.fn.persist.set(kLastSaveDir, savedDir);
+          this.fn.persist.set(kLastSaveDir.persistId, savedDir);
           dx.out(`Saved successfully to: ${path}`);
           return path;
         } catch (error) {
@@ -293,7 +293,7 @@ export class UI {
           if (attemptCount < maxAttempts) {
             // Update lastSaveDir to Documents for next attempt
             const docsDir = this.fn.os.getDir_Documents();
-            this.fn.persist.set(kLastSaveDir, docsDir);
+            this.fn.persist.set(kLastSaveDir.persistId, docsDir);
 
             // Show error and ask if they want to try again
             const retry = await this.showErrorMessage(

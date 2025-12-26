@@ -10,7 +10,9 @@ export const kToolbar = {
 } as const;
 
 // Save dialog configuration
-export const kLastSaveDir = 'lastSaveDir' as const;
+export const kLastSaveDir = {
+  persistId: 'lastSaveDir',
+} as const;
 
 export interface UIMenuItem {
   id: string;

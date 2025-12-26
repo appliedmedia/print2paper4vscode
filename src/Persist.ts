@@ -129,7 +129,7 @@ export class Persist {
    */
   async clear(): Promise<void> {
     // Clear all menu-related state
-    const keysToReset: GlobalStateKey_t[] = [...kMenuId, kToolbar.pos.persistId, kLastSaveDir];
+    const keysToReset: GlobalStateKey_t[] = [...kMenuId, kToolbar.pos.persistId, kLastSaveDir.persistId];
 
     for (const key of keysToReset) {
       await this.fn.vscodeapis.deleteGlobalState({
