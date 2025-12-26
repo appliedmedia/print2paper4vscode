@@ -76,6 +76,7 @@ export class PDF {
       'os.filePrint',
       'os.pathDirname',
       'os.fileReveal',
+      'os.getDir_Documents',
       'vscodeapis.getDir_Temp',
       'vscodeapis.getEditorTypography',
       'vscodeapis.getConfiguration',
@@ -83,7 +84,8 @@ export class PDF {
       'yaml.create',
       'utils.templateDictReplace',
       'utils.hasContent',
-      'uimenumgr.getMenuItemIdSelected'
+      'uimenumgr.getMenuItemIdSelected',
+      'persist.set'
     );
     this.dx = this.fn.dx.sub({ name: 'PDF' });
     this._docInfo = DocInfo_PDF.create({ reg: this.reg });
@@ -274,6 +276,10 @@ export class PDF {
           dx.error(`Save failed on attempt ${attemptCount}: ${errorStr}`);
           
           if (attemptCount < maxAttempts) {
+            // Update lastSaveDir to Documents for next attempt
+            const docsDir = this.fn.os.getDir_Documents();
+            this.fn.persist.set('lastSaveDir', docsDir);
+            
             // Show error and ask if they want to try again
             const retry = await this.fn.ui.showErrorMessage(
               'Please pick a directory you have access to (e.g., Documents folder).',
@@ -285,7 +291,7 @@ export class PDF {
               dx.out('User chose not to retry save');
               throw error;
             }
-            // Loop will continue and re-prompt with Documents directory as default
+            // Loop will continue and chooseSaveLocation will use Documents as default
           } else {
             // Max attempts reached
             await this.fn.ui.showErrorMessage(`Failed to save PDF: ${errorStr}`);
