@@ -170,6 +170,14 @@ describe('OS Base Class', () => {
       assert.ok(typeof homeDir === 'string');
       assert.ok(homeDir.length > 0);
     });
+
+    it('should get Documents directory', () => {
+      const docsDir = os.getDir_Documents();
+      assert.ok(typeof docsDir === 'string');
+      assert.ok(docsDir.length > 0);
+      // Documents directory should contain 'Documents' in path
+      assert.ok(docsDir.includes('Documents'));
+    });
   });
 
   describe('filename sanitization', () => {

@@ -123,6 +123,9 @@ export abstract class OS {
     return homedir();
   }
 
+  // Platform-specific Documents directory - must be overridden by subclasses
+  abstract getDir_Documents(): string;
+
   /**
    * Get OS-specific template variable replacements
    * Subclasses must implement this to return platform-specific key-value pairs

@@ -538,22 +538,22 @@ export class VSCodeAPIs {
   /**
    * Shows information message
    */
-  showInformationMessage(message: string): void {
-    this.vscode.window.showInformationMessage(message);
+  showInformationMessage(message: string, ...items: string[]): Thenable<string | undefined> {
+    return this.vscode.window.showInformationMessage(message, ...items);
   }
 
   /**
    * Shows warning message
    */
-  showWarningMessage(message: string): void {
-    this.vscode.window.showWarningMessage(message);
+  showWarningMessage(message: string, ...items: string[]): Thenable<string | undefined> {
+    return this.vscode.window.showWarningMessage(message, ...items);
   }
 
   /**
    * Shows error message
    */
-  showErrorMessage(message: string): void {
-    this.vscode.window.showErrorMessage(message);
+  showErrorMessage(message: string, ...items: string[]): Thenable<string | undefined> {
+    return this.vscode.window.showErrorMessage(message, ...items);
   }
 
   /**

@@ -78,7 +78,8 @@ export class UI {
       'utils.templateDictReplace',
       'uimenumgr.getUIMenus_HTML',
       'uimenumgr.getUIMenus_CSS',
-      'uimenumgr.getUIMenus_JS'
+      'uimenumgr.getUIMenus_JS',
+      'os.pathJoin'
     );
     this.dx = this.fn.dx.sub({ name: 'UI' });
     
@@ -148,18 +149,18 @@ export class UI {
   }
 
   // Show information message
-  showInfoMessage(message: string): void {
-    this.fn.vscodeapis.showInformationMessage(message);
+  showInfoMessage(message: string, ...items: string[]): Thenable<string | undefined> {
+    return this.fn.vscodeapis.showInformationMessage(message, ...items);
   }
 
   // Show error message
-  showErrorMessage(message: string): void {
-    this.fn.vscodeapis.showErrorMessage(message);
+  showErrorMessage(message: string, ...items: string[]): Thenable<string | undefined> {
+    return this.fn.vscodeapis.showErrorMessage(message, ...items);
   }
 
   // Show warning message
-  showWarningMessage(message: string): void {
-    this.fn.vscodeapis.showWarningMessage(message);
+  showWarningMessage(message: string, ...items: string[]): Thenable<string | undefined> {
+    return this.fn.vscodeapis.showWarningMessage(message, ...items);
   }
 
   // Add toolbar to HTML content
@@ -234,12 +235,17 @@ export class UI {
   }
 
   // Choose save location
-  async chooseSaveLocation(defaultFilename: string): Promise<string | null> {
+  async chooseSaveLocation(defaultFilename: string, defaultDirectory?: string): Promise<string | null> {
     const dx = this.dx.sub({ name: 'chooseSaveLocation' });
 
     try {
+      // If a default directory is provided, use it; otherwise just use the filename
+      const defaultPath = defaultDirectory
+        ? this.fn.os.pathJoin(defaultDirectory, defaultFilename)
+        : defaultFilename;
+
       const uri = await this.fn.vscodeapis.showSaveDialog({
-        defaultUri: this.fn.vscodeapis.uriFromPath(defaultFilename),
+        defaultUri: this.fn.vscodeapis.uriFromPath(defaultPath),
         filters: {
           'PDF files': ['pdf'],
         },

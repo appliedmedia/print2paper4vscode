@@ -53,6 +53,21 @@ export class OSLinux extends OS {
     await this.fileOpenInDefaultApp(path);
   }
 
+  getDir_Documents(): string {
+    // On Linux, try xdg-user-dir first
+    try {
+      const documentsPath = this.execSync('xdg-user-dir DOCUMENTS').trim();
+      if (documentsPath && documentsPath !== this.getDir_Home()) {
+        return documentsPath;
+      }
+    } catch (error) {
+      // xdg-user-dir not available or failed, fall back to ~/Documents
+      this.dx.out(`xdg-user-dir failed: ${String(error)}, falling back to ~/Documents`);
+    }
+    // Fallback to standard location
+    return this.pathJoin(this.getDir_Home(), 'Documents');
+  }
+
   done(): void {
     this.dx.done();
   }

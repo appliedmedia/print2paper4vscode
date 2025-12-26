@@ -76,6 +76,7 @@ export class PDF {
       'os.filePrint',
       'os.pathDirname',
       'os.fileReveal',
+      'os.getDir_Documents',
       'vscodeapis.getDir_Temp',
       'vscodeapis.getEditorTypography',
       'vscodeapis.getConfiguration',
@@ -234,30 +235,83 @@ export class PDF {
       const safeName = this.fn.os.sanitizeFileName(descriptiveName || 'print_output');
       const defaultFilename = `${timestamp}_${safeName}.pdf`;
 
-      // Ask user for save location using UI method
-      const targetPath = await this.fn.ui.chooseSaveLocation(defaultFilename);
+      let targetPath: string | null = null;
+      let saveSuccessful = false;
+      let attemptCount = 0;
+      const maxAttempts = 5; // Prevent infinite loop
+      let defaultDirectory: string | undefined = undefined;
 
-      if (!targetPath) {
-        dx.out('Save cancelled by user');
-        return;
+      // Retry loop for permission errors
+      while (!saveSuccessful && attemptCount < maxAttempts) {
+        attemptCount++;
+
+        // Ask user for save location using UI method
+        targetPath = await this.fn.ui.chooseSaveLocation(defaultFilename, defaultDirectory);
+
+        if (!targetPath) {
+          dx.out('Save cancelled by user');
+          return;
+        }
+
+        try {
+          // Ensure directory exists
+          const targetDir = this.fn.os.pathDirname(targetPath);
+          this.fn.os.ensureDir(targetDir);
+
+          // Save PDF document directly to chosen location
+          this.fn.os.fileWrite({ filePath: targetPath, content: Buffer.from(pdfBuffer) });
+
+          saveSuccessful = true;
+
+          // DO NOT track user-saved PDFs for cleanup - only track temp files
+          // User explicitly saved this file, we should NOT delete it on shutdown
+
+          // Reveal file in file explorer
+          await this.fn.os.fileReveal(targetPath);
+
+          dx.out(`Saved PDF document to ${targetPath}`);
+        } catch (error) {
+          // Check if it's a permission error
+          const errorStr = String(error);
+          const isPermissionError =
+            errorStr.includes('EACCES') ||
+            errorStr.includes('EPERM') ||
+            errorStr.includes('permission denied');
+
+          if (isPermissionError && attemptCount < maxAttempts) {
+            dx.out(`Permission error on attempt ${attemptCount}: ${errorStr}`);
+
+            // Default to Documents directory on retry
+            defaultDirectory = this.fn.os.getDir_Documents();
+
+            // Show error and ask if they want to try again
+            const retry = await this.fn.ui.showErrorMessage(
+              'Please pick a directory you have access to (e.g., Documents folder).',
+              'Choose Different Location',
+              'Cancel'
+            );
+
+            if (retry !== 'Choose Different Location') {
+              dx.out('User chose not to retry save');
+              throw error;
+            }
+            // Loop will continue and re-prompt with Documents directory as default
+          } else {
+            // Non-permission error or max attempts reached
+            await this.fn.ui.showErrorMessage(`Failed to save PDF: ${errorStr}`);
+            throw error;
+          }
+        }
       }
 
-      // Ensure directory exists
-      const targetDir = this.fn.os.pathDirname(targetPath);
-      this.fn.os.ensureDir(targetDir);
-
-      // Save PDF document directly to chosen location
-      this.fn.os.fileWrite({ filePath: targetPath, content: Buffer.from(pdfBuffer) });
-
-      // DO NOT track user-saved PDFs for cleanup - only track temp files
-      // User explicitly saved this file, we should NOT delete it on shutdown
-
-      // Reveal file in file explorer
-      await this.fn.os.fileReveal(targetPath);
-
-      dx.out(`Saved PDF document to ${targetPath}`);
+      if (!saveSuccessful) {
+        const maxAttemptsError = `Failed to save PDF after ${maxAttempts} attempts`;
+        await this.fn.ui.showErrorMessage(maxAttemptsError);
+        throw new Error(maxAttemptsError);
+      }
     } catch (error) {
-      this.fn.ui.showErrorMessage(`Failed to save PDF: ${String(error)}`);
+      // Final error logging - error message already shown in inner catch
+      dx.error(`saveAsPDF failed: ${String(error)}`);
       throw error;
     } finally {
       dx.done();

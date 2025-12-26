@@ -96,6 +96,11 @@ export class OSMac extends OS {
     await this.executeAppleScript('apple_script_open_preview_print_dialog', { file_path: escapedPath });
   }
 
+  getDir_Documents(): string {
+    // On macOS, Documents is always at ~/Documents
+    return this.pathJoin(this.getDir_Home(), 'Documents');
+  }
+
   done(): void {
     this.dx.done();
   }
