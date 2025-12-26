@@ -15,7 +15,7 @@ import { Yaml } from './Yaml';
 import { Utils } from './Utils';
 import type { FnImport_t } from './types/Registry_t';
 import type { ExtensionContext } from 'vscode';
-import { kExtId } from './_entrypoint_extId_t';
+import { kNs, kNs_ } from './types/_entrypoint_extId_t';
 
 /**
  * App - Main application container and component manager
@@ -38,9 +38,9 @@ import { kExtId } from './_entrypoint_extId_t';
  * await fn.pdf.generatePdf();
  */
 export class App {
-  // Namespace - References kExtId (single source of truth)
-  public static readonly kNs = kExtId;
-  public static readonly kNs_ = App.kNs + '_';
+  // Namespace - References constants from _entrypoint_extId_t.ts (single source of truth)
+  public static readonly kNs = kNs;
+  public static readonly kNs_ = kNs_;
   
   // Instance properties for easy access
   public readonly ns = App.kNs;

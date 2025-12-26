@@ -13,7 +13,7 @@ import { Range } from 'vscode';
 import type { SendToExt_t } from './types/UI_t';
 import type { FnImport_t } from './types/Registry_t';
 import { Diagnostics } from './Diagnostics';
-import { kExtId } from './_entrypoint_extId_t';
+import { kExtId } from './types/_entrypoint_extId_t';
 import type { FileRead_t } from './OS';
 import { Persist } from './Persist';
 
@@ -571,13 +571,6 @@ export class VSCodeAPIs {
    */
   getExtensionPath(): string {
     return this.context.extensionPath;
-  }
-
-  /**
-   * Gets temp directory for the extension
-   */
-  getDir_Temp(): string {
-    return this.fn.os.pathJoin(this.context.globalStorageUri.fsPath, 'temp');
   }
 
   /**

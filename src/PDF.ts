@@ -16,6 +16,7 @@ import { DocInfo_PDF } from './DocInfo_PDF';
 import type { ThemedToken } from 'shiki';
 import { parse, type HTMLElement, NodeType } from 'node-html-parser';
 import type { LanguageId_t } from './Stylize';
+import { kDir } from './types/OS_t';
 
 type HeaderFooterRenderablePos = HeaderFooterPos_t;
 
@@ -76,7 +77,7 @@ export class PDF {
       'os.filePrint',
       'os.pathDirname',
       'os.fileReveal',
-      'vscodeapis.getDir_Temp',
+      'os.getDir_Temp',
       'vscodeapis.getEditorTypography',
       'vscodeapis.getConfiguration',
       'stylize.tokenize',
@@ -166,14 +167,10 @@ export class PDF {
       const safeName = this.fn.os.sanitizeFileName(descriptiveName || 'print_output');
       const filename = `${timestamp}_${safeName}.pdf`;
 
-      // Save PDF to temp directory
-      const tempDir = this.fn.vscodeapis.getDir_Temp();
-      this.fn.os.ensureDir(tempDir);
-      const tempPdfPath = this.fn.os.pathJoin(tempDir, filename);
-
       // Write PDF document to temp file
-      this.fn.os.fileWrite({ filePath: tempPdfPath, content: Buffer.from(pdfBuffer) });
+      this.fn.os.fileWrite({ dir: kDir.temp, filename, content: Buffer.from(pdfBuffer) });
 
+      const tempPdfPath = this.fn.os.pathJoin(this.fn.os.getDir_Temp(), filename);
       this.trackTempPdf(tempPdfPath);
       await this.fn.os.fileOpenPrintDialog(tempPdfPath);
       dx.out('Opened PDF in Preview app');
@@ -199,14 +196,10 @@ export class PDF {
       const safeName = this.fn.os.sanitizeFileName(descriptiveName || 'print_output');
       const filename = `${timestamp}_${safeName}.pdf`;
 
-      // Save PDF to temp directory
-      const tempDir = this.fn.vscodeapis.getDir_Temp();
-      this.fn.os.ensureDir(tempDir);
-      const tempPdfPath = this.fn.os.pathJoin(tempDir, filename);
-
       // Write PDF document to temp file
-      this.fn.os.fileWrite({ filePath: tempPdfPath, content: Buffer.from(pdfBuffer) });
+      this.fn.os.fileWrite({ dir: kDir.temp, filename, content: Buffer.from(pdfBuffer) });
 
+      const tempPdfPath = this.fn.os.pathJoin(this.fn.os.getDir_Temp(), filename);
       this.trackTempPdf(tempPdfPath);
       // Send PDF to printer
       await this.fn.os.filePrint(tempPdfPath);
@@ -236,12 +229,12 @@ export class PDF {
 
       // Define save operation
       const saveOperation = async (path: string): Promise<void> => {
-        // Ensure directory exists
-        const targetDir = this.fn.os.pathDirname(path);
-        this.fn.os.ensureDir(targetDir);
+        // Extract dir and filename from path
+        const dir = this.fn.os.pathDirname(path);
+        const filename = this.fn.os.pathBasename(path);
 
         // Save PDF document directly to chosen location
-        this.fn.os.fileWrite({ filePath: path, content: Buffer.from(pdfBuffer) });
+        this.fn.os.fileWrite({ dir, filename, content: Buffer.from(pdfBuffer) });
 
         // DO NOT track user-saved PDFs for cleanup - only track temp files
         // User explicitly saved this file, we should NOT delete it on shutdown
