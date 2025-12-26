@@ -250,7 +250,7 @@ export class UI {
         attemptCount++;
 
         // Use last saved dir or Documents dir
-        const lastSaveDir = this.fn.persist.get(kLastSaveDir);
+        const lastSaveDir = this.fn.persist.get(kLastSaveDir.persistId);
         const targetDir = lastSaveDir || this.fn.os.getDir_Documents();
         const defaultPath = this.fn.os.pathJoin(targetDir, defaultFilename);
 
