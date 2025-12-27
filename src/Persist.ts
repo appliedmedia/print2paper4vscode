@@ -128,10 +128,8 @@ export class Persist {
    * Clears menu selections, toolbar position, zoom level, and last save directory
    */
   async clear(): Promise<void> {
-    // Clear all known UI-related state (uses kUI which contains all persist keys)
-    const keysToReset: GlobalStateKey_t[] = [...kUI];
-
-    for (const key of keysToReset) {
+    // Clear all known UI-related state
+    for (const key of kUI) {
       await this.fn.vscodeapis.deleteGlobalState({
         key: key as GlobalStateKey_t,
       });
