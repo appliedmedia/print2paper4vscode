@@ -2,9 +2,8 @@ import type { Registry } from './Registry';
 import type { FnImport_t } from './types/Registry_t';
 import { Diagnostics } from './Diagnostics';
 import type { UI_t } from './UI';
-import { kToolbar, kLastSaveDir } from './types/UI_t';
+import { kUI } from './UI';
 import type { GlobalStateKey_t, GlobalStateValue_t } from './VSCodeAPIs';
-import { kMenuId } from './types/UIMenu_t';
 
 // Persist value types - what we store locally
 // NOTE: No booleans - we have no global persist bools in this codebase.
@@ -126,11 +125,11 @@ export class Persist {
 
   /**
    * Clear known UI persist state
-   * Clears menu selections, toolbar position, and last save directory
+   * Clears menu selections, toolbar position, zoom level, and last save directory
    */
   async clear(): Promise<void> {
-    // Clear all known UI-related state
-    const keysToReset: GlobalStateKey_t[] = [...kMenuId, kToolbar.pos.persistId, kLastSaveDir.persistId];
+    // Clear all known UI-related state (uses kUI which contains all persist keys)
+    const keysToReset: GlobalStateKey_t[] = [...kUI];
 
     for (const key of keysToReset) {
       await this.fn.vscodeapis.deleteGlobalState({
