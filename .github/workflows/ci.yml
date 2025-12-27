@@ -12,6 +12,9 @@ jobs:
   test:
     name: Test on Node.js ${{ matrix.node-version }}
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
     
     strategy:
       matrix:
@@ -43,4 +46,69 @@ jobs:
           npm run lint:yaml
       
       - name: Run tests with coverage
-        run: npm run test:coverage
+        run: npm run test:coverage | tee coverage.txt
+      
+      - name: Extract coverage percentage
+        id: coverage
+        run: |
+          COVERAGE=$(grep "All files" coverage.txt | awk '{print $5}' | sed 's/%//')
+          echo "percentage=$COVERAGE" >> $GITHUB_OUTPUT
+          echo "Coverage: $COVERAGE%"
+      
+      - name: Report coverage in job summary
+        if: always()
+        run: |
+          echo "## Test Coverage Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Overall Coverage: ${{ steps.coverage.outputs.percentage }}%**" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          tail -20 coverage.txt >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+      
+      - name: Comment coverage on PR
+        if: github.event_name == 'pull_request'
+        run: |
+          COMMENT="## 📊 Test Coverage Report
+          
+          **Overall Coverage: ${{ steps.coverage.outputs.percentage }}%**
+          
+          <details>
+          <summary>View detailed coverage</summary>
+          
+          \`\`\`
+          $(tail -20 coverage.txt)
+          \`\`\`
+          
+          </details>
+          
+          View full report in the [Actions run](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})"
+          
+          gh pr comment ${{ github.event.pull_request.number }} --body "$COMMENT"
+        env:
+          GH_TOKEN: ${{ github.token }}
+      
+      - name: Generate coverage badge
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        run: |
+          COVERAGE=${{ steps.coverage.outputs.percentage }}
+          COLOR="red"
+          if (( $(echo "$COVERAGE >= 80" | bc -l) )); then
+            COLOR="green"
+          elif (( $(echo "$COVERAGE >= 60" | bc -l) )); then
+            COLOR="yellow"
+          elif (( $(echo "$COVERAGE >= 40" | bc -l) )); then
+            COLOR="orange"
+          fi
+          
+          mkdir -p .github/badges
+          curl -s "https://img.shields.io/badge/coverage-${COVERAGE}%25-${COLOR}" > .github/badges/coverage.svg
+      
+      - name: Commit coverage badge
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          git add .github/badges/coverage.svg
+          git diff --staged --quiet || git commit -m "Update coverage badge [skip ci]"
+          git push
