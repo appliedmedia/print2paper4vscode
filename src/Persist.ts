@@ -112,12 +112,9 @@ export class Persist {
     dx.require(args, ['name', 'computeFn']);
     const { name, computeFn } = args;
     
-    let result: PersistValue_t;
-    const existing = this.default[name];
+    let result = this.default[name];
     
-    if (existing !== undefined) {
-      result = existing;
-    } else {
+    if (result === undefined) {
       const computed = await computeFn();
       this.default[name] = computed;
       result = computed;
