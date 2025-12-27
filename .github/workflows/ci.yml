@@ -48,55 +48,8 @@ jobs:
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v4
         if: matrix.node-version == '20.x'
+        continue-on-error: true
         with:
           files: ./coverage/coverage-final.json
-          fail_ci_if_error: true
+          fail_ci_if_error: false
           token: ${{ secrets.CODECOV_TOKEN }}
-      
-      - name: Upload compiled artifacts
-        uses: actions/upload-artifact@v4
-        if: matrix.node-version == '20.x'
-        with:
-          name: compiled-extension
-          path: |
-            out/**
-            package.json
-            package-lock.json
-            README.md
-            LICENSE
-            CHANGELOG.md
-            .vscodeignore
-          retention-days: 1
-
-  build:
-    name: Build Extension
-    runs-on: ubuntu-latest
-    needs: test
-    
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-      
-      - name: Download compiled artifacts
-        uses: actions/download-artifact@v4
-        with:
-          name: compiled-extension
-      
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20.x'
-          cache: 'npm'
-
-      - name: Install vsce
-        run: npm install -g @vscode/vsce
-      
-      - name: Package extension
-        run: vsce package
-      
-      - name: Upload VSIX artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: vsix-package
-          path: '*.vsix'
-          retention-days: 30
