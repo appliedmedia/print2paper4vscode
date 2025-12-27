@@ -180,11 +180,14 @@ View full report in the [Actions run](https://github.com/${{ github.repository }
           fi
           
           # Pull latest changes to avoid race conditions
-          git pull --rebase origin main || {
+          if ! git pull --rebase origin main; then
             echo "Failed to rebase, attempting merge"
-            git rebase --abort
-            git pull origin main
-          }
+            git rebase --abort 2>/dev/null || true
+            if ! git pull origin main; then
+              echo "Failed to sync with remote, aborting badge commit"
+              exit 1
+            fi
+          fi
           
           git commit -m "Update coverage badge [skip ci]"
           git push origin main
