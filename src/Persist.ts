@@ -130,9 +130,7 @@ export class Persist {
    */
   async clear(): Promise<void> {
     // Clear all known UI-related state
-    for (const key of kUI) {
-      await this.fn.vscodeapis.deleteGlobalState({ key });
-    }
+    await Promise.all(kUI.map(key => this.fn.vscodeapis.deleteGlobalState({ key })));
 
     // Clear in-memory caches
     this.value = {};

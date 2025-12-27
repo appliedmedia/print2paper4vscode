@@ -52,6 +52,7 @@ export abstract class OS {
       'vscodeapis.getExtensionPath',
       'vscodeapis.getPanelForUriConversion',
       'vscodeapis.uriFromPath',
+      'ui.showErrorMessage',
       'utils.templateDictReplace'
     );
     this.dx = this.fn.dx.sub({ name: 'OS' });
@@ -162,20 +163,28 @@ export abstract class OS {
    * Resolve special directory constants to actual paths
    */
   private resolveDir(dir: Dir_t): string {
-    switch (dir) {
-      case kDir.temp:
-        return this.getDir_Temp();
-      case kDir.documents:
-        return this.getDir_Documents();
-      case kDir.home:
-        return this.getDir_Home();
-      default:
-        // Literal path - validate it's not empty or garbage
-        if (!dir || dir.trim().length === 0) {
-          throw new Error(`Invalid directory path: "${dir}"`);
-        }
-        return dir; // Assume it's a full directory path
+    let result = '';
+    
+    // Check if it's a known directory constant
+    const resolver = Object.values(kDir).find(r => r.key === dir);
+    if (resolver) {
+      result = resolver.fxn(this);
+    } else {
+      // Literal path - validate security and structure
+      const isBadPath = dir.includes('\0') || 
+                        dir.trim().length === 0 || 
+                        !path.isAbsolute(dir);
+      
+      if (isBadPath) {
+        this.fn.ui.showErrorMessage(`Bad dir path: "${dir}"`);
+        result = '';
+      } else {
+        this.dx.out(`Using dir: "${dir}"`);
+        result = dir;
+      }
     }
+    
+    return result;
   }
 
   fileWrite(args: { dir: Dir_t; filename: Filename_t; content: string | Buffer }): void {
