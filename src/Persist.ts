@@ -111,16 +111,20 @@ export class Persist {
     const dx = this.dx.sub({ name: 'validateDefault' });
     dx.require(args, ['name', 'computeFn']);
     const { name, computeFn } = args;
+    
+    let result: PersistValue_t;
     const existing = this.default[name];
+    
     if (existing !== undefined) {
-      dx.done();
-      return existing;
+      result = existing;
+    } else {
+      const computed = await computeFn();
+      this.default[name] = computed;
+      result = computed;
     }
 
-    const computed = await computeFn();
-    this.default[name] = computed;
     dx.done();
-    return computed;
+    return result;
   }
 
   /**
