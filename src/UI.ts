@@ -291,9 +291,12 @@ export class UI {
           dx.error(`Save failed on attempt ${attemptCount}: ${errorStr}`);
 
           if (attemptCount < maxAttempts) {
-            // Update lastSaveDir to Documents for next attempt
+            // Update lastSaveDir to Documents for next attempt (avoid redundant writes)
             const docsDir = this.fn.os.getDir_Documents();
-            this.fn.persist.set(kLastSaveDir.persistId, docsDir);
+            const currentSaveDir = this.fn.persist.get(kLastSaveDir.persistId);
+            if (currentSaveDir !== docsDir) {
+              this.fn.persist.set(kLastSaveDir.persistId, docsDir);
+            }
 
             // Show error and ask if they want to try again
             const retry = await this.showErrorMessage(

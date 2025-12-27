@@ -125,10 +125,11 @@ export class Persist {
   }
 
   /**
-   * Clear all persist state
+   * Clear known UI persist state
+   * Clears menu selections, toolbar position, and last save directory
    */
   async clear(): Promise<void> {
-    // Clear all menu-related state
+    // Clear all known UI-related state
     const keysToReset: GlobalStateKey_t[] = [...kMenuId, kToolbar.pos.persistId, kLastSaveDir.persistId];
 
     for (const key of keysToReset) {

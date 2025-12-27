@@ -170,6 +170,10 @@ export abstract class OS {
       case kDir.home:
         return this.getDir_Home();
       default:
+        // Literal path - validate it's not empty or garbage
+        if (!dir || dir.trim().length === 0) {
+          throw new Error(`Invalid directory path: "${dir}"`);
+        }
         return dir; // Assume it's a full directory path
     }
   }
