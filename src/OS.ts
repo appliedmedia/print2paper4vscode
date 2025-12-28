@@ -169,19 +169,19 @@ export abstract class OS {
     if (typeof dir === 'function') {
       result = dir(this);
     } else {
-      // Literal path - validate security and structure
-      const isBadPath = dir.includes('\0') || 
-                        dir.trim().length === 0 || 
-                        !path.isAbsolute(dir);
-      
-      if (isBadPath) {
-        const msg = `Bad dir path: "${dir}"`;
-        this.fn.ui.showErrorMessage(msg);
-        throw new Error(msg);
-      } else {
-        this.dx.out(`Using dir: "${dir}"`);
-        result = dir;
-      }
+      this.dx.out(`Using dir: "${dir}"`);
+      result = dir;
+    }
+    
+    // Validate the resolved path (whether from resolver or literal)
+    const isBadPath = result.includes('\0') || 
+                      result.trim().length === 0 || 
+                      !path.isAbsolute(result);
+    
+    if (isBadPath) {
+      const msg = `Bad dir path: "${result}"`;
+      this.fn.ui.showErrorMessage(msg);
+      throw new Error(msg);
     }
     
     return result;
