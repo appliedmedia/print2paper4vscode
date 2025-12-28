@@ -9,7 +9,7 @@ import type { WebviewPanelId_t } from './VSCodeAPIs';
 import type { FnImport_t } from './types/Registry_t';
 import { Diagnostics } from './Diagnostics';
 import type { Registry } from './Registry';
-import { kDir, type Dir_t, type Filename_t, type Path_t, type FileRead_t } from './types/OS_t';
+import type { Dir_t, Filename_t, Path_t, FileRead_t } from './types/OS_t';
 
 // Re-export FileRead_t for backward compatibility
 export type { FileRead_t };
@@ -165,10 +165,9 @@ export abstract class OS {
   private resolveDir(dir: Dir_t): string {
     let result = '';
     
-    // Check if it's a known directory constant
-    const resolver = Object.values(kDir).find(r => r.key === dir);
-    if (resolver) {
-      result = resolver.fxn(this);
+    // Check if it's a resolver function (kDir constant)
+    if (typeof dir === 'function') {
+      result = dir(this);
     } else {
       // Literal path - validate security and structure
       const isBadPath = dir.includes('\0') || 
@@ -176,8 +175,9 @@ export abstract class OS {
                         !path.isAbsolute(dir);
       
       if (isBadPath) {
-        this.fn.ui.showErrorMessage(`Bad dir path: "${dir}"`);
-        result = '';
+        const msg = `Bad dir path: "${dir}"`;
+        this.fn.ui.showErrorMessage(msg);
+        throw new Error(msg);
       } else {
         this.dx.out(`Using dir: "${dir}"`);
         result = dir;

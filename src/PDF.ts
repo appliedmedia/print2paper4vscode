@@ -168,7 +168,7 @@ export class PDF {
       const filename = `${timestamp}_${safeName}.pdf`;
 
       // Write PDF document to temp file
-      this.fn.os.fileWrite({ dir: kDir.temp.key, filename, content: Buffer.from(pdfBuffer) });
+      this.fn.os.fileWrite({ dir: kDir.temp, filename, content: Buffer.from(pdfBuffer) });
 
       const tempPdfPath = this.fn.os.pathJoin(this.fn.os.getDir_Temp(), filename);
       this.trackTempPdf(tempPdfPath);
@@ -197,7 +197,7 @@ export class PDF {
       const filename = `${timestamp}_${safeName}.pdf`;
 
       // Write PDF document to temp file
-      this.fn.os.fileWrite({ dir: kDir.temp.key, filename, content: Buffer.from(pdfBuffer) });
+      this.fn.os.fileWrite({ dir: kDir.temp, filename, content: Buffer.from(pdfBuffer) });
 
       const tempPdfPath = this.fn.os.pathJoin(this.fn.os.getDir_Temp(), filename);
       this.trackTempPdf(tempPdfPath);
