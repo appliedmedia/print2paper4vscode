@@ -17,6 +17,12 @@
 export const kExtId = 'p2p4vsc' as const;
 
 /**
+ * Namespace constants - derived from kExtId
+ */
+export const kNs = kExtId;
+export const kNs_ = kNs + '_';
+
+/**
  * Extension ID type - for type safety
  */
 export type ExtensionId_t = typeof kExtId;

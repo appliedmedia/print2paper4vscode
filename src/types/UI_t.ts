@@ -1,5 +1,19 @@
 import type { MenuId_t, MenuItemId_t } from './UIMenu_t';
 
+// Toolbar configuration
+export const kToolbar = {
+  pos: {
+    persistId: 'toolbar_pos',
+    min_px: 8,
+    max_px: 5120, // Reasonable max for 5K displays
+  },
+} as const;
+
+// Save dialog configuration
+export const kLastSaveDir = {
+  persistId: 'lastSaveDir',
+} as const;
+
 export interface UIMenuItem {
   id: string;
   displayName: string;

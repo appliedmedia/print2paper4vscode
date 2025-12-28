@@ -37,7 +37,7 @@ describe('OS Base Class', () => {
       const filePath = path.join(tempDir, 'test.txt');
       const content = 'test content';
       
-      os.fileWrite({ filePath, content });
+      os.fileWrite({ dir: tempDir, filename: 'test.txt', content });
       assert.ok(os.exists(filePath));
       
       const readContent = os.fileRead({ path: filePath });
@@ -46,7 +46,7 @@ describe('OS Base Class', () => {
 
     it('should delete files', () => {
       const filePath = path.join(tempDir, 'delete.txt');
-      os.fileWrite({ filePath, content: 'content' });
+      os.fileWrite({ dir: tempDir, filename: 'delete.txt', content: 'content' });
       assert.ok(os.exists(filePath));
       
       os.fileDelete(filePath);
@@ -82,11 +82,10 @@ describe('OS Base Class', () => {
       assert.ok(result.includes('c'));
     });
 
-    it('should handle undefined path parts', () => {
-      const result = os.pathJoin('a', undefined, 'c');
+    it('should join multiple path parts', () => {
+      const result = os.pathJoin('a', 'b', 'c');
       assert.ok(result.includes('a'));
       assert.ok(result.includes('c'));
-      assert.ok(!result.includes('undefined'));
     });
 
     it('should get basename', () => {
@@ -104,7 +103,7 @@ describe('OS Base Class', () => {
     it('should parse JSON files', () => {
       const jsonPath = path.join(tempDir, 'test.json');
       const jsonContent = { key: 'value', number: 42 };
-      os.fileWrite({ filePath: jsonPath, content: JSON.stringify(jsonContent) });
+      os.fileWrite({ dir: tempDir, filename: 'test.json', content: JSON.stringify(jsonContent) });
       
       const parsed = os.fileRead<typeof jsonContent>({ path: jsonPath });
       assert.strictEqual(parsed?.key, 'value');
@@ -114,7 +113,7 @@ describe('OS Base Class', () => {
     it('should return specific key from JSON', () => {
       const jsonPath = path.join(tempDir, 'test.json');
       const jsonContent = { key1: 'value1', key2: 'value2' };
-      os.fileWrite({ filePath: jsonPath, content: JSON.stringify(jsonContent) });
+      os.fileWrite({ dir: tempDir, filename: 'test.json', content: JSON.stringify(jsonContent) });
       
       const value = os.fileRead<string>({ path: jsonPath, key: 'key1' });
       assert.strictEqual(value, 'value1');
@@ -125,7 +124,7 @@ describe('OS Base Class', () => {
     it('should parse YAML files', () => {
       const yamlPath = path.join(tempDir, 'test.yaml');
       const yamlContent = 'key1: value1\nkey2: value2';
-      os.fileWrite({ filePath: yamlPath, content: yamlContent });
+      os.fileWrite({ dir: tempDir, filename: 'test.yaml', content: yamlContent });
       
       const parsed = os.fileRead<{ key1: string; key2: string }>({ path: yamlPath });
       assert.strictEqual(parsed?.key1, 'value1');
@@ -135,7 +134,7 @@ describe('OS Base Class', () => {
     it('should return specific key from YAML', () => {
       const yamlPath = path.join(tempDir, 'test.yaml');
       const yamlContent = 'key1: value1\nkey2: value2';
-      os.fileWrite({ filePath: yamlPath, content: yamlContent });
+      os.fileWrite({ dir: tempDir, filename: 'test.yaml', content: yamlContent });
       
       const value = os.fileRead<string>({ path: yamlPath, key: 'key1' });
       assert.strictEqual(value, 'value1');
@@ -146,7 +145,7 @@ describe('OS Base Class', () => {
     it('should read plain text files', () => {
       const txtPath = path.join(tempDir, 'test.txt');
       const content = 'plain text content';
-      os.fileWrite({ filePath: txtPath, content });
+      os.fileWrite({ dir: tempDir, filename: 'test.txt', content });
       
       const readContent = os.fileRead<string>({ path: txtPath });
       assert.strictEqual(readContent, content);
@@ -169,6 +168,14 @@ describe('OS Base Class', () => {
       const homeDir = os.getDir_Home();
       assert.ok(typeof homeDir === 'string');
       assert.ok(homeDir.length > 0);
+    });
+
+    it('should get Documents directory', () => {
+      const docsDir = os.getDir_Documents();
+      assert.ok(typeof docsDir === 'string');
+      assert.ok(docsDir.length > 0);
+      // Documents directory should contain 'Documents' in path
+      assert.ok(docsDir.includes('Documents'));
     });
   });
 

@@ -16,14 +16,15 @@
 
 import type { Registry } from './Registry';
 import type { SendToExt_t, MessageHandler_t } from './types/UI_t';
+import { kToolbar, kLastSaveDir } from './types/UI_t';
 import type { FnImport_t } from './types/Registry_t';
 import { Diagnostics } from './Diagnostics';
 import { YamlInstance } from './Yaml';
-import type { Persist, Persist_t } from './Persist';
 import { kMenuId } from './types/UIMenu_t';
+import { kZoomLevel } from './types/PaperPrinter_t';
 
 // UI persist keys - union of menu IDs and toolbar position
-export const kUI = [...kMenuId, 'toolbar_pos', 'zoomLevel_value'] as const;
+export const kUI = [...kMenuId, kToolbar.pos.persistId, kZoomLevel.iconSlotTriad.main.persistId, kLastSaveDir.persistId] as const;
 
 export type UI_t = (typeof kUI)[number];
 
@@ -52,9 +53,6 @@ export class UI {
     toolbar_html: '',
   } as const;
 
-  // Toolbar positioning constants
-  private static readonly kToolbar_pos_min_px = 8;
-  private static readonly kToolbar_pos_max_px = 5120; // Reasonable max for 5K displays
 
   private reg: Registry;
   private fn: FnImport_t;
@@ -78,7 +76,10 @@ export class UI {
       'utils.templateDictReplace',
       'uimenumgr.getUIMenus_HTML',
       'uimenumgr.getUIMenus_CSS',
-      'uimenumgr.getUIMenus_JS'
+      'uimenumgr.getUIMenus_JS',
+      'os.pathJoin',
+      'os.pathDirname',
+      'os.getDir_Documents'
     );
     this.dx = this.fn.dx.sub({ name: 'UI' });
     
@@ -148,18 +149,18 @@ export class UI {
   }
 
   // Show information message
-  showInfoMessage(message: string): void {
-    this.fn.vscodeapis.showInformationMessage(message);
+  async showInfoMessage(message: string, ...items: string[]): Promise<string | undefined> {
+    return await this.fn.vscodeapis.showInformationMessage(message, ...items);
   }
 
   // Show error message
-  showErrorMessage(message: string): void {
-    this.fn.vscodeapis.showErrorMessage(message);
+  async showErrorMessage(message: string, ...items: string[]): Promise<string | undefined> {
+    return await this.fn.vscodeapis.showErrorMessage(message, ...items);
   }
 
   // Show warning message
-  showWarningMessage(message: string): void {
-    this.fn.vscodeapis.showWarningMessage(message);
+  async showWarningMessage(message: string, ...items: string[]): Promise<string | undefined> {
+    return await this.fn.vscodeapis.showWarningMessage(message, ...items);
   }
 
   // Add toolbar to HTML content
@@ -181,13 +182,13 @@ export class UI {
       // Get toolbar position, validate it's within bounds, else use default
       // Note: VS Code extensions run in Node.js and don't have access to window dimensions.
       // Client-side code in toolbar_js/yaml dynamically clamps to actual window.innerWidth.
-      let toolbar_pos = Number(this.fn.persist.get('toolbar_pos'));
+      let toolbar_pos = Number(this.fn.persist.get(kToolbar.pos.persistId));
       if (
         isNaN(toolbar_pos) ||
-        toolbar_pos < UI.kToolbar_pos_min_px ||
-        toolbar_pos >= UI.kToolbar_pos_max_px
+        toolbar_pos < kToolbar.pos.min_px ||
+        toolbar_pos >= kToolbar.pos.max_px
       ) {
-        toolbar_pos = UI.kToolbar_pos_min_px;
+        toolbar_pos = kToolbar.pos.min_px;
       }
 
       // Replace toolbar_pos in toolbar_css before combining with menu CSS
@@ -199,7 +200,7 @@ export class UI {
       // Replace toolbar positioning constant in toolbar_js
       const toolbarJsWithConstants = templates.toolbar_js.replace(
         /\{\{toolbar_pos_min_px\}\}/g,
-        UI.kToolbar_pos_min_px.toString()
+        kToolbar.pos.min_px.toString()
       );
 
       // Inject toolbar into HTML using template
@@ -233,29 +234,95 @@ export class UI {
     return this.yaml().base_css;
   }
 
-  // Choose save location
-  async chooseSaveLocation(defaultFilename: string): Promise<string | null> {
+  // Choose save location with retry on error
+  async chooseSaveLocation(
+    defaultFilename: string,
+    saveOperation?: (path: string) => Promise<void>
+  ): Promise<string | null> {
     const dx = this.dx.sub({ name: 'chooseSaveLocation' });
 
     try {
-      const uri = await this.fn.vscodeapis.showSaveDialog({
-        defaultUri: this.fn.vscodeapis.uriFromPath(defaultFilename),
-        filters: {
-          'PDF files': ['pdf'],
-        },
-        title: 'Save PDF As',
-      });
+      let attemptCount = 0;
+      const maxAttempts = 5; // Prevent infinite loop
 
-      if (uri) {
+      // Retry loop for save errors
+      while (attemptCount < maxAttempts) {
+        attemptCount++;
+
+        // Use last saved dir or Documents dir
+        const lastSaveDir = this.fn.persist.get(kLastSaveDir.persistId);
+        const targetDir = lastSaveDir || this.fn.os.getDir_Documents();
+        const defaultPath = this.fn.os.pathJoin(targetDir, defaultFilename);
+
+        const uri = await this.fn.vscodeapis.showSaveDialog({
+          defaultUri: this.fn.vscodeapis.uriFromPath(defaultPath),
+          filters: {
+            'PDF files': ['pdf'],
+          },
+          title: 'Save PDF As',
+        });
+
+        if (!uri) {
+          dx.out('Save cancelled by user');
+          return null;
+        }
+
         const path = this.fn.vscodeapis.uriToPath(uri);
-        dx.out(`User chose save location: ${path}`);
-        return path;
-      } else {
-        dx.out('User cancelled save dialog');
-        return null;
+
+        // If no save operation provided, just return the path
+        if (!saveOperation) {
+          const savedDir = this.fn.os.pathDirname(path);
+          this.fn.persist.set(kLastSaveDir.persistId, savedDir);
+          dx.out(`User chose save location: ${path}`);
+          return path;
+        }
+
+        // Try to save using the provided operation
+        try {
+          await saveOperation(path);
+
+          // Save succeeded - update lastSaveDir
+          const savedDir = this.fn.os.pathDirname(path);
+          this.fn.persist.set(kLastSaveDir.persistId, savedDir);
+          dx.out(`Saved successfully to: ${path}`);
+          return path;
+        } catch (error) {
+          const errorStr = String(error);
+          dx.error(`Save failed on attempt ${attemptCount}: ${errorStr}`);
+
+          if (attemptCount < maxAttempts) {
+            // Update lastSaveDir to Documents for next attempt (avoid redundant writes)
+            const docsDir = this.fn.os.getDir_Documents();
+            const currentSaveDir = this.fn.persist.get(kLastSaveDir.persistId);
+            if (currentSaveDir !== docsDir) {
+              this.fn.persist.set(kLastSaveDir.persistId, docsDir);
+            }
+
+            // Show error and ask if they want to try again
+            const retry = await this.showErrorMessage(
+              'Please pick a directory you have access to (e.g., Documents folder).',
+              'Choose Different Location',
+              'Cancel'
+            );
+
+            if (retry !== 'Choose Different Location') {
+              dx.out('User chose not to retry save');
+              throw error;
+            }
+            // Loop will continue and re-prompt with Documents as default
+          } else {
+            // Max attempts reached
+            await this.showErrorMessage(`Failed to save PDF: ${errorStr}`);
+            throw error;
+          }
+        }
       }
+
+      const maxAttemptsError = `Failed to save PDF after ${maxAttempts} attempts`;
+      await this.showErrorMessage(maxAttemptsError);
+      throw new Error(maxAttemptsError);
     } catch (error) {
-      dx.out(`Error in save dialog: ${String(error)}`);
+      dx.error(`chooseSaveLocation failed: ${String(error)}`);
       throw error;
     } finally {
       dx.done();

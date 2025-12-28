@@ -16,6 +16,7 @@ import { DocInfo_PDF } from './DocInfo_PDF';
 import type { ThemedToken } from 'shiki';
 import { parse, type HTMLElement, NodeType } from 'node-html-parser';
 import type { LanguageId_t } from './Stylize';
+import { kDir } from './types/OS_t';
 
 type HeaderFooterRenderablePos = HeaderFooterPos_t;
 
@@ -76,7 +77,7 @@ export class PDF {
       'os.filePrint',
       'os.pathDirname',
       'os.fileReveal',
-      'vscodeapis.getDir_Temp',
+      'os.getDir_Temp',
       'vscodeapis.getEditorTypography',
       'vscodeapis.getConfiguration',
       'stylize.tokenize',
@@ -166,14 +167,10 @@ export class PDF {
       const safeName = this.fn.os.sanitizeFileName(descriptiveName || 'print_output');
       const filename = `${timestamp}_${safeName}.pdf`;
 
-      // Save PDF to temp directory
-      const tempDir = this.fn.vscodeapis.getDir_Temp();
-      this.fn.os.ensureDir(tempDir);
-      const tempPdfPath = this.fn.os.pathJoin(tempDir, filename);
-
       // Write PDF document to temp file
-      this.fn.os.fileWrite({ filePath: tempPdfPath, content: Buffer.from(pdfBuffer) });
+      this.fn.os.fileWrite({ dir: kDir.temp, filename, content: Buffer.from(pdfBuffer) });
 
+      const tempPdfPath = this.fn.os.pathJoin(this.fn.os.getDir_Temp(), filename);
       this.trackTempPdf(tempPdfPath);
       await this.fn.os.fileOpenPrintDialog(tempPdfPath);
       dx.out('Opened PDF in Preview app');
@@ -199,14 +196,10 @@ export class PDF {
       const safeName = this.fn.os.sanitizeFileName(descriptiveName || 'print_output');
       const filename = `${timestamp}_${safeName}.pdf`;
 
-      // Save PDF to temp directory
-      const tempDir = this.fn.vscodeapis.getDir_Temp();
-      this.fn.os.ensureDir(tempDir);
-      const tempPdfPath = this.fn.os.pathJoin(tempDir, filename);
-
       // Write PDF document to temp file
-      this.fn.os.fileWrite({ filePath: tempPdfPath, content: Buffer.from(pdfBuffer) });
+      this.fn.os.fileWrite({ dir: kDir.temp, filename, content: Buffer.from(pdfBuffer) });
 
+      const tempPdfPath = this.fn.os.pathJoin(this.fn.os.getDir_Temp(), filename);
       this.trackTempPdf(tempPdfPath);
       // Send PDF to printer
       await this.fn.os.filePrint(tempPdfPath);
@@ -234,30 +227,29 @@ export class PDF {
       const safeName = this.fn.os.sanitizeFileName(descriptiveName || 'print_output');
       const defaultFilename = `${timestamp}_${safeName}.pdf`;
 
-      // Ask user for save location using UI method
-      const targetPath = await this.fn.ui.chooseSaveLocation(defaultFilename);
+      // Define save operation
+      const saveOperation = async (path: string): Promise<void> => {
+        // Extract dir and filename from path
+        const dir = this.fn.os.pathDirname(path);
+        const filename = this.fn.os.pathBasename(path);
 
-      if (!targetPath) {
-        dx.out('Save cancelled by user');
-        return;
-      }
+        // Save PDF document directly to chosen location
+        this.fn.os.fileWrite({ dir, filename, content: Buffer.from(pdfBuffer) });
 
-      // Ensure directory exists
-      const targetDir = this.fn.os.pathDirname(targetPath);
-      this.fn.os.ensureDir(targetDir);
+        // DO NOT track user-saved PDFs for cleanup - only track temp files
+        // User explicitly saved this file, we should NOT delete it on shutdown
 
-      // Save PDF document directly to chosen location
-      this.fn.os.fileWrite({ filePath: targetPath, content: Buffer.from(pdfBuffer) });
+        // Reveal file in file explorer
+        await this.fn.os.fileReveal(path);
 
-      // DO NOT track user-saved PDFs for cleanup - only track temp files
-      // User explicitly saved this file, we should NOT delete it on shutdown
+        dx.out(`Saved PDF document to ${path}`);
+      };
 
-      // Reveal file in file explorer
-      await this.fn.os.fileReveal(targetPath);
+      // chooseSaveLocation handles retry logic and persist management
+      await this.fn.ui.chooseSaveLocation(defaultFilename, saveOperation);
 
-      dx.out(`Saved PDF document to ${targetPath}`);
     } catch (error) {
-      this.fn.ui.showErrorMessage(`Failed to save PDF: ${String(error)}`);
+      dx.error(`saveAsPDF failed: ${String(error)}`);
       throw error;
     } finally {
       dx.done();
@@ -438,9 +430,6 @@ export class PDF {
       if (dx.require({ code, languageId }, ['code', 'languageId'])) {
         // Setup PDF document
         this.setupPdf();
-
-        // Add header and footer to first page
-        this.addHeaderAndFooter();
 
         // Tokenize or render to HTML
         const result = await this.fn.stylize.tokenize({
@@ -1607,7 +1596,7 @@ private renderHeaderFooterElements(
     this.currentY = headerBottom + headerSpacing + this.currentLineHeight;
     this.currentX = margins.leftMarginPts;
 
-    this.addHeaderAndFooter();
+    // Note: Headers/footers are added later in renderPageTotals() after we know the total page count
   }
 
   /**

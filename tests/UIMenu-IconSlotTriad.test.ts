@@ -11,10 +11,7 @@ import { describe, it, beforeEach } from 'node:test';
 import * as assert from 'node:assert';
 import { UIMenu } from '../src/UIMenu.js';
 import type {
-  HandleSelection_t,
   UIMenuItem_t,
-  MenuId_t,
-  MenuItemId_t,
   iconSlotTriad_t,
 } from '../src/types/UIMenu_t.js';
 import { createTestApp, TestApp } from './test-utils.js';
@@ -158,6 +155,7 @@ describe('UIMenu Icon Slot Triad', () => {
             main: {
               type: 'text_edit' as const,
               width: '3ch',
+              persistId: 'test_zoom',
               constrain: {
                 regex: '^\\d{0,3}$', // Only 2 backslashes - clean and readable!
                 min: 10,
@@ -189,6 +187,7 @@ describe('UIMenu Icon Slot Triad', () => {
             main: {
               type: 'text_edit' as const,
               width: '5ch',
+              persistId: 'test_zoom2',
               constrain: {
                 regex: '^\\d{1,3}$', // Only 2 backslashes - clean!
                 min: 1,
@@ -219,6 +218,7 @@ describe('UIMenu Icon Slot Triad', () => {
             main: {
               type: 'text_edit' as const,
               width: '2ch',
+              persistId: 'test_value',
               constrain: {
                 regex: '^\\d{0,2}$',
                 min: 0,
@@ -249,6 +249,7 @@ describe('UIMenu Icon Slot Triad', () => {
             main: {
               type: 'text_edit' as const,
               width: '3ch',
+              persistId: 'test_count',
               constrain: {
                 regex: '^\\d{0,3}$', // Only 2 backslashes - clean!
                 min: 0,

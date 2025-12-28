@@ -67,6 +67,16 @@ export class OSWin extends OS {
     await this.fileOpenInDefaultApp(path);
   }
 
+  getDir_Documents(): string {
+    // On Windows, try USERPROFILE\Documents first, fallback to standard location
+    const userProfile = process.env.USERPROFILE || process.env.HOME;
+    if (userProfile) {
+      return this.pathJoin(userProfile, 'Documents');
+    }
+    // Fallback to home directory + Documents
+    return this.pathJoin(this.getDir_Home(), 'Documents');
+  }
+
   done(): void {
     this.dx.done();
   }

@@ -1,18 +1,18 @@
 import * as fs from 'fs';
 import * as path from 'path';
-import { homedir } from 'os';
+import { homedir, tmpdir } from 'os';
 import { exec as cpExec, execSync as cpExecSync, execFile as cpExecFile } from 'child_process';
 import { promisify } from 'util';
 import { parse as yamlParse } from 'yaml';
 import { performance } from 'node:perf_hooks';
-import type { App } from './App';
 import type { WebviewPanelId_t } from './VSCodeAPIs';
 import type { FnImport_t } from './types/Registry_t';
 import { Diagnostics } from './Diagnostics';
 import type { Registry } from './Registry';
+import type { Dir_t, Filename_t, Path_t, FileRead_t } from './types/OS_t';
 
-// Type definition for fileRead method
-export type FileRead_t = <T = string>(args: { path: string; key?: string }) => T | undefined;
+// Re-export FileRead_t for backward compatibility
+export type { FileRead_t };
 
 /**
  * OS - Abstract base class for operating system operations
@@ -52,6 +52,7 @@ export abstract class OS {
       'vscodeapis.getExtensionPath',
       'vscodeapis.getPanelForUriConversion',
       'vscodeapis.uriFromPath',
+      'ui.showErrorMessage',
       'utils.templateDictReplace'
     );
     this.dx = this.fn.dx.sub({ name: 'OS' });
@@ -123,6 +124,14 @@ export abstract class OS {
     return homedir();
   }
 
+  // Platform-agnostic temp directory
+  getDir_Temp(): string {
+    return tmpdir();
+  }
+
+  // Platform-specific Documents directory - must be overridden by subclasses
+  abstract getDir_Documents(): string;
+
   /**
    * Get OS-specific template variable replacements
    * Subclasses must implement this to return platform-specific key-value pairs
@@ -150,13 +159,46 @@ export abstract class OS {
     fs.mkdirSync(dirPath, { recursive: true, mode: 0o755 });
   }
 
-  fileWrite(args: { filePath: string; content: string | Buffer }): void {
+  /**
+   * Resolve special directory constants to actual paths
+   */
+  private resolveDir(dir: Dir_t): string {
+    let result = '';
+    
+    // Check if it's a resolver function (kDir constant)
+    if (typeof dir === 'function') {
+      result = dir(this);
+    } else {
+      this.dx.out(`Using dir: "${dir}"`);
+      result = dir;
+    }
+    
+    // Validate the resolved path (whether from resolver or literal)
+    const isBadPath = result.includes('\0') || 
+                      result.trim().length === 0 || 
+                      !path.isAbsolute(result);
+    
+    if (isBadPath) {
+      const msg = `Bad dir path: "${result}"`;
+      this.fn.ui.showErrorMessage(msg);
+      throw new Error(msg);
+    }
+    
+    return result;
+  }
+
+  fileWrite(args: { dir: Dir_t; filename: Filename_t; content: string | Buffer }): void {
     const dx = this.dx.sub({ name: 'fileWrite' });
-    dx.require(args, ['filePath', 'content']);
-    const { filePath, content } = args;
+    dx.require(args, ['dir', 'filename', 'content']);
+    const { dir, filename, content } = args;
     try {
+      const resolvedDir = this.resolveDir(dir);
+      this.ensureDir(resolvedDir);
+      const filePath = this.pathJoin(resolvedDir, filename);
       fs.writeFileSync(filePath, content, { mode: 0o644 });
     } catch (err) {
+      const resolvedDir = this.resolveDir(dir);
+      const filePath = this.pathJoin(resolvedDir, filename);
       dx.error(`Failed to write ${filePath}: ${err}`);
       throw err; // Re-throw to preserve existing behavior
     } finally {
@@ -331,8 +373,10 @@ export abstract class OS {
   }
 
   // Path helpers to centralize path operations
-  pathJoin(...parts: Array<string | undefined>): string {
-    return path.join(...(parts.filter(Boolean) as string[]));
+  // Note: Node.js path.join() automatically handles OS-specific path separators
+  // (Windows: \, Mac/Linux: /)
+  pathJoin(...parts: Path_t[]): Path_t {
+    return path.join(...parts);
   }
 
   pathBasename(p: string): string {

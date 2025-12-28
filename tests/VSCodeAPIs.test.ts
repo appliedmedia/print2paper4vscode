@@ -3,16 +3,17 @@ import * as assert from 'node:assert';
 import { createTestApp, TestApp } from './test-utils.js';
 import type { ExtensionContext } from 'vscode';
 import { mockVSCode } from './test-utils.js';
+import type { GlobalStateValue_t } from '../src/VSCodeAPIs.js';
 
 // Mock VS Code context with state tracking for this test suite
-let mockGlobalState: Record<string, any> = {};
+let mockGlobalState: Record<string, GlobalStateValue_t> = {};
 
 const mockContext = {
   subscriptions: [],
   extensionPath: process.cwd(),
   globalState: {
     get: (key: string) => mockGlobalState[key],
-    update: async (key: string, value: any) => {
+    update: async (key: string, value: GlobalStateValue_t | undefined) => {
       if (value === undefined) {
         delete mockGlobalState[key];
       } else {
@@ -123,10 +124,10 @@ describe('VSCodeAPIs', () => {
     disposable.dispose();
   });
 
-  it('should get temp directory', () => {
-    const tempDir = app.vscodeapis.getDir_Temp();
+  it('should get temp directory from OS', () => {
+    const tempDir = app.os.getDir_Temp();
     assert.ok(typeof tempDir === 'string');
-    assert.ok(tempDir.includes('temp'));
+    assert.ok(tempDir.length > 0);
   });
 
   it('should convert URI from path', () => {

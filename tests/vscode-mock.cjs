@@ -72,9 +72,9 @@ module.exports = {
     registerCommand: () => ({ dispose: () => {} }),
   },
   window: {
-    showInformationMessage: () => Promise.resolve(),
-    showWarningMessage: () => Promise.resolve(),
-    showErrorMessage: () => Promise.resolve(),
+    showInformationMessage: (...args) => Promise.resolve(args[1]),
+    showWarningMessage: (...args) => Promise.resolve(args[1]),
+    showErrorMessage: (...args) => Promise.resolve(args[1]),
     showSaveDialog: () => Promise.resolve(undefined),
     setStatusBarMessage: () => ({ dispose: () => {} }),
     activeTextEditor: {
