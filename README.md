@@ -1,12 +1,12 @@
 # Print2Paper4VSCode
 
-<!-- 
-Badges to add after CI/CD is running:
 [![CI](https://github.com/appliedmedia/print2paper4vscode/workflows/CI/badge.svg)](https://github.com/appliedmedia/print2paper4vscode/actions)
-[![codecov](https://codecov.io/gh/appliedmedia/print2paper4vscode/branch/main/graph/badge.svg)](https://codecov.io/gh/appliedmedia/print2paper4vscode)
+[![Coverage](https://raw.githubusercontent.com/appliedmedia/print2paper4vscode/main/.github/badges/coverage.svg)](https://github.com/appliedmedia/print2paper4vscode/actions)
+[![License: Code Transparency](https://img.shields.io/badge/License-Code%20Transparency-blue.svg)](https://github.com/appliedmedia/print2paper4vscode/blob/main/LICENSE)
+<!-- 
+Badge to add after marketplace publish:
 [![VS Code Marketplace](https://img.shields.io/visual-studio-marketplace/v/acoven.print2paper4vscode)](https://marketplace.visualstudio.com/items?itemName=acoven.print2paper4vscode)
 -->
-[![License: Code Transparency](https://img.shields.io/badge/License-Code%20Transparency-blue.svg)](https://github.com/appliedmedia/print2paper4vscode/blob/main/LICENSE)
 
 A VS Code extension that captures content from the active editor, applies syntax highlighting, generates a vector PDF, and provides multiple printing options through an interactive webview interface.
 
@@ -15,16 +15,7 @@ A VS Code extension that captures content from the active editor, applies syntax
 - **[Developer Guide](docs/AGENTS.md)** - Complete developer documentation
 - **[VSCode APIs](docs/VSCodeAPIs.md)** - API integration details
 
-<!--
-## Test Coverage
-
-- **Lines:** 85%
-- **Functions:** 83%
-- **Branches:** 74%
-- **Statements:** 85%
-
-Run `npm run test:coverage` to generate full report.
--->
+Run `npm run test:coverage` to generate full coverage report.
 
 ## Platform Support
 
