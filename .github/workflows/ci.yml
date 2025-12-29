@@ -105,6 +105,14 @@ jobs:
             echo ""
             echo "View full report in the [Actions run](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})"
           } | gh pr comment ${{ github.event.pull_request.number }} --body-file -
+      
+      - name: Upload coverage for badge job
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-data
+          path: coverage.txt
+          retention-days: 1
 
   # Separate job for badge updates to isolate write permissions
   update-badge:
@@ -121,25 +129,10 @@ jobs:
         with:
           ref: main
       
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - name: Download coverage data
+        uses: actions/download-artifact@v4
         with:
-          node-version: '20.x'
-          cache: 'npm'
-      
-      - name: Generate package.json
-        run: node scripts/generate-package-json.mjs
-
-      - name: Install dependencies
-        run: npm ci
-      
-      - name: Compile TypeScript
-        run: npm run compile
-      
-      - name: Run tests with coverage
-        run: |
-          set -o pipefail
-          npm run test:coverage | tee coverage.txt
+          name: coverage-data
       
       - name: Extract coverage percentage
         id: coverage
@@ -153,11 +146,10 @@ jobs:
             echo "Coverage data not found"
           fi
       
-      - name: Generate coverage badge
+      - name: Update README badge
         run: |
           COVERAGE=${{ steps.coverage.outputs.percentage }}
           # Color thresholds: green>=80%, yellow>=60%, orange>=40%, red<40%
-          # Using awk for floating-point comparison (bc not available by default)
           COLOR="red"
           if awk "BEGIN {exit !($COVERAGE >= 80)}"; then
             COLOR="green"
@@ -167,18 +159,18 @@ jobs:
             COLOR="orange"
           fi
           
-          mkdir -p .github/badges
-          curl -s "https://img.shields.io/badge/coverage-${COVERAGE}%25-${COLOR}" > .github/badges/coverage.svg
+          # Update README.md with new coverage percentage
+          sed -i "s/coverage-[0-9.]*%25-[a-z]*/coverage-${COVERAGE}%25-${COLOR}/" README.md
       
-      - name: Commit and push badge
+      - name: Commit and push badge update
         run: |
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
           
-          # Check if badge actually changed
-          git add .github/badges/coverage.svg
+          # Check if README actually changed
+          git add README.md
           if git diff --staged --quiet; then
-            echo "Badge unchanged, skipping commit"
+            echo "Coverage unchanged, skipping commit"
             exit 0
           fi
           
