@@ -146,29 +146,36 @@ jobs:
             echo "Coverage data not found"
           fi
       
-      - name: Update README badge
+      - name: Generate coverage badge
         run: |
           COVERAGE=${{ steps.coverage.outputs.percentage }}
           # Color thresholds: green>=80%, yellow>=60%, orange>=40%, red<40%
           COLOR="red"
+          COLOR_HEX="e05d44"
           if awk "BEGIN {exit !($COVERAGE >= 80)}"; then
             COLOR="green"
+            COLOR_HEX="97ca00"
           elif awk "BEGIN {exit !($COVERAGE >= 60)}"; then
             COLOR="yellow"
+            COLOR_HEX="dfb317"
           elif awk "BEGIN {exit !($COVERAGE >= 40)}"; then
             COLOR="orange"
+            COLOR_HEX="fe7d37"
           fi
           
-          # Update README.md with new coverage percentage
-          sed -i "s/coverage-[0-9.]*%25-[a-z]*/coverage-${COVERAGE}%25-${COLOR}/" README.md
+          # Generate badge SVG
+          mkdir -p images
+          cat > images/coverage.svg << EOF
+          <svg xmlns="http://www.w3.org/2000/svg" width="114" height="20" role="img" aria-label="coverage: ${COVERAGE}%"><title>coverage: ${COVERAGE}%</title><linearGradient id="s" x2="0" y2="100%"><stop offset="0" stop-color="#bbb" stop-opacity=".1"/><stop offset="1" stop-opacity=".1"/></linearGradient><clipPath id="r"><rect width="114" height="20" rx="3" fill="#fff"/></clipPath><g clip-path="url(#r)"><rect width="61" height="20" fill="#555"/><rect x="61" width="53" height="20" fill="#${COLOR_HEX}"/><rect width="114" height="20" fill="url(#s)"/></g><g fill="#fff" text-anchor="middle" font-family="Verdana,Geneva,DejaVu Sans,sans-serif" text-rendering="geometricPrecision" font-size="110"><text aria-hidden="true" x="315" y="150" fill="#010101" fill-opacity=".3" transform="scale(.1)" textLength="510">coverage</text><text x="315" y="140" transform="scale(.1)" fill="#fff" textLength="510">coverage</text><text aria-hidden="true" x="865" y="150" fill="#010101" fill-opacity=".3" transform="scale(.1)" textLength="430">${COVERAGE}%</text><text x="865" y="140" transform="scale(.1)" fill="#fff" textLength="430">${COVERAGE}%</text></g></svg>
+          EOF
       
       - name: Commit and push badge update
         run: |
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
           
-          # Check if README actually changed
-          git add README.md
+          # Check if badge actually changed
+          git add images/coverage.svg
           if git diff --staged --quiet; then
             echo "Coverage unchanged, skipping commit"
             exit 0
