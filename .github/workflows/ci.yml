@@ -80,15 +80,23 @@ jobs:
           fi
       
       - name: Comment coverage on PR
-        # Only comment once per PR - check if we've already commented
+        # Only comment on first commit - use a unique marker to check if we've commented
         if: |
           github.event_name == 'pull_request' &&
-          steps.coverage.outputs.percentage != '0' &&
-          github.event.action == 'opened'
+          steps.coverage.outputs.percentage != '0'
         env:
           GH_TOKEN: ${{ github.token }}
           COVERAGE_PCT: ${{ steps.coverage.outputs.percentage }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
         run: |
+          # Check if we've already posted a coverage comment
+          EXISTING=$(gh pr view $PR_NUMBER --json comments --jq '[.comments[] | select(.author.login == "github-actions" and (.body | contains("Test Coverage Report")))] | length')
+          
+          if [ "$EXISTING" -gt "0" ]; then
+            echo "Coverage comment already exists, skipping"
+            exit 0
+          fi
+          
           COVERAGE_TABLE=$(tail -20 coverage.txt)
           {
             echo "## 📊 Test Coverage Report"
@@ -131,6 +139,11 @@ jobs:
         with:
           ref: main
       
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20.x'
+      
       - name: Download coverage data
         uses: actions/download-artifact@v4
         with:
@@ -168,6 +181,12 @@ jobs:
         run: |
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
+          
+          # Check if badge files exist before adding
+          if [[ ! -f images/coverage.svg ]] || [[ ! -f images/ci.svg ]]; then
+            echo "⚠️ Badge files missing, skipping commit"
+            exit 1
+          fi
           
           # Check if badges actually changed
           git add images/coverage.svg images/ci.svg

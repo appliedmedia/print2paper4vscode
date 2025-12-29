@@ -39,8 +39,10 @@ for (let i = 0; i < args.length; i++) {
     const pairs = args[i + 1].split(',');
     for (const pair of pairs) {
       const [key, value] = pair.split('=');
-      if (key && value !== undefined) {
-        dictOverrides[key] = value;
+      if (key && key.trim() && value !== undefined && value !== '') {
+        dictOverrides[key.trim()] = value;
+      } else {
+        console.warn(`Warning: Skipping invalid --dict pair: "${pair}"`);
       }
     }
     i++; // Skip next arg since we consumed it
@@ -60,7 +62,14 @@ function templateDictReplace(source, dictionary) {
 
 // Load configuration
 const configPath = path.join(projectRoot, '.config', 'templateDictReplace.yaml');
-const config = yaml.parse(fs.readFileSync(configPath, 'utf8'));
+let config;
+try {
+  config = yaml.parse(fs.readFileSync(configPath, 'utf8'));
+} catch (err) {
+  console.error(`Error: Failed to load configuration file: ${configPath}`);
+  console.error(`  ${err.message}`);
+  process.exit(1);
+}
 
 console.log('templateDictReplace: Processing template replacements...');
 console.log(`  Config: ${configPath}`);
@@ -125,10 +134,6 @@ for (const replacement of config.replacements) {
       // Config mode: import value from source (JS module or YAML file)
       console.log(`  Template: ${template}`);
       console.log(`  Source: ${source}`);
-      
-      if (!source) {
-        throw new Error(`No value source specified (need source for config mode)`);
-      }
       
       const sourcePath = path.join(projectRoot, source);
       if (!fs.existsSync(sourcePath)) {
