@@ -11,12 +11,12 @@
 # - source: Where to get the replacement value from [REQUIRED for config mode]
 #     - If .yaml/.yml: YAML file to read
 #     - If .js: JS module to import
-# - variable: What to extract from source [REQUIRED for config mode]
+# - key: What to extract from source [REQUIRED for config mode]
 #     - If source is YAML: YAML key to extract
-#     - If source is JS: Variable name to import
+#     - If source is JS: Exported variable name to import
 #
 # Two modes:
-# 1. Config mode (default): Requires 'source' + 'variable' + 'template'
+# 1. Config mode (default): Requires 'source' + 'key' + 'template'
 # 2. CLI mode (--dict): Skips entries without 'source', applies all {{placeholders}}
 
 replacements:
@@ -36,11 +36,11 @@ replacements:
   #   output: package.json
   #   template: "{{extId}}"
   #   source: out/src/types/_entrypoint_extId_t.js
-  #   variable: kExtId
+  #   key: kExtId
   
   # Example: Extract from YAML file
   # - file: .config/template.readme.md
   #   output: README.md
   #   template: "{{projectName}}"
   #   source: .config/metadata.yaml
-  #   variable: projectName
+  #   key: projectName

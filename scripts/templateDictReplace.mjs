@@ -77,7 +77,7 @@ let errorCount = 0;
 
 // Process each replacement
 for (const replacement of config.replacements) {
-  const { file, output, template, source, variable, yamlKey } = replacement;
+  const { file, output, template, source, key, yamlKey } = replacement;
   
   try {
     console.log(`Processing: ${file}`);
@@ -140,30 +140,30 @@ for (const replacement of config.replacements) {
       // Determine if source is YAML or JS based on extension
       if (source.endsWith('.yaml') || source.endsWith('.yml')) {
         // Extract value from YAML source file
-        if (!variable) {
-          throw new Error(`variable required when source is YAML file (specifies which YAML key to extract)`);
+        if (!key) {
+          throw new Error(`key required when source is YAML file (specifies which YAML key to extract)`);
         }
-        console.log(`  Source YAML Key: ${variable}`);
+        console.log(`  Source YAML Key: ${key}`);
         
         const yamlContent = yaml.parse(fs.readFileSync(sourcePath, 'utf8'));
-        if (!yamlContent || yamlContent[variable] === undefined) {
-          throw new Error(`YAML key '${variable}' not found in ${source}`);
+        if (!yamlContent || yamlContent[key] === undefined) {
+          throw new Error(`YAML key '${key}' not found in ${source}`);
         }
-        value = yamlContent[variable];
+        value = yamlContent[key];
         console.log(`  Value: ${value} (from YAML)`);
         
       } else {
         // Extract value from JS module
-        if (!variable) {
-          throw new Error(`variable required when source is JS module`);
+        if (!key) {
+          throw new Error(`key required when source is JS module`);
         }
-        console.log(`  Variable: ${variable}`);
+        console.log(`  Key: ${key}`);
         
         const sourceModule = require(sourcePath);
-        value = sourceModule[variable];
+        value = sourceModule[key];
         
         if (value === undefined) {
-          throw new Error(`Variable '${variable}' not found in ${source}`);
+          throw new Error(`Key '${key}' not found in ${source}`);
         }
         console.log(`  Value: ${value} (from JS module)`);
       }
