@@ -5,7 +5,7 @@ out/
 dist/
 coverage/
 .tmp/
-package.json
+# package.json is now static (no longer generated from template)
 # Logs
 *.log
 # OS

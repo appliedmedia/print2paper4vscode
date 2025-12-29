@@ -1,8 +1,8 @@
 # Print2Paper4VSCode
 
-[![CI](https://github.com/appliedmedia/print2paper4vscode/workflows/CI/badge.svg)](https://github.com/appliedmedia/print2paper4vscode/actions)
-[![Coverage](https://raw.githubusercontent.com/appliedmedia/print2paper4vscode/main/.github/badges/coverage.svg)](https://github.com/appliedmedia/print2paper4vscode/actions)
-[![License](https://raw.githubusercontent.com/appliedmedia/print2paper4vscode/main/.github/badges/license.svg)](https://github.com/appliedmedia/print2paper4vscode/blob/main/LICENSE)
+[![CI](images/ci.svg)](https://github.com/appliedmedia/print2paper4vscode/actions)
+[![Coverage](images/coverage.svg)](https://github.com/appliedmedia/print2paper4vscode/actions)
+[![License](images/license.svg)](https://github.com/appliedmedia/print2paper4vscode/blob/main/LICENSE)
 <!-- 
 Badge to add after marketplace publish:
 [![VS Code Marketplace](https://img.shields.io/visual-studio-marketplace/v/acoven.print2paper4vscode)](https://marketplace.visualstudio.com/items?itemName=acoven.print2paper4vscode)

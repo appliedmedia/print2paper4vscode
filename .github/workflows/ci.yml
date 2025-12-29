@@ -34,9 +34,6 @@ jobs:
           node-version: ${{ matrix.node-version }}
           cache: 'npm'
       
-      - name: Generate package.json
-        run: node scripts/generate-package-json.mjs
-
       - name: Install dependencies
         run: npm ci
       
@@ -83,11 +80,23 @@ jobs:
           fi
       
       - name: Comment coverage on PR
-        if: github.event_name == 'pull_request' && steps.coverage.outputs.percentage != '0'
+        # Only comment on first commit - use a unique marker to check if we've commented
+        if: |
+          github.event_name == 'pull_request' &&
+          steps.coverage.outputs.percentage != '0'
         env:
           GH_TOKEN: ${{ github.token }}
           COVERAGE_PCT: ${{ steps.coverage.outputs.percentage }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
         run: |
+          # Check if we've already posted a coverage comment
+          EXISTING=$(gh pr view $PR_NUMBER --json comments --jq '[.comments[] | select(.author.login == "github-actions" and (.body | contains("Test Coverage Report")))] | length')
+          
+          if [ "$EXISTING" -gt "0" ]; then
+            echo "Coverage comment already exists, skipping"
+            exit 0
+          fi
+          
           COVERAGE_TABLE=$(tail -20 coverage.txt)
           {
             echo "## 📊 Test Coverage Report"
@@ -105,13 +114,22 @@ jobs:
             echo ""
             echo "View full report in the [Actions run](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})"
           } | gh pr comment ${{ github.event.pull_request.number }} --body-file -
+      
+      - name: Upload coverage for badge job
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-data
+          path: coverage.txt
+          retention-days: 1
 
   # Separate job for badge updates to isolate write permissions
   update-badge:
     name: Update Coverage Badge
     runs-on: ubuntu-latest
     needs: test
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    # Only run on main branch pushes that are merge commits (PR merges)
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push' && github.event.head_commit.message != 'Update badges [skip ci]'
     permissions:
       contents: write
     
@@ -125,21 +143,11 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '20.x'
-          cache: 'npm'
       
-      - name: Generate package.json
-        run: node scripts/generate-package-json.mjs
-
-      - name: Install dependencies
-        run: npm ci
-      
-      - name: Compile TypeScript
-        run: npm run compile
-      
-      - name: Run tests with coverage
-        run: |
-          set -o pipefail
-          npm run test:coverage | tee coverage.txt
+      - name: Download coverage data
+        uses: actions/download-artifact@v4
+        with:
+          name: coverage-data
       
       - name: Extract coverage percentage
         id: coverage
@@ -157,28 +165,33 @@ jobs:
         run: |
           COVERAGE=${{ steps.coverage.outputs.percentage }}
           # Color thresholds: green>=80%, yellow>=60%, orange>=40%, red<40%
-          # Using awk for floating-point comparison (bc not available by default)
-          COLOR="red"
+          COLOR_HEX="e05d44"  # red
           if awk "BEGIN {exit !($COVERAGE >= 80)}"; then
-            COLOR="green"
+            COLOR_HEX="97ca00"  # green
           elif awk "BEGIN {exit !($COVERAGE >= 60)}"; then
-            COLOR="yellow"
+            COLOR_HEX="dfb317"  # yellow
           elif awk "BEGIN {exit !($COVERAGE >= 40)}"; then
-            COLOR="orange"
+            COLOR_HEX="fe7d37"  # orange
           fi
           
-          mkdir -p .github/badges
-          curl -s "https://img.shields.io/badge/coverage-${COVERAGE}%25-${COLOR}" > .github/badges/coverage.svg
+          # Generate badges using template replacement with runtime values
+          node scripts/templateDictReplace.mjs --dict "{\"coverage\":\"$COVERAGE\",\"colorHex\":\"$COLOR_HEX\"}"
       
-      - name: Commit and push badge
+      - name: Commit and push badge updates
         run: |
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
           
-          # Check if badge actually changed
-          git add .github/badges/coverage.svg
+          # Check if badge files exist before adding
+          if [[ ! -f images/coverage.svg ]] || [[ ! -f images/ci.svg ]]; then
+            echo "⚠️ Badge files missing, skipping commit"
+            exit 1
+          fi
+          
+          # Check if badges actually changed
+          git add images/coverage.svg images/ci.svg
           if git diff --staged --quiet; then
-            echo "Badge unchanged, skipping commit"
+            echo "Badges unchanged, skipping commit"
             exit 0
           fi
           
@@ -193,5 +206,5 @@ jobs:
             fi
           fi
           
-          git commit -m "Update coverage badge [skip ci]"
+          git commit -m "Update badges [skip ci]"
           git push origin main

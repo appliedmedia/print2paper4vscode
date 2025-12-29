@@ -5,16 +5,42 @@
 # Each entry specifies:
 # - file: Target file to process (relative to project root)
 # - output: Output file path (relative to project root)
+# - yamlKey: If 'file' is YAML, extract this key's value before processing [OPTIONAL]
+#     (Used in CLI mode: extracts key from INPUT file before replacement)
 # - template: Template placeholder to replace (e.g., {{extId}})
-# - source: Compiled JS file to import from (relative to project root)
-# - variable: Variable name to import (e.g., kExtId)
+# - source: Where to get the replacement value from [REQUIRED for config mode]
+#     - If .yaml/.yml: YAML file to read
+#     - If .js: JS module to import
+# - key: What to extract from source [REQUIRED for config mode]
+#     - If source is YAML: YAML key to extract
+#     - If source is JS: Exported variable name to import
 #
-# To add more replacements, just add entries to this array
+# Two modes:
+# 1. Config mode (default): Requires 'source' + 'key' + 'template'
+# 2. CLI mode (--dict): Skips entries without 'source', applies all {{placeholders}}
 
 replacements:
-  # Process template → root package.json (used by vsce and npm)
-  - file: .config/template.package.json
-    output: package.json
-    template: "{{extId}}"
-    source: out/src/types/_entrypoint_extId_t.js
-    variable: kExtId
+  # Badge generation (requires --dict flag with runtime values)
+  - file: images/svgs.yaml
+    yamlKey: coverage
+    output: images/coverage.svg
+    # No 'source' = skipped in config mode, used in CLI mode with --dict
+  
+  - file: images/svgs.yaml
+    yamlKey: ci
+    output: images/ci.svg
+    # No 'source' = skipped in config mode, used in CLI mode with --dict
+  
+  # Example: Extract from JS module
+  # - file: .config/template.package.json
+  #   output: package.json
+  #   template: "{{extId}}"
+  #   source: out/src/types/_entrypoint_extId_t.js
+  #   key: kExtId
+  
+  # Example: Extract from YAML file
+  # - file: .config/template.readme.md
+  #   output: README.md
+  #   template: "{{projectName}}"
+  #   source: .config/metadata.yaml
+  #   key: projectName
