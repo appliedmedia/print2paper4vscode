@@ -10,11 +10,14 @@
 # - variable: Variable name to import (e.g., kExtId)
 #
 # To add more replacements, just add entries to this array
+#
+# NOTE: Currently not in use. package.json now uses static "p2p4vsc" values.
+# This file is kept as reference for future template replacement needs.
 
 replacements:
-  # Process template → root package.json (used by vsce and npm)
-  - file: .config/template.package.json
-    output: package.json
-    template: "{{extId}}"
-    source: out/src/types/_entrypoint_extId_t.js
-    variable: kExtId
+  # Example: Process template → root package.json (used by vsce and npm)
+  # - file: .config/template.package.json
+  #   output: package.json
+  #   template: "{{extId}}"
+  #   source: out/src/types/_entrypoint_extId_t.js
+  #   variable: kExtId

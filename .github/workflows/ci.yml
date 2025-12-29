@@ -34,11 +34,8 @@ jobs:
           node-version: ${{ matrix.node-version }}
           cache: 'npm'
       
-      - name: Generate package.json
-        run: node scripts/generate-package-json.mjs
-
       - name: Install dependencies
-        run: npm install
+        run: npm ci
       
       - name: Compile TypeScript
         run: npm run compile
