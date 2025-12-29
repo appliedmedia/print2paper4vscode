@@ -14,7 +14,7 @@
 # NOTE: Currently not in use. package.json now uses static "p2p4vsc" values.
 # This file is kept as reference for future template replacement needs.
 
-replacements:
+replacements: []
   # Example: Process template → root package.json (used by vsce and npm)
   # - file: .config/template.package.json
   #   output: package.json
