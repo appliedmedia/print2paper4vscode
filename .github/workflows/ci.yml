@@ -89,20 +89,22 @@ jobs:
           COVERAGE_PCT: ${{ steps.coverage.outputs.percentage }}
         run: |
           COVERAGE_TABLE=$(tail -20 coverage.txt)
-          gh pr comment ${{ github.event.pull_request.number }} --body "## 📊 Test Coverage Report
-
-**Overall Coverage: ${COVERAGE_PCT}%**
-
-<details>
-<summary>View detailed coverage</summary>
-
-\`\`\`
-${COVERAGE_TABLE}
-\`\`\`
-
-</details>
-
-View full report in the [Actions run](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})"
+          {
+            echo "## 📊 Test Coverage Report"
+            echo ""
+            echo "**Overall Coverage: ${COVERAGE_PCT}%**"
+            echo ""
+            echo "<details>"
+            echo "<summary>View detailed coverage</summary>"
+            echo ""
+            echo "\`\`\`"
+            echo "${COVERAGE_TABLE}"
+            echo "\`\`\`"
+            echo ""
+            echo "</details>"
+            echo ""
+            echo "View full report in the [Actions run](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})"
+          } | gh pr comment ${{ github.event.pull_request.number }} --body-file -
 
   # Separate job for badge updates to isolate write permissions
   update-badge:
