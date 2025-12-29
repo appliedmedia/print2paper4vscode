@@ -175,7 +175,7 @@ jobs:
           fi
           
           # Generate badges using template replacement with runtime values
-          node scripts/templateDictReplace.mjs --dict coverage=$COVERAGE,colorHex=$COLOR_HEX
+          node scripts/templateDictReplace.mjs --dict "{\"coverage\":\"$COVERAGE\",\"colorHex\":\"$COLOR_HEX\"}"
       
       - name: Commit and push badge updates
         run: |
