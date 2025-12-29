@@ -139,6 +139,14 @@ jobs:
         with:
           ref: main
       
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20.x'
+      
+      - name: Install yaml package
+        run: npm install yaml
+      
       - name: Download coverage data
         uses: actions/download-artifact@v4
         with:
@@ -169,15 +177,8 @@ jobs:
             COLOR_HEX="fe7d37"  # orange
           fi
           
-          # Generate coverage badge from template (pure bash, no dependencies)
-          cat > images/coverage.svg << EOF
-          <svg xmlns="http://www.w3.org/2000/svg" width="114" height="20" role="img" aria-label="coverage: ${COVERAGE}%"><title>coverage: ${COVERAGE}%</title><linearGradient id="s" x2="0" y2="100%"><stop offset="0" stop-color="#bbb" stop-opacity=".1"/><stop offset="1" stop-opacity=".1"/></linearGradient><clipPath id="r"><rect width="114" height="20" rx="3" fill="#fff"/></clipPath><g clip-path="url(#r)"><rect width="61" height="20" fill="#555"/><rect x="61" width="53" height="20" fill="#${COLOR_HEX}"/><rect width="114" height="20" fill="url(#s)"/></g><g fill="#fff" text-anchor="middle" font-family="Verdana,Geneva,DejaVu Sans,sans-serif" text-rendering="geometricPrecision" font-size="110"><text aria-hidden="true" x="315" y="150" fill="#010101" fill-opacity=".3" transform="scale(.1)" textLength="510">coverage</text><text x="315" y="140" transform="scale(.1)" fill="#fff" textLength="510">coverage</text><text aria-hidden="true" x="865" y="150" fill="#010101" fill-opacity=".3" transform="scale(.1)" textLength="430">${COVERAGE}%</text><text x="865" y="140" transform="scale(.1)" fill="#fff" textLength="430">${COVERAGE}%</text></g></svg>
-          EOF
-          
-          # Generate CI badge (static)
-          cat > images/ci.svg << EOF
-          <svg xmlns="http://www.w3.org/2000/svg" width="80" height="20" role="img" aria-label="CI: passing"><title>CI: passing</title><linearGradient id="s" x2="0" y2="100%"><stop offset="0" stop-color="#bbb" stop-opacity=".1"/><stop offset="1" stop-opacity=".1"/></linearGradient><clipPath id="r"><rect width="80" height="20" rx="3" fill="#fff"/></clipPath><g clip-path="url(#r)"><rect width="27" height="20" fill="#555"/><rect x="27" width="53" height="20" fill="#97ca00"/><rect width="80" height="20" fill="url(#s)"/></g><g fill="#fff" text-anchor="middle" font-family="Verdana,Geneva,DejaVu Sans,sans-serif" text-rendering="geometricPrecision" font-size="110"><text aria-hidden="true" x="145" y="150" fill="#010101" fill-opacity=".3" transform="scale(.1)" textLength="170">CI</text><text x="145" y="140" transform="scale(.1)" fill="#fff" textLength="170">CI</text><text aria-hidden="true" x="525" y="150" fill="#010101" fill-opacity=".3" transform="scale(.1)" textLength="430">passing</text><text x="525" y="140" transform="scale(.1)" fill="#fff" textLength="430">passing</text></g></svg>
-          EOF
+          # Generate badges using template replacement with runtime values
+          node scripts/templateDictReplace.mjs --dict "{\"coverage\":\"$COVERAGE\",\"colorHex\":\"$COLOR_HEX\"}"
       
       - name: Commit and push badge updates
         run: |
