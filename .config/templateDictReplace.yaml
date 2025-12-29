@@ -5,20 +5,23 @@
 # Each entry specifies:
 # - file: Target file to process (relative to project root)
 # - output: Output file path (relative to project root)
+# - yamlKey: If file is YAML, extract this key's value before processing [OPTIONAL]
 # - source: Compiled JS file to import from (for config mode) [OPTIONAL]
 # - variable: Variable name to import (for config mode) [OPTIONAL]
 # - template: Single template to replace (for config mode) [OPTIONAL]
 #
 # When using --dict flag, source/variable/template are ignored - all {{placeholders}}
-# in the file are replaced with values from the CLI dictionary.
+# in the file (or yamlKey value) are replaced with values from the CLI dictionary.
 
 replacements:
   # Badge generation (requires --dict flag with runtime values)
-  - file: images/coverage-template.svg
+  - file: images/svgs.yaml
+    yamlKey: coverage
     output: images/coverage.svg
     # Requires: --dict coverage=84.83,colorHex=97ca00
   
-  - file: images/ci-template.svg
+  - file: images/svgs.yaml
+    yamlKey: ci
     output: images/ci.svg
     # No replacements needed (static badge)
   

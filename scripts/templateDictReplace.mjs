@@ -8,8 +8,9 @@
  * 1. Config-driven (default): Reads .config/templateDictReplace.yaml, imports values 
  *    from compiled TypeScript modules, replaces templates in specified files.
  * 
- * 2. CLI-driven (--dict flag): Applies provided key=value pairs to all files in config,
- *    skipping the module import step. Useful for CI badge generation with runtime values.
+ * 2. CLI-driven (--dict flag): Applies provided key=value pairs to files in config.
+ *    If 'yamlKey' is specified in config, extracts that key's value from YAML file first.
+ *    Useful for CI badge generation with runtime values.
  * 
  * Usage:
  *   node scripts/templateDictReplace.mjs
@@ -76,7 +77,7 @@ let errorCount = 0;
 
 // Process each replacement
 for (const replacement of config.replacements) {
-  const { file, output, template, source, variable } = replacement;
+  const { file, output, template, source, variable, yamlKey } = replacement;
   
   try {
     console.log(`Processing: ${file}`);
@@ -93,7 +94,21 @@ for (const replacement of config.replacements) {
     if (!fs.existsSync(filePath)) {
       throw new Error(`Source file not found: ${filePath}`);
     }
-    const fileContent = fs.readFileSync(filePath, 'utf8');
+    let fileContent = fs.readFileSync(filePath, 'utf8');
+    
+    // If yamlKey specified, extract that key's value from YAML
+    if (yamlKey) {
+      try {
+        const yamlContent = yaml.parse(fileContent);
+        if (!yamlContent || !yamlContent[yamlKey]) {
+          throw new Error(`YAML key '${yamlKey}' not found in ${file}`);
+        }
+        fileContent = yamlContent[yamlKey];
+        console.log(`  Extracted YAML key: ${yamlKey}`);
+      } catch (err) {
+        throw new Error(`Failed to parse YAML or extract key '${yamlKey}': ${err.message}`);
+      }
+    }
     
     let result;
     
