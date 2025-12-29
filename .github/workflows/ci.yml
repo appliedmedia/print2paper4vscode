@@ -156,12 +156,12 @@ jobs:
             COLOR_HEX="fe7d37"
           fi
           
-          # Generate badge from YAML template
+          # Generate badge using template replacement
           node scripts/badgeReplace.mjs coverage $COVERAGE $COLOR_HEX
       
       - name: Generate CI badge
         run: |
-          # Generate passing badge from YAML template
+          # Generate passing badge using template replacement
           node scripts/badgeReplace.mjs ci
       
       - name: Commit and push badge updates

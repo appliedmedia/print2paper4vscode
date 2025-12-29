@@ -5,10 +5,14 @@
  * 
  * Reads configuration from .config/templateDictReplace.yaml and processes
  * all specified files, replacing template placeholders with actual values
- * imported from compiled TypeScript modules.
+ * imported from compiled TypeScript modules OR provided via CLI arguments.
  * 
  * Named to match App.templateDictReplace() - same concept for build process.
  * This allows easy extension - just add entries to the YAML config.
+ * 
+ * Usage:
+ *   node scripts/templateDictReplace.mjs
+ *   node scripts/templateDictReplace.mjs --dict key1=value1,key2=value2
  */
 
 import fs from 'fs';
@@ -21,12 +25,33 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const require = createRequire(import.meta.url);
 const projectRoot = path.join(__dirname, '..');
 
+// Parse CLI arguments
+const args = process.argv.slice(2);
+const dictOverrides = {};
+
+for (let i = 0; i < args.length; i++) {
+  if (args[i] === '--dict' && args[i + 1]) {
+    // Parse key=value,key=value format
+    const pairs = args[i + 1].split(',');
+    for (const pair of pairs) {
+      const [key, value] = pair.split('=');
+      if (key && value !== undefined) {
+        dictOverrides[key] = value;
+      }
+    }
+    i++; // Skip next arg since we consumed it
+  }
+}
+
 // Load configuration
 const configPath = path.join(projectRoot, '.config', 'templateDictReplace.yaml');
 const config = yaml.parse(fs.readFileSync(configPath, 'utf8'));
 
 console.log('templateDictReplace: Processing template replacements...');
 console.log(`  Config: ${configPath}`);
+if (Object.keys(dictOverrides).length > 0) {
+  console.log(`  CLI overrides: ${JSON.stringify(dictOverrides)}`);
+}
 console.log(`  Replacements: ${config.replacements.length}\n`);
 
 let totalReplacements = 0;
@@ -39,36 +64,43 @@ for (const replacement of config.replacements) {
   try {
     console.log(`Processing: ${file}`);
     console.log(`  Template: ${template}`);
-    console.log(`  Source: ${source}`);
-    console.log(`  Variable: ${variable}`);
     
     // Read source file
     const filePath = path.join(projectRoot, file);
     if (!fs.existsSync(filePath)) {
       throw new Error(`Source file not found: ${filePath}`);
     }
-    const fileContent = JSON.parse(fs.readFileSync(filePath, 'utf8'));
+    const fileContent = fs.readFileSync(filePath, 'utf8');
     
-    // Import variable from compiled module
-    const sourcePath = path.join(projectRoot, source);
-    if (!fs.existsSync(sourcePath)) {
-      throw new Error(`Source module not found: ${sourcePath}`);
+    // Get value - either from CLI override or from module import
+    let value;
+    const templateKey = template.replace(/[{}]/g, ''); // Extract key from {{key}}
+    
+    if (dictOverrides[templateKey]) {
+      value = dictOverrides[templateKey];
+      console.log(`  Value: ${value} (from CLI override)`);
+    } else if (source && variable) {
+      // Import variable from compiled module
+      const sourcePath = path.join(projectRoot, source);
+      if (!fs.existsSync(sourcePath)) {
+        throw new Error(`Source module not found: ${sourcePath}`);
+      }
+      const sourceModule = require(sourcePath);
+      value = sourceModule[variable];
+      
+      if (value === undefined) {
+        throw new Error(`Variable '${variable}' not found in ${source}`);
+      }
+      console.log(`  Value: ${value} (from ${source})`);
+    } else {
+      throw new Error(`No value source specified (need CLI override or source+variable)`);
     }
-    const sourceModule = require(sourcePath);
-    const value = sourceModule[variable];
-    
-    if (value === undefined) {
-      throw new Error(`Variable '${variable}' not found in ${source}`);
-    }
-    
-    console.log(`  Value: ${value}`);
     
     // Replace template with value
-    let fileStr = JSON.stringify(fileContent, null, 2);
     const regex = new RegExp(template.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g');
-    const beforeCount = (fileStr.match(regex) || []).length;
-    fileStr = fileStr.replace(regex, value);
-    const afterCount = (fileStr.match(regex) || []).length;
+    const beforeCount = (fileContent.match(regex) || []).length;
+    const result = fileContent.replace(regex, value);
+    const afterCount = (result.match(regex) || []).length;
     
     console.log(`  Replaced: ${beforeCount} occurrences`);
     
@@ -82,7 +114,7 @@ for (const replacement of config.replacements) {
     if (!fs.existsSync(outputDir)) {
       fs.mkdirSync(outputDir, { recursive: true });
     }
-    fs.writeFileSync(outputPath, fileStr, 'utf8');
+    fs.writeFileSync(outputPath, result, 'utf8');
     console.log(`  Output: ${output}`);
     console.log(`  ✓ Success\n`);
     

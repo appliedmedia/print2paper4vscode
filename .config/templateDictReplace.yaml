@@ -6,15 +6,28 @@
 # - file: Target file to process (relative to project root)
 # - output: Output file path (relative to project root)
 # - template: Template placeholder to replace (e.g., {{extId}})
-# - source: Compiled JS file to import from (relative to project root)
-# - variable: Variable name to import (e.g., kExtId)
+# - source: Compiled JS file to import from (relative to project root) [OPTIONAL if using --dict]
+# - variable: Variable name to import (e.g., kExtId) [OPTIONAL if using --dict]
 #
 # To add more replacements, just add entries to this array
-#
-# NOTE: Currently not in use. package.json now uses static "p2p4vsc" values.
-# This file is kept as reference for future template replacement needs.
 
-replacements: []
+replacements:
+  # Badge generation (values provided via CLI --dict argument)
+  - file: images/badges.yaml
+    output: images/coverage.svg
+    template: "{{coverage}}"
+    # No source/variable - value comes from --dict coverage=84.83
+  
+  - file: images/badges.yaml
+    output: images/coverage.svg
+    template: "{{colorHex}}"
+    # No source/variable - value comes from --dict colorHex=97ca00
+  
+  - file: images/badges.yaml
+    output: images/ci.svg
+    template: "{{status}}"
+    # No source/variable - value comes from --dict status=passing
+  
   # Example: Process template → root package.json (used by vsce and npm)
   # - file: .config/template.package.json
   #   output: package.json
