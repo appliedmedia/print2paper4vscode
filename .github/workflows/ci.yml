@@ -59,7 +59,7 @@ jobs:
         if: always()
         run: |
           if [ -f coverage.txt ] && grep -q "All files" coverage.txt; then
-            COVERAGE=$(grep "All files" coverage.txt | awk '{print $5}' | sed 's/%//' || echo "0")
+            COVERAGE=$(grep "All files" coverage.txt | awk '{print $4}' | sed 's/%//' || echo "0")
             echo "percentage=${COVERAGE:-0}" >> $GITHUB_OUTPUT
             echo "Coverage: ${COVERAGE:-0}%"
           else
@@ -145,7 +145,7 @@ jobs:
         id: coverage
         run: |
           if [ -f coverage.txt ] && grep -q "All files" coverage.txt; then
-            COVERAGE=$(grep "All files" coverage.txt | awk '{print $5}' | sed 's/%//' || echo "0")
+            COVERAGE=$(grep "All files" coverage.txt | awk '{print $4}' | sed 's/%//' || echo "0")
             echo "percentage=${COVERAGE:-0}" >> $GITHUB_OUTPUT
             echo "Coverage: ${COVERAGE:-0}%"
           else

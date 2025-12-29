@@ -2,7 +2,7 @@
 
 [![CI](https://github.com/appliedmedia/print2paper4vscode/workflows/CI/badge.svg)](https://github.com/appliedmedia/print2paper4vscode/actions)
 [![Coverage](https://raw.githubusercontent.com/appliedmedia/print2paper4vscode/main/.github/badges/coverage.svg)](https://github.com/appliedmedia/print2paper4vscode/actions)
-[![License: Code Transparency](https://img.shields.io/badge/License-Code%20Transparency-blue.svg)](https://github.com/appliedmedia/print2paper4vscode/blob/main/LICENSE)
+[![License](https://raw.githubusercontent.com/appliedmedia/print2paper4vscode/main/.github/badges/license.svg)](https://github.com/appliedmedia/print2paper4vscode/blob/main/LICENSE)
 <!-- 
 Badge to add after marketplace publish:
 [![VS Code Marketplace](https://img.shields.io/visual-studio-marketplace/v/acoven.print2paper4vscode)](https://marketplace.visualstudio.com/items?itemName=acoven.print2paper4vscode)
