@@ -77,26 +77,27 @@ let errorCount = 0;
 
 // Process each replacement
 for (const replacement of config.replacements) {
-  const { file, output, template, source, variable, yamlKey } = replacement;
+  const { file, output, template, source, variable, yamlKey, sourceYamlKey } = replacement;
   
   try {
     console.log(`Processing: ${file}`);
     
-    // Skip entries in config mode if they don't have source/variable
+    // Skip entries in config mode if they don't have source
     // (These entries are intended for --dict mode only)
-    if (!useDictMode && (!source || !variable)) {
-      console.log(`  Skipped: Requires --dict mode (no source/variable)\n`);
+    if (!useDictMode && !source) {
+      console.log(`  Skipped: Requires --dict mode (no source)\n`);
       continue;
     }
     
-    // Read source file
+    // Read input file
     const filePath = path.join(projectRoot, file);
     if (!fs.existsSync(filePath)) {
-      throw new Error(`Source file not found: ${filePath}`);
+      throw new Error(`Input file not found: ${filePath}`);
     }
     let fileContent = fs.readFileSync(filePath, 'utf8');
     
-    // If yamlKey specified, extract that key's value from YAML
+    // If yamlKey specified for INPUT file, extract that key's value
+    // (Used in CLI mode for badge generation from svgs.yaml)
     if (yamlKey) {
       try {
         const yamlContent = yaml.parse(fileContent);
@@ -104,7 +105,7 @@ for (const replacement of config.replacements) {
           throw new Error(`YAML key '${yamlKey}' not found in ${file}`);
         }
         fileContent = yamlContent[yamlKey];
-        console.log(`  Extracted YAML key: ${yamlKey}`);
+        console.log(`  Extracted input YAML key: ${yamlKey}`);
       } catch (err) {
         throw new Error(`Failed to parse YAML or extract key '${yamlKey}': ${err.message}`);
       }
@@ -121,28 +122,52 @@ for (const replacement of config.replacements) {
       totalReplacements += count;
       
     } else {
-      // Config mode: import value from module and replace specific template
+      // Config mode: import value from source (JS module or YAML file)
       console.log(`  Template: ${template}`);
       console.log(`  Source: ${source}`);
-      console.log(`  Variable: ${variable}`);
       
-      if (!source || !variable) {
-        throw new Error(`No value source specified (need source+variable for config mode)`);
+      if (!source) {
+        throw new Error(`No value source specified (need source for config mode)`);
       }
       
-      // Import variable from compiled module
       const sourcePath = path.join(projectRoot, source);
       if (!fs.existsSync(sourcePath)) {
-        throw new Error(`Source module not found: ${sourcePath}`);
-      }
-      const sourceModule = require(sourcePath);
-      const value = sourceModule[variable];
-      
-      if (value === undefined) {
-        throw new Error(`Variable '${variable}' not found in ${source}`);
+        throw new Error(`Source file not found: ${sourcePath}`);
       }
       
-      console.log(`  Value: ${value}`);
+      let value;
+      
+      // Determine if source is YAML or JS based on extension
+      if (source.endsWith('.yaml') || source.endsWith('.yml')) {
+        // Extract value from YAML source file
+        const keyToUse = sourceYamlKey || variable; // Allow either sourceYamlKey or variable for backwards compat
+        if (!keyToUse) {
+          throw new Error(`sourceYamlKey (or variable) required when source is YAML file`);
+        }
+        console.log(`  Source YAML Key: ${keyToUse}`);
+        
+        const yamlContent = yaml.parse(fs.readFileSync(sourcePath, 'utf8'));
+        if (!yamlContent || yamlContent[keyToUse] === undefined) {
+          throw new Error(`YAML key '${keyToUse}' not found in ${source}`);
+        }
+        value = yamlContent[keyToUse];
+        console.log(`  Value: ${value} (from YAML)`);
+        
+      } else {
+        // Extract value from JS module
+        if (!variable) {
+          throw new Error(`variable required when source is JS module`);
+        }
+        console.log(`  Variable: ${variable}`);
+        
+        const sourceModule = require(sourcePath);
+        value = sourceModule[variable];
+        
+        if (value === undefined) {
+          throw new Error(`Variable '${variable}' not found in ${source}`);
+        }
+        console.log(`  Value: ${value} (from JS module)`);
+      }
       
       // Replace template with value
       const escapedTemplate = template.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
