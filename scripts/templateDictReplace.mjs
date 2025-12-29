@@ -77,7 +77,7 @@ let errorCount = 0;
 
 // Process each replacement
 for (const replacement of config.replacements) {
-  const { file, output, template, source, variable, yamlKey, sourceYamlKey } = replacement;
+  const { file, output, template, source, variable, yamlKey } = replacement;
   
   try {
     console.log(`Processing: ${file}`);
@@ -140,17 +140,16 @@ for (const replacement of config.replacements) {
       // Determine if source is YAML or JS based on extension
       if (source.endsWith('.yaml') || source.endsWith('.yml')) {
         // Extract value from YAML source file
-        const keyToUse = sourceYamlKey || variable; // Allow either sourceYamlKey or variable for backwards compat
-        if (!keyToUse) {
-          throw new Error(`sourceYamlKey (or variable) required when source is YAML file`);
+        if (!variable) {
+          throw new Error(`variable required when source is YAML file (specifies which YAML key to extract)`);
         }
-        console.log(`  Source YAML Key: ${keyToUse}`);
+        console.log(`  Source YAML Key: ${variable}`);
         
         const yamlContent = yaml.parse(fs.readFileSync(sourcePath, 'utf8'));
-        if (!yamlContent || yamlContent[keyToUse] === undefined) {
-          throw new Error(`YAML key '${keyToUse}' not found in ${source}`);
+        if (!yamlContent || yamlContent[variable] === undefined) {
+          throw new Error(`YAML key '${variable}' not found in ${source}`);
         }
-        value = yamlContent[keyToUse];
+        value = yamlContent[variable];
         console.log(`  Value: ${value} (from YAML)`);
         
       } else {

@@ -6,15 +6,17 @@
 # - file: Target file to process (relative to project root)
 # - output: Output file path (relative to project root)
 # - yamlKey: If 'file' is YAML, extract this key's value before processing [OPTIONAL]
-# - template: Template placeholder to replace (e.g., {{extId}}) [OPTIONAL for --dict mode]
-# - source: Where to get the replacement value from [OPTIONAL - required for config mode]
-#     - If .yaml/.yml: reads YAML file, requires 'yamlKey' to extract value
-#     - If .js: imports JS module, requires 'variable' to extract value
-# - yamlKey: Key to extract from YAML source file [OPTIONAL - required if source is YAML]
-# - variable: Variable to import from JS source module [OPTIONAL - required if source is JS]
+#     (Used in CLI mode: extracts key from INPUT file before replacement)
+# - template: Template placeholder to replace (e.g., {{extId}})
+# - source: Where to get the replacement value from [REQUIRED for config mode]
+#     - If .yaml/.yml: YAML file to read
+#     - If .js: JS module to import
+# - variable: What to extract from source [REQUIRED for config mode]
+#     - If source is YAML: YAML key to extract
+#     - If source is JS: Variable name to import
 #
 # Two modes:
-# 1. Config mode (default): Requires 'source' + (variable OR yamlKey)
+# 1. Config mode (default): Requires 'source' + 'variable' + 'template'
 # 2. CLI mode (--dict): Skips entries without 'source', applies all {{placeholders}}
 
 replacements:
@@ -29,13 +31,6 @@ replacements:
     output: images/ci.svg
     # No 'source' = skipped in config mode, used in CLI mode with --dict
   
-  # Test: Extract from YAML file
-  - file: .config/test-template.txt
-    output: .config/test-output.txt
-    template: "{{projectName}}"
-    source: .config/test-metadata.yaml
-    yamlKey: projectName
-  
   # Example: Extract from JS module
   # - file: .config/template.package.json
   #   output: package.json
@@ -47,5 +42,5 @@ replacements:
   # - file: .config/template.readme.md
   #   output: README.md
   #   template: "{{projectName}}"
-  #   source: project-metadata.yaml
-  #   yamlKey: name
+  #   source: .config/metadata.yaml
+  #   variable: projectName
