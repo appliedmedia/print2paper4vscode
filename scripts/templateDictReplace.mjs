@@ -15,6 +15,11 @@
  * Usage:
  *   node scripts/templateDictReplace.mjs
  *   node scripts/templateDictReplace.mjs --dict coverage=84.83,colorHex=97ca00
+ *   node scripts/templateDictReplace.mjs --dict '{"coverage":"84.83","colorHex":"97ca00"}'
+ * 
+ * --dict format options:
+ *   - Simple: key=value,key=value (values cannot contain commas or equals)
+ *   - JSON: '{"key":"value"}' (supports any characters, use for complex values)
  */
 
 import fs from 'fs';
@@ -35,16 +40,62 @@ let useDictMode = false;
 for (let i = 0; i < args.length; i++) {
   if (args[i] === '--dict' && args[i + 1]) {
     useDictMode = true;
-    // Parse key=value,key=value format
-    const pairs = args[i + 1].split(',');
-    for (const pair of pairs) {
-      const [key, value] = pair.split('=');
-      if (key && key.trim() && value !== undefined && value !== '') {
-        dictOverrides[key.trim()] = value;
-      } else {
-        console.warn(`Warning: Skipping invalid --dict pair: "${pair}"`);
+    const dictArg = args[i + 1];
+    
+    // Option 1: JSON object format (supports any characters in values)
+    if (dictArg.startsWith('{')) {
+      try {
+        const parsed = JSON.parse(dictArg);
+        if (typeof parsed !== 'object' || Array.isArray(parsed)) {
+          console.error('Error: --dict JSON must be an object, not an array');
+          process.exit(1);
+        }
+        Object.assign(dictOverrides, parsed);
+        console.log(`Parsed ${Object.keys(parsed).length} keys from JSON`);
+      } catch (err) {
+        console.error(`Error: Failed to parse --dict JSON: ${err.message}`);
+        console.error('Example: --dict \'{"coverage":"95.0","colorHex":"97ca00"}\'');
+        process.exit(1);
+      }
+    } 
+    // Option 2: Simple key=value,key=value format (limited: no commas/equals in values)
+    else {
+      const pairs = dictArg.split(',');
+      for (const pair of pairs) {
+        if (!pair.trim()) continue;
+        
+        const equalsIndex = pair.indexOf('=');
+        if (equalsIndex === -1) {
+          console.warn(`Warning: Skipping invalid --dict pair (no '='): "${pair}"`);
+          continue;
+        }
+        
+        const key = pair.substring(0, equalsIndex).trim();
+        const value = pair.substring(equalsIndex + 1); // Everything after first '='
+        
+        if (!key) {
+          console.warn(`Warning: Skipping invalid --dict pair (empty key): "${pair}"`);
+          continue;
+        }
+        
+        if (value === '') {
+          console.warn(`Warning: Skipping invalid --dict pair (empty value): "${pair}"`);
+          continue;
+        }
+        
+        dictOverrides[key] = value;
+      }
+      
+      // Warn if simple format might be problematic
+      if (dictArg.match(/=.*[,=]/)) {
+        console.warn('');
+        console.warn('⚠️  Warning: Values contain commas or equals - this may not work as expected.');
+        console.warn('   For complex values, use JSON format instead:');
+        console.warn(`   --dict '{"key":"value,with=special"}'`);
+        console.warn('');
       }
     }
+    
     i++; // Skip next arg since we consumed it
   }
 }
