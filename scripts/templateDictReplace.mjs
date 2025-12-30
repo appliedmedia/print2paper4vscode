@@ -141,6 +141,12 @@ for (const replacement of config.replacements) {
       console.log(`  Replaced: ${count} templates`);
       totalReplacements += count;
       
+      // Check for remaining placeholders
+      const remaining = (result.match(/\{\{[^}]+\}\}/g) || []);
+      if (remaining.length > 0) {
+        console.warn(`  WARNING: ${remaining.length} placeholders remain after replacement: ${remaining.join(', ')}`);
+      }
+      
     } else {
       // Config mode: import value from source (JS module or YAML file)
       console.log(`  Template: ${template}`);
