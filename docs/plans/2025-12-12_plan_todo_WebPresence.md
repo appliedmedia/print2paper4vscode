@@ -7,6 +7,42 @@
 
 ---
 
+## Execution Plan
+
+### Phase 1: Decisions & Preparation
+- [ ] **Approve Plan & Budget:** Confirm ~$90-160/year budget for domains.
+- [ ] **Platform Decisions:** Confirm GitHub Pages for all three sites.
+- [ ] **Mailing List:** Create Mailchimp account (Free Tier).
+- [ ] **Domain Inventory:** Check ownership of `p2p4vsc.*`, `g2t.*`, and `cov.llc`. Purchase missing domains.
+
+### Phase 2: Repository & Domain Setup (One-to-One)
+- [ ] **Create Repo `p2p4vsc.com`:** Initialize public repo, enable GitHub Pages, add CNAME `p2p4vsc.com`.
+- [ ] **Create Repo `g2t.cc`:** Initialize public repo, enable GitHub Pages, add CNAME `g2t.cc`.
+- [ ] **Create Repo `cov.llc`:** Initialize public repo, enable GitHub Pages, add CNAME `cov.llc`.
+- [ ] **DNS Configuration (Primary):** Point A records for all 3 domains to GitHub Pages IPs.
+- [ ] **DNS Configuration (Redirects):** Configure `.info`, `.dev`, `.support` redirects in DNS provider.
+
+### Phase 3: Content & Assets
+- [ ] **Visual Identity:** Create Applied Media logo and consistent favicon.
+- [ ] **Copywriting (cov.llc):** Draft bio, services, and contact info.
+- [ ] **Copywriting (p2p4vsc):** Draft landing page, installation steps, and features.
+- [ ] **Copywriting (g2t):** Draft landing page, usage guide, and trust messaging.
+- [ ] **Media:** Capture screenshots and record workflow GIFs for both extensions.
+
+### Phase 4: Implementation
+- [ ] **Develop `cov.llc`:** Build simple static site (bio + contact). Deploy.
+- [ ] **Develop `p2p4vsc.com`:** Build marketing site + docs. Integrate Mailchimp. Deploy.
+- [ ] **Develop `g2t.cc`:** Build marketing site + docs. Integrate Mailchimp. Deploy.
+- [ ] **Cross-Linking:** Ensure all sites link to "Applied Media" and each other where appropriate.
+
+### Phase 5: Launch & Updates
+- [ ] **Verification:** Test SSL, redirects, and form submissions on all sites.
+- [ ] **Update Metadata:** Update `package.json` and `manifest.json` homepage fields.
+- [ ] **Update Listings:** Update VS Code Marketplace and Chrome Web Store profiles.
+- [ ] **Announce:** Send welcome email to any initial subscribers.
+
+---
+
 ## Overview
 
 Establish professional web presence for three Applied Media initiatives:
@@ -25,6 +61,24 @@ Each project gets:
 
 ---
 
+## Repository Strategy
+
+**Decision: One-to-One Mapping (One Repository per Website)**
+
+We will create **separate repositories** for the web hosting (e.g., `p2p4vsc.com`, `g2t.cc`, `cov.llc`).
+
+**Why?**
+1.  **GitHub Pages Limitation:** GitHub Pages allows only **one custom domain per repository**. You cannot map `p2p4vsc.com` and `g2t.cc` to the same repo without complex workarounds.
+2.  **Decoupling:** Keeps marketing content (HTML/CSS) separate from application code. This prevents the main extension repos from being cluttered with website assets.
+3.  **Clarity:** Naming the repo after the domain (e.g., `p2p4vsc.com`) makes the mapping obvious.
+
+**Proposed Repos:**
+1.  `appliedmedia/p2p4vsc.com` (Source for https://p2p4vsc.com)
+2.  `appliedmedia/g2t.cc` (Source for https://g2t.cc)
+3.  `appliedmedia/cov.llc` (Source for https://cov.llc)
+
+---
+
 ## Domain Structure
 
 ### Print2Paper4VSCode Domains
@@ -32,9 +86,8 @@ Each project gets:
 **p2p4vsc.com** - Main Marketing Website
 
 - **Purpose:** Professional landing page and marketing site
-- **Platform Options:** GitHub Pages or Google Sites (see recommendation)
-- **Content:** Landing page, installation guide, support info
-- **User Action:** Point DNS to chosen platform
+- **Repo:** `appliedmedia/p2p4vsc.com`
+- **User Action:** Point DNS to GitHub Pages
 
 **p2p4vsc.info** - VS Code Marketplace Redirect
 
@@ -64,9 +117,8 @@ Each project gets:
 **g2t.cc** - Main Marketing Website
 
 - **Purpose:** Professional landing page and marketing site
-- **Platform:** GitHub Pages (same approach as p2p4vsc)
-- **Content:** Landing page, usage guide, trust messaging
-- **User Action:** Point DNS to chosen platform
+- **Repo:** `appliedmedia/g2t.cc`
+- **User Action:** Point DNS to GitHub Pages
 
 **g2t.info** - Chrome Web Store Redirect
 
@@ -95,9 +147,10 @@ Each project gets:
 **cov.llc** - Fractional CTO Consulting
 
 - **Purpose:** Primary site for fractional CTO work
-- **Platform:** See Platform Recommendation section
+- **Repo:** `appliedmedia/cov.llc`
+- **Platform:** GitHub Pages
 - **Content:** Professional profile, services, case studies, contact form
-- **User Action:** Point DNS to chosen platform
+- **User Action:** Point DNS to GitHub Pages
 
 ---
 
@@ -965,25 +1018,15 @@ Commercial licensing available.
 **Repository Structure:**
 
 ```text
-appliedmedia.github.io/
-├── index.html                  # Applied Media landing (or redirect)
-├── p2p4vsc/
-│   ├── index.html             # Print2Paper4VSCode landing
-│   ├── install.html           # Installation guide
-│   └── assets/
-├── g2t/
-│   ├── index.html             # gmail2trello landing
-│   ├── guide.html             # Usage guide
-│   └── assets/
-├── cov/ (or separate repo for cov.llc)
-│   ├── index.html             # cov.llc landing
-│   └── assets/
-└── shared/
-    ├── css/
-    │   └── common.css         # Shared Applied Media styles
-    ├── js/
-    │   └── newsletter.js      # Mailing list form handler
-    └── images/
+appliedmedia/
+├── p2p4vsc.com/ (Repo)
+│   ├── index.html
+│   └── install.html
+├── g2t.cc/ (Repo)
+│   ├── index.html
+│   └── guide.html
+└── cov.llc/ (Repo)
+    └── index.html
 ```
 
 **Development Tasks:**
