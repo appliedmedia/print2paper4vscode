@@ -77,6 +77,14 @@ We will create **separate repositories** for the web hosting (e.g., `p2p4vsc.com
 2.  `appliedmedia/g2t.cc` (Source for https://g2t.cc)
 3.  `appliedmedia/cov.llc` (Source for https://cov.llc)
 
+**Alternative Considered: `docs/` folder in existing Extension Repos**
+- **Pros:** fewer repos to manage.
+- **Cons:**
+    - **Branch bloat:** Marketing assets (images, videos) bloat the extension repo size.
+    - **Release Cycle:** Website updates shouldn't require touching the extension code or triggering CI/CD pipelines for the extension.
+    - **Domain Mapping:** GitHub Pages on `main` branch usually publishes to `username.github.io/repo-name`. While custom domains work, managing 3 distinct custom domains (com, cc, llc) is cleaner with 3 distinct repos.
+    - **Access Control:** You might want a designer or content writer to edit the site without giving them commit access to the extension source code.
+
 ---
 
 ## Domain Structure
