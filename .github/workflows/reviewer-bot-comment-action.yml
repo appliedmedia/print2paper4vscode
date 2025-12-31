@@ -20,6 +20,7 @@ permissions:
 jobs:
   post-comment:
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     steps:
       - name: Post Comment
         env:
