@@ -2,28 +2,46 @@
 
 **Status:** TODO
 **Created:** 2025-12-12
+**Updated:** 2025-12-31
 **Priority:** Execute after PR #76 is merged
 
 ---
 
 ## Overview
 
-Establish a professional web presence for Print2Paper4VSCode (p2p4vsc) with clear domain structure, compelling landing page, comprehensive user guide, and straightforward support channel.
+Establish professional web presence for three Applied Media initiatives:
+
+1. **Print2Paper4VSCode (p2p4vsc)** - VS Code extension for printing code with syntax highlighting
+2. **gmail2trello (g2t)** - Chrome extension for converting Gmail threads to Trello cards
+3. **cov.llc** - Primary site for fractional CTO consulting work
+
+Each project gets:
+
+- Clear domain structure
+- Professional landing page with trust/transparency messaging
+- Applied Media branding where appropriate
+- Email signup for future updates (software projects)
+- Contact/Lead generation (consulting)
 
 ---
 
 ## Domain Structure
 
-### Primary Domains
+### Print2Paper4VSCode Domains
 
 **p2p4vsc.com** - Main Marketing Website
 
 - **Purpose:** Professional landing page and marketing site
-- **Platform Options:**
-  1. GitHub Pages with custom index.html (free, full control)
-  2. Google Sites (free, easier to manage, less control)
+- **Platform Options:** GitHub Pages or Google Sites (see recommendation)
 - **Content:** Landing page, installation guide, support info
 - **User Action:** Point DNS to chosen platform
+
+**p2p4vsc.info** - VS Code Marketplace Redirect
+
+- **Purpose:** Direct link to VS Code Marketplace extension listing
+- **Target:** `https://marketplace.visualstudio.com/items?itemName=acoven.print2paper4vscode`
+- **Benefit:** Easy-to-remember install URL for users
+- **User Action:** Configure DNS redirect
 
 **p2p4vsc.dev** - Developer Documentation
 
@@ -41,11 +59,55 @@ Establish a professional web presence for Print2Paper4VSCode (p2p4vsc) with clea
 
 ---
 
+### gmail2trello Domains
+
+**g2t.cc** - Main Marketing Website
+
+- **Purpose:** Professional landing page and marketing site
+- **Platform:** GitHub Pages (same approach as p2p4vsc)
+- **Content:** Landing page, usage guide, trust messaging
+- **User Action:** Point DNS to chosen platform
+
+**g2t.info** - Chrome Web Store Redirect
+
+- **Purpose:** Direct link to Chrome Web Store extension listing
+- **Target:** Chrome Web Store URL for gmail2trello
+- **Benefit:** Easy-to-remember install URL
+- **User Action:** Configure DNS redirect
+
+**g2t.dev** - Developer Documentation
+
+- **Purpose:** Direct link to GitHub repository
+- **Target:** `https://github.com/appliedmedia/gmail2trello` (or actual repo URL)
+- **Content:** README, code, issues, pull requests
+- **User Action:** Configure DNS redirect
+
+**g2t.support** - Support Portal
+
+- **Purpose:** Support entry point
+- **Target:** GitHub issues page for gmail2trello
+- **User Action:** Configure DNS redirect
+
+---
+
+### Consulting Domain
+
+**cov.llc** - Fractional CTO Consulting
+
+- **Purpose:** Primary site for fractional CTO work
+- **Platform:** See Platform Recommendation section
+- **Content:** Professional profile, services, case studies, contact form
+- **User Action:** Point DNS to chosen platform
+
+---
+
 ## Website Pages
 
-### Page 1: Landing Page (p2p4vsc.com)
+### Print2Paper4VSCode Pages
 
-#### Key Messages
+#### Page 1: Landing Page (p2p4vsc.com)
+
+##### Key Messages
 
 **Hero Section:**
 
@@ -61,15 +123,15 @@ snippets—Print2Paper4VSCode makes it simple and safe.
 
 - ⚠️ **Security Story:** Reference [real incident of malicious VSCode extensions removed from marketplace](https://www.bleepingcomputer.com/news/security/microsoft-finds-dozens-of-malicious-vs-code-extensions/)
 - ✅ **Full Source Available:** Every line of code is viewable at [p2p4vsc.dev](https://p2p4vsc.dev)
-- ✅ **Made in the USA** 🇺🇸 (display flag in header and footer)
+- ✅ **Made in the USA by Applied Media** 🇺🇸 (display flag and Applied Media logo in header and footer)
 - ✅ **Community Driven:** We welcome fixes, features, and security reviews
 
 **Call to Actions:**
 
-1. **Install Extension** → Link to VS Code Marketplace
+1. **Install Extension** → Link to p2p4vsc.info (redirects to VS Code Marketplace)
 2. **View Source Code** → Link to p2p4vsc.dev
 3. **Get Installation Guide** → Link to /install page
-4. **Stay Updated** → Mailing list signup form
+4. **Stay Updated** → Mailing list signup form (Applied Media newsletter)
 
 **Features Highlight:**
 
@@ -87,18 +149,18 @@ snippets—Print2Paper4VSCode makes it simple and safe.
 
 **Footer:**
 
-- Made in the USA 🇺🇸
+- 🇺🇸 Made in the USA by Applied Media [AM Logo] (small text)
 - © 2025-2026 Applied Media
 - Links: Install | Docs | Support | Privacy | Source Code
-- Social media icons (if applicable)
+- Mailing list signup: "Get updates on new Applied Media software"
 
 ---
 
-### Page 2: Installation & Usage Guide (p2p4vsc.com/install)
+#### Page 2: Installation & Usage Guide (p2p4vsc.com/install)
 
-#### Section 1: Installation
+##### Section 1: Installation
 
-#### Step 1: Install from VS Code Marketplace
+##### Step 1: Install from VS Code Marketplace
 
 Screenshot: VS Code Extensions sidebar
 
@@ -109,7 +171,7 @@ Screenshot: VS Code Extensions sidebar
 4. Click "Install"
 ```
 
-#### Step 2: Verify Installation
+##### Step 2: Verify Installation
 
 Screenshot: Command palette with print command
 
@@ -121,9 +183,9 @@ Screenshot: Command palette with print command
 
 ---
 
-#### Section 2: Basic Usage
+##### Section 2: Basic Usage
 
-#### Quick Start: Print Current File
+##### Quick Start: Print Current File
 
 Screenshot: Code file with keyboard shortcut
 
@@ -138,7 +200,7 @@ Method 3: Command Palette
 - Ctrl+Shift+P → "Print2Paper"
 ```
 
-#### Understanding the Preview
+##### Understanding the Preview
 
 Screenshot: PDF preview panel
 
@@ -156,9 +218,9 @@ Navigation:
 
 ---
 
-#### Section 3: Customization
+##### Section 3: Customization
 
-#### Changing Themes
+##### Changing Themes
 
 Screenshot: Theme dropdown menu
 
@@ -170,7 +232,7 @@ Screenshot: Theme dropdown menu
 5. Preview updates instantly
 ```
 
-#### Adjusting Page Settings
+##### Adjusting Page Settings
 
 Screenshot: Page size and margin menus
 
@@ -190,9 +252,9 @@ Font Size:
 
 ---
 
-#### Section 4: Advanced Features
+##### Section 4: Advanced Features
 
-#### Printing Markdown Files
+##### Printing Markdown Files
 
 Screenshot: Markdown mode dropdown
 
@@ -204,7 +266,7 @@ For .md files, choose render mode:
 Toggle via dropdown in preview panel
 ```
 
-#### Printing Options
+##### Printing Options
 
 Screenshot: Print button menu
 
@@ -217,14 +279,14 @@ Print Button Options:
 
 ---
 
-#### Section 5: Troubleshooting
+##### Section 5: Troubleshooting
 
 **Common Issues:**
 
 1. **Extension not found in marketplace**
    - Refresh Extensions panel
    - Check spelling: "Print2Paper4VSCode"
-   - Try direct link: [marketplace link]
+   - Try direct link: [p2p4vsc.info](https://p2p4vsc.info)
 
 2. **Alt+P doesn't work**
    - Check for keyboard shortcut conflicts
@@ -246,7 +308,7 @@ Visit [p2p4vsc.support](https://p2p4vsc.support) to report issues or ask questio
 
 ---
 
-### Page 3: Support (Redirect)
+#### Page 3: Print2Paper4VSCode Support (Redirect)
 
 **p2p4vsc.support** → Redirects to GitHub Issues
 
@@ -259,95 +321,433 @@ Optional: Add intermediate page with quick links:
 
 ---
 
+### gmail2trello Pages
+
+#### Page 1: Landing Page (g2t.cc)
+
+##### gmail2trello Key Messages
+
+**Hero Section:**
+
+```text
+Email to Tasks. In One Click.
+
+Turn Gmail threads into Trello cards without switching tabs.
+gmail2trello makes project management seamless and secure.
+```
+
+**Trust & Transparency:**
+
+- ⚠️ **Security Story:** Browser extensions can access sensitive data. We don't.
+- ✅ **Full Source Available:** Every line of code is public at [g2t.dev](https://g2t.dev)
+- ✅ **Made in the USA by Applied Media** 🇺🇸 (display flag and Applied Media logo in header and footer)
+- ✅ **Community Driven:** Open source, auditable, trustworthy
+
+**Call to Actions:**
+
+1. **Install Extension** → Link to g2t.info (redirects to Chrome Web Store)
+2. **View Source Code** → Link to g2t.dev
+3. **Get Usage Guide** → Link to /guide page
+4. **Stay Updated** → Mailing list signup form (Applied Media newsletter)
+
+**Features Highlight:**
+
+- 📧 Convert Gmail threads to Trello cards instantly
+- 🔗 Preserve email context and links
+- 🎯 Choose board and list on the fly
+- ⚡ One-click workflow integration
+- 🔒 No data stored or transmitted to third parties
+
+**Use Cases:**
+
+- **Project managers:** Convert client emails to actionable tasks
+- **Support teams:** Turn bug reports into tracked tickets
+- **Sales teams:** Move leads from inbox to pipeline
+- **Anyone:** Stop losing important emails in the inbox
+
+**Community & Support:**
+
+- Found a bug? → g2t.support
+- Want a feature? → Submit request at g2t.dev
+- Pull requests welcome → See contribution guidelines
+
+**Footer:**
+
+- 🇺🇸 Made in the USA by Applied Media [AM Logo] (small text)
+- © 2025-2026 Applied Media
+- Links: Install | Guide | Support | Privacy | Source Code
+- Mailing list signup: "Get updates on new Applied Media software"
+
+---
+
+#### Page 2: Usage Guide (g2t.cc/guide)
+
+##### gmail2trello Installation
+
+##### Step 1: Install from Chrome Web Store
+
+Screenshot: Chrome Web Store page
+
+```text
+1. Visit g2t.info (redirects to Chrome Web Store)
+2. Click "Add to Chrome"
+3. Confirm permissions when prompted
+4. Extension icon appears in Chrome toolbar
+```
+
+##### Step 2: Connect to Trello
+
+Screenshot: Extension popup with Trello auth
+
+```text
+1. Click gmail2trello icon in Chrome toolbar
+2. Click "Connect to Trello"
+3. Authorize access to your Trello boards
+4. Select default board/list (optional)
+```
+
+---
+
+##### gmail2trello Basic Usage
+
+##### Convert Email to Trello Card
+
+Screenshot: Gmail with extension button
+
+```text
+1. Open any Gmail thread
+2. Click the "Send to Trello" button (appears in Gmail interface)
+3. Choose destination board and list
+4. (Optional) Edit card title/description
+5. Click "Create Card"
+6. Card created! Link appears in confirmation
+```
+
+##### What Gets Converted
+
+- **Card title:** Email subject line
+- **Card description:** Email body (formatted)
+- **Attachments:** Links to Gmail thread (preserves context)
+- **Labels:** Optional mapping from Gmail labels
+
+---
+
+##### Section 3: Tips & Tricks
+
+**Keyboard Shortcut:**
+
+```text
+Press Alt+T (Option+T on Mac) to trigger "Send to Trello"
+from any Gmail thread (configurable in Chrome settings)
+```
+
+**Default Board/List:**
+
+```text
+Set a default destination in extension settings
+to skip board selection for routine workflows
+```
+
+**Gmail Labels → Trello Labels:**
+
+```text
+Map Gmail labels to Trello labels for automatic tagging
+Configure in extension settings
+```
+
+---
+
+##### Section 4: Troubleshooting
+
+**Common Issues:**
+
+1. **Extension button doesn't appear in Gmail**
+   - Refresh Gmail page
+   - Check extension is enabled (chrome://extensions)
+   - Verify you're using Chrome/Chromium browser
+
+2. **Trello authorization fails**
+   - Check you're logged into Trello
+   - Try disconnecting and reconnecting
+   - Clear browser cache and retry
+
+3. **Card creation fails**
+   - Verify Trello board permissions
+   - Check internet connection
+   - Try selecting different board/list
+
+**Need More Help?**
+Visit [g2t.support](https://g2t.support) to report issues or ask questions
+
+---
+
+#### Page 3: Support (Redirect)
+
+**g2t.support** → Redirects to GitHub Issues
+
+---
+
+### cov.llc Pages
+
+#### Page 1: Home/Consulting (cov.llc)
+
+##### Key Messages
+
+**Hero Section:**
+
+```text
+Fractional CTO & Technical Leadership
+
+Strategic technology guidance for startups and growing companies.
+Expertise in cloud architecture, team building, and software delivery.
+```
+
+**Value Proposition:**
+
+- **Strategic Vision:** Aligning technology with business goals
+- **Hands-on Leadership:** Not just advice, but execution
+- **Scalability:** Preparing your tech stack for growth
+- **Interim Roles:** Filling gaps during transitions
+
+**Services:**
+
+1. **Fractional CTO:** Ongoing leadership without the full-time cost
+2. **Technical Due Diligence:** For investors and M&A
+3. **Architecture Review:** Audit and roadmap for your stack
+4. **Team Mentorship:** Leveling up your engineering team
+
+**Footer:**
+
+- © 2025 cov.llc | Applied Media
+- Links: Services | About | Contact
+- Social: LinkedIn | GitHub
+
+---
+
+### Shared Elements (Software Sites)
+
+Both landing pages share:
+
+1. **Applied Media branding:** Consistent footer, logo, color scheme
+2. **Same mailing list form:** One unified audience for all Applied Media projects
+3. **Trust messaging:** Open source, auditable, Made in the USA by Applied Media
+4. **Similar structure:** Hero → Features → Trust → CTA → Footer
+5. **Cross-promotion:** Each site mentions the other project in footer or "More from Applied Media" section
+6. **Footer format:** 🇺🇸 Made in the USA by Applied Media [AM Logo] in small text
+
+---
+
 ## Mailing List Implementation
 
-### Recommended Option: Buttondown
+### Purpose
 
-**Why Buttondown:**
+Collect email addresses for **Applied Media** mailing list to:
+
+- Announce new open source software releases
+- Share updates about existing projects (p2p4vsc, g2t)
+- Build community around Applied Media software offerings
+
+**Key:** This is ONE mailing list for ALL Applied Media projects, not separate lists per project.
+
+### Top-Rated Services Comparison (2025)
+
+#### 1. Mailchimp - Industry Standard
+
+**Rating:** 4.5/5 stars | G2 "Leader" | 13M+ users
+
+**Pros:**
+
+- ✅ **Trusted brand:** Most recognized email marketing platform
+- ✅ **Free tier:** Up to 500 subscribers, 1,000 emails/month
+- ✅ **Professional templates:** Extensive library
+- ✅ **Analytics:** Open rates, click tracking, A/B testing
+- ✅ **Integrations:** 300+ integrations available
+- ✅ **GDPR compliant:** Strong privacy/compliance features
+- ✅ **Easy embeds:** Simple form generation for websites
+
+**Cons:**
+
+- ⚠️ Feature creep: More than needed for simple updates
+- ⚠️ UI complexity: Can be overwhelming for beginners
+- ⚠️ Price scaling: Gets expensive above 500 subscribers
+
+**Pricing:**
+
+- Free: 500 contacts, 1,000 emails/month, Mailchimp branding
+- Essentials: $13/mo for 500 contacts, remove branding
+- Standard: $20/mo for 500 contacts, advanced features
+
+#### 2. Brevo (formerly Sendinblue) - Best Value
+
+**Rating:** 4.5/5 stars | G2 "Leader" | Good Mailchimp alternative
+
+**Pros:**
+
+- ✅ **Generous free tier:** Unlimited contacts, 300 emails/day
+- ✅ **No contact-based pricing:** Pay for emails sent, not subscribers
+- ✅ **SMS included:** Can add SMS notifications if desired
+- ✅ **Transactional emails:** Good for automated notifications
+- ✅ **Modern UI:** Cleaner than Mailchimp
+- ✅ **GDPR compliant:** EU-based, strong privacy
+
+**Cons:**
+
+- ⚠️ Daily email limit on free tier (300/day = 9,000/month)
+- ⚠️ Less brand recognition than Mailchimp
+- ⚠️ Fewer third-party integrations
+
+**Pricing:**
+
+- Free: Unlimited contacts, 300 emails/day
+- Starter: $25/mo for 20,000 emails/month
+- Business: $65/mo for 20,000 emails/month + advanced features
+
+#### 3. Buttondown - Developer-Friendly
+
+**Rating:** 4.7/5 stars | Indie/developer favorite
+
+**Pros:**
 
 - ✅ **Simple:** Markdown-based, minimal setup
 - ✅ **Privacy-focused:** No tracking pixels by default
-- ✅ **Free tier:** Up to 1,000 subscribers
-- ✅ **API available:** Easy integration
-- ✅ **Paid upgrade:** $9/mo for more features if needed
-- ✅ **Clean embeds:** Simple email form
+- ✅ **Free tier:** Up to 100 subscribers (reduced from 1,000)
+- ✅ **API available:** Easy integration for developers
+- ✅ **Clean embeds:** Simple email form, no bloat
 
-**Alternative Options:**
+**Cons:**
 
-1. **Mailchimp**
-   - Free up to 500 subscribers
-   - Well-known, feature-rich
-   - Can be overkill for simple newsletter
-   - More complex UI
+- ⚠️ Small free tier: Only 100 subscribers free (changed in 2024)
+- ⚠️ Minimal features: Intentionally basic
+- ⚠️ Less business-appropriate: More for indie newsletters
+- ⚠️ No templates: Write your own HTML/Markdown
 
-2. **Constant Contact**
-   - No free tier ($12+/mo)
-   - Professional features
-   - Good if you want full marketing suite
-   - Overkill for simple updates
+**Pricing:**
 
-3. **ConvertKit**
-   - Free up to 1,000 subscribers
-   - Creator-focused
-   - Good automation features
-   - More than you might need initially
+- Free: 100 subscribers
+- Standard: $9/mo for 1,000 subscribers
+- Pro: $29/mo for 10,000 subscribers
 
-4. **Simple Form → Email**
-   - Completely free
-   - Use Formspree or similar
-   - Just sends emails to you
-   - Manual management required
+#### 4. ConvertKit - Creator-Focused
 
-### Recommended: Start with Buttondown
+**Rating:** 4.4/5 stars | Popular with creators/bloggers
 
-**Setup Steps:**
+**Pros:**
 
-1. Create account at [buttondown.email](https://buttondown.email)
-2. Configure newsletter name and description
-3. Get embed code for subscription form
-4. Add to website footer/dedicated section
-5. (Optional) Set up welcome email
+- ✅ **Free tier:** Up to 10,000 subscribers (broadcasts to 1,000)
+- ✅ **Creator tools:** Landing pages, automation funnels
+- ✅ **Audience segmentation:** Tag-based organization
+- ✅ **Modern UI:** Clean, intuitive interface
 
-**CSP-Safe Embed Example:**
+**Cons:**
+
+- ⚠️ Limited free broadcasts: Only first 1,000 subscribers get emails
+- ⚠️ Creator-centric: Built for influencers, may be overkill
+- ⚠️ Price jump: $15/mo for unlimited sends to 300 subscribers
+
+**Pricing:**
+
+- Free: Up to 10,000 subscribers, limited sends
+- Creator: $15/mo for 300 subscribers, unlimited sends
+- Creator Pro: $29/mo for 300 subscribers + advanced features
+
+### Recommendation: Mailchimp or Brevo
+
+**Choose Mailchimp if:**
+
+- You want the most trusted/recognized name
+- 500 subscribers is enough for Year 1
+- You prefer extensive templates and analytics
+- Brand reputation matters for professionalism
+
+**Choose Brevo if:**
+
+- You want unlimited contacts from day 1
+- 300 emails/day (9,000/month) is sufficient
+- You prefer modern UI and better value
+- Cost scaling is important (pay per email, not per contact)
+
+### Recommended: Mailchimp (Start Here)
+
+**Why Mailchimp for Applied Media:**
+
+1. **Trust signal:** Most recognized name in email marketing
+2. **Free tier adequate:** 500 subscribers is reasonable for initial launch
+3. **Professional appearance:** Well-designed forms and emails
+4. **Growth path:** Easy to scale when subscriber count increases
+5. **Proven reliability:** 20+ years in business, won't disappear
+
+**Switch to Brevo later if:**
+
+- You exceed 500 subscribers and want to avoid Mailchimp pricing
+- You're sending infrequent updates (Brevo's free tier is better for this)
+
+**Setup Steps (Mailchimp):**
+
+1. Create account at [mailchimp.com](https://mailchimp.com)
+2. Create audience named "Applied Media Software Updates"
+3. Configure audience settings and welcome email
+4. Create embedded form:
+   - Navigate to Audience → Signup forms → Embedded forms
+   - Customize form fields (email required, optional: first name)
+   - Copy embed code
+5. Add form to both p2p4vsc.com and g2t.com websites
+6. Test subscription flow end-to-end
+
+**Mailchimp Embed Example:**
 
 ```html
-<!-- HTML: Add to your page -->
-<form
-  id="p2p4vsc-newsletter-form"
-  action="https://buttondown.email/api/emails/embed-subscribe/p2p4vsc"
-  method="post"
-  data-popup-url="https://buttondown.email/p2p4vsc"
->
-  <label for="bd-email">Get extension updates:</label>
-  <input type="email" name="email" id="bd-email" placeholder="your@email.com" required />
-  <input type="submit" value="Subscribe" />
-</form>
+<!-- Mailchimp signup form -->
+<div id="mc_embed_signup">
+  <form 
+    action="https://appliedmedia.us1.list-manage.com/subscribe/post?u=YOUR_USER_ID&amp;id=YOUR_LIST_ID" 
+    method="post" 
+    id="mc-embedded-subscribe-form" 
+    name="mc-embedded-subscribe-form" 
+    class="validate" 
+    target="_blank"
+  >
+    <div id="mc_embed_signup_scroll">
+      <h3>Get Updates on New Software Releases</h3>
+      <p>Join the Applied Media mailing list for announcements about new open source projects and updates.</p>
+      
+      <div class="mc-field-group">
+        <label for="mce-EMAIL">Email Address <span class="asterisk">*</span></label>
+        <input type="email" name="EMAIL" class="required email" id="mce-EMAIL" required>
+      </div>
+      
+      <div class="mc-field-group">
+        <label for="mce-FNAME">First Name</label>
+        <input type="text" name="FNAME" class="text" id="mce-FNAME">
+      </div>
+      
+      <!-- Bot prevention -->
+      <div style="position: absolute; left: -5000px;" aria-hidden="true">
+        <input type="text" name="b_YOUR_USER_ID_YOUR_LIST_ID" tabindex="-1" value="">
+      </div>
+      
+      <div class="clear">
+        <input type="submit" value="Subscribe" name="subscribe" id="mc-embedded-subscribe" class="button">
+      </div>
+    </div>
+  </form>
+</div>
 
-<!-- JavaScript: Add to external script file (e.g., newsletter.js) -->
-<script src="newsletter.js"></script>
+<!-- Optional: Add Mailchimp validation script if needed -->
+<script type='text/javascript' src='//s3.amazonaws.com/downloads.mailchimp.com/js/mc-validate.js'></script>
 ```
 
-**newsletter.js (external script for CSP compliance):**
+**Styling Tips:**
 
-```javascript
-// CSP-safe implementation - attach event listener externally
-document.addEventListener('DOMContentLoaded', function() {
-  const form = document.getElementById('p2p4vsc-newsletter-form');
-  if (form) {
-    form.addEventListener('submit', function(e) {
-      const popupUrl = form.getAttribute('data-popup-url');
-      window.open(popupUrl, 'popupwindow', 'scrollbars=yes,width=800,height=600');
-      return true;
-    });
-  }
-});
-```
+- Customize CSS to match website branding
+- Keep form simple: email required, first name optional
+- Place in footer or dedicated "Stay Updated" section
+- Use same form on both project websites (shared audience)
 
 ---
 
 ## README Cleanup
 
-### Current State
+### Current State (Print2Paper4VSCode)
 
 - Comprehensive but dense
 - Mixed audience (users + developers)
@@ -379,14 +779,14 @@ Brief explanation of use cases...
 
 [Installation GIF/Screenshot]
 
-1. Install from VS Code Marketplace
+1. Install from VS Code Marketplace: [p2p4vsc.info](https://p2p4vsc.info)
 2. Press Alt+P in any code file
 3. Preview, adjust, print!
 
 ## Security & Trust
 
 🔍 **Full Source Available:** Every line of code is public and auditable
-🇺🇸 **Made in the USA**
+🇺🇸 **Made in the USA by Applied Media:** Professional open source software
 🤝 **Community Driven:** PRs and audits welcome
 
 [Link to malicious extension article]
@@ -394,12 +794,17 @@ Brief explanation of use cases...
 ## Documentation
 
 - 📖 **User Guide:** [p2p4vsc.com/install](https://p2p4vsc.com/install)
-- 🔧 **Developer Docs:** See AGENTS.md
+- 🔧 **Developer Docs:** See [AGENTS.md](docs/AGENTS.md)
 - 🐛 **Report Issues:** [p2p4vsc.support](https://p2p4vsc.support)
 
 ## For Developers
 
 [Keep existing architecture/development sections but streamlined]
+
+## More from Applied Media
+
+- **gmail2trello:** Convert Gmail threads to Trello cards ([g2t.cc](https://g2t.cc))
+- **Stay Updated:** [Join our mailing list](https://p2p4vsc.com#newsletter) for announcements
 
 ## License
 
@@ -410,55 +815,77 @@ Commercial licensing available.
 
 ---
 
-Made in the USA 🇺🇸 | © 2025-2026 Applied Media
+🇺🇸 Made in the USA by Applied Media | © 2025-2026 Applied Media
 ```
+
+### Similar Approach for gmail2trello README
+
+- Add links to g2t.cc, g2t.info, g2t.dev, g2t.support
+- Cross-promote Print2Paper4VSCode
+- Applied Media branding and mailing list link
+- Trust & transparency messaging
 
 ---
 
-## Platform Recommendation
+## Platform Recommendation (Simple Sites)
 
-### GitHub Pages (Recommended)
+**Comparing options for static landing pages (p2p4vsc.com, g2t.cc, cov.llc):**
 
-**Pros:**
-
-- ✅ Free, unlimited bandwidth
-- ✅ Full control over HTML/CSS/JS
-- ✅ Version controlled (same repo or separate)
-- ✅ Custom domain support
-- ✅ HTTPS included
-- ✅ Can use Jekyll or plain HTML
-- ✅ Easy deployment (just push to gh-pages branch)
-
-**Cons:**
-
-- ⚠️ Requires HTML/CSS knowledge (minimal)
-- ⚠️ Static only (but that's fine for this use case)
-
-### Google Sites (Alternative)
+### 1. GitHub Pages (Recommended for Software)
 
 **Pros:**
 
-- ✅ No coding required
-- ✅ WYSIWYG editor
-- ✅ Free, custom domain support
-- ✅ Quick to set up
+- ✅ **Free:** Unlimited bandwidth for public repos
+- ✅ **Version Control:** Built-in with git workflow
+- ✅ **Developer Native:** ideal for open source projects
+- ✅ **Custom Domains:** Easy CNAME setup, free HTTPS
+- ✅ **Control:** Full HTML/CSS/JS control or Jekyll themes
 
 **Cons:**
 
-- ⚠️ Less control over design
-- ⚠️ Can look generic
-- ⚠️ Limited customization
-- ⚠️ Not version controlled
+- ⚠️ Requires some coding knowledge (HTML/CSS)
+- ⚠️ Static only (no backend code)
 
-### Recommendation: GitHub Pages
+### 2. Google Sites (Recommended for Consulting if Non-Technical)
 
-Use GitHub Pages with custom HTML for:
+**Pros:**
 
-1. Professional appearance
-2. Full control
-3. Easy updates (just edit HTML)
-4. Version history
-5. Can reuse extension's design language
+- ✅ **No Code:** Drag-and-drop WYSIWYG editor
+- ✅ **Integrated:** Works with Google Workspace
+- ✅ **Fast Setup:** Launch in minutes
+- ✅ **Free:** Included with Google account
+
+**Cons:**
+
+- ⚠️ **Limited Design:** Can look generic/template-y
+- ⚠️ **Less Control:** Hard to customize HTML/CSS
+- ⚠️ **Not Version Controlled:** Harder to track changes
+- ⚠️ **Vendor Lock-in:** Harder to migrate away
+
+### 3. GCP Web Hosting (Firebase Hosting or Cloud Storage)
+
+**Pros:**
+
+- ✅ **Scalable:** Built on Google Cloud infrastructure
+- ✅ **Advanced Features:** Custom headers, rewrites, cloud functions
+- ✅ **Ecosystem:** Good if you already use GCP services
+- ✅ **Fast:** Global CDN included (Firebase)
+
+**Cons:**
+
+- ⚠️ **Complexity:** Overkill for simple static landing pages
+- ⚠️ **Cost Risk:** Pay-as-you-go can scale up unexpectedly (though low for static)
+- ⚠️ **Setup:** Requires CLI tools, billing setup, project config
+
+### Recommendation Summary
+
+**For Software Projects (p2p4vsc, g2t):**
+👉 **Use GitHub Pages.** It aligns with the open-source nature, allows full control over the design, and keeps code and docs in the same place.
+
+**For Consulting Site (cov.llc):**
+👉 **Use GitHub Pages** if you want full design control and a "developer-native" feel.
+👉 **Use Google Sites** if you want a quick, easy-to-edit business card site without coding.
+👉 **Avoid GCP Web Hosting** unless you need dynamic backend features or have complex routing needs. It's unnecessary complexity for a simple consulting page.
 
 ---
 
@@ -466,93 +893,183 @@ Use GitHub Pages with custom HTML for:
 
 ### Phase 1: Domain Setup (Day 1)
 
+**Print2Paper4VSCode:**
+
 - [ ] Register/configure p2p4vsc.com
+- [ ] Register/configure p2p4vsc.info (marketplace redirect)
 - [ ] Register/configure p2p4vsc.dev
 - [ ] Register/configure p2p4vsc.support
-- [ ] Set up DNS redirects for .dev and .support
+- [ ] Set up DNS redirects for .info, .dev, and .support
 - [ ] Set up DNS for .com → GitHub Pages
 
-### Phase 2: Content Creation (Day 1-2)
+**gmail2trello:**
+
+- [ ] Register/configure g2t.cc
+- [ ] Register/configure g2t.info (Chrome Web Store redirect)
+- [ ] Register/configure g2t.dev
+- [ ] Register/configure g2t.support
+- [ ] Set up DNS redirects for .info, .dev, and .support
+- [ ] Set up DNS for .cc → GitHub Pages
+
+**cov.llc:**
+
+- [ ] Register/configure cov.llc
+- [ ] Set up DNS for cov.llc → GitHub Pages (or chosen platform)
+- [ ] Setup email forwarding (e.g. contact@cov.llc)
+
+### Phase 2: Mailing List Setup (Day 1)
+
+- [ ] Create Mailchimp account (or chosen service)
+- [ ] Create audience: "Applied Media Software Updates"
+- [ ] Configure welcome email template
+- [ ] Design embedded form (simple: email + optional first name)
+- [ ] Get embed code
+- [ ] Test subscription flow
+
+### Phase 3: Content Creation (Day 2-3)
+
+**Print2Paper4VSCode:**
 
 - [ ] Write landing page copy
 - [ ] Find and link to malicious extension article
 - [ ] Create installation guide content
-- [ ] Take screenshots for guide
-- [ ] Clean up README.md
+- [ ] Take screenshots for guide (Extension install, preview panel, menus)
+- [ ] Create GIF/video of basic usage
 
-### Phase 3: Website Development (Day 2-3)
+**gmail2trello:**
 
-#### Option A: GitHub Pages (Recommended)
+- [ ] Write landing page copy
+- [ ] Gather info from existing README/repo
+- [ ] Create usage guide content
+- [ ] Take screenshots (Chrome Web Store, Gmail button, card creation)
+- [ ] Create GIF/video of email-to-card workflow
 
-- [ ] Create gh-pages branch or docs/ folder
-- [ ] Design/code landing page HTML
-- [ ] Design/code installation guide page
-- [ ] Add responsive CSS
+**cov.llc:**
+
+- [ ] Write professional bio
+- [ ] List services and expertise areas
+- [ ] Write "About Applied Media" section
+- [ ] Create contact form/method
+
+**Shared:**
+
+- [ ] Applied Media logo SVG (for footer)
+- [ ] USA flag SVG (public domain, for footer)
+- [ ] Consistent color scheme and CSS
+- [ ] Privacy policy (if needed for extensions)
+
+### Phase 4: Website Development (Day 3-5)
+
+#### GitHub Pages Setup (Recommended)
+
+**Repository Structure:**
+
+```text
+appliedmedia.github.io/
+├── index.html                  # Applied Media landing (or redirect)
+├── p2p4vsc/
+│   ├── index.html             # Print2Paper4VSCode landing
+│   ├── install.html           # Installation guide
+│   └── assets/
+├── g2t/
+│   ├── index.html             # gmail2trello landing
+│   ├── guide.html             # Usage guide
+│   └── assets/
+├── cov/ (or separate repo for cov.llc)
+│   ├── index.html             # cov.llc landing
+│   └── assets/
+└── shared/
+    ├── css/
+    │   └── common.css         # Shared Applied Media styles
+    ├── js/
+    │   └── newsletter.js      # Mailing list form handler
+    └── images/
+```
+
+**Development Tasks:**
+
+**Software Sites (p2p4vsc, g2t):**
+
+- [ ] Create HTML pages
+- [ ] Design responsive CSS
+- [ ] Add mailing list form embed
 - [ ] Implement navigation
-- [ ] Add mailing list form
-- [ ] Test on mobile
+- [ ] Test on desktop and mobile
 
-#### Option B: Google Sites
+**Consulting Site (cov.llc):**
 
-- [ ] Create new Google Site
-- [ ] Build landing page
-- [ ] Build installation guide page
-- [ ] Configure custom domain
-- [ ] Test functionality
+- [ ] Create landing page (single page scroll or multi-page)
+- [ ] Add professional styling
+- [ ] Add contact form or mailto link
+- [ ] Test on devices
 
-### Phase 4: Mailing List Setup (Day 3)
+**Shared Elements:**
 
-- [ ] Create Buttondown account (or chosen service)
-- [ ] Configure newsletter settings
-- [ ] Get embed code
-- [ ] Integrate into website
-- [ ] Test subscription flow
-- [ ] Write welcome email template
+- [ ] Create common.css with Applied Media branding
+- [ ] Create newsletter.js for form handling
+- [ ] Add cross-promotion links ("More from Applied Media")
+- [ ] Ensure consistent footer across both sites
 
-### Phase 5: Testing & Launch (Day 4)
+### Phase 5: Testing & Launch (Day 6)
 
-- [ ] Test all domain redirects
-- [ ] Test website on desktop browsers
-- [ ] Test website on mobile devices
+**Domain Testing:**
+
+- [ ] Test p2p4vsc.com, .info, .dev, .support
+- [ ] Test g2t.cc, .info, .dev, .support
+- [ ] Test cov.llc
+
+**Website Testing:**
+
+- [ ] Test all internal links
 - [ ] Test mailing list signup
-- [ ] Verify all links work
-- [ ] Check GitHub repo link accessibility
-- [ ] Deploy to production
+- [ ] Test responsive design
+- [ ] Verify all external links work
 
-### Phase 6: Post-Launch (Day 5)
+**Analytics Setup (Optional):**
 
-- [ ] Update package.json homepage field
-- [ ] Update VS Code Marketplace listing with website link
+- [ ] Add privacy-friendly analytics (Plausible or similar)
+- [ ] Configure goals/events
+
+### Phase 6: Post-Launch (Day 7+)
+
+**Updates:**
+
+- [ ] Update package.json/manifest.json homepage fields
+- [ ] Update Marketplace/Web Store listings
+- [ ] Clean up READMEs
 - [ ] Announce on relevant channels
-- [ ] Monitor for issues
+
+**Monitoring:**
+
+- [ ] Monitor support requests
+- [ ] Track mailing list growth
+- [ ] Review analytics weekly
 
 ---
 
 ## Assets Needed
 
-### Content
+### Visual Content
 
-- [ ] High-quality screenshots of extension in use
-- [ ] GIF/video of installation process
-- [ ] GIF/video of basic usage (Alt+P → preview → print)
-- [ ] USA flag image (SVG preferred)
-- [ ] Extension icon (already have)
+- [ ] High-quality screenshots (p2p4vsc, g2t)
+- [ ] GIFs/videos of usage
+- [ ] Applied Media logo (SVG)
+- [ ] USA flag image (SVG)
+- [ ] Professional headshot (for cov.llc)
 
-### Text
+### Text Content
 
-- [ ] Landing page hero copy
-- [ ] Feature descriptions
-- [ ] Installation guide step-by-step
-- [ ] Troubleshooting FAQs
-- [ ] Cleaned up README
+- [ ] Landing page copy (all sites)
+- [ ] Usage guides (software)
+- [ ] Bio and Services (consulting)
+- [ ] Privacy policies
+- [ ] Mailing list templates
 
-### Links
+### External Links
 
-- [ ] Find real article about malicious VS Code extensions
-  - Suggested: [BleepingComputer article](https://www.bleepingcomputer.com/news/security/microsoft-finds-dozens-of-malicious-vs-code-extensions/)
-  - Or: [The Register article on malicious extensions](https://www.theregister.com/2023/08/02/malicious_vscode_extensions/)
-- [ ] VS Code Marketplace extension page URL
-- [ ] GitHub repository URL
+- [ ] Marketplace/Store listings
+- [ ] GitHub repositories
+- [ ] BleepingComputer article
 
 ---
 
@@ -570,7 +1087,7 @@ git rm -rf .
 git add index.html install.html style.css
 git commit -m "Initial GitHub Pages commit"
 git push origin gh-pages
-```text
+```
 
 #### Method 2: docs/ folder on main
 
@@ -596,131 +1113,17 @@ git push
    - 185.199.110.153
    - 185.199.111.153
 
-**For `www.p2p4vsc.com` (subdomain - optional):**
+**For cov.llc:**
+Similar setup if using GitHub Pages.
 
-- Add CNAME record pointing to: `appliedmedia.github.io`
-
-**For p2p4vsc.dev:**
-
-- Add URL redirect record → `https://github.com/appliedmedia/print2paper4vscode`
-
-**For p2p4vsc.support:**
-
-- Add URL redirect record → `https://github.com/appliedmedia/print2paper4vscode/issues/new`
+**For Redirects:**
+Use URL Redirect records in your DNS provider (Namecheap, GoDaddy, Cloudflare, etc.).
 
 ---
 
 ## Simple Landing Page Template
 
-Here's a minimal but professional starting template:
-
-```html
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Print2Paper4VSCode - Print Code, Trust the Source</title>
-    <meta name="description" content="A trustworthy VS Code extension for printing code with syntax highlighting. Full source code available.">
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; line-height: 1.6; color: #333; }
-        header { background: #1e1e1e; color: white; padding: 1rem 2rem; display: flex; justify-content: space-between; align-items: center; }
-        header img { height: 20px; }
-        nav a { color: white; text-decoration: none; margin-left: 2rem; }
-        .hero { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 6rem 2rem; text-align: center; }
-        .hero h1 { font-size: 3rem; margin-bottom: 1rem; }
-        .hero p { font-size: 1.3rem; margin-bottom: 2rem; max-width: 600px; margin-left: auto; margin-right: auto; }
-        .cta-button { display: inline-block; background: white; color: #667eea; padding: 1rem 2rem; text-decoration: none; border-radius: 5px; font-weight: bold; margin: 0.5rem; }
-        .features { padding: 4rem 2rem; max-width: 1200px; margin: 0 auto; display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 2rem; }
-        .feature { text-align: center; }
-        .feature h3 { margin: 1rem 0; }
-        .trust { background: #f5f5f5; padding: 4rem 2rem; text-align: center; }
-        .trust h2 { margin-bottom: 2rem; }
-        .trust-points { max-width: 800px; margin: 0 auto; display: grid; gap: 1rem; }
-        .trust-point { background: white; padding: 1.5rem; border-radius: 5px; text-align: left; }
-        footer { background: #1e1e1e; color: white; padding: 2rem; text-align: center; }
-        footer img { height: 30px; margin-top: 1rem; }
-    </style>
-</head>
-<body>
-    <header>
-        <div>Print2Paper4VSCode</div>
-        <nav>
-            <a href="#features">Features</a>
-            <a href="/install.html">Install</a>
-            <a href="https://p2p4vsc.dev">Source Code</a>
-            <a href="https://p2p4vsc.support">Support</a>
-        </nav>
-    </header>
-
-    <section class="hero">
-        <h1>Print Code. Trust the Source.</h1>
-        <p>Sometimes you need code on paper. Print2Paper4VSCode makes it simple, safe, and beautiful.</p>
-        <!-- Redirects to: https://marketplace.visualstudio.com/items?itemName=acoven.print2paper4vscode -->
-        <a href="https://p2p4vsc.info" class="cta-button">Install Extension</a>
-        <a href="https://p2p4vsc.dev" class="cta-button">View Source Code</a>
-    </section>
-
-    <section class="features" id="features">
-        <div class="feature">
-            <div style="font-size: 3rem;">🎨</div>
-            <h3>Syntax Highlighting</h3>
-            <p>100+ languages via Shiki</p>
-        </div>
-        <div class="feature">
-            <div style="font-size: 3rem;">📄</div>
-            <h3>Vector PDFs</h3>
-            <p>Clean, professional output</p>
-        </div>
-        <div class="feature">
-            <div style="font-size: 3rem;">👁️</div>
-            <h3>Live Preview</h3>
-            <p>See before you print</p>
-        </div>
-        <div class="feature">
-            <div style="font-size: 3rem;">🔧</div>
-            <h3>Customizable</h3>
-            <p>Themes, fonts, page sizes</p>
-        </div>
-    </section>
-
-    <section class="trust">
-        <h2>Built on Trust & Transparency</h2>
-        <div class="trust-points">
-            <div class="trust-point">
-                <strong>⚠️ Security Matters</strong><br>
-                Malicious extensions have been removed from the marketplace. 
-                <a href="https://www.bleepingcomputer.com/news/security/microsoft-finds-dozens-of-malicious-vs-code-extensions/">Read the story</a>
-            </div>
-            <div class="trust-point">
-                <strong>✅ Full Source Available</strong><br>
-                Every line of code is public at <a href="https://p2p4vsc.dev">p2p4vsc.dev</a>. 
-                Audit it. Review it. Trust it.
-            </div>
-            <div class="trust-point">
-                <strong>🇺🇸 Made in the USA</strong><br>
-                Developed and maintained in the United States.
-            </div>
-            <div class="trust-point">
-                <strong>🤝 Community Driven</strong><br>
-                We welcome bug reports, feature requests, and pull requests.
-            </div>
-        </div>
-    </section>
-
-    <footer>
-        <p>&copy; 2025-2026 Applied Media. All Rights Reserved.</p>
-        <p>
-            <a href="/install.html" style="color: white;">Install</a> | 
-            <a href="https://p2p4vsc.dev" style="color: white;">Source</a> | 
-            <a href="https://p2p4vsc.support" style="color: white;">Support</a>
-        </p>
-        <p>Made in the USA <img src="usa-flag.svg" alt="USA Flag" /></p>
-    </footer>
-</body>
-</html>
-```text
+(See previous section for code example)
 
 ---
 
@@ -728,17 +1131,38 @@ Here's a minimal but professional starting template:
 
 ### Initial Goals (Month 1)
 
+**Print2Paper4VSCode:**
+
 - [ ] Website live and accessible
+- [ ] 25+ extension installs from website
+
+**gmail2trello:**
+
+- [ ] Website live and accessible
+- [ ] 25+ extension installs from website
+
+**cov.llc:**
+
+- [ ] Website live
+- [ ] Professional presence established
+
+**Applied Media (Combined):**
+
 - [ ] 100+ mailing list subscribers
-- [ ] 50+ extension installs from website referrals
-- [ ] Zero broken links reported
+- [ ] Positive user feedback
 
-### Ongoing Metrics
+### Ongoing Metrics (Monthly)
 
-- Track via VS Code Marketplace analytics
-- Monitor mailing list growth
-- Track support requests via GitHub issues
-- Collect user feedback
+- Traffic & Engagement
+- Conversions (Installs, Signups)
+- Support & Community Health
+
+### Long-Term Goals (6-12 Months)
+
+- [ ] 1,000+ mailing list subscribers
+- [ ] 500+ extension installs
+- [ ] 100+ GitHub stars
+- [ ] New consulting leads via cov.llc
 
 ---
 
@@ -749,7 +1173,6 @@ Here's a minimal but professional starting template:
 - **Weekly:** Check GitHub issues, respond to support
 - **Monthly:** Send newsletter if significant updates
 - **Quarterly:** Review and update screenshots/guides
-- **As needed:** Update for new features or security notices
 
 ---
 
@@ -757,19 +1180,41 @@ Here's a minimal but professional starting template:
 
 ### One-Time Costs
 
-- Domain registrations: ~$30-50/year (if not already owned)
-- USA flag SVG: Free (public domain)
-- Screenshots/assets: Free (DIY)
+**Domains (per year):**
+
+- Print2Paper4VSCode domains: ~$40-60/year
+- gmail2trello domains: ~$20-40/year
+- cov.llc: ~$30-60/year (LLC domains can be pricier, check registrar)
+- **Total domains:** ~$90-160/year
+
+**Visual Assets:**
+
+- USA flag SVG: Free
+- Applied Media logo: Free (DIY)
 
 ### Ongoing Costs
 
-- **Buttondown mailing list:**
-  - Free (up to 1,000 subscribers)
-  - $9/mo if upgrade needed
-- **GitHub Pages:** Free
-- **Domain renewals:** ~$30-50/year
+**Mailing List Service:**
 
-**Total estimated:** $0-100/year depending on choices
+- **Mailchimp:** $0-13/month
+- **Brevo:** $0-25/month
+
+**Hosting:**
+
+- **GitHub Pages:** $0/month
+
+**Analytics (Optional):**
+
+- **Plausible Analytics:** $9/month
+
+### Annual Cost Summary
+
+**Minimum setup (Year 1):**
+
+- Domains: ~$90-160
+- Mailing list: $0
+- Hosting: $0
+- **Total:** ~$90-160/year
 
 ---
 
@@ -777,27 +1222,82 @@ Here's a minimal but professional starting template:
 
 **After PR #76 merges:**
 
-1. **Approve this plan**
-2. **Decide: GitHub Pages vs Google Sites**
-3. **Decide: Mailing list provider**
+1. **Review & approve this plan**
+   - Confirm scope: p2p4vsc, g2t, and cov.llc
+   - Confirm budget
+   - Confirm mailing list choice
+
+2. **Make key decisions:**
+   - Platform for cov.llc (GitHub Pages vs Google Sites)
+   - Mailchimp vs Brevo
+   - Analytics
+
+3. **Gather info:**
+   - Repo URLs, Store listings
+   - Content for all sites
+
 4. **Start Phase 1: Domain setup**
-5. **Create assets (screenshots, copy)**
-6. **Build website**
-7. **Launch!**
+   - Purchase/configure all domains
+
+5. **Execute Phases 2-6:**
+   - Build and launch!
 
 ---
+
+## Summary
+
+This plan establishes professional web presence for three Applied Media initiatives:
+
+**Print2Paper4VSCode:**
+- Landing page at p2p4vsc.com
+- Marketplace redirect at p2p4vsc.info
+- Developer docs at p2p4vsc.dev
+- Support portal at p2p4vsc.support
+
+**gmail2trello:**
+- Landing page at g2t.cc
+- Chrome Web Store redirect at g2t.info
+- Developer docs at g2t.dev
+- Support portal at g2t.support
+
+**cov.llc:**
+- Consulting landing page at cov.llc
+
+**Key Updates:**
+1. ✅ **Added p2p4vsc.info**
+2. ✅ **Added gmail2trello**
+3. ✅ **Added cov.llc** (Consulting)
+4. ✅ **Unified mailing list**
+5. ✅ **Platform Comparison:** Added GCP/Firebase vs GitHub Pages vs Google Sites
+6. ✅ **Applied Media branding**
+
+**Estimated Timeline:** 1 week for full implementation
+**Estimated Budget:** $90-160/year (domains only)
+**Priority:** High
+
+---
+
+**Status:** Ready to execute
+**Blocking questions:** See "Questions to Resolve" section above
 
 ## Questions to Resolve
 
-- [ ] Do you already own p2p4vsc.com/.dev/.support domains?
-- [ ] Preference: GitHub Pages or Google Sites?
-- [ ] Mailing list: Buttondown or alternative?
-- [ ] Want to keep extension icon or create website-specific branding?
-- [ ] Any specific design preferences/colors?
-- [ ] Want analytics (Google Analytics, Plausible, etc.)?
+**Domain Ownership:**
+
+- [ ] Do you already own p2p4vsc domains?
+- [ ] Do you already own g2t domains?
+- [ ] Do you already own cov.llc?
+- [ ] Budget approved?
+
+**Platform Decisions:**
+
+- [ ] cov.llc platform: GitHub Pages (control) or Google Sites (ease)?
+- [ ] Mailing list provider?
+- [ ] Analytics?
+
+**Content Details:**
+
+- [ ] Confirm URLs for repos and stores
+- [ ] Existing privacy policies?
 
 ---
-
-**Status:** Ready to execute after PR #76 clears
-**Estimated time:** 4-5 days for full implementation
-**Priority:** High (professional web presence before marketing)
