@@ -34,9 +34,9 @@ Since this workflow was added in PR #92 (branch `cursor/web-presence-documentati
 
 ## Next Steps
 
-1.  **Merge PR #92**: This will commit the workflow file to `main`.
-2.  **Verify Availability**: Run `gh workflow list` to confirm `reviewer-bot-comment-action.yml` is active.
-3.  **Future Usage**: Use the instructions below to post comments as a bot.
+1. **Merge PR #92**: This will commit the workflow file to `main`.
+2. **Verify Availability**: Run `gh workflow list` to confirm `reviewer-bot-comment-action.yml` is active.
+3. **Future Usage**: Use the instructions below to post comments as a bot.
 
 ## Usage Instructions
 
@@ -54,13 +54,16 @@ gh workflow run reviewer-bot-comment-action.yml \
 
 To reply to a specific line-of-code comment (threaded):
 
-1.  **Find the Comment ID**:
+1. **Find the Comment ID**:
+
     ```bash
     gh api repos/{owner}/{repo}/pulls/{pr_number}/comments
     ```
+
     Look for the `id` of the comment you want to reply to.
 
-2.  **Trigger the Reply**:
+2. **Trigger the Reply**:
+
     ```bash
     gh workflow run reviewer-bot-comment-action.yml \
       -f pr_number=92 \
@@ -72,9 +75,9 @@ To reply to a specific line-of-code comment (threaded):
 
 If you provide a `reply_to_comment_id` that refers to a standard issue comment (which doesn't support API threading) instead of a code review comment, the workflow includes a fallback mechanism:
 
-1.  It catches the API failure.
-2.  It fetches the original comment body.
-3.  It posts a new **top-level comment** that quotes the original text, ensuring context is preserved.
+1. **It catches the API failure.**
+2. **It fetches the original comment body.**
+3. **It posts a new **top-level comment** that quotes the original text, ensuring context is preserved.**
 
 ## Strategic Value
 
