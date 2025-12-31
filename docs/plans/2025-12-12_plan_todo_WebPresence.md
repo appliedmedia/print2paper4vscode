@@ -10,12 +10,14 @@
 ## Execution Plan
 
 ### Phase 1: Decisions & Preparation
+
 - [ ] **Approve Plan & Budget:** Confirm ~$90-160/year budget for domains.
 - [ ] **Platform Decisions:** Confirm GitHub Pages for all three sites.
 - [ ] **Mailing List:** Create Mailchimp account (Free Tier).
 - [ ] **Domain Inventory:** Check ownership of `p2p4vsc.*`, `g2t.*`, and `cov.llc`. Purchase missing domains.
 
 ### Phase 2: Repository & Domain Setup (One-to-One)
+
 - [ ] **Create Repo `p2p4vsc.com`:** Initialize public repo, enable GitHub Pages, add CNAME `p2p4vsc.com`.
 - [ ] **Create Repo `g2t.cc`:** Initialize public repo, enable GitHub Pages, add CNAME `g2t.cc`.
 - [ ] **Create Repo `cov.llc`:** Initialize public repo, enable GitHub Pages, add CNAME `cov.llc`.
@@ -23,6 +25,7 @@
 - [ ] **DNS Configuration (Redirects):** Configure `.info`, `.dev`, `.support` redirects in DNS provider.
 
 ### Phase 3: Content & Assets
+
 - [ ] **Visual Identity:** Create Applied Media logo and consistent favicon.
 - [ ] **Copywriting (cov.llc):** Draft bio, services, and contact info.
 - [ ] **Copywriting (p2p4vsc):** Draft landing page, installation steps, and features.
@@ -30,12 +33,14 @@
 - [ ] **Media:** Capture screenshots and record workflow GIFs for both extensions.
 
 ### Phase 4: Implementation
+
 - [ ] **Develop `cov.llc`:** Build simple static site (bio + contact). Deploy.
 - [ ] **Develop `p2p4vsc.com`:** Build marketing site + docs. Integrate Mailchimp. Deploy.
 - [ ] **Develop `g2t.cc`:** Build marketing site + docs. Integrate Mailchimp. Deploy.
 - [ ] **Cross-Linking:** Ensure all sites link to "Applied Media" and each other where appropriate.
 
 ### Phase 5: Launch & Updates
+
 - [ ] **Verification:** Test SSL, redirects, and form submissions on all sites.
 - [ ] **Update Metadata:** Update `package.json` and `manifest.json` homepage fields.
 - [ ] **Update Listings:** Update VS Code Marketplace and Chrome Web Store profiles.
@@ -63,27 +68,30 @@ Each project gets:
 
 ## Repository Strategy
 
-**Decision: One-to-One Mapping (One Repository per Website)**
+### Decision: One-to-One Mapping (One Repository per Website)
 
 We will create **separate repositories** for the web hosting (e.g., `p2p4vsc.com`, `g2t.cc`, `cov.llc`).
 
 **Why?**
-1.  **GitHub Pages Limitation:** GitHub Pages allows only **one custom domain per repository**. You cannot map `p2p4vsc.com` and `g2t.cc` to the same repo without complex workarounds.
-2.  **Decoupling:** Keeps marketing content (HTML/CSS) separate from application code. This prevents the main extension repos from being cluttered with website assets.
-3.  **Clarity:** Naming the repo after the domain (e.g., `p2p4vsc.com`) makes the mapping obvious.
+
+1. **GitHub Pages Limitation:** GitHub Pages allows only **one custom domain per repository**. You cannot map `p2p4vsc.com` and `g2t.cc` to the same repo without complex workarounds.
+2. **Decoupling:** Keeps marketing content (HTML/CSS) separate from application code. This prevents the main extension repos from being cluttered with website assets.
+3. **Clarity:** Naming the repo after the domain (e.g., `p2p4vsc.com`) makes the mapping obvious.
 
 **Proposed Repos:**
-1.  `appliedmedia/p2p4vsc.com` (Source for https://p2p4vsc.com)
-2.  `appliedmedia/g2t.cc` (Source for https://g2t.cc)
-3.  `appliedmedia/cov.llc` (Source for https://cov.llc)
+
+1. `appliedmedia/p2p4vsc.com` (Source for [https://p2p4vsc.com](https://p2p4vsc.com))
+2. `appliedmedia/g2t.cc` (Source for [https://g2t.cc](https://g2t.cc))
+3. `appliedmedia/cov.llc` (Source for [https://cov.llc](https://cov.llc))
 
 **Alternative Considered: `docs/` folder in existing Extension Repos**
+
 - **Pros:** fewer repos to manage.
 - **Cons:**
-    - **Branch bloat:** Marketing assets (images, videos) bloat the extension repo size.
-    - **Release Cycle:** Website updates shouldn't require touching the extension code or triggering CI/CD pipelines for the extension.
-    - **Domain Mapping:** GitHub Pages on `main` branch usually publishes to `username.github.io/repo-name`. While custom domains work, managing 3 distinct custom domains (com, cc, llc) is cleaner with 3 distinct repos.
-    - **Access Control:** You might want a designer or content writer to edit the site without giving them commit access to the extension source code.
+  - **Branch bloat:** Marketing assets (images, videos) bloat the extension repo size.
+  - **Release Cycle:** Website updates shouldn't require touching the extension code or triggering CI/CD pipelines for the extension.
+  - **Domain Mapping:** GitHub Pages on `main` branch usually publishes to `username.github.io/repo-name`. While custom domains work, managing 3 distinct custom domains (com, cc, llc) is cleaner with 3 distinct repos.
+  - **Access Control:** You might want a designer or content writer to edit the site without giving them commit access to the extension source code.
 
 ---
 
@@ -552,7 +560,7 @@ Visit [g2t.support](https://g2t.support) to report issues or ask questions
 
 #### Page 1: Home/Consulting (cov.llc)
 
-##### Key Messages
+##### Key Messages (cov.llc)
 
 **Hero Section:**
 
@@ -976,7 +984,7 @@ Commercial licensing available.
 
 - [ ] Register/configure cov.llc
 - [ ] Set up DNS for cov.llc → GitHub Pages (or chosen platform)
-- [ ] Setup email forwarding (e.g. contact@cov.llc)
+- [ ] Setup email forwarding (e.g. [contact@cov.llc](mailto:contact@cov.llc))
 
 ### Phase 2: Mailing List Setup (Day 1)
 
@@ -1300,21 +1308,25 @@ Use URL Redirect records in your DNS provider (Namecheap, GoDaddy, Cloudflare, e
 This plan establishes professional web presence for three Applied Media initiatives:
 
 **Print2Paper4VSCode:**
+
 - Landing page at p2p4vsc.com
 - Marketplace redirect at p2p4vsc.info
 - Developer docs at p2p4vsc.dev
 - Support portal at p2p4vsc.support
 
 **gmail2trello:**
+
 - Landing page at g2t.cc
 - Chrome Web Store redirect at g2t.info
 - Developer docs at g2t.dev
 - Support portal at g2t.support
 
 **cov.llc:**
+
 - Consulting landing page at cov.llc
 
 **Key Updates:**
+
 1. ✅ **Added p2p4vsc.info**
 2. ✅ **Added gmail2trello**
 3. ✅ **Added cov.llc** (Consulting)
