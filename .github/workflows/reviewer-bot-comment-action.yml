@@ -108,13 +108,9 @@ jobs:
             if [ $API_EXIT_CODE -eq 0 ] && [ -n "$ORIG_BODY" ]; then
               echo "Found issue comment. Posting quoted reply..."
               # Use printf for safe output of user-controlled content
-              # Quote the original comment using a here-doc to avoid command injection
-              QUOTED_MESSAGE=$(cat <<EOF
-$(printf '%s' "$ORIG_BODY" | sed 's/^/> /')
-
-$MESSAGE
-EOF
-)
+              # Quote the original comment - build message safely without nested here-docs
+              QUOTED_BODY=$(printf '%s' "$ORIG_BODY" | sed 's/^/> /')
+              QUOTED_MESSAGE="${QUOTED_BODY}"$'\n\n'"${MESSAGE}"
               gh pr comment "$PR_NUMBER" --body "$QUOTED_MESSAGE" --repo ${{ github.repository }}
             elif [ $API_EXIT_CODE -ne 0 ]; then
               echo "ERROR: API call failed with exit code $API_EXIT_CODE"
