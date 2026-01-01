@@ -42,7 +42,7 @@ jobs:
             gh api --method POST \
               "/repos/${{ github.repository }}/pulls/$PR_NUMBER/comments" \
               -f body="$MESSAGE" \
-              -F in_reply_to="$REPLY_TO_ID" 2>/dev/null && {
+              -F in_reply_to="$REPLY_TO_ID" 2>&1 && {
                 echo "Successfully replied to review comment $REPLY_TO_ID"
                 exit 0
               } || {
@@ -50,7 +50,7 @@ jobs:
               }
             
             # Try to fetch the parent review comment to get its position data
-            PARENT_COMMENT=$(gh api "/repos/${{ github.repository }}/pulls/comments/$REPLY_TO_ID" 2>/dev/null || echo "")
+            PARENT_COMMENT=$(gh api "/repos/${{ github.repository }}/pulls/comments/$REPLY_TO_ID" 2>&1 || echo "")
             
             if [ -n "$PARENT_COMMENT" ]; then
               echo "Found parent review comment. Extracting position data..."
@@ -68,7 +68,7 @@ jobs:
                   -f body="$MESSAGE" \
                   -f commit_id="$COMMIT_ID" \
                   -f path="$FILE_PATH" \
-                  -F position="$POSITION" 2>/dev/null; then
+                  -F position="$POSITION" 2>&1; then
                   echo "Successfully posted comment at same position"
                   exit 0
                 else
@@ -85,7 +85,7 @@ jobs:
                   -f commit_id="$COMMIT_ID" \
                   -f path="$FILE_PATH" \
                   -F line="$LINE" \
-                  -f side="$SIDE" 2>/dev/null; then
+                  -f side="$SIDE" 2>&1; then
                   echo "Successfully posted comment at same line"
                   exit 0
                 else
