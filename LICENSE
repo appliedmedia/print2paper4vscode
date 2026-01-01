@@ -1,6 +1,6 @@
 # Code Transparency License
 
-**For:** Print2Paper4VSCode VSCode Marketplace Extension [https://p2p4vsc.info] ("Extension"), and Accompanying GitHub Repo ("Repo") [https://p2p4vsc.dev].
+**For:** Print2Paper4VSCode VSCode Marketplace Extension [https://p2p4vsc.info] ("Extension"), and Accompanying code in its open source GitHub Repo ("Code") [https://p2p4vsc.dev].
 
 Copyright © 2025-2026 Applied Media. All Rights Reserved.
 
@@ -10,15 +10,15 @@ You can view, audit, and submit pull requests. You cannot use or sell derivative
 
 ## Permissions
 
-1. **View and Audit**: View, study, and audit this source code.
+1. **View and Audit**: View, study, and audit the Code.
 2. **Use the Extension**: Use the official Extension from the VS Code Marketplace.
 3. **Report Issues**: Report bugs, vulnerabilities, and improvements via GitHub.
 4. **Submit Contributions**: Submit pull requests with fixes, improvements, or features.
 
 ## Non-Maintainer Restrictions
 
-1. **No Derivative Works**: No derivative works, modified versions, or competing products.
-2. **No Redistribution**: No distribution, publication, or sale of this code or modifications.
+1. **No Derivative Works**: No derivative works, modified versions, or competing products using the Code.
+2. **No Redistribution**: No distribution, publication, or sale of the Code or modifications.
 3. **No Competing Extensions**: No extensions providing similar functionality.
 4. **No Commercial Use**: Commercial use requires a separate license.
 5. **No Republication**: No republishing under different names or channels.
@@ -41,7 +41,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 
 ## Termination
 
-Rights terminate automatically upon violation. You must then cease use and destroy all copies.
+Rights terminate automatically upon violation. You must then cease use and destroy all copies of the Code.
 
 ## Contact
 
