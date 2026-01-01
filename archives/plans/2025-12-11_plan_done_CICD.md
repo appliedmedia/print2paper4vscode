@@ -708,7 +708,7 @@ Added additional security for public repository:
 
 **Files Modified:**
 
-- `.github/workflows/publish.yml` - Secret context fix, security hardening
+- `.github/workflows/publish.yml` — Secret context fix, security hardening
 - `.github/workflows/ci.yml` - Codecov fix, artifact optimization
 - `package-lock.json` - Synced with package.json
 
