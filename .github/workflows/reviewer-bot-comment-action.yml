@@ -38,16 +38,56 @@ jobs:
             echo "Replying to comment ID $REPLY_TO_ID..."
             
             # First, try replying to a pull request review comment (inline code comment)
-            # Use in_reply_to parameter to thread the reply
+            # The in_reply_to parameter automatically threads it - no need to specify line/path
             gh api --method POST \
               "/repos/${{ github.repository }}/pulls/$PR_NUMBER/comments" \
               -f body="$MESSAGE" \
-              -F in_reply_to="$REPLY_TO_ID" && {
+              -F in_reply_to="$REPLY_TO_ID" 2>/dev/null && {
                 echo "Successfully replied to review comment $REPLY_TO_ID"
                 exit 0
               } || {
-                echo "Not a review comment. Trying issue comment reply..."
+                echo "in_reply_to failed. Checking if it's a review comment that needs explicit positioning..."
               }
+            
+            # Try to fetch the parent review comment to get its position data
+            PARENT_COMMENT=$(gh api "/repos/${{ github.repository }}/pulls/comments/$REPLY_TO_ID" 2>/dev/null || echo "")
+            
+            if [ -n "$PARENT_COMMENT" ]; then
+              echo "Found parent review comment. Extracting position data..."
+              COMMIT_ID=$(echo "$PARENT_COMMENT" | jq -r '.commit_id')
+              PATH=$(echo "$PARENT_COMMENT" | jq -r '.path')
+              POSITION=$(echo "$PARENT_COMMENT" | jq -r '.position // empty')
+              LINE=$(echo "$PARENT_COMMENT" | jq -r '.line // empty')
+              SIDE=$(echo "$PARENT_COMMENT" | jq -r '.side // "RIGHT"')
+              
+              # Try posting as a new comment on the same line
+              if [ -n "$POSITION" ]; then
+                echo "Posting new comment at position $POSITION in $PATH..."
+                gh api --method POST \
+                  "/repos/${{ github.repository }}/pulls/$PR_NUMBER/comments" \
+                  -f body="$MESSAGE" \
+                  -f commit_id="$COMMIT_ID" \
+                  -f path="$PATH" \
+                  -F position="$POSITION" && {
+                    echo "Successfully posted comment at same position"
+                    exit 0
+                  }
+              elif [ -n "$LINE" ]; then
+                echo "Posting new comment at line $LINE in $PATH..."
+                gh api --method POST \
+                  "/repos/${{ github.repository }}/pulls/$PR_NUMBER/comments" \
+                  -f body="$MESSAGE" \
+                  -f commit_id="$COMMIT_ID" \
+                  -f path="$PATH" \
+                  -F line="$LINE" \
+                  -f side="$SIDE" && {
+                    echo "Successfully posted comment at same line"
+                    exit 0
+                  }
+              fi
+            fi
+            
+            echo "Not a review comment or positioning failed. Trying issue comment..."
             
             # If that fails, try replying to an issue comment (PR-level timeline comment)
             # Issue comments don't support threading, so we quote instead
