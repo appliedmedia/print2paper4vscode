@@ -1,4 +1,4 @@
-name: CursorBot Comment
+name: Reviewer Bot Comment
 
 on:
   workflow_dispatch:
