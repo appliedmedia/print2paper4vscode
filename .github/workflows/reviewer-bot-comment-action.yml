@@ -55,35 +55,42 @@ jobs:
             if [ -n "$PARENT_COMMENT" ]; then
               echo "Found parent review comment. Extracting position data..."
               COMMIT_ID=$(echo "$PARENT_COMMENT" | jq -r '.commit_id')
-              PATH=$(echo "$PARENT_COMMENT" | jq -r '.path')
+              FILE_PATH=$(echo "$PARENT_COMMENT" | jq -r '.path')
               POSITION=$(echo "$PARENT_COMMENT" | jq -r '.position // empty')
               LINE=$(echo "$PARENT_COMMENT" | jq -r '.line // empty')
               SIDE=$(echo "$PARENT_COMMENT" | jq -r '.side // "RIGHT"')
               
-              # Try posting as a new comment on the same line
+              # Try posting as a new comment at the same position
               if [ -n "$POSITION" ]; then
-                echo "Posting new comment at position $POSITION in $PATH..."
-                gh api --method POST \
+                echo "Posting new comment at position $POSITION in $FILE_PATH..."
+                if gh api --method POST \
                   "/repos/${{ github.repository }}/pulls/$PR_NUMBER/comments" \
                   -f body="$MESSAGE" \
                   -f commit_id="$COMMIT_ID" \
-                  -f path="$PATH" \
-                  -F position="$POSITION" && {
-                    echo "Successfully posted comment at same position"
-                    exit 0
-                  }
-              elif [ -n "$LINE" ]; then
-                echo "Posting new comment at line $LINE in $PATH..."
-                gh api --method POST \
+                  -f path="$FILE_PATH" \
+                  -F position="$POSITION" 2>/dev/null; then
+                  echo "Successfully posted comment at same position"
+                  exit 0
+                else
+                  echo "Position-based post failed, trying line-based fallback..."
+                fi
+              fi
+              
+              # If POSITION failed or wasn't set, try LINE-based posting
+              if [ -n "$LINE" ]; then
+                echo "Posting new comment at line $LINE in $FILE_PATH..."
+                if gh api --method POST \
                   "/repos/${{ github.repository }}/pulls/$PR_NUMBER/comments" \
                   -f body="$MESSAGE" \
                   -f commit_id="$COMMIT_ID" \
-                  -f path="$PATH" \
+                  -f path="$FILE_PATH" \
                   -F line="$LINE" \
-                  -f side="$SIDE" && {
-                    echo "Successfully posted comment at same line"
-                    exit 0
-                  }
+                  -f side="$SIDE" 2>/dev/null; then
+                  echo "Successfully posted comment at same line"
+                  exit 0
+                else
+                  echo "Line-based post also failed"
+                fi
               fi
             fi
             
