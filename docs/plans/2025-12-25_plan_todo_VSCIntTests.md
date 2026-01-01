@@ -37,18 +37,21 @@ Add VS Code integration tests to Print2Paper4VSCode extension. Currently, the ex
 ## Why Integration Tests?
 
 **Current unit tests are excellent, but:**
+
 - Don't test VS Code API interactions
 - Don't test extension activation
 - Don't test webview rendering in real environment
 - Don't catch VS Code version compatibility issues
 
 **Integration tests provide:**
+
 - Confidence in VS Code API usage
 - Early detection of breaking changes in VS Code updates
 - Real environment testing (not mocks)
 - End-to-end workflow validation
 
 **Trade-offs:**
+
 - Slower (requires launching VS Code)
 - More complex setup
 - Harder to debug
@@ -68,7 +71,7 @@ npm install --save-dev @vscode/test-electron
 
 **Create test directory structure:**
 
-```
+```text
 tests/
   integration/
     suite/
@@ -504,11 +507,13 @@ npm run test:all
 Instead of @vscode/test-electron, could use Playwright for E2E tests:
 
 **Pros:**
+
 - More control over VS Code instance
 - Better debugging tools
 - Can test actual UI interactions
 
 **Cons:**
+
 - More complex setup
 - Slower
 - Less official VS Code support
@@ -539,18 +544,21 @@ Instead of @vscode/test-electron, could use Playwright for E2E tests:
 ## Notes
 
 **Why this is optional:**
+
 - Current unit tests already provide 85% coverage
 - Extension works well in production
 - Integration tests add complexity
 - Main benefit is VS Code API compatibility validation
 
 **When to implement:**
+
 - Before major VS Code API changes
 - If seeing unexplained user issues
 - For professional polish
 - If contributing to VS Code marketplace featured extensions
 
 **Estimated value:**
+
 - Low immediate value (extension works)
 - High long-term value (prevents regressions)
 - Medium complexity (4-6 hours work)
