@@ -58,6 +58,12 @@ themselves do NOT receive redistribution or relicensing rights.
 3. You represent that you have the right to grant this license and that your
    contribution does not violate any third-party rights.
 
+4. The "No Derivative Works" and "No Redistribution" restrictions in this
+license apply to third parties, not to p2p4vsc maintainers. By contributing,
+you grant maintainers--and ONLY maintainers--the right to incorporate and
+redistribute contributions as part of the official project. Contributors
+themselves do NOT receive redistribution or relicensing rights.
+
 ## Commercial Licensing
 
 If you wish to use this code for purposes not permitted by this license,
@@ -87,6 +93,8 @@ project's GitHub repository.
 
 ---
 
-**Summary**: You can view the code and use the free extension. You cannot create
+## Summary
+
+You can view the code and use the free extension. You cannot create
 competing products or redistribute the code. Commercial licensing is available
 upon request.
