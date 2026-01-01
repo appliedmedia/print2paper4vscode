@@ -50,7 +50,7 @@ jobs:
                 # Fallback: Fetch the original comment body to quote it
                 ORIG_BODY=$(gh api "/repos/${{ github.repository }}/issues/comments/$REPLY_TO_ID" --jq '.body' 2>/dev/null || echo "referenced comment")
                 
-                QUOTED_MESSAGE="> $ORIG_BODY\n\n$MESSAGE"
+                QUOTED_MESSAGE=$(printf "> %s\n\n%s" "$ORIG_BODY" "$MESSAGE")
                 gh pr comment "$PR_NUMBER" --body "$QUOTED_MESSAGE" --repo ${{ github.repository }}
               }
           fi
