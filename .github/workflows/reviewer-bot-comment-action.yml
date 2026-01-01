@@ -1,0 +1,56 @@
+name: CursorBot Comment
+
+on:
+  workflow_dispatch:
+    inputs:
+      pr_number:
+        description: 'PR Number'
+        required: true
+      message:
+        description: 'Comment Body'
+        required: true
+      reply_to_comment_id:
+        description: 'Comment ID to reply to (Optional - for threaded replies)'
+        required: false
+
+permissions:
+  pull-requests: write
+  issues: write
+
+jobs:
+  post-comment:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Post Comment
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ inputs.pr_number }}
+          MESSAGE: ${{ inputs.message }}
+          REPLY_TO_ID: ${{ inputs.reply_to_comment_id }}
+        run: |
+          if [ -z "$REPLY_TO_ID" ]; then
+            # No reply ID provided, post as a general top-level comment
+            echo "Posting top-level comment to PR #$PR_NUMBER..."
+            gh pr comment "$PR_NUMBER" --body "$MESSAGE" --repo ${{ github.repository }}
+          else
+            # Reply ID provided, attempt to reply to a review comment thread
+            echo "Replying to comment ID $REPLY_TO_ID..."
+            
+            # API endpoint for replying to a review comment
+            # Note: General issue comments (timeline) do not support threading via API.
+            # This works for "Review Comments" (code comments).
+            
+            gh api --method POST \
+              "/repos/${{ github.repository }}/pulls/$PR_NUMBER/comments/$REPLY_TO_ID/replies" \
+              -f body="$MESSAGE" || {
+                echo "Failed to reply to comment ID $REPLY_TO_ID. It might be a general issue comment (which doesn't support threading)."
+                echo "Falling back to quoting the comment in a new top-level message..."
+                
+                # Fallback: Fetch the original comment body to quote it
+                ORIG_BODY=$(gh api "/repos/${{ github.repository }}/issues/comments/$REPLY_TO_ID" --jq '.body' 2>/dev/null || echo "referenced comment")
+                
+                QUOTED_MESSAGE="> $ORIG_BODY\n\n$MESSAGE"
+                gh pr comment "$PR_NUMBER" --body "$QUOTED_MESSAGE" --repo ${{ github.repository }}
+              }
+          fi
