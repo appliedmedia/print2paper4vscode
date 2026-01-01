@@ -39,7 +39,7 @@ This capability separates automated/bot commentary from personal accounts, ensur
 4. **Top-Level Comments Tested** - Successfully posted test comments as `github-actions[bot]`
 5. **Reply Threading Tested** - Verified both threaded replies and fallback quoting behavior
 6. **CRLF Formatting Fixed** - Resolved newline formatting issues in quoted replies
-7. **Multi-Line Quoting Fixed** - Each line of quoted comments now properly prefixed with `> `
+7. **Multi-Line Quoting Fixed** - Each line of quoted comments now properly prefixed with `>` character
 
 ### Improvements Made
 
@@ -82,14 +82,14 @@ All tests passed successfully! ✅
 
 To reply directly to a code review comment in a thread:
 
-**Step 1: Find the Review Comment ID**
+#### Step 1: Find the Review Comment ID
 
 ```bash
 gh api repos/appliedmedia/print2paper4vscode/pulls/94/comments \
   --jq '.[] | {id: .id, path: .path, body: .body}'
 ```
 
-**Step 2: Post the Threaded Reply**
+#### Step 2: Post the Threaded Reply
 
 ```bash
 gh workflow run reviewer-bot-comment-action.yml \
@@ -104,14 +104,14 @@ gh workflow run reviewer-bot-comment-action.yml \
 
 To reply to a general PR timeline comment:
 
-**Step 1: Find the Issue Comment ID**
+#### Step 1: Find the Issue Comment ID
 
 ```bash
 gh api repos/appliedmedia/print2paper4vscode/issues/94/comments \
   --jq '.[] | {id: .id, author: .user.login, body: .body}'
 ```
 
-**Step 2: Post the Reply**
+#### Step 2: Post the Reply
 
 ```bash
 gh workflow run reviewer-bot-comment-action.yml \
@@ -121,13 +121,14 @@ gh workflow run reviewer-bot-comment-action.yml \
 ```
 
 **Result:** Since issue comments don't support threading, the workflow automatically:
+
 1. Fetches the original comment text
 2. Quotes it using Markdown `>` syntax (multi-line support)
 3. Posts a new top-level comment with your message below the quote
 
 **Example Output:**
 
-```
+```text
 > This is the original comment
 > that might span multiple lines
 
@@ -164,6 +165,7 @@ gh run view <run-id> --log
 ## Testing History
 
 **Tested on PR #94 (2026-01-01):**
+
 - ✅ Top-level comment posted successfully
 - ✅ Reply to issue comment with quoted fallback
 - ✅ CRLF line ending formatting verified
