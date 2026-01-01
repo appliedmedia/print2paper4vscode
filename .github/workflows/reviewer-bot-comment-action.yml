@@ -50,7 +50,15 @@ jobs:
                 # Fallback: Fetch the original comment body to quote it
                 ORIG_BODY=$(gh api "/repos/${{ github.repository }}/issues/comments/$REPLY_TO_ID" --jq '.body' 2>/dev/null || echo "referenced comment")
                 
-                # Use printf with %s to properly format the quoted message with real newlines
-                gh pr comment "$PR_NUMBER" --body $'> '"$ORIG_BODY"$'\n\n'"$MESSAGE" --repo ${{ github.repository }}
+                # Create a properly formatted comment with quoted original
+                COMMENT_FILE=$(mktemp)
+                {
+                  echo "> $ORIG_BODY"
+                  echo ""
+                  echo "$MESSAGE"
+                } > "$COMMENT_FILE"
+                
+                gh pr comment "$PR_NUMBER" --body-file "$COMMENT_FILE" --repo ${{ github.repository }}
+                rm -f "$COMMENT_FILE"
               }
           fi
