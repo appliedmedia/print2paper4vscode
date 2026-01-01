@@ -87,6 +87,7 @@ async fileOpenPrintDialog(args: { path: string }): Promise<void> {
 ```
 
 **Desktop Environment Support:**
+
 - GNOME → evince
 - KDE → okular
 - MATE → atril
@@ -141,7 +142,7 @@ async filePrint(args: { path: string }): Promise<void> {
 }
 ```
 
-**Alternative: lpstat for printer selection**
+#### Alternative: lpstat for printer selection
 
 ```typescript
 async listPrinters(): Promise<string[]> {
@@ -314,7 +315,6 @@ sudo pacman -S cups evince
 # Enable CUPS service
 sudo systemctl enable --now cups
 ```
-```
 
 ---
 
@@ -323,6 +323,7 @@ sudo systemctl enable --now cups
 ### Manual Testing Checklist
 
 **Test Distributions:**
+
 - [ ] Ubuntu 22.04/24.04 (GNOME)
 - [ ] Fedora (GNOME)
 - [ ] KDE Neon (KDE Plasma)
@@ -330,6 +331,7 @@ sudo systemctl enable --now cups
 - [ ] Elementary OS (Pantheon)
 
 **Test Cases:**
+
 1. [ ] Print dialog opens with evince (GNOME)
 2. [ ] Print dialog opens with okular (KDE)
 3. [ ] Print dialog opens with atril (MATE)
@@ -409,22 +411,26 @@ sudo systemctl enable --now cups
 ## Distribution-Specific Notes
 
 ### Ubuntu/Debian
+
 - CUPS usually pre-installed
 - evince default viewer
 - `apt install cups evince`
 
 ### Fedora/RHEL
+
 - CUPS usually pre-installed
 - evince default viewer
 - `dnf install cups evince`
 
 ### Arch Linux
+
 - CUPS not pre-installed
 - No default viewer
 - `pacman -S cups evince`
 - Must enable cups service: `systemctl enable --now cups`
 
 ### Linux Mint
+
 - CUPS pre-installed
 - xreader default viewer
 - Should work out of box

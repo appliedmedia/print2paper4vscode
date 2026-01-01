@@ -62,6 +62,7 @@ async fileOpenPrintDialog(args: { path: string }): Promise<void> {
 ```
 
 **Testing:**
+
 - Verify PDF opens in default viewer (Adobe, Edge, Chrome)
 - Verify file path with spaces works
 - Verify error handling for missing file
@@ -96,6 +97,7 @@ async filePrint(args: { path: string }): Promise<void> {
 ```
 
 **Edge Cases:**
+
 - No default printer configured
 - PDF viewer not installed
 - PowerShell execution policy restrictions
@@ -232,12 +234,14 @@ test('OSWin - filePrint sends to printer', async () => {
 ### Manual Testing Checklist
 
 **Environment Setup:**
+
 - [ ] Windows 10/11 machine
 - [ ] Default printer configured
 - [ ] PDF viewer installed (Edge, Adobe, Chrome)
 - [ ] PowerShell available
 
 **Test Cases:**
+
 1. [ ] Open print dialog with simple filename
 2. [ ] Open print dialog with filename containing spaces
 3. [ ] Direct print to default printer
