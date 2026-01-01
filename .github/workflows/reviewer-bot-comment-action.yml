@@ -91,16 +91,30 @@ jobs:
             
             # If that fails, try replying to an issue comment (PR-level timeline comment)
             # Issue comments don't support threading, so we quote instead
-            ORIG_BODY=$(gh api "/repos/${{ github.repository }}/issues/comments/$REPLY_TO_ID" --jq '.body' 2>/dev/null || echo "")
             
-            if [ -n "$ORIG_BODY" ]; then
+            # Capture the API call result and exit code separately
+            set +e
+            ORIG_BODY=$(gh api "/repos/${{ github.repository }}/issues/comments/$REPLY_TO_ID" --jq '.body' 2>&1)
+            API_EXIT_CODE=$?
+            set -e
+            
+            if [ $API_EXIT_CODE -eq 0 ] && [ -n "$ORIG_BODY" ]; then
               echo "Found issue comment. Posting quoted reply..."
-              # Quote the original comment
-              QUOTED_BODY=$(echo "$ORIG_BODY" | sed 's/^/> /')
-              QUOTED_MESSAGE="$QUOTED_BODY"$'\n\n'"$MESSAGE"
+              # Use printf for safe output of user-controlled content
+              # Quote the original comment using a here-doc to avoid command injection
+              QUOTED_MESSAGE=$(cat <<EOF
+$(printf '%s' "$ORIG_BODY" | sed 's/^/> /')
+
+$MESSAGE
+EOF
+)
               gh pr comment "$PR_NUMBER" --body "$QUOTED_MESSAGE" --repo ${{ github.repository }}
+            elif [ $API_EXIT_CODE -ne 0 ]; then
+              echo "ERROR: API call failed with exit code $API_EXIT_CODE"
+              echo "API error output: $ORIG_BODY"
+              exit 1
             else
-              echo "ERROR: Could not find comment ID $REPLY_TO_ID in either review comments or issue comments"
+              echo "ERROR: Comment ID $REPLY_TO_ID not found in review comments or issue comments"
               exit 1
             fi
           fi
