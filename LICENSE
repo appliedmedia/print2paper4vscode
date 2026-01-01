@@ -4,35 +4,35 @@ Copyright © 2025-2026 Applied Media. All Rights Reserved.
 
 ## Summary
 
-You can view, audit, and submit pull requests for fixes and enhancements. You cannot use or sell derivatives of this code for your own work.
+You can view, audit, and submit pull requests. You cannot use or sell derivatives.
 
 ## Permissions
 
-1. **View and Audit**: View, study, and audit this source code for any purpose.
-2. **Use the Extension**: Freely use the official Print2Paper4VSCode extension from the Visual Studio Code Marketplace.
-3. **Report Issues**: Report bugs, security vulnerabilities, and suggest improvements via GitHub issues.
-4. **Submit Contributions**: Submit pull requests with bug fixes, improvements, or new features.
+1. **View and Audit**: View, study, and audit this source code.
+2. **Use the Extension**: Use the official extension from the VS Code Marketplace.
+3. **Report Issues**: Report bugs, vulnerabilities, and improvements via GitHub.
+4. **Submit Contributions**: Submit pull requests with fixes, improvements, or features.
 
-## Restrictions
+## Non-Maintainer Restrictions
 
-1. **No Derivative Works**: Do not create derivative works, modified versions, or competing products.
-2. **No Redistribution**: Do not distribute, publish, or sell this code or modified versions.
-3. **No Competing Extensions**: Do not create or publish extensions providing similar functionality.
+1. **No Derivative Works**: No derivative works, modified versions, or competing products.
+2. **No Redistribution**: No distribution, publication, or sale of this code or modifications.
+3. **No Competing Extensions**: No extensions providing similar functionality.
 4. **No Commercial Use**: Commercial use requires a separate license.
-5. **No Republication**: Do not republish this extension under a different name or distribution channel.
+5. **No Republication**: No republishing under different names or channels.
 
 ## Contributions
 
-By submitting a pull request, you agree that:
+By submitting a pull request, you agree:
 
-1. You grant p2p4vsc maintainers a perpetual, worldwide, non-exclusive, royalty-free, irrevocable license to use, modify, distribute, and relicense your contribution. The restrictions above apply to third parties, not maintainers.
-2. Your contribution becomes part of the Print2Paper4VSCode project and may be included or licensed separately at maintainers' discretion.
-3. You represent that you have the right to grant this license and that your contribution does not violate third-party rights.
-4. You do not receive redistribution or relicensing rights to the project.
+1. You grant maintainers a perpetual, worldwide, non-exclusive, royalty-free, irrevocable license to use, modify, distribute, and relicense your contribution.
+2. Your contribution becomes part of Print2Paper4VSCode and may be included or licensed separately.
+3. You have the right to grant this license and your contribution violates no third-party rights.
+4. You receive no redistribution or relicensing rights.
 
 ## Commercial Licensing
 
-For uses not permitted by this license, contact us to discuss commercial licensing options.
+Contact us to discuss commercial licensing.
 
 ## Disclaimer
 
@@ -40,8 +40,8 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 
 ## Termination
 
-Your rights under this license automatically terminate if you violate any of its terms. Upon termination, you must cease all use of the source code and destroy any copies in your possession.
+Rights terminate automatically upon violation. You must then cease use and destroy all copies.
 
 ## Contact
 
-For commercial licensing inquiries, questions about this license, or to report security vulnerabilities, contact the p2p4vsc maintainers through the project's GitHub repository.
+Contact maintainers through GitHub for licensing, questions, or security issues.
