@@ -2,7 +2,7 @@
 
 ## For:
 * Print2Paper4VSCode VSCode Marketplace Extension [https://p2p4vsc.info] ("Extension")
-* Accompanying code in its open source GitHub Repo [https://p2p4vsc.dev] ("Code", "Repo")
+* Accompanying code and modifications in its open source GitHub Repo [https://p2p4vsc.dev] ("Code", "Repo")
 * Requests/defects reported as Issues in GitHub [https://p2p4vsc.support] ("Feedback")
 
 Copyright © 2025-2026 Applied Media. All Rights Reserved.
@@ -20,7 +20,7 @@ You can post requests/defects, view, audit, and submit pull requests. You cannot
 ## Non-Maintainer Restrictions
 
 1. **No Derivative Works**: No derivative works, modified versions, or competing products providing similar functionality.
-2. **No Redistribution**: No distribution, publication, or sale of the Code or modifications.
+2. **No Redistribution**: No distribution, publication, or sale of the Code.
 3. **No Commercial Use**: Commercial use requires a separate license.
 4. **No Republication**: No republishing under different names or channels.
 
