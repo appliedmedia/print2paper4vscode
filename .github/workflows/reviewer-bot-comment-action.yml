@@ -37,24 +37,30 @@ jobs:
             # Reply ID provided, attempt to reply to a review comment thread
             echo "Replying to comment ID $REPLY_TO_ID..."
             
-            # API endpoint for replying to a review comment
-            # Note: General issue comments (timeline) do not support threading via API.
-            # This works for "Review Comments" (code comments).
-            
+            # First, try replying to a pull request review comment (inline code comment)
+            # Use in_reply_to parameter to thread the reply
             gh api --method POST \
-              "/repos/${{ github.repository }}/pulls/$PR_NUMBER/comments/$REPLY_TO_ID/replies" \
-              -f body="$MESSAGE" || {
-                echo "Failed to reply to comment ID $REPLY_TO_ID. It might be a general issue comment (which doesn't support threading)."
-                echo "Falling back to quoting the comment in a new top-level message..."
-                
-                # Fallback: Fetch the original comment body to quote it
-                ORIG_BODY=$(gh api "/repos/${{ github.repository }}/issues/comments/$REPLY_TO_ID" --jq '.body' 2>/dev/null || echo "referenced comment")
-                
-                # Quote each line of the original body with '> ' prefix for proper multi-line Markdown quoting
-                QUOTED_BODY=$(echo "$ORIG_BODY" | sed 's/^/> /')
-                
-                # Use CRLF line endings for proper formatting
-                QUOTED_MESSAGE="$QUOTED_BODY"$'\r\n\r\n'"$MESSAGE"
-                gh pr comment "$PR_NUMBER" --body "$QUOTED_MESSAGE" --repo ${{ github.repository }}
+              "/repos/${{ github.repository }}/pulls/$PR_NUMBER/comments" \
+              -f body="$MESSAGE" \
+              -F in_reply_to="$REPLY_TO_ID" && {
+                echo "Successfully replied to review comment $REPLY_TO_ID"
+                exit 0
+              } || {
+                echo "Not a review comment. Trying issue comment reply..."
               }
+            
+            # If that fails, try replying to an issue comment (PR-level timeline comment)
+            # Issue comments don't support threading, so we quote instead
+            ORIG_BODY=$(gh api "/repos/${{ github.repository }}/issues/comments/$REPLY_TO_ID" --jq '.body' 2>/dev/null || echo "")
+            
+            if [ -n "$ORIG_BODY" ]; then
+              echo "Found issue comment. Posting quoted reply..."
+              # Quote the original comment
+              QUOTED_BODY=$(echo "$ORIG_BODY" | sed 's/^/> /')
+              QUOTED_MESSAGE="$QUOTED_BODY"$'\n\n'"$MESSAGE"
+              gh pr comment "$PR_NUMBER" --body "$QUOTED_MESSAGE" --repo ${{ github.repository }}
+            else
+              echo "ERROR: Could not find comment ID $REPLY_TO_ID in either review comments or issue comments"
+              exit 1
+            fi
           fi
