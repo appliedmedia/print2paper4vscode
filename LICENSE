@@ -1,100 +1,49 @@
-# Print2Paper4VSCode Code Transparency License
+# Code Transparency License
 
-Copyright © 2025-2026 Applied Media. All Rights Reserved.
+Copyright © 2025...2026-01-01.001:@acoven and Applied Media. All Rights Reserved.
+
+## Scope
+1. Print2Paper4VSCode VSCode Marketplace Extension [https://p2p4vsc.info] ("Extension").
+2. Accompanying code and modifications in its open source GitHub Repo [https://p2p4vsc.dev] ("Code", "Repo").
+3. Requests/defects reported as Issues in GitHub [https://p2p4vsc.support] ("Feedback").
+4. Scope items 1-3 together are "Software".
 
 ## TL;DR
 
-You can view, audit, and submit pull requests for fixes and enhancements. You
-cannot use or sell derivatives of this code for your own work.
+You can post requests/defects, view, audit, and submit pull requests. You cannot use or sell derivatives.
 
-## What You CAN Do
+## Permissions
 
-1. **View and Audit**: You may view, study, and audit this source code for any purpose.
+1. **View and Audit**: View, study, and audit the Code.
+2. **Use the Extension**: Install and use the Extension.
+3. **Contribute**: Requests/defects via Feedback, submit Pull Requests at Repo.
 
-2. **Use the Extension**: You may freely use the official Print2Paper4VSCode
-   extension published on the Visual Studio Code Marketplace.
+## Non-Maintainer Restrictions
 
-3. **Report Issues**: You may report bugs, security vulnerabilities, and suggest
-   improvements through GitHub issues.
-
-4. **Submit Contributions**: You may submit pull requests with bug fixes,
-   improvements, or new features (see Contributions section below).
-
-## What You CANNOT Do
-
-1. **No Derivative Works**: You may not use this source code to create derivative
-   works, modified versions, or competing products.
-
-2. **No Redistribution**: You may not distribute, publish, or sell this code or
-   modified versions of it.
-
-3. **No Competing Extensions**: You may not use this code to create or publish
-   any extension, plugin, or software that provides similar functionality to
-   Print2Paper4VSCode.
-
-4. **No Commercial Use**: You may not use this code for commercial purposes
-   without obtaining a separate commercial license from us.
-
-5. **No Republication**: You may not republish this extension under a different
-   name or through different distribution channels.
+1. **No Derivative Works**: No derivative works, modified versions, or competing products providing similar functionality.
+2. **No Redistribution**: No distribution, publication, or sale of the Software under the same or different names or channels.
+3. **No Commercial Use**: Commercial use requires a separate license.
 
 ## Contributions
 
-By submitting a pull request or contribution to this project, you agree that:
+By submitting a request/defect or pull request, you agree:
 
-**Note:** The "No Derivative Works" and "No Redistribution" restrictions in this
-license apply to third parties, not to the p2p4vsc maintainers. By contributing,
-you grant maintainers—and ONLY maintainers—the right to incorporate and
-redistribute contributions as part of the official project. Contributors
-themselves do NOT receive redistribution or relicensing rights.
-
-1. You grant the p2p4vsc maintainers (and only the maintainers) a perpetual,
-   worldwide, non-exclusive, royalty-free, irrevocable license to use, modify,
-   distribute, and relicense your contribution under any terms.
-
-2. Your contribution becomes part of the Print2Paper4VSCode project and may be
-   included in the official extension or licensed separately at our discretion.
-
-3. You represent that you have the right to grant this license and that your
-   contribution does not violate any third-party rights.
-
-4. The "No Derivative Works" and "No Redistribution" restrictions in this
-license apply to third parties, not to p2p4vsc maintainers. By contributing,
-you grant maintainers--and ONLY maintainers--the right to incorporate and
-redistribute contributions as part of the official project. Contributors
-themselves do NOT receive redistribution or relicensing rights.
+1. You grant maintainers a perpetual, worldwide, non-exclusive, royalty-free, irrevocable license to use, modify, distribute, and relicense your contribution.
+2. You have the right to grant this license and your contribution violates no third-party rights.
+3. You receive no redistribution or relicensing rights.
 
 ## Commercial Licensing
 
-If you wish to use this code for purposes not permitted by this license,
-commercial licensing is available. Contact us to discuss licensing options.
+Contact the maintainers to discuss commercial licensing.
 
 ## Disclaimer
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
+SOFTWARE IS PROVIDED "AS IS" WITHOUT WARRANTY OF ANY KIND (EXPRESS, IMPLIED, MERCHANTABILITY, FITNESS, NONINFRINGEMENT), EXCEPT AS REQUIRED BY APPLICABLE LAW. MAINTAINERS SHALL NOT BE LIABLE FOR ANY CLAIM, DAMAGES, OR OTHER LIABILITY ARISING FROM USE OF OR DEALINGS WITH THE SOFTWARE OR MAINTAINERS, EXCEPT AS REQUIRED BY APPLICABLE LAW.
 
 ## Termination
 
-Your rights under this license automatically terminate if you violate any of
-its terms. Upon termination, you must cease all use of the source code and
-destroy any copies in your possession.
+Rights terminate automatically upon violation. You must then cease use and destroy all copies of the Software.
 
 ## Contact
 
-For commercial licensing inquiries, questions about this license, or to report
-security vulnerabilities, please contact the p2p4vsc maintainers through the
-project's GitHub repository.
-
----
-
-## Summary
-
-You can view the code and use the free extension. You cannot create
-competing products or redistribute the code. Commercial licensing is available
-upon request.
+Contact maintainers through GitHub for licensing, questions, or security issues.

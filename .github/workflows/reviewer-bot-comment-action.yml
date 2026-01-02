@@ -37,24 +37,119 @@ jobs:
             # Reply ID provided, attempt to reply to a review comment thread
             echo "Replying to comment ID $REPLY_TO_ID..."
             
-            # API endpoint for replying to a review comment
-            # Note: General issue comments (timeline) do not support threading via API.
-            # This works for "Review Comments" (code comments).
-            
+            # First, try replying to a pull request review comment (inline code comment)
+            # The in_reply_to parameter automatically threads it - no need to specify line/path
             gh api --method POST \
-              "/repos/${{ github.repository }}/pulls/$PR_NUMBER/comments/$REPLY_TO_ID/replies" \
-              -f body="$MESSAGE" || {
-                echo "Failed to reply to comment ID $REPLY_TO_ID. It might be a general issue comment (which doesn't support threading)."
-                echo "Falling back to quoting the comment in a new top-level message..."
-                
-                # Fallback: Fetch the original comment body to quote it
-                ORIG_BODY=$(gh api "/repos/${{ github.repository }}/issues/comments/$REPLY_TO_ID" --jq '.body' 2>/dev/null || echo "referenced comment")
-                
-                # Quote each line of the original body with '> ' prefix for proper multi-line Markdown quoting
-                QUOTED_BODY=$(echo "$ORIG_BODY" | sed 's/^/> /')
-                
-                # Use CRLF line endings for proper formatting
-                QUOTED_MESSAGE="$QUOTED_BODY"$'\r\n\r\n'"$MESSAGE"
-                gh pr comment "$PR_NUMBER" --body "$QUOTED_MESSAGE" --repo ${{ github.repository }}
+              "/repos/${{ github.repository }}/pulls/$PR_NUMBER/comments" \
+              -f body="$MESSAGE" \
+              -F in_reply_to="$REPLY_TO_ID" 2>&1 && {
+                echo "Successfully replied to review comment $REPLY_TO_ID"
+                exit 0
+              } || {
+                echo "in_reply_to failed. Checking if it's a review comment that needs explicit positioning..."
               }
+            
+            # Try to fetch the parent review comment to get its position data
+            set +e
+            PARENT_COMMENT=$(gh api "/repos/${{ github.repository }}/pulls/comments/$REPLY_TO_ID" 2>&1)
+            PARENT_EXIT_CODE=$?
+            set -e
+            
+            if [ $PARENT_EXIT_CODE -eq 0 ] && [ -n "$PARENT_COMMENT" ]; then
+              echo "Found parent review comment. Extracting position data..."
+              COMMIT_ID=$(echo "$PARENT_COMMENT" | jq -r '.commit_id')
+              FILE_PATH=$(echo "$PARENT_COMMENT" | jq -r '.path')
+              POSITION=$(echo "$PARENT_COMMENT" | jq -r '.position // empty')
+              LINE=$(echo "$PARENT_COMMENT" | jq -r '.line // empty')
+              SIDE=$(echo "$PARENT_COMMENT" | jq -r '.side // "RIGHT"')
+              
+              # Validate required fields
+              if [ -z "$COMMIT_ID" ] || [ "$COMMIT_ID" = "null" ]; then
+                echo "ERROR: Invalid or missing commit_id in parent comment"
+                echo "Cannot post review comment without valid commit_id"
+              elif [ -z "$FILE_PATH" ] || [ "$FILE_PATH" = "null" ]; then
+                echo "ERROR: Invalid or missing file path in parent comment"
+                echo "Cannot post review comment without valid path"
+              else
+                # Try posting as a new comment at the same position
+                if [ -n "$POSITION" ] && [ "$POSITION" != "null" ]; then
+                  echo "Posting new comment at position $POSITION in $FILE_PATH..."
+                  set +e
+                  POSITION_OUTPUT=$(gh api --method POST \
+                    "/repos/${{ github.repository }}/pulls/$PR_NUMBER/comments" \
+                    -f body="$MESSAGE" \
+                    -f commit_id="$COMMIT_ID" \
+                    -f path="$FILE_PATH" \
+                    -F position="$POSITION" 2>&1)
+                  POSITION_EXIT=$?
+                  set -e
+                  
+                  if [ $POSITION_EXIT -eq 0 ]; then
+                    echo "Successfully posted comment at same position"
+                    exit 0
+                  else
+                    echo "Position-based post failed (exit $POSITION_EXIT)"
+                    echo "API output: $POSITION_OUTPUT"
+                    echo "Trying line-based fallback..."
+                  fi
+                else
+                  echo "No POSITION available, skipping position-based post"
+                fi
+                
+                # If POSITION failed or wasn't set, try LINE-based posting
+                if [ -n "$LINE" ] && [ "$LINE" != "null" ]; then
+                  echo "Posting new comment at line $LINE in $FILE_PATH..."
+                  set +e
+                  LINE_OUTPUT=$(gh api --method POST \
+                    "/repos/${{ github.repository }}/pulls/$PR_NUMBER/comments" \
+                    -f body="$MESSAGE" \
+                    -f commit_id="$COMMIT_ID" \
+                    -f path="$FILE_PATH" \
+                    -F line="$LINE" \
+                    -f side="$SIDE" 2>&1)
+                  LINE_EXIT=$?
+                  set -e
+                  
+                  if [ $LINE_EXIT -eq 0 ]; then
+                    echo "Successfully posted comment at same line"
+                    exit 0
+                  else
+                    echo "Line-based post failed (exit $LINE_EXIT)"
+                    echo "API output: $LINE_OUTPUT"
+                  fi
+                else
+                  echo "No LINE available, skipping line-based post"
+                fi
+              fi
+            elif [ $PARENT_EXIT_CODE -ne 0 ]; then
+              echo "Failed to fetch parent comment (exit $PARENT_EXIT_CODE)"
+              echo "API output: $PARENT_COMMENT"
+            fi
+            
+            echo "Not a review comment or positioning failed. Trying issue comment..."
+            
+            # If that fails, try replying to an issue comment (PR-level timeline comment)
+            # Issue comments don't support threading, so we quote instead
+            
+            # Capture the API call result and exit code separately
+            set +e
+            ORIG_BODY=$(gh api "/repos/${{ github.repository }}/issues/comments/$REPLY_TO_ID" --jq '.body' 2>&1)
+            API_EXIT_CODE=$?
+            set -e
+            
+            if [ $API_EXIT_CODE -eq 0 ] && [ -n "$ORIG_BODY" ]; then
+              echo "Found issue comment. Posting quoted reply..."
+              # Use printf for safe output of user-controlled content
+              # Quote the original comment - build message safely without nested here-docs
+              QUOTED_BODY=$(printf '%s' "$ORIG_BODY" | sed 's/^/> /')
+              QUOTED_MESSAGE="${QUOTED_BODY}"$'\n\n'"${MESSAGE}"
+              gh pr comment "$PR_NUMBER" --body "$QUOTED_MESSAGE" --repo ${{ github.repository }}
+            elif [ $API_EXIT_CODE -ne 0 ]; then
+              echo "ERROR: API call failed with exit code $API_EXIT_CODE"
+              echo "API error output: $ORIG_BODY"
+              exit 1
+            else
+              echo "ERROR: Comment ID $REPLY_TO_ID not found in review comments or issue comments"
+              exit 1
+            fi
           fi
