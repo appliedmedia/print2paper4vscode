@@ -1,9 +1,63 @@
 # Web Presence Plan
 
-**Status:** TODO
+**Status:** IN PROGRESS
 **Created:** 2025-12-12
-**Updated:** 2025-12-31
+**Updated:** 2026-01-03
 **Priority:** Execute after PR #76 is merged
+
+---
+
+## Progress Update (2026-01-03)
+
+### ✅ Completed
+- Created GitHub repository: `p2p4vsc.com`
+- Created GitHub repository: `g2t.cc`
+- Created GitHub repository: `cov.llc` (Note: Business name is "Coven LLC", domain is `cov.llc`)
+
+### 🔄 Next Actions (Priority Order)
+
+1. **Enable GitHub Pages on all three repositories**
+   - Navigate to Settings → Pages for each repo
+   - Set source to `main` branch (root or `/docs` folder)
+   - Add CNAME file to each repo with respective domain
+
+2. **Configure DNS for all domains**
+   - Point `p2p4vsc.com` A records to GitHub Pages IPs
+   - Point `g2t.cc` A records to GitHub Pages IPs
+   - Point `cov.llc` A records to GitHub Pages IPs
+   - GitHub Pages IPs: 185.199.108.153, 185.199.109.153, 185.199.110.153, 185.199.111.153
+
+3. **Create minimal landing pages**
+   - Build simple `index.html` for each site
+   - Start with basic structure: hero section + trust messaging + CTA
+   - Apply consistent Applied Media branding
+
+4. **Set up mailing list (Mailchimp)**
+   - Create Mailchimp account
+   - Create audience: "Applied Media Software Updates"
+   - Generate embed code for both software sites
+
+5. **Configure domain redirects** (After main domains work)
+   - Set up DNS redirects for `.info`, `.dev`, `.support` domains (if owned)
+
+### 📋 Tracking Phase Completion
+
+**Phase 1: Decisions & Preparation**
+- [x] Platform Decisions: Confirmed GitHub Pages for all three sites
+- [x] Domain Inventory: Repos created for `p2p4vsc.com`, `g2t.cc`, `cov.llc`
+- [ ] Approve Plan & Budget: ~$90-160/year for domains
+- [ ] Mailing List: Create Mailchimp account
+
+**Phase 2: Repository & Domain Setup**
+- [x] Create Repo `p2p4vsc.com`
+- [x] Create Repo `g2t.cc`
+- [x] Create Repo `cov.llc`
+- [ ] Enable GitHub Pages on all three repos
+- [ ] Add CNAME files to each repo
+- [ ] DNS Configuration (Primary): Point A records to GitHub Pages IPs
+- [ ] DNS Configuration (Redirects): Configure `.info`, `.dev`, `.support` if domains owned
+
+**Phase 3-5:** Not yet started
 
 ---
 
@@ -11,18 +65,20 @@
 
 ### Phase 1: Decisions & Preparation
 
+- [x] **Platform Decisions:** Confirmed GitHub Pages for all three sites.
+- [x] **Domain Inventory:** Repos created for `p2p4vsc.com`, `g2t.cc`, `cov.llc`.
 - [ ] **Approve Plan & Budget:** Confirm ~$90-160/year budget for domains.
-- [ ] **Platform Decisions:** Confirm GitHub Pages for all three sites.
 - [ ] **Mailing List:** Create Mailchimp account (Free Tier).
-- [ ] **Domain Inventory:** Check ownership of `p2p4vsc.*`, `g2t.*`, and `cov.llc`. Purchase missing domains.
 
 ### Phase 2: Repository & Domain Setup (One-to-One)
 
-- [ ] **Create Repo `p2p4vsc.com`:** Initialize public repo, enable GitHub Pages, add CNAME `p2p4vsc.com`.
-- [ ] **Create Repo `g2t.cc`:** Initialize public repo, enable GitHub Pages, add CNAME `g2t.cc`.
-- [ ] **Create Repo `cov.llc`:** Initialize public repo, enable GitHub Pages, add CNAME `cov.llc`.
+- [x] **Create Repo `p2p4vsc.com`:** Repository created.
+- [x] **Create Repo `g2t.cc`:** Repository created.
+- [x] **Create Repo `cov.llc`:** Repository created (Note: Business name is "Coven LLC").
+- [ ] **Enable GitHub Pages:** Configure GitHub Pages in repo settings for all three.
+- [ ] **Add CNAME files:** Add CNAME file with domain name to each repo.
 - [ ] **DNS Configuration (Primary):** Point A records for all 3 domains to GitHub Pages IPs.
-- [ ] **DNS Configuration (Redirects):** Configure `.info`, `.dev`, `.support` redirects in DNS provider.
+- [ ] **DNS Configuration (Redirects):** Configure `.info`, `.dev`, `.support` redirects in DNS provider (if domains owned).
 
 ### Phase 3: Content & Assets
 
@@ -80,9 +136,11 @@ We will create **separate repositories** for the web hosting (e.g., `p2p4vsc.com
 
 **Proposed Repos:**
 
-1. `appliedmedia/p2p4vsc.com` (Source for [https://p2p4vsc.com](https://p2p4vsc.com))
-2. `appliedmedia/g2t.cc` (Source for [https://g2t.cc](https://g2t.cc))
-3. `appliedmedia/cov.llc` (Source for [https://cov.llc](https://cov.llc))
+1. `appliedmedia/p2p4vsc.com` ✅ Created (Source for [https://p2p4vsc.com](https://p2p4vsc.com))
+2. `appliedmedia/g2t.cc` ✅ Created (Source for [https://g2t.cc](https://g2t.cc))
+3. `appliedmedia/cov.llc` ✅ Created (Source for [https://cov.llc](https://cov.llc))
+
+**Note:** Business name is "Coven LLC", domain is `cov.llc`.
 
 **Alternative Considered: `docs/` folder in existing Extension Repos**
 
@@ -1347,20 +1405,114 @@ This plan establishes professional web presence for three Applied Media initiati
 
 **Domain Ownership:**
 
-- [ ] Do you already own p2p4vsc domains?
-- [ ] Do you already own g2t domains?
-- [ ] Do you already own cov.llc?
-- [ ] Budget approved?
+- [x] Do you already own p2p4vsc domains? (Repo created, assume domain owned/purchasing)
+- [x] Do you already own g2t domains? (Repo created, assume domain owned/purchasing)
+- [x] Do you already own cov.llc? (Repo created, assume domain owned/purchasing)
+- [ ] Budget approved? ~$90-160/year
+- [ ] Do you own the `.info`, `.dev`, `.support` redirect domains?
 
 **Platform Decisions:**
 
-- [ ] cov.llc platform: GitHub Pages (control) or Google Sites (ease)?
-- [ ] Mailing list provider?
-- [ ] Analytics?
+- [x] All three sites: GitHub Pages (confirmed by repo creation)
+- [ ] Mailing list provider? Recommend: Mailchimp Free Tier (500 subscribers)
+- [ ] Analytics? Optional: Plausible or none for now
 
 **Content Details:**
 
-- [ ] Confirm URLs for repos and stores
+- [ ] Confirm URLs for repos and stores (VS Code Marketplace, Chrome Web Store)
 - [ ] Existing privacy policies?
+- [ ] Professional headshot available for cov.llc?
+- [ ] Applied Media logo ready?
+
+---
+
+## Immediate Action Items (Ordered by Priority)
+
+### 1. Enable GitHub Pages (All Repos)
+For each of the three repositories (`p2p4vsc.com`, `g2t.cc`, `cov.llc`):
+- Go to repository Settings → Pages
+- Set Source to `main` branch (root `/` or `/docs` folder)
+- Save settings
+
+### 2. Create CNAME Files
+In each repository, create a file named `CNAME` (no extension) in the root (or `/docs` if using that):
+
+**p2p4vsc.com repo:**
+```
+p2p4vsc.com
+```
+
+**g2t.cc repo:**
+```
+g2t.cc
+```
+
+**cov.llc repo:**
+```
+cov.llc
+```
+
+### 3. Configure DNS
+In your domain registrar (Namecheap, GoDaddy, Cloudflare, etc.), add A records for each domain:
+
+**For `p2p4vsc.com`:**
+- A record: `@` → `185.199.108.153`
+- A record: `@` → `185.199.109.153`
+- A record: `@` → `185.199.110.153`
+- A record: `@` → `185.199.111.153`
+
+**For `g2t.cc`:**
+- A record: `@` → `185.199.108.153`
+- A record: `@` → `185.199.109.153`
+- A record: `@` → `185.199.110.153`
+- A record: `@` → `185.199.111.153`
+
+**For `cov.llc`:**
+- A record: `@` → `185.199.108.153`
+- A record: `@` → `185.199.109.153`
+- A record: `@` → `185.199.110.153`
+- A record: `@` → `185.199.111.153`
+
+### 4. Create Initial Landing Pages
+Create minimal `index.html` files for each repository to test deployment:
+
+**Minimal Template:**
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>[Site Name]</title>
+</head>
+<body>
+    <h1>[Site Name]</h1>
+    <p>Coming Soon</p>
+    <footer>🇺🇸 Made in the USA by Applied Media</footer>
+</body>
+</html>
+```
+
+Commit and push to trigger GitHub Pages build.
+
+### 5. Verify Deployment
+Wait 5-10 minutes after DNS configuration and check:
+- `https://p2p4vsc.com` (should show "Coming Soon")
+- `https://g2t.cc` (should show "Coming Soon")
+- `https://cov.llc` (should show "Coming Soon")
+
+DNS propagation can take up to 24 hours but usually completes in 1-2 hours.
+
+### 6. Set Up Mailing List
+- Create Mailchimp account at [mailchimp.com](https://mailchimp.com)
+- Create audience: "Applied Media Software Updates"
+- Generate embedded form code
+- Save for later integration into landing pages
+
+### 7. Build Out Content (After Basic Deployment Works)
+Once the basic "Coming Soon" pages are live:
+- Follow Phase 3 (Content & Assets) from the plan
+- Follow Phase 4 (Implementation) to build full landing pages
+- Add mailing list forms to software sites
 
 ---
