@@ -49,8 +49,14 @@ for REPO in "${REPOS[@]}"; do
     if [ "$HTTP_CODE" = "204" ] || [ "$HTTP_CODE" = "200" ]; then
         echo "  ✅ HTTPS enforcement enabled"
     elif [ "$HTTP_CODE" = "409" ]; then
-        echo "  ⚠️  HTTPS not available yet (DNS may still be propagating)"
-        echo "     GitHub will enable HTTPS automatically once DNS is verified"
+        echo "  ⚠️  HTTPS not available yet (multiple possible causes):"
+        echo "     - DNS still propagating"
+        echo "     - Domain not verified / SSL certificate not issued"
+        echo "     - DNS records misconfigured"
+        echo "     - Domain attached to another repository"
+        echo "  → Check repo Settings → Pages to verify domain and certificate status"
+        echo "  → Confirm DNS A/AAAA records point to GitHub Pages IPs"
+        echo "  → GitHub will enable HTTPS automatically once verified"
     else
         echo "  ❌ Failed with HTTP $HTTP_CODE"
         echo "  Response: $BODY"

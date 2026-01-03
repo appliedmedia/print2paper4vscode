@@ -18,7 +18,7 @@ fi
 API_BASE="https://api.dynadot.com/api3.json"
 API_KEY="$DYNADOT_API_KEY"
 
-# GitHub Pages IPv4 IPs (A records - already configured)
+# GitHub Pages IPv4 IPs (A records - will be set alongside AAAA)
 GITHUB_IPS_V4=(
     "185.199.108.153"
     "185.199.109.153"
