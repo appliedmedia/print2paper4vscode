@@ -13,17 +13,16 @@
 - Created GitHub repository: `print2paper4vscode.com` (serves print2paper4vscode.com)
 - Created GitHub repository: `gmail2trello.com` (serves gmail2trello.com)
 - Created GitHub repository: `cov.llc` (serves cov.llc)
+- **Repos renamed** to match domain names for clarity
 - Note: Business name is "Coven LLC", domain is `cov.llc`
 - Designed structure for `appliedmedia/.github` (public org infrastructure repo)
-- Created automation script: `scripts/enable-github-pages.sh`
+- Created automation scripts: `enable-github-pages.sh`, `enable-https.sh`, `configure-dynadot-dns.sh`, `configure-dynadot-dns-ipv6.sh`
 - Created `appliedmedia/.github` and populated it
 - Enabled GitHub Pages on all three repos
 - Added "Coming Soon" landing pages to all three sites
-- Updated CNAME files with final domains:
-  - print2paper4vscode.com
-  - gmail2trello.com
-  - cov.llc
+- Updated CNAME files with final domains
 - **Configured DNS A records in Dynadot** for all three domains
+- All sites are live via HTTP (waiting for SSL certificate provisioning)
 - **Decision:** Keep `.github` public, plans stay in project repos for now
 
 ### 🔄 Next Actions (Priority Order)

@@ -19,8 +19,8 @@ ORG="appliedmedia"
 
 # Repositories to configure
 REPOS=(
-    "p2p4vsc.com"
-    "g2t.cc"
+    "print2paper4vscode.com"
+    "gmail2trello.com"
     "cov.llc"
 )
 
