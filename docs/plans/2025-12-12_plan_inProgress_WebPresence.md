@@ -10,6 +10,7 @@
 ## Progress Update (2026-01-03)
 
 ### ✅ Completed
+
 - Created GitHub repository: `print2paper4vscode.com` (serves print2paper4vscode.com)
 - Created GitHub repository: `gmail2trello.com` (serves gmail2trello.com)
 - Created GitHub repository: `cov.llc` (serves cov.llc)
@@ -32,9 +33,9 @@
    - Look for the 4 GitHub Pages IPs in the response
 
 2. **Verify sites are live and enable HTTPS**
-   - Visit: https://print2paper4vscode.com
-   - Visit: https://gmail2trello.com
-   - Visit: https://cov.llc
+   - Visit: <https://print2paper4vscode.com>
+   - Visit: <https://gmail2trello.com>
+   - Visit: <https://cov.llc>
    - Once DNS propagates, go to each repo Settings → Pages → Enable "Enforce HTTPS"
 
 3. **Set up Mailchimp mailing list**
@@ -57,6 +58,7 @@
 ### 📋 Tracking Phase Completion
 
 **Phase 1: Decisions & Preparation**
+
 - [x] Platform Decisions: Confirmed GitHub Pages for all three sites
 - [x] Domain Inventory: Repos created, domains finalized
 - [x] Infrastructure Design: Designed `appliedmedia/.github` structure (public)
@@ -66,6 +68,7 @@
 - [ ] Mailing List: Create Mailchimp account
 
 **Phase 2: Repository & Domain Setup**
+
 - [x] Create Repo `print2paper4vscode.com` (serves print2paper4vscode.com)
 - [x] Create Repo `gmail2trello.com` (serves gmail2trello.com)
 - [x] Create Repo `cov.llc` (serves cov.llc)
@@ -80,12 +83,14 @@
 - [ ] DNS Configuration (Redirects): Configure `.info`, `.dev`, `.support` if domains owned
 
 **Phase 3: Content & Assets**
+
 - [ ] Set up Mailchimp account and mailing list
 - [ ] Create/gather visual assets (logos, screenshots, GIFs)
 - [ ] Write full copy for all three sites
 - [ ] Take screenshots and create demo videos
 
 **Phase 4: Implementation**
+
 - [ ] Build full landing page for print2paper4vscode.com
 - [ ] Build full landing page for gmail2trello.com
 - [ ] Build full landing page for cov.llc
@@ -93,6 +98,7 @@
 - [ ] Test all links, forms, and responsive design
 
 **Phase 5: Launch**
+
 - [ ] Final testing across devices/browsers
 - [ ] Update package.json/manifest.json with new URLs
 - [ ] Update marketplace listings
@@ -1500,12 +1506,14 @@ git push origin main
 ```
 
 **What is `.github`?**
+
 - It's a special repository name GitHub recognizes at the org level
 - Stores org-wide public resources (profile, scripts, workflows)
 - `profile/README.md` shows on your organization's GitHub profile
 - Used by major orgs: microsoft, github, nodejs, vercel, etc.
 
 **What NOT to put in public `.github`:**
+
 - Planning documents (keep in project repos)
 - Sensitive scripts or credentials
 - Internal strategy documents
@@ -1513,6 +1521,7 @@ git push origin main
 See the complete file structure and contents in the APPENDIX section below.
 
 ### 1. Run Automation Script to Enable GitHub Pages
+
 ```bash
 # After .github repo is set up:
 cd .github
@@ -1525,35 +1534,42 @@ export GH_TOKEN=$(gh auth token)
 ```
 
 This script will:
+
 - Enable GitHub Pages on all three repos (`print2paper4vscode.com`, `gmail2trello.com`, `cov.llc`)
 - Create CNAME files in each repo with the correct domain
 - Show status of each operation
 
 ### 2. Configure DNS
+
 In your domain registrar (Namecheap, GoDaddy, Cloudflare, etc.), add A records for each domain:
 
 **For `print2paper4vscode.com`:**
+
 - A record: `@` → `185.199.108.153`
 - A record: `@` → `185.199.109.153`
 - A record: `@` → `185.199.110.153`
 - A record: `@` → `185.199.111.153`
 
 **For `gmail2trello.com`:**
+
 - A record: `@` → `185.199.108.153`
 - A record: `@` → `185.199.109.153`
 - A record: `@` → `185.199.110.153`
 - A record: `@` → `185.199.111.153`
 
 **For `cov.llc`:**
+
 - A record: `@` → `185.199.108.153`
 - A record: `@` → `185.199.109.153`
 - A record: `@` → `185.199.110.153`
 - A record: `@` → `185.199.111.153`
 
 ### 3. Create Initial Landing Pages
+
 Create minimal `index.html` files for each repository to test deployment:
 
 **Minimal Template:**
+
 ```html
 <!DOCTYPE html>
 <html lang="en">
@@ -1573,7 +1589,9 @@ Create minimal `index.html` files for each repository to test deployment:
 Commit and push to trigger GitHub Pages build.
 
 ### 4. Verify Deployment
+
 Wait 5-10 minutes after DNS configuration and check:
+
 - `https://print2paper4vscode.com` (should show "Coming Soon")
 - `https://gmail2trello.com` (should show "Coming Soon")
 - `https://cov.llc` (should show "Coming Soon")
@@ -1581,13 +1599,16 @@ Wait 5-10 minutes after DNS configuration and check:
 DNS propagation can take up to 24 hours but usually completes in 1-2 hours.
 
 ### 5. Set Up Mailing List
+
 - Create Mailchimp account at [mailchimp.com](https://mailchimp.com)
 - Create audience: "Applied Media Software Updates"
 - Generate embedded form code
 - Save for later integration into landing pages
 
 ### 6. Build Out Content (After Basic Deployment Works)
+
 Once the basic "Coming Soon" pages are live:
+
 - Follow Phase 3 (Content & Assets) from the plan
 - Follow Phase 4 (Implementation) to build full landing pages
 - Add mailing list forms to software sites
@@ -1625,12 +1646,14 @@ This repository contains organization-wide public resources for Applied Media pr
 ## Repository Structure
 
 ```
+
 .github/
 ├── scripts/             # Cross-project automation scripts
 ├── profile/             # Organization profile (shows on github.com/appliedmedia)
 │   └── README.md
 └── .github/
     └── workflows/       # Shared GitHub Actions workflows
+
 ```
 
 ## Scripts
@@ -1655,6 +1678,7 @@ export GH_TOKEN=$(gh auth token)
 ---
 
 🇺🇸 Made in the USA by Applied Media
+
 ```
 
 ### File: `profile/README.md`
