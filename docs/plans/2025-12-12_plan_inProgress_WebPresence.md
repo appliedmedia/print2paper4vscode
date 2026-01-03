@@ -23,22 +23,37 @@
   - print2paper4vscode.com
   - gmail2trello.com
   - cov.llc
+- **Configured DNS A records in Dynadot** for all three domains
 - **Decision:** Keep `.github` public, plans stay in project repos for now
 
 ### 🔄 Next Actions (Priority Order)
 
-1. **Configure DNS for all three domains**
-   - Run the Dynadot DNS configuration script: `./scripts/configure-dynadot-dns.sh`
-   - Or manually add A records for: print2paper4vscode.com, gmail2trello.com, cov.llc
-   - GitHub Pages IPs: 185.199.108.153, 185.199.109.153, 185.199.110.153, 185.199.111.153
-
-2. **Wait for DNS propagation** (1-24 hours, usually 1-2 hours)
+1. **Wait for DNS propagation** (1-24 hours, usually 1-2 hours)
    - Test with: `dig print2paper4vscode.com`, `dig gmail2trello.com`, `dig cov.llc`
+   - Look for the 4 GitHub Pages IPs in the response
 
-3. **Verify sites are live**
-   - https://print2paper4vscode.com
-   - https://gmail2trello.com
-   - https://cov.llc
+2. **Verify sites are live and enable HTTPS**
+   - Visit: https://print2paper4vscode.com
+   - Visit: https://gmail2trello.com
+   - Visit: https://cov.llc
+   - Once DNS propagates, go to each repo Settings → Pages → Enable "Enforce HTTPS"
+
+3. **Set up Mailchimp mailing list**
+   - Create account at mailchimp.com
+   - Create audience: "Applied Media Software Updates"
+   - Generate embedded form code
+
+4. **Build out full content** (replace "Coming Soon" pages)
+   - Create full landing pages per design in this plan
+   - Add features, screenshots, trust messaging
+   - Integrate Mailchimp forms on software sites
+   - Add professional bio and services to cov.llc
+
+5. **Optional: Configure redirect domains** (if owned)
+   - p2p4vsc.info → VS Code Marketplace
+   - p2p4vsc.dev → GitHub repo
+   - p2p4vsc.support → GitHub issues
+   - Similar for g2t.*
 
 ### 📋 Tracking Phase Completion
 
@@ -60,8 +75,29 @@
 - [x] Run script to enable GitHub Pages on all three repos
 - [x] Add CNAME files with correct domains to each repo
 - [x] Add "Coming Soon" landing pages to all repos
-- [ ] DNS Configuration (Primary): Point A records to GitHub Pages IPs
+- [x] DNS Configuration (Primary): Point A records to GitHub Pages IPs
+- [ ] Wait for DNS propagation and verify sites are live
+- [ ] Enable HTTPS enforcement in GitHub Pages settings
 - [ ] DNS Configuration (Redirects): Configure `.info`, `.dev`, `.support` if domains owned
+
+**Phase 3: Content & Assets**
+- [ ] Set up Mailchimp account and mailing list
+- [ ] Create/gather visual assets (logos, screenshots, GIFs)
+- [ ] Write full copy for all three sites
+- [ ] Take screenshots and create demo videos
+
+**Phase 4: Implementation**
+- [ ] Build full landing page for print2paper4vscode.com
+- [ ] Build full landing page for gmail2trello.com
+- [ ] Build full landing page for cov.llc
+- [ ] Integrate Mailchimp forms on software sites
+- [ ] Test all links, forms, and responsive design
+
+**Phase 5: Launch**
+- [ ] Final testing across devices/browsers
+- [ ] Update package.json/manifest.json with new URLs
+- [ ] Update marketplace listings
+- [ ] Announce on relevant channels
 
 **Phase 3-5:** Not yet started
 
