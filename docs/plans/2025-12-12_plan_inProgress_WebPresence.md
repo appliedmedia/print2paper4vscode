@@ -13,24 +13,24 @@
 - Created GitHub repository: `p2p4vsc.com`
 - Created GitHub repository: `g2t.cc`
 - Created GitHub repository: `cov.llc` (Note: Business name is "Coven LLC", domain is `cov.llc`)
-- Designed structure for `appliedmedia/.github` (org-wide infrastructure repo)
+- Designed structure for `appliedmedia/.github` (public org infrastructure repo)
 - Created automation script: `scripts/enable-github-pages.sh`
-- **NOTE:** This plan will be moved to `appliedmedia/.github/docs/plans/` once that repo is created
+- **Decision:** Keep `.github` public, plans stay in project repos for now
 
 ### 🔄 Next Actions (Priority Order)
 
 1. **Create the `appliedmedia/.github` repository**
    - Run: `gh repo create appliedmedia/.github --public`
-   - This is a special GitHub org repository for infrastructure
-   - See full setup instructions at the end of this document
+   - This is a special GitHub org repository for public-facing infrastructure
+   - Will contain: org profile, public scripts, community health files
+   - Plans will stay in project repos for now
 
 2. **Populate the `.github` repository**
-   - Add the automation script and documentation
-   - Files are prepared in `/tmp/appliedmedia-github/` on the agent machine
-   - Follow the SETUP.md instructions
+   - Add profile README, scripts, and documentation
+   - See APPENDIX section below for all file contents
 
 3. **Run the automation script to enable GitHub Pages**
-   - Clone `appliedmedia/.github` repository  
+   - Copy script to `appliedmedia/.github/scripts/`
    - Run: `./scripts/enable-github-pages.sh`
    - Script will enable GitHub Pages and create CNAME files for all three repos
 
@@ -58,7 +58,8 @@
 **Phase 1: Decisions & Preparation**
 - [x] Platform Decisions: Confirmed GitHub Pages for all three sites
 - [x] Domain Inventory: Repos created for `p2p4vsc.com`, `g2t.cc`, `cov.llc`
-- [x] Infrastructure Design: Designed `appliedmedia/.github` structure for org-wide resources
+- [x] Infrastructure Design: Designed `appliedmedia/.github` structure (public)
+- [x] Plan Location: Keep plans in project repos, not in public `.github`
 - [ ] Create `appliedmedia/.github` repository
 - [ ] Approve Plan & Budget: ~$90-160/year for domains
 - [ ] Mailing List: Create Mailchimp account
@@ -68,7 +69,7 @@
 - [x] Create Repo `g2t.cc`
 - [x] Create Repo `cov.llc`
 - [x] Create automation script `enable-github-pages.sh`
-- [ ] Create and populate `appliedmedia/.github` repo
+- [ ] Create and populate `appliedmedia/.github` repo (public)
 - [ ] Run script to enable GitHub Pages on all three repos
 - [ ] Run script to add CNAME files to each repo
 - [ ] DNS Configuration (Primary): Point A records to GitHub Pages IPs
@@ -1447,25 +1448,26 @@ This plan establishes professional web presence for three Applied Media initiati
 
 ### 0. Create and Set Up `appliedmedia/.github` Repository
 
-This is a special GitHub repository that stores organization-wide resources.
+This is a special GitHub repository that stores organization-wide public resources.
 
 **Step-by-step:**
 
 ```bash
-# 1. Create the repository
-gh repo create appliedmedia/.github --public --description "Applied Media organization infrastructure, scripts, and documentation"
+# 1. Create the repository (PUBLIC)
+gh repo create appliedmedia/.github --public --description "Applied Media organization infrastructure and public resources"
 
 # 2. Clone it locally
 git clone git@github.com:appliedmedia/.github.git
 cd .github
 
 # 3. Create directory structure
-mkdir -p scripts docs/plans profile .github/workflows
+mkdir -p scripts profile .github/workflows
 
-# 4. Add files (prepared structure available - see docs/SETUP.md for details)
-# - Copy enable-github-pages.sh to scripts/
-# - Copy web presence plan to docs/plans/
-# - Add README.md, profile/README.md, docs/ORGANIZATION.md
+# 4. Add files (see APPENDIX below for all file contents)
+# - Create README.md
+# - Create profile/README.md
+# - Copy enable-github-pages.sh from print2paper4vscode/scripts/ to scripts/
+# - Create .gitignore
 # - Make scripts executable: chmod +x scripts/*.sh
 
 # 5. Commit and push
@@ -1476,11 +1478,16 @@ git push origin main
 
 **What is `.github`?**
 - It's a special repository name GitHub recognizes at the org level
-- Stores org-wide scripts, workflows, and documentation
+- Stores org-wide public resources (profile, scripts, workflows)
 - `profile/README.md` shows on your organization's GitHub profile
 - Used by major orgs: microsoft, github, nodejs, vercel, etc.
 
-See the complete file structure and contents at the end of this document.
+**What NOT to put in public `.github`:**
+- Planning documents (keep in project repos)
+- Sensitive scripts or credentials
+- Internal strategy documents
+
+See the complete file structure and contents in the APPENDIX section below.
 
 ### 1. Run Automation Script to Enable GitHub Pages
 ```bash
@@ -1566,7 +1573,9 @@ Once the basic "Coming Soon" pages are live:
 
 ## APPENDIX: `appliedmedia/.github` Repository Contents
 
-This section contains all files needed for the `appliedmedia/.github` repository.
+This section contains all files needed for the **public** `appliedmedia/.github` repository.
+
+**Note:** Plans and internal docs stay in project repos, not in the public `.github` repo.
 
 ### Directory Structure
 
@@ -1576,10 +1585,6 @@ This section contains all files needed for the `appliedmedia/.github` repository
 ├── .gitignore
 ├── scripts/
 │   └── enable-github-pages.sh
-├── docs/
-│   ├── ORGANIZATION.md
-│   └── plans/
-│       └── 2025-12-12_plan_inProgress_WebPresence.md (this file)
 ├── profile/
 │   └── README.md
 └── .github/
@@ -1592,14 +1597,12 @@ This section contains all files needed for the `appliedmedia/.github` repository
 ```markdown
 # Applied Media - Organization Infrastructure
 
-This repository contains organization-wide resources, scripts, and documentation for Applied Media projects.
+This repository contains organization-wide public resources for Applied Media projects.
 
 ## Repository Structure
 
 ```
 .github/
-├── docs/
-│   └── plans/           # Organization-wide planning documents
 ├── scripts/             # Cross-project automation scripts
 ├── profile/             # Organization profile (shows on github.com/appliedmedia)
 │   └── README.md
@@ -1617,13 +1620,6 @@ Enables GitHub Pages and configures CNAME files for all Applied Media web presen
 export GH_TOKEN=$(gh auth token)
 ./scripts/enable-github-pages.sh
 ```
-
-## Planning Documents
-
-Organization-wide plans are stored in `docs/plans/`:
-- **Web Presence Plan** - Strategy for p2p4vsc.com, g2t.cc, and cov.llc websites
-
-Project-specific plans remain in their respective repositories.
 
 ## Applied Media Projects
 
@@ -1684,65 +1680,6 @@ All our software projects are:
 © 2025-2026 Applied Media
 ```
 
-### File: `docs/ORGANIZATION.md`
-
-```markdown
-# Applied Media Organization Structure
-
-## Repository Organization
-
-### Infrastructure
-- **[.github](https://github.com/appliedmedia/.github)** - Org-wide scripts, documentation, and workflows
-
-### Product Repositories
-- **[print2paper4vscode](https://github.com/appliedmedia/print2paper4vscode)** - VS Code extension source code
-- **[gmail2trello](https://github.com/appliedmedia/gmail2trello)** - Chrome extension source code
-
-### Marketing Sites (GitHub Pages)
-- **[p2p4vsc.com](https://github.com/appliedmedia/p2p4vsc.com)** - Marketing site for Print2Paper4VSCode
-- **[g2t.cc](https://github.com/appliedmedia/g2t.cc)** - Marketing site for gmail2trello
-- **[cov.llc](https://github.com/appliedmedia/cov.llc)** - Fractional CTO consulting site
-
-## Planning Document Organization
-
-### Organization-Wide Plans
-Stored in `appliedmedia/.github/docs/plans/`:
-- Web Presence Strategy (covers all 3 marketing sites)
-- Applied Media Branding Guidelines
-- Cross-project automation
-- GitHub Actions reviewer bot (if used org-wide)
-
-### Project-Specific Plans
-Stored in respective product repos (e.g., `print2paper4vscode/docs/plans/`):
-- Feature development plans
-- Architecture decisions
-- Project-specific roadmaps
-- Platform-specific plans (Linux print, Windows print, etc.)
-
-### Site-Specific Plans
-For simple marketing sites, plans can stay in `.github` or move to site repos if they grow complex.
-
-## When to Use `.github` vs Project Repos
-
-**Use `appliedmedia/.github` for:**
-- Scripts that affect multiple repos
-- Organization branding/identity
-- Cross-project strategies
-- Shared CI/CD workflows
-- Community health files (CODE_OF_CONDUCT, CONTRIBUTING, etc.)
-
-**Use project repos for:**
-- Code-specific documentation
-- API documentation
-- Feature development plans
-- Project-specific tooling
-- Release management
-
----
-
-This structure keeps organization-level concerns separate from individual projects while maintaining clear ownership and discoverability.
-```
-
 ### File: `.gitignore`
 
 ```
@@ -1756,10 +1693,8 @@ node_modules/
 
 ### File: `scripts/enable-github-pages.sh`
 
-See the existing file at `/workspace/scripts/enable-github-pages.sh` - copy that to the `.github` repo.
+Copy the file from `/workspace/scripts/enable-github-pages.sh` to the `.github` repo's `scripts/` directory.
 
-### File: `docs/plans/2025-12-12_plan_inProgress_WebPresence.md`
-
-This current file should be copied to the `.github` repo.
+Don't forget to make it executable: `chmod +x scripts/enable-github-pages.sh`
 
 ---
