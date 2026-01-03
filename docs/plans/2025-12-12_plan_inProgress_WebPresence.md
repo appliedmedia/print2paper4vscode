@@ -57,7 +57,7 @@
 
 ### 📋 Tracking Phase Completion
 
-**Phase 1: Decisions & Preparation**
+#### Phase 1: Decisions & Preparation
 
 - [x] Platform Decisions: Confirmed GitHub Pages for all three sites
 - [x] Domain Inventory: Repos created, domains finalized
@@ -67,7 +67,7 @@
 - [ ] Approve Plan & Budget: ~$90-160/year for domains
 - [ ] Mailing List: Create Mailchimp account
 
-**Phase 2: Repository & Domain Setup**
+#### Phase 2: Repository & Domain Setup
 
 - [x] Create Repo `print2paper4vscode.com` (serves print2paper4vscode.com)
 - [x] Create Repo `gmail2trello.com` (serves gmail2trello.com)
@@ -82,14 +82,14 @@
 - [ ] Enable HTTPS enforcement in GitHub Pages settings
 - [ ] DNS Configuration (Redirects): Configure `.info`, `.dev`, `.support` if domains owned
 
-**Phase 3: Content & Assets**
+#### Phase 3: Content & Assets
 
 - [ ] Set up Mailchimp account and mailing list
 - [ ] Create/gather visual assets (logos, screenshots, GIFs)
 - [ ] Write full copy for all three sites
 - [ ] Take screenshots and create demo videos
 
-**Phase 4: Implementation**
+#### Phase 4: Implementation
 
 - [ ] Build full landing page for print2paper4vscode.com
 - [ ] Build full landing page for gmail2trello.com
@@ -97,7 +97,7 @@
 - [ ] Integrate Mailchimp forms on software sites
 - [ ] Test all links, forms, and responsive design
 
-**Phase 5: Launch**
+#### Phase 5: Launch
 
 - [ ] Final testing across devices/browsers
 - [ ] Update package.json/manifest.json with new URLs
@@ -110,7 +110,7 @@
 
 ## Execution Plan
 
-### Phase 1: Decisions & Preparation
+### Phase 1: Decisions & Preparation (Setup)
 
 - [x] **Platform Decisions:** Confirmed GitHub Pages for all three sites.
 - [x] **Domain Inventory:** Repos created for `print2paper4vscode.com`, `gmail2trello.com`, `cov.llc`.
@@ -127,7 +127,7 @@
 - [ ] **DNS Configuration (Primary):** Point A records for all 3 domains to GitHub Pages IPs.
 - [ ] **DNS Configuration (Redirects):** Configure `.info`, `.dev`, `.support` redirects in DNS provider (if domains owned).
 
-### Phase 3: Content & Assets
+### Phase 3: Content & Assets (Creation)
 
 - [ ] **Visual Identity:** Create Applied Media logo and consistent favicon.
 - [ ] **Copywriting (cov.llc):** Draft bio, services, and contact info.
@@ -135,7 +135,7 @@
 - [ ] **Copywriting (g2t):** Draft landing page, usage guide, and trust messaging.
 - [ ] **Media:** Capture screenshots and record workflow GIFs for both extensions.
 
-### Phase 4: Implementation
+### Phase 4: Implementation (Build)
 
 - [ ] **Develop `cov.llc`:** Build simple static site (bio + contact). Deploy.
 - [ ] **Develop `print2paper4vscode.com`:** Build marketing site + docs. Integrate Mailchimp. Deploy.
@@ -1623,7 +1623,7 @@ This section contains all files needed for the **public** `appliedmedia/.github`
 
 ### Directory Structure
 
-```
+```text
 .github/
 ├── README.md
 ├── .gitignore
@@ -1645,7 +1645,7 @@ This repository contains organization-wide public resources for Applied Media pr
 
 ## Repository Structure
 
-```
+```markdown
 
 .github/
 ├── scripts/             # Cross-project automation scripts
@@ -1659,9 +1659,11 @@ This repository contains organization-wide public resources for Applied Media pr
 ## Scripts
 
 ### `scripts/enable-github-pages.sh`
+
 Enables GitHub Pages and configures CNAME files for all Applied Media web presence repositories.
 
 **Usage:**
+
 ```bash
 export GH_TOKEN=$(gh auth token)
 ./scripts/enable-github-pages.sh
@@ -1679,7 +1681,7 @@ export GH_TOKEN=$(gh auth token)
 
 🇺🇸 Made in the USA by Applied Media
 
-```
+```text
 
 ### File: `profile/README.md`
 
@@ -1729,7 +1731,7 @@ All our software projects are:
 
 ### File: `.gitignore`
 
-```
+```text
 *.log
 *.tmp
 .DS_Store
