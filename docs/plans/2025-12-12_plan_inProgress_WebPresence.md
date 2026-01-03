@@ -13,13 +13,26 @@
 - Created GitHub repository: `p2p4vsc.com`
 - Created GitHub repository: `g2t.cc`
 - Created GitHub repository: `cov.llc` (Note: Business name is "Coven LLC", domain is `cov.llc`)
+- Designed structure for `appliedmedia/.github` (org-wide infrastructure repo)
+- Created automation script: `scripts/enable-github-pages.sh`
+- **NOTE:** This plan will be moved to `appliedmedia/.github/docs/plans/` once that repo is created
 
 ### 🔄 Next Actions (Priority Order)
 
-1. **Enable GitHub Pages on all three repositories**
-   - Navigate to Settings → Pages for each repo
-   - Set source to `main` branch (root or `/docs` folder)
-   - Add CNAME file to each repo with respective domain
+1. **Create the `appliedmedia/.github` repository**
+   - Run: `gh repo create appliedmedia/.github --public`
+   - This is a special GitHub org repository for infrastructure
+   - See full setup instructions at the end of this document
+
+2. **Populate the `.github` repository**
+   - Add the automation script and documentation
+   - Files are prepared in `/tmp/appliedmedia-github/` on the agent machine
+   - Follow the SETUP.md instructions
+
+3. **Run the automation script to enable GitHub Pages**
+   - Clone `appliedmedia/.github` repository  
+   - Run: `./scripts/enable-github-pages.sh`
+   - Script will enable GitHub Pages and create CNAME files for all three repos
 
 2. **Configure DNS for all domains**
    - Point `p2p4vsc.com` A records to GitHub Pages IPs
@@ -45,6 +58,8 @@
 **Phase 1: Decisions & Preparation**
 - [x] Platform Decisions: Confirmed GitHub Pages for all three sites
 - [x] Domain Inventory: Repos created for `p2p4vsc.com`, `g2t.cc`, `cov.llc`
+- [x] Infrastructure Design: Designed `appliedmedia/.github` structure for org-wide resources
+- [ ] Create `appliedmedia/.github` repository
 - [ ] Approve Plan & Budget: ~$90-160/year for domains
 - [ ] Mailing List: Create Mailchimp account
 
@@ -52,8 +67,10 @@
 - [x] Create Repo `p2p4vsc.com`
 - [x] Create Repo `g2t.cc`
 - [x] Create Repo `cov.llc`
-- [ ] Enable GitHub Pages on all three repos
-- [ ] Add CNAME files to each repo
+- [x] Create automation script `enable-github-pages.sh`
+- [ ] Create and populate `appliedmedia/.github` repo
+- [ ] Run script to enable GitHub Pages on all three repos
+- [ ] Run script to add CNAME files to each repo
 - [ ] DNS Configuration (Primary): Point A records to GitHub Pages IPs
 - [ ] DNS Configuration (Redirects): Configure `.info`, `.dev`, `.support` if domains owned
 
@@ -1428,31 +1445,61 @@ This plan establishes professional web presence for three Applied Media initiati
 
 ## Immediate Action Items (Ordered by Priority)
 
-### 1. Enable GitHub Pages (All Repos)
-For each of the three repositories (`p2p4vsc.com`, `g2t.cc`, `cov.llc`):
-- Go to repository Settings → Pages
-- Set Source to `main` branch (root `/` or `/docs` folder)
-- Save settings
+### 0. Create and Set Up `appliedmedia/.github` Repository
 
-### 2. Create CNAME Files
-In each repository, create a file named `CNAME` (no extension) in the root (or `/docs` if using that):
+This is a special GitHub repository that stores organization-wide resources.
 
-**p2p4vsc.com repo:**
-```
-p2p4vsc.com
+**Step-by-step:**
+
+```bash
+# 1. Create the repository
+gh repo create appliedmedia/.github --public --description "Applied Media organization infrastructure, scripts, and documentation"
+
+# 2. Clone it locally
+git clone git@github.com:appliedmedia/.github.git
+cd .github
+
+# 3. Create directory structure
+mkdir -p scripts docs/plans profile .github/workflows
+
+# 4. Add files (prepared structure available - see docs/SETUP.md for details)
+# - Copy enable-github-pages.sh to scripts/
+# - Copy web presence plan to docs/plans/
+# - Add README.md, profile/README.md, docs/ORGANIZATION.md
+# - Make scripts executable: chmod +x scripts/*.sh
+
+# 5. Commit and push
+git add .
+git commit -m "Initial .github repository setup"
+git push origin main
 ```
 
-**g2t.cc repo:**
-```
-g2t.cc
+**What is `.github`?**
+- It's a special repository name GitHub recognizes at the org level
+- Stores org-wide scripts, workflows, and documentation
+- `profile/README.md` shows on your organization's GitHub profile
+- Used by major orgs: microsoft, github, nodejs, vercel, etc.
+
+See the complete file structure and contents at the end of this document.
+
+### 1. Run Automation Script to Enable GitHub Pages
+```bash
+# After .github repo is set up:
+cd .github
+
+# Set your GitHub token
+export GH_TOKEN=$(gh auth token)
+
+# Run the automation script
+./scripts/enable-github-pages.sh
 ```
 
-**cov.llc repo:**
-```
-cov.llc
-```
+This script will:
+- Enable GitHub Pages on all three repos (`p2p4vsc.com`, `g2t.cc`, `cov.llc`)
+- Create CNAME files in each repo with the correct domain
+- Show status of each operation
 
-### 3. Configure DNS
+### 2. Configure DNS
 In your domain registrar (Namecheap, GoDaddy, Cloudflare, etc.), add A records for each domain:
 
 **For `p2p4vsc.com`:**
@@ -1473,7 +1520,7 @@ In your domain registrar (Namecheap, GoDaddy, Cloudflare, etc.), add A records f
 - A record: `@` → `185.199.110.153`
 - A record: `@` → `185.199.111.153`
 
-### 4. Create Initial Landing Pages
+### 3. Create Initial Landing Pages
 Create minimal `index.html` files for each repository to test deployment:
 
 **Minimal Template:**
@@ -1495,7 +1542,7 @@ Create minimal `index.html` files for each repository to test deployment:
 
 Commit and push to trigger GitHub Pages build.
 
-### 5. Verify Deployment
+### 4. Verify Deployment
 Wait 5-10 minutes after DNS configuration and check:
 - `https://p2p4vsc.com` (should show "Coming Soon")
 - `https://g2t.cc` (should show "Coming Soon")
@@ -1503,13 +1550,13 @@ Wait 5-10 minutes after DNS configuration and check:
 
 DNS propagation can take up to 24 hours but usually completes in 1-2 hours.
 
-### 6. Set Up Mailing List
+### 5. Set Up Mailing List
 - Create Mailchimp account at [mailchimp.com](https://mailchimp.com)
 - Create audience: "Applied Media Software Updates"
 - Generate embedded form code
 - Save for later integration into landing pages
 
-### 7. Build Out Content (After Basic Deployment Works)
+### 6. Build Out Content (After Basic Deployment Works)
 Once the basic "Coming Soon" pages are live:
 - Follow Phase 3 (Content & Assets) from the plan
 - Follow Phase 4 (Implementation) to build full landing pages
