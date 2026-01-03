@@ -1563,3 +1563,203 @@ Once the basic "Coming Soon" pages are live:
 - Add mailing list forms to software sites
 
 ---
+
+## APPENDIX: `appliedmedia/.github` Repository Contents
+
+This section contains all files needed for the `appliedmedia/.github` repository.
+
+### Directory Structure
+
+```
+.github/
+├── README.md
+├── .gitignore
+├── scripts/
+│   └── enable-github-pages.sh
+├── docs/
+│   ├── ORGANIZATION.md
+│   └── plans/
+│       └── 2025-12-12_plan_inProgress_WebPresence.md (this file)
+├── profile/
+│   └── README.md
+└── .github/
+    └── workflows/
+        (empty for now - add GitHub Actions as needed)
+```
+
+### File: `README.md`
+
+```markdown
+# Applied Media - Organization Infrastructure
+
+This repository contains organization-wide resources, scripts, and documentation for Applied Media projects.
+
+## Repository Structure
+
+```
+.github/
+├── docs/
+│   └── plans/           # Organization-wide planning documents
+├── scripts/             # Cross-project automation scripts
+├── profile/             # Organization profile (shows on github.com/appliedmedia)
+│   └── README.md
+└── .github/
+    └── workflows/       # Shared GitHub Actions workflows
+```
+
+## Scripts
+
+### `scripts/enable-github-pages.sh`
+Enables GitHub Pages and configures CNAME files for all Applied Media web presence repositories.
+
+**Usage:**
+```bash
+export GH_TOKEN=$(gh auth token)
+./scripts/enable-github-pages.sh
+```
+
+## Planning Documents
+
+Organization-wide plans are stored in `docs/plans/`:
+- **Web Presence Plan** - Strategy for p2p4vsc.com, g2t.cc, and cov.llc websites
+
+Project-specific plans remain in their respective repositories.
+
+## Applied Media Projects
+
+- [print2paper4vscode](https://github.com/appliedmedia/print2paper4vscode) - VS Code extension for printing code
+- [gmail2trello](https://github.com/appliedmedia/gmail2trello) - Chrome extension for email to Trello
+- [p2p4vsc.com](https://github.com/appliedmedia/p2p4vsc.com) - Marketing site for Print2Paper4VSCode
+- [g2t.cc](https://github.com/appliedmedia/g2t.cc) - Marketing site for gmail2trello
+- [cov.llc](https://github.com/appliedmedia/cov.llc) - Fractional CTO consulting site
+
+---
+
+🇺🇸 Made in the USA by Applied Media
+```
+
+### File: `profile/README.md`
+
+This appears on `github.com/appliedmedia` organization page:
+
+```markdown
+# Applied Media
+
+🇺🇸 Made in the USA
+
+Professional open source software and fractional CTO services.
+
+## Software Projects
+
+### [Print2Paper4VSCode](https://p2p4vsc.com)
+Print code with syntax highlighting. Trust the source.
+- 🎨 Syntax highlighting for 100+ languages
+- 📄 Professional PDF generation
+- 👁️ Live preview before printing
+- [Install](https://p2p4vsc.info) | [Source](https://github.com/appliedmedia/print2paper4vscode)
+
+### [gmail2trello](https://g2t.cc)
+Email to tasks in one click.
+- 📧 Convert Gmail threads to Trello cards instantly
+- 🔒 No data stored or transmitted to third parties
+- [Install](https://g2t.info) | [Source](https://github.com/appliedmedia/gmail2trello)
+
+## Consulting
+
+### [Fractional CTO Services](https://cov.llc)
+Strategic technology guidance for startups and growing companies.
+- Cloud architecture
+- Team building
+- Software delivery
+
+## Trust & Transparency
+
+All our software projects are:
+- ✅ Fully open source and auditable
+- ✅ Community driven
+- ✅ Made in the USA
+
+---
+
+© 2025-2026 Applied Media
+```
+
+### File: `docs/ORGANIZATION.md`
+
+```markdown
+# Applied Media Organization Structure
+
+## Repository Organization
+
+### Infrastructure
+- **[.github](https://github.com/appliedmedia/.github)** - Org-wide scripts, documentation, and workflows
+
+### Product Repositories
+- **[print2paper4vscode](https://github.com/appliedmedia/print2paper4vscode)** - VS Code extension source code
+- **[gmail2trello](https://github.com/appliedmedia/gmail2trello)** - Chrome extension source code
+
+### Marketing Sites (GitHub Pages)
+- **[p2p4vsc.com](https://github.com/appliedmedia/p2p4vsc.com)** - Marketing site for Print2Paper4VSCode
+- **[g2t.cc](https://github.com/appliedmedia/g2t.cc)** - Marketing site for gmail2trello
+- **[cov.llc](https://github.com/appliedmedia/cov.llc)** - Fractional CTO consulting site
+
+## Planning Document Organization
+
+### Organization-Wide Plans
+Stored in `appliedmedia/.github/docs/plans/`:
+- Web Presence Strategy (covers all 3 marketing sites)
+- Applied Media Branding Guidelines
+- Cross-project automation
+- GitHub Actions reviewer bot (if used org-wide)
+
+### Project-Specific Plans
+Stored in respective product repos (e.g., `print2paper4vscode/docs/plans/`):
+- Feature development plans
+- Architecture decisions
+- Project-specific roadmaps
+- Platform-specific plans (Linux print, Windows print, etc.)
+
+### Site-Specific Plans
+For simple marketing sites, plans can stay in `.github` or move to site repos if they grow complex.
+
+## When to Use `.github` vs Project Repos
+
+**Use `appliedmedia/.github` for:**
+- Scripts that affect multiple repos
+- Organization branding/identity
+- Cross-project strategies
+- Shared CI/CD workflows
+- Community health files (CODE_OF_CONDUCT, CONTRIBUTING, etc.)
+
+**Use project repos for:**
+- Code-specific documentation
+- API documentation
+- Feature development plans
+- Project-specific tooling
+- Release management
+
+---
+
+This structure keeps organization-level concerns separate from individual projects while maintaining clear ownership and discoverability.
+```
+
+### File: `.gitignore`
+
+```
+*.log
+*.tmp
+.DS_Store
+node_modules/
+.env
+.env.local
+```
+
+### File: `scripts/enable-github-pages.sh`
+
+See the existing file at `/workspace/scripts/enable-github-pages.sh` - copy that to the `.github` repo.
+
+### File: `docs/plans/2025-12-12_plan_inProgress_WebPresence.md`
+
+This current file should be copied to the `.github` repo.
+
+---
