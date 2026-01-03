@@ -24,10 +24,10 @@ REPOS=(
     "cov.llc"
 )
 
-# Domains for each repo (must match repo names in this case)
+# Domains for each repo
 DOMAINS=(
-    "p2p4vsc.com"
-    "g2t.cc"
+    "print2paper4vscode.com"
+    "gmail2trello.com"
     "cov.llc"
 )
 

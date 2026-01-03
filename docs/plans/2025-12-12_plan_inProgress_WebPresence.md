@@ -10,68 +10,56 @@
 ## Progress Update (2026-01-03)
 
 ### ✅ Completed
-- Created GitHub repository: `p2p4vsc.com`
-- Created GitHub repository: `g2t.cc`
-- Created GitHub repository: `cov.llc` (Note: Business name is "Coven LLC", domain is `cov.llc`)
+- Created GitHub repository: `print2paper4vscode.com` (serves print2paper4vscode.com)
+- Created GitHub repository: `gmail2trello.com` (serves gmail2trello.com)
+- Created GitHub repository: `cov.llc` (serves cov.llc)
+- Note: Business name is "Coven LLC", domain is `cov.llc`
 - Designed structure for `appliedmedia/.github` (public org infrastructure repo)
 - Created automation script: `scripts/enable-github-pages.sh`
+- Created `appliedmedia/.github` and populated it
+- Enabled GitHub Pages on all three repos
+- Added "Coming Soon" landing pages to all three sites
+- Updated CNAME files with final domains:
+  - print2paper4vscode.com
+  - gmail2trello.com
+  - cov.llc
 - **Decision:** Keep `.github` public, plans stay in project repos for now
 
 ### 🔄 Next Actions (Priority Order)
 
-1. **Create the `appliedmedia/.github` repository**
-   - Run: `gh repo create appliedmedia/.github --public`
-   - This is a special GitHub org repository for public-facing infrastructure
-   - Will contain: org profile, public scripts, community health files
-   - Plans will stay in project repos for now
-
-2. **Populate the `.github` repository**
-   - Add profile README, scripts, and documentation
-   - See APPENDIX section below for all file contents
-
-3. **Run the automation script to enable GitHub Pages**
-   - Copy script to `appliedmedia/.github/scripts/`
-   - Run: `./scripts/enable-github-pages.sh`
-   - Script will enable GitHub Pages and create CNAME files for all three repos
-
-2. **Configure DNS for all domains**
-   - Point `p2p4vsc.com` A records to GitHub Pages IPs
-   - Point `g2t.cc` A records to GitHub Pages IPs
-   - Point `cov.llc` A records to GitHub Pages IPs
+1. **Configure DNS for all three domains**
+   - Run the Dynadot DNS configuration script: `./scripts/configure-dynadot-dns.sh`
+   - Or manually add A records for: print2paper4vscode.com, gmail2trello.com, cov.llc
    - GitHub Pages IPs: 185.199.108.153, 185.199.109.153, 185.199.110.153, 185.199.111.153
 
-3. **Create minimal landing pages**
-   - Build simple `index.html` for each site
-   - Start with basic structure: hero section + trust messaging + CTA
-   - Apply consistent Applied Media branding
+2. **Wait for DNS propagation** (1-24 hours, usually 1-2 hours)
+   - Test with: `dig print2paper4vscode.com`, `dig gmail2trello.com`, `dig cov.llc`
 
-4. **Set up mailing list (Mailchimp)**
-   - Create Mailchimp account
-   - Create audience: "Applied Media Software Updates"
-   - Generate embed code for both software sites
-
-5. **Configure domain redirects** (After main domains work)
-   - Set up DNS redirects for `.info`, `.dev`, `.support` domains (if owned)
+3. **Verify sites are live**
+   - https://print2paper4vscode.com
+   - https://gmail2trello.com
+   - https://cov.llc
 
 ### 📋 Tracking Phase Completion
 
 **Phase 1: Decisions & Preparation**
 - [x] Platform Decisions: Confirmed GitHub Pages for all three sites
-- [x] Domain Inventory: Repos created for `p2p4vsc.com`, `g2t.cc`, `cov.llc`
+- [x] Domain Inventory: Repos created, domains finalized
 - [x] Infrastructure Design: Designed `appliedmedia/.github` structure (public)
 - [x] Plan Location: Keep plans in project repos, not in public `.github`
-- [ ] Create `appliedmedia/.github` repository
+- [x] Create `appliedmedia/.github` repository
 - [ ] Approve Plan & Budget: ~$90-160/year for domains
 - [ ] Mailing List: Create Mailchimp account
 
 **Phase 2: Repository & Domain Setup**
-- [x] Create Repo `p2p4vsc.com`
-- [x] Create Repo `g2t.cc`
-- [x] Create Repo `cov.llc`
-- [x] Create automation script `enable-github-pages.sh`
-- [ ] Create and populate `appliedmedia/.github` repo (public)
-- [ ] Run script to enable GitHub Pages on all three repos
-- [ ] Run script to add CNAME files to each repo
+- [x] Create Repo `print2paper4vscode.com` (serves print2paper4vscode.com)
+- [x] Create Repo `gmail2trello.com` (serves gmail2trello.com)
+- [x] Create Repo `cov.llc` (serves cov.llc)
+- [x] Create automation scripts
+- [x] Create and populate `appliedmedia/.github` repo (public)
+- [x] Run script to enable GitHub Pages on all three repos
+- [x] Add CNAME files with correct domains to each repo
+- [x] Add "Coming Soon" landing pages to all repos
 - [ ] DNS Configuration (Primary): Point A records to GitHub Pages IPs
 - [ ] DNS Configuration (Redirects): Configure `.info`, `.dev`, `.support` if domains owned
 
@@ -84,14 +72,14 @@
 ### Phase 1: Decisions & Preparation
 
 - [x] **Platform Decisions:** Confirmed GitHub Pages for all three sites.
-- [x] **Domain Inventory:** Repos created for `p2p4vsc.com`, `g2t.cc`, `cov.llc`.
+- [x] **Domain Inventory:** Repos created for `print2paper4vscode.com`, `gmail2trello.com`, `cov.llc`.
 - [ ] **Approve Plan & Budget:** Confirm ~$90-160/year budget for domains.
 - [ ] **Mailing List:** Create Mailchimp account (Free Tier).
 
 ### Phase 2: Repository & Domain Setup (One-to-One)
 
-- [x] **Create Repo `p2p4vsc.com`:** Repository created.
-- [x] **Create Repo `g2t.cc`:** Repository created.
+- [x] **Create Repo `print2paper4vscode.com`:** Repository created.
+- [x] **Create Repo `gmail2trello.com`:** Repository created.
 - [x] **Create Repo `cov.llc`:** Repository created (Note: Business name is "Coven LLC").
 - [ ] **Enable GitHub Pages:** Configure GitHub Pages in repo settings for all three.
 - [ ] **Add CNAME files:** Add CNAME file with domain name to each repo.
@@ -109,8 +97,8 @@
 ### Phase 4: Implementation
 
 - [ ] **Develop `cov.llc`:** Build simple static site (bio + contact). Deploy.
-- [ ] **Develop `p2p4vsc.com`:** Build marketing site + docs. Integrate Mailchimp. Deploy.
-- [ ] **Develop `g2t.cc`:** Build marketing site + docs. Integrate Mailchimp. Deploy.
+- [ ] **Develop `print2paper4vscode.com`:** Build marketing site + docs. Integrate Mailchimp. Deploy.
+- [ ] **Develop `gmail2trello.com`:** Build marketing site + docs. Integrate Mailchimp. Deploy.
 - [ ] **Cross-Linking:** Ensure all sites link to "Applied Media" and each other where appropriate.
 
 ### Phase 5: Launch & Updates
@@ -144,18 +132,18 @@ Each project gets:
 
 ### Decision: One-to-One Mapping (One Repository per Website)
 
-We will create **separate repositories** for the web hosting (e.g., `p2p4vsc.com`, `g2t.cc`, `cov.llc`).
+We will create **separate repositories** for the web hosting (e.g., `print2paper4vscode.com`, `gmail2trello.com`, `cov.llc`).
 
 **Why?**
 
-1. **GitHub Pages Limitation:** GitHub Pages allows only **one custom domain per repository**. You cannot map `p2p4vsc.com` and `g2t.cc` to the same repo without complex workarounds.
+1. **GitHub Pages Limitation:** GitHub Pages allows only **one custom domain per repository**. You cannot map `print2paper4vscode.com` and `gmail2trello.com` to the same repo without complex workarounds.
 2. **Decoupling:** Keeps marketing content (HTML/CSS) separate from application code. This prevents the main extension repos from being cluttered with website assets.
-3. **Clarity:** Naming the repo after the domain (e.g., `p2p4vsc.com`) makes the mapping obvious.
+3. **Clarity:** Naming the repo after the domain (e.g., `print2paper4vscode.com`) makes the mapping obvious.
 
 **Proposed Repos:**
 
-1. `appliedmedia/p2p4vsc.com` ✅ Created (Source for [https://p2p4vsc.com](https://p2p4vsc.com))
-2. `appliedmedia/g2t.cc` ✅ Created (Source for [https://g2t.cc](https://g2t.cc))
+1. `appliedmedia/print2paper4vscode.com` ✅ Created (Source for [https://print2paper4vscode.com](https://print2paper4vscode.com))
+2. `appliedmedia/gmail2trello.com` ✅ Created (Source for [https://gmail2trello.com](https://gmail2trello.com))
 3. `appliedmedia/cov.llc` ✅ Created (Source for [https://cov.llc](https://cov.llc))
 
 **Note:** Business name is "Coven LLC", domain is `cov.llc`.
@@ -175,10 +163,10 @@ We will create **separate repositories** for the web hosting (e.g., `p2p4vsc.com
 
 ### Print2Paper4VSCode Domains
 
-**p2p4vsc.com** - Main Marketing Website
+**print2paper4vscode.com** - Main Marketing Website
 
 - **Purpose:** Professional landing page and marketing site
-- **Repo:** `appliedmedia/p2p4vsc.com`
+- **Repo:** `appliedmedia/print2paper4vscode.com`
 - **User Action:** Point DNS to GitHub Pages
 
 **p2p4vsc.info** - VS Code Marketplace Redirect
@@ -206,10 +194,10 @@ We will create **separate repositories** for the web hosting (e.g., `p2p4vsc.com
 
 ### gmail2trello Domains
 
-**g2t.cc** - Main Marketing Website
+**gmail2trello.com** - Main Marketing Website
 
 - **Purpose:** Professional landing page and marketing site
-- **Repo:** `appliedmedia/g2t.cc`
+- **Repo:** `appliedmedia/gmail2trello.com`
 - **User Action:** Point DNS to GitHub Pages
 
 **g2t.info** - Chrome Web Store Redirect
@@ -250,7 +238,7 @@ We will create **separate repositories** for the web hosting (e.g., `p2p4vsc.com
 
 ### Print2Paper4VSCode Pages
 
-#### Page 1: Landing Page (p2p4vsc.com)
+#### Page 1: Landing Page (print2paper4vscode.com)
 
 ##### Key Messages
 
@@ -301,7 +289,7 @@ snippets—Print2Paper4VSCode makes it simple and safe.
 
 ---
 
-#### Page 2: Installation & Usage Guide (p2p4vsc.com/install)
+#### Page 2: Installation & Usage Guide (print2paper4vscode.com/install)
 
 ##### Section 1: Installation
 
@@ -468,7 +456,7 @@ Optional: Add intermediate page with quick links:
 
 ### gmail2trello Pages
 
-#### Page 1: Landing Page (g2t.cc)
+#### Page 1: Landing Page (gmail2trello.com)
 
 ##### gmail2trello Key Messages
 
@@ -525,7 +513,7 @@ gmail2trello makes project management seamless and secure.
 
 ---
 
-#### Page 2: Usage Guide (g2t.cc/guide)
+#### Page 2: Usage Guide (gmail2trello.com/guide)
 
 ##### gmail2trello Installation
 
@@ -835,7 +823,7 @@ Collect email addresses for **Applied Media** mailing list to:
    - Navigate to Audience → Signup forms → Embedded forms
    - Customize form fields (email required, optional: first name)
    - Copy embed code
-5. Add form to both p2p4vsc.com and g2t.com websites
+5. Add form to both print2paper4vscode.com and g2t.com websites
 6. Test subscription flow end-to-end
 
 **Mailchimp Embed Example:**
@@ -907,7 +895,7 @@ Collect email addresses for **Applied Media** mailing list to:
 
 > Print code with syntax highlighting. Trust the source.
 
-[Install](https://p2p4vsc.info) | [Documentation](https://p2p4vsc.com) | [Source Code](https://p2p4vsc.dev) | [Support](https://p2p4vsc.support)
+[Install](https://p2p4vsc.info) | [Documentation](https://print2paper4vscode.com) | [Source Code](https://p2p4vsc.dev) | [Support](https://p2p4vsc.support)
 
 ## Why Print Code?
 
@@ -938,7 +926,7 @@ Brief explanation of use cases...
 
 ## Documentation
 
-- 📖 **User Guide:** [p2p4vsc.com/install](https://p2p4vsc.com/install)
+- 📖 **User Guide:** [print2paper4vscode.com/install](https://print2paper4vscode.com/install)
 - 🔧 **Developer Docs:** See [AGENTS.md](docs/AGENTS.md)
 - 🐛 **Report Issues:** [p2p4vsc.support](https://p2p4vsc.support)
 
@@ -948,8 +936,8 @@ Brief explanation of use cases...
 
 ## More from Applied Media
 
-- **gmail2trello:** Convert Gmail threads to Trello cards ([g2t.cc](https://g2t.cc))
-- **Stay Updated:** [Join our mailing list](https://p2p4vsc.com#newsletter) for announcements
+- **gmail2trello:** Convert Gmail threads to Trello cards ([gmail2trello.com](https://gmail2trello.com))
+- **Stay Updated:** [Join our mailing list](https://print2paper4vscode.com#newsletter) for announcements
 
 ## License
 
@@ -965,7 +953,7 @@ Commercial licensing available.
 
 ### Similar Approach for gmail2trello README
 
-- Add links to g2t.cc, g2t.info, g2t.dev, g2t.support
+- Add links to gmail2trello.com, g2t.info, g2t.dev, g2t.support
 - Cross-promote Print2Paper4VSCode
 - Applied Media branding and mailing list link
 - Trust & transparency messaging
@@ -974,7 +962,7 @@ Commercial licensing available.
 
 ## Platform Recommendation (Simple Sites)
 
-**Comparing options for static landing pages (p2p4vsc.com, g2t.cc, cov.llc):**
+**Comparing options for static landing pages (print2paper4vscode.com, gmail2trello.com, cov.llc):**
 
 ### 1. GitHub Pages (Recommended for Software)
 
@@ -1040,7 +1028,7 @@ Commercial licensing available.
 
 **Print2Paper4VSCode:**
 
-- [ ] Register/configure p2p4vsc.com
+- [ ] Register/configure print2paper4vscode.com
 - [ ] Register/configure p2p4vsc.info (marketplace redirect)
 - [ ] Register/configure p2p4vsc.dev
 - [ ] Register/configure p2p4vsc.support
@@ -1049,7 +1037,7 @@ Commercial licensing available.
 
 **gmail2trello:**
 
-- [ ] Register/configure g2t.cc
+- [ ] Register/configure gmail2trello.com
 - [ ] Register/configure g2t.info (Chrome Web Store redirect)
 - [ ] Register/configure g2t.dev
 - [ ] Register/configure g2t.support
@@ -1111,10 +1099,10 @@ Commercial licensing available.
 
 ```text
 appliedmedia/
-├── p2p4vsc.com/ (Repo)
+├── print2paper4vscode.com/ (Repo)
 │   ├── index.html
 │   └── install.html
-├── g2t.cc/ (Repo)
+├── gmail2trello.com/ (Repo)
 │   ├── index.html
 │   └── guide.html
 └── cov.llc/ (Repo)
@@ -1149,8 +1137,8 @@ appliedmedia/
 
 **Domain Testing:**
 
-- [ ] Test p2p4vsc.com, .info, .dev, .support
-- [ ] Test g2t.cc, .info, .dev, .support
+- [ ] Test print2paper4vscode.com, .info, .dev, .support
+- [ ] Test gmail2trello.com, .info, .dev, .support
 - [ ] Test cov.llc
 
 **Website Testing:**
@@ -1239,9 +1227,9 @@ git push
 
 ### Custom Domain Configuration
 
-**For p2p4vsc.com (apex domain - GitHub Pages):**
+**For print2paper4vscode.com (apex domain - GitHub Pages):**
 
-1. Add CNAME file to gh-pages with content: `p2p4vsc.com`
+1. Add CNAME file to gh-pages with content: `print2paper4vscode.com`
 2. In DNS provider, add A records (CNAMEs don't work for apex domains):
    - 185.199.108.153
    - 185.199.109.153
@@ -1385,14 +1373,14 @@ This plan establishes professional web presence for three Applied Media initiati
 
 **Print2Paper4VSCode:**
 
-- Landing page at p2p4vsc.com
+- Landing page at print2paper4vscode.com
 - Marketplace redirect at p2p4vsc.info
 - Developer docs at p2p4vsc.dev
 - Support portal at p2p4vsc.support
 
 **gmail2trello:**
 
-- Landing page at g2t.cc
+- Landing page at gmail2trello.com
 - Chrome Web Store redirect at g2t.info
 - Developer docs at g2t.dev
 - Support portal at g2t.support
@@ -1502,20 +1490,20 @@ export GH_TOKEN=$(gh auth token)
 ```
 
 This script will:
-- Enable GitHub Pages on all three repos (`p2p4vsc.com`, `g2t.cc`, `cov.llc`)
+- Enable GitHub Pages on all three repos (`print2paper4vscode.com`, `gmail2trello.com`, `cov.llc`)
 - Create CNAME files in each repo with the correct domain
 - Show status of each operation
 
 ### 2. Configure DNS
 In your domain registrar (Namecheap, GoDaddy, Cloudflare, etc.), add A records for each domain:
 
-**For `p2p4vsc.com`:**
+**For `print2paper4vscode.com`:**
 - A record: `@` → `185.199.108.153`
 - A record: `@` → `185.199.109.153`
 - A record: `@` → `185.199.110.153`
 - A record: `@` → `185.199.111.153`
 
-**For `g2t.cc`:**
+**For `gmail2trello.com`:**
 - A record: `@` → `185.199.108.153`
 - A record: `@` → `185.199.109.153`
 - A record: `@` → `185.199.110.153`
@@ -1551,8 +1539,8 @@ Commit and push to trigger GitHub Pages build.
 
 ### 4. Verify Deployment
 Wait 5-10 minutes after DNS configuration and check:
-- `https://p2p4vsc.com` (should show "Coming Soon")
-- `https://g2t.cc` (should show "Coming Soon")
+- `https://print2paper4vscode.com` (should show "Coming Soon")
+- `https://gmail2trello.com` (should show "Coming Soon")
 - `https://cov.llc` (should show "Coming Soon")
 
 DNS propagation can take up to 24 hours but usually completes in 1-2 hours.
@@ -1625,8 +1613,8 @@ export GH_TOKEN=$(gh auth token)
 
 - [print2paper4vscode](https://github.com/appliedmedia/print2paper4vscode) - VS Code extension for printing code
 - [gmail2trello](https://github.com/appliedmedia/gmail2trello) - Chrome extension for email to Trello
-- [p2p4vsc.com](https://github.com/appliedmedia/p2p4vsc.com) - Marketing site for Print2Paper4VSCode
-- [g2t.cc](https://github.com/appliedmedia/g2t.cc) - Marketing site for gmail2trello
+- [print2paper4vscode.com](https://github.com/appliedmedia/print2paper4vscode.com) - Marketing site for Print2Paper4VSCode
+- [gmail2trello.com](https://github.com/appliedmedia/gmail2trello.com) - Marketing site for gmail2trello
 - [cov.llc](https://github.com/appliedmedia/cov.llc) - Fractional CTO consulting site
 
 ---
@@ -1647,14 +1635,14 @@ Professional open source software and fractional CTO services.
 
 ## Software Projects
 
-### [Print2Paper4VSCode](https://p2p4vsc.com)
+### [Print2Paper4VSCode](https://print2paper4vscode.com)
 Print code with syntax highlighting. Trust the source.
 - 🎨 Syntax highlighting for 100+ languages
 - 📄 Professional PDF generation
 - 👁️ Live preview before printing
 - [Install](https://p2p4vsc.info) | [Source](https://github.com/appliedmedia/print2paper4vscode)
 
-### [gmail2trello](https://g2t.cc)
+### [gmail2trello](https://gmail2trello.com)
 Email to tasks in one click.
 - 📧 Convert Gmail threads to Trello cards instantly
 - 🔒 No data stored or transmitted to third parties

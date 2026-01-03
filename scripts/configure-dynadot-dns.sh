@@ -28,8 +28,8 @@ GITHUB_IPS=(
 
 # Domains to configure
 DOMAINS=(
-    "p2p4vsc.com"
-    "g2t.cc"
+    "print2paper4vscode.com"
+    "gmail2trello.com"
     "cov.llc"
 )
 
@@ -83,12 +83,12 @@ echo "Note: DNS changes may take up to 48 hours to propagate globally,"
 echo "but usually complete within 1-2 hours."
 echo ""
 echo "Test propagation with:"
-echo "  dig p2p4vsc.com"
-echo "  dig g2t.cc"
+echo "  dig print2paper4vscode.com"
+echo "  dig gmail2trello.com"
 echo "  dig cov.llc"
 echo ""
 echo "Once propagated, verify sites are live:"
-echo "  - https://p2p4vsc.com"
-echo "  - https://g2t.cc"
+echo "  - https://print2paper4vscode.com"
+echo "  - https://gmail2trello.com"
 echo "  - https://cov.llc"
 echo ""
