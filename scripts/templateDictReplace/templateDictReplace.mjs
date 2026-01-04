@@ -84,15 +84,16 @@ function templateDictReplace(source, dictionary) {
 }
 
 // Load configuration
-// Try local directory first (same as script), then .config/
-let configPath = path.join(__dirname, 'templateDictReplace.yaml');
-if (!fs.existsSync(configPath)) {
-  configPath = path.join(projectRoot, '.config', 'templateDictReplace.yaml');
-}
+// Config file must be in same directory as script
+const configPath = path.join(__dirname, 'templateDictReplace.yaml');
 
 let config;
 try {
   config = yaml.parse(fs.readFileSync(configPath, 'utf8'));
+  if (!config || !config.replacements) {
+    console.error(`Error: Configuration file missing 'replacements' array: ${configPath}`);
+    process.exit(1);
+  }
 } catch (err) {
   console.error(`Error: Failed to load configuration file: ${configPath}`);
   console.error(`  ${err.message}`);

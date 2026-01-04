@@ -6,11 +6,12 @@ Extension-specific build and automation scripts.
 
 - **`badges4readmes/`** - Badge generation for README files (CI, coverage, license)
   - See `badges4readmes/README.md` for details
+- **`templateDictReplace/`** - Generic template variable replacement tool
+  - See `templateDictReplace/README.md` for details
 - **`generate-package-json.mjs`** - Generates package.json from extension manifest
 - **`prepublish.sh`** - Pre-publish checks and preparation
 - **`lint-yaml-code.js`** - YAML code block linting
 - **`setup-vscode-mock.js`** - Sets up VSCode API mocks for testing
-- **`templateDictReplace.mjs`** - Template variable replacement utility
 
 ## 🔗 Organizational Scripts
 
