@@ -3,10 +3,6 @@
 [![CI](images/ci.svg)](https://github.com/appliedmedia/print2paper4vscode/actions)
 [![Coverage](images/coverage.svg)](https://github.com/appliedmedia/print2paper4vscode/actions)
 [![License](images/license.svg)](https://github.com/appliedmedia/print2paper4vscode/blob/main/LICENSE)
-<!-- 
-Badge to add after marketplace publish:
-[![VS Code Marketplace](https://img.shields.io/visual-studio-marketplace/v/acoven.print2paper4vscode)](https://marketplace.visualstudio.com/items?itemName=acoven.print2paper4vscode)
--->
 
 A VS Code extension that captures content from the active editor, applies syntax highlighting, generates a vector PDF, and provides multiple printing options through an interactive webview interface.
 
