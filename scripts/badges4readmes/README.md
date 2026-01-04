@@ -69,15 +69,9 @@ Parses your `LICENSE` file to extract the license name:
 
 ### 3. Dynamic badge sizing
 
-License badge automatically adjusts width based on text length using this formula:
+License badge automatically adjusts width based on text length.
 
-```bash
-CHAR_COUNT=${#LICENSE_NAME}
-VALUE_TEXT_LENGTH=$((CHAR_COUNT * 65))
-VALUE_WIDTH=$((VALUE_TEXT_LENGTH / 10 + 6))
-TOTAL_WIDTH=$((51 + VALUE_WIDTH))
-VALUE_X=$((510 + VALUE_WIDTH * 5))
-```
+**Implementation**: See `calculate_badge_dimensions()` function in [`badges4readmes.sh`](./badges4readmes.sh) (lines ~97-109) for the canonical dimension calculation formulas.
 
 ## Setup for your repository
 

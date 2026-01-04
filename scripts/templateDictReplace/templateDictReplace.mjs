@@ -1,63 +1,12 @@
 #!/usr/bin/env node
 ////////////////////////////////////////////////////////////////////////////////
-// templateDictReplace.mjs - Generic template variable replacement engine
+// templateDictReplace.mjs - Template variable replacement engine
+//
+// Replaces {{placeholder}} variables with values from config files or CLI args.
+// Two modes: (1) Config mode loads from YAML/JS modules via templateDictReplace.yaml,
+// (2) CLI mode via --dict '{"key":"val"}'. Paths relative to project root (.git).
+// Exit codes: 0=success, 1=error. See README.md for extended docs.
 ////////////////////////////////////////////////////////////////////////////////
-//
-// OVERVIEW:
-//   Processes template files by replacing {{placeholder}} variables with actual
-//   values. Supports two operational modes for different use cases.
-//
-// MODES:
-//   1. Config mode (default): Imports values from compiled modules or YAML files
-//      - Reads templateDictReplace.yaml configuration
-//      - Loads values from TypeScript/JavaScript modules or YAML sources
-//      - Replaces specific template placeholders with imported values
-//      - Use case: Build-time code generation, version injection
-//
-//   2. CLI mode (--dict flag): Applies JSON dictionary to templates
-//      - Takes JSON object as command-line argument
-//      - Applies all key-value pairs to matched template files
-//      - Skips config entries without 'source' field
-//      - Use case: CI/CD runtime value injection, badge generation
-//
-// USAGE:
-//   Config mode:
-//     node templateDictReplace.mjs
-//
-//   CLI mode:
-//     node templateDictReplace.mjs --dict '{"key":"value","foo":"bar"}'
-//
-// TEMPLATE SYNTAX:
-//   Templates use double curly braces: {{variableName}}
-//   Example: "Version: {{version}}" with {"version":"1.0"} → "Version: 1.0"
-//
-// CONFIGURATION (templateDictReplace.yaml):
-//   replacements:
-//     - file: input.txt           # Input file (relative to project root)
-//       output: output.txt         # Output file (relative to project root)
-//       yamlKey: template          # [Optional] Extract this YAML key from input
-//       template: "{{version}}"    # [Config mode] Placeholder to replace
-//       source: package.json       # [Config mode] Source file (.js/.yaml)
-//       key: version               # [Config mode] Key/export to extract
-//
-// PATH RESOLUTION:
-//   - Config file: Same directory as this script (templateDictReplace.yaml)
-//   - Input/output paths: Relative to project root (auto-detected from .git)
-//   - Source paths: Relative to project root
-//
-// EXIT CODES:
-//   0 - Success
-//   1 - Error (config not found, file not found, parse error, etc.)
-//
-// SEE ALSO:
-//   - README.md (this directory): Extended documentation and examples
-//   - templateDictReplace.yaml: Configuration file reference
-//
-////////////////////////////////////////////////////////////////////////////////
-
-/**
- * @deprecated Old JSDoc format below - see header comments above for primary docs
- */
 
 import fs from 'fs';
 import path from 'path';

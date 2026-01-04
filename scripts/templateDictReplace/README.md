@@ -2,42 +2,34 @@
 
 Generic template variable replacement tool for build and automation scripts.
 
-## Primary documentation
+## Core concepts
 
-**See [`templateDictReplace.mjs`](./templateDictReplace.mjs)** for complete documentation including:
+**See [`templateDictReplace.mjs`](./templateDictReplace.mjs) header** for implementation details: modes, path resolution, exit codes.
 
-- Overview of both operational modes (Config and CLI)
-- Usage examples and syntax
-- Template placeholder format (`{{variable}}`)
-- Configuration file structure
-- Path resolution logic
-- Exit codes and error handling
+**Two modes:**
 
-The script header contains comprehensive inline documentation.
+1. **Config mode** - Loads values from compiled JS/YAML files for build-time replacement
+2. **CLI mode** (`--dict`) - Applies runtime JSON dictionary for CI/CD
+
+**Template syntax:** `{{placeholder}}` replaced with dictionary values
 
 ## Quick start
 
-### CLI mode (runtime values)
+### CLI mode
 
 ```bash
 node templateDictReplace.mjs --dict '{"key":"value","foo":"bar"}'
 ```
 
-### Config mode (build-time imports)
+### Config mode
 
 ```bash
 node templateDictReplace.mjs
 ```
 
-## Files in this directory
-
-- **`templateDictReplace.mjs`** - Main template replacement engine
-- **`templateDictReplace.yaml`** - Configuration file (defines replacements)
-- **`README.md`** - This file
-
 ## Configuration format
 
-The `templateDictReplace.yaml` file defines which files to process:
+`templateDictReplace.yaml` defines file processing rules:
 
 ```yaml
 replacements:
@@ -54,79 +46,20 @@ replacements:
     key: EXT_ID
 ```
 
-### Configuration fields
+**Fields:**
 
-- **file** - Input file to process (relative path)
-- **output** - Output file path (relative path)
-- **yamlKey** - If input file is YAML, extract this key's value first
-- **template** - Template placeholder to replace (e.g., `{{extId}}`)
-- **source** - Source file for replacement value (JS module or YAML file)
-- **key** - What to extract from source (JS export name or YAML key)
-
-## Usage modes
-
-### 1. CLI mode (--dict flag)
-
-Apply runtime values to templates. Useful for CI/CD:
-
-```bash
-node templateDictReplace.mjs --dict '{"coverage":"84.83","color":"green"}'
-```
-
-**How it works:**
-
-1. Reads config file
-2. Skips entries without `source` field
-3. Applies all dictionary values to matched templates
-4. Replaces `{{key}}` with corresponding value
-
-**Example use case:** Generate badges with dynamic values in CI
-
-### 2. Config mode (default)
-
-Import values from compiled modules or YAML files:
-
-```bash
-node templateDictReplace.mjs
-```
-
-**How it works:**
-
-1. Reads config file
-2. For each replacement with `source`:
-   - Loads source file (JS module or YAML)
-   - Extracts value using `key`
-   - Replaces `template` with value in `file`
-   - Writes result to `output`
-
-**Example use case:** Inject version numbers from package.json into build artifacts
-
-## Template syntax
-
-Templates use double curly braces:
-
-```text
-Hello {{name}}!
-Version: {{version}}
-```
-
-With dictionary `{"name":"World","version":"1.0"}` becomes:
-
-```text
-Hello World!
-Version: 1.0
-```
-
-## Path resolution
-
-Paths in config are relative to project root:
-
-- Script directory → `scripts/templateDictReplace/`
-- Project root → Go up two levels
+- `file` - Input template (relative to project root)
+- `output` - Output path (relative to project root)
+- `yamlKey` - Extract this key from YAML input before processing
+- `template` - Placeholder to find (config mode only, e.g., `{{extId}}`)
+- `source` - Source file for value (config mode only: .js/.yaml)
+- `key` - Export/key to extract from source (config mode only)
 
 ## Examples
 
 ### Badge generation (CLI mode)
+
+CI/CD runtime value injection:
 
 ```yaml
 replacements:
@@ -140,6 +73,8 @@ node templateDictReplace.mjs --dict '{"coverage":"85.5","color":"97ca00"}'
 ```
 
 ### Package.json generation (config mode)
+
+Build-time constant injection:
 
 ```yaml
 replacements:
@@ -165,29 +100,17 @@ replacements:
     key: name
 ```
 
-## Error handling
+## Integration patterns
 
-The script will exit with error if:
+### CI/CD badge generation
 
-- Configuration file not found
-- Input file doesn't exist
-- Source file not found (config mode)
-- Key not found in source (config mode)
-- Invalid JSON in --dict argument (CLI mode)
-
-## Integration
-
-### With badges4readmes
-
-The badges4readmes system uses this tool in CLI mode:
-
-```bash
-node ../templateDictReplace/templateDictReplace.mjs --dict "{...badge data...}"
+```yaml
+- name: Generate badges
+  run: |
+    node scripts/templateDictReplace/templateDictReplace.mjs --dict '{"coverage":"85","color":"97ca00"}'
 ```
 
-### With build scripts
-
-Add to your build process:
+### Build-time constant injection
 
 ```json
 {
@@ -197,19 +120,9 @@ Add to your build process:
 }
 ```
 
-### With CI workflows
-
-```yaml
-- name: Generate files from templates
-  run: |
-    node scripts/templateDictReplace/templateDictReplace.mjs --dict '{"version":"${{ github.ref }}"}'
-```
-
-## Advanced features
-
 ### YAML key extraction
 
-If input file is YAML, use `yamlKey` to extract a specific key before processing:
+Extract specific key from YAML input before replacement:
 
 ```yaml
 replacements:
@@ -218,48 +131,14 @@ replacements:
     output: badge.svg
 ```
 
-This extracts `templates.yaml[badge_template]` before applying replacements.
-
-### Placeholder detection
-
-The script warns if placeholders remain after replacement:
-
-```text
-WARNING: 2 placeholders remain after replacement: {{foo}}, {{bar}}
-```
-
-### Dry run output
-
-View what will be replaced without writing files:
-
-```bash
-node templateDictReplace.mjs | grep "Replaced:"
-```
+**Result:** Processes only `templates.yaml[badge_template]` value
 
 ## Troubleshooting
 
-### Configuration file not found
+**Config not found:** Ensure `templateDictReplace.yaml` exists in script directory
 
-- Ensure `templateDictReplace.yaml` is in same directory or project `.config/`
+**Paths fail:** Use paths relative to project root (detected via `.git` or `package.json`)
 
-### Input file not found
+**Invalid JSON:** Single-quote `--dict` argument: `--dict '{...}'`
 
-- Check paths are relative to project root, not script directory
-
-### Key not found in source
-
-- Verify export name (JS) or YAML key (YAML) exists in source file
-
-### Invalid JSON object
-
-- Use single quotes around --dict argument in bash
-- Ensure valid JSON object (not array or string)
-
-## Source
-
-This tool is used across Applied Media projects:
-
-- `appliedmedia/print2paper4vscode` - Original implementation
-- `appliedmedia/ops` - Shared organizational scripts
-
-See `scripts/badges4readmes/` for example usage.
+**Missing keys:** Verify JS export name or YAML key exists in source file
