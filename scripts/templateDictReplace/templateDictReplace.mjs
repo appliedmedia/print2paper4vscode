@@ -28,17 +28,17 @@ import yaml from 'yaml';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const require = createRequire(import.meta.url);
 
-// Determine project root
-// Check if we're in badges4readmes/ subdirectory
+// Determine project root based on where script is located
 let projectRoot;
-if (fs.existsSync(path.join(__dirname, 'templateDictReplace.yaml'))) {
-  // We're in badges4readmes/ with config in same directory
-  projectRoot = __dirname;
-} else if (fs.existsSync(path.join(__dirname, '../..'))) {
-  // We're in scripts/ subdirectory, go up to project root
+if (fs.existsSync(path.join(__dirname, '../../.git'))) {
+  // We're in scripts/templateDictReplace/, go up to project root
   projectRoot = path.join(__dirname, '../..');
-} else {
+} else if (fs.existsSync(path.join(__dirname, '../.git'))) {
+  // We're in scripts/, go up one level
   projectRoot = path.join(__dirname, '..');
+} else {
+  // Fallback
+  projectRoot = __dirname;
 }
 
 // Parse CLI arguments
@@ -84,8 +84,8 @@ function templateDictReplace(source, dictionary) {
 }
 
 // Load configuration
-// Try local directory first (badges4readmes/), then .config/
-let configPath = path.join(projectRoot, 'templateDictReplace.yaml');
+// Try local directory first (same as script), then .config/
+let configPath = path.join(__dirname, 'templateDictReplace.yaml');
 if (!fs.existsSync(configPath)) {
   configPath = path.join(projectRoot, '.config', 'templateDictReplace.yaml');
 }

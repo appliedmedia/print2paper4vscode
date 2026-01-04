@@ -34,9 +34,11 @@ fi
 LICENSE_FILE="${LICENSE_FILE:-$PROJECT_ROOT/LICENSE}"
 IMAGES_DIR="${IMAGES_DIR:-$PROJECT_ROOT/images}"
 
-# Template script can be in same directory or in scripts/ directory
+# Template script can be in same directory, sibling directory, or in scripts/
 if [ -f "$SCRIPT_DIR/templateDictReplace.mjs" ]; then
   TEMPLATE_SCRIPT="${TEMPLATE_SCRIPT:-$SCRIPT_DIR/templateDictReplace.mjs}"
+elif [ -f "$SCRIPT_DIR/../templateDictReplace/templateDictReplace.mjs" ]; then
+  TEMPLATE_SCRIPT="${TEMPLATE_SCRIPT:-$SCRIPT_DIR/../templateDictReplace/templateDictReplace.mjs}"
 else
   TEMPLATE_SCRIPT="${TEMPLATE_SCRIPT:-$PROJECT_ROOT/scripts/templateDictReplace.mjs}"
 fi
