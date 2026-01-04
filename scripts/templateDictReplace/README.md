@@ -2,12 +2,18 @@
 
 Generic template variable replacement tool for build and automation scripts.
 
-## What this does
+## Primary documentation
 
-Processes template files by replacing placeholder variables with actual values. Supports two modes:
+**See [`templateDictReplace.mjs`](./templateDictReplace.mjs)** for complete documentation including:
 
-1. **Config mode** - Imports values from TypeScript modules or YAML files
-2. **CLI mode** - Applies JSON dictionary directly to templates
+- Overview of both operational modes (Config and CLI)
+- Usage examples and syntax
+- Template placeholder format (`{{variable}}`)
+- Configuration file structure
+- Path resolution logic
+- Exit codes and error handling
+
+The script header contains comprehensive inline documentation.
 
 ## Quick start
 

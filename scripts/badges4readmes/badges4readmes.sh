@@ -1,20 +1,100 @@
 #!/bin/bash
-# generate-badges.sh - Reusable badge generation script
-# 
-# This script generates SVG badges for CI status, test coverage, and license info.
-# It can be used across multiple repositories.
+################################################################################
+# badges4readmes.sh - Dynamic SVG badge generator for README files
+################################################################################
 #
-# Requirements:
-# - LICENSE file in repo root
-# - images/svgs.yaml with badge templates
-# - scripts/templateDictReplace.mjs (or node-based template replacement)
-# - Node.js installed
+# OVERVIEW:
+#   Generates three types of SVG badges for repository README files:
+#   1. CI Status - Static "CI: passing" badge with fixed kerning
+#   2. Test Coverage - Dynamic badge showing coverage % with color coding
+#   3. License - Automatically extracts license name from LICENSE file
 #
-# Usage:
-#   ./generate-badges.sh [COVERAGE_PERCENTAGE]
+# USAGE:
+#   ./badges4readmes.sh <COVERAGE_PERCENTAGE>
 #
-# Example:
-#   ./generate-badges.sh 84.83
+#   Example: ./badges4readmes.sh 84.83
+#
+# ARGUMENTS:
+#   COVERAGE_PERCENTAGE - Test coverage as decimal number (0-100)
+#                        Used to generate coverage badge with appropriate color
+#
+# OUTPUT:
+#   Creates/updates three SVG files in project images/ directory:
+#   - images/ci.svg       (CI: passing)
+#   - images/coverage.svg (Coverage: XX.X%)
+#   - images/license.svg  (License: <extracted from LICENSE file>)
+#
+# REQUIREMENTS:
+#   - Node.js (for template replacement)
+#   - LICENSE file in repository root
+#   - svgs.yaml with badge templates (in same directory as this script)
+#   - templateDictReplace.mjs (in sibling directory or same dir)
+#
+# LICENSE PARSER:
+#   Extracts license name from LICENSE file using flexible parsing:
+#   1. Finds first line containing "License" (case insensitive)
+#   2. Strips leading comment markers: # // /*
+#   3. If line contains "License:", strips everything before it
+#   4. If started with /*, strips trailing */
+#   5. Removes quotes and trims whitespace
+#
+#   Supported formats:
+#   - # License: MIT                      → MIT
+#   - # "Code Transparency" License v1    → Code Transparency License v1
+#   - /* License: BSD 3-Clause */         → BSD 3-Clause
+#   - // Apache License 2.0               → Apache License 2.0
+#
+# COVERAGE COLORS:
+#   Coverage percentage determines badge color:
+#   - Green  (#97ca00): >= 80%
+#   - Yellow (#dfb317): >= 60%
+#   - Orange (#fe7d37): >= 40%
+#   - Red    (#e05d44): <  40%
+#
+# BADGE DIMENSIONS:
+#   License badge width auto-calculated based on text length:
+#   - Base label width: 51px
+#   - Character width: ~6.5px per character
+#   - Formula: total_width = 51 + (char_count * 6.5 + 6)
+#   - SVG coordinates scaled by factors for proper rendering
+#
+# ENVIRONMENT VARIABLES:
+#   Override default paths if needed:
+#   - PROJECT_ROOT    - Repository root (auto-detected)
+#   - LICENSE_FILE    - Path to LICENSE file (default: $PROJECT_ROOT/LICENSE)
+#   - IMAGES_DIR      - Output directory (default: $PROJECT_ROOT/images)
+#   - TEMPLATE_SCRIPT - Path to templateDictReplace.mjs (auto-detected)
+#
+# INTEGRATION:
+#   Typically called from CI workflow after test coverage generation:
+#
+#   - name: Generate badges
+#     run: |
+#       COVERAGE=$(extract_from_test_output)
+#       ./scripts/badges4readmes/badges4readmes.sh $COVERAGE
+#
+#   - name: Commit badges
+#     run: |
+#       git add images/*.svg
+#       git commit -m "Update badges [skip ci]"
+#       git push
+#
+# ERROR HANDLING:
+#   Script exits with error code 1 if:
+#   - LICENSE file not found (outputs: Unknown)
+#   - Template script not found
+#   - Template replacement fails
+#
+# DEPENDENCIES:
+#   - templateDictReplace.mjs: Performs variable substitution in SVG templates
+#   - svgs.yaml: Contains SVG badge templates with {{placeholder}} variables
+#   - templateDictReplace.yaml: Configuration for template processing
+#
+# SEE ALSO:
+#   - README.md (this directory): Complete usage guide and examples
+#   - ../templateDictReplace/templateDictReplace.mjs: Template engine docs
+#
+################################################################################
 
 set -euo pipefail
 

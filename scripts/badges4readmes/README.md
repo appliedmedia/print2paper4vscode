@@ -2,17 +2,25 @@
 
 Reusable badge generation system for creating dynamic SVG badges in README files.
 
-## What this generates
+## Primary documentation
 
-Three types of badges:
-1. **CI Status** - Shows "CI: passing" with improved kerning
-2. **Test Coverage** - Shows percentage with color coding (green/yellow/orange/red)
-3. **License** - Dynamically extracted from LICENSE file with auto-sizing
+**See [`badges4readmes.sh`](./badges4readmes.sh)** for complete documentation including:
+
+- Overview of badge types (CI, Coverage, License)
+- Usage and arguments
+- License parser logic and supported formats
+- Coverage color thresholds
+- Badge dimension calculations
+- Environment variables
+- CI integration examples
+- Error handling
+
+The script header contains comprehensive inline documentation.
 
 ## Quick start
 
 ```bash
-./generate-badges.sh 84.83
+./badges4readmes.sh 84.83
 ```
 
 This generates three badges in your `images/` directory:
