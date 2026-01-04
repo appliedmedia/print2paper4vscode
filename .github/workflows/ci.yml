@@ -165,9 +165,47 @@ jobs:
             echo "Coverage data not found"
           fi
       
-      - name: Generate coverage badge
+      - name: Extract license info
+        id: license
+        run: |
+          # Parse LICENSE file according to spec:
+          # 1. Find first line containing "License" (case insensitive)
+          # 2. Strip leading comment markers (# // /* etc.) + spaces
+          # 3. If contains "License:" → strip everything up to and including "License:" + spaces
+          # 4. Otherwise leave as-is
+          
+          if [ -f LICENSE ]; then
+            # Find first line with "license" (case insensitive)
+            LICENSE_LINE=$(grep -i "license" LICENSE | head -1)
+            
+            if [ -n "$LICENSE_LINE" ]; then
+              # Strip leading comment markers and spaces
+              LICENSE_TEXT=$(echo "$LICENSE_LINE" | sed -E 's/^[[:space:]]*(#|\/\/|\/\*)[[:space:]]*//')
+              
+              # If contains "License:", strip everything up to and including it
+              if echo "$LICENSE_TEXT" | grep -qi "license:"; then
+                LICENSE_TEXT=$(echo "$LICENSE_TEXT" | sed -E 's/^.*[Ll]icense:[[:space:]]*//')
+              fi
+              
+              # Remove trailing comment markers and quotes
+              LICENSE_TEXT=$(echo "$LICENSE_TEXT" | sed -E 's/[[:space:]]*(\*\/)?[[:space:]]*$//' | sed 's/"//g')
+              
+              echo "name=$LICENSE_TEXT" >> $GITHUB_OUTPUT
+              echo "License extracted: $LICENSE_TEXT"
+            else
+              echo "name=Unknown" >> $GITHUB_OUTPUT
+              echo "No license line found"
+            fi
+          else
+            echo "name=Unknown" >> $GITHUB_OUTPUT
+            echo "LICENSE file not found"
+          fi
+      
+      - name: Generate badges
         run: |
           COVERAGE=${{ steps.coverage.outputs.percentage }}
+          LICENSE_NAME="${{ steps.license.outputs.name }}"
+          
           # Color thresholds: green>=80%, yellow>=60%, orange>=40%, red<40%
           COLOR_HEX="e05d44"  # red
           if awk "BEGIN {exit !($COVERAGE >= 80)}"; then
@@ -178,8 +216,17 @@ jobs:
             COLOR_HEX="fe7d37"  # orange
           fi
           
+          # Calculate license badge dimensions
+          # Base width: 51 (label) + padding
+          # Character width: ~6.5 pixels per character at font-size 110
+          LICENSE_CHAR_COUNT=${#LICENSE_NAME}
+          VALUE_TEXT_LENGTH=$((LICENSE_CHAR_COUNT * 65))
+          VALUE_WIDTH=$((VALUE_TEXT_LENGTH / 10 + 6))
+          TOTAL_WIDTH=$((51 + VALUE_WIDTH))
+          VALUE_X=$((510 + VALUE_WIDTH * 5))
+          
           # Generate badges using template replacement with runtime values
-          node scripts/templateDictReplace.mjs --dict "{\"coverage\":\"$COVERAGE\",\"colorHex\":\"$COLOR_HEX\"}"
+          node scripts/templateDictReplace.mjs --dict "{\"coverage\":\"$COVERAGE\",\"colorHex\":\"$COLOR_HEX\",\"licenseName\":\"$LICENSE_NAME\",\"width\":\"$TOTAL_WIDTH\",\"valueWidth\":\"$VALUE_WIDTH\",\"valueX\":\"$VALUE_X\",\"valueTextLength\":\"$VALUE_TEXT_LENGTH\"}"
       
       - name: Commit and push badge updates
         run: |
@@ -187,13 +234,13 @@ jobs:
           git config --local user.name "github-actions[bot]"
           
           # Check if badge files exist before adding
-          if [[ ! -f images/coverage.svg ]] || [[ ! -f images/ci.svg ]]; then
+          if [[ ! -f images/coverage.svg ]] || [[ ! -f images/ci.svg ]] || [[ ! -f images/license.svg ]]; then
             echo "⚠️ Badge files missing, skipping commit"
             exit 1
           fi
           
           # Check if badges actually changed
-          git add images/coverage.svg images/ci.svg
+          git add images/coverage.svg images/ci.svg images/license.svg
           if git diff --staged --quiet; then
             echo "Badges unchanged, skipping commit"
             exit 0

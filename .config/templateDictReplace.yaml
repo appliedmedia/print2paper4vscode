@@ -31,6 +31,11 @@ replacements:
     output: images/ci.svg
     # No 'source' = skipped in config mode, used in CLI mode with --dict
   
+  - file: images/svgs.yaml
+    yamlKey: license
+    output: images/license.svg
+    # No 'source' = skipped in config mode, used in CLI mode with --dict
+  
   # Example: Extract from JS module
   # - file: .config/template.package.json
   #   output: package.json
