@@ -69,16 +69,45 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const require = createRequire(import.meta.url);
 
 // Determine project root based on where script is located
+// Priority: 1) Check for .git directory (ensure it's a dir not file)
+//           2) Check for package.json
+//           3) Fail with helpful error
 let projectRoot;
+
 if (fs.existsSync(path.join(__dirname, '../../.git'))) {
-  // We're in scripts/templateDictReplace/, go up to project root
-  projectRoot = path.join(__dirname, '../..');
+  const gitPath = path.join(__dirname, '../../.git');
+  if (fs.statSync(gitPath).isDirectory()) {
+    // We're in scripts/templateDictReplace/, go up to project root
+    projectRoot = path.join(__dirname, '../..');
+  } else {
+    // .git is a file (submodule), try package.json
+    if (fs.existsSync(path.join(__dirname, '../../package.json'))) {
+      projectRoot = path.join(__dirname, '../..');
+    } else {
+      console.error('Error: Could not determine project root');
+      console.error('  No .git directory or package.json found');
+      console.error('  Script location:', __dirname);
+      process.exit(1);
+    }
+  }
 } else if (fs.existsSync(path.join(__dirname, '../.git'))) {
-  // We're in scripts/, go up one level
-  projectRoot = path.join(__dirname, '..');
-} else {
-  // Fallback
+  const gitPath = path.join(__dirname, '../.git');
+  if (fs.statSync(gitPath).isDirectory()) {
+    projectRoot = path.join(__dirname, '..');
+  } else if (fs.existsSync(path.join(__dirname, '../package.json'))) {
+    projectRoot = path.join(__dirname, '..');
+  } else {
+    console.error('Error: Could not determine project root');
+    process.exit(1);
+  }
+} else if (fs.existsSync(path.join(__dirname, 'package.json'))) {
   projectRoot = __dirname;
+} else {
+  console.error('Error: Could not determine project root');
+  console.error('  Looked for .git directory or package.json');
+  console.error('  Script directory:', __dirname);
+  console.error('  Please run from project root or pass --root argument');
+  process.exit(1);
 }
 
 // Parse CLI arguments
@@ -124,11 +153,18 @@ function templateDictReplace(source, dictionary) {
 }
 
 // Load configuration
-// Config file must be in same directory as script
+// Config file must be in same directory as script OR can be passed as path
+// For badge generation, badges4readmes calls this and expects to find config in its own dir
 const configPath = path.join(__dirname, 'templateDictReplace.yaml');
 
 let config;
 try {
+  if (!fs.existsSync(configPath)) {
+    console.error(`Error: Configuration file not found: ${configPath}`);
+    console.error('  Expected config in same directory as script');
+    console.error('  For badge generation, ensure config exists in badges4readmes/');
+    process.exit(1);
+  }
   config = yaml.parse(fs.readFileSync(configPath, 'utf8'));
   if (!config || !config.replacements) {
     console.error(`Error: Configuration file missing 'replacements' array: ${configPath}`);
