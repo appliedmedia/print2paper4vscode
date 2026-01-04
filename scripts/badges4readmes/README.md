@@ -24,6 +24,7 @@ The script header contains comprehensive inline documentation.
 ```
 
 This generates three badges in your `images/` directory:
+
 - `images/ci.svg`
 - `images/coverage.svg` (with 84.83%)
 - `images/license.svg` (extracted from LICENSE file)
@@ -43,6 +44,7 @@ This generates three badges in your `images/` directory:
 Parses your `LICENSE` file to extract the license name:
 
 **Supported formats:**
+
 ```bash
 # License: MIT                     → MIT
 # "Code Transparency" License v1   → Code Transparency License v1
@@ -51,6 +53,7 @@ Parses your `LICENSE` file to extract the license name:
 ```
 
 **Parser logic:**
+
 1. Find first line containing "License" (case insensitive)
 2. Strip leading comment markers (`#`, `//`, `/*`) + spaces
 3. If contains "License:" → strip everything up to and including "License:" + spaces
@@ -88,13 +91,15 @@ cp scripts/badges4readmes/* your-repo/scripts/badges4readmes/
 ### 2. Create LICENSE file
 
 Use a supported format:
-```
+
+```text
 # License: Your License Name v1
 ```
 
 ### 3. Create badge templates directory
 
 Ensure you have:
+
 - `images/` directory (or update paths in script)
 - `svgs.yaml` with badge templates
 - `.config/templateDictReplace.yaml` config file
@@ -152,28 +157,34 @@ export TEMPLATE_SCRIPT=/custom/templateDictReplace.mjs
 
 ## Troubleshooting
 
-**"Template replacement script not found"**
+### Template replacement script not found
+
 - Ensure `templateDictReplace.mjs` is in the same directory or set `TEMPLATE_SCRIPT`
 
-**"License: Unknown"**
+### License: Unknown
+
 - Check LICENSE file exists and contains "License" (case insensitive)
 - Verify LICENSE file uses a supported comment format
 
-**Badge dimensions look wrong**
+### Badge dimensions look wrong
+
 - Check `svgs.yaml` has correct template placeholders
 - Verify calculation formulas in `generate-badges.sh`
 
-**Coverage color not updating**
+### Coverage color not updating
+
 - Check coverage percentage is passed as first argument
 - Verify `awk` is available for threshold calculations
 
 ## Key improvements
 
 ### CI badge kerning fix
+
 - **Before**: `textLength="170"` made "CI" look like "C I"
 - **After**: `textLength="130"` for proper character spacing
 
 ### Complementary comment marker handling
+
 - Correctly strips `*/` when `/*` is detected at start
 - Prevents output like "BSD-Foo */"
 

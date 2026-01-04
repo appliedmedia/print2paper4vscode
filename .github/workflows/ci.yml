@@ -170,7 +170,7 @@ jobs:
         run: |
           # Parse LICENSE file according to spec:
           # 1. Find first line containing "License" (case insensitive)
-          # 2. Strip leading comment markers (# // /* etc.) + spaces
+          # 2. Strip leading comment markers (# // /*) + spaces
           # 3. If contains "License:" → strip everything up to and including "License:" + spaces
           # 4. Strip complementary closing comment markers if present
           
@@ -201,14 +201,14 @@ jobs:
               # Remove quotes and trim trailing spaces
               LICENSE_TEXT=$(echo "$LICENSE_TEXT" | sed 's/"//g' | sed -E 's/[[:space:]]*$//')
               
-              echo "name=$LICENSE_TEXT" >> $GITHUB_OUTPUT
-              echo "License extracted: $LICENSE_TEXT"
+              echo "name=${LICENSE_TEXT}" >> "$GITHUB_OUTPUT"
+              echo "License extracted: ${LICENSE_TEXT}"
             else
-              echo "name=Unknown" >> $GITHUB_OUTPUT
+              echo "name=Unknown" >> "$GITHUB_OUTPUT"
               echo "No license line found"
             fi
           else
-            echo "name=Unknown" >> $GITHUB_OUTPUT
+            echo "name=Unknown" >> "$GITHUB_OUTPUT"
             echo "LICENSE file not found"
           fi
       
@@ -228,8 +228,11 @@ jobs:
           fi
           
           # Calculate license badge dimensions
-          # Base width: 51 (label) + padding
-          # Character width: ~6.5 pixels per character at font-size 110
+          # Badge layout constants (based on SVG template structure):
+          # - Base label width: 51px (fixed "License" label section)
+          # - Character pixel width: ~6.5px per character (font-size 110, Verdana)
+          # - Value padding: 6px (margins around value text)
+          # - SVG X origin: 510 (label center) + 5x value width for proper centering
           LICENSE_CHAR_COUNT=${#LICENSE_NAME}
           VALUE_TEXT_LENGTH=$((LICENSE_CHAR_COUNT * 65))
           VALUE_WIDTH=$((VALUE_TEXT_LENGTH / 10 + 6))

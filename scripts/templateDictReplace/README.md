@@ -74,6 +74,7 @@ node templateDictReplace.mjs --dict '{"coverage":"84.83","color":"green"}'
 ```
 
 **How it works:**
+
 1. Reads config file
 2. Skips entries without `source` field
 3. Applies all dictionary values to matched templates
@@ -90,6 +91,7 @@ node templateDictReplace.mjs
 ```
 
 **How it works:**
+
 1. Reads config file
 2. For each replacement with `source`:
    - Loads source file (JS module or YAML)
@@ -103,14 +105,14 @@ node templateDictReplace.mjs
 
 Templates use double curly braces:
 
-```
+```text
 Hello {{name}}!
 Version: {{version}}
 ```
 
 With dictionary `{"name":"World","version":"1.0"}` becomes:
 
-```
+```text
 Hello World!
 Version: 1.0
 ```
@@ -118,6 +120,7 @@ Version: 1.0
 ## Path resolution
 
 Paths in config are relative to project root:
+
 - Script directory → `scripts/templateDictReplace/`
 - Project root → Go up two levels
 
@@ -165,6 +168,7 @@ replacements:
 ## Error handling
 
 The script will exit with error if:
+
 - Configuration file not found
 - Input file doesn't exist
 - Source file not found (config mode)
@@ -220,7 +224,7 @@ This extracts `templates.yaml[badge_template]` before applying replacements.
 
 The script warns if placeholders remain after replacement:
 
-```
+```text
 WARNING: 2 placeholders remain after replacement: {{foo}}, {{bar}}
 ```
 
@@ -234,22 +238,27 @@ node templateDictReplace.mjs | grep "Replaced:"
 
 ## Troubleshooting
 
-**"Configuration file not found"**
+### Configuration file not found
+
 - Ensure `templateDictReplace.yaml` is in same directory or project `.config/`
 
-**"Input file not found"**
+### Input file not found
+
 - Check paths are relative to project root, not script directory
 
-**"Key not found in source"**
+### Key not found in source
+
 - Verify export name (JS) or YAML key (YAML) exists in source file
 
-**"Invalid JSON object"**
+### Invalid JSON object
+
 - Use single quotes around --dict argument in bash
 - Ensure valid JSON object (not array or string)
 
 ## Source
 
 This tool is used across Applied Media projects:
+
 - `appliedmedia/print2paper4vscode` - Original implementation
 - `appliedmedia/ops` - Shared organizational scripts
 
