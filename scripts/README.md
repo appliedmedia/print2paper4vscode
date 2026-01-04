@@ -13,11 +13,12 @@ Extension-specific build and automation scripts.
 
 ## 🔗 Organizational Scripts
 
-Generic automation scripts (GitHub Pages, DNS, etc.) have been moved to:
+Generic automation scripts (GitHub Pages, DNS, badges, etc.) have been moved to:
 
 **[appliedmedia/ops](https://github.com/appliedmedia/ops)**
 
 This includes:
+- Badge generation workflow (`scripts/generate-badges.sh`, see `docs/badges.md`)
 - GitHub Pages automation (`enable-github-pages.sh`, `enable-https.sh`)
 - DNS configuration (`configure-dynadot-dns.sh`, `configure-dynadot-dns-ipv6.sh`)
 - Cross-organizational planning documents
