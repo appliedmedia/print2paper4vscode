@@ -4,6 +4,7 @@ Extension-specific build and automation scripts.
 
 ## 📁 Scripts in This Directory
 
+- **`generate-badges.sh`** - Generates SVG badges for CI, coverage, and license
 - **`generate-package-json.mjs`** - Generates package.json from extension manifest
 - **`prepublish.sh`** - Pre-publish checks and preparation
 - **`lint-yaml-code.js`** - YAML code block linting
