@@ -4,7 +4,8 @@ Extension-specific build and automation scripts.
 
 ## 📁 Scripts in This Directory
 
-- **`generate-badges.sh`** - Generates SVG badges for CI, coverage, and license
+- **`badges4readmes/`** - Badge generation for README files (CI, coverage, license)
+  - See `badges4readmes/README.md` for details
 - **`generate-package-json.mjs`** - Generates package.json from extension manifest
 - **`prepublish.sh`** - Pre-publish checks and preparation
 - **`lint-yaml-code.js`** - YAML code block linting
@@ -18,7 +19,7 @@ Generic automation scripts (GitHub Pages, DNS, badges, etc.) have been moved to:
 **[appliedmedia/ops](https://github.com/appliedmedia/ops)**
 
 This includes:
-- Badge generation workflow (`scripts/generate-badges.sh`, see `docs/badges.md`)
+- Badge generation workflow (`scripts/badges4readmes/`, see `docs/badges.md`)
 - GitHub Pages automation (`enable-github-pages.sh`, `enable-https.sh`)
 - DNS configuration (`configure-dynadot-dns.sh`, `configure-dynadot-dns-ipv6.sh`)
 - Cross-organizational planning documents

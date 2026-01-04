@@ -21,8 +21,11 @@ set -euo pipefail
 # Configuration
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-# Auto-detect project root (script could be in scripts/ or root)
-if [ -f "$SCRIPT_DIR/../LICENSE" ]; then
+# Auto-detect project root
+# Script is in scripts/badges4readmes/, so go up 2 levels to get project root
+if [ -f "$SCRIPT_DIR/../../LICENSE" ]; then
+  PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
+elif [ -f "$SCRIPT_DIR/../LICENSE" ]; then
   PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 else
   PROJECT_ROOT="$SCRIPT_DIR"
@@ -30,7 +33,13 @@ fi
 
 LICENSE_FILE="${LICENSE_FILE:-$PROJECT_ROOT/LICENSE}"
 IMAGES_DIR="${IMAGES_DIR:-$PROJECT_ROOT/images}"
-TEMPLATE_SCRIPT="${TEMPLATE_SCRIPT:-$PROJECT_ROOT/scripts/templateDictReplace.mjs}"
+
+# Template script can be in same directory or in scripts/ directory
+if [ -f "$SCRIPT_DIR/templateDictReplace.mjs" ]; then
+  TEMPLATE_SCRIPT="${TEMPLATE_SCRIPT:-$SCRIPT_DIR/templateDictReplace.mjs}"
+else
+  TEMPLATE_SCRIPT="${TEMPLATE_SCRIPT:-$PROJECT_ROOT/scripts/templateDictReplace.mjs}"
+fi
 
 # Parse arguments
 COVERAGE_PERCENTAGE="${1:-0}"
