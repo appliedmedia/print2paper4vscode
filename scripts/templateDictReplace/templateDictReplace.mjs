@@ -106,7 +106,6 @@ if (fs.existsSync(path.join(__dirname, '../../.git'))) {
   console.error('Error: Could not determine project root');
   console.error('  Looked for .git directory or package.json');
   console.error('  Script directory:', __dirname);
-  console.error('  Please run from project root or pass --root argument');
   process.exit(1);
 }
 

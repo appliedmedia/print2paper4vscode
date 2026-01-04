@@ -152,7 +152,7 @@ export LICENSE_FILE=/custom/LICENSE
 export IMAGES_DIR=/custom/images
 export TEMPLATE_SCRIPT=/custom/templateDictReplace.mjs
 
-./generate-badges.sh 85.0
+./badges4readmes.sh 85.0
 ```
 
 ## Troubleshooting
