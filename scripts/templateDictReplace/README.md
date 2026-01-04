@@ -6,6 +6,8 @@ Generic template variable replacement tool for build and automation scripts.
 
 **See [`templateDictReplace.mjs`](./templateDictReplace.mjs) header** for implementation details: modes, path resolution, exit codes.
 
+**Single shared script:** One copy at `scripts/templateDictReplace/templateDictReplace.mjs` serves all needs. Each use case has its own YAML config file (e.g., `badges4readmes/templateDictReplace.yaml`).
+
 **Two modes:**
 
 1. **Config mode** - Loads values from compiled JS/YAML files for build-time replacement
@@ -13,18 +15,22 @@ Generic template variable replacement tool for build and automation scripts.
 
 **Template syntax:** `{{placeholder}}` replaced with dictionary values
 
+**Config loading priority:** `--config` arg > script directory > current working directory
+
 ## Quick start
 
 ### CLI mode
 
 ```bash
-node templateDictReplace.mjs --dict '{"key":"value","foo":"bar"}'
+node templateDictReplace.mjs --config path/to/config.yaml --dict '{"key":"value","foo":"bar"}'
 ```
 
 ### Config mode
 
 ```bash
 node templateDictReplace.mjs
+# Or with explicit config:
+node templateDictReplace.mjs --config custom-config.yaml
 ```
 
 ## Configuration format

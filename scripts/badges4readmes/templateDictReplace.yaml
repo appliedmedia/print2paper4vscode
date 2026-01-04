@@ -2,17 +2,18 @@
 #
 # Badge generation configuration for CLI mode (--dict flag)
 # Templates are in badges4readmes/svgs.yaml, output to images/
+# Paths are relative to project root
 
 replacements:
   # Badge generation (requires --dict flag with runtime values)
-  - file: svgs.yaml
+  - file: scripts/badges4readmes/svgs.yaml
     yamlKey: coverage
-    output: ../../images/coverage.svg
+    output: images/coverage.svg
   
-  - file: svgs.yaml
+  - file: scripts/badges4readmes/svgs.yaml
     yamlKey: ci
-    output: ../../images/ci.svg
+    output: images/ci.svg
   
-  - file: svgs.yaml
+  - file: scripts/badges4readmes/svgs.yaml
     yamlKey: license
-    output: ../../images/license.svg
+    output: images/license.svg

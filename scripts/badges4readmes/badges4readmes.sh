@@ -236,7 +236,7 @@ if [ ! -f "$TEMPLATE_SCRIPT" ]; then
 fi
 
 # Generate all badges using template replacement
-node "$TEMPLATE_SCRIPT" --dict "{\"coverage\":\"$COVERAGE_PERCENTAGE\",\"colorHex\":\"$COLOR_HEX\",\"licenseName\":\"$LICENSE_NAME\",\"width\":\"$TOTAL_WIDTH\",\"valueWidth\":\"$VALUE_WIDTH\",\"valueX\":\"$VALUE_X\",\"valueTextLength\":\"$VALUE_TEXT_LENGTH\"}"
+node "$TEMPLATE_SCRIPT" --config "$SCRIPT_DIR/templateDictReplace.yaml" --dict "{\"coverage\":\"$COVERAGE_PERCENTAGE\",\"colorHex\":\"$COLOR_HEX\",\"licenseName\":\"$LICENSE_NAME\",\"width\":\"$TOTAL_WIDTH\",\"valueWidth\":\"$VALUE_WIDTH\",\"valueX\":\"$VALUE_X\",\"valueTextLength\":\"$VALUE_TEXT_LENGTH\"}"
 
 echo ""
 echo "=========================================="
