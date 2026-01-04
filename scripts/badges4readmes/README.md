@@ -71,7 +71,7 @@ Parses your `LICENSE` file to extract the license name:
 
 License badge automatically adjusts width based on text length.
 
-**Implementation**: See `calculate_badge_dimensions()` function in [`badges4readmes.sh`](./badges4readmes.sh) (lines ~97-109) for the canonical dimension calculation formulas.
+**Implementation**: See `calculate_badge_dimensions()` function in [`badges4readmes.sh`](./badges4readmes.sh) (lines 191-203) for the canonical dimension calculation formulas.
 
 ## Setup for your repository
 
