@@ -1,23 +1,12 @@
 #!/usr/bin/env node
-
-/**
- * templateDictReplace: Generic template replacement for build files
- * 
- * Two modes of operation:
- * 
- * 1. Config-driven (default): Reads .config/templateDictReplace.yaml, imports values 
- *    from compiled TypeScript modules, replaces templates in specified files.
- * 
- * 2. CLI-driven (--dict flag): Applies provided JSON object to files in config.
- *    If 'yamlKey' is specified in config, extracts that key's value from YAML file first.
- *    Useful for CI badge generation with runtime values.
- * 
- * Usage:
- *   node scripts/templateDictReplace.mjs
- *   node scripts/templateDictReplace.mjs --dict '{"coverage":"84.83","colorHex":"97ca00"}'
- * 
- * Note: --dict requires valid JSON object (use single quotes in bash to avoid escaping)
- */
+////////////////////////////////////////////////////////////////////////////////
+// templateDictReplace.mjs - Template variable replacement engine
+//
+// Replaces {{placeholder}} variables with values from config files or CLI args.
+// Two modes: (1) Config mode loads from YAML/JS modules via templateDictReplace.yaml,
+// (2) CLI mode via --dict '{"key":"val"}'. Paths relative to project root (.git).
+// Exit codes: 0=success, 1=error. See README.md for extended docs.
+////////////////////////////////////////////////////////////////////////////////
 
 import fs from 'fs';
 import path from 'path';
@@ -27,7 +16,47 @@ import yaml from 'yaml';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const require = createRequire(import.meta.url);
-const projectRoot = path.join(__dirname, '..');
+
+// Determine project root based on where script is located
+// Priority: 1) Check for .git directory (ensure it's a dir not file)
+//           2) Check for package.json
+//           3) Fail with helpful error
+let projectRoot;
+
+if (fs.existsSync(path.join(__dirname, '../../.git'))) {
+  const gitPath = path.join(__dirname, '../../.git');
+  if (fs.statSync(gitPath).isDirectory()) {
+    // We're in scripts/templateDictReplace/, go up to project root
+    projectRoot = path.join(__dirname, '../..');
+  } else {
+    // .git is a file (submodule), try package.json
+    if (fs.existsSync(path.join(__dirname, '../../package.json'))) {
+      projectRoot = path.join(__dirname, '../..');
+    } else {
+      console.error('Error: Could not determine project root');
+      console.error('  No .git directory or package.json found');
+      console.error('  Script location:', __dirname);
+      process.exit(1);
+    }
+  }
+} else if (fs.existsSync(path.join(__dirname, '../.git'))) {
+  const gitPath = path.join(__dirname, '../.git');
+  if (fs.statSync(gitPath).isDirectory()) {
+    projectRoot = path.join(__dirname, '..');
+  } else if (fs.existsSync(path.join(__dirname, '../package.json'))) {
+    projectRoot = path.join(__dirname, '..');
+  } else {
+    console.error('Error: Could not determine project root');
+    process.exit(1);
+  }
+} else if (fs.existsSync(path.join(__dirname, 'package.json'))) {
+  projectRoot = __dirname;
+} else {
+  console.error('Error: Could not determine project root');
+  console.error('  Looked for .git directory or package.json');
+  console.error('  Script directory:', __dirname);
+  process.exit(1);
+}
 
 // Parse CLI arguments
 const args = process.argv.slice(2);
@@ -71,11 +100,22 @@ function templateDictReplace(source, dictionary) {
   return result;
 }
 
-// Load configuration
-const configPath = path.join(projectRoot, '.config', 'templateDictReplace.yaml');
+// Load configuration from same directory as script
+const configPath = path.join(__dirname, 'templateDictReplace.yaml');
+
 let config;
 try {
+  if (!fs.existsSync(configPath)) {
+    console.error(`Error: Configuration file not found: ${configPath}`);
+    console.error('  Expected config in same directory as script');
+    console.error('  For badge generation, ensure config exists in badges4readmes/');
+    process.exit(1);
+  }
   config = yaml.parse(fs.readFileSync(configPath, 'utf8'));
+  if (!config || !config.replacements) {
+    console.error(`Error: Configuration file missing 'replacements' array: ${configPath}`);
+    process.exit(1);
+  }
 } catch (err) {
   console.error(`Error: Failed to load configuration file: ${configPath}`);
   console.error(`  ${err.message}`);

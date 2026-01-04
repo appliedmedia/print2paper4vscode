@@ -1,0 +1,26 @@
+# Template replacement configuration
+#
+# This file contains all template replacement configs for the project.
+# Entries without 'source' are for CLI mode (--dict flag).
+# Entries with 'source' are for config mode (import from JS/YAML).
+
+replacements:
+  # Badge generation (CLI mode with --dict flag)
+  - file: scripts/badges4readmes/svgs.yaml
+    yamlKey: coverage
+    output: images/coverage.svg
+  
+  - file: scripts/badges4readmes/svgs.yaml
+    yamlKey: ci
+    output: images/ci.svg
+  
+  - file: scripts/badges4readmes/svgs.yaml
+    yamlKey: license
+    output: images/license.svg
+  
+  # Example config mode entries (currently unused)
+  # - file: .config/template.package.json
+  #   output: package.json
+  #   template: "{{extId}}"
+  #   source: out/src/types/_entrypoint_extId_t.js
+  #   key: kExtId
