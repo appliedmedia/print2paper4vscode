@@ -31,11 +31,12 @@ This generates three badges in your `images/` directory:
 
 ## Files in this directory
 
-- **`generate-badges.sh`** - Main badge generator script
-- **`templateDictReplace.mjs`** - Template variable replacement engine
+- **`badges4readmes.sh`** - Main badge generator script
 - **`svgs.yaml`** - SVG badge templates with placeholders
 - **`templateDictReplace.yaml`** - Configuration for template processing
 - **`README.md`** - This file
+
+Note: templateDictReplace.mjs lives in sibling directory `../templateDictReplace/`
 
 ## How it works
 
@@ -101,7 +102,7 @@ Ensure you have:
 ### 4. Run generator
 
 ```bash
-./scripts/badges4readmes/generate-badges.sh 84.83
+./scripts/badges4readmes/badges4readmes.sh 84.83
 ```
 
 ### 5. Add to README
@@ -125,7 +126,7 @@ Add to `.github/workflows/ci.yml`:
 
 - name: Generate badges
   run: |
-    ./scripts/badges4readmes/generate-badges.sh ${{ steps.coverage.outputs.percentage }}
+    ./scripts/badges4readmes/badges4readmes.sh ${{ steps.coverage.outputs.percentage }}
 
 - name: Commit badges
   run: |
@@ -163,7 +164,7 @@ export TEMPLATE_SCRIPT=/custom/templateDictReplace.mjs
 ### Badge dimensions look wrong
 
 - Check `svgs.yaml` has correct template placeholders
-- Verify calculation formulas in `generate-badges.sh`
+- Verify calculation formulas in `badges4readmes.sh`
 
 ### Coverage color not updating
 
