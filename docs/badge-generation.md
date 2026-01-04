@@ -1,4 +1,4 @@
-# Badge Generation Workflow
+# Badge generation workflow
 
 This document describes the reusable badge generation workflow that can be shared across Applied Media repositories.
 

@@ -1,4 +1,4 @@
-# Badge Generation Workflow for Ops Repository
+# Badge generation workflow for ops repository
 
 ## Summary
 
@@ -65,7 +65,7 @@ node scripts/templateDictReplace.mjs --dict '{"key":"value",...}'
 
 **Purpose:** Complete documentation for setting up and using badge generation in any repo.
 
-**Source:** `print2paper4vscode/docs/BADGE_GENERATION.md`
+**Source:** `print2paper4vscode/docs/badge-generation.md`
 
 ## CI Workflow Integration
 
