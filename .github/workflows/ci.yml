@@ -172,13 +172,19 @@ jobs:
           # 1. Find first line containing "License" (case insensitive)
           # 2. Strip leading comment markers (# // /* etc.) + spaces
           # 3. If contains "License:" → strip everything up to and including "License:" + spaces
-          # 4. Otherwise leave as-is
+          # 4. Strip complementary closing comment markers if present
           
           if [ -f LICENSE ]; then
             # Find first line with "license" (case insensitive)
             LICENSE_LINE=$(grep -i "license" LICENSE | head -1)
             
             if [ -n "$LICENSE_LINE" ]; then
+              # Check if line starts with /* (multi-line comment)
+              HAS_BLOCK_COMMENT=false
+              if echo "$LICENSE_LINE" | grep -qE '^[[:space:]]*/\*'; then
+                HAS_BLOCK_COMMENT=true
+              fi
+              
               # Strip leading comment markers and spaces
               LICENSE_TEXT=$(echo "$LICENSE_LINE" | sed -E 's/^[[:space:]]*(#|\/\/|\/\*)[[:space:]]*//')
               
@@ -187,8 +193,13 @@ jobs:
                 LICENSE_TEXT=$(echo "$LICENSE_TEXT" | sed -E 's/^.*[Ll]icense:[[:space:]]*//')
               fi
               
-              # Remove trailing comment markers and quotes
-              LICENSE_TEXT=$(echo "$LICENSE_TEXT" | sed -E 's/[[:space:]]*(\*\/)?[[:space:]]*$//' | sed 's/"//g')
+              # Remove trailing */ if we had /* at start
+              if [ "$HAS_BLOCK_COMMENT" = true ]; then
+                LICENSE_TEXT=$(echo "$LICENSE_TEXT" | sed -E 's/[[:space:]]*\*\/[[:space:]]*$//')
+              fi
+              
+              # Remove quotes and trim trailing spaces
+              LICENSE_TEXT=$(echo "$LICENSE_TEXT" | sed 's/"//g' | sed -E 's/[[:space:]]*$//')
               
               echo "name=$LICENSE_TEXT" >> $GITHUB_OUTPUT
               echo "License extracted: $LICENSE_TEXT"
