@@ -1,4 +1,4 @@
-# Code Transparency License
+# "Code Transparency" License v1
 
 Copyright © 2025...2026-01-01.001:@acoven and Applied Media. All Rights Reserved.
 
@@ -32,10 +32,6 @@ By submitting a request/defect or pull request, you agree:
 2. You have the right to grant this license and your contribution violates no third-party rights.
 3. You receive no redistribution or relicensing rights.
 
-## Commercial Licensing
-
-Contact the maintainers to discuss commercial licensing.
-
 ## Disclaimer
 
 SOFTWARE IS PROVIDED "AS IS" WITHOUT WARRANTY OF ANY KIND (EXPRESS, IMPLIED, MERCHANTABILITY, FITNESS, NONINFRINGEMENT), EXCEPT AS REQUIRED BY APPLICABLE LAW. MAINTAINERS SHALL NOT BE LIABLE FOR ANY CLAIM, DAMAGES, OR OTHER LIABILITY ARISING FROM USE OF OR DEALINGS WITH THE SOFTWARE OR MAINTAINERS, EXCEPT AS REQUIRED BY APPLICABLE LAW.
@@ -46,4 +42,4 @@ Rights terminate automatically upon violation. You must then cease use and destr
 
 ## Contact
 
-Contact maintainers through GitHub for licensing, questions, or security issues.
+Post requests/defects as GitHub Issues in Repo. Other questions, such as commercial licensing, contact maintainers.
