@@ -2,9 +2,11 @@
 
 # Enable HTTPS enforcement for Applied Media GitHub Pages sites
 # Requires: GH_TOKEN environment variable with repo access
+# Note: Run enable-github-pages.sh first to ensure Pages sites exist
 # Usage: ./enable-https.sh
 
-set -e
+# Note: Not using 'set -e' because curl doesn't exit non-zero on HTTP errors
+# We handle errors explicitly for each repo
 
 # Check if GH_TOKEN is set
 if [ -z "$GH_TOKEN" ]; then
@@ -32,6 +34,22 @@ echo ""
 
 for REPO in "${REPOS[@]}"; do
     echo "Processing: $ORG/$REPO"
+    
+    # First, check if Pages site exists
+    CHECK_RESPONSE=$(curl -s -w "\n%{http_code}" \
+        -H "Accept: application/vnd.github+json" \
+        -H "Authorization: Bearer $GH_TOKEN" \
+        -H "X-GitHub-Api-Version: 2022-11-28" \
+        "$API_BASE/repos/$ORG/$REPO/pages")
+    
+    CHECK_CODE=$(echo "$CHECK_RESPONSE" | tail -n1)
+    
+    if [ "$CHECK_CODE" != "200" ]; then
+        echo "  ❌ GitHub Pages not enabled for this repo"
+        echo "     Run enable-github-pages.sh first"
+        echo ""
+        continue
+    fi
     
     # Update GitHub Pages to enforce HTTPS
     # Reference: https://docs.github.com/en/rest/pages/pages?apiVersion=2022-11-28#update-information-about-a-apiname-pages-site
