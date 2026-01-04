@@ -33,10 +33,9 @@ This generates three badges in your `images/` directory:
 
 - **`badges4readmes.sh`** - Main badge generator script
 - **`svgs.yaml`** - SVG badge templates with placeholders
-- **`templateDictReplace.yaml`** - Configuration for template processing (used with `--config` flag)
 - **`README.md`** - This file
 
-**Architecture note:** This directory uses the shared `templateDictReplace.mjs` from `../templateDictReplace/` but has its own config file (`templateDictReplace.yaml`) that specifies badge-specific input/output paths. The script passes `--config` to tell templateDictReplace which config to use.
+**Architecture note:** Uses the shared `templateDictReplace.mjs` from `../templateDictReplace/` in CLI mode (`--dict` flag) for dynamic badge generation. The badge config entries are in `../templateDictReplace/templateDictReplace.yaml`.
 
 ## How it works
 

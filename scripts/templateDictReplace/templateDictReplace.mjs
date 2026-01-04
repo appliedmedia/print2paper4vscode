@@ -5,7 +5,6 @@
 // Replaces {{placeholder}} variables with values from config files or CLI args.
 // Two modes: (1) Config mode loads from YAML/JS modules via templateDictReplace.yaml,
 // (2) CLI mode via --dict '{"key":"val"}'. Paths relative to project root (.git).
-// Config priority: --config arg > script directory > current working directory.
 // Exit codes: 0=success, 1=error. See README.md for extended docs.
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -63,7 +62,6 @@ if (fs.existsSync(path.join(__dirname, '../../.git'))) {
 const args = process.argv.slice(2);
 const dictOverrides = {};
 let useDictMode = false;
-let configPathOverride = null;
 
 for (let i = 0; i < args.length; i++) {
   if (args[i] === '--dict' && args[i + 1]) {
@@ -88,9 +86,6 @@ for (let i = 0; i < args.length; i++) {
     }
     
     i++; // Skip next arg since we consumed it
-  } else if (args[i] === '--config' && args[i + 1]) {
-    configPathOverride = args[i + 1];
-    i++; // Skip next arg since we consumed it
   }
 }
 
@@ -105,20 +100,8 @@ function templateDictReplace(source, dictionary) {
   return result;
 }
 
-// Load configuration
-// Priority: 1) --config CLI arg, 2) Same directory as script, 3) Current working directory
-let configPath;
-if (configPathOverride) {
-  configPath = path.isAbsolute(configPathOverride) 
-    ? configPathOverride 
-    : path.join(process.cwd(), configPathOverride);
-} else if (fs.existsSync(path.join(__dirname, 'templateDictReplace.yaml'))) {
-  configPath = path.join(__dirname, 'templateDictReplace.yaml');
-} else if (fs.existsSync(path.join(process.cwd(), 'templateDictReplace.yaml'))) {
-  configPath = path.join(process.cwd(), 'templateDictReplace.yaml');
-} else {
-  configPath = path.join(__dirname, 'templateDictReplace.yaml'); // Will fail with clear error below
-}
+// Load configuration from same directory as script
+const configPath = path.join(__dirname, 'templateDictReplace.yaml');
 
 let config;
 try {
