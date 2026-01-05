@@ -10,12 +10,12 @@
 #   3. License - Automatically extracts license name from LICENSE file
 #
 # USAGE:
-#   ./badges4readmes.sh <COVERAGE_PERCENTAGE>
+#   ./badges4readmes.sh <coverage_percentage>
 #
 #   Example: ./badges4readmes.sh 84.83
 #
 # ARGUMENTS:
-#   COVERAGE_PERCENTAGE - Test coverage as decimal number (0-100)
+#   coverage_percentage - Test coverage as decimal number (0-100)
 #                        Used to generate coverage badge with appropriate color
 #
 # OUTPUT:
@@ -26,6 +26,7 @@
 #
 # REQUIREMENTS:
 #   - Node.js (for template replacement)
+#   - jq (for safe JSON construction)
 #   - LICENSE file in repository root
 #   - svgs.yaml with badge templates (in same directory as this script)
 #   - templateDictReplace.mjs (in sibling directory or same dir)
@@ -60,18 +61,18 @@
 #
 # ENVIRONMENT VARIABLES:
 #   Override default paths if needed:
-#   - PROJECT_ROOT    - Repository root (auto-detected)
-#   - LICENSE_FILE    - Path to LICENSE file (default: $PROJECT_ROOT/LICENSE)
-#   - IMAGES_DIR      - Output directory (default: $PROJECT_ROOT/images)
-#   - TEMPLATE_SCRIPT - Path to templateDictReplace.mjs (auto-detected)
+#   - project_root    - Repository root (auto-detected)
+#   - license_file    - Path to LICENSE file (default: $project_root/LICENSE)
+#   - images_dir      - Output directory (default: $project_root/images)
+#   - template_script - Path to templateDictReplace.mjs (auto-detected)
 #
 # INTEGRATION:
 #   Typically called from CI workflow after test coverage generation:
 #
 #   - name: Generate badges
 #     run: |
-#       COVERAGE=$(extract_from_test_output)
-#       ./scripts/badges4readmes/badges4readmes.sh $COVERAGE
+#       coverage=$(extract_from_test_output)
+#       ./scripts/badges4readmes/badges4readmes.sh $coverage
 #
 #   - name: Commit badges
 #     run: |
@@ -99,38 +100,68 @@
 set -euo pipefail
 
 # Configuration
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 # Auto-detect project root
 # Script is in scripts/badges4readmes/, so go up 2 levels to get project root
-if [ -f "$SCRIPT_DIR/../../LICENSE" ]; then
-  PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
-elif [ -f "$SCRIPT_DIR/../LICENSE" ]; then
-  PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+if [ -f "$script_dir/../../LICENSE" ]; then
+  project_root="$(cd "$script_dir/../.." && pwd)"
+elif [ -f "$script_dir/../LICENSE" ]; then
+  project_root="$(cd "$script_dir/.." && pwd)"
 else
-  PROJECT_ROOT="$SCRIPT_DIR"
+  project_root="$script_dir"
 fi
 
-LICENSE_FILE="${LICENSE_FILE:-$PROJECT_ROOT/LICENSE}"
-IMAGES_DIR="${IMAGES_DIR:-$PROJECT_ROOT/images}"
+license_file="${license_file:-$project_root/LICENSE}"
+images_dir="${images_dir:-$project_root/images}"
 
 # Template script can be in same directory, sibling directory, or in scripts/
-if [ -f "$SCRIPT_DIR/templateDictReplace.mjs" ]; then
-  TEMPLATE_SCRIPT="${TEMPLATE_SCRIPT:-$SCRIPT_DIR/templateDictReplace.mjs}"
-elif [ -f "$SCRIPT_DIR/../templateDictReplace/templateDictReplace.mjs" ]; then
-  TEMPLATE_SCRIPT="${TEMPLATE_SCRIPT:-$SCRIPT_DIR/../templateDictReplace/templateDictReplace.mjs}"
+if [ -f "$script_dir/templateDictReplace.mjs" ]; then
+  template_script="${template_script:-$script_dir/templateDictReplace.mjs}"
+elif [ -f "$script_dir/../templateDictReplace/templateDictReplace.mjs" ]; then
+  template_script="${template_script:-$script_dir/../templateDictReplace/templateDictReplace.mjs}"
 else
-  TEMPLATE_SCRIPT="${TEMPLATE_SCRIPT:-$PROJECT_ROOT/scripts/templateDictReplace.mjs}"
+  template_script="${template_script:-$project_root/scripts/templateDictReplace.mjs}"
 fi
 
 # Parse arguments
-COVERAGE_PERCENTAGE="${1:-0}"
+coverage_percentage="${1:-0}"
+
+# Validate coverage percentage
+if ! [[ "$coverage_percentage" =~ ^[0-9]+(\.[0-9]+)?$ ]]; then
+  echo "ERROR: Coverage percentage must be a numeric value (integer or decimal)."
+  echo "  Received: '$coverage_percentage'"
+  echo "  Expected: A number between 0 and 100 (e.g., 84.83)"
+  exit 1
+fi
+
+# Check coverage is within valid range (0-100)
+if ! awk "BEGIN {exit !($coverage_percentage >= 0 && $coverage_percentage <= 100)}"; then
+  echo "ERROR: Coverage percentage must be between 0 and 100."
+  echo "  Received: $coverage_percentage"
+  exit 1
+fi
+
+# Check for required dependencies
+if ! command -v jq &> /dev/null; then
+  echo "ERROR: jq is required but not installed."
+  echo "Install it with: sudo apt-get install jq (Debian/Ubuntu)"
+  echo "                 brew install jq (macOS)"
+  exit 1
+fi
+
+if ! command -v node &> /dev/null; then
+  echo "ERROR: Node.js is required but not installed."
+  echo "Install it with: sudo apt-get install nodejs npm (Debian/Ubuntu)"
+  echo "                 brew install node (macOS)"
+  exit 1
+fi
 
 echo "=========================================="
 echo "Badge Generation Script"
 echo "=========================================="
-echo "Project Root: $PROJECT_ROOT"
-echo "Coverage: ${COVERAGE_PERCENTAGE}%"
+echo "Project Root: $project_root"
+echo "Coverage: ${coverage_percentage}%"
 echo ""
 
 # ==========================================
@@ -207,43 +238,53 @@ calculate_badge_dimensions() {
 # ==========================================
 
 echo "Step 1: Extracting license information..."
-LICENSE_NAME=$(extract_license "$LICENSE_FILE")
-echo "  License: '$LICENSE_NAME'"
+license_name=$(extract_license "$license_file")
+echo "  License: '$license_name'"
 echo ""
 
 echo "Step 2: Calculating coverage badge color..."
 # Color thresholds: green>=80%, yellow>=60%, orange>=40%, red<40%
-COLOR_HEX="e05d44"  # red
-if awk "BEGIN {exit !($COVERAGE_PERCENTAGE >= 80)}"; then
-  COLOR_HEX="97ca00"  # green
-elif awk "BEGIN {exit !($COVERAGE_PERCENTAGE >= 60)}"; then
-  COLOR_HEX="dfb317"  # yellow
-elif awk "BEGIN {exit !($COVERAGE_PERCENTAGE >= 40)}"; then
-  COLOR_HEX="fe7d37"  # orange
+color_hex="e05d44"  # red
+if awk "BEGIN {exit !($coverage_percentage >= 80)}"; then
+  color_hex="97ca00"  # green
+elif awk "BEGIN {exit !($coverage_percentage >= 60)}"; then
+  color_hex="dfb317"  # yellow
+elif awk "BEGIN {exit !($coverage_percentage >= 40)}"; then
+  color_hex="fe7d37"  # orange
 fi
-echo "  Coverage color: #$COLOR_HEX"
+echo "  Coverage color: #$color_hex"
 echo ""
 
 echo "Step 3: Calculating license badge dimensions..."
-IFS=',' read -r TOTAL_WIDTH VALUE_WIDTH VALUE_X VALUE_TEXT_LENGTH <<< "$(calculate_badge_dimensions "$LICENSE_NAME")"
-echo "  Width: $TOTAL_WIDTH, Value Width: $VALUE_WIDTH, Value X: $VALUE_X, Text Length: $VALUE_TEXT_LENGTH"
+IFS=',' read -r total_width value_width value_x value_text_length <<< "$(calculate_badge_dimensions "$license_name")"
+echo "  Width: $total_width, Value Width: $value_width, Value X: $value_x, Text Length: $value_text_length"
 echo ""
 
 echo "Step 4: Generating badges..."
-if [ ! -f "$TEMPLATE_SCRIPT" ]; then
-  echo "ERROR: Template replacement script not found: $TEMPLATE_SCRIPT"
+if [ ! -f "$template_script" ]; then
+  echo "ERROR: Template replacement script not found: $template_script"
   exit 1
 fi
 
 # Generate all badges using template replacement
-node "$TEMPLATE_SCRIPT" --dict "{\"coverage\":\"$COVERAGE_PERCENTAGE\",\"colorHex\":\"$COLOR_HEX\",\"licenseName\":\"$LICENSE_NAME\",\"width\":\"$TOTAL_WIDTH\",\"valueWidth\":\"$VALUE_WIDTH\",\"valueX\":\"$VALUE_X\",\"valueTextLength\":\"$VALUE_TEXT_LENGTH\"}"
+json_dict=$(jq -n \
+  --arg coverage "$coverage_percentage" \
+  --arg colorHex "$color_hex" \
+  --arg licenseName "$license_name" \
+  --arg width "$total_width" \
+  --arg valueWidth "$value_width" \
+  --arg valueX "$value_x" \
+  --arg valueTextLength "$value_text_length" \
+  '{coverage: $coverage, colorHex: $colorHex, licenseName: $licenseName, width: $width, valueWidth: $valueWidth, valueX: $valueX, valueTextLength: $valueTextLength}')
+
+node "$template_script" --dict "$json_dict"
 
 echo ""
 echo "=========================================="
 echo "Badge Generation Complete!"
 echo "=========================================="
 echo "Generated badges:"
-echo "  - $IMAGES_DIR/ci.svg"
-echo "  - $IMAGES_DIR/coverage.svg (${COVERAGE_PERCENTAGE}%)"
-echo "  - $IMAGES_DIR/license.svg ($LICENSE_NAME)"
+echo "  - $images_dir/ci.svg"
+echo "  - $images_dir/coverage.svg (${coverage_percentage}%)"
+echo "  - $images_dir/license.svg ($license_name)"
 echo ""

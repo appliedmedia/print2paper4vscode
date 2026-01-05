@@ -90,13 +90,25 @@ for (let i = 0; i < args.length; i++) {
 }
 
 // Simple template replacement (matches Utils.templateDictReplace logic)
+// Keys are case-insensitive: both dict keys and template placeholders are normalized to lowercase
 function templateDictReplace(source, dictionary) {
   let result = source;
+  
+  // Create a lowercase-normalized version of the dictionary
+  const normalizedDict = {};
   for (const [key, value] of Object.entries(dictionary)) {
-    const escapedKey = key.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-    const pattern = new RegExp(`\\{\\{${escapedKey}\\}\\}`, 'g');
-    result = result.replace(pattern, value);
+    normalizedDict[key.toLowerCase()] = value;
   }
+  
+  // Find all placeholders in the source and replace them case-insensitively
+  result = result.replace(/\{\{([^}]+)\}\}/g, (match, placeholder) => {
+    const normalizedPlaceholder = placeholder.toLowerCase();
+    if (normalizedDict.hasOwnProperty(normalizedPlaceholder)) {
+      return normalizedDict[normalizedPlaceholder];
+    }
+    return match; // Keep original if no match found
+  });
+  
   return result;
 }
 
