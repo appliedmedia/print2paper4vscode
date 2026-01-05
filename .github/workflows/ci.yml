@@ -240,7 +240,7 @@ jobs:
           VALUE_X=$((510 + VALUE_WIDTH * 5))
           
           # Generate badges using template replacement with runtime values
-          node scripts/templateDictReplace.mjs --dict "{\"coverage\":\"$COVERAGE\",\"colorHex\":\"$COLOR_HEX\",\"licenseName\":\"$LICENSE_NAME\",\"width\":\"$TOTAL_WIDTH\",\"valueWidth\":\"$VALUE_WIDTH\",\"valueX\":\"$VALUE_X\",\"valueTextLength\":\"$VALUE_TEXT_LENGTH\"}"
+          node scripts/templateDictReplace/templateDictReplace.mjs --dict "{\"coverage\":\"$COVERAGE\",\"colorHex\":\"$COLOR_HEX\",\"licenseName\":\"$LICENSE_NAME\",\"width\":\"$TOTAL_WIDTH\",\"valueWidth\":\"$VALUE_WIDTH\",\"valueX\":\"$VALUE_X\",\"valueTextLength\":\"$VALUE_TEXT_LENGTH\"}"
       
       - name: Commit and push badge updates
         run: |
