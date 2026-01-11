@@ -168,48 +168,53 @@ jobs:
       - name: Extract license info
         id: license
         run: |
-          # Parse LICENSE file according to spec:
-          # 1. Find first line containing "License" (case insensitive)
-          # 2. Strip leading comment markers (# // /*) + spaces
-          # 3. If contains "License:" → strip everything up to and including "License:" + spaces
-          # 4. Strip complementary closing comment markers if present
-          
           if [ -f LICENSE ]; then
-            # Find first line with "license" (case insensitive)
-            LICENSE_LINE=$(grep -i "license" LICENSE | head -1)
+            # Extract license name from first line containing "license"
+            # Supported comment formats:
+            #   # License: Name      (shell, python, ruby, yaml)
+            #   // License: Name     (c, c++, java, js, go, rust)
+            #   /* License: Name */  (c block comment)
+            #   <!-- License: Name -->(html, xml)
+            #   -- License: Name     (sql, lua, haskell)
+            #   ; License: Name      (ini, lisp, assembly)
+            #   REM License: Name    (batch)
+            #   License: Name        (plain text)
+            LICENSE_LINE=$(grep -i "^[[:space:]]*\(#\|//\|/\*\|<!--\|--\|;\|REM\)\?[[:space:]]*License" LICENSE | head -1)
             
-            if [ -n "$LICENSE_LINE" ]; then
-              # Check if line starts with /* (multi-line comment)
-              HAS_BLOCK_COMMENT=false
-              if echo "$LICENSE_LINE" | grep -qE '^[[:space:]]*/\*'; then
-                HAS_BLOCK_COMMENT=true
-              fi
-              
-              # Strip leading comment markers and spaces
-              LICENSE_TEXT=$(echo "$LICENSE_LINE" | sed -E 's/^[[:space:]]*(#|\/\/|\/\*)[[:space:]]*//')
-              
-              # If contains "License:", strip everything up to and including it
-              if echo "$LICENSE_TEXT" | grep -qi "license:"; then
-                LICENSE_TEXT=$(echo "$LICENSE_TEXT" | sed -E 's/^.*[Ll]icense:[[:space:]]*//')
-              fi
-              
-              # Remove trailing */ if we had /* at start
-              if [ "$HAS_BLOCK_COMMENT" = true ]; then
-                LICENSE_TEXT=$(echo "$LICENSE_TEXT" | sed -E 's/[[:space:]]*\*\/[[:space:]]*$//')
-              fi
-              
-              # Remove quotes and trim trailing spaces
-              LICENSE_TEXT=$(echo "$LICENSE_TEXT" | sed 's/"//g' | sed -E 's/[[:space:]]*$//')
-              
-              echo "name=${LICENSE_TEXT}" >> "$GITHUB_OUTPUT"
-              echo "License extracted: ${LICENSE_TEXT}"
+            if [ -z "$LICENSE_LINE" ]; then
+              echo "name=Unknown" >> $GITHUB_OUTPUT
+              echo "No license line found in LICENSE file"
+              exit 0
+            fi
+            
+            # Strip comment markers
+            LICENSE_NAME=$(echo "$LICENSE_LINE" | \
+              sed 's/^[[:space:]]*//' | \
+              sed 's/^#[[:space:]]*//' | \
+              sed 's/^\/\/[[:space:]]*//' | \
+              sed 's/^\/\*[[:space:]]*//' | \
+              sed 's/[[:space:]]*\*\/$//' | \
+              sed 's/^<!--[[:space:]]*//' | \
+              sed 's/[[:space:]]*-->$//' | \
+              sed 's/^--[[:space:]]*//' | \
+              sed 's/^;[[:space:]]*//' | \
+              sed 's/^REM[[:space:]]*//' | \
+              sed 's/^[Ll]icense:[[:space:]]*//' | \
+              sed 's/^"//' | \
+              sed 's/"$//' | \
+              xargs)
+            
+            # Validate extraction
+            if [ -z "$LICENSE_NAME" ] || [ "$LICENSE_NAME" = "License" ]; then
+              echo "name=Unknown" >> $GITHUB_OUTPUT
+              echo "Could not parse license name from: $LICENSE_LINE"
             else
-              echo "name=Unknown" >> "$GITHUB_OUTPUT"
-              echo "No license line found"
+              echo "name=$LICENSE_NAME" >> $GITHUB_OUTPUT
+              echo "Extracted license: $LICENSE_NAME"
             fi
           else
-            echo "name=Unknown" >> "$GITHUB_OUTPUT"
-            echo "LICENSE file not found"
+            echo "name=Unknown" >> $GITHUB_OUTPUT
+            echo "No LICENSE file found"
           fi
       
       - name: Generate badges
