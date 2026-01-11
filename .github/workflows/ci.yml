@@ -12,6 +12,9 @@ on: # yamllint disable-line rule:truthy
 permissions:
   contents: read
 
+# For CI status badge, use GitHub's dynamic URL in your README:
+#   ![CI](https://github.com/appliedmedia/print2paper4vscode/actions/workflows/ci.yml/badge.svg)
+
 jobs:
   test:
     name: Test on Node.js ${{ matrix.node-version }}
@@ -125,7 +128,7 @@ jobs:
 
   # Separate job for badge updates to isolate write permissions
   update-badge:
-    name: Update Coverage Badge
+    name: Update Coverage & License Badges
     runs-on: ubuntu-latest
     needs: test
     # Only run on main branch pushes that are merge commits (PR merges)
@@ -233,18 +236,13 @@ jobs:
           fi
           
           # Calculate license badge dimensions
-          # Badge layout constants (based on SVG template structure):
-          # - Base label width: 51px (fixed "License" label section)
-          # - Character pixel width: ~6.5px per character (font-size 110, Verdana)
-          # - Value padding: 6px (margins around value text)
-          # - SVG X origin: 510 (label center) + 5x value width for proper centering
           LICENSE_CHAR_COUNT=${#LICENSE_NAME}
           VALUE_TEXT_LENGTH=$((LICENSE_CHAR_COUNT * 65))
           VALUE_WIDTH=$((VALUE_TEXT_LENGTH / 10 + 6))
           TOTAL_WIDTH=$((51 + VALUE_WIDTH))
           VALUE_X=$((510 + VALUE_WIDTH * 5))
           
-          # Generate badges using template replacement with runtime values
+          # Generate coverage and license badges (CI badge now uses GitHub's dynamic URL)
           node scripts/templateDictReplace/templateDictReplace.mjs --dict "{\"coverage\":\"$COVERAGE\",\"colorHex\":\"$COLOR_HEX\",\"licenseName\":\"$LICENSE_NAME\",\"width\":\"$TOTAL_WIDTH\",\"valueWidth\":\"$VALUE_WIDTH\",\"valueX\":\"$VALUE_X\",\"valueTextLength\":\"$VALUE_TEXT_LENGTH\"}"
       
       - name: Commit and push badge updates
@@ -252,29 +250,52 @@ jobs:
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
           
-          # Check if badge files exist before adding
-          if [[ ! -f images/coverage.svg ]] || [[ ! -f images/ci.svg ]] || [[ ! -f images/license.svg ]]; then
+          # Check if badge files exist before adding (CI badge no longer generated)
+          if [[ ! -f images/coverage.svg ]] || [[ ! -f images/license.svg ]]; then
             echo "⚠️ Badge files missing, skipping commit"
             exit 1
           fi
           
-          # Check if badges actually changed
-          git add images/coverage.svg images/ci.svg images/license.svg
+          # Stage coverage and license badges (not ci.svg - using GitHub's dynamic badge)
+          git add images/coverage.svg images/license.svg
+          
           if git diff --staged --quiet; then
             echo "Badges unchanged, skipping commit"
             exit 0
           fi
           
-          # Pull latest changes to avoid race conditions
-          if ! git pull --rebase origin main; then
-            echo "Failed to rebase, attempting merge"
-            git rebase --abort 2>/dev/null || true
-            if ! git pull origin main; then
-              echo "⚠️ Failed to sync with remote, skipping badge update"
-              echo "Badge will be updated on next successful push to main"
+          git commit -m "Update badges [skip ci]"
+          
+          # Retry push with rebase to handle concurrent commits
+          MAX_RETRIES=3
+          RETRY_COUNT=0
+          
+          while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
+            if git push origin main; then
+              echo "✅ Badge update pushed successfully"
               exit 0
             fi
-          fi
+            
+            RETRY_COUNT=$((RETRY_COUNT + 1))
+            echo "⚠️ Push failed (attempt $RETRY_COUNT/$MAX_RETRIES), rebasing..."
+            
+            # Fetch and rebase on latest main
+            git fetch origin main
+            if ! git rebase origin/main; then
+              echo "⚠️ Rebase conflict, aborting and retrying fresh"
+              git rebase --abort
+              git reset --soft HEAD~1
+              git pull --rebase origin main
+              git add images/coverage.svg images/license.svg
+              if git diff --staged --quiet; then
+                echo "Badge changes already present after rebase, skipping"
+                exit 0
+              fi
+              git commit -m "Update badges [skip ci]"
+            fi
+            
+            sleep 2
+          done
           
-          git commit -m "Update badges [skip ci]"
-          git push origin main
+          echo "⚠️ Failed to push after $MAX_RETRIES attempts, badge will update on next run"
+          exit 0
