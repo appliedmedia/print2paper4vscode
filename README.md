@@ -1,6 +1,6 @@
 # Print2Paper4VSCode
 
-[![CI](images/ci.svg)](https://github.com/appliedmedia/print2paper4vscode/actions)
+[![CI](https://github.com/appliedmedia/print2paper4vscode/actions/workflows/ci.yml/badge.svg)](https://github.com/appliedmedia/print2paper4vscode/actions)
 [![Coverage](images/coverage.svg)](https://github.com/appliedmedia/print2paper4vscode/actions)
 [![License](images/license.svg)](https://github.com/appliedmedia/print2paper4vscode/blob/main/LICENSE)
 
