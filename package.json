@@ -8,6 +8,7 @@
     "vscode": "^1.90.0"
   },
   "publisher": "appliedmedia",
+  "icon": "images/icon.png",
   "categories": [
     "Other"
   ],
