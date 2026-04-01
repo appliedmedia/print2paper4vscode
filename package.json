@@ -8,7 +8,6 @@
     "vscode": "^1.90.0"
   },
   "publisher": "appliedmedia",
-  "icon": "images/logo-p2p4vsc_128x128px.png",
   "categories": [
     "Other"
   ],
@@ -38,12 +37,12 @@
   "contributes": {
     "commands": [
       {
-        "command": "p2p4vsc.print2paper",
+        "command": "{{extId}}.print2paper",
         "title": "Print2Paper",
         "category": "Print"
       },
       {
-        "command": "p2p4vsc.persistClear",
+        "command": "{{extId}}.persistClear",
         "title": "Clear State",
         "category": "Print"
       }
@@ -51,13 +50,13 @@
     "menus": {
       "editor/context": [
         {
-          "command": "p2p4vsc.print2paper",
+          "command": "{{extId}}.print2paper",
           "group": "navigation"
         }
       ],
       "editor/title": [
         {
-          "command": "p2p4vsc.print2paper",
+          "command": "{{extId}}.print2paper",
           "group": "navigation",
           "when": "editorTextFocus",
           "title": "Print2Paper"
@@ -66,7 +65,7 @@
     },
     "keybindings": [
       {
-        "command": "p2p4vsc.print2paper",
+        "command": "{{extId}}.print2paper",
         "key": "alt+p",
         "mac": "alt+p"
       }
@@ -75,9 +74,10 @@
   "scripts": {
     "postinstall": "node scripts/setup-vscode-mock.js",
     "vscode:prepublish": "bash scripts/prepublish.sh",
+    "precompile": "node scripts/generate-package-json.mjs",
     "clean": "node -e \"require('fs').rmSync('out',{recursive:true,force:true})\"",
-    "compile": "npm run clean && tsc -p ./.config/ && node scripts/templateDictReplace/templateDictReplace.mjs",
-    "compile:deploy": "npm run clean && tsc -p ./.config/ && node scripts/templateDictReplace/templateDictReplace.mjs",
+    "compile": "npm run precompile && npm run clean && tsc -p ./.config/ && node scripts/templateDictReplace/templateDictReplace.mjs",
+    "compile:deploy": "npm run precompile && npm run clean && tsc -p ./.config/ && node scripts/templateDictReplace/templateDictReplace.mjs",
     "build": "npm run compile && npm run esbuild",
     "package": "bash scripts/prepublish.sh",
     "esbuild": "node .config/esbuild.mjs --production",
@@ -92,23 +92,25 @@
     "format:check": "prettier --check src/**/*.ts **/*.md",
     "pretest": "node scripts/setup-vscode-mock.js",
     "test": "node scripts/run-tests.js",
+    "test:gherkin": "node scripts/setup-vscode-mock.js && node --import @cucumber/node/bootstrap --test 'features/**/*.feature'",
+    "test:all": "node --import @cucumber/node/bootstrap --test 'out/tests/*.test.js' 'features/**/*.feature'",
     "test:watch": "node scripts/run-tests.js --watch",
     "test:verbose": "node scripts/run-tests.js --reporter spec",
-    "test:coverage": "c8 --reporter=text --reporter=html --reporter=json-summary npm run test",
-    "test:coverage:check": "c8 --reporter=text --reporter=html --reporter=json-summary --check-coverage --lines 80 --functions 80 --branches 80 --statements 80 npm run test"
+    "test:coverage": "c8 --reporter=text --reporter=html --reporter=json-summary npm run test:all",
+    "test:coverage:check": "c8 --reporter=text --reporter=html --reporter=json-summary --check-coverage --lines 80 --functions 80 --branches 80 --statements 80 npm run test:all"
   },
   "devDependencies": {
     "@types/node": "^20.14.0",
     "@types/vscode": "^1.90.0",
-    "@typescript-eslint/eslint-plugin": "^8.50.1",
-    "@typescript-eslint/parser": "^8.50.1",
+    "@typescript-eslint/eslint-plugin": "latest",
+    "@typescript-eslint/parser": "latest",
     "c8": "^10.1.3",
     "esbuild": "^0.27.1",
-    "eslint": "^9.39.2",
+    "eslint": "latest",
     "htmlparser2": "^10.0.0",
     "js-yaml": "^4.1.0",
-    "markdownlint-cli": "^0.47.0",
-    "prettier": "^3.7.4",
+    "markdownlint-cli": "latest",
+    "prettier": "latest",
     "stylelint": "^16.26.1",
     "stylelint-config-standard": "^39.0.1",
     "typescript": "^5.9.2"
@@ -119,6 +121,6 @@
     "node-html-parser": "^7.0.1",
     "shiki": "^3.20.0",
     "vscode-oniguruma": "^2.0.1",
-    "yaml": "^2.8.2"
+    "yaml": "latest"
   }
 }

@@ -91,10 +91,12 @@
     "format:check": "prettier --check src/**/*.ts **/*.md",
     "pretest": "node scripts/setup-vscode-mock.js",
     "test": "node --test out/tests/*.test.js",
+    "test:gherkin": "node scripts/setup-vscode-mock.js && node --import @cucumber/node/bootstrap --test 'features/**/*.feature'",
+    "test:all": "node --import @cucumber/node/bootstrap --test 'out/tests/*.test.js' 'features/**/*.feature'",
     "test:watch": "node --test --watch out/tests/**/*.test.js",
     "test:verbose": "node --test --reporter spec out/tests/**/*.test.js",
-    "test:coverage": "c8 --reporter=text --reporter=html --reporter=json-summary npm run test",
-    "test:coverage:check": "c8 --reporter=text --reporter=html --reporter=json-summary --check-coverage --lines 80 --functions 80 --branches 80 --statements 80 npm run test"
+    "test:coverage": "c8 --reporter=text --reporter=html --reporter=json-summary npm run test:all",
+    "test:coverage:check": "c8 --reporter=text --reporter=html --reporter=json-summary --check-coverage --lines 80 --functions 80 --branches 80 --statements 80 npm run test:all"
   },
   "devDependencies": {
     "@types/node": "^20.14.0",
