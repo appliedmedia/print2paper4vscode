@@ -75,8 +75,8 @@
   "scripts": {
     "postinstall": "node scripts/setup-vscode-mock.js",
     "vscode:prepublish": "bash scripts/prepublish.sh",
-    "compile": "rm -rf out && tsc -p ./.config/ && node scripts/templateDictReplace/templateDictReplace.mjs",
-    "compile:deploy": "rm -rf out && tsc -p ./.config/ && node scripts/templateDictReplace/templateDictReplace.mjs",
+    "compile": "node -e \"fs.rmSync('out',{recursive:true,force:true})\" && tsc -p ./.config/ && node scripts/templateDictReplace/templateDictReplace.mjs",
+    "compile:deploy": "node -e \"fs.rmSync('out',{recursive:true,force:true})\" && tsc -p ./.config/ && node scripts/templateDictReplace/templateDictReplace.mjs",
     "build": "npm run compile && npm run esbuild",
     "package": "bash scripts/prepublish.sh",
     "esbuild": "node .config/esbuild.mjs --production",

@@ -6,10 +6,10 @@ import type { Registry } from './Registry';
  * OSWin - Windows-specific operating system operations
  *
  * Provides Windows-specific implementations for file operations and printing.
- * Uses Windows shell commands (start, explorer.exe) and rundll32 for printing.
+ * Uses execFileAsync (no shell) for cmd.exe, explorer.exe, and PowerShell commands.
  *
  * @input reg - Registry instance for accessing shared services
- * @output File operations, print commands via rundll32, Explorer integration
+ * @output File operations, print commands via PowerShell, Explorer integration
  *
  * @example
  * const os = new OSWin({ reg });
@@ -31,35 +31,30 @@ export class OSWin extends OS {
   }
 
   protected escapePath(path: string): string {
-    // Windows cmd.exe escaping - escape metacharacters with caret (^)
+    // Inside cmd.exe double quotes, only " and % need escaping.
+    // Backslash is NOT a cmd.exe metacharacter - do not escape it.
+    // Other metacharacters (^, &, |, <, >) are already neutralized by double quotes.
     return path
-      .replace(/\\/g, '\\\\')
-      .replace(/"/g, '\\"')
-      .replace(/%/g, '^%')
-      .replace(/\^/g, '^^')
-      .replace(/&/g, '^&')
-      .replace(/\|/g, '^|')
-      .replace(/</g, '^<')
-      .replace(/>/g, '^>')
+      .replace(/"/g, '""')
+      .replace(/%/g, '%%')
       .replace(/\r/g, '')
       .replace(/\n/g, '');
   }
 
   async fileOpenInDefaultApp(path: string): Promise<void> {
-    const escapedPath = this.escapePath(path);
-    await this.execAsync(`start "" "${escapedPath}"`);
+    await this.execFileAsync('cmd', ['/c', 'start', '""', path]);
   }
 
   async fileReveal(path: string): Promise<void> {
-    const escapedPath = this.escapePath(path);
-    await this.execAsync(`explorer.exe /select,"${escapedPath}"`);
+    await this.execFileAsync('explorer.exe', ['/select,' + path]);
   }
 
   async filePrint(path: string): Promise<void> {
-    const escapedPath = this.escapePath(path);
-    await this.execAsync(
-      `rundll32.exe %systemroot%\\system32\\shimgvw.dll,ImageView_PrintTo /pt "${escapedPath}"`
-    );
+    const escapedPath = path.replace(/'/g, "''");
+    await this.execFileAsync('powershell', [
+      '-NoProfile', '-NonInteractive', '-Command',
+      `Start-Process -FilePath '${escapedPath}' -Verb Print`
+    ]);
   }
 
   async fileOpenPrintDialog(path: string): Promise<void> {

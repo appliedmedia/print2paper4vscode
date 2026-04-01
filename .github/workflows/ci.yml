@@ -17,14 +17,15 @@ permissions:
 
 jobs:
   test:
-    name: Test on Node.js ${{ matrix.node-version }}
-    runs-on: ubuntu-latest
+    name: Test on ${{ matrix.os }} / Node.js ${{ matrix.node-version }}
+    runs-on: ${{ matrix.os }}
     permissions:
       contents: read
       pull-requests: write
-    
+
     strategy:
       matrix:
+        os: [ubuntu-latest, windows-latest]
         node-version: [20.x]
     
     steps:
@@ -44,19 +45,25 @@ jobs:
         run: npm run compile
       
       - name: Run linters
+        if: matrix.os == 'ubuntu-latest'
         run: |
           npm run lint
           npm run lint:md
           npm run lint:yaml
-      
+
       - name: Run tests with coverage
+        if: matrix.os == 'ubuntu-latest'
         run: |
           set -o pipefail
           npm run test:coverage | tee coverage.txt
+
+      - name: Run tests (Windows)
+        if: matrix.os == 'windows-latest'
+        run: npm test
       
       - name: Extract coverage percentage
         id: coverage
-        if: always()
+        if: always() && matrix.os == 'ubuntu-latest'
         run: |
           if [ -f coverage.txt ] && grep -q "All files" coverage.txt; then
             COVERAGE=$(grep "All files" coverage.txt | awk '{print $4}' | sed 's/%//' || echo "0")
@@ -68,7 +75,7 @@ jobs:
           fi
       
       - name: Report coverage in job summary
-        if: always()
+        if: always() && matrix.os == 'ubuntu-latest'
         run: |
           echo "## Test Coverage Results" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
@@ -85,6 +92,7 @@ jobs:
       - name: Comment coverage on PR
         # Only comment on first commit - use a unique marker to check if we've commented
         if: |
+          matrix.os == 'ubuntu-latest' &&
           github.event_name == 'pull_request' &&
           steps.coverage.outputs.percentage != '0'
         env:
@@ -119,7 +127,7 @@ jobs:
           } | gh pr comment ${{ github.event.pull_request.number }} --body-file -
       
       - name: Upload coverage for badge job
-        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        if: matrix.os == 'ubuntu-latest' && github.ref == 'refs/heads/main' && github.event_name == 'push'
         uses: actions/upload-artifact@v4
         with:
           name: coverage-data
