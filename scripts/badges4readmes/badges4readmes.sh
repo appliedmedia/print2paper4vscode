@@ -121,7 +121,7 @@ if [ -f "$script_dir/templateDictReplace.mjs" ]; then
 elif [ -f "$script_dir/../templateDictReplace/templateDictReplace.mjs" ]; then
   template_script="${template_script:-$script_dir/../templateDictReplace/templateDictReplace.mjs}"
 else
-  template_script="${template_script:-$project_root/scripts/templateDictReplace.mjs}"
+  template_script="${template_script:-$project_root/scripts/templateDictReplace/templateDictReplace.mjs}"
 fi
 
 # Parse arguments

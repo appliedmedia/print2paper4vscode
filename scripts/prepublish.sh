@@ -17,7 +17,7 @@ node scripts/generate-package-json.mjs
 npm run compile:deploy
 
 # Replace templates (template.package.json → package.json with {{extId}} → p2p4vsc)
-node scripts/templateDictReplace.mjs
+node scripts/templateDictReplace/templateDictReplace.mjs
 
 # Bundle with esbuild (produces dist/extension.js)
 npm run esbuild
