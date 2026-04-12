@@ -2,8 +2,8 @@
 
 /**
  * Generate root package.json from template
- * This is a simple first step - just copy the template
- * Template replacement happens later via templateDictReplace.mjs
+ * Copies the template and resolves {{extId}} placeholders using the
+ * single source of truth in src/types/_entrypoint_extId_t.ts.
  */
 
 import fs from 'fs';
@@ -21,6 +21,20 @@ if (!fs.existsSync(templatePath)) {
   process.exit(1);
 }
 
-// Copy template to root
-fs.copyFileSync(templatePath, outputPath);
-console.log('✓ Generated package.json from template');
+// Extract kExtId from the source of truth
+const extIdPath = path.join(projectRoot, 'src', 'types', '_entrypoint_extId_t.ts');
+let extId = 'p2p4vsc'; // fallback
+if (fs.existsSync(extIdPath)) {
+  const content = fs.readFileSync(extIdPath, 'utf8');
+  const match = content.match(/export const kExtId\s*=\s*'([^']+)'/);
+  if (match) {
+    extId = match[1];
+  }
+}
+
+// Read template, replace {{extId}}, and write to root
+let templateContent = fs.readFileSync(templatePath, 'utf8');
+const count = (templateContent.match(/\{\{extId\}\}/g) || []).length;
+templateContent = templateContent.replace(/\{\{extId\}\}/g, extId);
+fs.writeFileSync(outputPath, templateContent, 'utf8');
+console.log(`✓ Generated package.json from template (replaced ${count} {{extId}} → ${extId})`);

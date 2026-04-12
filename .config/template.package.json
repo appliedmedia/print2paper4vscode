@@ -99,6 +99,7 @@
     "test:coverage:check": "c8 --reporter=text --reporter=html --reporter=json-summary --check-coverage --lines 80 --functions 80 --branches 80 --statements 80 npm run test:all"
   },
   "devDependencies": {
+    "@cucumber/node": "^0.6.1",
     "@types/node": "^20.14.0",
     "@types/vscode": "^1.90.0",
     "@typescript-eslint/eslint-plugin": "latest",

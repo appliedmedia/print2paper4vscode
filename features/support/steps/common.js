@@ -1,11 +1,11 @@
 import { Given, Then } from '@cucumber/node';
-import { createTestApp, mockContext, mockVSCode } from '../world.js';
+import { createTestApp, createMockContext, createMockVSCode } from '../world.js';
 
 Given('a new Print2Paper application', (t) => {
   /** @type {import('../world.js').P2PWorld} */
   const world = t.world;
   try {
-    world.app = createTestApp({ context: mockContext, vscode: mockVSCode });
+    world.app = createTestApp({ context: createMockContext(), vscode: createMockVSCode() });
     world.error = undefined;
   } catch (e) {
     world.error = e instanceof Error ? e : new Error(String(e));
