@@ -6,7 +6,7 @@
 **Type:** Stream orchestrator (coordinates swimlane plans)
 **Master Orchestrator:** `2026-04-01_plan_todo_Orchestrator.md` (Phase 2, Stream C)
 
-### Branch & PR Strategy
+## Branch & PR Strategy
 
 Each swimlane is one branch → one PR → CodeRabbit review → merge to main.
 

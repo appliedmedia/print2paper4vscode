@@ -240,12 +240,42 @@ Object.defineProperty(process, 'platform', { value: original, configurable: true
 
 ## Tasks
 
-### Task 1: Fix OSWin.ts Bugs (2 hours)
+### Task 0: Verify Current Failures on Windows (30 min)
 
-1. Rewrite `escapePath()` — remove backslash doubling, fix double-escaping, simplify for quoted context
-2. Replace `filePrint()` — use PowerShell `Start-Process -Verb Print` instead of `shimgvw.dll`
-3. Convert methods to `execFileAsync` where possible
-4. Update `fileReveal()` explorer.exe call
+Before making changes, capture the current failure state:
+
+1. Boot a Windows runner (GitHub Actions `windows-latest` or local Parallels)
+2. Run the current OSWin.ts flows and capture failing cases and error logs for:
+   - `escapePath` with special characters (`%`, `"`, spaces, UNC paths)
+   - `filePrint` with a PDF file (expected: shimgvw.dll failure)
+   - `fileReveal` with paths containing spaces
+   - `getDir_Documents` with/without `USERPROFILE` set
+   - `execFileAsync` vs `execAsync` behavior differences
+3. Document actual error messages and stack traces
+4. Use these as acceptance criteria for Task 1
+
+### Task 1: Fix OSWin.ts Bugs (2-3 hours)
+
+#### 1a. Rewrite `escapePath()` (45 min)
+- Remove backslash doubling (not a cmd.exe metacharacter)
+- Fix double-escaping of `%` and `^`
+- Simplify for quoted context: only escape `"` (as `""`) and `%` (as `%%`)
+- Strip CR/LF
+- **Acceptance:** Unit tests pass with adversarial inputs from Task 0
+
+#### 1b. Replace `filePrint()` with PowerShell (30 min)
+- Use `Start-Process -Verb Print` instead of `shimgvw.dll`
+- Use `execFileAsync` to avoid shell escaping
+- **Acceptance:** Mock test verifies correct PowerShell arguments
+
+#### 1c. Convert methods to `execFileAsync` (30 min)
+- `fileOpenInDefaultApp` -> `execFileAsync('cmd', ['/c', 'start', ...])`
+- `fileReveal` -> `execFileAsync('explorer.exe', ['/select,', path])`
+- **Acceptance:** Mock tests verify correct argument arrays
+
+#### 1d. Update `fileReveal()` (15 min)
+- Call `explorer.exe` directly as standalone executable
+- **Acceptance:** Mock test verifies `/select,` argument format
 
 ### Task 2: Write Unit Tests (1 hour)
 

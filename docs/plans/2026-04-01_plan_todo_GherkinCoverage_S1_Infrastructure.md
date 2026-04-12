@@ -117,7 +117,9 @@ Feature: Application Smoke Test
 
   Scenario: Application has registered components
     Given the application is initialized
-    Then the application should have 17 registered components
+    Then the application should have the "pdf" component
+    And the application should have the "ui" component
+    And the application should have the "os" component
 ```
 
 ### Task 6: Update npm Scripts

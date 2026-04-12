@@ -46,6 +46,7 @@ The marketplace uses Azure DevOps for authentication.
    - **Name:** `vsce-publish` (or anything descriptive)
    - **Organization:** **All accessible organizations** ⚠️ CRITICAL — selecting a specific org causes 403 errors
    - **Expiration:** 365 days (maximum)
+   - **Renewal reminder:** Create a calendar reminder for ~11 months after creation (e.g., March 2027) to renew this token before expiry. The PAT name `vsce-publish` is stored as GitHub secret `VSCE_PAT` (see Step 9) and locally via `vsce login`.
    - **Scopes:** Click **Custom defined** → click **Show all scopes** → scroll to **Marketplace** → check **Manage**
 5. Click **Create**
 6. **COPY THE TOKEN IMMEDIATELY** — it is shown only once
@@ -171,7 +172,7 @@ Now `publish.yml` can publish automatically on release or manual trigger.
 - [ ] All features work (Alt+P, themes, PDF, print)
 - [ ] Marketplace listing looks professional (description, README renders correctly)
 - [ ] `VSCE_PAT` secret added to GitHub repo
-- [ ] Mark `2025-12-11_plan_inProgress_PrepareForDeploy.md` as `done`
+- [ ] Verify `2025-12-11_plan_inProgress_PrepareForDeploy.md` is marked as superseded by the orchestrator
 
 ---
 

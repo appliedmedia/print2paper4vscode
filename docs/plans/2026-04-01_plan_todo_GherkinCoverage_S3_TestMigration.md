@@ -70,6 +70,7 @@ These tests have simple input→output patterns with minimal mocking.
 **Example migration:**
 
 Before (`Coords.test.ts`):
+
 ```typescript
 describe('Coords', () => {
   it('should convert CSS pixels to PDF points', () => {
@@ -79,6 +80,7 @@ describe('Coords', () => {
 ```
 
 After (`features/coords.feature`):
+
 ```gherkin
 Feature: Coordinate Conversion
   Coords handles CSS pixel to PDF point conversion and Y-axis transformations.
@@ -180,7 +182,7 @@ Feature: Coordinate Conversion
 | Metric | Before | After |
 | --- | --- | --- |
 | Test files | 33 `.test.ts` | ~20 `.feature` files |
-| Test count | 361 individual tests | ~250 scenarios (Scenario Outlines consolidate repetitive cases) |
+| Test count | ~343 individual tests | ~250 scenarios (Scenario Outlines consolidate repetitive cases) |
 | Step def files | N/A | ~12 files in `features/support/steps/` |
 | Helper files | 2 (test-utils, test-helpers) | 1 (world.ts, incorporates both) |
 

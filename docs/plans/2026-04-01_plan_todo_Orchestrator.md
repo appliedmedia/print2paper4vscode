@@ -91,7 +91,7 @@ Stream F ──────►                                              [VSC
                                                                PR → CR → merge
 ```
 
-*Windows Print (from Dec 2025 plan) is superseded by Windows Fixes — the bugs must be fixed before adding new print features.
+*Windows Print (`2025-12-25_plan_todo_WinPrint.md`, Dec 2025) is superseded by Windows Fixes (`2026-04-01_plan_todo_WindowsFixes.md`). The existing bugs in OSWin.ts must be fixed before adding new print features. The old plan remains in `docs/plans/` for reference but should not be actioned.
 
 ---
 
@@ -273,6 +273,8 @@ Every PR in this project must satisfy:
 - [ ] **Tests:** New/changed code has corresponding tests
 - [ ] **No secrets:** No tokens, credentials, or `.env` files
 - [ ] **Commit messages:** Clear, descriptive, reference plan if applicable
+
+**Docs-only PRs:** For PRs that only change documentation files (`.md`, `.txt`, plan files), the CI, Coverage, and Tests checkboxes are automatically satisfied. CI linting for docs (e.g., `npm run lint:md`) is the only required check. Coverage and test requirements do not apply to documentation-only changes.
 
 ---
 

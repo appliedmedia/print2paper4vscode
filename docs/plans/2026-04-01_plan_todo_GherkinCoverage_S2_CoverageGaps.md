@@ -233,7 +233,7 @@ Feature: Dependency Injection Registry
 **Note:** These files have low coverage because they contain platform-specific code (AppleScript, CUPS, PowerShell) that can only truly run on their respective platforms. We can test:
 - Method existence and signatures
 - Error handling for unavailable platform commands
-- Mock-based execution paths
+- Mock-based execution paths.
 
 ```gherkin
 # features/os-platform.feature
@@ -279,9 +279,11 @@ Feature: Cross-Platform OS Abstraction
 
 | Metric | Before | After | Change |
 | --- | --- | --- | --- |
-| Statements | 85.18% | ~95% | +10% |
-| Branches | 75.41% | ~90% | +15% |
-| Functions | 83.18% | ~95% | +12% |
+| Statements | 85.18% | ~92% | +7% |
+| Branches | 75.41% | ~87% | +12% |
+| Functions | 83.18% | ~92% | +9% |
+
+**Note:** Targets account for platform-limited files (OSWin, OSLinux, OSMac) which max out at 70-80% coverage due to platform-specific code paths (AppleScript, CUPS, PowerShell) that cannot run in CI. Per-file exceptions are set for these files.
 
 ## Execution Order
 
