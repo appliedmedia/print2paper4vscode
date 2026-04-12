@@ -113,7 +113,7 @@ describe('OSLinux', () => {
   });
 
   describe('filePrint', () => {
-    it('should check for CUPS before printing', async () => {
+    it('should call lp directly to print', async () => {
       const calls: Array<{ file: string; args: string[] }> = [];
       (osLinux as any).execFileAsync = async (file: string, args: string[]) => {
         calls.push({ file, args });
@@ -122,17 +122,17 @@ describe('OSLinux', () => {
 
       await osLinux.filePrint('/tmp/test.pdf');
 
-      assert.strictEqual(calls.length, 2);
-      assert.strictEqual(calls[0].file, 'which');
-      assert.deepStrictEqual(calls[0].args, ['lp']);
-      assert.strictEqual(calls[1].file, 'lp');
-      assert.deepStrictEqual(calls[1].args, ['/tmp/test.pdf']);
+      assert.strictEqual(calls.length, 1);
+      assert.strictEqual(calls[0].file, 'lp');
+      assert.deepStrictEqual(calls[0].args, ['/tmp/test.pdf']);
     });
 
     it('should throw helpful error when CUPS is not installed', async () => {
       (osLinux as any).execFileAsync = async (file: string, args: string[]) => {
-        if (file === 'which' && args[0] === 'lp') {
-          throw new Error('not found');
+        if (file === 'lp') {
+          const err = new Error('spawn lp ENOENT') as any;
+          err.code = 'ENOENT';
+          throw err;
         }
         return { stdout: '', stderr: '' };
       };
@@ -148,26 +148,34 @@ describe('OSLinux', () => {
       );
     });
 
-    it('should not call lp when CUPS check fails', async () => {
+    it('should reject with CUPS error when lp is not found', async () => {
       const calls: Array<{ file: string; args: string[] }> = [];
       (osLinux as any).execFileAsync = async (file: string, args: string[]) => {
         calls.push({ file, args });
-        if (file === 'which') {
-          throw new Error('not found');
-        }
-        return { stdout: '', stderr: '' };
+        const err = new Error('spawn lp ENOENT') as any;
+        err.code = 'ENOENT';
+        throw err;
       };
 
-      try {
-        await osLinux.filePrint('/tmp/test.pdf');
-      } catch {
-        // Expected
-      }
+      await assert.rejects(() => osLinux.filePrint('/tmp/test.pdf'));
 
-      // Should only have called which, not lp
+      // Should have called lp directly (no which check)
       assert.strictEqual(calls.length, 1);
-      assert.strictEqual(calls[0].file, 'which');
-      assert.ok(!calls.some(c => c.file === 'lp'));
+      assert.strictEqual(calls[0].file, 'lp');
+    });
+
+    it('should rethrow non-ENOENT errors from lp', async () => {
+      (osLinux as any).execFileAsync = async (file: string, args: string[]) => {
+        throw new Error('printer paper jam');
+      };
+
+      await assert.rejects(
+        () => osLinux.filePrint('/tmp/test.pdf'),
+        (err: Error) => {
+          assert.ok(err.message.includes('printer paper jam'));
+          return true;
+        }
+      );
     });
   });
 

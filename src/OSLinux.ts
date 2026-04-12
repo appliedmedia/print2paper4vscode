@@ -46,11 +46,15 @@ export class OSLinux extends OS {
 
   async filePrint(path: string): Promise<void> {
     try {
-      await this.execFileAsync('which', ['lp']);
-    } catch {
-      throw new Error('CUPS printing system not found. Install with: sudo apt install cups (Debian/Ubuntu) or sudo dnf install cups (Fedora)');
+      await this.execFileAsync('lp', [path]);
+    } catch (error) {
+      if ((error as any)?.code === 'ENOENT') {
+        throw new Error(
+          'CUPS printing system not found. Install with: sudo apt install cups (Debian/Ubuntu) or sudo dnf install cups (Fedora)'
+        );
+      }
+      throw error;
     }
-    await this.execFileAsync('lp', [path]);
   }
 
   async fileOpenPrintDialog(path: string): Promise<void> {
@@ -65,7 +69,10 @@ export class OSLinux extends OS {
         await this.execFileAsync('which', [viewer.cmd]);
         await this.execFileAsync(viewer.cmd, viewer.args);
         return;
-      } catch { continue; }
+      } catch (error) {
+        this.dx.out(`Viewer launch failed (${viewer.cmd}): ${String(error)}`);
+        continue;
+      }
     }
     await this.fileOpenInDefaultApp(path);
   }
