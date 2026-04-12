@@ -8,7 +8,7 @@
  */
 'use strict';
 
-const { readdirSync, statSync } = require('fs');
+const { existsSync, readdirSync, statSync } = require('fs');
 const { join } = require('path');
 const { execFileSync } = require('child_process');
 
@@ -29,6 +29,13 @@ function collectTestFiles(dir) {
 }
 
 const TEST_DIR = join(__dirname, '..', 'out', 'tests');
+
+if (!existsSync(TEST_DIR) || !statSync(TEST_DIR).isDirectory()) {
+  console.error('TEST_DIR does not exist or is not a directory:', TEST_DIR);
+  console.error('Run `npm run compile` first to generate the test output.');
+  process.exit(1);
+}
+
 const files = collectTestFiles(TEST_DIR).sort();
 
 if (files.length === 0) {
