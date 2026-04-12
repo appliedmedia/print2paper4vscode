@@ -76,6 +76,7 @@ The `publisher` field in `.config/template.package.json` must match the publishe
 ```
 
 Verify this is already set correctly. If not, update the template and regenerate:
+
 ```bash
 node scripts/generate-package-json.mjs
 ```
@@ -128,11 +129,13 @@ npx @vscode/vsce publish
 ```
 
 **Alternative (CI/non-interactive):**
+
 ```bash
 npx @vscode/vsce publish -p <your-pat-token>
 ```
 
 **Or with env var:**
+
 ```bash
 export VSCE_PAT=<your-pat-token>
 npx @vscode/vsce publish

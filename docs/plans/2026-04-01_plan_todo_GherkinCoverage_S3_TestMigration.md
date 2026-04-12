@@ -14,7 +14,7 @@
 
 ## Objective
 
-Convert all 33 existing `node:test` files (361 tests) into Gherkin `.feature` files with reusable TypeScript step definitions. Migration is incremental - old and new tests coexist until each batch is fully verified.
+Convert all 33 existing `node:test` files (~343 tests) into Gherkin `.feature` files with reusable TypeScript step definitions. Migration is incremental - old and new tests coexist until each batch is fully verified.
 
 ---
 
