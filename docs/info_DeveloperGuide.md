@@ -62,7 +62,7 @@ git branch -r --merged origin/main | grep "origin/cursor/" | sed 's/origin\///' 
 ├── tests/                        # Test files
 ├── package.json                  # Extension manifest and dependencies
 ├── tsconfig.json                 # TypeScript configuration
-├── AGENTS.md                     # Project context and architecture (this file)
+├── info_DeveloperGuide.md        # Project context and architecture (this file)
 └── README.md                     # Project documentation
 ```
 
@@ -308,7 +308,7 @@ The project uses different documentation types for different purposes:
 **Reference Documentation (`docs/`)**: Static informational content
 
 - API references, coding standards, architecture guides
-- Examples: `AGENTS.md`, `VSCodeAPIs.md`, `INSTALL.md`
+- Examples: `info_DeveloperGuide.md`, `VSCodeAPIs.md`, `INSTALL.md`
 
 **User Documentation (root)**: End-user-facing content
 
