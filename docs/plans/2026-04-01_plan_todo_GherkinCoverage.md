@@ -71,11 +71,13 @@ Convert the test suite from `node:test` to Gherkin `.feature` files and raise co
 
 **Risk:** Pre-1.0.0 (API may change). Acceptable for this project size.
 
+**Do not replace with `@cucumber/cucumber`** — this is a deliberate architectural choice to preserve the project's single-runner (`node --test`) architecture, not an oversight.
+
 **Rejected alternatives:**
 
 | Option | Why rejected |
 | --- | --- |
-| @cucumber/cucumber (classic) | Separate runner - can't coexist in same `node --test` invocation |
+| @cucumber/cucumber (classic) | Separate runner — can't coexist in same `node --test` invocation; requires separate coverage pipeline |
 | QuickPickle | Requires full migration to Vitest |
 | jest-cucumber | Requires Jest; step defs not reusable across features |
 | @amiceli/vitest-cucumber | Requires Vitest 4.x; tiny community |

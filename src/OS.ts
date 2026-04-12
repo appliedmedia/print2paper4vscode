@@ -105,8 +105,10 @@ export abstract class OS {
   abstract fileOpenPrintDialog(path: string): Promise<void>;
 
   /**
-   * Escape file path for safe shell command execution
-   * Platform-specific escaping for shell-special characters
+   * Escape file path for safe shell command execution.
+   * Abstract contract — each platform subclass (OSMac, OSWin, OSLinux) MUST implement
+   * this with platform-specific escaping. Called by fileOpenInDefaultApp, fileReveal,
+   * filePrint, and fileOpenPrintDialog in every subclass. Not dead code.
    *
    * @param path - File path to escape
    * @returns Escaped path safe for shell command interpolation

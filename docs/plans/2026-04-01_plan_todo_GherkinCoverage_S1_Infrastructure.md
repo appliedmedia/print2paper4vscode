@@ -17,6 +17,22 @@ Install and configure `@cucumber/node` so that `.feature` files run alongside ex
 
 ---
 
+## Architecture Decision: `@cucumber/node` over `@cucumber/cucumber`
+
+**Choice:** `@cucumber/node` (not `@cucumber/cucumber`)
+
+**Why:** This project uses Node.js built-in `node:test` runner exclusively — no Mocha, no Jest. `@cucumber/node` integrates natively with `node --test` via the `--import @cucumber/node/bootstrap` loader, so Gherkin `.feature` files run as first-class `node:test` suites. This means:
+
+- Single test runner (`node --test`) for both unit tests and Gherkin scenarios
+- Combined c8 coverage in one pass — no stitching separate coverage reports
+- No parallel test infrastructure to maintain
+
+`@cucumber/cucumber` ships its own CLI runner (`cucumber-js`), which would require a separate test pipeline, separate coverage collection, and report merging. That contradicts the project's single-runner architecture.
+
+**Do not replace with `@cucumber/cucumber`** — this is a deliberate architectural choice, not an oversight.
+
+---
+
 ## Tasks
 
 ### Task 1: Install Dependencies
