@@ -91,8 +91,8 @@
     "format:check": "prettier --check src/**/*.ts **/*.md",
     "pretest": "node scripts/setup-vscode-mock.js",
     "test": "node --test out/tests/*.test.js",
-    "test:gherkin": "node scripts/setup-vscode-mock.js && node --import @cucumber/node/bootstrap --test 'features/**/*.feature'",
-    "test:all": "node scripts/setup-vscode-mock.js && node --import @cucumber/node/bootstrap --test 'out/tests/*.test.js' 'features/**/*.feature'",
+    "test:gherkin": "node scripts/setup-vscode-mock.js && node --import @cucumber/node/bootstrap --import tsx --test 'features/**/*.feature'",
+    "test:all": "node scripts/setup-vscode-mock.js && node --import @cucumber/node/bootstrap --import tsx --test 'out/tests/*.test.js' 'features/**/*.feature'",
     "test:watch": "node --test --watch out/tests/**/*.test.js",
     "test:verbose": "node --test --reporter spec out/tests/**/*.test.js",
     "test:coverage": "c8 --reporter=text --reporter=html --reporter=json-summary npm run test:all",
@@ -113,6 +113,7 @@
     "prettier": "latest",
     "stylelint": "^16.26.1",
     "stylelint-config-standard": "^39.0.1",
+    "tsx": "^4.21.0",
     "typescript": "^5.9.2"
   },
   "dependencies": {

@@ -37,12 +37,12 @@
   "contributes": {
     "commands": [
       {
-        "command": "{{extId}}.print2paper",
+        "command": "p2p4vsc.print2paper",
         "title": "Print2Paper",
         "category": "Print"
       },
       {
-        "command": "{{extId}}.persistClear",
+        "command": "p2p4vsc.persistClear",
         "title": "Clear State",
         "category": "Print"
       }
@@ -50,13 +50,13 @@
     "menus": {
       "editor/context": [
         {
-          "command": "{{extId}}.print2paper",
+          "command": "p2p4vsc.print2paper",
           "group": "navigation"
         }
       ],
       "editor/title": [
         {
-          "command": "{{extId}}.print2paper",
+          "command": "p2p4vsc.print2paper",
           "group": "navigation",
           "when": "editorTextFocus",
           "title": "Print2Paper"
@@ -65,7 +65,7 @@
     },
     "keybindings": [
       {
-        "command": "{{extId}}.print2paper",
+        "command": "p2p4vsc.print2paper",
         "key": "alt+p",
         "mac": "alt+p"
       }
@@ -92,8 +92,8 @@
     "format:check": "prettier --check src/**/*.ts **/*.md",
     "pretest": "node scripts/setup-vscode-mock.js",
     "test": "node scripts/run-tests.js",
-    "test:gherkin": "node scripts/setup-vscode-mock.js && node --import @cucumber/node/bootstrap --test 'features/**/*.feature'",
-    "test:all": "node scripts/setup-vscode-mock.js && node --import @cucumber/node/bootstrap --test 'out/tests/*.test.js' 'features/**/*.feature'",
+    "test:gherkin": "node scripts/setup-vscode-mock.js && node --import @cucumber/node/bootstrap --import tsx --test 'features/**/*.feature'",
+    "test:all": "node scripts/setup-vscode-mock.js && node --import @cucumber/node/bootstrap --import tsx --test 'out/tests/*.test.js' 'features/**/*.feature'",
     "test:watch": "node scripts/run-tests.js --watch",
     "test:verbose": "node scripts/run-tests.js --reporter spec",
     "test:coverage": "c8 --reporter=text --reporter=html --reporter=json-summary npm run test:all",
@@ -114,6 +114,7 @@
     "prettier": "latest",
     "stylelint": "^16.26.1",
     "stylelint-config-standard": "^39.0.1",
+    "tsx": "^4.21.0",
     "typescript": "^5.9.2"
   },
   "dependencies": {
