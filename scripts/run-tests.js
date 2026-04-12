@@ -8,15 +8,28 @@
  */
 'use strict';
 
-const { readdirSync } = require('fs');
+const { readdirSync, statSync } = require('fs');
 const { join } = require('path');
 const { execFileSync } = require('child_process');
 
+/**
+ * Recursively walk `dir`, collecting all files that end with `.test.js`.
+ */
+function collectTestFiles(dir) {
+  const results = [];
+  for (const entry of readdirSync(dir)) {
+    const full = join(dir, entry);
+    if (statSync(full).isDirectory()) {
+      results.push(...collectTestFiles(full));
+    } else if (entry.endsWith('.test.js')) {
+      results.push(full);
+    }
+  }
+  return results;
+}
+
 const TEST_DIR = join(__dirname, '..', 'out', 'tests');
-const files = readdirSync(TEST_DIR)
-  .filter(f => f.endsWith('.test.js'))
-  .sort()
-  .map(f => join(TEST_DIR, f));
+const files = collectTestFiles(TEST_DIR).sort();
 
 if (files.length === 0) {
   console.error('No .test.js files found in', TEST_DIR);

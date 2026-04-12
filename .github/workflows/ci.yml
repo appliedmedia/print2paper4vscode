@@ -97,7 +97,7 @@ jobs:
           PR_NUMBER: ${{ github.event.pull_request.number }}
         run: |
           # Check if we've already posted a coverage comment
-          EXISTING=$(gh pr view $PR_NUMBER --json comments --jq '[.comments[] | select(.author.login == "github-actions" and (.body | contains("Test Coverage Report")))] | length')
+          EXISTING=$(gh pr view $PR_NUMBER --json comments --jq '[.comments[] | select(.author.login == "github-actions[bot]" and (.body | contains("## 📊 Test Coverage Report")))] | length')
           
           if [ "$EXISTING" -gt "0" ]; then
             echo "Coverage comment already exists, skipping"

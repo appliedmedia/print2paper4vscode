@@ -162,16 +162,17 @@ describe('OSWin', () => {
 
   describe('fileOpenPrintDialog', () => {
     it('should delegate to fileOpenInDefaultApp', async () => {
-      const calls: string[] = [];
+      const calls: { file: string; args: string[] }[] = [];
       (osWin as any).execFileAsync = async (file: string, args: string[]) => {
-        calls.push(file);
+        calls.push({ file, args });
         return { stdout: '', stderr: '' };
       };
 
       await osWin.fileOpenPrintDialog('C:\\test\\file.pdf');
 
       assert.strictEqual(calls.length, 1);
-      assert.strictEqual(calls[0], 'cmd');
+      assert.strictEqual(calls[0].file, 'cmd');
+      assert.deepStrictEqual(calls[0].args, ['/c', 'start', '""', 'C:\\test\\file.pdf']);
     });
   });
 
@@ -237,6 +238,8 @@ describe('OSWin', () => {
         }
         if (origHome !== undefined) {
           process.env.HOME = origHome;
+        } else {
+          delete process.env.HOME;
         }
       }
     });
