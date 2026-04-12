@@ -23,20 +23,21 @@ if (!fs.existsSync(templatePath)) {
 
 // Extract kExtId from the source of truth
 const extIdPath = path.join(projectRoot, 'src', 'types', '_entrypoint_extId_t.ts');
-let extId = 'p2p4vsc'; // fallback
-if (fs.existsSync(extIdPath)) {
-  const content = fs.readFileSync(extIdPath, 'utf8');
-  const match = content.match(/export const kExtId\s*=\s*'([^']+)'/);
-  if (match) {
-    extId = match[1];
-  } else {
-    console.warn(
-      `WARNING: Could not extract kExtId from ${extIdPath}. ` +
-      `Expected a line matching: export const kExtId = '<value>'. ` +
-      `Falling back to '${extId}'.`
-    );
-  }
+if (!fs.existsSync(extIdPath)) {
+  console.error(`ERROR: Source of truth not found: ${extIdPath}`);
+  process.exit(1);
 }
+
+const content = fs.readFileSync(extIdPath, 'utf8');
+const match = content.match(/export const kExtId\s*=\s*['"]([^'"]+)['"]/);
+if (!match) {
+  console.error(
+    `ERROR: Could not extract kExtId from ${extIdPath}. ` +
+    `Expected a line matching: export const kExtId = '<value>'.`
+  );
+  process.exit(1);
+}
+const extId = match[1];
 
 // Read template, replace {{extId}}, and write to root
 let templateContent = fs.readFileSync(templatePath, 'utf8');
