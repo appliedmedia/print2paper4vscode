@@ -44,7 +44,17 @@ if (files.length === 0) {
 }
 
 // Forward extra CLI flags (e.g. --watch, --reporter spec)
-const extraArgs = process.argv.slice(2);
+const extraArgs = process.argv.slice(2).map((arg) => {
+  // Node's test runner uses --test-reporter, not --reporter.
+  // Normalize so npm scripts can use the shorter form.
+  if (arg === '--reporter') {
+    return '--test-reporter';
+  }
+  if (arg.startsWith('--reporter=')) {
+    return arg.replace('--reporter=', '--test-reporter=');
+  }
+  return arg;
+});
 
 try {
   execFileSync(
