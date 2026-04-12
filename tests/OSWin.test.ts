@@ -249,7 +249,7 @@ describe('OSWin', () => {
       const origHome = process.env.HOME;
       try {
         process.env.USERPROFILE = 'C:\\Users\\TestUser';
-        process.env.HOME = '';
+        delete process.env.HOME;
         const dir = osWin.getDir_Documents();
         assert.ok(dir.includes('TestUser'));
         assert.ok(dir.includes('Documents'));
