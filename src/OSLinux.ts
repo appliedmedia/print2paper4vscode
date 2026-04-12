@@ -45,11 +45,35 @@ export class OSLinux extends OS {
   }
 
   async filePrint(path: string): Promise<void> {
-    await this.execFileAsync('lp', [path]);
+    try {
+      await this.execFileAsync('lp', [path]);
+    } catch (error) {
+      if ((error as any)?.code === 'ENOENT') {
+        throw new Error(
+          'CUPS printing system not found. Install with: sudo apt install cups (Debian/Ubuntu) or sudo dnf install cups (Fedora)'
+        );
+      }
+      throw error;
+    }
   }
 
   async fileOpenPrintDialog(path: string): Promise<void> {
-    // Open PDF in default application (user can print from there)
+    const viewers = [
+      { cmd: 'evince', args: [path] },
+      { cmd: 'okular', args: [path] },
+      { cmd: 'atril', args: [path] },
+      { cmd: 'xreader', args: [path] },
+    ];
+    for (const viewer of viewers) {
+      try {
+        await this.execFileAsync('which', [viewer.cmd]);
+        await this.execFileAsync(viewer.cmd, viewer.args);
+        return;
+      } catch (error) {
+        this.dx.out(`Viewer launch failed (${viewer.cmd}): ${String(error)}`);
+        continue;
+      }
+    }
     await this.fileOpenInDefaultApp(path);
   }
 
