@@ -29,6 +29,12 @@ if (fs.existsSync(extIdPath)) {
   const match = content.match(/export const kExtId\s*=\s*'([^']+)'/);
   if (match) {
     extId = match[1];
+  } else {
+    console.warn(
+      `WARNING: Could not extract kExtId from ${extIdPath}. ` +
+      `Expected a line matching: export const kExtId = '<value>'. ` +
+      `Falling back to '${extId}'.`
+    );
   }
 }
 
