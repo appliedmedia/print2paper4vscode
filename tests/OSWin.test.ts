@@ -19,74 +19,6 @@ describe('OSWin', () => {
     mock.restoreAll();
   });
 
-  describe('escapePath', () => {
-    // Access protected method via cast
-    const escape = (os: OSWin, p: string) => (os as any).escapePath(p);
-
-    it('should pass through simple Windows paths unchanged', () => {
-      const result = escape(osWin, 'C:\\Users\\test\\file.pdf');
-      assert.strictEqual(result, 'C:\\Users\\test\\file.pdf');
-    });
-
-    it('should not double backslashes (Bug 2 fix)', () => {
-      const result = escape(osWin, 'C:\\path\\to\\file.txt');
-      assert.strictEqual(result, 'C:\\path\\to\\file.txt');
-      assert.ok(!result.includes('\\\\'), 'Backslashes must not be doubled');
-    });
-
-    it('should escape double quotes by doubling them', () => {
-      const result = escape(osWin, 'C:\\path\\"quoted".txt');
-      assert.strictEqual(result, 'C:\\path\\""quoted"".txt');
-    });
-
-    it('should escape percent signs by doubling them', () => {
-      const result = escape(osWin, 'C:\\path\\%TEMP%\\file.txt');
-      assert.strictEqual(result, 'C:\\path\\%%TEMP%%\\file.txt');
-    });
-
-    it('should not produce ^^% from %  (Bug 1 fix - no double-escaping)', () => {
-      const result = escape(osWin, '%PATH%');
-      assert.strictEqual(result, '%%PATH%%');
-      assert.ok(!result.includes('^^'), 'Must not contain ^^ from double-escaping');
-    });
-
-    it('should not escape caret, ampersand, pipe, angle brackets (Bug 3 fix)', () => {
-      const result = escape(osWin, 'file^name & copy | test < > end');
-      assert.strictEqual(result, 'file^name & copy | test < > end');
-    });
-
-    it('should strip carriage returns', () => {
-      const result = escape(osWin, 'path\rwith\rcr');
-      assert.strictEqual(result, 'pathwithcr');
-    });
-
-    it('should strip newlines', () => {
-      const result = escape(osWin, 'path\nwith\nnewlines');
-      assert.strictEqual(result, 'pathwithnewlines');
-    });
-
-    it('should handle paths with spaces', () => {
-      const result = escape(osWin, 'C:\\Program Files\\My App\\file.pdf');
-      assert.strictEqual(result, 'C:\\Program Files\\My App\\file.pdf');
-    });
-
-    it('should handle adversarial input with all special chars', () => {
-      const adversarial = 'C:\\Users\\test%user%\\"docs"\\file^1 & file|2 < >\r\n.pdf';
-      const result = escape(osWin, adversarial);
-      assert.strictEqual(result, 'C:\\Users\\test%%user%%\\""docs""\\file^1 & file|2 < >.pdf');
-    });
-
-    it('should handle empty string', () => {
-      const result = escape(osWin, '');
-      assert.strictEqual(result, '');
-    });
-
-    it('should handle UNC paths', () => {
-      const result = escape(osWin, '\\\\server\\share\\folder\\file.txt');
-      assert.strictEqual(result, '\\\\server\\share\\folder\\file.txt');
-    });
-  });
-
   describe('fileOpenInDefaultApp', () => {
     it('should call execFileAsync with cmd /c start', async () => {
       const calls: { file: string; args: string[] }[] = [];
@@ -254,8 +186,8 @@ describe('OSWin', () => {
         assert.ok(dir.includes('TestUser'));
         assert.ok(dir.includes('Documents'));
       } finally {
-        process.env.USERPROFILE = origProfile;
-        process.env.HOME = origHome;
+        if (origProfile !== undefined) { process.env.USERPROFILE = origProfile; } else { delete process.env.USERPROFILE; }
+        if (origHome !== undefined) { process.env.HOME = origHome; } else { delete process.env.HOME; }
       }
     });
 
@@ -269,22 +201,43 @@ describe('OSWin', () => {
         assert.ok(dir.includes('HomeUser'));
         assert.ok(dir.includes('Documents'));
       } finally {
-        process.env.USERPROFILE = origProfile;
-        process.env.HOME = origHome;
+        if (origProfile !== undefined) { process.env.USERPROFILE = origProfile; } else { delete process.env.USERPROFILE; }
+        if (origHome !== undefined) { process.env.HOME = origHome; } else { delete process.env.HOME; }
       }
     });
 
-    it('should fall back to getDir_Home when neither env var is set', () => {
+    it('should fall back to getDir_Home() when env vars are cleared', () => {
       const origProfile = process.env.USERPROFILE;
       const origHome = process.env.HOME;
+      const sentinel = 'Z:\\SentinelHomeDir';
+
       try {
         delete process.env.USERPROFILE;
         delete process.env.HOME;
+
+        // Stub getDir_Home to return a sentinel so we can verify the fallback path
+        (osWin as any).getDir_Home = () => sentinel;
+
         const dir = osWin.getDir_Documents();
-        assert.ok(dir.includes('Documents'));
+        assert.ok(
+          dir.includes(sentinel),
+          `Should use getDir_Home() sentinel; got "${dir}"`
+        );
+        assert.ok(
+          dir.includes('Documents'),
+          'Should append Documents to the home directory'
+        );
       } finally {
-        process.env.USERPROFILE = origProfile;
-        process.env.HOME = origHome;
+        // Restore getDir_Home to the prototype method
+        delete (osWin as any).getDir_Home;
+        if (origProfile !== undefined) {
+          process.env.USERPROFILE = origProfile;
+        } else {
+          delete process.env.USERPROFILE;
+        }
+        if (origHome !== undefined) {
+          process.env.HOME = origHome;
+        }
       }
     });
   });

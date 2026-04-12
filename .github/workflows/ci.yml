@@ -52,14 +52,10 @@ jobs:
           npm run lint:yaml
 
       - name: Run tests with coverage
-        if: matrix.os == 'ubuntu-latest'
+        shell: bash
         run: |
           set -o pipefail
           npm run test:coverage | tee coverage.txt
-
-      - name: Run tests (Windows)
-        if: matrix.os == 'windows-latest'
-        run: npm test
       
       - name: Extract coverage percentage
         id: coverage
