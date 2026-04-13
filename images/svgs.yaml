@@ -1,5 +1,5 @@
 # SVG badge templates for CI workflow
-# Processed by templateDictReplace.mjs with --dict flag
+# Processed by action-proxy-badge2svg → action-handler-badge2svg (primer.py)
 
 coverage: |
   <svg xmlns="http://www.w3.org/2000/svg" width="114" height="20" role="img" aria-label="coverage: {{coverage}}%">
