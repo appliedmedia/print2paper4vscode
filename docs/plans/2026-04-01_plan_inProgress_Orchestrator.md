@@ -1,22 +1,22 @@
 # Master Orchestrator - Print2Paper4VSCode Roadmap
 
-**Status:** TODO
+**Status:** IN PROGRESS
 **Created:** 2026-04-01
-**Updated:** 2026-04-01
+**Updated:** 2026-04-12
 **Scope:** All active and planned work for the extension
 
 ---
 
-## Current State (2026-04-01)
+## Current State (2026-04-12)
 
 | Metric | Value |
 | --- | --- |
-| Branch | `main` at 870d7b5 |
-| Tests | 361 passing (91 suites) |
-| Coverage | 85.18% stmts, 75.41% branch |
+| Branch | `main` at 9bbb3a7 |
+| Tests | 386 passing (101 suites) |
+| Coverage | 85.59% stmts, 75.80% branch |
 | Build | Compiles clean, esbuild bundles to dist/ |
 | Published | No - not yet on VS Code Marketplace |
-| Platform | macOS complete, Windows has 5 bugs, Linux stubs only |
+| Platform | macOS complete, Windows bugs fixed (PR #103), Linux viewer selection + CUPS detection added (PR #105) |
 
 ---
 
@@ -49,35 +49,34 @@ For each work stream:
                    (Unblock publish)         (Quality & coverage)    (Platform expansion)
                    ──────────────────        ────────────────────    ──────────────────────
 
-Stream A ──────►   [Windows Fixes]
-(Critical bugs)    branch: feature/windows-fixes
-                   PR → CodeRabbit → merge
+Stream A ──────►   [Windows Fixes] ✓ DONE
+(Critical bugs)    PR #103 merged 2026-04-12
                           │
                           ▼
-Stream B ──────►   [Marketplace Publish]
+Stream B ──────►   [Marketplace Publish] ← NEXT
 (Go live)          Manual steps (account setup)
                    + branch: feature/marketplace-prep
                    PR → CodeRabbit → merge
                    Then: vsce publish
                                                │
-Stream C ──────►                          [Gherkin Infra]
-(Test quality)                             branch: feature/gherkin-infrastructure
-                                           PR → CodeRabbit → merge
+Stream C ──────►                          [Gherkin Infra] ✓ DONE
+(Test quality)                             PR #104 merged 2026-04-12
                                                   │
                                           ┌───────┴────────┐
                                           ▼                ▼
                                    [Gherkin Coverage] [Gherkin Migration]
-                                   branch: feature/   branch: feature/
-                                   gherkin-coverage    gherkin-migration
-                                   PR → CR → merge     PR → CR → merge
+                                   ← READY             branch: feature/
+                                   branch: feature/     gherkin-migration
+                                   gherkin-coverage     PR → CR → merge
+                                   PR → CR → merge
                                           │                │
                                           └───────┬────────┘
                                                   ▼
                                           Coverage ≥ 95%
 
-Stream D ──────►                                              [Linux Print]
-(Platforms)                                                    branch: feature/linux-print
-                                                               PR → CR → merge
+Stream D ──────►                                              [Linux Print] ◐ PARTIAL
+(Platforms)                                                    PR #105 merged 2026-04-12
+                                                               Viewer + CUPS done; smoke test pending
 
                                                               [Windows Print]*
                                                                branch: feature/windows-print
@@ -99,28 +98,20 @@ Stream F ──────►                                              [VSC
 
 Goal: Fix critical bugs and get the extension on the VS Code Marketplace.
 
-### Stream A: Windows Fixes
+### Stream A: Windows Fixes — DONE ✓
 
 | Field | Value |
 | --- | --- |
 | **Plan** | `2026-04-01_plan_todo_WindowsFixes.md` |
-| **Branch** | `feature/windows-fixes` |
-| **Blocks** | Stream B (Marketplace Publish) |
-| **Estimate** | 3-4 hours |
+| **Branch** | `feature/windows-fixes` (deleted) |
+| **PR** | #103 — merged 2026-04-12 |
+| **Blocks** | Stream B (Marketplace Publish) — **now unblocked** |
 
-**What:**
-- Fix 5 bugs in OSWin.ts (double-escaping, wrong DLL, backslash handling)
-- Rewrite `escapePath()`, `filePrint()`, convert to `execFileAsync`
-- Add unit tests for command construction (runnable on macOS)
-- Add `windows-latest` to CI matrix
+**Delivered:**
 
-**PR scope:**
-- `src/OSWin.ts` — rewritten
-- `tests/OSWin.test.ts` — new/updated tests
-- `.github/workflows/ci.yml` — add Windows matrix
-- `package.json` scripts — cross-platform `compile` command
-
-**Done when:** Tests pass on both ubuntu-latest and windows-latest in CI.
+- Fixed 5 bugs in OSWin.ts (double-escaping, wrong DLL, backslash handling)
+- Rewrote `escapePath()`, `filePrint()`, converted to `execFileAsync`
+- Added unit tests for command construction (runnable on macOS)
 
 ### Stream B: Marketplace Publish
 
@@ -132,6 +123,7 @@ Goal: Fix critical bugs and get the extension on the VS Code Marketplace.
 | **Estimate** | 30-45 min manual steps + small PR |
 
 **What:**
+
 1. Create Azure DevOps org + PAT (manual)
 2. Create publisher "appliedmedia" on marketplace (manual)
 3. Verify `package.json` publisher field matches
@@ -141,6 +133,7 @@ Goal: Fix critical bugs and get the extension on the VS Code Marketplace.
 7. Verify extension live on marketplace
 
 **PR scope (if needed):**
+
 - `.config/template.package.json` — publisher field, metadata tweaks
 - `package.json` — regenerated
 
@@ -161,20 +154,19 @@ Goal: Convert test suite to Gherkin and raise coverage from 85% to 95%+.
 
 Three sequential/parallel branches:
 
-#### C1: Infrastructure
+#### C1: Infrastructure — DONE ✓
 
 | Field | Value |
 | --- | --- |
 | **Plan** | `2026-04-01_plan_todo_GherkinCoverage_S1_Infrastructure.md` |
-| **Branch** | `feature/gherkin-infrastructure` |
-| **Blocks** | C2, C3 |
-| **Estimate** | 2-3 hours |
+| **Branch** | `feature/gherkin-infrastructure` (deleted) |
+| **PR** | #104 — merged 2026-04-12 |
+| **Blocks** | C2, C3 — **now unblocked** |
 
-**PR scope:**
-- `package.json` — new devDeps (@cucumber/node, tsx), new scripts
-- `features/support/world.ts` — World class
-- `features/support/steps/common.ts` — shared steps
-- `features/smoke.feature` — first feature file
+**Delivered:**
+
+- @cucumber/node + tsx devDeps, npm scripts
+- World class, shared step definitions, smoke feature file
 
 #### C2: Coverage Gaps
 
@@ -187,6 +179,7 @@ Three sequential/parallel branches:
 | **Estimate** | 6-8 hours |
 
 **PR scope:**
+
 - `features/*.feature` — new feature files for 7 coverage gap batches
 - `features/support/steps/*.ts` — step definitions
 - Coverage delta: 85% → 95%+
@@ -202,6 +195,7 @@ Three sequential/parallel branches:
 | **Estimate** | 10-14 hours |
 
 **PR scope:**
+
 - `features/*.feature` — converted feature files
 - `features/support/steps/*.ts` — step definitions
 - Deleted: `tests/*.test.ts` (replaced by features)
@@ -215,10 +209,10 @@ Goal: Full cross-platform support and professional polish.
 
 ### Stream D: Platform Printing
 
-| Stream | Plan | Branch | Blocked by | Estimate |
+| Stream | Plan | Branch | Status | Notes |
 | --- | --- | --- | --- | --- |
-| Linux Print | `2025-12-25_plan_todo_LinuxPrint.md` | `feature/linux-print` | Nothing | 4-6 hours |
-| Windows Print | `2025-12-25_plan_todo_WinPrint.md` | `feature/windows-print` | Stream A | 4-6 hours |
+| Linux Print | `2025-12-25_plan_todo_LinuxPrint.md` | `feature/linux-print` (deleted) | **Partial** — PR #105 merged 2026-04-12 | Viewer selection + CUPS detection done; Linux smoke test pending |
+| Windows Print | `2025-12-25_plan_todo_WinPrint.md` | `feature/windows-print` | TODO | Unblocked by Stream A completion |
 
 ### Stream E: Web Presence
 
@@ -286,6 +280,10 @@ Every PR in this project must satisfy:
 | 2026-04-01 | One branch per swimlane | Fewer PRs, coherent CodeRabbit reviews per work stream |
 | 2026-04-01 | Fix Windows bugs before publishing | Don't ship known-broken platform code |
 | 2026-04-01 | Publish as "appliedmedia" | Organization publisher on VS Code Marketplace |
+| 2026-04-12 | Merge Windows Fixes (PR #103) | 5 OSWin.ts bugs fixed, unblocks Marketplace Publish |
+| 2026-04-12 | Merge Gherkin Infra (PR #104) | @cucumber/node foundation, unblocks C2 + C3 |
+| 2026-04-12 | Merge Linux Print (PR #105) | Viewer selection + CUPS detection; smoke test still needed |
+| 2026-04-12 | Merge Orchestrator Plans (PR #106) | Swimlane plan documents added to docs/plans/ |
 
 ---
 
