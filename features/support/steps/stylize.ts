@@ -2,6 +2,7 @@ import { Given, When, Then } from '@cucumber/node';
 import type { TestCaseContext } from '@cucumber/node';
 import assert from 'node:assert';
 import type { P2PWorld } from '../world.js';
+import { isThemeId } from '../../../out/src/Stylize.js';
 
 // -- Given steps ---------------------------------------------------------
 
@@ -66,6 +67,31 @@ Given(
   }
 );
 
+Given('VS Code extension themes are mocked with NLS labels', (t: TestCaseContext) => {
+  const world = t.world as P2PWorld;
+  const stylize = world.app.stylize;
+  (stylize.constructor as any).themesCache = null;
+
+  const fn = (stylize as any).fn;
+  fn.vscodeapis.getVSCodeExtensionsThemes = () => [
+    { id: 'nls-theme', extensionPath: '/mock/ext' },
+  ];
+  fn.vscodeapis.getVSCodeThemeJson = () => ({
+    id: 'nls-theme',
+    label: '%themeLabel%',
+    colors: { 'editor.background': '#ffffff' },
+    tokenColors: [{ scope: 'comment', settings: { foreground: '#008000' } }],
+  });
+  fn.vscodeapis.getActiveThemeId = () => 'nls-theme';
+  fn.os.fileRead = (args: any) => {
+    if (typeof args === 'object' && args.path?.includes('nls')) {
+      return { themeLabel: 'My NLS Theme' };
+    }
+    return null;
+  };
+  fn.os.pathJoin = (...parts: string[]) => parts.join('/');
+});
+
 // -- When steps ----------------------------------------------------------
 
 When(
@@ -95,6 +121,57 @@ When(
     world.result = (world.app.stylize as any).getShikiThemes(filter);
   }
 );
+
+When('I validate theme ID {string}', (t: TestCaseContext, id: string) => {
+  const world = t.world as P2PWorld;
+  world.result = String(isThemeId(id));
+});
+
+When(
+  'I escape HTML {string}',
+  (t: TestCaseContext, text: string) => {
+    const world = t.world as P2PWorld;
+    world.result = (world.app.stylize as any).escapeHtml(text);
+  }
+);
+
+When('I generate HTML from mock tokens', (t: TestCaseContext) => {
+  const world = t.world as P2PWorld;
+  const mockTokens = [
+    [
+      { content: 'const', color: '#0000ff', fontStyle: 1 },
+      { content: ' x', color: '#000000', fontStyle: 0 },
+    ],
+    [
+      { content: '// comment', color: '#008000', fontStyle: 2 },
+    ],
+  ];
+  world.result = (world.app.stylize as any).generateHtmlFromTokens(mockTokens, 14, 1.5);
+});
+
+When('I convert a theme with background token colors', (t: TestCaseContext) => {
+  const world = t.world as P2PWorld;
+  world.result = world.app.stylize.convertVSCodeThemeToShiki({
+    name: 'bg-theme',
+    colors: { 'editor.background': '#1e1e1e' },
+    tokenColors: [
+      {
+        scope: 'comment',
+        settings: { foreground: '#6a9955', background: '#1e1e1e' },
+      },
+    ],
+  });
+});
+
+When('I convert a null theme', (t: TestCaseContext) => {
+  const world = t.world as P2PWorld;
+  // Create a theme with a throwing getter to trigger the catch path
+  const badTheme = { name: 'bad-theme' } as any;
+  Object.defineProperty(badTheme, 'colors', {
+    get: () => { throw new Error('simulated conversion error'); },
+  });
+  world.result = world.app.stylize.convertVSCodeThemeToShiki(badTheme);
+});
 
 // -- Then steps ----------------------------------------------------------
 
@@ -155,3 +232,28 @@ Then(
     }
   }
 );
+
+Then(
+  'the result should contain {string}',
+  (t: TestCaseContext, expected: string) => {
+    const world = t.world as P2PWorld;
+    const result = String(world.result);
+    assert.ok(result.includes(expected), `Result should contain "${expected}", got "${result}"`);
+  }
+);
+
+Then('the theme data should have token colors', (t: TestCaseContext) => {
+  const world = t.world as P2PWorld;
+  const themeData = world.result as { tokenColors: unknown[] };
+  assert.ok(themeData.tokenColors, 'Should have tokenColors');
+  assert.ok(themeData.tokenColors.length > 0, 'Should have at least one token color');
+  const first = themeData.tokenColors[0] as { settings: { background?: string } };
+  assert.ok(first.settings.background, 'First token color should have background');
+});
+
+Then('the theme data should have a name', (t: TestCaseContext) => {
+  const world = t.world as P2PWorld;
+  const themeData = world.result as { name: string };
+  assert.ok(typeof themeData.name === 'string', 'Should have a name');
+  assert.ok(themeData.name.length > 0, 'Name should not be empty');
+});

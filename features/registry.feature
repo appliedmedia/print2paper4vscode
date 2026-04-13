@@ -16,3 +16,13 @@ Feature: Registry Error Paths
     And a component whose done method throws
     When I call done on the registry
     Then no errors should occur
+
+  Scenario: getInstance returns undefined for unknown component
+    Given a new Print2Paper application
+    When I get instance of "nonexistent_component"
+    Then the result should be undefined
+
+  Scenario: use() throws when method name not found in any prototype
+    Given a new Print2Paper application
+    When I call use with a method-only name that does not exist
+    Then an error should be thrown containing "not found"

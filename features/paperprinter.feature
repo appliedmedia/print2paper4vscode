@@ -36,3 +36,44 @@ Feature: PaperPrinter Zoom and Markdown Selection
     And the current zoom is at maximum
     When I click the zoom in button
     Then the zoom should remain at maximum
+
+  Scenario: handleSelection_Theme with non-default theme
+    Given a new Print2Paper application
+    And menus are created
+    And regenerateAndUpdateWebview is mocked
+    When I select a non-default theme
+    Then the selection result should have an id
+
+  Scenario: handleSelection_Text with non-default font size
+    Given a new Print2Paper application
+    And menus are created
+    And regenerateAndUpdateWebview is mocked
+    When I select a non-default font size
+    Then the selection result should have an id
+
+  Scenario: handleSelection_PageSizeId with non-default page size
+    Given a new Print2Paper application
+    And menus are created
+    And regenerateAndUpdateWebview is mocked
+    When I select a non-default page size
+    Then the selection result should have an id
+
+  Scenario: handleSelection_Orient with non-default orientation
+    Given a new Print2Paper application
+    And menus are created
+    And regenerateAndUpdateWebview is mocked
+    When I select a non-default orientation
+    Then the selection result should have an id
+
+  Scenario: handleSelection_MarginId with non-default margin
+    Given a new Print2Paper application
+    And menus are created
+    And regenerateAndUpdateWebview is mocked
+    When I select a non-default margin
+    Then the selection result should have an id
+
+  Scenario: menus are only created once
+    Given a new Print2Paper application
+    And menus are created
+    When menus are created again
+    Then the menu count should not change

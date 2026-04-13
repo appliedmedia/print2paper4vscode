@@ -79,6 +79,54 @@ When('I click the zoom out button', async (t: TestCaseContext) => {
   });
 });
 
+When('I select a non-default theme', async (t: TestCaseContext) => {
+  const world = t.world as P2PWorld;
+  state.zoomResult = await (world.app.paperprinter as any).handleSelection_Theme({
+    menuId: 'theme',
+    menuItemId: 'github-dark',
+  });
+});
+
+When('I select a non-default font size', async (t: TestCaseContext) => {
+  const world = t.world as P2PWorld;
+  state.zoomResult = await (world.app.paperprinter as any).handleSelection_Text({
+    menuId: 'fontSizeId',
+    menuItemId: '16',
+  });
+});
+
+When('I select a non-default page size', async (t: TestCaseContext) => {
+  const world = t.world as P2PWorld;
+  state.zoomResult = await (world.app.paperprinter as any).handleSelection_PageSizeId({
+    menuId: 'pageSizeId',
+    menuItemId: 'a4',
+  });
+});
+
+When('I select a non-default orientation', async (t: TestCaseContext) => {
+  const world = t.world as P2PWorld;
+  state.zoomResult = await (world.app.paperprinter as any).handleSelection_Orient({
+    menuId: 'orient',
+    menuItemId: 'landscape',
+  });
+});
+
+When('I select a non-default margin', async (t: TestCaseContext) => {
+  const world = t.world as P2PWorld;
+  state.zoomResult = await (world.app.paperprinter as any).handleSelection_MarginId({
+    menuId: 'marginId',
+    menuItemId: 'narrow',
+  });
+});
+
+When('menus are created again', (t: TestCaseContext) => {
+  const world = t.world as P2PWorld;
+  const before = world.app.uimenumgr.getUIMenus().length;
+  (world.app.paperprinter as any).createMenus();
+  const after = world.app.uimenumgr.getUIMenus().length;
+  world.result = { before, after };
+});
+
 // -- Then steps ----------------------------------------------------------
 
 Then('the zoom value should be persisted', (t: TestCaseContext) => {
@@ -101,4 +149,15 @@ Then('the zoom should decrease', (t: TestCaseContext) => {
 Then('the zoom should remain at maximum', (t: TestCaseContext) => {
   const newZoom = state.zoomResult.value as number;
   assert.strictEqual(newZoom, 2.5, 'Zoom should be clamped at maximum 2.5');
+});
+
+Then('the selection result should have an id', (t: TestCaseContext) => {
+  assert.ok(state.zoomResult.id, 'Selection result should have an id');
+  assert.ok(state.zoomResult.value, 'Selection result should have a value');
+});
+
+Then('the menu count should not change', (t: TestCaseContext) => {
+  const world = t.world as P2PWorld;
+  const counts = world.result as { before: number; after: number };
+  assert.strictEqual(counts.before, counts.after, 'Menu count should not change on second createMenus');
 });

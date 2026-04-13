@@ -63,6 +63,67 @@ When('I get the menu CSS', (t: TestCaseContext) => {
   world.result = world.app.uimenumgr.getUIMenus_CSS();
 });
 
+// Track dispatch calls
+const dispatchState = { called: false };
+
+Given('menu dispatch is mocked', (t: TestCaseContext) => {
+  const world = t.world as P2PWorld;
+  dispatchState.called = false;
+  // Mock the dispatch on all menus
+  const menus = world.app.uimenumgr.getUIMenus();
+  for (const menu of menus) {
+    const orig = menu.dispatchSelection.bind(menu);
+    menu.dispatchSelection = async (menuItemId: string, contextDict: any) => {
+      dispatchState.called = true;
+      // Don't call original to avoid side effects
+    };
+  }
+});
+
+When(
+  'I set context dict with key {string} value {string}',
+  (t: TestCaseContext, key: string, value: string) => {
+    const world = t.world as P2PWorld;
+    world.app.uimenumgr.setContextDict({ [key]: value } as any);
+  }
+);
+
+When('I validate menu item ID {string}', (t: TestCaseContext, id: string) => {
+  const world = t.world as P2PWorld;
+  world.result = world.app.uimenumgr.isMenuItemId(id);
+});
+
+When('I get persist for menu {string}', (t: TestCaseContext, menuId: string) => {
+  const world = t.world as P2PWorld;
+  world.result = world.app.uimenumgr.getPersistForMenuId(menuId as any);
+});
+
+When(
+  'I handle menu item selected {string} with item {string}',
+  async (t: TestCaseContext, menuId: string, menuItemId: string) => {
+    const world = t.world as P2PWorld;
+    try {
+      await world.app.uimenumgr.handleMenuItemSelected(
+        menuId as any, menuItemId as any, {} as any
+      );
+      world.error = null;
+    } catch (e) {
+      world.error = e as Error;
+    }
+  }
+);
+
+When(
+  'I get persist value for persistId {string} on menu {string}',
+  (t: TestCaseContext, persistId: string, menuId: string) => {
+    const world = t.world as P2PWorld;
+    world.result = world.app.uimenumgr.getValueOfPersistIdForMenuId({
+      menuId: menuId as any,
+      persistId: persistId as any,
+    });
+  }
+);
+
 // -- Then steps ----------------------------------------------------------
 
 Then('the menu should default to visible', (t: TestCaseContext) => {
@@ -79,4 +140,22 @@ Then('the resolved value should be undefined', (t: TestCaseContext) => {
 Then('the result should be empty string', (t: TestCaseContext) => {
   const world = t.world as P2PWorld;
   assert.strictEqual(world.result, '', 'Should return empty string');
+});
+
+Then(
+  'the context dict should contain key {string}',
+  (t: TestCaseContext, key: string) => {
+    const world = t.world as P2PWorld;
+    const dict = (world.app.uimenumgr as any).contextDict;
+    assert.ok(key in dict, `Context dict should contain key "${key}"`);
+  }
+);
+
+Then('the validation result should be true', (t: TestCaseContext) => {
+  const world = t.world as P2PWorld;
+  assert.strictEqual(world.result, true, 'Should return true');
+});
+
+Then('the menu dispatch should have been called', (t: TestCaseContext) => {
+  assert.ok(dispatchState.called, 'Menu dispatch should have been called');
 });

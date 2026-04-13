@@ -56,7 +56,27 @@ When('I call done on the registry', (t: TestCaseContext) => {
   }
 });
 
+When('I get instance of {string}', (t: TestCaseContext, componentId: string) => {
+  const world = t.world as P2PWorld;
+  world.result = world.app.reg.getInstance(componentId);
+});
+
+When('I call use with a method-only name that does not exist', (t: TestCaseContext) => {
+  const world = t.world as P2PWorld;
+  try {
+    world.app.reg.use('totallyFakeMethodNameXyz');
+    world.error = null;
+  } catch (e) {
+    world.error = e as Error;
+  }
+});
+
 // -- Then steps ----------------------------------------------------------
+
+Then('the result should be undefined', (t: TestCaseContext) => {
+  const world = t.world as P2PWorld;
+  assert.strictEqual(world.result, undefined, 'Should return undefined');
+});
 
 Then(
   'an error should be thrown containing {string}',
