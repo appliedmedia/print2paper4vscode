@@ -1,0 +1,49 @@
+import { Given, When, Then } from '@cucumber/node';
+import type { TestCaseContext } from '@cucumber/node';
+import assert from 'node:assert';
+import type { P2PWorld } from '../world.js';
+
+// -- Given steps ---------------------------------------------------------
+
+Given('uimenu_generic_handlers YAML property is cleared', (t: TestCaseContext) => {
+  const world = t.world as P2PWorld;
+  const menus = world.app.uimenumgr.getUIMenus();
+  if (menus.length > 0) {
+    const origYaml = menus[0].yaml.bind(menus[0]);
+    menus[0].yaml = () => {
+      const data = origYaml();
+      return { ...data, uimenu_generic_handlers: '' };
+    };
+  }
+});
+
+Given('uimenu_css YAML property is cleared', (t: TestCaseContext) => {
+  const world = t.world as P2PWorld;
+  const menus = world.app.uimenumgr.getUIMenus();
+  if (menus.length > 0) {
+    const origYaml = menus[0].yaml.bind(menus[0]);
+    menus[0].yaml = () => {
+      const data = origYaml();
+      return { ...data, uimenu_css: '' };
+    };
+  }
+});
+
+// -- When steps ----------------------------------------------------------
+
+When('a value resolver returns a boolean', (t: TestCaseContext) => {
+  const world = t.world as P2PWorld;
+  const mgr = world.app.uimenumgr;
+  world.result = (mgr as any).getValueOfMenuFxnByCalcValue(
+    () => false,
+    'test-menu',
+    'test-item'
+  );
+});
+
+// -- Then steps ----------------------------------------------------------
+
+Then('the resolved value should be boolean false', (t: TestCaseContext) => {
+  const world = t.world as P2PWorld;
+  assert.strictEqual(world.result, false, 'Should return boolean false');
+});
