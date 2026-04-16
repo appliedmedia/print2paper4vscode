@@ -92,7 +92,7 @@
     "format:check": "prettier --check src/**/*.ts **/*.md",
     "pretest": "node scripts/setup-vscode-mock.js",
     "test": "node scripts/run-tests.js",
-    "test:gherkin": "node scripts/setup-vscode-mock.js && node --import @cucumber/node/bootstrap --import tsx --test features/smoke.feature",
+    "test:gherkin": "node scripts/setup-vscode-mock.js && node --import @cucumber/node/bootstrap --import tsx --test features/*.feature",
     "test:all": "npm run test && npm run test:gherkin",
     "test:watch": "node scripts/run-tests.js --watch",
     "test:verbose": "node scripts/run-tests.js --reporter spec",
