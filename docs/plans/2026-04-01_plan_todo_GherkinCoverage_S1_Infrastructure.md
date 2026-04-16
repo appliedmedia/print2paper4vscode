@@ -1,6 +1,6 @@
 # Swimlane 1: Infrastructure Setup
 
-**Status:** TODO
+**Status:** DONE (merged as PR #104, 2026-04-12)
 **Created:** 2026-04-01
 **Orchestrator:** `2026-04-01_plan_todo_GherkinCoverage.md`
 **Master Orchestrator:** `2026-04-01_plan_todo_Orchestrator.md` (Phase 2, Stream C1)
@@ -42,6 +42,7 @@ npm install --save-dev @cucumber/node tsx
 ```
 
 **Packages:**
+
 - `@cucumber/node` - Gherkin runner for node:test
 - `tsx` - TypeScript execution (recommended by @cucumber/node docs for TS step definitions)
 
@@ -170,6 +171,7 @@ npm run test:coverage
 ```
 
 **Success criteria for this task:**
+
 - smoke.feature passes
 - All 361 existing tests still pass
 - c8 shows combined coverage from both test types

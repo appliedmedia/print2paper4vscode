@@ -1,7 +1,8 @@
 # Gherkin Migration & Coverage Improvement - Stream C Orchestrator
 
-**Status:** TODO
+**Status:** IN PROGRESS (S1 done, S2 at 95.03%, S3 Batch 1 done)
 **Created:** 2026-04-01
+**Updated:** 2026-04-16
 **Priority:** High - test quality and coverage improvement
 **Type:** Stream orchestrator (coordinates swimlane plans)
 **Master Orchestrator:** `2026-04-01_plan_todo_Orchestrator.md` (Phase 2, Stream C)
@@ -22,30 +23,22 @@ Each swimlane is one branch → one PR → CodeRabbit review → merge to main.
 
 Convert the test suite from `node:test` to Gherkin `.feature` files and raise code coverage from **85% to 95%+** in a single coordinated effort.
 
-## Current State
+## Current State (updated 2026-04-16)
 
-| Metric | Value |
-| --- | --- |
-| **Tests** | 361 passing (91 suites, 33 files) |
-| **Runner** | `node:test` (Node.js built-in) |
-| **Coverage tool** | `c8` (V8-based) |
-| **Statement coverage** | 85.18% |
-| **Branch coverage** | 75.41% |
-| **Function coverage** | 83.18% |
-| **Line coverage** | 85.18% |
+* **Coverage branch (feature/gherkin-coverage, PR #107):** 1238 tests (386 unit + 852 Gherkin), 95.03% stmts, 83.86% branches
+* **Migration branch (feature/gherkin-migration):** 623 tests (342 unit + 281 Gherkin), Batch 1 of 6 complete
+* **Runner:** `node:test` (Node.js built-in) + `@cucumber/node` for Gherkin
+* **Coverage tool:** `c8` (V8-based)
 
-### Coverage Gaps (files below 80%)
+### Remaining Coverage Gaps (on feature/gherkin-coverage branch)
 
-| File | Stmts | Branch | Funcs | Reason |
-| --- | --- | --- | --- | --- |
-| OSMac.ts | 55.04% | 100% | 41.66% | AppleScript methods untested |
-| OSWin.ts | 58.82% | 100% | 33.33% | Windows stubs |
-| Stylize.ts | 63.92% | 53.48% | 75% | Theme loading paths |
-| OSLinux.ts | 65.78% | 100% | 33.33% | Linux stubs |
-| UIMenuMgr.ts | 75.39% | 87.71% | 76% | Menu selection tracking |
-| VSCodeAPIs.ts | 75.76% | 67.27% | 86.48% | Workspace/dialog wrappers |
-| UI.ts | 77.94% | 75% | 87.5% | CSS generation, templates |
-| PaperPrinter.ts | 79.61% | 69.09% | 97.5% | Print workflow branches |
+* OSMac.ts: 74.31% stmts (platform-limited, skip)
+* VSCodeAPIs.ts: 77.7% stmts (skipped per project preference)
+* UIMenuMgr.ts: 89.17% stmts
+* PDF.ts: 89.45% stmts
+* Registry.ts: 91.48% stmts
+* PaperPrinter.ts: 91.59% stmts
+* OS.ts: 92.13% stmts
 
 ## Target State
 
@@ -165,16 +158,16 @@ features/
 
 ## Success Criteria
 
-- [ ] @cucumber/node installed and configured
-- [ ] At least one .feature file runs alongside existing tests
-- [ ] All existing 361 tests still pass during migration
-- [ ] Statement coverage >= 95%
-- [ ] Branch coverage >= 90%
-- [ ] Function coverage >= 95%
-- [ ] All 33 test files migrated to .feature files
-- [ ] Step definitions are reusable across features
-- [ ] c8 produces combined coverage report
-- [ ] CI pipeline updated to run Gherkin tests
+* [x] @cucumber/node installed and configured (S1, PR #104)
+* [x] At least one .feature file runs alongside existing tests (S1, PR #104)
+* [x] All existing tests still pass during migration
+* [x] Statement coverage >= 95% (95.03% on S2 branch)
+* [ ] Branch coverage >= 90% (83.86% currently)
+* [ ] Function coverage >= 95% (90.83% currently)
+* [ ] All 33 test files migrated to .feature files (4 of 33 done in S3 Batch 1)
+* [x] Step definitions are reusable across features
+* [x] c8 produces combined coverage report
+* [x] CI pipeline updated to run Gherkin tests
 
 ## Risks
 
@@ -189,8 +182,8 @@ features/
 
 ## References
 
-- [@cucumber/node docs](https://cucumber.github.io/cucumber-node)
-- [@cucumber/node GitHub](https://github.com/cucumber/cucumber-node)
-- [Gherkin Reference](https://cucumber.io/docs/gherkin/reference/)
-- [c8 coverage tool](https://github.com/bcoe/c8)
-- VS Code extension: `CucumberOpen.cucumber-official` (step autocomplete, go-to-definition)
+* [@cucumber/node docs](https://cucumber.github.io/cucumber-node)
+* [@cucumber/node GitHub](https://github.com/cucumber/cucumber-node)
+* [Gherkin Reference](https://cucumber.io/docs/gherkin/reference/)
+* [c8 coverage tool](https://github.com/bcoe/c8)
+* VS Code extension: `CucumberOpen.cucumber-official` (step autocomplete, go-to-definition)

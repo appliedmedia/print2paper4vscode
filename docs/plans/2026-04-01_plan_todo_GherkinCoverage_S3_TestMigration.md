@@ -1,14 +1,14 @@
 # Swimlane 3: Test Migration - node:test to Gherkin
 
-**Status:** TODO
+**Status:** IN PROGRESS (Batch 1 done: Coords, Diagnostics, Yaml migrated)
 **Created:** 2026-04-01
+**Updated:** 2026-04-16
 **Orchestrator:** `2026-04-01_plan_todo_GherkinCoverage.md`
 **Master Orchestrator:** `2026-04-01_plan_todo_Orchestrator.md` (Phase 2, Stream C3)
 **Branch:** `feature/gherkin-migration`
-**PR Target:** `main` (CodeRabbit review required)
-**Blocked by:** Swimlane 1 (Infrastructure) — S1 PR must be merged first
+**PR:** pending creation
 **Parallel with:** Swimlane 2 (Coverage Gaps)
-**Estimated Time:** 10-14 hours
+**Estimated Time:** 10-14 hours (Batch 1 complete, Batches 2-6 remaining)
 
 ---
 

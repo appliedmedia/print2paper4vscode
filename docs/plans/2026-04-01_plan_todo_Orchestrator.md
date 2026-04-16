@@ -7,16 +7,14 @@
 
 ---
 
-## Current State (2026-04-01)
+## Current State (updated 2026-04-16)
 
-| Metric | Value |
-| --- | --- |
-| Branch | `main` at 870d7b5 |
-| Tests | 361 passing (91 suites) |
-| Coverage | 85.18% stmts, 75.41% branch |
-| Build | Compiles clean, esbuild bundles to dist/ |
-| Published | No - not yet on VS Code Marketplace |
-| Platform | macOS complete, Windows has 5 bugs, Linux stubs only |
+* **Main branch:** 386 unit + 8 Gherkin smoke tests, 85.69% stmts
+* **Coverage branch (PR #107):** 1238 tests (386 unit + 852 Gherkin), 95.03% stmts
+* **Migration branch (PR pending):** 623 tests (342 unit + 281 Gherkin), Batch 1 done
+* **Build:** Compiles clean, esbuild bundles to dist/
+* **Published:** No: not yet on VS Code Marketplace
+* **Platform:** macOS complete, Windows bugs fixed (PR #103), Linux partial (PR #105)
 
 ---
 
@@ -109,16 +107,18 @@ Goal: Fix critical bugs and get the extension on the VS Code Marketplace.
 | **Estimate** | 3-4 hours |
 
 **What:**
-- Fix 5 bugs in OSWin.ts (double-escaping, wrong DLL, backslash handling)
-- Rewrite `escapePath()`, `filePrint()`, convert to `execFileAsync`
-- Add unit tests for command construction (runnable on macOS)
-- Add `windows-latest` to CI matrix
+
+* Fix 5 bugs in OSWin.ts (double-escaping, wrong DLL, backslash handling)
+* Rewrite `escapePath()`, `filePrint()`, convert to `execFileAsync`
+* Add unit tests for command construction (runnable on macOS)
+* Add `windows-latest` to CI matrix
 
 **PR scope:**
-- `src/OSWin.ts` — rewritten
-- `tests/OSWin.test.ts` — new/updated tests
-- `.github/workflows/ci.yml` — add Windows matrix
-- `package.json` scripts — cross-platform `compile` command
+
+* `src/OSWin.ts` — rewritten
+* `tests/OSWin.test.ts` — new/updated tests
+* `.github/workflows/ci.yml` — add Windows matrix
+* `package.json` scripts — cross-platform `compile` command
 
 **Done when:** Tests pass on both ubuntu-latest and windows-latest in CI.
 
@@ -132,6 +132,7 @@ Goal: Fix critical bugs and get the extension on the VS Code Marketplace.
 | **Estimate** | 30-45 min manual steps + small PR |
 
 **What:**
+
 1. Create Azure DevOps org + PAT (manual)
 2. Create publisher "appliedmedia" on marketplace (manual)
 3. Verify `package.json` publisher field matches
@@ -141,8 +142,9 @@ Goal: Fix critical bugs and get the extension on the VS Code Marketplace.
 7. Verify extension live on marketplace
 
 **PR scope (if needed):**
-- `.config/template.package.json` — publisher field, metadata tweaks
-- `package.json` — regenerated
+
+* `.config/template.package.json` — publisher field, metadata tweaks
+* `package.json` — regenerated
 
 **Done when:** Extension searchable and installable from VS Code Marketplace.
 
@@ -161,51 +163,27 @@ Goal: Convert test suite to Gherkin and raise coverage from 85% to 95%+.
 
 Three sequential/parallel branches:
 
-#### C1: Infrastructure
+#### C1: Infrastructure -- DONE
 
-| Field | Value |
-| --- | --- |
-| **Plan** | `2026-04-01_plan_todo_GherkinCoverage_S1_Infrastructure.md` |
-| **Branch** | `feature/gherkin-infrastructure` |
-| **Blocks** | C2, C3 |
-| **Estimate** | 2-3 hours |
+* **Plan:** `2026-04-01_plan_todo_GherkinCoverage_S1_Infrastructure.md`
+* **Branch:** `feature/gherkin-infrastructure` (merged as PR #104)
+* **Status:** DONE
 
-**PR scope:**
-- `package.json` — new devDeps (@cucumber/node, tsx), new scripts
-- `features/support/world.ts` — World class
-- `features/support/steps/common.ts` — shared steps
-- `features/smoke.feature` — first feature file
+#### C2: Coverage Gaps -- IN PROGRESS (95.03% stmts)
 
-#### C2: Coverage Gaps
+* **Plan:** `2026-04-01_plan_todo_GherkinCoverage_S2_CoverageGaps.md`
+* **Branch:** `feature/gherkin-coverage`
+* **PR:** #107 (open)
+* **Status:** 95.03% stmts achieved (target met). 852 Gherkin tests added across 17 feature files.
+* **Remaining:** Branch coverage 83.86% (target 90%), some per-file gaps in UIMenuMgr, PDF, Registry
 
-| Field | Value |
-| --- | --- |
-| **Plan** | `2026-04-01_plan_todo_GherkinCoverage_S2_CoverageGaps.md` |
-| **Branch** | `feature/gherkin-coverage` |
-| **Blocked by** | C1 |
-| **Parallel with** | C3 |
-| **Estimate** | 6-8 hours |
+#### C3: Test Migration -- IN PROGRESS (Batch 1 of 6)
 
-**PR scope:**
-- `features/*.feature` — new feature files for 7 coverage gap batches
-- `features/support/steps/*.ts` — step definitions
-- Coverage delta: 85% → 95%+
-
-#### C3: Test Migration
-
-| Field | Value |
-| --- | --- |
-| **Plan** | `2026-04-01_plan_todo_GherkinCoverage_S3_TestMigration.md` |
-| **Branch** | `feature/gherkin-migration` |
-| **Blocked by** | C1 |
-| **Parallel with** | C2 |
-| **Estimate** | 10-14 hours |
-
-**PR scope:**
-- `features/*.feature` — converted feature files
-- `features/support/steps/*.ts` — step definitions
-- Deleted: `tests/*.test.ts` (replaced by features)
-- Updated: npm scripts, CI workflow
+* **Plan:** `2026-04-01_plan_todo_GherkinCoverage_S3_TestMigration.md`
+* **Branch:** `feature/gherkin-migration`
+* **PR:** pending creation
+* **Status:** Batch 1 complete (Coords, Coords-PageLayout, Diagnostics, Yaml). 44 node:test tests replaced by 273 Gherkin scenarios.
+* **Remaining:** Batches 2-6 (Persist, TabInspector, Registry, UI, PDF, PaperPrinter, OS, etc.)
 
 ---
 
@@ -266,13 +244,13 @@ Goal: Full cross-platform support and professional polish.
 
 Every PR in this project must satisfy:
 
-- [ ] **Branch:** Created from latest `main`
-- [ ] **CI passes:** Compile + lint + test on ubuntu-latest (and windows-latest after Stream A)
-- [ ] **Coverage:** Does not decrease from baseline (currently 85.18%)
-- [ ] **CodeRabbit:** Automated review addressed — all critical/major comments resolved
-- [ ] **Tests:** New/changed code has corresponding tests
-- [ ] **No secrets:** No tokens, credentials, or `.env` files
-- [ ] **Commit messages:** Clear, descriptive, reference plan if applicable
+* [ ] **Branch:** Created from latest `main`
+* [ ] **CI passes:** Compile + lint + test on ubuntu-latest (and windows-latest after Stream A)
+* [ ] **Coverage:** Does not decrease from baseline (currently 85.18%)
+* [ ] **CodeRabbit:** Automated review addressed — all critical/major comments resolved
+* [ ] **Tests:** New/changed code has corresponding tests
+* [ ] **No secrets:** No tokens, credentials, or `.env` files
+* [ ] **Commit messages:** Clear, descriptive, reference plan if applicable
 
 **Docs-only PRs:** For PRs that only change documentation files (`.md`, `.txt`, plan files), the CI, Coverage, and Tests checkboxes are automatically satisfied. CI linting for docs (e.g., `npm run lint:md`) is the only required check. Coverage and test requirements do not apply to documentation-only changes.
 

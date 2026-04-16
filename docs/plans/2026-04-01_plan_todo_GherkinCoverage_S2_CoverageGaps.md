@@ -1,12 +1,12 @@
 # Swimlane 2: Coverage Gaps - New Gherkin Tests
 
-**Status:** TODO
+**Status:** IN PROGRESS (95.03% stmts achieved, PR #107 open)
 **Created:** 2026-04-01
+**Updated:** 2026-04-16
 **Orchestrator:** `2026-04-01_plan_todo_GherkinCoverage.md`
 **Master Orchestrator:** `2026-04-01_plan_todo_Orchestrator.md` (Phase 2, Stream C2)
 **Branch:** `feature/gherkin-coverage`
-**PR Target:** `main` (CodeRabbit review required)
-**Blocked by:** Swimlane 1 (Infrastructure) — S1 PR must be merged first
+**PR:** #107 (open)
 **Parallel with:** Swimlane 3 (Test Migration)
 **Estimated Time:** 6-8 hours
 
@@ -18,7 +18,7 @@ Write new Gherkin tests targeting uncovered code paths. All new tests go directl
 
 ## Coverage Baseline (2026-04-01)
 
-**Overall: 85.18% statements, 75.41% branches**
+Overall: 85.18% statements, 75.41% branches
 
 ---
 
@@ -231,6 +231,7 @@ Feature: Dependency Injection Registry
 ### Batch G: OS Platform Stubs (OSWin 58%, OSLinux 65%, OSMac 55%)
 
 **Note:** These files have low coverage because they contain platform-specific code (AppleScript, CUPS, PowerShell) that can only truly run on their respective platforms. We can test:
+
 - Method existence and signatures
 - Error handling for unavailable platform commands
 - Mock-based execution paths.
@@ -308,6 +309,7 @@ npm run test:coverage
 ```
 
 Check that:
+
 - New .feature tests pass
 - Existing tests unaffected
 - Coverage % increases as expected
