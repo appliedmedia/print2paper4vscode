@@ -3,28 +3,31 @@ import type { TestCaseContext } from '@cucumber/node';
 import assert from 'node:assert';
 import type { P2PWorld } from '../world.js';
 
+// -- Helpers -------------------------------------------------------------
+
+function clearYamlProp(
+  world: P2PWorld,
+  key: 'uimenu_generic_handlers' | 'uimenu_css'
+): void {
+  const menus = world.app.uimenumgr.getUIMenus();
+  assert.ok(menus.length > 0, 'Expected at least one UIMenu to clear YAML on');
+  const origYaml = menus[0].yaml.bind(menus[0]);
+  menus[0].yaml = () => {
+    const data = origYaml();
+    return { ...data, [key]: '' };
+  };
+}
+
 // -- Given steps ---------------------------------------------------------
 
 Given('uimenu_generic_handlers YAML property is cleared', (t: TestCaseContext) => {
   const world = t.world as P2PWorld;
-  const menus = world.app.uimenumgr.getUIMenus();
-  assert.ok(menus.length > 0, 'Expected at least one UIMenu to clear YAML on');
-  const origYaml = menus[0].yaml.bind(menus[0]);
-  menus[0].yaml = () => {
-    const data = origYaml();
-    return { ...data, uimenu_generic_handlers: '' };
-  };
+  clearYamlProp(world, 'uimenu_generic_handlers');
 });
 
 Given('uimenu_css YAML property is cleared', (t: TestCaseContext) => {
   const world = t.world as P2PWorld;
-  const menus = world.app.uimenumgr.getUIMenus();
-  assert.ok(menus.length > 0, 'Expected at least one UIMenu to clear YAML on');
-  const origYaml = menus[0].yaml.bind(menus[0]);
-  menus[0].yaml = () => {
-    const data = origYaml();
-    return { ...data, uimenu_css: '' };
-  };
+  clearYamlProp(world, 'uimenu_css');
 });
 
 // -- When steps ----------------------------------------------------------
