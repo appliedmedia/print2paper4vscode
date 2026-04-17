@@ -130,6 +130,23 @@ Then('the print action should complete', (t: TestCaseContext) => {
 Then('the md selection should have a value', (t: TestCaseContext) => {
   assert.ok(ppState2.mdResult, 'Md result should exist');
   assert.ok(ppState2.mdResult.id, 'Md result should have an id');
+  // Step name says "should have a value" — enforce that literally so an
+  // empty-string value does not silently pass and mask regressions.
+  assert.notStrictEqual(
+    ppState2.mdResult.value,
+    undefined,
+    'Md result should have a value (not undefined)'
+  );
+  assert.notStrictEqual(
+    ppState2.mdResult.value,
+    null,
+    'Md result should have a value (not null)'
+  );
+  assert.notStrictEqual(
+    ppState2.mdResult.value,
+    '',
+    'Md result should have a non-empty value'
+  );
 });
 
 Then('the regenerate should complete', (t: TestCaseContext) => {

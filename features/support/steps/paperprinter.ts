@@ -162,7 +162,18 @@ Then('the zoom should remain at maximum', (t: TestCaseContext) => {
 
 Then('the selection result should have an id', (t: TestCaseContext) => {
   assert.ok(state.zoomResult.id, 'Selection result should have an id');
-  assert.ok(state.zoomResult.value, 'Selection result should have a value');
+  // Check for null/undefined rather than truthiness so valid values like 0 or
+  // false are accepted (avoids false negatives on falsy-but-valid results).
+  assert.notStrictEqual(
+    state.zoomResult.value,
+    undefined,
+    'Selection result should have a value'
+  );
+  assert.notStrictEqual(
+    state.zoomResult.value,
+    null,
+    'Selection result should have a value'
+  );
 });
 
 Then('the menu count should not change', (t: TestCaseContext) => {
