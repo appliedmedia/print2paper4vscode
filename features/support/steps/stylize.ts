@@ -181,6 +181,10 @@ Then(
     const world = t.world as P2PWorld;
     const themes = world.result as Array<{ id: string; displayName: string }>;
     assert.ok(Array.isArray(themes), 'Should return array');
+    // Guard against empty arrays silently passing: an empty result would mean
+    // the filter ran but returned nothing, which is indistinguishable from the
+    // filter never executing the matching branch.
+    assert.ok(themes.length > 0, 'Should have at least one matching theme');
     const regex = new RegExp(pattern, 'i');
     for (const theme of themes) {
       assert.ok(
@@ -201,6 +205,22 @@ Then('converted themes should be returned', (t: TestCaseContext) => {
     assert.ok(theme.themeData, `Theme "${theme.id}" should have themeData`);
   }
 });
+
+Then(
+  'theme {string} should have display name {string}',
+  (t: TestCaseContext, id: string, expected: string) => {
+    const world = t.world as P2PWorld;
+    const themes = world.result as Array<{ id: string; displayName: string }>;
+    assert.ok(Array.isArray(themes), 'Should return array');
+    const theme = themes.find(x => x.id === id);
+    assert.ok(theme, `Missing theme "${id}"`);
+    assert.strictEqual(
+      theme!.displayName,
+      expected,
+      `Theme "${id}" display name should resolve NLS label to "${expected}"`
+    );
+  }
+);
 
 Then('the active theme should be first', (t: TestCaseContext) => {
   const world = t.world as P2PWorld;

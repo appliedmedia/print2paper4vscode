@@ -75,4 +75,4 @@ Feature: Stylize Theme Management
     Given a new Print2Paper application
     And VS Code extension themes are mocked with NLS labels
     When I get VS Code themes
-    Then converted themes should be returned
+    Then theme "nls-theme" should have display name "My NLS Theme"
