@@ -123,6 +123,7 @@ Then(
 
 Then('the menu selection should be forwarded', (t: TestCaseContext) => {
   assert.ok(state.menuItemSelectedCalled, 'handleMenuItemSelected should have been called');
+  assert.ok(state.menuItemSelectedArgs, 'menuItemSelectedArgs should be set');
   assert.strictEqual(state.menuItemSelectedArgs.menuId, 'testMenu');
   assert.strictEqual(state.menuItemSelectedArgs.menuItemId, 'testItem');
 });

@@ -14,7 +14,7 @@ Feature: PDF Generation Error Paths
   Scenario: shouldBreakPage returns false when no PDF document
     Given a new Print2Paper application
     When I check shouldBreakPage without PDF
-    Then the result should equal "false"
+    Then the result should be boolean false
 
   Scenario: addPageBreak does nothing when no PDF document
     Given a new Print2Paper application

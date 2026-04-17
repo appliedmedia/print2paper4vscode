@@ -117,12 +117,30 @@ When(
   'I get persist value for persistId {string} on menu {string}',
   (t: TestCaseContext, persistId: string, menuId: string) => {
     const world = t.world as P2PWorld;
-    world.result = world.app.uimenumgr.getValueOfPersistIdForMenuId({
-      menuId: menuId as any,
-      persistId: persistId as any,
-    });
+    try {
+      world.result = world.app.uimenumgr.getValueOfPersistIdForMenuId({
+        menuId: menuId as any,
+        persistId: persistId as any,
+      });
+      world.error = null;
+    } catch (e) {
+      world.error = e as Error;
+    }
   }
 );
+
+Then('the persist value should be defined or undefined without throwing', (t: TestCaseContext) => {
+  const world = t.world as P2PWorld;
+  // Concrete assertion: the call returned (did not throw), world.error is null,
+  // and world.result is either a valid persist value or undefined (no persist
+  // registered for the given persistId). This is more specific than "no errors".
+  assert.strictEqual(world.error, null, `Unexpected error: ${world.error}`);
+  const result = world.result;
+  assert.ok(
+    result === undefined || typeof result === 'string' || typeof result === 'number' || typeof result === 'boolean',
+    `getValueOfPersistIdForMenuId should return undefined or a primitive persist value; got ${typeof result}`
+  );
+});
 
 // -- Then steps ----------------------------------------------------------
 

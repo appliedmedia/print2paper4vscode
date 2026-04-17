@@ -38,6 +38,8 @@ Then('the tab metadata should be empty', (t: TestCaseContext) => {
   assert.strictEqual(meta.code, '', 'Code should be empty');
   assert.strictEqual(meta.fileName, '', 'fileName should be empty');
   assert.strictEqual(meta.filePath, '', 'filePath should be empty');
+  // inspectTab() returns language: 'plaintext' on no-editor / error paths
+  assert.strictEqual(meta.language, 'plaintext', "language should default to 'plaintext' on empty/error path");
 });
 
 Then('the result should be an empty array', (t: TestCaseContext) => {

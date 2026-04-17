@@ -14,7 +14,7 @@ Feature: Utils Coverage Gaps
   Scenario: forceContent returns useForEmpty for null
     Given a new Print2Paper application
     When I call forceContent with null
-    Then the force content result should be empty string
+    Then the force content result should be the default value
 
   Scenario: forceContents adds required keys
     Given a new Print2Paper application

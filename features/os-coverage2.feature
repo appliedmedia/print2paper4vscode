@@ -13,7 +13,7 @@ Feature: OS Coverage Gaps Extended
     When I read Shiki light themes
     Then the result should be an empty array
 
-  Scenario: fileDelete removes existing file without error
+  Scenario: fileDelete is a no-op for non-existent paths
     Given a new Print2Paper application
     When I delete a non-existent file path
     Then no errors should occur

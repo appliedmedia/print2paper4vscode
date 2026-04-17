@@ -93,9 +93,19 @@ Then('the selection should have empty values', (t: TestCaseContext) => {
 });
 
 Then('the zoom should use fallback value', (t: TestCaseContext) => {
-  // The zoom in button step stores result in the paperprinter.ts state module.
-  // If we reach here without error, the fallback path executed successfully.
-  // The zoom increased from altValue (1.0), which means it used the fallback.
+  // The "current zoom value is invalid" Given forces getValueOfMenuItemIdSelected
+  // to return 'not-a-number', forcing handleSelection_ZoomInOut to fall back to
+  // altValue (1.0) and increment by stepAmount. The zoom-in step stores the
+  // returned {id, value} on world.result so we can assert the concrete math
+  // (numeric, > 1.0 fallback base) instead of a vacuous world.error check.
   const world = t.world as P2PWorld;
   assert.strictEqual(world.error, null, 'Should not have errors');
+  const selection = world.result as { id: unknown; value: unknown } | undefined;
+  assert.ok(selection, 'zoom-in step should have stored the selection result');
+  const numericZoom =
+    typeof selection.value === 'number' ? selection.value : Number(selection.value);
+  assert.ok(
+    Number.isFinite(numericZoom) && numericZoom > 1.0,
+    `Zoom should be numeric and > 1.0 fallback; got ${String(selection.value)}`
+  );
 });

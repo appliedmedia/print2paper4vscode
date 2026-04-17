@@ -41,7 +41,7 @@ Feature: Stylize Theme Management
     And VS Code extension themes are mocked
     And the active theme ID matches a loaded theme
     When I resolve the active theme
-    Then a valid fallback theme should be returned
+    Then the result should equal the converted VS Code theme name
 
   Scenario: isThemeId rejects empty strings
     Given a new Print2Paper application

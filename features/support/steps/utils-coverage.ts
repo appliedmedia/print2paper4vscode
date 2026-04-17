@@ -60,7 +60,7 @@ Then('the result should have a fallback key', (t: TestCaseContext) => {
   assert.ok('0' in result, 'Should have fallback key "0"');
 });
 
-Then('the force content result should be empty string', (t: TestCaseContext) => {
+Then('the force content result should be the default value', (t: TestCaseContext) => {
   const world = t.world as P2PWorld;
   assert.strictEqual(world.result, 'default', 'Should return useForEmpty value');
 });
@@ -74,4 +74,5 @@ Then('the result should contain all required keys', (t: TestCaseContext) => {
   assert.ok('key3' in result, 'Should have key3');
   assert.strictEqual(result.key1, 'value1', 'key1 should keep its value');
   assert.strictEqual(result.key2, 'empty', 'key2 should use default');
+  assert.strictEqual(result.key3, 'empty', 'key3 should use default');
 });

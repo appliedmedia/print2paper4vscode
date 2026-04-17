@@ -67,6 +67,8 @@ When('I click the zoom in button', async (t: TestCaseContext) => {
     menuId: 'zoomIn',
     menuItemId: 'zoomIn',
   });
+  // Also expose on world.result so coverage scenarios can make concrete assertions
+  world.result = state.zoomResult;
 });
 
 When('I click the zoom out button', async (t: TestCaseContext) => {

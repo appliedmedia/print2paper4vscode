@@ -216,6 +216,17 @@ Then('a valid fallback theme should be returned', (t: TestCaseContext) => {
   assert.ok(result.length > 0, 'Should not be empty');
 });
 
+Then('the result should equal the converted VS Code theme name', (t: TestCaseContext) => {
+  const world = t.world as P2PWorld;
+  const result = world.result as string;
+  assert.ok(typeof result === 'string', 'Should return a string');
+  // When the active theme ID matches a loaded VS Code theme,
+  // resolveActiveTheme returns themeData.themeData.name or themeData.id.
+  // In the mocked setup, 'mock-light-theme' is the active theme ID and it's
+  // in the loaded themes list, so the converted path returns 'mock-light-theme'.
+  assert.strictEqual(result, 'mock-light-theme', 'Should return the matched theme id/name');
+});
+
 Then(
   'only Shiki themes matching {string} should be returned',
   (t: TestCaseContext, pattern: string) => {

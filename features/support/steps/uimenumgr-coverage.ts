@@ -8,25 +8,23 @@ import type { P2PWorld } from '../world.js';
 Given('uimenu_generic_handlers YAML property is cleared', (t: TestCaseContext) => {
   const world = t.world as P2PWorld;
   const menus = world.app.uimenumgr.getUIMenus();
-  if (menus.length > 0) {
-    const origYaml = menus[0].yaml.bind(menus[0]);
-    menus[0].yaml = () => {
-      const data = origYaml();
-      return { ...data, uimenu_generic_handlers: '' };
-    };
-  }
+  assert.ok(menus.length > 0, 'Expected at least one UIMenu to clear YAML on');
+  const origYaml = menus[0].yaml.bind(menus[0]);
+  menus[0].yaml = () => {
+    const data = origYaml();
+    return { ...data, uimenu_generic_handlers: '' };
+  };
 });
 
 Given('uimenu_css YAML property is cleared', (t: TestCaseContext) => {
   const world = t.world as P2PWorld;
   const menus = world.app.uimenumgr.getUIMenus();
-  if (menus.length > 0) {
-    const origYaml = menus[0].yaml.bind(menus[0]);
-    menus[0].yaml = () => {
-      const data = origYaml();
-      return { ...data, uimenu_css: '' };
-    };
-  }
+  assert.ok(menus.length > 0, 'Expected at least one UIMenu to clear YAML on');
+  const origYaml = menus[0].yaml.bind(menus[0]);
+  menus[0].yaml = () => {
+    const data = origYaml();
+    return { ...data, uimenu_css: '' };
+  };
 });
 
 // -- When steps ----------------------------------------------------------

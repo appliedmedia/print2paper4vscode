@@ -60,4 +60,4 @@ Feature: UIMenuMgr Error Paths
     Given a new Print2Paper application
     And menus are created
     When I get persist value for persistId "testKey" on menu "zoomLevel"
-    Then no errors should occur
+    Then the persist value should be defined or undefined without throwing

@@ -1,5 +1,6 @@
-import { Given, When } from '@cucumber/node';
+import { Given, When, Then } from '@cucumber/node';
 import type { TestCaseContext } from '@cucumber/node';
+import assert from 'node:assert';
 import type { P2PWorld } from '../world.js';
 
 // -- Given steps ---------------------------------------------------------
@@ -44,7 +45,7 @@ When('I finish PDF without document', (t: TestCaseContext) => {
 
 When('I check shouldBreakPage without PDF', (t: TestCaseContext) => {
   const world = t.world as P2PWorld;
-  world.result = String((world.app.pdf as any).shouldBreakPage(100));
+  world.result = (world.app.pdf as any).shouldBreakPage(100);
 });
 
 When('I add page break without PDF', (t: TestCaseContext) => {
@@ -95,4 +96,9 @@ When('I generate PDF', async (t: TestCaseContext) => {
   } catch (e) {
     world.error = e as Error;
   }
+});
+
+Then('the result should be boolean false', (t: TestCaseContext) => {
+  const world = t.world as P2PWorld;
+  assert.strictEqual(world.result, false, 'Result should be boolean false');
 });

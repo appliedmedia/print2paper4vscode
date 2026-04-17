@@ -32,16 +32,13 @@ When('I call a non-existent method via lazy proxy', (t: TestCaseContext) => {
 
 Given('a component whose done method throws', (t: TestCaseContext) => {
   const world = t.world as P2PWorld;
-  // Register a fake component instance with a throwing done()
+  // registerInstance() already adds the componentId to the _initialized set,
+  // so no private-state manipulation is needed here.
   world.app.reg.registerInstance('throwingComponent', {
     done() {
       throw new Error('Intentional done() failure');
     },
   });
-  // Add to initialized set so it gets cleaned up
-  (world.app.reg as unknown as { _initialized: Set<string> })._initialized.add(
-    'throwingComponent'
-  );
 });
 
 // -- When steps (continued) ----------------------------------------------
