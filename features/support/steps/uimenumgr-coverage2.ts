@@ -91,6 +91,18 @@ Then('an invalid-args error should be thrown', (t: TestCaseContext) => {
 Then('the zoom value result should be numeric', (t: TestCaseContext) => {
   const world = t.world as P2PWorld;
   assert.strictEqual(world.error, null, `Unexpected error: ${world.error}`);
-  // The result should be a number or string that represents a zoom value
   assert.ok(world.result !== undefined, 'Result should not be undefined');
+  // Verify the result is numeric (either a number or a string that parses to
+  // a finite number). Previously the step only checked "defined", which let
+  // non-numeric values pass and masked broken zoom math.
+  const numericValue =
+    typeof world.result === 'number'
+      ? world.result
+      : typeof world.result === 'string'
+        ? Number(world.result)
+        : NaN;
+  assert.ok(
+    Number.isFinite(numericValue),
+    `Expected numeric zoom value, got: ${String(world.result)}`
+  );
 });

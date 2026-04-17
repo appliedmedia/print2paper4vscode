@@ -22,40 +22,50 @@ Given('a component done method throws', (t: TestCaseContext) => {
 When('I invoke a lazy proxy for a missing instance', (t: TestCaseContext) => {
   const world = t.world as P2PWorld;
   const reg = world.app.reg;
-  // Create a proxy via use() for a real component, then sabotage the instance map
-  const fnResult = reg.use('os.fileRead');
-  // Remove the instance to simulate a missing instance
-  (reg as any)._instances.delete('os');
-  (reg as any)._initialized.delete('os');
-  // Also remove from components to ensure getInstance returns undefined
+  // Back up everything we mutate BEFORE creating the proxy, so we can fully
+  // restore the Registry state in the finally block. Also clear 'os' from
+  // _instances/_initialized before reg.use() so the proxy actually takes the
+  // lazy path rather than binding to an already-resolved instance.
   const origComponents = (reg as any).components;
-  (reg as any).components = origComponents.filter((c: any) => c.id !== 'os');
+  const hadOsInstance = (reg as any)._instances.has('os');
+  const origOsInstance = (reg as any)._instances.get('os');
+  const hadOsInitialized = (reg as any)._initialized.has('os');
   try {
+    (reg as any)._instances.delete('os');
+    (reg as any)._initialized.delete('os');
+    const fnResult = reg.use('os.fileRead');
+    // Force getInstance() miss on invocation
+    (reg as any).components = origComponents.filter((c: any) => c.id !== 'os');
     fnResult.os.fileRead({ path: 'test.txt' });
     world.error = null;
   } catch (e) {
     world.error = e as Error;
   } finally {
-    // Restore components
     (reg as any).components = origComponents;
+    if (hadOsInstance) (reg as any)._instances.set('os', origOsInstance);
+    if (hadOsInitialized) (reg as any)._initialized.add('os');
   }
 });
 
 When('I invoke a lazy proxy for a non-function property', (t: TestCaseContext) => {
   const world = t.world as P2PWorld;
   const reg = world.app.reg;
-  // Register a fake component class with a non-function property
+  // Register a fake component class with a non-function property; restore
+  // components in finally so this step is fully self-contained.
   const fakeClass = class FakeNonFunc {
     static id = '_fakeNonFunc';
     notAFunction = 42;
   };
-  (reg as any).components.push(fakeClass);
-  const fnResult = reg.use('_fakeNonFunc.notAFunction');
+  const origComponents = (reg as any).components;
+  (reg as any).components = [...origComponents, fakeClass];
   try {
+    const fnResult = reg.use('_fakeNonFunc.notAFunction');
     fnResult._fakeNonFunc.notAFunction();
     world.error = null;
   } catch (e) {
     world.error = e as Error;
+  } finally {
+    (reg as any).components = origComponents;
   }
 });
 

@@ -43,7 +43,7 @@ When('I get the descriptive name', (t: TestCaseContext) => {
 
 When(
   'I call showWarningMessage with {string}',
-  async (t: TestCaseContext, message: string) => {
+  (t: TestCaseContext, message: string) => {
     const world = t.world as P2PWorld;
     world.result = world.app.vscodeapis.showWarningMessage(message);
   }
