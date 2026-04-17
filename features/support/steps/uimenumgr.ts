@@ -23,6 +23,11 @@ Given('a new Print2Paper application without menus', (t: TestCaseContext) => {
   const world = t.world as P2PWorld;
   // App is created but no menus are registered - UIMenuMgr has empty menu list
   assert.ok(world.app, 'App should exist');
+  assert.strictEqual(
+    world.app.uimenumgr.getUIMenus().length,
+    0,
+    'Expected no menus to exist for this scenario'
+  );
 });
 
 // -- When steps ----------------------------------------------------------
