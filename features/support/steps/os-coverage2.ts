@@ -74,12 +74,10 @@ When('I read a file with bad YAML content', (t: TestCaseContext) => {
 
 When('I delete a non-existent file path', (t: TestCaseContext) => {
   const world = t.world as P2PWorld;
-  try {
-    world.app.os.fileDelete('/tmp/nonexistent-file-p2p-test-12345.txt');
-    world.error = null;
-  } catch (e) {
-    world.error = e as Error;
-  }
+  // fileDelete swallows all exceptions internally (see src/OS.ts),
+  // so no try/catch is needed here.
+  world.app.os.fileDelete('/tmp/nonexistent-file-p2p-test-12345.txt');
+  world.error = null;
 });
 
 When('I convert HTML with src attributes to URI', (t: TestCaseContext) => {
