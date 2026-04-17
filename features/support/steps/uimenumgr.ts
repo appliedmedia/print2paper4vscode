@@ -1,7 +1,16 @@
-import { Given, When, Then } from '@cucumber/node';
+import { Given, When, Then, Before } from '@cucumber/node';
 import type { TestCaseContext } from '@cucumber/node';
 import assert from 'node:assert';
 import type { P2PWorld } from '../world.js';
+
+// dispatchState is module-level for simplicity; the Before hook below resets
+// it per scenario to avoid any cross-scenario leakage should cucumber ever
+// parallelize or reorder scenarios. Declared here to precede the Before hook.
+const dispatchState = { called: false };
+
+Before(() => {
+  dispatchState.called = false;
+});
 
 // -- Given steps ---------------------------------------------------------
 
@@ -62,9 +71,6 @@ When('I get the menu CSS', (t: TestCaseContext) => {
   const world = t.world as P2PWorld;
   world.result = world.app.uimenumgr.getUIMenus_CSS();
 });
-
-// Track dispatch calls
-const dispatchState = { called: false };
 
 Given('menu dispatch is mocked', (t: TestCaseContext) => {
   const world = t.world as P2PWorld;

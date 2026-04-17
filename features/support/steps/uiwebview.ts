@@ -1,14 +1,21 @@
-import { Given, When, Then } from '@cucumber/node';
+import { Given, When, Then, Before } from '@cucumber/node';
 import type { TestCaseContext } from '@cucumber/node';
 import assert from 'node:assert';
 import type { P2PWorld } from '../world.js';
 
-// Track mock calls
+// Track mock calls (reset per scenario by Before hook below to prevent
+// cross-scenario state bleeding if a scenario fails or runs out of order).
 const state = {
   menuItemSelectedCalled: false,
   menuItemSelectedArgs: null as any,
   persistedPosition: null as number | null,
 };
+
+Before(() => {
+  state.menuItemSelectedCalled = false;
+  state.menuItemSelectedArgs = null;
+  state.persistedPosition = null;
+});
 
 // Helper: create a mock docInfo that passes initial pdfDoc check
 function makeMockDocInfo(overrides: Record<string, unknown> = {}) {

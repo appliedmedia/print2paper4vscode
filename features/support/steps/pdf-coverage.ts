@@ -1,12 +1,17 @@
-import { Given, When, Then } from '@cucumber/node';
+import { Given, When, Then, Before } from '@cucumber/node';
 import type { TestCaseContext } from '@cucumber/node';
 import assert from 'node:assert';
 import type { P2PWorld } from '../world.js';
 
-// Track header content
+// Track header content (reset per scenario by Before hook to avoid stale
+// state bleeding into scenarios that do not run the setup step).
 const pdfState = {
   headerRendered: false,
 };
+
+Before(() => {
+  pdfState.headerRendered = false;
+});
 
 // Create a mock jsPDF object with the methods addHeaderAndFooter needs
 function createMockPdfDoc(pageTotal: number): any {

@@ -1,11 +1,12 @@
-import { Given, When, Then } from '@cucumber/node';
+import { Given, When, Then, Before } from '@cucumber/node';
 import type { TestCaseContext } from '@cucumber/node';
 import assert from 'node:assert';
 import type { P2PWorld } from '../world.js';
 import { OSWin } from '../../../out/src/OSWin.js';
 import { OSLinux } from '../../../out/src/OSLinux.js';
 
-// Track exec calls
+// Track exec calls (reset per scenario by Before hook below to avoid
+// cross-scenario leakage of cached OS instances or mutations).
 const execState = {
   lastCommand: '',
   lastFile: '',
@@ -13,6 +14,14 @@ const execState = {
   osWin: null as any,
   osLinux: null as any,
 };
+
+Before(() => {
+  execState.lastCommand = '';
+  execState.lastFile = '';
+  execState.lastArgs = [];
+  execState.osWin = null;
+  execState.osLinux = null;
+});
 
 // Helper to get platform OS instances
 function getMacOS(world: P2PWorld): any {

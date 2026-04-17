@@ -1,13 +1,18 @@
-import { Given, When, Then } from '@cucumber/node';
+import { Given, When, Then, Before } from '@cucumber/node';
 import type { TestCaseContext } from '@cucumber/node';
 import assert from 'node:assert';
 import type { P2PWorld } from '../world.js';
 
-// State for tracking
+// State for tracking (reset per scenario by Before hook below)
 const stylState2 = {
   themes: [] as any[],
   fallbackTheme: null as any,
 };
+
+Before(() => {
+  stylState2.themes = [];
+  stylState2.fallbackTheme = null;
+});
 
 // -- Given steps ---------------------------------------------------------
 
@@ -20,10 +25,9 @@ Given('VSCode extensions return themes without colors', (t: TestCaseContext) => 
   fn.vscodeapis.getVSCodeExtensionsThemes = () => [
     { id: 'test-theme-no-colors', extensionPath: '/tmp/ext' },
   ];
-  fn.vscodeapis.getVSCodeThemeJson = (args: any) => {
-    return [{ id: 'test-theme-no-colors', label: 'Test Theme' }];
-  };
   fn.vscodeapis.getActiveThemeId = () => 'some-other-theme';
+  // Single stub: returns null for the active theme id (forces fallback path),
+  // returns the no-colors theme for any other themeId query.
   fn.vscodeapis.getVSCodeThemeJson = (args: any) => {
     if (args?.themeId === 'some-other-theme') return null;
     return [{ id: 'test-theme-no-colors', label: 'Test Theme' }];
@@ -46,8 +50,7 @@ Given('VSCode extensions return themes that fail conversion', (t: TestCaseContex
       tokenColors: [{ scope: 'comment', settings: { foreground: '#008000' } }],
     }];
   };
-  // Make convertVSCodeThemeToShiki throw
-  const origConvert = (world.app.stylize as any).convertVSCodeThemeToShiki.bind(world.app.stylize);
+  // Make convertVSCodeThemeToShiki throw to exercise the fallback path
   (world.app.stylize as any).convertVSCodeThemeToShiki = () => {
     throw new Error('Simulated conversion failure');
   };
@@ -95,27 +98,18 @@ When('I get VS Code themes for coverage', (t: TestCaseContext) => {
 
 When('I convert a theme that causes error', (t: TestCaseContext) => {
   const world = t.world as P2PWorld;
-  // Pass a theme object that will trigger the catch in convertVSCodeThemeToShiki
-  // by making colors iteration throw
+  // Pass a theme whose colors getter throws mid-iteration. This forces the
+  // try/catch in convertVSCodeThemeToShiki to take the fallback branch
+  // (the previous implementation passed safe nulls and never exercised it).
   const badTheme = {
-    name: 'bad-theme',
+    name: 'error-theme',
     get colors() {
-      // First access succeeds (for the typeof check), subsequent access throws
-      Object.defineProperty(this, 'colors', {
-        get() { throw new Error('Simulated colors access failure'); },
-        configurable: true,
-      });
-      return { 'editor.background': '#fff' };
+      throw new Error('Simulated colors access failure');
     },
-    tokenColors: null as any, // Force error when iterating
+    tokenColors: [],
   };
-  // Actually, let's trigger via a simpler path - pass object with getters that throw
   try {
-    stylState2.fallbackTheme = (world.app.stylize as any).convertVSCodeThemeToShiki({
-      name: 'error-theme',
-      colors: null, // Will work - colors check handles it
-      tokenColors: null, // Will work - tokenColors check handles it
-    });
+    stylState2.fallbackTheme = (world.app.stylize as any).convertVSCodeThemeToShiki(badTheme);
     world.error = null;
   } catch (e) {
     world.error = e as Error;

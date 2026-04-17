@@ -1,4 +1,4 @@
-import { Given, When, Then } from '@cucumber/node';
+import { Given, When, Then, Before, After } from '@cucumber/node';
 import type { TestCaseContext } from '@cucumber/node';
 import assert from 'node:assert';
 import type { P2PWorld } from '../world.js';
@@ -6,10 +6,26 @@ import fs from 'node:fs';
 import path from 'node:path';
 import os from 'node:os';
 
-// State for tracking
+// State for tracking (reset per scenario by Before hook; cleanup handled by
+// After hook to remove temp dirs so tests do not leak files on disk).
 const osState2 = {
   tempDir: '',
 };
+
+Before(() => {
+  osState2.tempDir = '';
+});
+
+After(() => {
+  if (osState2.tempDir) {
+    try {
+      fs.rmSync(osState2.tempDir, { recursive: true, force: true });
+    } catch {
+      // best-effort cleanup
+    }
+    osState2.tempDir = '';
+  }
+});
 
 // -- Given steps ---------------------------------------------------------
 

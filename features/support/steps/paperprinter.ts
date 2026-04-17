@@ -1,14 +1,21 @@
-import { Given, When, Then } from '@cucumber/node';
+import { Given, When, Then, Before } from '@cucumber/node';
 import type { TestCaseContext } from '@cucumber/node';
 import assert from 'node:assert';
 import type { P2PWorld } from '../world.js';
 
-// Track regenerate calls and zoom values
+// Track regenerate calls and zoom values (reset per scenario by Before hook
+// below so state does not leak between scenarios).
 const state = {
   regenerateCalled: false,
   zoomResult: { id: '', value: '' as string | number | boolean },
   initialZoom: 1.0,
 };
+
+Before(() => {
+  state.regenerateCalled = false;
+  state.zoomResult = { id: '', value: '' };
+  state.initialZoom = 1.0;
+});
 
 // -- Given steps ---------------------------------------------------------
 

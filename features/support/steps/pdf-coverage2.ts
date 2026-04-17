@@ -1,7 +1,16 @@
-import { Given, When, Then } from '@cucumber/node';
+import { Given, When, Then, Before } from '@cucumber/node';
 import type { TestCaseContext } from '@cucumber/node';
 import assert from 'node:assert';
 import type { P2PWorld } from '../world.js';
+
+// Track text rendering (reset per scenario by Before hook below)
+const pdfState2 = {
+  textCalls: [] as { text: string; x: number; y: number }[],
+};
+
+Before(() => {
+  pdfState2.textCalls = [];
+});
 
 // Create a mock jsPDF object
 function createMockPdfDoc2(pageTotal: number): any {
@@ -94,11 +103,6 @@ Given('a PDF document with 3 page total and footer content', (t: TestCaseContext
   world.app.uimenumgr.getMenuItemIdSelected = mockFn;
   (world.app.pdf as any).fn.uimenumgr.getMenuItemIdSelected = mockFn;
 });
-
-// Track text rendering
-const pdfState2 = {
-  textCalls: [] as { text: string; x: number; y: number }[],
-};
 
 Given('a PDF document with text tracking and title header', (t: TestCaseContext) => {
   const world = t.world as P2PWorld;

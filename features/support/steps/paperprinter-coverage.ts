@@ -1,13 +1,17 @@
-import { Given, When, Then } from '@cucumber/node';
+import { Given, When, Then, Before } from '@cucumber/node';
 import type { TestCaseContext } from '@cucumber/node';
 import assert from 'node:assert';
 import type { P2PWorld } from '../world.js';
 import { UIMenu } from '../../../out/src/UIMenu.js';
 
-// State for tracking
+// State for tracking (reset per scenario by Before hook to avoid leak)
 const ppState = {
   selectionResult: { id: '', value: '' as string | number | boolean },
 };
+
+Before(() => {
+  ppState.selectionResult = { id: '', value: '' };
+});
 
 // -- Given steps ---------------------------------------------------------
 

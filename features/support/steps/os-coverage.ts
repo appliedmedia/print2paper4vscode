@@ -1,13 +1,26 @@
-import { Given, When, Then } from '@cucumber/node';
+import { Given, When, Then, Before, After } from '@cucumber/node';
 import type { TestCaseContext } from '@cucumber/node';
 import assert from 'node:assert';
 import type { P2PWorld } from '../world.js';
 import fs from 'node:fs';
 
-// State for tracking
+// State for tracking (reset per scenario by Before hook below)
 const osState = {
   originalHtml: '',
 };
+
+// Track fs.writeFileSync restoration for cleanup safety
+let restoreWriteFileSync: (() => void) | null = null;
+
+Before(() => {
+  osState.originalHtml = '';
+});
+
+After(() => {
+  // Always restore fs.writeFileSync if a scenario mocked it
+  restoreWriteFileSync?.();
+  restoreWriteFileSync = null;
+});
 
 // -- Given steps ---------------------------------------------------------
 
@@ -17,13 +30,14 @@ Given('extensionRoot is cleared', (t: TestCaseContext) => {
 });
 
 Given('fs.writeFileSync is mocked to throw', (t: TestCaseContext) => {
-  // We mock at the OS level by making resolveDir succeed but writeFileSync fail
+  // Mock at the OS level by making resolveDir succeed but writeFileSync fail.
+  // Restoration is handled by the After hook at the top of this file to avoid
+  // bleed-through if a scenario fails before the mock is triggered.
   const origWriteFileSync = fs.writeFileSync;
-  const _restore = () => {
+  restoreWriteFileSync = () => {
     fs.writeFileSync = origWriteFileSync;
   };
   fs.writeFileSync = (() => {
-    _restore();
     throw new Error('Simulated write failure');
   }) as any;
 });

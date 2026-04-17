@@ -1,14 +1,20 @@
-import { Given, When, Then } from '@cucumber/node';
+import { Given, When, Then, Before } from '@cucumber/node';
 import type { TestCaseContext } from '@cucumber/node';
 import assert from 'node:assert';
 import type { P2PWorld } from '../world.js';
 
-// State for tracking
+// State for tracking (reset per scenario by Before hook below)
 const ppState2 = {
   printResult: { id: '', value: '' as string | number | boolean },
   mdResult: { id: '', value: '' as string | number | boolean },
   regenerateCompleted: false,
 };
+
+Before(() => {
+  ppState2.printResult = { id: '', value: '' };
+  ppState2.mdResult = { id: '', value: '' };
+  ppState2.regenerateCompleted = false;
+});
 
 // -- Given steps ---------------------------------------------------------
 
@@ -227,6 +233,7 @@ Then('the font size menu should include 15', (t: TestCaseContext) => {
   const world = t.world as P2PWorld;
   const items = world.result as any[];
   assert.ok(items, 'Menu items should exist');
-  const has15 = items.some((item: any) => item.id === '15' || item.id === 15);
+  // menuItems_Text() stores id as String(editorSize), so compare as string only.
+  const has15 = items.some((item: any) => item.id === '15');
   assert.ok(has15, `Should include size 15, got ids: ${items.map((i: any) => i.id).join(',')}`);
 });
