@@ -51,6 +51,9 @@ Then('the result should contain the required keys', (t: TestCaseContext) => {
   assert.ok('existingKey' in result, 'Should have existingKey');
   assert.ok('missingKey1' in result, 'Should have missingKey1');
   assert.ok('missingKey2' in result, 'Should have missingKey2');
+  assert.strictEqual(result.existingKey, 42, 'existingKey should keep original value');
+  assert.strictEqual(result.missingKey1, 1, 'missingKey1 should use useForZero');
+  assert.strictEqual(result.missingKey2, 1, 'missingKey2 should use useForZero');
 });
 
 Then('the result should have a fallback key', (t: TestCaseContext) => {
@@ -58,6 +61,7 @@ Then('the result should have a fallback key', (t: TestCaseContext) => {
   const result = world.result as Record<string, number>;
   assert.ok(result, 'Result should exist');
   assert.ok('0' in result, 'Should have fallback key "0"');
+  assert.strictEqual(result['0'], 1, 'Fallback key should use useForZero');
 });
 
 Then('the force content result should be the default value', (t: TestCaseContext) => {

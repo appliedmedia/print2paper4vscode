@@ -240,8 +240,25 @@ Then('the page size should have valid dimensions', (t: TestCaseContext) => {
 
 Then('the margins should be updated', (t: TestCaseContext) => {
   const world = t.world as P2PWorld;
-  const docInfo = world.result as any;
+  const docInfo = world.result as {
+    marginPts: {
+      topMarginPts: number;
+      bottomMarginPts: number;
+      leftMarginPts: number;
+      rightMarginPts: number;
+    };
+  };
   assert.ok(docInfo, 'DocInfo should exist');
+  assert.deepStrictEqual(
+    docInfo.marginPts,
+    {
+      topMarginPts: 50,
+      bottomMarginPts: 50,
+      leftMarginPts: 40,
+      rightMarginPts: 40,
+    },
+    'marginPts should reflect the assigned values'
+  );
 });
 
 Then('the page total should be 5', (t: TestCaseContext) => {

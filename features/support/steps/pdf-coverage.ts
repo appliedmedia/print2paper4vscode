@@ -7,20 +7,24 @@ import type { P2PWorld } from '../world.js';
 // state bleeding into scenarios that do not run the setup step).
 const pdfState = {
   headerRendered: false,
+  textCalls: [] as string[],
+  fontSizeCalls: [] as number[],
 };
 
 Before(() => {
   pdfState.headerRendered = false;
+  pdfState.textCalls = [];
+  pdfState.fontSizeCalls = [];
 });
 
 // Create a mock jsPDF object with the methods addHeaderAndFooter needs
 function createMockPdfDoc(pageTotal: number): any {
   let currentPage = 1;
   return {
-    setFontSize: () => {},
+    setFontSize: (size: number) => { pdfState.fontSizeCalls.push(size); },
     setTextColor: () => {},
     getTextWidth: () => 30,
-    text: () => {},
+    text: (text: string) => { pdfState.textCalls.push(text); },
     setPage: (p: number) => { currentPage = p; },
     addPage: () => {},
     getNumberOfPages: () => pageTotal,
@@ -151,6 +155,14 @@ When('I render page totals', (t: TestCaseContext) => {
 // -- Then steps ----------------------------------------------------------
 
 Then('the header should have no content', (t: TestCaseContext) => {
-  // If we got here without error, formatContent returned null for total with pageTotal=0
+  // If we got here without error, formatContent returned null for total with pageTotal=0.
+  // We also need to prove that no header/footer text was rendered; assert that
+  // pdfDoc.text() was never invoked with a user-visible string. setFontSize may
+  // still be called during setup, so we assert only on text calls.
   assert.ok(pdfState.headerRendered, 'addHeaderAndFooter should have run');
+  assert.deepStrictEqual(
+    pdfState.textCalls,
+    [],
+    `No header/footer text should be rendered, got: ${JSON.stringify(pdfState.textCalls)}`
+  );
 });
