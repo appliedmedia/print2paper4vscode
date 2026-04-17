@@ -53,9 +53,14 @@ When(
 
 Then('the result should be the tab group label', (t: TestCaseContext) => {
   const world = t.world as P2PWorld;
-  // The mock has tabGroups.activeTabGroup.activeTab.label set
-  assert.ok(typeof world.result === 'string', 'Should return a string');
-  assert.ok((world.result as string).length > 0, 'Should not be empty');
+  const vscode = (world.app.vscodeapis as any).vscode;
+  const expected = vscode.window.tabGroups?.activeTabGroup?.activeTab?.label;
+  assert.strictEqual(
+    typeof expected,
+    'string',
+    'Test setup must provide an active tab label on the vscode mock'
+  );
+  assert.strictEqual(world.result, expected);
 });
 
 Then(
