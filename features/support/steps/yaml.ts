@@ -1,4 +1,4 @@
-import { Given, When, Then } from '@cucumber/node';
+import { Given, When, Then, After } from '@cucumber/node';
 import type { TestCaseContext } from '@cucumber/node';
 import assert from 'node:assert';
 import * as fs from 'fs';
@@ -118,4 +118,16 @@ Then('the YAML result should have an array {string} with {int} items', (t: TestC
   const arr = world.yamlResult[key];
   assert.ok(Array.isArray(arr), `Expected "${key}" to be an array`);
   assert.strictEqual((arr as unknown[]).length, count);
+});
+
+// -- Teardown -------------------------------------------------------------
+
+// Cleans up the per-scenario temp directory created under os.tmpdir(). Without
+// this hook repeated local runs accumulate orphaned `yaml-test-*` dirs.
+After((t: TestCaseContext) => {
+  const world = t.world as YamlWorld;
+  if (world && world.tempDir && fs.existsSync(world.tempDir)) {
+    fs.rmSync(world.tempDir, { recursive: true, force: true });
+    world.tempDir = '';
+  }
 });
