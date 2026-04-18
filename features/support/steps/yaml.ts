@@ -15,31 +15,33 @@ interface YamlWorld extends P2PWorld {
   previousResult: Record<string, unknown>;
 }
 
+// Creates a unique temp directory for one scenario and sets world.tempDir /
+// world.yamlPath. Uses fs.mkdtempSync so uniqueness does not depend on
+// millisecond granularity of Date.now().
+function initTempYamlPath(world: YamlWorld, fileName = 'test.yaml'): void {
+  world.tempDir = fs.mkdtempSync(path.join(tmpdir(), 'yaml-test-'));
+  world.yamlPath = path.join(world.tempDir, fileName);
+}
+
 // -- Given steps ----------------------------------------------------------
 
 Given('a temp YAML file containing {string}', (t: TestCaseContext, content: string) => {
   const world = t.world as YamlWorld;
-  world.tempDir = path.join(tmpdir(), `yaml-test-${Date.now()}`);
-  fs.mkdirSync(world.tempDir, { recursive: true });
-  world.yamlPath = path.join(world.tempDir, 'test.yaml');
+  initTempYamlPath(world);
   // Unescape the \n in the string from Gherkin
   fs.writeFileSync(world.yamlPath, content.replace(/\\n/g, '\n'));
 });
 
 Given('a temp YAML file with nested content', (t: TestCaseContext) => {
   const world = t.world as YamlWorld;
-  world.tempDir = path.join(tmpdir(), `yaml-test-${Date.now()}`);
-  fs.mkdirSync(world.tempDir, { recursive: true });
-  world.yamlPath = path.join(world.tempDir, 'test.yaml');
+  initTempYamlPath(world);
   const content = `nested:\n  key1: value1\n  key2: value2\narray:\n  - item1\n  - item2\n`;
   fs.writeFileSync(world.yamlPath, content);
 });
 
 Given('a nonexistent YAML file path', (t: TestCaseContext) => {
   const world = t.world as YamlWorld;
-  world.tempDir = path.join(tmpdir(), `yaml-test-${Date.now()}`);
-  fs.mkdirSync(world.tempDir, { recursive: true });
-  world.yamlPath = path.join(world.tempDir, 'nonexistent.yaml');
+  initTempYamlPath(world, 'nonexistent.yaml');
 });
 
 Given('an invalid YAML file path', (t: TestCaseContext) => {
