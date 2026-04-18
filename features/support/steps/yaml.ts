@@ -105,6 +105,9 @@ Then('the YAML result should have nested key {string} equal to {string}', (t: Te
   const keys = dotPath.split('.');
   let value: unknown = world.yamlResult;
   for (const k of keys) {
+    if (value === null || value === undefined || typeof value !== 'object') {
+      assert.fail(`Expected nested path "${dotPath}" to exist but hit ${value === null ? 'null' : typeof value} at segment "${k}"`);
+    }
     value = (value as Record<string, unknown>)[k];
   }
   assert.strictEqual(value, expected);
