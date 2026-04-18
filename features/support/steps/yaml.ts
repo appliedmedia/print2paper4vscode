@@ -23,6 +23,15 @@ function initTempYamlPath(world: YamlWorld, fileName = 'test.yaml'): void {
   world.yamlPath = path.join(world.tempDir, fileName);
 }
 
+// Returns the `yaml` factory registered on the app registry, or fails with an
+// explicit error if the wiring is broken. Replaces a non-null-assert that
+// would otherwise throw a vague "Cannot read properties of undefined" error.
+function getYamlFactory(world: YamlWorld): Yaml {
+  const yamlFactory = world.app.reg.getInstance<Yaml>('yaml');
+  assert.ok(yamlFactory, 'Registry component "yaml" is not registered');
+  return yamlFactory;
+}
+
 // -- Given steps ----------------------------------------------------------
 
 Given('a temp YAML file containing {string}', (t: TestCaseContext, content: string) => {
@@ -53,19 +62,19 @@ Given('an invalid YAML file path', (t: TestCaseContext) => {
 
 When('I create a Yaml instance with defaults \\{key1: {string}, key2: {string}}', (t: TestCaseContext, val1: string, val2: string) => {
   const world = t.world as YamlWorld;
-  const yamlFactory = world.app.reg.getInstance<Yaml>('yaml')!;
+  const yamlFactory = getYamlFactory(world);
   world.yamlInstance = yamlFactory.create({ filePath: world.yamlPath, dataStruct: { key1: val1, key2: val2 } });
 });
 
 When('I create a Yaml instance with defaults \\{key1: {string}}', (t: TestCaseContext, val: string) => {
   const world = t.world as YamlWorld;
-  const yamlFactory = world.app.reg.getInstance<Yaml>('yaml')!;
+  const yamlFactory = getYamlFactory(world);
   world.yamlInstance = yamlFactory.create({ filePath: world.yamlPath, dataStruct: { key1: val } });
 });
 
 When('I create a Yaml instance with empty defaults', (t: TestCaseContext) => {
   const world = t.world as YamlWorld;
-  const yamlFactory = world.app.reg.getInstance<Yaml>('yaml')!;
+  const yamlFactory = getYamlFactory(world);
   world.yamlInstance = yamlFactory.create<Record<string, unknown>>({ filePath: world.yamlPath, dataStruct: {} });
 });
 
