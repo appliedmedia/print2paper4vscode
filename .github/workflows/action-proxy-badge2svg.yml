@@ -59,3 +59,4 @@ jobs:
     uses: appliedmedia/internal/.github/workflows/action-handler-badge2svg.yml@main
     with:
       badge_data: ${{ needs.extract.outputs.badge_data }}
+    secrets: inherit
