@@ -1,4 +1,4 @@
-import { Given, When, Then } from '@cucumber/node';
+import { Given, When, Then, After } from '@cucumber/node';
 import type { TestCaseContext } from '@cucumber/node';
 import assert from 'node:assert';
 import type { P2PWorld } from '../world.js';
@@ -10,13 +10,15 @@ interface DxWorld extends P2PWorld {
   furtherSubDx: Diagnostics;
   validationResult: boolean;
   capturedOutput: string;
-  originalLog: typeof console.log;
+  originalLog?: typeof console.log;
   chainResult: Diagnostics;
 }
 
 function startCapture(world: DxWorld): void {
   world.capturedOutput = '';
-  world.originalLog = console.log;
+  if (!world.originalLog) {
+    world.originalLog = console.log;
+  }
   console.log = (...args: unknown[]) => {
     world.capturedOutput += args.map(a => String(a)).join(' ') + '\n';
   };
@@ -25,8 +27,22 @@ function startCapture(world: DxWorld): void {
 function stopCapture(world: DxWorld): void {
   if (world.originalLog) {
     console.log = world.originalLog;
+    world.originalLog = undefined;
   }
 }
+
+// Guarantees console.log and Diagnostics global state are restored even if a
+// scenario throws between startCapture() and stopCapture(). Without this hook
+// a thrown assertion would leave console.log patched and leak capture into
+// subsequent scenarios.
+After((t: TestCaseContext) => {
+  const world = t.world as DxWorld;
+  if (world && world.originalLog) {
+    stopCapture(world);
+  }
+  Diagnostics.reset();
+  Diagnostics.debugOn(false);
+});
 
 // -- Given steps ----------------------------------------------------------
 
