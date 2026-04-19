@@ -4,6 +4,7 @@ import assert from 'node:assert';
 import type { P2PWorld } from '../world.js';
 import { OSWin } from '../../../out/src/OSWin.js';
 import { OSLinux } from '../../../out/src/OSLinux.js';
+import { OSMac } from '../../../out/src/OSMac.js';
 
 // Track exec calls (reset per scenario by Before hook below to avoid
 // cross-scenario leakage of cached OS instances or mutations).
@@ -13,6 +14,7 @@ const execState = {
   lastArgs: [] as string[],
   osWin: null as any,
   osLinux: null as any,
+  osMac: null as any,
 };
 
 Before(() => {
@@ -21,12 +23,17 @@ Before(() => {
   execState.lastArgs = [];
   execState.osWin = null;
   execState.osLinux = null;
+  execState.osMac = null;
 });
 
-// Helper to get platform OS instances
+// Helper to get platform OS instances. We always instantiate OSMac/OSWin/OSLinux
+// directly (rather than using world.app.os) so these cross-platform scenarios
+// behave identically on macOS, Linux, and Windows CI.
 function getMacOS(world: P2PWorld): any {
-  // On macOS, app.os IS OSMac
-  return world.app.os;
+  if (!execState.osMac) {
+    execState.osMac = new OSMac({ reg: world.app.reg });
+  }
+  return execState.osMac;
 }
 
 function getWinOS(world: P2PWorld): any {
