@@ -92,7 +92,7 @@
     "format:check": "prettier --check src/**/*.ts **/*.md",
     "pretest": "node scripts/setup-vscode-mock.js",
     "test": "node scripts/run-tests.js",
-    "test:gherkin": "node scripts/setup-vscode-mock.js && node --import @cucumber/node/bootstrap --import tsx --test features/coords-pagelayout.feature features/coords.feature features/diagnostics.feature features/smoke.feature features/yaml.feature",
+    "test:gherkin": "node scripts/setup-vscode-mock.js && node --import @cucumber/node/bootstrap --import tsx --test features/coords-debug.feature features/coords-pagelayout.feature features/coords.feature features/diagnostics.feature features/os-coverage.feature features/os-coverage2.feature features/os-platform.feature features/paperprinter-coverage.feature features/paperprinter-coverage2.feature features/paperprinter.feature features/pdf-coverage.feature features/pdf-coverage2.feature features/pdf.feature features/registry-coverage.feature features/registry.feature features/smoke.feature features/stylize-coverage.feature features/stylize-coverage2.feature features/stylize.feature features/tabinspector.feature features/ui-coverage.feature features/ui.feature features/uimenumgr-coverage.feature features/uimenumgr-coverage2.feature features/uimenumgr.feature features/uiwebview.feature features/utils-coverage.feature features/vscodeapis.feature features/yaml.feature",
     "test:all": "npm run test && npm run test:gherkin",
     "test:watch": "node scripts/run-tests.js --watch",
     "test:verbose": "node scripts/run-tests.js --reporter spec",
