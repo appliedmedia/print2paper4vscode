@@ -20,11 +20,7 @@ describe('OSLinux smoke', () => {
     app.done();
   });
 
-  it('fileOpenPrintDialog launches the first available viewer', async () => {
-    if (!isLinux) {
-      console.log('skipping');
-      return;
-    }
+  it('fileOpenPrintDialog launches the first available viewer', { skip: !isLinux }, async () => {
     const calls: Array<{ file: string; args: string[] }> = [];
     (osLinux as any).execFileAsync = async (file: string, args: string[]) => {
       calls.push({ file, args });
@@ -40,11 +36,7 @@ describe('OSLinux smoke', () => {
     assert.strictEqual(calls.length, 2);
   });
 
-  it('fileOpenPrintDialog falls back to fileOpenInDefaultApp when every viewer probe fails', async () => {
-    if (!isLinux) {
-      console.log('skipping');
-      return;
-    }
+  it('fileOpenPrintDialog falls back to fileOpenInDefaultApp when every viewer probe fails', { skip: !isLinux }, async () => {
     const calls: Array<{ file: string; args: string[] }> = [];
     (osLinux as any).execFileAsync = async (file: string, args: string[]) => {
       calls.push({ file, args });
@@ -68,11 +60,7 @@ describe('OSLinux smoke', () => {
     assert.deepStrictEqual(lastCall.args, ['/tmp/test.pdf']);
   });
 
-  it('filePrint rethrows a friendly CUPS error when execFileAsync throws ENOENT', async () => {
-    if (!isLinux) {
-      console.log('skipping');
-      return;
-    }
+  it('filePrint rethrows a friendly CUPS error when execFileAsync throws ENOENT', { skip: !isLinux }, async () => {
     (osLinux as any).execFileAsync = async (file: string, _args: string[]) => {
       if (file === 'lp') {
         const err = new Error('spawn lp ENOENT') as any;
@@ -93,11 +81,7 @@ describe('OSLinux smoke', () => {
     );
   });
 
-  it('getDir_Documents returns a non-empty string', () => {
-    if (!isLinux) {
-      console.log('skipping');
-      return;
-    }
+  it('getDir_Documents returns a non-empty string', { skip: !isLinux }, () => {
     const result = osLinux.getDir_Documents();
     assert.strictEqual(typeof result, 'string');
     assert.ok(result.length > 0, 'getDir_Documents should return a non-empty string');
