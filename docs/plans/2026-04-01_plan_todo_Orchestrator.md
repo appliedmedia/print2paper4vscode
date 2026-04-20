@@ -89,7 +89,7 @@ Stream F ──────►                                              [VSC
                                                                PR → CR → merge
 ```
 
-*Windows Print (`2025-12-25_plan_todo_WinPrint.md`, Dec 2025) is superseded by Windows Fixes (`2026-04-01_plan_todo_WindowsFixes.md`). The existing bugs in OSWin.ts must be fixed before adding new print features. The old plan remains in `docs/plans/` for reference but should not be actioned.
+*Windows Print is tracked by the refreshed plan `2026-04-17_plan_todo_WindowsPrint.md`. Stream A (Windows Fixes, PR #103) has merged, so Windows Print is now `unblocked`.
 
 ---
 
@@ -196,7 +196,7 @@ Goal: Full cross-platform support and professional polish.
 | Stream | Plan | Branch | Blocked by | Estimate |
 | --- | --- | --- | --- | --- |
 | Linux Print | `2025-12-25_plan_todo_LinuxPrint.md` | `feature/linux-print` | Nothing | 4-6 hours |
-| Windows Print | `2025-12-25_plan_todo_WinPrint.md` | `feature/windows-print` | Stream A | 4-6 hours |
+| Windows Print | `2026-04-17_plan_todo_WindowsPrint.md` | `feature/windows-print` | unblocked | 4-6 hours |
 
 ### Stream E: Web Presence
 
@@ -236,7 +236,6 @@ Goal: Full cross-platform support and professional polish.
 | --- | --- | --- |
 | `PackageJsonMetadata.md` | MarketplacePublish | Metadata already applied; remaining work folded into publish recipe |
 | `PrepareForDeploy.md` | This orchestrator | Deployment readiness tracked here now |
-| `WinPrint.md` (partially) | WindowsFixes | Must fix existing bugs before adding features |
 
 ---
 
