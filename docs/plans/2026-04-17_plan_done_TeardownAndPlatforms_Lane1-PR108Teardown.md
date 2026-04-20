@@ -1,9 +1,10 @@
 # Lane 1: PR #108 Deferred Teardown Fixes
 
-**Status:** todo
+**Status:** done
 **Created:** 2026-04-17
+**Closed:** 2026-04-20
 **Branch:** `feature/gherkin-migration`
-**PR:** [#108](https://github.com/appliedmedia/print2paper4vscode/pull/108)
+**PR:** [#108](<https://github.com/appliedmedia/print2paper4vscode/pull/108>)
 **Orchestrator:** [2026-04-17_plan_todo_TeardownAndPlatforms_Orch.md](<2026-04-17_plan_todo_TeardownAndPlatforms_Orch.md>)
 
 ## Objective
@@ -51,3 +52,13 @@ Three small commits, one per work item, pushed to `feature/gherkin-migration`. D
 * Item, short sha, one-line message.
 * Confirmation that `npm test` and `npm run test:gherkin` are green.
 * Anything discovered along the way that justifies a follow-up plan.
+
+## Outcome
+
+All three deferred teardown fixes shipped inside PR [#108](<https://github.com/appliedmedia/print2paper4vscode/pull/108>) before merge. The squash-merge commit that introduced them on `main` is `e4ea318` ("Migrate Batch 1 unit tests to Gherkin (Coords, Diagnostics, Yaml) (#108)"). No follow-up branch or PR was opened.
+
+* Diagnostics After hook: landed at `features/support/steps/diagnostics.ts:38-45`. The hook calls `stopCapture(world)` only when `world.originalLog` is still set, restoring `console.log` and clearing the field, then resets `Diagnostics` global state.
+* Yaml tempDir cleanup: landed at `features/support/steps/yaml.ts:138-144`. The After hook removes `world.tempDir` recursively when it exists and clears the field.
+* Yaml dot-path guard: landed at `features/support/steps/yaml.ts:114-125`. The walker advances one segment at a time and calls `assert.fail` with a message naming the missing segment when an intermediate is non-object, null, or undefined.
+
+`world.ts` was not modified; the hooks were colocated in `diagnostics.ts` and `yaml.ts`, which the plan permitted.
