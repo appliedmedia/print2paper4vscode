@@ -51,6 +51,10 @@ jobs:
           npm run lint:md
           npm run lint:yaml
 
+      - name: Run Linux print smoke test
+        if: matrix.os == 'ubuntu-latest'
+        run: npm test -- --test-name-pattern OSLinux
+
       - name: Run tests with coverage
         shell: bash
         run: |
