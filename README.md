@@ -27,6 +27,7 @@ Run `npm run test:coverage` to generate full coverage report.
 - ⏳ Core functionality works (PDF generation, syntax highlighting)
 - ⏳ Platform-specific printing commands in development
 - ⏳ Contributions welcome
+- Linux: Smoke test exercises viewer selection and CUPS error paths in CI.
 
 **Current recommendation:** macOS for full printing workflow, all platforms for PDF export.
 
