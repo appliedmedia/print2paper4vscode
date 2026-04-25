@@ -191,7 +191,9 @@ Three sequential/parallel branches:
 
 Goal: Full cross-platform support and professional polish.
 
-### Stream D: Platform Printing -- DONE
+### Stream D: Platform Printing
+
+Status: done.
 
 * **Linux Print:** done. Merged via PR #105 + smoke test PR #110. Spec: `2025-12-25_plan_todo_LinuxPrint.md`.
 * **Windows Print:** done (2026-04-25). Merged via PR #112 as `bc93025`. Spec: `2026-04-17_plan_done_WindowsPrint.md`. Wave orchestrator: `2026-04-24_plan_done_WindowsPrintImpl_Orch.md` with two lanes (`LaneA-PrintDialog`, `LaneB-FailureModes`).
