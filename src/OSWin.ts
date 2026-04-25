@@ -58,8 +58,33 @@ export class OSWin extends OS {
   }
 
   async fileOpenPrintDialog(path: string): Promise<void> {
-    // Best effort: open the PDF and rely on user; Windows programmatic print dialogs vary
-    await this.fileOpenInDefaultApp(path);
+    // Programmatic Windows print dialog.
+    //
+    // Approach: shell out to PowerShell, instantiate System.Windows.Forms.PrintDialog
+    // for printer/page selection, and on OK fire Start-Process -Verb PrintTo against
+    // the chosen printer. User cancellation (DialogResult != OK) is a no-op; no
+    // error surfaces.
+    //
+    // Do NOT regress this method to delegate to fileOpenInDefaultApp. That stub
+    // relied on the user clicking Print inside the viewer and was the explicit
+    // motivation for the Windows print rewrite (see
+    // docs/plans/2026-04-17_plan_inProgress_WindowsPrint.md, "Print dialog"
+    // section).
+    const escapedPath = path.replace(/'/g, "''");
+    const script =
+      "Add-Type -AssemblyName System.Windows.Forms | Out-Null;" +
+      " $dlg = New-Object System.Windows.Forms.PrintDialog;" +
+      " $dlg.AllowSomePages = $false;" +
+      " $dlg.AllowPrintToFile = $false;" +
+      " $dlg.UseEXDialog = $true;" +
+      " if ($dlg.ShowDialog() -eq 'OK') {" +
+      ` Start-Process -FilePath '${escapedPath}' -Verb PrintTo` +
+      " -ArgumentList ('\"' + $dlg.PrinterSettings.PrinterName + '\"')" +
+      " -WindowStyle Hidden }";
+    await this.execFileAsync('powershell', [
+      '-NoProfile', '-NonInteractive', '-Command',
+      script
+    ]);
   }
 
   getDir_Documents(): string {

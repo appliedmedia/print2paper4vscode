@@ -161,7 +161,7 @@ describe('OSWin', () => {
   });
 
   describe('fileOpenPrintDialog', () => {
-    it('should delegate to fileOpenInDefaultApp', async () => {
+    it('should call execFileAsync with powershell and -NoProfile -NonInteractive -Command', async () => {
       const calls: { file: string; args: string[] }[] = [];
       (osWin as any).execFileAsync = async (file: string, args: string[]) => {
         calls.push({ file, args });
@@ -171,8 +171,83 @@ describe('OSWin', () => {
       await osWin.fileOpenPrintDialog('C:\\test\\file.pdf');
 
       assert.strictEqual(calls.length, 1);
-      assert.strictEqual(calls[0].file, 'cmd');
-      assert.deepStrictEqual(calls[0].args, ['/c', 'start', '""', 'C:\\test\\file.pdf']);
+      assert.strictEqual(calls[0].file, 'powershell');
+      assert.strictEqual(calls[0].args[0], '-NoProfile');
+      assert.strictEqual(calls[0].args[1], '-NonInteractive');
+      assert.strictEqual(calls[0].args[2], '-Command');
+      assert.strictEqual(calls[0].args.length, 4);
+    });
+
+    it('should invoke System.Windows.Forms.PrintDialog and PrintTo on OK', async () => {
+      const calls: { file: string; args: string[] }[] = [];
+      (osWin as any).execFileAsync = async (file: string, args: string[]) => {
+        calls.push({ file, args });
+        return { stdout: '', stderr: '' };
+      };
+
+      await osWin.fileOpenPrintDialog('C:\\test\\file.pdf');
+
+      const script = calls[0].args[3];
+      assert.ok(
+        script.includes('System.Windows.Forms.PrintDialog'),
+        `script must instantiate PrintDialog; got: ${script}`
+      );
+      assert.ok(
+        script.includes('-Verb PrintTo'),
+        `script must use PrintTo verb; got: ${script}`
+      );
+      assert.ok(
+        script.includes('PrinterSettings.PrinterName'),
+        `script must pass chosen printer to PrintTo; got: ${script}`
+      );
+      assert.ok(
+        script.includes("ShowDialog() -eq 'OK'"),
+        `script must guard PrintTo behind dialog OK; got: ${script}`
+      );
+    });
+
+    it('should escape single quotes in path for the PowerShell string literal', async () => {
+      const calls: { file: string; args: string[] }[] = [];
+      (osWin as any).execFileAsync = async (file: string, args: string[]) => {
+        calls.push({ file, args });
+        return { stdout: '', stderr: '' };
+      };
+
+      await osWin.fileOpenPrintDialog("C:\\Users\\O'Brien\\file.pdf");
+
+      const script = calls[0].args[3];
+      assert.ok(
+        script.includes("'C:\\Users\\O''Brien\\file.pdf'"),
+        `single quotes must be doubled inside the PowerShell literal; got: ${script}`
+      );
+    });
+
+    it('should not delegate to fileOpenInDefaultApp', async () => {
+      const calls: { file: string; args: string[] }[] = [];
+      (osWin as any).execFileAsync = async (file: string, args: string[]) => {
+        calls.push({ file, args });
+        return { stdout: '', stderr: '' };
+      };
+
+      await osWin.fileOpenPrintDialog('C:\\test\\file.pdf');
+
+      // Must not invoke `cmd /c start ...` (the fileOpenInDefaultApp signature).
+      assert.ok(
+        !calls.some(c => c.file === 'cmd'),
+        'fileOpenPrintDialog must not invoke cmd /c start'
+      );
+    });
+
+    it('should not call execAsync (Bug 5 fix carry-over)', async () => {
+      let execAsyncCalled = false;
+      (osWin as any).execAsync = async () => {
+        execAsyncCalled = true;
+        return { stdout: '', stderr: '' };
+      };
+      (osWin as any).execFileAsync = async () => ({ stdout: '', stderr: '' });
+
+      await osWin.fileOpenPrintDialog('C:\\test.pdf');
+      assert.strictEqual(execAsyncCalled, false, 'execAsync must not be called');
     });
   });
 
