@@ -1,9 +1,15 @@
 # Orchestrator: Windows Print Implementation Wave
 
-**Status:** todo
+**Status:** done
 **Created:** 2026-04-24
-**Spec:** [2026-04-17_plan_inProgress_WindowsPrint.md](<2026-04-17_plan_inProgress_WindowsPrint.md>)
+**Closed:** 2026-04-25
+**Merged PR:** [#112 Windows print: real dialog + failure-mode handling](<https://github.com/appliedmedia/print2paper4vscode/pull/112>)
+**Spec:** [2026-04-17_plan_done_WindowsPrint.md](<2026-04-17_plan_done_WindowsPrint.md>)
 **Master orchestrator:** [2026-04-01_plan_todo_Orchestrator.md](<2026-04-01_plan_todo_Orchestrator.md>) (Phase 3 Stream D)
+
+## Closure note (2026-04-25)
+
+Both lanes shipped together in PR #112 (squash-merged as `bc93025` on `main`). Lane A rewrote `fileOpenPrintDialog` to invoke a real `System.Windows.Forms.PrintDialog` via PowerShell; Lane B added `mapPowerShellErrorToMessage` and routed `filePrint` failures through `fn.ui.showErrorMessage` for the four spec'd failure modes. CodeRabbit clean after one ai01 pass. CI green on `ubuntu-latest` and `windows-latest`. 348 unit tests pass.
 
 ## Objective
 

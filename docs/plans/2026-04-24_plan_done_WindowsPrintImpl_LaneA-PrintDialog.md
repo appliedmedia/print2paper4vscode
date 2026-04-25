@@ -1,11 +1,13 @@
 # Lane A: fileOpenPrintDialog Rewrite
 
-**Status:** todo
+**Status:** done
 **Created:** 2026-04-24
-**Branch:** `feature/windows-print-dialog` (new, branched from `feature/windows-print`)
-**Parent branch:** `feature/windows-print` (new, branched from `main`)
-**Orchestrator:** [2026-04-24_plan_todo_WindowsPrintImpl_Orch.md](<2026-04-24_plan_todo_WindowsPrintImpl_Orch.md>)
-**Spec:** [2026-04-17_plan_inProgress_WindowsPrint.md](<2026-04-17_plan_inProgress_WindowsPrint.md>) sections "Print dialog" and "Tests"
+**Closed:** 2026-04-25
+**Merged into:** `feature/windows-print` as commit `ff23b1c` (then squash-merged to `main` via PR #112 as `bc93025`)
+**Branch:** `feature/windows-print-dialog` (deleted post-merge)
+**Parent branch:** `feature/windows-print` (deleted post-merge)
+**Orchestrator:** [2026-04-24_plan_done_WindowsPrintImpl_Orch.md](<2026-04-24_plan_done_WindowsPrintImpl_Orch.md>)
+**Spec:** [2026-04-17_plan_done_WindowsPrint.md](<2026-04-17_plan_done_WindowsPrint.md>) sections "Print dialog" and "Tests"
 
 ## Objective
 
