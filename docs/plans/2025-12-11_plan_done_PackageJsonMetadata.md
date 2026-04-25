@@ -1,9 +1,15 @@
 # Package.json Metadata Updates
 
-**Status:** TODO  
-**Created:** 2025-12-11  
+**Status:** done (superseded)
+**Created:** 2025-12-11
+**Closed:** 2026-04-25
+**Superseded by:** [2026-04-25_plan_todo_MarketplacePublishImpl_LaneA-PackageAudit.md](<2026-04-25_plan_todo_MarketplacePublishImpl_LaneA-PackageAudit.md>)
 
 This plan tracks the required metadata updates to `package.json` before publishing.
+
+## 2026-04-25 closure note
+
+All metadata fields listed below are now in `.config/template.package.json` and are produced by `scripts/generate-package-json.mjs`. The Marketplace publish wave's Lane A audit (linked above) reconciled this plan against the current template, switched `repository.url` from the vanity domain `https://p2p4vsc.dev` to the canonical GitHub URL `https://github.com/appliedmedia/print2paper4vscode` (so `vsce` can auto-rewrite relative README links), wired the existing `images/logo-p2p4vsc_128x128px.png` into a new `icon` field, and normalized `license` from the malformed `SEE LICENSE IN FILE "./LICENSE"` to the SPDX-conformant `SEE LICENSE IN LICENSE`. `vsce package` now produces a clean 8-file VSIX with zero warnings and zero errors. This plan is closed; further marketplace work tracks under the 2026-04-25 wave plans.
 
 ## Current Status
 

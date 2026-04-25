@@ -1,8 +1,24 @@
+# .vscodeignore - controls what ships in the .vsix to the marketplace.
+# Whitelist mindset: the vsix should contain only dist/, README.md, CHANGELOG.md,
+# LICENSE, package.json, and the icon. Everything else is dev-only.
+
 # Source files (only ship compiled JS)
 src/**
 tests/**
+features/**
 .config/**
 scripts/**
+
+# Site / docs / dev assets that are not user-facing
+site/**
+docs/**
+archives/**
+pocs/**
+assets/**
+
+# Images: ship only the marketplace icon. Exclude badges and other dev SVGs.
+images/**
+!images/logo-p2p4vsc_128x128px.png
 
 # Build artifacts
 out-deploy/
@@ -12,10 +28,7 @@ coverage/
 *.bak
 *.template.bak
 
-# Documentation (dev-only)
-docs/**
-archives/**
-pocs/**
+# Documentation (dev-only) - keep README/CHANGELOG, drop everything else
 *.md
 !README.md
 !CHANGELOG.md
@@ -32,16 +45,22 @@ DIAGNOSTICS_REFACTOR_PLAN.md
 DIAGNOSTICS_USAGE_EXAMPLE.md
 PR26.json
 
-# Dev dependencies
-node_modules/**
-.vscode/**
-.cursor/**
+# Repo / tooling configuration
+.github/**
 .git/**
 .gitignore
+.gitattributes
 .prettierrc
 .stylelintrc.json
 .markdownlintignore
 .markdownlint.json
+.eslintrc*
+.editorconfig
+
+# Dev dependencies
+node_modules/**
+.vscode/**
+.cursor/**
 
 # Environment
 .env

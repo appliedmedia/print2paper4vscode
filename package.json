@@ -3,11 +3,12 @@
   "displayName": "Print2Paper4VSCode",
   "description": "Print selections or current tabs with syntax highlighting and interactive PDF preview",
   "version": "1.0.0",
-  "license": "SEE LICENSE IN FILE \"./LICENSE\"",
+  "license": "SEE LICENSE IN LICENSE",
   "engines": {
     "vscode": "^1.90.0"
   },
   "publisher": "appliedmedia",
+  "icon": "images/logo-p2p4vsc_128x128px.png",
   "categories": [
     "Other"
   ],
@@ -24,7 +25,7 @@
   ],
   "repository": {
     "type": "git",
-    "url": "https://p2p4vsc.dev"
+    "url": "https://github.com/appliedmedia/print2paper4vscode"
   },
   "bugs": {
     "url": "https://p2p4vsc.support"
