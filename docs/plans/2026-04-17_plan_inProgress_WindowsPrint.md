@@ -1,10 +1,12 @@
 # Windows Printing Implementation Plan
 
-**Status:** todo
+**Status:** inProgress
 **Created:** 2026-04-17
+**Picked up:** 2026-04-24
 **Supersedes:** `2025-12-25_plan_todo_WinPrint.md` (deleted in the same PR that introduces this file)
 **Related merged PR:** [#103 Windows Fixes](<https://github.com/appliedmedia/print2paper4vscode/pull/103>)
 **Master orchestrator:** [2026-04-01_plan_todo_Orchestrator.md](<2026-04-01_plan_todo_Orchestrator.md>) (Phase 3 Stream D)
+**Wave orchestrator:** [2026-04-24_plan_todo_WindowsPrintImpl_Orch.md](<2026-04-24_plan_todo_WindowsPrintImpl_Orch.md>)
 
 ## Objective
 

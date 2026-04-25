@@ -1,10 +1,11 @@
 # Lane 2: Linux Print Smoke Test
 
-**Status:** todo
+**Status:** done
 **Created:** 2026-04-17
+**Completed:** 2026-04-20 via [PR #110](https://github.com/appliedmedia/print2paper4vscode/pull/110)
 **Branch:** `feature/linux-smoke-test` (new, branched from `main`)
 **Related merged PR:** [#105](https://github.com/appliedmedia/print2paper4vscode/pull/105)
-**Orchestrator:** [2026-04-17_plan_todo_TeardownAndPlatforms_Orch.md](<2026-04-17_plan_todo_TeardownAndPlatforms_Orch.md>)
+**Orchestrator:** [2026-04-17_plan_done_TeardownAndPlatforms_Orch.md](<2026-04-17_plan_done_TeardownAndPlatforms_Orch.md>)
 
 ## Objective
 
@@ -29,10 +30,10 @@ Add an automated smoke test that exercises the Linux printing path shipped in PR
 * Create `tests/OSLinux.test.ts` using the existing `node:test` harness.
 * Tests must run on any platform; skip body on non-Linux with a `console.log('skipping')` and early return.
 * Cover four cases.
-    * `fileOpenPrintDialog` returns without throwing when at least one viewer is present. Stub `execFileAsync` via a registry/fn swap so no real process is spawned.
-    * `fileOpenPrintDialog` falls back to `fileOpenInDefaultApp` when every viewer probe fails.
-    * `filePrint` rethrows a friendly CUPS error when `execFileAsync` throws `ENOENT`.
-    * `getDir_Documents` returns a non-empty string (no spawn assertion needed).
+  * `fileOpenPrintDialog` returns without throwing when at least one viewer is present. Stub `execFileAsync` via a registry/fn swap so no real process is spawned.
+  * `fileOpenPrintDialog` falls back to `fileOpenInDefaultApp` when every viewer probe fails.
+  * `filePrint` rethrows a friendly CUPS error when `execFileAsync` throws `ENOENT`.
+  * `getDir_Documents` returns a non-empty string (no spawn assertion needed).
 
 ### 2. CI integration
 

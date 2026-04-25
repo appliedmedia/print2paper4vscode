@@ -1,7 +1,8 @@
 # Orchestrator: A2+A3 Teardown Fixes and Platform Expansion
 
-**Status:** todo
+**Status:** done
 **Created:** 2026-04-17
+**Completed:** 2026-04-20 (PRs [#108](https://github.com/appliedmedia/print2paper4vscode/pull/108), [#110](https://github.com/appliedmedia/print2paper4vscode/pull/110), [#111](https://github.com/appliedmedia/print2paper4vscode/pull/111) merged)
 **Master Orchestrator:** [2026-04-01_plan_todo_Orchestrator.md](<2026-04-01_plan_todo_Orchestrator.md>) (Phase 2 Stream C3 + Phase 3 Stream D)
 
 ## Objective
@@ -21,9 +22,9 @@ Close the two highest-priority items that remain before Marketplace publish read
 
 Comments and files are partitioned so the three lanes share no source files and can run in parallel.
 
-* [Lane 1: PR #108 teardown fixes](<2026-04-17_plan_todo_TeardownAndPlatforms_Lane1-PR108Teardown.md>) on branch `feature/gherkin-migration`
-* [Lane 2: Linux smoke test](<2026-04-17_plan_todo_TeardownAndPlatforms_Lane2-LinuxSmokeTest.md>) on new branch `feature/linux-smoke-test`
-* [Lane 3: Windows print plan refresh](<2026-04-17_plan_todo_TeardownAndPlatforms_Lane3-WindowsPrintPlan.md>) on new branch `docs/windows-print-plan-refresh`
+* [Lane 1: PR #108 teardown fixes](<2026-04-17_plan_done_TeardownAndPlatforms_Lane1-PR108Teardown.md>) on branch `feature/gherkin-migration`
+* [Lane 2: Linux smoke test](<2026-04-17_plan_done_TeardownAndPlatforms_Lane2-LinuxSmokeTest.md>) on new branch `feature/linux-smoke-test`
+* [Lane 3: Windows print plan refresh](<2026-04-17_plan_done_TeardownAndPlatforms_Lane3-WindowsPrintPlan.md>) on new branch `docs/windows-print-plan-refresh`
 
 ## Execution contract
 
