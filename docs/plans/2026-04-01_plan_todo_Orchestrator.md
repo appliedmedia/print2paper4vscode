@@ -163,13 +163,13 @@ Goal: Convert test suite to Gherkin and raise coverage from 85% to 95%+.
 
 Three sequential/parallel branches:
 
-#### C1: Infrastructure
+#### C1: Infrastructure: DONE
 
 * **Plan:** `2026-04-01_plan_todo_GherkinCoverage_S1_Infrastructure.md`
 * **Branch:** `feature/gherkin-infrastructure` (merged as PR #104)
 * **Status:** DONE
 
-#### C2: Coverage Gaps
+#### C2: Coverage Gaps: IN PROGRESS (95.03% stmts)
 
 * **Plan:** `2026-04-01_plan_todo_GherkinCoverage_S2_CoverageGaps.md`
 * **Branch:** `feature/gherkin-coverage`
@@ -177,7 +177,7 @@ Three sequential/parallel branches:
 * **Status:** 95.03% stmts achieved (target met). 852 Gherkin tests added across 17 feature files.
 * **Remaining:** Branch coverage 83.86% (target 90%), some per-file gaps in UIMenuMgr, PDF, Registry
 
-#### C3: Test Migration
+#### C3: Test Migration: IN PROGRESS (Batch 1 of 6)
 
 * **Plan:** `2026-04-01_plan_todo_GherkinCoverage_S3_TestMigration.md`
 * **Branch:** `feature/gherkin-migration`
@@ -191,9 +191,7 @@ Three sequential/parallel branches:
 
 Goal: Full cross-platform support and professional polish.
 
-### Stream D: Platform Printing
-
-Status: done.
+### Stream D: Platform Printing: DONE
 
 * **Linux Print:** done. Merged via PR #105 + smoke test PR #110. Spec: `2025-12-25_plan_todo_LinuxPrint.md`.
 * **Windows Print:** done (2026-04-25). Merged via PR #112 as `bc93025`. Spec: `2026-04-17_plan_done_WindowsPrint.md`. Wave orchestrator: `2026-04-24_plan_done_WindowsPrintImpl_Orch.md` with two lanes (`LaneA-PrintDialog`, `LaneB-FailureModes`).
