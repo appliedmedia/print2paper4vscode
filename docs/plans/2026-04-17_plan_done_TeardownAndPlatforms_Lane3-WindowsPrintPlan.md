@@ -1,10 +1,11 @@
 # Lane 3: Windows Print Plan Refresh
 
-**Status:** todo
+**Status:** done
 **Created:** 2026-04-17
+**Completed:** 2026-04-20 via [PR #111](https://github.com/appliedmedia/print2paper4vscode/pull/111)
 **Branch:** `docs/windows-print-plan-refresh` (new, branched from `main`)
 **Related merged PR:** [#103](https://github.com/appliedmedia/print2paper4vscode/pull/103) (Windows Fixes)
-**Orchestrator:** [2026-04-17_plan_todo_TeardownAndPlatforms_Orch.md](<2026-04-17_plan_todo_TeardownAndPlatforms_Orch.md>)
+**Orchestrator:** [2026-04-17_plan_done_TeardownAndPlatforms_Orch.md](<2026-04-17_plan_done_TeardownAndPlatforms_Orch.md>)
 
 ## Objective
 
@@ -28,13 +29,13 @@ Bring the Windows Print plan out of its "superseded" state now that Stream A (Wi
 * Replace the superseded framing with a real action plan grounded in the post-fixes code.
 * Keep the markdown-hygiene rules (no tables, `*` bullets, no trailing whitespace, extended link format).
 * Sections to include.
-    * Objective
-    * Current state (from step 1)
-    * Deliverables (print dialog, direct print, error paths, tests)
-    * Implementation order
-    * Test strategy (unit-only, windows-latest CI)
-    * Success criteria
-    * Out of scope
+  * Objective
+  * Current state (from step 1)
+  * Deliverables (print dialog, direct print, error paths, tests)
+  * Implementation order
+  * Test strategy (unit-only, windows-latest CI)
+  * Success criteria
+  * Out of scope
 
 ### 3. Update master orchestrator
 

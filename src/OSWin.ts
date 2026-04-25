@@ -51,15 +51,83 @@ export class OSWin extends OS {
 
   async filePrint(path: string): Promise<void> {
     const escapedPath = path.replace(/'/g, "''");
-    await this.execFileAsync('powershell', [
-      '-NoProfile', '-NonInteractive', '-Command',
-      `Start-Process -FilePath '${escapedPath}' -Verb Print`
-    ]);
+    try {
+      const { stderr } = await this.execFileAsync('powershell', [
+        '-NoProfile', '-NonInteractive', '-Command',
+        `Start-Process -FilePath '${escapedPath}' -Verb Print`
+      ]);
+      // Some PowerShell error conditions surface via stderr without rejecting.
+      if (stderr) {
+        const message = this.mapPowerShellErrorToMessage(stderr);
+        if (message) {
+          await this.fn.ui.showErrorMessage(message);
+          return;
+        }
+        throw new Error(stderr);
+      }
+    } catch (error) {
+      const stderr = String((error as any)?.stderr ?? (error as any)?.message ?? error);
+      const message = this.mapPowerShellErrorToMessage(stderr);
+      if (message) {
+        await this.fn.ui.showErrorMessage(message);
+        return;
+      }
+      throw error;
+    }
+  }
+
+  /**
+   * Translate a PowerShell stderr blob into a user-actionable message for the
+   * Windows print failure modes that filePrint can encounter. Returns null if
+   * the text does not match a known mode; the caller is then responsible for
+   * propagating the original error.
+   */
+  protected mapPowerShellErrorToMessage(stderr: string): string | null {
+    const text = stderr.toLowerCase();
+    if (text.includes('default printer') || text.includes('no printer')) {
+      return 'No default printer is set. Configure one in Settings > Bluetooth & devices > Printers & scanners, then try again.';
+    }
+    if (text.includes('verb') && text.includes('not supported')) {
+      return 'The associated PDF handler does not support the Print verb. Install a PDF reader that does, such as Microsoft Edge, Adobe Reader, or Foxit Reader.';
+    }
+    if (
+      text.includes('execution policy') ||
+      text.includes('about_execution_policies') ||
+      text.includes('running scripts is disabled')
+    ) {
+      return 'PowerShell blocked the print command via execution policy. From an elevated PowerShell, run: Set-ExecutionPolicy -Scope CurrentUser RemoteSigned';
+    }
+    return null;
   }
 
   async fileOpenPrintDialog(path: string): Promise<void> {
-    // Best effort: open the PDF and rely on user; Windows programmatic print dialogs vary
-    await this.fileOpenInDefaultApp(path);
+    // Programmatic Windows print dialog.
+    //
+    // Approach: shell out to PowerShell, instantiate System.Windows.Forms.PrintDialog
+    // for printer/page selection, and on OK fire Start-Process -Verb PrintTo against
+    // the chosen printer. User cancellation (DialogResult != OK) is a no-op; no
+    // error surfaces.
+    //
+    // Do NOT regress this method to delegate to fileOpenInDefaultApp. That stub
+    // relied on the user clicking Print inside the viewer and was the explicit
+    // motivation for the Windows print rewrite (see
+    // docs/plans/2026-04-17_plan_inProgress_WindowsPrint.md, "Print dialog"
+    // section).
+    const escapedPath = path.replace(/'/g, "''");
+    const script =
+      "Add-Type -AssemblyName System.Windows.Forms | Out-Null;" +
+      " $dlg = New-Object System.Windows.Forms.PrintDialog;" +
+      " $dlg.AllowSomePages = $false;" +
+      " $dlg.AllowPrintToFile = $false;" +
+      " $dlg.UseEXDialog = $true;" +
+      " if ($dlg.ShowDialog() -eq 'OK') {" +
+      ` Start-Process -FilePath '${escapedPath}' -Verb PrintTo` +
+      " -ArgumentList ('\"' + $dlg.PrinterSettings.PrinterName + '\"')" +
+      " -WindowStyle Hidden }";
+    await this.execFileAsync('powershell', [
+      '-NoProfile', '-NonInteractive', '-Command',
+      script
+    ]);
   }
 
   getDir_Documents(): string {

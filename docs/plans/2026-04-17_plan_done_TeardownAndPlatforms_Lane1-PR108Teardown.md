@@ -5,7 +5,7 @@
 **Closed:** 2026-04-20
 **Branch:** `feature/gherkin-migration`
 **PR:** [#108](<https://github.com/appliedmedia/print2paper4vscode/pull/108>)
-**Orchestrator:** [2026-04-17_plan_todo_TeardownAndPlatforms_Orch.md](<2026-04-17_plan_todo_TeardownAndPlatforms_Orch.md>)
+**Orchestrator:** [2026-04-17_plan_done_TeardownAndPlatforms_Orch.md](<2026-04-17_plan_done_TeardownAndPlatforms_Orch.md>)
 
 ## Objective
 
