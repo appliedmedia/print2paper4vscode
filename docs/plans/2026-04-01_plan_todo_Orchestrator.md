@@ -163,13 +163,13 @@ Goal: Convert test suite to Gherkin and raise coverage from 85% to 95%+.
 
 Three sequential/parallel branches:
 
-#### C1: Infrastructure -- DONE
+#### C1: Infrastructure
 
 * **Plan:** `2026-04-01_plan_todo_GherkinCoverage_S1_Infrastructure.md`
 * **Branch:** `feature/gherkin-infrastructure` (merged as PR #104)
 * **Status:** DONE
 
-#### C2: Coverage Gaps -- IN PROGRESS (95.03% stmts)
+#### C2: Coverage Gaps
 
 * **Plan:** `2026-04-01_plan_todo_GherkinCoverage_S2_CoverageGaps.md`
 * **Branch:** `feature/gherkin-coverage`
@@ -177,7 +177,7 @@ Three sequential/parallel branches:
 * **Status:** 95.03% stmts achieved (target met). 852 Gherkin tests added across 17 feature files.
 * **Remaining:** Branch coverage 83.86% (target 90%), some per-file gaps in UIMenuMgr, PDF, Registry
 
-#### C3: Test Migration -- IN PROGRESS (Batch 1 of 6)
+#### C3: Test Migration
 
 * **Plan:** `2026-04-01_plan_todo_GherkinCoverage_S3_TestMigration.md`
 * **Branch:** `feature/gherkin-migration`
