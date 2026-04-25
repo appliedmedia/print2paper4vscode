@@ -59,13 +59,17 @@ export class OSWin extends OS {
       // Some PowerShell error conditions surface via stderr without rejecting.
       if (stderr) {
         const message = this.mapPowerShellErrorToMessage(stderr);
-        if (message) { this.fn.ui.showErrorMessage(message); }
+        if (message) {
+          await this.fn.ui.showErrorMessage(message);
+          return;
+        }
+        throw new Error(stderr);
       }
     } catch (error) {
       const stderr = String((error as any)?.stderr ?? (error as any)?.message ?? error);
       const message = this.mapPowerShellErrorToMessage(stderr);
       if (message) {
-        this.fn.ui.showErrorMessage(message);
+        await this.fn.ui.showErrorMessage(message);
         return;
       }
       throw error;
@@ -86,7 +90,11 @@ export class OSWin extends OS {
     if (text.includes('verb') && text.includes('not supported')) {
       return 'The associated PDF handler does not support the Print verb. Install a PDF reader that does, such as Microsoft Edge, Adobe Reader, or Foxit Reader.';
     }
-    if (text.includes('execution policy') || text.includes('cannot be loaded') || text.includes('disabled')) {
+    if (
+      text.includes('execution policy') ||
+      text.includes('about_execution_policies') ||
+      text.includes('running scripts is disabled')
+    ) {
       return 'PowerShell blocked the print command via execution policy. From an elevated PowerShell, run: Set-ExecutionPolicy -Scope CurrentUser RemoteSigned';
     }
     return null;

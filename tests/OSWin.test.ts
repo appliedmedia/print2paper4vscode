@@ -260,6 +260,21 @@ describe('OSWin', () => {
       assert.strictEqual(messages.length, 1);
       assert.ok(/Settings/i.test(messages[0]));
     });
+
+    it('should reject on unknown resolved stderr without showing an error message', async () => {
+      let errorMsgCalls = 0;
+      (osWin as any).execFileAsync = async () => ({
+        stdout: '',
+        stderr: 'unrecognized print failure'
+      });
+      (osWin as any).fn.ui.showErrorMessage = (_msg: string) => {
+        errorMsgCalls += 1;
+        return Promise.resolve(undefined);
+      };
+
+      await assert.rejects(() => osWin.filePrint('C:\\test.pdf'), /unrecognized print failure/);
+      assert.strictEqual(errorMsgCalls, 0);
+    });
   });
 
   describe('mapPowerShellErrorToMessage', () => {
