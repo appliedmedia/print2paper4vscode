@@ -1,9 +1,5 @@
 # Print2Paper4VSCode
 
-[![CI](https://github.com/appliedmedia/print2paper4vscode/actions/workflows/ci.yml/badge.svg)](https://github.com/appliedmedia/print2paper4vscode/actions)
-[![Coverage](images/coverage.svg)](https://github.com/appliedmedia/print2paper4vscode/actions)
-[![License](images/license.svg)](https://github.com/appliedmedia/print2paper4vscode/blob/main/LICENSE)
-
 A VS Code extension that captures content from the active editor, applies syntax highlighting, generates a vector PDF, and provides multiple printing options through an interactive webview interface.
 
 ## Quick Links
