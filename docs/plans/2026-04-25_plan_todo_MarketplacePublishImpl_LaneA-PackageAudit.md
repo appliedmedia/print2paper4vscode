@@ -27,15 +27,15 @@ The spec recipe ([MarketplacePublish](<2026-04-01_plan_todo_MarketplacePublish.m
   * If `vsce` complains, fix the template field, regenerate, and retry
   * Save the resulting VSIX as a build artifact for Lane C smoke install
 * Icon
-  * If `icon.png` does not exist at the repo root, decide with acoven whether to ship without an icon or commission one
-  * If shipping without, confirm template does not reference an icon path
-  * If shipping with, add `icon.png` (128x128 PNG, transparent background) and the `"icon": "icon.png"` field
+  * Confirm `images/logo-p2p4vsc_128x128px.png` exists and is referenced by the `"icon"` field in `.config/template.package.json`
+  * Confirm `.vscodeignore` keeps only that single icon file in the VSIX image payload (whitelist `images/**` then `!images/logo-p2p4vsc_128x128px.png`)
+  * If the icon asset or path changes, update both `.config/template.package.json` and `.vscodeignore` in the same change
 * README marketplace-readiness sweep
   * No Yeoman boilerplate text
   * No `<img>` tags with non-HTTPS sources
   * No inline SVG references
   * Renders sensibly at <https://github.com/appliedmedia/print2paper4vscode>
-* Reconcile [2025-12-11_plan_todo_PackageJsonMetadata.md](<2025-12-11_plan_todo_PackageJsonMetadata.md>)
+* Reconcile [2025-12-11_plan_done_PackageJsonMetadata.md](<2025-12-11_plan_done_PackageJsonMetadata.md>)
   * If every field it lists is already in the template, rename it `*_plan_done_*` with a top-line note pointing to this wave
   * If anything is genuinely missing, fix the template in this lane and then close the older plan
 

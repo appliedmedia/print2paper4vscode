@@ -15,7 +15,7 @@ Push the audited VSIX to the marketplace, smoke-install it from the marketplace,
 
 * Final VSIX
   * [ ] On the wave branch, run `bash scripts/prepublish.sh && npx @vscode/vsce package`
-  * [ ] Confirm the `.vsix` filename matches `print2paper4vscode-{version}.vsix` and the version matches `template.package.json`
+  * [ ] Confirm the `.vsix` filename matches `print2paper4vscode-{version}.vsix` and the version matches `.config/template.package.json`
 * Publish
   * [ ] `npx @vscode/vsce publish` (interactive) **OR** `VSCE_PAT=<pat> npx @vscode/vsce publish` (one-shot)
   * [ ] Wait for Microsoft's automated virus scan (typically a few minutes)

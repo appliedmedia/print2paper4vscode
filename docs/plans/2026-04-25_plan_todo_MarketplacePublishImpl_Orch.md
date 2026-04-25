@@ -3,7 +3,7 @@
 **Status:** todo
 **Created:** 2026-04-25
 **Spec:** [2026-04-01_plan_todo_MarketplacePublish.md](<2026-04-01_plan_todo_MarketplacePublish.md>)
-**Stale prereq:** [2025-12-11_plan_todo_PackageJsonMetadata.md](<2025-12-11_plan_todo_PackageJsonMetadata.md>)
+**Stale prereq:** [2025-12-11_plan_done_PackageJsonMetadata.md](<2025-12-11_plan_done_PackageJsonMetadata.md>)
 **Master orchestrator:** [2026-04-01_plan_todo_Orchestrator.md](<2026-04-01_plan_todo_Orchestrator.md>) (Phase 1 Stream B)
 
 ## Objective
