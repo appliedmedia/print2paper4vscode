@@ -51,10 +51,45 @@ export class OSWin extends OS {
 
   async filePrint(path: string): Promise<void> {
     const escapedPath = path.replace(/'/g, "''");
-    await this.execFileAsync('powershell', [
-      '-NoProfile', '-NonInteractive', '-Command',
-      `Start-Process -FilePath '${escapedPath}' -Verb Print`
-    ]);
+    try {
+      const { stderr } = await this.execFileAsync('powershell', [
+        '-NoProfile', '-NonInteractive', '-Command',
+        `Start-Process -FilePath '${escapedPath}' -Verb Print`
+      ]);
+      // Some PowerShell error conditions surface via stderr without rejecting.
+      if (stderr) {
+        const message = this.mapPowerShellErrorToMessage(stderr);
+        if (message) { this.fn.ui.showErrorMessage(message); }
+      }
+    } catch (error) {
+      const stderr = String((error as any)?.stderr ?? (error as any)?.message ?? error);
+      const message = this.mapPowerShellErrorToMessage(stderr);
+      if (message) {
+        this.fn.ui.showErrorMessage(message);
+        return;
+      }
+      throw error;
+    }
+  }
+
+  /**
+   * Translate a PowerShell stderr blob into a user-actionable message for the
+   * Windows print failure modes that filePrint can encounter. Returns null if
+   * the text does not match a known mode; the caller is then responsible for
+   * propagating the original error.
+   */
+  protected mapPowerShellErrorToMessage(stderr: string): string | null {
+    const text = stderr.toLowerCase();
+    if (text.includes('default printer') || text.includes('no printer')) {
+      return 'No default printer is set. Configure one in Settings > Bluetooth & devices > Printers & scanners, then try again.';
+    }
+    if (text.includes('verb') && text.includes('not supported')) {
+      return 'The associated PDF handler does not support the Print verb. Install a PDF reader that does, such as Microsoft Edge, Adobe Reader, or Foxit Reader.';
+    }
+    if (text.includes('execution policy') || text.includes('cannot be loaded') || text.includes('disabled')) {
+      return 'PowerShell blocked the print command via execution policy. From an elevated PowerShell, run: Set-ExecutionPolicy -Scope CurrentUser RemoteSigned';
+    }
+    return null;
   }
 
   async fileOpenPrintDialog(path: string): Promise<void> {

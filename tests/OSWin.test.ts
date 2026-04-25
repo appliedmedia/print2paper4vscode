@@ -158,6 +158,120 @@ describe('OSWin', () => {
       await osWin.filePrint('C:\\test.pdf');
       assert.strictEqual(execAsyncCalled, false, 'execAsync must not be called');
     });
+
+    it('should not call showErrorMessage on the success path', async () => {
+      let errorMsgCalls = 0;
+      (osWin as any).execFileAsync = async () => ({ stdout: '', stderr: '' });
+      (osWin as any).fn.ui.showErrorMessage = (_msg: string) => {
+        errorMsgCalls += 1;
+        return Promise.resolve(undefined);
+      };
+
+      await osWin.filePrint('C:\\test.pdf');
+      assert.strictEqual(errorMsgCalls, 0);
+    });
+
+    it('should surface a Settings hint when PowerShell reports no default printer', async () => {
+      const messages: string[] = [];
+      (osWin as any).execFileAsync = async () => {
+        const err: any = new Error('Start-Process failed');
+        err.stderr = 'Start-Process : No default printer is configured for this user.';
+        throw err;
+      };
+      (osWin as any).fn.ui.showErrorMessage = (msg: string) => {
+        messages.push(msg);
+        return Promise.resolve(undefined);
+      };
+
+      await osWin.filePrint('C:\\test.pdf');
+
+      assert.strictEqual(messages.length, 1);
+      assert.ok(/Settings/i.test(messages[0]), `expected Settings hint; got: ${messages[0]}`);
+      assert.ok(/Printers/i.test(messages[0]), `expected Printers hint; got: ${messages[0]}`);
+    });
+
+    it('should surface a reader hint when the Print verb is not supported', async () => {
+      const messages: string[] = [];
+      (osWin as any).execFileAsync = async () => {
+        const err: any = new Error('Start-Process failed');
+        err.stderr = "Start-Process : The Verb 'Print' is not supported by this object.";
+        throw err;
+      };
+      (osWin as any).fn.ui.showErrorMessage = (msg: string) => {
+        messages.push(msg);
+        return Promise.resolve(undefined);
+      };
+
+      await osWin.filePrint('C:\\test.pdf');
+
+      assert.strictEqual(messages.length, 1);
+      assert.ok(/PDF reader/i.test(messages[0]), `expected reader hint; got: ${messages[0]}`);
+      assert.ok(/Edge|Adobe|Foxit/.test(messages[0]), `expected reader names; got: ${messages[0]}`);
+    });
+
+    it('should surface a Set-ExecutionPolicy hint when PowerShell blocks the script', async () => {
+      const messages: string[] = [];
+      (osWin as any).execFileAsync = async () => {
+        const err: any = new Error('PowerShell blocked');
+        err.stderr = 'File cannot be loaded because running scripts is disabled on this system. See about_Execution_Policies.';
+        throw err;
+      };
+      (osWin as any).fn.ui.showErrorMessage = (msg: string) => {
+        messages.push(msg);
+        return Promise.resolve(undefined);
+      };
+
+      await osWin.filePrint('C:\\test.pdf');
+
+      assert.strictEqual(messages.length, 1);
+      assert.ok(/Set-ExecutionPolicy/.test(messages[0]), `expected Set-ExecutionPolicy hint; got: ${messages[0]}`);
+      assert.ok(/RemoteSigned/.test(messages[0]), `expected RemoteSigned policy; got: ${messages[0]}`);
+    });
+
+    it('should rethrow when stderr does not match a known failure mode', async () => {
+      (osWin as any).execFileAsync = async () => {
+        const err: any = new Error('mystery failure');
+        err.stderr = 'something went wrong that we have never seen before';
+        throw err;
+      };
+      let errorMsgCalls = 0;
+      (osWin as any).fn.ui.showErrorMessage = (_msg: string) => {
+        errorMsgCalls += 1;
+        return Promise.resolve(undefined);
+      };
+
+      await assert.rejects(() => osWin.filePrint('C:\\test.pdf'), /mystery failure/);
+      assert.strictEqual(errorMsgCalls, 0);
+    });
+
+    it('should also map failure modes that surface via resolved stderr', async () => {
+      const messages: string[] = [];
+      (osWin as any).execFileAsync = async () => ({
+        stdout: '',
+        stderr: 'No default printer.'
+      });
+      (osWin as any).fn.ui.showErrorMessage = (msg: string) => {
+        messages.push(msg);
+        return Promise.resolve(undefined);
+      };
+
+      await osWin.filePrint('C:\\test.pdf');
+
+      assert.strictEqual(messages.length, 1);
+      assert.ok(/Settings/i.test(messages[0]));
+    });
+  });
+
+  describe('mapPowerShellErrorToMessage', () => {
+    it('should return null for stderr that does not match a known failure mode', () => {
+      const result = (osWin as any).mapPowerShellErrorToMessage('totally unrelated error text');
+      assert.strictEqual(result, null);
+    });
+
+    it('should be case-insensitive', () => {
+      const result = (osWin as any).mapPowerShellErrorToMessage('NO DEFAULT PRINTER FOUND');
+      assert.ok(result && /Settings/i.test(result));
+    });
   });
 
   describe('fileOpenPrintDialog', () => {
