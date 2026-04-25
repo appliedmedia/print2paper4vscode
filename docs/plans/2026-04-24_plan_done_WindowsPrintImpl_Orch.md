@@ -13,7 +13,7 @@ Both lanes shipped together in PR #112 (squash-merged as `bc93025` on `main`). L
 
 ## Objective
 
-Execute the [WindowsPrint spec](<2026-04-17_plan_inProgress_WindowsPrint.md>) in two coordinated lanes that ship together as a single PR on `feature/windows-print`. The spec lists two largely independent workstreams: rewriting the print-dialog method, and adding failure-mode handling to the direct-print method. Both edit the same source and test files, so the lanes are partitioned by method, not by file.
+Execute the [WindowsPrint spec](<2026-04-17_plan_done_WindowsPrint.md>) in two coordinated lanes that ship together as a single PR on `feature/windows-print`. The spec lists two largely independent workstreams: rewriting the print-dialog method, and adding failure-mode handling to the direct-print method. Both edit the same source and test files, so the lanes are partitioned by method, not by file.
 
 ## Scope
 
@@ -27,8 +27,8 @@ Execute the [WindowsPrint spec](<2026-04-17_plan_inProgress_WindowsPrint.md>) in
 
 Lanes are partitioned by method-and-describe-block. Both lanes touch the same two files; the orchestrator serializes them at the source level (Lane A merges into the wave branch first, Lane B rebases).
 
-* [Lane A: fileOpenPrintDialog rewrite](<2026-04-24_plan_todo_WindowsPrintImpl_LaneA-PrintDialog.md>)
-* [Lane B: filePrint failure-mode handling](<2026-04-24_plan_todo_WindowsPrintImpl_LaneB-FailureModes.md>)
+* [Lane A: fileOpenPrintDialog rewrite](<2026-04-24_plan_done_WindowsPrintImpl_LaneA-PrintDialog.md>)
+* [Lane B: filePrint failure-mode handling](<2026-04-24_plan_done_WindowsPrintImpl_LaneB-FailureModes.md>)
 
 ## File partition
 
