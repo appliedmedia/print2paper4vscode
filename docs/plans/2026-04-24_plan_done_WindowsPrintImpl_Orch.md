@@ -1,13 +1,19 @@
 # Orchestrator: Windows Print Implementation Wave
 
-**Status:** todo
+**Status:** done
 **Created:** 2026-04-24
-**Spec:** [2026-04-17_plan_inProgress_WindowsPrint.md](<2026-04-17_plan_inProgress_WindowsPrint.md>)
+**Closed:** 2026-04-25
+**Merged PR:** [#112 Windows print: real dialog + failure-mode handling](<https://github.com/appliedmedia/print2paper4vscode/pull/112>)
+**Spec:** [2026-04-17_plan_done_WindowsPrint.md](<2026-04-17_plan_done_WindowsPrint.md>)
 **Master orchestrator:** [2026-04-01_plan_todo_Orchestrator.md](<2026-04-01_plan_todo_Orchestrator.md>) (Phase 3 Stream D)
+
+## Closure note (2026-04-25)
+
+Both lanes shipped together in PR #112 (squash-merged as `bc93025` on `main`). Lane A rewrote `fileOpenPrintDialog` to invoke a real `System.Windows.Forms.PrintDialog` via PowerShell; Lane B added `mapPowerShellErrorToMessage` and routed `filePrint` failures through `fn.ui.showErrorMessage` for the four spec'd failure modes. CodeRabbit clean after one ai01 pass. CI green on `ubuntu-latest` and `windows-latest`. 348 unit tests pass.
 
 ## Objective
 
-Execute the [WindowsPrint spec](<2026-04-17_plan_inProgress_WindowsPrint.md>) in two coordinated lanes that ship together as a single PR on `feature/windows-print`. The spec lists two largely independent workstreams: rewriting the print-dialog method, and adding failure-mode handling to the direct-print method. Both edit the same source and test files, so the lanes are partitioned by method, not by file.
+Execute the [WindowsPrint spec](<2026-04-17_plan_done_WindowsPrint.md>) in two coordinated lanes that ship together as a single PR on `feature/windows-print`. The spec lists two largely independent workstreams: rewriting the print-dialog method, and adding failure-mode handling to the direct-print method. Both edit the same source and test files, so the lanes are partitioned by method, not by file.
 
 ## Scope
 
@@ -21,8 +27,8 @@ Execute the [WindowsPrint spec](<2026-04-17_plan_inProgress_WindowsPrint.md>) in
 
 Lanes are partitioned by method-and-describe-block. Both lanes touch the same two files; the orchestrator serializes them at the source level (Lane A merges into the wave branch first, Lane B rebases).
 
-* [Lane A: fileOpenPrintDialog rewrite](<2026-04-24_plan_todo_WindowsPrintImpl_LaneA-PrintDialog.md>)
-* [Lane B: filePrint failure-mode handling](<2026-04-24_plan_todo_WindowsPrintImpl_LaneB-FailureModes.md>)
+* [Lane A: fileOpenPrintDialog rewrite](<2026-04-24_plan_done_WindowsPrintImpl_LaneA-PrintDialog.md>)
+* [Lane B: filePrint failure-mode handling](<2026-04-24_plan_done_WindowsPrintImpl_LaneB-FailureModes.md>)
 
 ## File partition
 

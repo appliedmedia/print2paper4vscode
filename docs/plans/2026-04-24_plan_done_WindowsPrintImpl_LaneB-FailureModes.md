@@ -1,11 +1,13 @@
 # Lane B: filePrint Failure-Mode Handling
 
-**Status:** todo
+**Status:** done
 **Created:** 2026-04-24
-**Branch:** `feature/windows-print-failure-modes` (new, branched from `feature/windows-print` after Lane A merges)
-**Parent branch:** `feature/windows-print` (post Lane A merge)
-**Orchestrator:** [2026-04-24_plan_todo_WindowsPrintImpl_Orch.md](<2026-04-24_plan_todo_WindowsPrintImpl_Orch.md>)
-**Spec:** [2026-04-17_plan_inProgress_WindowsPrint.md](<2026-04-17_plan_inProgress_WindowsPrint.md>) sections "Direct print", "Error paths", and "Tests"
+**Closed:** 2026-04-25
+**Merged into:** `feature/windows-print` as commits `f80174c` + `b431b25` (then squash-merged to `main` via PR #112 as `bc93025`)
+**Branch:** `feature/windows-print-failure-modes` (deleted post-merge)
+**Parent branch:** `feature/windows-print` (deleted post-merge)
+**Orchestrator:** [2026-04-24_plan_done_WindowsPrintImpl_Orch.md](<2026-04-24_plan_done_WindowsPrintImpl_Orch.md>)
+**Spec:** [2026-04-17_plan_done_WindowsPrint.md](<2026-04-17_plan_done_WindowsPrint.md>) sections "Direct print", "Error paths", and "Tests"
 
 ## Objective
 

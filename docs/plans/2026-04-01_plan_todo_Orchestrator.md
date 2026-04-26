@@ -73,13 +73,13 @@ Stream C ──────►                          [Gherkin Infra]
                                                   ▼
                                           Coverage ≥ 95%
 
-Stream D ──────►                                              [Linux Print]
+Stream D ──────►                                              [Linux Print] ✓
 (Platforms)                                                    branch: feature/linux-print
-                                                               PR → CR → merge
+                                                               merged: PR #105 + smoke test PR #110
 
-                                                              [Windows Print]*
+                                                              [Windows Print] ✓
                                                                branch: feature/windows-print
-                                                               PR → CR → merge
+                                                               merged: PR #112 (2026-04-25)
 
 Stream E ──────►                                              [Web Presence]
 (Marketing)                                                    See appliedmedia/ops
@@ -89,7 +89,7 @@ Stream F ──────►                                              [VSC
                                                                PR → CR → merge
 ```
 
-*Windows Print is tracked by the refreshed plan `2026-04-17_plan_todo_WindowsPrint.md`. Stream A (Windows Fixes, PR #103) has merged, so Windows Print is now `unblocked`.
+*Windows Print: implementation tracked by `2026-04-17_plan_done_WindowsPrint.md` (spec) and the wave orchestrator `2026-04-24_plan_done_WindowsPrintImpl_Orch.md`. Stream A (Windows Fixes, PR #103) merged, then PR #112 (real `System.Windows.Forms.PrintDialog` + `filePrint` failure-mode handling) merged on 2026-04-25 as `bc93025`. Stream D is now done.
 
 ---
 
@@ -163,13 +163,13 @@ Goal: Convert test suite to Gherkin and raise coverage from 85% to 95%+.
 
 Three sequential/parallel branches:
 
-#### C1: Infrastructure -- DONE
+#### C1: Infrastructure: DONE
 
 * **Plan:** `2026-04-01_plan_todo_GherkinCoverage_S1_Infrastructure.md`
 * **Branch:** `feature/gherkin-infrastructure` (merged as PR #104)
 * **Status:** DONE
 
-#### C2: Coverage Gaps -- IN PROGRESS (95.03% stmts)
+#### C2: Coverage Gaps: IN PROGRESS (95.03% stmts)
 
 * **Plan:** `2026-04-01_plan_todo_GherkinCoverage_S2_CoverageGaps.md`
 * **Branch:** `feature/gherkin-coverage`
@@ -177,7 +177,7 @@ Three sequential/parallel branches:
 * **Status:** 95.03% stmts achieved (target met). 852 Gherkin tests added across 17 feature files.
 * **Remaining:** Branch coverage 83.86% (target 90%), some per-file gaps in UIMenuMgr, PDF, Registry
 
-#### C3: Test Migration -- IN PROGRESS (Batch 1 of 6)
+#### C3: Test Migration: IN PROGRESS (Batch 1 of 6)
 
 * **Plan:** `2026-04-01_plan_todo_GherkinCoverage_S3_TestMigration.md`
 * **Branch:** `feature/gherkin-migration`
@@ -191,12 +191,10 @@ Three sequential/parallel branches:
 
 Goal: Full cross-platform support and professional polish.
 
-### Stream D: Platform Printing
+### Stream D: Platform Printing: DONE
 
-| Stream | Plan | Branch | Blocked by | Estimate |
-| --- | --- | --- | --- | --- |
-| Linux Print | `2025-12-25_plan_todo_LinuxPrint.md` | `feature/linux-print` | Nothing | 4-6 hours |
-| Windows Print | `2026-04-17_plan_todo_WindowsPrint.md` | `feature/windows-print` | unblocked | 4-6 hours |
+* **Linux Print:** done. Merged via PR #105 + smoke test PR #110. Spec: `2025-12-25_plan_todo_LinuxPrint.md`.
+* **Windows Print:** done (2026-04-25). Merged via PR #112 as `bc93025`. Spec: `2026-04-17_plan_done_WindowsPrint.md`. Wave orchestrator: `2026-04-24_plan_done_WindowsPrintImpl_Orch.md` with two lanes (`LaneA-PrintDialog`, `LaneB-FailureModes`).
 
 ### Stream E: Web Presence
 

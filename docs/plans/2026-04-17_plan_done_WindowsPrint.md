@@ -1,12 +1,18 @@
 # Windows Printing Implementation Plan
 
-**Status:** inProgress
+**Status:** done
 **Created:** 2026-04-17
 **Picked up:** 2026-04-24
+**Closed:** 2026-04-25
 **Supersedes:** `2025-12-25_plan_todo_WinPrint.md` (deleted in the same PR that introduces this file)
 **Related merged PR:** [#103 Windows Fixes](<https://github.com/appliedmedia/print2paper4vscode/pull/103>)
+**Implementation PR:** [#112 Windows print: real dialog + failure-mode handling](<https://github.com/appliedmedia/print2paper4vscode/pull/112>)
 **Master orchestrator:** [2026-04-01_plan_todo_Orchestrator.md](<2026-04-01_plan_todo_Orchestrator.md>) (Phase 3 Stream D)
-**Wave orchestrator:** [2026-04-24_plan_todo_WindowsPrintImpl_Orch.md](<2026-04-24_plan_todo_WindowsPrintImpl_Orch.md>)
+**Wave orchestrator:** [2026-04-24_plan_done_WindowsPrintImpl_Orch.md](<2026-04-24_plan_done_WindowsPrintImpl_Orch.md>)
+
+## Closure note (2026-04-25)
+
+Implementation landed in PR #112 (squash-merged as `bc93025` on `main`). Both spec lanes shipped: Lane A rewrote `fileOpenPrintDialog` as a real `System.Windows.Forms.PrintDialog` (PowerShell-invoked); Lane B added explicit failure-mode handling to `filePrint` via a new `mapPowerShellErrorToMessage` helper covering the four spec'd modes (no default printer, Print verb unsupported, execution policy block, user cancel). 348 unit tests pass; CI green on `ubuntu-latest` and `windows-latest`; CodeRabbit clean after one ai01 pass.
 
 ## Objective
 
