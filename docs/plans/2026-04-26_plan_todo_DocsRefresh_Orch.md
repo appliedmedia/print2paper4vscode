@@ -1,28 +1,33 @@
 # Orchestrator: Docs Refresh Wave
 
-**Status:** todo
+**Status:** in-progress
 **Created:** 2026-04-26
 **Master orchestrator:** [2026-04-01_plan_todo_Orchestrator.md](<2026-04-01_plan_todo_Orchestrator.md>) (Phase 1 quality gate before publish)
 **Blocks:** [2026-04-25_plan_todo_MarketplacePublishImpl_LaneC-PublishAndVerify.md](<2026-04-25_plan_todo_MarketplacePublishImpl_LaneC-PublishAndVerify.md>) (publish should not happen against the current dev-facing README)
 
 ## Objective
 
-The README that the marketplace shows is the same `README.md` shipped in the VSIX, which is the same file GitHub renders on the repo landing page.
-Today that file is written for contributors, not users: it leads with `docs/AGENTS.md` (a link broken in the marketplace because `docs/**` is excluded), tells visitors to `apt-get install nodejs`, and hides the actual usage in line 127 of a 409-line dev guide.
+Today, `vsce publish` would ship the repo-root `README.md` and `CHANGELOG.md` as the marketplace listing.
+Those files are written for contributors: leading with `docs/AGENTS.md` (a link broken in the marketplace because `docs/**` is excluded), telling visitors to `apt-get install nodejs`, hiding usage in line 127 of a 409-line dev guide.
 The single user-facing section is also factually wrong about keybindings and command names.
-This wave fixes that and, while we are in there, brings every other piece of repo documentation into agreement with what the extension actually does as of 2026-04-26.
+
+This wave keeps the repo `README.md` and `CHANGELOG.md` as the developer / contributor surface they have always been (with factual fixes), and adds a separate marketplace-only pair at `docs/MARKETPLACE.md` and `docs/MARKETPLACE_CHANGELOG.md` that `vsce publish` ships via `--readme-path` and `--changelog-path` flags. While we are in the docs anyway, bring every other piece of repo documentation into agreement with what the extension actually does as of 2026-04-26.
+
+See memory `feedback_marketplace_readme_split.md` for the convention this wave codifies.
 
 ## Scope
 
 * In scope
-  * Rewrite `README.md` to serve marketplace users first, contributors second (with a clear pointer to dev docs).
-  * Rewrite `CHANGELOG.md` 1.0.0 entry to reflect what actually shipped (correct date, accurate platform-support claims, drop "Future Roadmap" items that are now done).
-  * Split developer-only content out of the root README into new `docs/CONTRIBUTING.md` (setup + build + test) and `docs/ARCHITECTURE.md` (component flow, three-library pipeline, execution paths).
+  * Create `docs/MARKETPLACE.md`: marketplace-audience README (what does it do, what do I press, what does it look like).
+  * Create `docs/MARKETPLACE_CHANGELOG.md`: marketplace-audience changelog.
+  * Wire `vsce publish` (and any local manual `vsce package` invocation) to use `--readme-path docs/MARKETPLACE.md --changelog-path docs/MARKETPLACE_CHANGELOG.md`.
+  * Apply factual accuracy fixes to repo-root `README.md` (correct keybindings, command names, dead Quick Links, stale platform-support claims) and `CHANGELOG.md` (correct date, correct platform-support claims, replace stale test count, trim Future Roadmap).
   * Audit the existing `docs/AGENTS.md`, `docs/VSCodeAPIs.md`, `docs/INSTALL.md`, `docs/EXECUTION_ORDER_ANALYSIS.md`, `docs/2026-04-12_info_DeveloperGuide.md` for accuracy against current code; update or delete as needed.
   * Add a `contributes.walkthroughs` entry plus `walkthroughs/*.md` step files so first install in VS Code, Cursor, or any VSCodium fork pops a Get Started panel that teaches Alt+P.
-  * Capture at least one product screenshot for the README and one short GIF for the walkthrough.
+  * Capture at least one product screenshot for the marketplace README and one short GIF for the walkthrough.
 * Out of scope
   * Any change to runtime behavior. This wave is documentation and onboarding only.
+  * Splitting the repo `README.md` into multiple files. The repo README stays whole as the developer entry point.
   * Marketplace listing categories, gallery banner, sidebar metadata. Lane C of the publish wave already covers those.
   * Marketing copy beyond what fits a marketplace README. The polished landing page lives at `appliedmedia/ops` per the master orchestrator.
 
@@ -33,21 +38,26 @@ This wave fixes that and, while we are in there, brings every other piece of rep
 
 ## Branching
 
-* Wave branch: `feature/docs-refresh` (new, branched from the tip of `feature/marketplace-publish` so the in-flight `.vscodeignore` + `.gitignore` build fixes ride along).
-* Lanes do not need their own sub-branches; they touch mostly disjoint files and can land as ordered commits on the wave branch. If two Claude sessions run in parallel, they can each take a sub-branch off the wave (`feature/docs-refresh-laneA`, etc.) and PR back into the wave.
+* Wave branch: `feature/docs-refresh` (already created off `feature/marketplace-publish` so the in-flight `.vscodeignore` + `.gitignore` build fixes ride along).
+* Lanes do not need their own sub-branches; they touch mostly disjoint files and can land as ordered commits on the wave branch.
 * When the wave is done, one PR `feature/docs-refresh` → `main`. After merge, the marketplace wave's Lane C resumes by branching `feature/marketplace-publish` fresh from the new `main`.
 
 ## Lanes
 
-* [Lane A: marketplace-facing README rewrite](<2026-04-26_plan_todo_DocsRefresh_LaneA-MarketplaceREADME.md>)
-* [Lane B: CHANGELOG accuracy + format pass](<2026-04-26_plan_todo_DocsRefresh_LaneB-Changelog.md>)
-* [Lane C: developer docs split + audit](<2026-04-26_plan_todo_DocsRefresh_LaneC-DevDocsSplit.md>)
+* [Lane A: marketplace-facing README (separate file)](<2026-04-26_plan_todo_DocsRefresh_LaneA-MarketplaceREADME.md>)
+* [Lane B: marketplace CHANGELOG (separate file) + repo CHANGELOG accuracy](<2026-04-26_plan_todo_DocsRefresh_LaneB-Changelog.md>)
+* [Lane C: repo README accuracy fixes + dev docs audit](<2026-04-26_plan_todo_DocsRefresh_LaneC-DevDocsSplit.md>)
 * [Lane D: walkthrough Get Started experience](<2026-04-26_plan_todo_DocsRefresh_LaneD-Walkthrough.md>)
 * [Lane E: verification + cross-link audit](<2026-04-26_plan_todo_DocsRefresh_LaneE-Verify.md>)
 
 ## Dependencies
 
-* Lanes A, B, C, D are mutually independent: A rewrites root `README.md` from scratch; B rewrites `CHANGELOG.md` from scratch; C creates new `docs/CONTRIBUTING.md` + `docs/ARCHITECTURE.md` from a snapshot of the old README plus audits the existing `docs/*.md` set; D adds `walkthroughs/` + edits `.config/template.package.json` + `.vscodeignore`. The only shared file is `.vscodeignore` (Lane D adds a `!walkthroughs/**` allow-rule), so Lane D should land last among A-D or rebase the one-line `.vscodeignore` change.
+* Lanes A, B, C, D are mutually independent.
+  * A creates `docs/MARKETPLACE.md` + screenshot + publish.yml `--readme-path` flag.
+  * B creates `docs/MARKETPLACE_CHANGELOG.md` + publish.yml `--changelog-path` flag + accuracy fixes to repo `CHANGELOG.md`.
+  * C applies accuracy fixes to repo `README.md` + audits `docs/*.md`.
+  * D adds `walkthroughs/` + edits `.config/template.package.json` + `.vscodeignore`.
+  * The only shared file is `.github/workflows/publish.yml` (Lanes A and B both add a flag); land them as separate commits or coordinate the edit.
 * Lane E (verification) depends on A, B, C, D all complete. It rebuilds the VSIX, inspects the rendered README + walkthrough, and validates every internal link.
 
 ## Coordination
@@ -59,28 +69,30 @@ This wave fixes that and, while we are in there, brings every other piece of rep
 
 ## Done when
 
-* `README.md` reads as a marketplace user guide; contributor content is gone or one click away in `docs/CONTRIBUTING.md`.
-* `CHANGELOG.md` 1.0.0 entry is factually accurate as of publish day.
+* `docs/MARKETPLACE.md` reads as a marketplace user guide; `docs/MARKETPLACE_CHANGELOG.md` reads as a user-facing changelog; both are wired through `vsce publish` flags.
+* Repo `README.md` and `CHANGELOG.md` are factually accurate as of 2026-04-26 (keybindings, command names, platform support, test count) and remain the developer / contributor surface on GitHub.
 * Every file under `docs/` either reflects current code or is intentionally archival (with a header saying so).
 * Fresh install in an Extension Development Host pops the Get Started walkthrough automatically.
-* `npx @vscode/vsce package` produces a VSIX whose contents match the agreed file list (8 base files + walkthrough media), with no `.claude/`, no badges, no broken links.
+* `npx @vscode/vsce package --readme-path docs/MARKETPLACE.md --changelog-path docs/MARKETPLACE_CHANGELOG.md` produces a VSIX whose contents match the agreed file list (8 base files + walkthrough media), with no `.claude/`, no badges, no broken links.
 * `markdownlint` passes on every changed `.md` file with the project's existing rules.
 
 ## File ownership snapshot
 
 * Lane A may edit
-  * `README.md`
+  * `docs/MARKETPLACE.md` (new)
   * `images/` (new screenshot file, e.g., `images/screenshot-preview.png`)
+  * `.github/workflows/publish.yml` (add `--readme-path docs/MARKETPLACE.md` to the `vsce publish` line)
 * Lane B may edit
-  * `CHANGELOG.md`
+  * `docs/MARKETPLACE_CHANGELOG.md` (new)
+  * `CHANGELOG.md` (factual fixes; file stays as developer-facing)
+  * `.github/workflows/publish.yml` (add `--changelog-path docs/MARKETPLACE_CHANGELOG.md` to the `vsce publish` line)
 * Lane C may edit
-  * `docs/CONTRIBUTING.md` (new)
-  * `docs/ARCHITECTURE.md` (new)
+  * `README.md` (factual fixes; file stays as developer-facing)
   * `docs/AGENTS.md` (audit)
   * `docs/VSCodeAPIs.md` (audit)
   * `docs/INSTALL.md` (audit; possibly delete or merge)
-  * `docs/EXECUTION_ORDER_ANALYSIS.md` (audit; possibly merge into ARCHITECTURE)
-  * `docs/2026-04-12_info_DeveloperGuide.md` (audit; possibly merge into CONTRIBUTING)
+  * `docs/EXECUTION_ORDER_ANALYSIS.md` (audit; possibly merge)
+  * `docs/2026-04-12_info_DeveloperGuide.md` (audit)
 * Lane D may edit
   * `.config/template.package.json` (add `contributes.walkthroughs`)
   * `walkthroughs/` (new directory with markdown step files and media)
@@ -89,5 +101,9 @@ This wave fixes that and, while we are in there, brings every other piece of rep
 
 ## After this wave merges
 
-* The marketplace wave's [Lane C](<2026-04-25_plan_todo_MarketplacePublishImpl_LaneC-PublishAndVerify.md>) resumes from a fresh wave branch off the new `main`. The publish step there now ships a properly user-facing extension on day one.
+* The marketplace wave's [Lane C](<2026-04-25_plan_todo_MarketplacePublishImpl_LaneC-PublishAndVerify.md>) resumes from a fresh wave branch off the new `main`. The publish step there now ships a properly user-facing extension on day one (via `--readme-path` and `--changelog-path` to the marketplace-only files).
 * The master orchestrator's Phase 1 status flips: docs refresh becomes a recorded prerequisite to the publish line, not a known gap.
+
+## Recovery note (2026-04-26)
+
+* Initial Lane A draft incorrectly rewrote `README.md` itself into a marketplace README (commit `0605098`), instead of creating a separate marketplace file. acoven flagged it; the work was reverted and redone correctly: repo `README.md` restored to its dev-facing 409-line form, marketplace content moved to `docs/MARKETPLACE.md`, `--readme-path` flag wired in `publish.yml`. Memory `feedback_marketplace_readme_split.md` captures the convention so this does not repeat.
