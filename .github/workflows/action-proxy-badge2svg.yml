@@ -12,8 +12,9 @@
 name: Proxy Badge to SVG
 
 "on":
-  push:
-    branches: [main]
+  workflow_dispatch:
+  # push:
+  #   branches: [main]
 
 jobs:
   extract:
@@ -44,7 +45,7 @@ jobs:
 
           # Build JSON blob with all badge values
           # Add new keys here as needed — handler reads whatever is present
-          BADGE_DATA=$(jq -n -c \
+          BADGE_DATA=$(jq -n \
             --arg license_name "$LICENSE_NAME" \
             --arg target_repo "$GITHUB_REPOSITORY" \
             '{
