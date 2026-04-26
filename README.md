@@ -6,26 +6,30 @@ A VS Code extension that captures content from the active editor, applies syntax
 
 - **[Developer Guide](docs/AGENTS.md)** - Complete developer documentation
 - **[VSCode APIs](docs/VSCodeAPIs.md)** - API integration details
+- **[Marketplace README](docs/MARKETPLACE.md)** - End-user-facing README that ships to the VS Code marketplace listing (developers should not edit this file as a substitute for the repo README; the two have separate audiences and are shipped via `vsce publish --readme-path`)
 
 Run `npm run test:coverage` to generate full coverage report.
 
 ## Platform Support
 
-### macOS (Full Support)
+All three platforms ship with native print integration in 1.0.0.
 
-- ✅ Native AppleScript integration
-- ✅ Preview app integration
-- ✅ Direct printing support
-- ✅ Print dialog support
+### macOS
 
-### Windows & Linux (Planned)
+- AppleScript-driven Preview integration
+- Direct print to the default printer
+- Print dialog support
 
-- ⏳ Core functionality works (PDF generation, syntax highlighting)
-- ⏳ Platform-specific printing commands in development
-- ⏳ Contributions welcome
-- Linux: Smoke test exercises viewer selection and CUPS error paths in CI.
+### Windows (PR #112)
 
-**Current recommendation:** macOS for full printing workflow, all platforms for PDF export.
+- PowerShell-driven `System.Windows.Forms.PrintDialog`
+- Structured failure-mode handling for missing printers, missing PDF readers, and other error paths
+- CI runs the Windows print path on `windows-latest`
+
+### Linux (PRs #105, #110)
+
+- CUPS detection plus viewer selection (Okular, Evince, and other common PDF viewers)
+- Smoke-tested error paths in CI
 
 ## How It Actually Works
 
@@ -73,26 +77,14 @@ The extension follows this workflow:
 
 ## Quick Start
 
+Prerequisites: Node.js 20+ and npm. Install via the platform installer of your choice (e.g., `brew install node` on macOS, `winget install OpenJS.NodeJS.LTS` on Windows, your distribution's package manager on Linux).
+
 ```bash
-# Install Node.js/npm (if not already installed)
-curl -fsSL https://deb.nodesource.com/setup_lts.x | sudo -E bash -
-sudo apt-get install -y nodejs
-
-# Install TypeScript globally
-npm install -g typescript
-
-# Install GitHub CLI (if not already installed)
-curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | sudo dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg
-echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | sudo tee /etc/apt/sources.list.d/github-cli.list > /dev/null
-sudo apt update
-sudo apt install gh
-
-# Install project dependencies and compile
 npm install
 npm run compile
 ```
 
-This will install all prerequisites and compile the TypeScript code to JavaScript.
+This installs project dependencies and compiles the TypeScript to JavaScript. To run the extension in an Extension Development Host, open the project in VS Code and press F5.
 
 ## Installation
 
@@ -126,9 +118,13 @@ This will install all prerequisites and compile the TypeScript code to JavaScrip
 
 ## Using the Extension
 
-- **Print Selection**: Select text, then use `Cmd+Shift+P` (Mac) or `Ctrl+Shift+P` (Windows/Linux)
-- **Print Current Tab**: Use `Cmd+Shift+T` (Mac) or `Ctrl+Shift+T` (Windows/Linux)
-- **Context Menu**: Right-click in the editor and select "Print Selection" or "Print Current Tab"
+There are three ways to invoke Print2Paper on the active editor:
+
+- **Keybinding**: Press **Alt+P** (same on macOS, Windows, and Linux). Bound to the `p2p4vsc.print2paper` command.
+- **Context menu**: Right-click in the editor and choose **Print2Paper**.
+- **Command Palette**: Open the Command Palette (`Cmd+Shift+P` on macOS, `Ctrl+Shift+P` on Windows/Linux) and run **Print: Print2Paper**.
+
+If you have a selection, only the selection is printed; otherwise the entire document is printed. A second command, **Print: Clear State** (`p2p4vsc.persistClear`), is available from the Command Palette to reset persisted preview settings (page size, font, toolbar position) if they ever get into a bad state.
 
 ## Technical Implementation
 
@@ -356,16 +352,17 @@ Error Recovery:
 
 ### Known Limitations
 
-- **Preview Tabs**: Printing from preview/webview tabs not yet supported
-- **Platform Support**: Print commands currently optimized for macOS only
-- **Font Support**: Limited to jsPDF-supported fonts (Courier, Helvetica, Times)
+- **Preview Tabs**: Printing from preview/webview tabs (custom previews, notebooks, image editors) is not supported as a print target; only standard text editors
+- **Font Support**: Limited to jsPDF-supported fonts (Courier, Helvetica, Times); themes that rely on other fonts fall back to the closest match
+- **Large Files**: Very large files (hundreds of pages) may render slowly
 
 ## Documentation
 
 - **[Developer Guide](docs/AGENTS.md)** - Complete developer documentation and architecture
-- **[Developer Installation](docs/INSTALL.md)** - Developer setup and installation instructions
 - **[VSCode APIs](docs/VSCodeAPIs.md)** - VS Code API integration details
-- **[CI/CD Plan](docs/plans/2025-12-11_plan_inProgress_CICD.md)** - CI/CD automation and testing plan
+- **[Marketplace README](docs/MARKETPLACE.md)** - End-user-facing README that ships to the marketplace listing
+- **[Marketplace Changelog](docs/MARKETPLACE_CHANGELOG.md)** - End-user-facing changelog that ships to the marketplace listing
+- **[Plans directory](docs/plans/)** - Active and completed swimlane plan documents (working docs, not reference docs)
 
 ## Development
 
@@ -392,9 +389,9 @@ The extension uses Node.js built-in test runner (`node:test`) with comprehensive
 
 ## Future Improvements
 
-- Cross-platform support (Windows/Linux)
 - Enhanced RTF to HTML conversion
-- Print settings (page size, margins, orientation)
+- Custom header/footer templates
+- Custom page margins
 - Batch printing support
 - Alternative PDF generation methods
 

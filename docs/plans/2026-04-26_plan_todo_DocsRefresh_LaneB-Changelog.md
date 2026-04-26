@@ -1,6 +1,6 @@
 # Lane B: Marketplace CHANGELOG (separate file) + repo CHANGELOG accuracy
 
-**Status:** todo
+**Status:** in-progress
 **Created:** 2026-04-26
 **Parent orchestrator:** [2026-04-26_plan_todo_DocsRefresh_Orch.md](<2026-04-26_plan_todo_DocsRefresh_Orch.md>)
 **Branch:** `feature/docs-refresh`
@@ -19,31 +19,27 @@ The repo `CHANGELOG.md` stays as the developer-facing changelog rendered on GitH
 ## Workitems
 
 * `docs/MARKETPLACE_CHANGELOG.md` (new file, marketplace audience)
-  * [ ] H1 + Keep a Changelog header
-  * [ ] `## [1.0.0] - YYYY-MM-DD` (placeholder date; Lane E of this wave fills in just before publish)
-  * [ ] Sections: Added, Improved, Platform support
-  * [ ] Tone is end-user, not implementation: "Added Windows print support" not "Added Windows.Forms.PrintDialog wrapper"
-  * [ ] Lead with what users get (one-keystroke print, 100+ themes, all common page sizes, live preview, cross-platform support)
-  * [ ] Brief Platform support note (macOS / Windows / Linux all shipped in 1.0.0)
-  * [ ] No "Future Roadmap" section in the marketplace changelog (roadmap is a community signal that belongs on GitHub, not on a marketplace listing)
-  * [ ] Footnote link at bottom to the GitHub release page for full developer-facing detail
+  * [x] H1 + Keep a Changelog header
+  * [x] `## [1.0.0] - YYYY-MM-DD` (placeholder date with `TODO(date)` HTML comment; Lane E fills in just before publish)
+  * [x] Sections: Added, Platform support, Notes
+  * [x] Tone is end-user, not implementation
+  * [x] Lead with what users get
+  * [x] Brief Platform support note (macOS / Windows / Linux all shipped in 1.0.0)
+  * [x] No "Future Roadmap" section in the marketplace changelog
+  * [x] Footnote link at bottom to the GitHub release page
 * Wire `vsce` to ship the marketplace changelog
-  * [ ] `.github/workflows/publish.yml` line that runs `vsce publish` adds `--changelog-path docs/MARKETPLACE_CHANGELOG.md` alongside the existing `--readme-path docs/MARKETPLACE.md`
-  * [ ] Document the same flag on any local manual `vsce package` invocation
+  * [x] `.github/workflows/publish.yml` line that runs `vsce publish` adds `--changelog-path docs/MARKETPLACE_CHANGELOG.md` alongside the existing `--readme-path docs/MARKETPLACE.md`
+  * [x] Document the same flag on local manual `vsce package` invocation (added to `CONTRIBUTING.md` "Packaging the extension locally" section)
 * Repo-root `CHANGELOG.md` factual fixes (developer audience)
-  * [ ] Update date from `2025-12-12` to the actual marketplace publish date (placeholder `TODO(date)` until Lane C of the publish wave settles the date; Lane E of this wave finalizes)
-  * [ ] Drop the `### Known Limitations` claim "macOS-specific print commands (Windows/Linux support planned)": Linux shipped on PR #105 + #110, Windows on PR #112
-  * [ ] Move accurate platform-support facts out of `### Known Limitations` into `#### Platform Support` and rewrite both:
-    * macOS: AppleScript-driven Preview / direct print
-    * Windows: PowerShell-driven `System.Windows.Forms.PrintDialog`, with structured failure-mode handling for missing printers, missing PDF reader, etc. (PR #112)
-    * Linux: CUPS detection + viewer selection (Okular, Evince, etc.) with smoke-tested error paths (PR #110)
-  * [ ] Replace the test-count line `Comprehensive test suite: 357 tests across 90 suites` with either a current count or a generic "Comprehensive Gherkin + unit test suite covering ~95% of statements" (the audit memory says coverage is at ~95% via PR #107, so the latter is safer than chasing exact counts that go stale every PR)
-  * [ ] Drop or rewrite any other "future" / "planned" claim that has shipped
-  * [ ] Future Roadmap section: keep in the repo `CHANGELOG.md` (developer-facing roadmap is fine on GitHub) but trim entries that have already shipped
-  * [ ] Cross-references at file bottom: verify `[Unreleased]` and `[1.0.0]` link footnotes point to real GitHub URLs; if the `v1.0.0` tag does not yet exist, leave a `TODO(release-tag)` HTML comment so verify-pass catches it
+  * [x] Update date from `2025-12-12` to `YYYY-MM-DD` placeholder with `TODO(date)` HTML comment for Lane E to finalize
+  * [x] Drop the `### Known Limitations` claim "macOS-specific print commands (Windows/Linux support planned)"
+  * [x] Rewrite `#### Platform Support` to reflect shipped reality (macOS / Windows PR #112 / Linux PRs #105 + #110)
+  * [x] Replace the test-count line with generic "~95% statement coverage"
+  * [x] Drop "Cross-platform printing support (Windows, Linux)" and "GitHub Actions CI/CD pipeline" from Future Roadmap (both shipped)
+  * [x] Add `TODO(release-tag)` HTML comment near the `[1.0.0]` link footnote so Lane E catches it before publish
 * Tone consistency
-  * [ ] Repo `CHANGELOG.md` may keep developer detail (PR numbers, file paths) since it lives on GitHub
-  * [ ] `docs/MARKETPLACE_CHANGELOG.md` describes user-visible behavior only
+  * [x] Repo `CHANGELOG.md` keeps developer detail (PR numbers, file paths)
+  * [x] `docs/MARKETPLACE_CHANGELOG.md` describes user-visible behavior only
 
 ## Acceptance
 

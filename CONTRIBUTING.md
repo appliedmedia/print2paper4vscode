@@ -12,7 +12,17 @@ First off, thanks for taking the time to contribute!
 
 ## Development Setup
 
-See [INSTALL.md](docs/INSTALL.md) for detailed setup instructions.
+See the [Quick Start](README.md#quick-start) section in the root README for prerequisites and setup steps.
+
+## Packaging the extension locally
+
+If you need to build a `.vsix` locally for sideloading, pass the marketplace doc paths so vsce ships the user-facing files (not the developer README/CHANGELOG):
+
+```bash
+npx @vscode/vsce package --readme-path docs/MARKETPLACE.md --changelog-path docs/MARKETPLACE_CHANGELOG.md
+```
+
+Without those flags, vsce would ship the repo-root `README.md` and `CHANGELOG.md`, which are written for contributors, not marketplace users.
 
 ## Coding Standards
 

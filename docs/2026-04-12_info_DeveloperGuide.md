@@ -1,4 +1,14 @@
-# Print2Paper4VSCode - Developer Guide
+# Print2Paper4VSCode - Developer Guide (snapshot)
+
+> **Archival snapshot from 2026-04-12.**
+>
+> Some content is still useful (branch cleanup ops, three-library architecture explanation), but parts have drifted:
+>
+> * The project structure listing predates `OSLinux.ts`.
+> * The Environment Setup section assumes Linux and predates the cross-platform Quick Start in the root README.
+> * The "macOS optimized" framing predates Windows (PR #112) and Linux (PRs #105, #110) shipping.
+>
+> For current developer setup and architecture, start with the root [README.md](<../README.md>) and [docs/AGENTS.md](<AGENTS.md>). This file is preserved as a point-in-time reference; do not edit in place to "update" it. Open a fresh doc if a section needs a current rewrite.
 
 ## Overview
 
@@ -70,10 +80,10 @@ git branch -r --merged origin/main | grep "origin/cursor/" | sed 's/origin\///' 
 
 ### Prerequisites
 
-- **Node.js**: Required for build process and jsPDF PDF generation
-- **VS Code**: Extension development environment
-- **TypeScript**: Compilation to JavaScript
-- **macOS**: Currently optimized for macOS with AppleScript integration
+* **Node.js**: Required for build process and jsPDF PDF generation
+* **VS Code**: Extension development environment
+* **TypeScript**: Compilation to JavaScript
+* **macOS**: Currently optimized for macOS with AppleScript integration
 
 ### Environment Setup (Run First in New VM)
 
@@ -94,8 +104,8 @@ git branch -r --merged origin/main | grep "origin/cursor/" | sed 's/origin\///' 
 
 The project uses specific TypeScript lib settings for VS Code extension compatibility:
 
-- `ES2020` - Modern JavaScript features
-- `DOM` - Browser/extension globals (includes `setTimeout`, `setInterval`, etc.)
+* `ES2020` - Modern JavaScript features
+* `DOM` - Browser/extension globals (includes `setTimeout`, `setInterval`, etc.)
 
 **Critical**: Do not add `WebWorker` lib as it conflicts with DOM globals. VS Code extensions run in a DOM-like context, not a WebWorker context. Adding WebWorker lib causes 21+ TypeScript compilation errors due to conflicting global definitions.
 
@@ -103,35 +113,35 @@ The project uses specific TypeScript lib settings for VS Code extension compatib
 
 ### Working Components
 
-- **Multi-page PDF generation** using unified line-by-line rendering
-- **Page break calculation** with 100% accurate page counting
-- **Header/footer rendering** with document title and page numbers
-- **Side page numbers** for document navigation
-- **AppleScript integration** for macOS printing works
-- **HTML template system** with YAML-based snippets
-- **Shiki syntax highlighting** integration
-- **Tab inspection and content extraction**
-- **Webview UI System**: Interactive multi-page PDF preview with toolbar menus
-- **Menu Management**: Dynamic menu creation and selection handling
-- **Theme System**: Real-time theme switching with fallback support
-- **PDF.js Integration**: Client-side PDF rendering in webview
-- **Page cache optimization** for webview performance (first 7 pages)
+* **Multi-page PDF generation** using unified line-by-line rendering
+* **Page break calculation** with 100% accurate page counting
+* **Header/footer rendering** with document title and page numbers
+* **Side page numbers** for document navigation
+* **AppleScript integration** for macOS printing works
+* **HTML template system** with YAML-based snippets
+* **Shiki syntax highlighting** integration
+* **Tab inspection and content extraction**
+* **Webview UI System**: Interactive multi-page PDF preview with toolbar menus
+* **Menu Management**: Dynamic menu creation and selection handling
+* **Theme System**: Real-time theme switching with fallback support
+* **PDF.js Integration**: Client-side PDF rendering in webview
+* **Page cache optimization** for webview performance (first 7 pages)
 
 ### Technical Dependencies
 
 **Server-side (VS Code Extension Context)**:
 
-- **Node.js**: Runtime environment for extension execution
-- **Shiki**: Syntax highlighting and code tokenization with theme support
-- **jsPDF**: Vector PDF document creation and generation
-- **VS Code Extension API v1.60.0+**: Platform integration and webview management
-- **TypeScript**: Compiled to JavaScript for execution
-- **AppleScript**: macOS-specific printing operations
+* **Node.js**: Runtime environment for extension execution
+* **Shiki**: Syntax highlighting and code tokenization with theme support
+* **jsPDF**: Vector PDF document creation and generation
+* **VS Code Extension API v1.60.0+**: Platform integration and webview management
+* **TypeScript**: Compiled to JavaScript for execution
+* **AppleScript**: macOS-specific printing operations
 
 **Client-side (Webview Browser Context)**:
 
-- **PDF.js**: Client-side PDF rendering and canvas display
-- **VS Code Webview API**: Interactive UI panels and message passing
+* **PDF.js**: Client-side PDF rendering and canvas display
+* **VS Code Webview API**: Interactive UI panels and message passing
 
 ## Key Implementation Details
 
@@ -140,22 +150,22 @@ The project uses specific TypeScript lib settings for VS Code extension compatib
 The extension uses **three distinct PDF-related libraries** for different purposes:
 
 1. **Shiki** (Extension/Server-side):
-   - **Purpose**: Syntax highlighting and tokenization
-   - **Input**: Raw source code + theme name
-   - **Output**: `ThemedToken[][]` (styled text tokens with colors)
-   - **Location**: Runs in VS Code extension context
+   * **Purpose**: Syntax highlighting and tokenization
+   * **Input**: Raw source code + theme name
+   * **Output**: `ThemedToken[][]` (styled text tokens with colors)
+   * **Location**: Runs in VS Code extension context
 
 2. **jsPDF** (Extension/Server-side):
-   - **Purpose**: Vector PDF document creation and generation
-   - **Input**: Shiki tokens + layout settings
-   - **Output**: In-memory PDF document (data URL or ArrayBuffer)
-   - **Location**: Runs in VS Code extension context
+   * **Purpose**: Vector PDF document creation and generation
+   * **Input**: Shiki tokens + layout settings
+   * **Output**: In-memory PDF document (data URL or ArrayBuffer)
+   * **Location**: Runs in VS Code extension context
 
 3. **PDF.js** (Webview/Client-side):
-   - **Purpose**: PDF rendering and display in browser
-   - **Input**: PDF data URL from jsPDF
-   - **Output**: Canvas-based PDF display with zoom/scroll
-   - **Location**: Runs in webview browser context
+   * **Purpose**: PDF rendering and display in browser
+   * **Input**: PDF data URL from jsPDF
+   * **Output**: Canvas-based PDF display with zoom/scroll
+   * **Location**: Runs in webview browser context
 
 ### Unified Line-by-Line Rendering Architecture
 
@@ -184,65 +194,65 @@ Source Code → Shiki → Line-by-Line Rendering → PDF Output
 
 **⚠️ CRITICAL: Do NOT create multiple rendering methods!**
 
-- **Single Rendering Method**: Line-by-line rendering is used everywhere
-- **Unified Approach**: `generatePdf()` and `renderPage()` use the same underlying logic
-- **Webview is Display Only**: Webview shows PDF pages, doesn't create them
-- **Page Cache Optimization**: First 7 pages cached during `calculatePageBreaks()` for webview performance
-- **Deterministic Page Breaks**: Page breaks calculated by actual rendering, not simulation
+* **Single Rendering Method**: Line-by-line rendering is used everywhere
+* **Unified Approach**: `generatePdf()` and `renderPage()` use the same underlying logic
+* **Webview is Display Only**: Webview shows PDF pages, doesn't create them
+* **Page Cache Optimization**: First 7 pages cached during `calculatePageBreaks()` for webview performance
+* **Deterministic Page Breaks**: Page breaks calculated by actual rendering, not simulation
 
 **Common Mistakes to Avoid**:
 
-- ❌ Don't create separate "cache-optimized" generation methods
-- ❌ Don't try to copy PDF content between documents
-- ❌ Don't assume webview uses different rendering than final PDF
-- ✅ Always use line-by-line rendering for consistency
+* ❌ Don't create separate "cache-optimized" generation methods
+* ❌ Don't try to copy PDF content between documents
+* ❌ Don't assume webview uses different rendering than final PDF
+* ✅ Always use line-by-line rendering for consistency
 
 ### Syntax Highlighting
 
-- Shiki-based highlighting with VS Code theme support
-- Fallback to 'github-light' theme if needed
-- CSS classes for different token types
-- Fallback to plain text if highlighting fails
-- **Lazy Highlighter Initialization**: Created on-demand per language
-- **Theme Caching**: Singleton highlighter with multiple themes loaded
+* Shiki-based highlighting with VS Code theme support
+* Fallback to 'github-light' theme if needed
+* CSS classes for different token types
+* Fallback to plain text if highlighting fails
+* **Lazy Highlighter Initialization**: Created on-demand per language
+* **Theme Caching**: Singleton highlighter with multiple themes loaded
 
 ### Print Integration
 
-- **Preview Method**: Opens PDF in Preview app via AppleScript, triggers Cmd+P via System Events
-- **Direct Method**: Uses Finder's print functionality via AppleScript
-- **Save Method**: Shows VS Code save dialog, saves PDF to chosen location
+* **Preview Method**: Opens PDF in Preview app via AppleScript, triggers Cmd+P via System Events
+* **Direct Method**: Uses Finder's print functionality via AppleScript
+* **Save Method**: Shows VS Code save dialog, saves PDF to chosen location
 
 ### Webview UI System
 
-- **PDF.js Integration**: Client-side PDF rendering in VS Code webview
-- **Toolbar Menus**: Dynamic menu creation (Print, Theme, Text)
-- **Message Handling**: Bidirectional communication between webview and extension
-- **Real-time Updates**: Theme and font size changes without regeneration
+* **PDF.js Integration**: Client-side PDF rendering in VS Code webview
+* **Toolbar Menus**: Dynamic menu creation (Print, Theme, Text)
+* **Message Handling**: Bidirectional communication between webview and extension
+* **Real-time Updates**: Theme and font size changes without regeneration
 
 ### Memory Management
 
-- **PDF Documents**: Stored in-memory as `jsPDF` objects
-- **Highlighter**: Singleton pattern with lazy initialization
-- **Temp Files**: Tracked in `PDF.tempPdfs[]` for cleanup
-- **Webview State**: Managed by VS Code webview API
+* **PDF Documents**: Stored in-memory as `jsPDF` objects
+* **Highlighter**: Singleton pattern with lazy initialization
+* **Temp Files**: Tracked in `PDF.tempPdfs[]` for cleanup
+* **Webview State**: Managed by VS Code webview API
 
 ### Error Handling Strategy
 
-- **Diagnostics**: Comprehensive logging throughout execution
-- **Fallbacks**: Theme fallback to 'github-light', plain text on highlighting failure
-- **User Feedback**: Error messages via `UI.showErrorMessage()`
-- **Graceful Degradation**: Continue operation with reduced functionality
+* **Diagnostics**: Comprehensive logging throughout execution
+* **Fallbacks**: Theme fallback to 'github-light', plain text on highlighting failure
+* **User Feedback**: Error messages via `UI.showErrorMessage()`
+* **Graceful Degradation**: Continue operation with reduced functionality
 
 ## Debugging Notes
 
-- Check Node.js installation for jsPDF PDF generation
-- Verify AppleScript permissions for printing operations
-- Monitor console output for template loading issues
-- Verify Shiki theme loading and syntax highlighting
-- **Webview Issues**: Check VS Code webview API compatibility
-- **PDF.js Loading**: Verify CDN access for PDF.js library
-- **Theme Switching**: Monitor `currentThemeChoice` state in PaperPrinter
-- **Menu Creation**: Debug menu registration and selection handling
+* Check Node.js installation for jsPDF PDF generation
+* Verify AppleScript permissions for printing operations
+* Monitor console output for template loading issues
+* Verify Shiki theme loading and syntax highlighting
+* **Webview Issues**: Check VS Code webview API compatibility
+* **PDF.js Loading**: Verify CDN access for PDF.js library
+* **Theme Switching**: Monitor `currentThemeChoice` state in PaperPrinter
+* **Menu Creation**: Debug menu registration and selection handling
 
 ## Markdown Compliance - CRITICAL
 
@@ -272,7 +282,7 @@ If there are ANY errors, **FIX THEM IMMEDIATELY**. Do not ask the user to fix yo
 
 This project enforces **ALL** markdown linting rules via `.markdownlint.json` with one exception:
 
-- `MD013` (line length): Set to 512 characters to accommodate long TypeScript signatures and technical content
+* `MD013` (line length): Set to 512 characters to accommodate long TypeScript signatures and technical content
 
 All other rules (MD022, MD031, MD032, MD009, MD036, etc.) are strictly enforced.
 
@@ -280,9 +290,9 @@ All other rules (MD022, MD031, MD032, MD009, MD036, etc.) are strictly enforced.
 
 If you need to embed instructions for AI tooling (like repeated headings for systematic processing), use:
 
-- HTML comments: `<!-- AI instruction: ... -->`
-- Valid markdown structure that also serves as documentation
-- **Never** violate markdown rules for "AI convenience"
+* HTML comments: `<!-- AI instruction: ... -->`
+* Valid markdown structure that also serves as documentation
+* **Never** violate markdown rules for "AI convenience"
 
 ### Verification Process
 
@@ -301,19 +311,19 @@ The project uses different documentation types for different purposes:
 
 **Plans (`docs/plans/`)**: Track work efforts from start to completion
 
-- Status, progress, todos, results
-- Assessments, summaries, progress reports all belong IN the plan
-- Examples: deployment preparation, refactoring work, feature implementation
+* Status, progress, todos, results
+* Assessments, summaries, progress reports all belong IN the plan
+* Examples: deployment preparation, refactoring work, feature implementation
 
 **Reference Documentation (`docs/`)**: Static informational content
 
-- API references, coding standards, architecture guides
-- Examples: `2026-04-12_info_DeveloperGuide.md`, `VSCodeAPIs.md`, `INSTALL.md`
+* API references, coding standards, architecture guides
+* Examples: `2026-04-12_info_DeveloperGuide.md`, `VSCodeAPIs.md`, `INSTALL.md`
 
 **User Documentation (root)**: End-user-facing content
 
-- Installation, usage, features, changelog
-- Examples: `README.md`, `CHANGELOG.md`, `LICENSE`
+* Installation, usage, features, changelog
+* Examples: `README.md`, `CHANGELOG.md`, `LICENSE`
 
 **CRITICAL**: Do NOT create separate "assessment" or "summary" documents. Summaries, status, progress, and almost anything tracking work belongs INSIDE the plan document for that topic.
 
@@ -337,31 +347,31 @@ All planning documents are stored in `docs/plans/` and follow a standardized nam
 
 **❌ ANTI-PATTERN**: Do NOT create these as separate documents:
 
-- `DEPLOYMENT_ASSESSMENT.md` ← Should be INSIDE `plan_inProgress_PrepareForDeploy.md`
-- `DEPLOYMENT_SUMMARY.md` ← Should be INSIDE the plan
-- `PROJECT_STATUS.md` ← Status belongs IN the relevant plan
-- `PROGRESS_REPORT.md` ← Progress belongs IN the relevant plan
+* `DEPLOYMENT_ASSESSMENT.md` ← Should be INSIDE `plan_inProgress_PrepareForDeploy.md`
+* `DEPLOYMENT_SUMMARY.md` ← Should be INSIDE the plan
+* `PROJECT_STATUS.md` ← Status belongs IN the relevant plan
+* `PROGRESS_REPORT.md` ← Progress belongs IN the relevant plan
 
 **✅ CORRECT PATTERN**: One plan document per effort, containing ALL related content:
 
-- Assessment → Plan → TODOs → Progress → Status → Results (all in one file)
+* Assessment → Plan → TODOs → Progress → Status → Results (all in one file)
 
 #### Naming Convention
 
 **Pattern**: `YYYY-MM-DD_plan_{status}_{MixedCaseName}.md`
 
-- **Date**: `YYYY-MM-DD` format when plan is created
-- **Status**: One of:
-  - `done` - **All work completed and verified**
-  - `inProgress` - Work actively being done (agent or user actions pending)
-  - `todo` - Plan exists but work not yet started
-- **Name**: MixedCase descriptive name (e.g., `NamespaceFixes`, `PrepareForDeploy`, `NamedParamsRefactor`)
+* **Date**: `YYYY-MM-DD` format when plan is created
+* **Status**: One of:
+  * `done` - **All work completed and verified**
+  * `inProgress` - Work actively being done (agent or user actions pending)
+  * `todo` - Plan exists but work not yet started
+* **Name**: MixedCase descriptive name (e.g., `NamespaceFixes`, `PrepareForDeploy`, `NamedParamsRefactor`)
 
 #### Examples
 
-- `2025-11-27_plan_done_NamespaceFixes.md` - Namespace refactoring plan: ALL work complete
-- `2025-12-11_plan_inProgress_PrepareForDeploy.md` - Deployment prep: assessment done, user actions pending
-- `2025-12-11_plan_todo_CICD.md` - CI/CD and automation roadmap: not yet started
+* `2025-11-27_plan_done_NamespaceFixes.md` - Namespace refactoring plan: ALL work complete
+* `2025-12-11_plan_inProgress_PrepareForDeploy.md` - Deployment prep: assessment done, user actions pending
+* `2025-12-11_plan_todo_CICD.md` - CI/CD and automation roadmap: not yet started
 
 #### Status Transitions
 
@@ -375,24 +385,24 @@ Created   Working   Verified
 
 **When to change status**:
 
-- `todo` → `inProgress`: When first task begins
-- `inProgress` → `done`: When ALL tasks complete and are verified
-- If work is abandoned: Rename to `_cancelled_` or document why in file
+* `todo` → `inProgress`: When first task begins
+* `inProgress` → `done`: When ALL tasks complete and are verified
+* If work is abandoned: Rename to `_cancelled_` or document why in file
 
 #### File Management
 
-- Use `git mv` to rename plans when status changes (preserves history)
-- Update status in file header when renaming
-- If a file isn't tracked by git, use regular `mv` then `git add`
+* Use `git mv` to rename plans when status changes (preserves history)
+* Update status in file header when renaming
+* If a file isn't tracked by git, use regular `mv` then `git add`
 
 ## Development Guidelines
 
 ### Naming Conventions
 
-- **Types**: Suffix with `_t` (e.g., `PageSizeId_t`, `MarginId_t`, `LanguageId_t`)
-- **Constants**: Prefix with `k` (e.g., `kPageSizeIds`, `kMarginIds`)
-- **Interfaces**: Follow same `_t` convention if used across files (e.g., `Persist_t`, `UI_t`)
-- **Class instances**: Use lowercase (e.g., `uiwebview`, not `currentWebView`)
+* **Types**: Suffix with `_t` (e.g., `PageSizeId_t`, `MarginId_t`, `LanguageId_t`)
+* **Constants**: Prefix with `k` (e.g., `kPageSizeIds`, `kMarginIds`)
+* **Interfaces**: Follow same `_t` convention if used across files (e.g., `Persist_t`, `UI_t`)
+* **Class instances**: Use lowercase (e.g., `uiwebview`, not `currentWebView`)
 
 #### Method Naming Pattern
 
@@ -406,39 +416,39 @@ Methods that get or set values should follow this naming structure:
 
 **Examples**:
 
-- `getValueOfPersistIdForMenuId` - get the value OF a persistId FOR a specific menuId
-- `setValueOfPersistIdForMenuId` - set the value OF a persistId FOR a specific menuId
-- `getValueOfMenuItemIdForMenuId` - get the value OF a menuItemId FOR a specific menuId
+* `getValueOfPersistIdForMenuId` - get the value OF a persistId FOR a specific menuId
+* `setValueOfPersistIdForMenuId` - set the value OF a persistId FOR a specific menuId
+* `getValueOfMenuItemIdForMenuId` - get the value OF a menuItemId FOR a specific menuId
 
 **Rationale**:
 
-- Starts with the action (what you're doing)
-- Identifies the direct object (what you're acting on)
-- Provides context parameters (additional required info)
-- Reads naturally: "Get value of X for Y"
+* Starts with the action (what you're doing)
+* Identifies the direct object (what you're acting on)
+* Provides context parameters (additional required info)
+* Reads naturally: "Get value of X for Y"
 
 **Anti-patterns**:
 
-- ❌ `getValueForPersistIdOnMenuId` - unclear preposition "On"
-- ❌ `getMenuItemValue` - missing context (which menu?)
-- ❌ `getValueForMenuItemId` - ambiguous (which value? which menu?)
+* ❌ `getValueForPersistIdOnMenuId` - unclear preposition "On"
+* ❌ `getMenuItemValue` - missing context (which menu?)
+* ❌ `getValueForMenuItemId` - ambiguous (which value? which menu?)
 
 ### Testing Principles
 
-- **No caching in tests**: Always call methods directly (e.g., `app.pdf.docInfo().property`) rather than caching results in variables. Caching adds unexpected complexity and can mask state changes between assertions.
-- **Test production code paths**: Tests should exercise the same code paths as production, not simplified or delegated versions.
+* **No caching in tests**: Always call methods directly (e.g., `app.pdf.docInfo().property`) rather than caching results in variables. Caching adds unexpected complexity and can mask state changes between assertions.
+* **Test production code paths**: Tests should exercise the same code paths as production, not simplified or delegated versions.
 
 ### Code Organization
 
-- All VS Code API imports should be in `VSCodeAPIs.ts` only
-- UI methods should be generic and not reference specific menu items
-- Use CSS classes: `p2p4vsc-menu-btn`, `p2p4vsc-menu-items`, `p2p4vsc-menu-item`
-- Store HTML snippets in YAML files with `{{var}}` replacements
-- Single-use interfaces stay in the same file as the method
-- Use `displayName` instead of `label` for UIMenuItem definitions
-- Avoid hardcoded theme names except 'github-light'
-- Use `OS.fileRead` instead of `fs.readFileSync`
-- Set default values in variables and return once at the end of functions
+* All VS Code API imports should be in `VSCodeAPIs.ts` only
+* UI methods should be generic and not reference specific menu items
+* Use CSS classes: `p2p4vsc-menu-btn`, `p2p4vsc-menu-items`, `p2p4vsc-menu-item`
+* Store HTML snippets in YAML files with `{{var}}` replacements
+* Single-use interfaces stay in the same file as the method
+* Use `displayName` instead of `label` for UIMenuItem definitions
+* Avoid hardcoded theme names except 'github-light'
+* Use `OS.fileRead` instead of `fs.readFileSync`
+* Set default values in variables and return once at the end of functions
 
 ### Registry Pattern and Dependency Injection
 
@@ -512,10 +522,10 @@ this._yaml = this.fn.yaml.create({
 
 **Characteristics**:
 
-- Registered in Registry (accessible via `this.fn.yaml`)
-- Generic/reusable across many components
-- Each component gets a customized instance (different file, different dataStruct)
-- Examples: `Yaml`, `Persist` (though Persist is singleton now)
+* Registered in Registry (accessible via `this.fn.yaml`)
+* Generic/reusable across many components
+* Each component gets a customized instance (different file, different dataStruct)
+* Examples: `Yaml`, `Persist` (though Persist is singleton now)
 
 #### Component-Specific Helper Pattern
 
@@ -556,16 +566,16 @@ const pageWidth = this.fn.pdf.docInfo().pageWidthPx;
 
 **Characteristics**:
 
-- NOT registered in Registry
-- Tightly coupled to single parent component (PDF has DocInfo_PDF, PaperPrinter has DocInfo_PaperPrinter)
-- Created directly by parent using static `create()` method
-- Parent exposes it via method so others can access through Registry
-- Examples: `DocInfo_PDF`, `DocInfo_PaperPrinter`
+* NOT registered in Registry
+* Tightly coupled to single parent component (PDF has DocInfo_PDF, PaperPrinter has DocInfo_PaperPrinter)
+* Created directly by parent using static `create()` method
+* Parent exposes it via method so others can access through Registry
+* Examples: `DocInfo_PDF`, `DocInfo_PaperPrinter`
 
 **Key distinction**:
 
-- **Generic factories** (Yaml): Registered in Registry, used by many components with different configs
-- **Helper classes** (DocInfo): Not registered, owned by one component, exposed via parent's method
+* **Generic factories** (Yaml): Registered in Registry, used by many components with different configs
+* **Helper classes** (DocInfo): Not registered, owned by one component, exposed via parent's method
 
 #### Singleton Pattern
 
@@ -579,13 +589,13 @@ const px = this.reg.app.coords.pdfPtsToCssPx(100);
 
 #### Key Principles
 
-- **No init() methods** - all initialization in constructor
-- **Keep done() methods** - explicit cleanup when needed
-- **Request specific methods** - not entire components
-- **Always available: dx.sub** - for creating diagnostics instances
-- **Utils component methods via this.fn** - templateDictReplace, forceNumber, hasContent
-- **Component methods via this.fn** - all requested dependencies
-- **Lazy instantiation** - Registry creates components on first use
+* **No init() methods** - all initialization in constructor
+* **Keep done() methods** - explicit cleanup when needed
+* **Request specific methods** - not entire components
+* **Always available: dx.sub** - for creating diagnostics instances
+* **Utils component methods via this.fn** - templateDictReplace, forceNumber, hasContent
+* **Component methods via this.fn** - all requested dependencies
+* **Lazy instantiation** - Registry creates components on first use
 
 ### UIMenu Generic Design Principles
 
@@ -593,16 +603,16 @@ const px = this.reg.app.coords.pdfPtsToCssPx(100);
 
 **Use semaphores, not iteration:** Don't iterate through menuItems to determine gutter content. Use the available flags:
 
-- **Menu-level gutter determination**:
-  - `hasFlyout = this.flyoutMenuItemIds.length > 0` → menu has flyout parent items
-  - `hasDefaultItem = !!defaultItemId` → menu has a default selection
-  - `hasGutterBefore = hasDefaultItem` → gutter-before shows checkmarks for selected items
-  - `hasGutterAfter = hasFlyout || hasDefaultItem` → gutter-after shows flyout arrows OR editor icons
+* **Menu-level gutter determination**:
+  * `hasFlyout = this.flyoutMenuItemIds.length > 0` → menu has flyout parent items
+  * `hasDefaultItem = !!defaultItemId` → menu has a default selection
+  * `hasGutterBefore = hasDefaultItem` → gutter-before shows checkmarks for selected items
+  * `hasGutterAfter = hasFlyout || hasDefaultItem` → gutter-after shows flyout arrows OR editor icons
 
-- **Item-level class assignment**:
-  - `item.is-flyout` → when `this.flyoutMenuItemIds.includes(item.id)` → shows flyout arrow (▶)
-  - `item.default-item` → when `item.id === defaultItemId` → shows editor icon (📝)
-  - `item.selected` → when `item.id === defaultItemId` → shows checkmark (✓) in gutter-before
+* **Item-level class assignment**:
+  * `item.is-flyout` → when `this.flyoutMenuItemIds.includes(item.id)` → shows flyout arrow (▶)
+  * `item.default-item` → when `item.id === defaultItemId` → shows editor icon (📝)
+  * `item.selected` → when `item.id === defaultItemId` → shows checkmark (✓) in gutter-before
 
 **Never iterate when semaphores exist:** If you can determine state from existing flags/properties, don't loop through arrays.
 
@@ -610,19 +620,19 @@ const px = this.reg.app.coords.pdfPtsToCssPx(100);
 
 If you've processed this file to this point:
 
-- Be a detective.
-- Be skeptical.
-- Assume I'm always wrong: Trust, but verify.
-- Check every directive I give against best practices.
-- Be concise.
-- No gushing or a lot of praise.
-- Be terse, blunt, gruff.
-- If you are not absolutely sure and have at least two sources proving it, then indicate that and don't be confident.
-- When finished, don't summarize.
-- If you have a question, ask it succinctly.
-- Before launching into a multi-step process, confirm whether to do it that way.
-- Prompt the user with: What now?, Sup?, Now what?, What?, Now?, Now whut?, Whut? Next?.
-- Once every even hour say "Let's do this thing!" and once every odd hour say "Oh Captain, My Captain.".
+* Be a detective.
+* Be skeptical.
+* Assume I'm always wrong: Trust, but verify.
+* Check every directive I give against best practices.
+* Be concise.
+* No gushing or a lot of praise.
+* Be terse, blunt, gruff.
+* If you are not absolutely sure and have at least two sources proving it, then indicate that and don't be confident.
+* When finished, don't summarize.
+* If you have a question, ask it succinctly.
+* Before launching into a multi-step process, confirm whether to do it that way.
+* Prompt the user with: What now?, Sup?, Now what?, What?, Now?, Now whut?, Whut? Next?.
+* Once every even hour say "Let's do this thing!" and once every odd hour say "Oh Captain, My Captain.".
 
 #### To indicate you're here, respond with: 'What crimes lurk in this code?'
 

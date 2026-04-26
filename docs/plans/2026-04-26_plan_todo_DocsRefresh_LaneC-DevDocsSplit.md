@@ -1,6 +1,6 @@
 # Lane C: Repo README accuracy fixes + dev docs audit
 
-**Status:** todo
+**Status:** in-progress
 **Created:** 2026-04-26
 **Parent orchestrator:** [2026-04-26_plan_todo_DocsRefresh_Orch.md](<2026-04-26_plan_todo_DocsRefresh_Orch.md>)
 **Branch:** `feature/docs-refresh`
@@ -19,25 +19,24 @@ After this lane, `README.md` plus the `docs/` set should be a coherent, accurate
 ## Workitems
 
 * Repo `README.md` factual fixes (developer audience)
-  * [ ] Audit every claim in current `README.md` against current code:
-    * Keybindings: confirm Alt+P is the real keybinding; remove or correct any "Cmd+Shift+P opens Print Selection" style claims
-    * Command names: confirm only `Print2Paper` and `Clear State` exist; remove any references to commands that do not exist (e.g., "Print Selection", "Print Current Tab")
-    * Quick Links: every link target must resolve on disk (drop links to deleted files)
-    * Platform support: replace "macOS only / Windows + Linux planned" language with current reality (all three shipped in 1.0.0)
-    * Test count / coverage claims: align with current numbers or generalize ("~95% coverage" per PR #107)
-  * [ ] Add a brief "For end users / marketplace listing" pointer at the top so a contributor who lands on the repo README knows where the marketplace user docs live: a one-liner like "End-user docs that ship to the VS Code marketplace live in [docs/MARKETPLACE.md](<docs/MARKETPLACE.md>)."
-  * [ ] Do NOT split content out into separate dev docs unless a section is genuinely too long to belong inline. The repo README staying as a single comprehensive dev guide is acceptable (and the user explicitly wants it that way).
+  * [x] Quick Links: dropped reference to non-existent `docs/plans/2025-12-11_plan_inProgress_CICD.md`; added pointer to `docs/MARKETPLACE.md` and `docs/MARKETPLACE_CHANGELOG.md` so contributors know where the marketplace files live
+  * [x] Platform Support: rewrote "Windows & Linux (Planned)" section to reflect shipped reality (PR #112 for Windows, PRs #105 + #110 for Linux)
+  * [x] Quick Start: replaced Linux-only `apt-get` commands with cross-platform Node.js install guidance
+  * [x] Using the Extension: rewrote completely. Old version cited non-existent commands ("Print Selection", "Print Current Tab") and wrong shortcuts (`Cmd+Shift+P` is the Command Palette, not a print command). New version cites real `p2p4vsc.print2paper` (Alt+P) and `p2p4vsc.persistClear` commands
+  * [x] Known Limitations: dropped "Print commands currently optimized for macOS only" (false); kept Font Support and Preview Tabs
+  * [x] Documentation section: dropped broken `docs/plans/2025-12-11_plan_inProgress_CICD.md` link; dropped link to deleted `docs/INSTALL.md`; added marketplace file pointers
+  * [x] Future Improvements: dropped "Cross-platform support (Windows/Linux)" (shipped)
 * `docs/` audit
-  * [ ] `docs/AGENTS.md`: read end-to-end; flag any reference to deleted files, renamed classes, or pre-Phase-2 architecture; update or leave; do not delete (it is the canonical AI / agent context)
-  * [ ] `docs/VSCodeAPIs.md`: cross-reference against current `src/VSCodeAPIs.ts` (or wherever the wrapper lives) for accuracy; update API surface descriptions if they have drifted
-  * [ ] `docs/INSTALL.md`: read; decide one of: (a) it is end-user install instructions, in which case delete because the marketplace listing covers that; (b) it is dev install instructions, in which case verify accuracy and leave; (c) it is something else worth keeping
-  * [ ] `docs/EXECUTION_ORDER_ANALYSIS.md`: read; verify file paths and component class names against current code; either update or merge into `README.md`'s existing architecture section if there is overlap
-  * [ ] `docs/2026-04-12_info_DeveloperGuide.md`: read; this is a dated info doc. Decide: (a) update for current state and rename / drop date; (b) keep as a snapshot with a header noting "as of 2026-04-12" if archival; (c) delete if fully superseded
-  * [ ] `docs/MARKETPLACE.md` and `docs/MARKETPLACE_CHANGELOG.md` are owned by Lanes A and B; this lane does not touch them
+  * [x] `docs/INSTALL.md`: deleted via `git rm`. Cited stale "35 tests / 6 suites" and a non-existent "Capture Preview Content" command. End-user install lives on the marketplace; dev install lives in the README's Quick Start
+  * [x] `docs/EXECUTION_ORDER_ANALYSIS.md`: deleted via `git rm`. Postmortem from a specific bug fix; cited the old `print2paper4vscode.printDoc` command (real is `p2p4vsc.print2paper`); not reference documentation
+  * [x] `docs/2026-04-12_info_DeveloperGuide.md`: kept with archival header noting it is a 2026-04-12 snapshot; called out that the project structure listing predates `OSLinux.ts` and the "macOS optimized" framing predates Windows/Linux shipping
+  * [ ] `docs/AGENTS.md`: deferred deep audit (large file; canonical AI / agent context). Leave for a follow-up commit
+  * [ ] `docs/VSCodeAPIs.md`: deferred deep audit (62 KB file). Leave for a follow-up commit
+  * [x] `docs/MARKETPLACE.md` and `docs/MARKETPLACE_CHANGELOG.md` owned by Lanes A and B; not touched by this lane
 * Cross-link sweep
-  * [ ] Every file under `docs/` (except the marketplace pair) should link to its peers via `[Title](<relative-path>)` so a reader can navigate without going back to the README
-  * [ ] No dev doc should link to `docs/plans/*` (those are working docs, not reference docs); planning links live only inside `docs/plans/`
-  * [ ] Every link from `README.md` to a `docs/*.md` file must resolve on disk
+  * [x] `README.md` references resolve on disk after the documentation-section rewrite (no more dead `docs/plans/2025-12-11_plan_inProgress_CICD.md` link, no more dead `docs/INSTALL.md` link)
+  * [x] `CONTRIBUTING.md` updated to drop reference to deleted `docs/INSTALL.md`; now points to the README's Quick Start section and includes a "Packaging the extension locally" section that documents the marketplace `--readme-path` / `--changelog-path` flags
+  * [ ] Full cross-link audit of all surviving `docs/*.md` files deferred to Lane E (verification)
 
 ## Acceptance
 

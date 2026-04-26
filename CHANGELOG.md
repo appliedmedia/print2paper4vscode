@@ -7,7 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [1.0.0] - 2025-12-12
+## [1.0.0] - YYYY-MM-DD
+
+<!-- TODO(date): finalize on actual marketplace publish day -->
 
 ### Added
 
@@ -52,8 +54,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 #### Platform Support
 
 - macOS: Full AppleScript integration for native printing
-- Windows: Windows printing commands (future)
-- Linux: Linux printing commands (future)
+- Windows: PowerShell-driven `System.Windows.Forms.PrintDialog` with structured handling for missing printers, missing PDF readers, and other failure modes (PR #112)
+- Linux: CUPS detection plus viewer selection (Okular, Evince, and other common PDF viewers) with smoke-tested error paths in CI (PRs #105 and #110)
 
 ### Technical
 
@@ -68,7 +70,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 #### Code Quality
 
 - TypeScript with strict mode enabled
-- Comprehensive test suite: 357 tests across 90 suites
+- Comprehensive Gherkin + unit test suite, ~95% statement coverage
 - Node.js built-in test runner (node:test)
 - ESLint for code quality
 - Markdownlint for documentation quality
@@ -92,9 +94,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Known Limitations
 
-- macOS-specific print commands (Windows/Linux support planned)
-- Single page printing for very large files (multi-page support complete but may need testing)
-- Limited to jsPDF-supported fonts (Courier, Helvetica, Times)
+- Very large files (hundreds of pages) may render slowly
+- Limited to jsPDF-supported fonts (Courier, Helvetica, Times); themes that rely on other fonts fall back to the closest match
+- Webview-style files (custom previews, notebooks, image editors) are not supported as print targets
 
 ---
 
@@ -102,21 +104,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Planned Features
 
-- [ ] Cross-platform printing support (Windows, Linux)
 - [ ] Custom header/footer templates
 - [ ] Print selection only mode
 - [ ] Batch printing multiple files
 - [ ] Custom CSS for markdown rendering
 - [ ] Export to additional formats (HTML, RTF)
-- [ ] Print preview zoom controls
 - [ ] Custom page margins
 - [ ] Watermark support
 
 ### Technical Improvements
 
-- [ ] Code coverage reporting with c8
-- [ ] GitHub Actions CI/CD pipeline
-- [ ] Performance optimization for large files
+- [ ] Performance optimization for very large files
 - [ ] Memory usage optimization
 - [ ] VS Code test environment for integration tests
 
@@ -124,3 +122,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 [Unreleased]: https://github.com/appliedmedia/print2paper4vscode/compare/v1.0.0...HEAD
 [1.0.0]: https://github.com/appliedmedia/print2paper4vscode/releases/tag/v1.0.0
+
+<!-- TODO(release-tag): the v1.0.0 tag is created at publish time; this link will resolve once the tag exists -->
