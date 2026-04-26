@@ -46,7 +46,7 @@ Take Print2Paper4VSCode from "builds locally" to "live on the VS Code Marketplac
 ## Lanes
 
 * [Lane A: package audit + VSIX dry run](<2026-04-25_plan_todo_MarketplacePublishImpl_LaneA-PackageAudit.md>)
-* [Lane B: publisher + PAT setup, acoven manual](<2026-04-25_plan_todo_MarketplacePublishImpl_LaneB-PublisherSetup.md>)
+* [Lane B: publisher + PAT setup, acoven manual](<2026-04-25_plan_done_MarketplacePublishImpl_LaneB-PublisherSetup.md>)
 * [Lane C: publish + verify](<2026-04-25_plan_todo_MarketplacePublishImpl_LaneC-PublishAndVerify.md>)
 
 ## Coordination
