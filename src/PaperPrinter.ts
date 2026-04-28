@@ -591,6 +591,7 @@ export class PaperPrinter {
       id: item.id,
       displayName: item.displayName,
       iconSlotTriad: { begin: '', main: '', end: '' },
+      value: item.value,
     }));
   }
 

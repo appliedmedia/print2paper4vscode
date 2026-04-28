@@ -2,7 +2,7 @@
 # ⚠️ Keep comments in this file minimal because it has to get copied at runtime. ⚠️
 
 icon_external_link_svg: |
-  <svg class="icon-external-link" width="1.08em" height="1.08em" viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+  <svg class="icon-external-link" width="1.4em" height="1.4em" viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
     <path d="M19 13v6a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1h6"/>
     <polyline points="14 4 20 4 20 10"/>
     <line x1="20" y1="4" x2="11" y2="13"/>
@@ -88,8 +88,6 @@ uimenu_css: |
   }
 
   .{{ns_}}menuItem .menu-item-shortcut {
-    margin-left: auto;
-    padding-left: 2ch;
     opacity: 0.7;
     font-variant-numeric: tabular-nums;
   }
@@ -573,7 +571,7 @@ uimenu_item: |
   <div class="{{ns_}}menuItem {{itemClasses}}" id="{{itemId}}"{{flyoutMenuId}}{{textEditConfigAttr}}{{shortcutCodeAttr}}{{tooltipAttr}}>
     <div class="gutter-before">{{contentGutterBefore}}</div>
     <div class="menu-item-text">
-      {{iconSlotWithPrefixSuffix}}{{itemDisplayName}}{{itemShortcut}}
+      {{iconSlotWithPrefixSuffix}}{{itemDisplayName}}
     </div>
     <div class="gutter-after">{{contentGutterAfter}}</div>
     {{flyout}}

@@ -372,7 +372,7 @@ export type MdMenuItems_t = (typeof kMd.menuItems)[number]['id'];
 export const kAbout = {
   id: 'about',
   displayName: 'About',
-  iconSlotTriad: { begin: '', main: '⋮', end: '' },
+  iconSlotTriad: { begin: '', main: '⫶', end: '' },
   altId: '',
   methodName: '',
   isFlyout: false,

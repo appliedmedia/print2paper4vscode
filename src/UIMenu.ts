@@ -243,21 +243,21 @@ export class UIMenu {
       iconSlotWithPrefixSuffix = prefix + iconSlotResult.html + suffix;
     }
 
-    const itemShortcut = item.shortcut
-      ? `<span class="menu-item-shortcut">${item.shortcut}</span>`
-      : ``;
-
     // Icon-only detection: bump font 25% when the item shows a single-glyph
     // displayName with no inline icon and no shortcut. Counts code points so
     // graphemes like ⚙ register as length 1.
     const trimmedName = processedDisplayName.trim();
     const codePointCount = Array.from(trimmedName).length;
     const isIconOnly =
-      !iconSlotWithPrefixSuffix && !itemShortcut && codePointCount > 0 && codePointCount <= 2;
+      !iconSlotWithPrefixSuffix && !item.shortcut && codePointCount > 0 && codePointCount <= 2;
 
-    // External-link items render the SVG into gutter-after; the CSS ::after
-    // pseudo-element for plain items is empty so the SVG is the only content.
-    const contentGutterAfter = isExternalLink ? this.yaml().icon_external_link_svg : '';
+    // gutter-after: external-link SVG, shortcut, or empty (▶ for flyouts comes
+    // from a CSS ::after rule). Mutually exclusive in current menus.
+    const contentGutterAfter = isExternalLink
+      ? this.yaml().icon_external_link_svg
+      : item.shortcut
+        ? `<span class="menu-item-shortcut">${item.shortcut}</span>`
+        : '';
 
     // Individual items only need these classes
     const itemClasses = [
@@ -278,7 +278,6 @@ export class UIMenu {
     const replacementDict = {
       itemId,
       itemDisplayName: processedDisplayName,
-      itemShortcut,
       itemClasses,
       contentGutterBefore: '', // Content handled by CSS
       contentGutterAfter,
@@ -561,7 +560,11 @@ export class UIMenu {
 
       // Determine gutter states upfront - this is all we need for CSS
       const hasGutterBefore = hasDefaultItem; // Only if there's a default item
-      const hasGutterAfter = hasFlyout || hasDefaultItem; // Menus with flyout items OR default items get gutter-after
+      // gutter-after holds: ▶ (flyout), 📝 (default), launch-url SVG, or shortcut
+      const hasGutterAfterContent = menuItemsList.some(
+        item => !!item.isExternalLink || !!item.shortcut
+      );
+      const hasGutterAfter = hasFlyout || hasDefaultItem || hasGutterAfterContent;
       const processedMenuItemsHtml = await Promise.all(
         menuItemsList.map(item =>
           this.getItemHTML({
