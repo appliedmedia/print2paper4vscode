@@ -18,6 +18,7 @@ import {
   type UIMenuItemDict_t,
   type UIMenuFxn_t,
   type UIMenuItemValue_t,
+  type UIMenuShortcutFxn_t,
 } from './types/PaperPrinter_t';
 import type { Theme } from './types/theme_t';
 
@@ -401,9 +402,9 @@ export class UIMenuMgr {
    * Resolve a menu item's shortcut display string fresh on every call.
    *
    * Mirrors getValueOfMenuItemIdForMenuId / getIsHiddenOfMenuId: the menu item
-   * stores `shortcut: string | UIMenuFxn_t | undefined`. Static strings pass
-   * through; resolver functions run through the validated-dict helper so a
-   * resolver that calls e.g. `getShortcutForCommand(...)` always reads the
+   * stores `shortcut: string | UIMenuShortcutFxn_t | undefined`. Static strings
+   * pass through; resolver functions run through the validated-dict helper so
+   * a resolver that calls e.g. `getShortcutForCommand(...)` always reads the
    * current VS Code keybinding at HTML generation time.
    */
   getShortcutOfMenuItemIdForMenuId(args: { menuId: MenuId_t; menuItemId: string }): string {
@@ -412,10 +413,31 @@ export class UIMenuMgr {
     const menuItem = menu.getMenuItems().find(item => item.id === menuItemId);
     const shortcut = menuItem?.shortcut;
     if (typeof shortcut === 'function') {
-      const resolved = this.getValueOfMenuFxnByCalcValue(shortcut, menuId, menuItemId);
-      return typeof resolved === 'string' ? resolved : '';
+      return this.getValueOfMenuFxnByCalcShortcut(shortcut, menuId, menuItemId);
     }
     return shortcut ?? '';
+  }
+
+  // Like getValueOfMenuFxnByCalcValue, but typed for shortcut resolvers (always string).
+  // Returns '' if the resolver throws.
+  private getValueOfMenuFxnByCalcShortcut(
+    resolver: UIMenuShortcutFxn_t,
+    menuId: string,
+    menuItemId: string
+  ): string {
+    const dx = this.dx.sub({ name: 'getValueOfMenuFxnByCalcShortcut' });
+    const dict = this.buildUIMenuItemDict();
+    try {
+      const result = resolver(dict);
+      dx.done();
+      return result;
+    } catch (error) {
+      this.dx.error(
+        `Menu item shortcut resolver failed for ${menuId}.${menuItemId}: ${String(error)}`
+      );
+      dx.done();
+      return '';
+    }
   }
 
   /**
@@ -523,11 +545,12 @@ export class UIMenuMgr {
     try {
       const result = resolver(dict_nums);
       dx.done();
-      // Ensure we only return supported types
+      // UIMenuItemValue_t is number | string | boolean. Anything else (object,
+      // function, symbol from a misbehaving resolver) collapses to undefined.
       if (typeof result === 'number' || typeof result === 'string' || typeof result === 'boolean' || result === undefined) {
         return result;
       }
-      return undefined; // Filter out boolean or other types not supported for values
+      return undefined;
     } catch (error) {
       this.dx.error(
         `Menu item value resolver failed for ${menuId}.${menuItemId}: ${String(error)}`

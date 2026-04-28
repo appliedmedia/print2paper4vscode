@@ -40,6 +40,7 @@ import {
   type MarginIdMenuItems_t,
   type HeaderFooterSubmenu_t,
   type UIMenuFxn_t,
+  type UIMenuShortcutFxn_t,
   kPageSizeId,
   kOrient,
   kMarginId,
@@ -596,14 +597,14 @@ export class PaperPrinter {
   }
 
   private menuItems_About(): UIMenuItem_t[] {
-    // shortcut is a UIMenuFxn_t resolver — UIMenu.getItemHTML re-evaluates it
-    // on every render, so the displayed key always reflects the user's
-    // current keybindings.json (no caching, no file watcher).
+    // shortcut is a UIMenuShortcutFxn_t resolver — UIMenu.getItemHTML re-evaluates
+    // it on every render, so the displayed key always reflects the user's current
+    // keybindings.json (no caching, no file watcher).
     const urlById: Record<string, string | undefined> = {
       about: kURL.homePage,
       logBug: kURL.support,
     };
-    const resolvePrintShortcut: UIMenuFxn_t = () =>
+    const resolvePrintShortcut: UIMenuShortcutFxn_t = () =>
       this.fn.vscodeapis.getShortcutForCommand({ commandId: kCommandPrintId });
     return kAbout.menuItems.map(item => {
       const url = urlById[item.id];

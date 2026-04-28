@@ -569,10 +569,19 @@ export class UIMenu {
 
       // Determine gutter states upfront - this is all we need for CSS
       const hasGutterBefore = hasDefaultItem; // Only if there's a default item
-      // gutter-after holds: ▶ (flyout), 📝 (default), launch-url SVG, or shortcut
-      const hasGutterAfterContent = menuItemsList.some(
-        item => !!item.isExternalLink || !!item.shortcut
-      );
+      // gutter-after holds: ▶ (flyout), 📝 (default), launch-url SVG, or shortcut.
+      // For function-valued shortcuts, resolve once here so an unbound command
+      // (resolver returns '') doesn't leave the gutter reserved for nothing.
+      const hasGutterAfterContent = menuItemsList.some(item => {
+        if (item.isExternalLink) return true;
+        if (typeof item.shortcut === 'function') {
+          return !!this.fn.uimenumgr.getShortcutOfMenuItemIdForMenuId({
+            menuId: this._id,
+            menuItemId: item.id,
+          });
+        }
+        return !!item.shortcut;
+      });
       const hasGutterAfter = hasFlyout || hasDefaultItem || hasGutterAfterContent;
       const processedMenuItemsHtml = await Promise.all(
         menuItemsList.map(item =>

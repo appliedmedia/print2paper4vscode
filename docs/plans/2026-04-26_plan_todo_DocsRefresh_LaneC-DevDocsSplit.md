@@ -42,7 +42,7 @@ After this lane, `README.md` plus the `docs/` set should be a coherent, accurate
 
 * Repo `README.md` is factually accurate as of 2026-04-26: real keybinding, real command names, no broken "Quick Links", honest platform support status, current or generic test/coverage numbers.
 * Repo `README.md` includes a short pointer telling readers where the marketplace user docs live (`docs/MARKETPLACE.md`).
-* `docs/AGENTS.md` and `docs/VSCodeAPIs.md` are accurate as of 2026-04-26 (or any inaccuracy is fixed).
+* `docs/AGENTS.md` and `docs/VSCodeAPIs.md` deep-audit is **deferred** to a follow-up commit (the workitems explicitly defer it; this lane only owns README / INSTALL / EXECUTION_ORDER_ANALYSIS / info_DeveloperGuide).
 * `docs/INSTALL.md`, `docs/EXECUTION_ORDER_ANALYSIS.md`, `docs/2026-04-12_info_DeveloperGuide.md` are either updated, merged, or deleted via `git rm`, with no orphaned stale files left.
 * `markdownlint` passes on every changed `.md` file.
 

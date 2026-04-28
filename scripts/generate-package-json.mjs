@@ -43,16 +43,34 @@ const placeholders = {
   urlSupport: { from: 'kURL', key: 'support' },
 };
 
+// Extract the body of `export const <name> = { ... } as const` using brace
+// counting so that nested objects (e.g. `{ a: { b: 'x' } }`) are handled
+// correctly. Returns the inner body string (between the outer braces) or
+// null if the declaration cannot be found.
+function extractObjectBody(source, constName) {
+  const headRe = new RegExp(`export const ${constName}\\s*=\\s*\\{`);
+  const headMatch = source.match(headRe);
+  if (!headMatch) return null;
+  const start = headMatch.index + headMatch[0].length; // first char inside the {
+  let depth = 1;
+  let i = start;
+  while (i < source.length && depth > 0) {
+    const c = source[i];
+    if (c === '{') depth++;
+    else if (c === '}') depth--;
+    if (depth === 0) break;
+    i++;
+  }
+  if (depth !== 0) return null;
+  return source.slice(start, i);
+}
+
 const values = {};
 for (const [name, spec] of Object.entries(placeholders)) {
   let m;
   if (spec.key) {
-    // Extract a key from inside an object literal: `export const kObj = { ... key: 'value' ... }`
-    const objRe = new RegExp(
-      `export const ${spec.from}\\s*=\\s*\\{([\\s\\S]*?)\\}\\s*as const`
-    );
-    const objMatch = content.match(objRe);
-    if (!objMatch) {
+    const body = extractObjectBody(content, spec.from);
+    if (body === null) {
       console.error(
         `ERROR: Could not find object literal for ${spec.from} in ${extIdPath}. ` +
         `Expected: export const ${spec.from} = { ... } as const;`
@@ -60,7 +78,7 @@ for (const [name, spec] of Object.entries(placeholders)) {
       process.exit(1);
     }
     const keyRe = new RegExp(`${spec.key}\\s*:\\s*['"]([^'"]+)['"]`);
-    m = objMatch[1].match(keyRe);
+    m = body.match(keyRe);
     if (!m) {
       console.error(
         `ERROR: Could not extract key '${spec.key}' from ${spec.from} in ${extIdPath}.`

@@ -113,7 +113,7 @@ This installs project dependencies and compiles the TypeScript to JavaScript. To
 ### Prerequisites
 
 - **Node.js**: Required for PDF generation using jsPDF (works on all platforms)
-- **macOS**: Currently optimized for macOS with AppleScript integration
+- **macOS / Windows / Linux**: Native print integration ships on all three (see Platform Support above)
 - **VS Code**: Version 1.60.0 or higher
 
 ## Using the Extension
@@ -149,7 +149,7 @@ The extension uses three distinct libraries for different purposes:
 ### Flow: Source Code → Shiki → jsPDF → PDF.js → User
 
 - **Content Capture**: Direct VS Code API access to editor content and selections
-- **Print Integration**: AppleScript-based printing (opens Preview with Cmd+P or uses Finder print)
+- **Print Integration**: Per-platform print path — AppleScript on macOS, PowerShell on Windows, CUPS-based on Linux (see `OSMac`/`OSWin`/`OSLinux` in the OS abstraction layer)
 - **Menu Management**: Generic UIMenu system with flyout support and selection handlers
 - **State Management**: Global state persistence for user preferences
 - **Diagnostics**: Hierarchical logging system with performance timing
@@ -311,6 +311,7 @@ Error Recovery:
   ├── Theme fallback to 'github-light'
   ├── Font fallback to 'Courier'
   ├── Plain text fallback on highlighting failure
+  ├── Structured per-OS failure-mode handling (missing printer, missing PDF reader)
   └── User feedback via UI.showErrorMessage()
 ```
 
@@ -347,7 +348,7 @@ Error Recovery:
 - ✅ Theme switching without regeneration
 - ✅ Page size and orientation configuration
 - ✅ Font size adjustment (8px to 24px)
-- ✅ AppleScript integration for macOS printing
+- ✅ Native printing on macOS (AppleScript), Windows (PowerShell), and Linux (CUPS)
 - ✅ Multi-page PDF generation
 
 ### Known Limitations
@@ -398,7 +399,7 @@ The extension uses Node.js built-in test runner (`node:test`) with comprehensive
 ## Debugging Notes
 
 - Check Node.js installation for jsPDF PDF generation
-- Verify AppleScript permissions for macOS printing operations
+- Verify per-OS print prerequisites (AppleScript permissions on macOS, PowerShell execution policy on Windows, CUPS + a supported PDF viewer on Linux)
 - Monitor Shiki highlighter initialization and theme loading
 - Check webview console for PDF.js loading issues
 - Verify VS Code API access to editor content

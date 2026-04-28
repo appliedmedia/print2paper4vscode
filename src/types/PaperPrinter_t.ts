@@ -51,6 +51,8 @@ export type UIMenuItemDict_t = Record<string, number | string>;
 // User requested non-generic return type: number | string | Boolean | unknown
 export type UIMenuItemValue_t = number | string | boolean;
 export type UIMenuFxn_t = (dict: UIMenuItemDict_t) => UIMenuItemValue_t;
+// Shortcut resolver always returns a display string (or '' if unbound).
+export type UIMenuShortcutFxn_t = (dict: UIMenuItemDict_t) => string;
 
 // Print menu definition
 export const kPrint = {

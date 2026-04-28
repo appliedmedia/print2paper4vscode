@@ -197,8 +197,9 @@ export class VSCodeAPIs {
     let data: unknown;
     try {
       const raw = fs.readFileSync(file, 'utf8');
-      // keybindings.json is JSONC; strip line and block comments before JSON.parse
-      const stripped = raw.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
+      // keybindings.json is JSONC; strip comments with a string-aware pass so
+      // `//` or `/*` inside string literals (e.g. `"args": "// foo"`) survive.
+      const stripped = this.stripJsonComments(raw);
       data = JSON.parse(stripped);
     } catch {
       return undefined;
@@ -240,6 +241,49 @@ export class VSCodeAPIs {
     return this._defaultKeybindings.get(commandId);
   }
 
+  // Strip // and /* */ comments from JSONC, leaving comments inside string
+  // literals intact. Replaces stripped comment characters with spaces so
+  // JSON.parse line/column numbers stay aligned with the source file.
+  private stripJsonComments(raw: string): string {
+    const out: string[] = [];
+    let i = 0;
+    let inString = false;
+    while (i < raw.length) {
+      const c = raw[i];
+      const next = raw[i + 1];
+      if (inString) {
+        out.push(c);
+        if (c === '\\' && i + 1 < raw.length) {
+          out.push(raw[i + 1]);
+          i += 2;
+          continue;
+        }
+        if (c === '"') inString = false;
+        i++;
+        continue;
+      }
+      if (c === '"') {
+        inString = true;
+        out.push(c);
+        i++;
+        continue;
+      }
+      if (c === '/' && next === '/') {
+        while (i < raw.length && raw[i] !== '\n') i++;
+        continue;
+      }
+      if (c === '/' && next === '*') {
+        i += 2;
+        while (i < raw.length && !(raw[i] === '*' && raw[i + 1] === '/')) i++;
+        if (i < raw.length) i += 2;
+        continue;
+      }
+      out.push(c);
+      i++;
+    }
+    return out.join('');
+  }
+
   private userKeybindingsFilePath(): string | undefined {
     // Map vscode.env.appName to user-data directory name. Only "Visual Studio Code" needs
     // remapping; forks like Cursor/VSCodium use appName as the directory name directly.
@@ -260,7 +304,17 @@ export class VSCodeAPIs {
   }
 
   private formatKeybindingForDisplay(key: string): string {
-    const parts = key.split('+').map(p => p.trim()).filter(Boolean);
+    // VS Code chord bindings are space-separated (e.g. "cmd+k cmd+s"). Format
+    // each chord independently, then join. On macOS chords are spaced; on
+    // other platforms the convention is "Ctrl+K Ctrl+S".
+    const chords = key.split(/\s+/).map(c => c.trim()).filter(Boolean);
+    if (chords.length === 0) return '';
+    const formatted = chords.map(chord => this.formatSingleChordForDisplay(chord)).filter(Boolean);
+    return formatted.join(' ');
+  }
+
+  private formatSingleChordForDisplay(chord: string): string {
+    const parts = chord.split('+').map(p => p.trim()).filter(Boolean);
     if (parts.length === 0) return '';
     const last = parts[parts.length - 1];
     const mods = parts.slice(0, -1).map(p => p.toLowerCase());

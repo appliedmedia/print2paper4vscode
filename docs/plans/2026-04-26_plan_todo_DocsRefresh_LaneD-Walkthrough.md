@@ -28,7 +28,7 @@ After a user clicks Install on the marketplace, the next thing they see in VS Co
   3. **Pick page size, theme, and font from the toolbar**
      * Description: "Use the toolbar in the preview panel to switch theme (100+ Shiki themes), page size (Letter, A4, Legal, etc.), font size, and orientation. The PDF re-renders live."
      * Media: GIF showing toolbar menu interactions
-     * Completion event: `onView:p2p4vsc.preview` (or whichever webview view ID is right; verify against current code)
+     * Completion event: none reliable — `createWebviewPanel` produces a programmatic panel, not a registered view, so `onView:<id>` does not fire. Either omit a completion event (user marks the step done manually) or register a dedicated `onContext:<key>` event by setting a custom context key when the toolbar receives its first interaction message in `UI.handleWebviewMessage`. Decide during implementation; do not ship a non-firing `onView:` event
   4. **Print directly or save as PDF**
      * Description: "Use the Print menu in the toolbar to save the PDF, send it to your printer, or open the system print dialog for full control."
      * Media: GIF of clicking Save as PDF

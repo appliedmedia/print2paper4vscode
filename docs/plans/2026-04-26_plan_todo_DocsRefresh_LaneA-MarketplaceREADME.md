@@ -64,7 +64,7 @@ Total target length: under 100 lines including blank lines and headings. Current
   * [ ] Capture a 1600x1000 (or 16:10) screenshot of the Print2Paper preview panel beside a code editor with syntax highlighting visible
   * [ ] Compress the PNG (target under 200 KB) via `pngquant` or equivalent so it does not bloat the VSIX
   * [ ] Save as `images/screenshot-preview.png`
-  * [ ] `images/` is currently in `.vscodeignore` only via the default `**/*.png` allowance via `images/` being included; verify with a test `vsce package --readme-path docs/MARKETPLACE.md` that the screenshot ships and the relative `../images/` reference resolves on the marketplace
+  * [ ] Verify `images/` is not ignored by `.vscodeignore` (no `images/**` exclusion, no broad `**/*.png` exclusion). Run `vsce package --readme-path docs/MARKETPLACE.md` and confirm the screenshot ships in the VSIX and the relative `../images/` reference resolves on the marketplace
 * Verify
   * [ ] `npx markdownlint docs/MARKETPLACE.md` passes
   * [ ] `npx @vscode/vsce package --readme-path docs/MARKETPLACE.md` produces a VSIX whose `extension/readme.md` contains the marketplace content (vsce stages the `--readme-path` file as `extension/readme.md` inside the VSIX)
