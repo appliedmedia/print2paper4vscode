@@ -1,9 +1,11 @@
 # Orchestrator: Docs Refresh Wave
 
-**Status:** in-progress
+**Status:** in-progress (Lanes A/B/C shipped; Lanes D/E remain)
 **Created:** 2026-04-26
+**Updated:** 2026-04-28
 **Master orchestrator:** [2026-04-01_plan_todo_Orchestrator.md](<2026-04-01_plan_todo_Orchestrator.md>) (Phase 1 quality gate before publish)
 **Blocks:** [2026-04-25_plan_todo_MarketplacePublishImpl_LaneC-PublishAndVerify.md](<2026-04-25_plan_todo_MarketplacePublishImpl_LaneC-PublishAndVerify.md>) (publish should not happen against the current dev-facing README)
+**Shipped via:** PR #115 (`63940fe`, merged 2026-04-28) — Lanes A, B, C plus a ride-along UIMenu dynamic shortcut/isHidden resolver refactor
 
 ## Objective
 
@@ -44,11 +46,11 @@ See memory `feedback_marketplace_readme_split.md` for the convention this wave c
 
 ## Lanes
 
-* [Lane A: marketplace-facing README (separate file)](<2026-04-26_plan_todo_DocsRefresh_LaneA-MarketplaceREADME.md>)
-* [Lane B: marketplace CHANGELOG (separate file) + repo CHANGELOG accuracy](<2026-04-26_plan_todo_DocsRefresh_LaneB-Changelog.md>)
-* [Lane C: repo README accuracy fixes + dev docs audit](<2026-04-26_plan_todo_DocsRefresh_LaneC-DevDocsSplit.md>)
-* [Lane D: walkthrough Get Started experience](<2026-04-26_plan_todo_DocsRefresh_LaneD-Walkthrough.md>)
-* [Lane E: verification + cross-link audit](<2026-04-26_plan_todo_DocsRefresh_LaneE-Verify.md>)
+* [Lane A: marketplace-facing README (separate file)](<2026-04-26_plan_done_DocsRefresh_LaneA-MarketplaceREADME.md>) — done (PR #115)
+* [Lane B: marketplace CHANGELOG (separate file) + repo CHANGELOG accuracy](<2026-04-26_plan_done_DocsRefresh_LaneB-Changelog.md>) — done (PR #115)
+* [Lane C: repo README accuracy fixes + dev docs audit](<2026-04-26_plan_done_DocsRefresh_LaneC-DevDocsSplit.md>) — done (PR #115)
+* [Lane D: walkthrough Get Started experience](<2026-04-26_plan_todo_DocsRefresh_LaneD-Walkthrough.md>) — todo
+* [Lane E: verification + cross-link audit](<2026-04-26_plan_todo_DocsRefresh_LaneE-Verify.md>) — todo
 
 ## Dependencies
 
@@ -107,3 +109,21 @@ See memory `feedback_marketplace_readme_split.md` for the convention this wave c
 ## Recovery note (2026-04-26)
 
 * Initial Lane A draft incorrectly rewrote `README.md` itself into a marketplace README (commit `0605098`), instead of creating a separate marketplace file. acoven flagged it; the work was reverted and redone correctly: repo `README.md` restored to its dev-facing 409-line form, marketplace content moved to `docs/MARKETPLACE.md`, `--readme-path` flag wired in `publish.yml`. Memory `feedback_marketplace_readme_split.md` captures the convention so this does not repeat.
+
+## Shipped via PR #115 (2026-04-28)
+
+PR `feature/docs-refresh` → `main` merged as commit `63940fe`. What landed:
+
+* Lane A: `docs/MARKETPLACE.md` (80 lines), `--readme-path docs/MARKETPLACE.md` wired in `.github/workflows/publish.yml`. Hero screenshot remains a placeholder; acoven's actual capture follows as a fix-up commit when convenient. See [Lane A](<2026-04-26_plan_done_DocsRefresh_LaneA-MarketplaceREADME.md>).
+* Lane B: `docs/MARKETPLACE_CHANGELOG.md` (39 lines) with `TODO(date)` placeholder, `--changelog-path` wired, repo `CHANGELOG.md` factual fixes (date, platform-support claims, test-count line, Future Roadmap trim), `CONTRIBUTING.md` updated with packaging instructions. See [Lane B](<2026-04-26_plan_done_DocsRefresh_LaneB-Changelog.md>).
+* Lane C: repo `README.md` factual fixes (real `p2p4vsc.print2paper` / Alt+P, dropped macOS-only contradictions, dropped dead `docs/INSTALL.md` and `docs/plans/2025-12-11_plan_inProgress_CICD.md` links), `docs/INSTALL.md` and `docs/EXECUTION_ORDER_ANALYSIS.md` deleted via `git rm`, `docs/2026-04-12_info_DeveloperGuide.md` updated with archival header. `docs/VSCodeAPIs.md` deep audit deferred. See [Lane C](<2026-04-26_plan_done_DocsRefresh_LaneC-DevDocsSplit.md>).
+* Ride-along (UIMenu dynamic shortcut + isHidden resolvers, plus parser cleanups):
+  * `UIMenuShortcutFxn_t` resolver type added; `UIMenuMgr.getShortcutOfMenuItemIdForMenuId` and `UIMenu` gutter detection now resolve function shortcuts type-safely.
+  * `VSCodeAPIs.formatKeybindingForDisplay` is chord-aware (whitespace-separated chord groups).
+  * `scripts/generate-package-json.mjs` uses a brace-counting `extractObjectBody` helper instead of regex; JSONC parser uses a string-aware state machine.
+  * Surfaced during the ai01 PR review and merged in the same wave. See memory `feedback_uimenu_resolver_generalization.md` for the next round of cleanup.
+
+## Remaining
+
+* [Lane D](<2026-04-26_plan_todo_DocsRefresh_LaneD-Walkthrough.md>) (walkthroughs) was not part of PR #115. It can land as its own PR off `main` whenever capacity exists.
+* [Lane E](<2026-04-26_plan_todo_DocsRefresh_LaneE-Verify.md>) (verification + cross-link audit + memory updates + plan renames) runs after Lane D ships, since the verification scope includes the walkthrough VSIX integrity. The wave Orch + lane plans for A/B/C have been renamed to `_done_` even though Lane E has not run; the renames reflect what shipped on `main`, not Lane E's bookkeeping pass.

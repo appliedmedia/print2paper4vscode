@@ -3,7 +3,7 @@
 **Status:** done (superseded)
 **Created:** 2025-12-11
 **Closed:** 2026-04-25
-**Superseded by:** [2026-04-25_plan_todo_MarketplacePublishImpl_LaneA-PackageAudit.md](<2026-04-25_plan_todo_MarketplacePublishImpl_LaneA-PackageAudit.md>)
+**Superseded by:** [2026-04-25_plan_done_MarketplacePublishImpl_LaneA-PackageAudit.md](<2026-04-25_plan_done_MarketplacePublishImpl_LaneA-PackageAudit.md>)
 
 This plan tracks the required metadata updates to `package.json` before publishing.
 

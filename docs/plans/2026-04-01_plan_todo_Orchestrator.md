@@ -2,19 +2,18 @@
 
 **Status:** TODO
 **Created:** 2026-04-01
-**Updated:** 2026-04-01
+**Updated:** 2026-04-28
 **Scope:** All active and planned work for the extension
 
 ---
 
-## Current State (updated 2026-04-16)
+## Current State (updated 2026-04-28)
 
-* **Main branch:** 386 unit + 8 Gherkin smoke tests, 85.69% stmts
-* **Coverage branch (PR #107):** 1238 tests (386 unit + 852 Gherkin), 95.03% stmts
-* **Migration branch (PR pending):** 623 tests (342 unit + 281 Gherkin), Batch 1 done
-* **Build:** Compiles clean, esbuild bundles to dist/
-* **Published:** No: not yet on VS Code Marketplace
-* **Platform:** macOS complete, Windows bugs fixed (PR #103), Linux partial (PR #105)
+* **Main branch:** ~95% statement coverage (per repo CHANGELOG); 386 unit + Gherkin scenarios from coverage replay (PR #109)
+* **Build:** Compiles clean, esbuild bundles to `dist/extension.js`; `.vscodeignore` excludes `.claude/` + `.cursor/`; `*.vsix` no longer tracked in git
+* **Published:** No: not yet on VS Code Marketplace. MarketplacePublishImpl Lane C is unblocked as of PR #115 (docs refresh shipped)
+* **Platform:** macOS / Windows (PR #112) / Linux (PRs #105 + #110) all shipped
+* **Docs:** Marketplace-only README at `docs/MARKETPLACE.md` and changelog at `docs/MARKETPLACE_CHANGELOG.md`; repo `README.md` and `CHANGELOG.md` are dev-facing with factual fixes; `CONTRIBUTING.md` documents `--readme-path` / `--changelog-path` flags. Walkthrough Get Started panel (DocsRefresh Lane D) and verification pass (Lane E) still pending
 
 ---
 
@@ -127,26 +126,41 @@ Goal: Fix critical bugs and get the extension on the VS Code Marketplace.
 | Field | Value |
 | --- | --- |
 | **Plan** | `2026-04-01_plan_todo_MarketplacePublish.md` |
-| **Branch** | `feature/marketplace-prep` (for any code changes) |
-| **Blocked by** | Stream A (Windows Fixes) |
+| **Wave orchestrator** | `2026-04-25_plan_todo_MarketplacePublishImpl_Orch.md` |
+| **Branch** | `feature/marketplace-publish` (Lane A merged via PR #113; Lane B ticked on `main` via `a74ffa3`; Lane C pending) |
+| **Blocked by** | DocsRefresh wave Lanes A/B/C (shipped 2026-04-28 via PR #115) — **now unblocked** |
 | **Estimate** | 30-45 min manual steps + small PR |
 
-**What:**
+**Status (2026-04-28):**
 
-1. Create Azure DevOps org + PAT (manual)
-2. Create publisher "appliedmedia" on marketplace (manual)
-3. Verify `package.json` publisher field matches
-4. Build, package, test VSIX locally
-5. `vsce publish`
-6. Add `VSCE_PAT` secret to GitHub repo
-7. Verify extension live on marketplace
-
-**PR scope (if needed):**
-
-* `.config/template.package.json` — publisher field, metadata tweaks
-* `package.json` — regenerated
+* Lane A (package audit + VSIX dry run) merged via PR #113 (`4c913c2`).
+* Lane B (publisher + PAT setup) ticked off by acoven via `a74ffa3` ("Lane B closeout: publisher + PAT setup done").
+* DocsRefresh quality gate shipped via PR #115 (`63940fe`). Marketplace listing will now ship `docs/MARKETPLACE.md` + `docs/MARKETPLACE_CHANGELOG.md` instead of the dev-facing root README.
+* Lane C (`vsce publish` + verify listing) is **next**. Resolve `TODO(date)` + `TODO(release-tag)` in `CHANGELOG.md` and `docs/MARKETPLACE_CHANGELOG.md` immediately before publish.
 
 **Done when:** Extension searchable and installable from VS Code Marketplace.
+
+### Stream B-Quality: Docs Refresh (publish prerequisite)
+
+| Field | Value |
+| --- | --- |
+| **Wave orchestrator** | `2026-04-26_plan_done_DocsRefresh_Orch.md` |
+| **Branch** | `feature/docs-refresh` (merged 2026-04-28) |
+| **Status** | Lanes A/B/C done; Lanes D/E remain |
+
+**Why this exists:** Without it, `vsce publish` would have shipped the contributor-facing repo `README.md` as the marketplace listing (broken `docs/AGENTS.md` reference, `apt-get install nodejs` instructions, wrong keybinding claims). Lane C of Stream B was paused for one wave of docs work to avoid a permanent first-impression problem on the marketplace.
+
+**What shipped (PR #115, 2026-04-28, `63940fe`):**
+
+* Lane A: marketplace-only README at `docs/MARKETPLACE.md`, wired via `--readme-path` flag.
+* Lane B: marketplace-only changelog at `docs/MARKETPLACE_CHANGELOG.md`, wired via `--changelog-path` flag; repo `CHANGELOG.md` factual fixes (date placeholder, platform-support claims, test-count line, Future Roadmap trim).
+* Lane C: repo `README.md` factual fixes (real commands, real keybinding, dropped macOS-only contradictions); `docs/INSTALL.md` and `docs/EXECUTION_ORDER_ANALYSIS.md` removed; `CONTRIBUTING.md` updated.
+* Ride-along: `UIMenuShortcutFxn_t` resolver type + dynamic isHidden resolver, JSONC state-machine parser, brace-counting `extractObjectBody` helper. Surfaced during the ai01 PR review and merged in the same wave.
+
+**What remains:**
+
+* [Lane D](<2026-04-26_plan_todo_DocsRefresh_LaneD-Walkthrough.md>): `contributes.walkthroughs` + `walkthroughs/*.md` step files for the first-install Get Started panel. Polish; can ship as v1.0.1 or later.
+* [Lane E](<2026-04-26_plan_todo_DocsRefresh_LaneE-Verify.md>): VSIX integrity, cross-link audit, markdownlint sweep, EDH smoke test, replace `TODO(date)` / `TODO(release-tag)` markers. Should run before Stream B Lane C executes.
 
 ---
 
@@ -261,6 +275,7 @@ Every PR in this project must satisfy:
 | 2026-04-01 | One branch per swimlane | Fewer PRs, coherent CodeRabbit reviews per work stream |
 | 2026-04-01 | Fix Windows bugs before publishing | Don't ship known-broken platform code |
 | 2026-04-01 | Publish as "appliedmedia" | Organization publisher on VS Code Marketplace |
+| 2026-04-26 | Split marketplace docs from repo docs | Repo `README.md` and `CHANGELOG.md` stay developer-facing; marketplace gets dedicated `docs/MARKETPLACE.md` + `docs/MARKETPLACE_CHANGELOG.md` shipped via `vsce publish --readme-path` / `--changelog-path`. Different audiences, different sizes. See memory `feedback_marketplace_readme_split.md`. |
 
 ---
 

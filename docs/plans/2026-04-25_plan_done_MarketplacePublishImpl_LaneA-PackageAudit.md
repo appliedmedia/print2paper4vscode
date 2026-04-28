@@ -1,9 +1,10 @@
 # Lane A: Package audit + VSIX dry run
 
-**Status:** todo
+**Status:** done (merged via PR #113, `4c913c2`, 2026-04-26)
 **Created:** 2026-04-25
+**Updated:** 2026-04-28
 **Parent orchestrator:** [2026-04-25_plan_todo_MarketplacePublishImpl_Orch.md](<2026-04-25_plan_todo_MarketplacePublishImpl_Orch.md>)
-**Branch:** `feature/marketplace-publish-audit` (off `feature/marketplace-publish`)
+**Branch:** `feature/marketplace-publish-audit` (merged)
 **Owner:** Claude (automated)
 
 ## Goal
@@ -49,3 +50,12 @@ The spec recipe ([MarketplacePublish](<2026-04-01_plan_todo_MarketplacePublish.m
 ## Hand-off to Lane C
 
 Drop the produced `.vsix` path and the validation summary into the Lane C plan as a "ready to publish" note before requesting Lane C be started.
+
+## Closeout (2026-04-26, PR #113)
+
+Audit shipped via `4c913c2`:
+
+* `.config/template.package.json` audited and confirmed compliant (publisher `appliedmedia`, all required fields present, keyword count in range).
+* `.vscodeignore` rewritten to whitelist only the icon (`images/logo-p2p4vsc_128x128px.png`) plus `.cursor/` excluded; PR #115 followed up to also exclude `.claude/` and `*.vsix`.
+* `bash scripts/prepublish.sh && npx @vscode/vsce package` produced a VSIX with zero warnings; ai01 review pass added 5 minor doc fixes before merge.
+* `2025-12-11_plan_todo_PackageJsonMetadata.md` renamed to `_done_` with a pointer to this wave (per the original plan's reconciliation step).

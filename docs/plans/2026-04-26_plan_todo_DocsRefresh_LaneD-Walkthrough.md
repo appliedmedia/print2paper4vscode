@@ -1,11 +1,12 @@
 # Lane D: Walkthrough Get Started experience
 
-**Status:** todo
+**Status:** todo (did not ship in PR #115; can land as its own PR)
 **Created:** 2026-04-26
-**Parent orchestrator:** [2026-04-26_plan_todo_DocsRefresh_Orch.md](<2026-04-26_plan_todo_DocsRefresh_Orch.md>)
-**Branch:** `feature/docs-refresh` (or sub-branch `feature/docs-refresh-laneD`)
+**Updated:** 2026-04-28
+**Parent orchestrator:** [2026-04-26_plan_done_DocsRefresh_Orch.md](<2026-04-26_plan_done_DocsRefresh_Orch.md>)
+**Branch:** new branch off `main` when work resumes (the original `feature/docs-refresh` was merged on 2026-04-28 without this lane)
 **Owner:** Claude (drafts), acoven (GIF capture + Extension Development Host smoke test)
-**Blocked by:** none structurally; this lane should land last among A-D so the `.vscodeignore` allow-rule for `walkthroughs/**` does not collide with Lane A's image work
+**Blocked by:** none structurally
 
 ## Goal
 
@@ -74,3 +75,15 @@ After a user clicks Install on the marketplace, the next thing they see in VS Co
 * Walkthroughs are a polish feature; if media capture stalls, the lane can land with text-only steps (no media) and follow-up commits add the GIFs. A text-only walkthrough is still better than no walkthrough.
 * Some forks (older VSCodium builds, Theia-based forks) do not honor walkthroughs. The contribution gracefully degrades, so those users just see no Get Started panel, which is the same as today. There is no negative side effect of adding it.
 * If the prepublish script does not currently handle `contributes.walkthroughs` template substitution correctly, that is a small fix in `scripts/generate-package-json.mjs` and belongs in this lane, not as separate work.
+
+## Status note (2026-04-28)
+
+The docs refresh wave shipped without this lane via PR #115 (`63940fe`). Lanes A, B, C are all marked done. The `walkthroughs/` directory does not exist on disk; `.config/template.package.json` has no `contributes.walkthroughs` entry; nothing in this lane has begun.
+
+Resume conditions:
+
+* When acoven or Claude has time for a 2-3 hour focused session (4 step files + media capture + EDH smoke test).
+* New branch off `main`, e.g., `feature/walkthrough-getstarted`. The original wave branch is merged and the wave is mostly closed.
+* When this lane lands, also run [Lane E](<2026-04-26_plan_todo_DocsRefresh_LaneE-Verify.md>) to do the cross-link audit, VSIX integrity check, and the `TODO(date)` / `TODO(release-tag)` resolution that Lane B left for verification.
+
+This lane does not block marketplace publish — Lane C of the [marketplace publish wave](<2026-04-25_plan_todo_MarketplacePublishImpl_LaneC-PublishAndVerify.md>) is unblocked as of PR #115. The walkthrough is polish that can ship as v1.0.1 or later.

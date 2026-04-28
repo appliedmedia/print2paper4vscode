@@ -1,11 +1,12 @@
 # Lane E: Verification + cross-link audit
 
-**Status:** todo
+**Status:** todo (Lanes A/B/C shipped via PR #115 without this verify pass; Lane D and Lane E remain)
 **Created:** 2026-04-26
-**Parent orchestrator:** [2026-04-26_plan_todo_DocsRefresh_Orch.md](<2026-04-26_plan_todo_DocsRefresh_Orch.md>)
-**Branch:** `feature/docs-refresh`
+**Updated:** 2026-04-28
+**Parent orchestrator:** [2026-04-26_plan_done_DocsRefresh_Orch.md](<2026-04-26_plan_done_DocsRefresh_Orch.md>)
+**Branch:** new branch off `main` when work resumes (the original `feature/docs-refresh` is merged)
 **Owner:** Claude
-**Blocked by:** Lanes A, B, C, D all complete
+**Blocked by:** [Lane D](<2026-04-26_plan_todo_DocsRefresh_LaneD-Walkthrough.md>) (still todo)
 
 ## Goal
 
@@ -56,3 +57,15 @@ Catch the cross-cutting failure modes that any individual lane could have introd
 
 * If verification surfaces a fix-up (e.g., a broken link, a markdownlint complaint, a walkthrough that does not auto-open), fix it on the wave branch and re-run the relevant verify step. Do not open a separate PR for verify-pass fix-ups; they are part of the wave.
 * The VSIX-installation smoke test is the single most important step in this lane. Everything else can be verified by tooling; the actual user experience can only be verified by installing as a user would.
+
+## Status note (2026-04-28)
+
+Lanes A, B, C shipped via PR #115 (`63940fe`) without this verify pass. The wave Orch and the A/B/C plan files have been renamed to `_done_` to reflect what landed on `main`. This lane is still pending and is responsible for:
+
+* Confirming the VSIX still builds clean against current `main` (no Lane B `--changelog-path` regression, no `.claude/` leakage, screenshot placeholder still ships).
+* Running the cross-link audit on the post-merge state of `README.md`, `CHANGELOG.md`, `docs/MARKETPLACE.md`, `docs/MARKETPLACE_CHANGELOG.md`, `docs/2026-04-12_info_DeveloperGuide.md`, `docs/VSCodeAPIs.md`, `CONTRIBUTING.md`.
+* `markdownlint` sweep on the merged state.
+* Resolving the `TODO(date)` and `TODO(release-tag)` markers in `CHANGELOG.md` and `docs/MARKETPLACE_CHANGELOG.md` just before publish.
+* Running the walkthrough VSIX integrity + EDH smoke test once [Lane D](<2026-04-26_plan_todo_DocsRefresh_LaneD-Walkthrough.md>) lands.
+
+This lane should run before Lane C of the [marketplace publish wave](<2026-04-25_plan_todo_MarketplacePublishImpl_LaneC-PublishAndVerify.md>) executes, but it does not block publish if acoven decides to ship the listing without the walkthrough — the post-merge state of `main` is already a marketplace-ready artifact (with a placeholder screenshot and `TODO(date)` markers that Lane E or the publish-wave Lane C must resolve).

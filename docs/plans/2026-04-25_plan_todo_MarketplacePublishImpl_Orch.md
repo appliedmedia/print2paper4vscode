@@ -1,9 +1,11 @@
 # Orchestrator: Marketplace Publish Wave
 
-**Status:** todo
+**Status:** in-progress (Lane A merged via PR #113, Lane B closed via `a74ffa3`, DocsRefresh quality gate shipped via PR #115; Lane C unblocked)
 **Created:** 2026-04-25
+**Updated:** 2026-04-28
 **Spec:** [2026-04-01_plan_todo_MarketplacePublish.md](<2026-04-01_plan_todo_MarketplacePublish.md>)
 **Stale prereq:** [2025-12-11_plan_done_PackageJsonMetadata.md](<2025-12-11_plan_done_PackageJsonMetadata.md>)
+**Quality gate:** [2026-04-26_plan_done_DocsRefresh_Orch.md](<2026-04-26_plan_done_DocsRefresh_Orch.md>) (Lanes A/B/C done; Lanes D/E remain — D/E do not block publish)
 **Master orchestrator:** [2026-04-01_plan_todo_Orchestrator.md](<2026-04-01_plan_todo_Orchestrator.md>) (Phase 1 Stream B)
 
 ## Objective
@@ -45,9 +47,9 @@ Take Print2Paper4VSCode from "builds locally" to "live on the VS Code Marketplac
 
 ## Lanes
 
-* [Lane A: package audit + VSIX dry run](<2026-04-25_plan_todo_MarketplacePublishImpl_LaneA-PackageAudit.md>)
-* [Lane B: publisher + PAT setup, acoven manual](<2026-04-25_plan_done_MarketplacePublishImpl_LaneB-PublisherSetup.md>)
-* [Lane C: publish + verify](<2026-04-25_plan_todo_MarketplacePublishImpl_LaneC-PublishAndVerify.md>)
+* [Lane A: package audit + VSIX dry run](<2026-04-25_plan_done_MarketplacePublishImpl_LaneA-PackageAudit.md>) (merged via PR #113, `4c913c2`)
+* [Lane B: publisher + PAT setup, acoven manual](<2026-04-25_plan_done_MarketplacePublishImpl_LaneB-PublisherSetup.md>) (closed on `main` via `a74ffa3`)
+* [Lane C: publish + verify](<2026-04-25_plan_todo_MarketplacePublishImpl_LaneC-PublishAndVerify.md>) (next; unblocked by docs refresh shipping in PR #115)
 
 ## Coordination
 

@@ -1,9 +1,10 @@
 # Lane B: Marketplace CHANGELOG (separate file) + repo CHANGELOG accuracy
 
-**Status:** in-progress
+**Status:** done (shipped via PR #115, 2026-04-28)
 **Created:** 2026-04-26
-**Parent orchestrator:** [2026-04-26_plan_todo_DocsRefresh_Orch.md](<2026-04-26_plan_todo_DocsRefresh_Orch.md>)
-**Branch:** `feature/docs-refresh`
+**Updated:** 2026-04-28
+**Parent orchestrator:** [2026-04-26_plan_done_DocsRefresh_Orch.md](<2026-04-26_plan_done_DocsRefresh_Orch.md>)
+**Branch:** `feature/docs-refresh` (merged)
 **Owner:** Claude
 **Blocked by:** none
 
@@ -54,3 +55,17 @@ The repo `CHANGELOG.md` stays as the developer-facing changelog rendered on GitH
 
 * This lane is short. If acoven only has 30 minutes for docs work in a sitting, the repo `CHANGELOG.md` accuracy fixes alone are the highest-value-per-minute slice — they prevent a v1.0.0 changelog that contradicts what shipped.
 * The marketplace changelog can ship minimal at first ("v1.0.0: initial release with cross-platform print support") and grow with future versions. Versioning starts at 1.0.0 because that is what the marketplace listing will show.
+
+## Closeout (2026-04-28, PR #115)
+
+Shipped as part of the docs refresh wave merged via `63940fe`:
+
+* `docs/MARKETPLACE_CHANGELOG.md` exists at 39 lines, with `TODO(date)` placeholder for Lane E to fill in just before publish.
+* `.github/workflows/publish.yml` now runs `vsce publish` with `--changelog-path docs/MARKETPLACE_CHANGELOG.md` alongside the `--readme-path` flag from Lane A.
+* `CONTRIBUTING.md` "Packaging the extension locally" section documents the same `--changelog-path` flag for manual `vsce package` invocations.
+* Repo `CHANGELOG.md` factual fixes landed: date set to `TODO(date)` placeholder, the "macOS-specific print commands (Windows/Linux support planned)" claim removed, the `#### Platform Support` section rewritten to reflect macOS / Windows (PR #112) / Linux (PRs #105 + #110), the test-count line replaced with "~95% statement coverage", "Cross-platform printing support" and "GitHub Actions CI/CD pipeline" removed from Future Roadmap, `TODO(release-tag)` placeholder added near the `[1.0.0]` link footnote.
+
+Deferred to Lane E (verification, just before publish):
+
+* Replace `TODO(date)` with the actual planned publish date.
+* Replace `TODO(release-tag)` once the `v1.0.0` git tag is created as part of the publish flow.

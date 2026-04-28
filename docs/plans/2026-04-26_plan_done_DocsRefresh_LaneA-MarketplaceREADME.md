@@ -1,9 +1,10 @@
 # Lane A: Marketplace-facing README (separate file)
 
-**Status:** in-progress
+**Status:** done (shipped via PR #115, 2026-04-28)
 **Created:** 2026-04-26
-**Parent orchestrator:** [2026-04-26_plan_todo_DocsRefresh_Orch.md](<2026-04-26_plan_todo_DocsRefresh_Orch.md>)
-**Branch:** `feature/docs-refresh`
+**Updated:** 2026-04-28
+**Parent orchestrator:** [2026-04-26_plan_done_DocsRefresh_Orch.md](<2026-04-26_plan_done_DocsRefresh_Orch.md>)
+**Branch:** `feature/docs-refresh` (merged)
 **Owner:** Claude (drafts), acoven (screenshot capture + final review)
 **Blocked by:** none
 
@@ -86,3 +87,17 @@ Total target length: under 100 lines including blank lines and headings. Current
 * If acoven cannot capture a screenshot today, the lane can land with a `images/screenshot-preview.png` placeholder (a 1x1 transparent PNG) and the real capture follows as a fix-up commit. The current `docs/MARKETPLACE.md` already has the reference in place with a `TODO(screenshot)` HTML comment.
 * `docs/MARKETPLACE.md` should NOT link to `docs/AGENTS.md`, `docs/VSCodeAPIs.md`, or any `docs/plans/*`. Those paths do not exist in the marketplace VSIX (since `docs/**` is excluded except for the explicit `--readme-path` file) and would render as broken links.
 * When adding any new vsce invocation anywhere in the repo (workflow, helper script, doc), include the `--readme-path` and (eventually) `--changelog-path` flags. See `feedback_marketplace_readme_split.md` for the why.
+
+## Closeout (2026-04-28, PR #115)
+
+Shipped as part of the docs refresh wave merged via `63940fe`:
+
+* `docs/MARKETPLACE.md` exists at 80 lines, in the structure described above.
+* `.github/workflows/publish.yml` now runs `vsce publish` with `--readme-path docs/MARKETPLACE.md`.
+* `CONTRIBUTING.md` "Packaging the extension locally" section documents the same flag for manual `vsce package` invocations (Lane B added the matching `--changelog-path` documentation in the same section).
+* Repo `README.md` is untouched by Lane A — Lane C handled the dev-facing README factual fixes.
+
+Deferred to follow-up commits (not blockers for marketplace publish):
+
+* Hero screenshot capture: `images/screenshot-preview.png` is currently a placeholder. acoven will capture the real PNG at 1600×1000 (or 16:10), compress under 200 KB, and replace the placeholder. Until then the marketplace listing renders without a hero image — acceptable but suboptimal.
+* VSIX inspection of the rendered marketplace README is folded into Lane E (verification).
