@@ -5,6 +5,7 @@ out/
 dist/
 coverage/
 .tmp/
+*.vsix
 # package.json is now static (no longer generated from template)
 # Logs
 *.log

@@ -95,6 +95,11 @@ export class Stylize {
       });
 
       dx.out(`Highlighter created successfully`);
+    } else if (!this.highlighter.getLoadedLanguages().includes(languageId)) {
+      // Singleton highlighter exists but was built for a different language.
+      // Without this, switching from e.g. typescript to markdown throws "no Shiki language".
+      dx.out(`Loading additional language: ${languageId}`);
+      await this.highlighter.loadLanguage(languageId);
     }
     dx.done();
   }

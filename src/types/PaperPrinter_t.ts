@@ -51,6 +51,8 @@ export type UIMenuItemDict_t = Record<string, number | string>;
 // User requested non-generic return type: number | string | Boolean | unknown
 export type UIMenuItemValue_t = number | string | boolean;
 export type UIMenuFxn_t = (dict: UIMenuItemDict_t) => UIMenuItemValue_t;
+// Shortcut resolver always returns a display string (or '' if unbound).
+export type UIMenuShortcutFxn_t = (dict: UIMenuItemDict_t) => string;
 
 // Print menu definition
 export const kPrint = {
@@ -368,6 +370,24 @@ export const kMd = {
 } as const;
 export type MdMenuItems_t = (typeof kMd.menuItems)[number]['id'];
 
+// About menu - kebab (⋮) at the end of the toolbar
+export const kAbout = {
+  id: 'about',
+  displayName: 'About',
+  iconSlotTriad: { begin: '', main: '⫶', end: '' },
+  altId: '',
+  methodName: '',
+  isFlyout: false,
+  isHidden: false,
+  flyoutMenuItemIds: [] as const,
+  menuItems: [
+    { id: 'shortcut', displayName: 'Shortcut' },
+    { id: 'about', displayName: 'About...' },
+    { id: 'logBug', displayName: 'Report a problem...' },
+  ],
+} as const;
+export type AboutMenuItems_t = (typeof kAbout.menuItems)[number]['id'];
+
 export const kZoomLevel = {
   id: 'zoomLevel',
   displayName: 'Zoom Level',
@@ -465,6 +485,7 @@ export const kMenus = [
   kZoomLevel,
   kZoomIn,
   kMd,
+  kAbout,
   kHeader,
   kFooter,
   ...kHeaderFooterPosMenus,

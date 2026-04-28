@@ -20,6 +20,10 @@ export const mockContext = {
     update: () => Promise.resolve(),
   },
   globalStorageUri: { fsPath: '/tmp' },
+  extension: {
+    id: 'appliedmedia.print2paper4vscode',
+    packageJSON: { name: 'test-extension', contributes: {} },
+  },
 } as unknown as vscode.ExtensionContext;
 
 interface MockVSCode {
@@ -86,6 +90,7 @@ interface MockVSCode {
   };
   env: {
     language: string;
+    appName: string;
   };
 }
 
@@ -165,6 +170,7 @@ export const mockVSCode = {
   },
   env: {
     language: 'en',
+    appName: 'Visual Studio Code',
   },
 } as unknown as typeof vscode;
 

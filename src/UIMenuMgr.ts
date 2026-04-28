@@ -18,6 +18,7 @@ import {
   type UIMenuItemDict_t,
   type UIMenuFxn_t,
   type UIMenuItemValue_t,
+  type UIMenuShortcutFxn_t,
 } from './types/PaperPrinter_t';
 import type { Theme } from './types/theme_t';
 
@@ -151,16 +152,17 @@ export class UIMenuMgr {
       selectionHandler,
     } = args;
 
-    // Resolve isHidden to boolean
-    const isHiddenResolved = this.getValueOfMenuFxnByCalcIsHidden(isHidden, id);
-
+    // Pass isHidden through unresolved (boolean | UIMenuFxn_t | undefined).
+    // UIMenu.getHTML resolves it fresh per render via getIsHiddenOfMenuId, so a
+    // dynamic resolver sees the latest docInfo (e.g. languageId set during PDF
+    // generation) instead of being frozen at construction time.
     return new UIMenu({
       reg: this.reg,
       id,
       displayName,
       iconSlotTriad,
       isFlyout,
-      isHidden: isHiddenResolved,
+      isHidden,
       menuItems,
       flyoutMenuItemIds,
       selectionHandler,
@@ -382,6 +384,63 @@ export class UIMenuMgr {
   }
 
   /**
+   * Resolve a menu's hidden state fresh on every call.
+   *
+   * Mirrors getValueOfMenuItemIdForMenuId: looks the menu up by id, reads the
+   * stored isHidden (boolean | UIMenuFxn_t | undefined), and runs it through
+   * getValueOfMenuFxnByCalcIsHidden so dynamic resolvers see current docInfo.
+   *
+   * Called from UIMenu.getHTML each render — keeps menus like kMd in sync with
+   * the active document's languageId without rebuilding the menu.
+   */
+  getIsHiddenOfMenuId(menuId: MenuId_t): boolean {
+    const menu = this.getMenuById(menuId);
+    return this.getValueOfMenuFxnByCalcIsHidden(menu.isHidden, menuId);
+  }
+
+  /**
+   * Resolve a menu item's shortcut display string fresh on every call.
+   *
+   * Mirrors getValueOfMenuItemIdForMenuId / getIsHiddenOfMenuId: the menu item
+   * stores `shortcut: string | UIMenuShortcutFxn_t | undefined`. Static strings
+   * pass through; resolver functions run through the validated-dict helper so
+   * a resolver that calls e.g. `getShortcutForCommand(...)` always reads the
+   * current VS Code keybinding at HTML generation time.
+   */
+  getShortcutOfMenuItemIdForMenuId(args: { menuId: MenuId_t; menuItemId: string }): string {
+    const { menuId, menuItemId } = args;
+    const menu = this.getMenuById(menuId);
+    const menuItem = menu.getMenuItems().find(item => item.id === menuItemId);
+    const shortcut = menuItem?.shortcut;
+    if (typeof shortcut === 'function') {
+      return this.getValueOfMenuFxnByCalcShortcut(shortcut, menuId, menuItemId);
+    }
+    return shortcut ?? '';
+  }
+
+  // Like getValueOfMenuFxnByCalcValue, but typed for shortcut resolvers (always string).
+  // Returns '' if the resolver throws.
+  private getValueOfMenuFxnByCalcShortcut(
+    resolver: UIMenuShortcutFxn_t,
+    menuId: string,
+    menuItemId: string
+  ): string {
+    const dx = this.dx.sub({ name: 'getValueOfMenuFxnByCalcShortcut' });
+    const dict = this.buildUIMenuItemDict();
+    try {
+      const result = resolver(dict);
+      dx.done();
+      return result;
+    } catch (error) {
+      this.dx.error(
+        `Menu item shortcut resolver failed for ${menuId}.${menuItemId}: ${String(error)}`
+      );
+      dx.done();
+      return '';
+    }
+  }
+
+  /**
    * Build validated menu item value dictionary for resolver functions
    *
    * Constructs dict from webview context (window dimensions) and PDF page dimensions.
@@ -486,11 +545,12 @@ export class UIMenuMgr {
     try {
       const result = resolver(dict_nums);
       dx.done();
-      // Ensure we only return supported types
+      // UIMenuItemValue_t is number | string | boolean. Anything else (object,
+      // function, symbol from a misbehaving resolver) collapses to undefined.
       if (typeof result === 'number' || typeof result === 'string' || typeof result === 'boolean' || result === undefined) {
         return result;
       }
-      return undefined; // Filter out boolean or other types not supported for values
+      return undefined;
     } catch (error) {
       this.dx.error(
         `Menu item value resolver failed for ${menuId}.${menuItemId}: ${String(error)}`

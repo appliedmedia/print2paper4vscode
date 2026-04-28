@@ -3,7 +3,6 @@ import * as assert from 'node:assert';
 import { createTestApp, TestApp, mockContext, mockVSCode } from './test-utils.js';
 import { kMd, kMd_languageId, UIMenuItemDict_t } from '../src/types/PaperPrinter_t.js';
 import { MenuId_t, UIMenuItem_t } from '../src/types/UIMenu_t.js';
-import { UIMenu } from '../src/UIMenu.js';
 
 describe('Menu Hidden', () => {
   let app: TestApp;
@@ -16,109 +15,113 @@ describe('Menu Hidden', () => {
     app.done();
   });
 
-  it('should correctly resolve kMd menu visibility based on languageId', async () => {
-    // 1. Setup - Create menus via PaperPrinter (private method, but we can access UIMenuMgr directly)
-    // Actually, PaperPrinter.createMenus is private.
-    // But we can just create the menu manually using UIMenuMgr and kMd config for testing purposes
-    // or trigger PaperPrinter.handlePrintCommandFromVSCode which calls createMenus.
-    
-    // Let's create the menu manually using UIMenuMgr to isolate the test
+  it('flips kMd visibility on languageId change without recreating the menu', async () => {
+    // Regression: isHidden used to be eagerly resolved in createMenu, so a kMd
+    // menu built before languageId was set was permanently frozen as hidden.
+    // The fix defers resolution to getHTML — a single menu instance must
+    // observe later changes to docInfo().languageId.
     const menuMgr = app.uimenumgr;
-    
-    // Function to create/recreate the menu (simulating dynamic evaluation)
-    const createMdMenu = () => {
-      // kMd.isHidden is now: (dict: UIMenuItemDict_t) => dict.languageId !== kMd_languageId
-      const isHidden = kMd.isHidden;
-      
-      return menuMgr.createMenu({
-        id: kMd.id,
-        displayName: kMd.displayName,
-        iconSlotTriad: kMd.iconSlotTriad,
-        isFlyout: kMd.isFlyout,
-        isHidden: isHidden,
-        menuItems: () => kMd.menuItems.map(item => ({
+    const menu = menuMgr.createMenu({
+      id: kMd.id,
+      displayName: kMd.displayName,
+      iconSlotTriad: kMd.iconSlotTriad,
+      isFlyout: kMd.isFlyout,
+      isHidden: kMd.isHidden,
+      menuItems: () =>
+        kMd.menuItems.map(item => ({
           ...item,
-          iconSlotTriad: { begin: '', main: '', end: '' }
-        })) as UIMenuItem_t[], // Realistic items with required iconSlotTriad
-        flyoutMenuItemIds: [],
-        selectionHandler: async (menuId, menuItemId) => ({ id: menuItemId, value: 0 }),
-      });
-    };
+          iconSlotTriad: { begin: '', main: '', end: '' },
+        })) as UIMenuItem_t[],
+      flyoutMenuItemIds: [],
+      selectionHandler: async (_menuId, menuItemId) => ({ id: menuItemId, value: 0 }),
+    });
+    menuMgr.addMenu(menu);
 
-    // 2. Test Case: Markdown file
-    // Set languageId to markdown
-    app.pdf.docInfo().languageId = kMd_languageId;
-    
-    // Create menu
-    const mdMenuVisible = createMdMenu();
-    
-    // Verify it is visible (not hidden)
-    assert.strictEqual(mdMenuVisible.isHidden, false, 'Markdown menu should be visible (not hidden) for markdown files');
-    
-    // Verify HTML has correct class (or lack thereof)
-    const htmlVisible = await mdMenuVisible.getHTML();
-    assert.ok(!htmlVisible.includes('isHidden'), 'Visible menu should not have isHidden class');
-
-    // 3. Test Case: Non-markdown file
-    // Set languageId to something else
+    // Non-markdown — must render hidden
     app.pdf.docInfo().languageId = 'typescript';
-    
-    // Create menu
-    const mdMenuHidden = createMdMenu();
-    
-    // Verify it is hidden
-    assert.strictEqual(mdMenuHidden.isHidden, true, 'Markdown menu should be hidden for non-markdown files');
-    
-    // Verify HTML has correct class
-    const htmlHidden = await mdMenuHidden.getHTML();
-    assert.ok(htmlHidden.includes('isHidden'), 'Hidden menu should have isHidden class');
+    assert.strictEqual(menuMgr.getIsHiddenOfMenuId(kMd.id), true);
+    const htmlHidden = await menu.getHTML();
+    assert.ok(htmlHidden.includes('isHidden'), 'kMd hidden when languageId=typescript');
+
+    // Flip to markdown on the SAME menu instance — must render visible
+    app.pdf.docInfo().languageId = kMd_languageId;
+    assert.strictEqual(menuMgr.getIsHiddenOfMenuId(kMd.id), false);
+    const htmlVisible = await menu.getHTML();
+    assert.ok(!htmlVisible.includes('isHidden'), 'kMd visible when languageId=markdown');
   });
 
-  it('should handle boolean isHidden correctly', async () => {
+  it('runs the isHidden resolver fresh on every getHTML, not at construction', async () => {
     const menuMgr = app.uimenumgr;
-    
-    // Visible menu (isHidden = false)
+    let calls = 0;
+    const resolver = (_dict: UIMenuItemDict_t): boolean => {
+      calls += 1;
+      // Odd → hide, even → show. Proves each render evaluates fresh.
+      return calls % 2 === 1;
+    };
+
+    const menu = menuMgr.createMenu({
+      id: 'test-fresh' as MenuId_t,
+      displayName: 'Fresh',
+      iconSlotTriad: { begin: '', main: '', end: '' },
+      isHidden: resolver,
+      menuItems: () => [],
+      selectionHandler: async () => ({ id: '', value: '' }),
+    });
+    menuMgr.addMenu(menu);
+
+    assert.strictEqual(calls, 0, 'resolver must not run during createMenu');
+
+    const html1 = await menu.getHTML();
+    assert.strictEqual(calls, 1, 'first getHTML evaluates resolver exactly once');
+    assert.ok(html1.includes('isHidden'), 'odd call → hidden');
+
+    const html2 = await menu.getHTML();
+    assert.strictEqual(calls, 2, 'second getHTML evaluates resolver again');
+    assert.ok(!html2.includes('isHidden'), 'even call → visible');
+  });
+
+  it('handles boolean isHidden via getIsHiddenOfMenuId', async () => {
+    const menuMgr = app.uimenumgr;
+
     const visibleMenu = menuMgr.createMenu({
-      id: 'test-visible' as MenuId_t, // Cast needed because test IDs are not in MenuId_t union
+      id: 'test-visible' as MenuId_t,
       displayName: 'Visible',
       iconSlotTriad: { begin: '', main: '', end: '' },
       isHidden: false,
       menuItems: () => [],
       selectionHandler: async () => ({ id: '', value: '' }),
     });
-    
-    assert.strictEqual(visibleMenu.isHidden, false);
-    
-    // Hidden menu (isHidden = true)
+    menuMgr.addMenu(visibleMenu);
+    assert.strictEqual(menuMgr.getIsHiddenOfMenuId('test-visible' as MenuId_t), false);
+    assert.ok(!(await visibleMenu.getHTML()).includes('isHidden'));
+
     const hiddenMenu = menuMgr.createMenu({
-      id: 'test-hidden' as MenuId_t, // Cast needed because test IDs are not in MenuId_t union
+      id: 'test-hidden' as MenuId_t,
       displayName: 'Hidden',
       iconSlotTriad: { begin: '', main: '', end: '' },
       isHidden: true,
       menuItems: () => [],
       selectionHandler: async () => ({ id: '', value: '' }),
     });
-    
-    assert.strictEqual(hiddenMenu.isHidden, true);
-    const htmlHidden = await hiddenMenu.getHTML();
-    assert.ok(htmlHidden.includes('isHidden'));
+    menuMgr.addMenu(hiddenMenu);
+    assert.strictEqual(menuMgr.getIsHiddenOfMenuId('test-hidden' as MenuId_t), true);
+    assert.ok((await hiddenMenu.getHTML()).includes('isHidden'));
   });
 
-  it('should default to visible (isHidden=false) if isHidden is undefined', async () => {
+  it('defaults undefined isHidden to visible (false)', async () => {
     const menuMgr = app.uimenumgr;
-    
     const menu = menuMgr.createMenu({
-      id: 'test-default' as MenuId_t, // Cast needed because test IDs are not in MenuId_t union
+      id: 'test-default' as MenuId_t,
       displayName: 'Default',
       iconSlotTriad: { begin: '', main: '', end: '' },
-      // isHidden undefined
+      // isHidden omitted
       menuItems: () => [],
       selectionHandler: async () => ({ id: '', value: '' }),
     });
-    
-    assert.strictEqual(menu.isHidden, false);
-    
-    const html = await menu.getHTML();
-    assert.ok(!html.includes('isHidden'), 'Default visible menu should not have isHidden class');
+    menuMgr.addMenu(menu);
+
+    assert.strictEqual(menu.isHidden, undefined, 'raw stored value is undefined');
+    assert.strictEqual(menuMgr.getIsHiddenOfMenuId('test-default' as MenuId_t), false);
+    assert.ok(!(await menu.getHTML()).includes('isHidden'));
   });
 });

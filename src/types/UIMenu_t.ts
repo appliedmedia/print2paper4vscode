@@ -12,6 +12,7 @@ import {
   kMenus,
   type UIMenuFxn_t,
   type UIMenuItemValue_t,
+  type UIMenuShortcutFxn_t,
 } from './PaperPrinter_t';
 
 /**
@@ -55,7 +56,9 @@ export interface UIMenuItem_t {
   displayName: string;
   iconSlotTriad: iconSlotTriad_t; // Button content: icon, text_edit widget (e.g., "text_edit: {...}"), or empty for non-button
   shortcutCode?: string; // Optional KeyboardEvent.code for keyboard shortcuts (e.g., "Digit0", "Minus", "Equal")
-  shortcut?: string; // Optional display string for keyboard shortcut (e.g., "Ctrl/Cmd + 0")
+  shortcut?: string | UIMenuShortcutFxn_t; // Display string for keyboard shortcut, or resolver fn that returns one (e.g., live-looked-up VS Code binding)
+  tooltip?: string; // Optional native browser tooltip on hover (e.g., URL for external-link items)
+  isExternalLink?: boolean; // True if item opens an external URL — renders box-with-arrow SVG in gutter-after
   value?: UIMenuItemValue_t | UIMenuFxn_t;
 }
 

@@ -61,6 +61,7 @@ PR26.json
 node_modules/**
 .vscode/**
 .cursor/**
+.claude/**
 
 # Environment
 .env

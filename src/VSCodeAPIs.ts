@@ -1,3 +1,6 @@
+import * as fs from 'fs';
+import * as os from 'os';
+import * as path from 'path';
 import type { Registry } from './Registry';
 import type {
   Disposable,
@@ -13,7 +16,7 @@ import { Range } from 'vscode';
 import type { SendToExt_t } from './types/UI_t';
 import type { FnImport_t } from './types/Registry_t';
 import { Diagnostics } from './Diagnostics';
-import { kExtId } from './types/_entrypoint_extId_t';
+import { kExtId, kCommandPrintId, kCommandPersistClearId } from './types/_entrypoint_extId_t';
 import type { FileRead_t } from './OS';
 import { Persist } from './Persist';
 
@@ -54,6 +57,9 @@ export class VSCodeAPIs {
   public context: ExtensionContext;
   private panels = new Map<WebviewPanelId_t, WebviewPanel>();
   private dx: Diagnostics;
+  // Cache of commandId → default key from this extension's package.json.
+  // Populated once per session; package.json keybindings cannot change at runtime.
+  private _defaultKeybindings?: Map<string, string>;
 
   constructor(args: { reg: Registry; vscode: typeof import('vscode'); context: ExtensionContext }) {
     this.reg = args.reg;
@@ -74,12 +80,12 @@ export class VSCodeAPIs {
 
     // Register VS Code commands - must happen at activation
     // Command handlers use methods requested during construction
-    const command_Print2Paper = this.vscode.commands.registerCommand('p2p4vsc.print2paper', () => {
+    const command_Print2Paper = this.vscode.commands.registerCommand(kCommandPrintId, () => {
       this.fn.paperprinter.handlePrintCommandFromVSCode();
     });
 
     const command_PersistClear = this.vscode.commands.registerCommand(
-      'p2p4vsc.persistClear',
+      kCommandPersistClearId,
       async () => {
         await Persist.clear({ reg: this.reg });
       }
@@ -131,6 +137,200 @@ export class VSCodeAPIs {
    */
   getConfiguration(section?: string): ReturnType<typeof import('vscode').workspace.getConfiguration> {
     return this.vscode.workspace.getConfiguration(section);
+  }
+
+  /**
+   * Open a URL in the user's default external browser.
+   */
+  async openExternalUrl(args: { url: string }): Promise<void> {
+    const dx = this.dx.sub({ name: 'openExternalUrl' });
+    dx.require(args, ['url']);
+    await this.vscode.env.openExternal(this.vscode.Uri.parse(args.url));
+    dx.done();
+  }
+
+  /**
+   * Open VS Code's keybindings editor pre-filtered to a specific command id.
+   */
+  async openKeybindingsForCommand(args: { commandId: string }): Promise<void> {
+    const dx = this.dx.sub({ name: 'openKeybindingsForCommand' });
+    dx.require(args, ['commandId']);
+    await this.vscode.commands.executeCommand(
+      'workbench.action.openGlobalKeybindings',
+      args.commandId
+    );
+    dx.done();
+  }
+
+  /**
+   * Resolve the effective keybinding for a command id and format it for display.
+   *
+   * Order of precedence:
+   *   1. User override in keybindings.json (last entry wins; `-cmdId` removes binding)
+   *   2. Default from this extension's package.json `contributes.keybindings`
+   *
+   * Returns '' if the user has explicitly unbound the command with no replacement, or if
+   * no binding can be resolved at all.
+   *
+   * VS Code does not expose user keybindings via API, so we read keybindings.json
+   * directly from a heuristic path derived from `vscode.env.appName`. Best-effort:
+   * unsupported VS Code variants fall through to the package.json default.
+   */
+  getShortcutForCommand(args: { commandId: string }): string {
+    const dx = this.dx.sub({ name: 'getShortcutForCommand' });
+    dx.require(args, ['commandId']);
+    const { commandId } = args;
+
+    const userKey = this.lookupUserKeybinding(commandId);
+    const finalKey = userKey !== undefined ? userKey : this.lookupDefaultKeybinding(commandId);
+    const result = finalKey ? this.formatKeybindingForDisplay(finalKey) : '';
+    dx.out(`Shortcut for ${commandId}: "${result}"`);
+    dx.done();
+    return result;
+  }
+
+  // Resolve user override from keybindings.json. Returns '' if explicitly unbound, undefined
+  // if no entry exists (caller falls back to the package.json default).
+  private lookupUserKeybinding(commandId: string): string | undefined {
+    const file = this.userKeybindingsFilePath();
+    if (!file || !fs.existsSync(file)) return undefined;
+    let data: unknown;
+    try {
+      const raw = fs.readFileSync(file, 'utf8');
+      // keybindings.json is JSONC; strip comments with a string-aware pass so
+      // `//` or `/*` inside string literals (e.g. `"args": "// foo"`) survive.
+      const stripped = this.stripJsonComments(raw);
+      data = JSON.parse(stripped);
+    } catch {
+      return undefined;
+    }
+    if (!Array.isArray(data)) return undefined;
+
+    let key: string | undefined;
+    let unbound = false;
+    for (const entry of data as Array<{ command?: string; key?: string }>) {
+      if (!entry || typeof entry.command !== 'string') continue;
+      if (entry.command === commandId && typeof entry.key === 'string') {
+        key = entry.key;
+        unbound = false;
+      } else if (entry.command === '-' + commandId) {
+        key = undefined;
+        unbound = true;
+      }
+    }
+    if (unbound && key === undefined) return '';
+    return key;
+  }
+
+  private lookupDefaultKeybinding(commandId: string): string | undefined {
+    if (!this._defaultKeybindings) {
+      this._defaultKeybindings = new Map<string, string>();
+      const ext = this.vscode.extensions.getExtension(this.context.extension.id);
+      const keybindings = ext?.packageJSON?.contributes?.keybindings;
+      if (Array.isArray(keybindings)) {
+        for (const kb of keybindings as Array<{ command?: string; key?: string; mac?: string }>) {
+          if (typeof kb?.command !== 'string') continue;
+          const platformKey =
+            process.platform === 'darwin' && typeof kb.mac === 'string' ? kb.mac : kb.key;
+          if (typeof platformKey === 'string') {
+            this._defaultKeybindings.set(kb.command, platformKey);
+          }
+        }
+      }
+    }
+    return this._defaultKeybindings.get(commandId);
+  }
+
+  // Strip // and /* */ comments from JSONC, leaving comments inside string
+  // literals intact. Replaces stripped comment characters with spaces so
+  // JSON.parse line/column numbers stay aligned with the source file.
+  private stripJsonComments(raw: string): string {
+    const out: string[] = [];
+    let i = 0;
+    let inString = false;
+    while (i < raw.length) {
+      const c = raw[i];
+      const next = raw[i + 1];
+      if (inString) {
+        out.push(c);
+        if (c === '\\' && i + 1 < raw.length) {
+          out.push(raw[i + 1]);
+          i += 2;
+          continue;
+        }
+        if (c === '"') inString = false;
+        i++;
+        continue;
+      }
+      if (c === '"') {
+        inString = true;
+        out.push(c);
+        i++;
+        continue;
+      }
+      if (c === '/' && next === '/') {
+        while (i < raw.length && raw[i] !== '\n') i++;
+        continue;
+      }
+      if (c === '/' && next === '*') {
+        i += 2;
+        while (i < raw.length && !(raw[i] === '*' && raw[i + 1] === '/')) i++;
+        if (i < raw.length) i += 2;
+        continue;
+      }
+      out.push(c);
+      i++;
+    }
+    return out.join('');
+  }
+
+  private userKeybindingsFilePath(): string | undefined {
+    // Map vscode.env.appName to user-data directory name. Only "Visual Studio Code" needs
+    // remapping; forks like Cursor/VSCodium use appName as the directory name directly.
+    const appName = this.vscode.env.appName;
+    const dirName = appName.startsWith('Visual Studio Code')
+      ? appName.replace('Visual Studio Code', 'Code')
+      : appName;
+    const home = os.homedir();
+    if (process.platform === 'darwin') {
+      return path.join(home, 'Library', 'Application Support', dirName, 'User', 'keybindings.json');
+    }
+    if (process.platform === 'win32') {
+      const appData = process.env.APPDATA || path.join(home, 'AppData', 'Roaming');
+      return path.join(appData, dirName, 'User', 'keybindings.json');
+    }
+    const xdgConfig = process.env.XDG_CONFIG_HOME || path.join(home, '.config');
+    return path.join(xdgConfig, dirName, 'User', 'keybindings.json');
+  }
+
+  private formatKeybindingForDisplay(key: string): string {
+    // VS Code chord bindings are space-separated (e.g. "cmd+k cmd+s"). Format
+    // each chord independently, then join. On macOS chords are spaced; on
+    // other platforms the convention is "Ctrl+K Ctrl+S".
+    const chords = key.split(/\s+/).map(c => c.trim()).filter(Boolean);
+    if (chords.length === 0) return '';
+    const formatted = chords.map(chord => this.formatSingleChordForDisplay(chord)).filter(Boolean);
+    return formatted.join(' ');
+  }
+
+  private formatSingleChordForDisplay(chord: string): string {
+    const parts = chord.split('+').map(p => p.trim()).filter(Boolean);
+    if (parts.length === 0) return '';
+    const last = parts[parts.length - 1];
+    const mods = parts.slice(0, -1).map(p => p.toLowerCase());
+    if (process.platform === 'darwin') {
+      const symbol = (m: string) =>
+        m === 'cmd' || m === 'meta' ? '⌘'
+        : m === 'ctrl' ? '⌃'
+        : m === 'alt' || m === 'option' ? '⌥'
+        : m === 'shift' ? '⇧'
+        : m;
+      const tail = last.length === 1 ? last.toUpperCase() : last;
+      return mods.map(symbol).join('') + tail;
+    }
+    const cap = (s: string) => (s.length === 0 ? s : s.charAt(0).toUpperCase() + s.slice(1).toLowerCase());
+    const tail = last.length === 1 ? last.toUpperCase() : last;
+    return [...mods.map(cap), tail].join('+');
   }
 
   /**

@@ -41,7 +41,7 @@ toolbar_css: |
     border-top-right-radius: 10px;
     cursor: ew-resize;
     z-index: 10;
-    background: radial-gradient(circle at 2px 3px, rgba(120,120,120,.6) 1px, transparent 1px) 0 0 / 4px 6px, radial-gradient(circle at 0px 3px, rgba(120,120,120,.6) 1px, transparent 1px) 2px 0 / 4px 6px;
+    background: radial-gradient(circle at 2px 2px, rgba(150,150,150,.5) 1px, transparent 1px) 0 0 / 4px 4px, radial-gradient(circle at 0px 2px, rgba(150,150,150,.5) 1px, transparent 1px) 2px 0 / 4px 4px;
   }
   #{{ns_}}toolbar.dragging { user-select: none; }
   .{{ns_}}menuBtn {
@@ -82,7 +82,8 @@ toolbar_js: |
     toolbar.style.left = Math.min(left, maxLeft) + 'px';
   });
 
-  function postDragEnd() {
+  function endDrag() {
+    if (!isDragging) return;
     isDragging = false;
     document.body.style.cursor = '';
     const rawLeft = getComputedStyle(toolbar).left;
@@ -93,13 +94,8 @@ toolbar_js: |
     });
   }
 
-  function endIfDragging(/* e */) {
-    if (isDragging) {
-      postDragEnd();
-    }
-  }
-
-  drag.addEventListener('mousedown', (e)=>{
+  drag.addEventListener('pointerdown', (e)=>{
+    if (e.button !== 0) return;
     e.preventDefault();
     isDragging = true;
     dragStartX = e.clientX;
@@ -108,22 +104,26 @@ toolbar_js: |
     document.body.style.cursor = 'grabbing';
   });
 
-  document.addEventListener('mousemove', (e)=>{
-    if (isDragging) {
-      if (e.buttons > 0) {
-        e.preventDefault();
-        const dx = e.clientX - dragStartX;
-        const maxLeft = Math.max(toolbar_pos_min_px, document.documentElement.clientWidth - toolbar.offsetWidth - toolbar_pos_min_px);
-        const newLeft = Math.min(Math.max(toolbar_pos_min_px, dragStartLeft + dx), maxLeft);
-        toolbar.style.left = newLeft + 'px';
-      } else {
-        postDragEnd();
-      }
-    }
+  // Listen on window so move/up outside the grip still drives the drag.
+  // e.buttons === 0 means the user released the mouse outside the iframe
+  // (we never received pointerup) — defensively end the drag.
+  window.addEventListener('pointermove', (e)=>{
+    if (!isDragging) return;
+    if (e.buttons === 0) { endDrag(); return; }
+    e.preventDefault();
+    const dx = e.clientX - dragStartX;
+    const maxLeft = Math.max(toolbar_pos_min_px, document.documentElement.clientWidth - toolbar.offsetWidth - toolbar_pos_min_px);
+    const newLeft = Math.min(Math.max(toolbar_pos_min_px, dragStartLeft + dx), maxLeft);
+    toolbar.style.left = newLeft + 'px';
   });
 
-  ['mouseup', 'mouseleave'].forEach(eventType => {
-    document.addEventListener(eventType, endIfDragging);
+  window.addEventListener('pointerup', endDrag);
+  window.addEventListener('pointercancel', endDrag);
+
+  // If the cursor re-enters the grip with no button pressed, clear any
+  // stale drag state from a mouseup we missed while outside the iframe.
+  drag.addEventListener('pointerenter', (e)=>{
+    if (isDragging && e.buttons === 0) endDrag();
   });
 
 toolbar_html: |
