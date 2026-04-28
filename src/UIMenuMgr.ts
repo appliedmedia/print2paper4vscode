@@ -151,16 +151,17 @@ export class UIMenuMgr {
       selectionHandler,
     } = args;
 
-    // Resolve isHidden to boolean
-    const isHiddenResolved = this.getValueOfMenuFxnByCalcIsHidden(isHidden, id);
-
+    // Pass isHidden through unresolved (boolean | UIMenuFxn_t | undefined).
+    // UIMenu.getHTML resolves it fresh per render via getIsHiddenForMenuId, so a
+    // dynamic resolver sees the latest docInfo (e.g. languageId set during PDF
+    // generation) instead of being frozen at construction time.
     return new UIMenu({
       reg: this.reg,
       id,
       displayName,
       iconSlotTriad,
       isFlyout,
-      isHidden: isHiddenResolved,
+      isHidden,
       menuItems,
       flyoutMenuItemIds,
       selectionHandler,
@@ -379,6 +380,21 @@ export class UIMenuMgr {
     }
 
     return result;
+  }
+
+  /**
+   * Resolve a menu's hidden state fresh on every call.
+   *
+   * Mirrors getValueOfMenuItemIdForMenuId: looks the menu up by id, reads the
+   * stored isHidden (boolean | UIMenuFxn_t | undefined), and runs it through
+   * getValueOfMenuFxnByCalcIsHidden so dynamic resolvers see current docInfo.
+   *
+   * Called from UIMenu.getHTML each render — keeps menus like kMd in sync with
+   * the active document's languageId without rebuilding the menu.
+   */
+  getIsHiddenForMenuId(menuId: MenuId_t): boolean {
+    const menu = this.getMenuById(menuId);
+    return this.getValueOfMenuFxnByCalcIsHidden(menu.isHidden, menuId);
   }
 
   /**

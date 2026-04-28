@@ -1,6 +1,13 @@
 # UIMenu.yaml - Menu component templates (HTML/CSS/JS)
 # ⚠️ Keep comments in this file minimal because it has to get copied at runtime. ⚠️
 
+icon_external_link_svg: |
+  <svg class="icon-external-link" width="1.08em" height="1.08em" viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M19 13v6a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1h6"/>
+    <polyline points="14 4 20 4 20 10"/>
+    <line x1="20" y1="4" x2="11" y2="13"/>
+  </svg>
+
 uimenu_css: |
   :root {
     --flyout-left: 97%;
@@ -80,6 +87,13 @@ uimenu_css: |
     display: inline-block;
   }
 
+  .{{ns_}}menuItem .menu-item-shortcut {
+    margin-left: auto;
+    padding-left: 2ch;
+    opacity: 0.7;
+    font-variant-numeric: tabular-nums;
+  }
+
   .{{ns_}}menuItem.isFlyout .gutter-after::after {
     content: "▶" !important;
   }
@@ -90,6 +104,20 @@ uimenu_css: |
 
   .{{ns_}}menuItem:not(.isFlyout):not(.isDefault) .gutter-after::after {
     content: "" !important;
+  }
+
+  /* External-link items render the box-with-arrow SVG inside .gutter-after,
+     right-justified in the same gutter as ▶ for flyouts. */
+  .{{ns_}}menuItem.isExternalLink .gutter-after svg {
+    display: inline-block;
+    vertical-align: middle;
+  }
+
+  /* Icon-only items (single-glyph displayName, no inline icon, no shortcut)
+     get rendered ~37% larger so emoji like ⚙ are legible. */
+  .{{ns_}}menuItem.isIconOnly .menu-item-text {
+    font-size: 1.375em;
+    line-height: 1;
   }
 
   /* .{{ns_}}menuItem.isSelected {} - removed empty block */
@@ -158,6 +186,18 @@ uimenu_css: |
     flex-shrink: 0;
   }
 
+  .{{ns_}}menuBtn .dropdown-arrow {
+    display: inline-block;
+    cursor: pointer;
+    border-radius: 3px;
+    padding: 0 1px;
+    line-height: 1;
+  }
+  .{{ns_}}menuBtn .dropdown-arrow:focus {
+    outline: 1px solid #007acc;
+    outline-offset: 1px;
+  }
+
   .{{ns_}}menu.has-gutter-before .{{ns_}}menuItem {
     --gutter-before: var(--gutter-before-width);
   }
@@ -187,7 +227,7 @@ uimenu_css: |
 
 uimenu_html: |
   <div class="{{ns_}}menu {{menuClasses}}" id="{{menuId}}">
-    <button class="{{ns_}}menuBtn" title="{{displayName}}"{{shortcutCodeAttr}}>{{icon}}</button>
+    <button class="{{ns_}}menuBtn" title="{{displayName}}"{{shortcutCodeAttr}}{{menuBtnExtraAttrs}}>{{icon}}</button>
     {{menuItemsContainer}}
   </div>
 
@@ -469,13 +509,16 @@ uimenu_generic_handlers: |
     if (!input.classList.contains('{{ns_}}textEdit')) return;
     e.stopPropagation();
     validateAndClampTextEdit(input);
-    
+
+    /* Skip post when value unchanged: a regen here destroys whatever element just received tab focus. */
+    if (input.value === input.defaultValue) return;
+
     const menu = input.closest('.{{ns_}}menu');
     if (!menu) return;
-    
+
     const menuId = menu.getAttribute('id');
     const displayValue = input.value; // Raw text_edit content (display value)
-    
+
     // For text_edit, send menuItemId = menuId and display value in contextDict
     // Extension will apply transform.persist if needed
     postMenuItemSelected(menuId, menuId, { display: displayValue });
@@ -485,6 +528,17 @@ uimenu_generic_handlers: |
   document.addEventListener('keydown', handleTextEditKeydown, true);
   document.addEventListener('input', handleTextEditInput, true);
   document.addEventListener('blur', handleTextEditBlur, true);
+
+  /* Keyboard activation for the dropdown arrow (a focusable span, not a real button). */
+  document.addEventListener('keydown', (e) => {
+    if (e.key !== 'Enter' && e.key !== ' ') return;
+    const arrow = e.target && e.target.closest && e.target.closest('.dropdown-arrow');
+    if (!arrow) return;
+    const btn = arrow.closest('.{{ns_}}menuBtn');
+    if (!btn) return;
+    e.preventDefault();
+    handleMenuButtonClick({ target: btn, preventDefault: () => {} });
+  });
 
   function initKeyboardShortcuts() {
     document.addEventListener('keydown', function(e) {
@@ -516,10 +570,10 @@ uimenu_generic_handlers: |
   initKeyboardShortcuts();
 
 uimenu_item: |
-  <div class="{{ns_}}menuItem {{itemClasses}}" id="{{itemId}}"{{flyoutMenuId}}{{textEditConfigAttr}}{{shortcutCodeAttr}}>
+  <div class="{{ns_}}menuItem {{itemClasses}}" id="{{itemId}}"{{flyoutMenuId}}{{textEditConfigAttr}}{{shortcutCodeAttr}}{{tooltipAttr}}>
     <div class="gutter-before">{{contentGutterBefore}}</div>
     <div class="menu-item-text">
-      {{iconSlotWithPrefixSuffix}}{{itemDisplayName}}
+      {{iconSlotWithPrefixSuffix}}{{itemDisplayName}}{{itemShortcut}}
     </div>
     <div class="gutter-after">{{contentGutterAfter}}</div>
     {{flyout}}

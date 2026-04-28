@@ -29,19 +29,70 @@ if (!fs.existsSync(extIdPath)) {
 }
 
 const content = fs.readFileSync(extIdPath, 'utf8');
-const match = content.match(/export const kExtId\s*=\s*['"]([^'"]+)['"]/);
-if (!match) {
-  console.error(
-    `ERROR: Could not extract kExtId from ${extIdPath}. ` +
-    `Expected a line matching: export const kExtId = '<value>'.`
-  );
-  process.exit(1);
-}
-const extId = match[1];
 
-// Read template, replace {{extId}}, and write to root
+// Each placeholder maps to the source-of-truth constant in _entrypoint_extId_t.ts.
+// Two extractor shapes:
+//   { from: 'kFoo' }                  → matches `export const kFoo = '<value>'`
+//   { from: 'kObj', key: 'someKey' }  → matches `someKey: '<value>'` inside `export const kObj = { ... }`
+// Add a row here when introducing a new {{name}} placeholder in template.package.json.
+const placeholders = {
+  extId: { from: 'kExtId' },
+  cmdPrint: { from: 'kCommandPrint' },
+  cmdPersistClear: { from: 'kCommandPersistClear' },
+  urlHomePage: { from: 'kURL', key: 'homePage' },
+  urlSupport: { from: 'kURL', key: 'support' },
+};
+
+const values = {};
+for (const [name, spec] of Object.entries(placeholders)) {
+  let m;
+  if (spec.key) {
+    // Extract a key from inside an object literal: `export const kObj = { ... key: 'value' ... }`
+    const objRe = new RegExp(
+      `export const ${spec.from}\\s*=\\s*\\{([\\s\\S]*?)\\}\\s*as const`
+    );
+    const objMatch = content.match(objRe);
+    if (!objMatch) {
+      console.error(
+        `ERROR: Could not find object literal for ${spec.from} in ${extIdPath}. ` +
+        `Expected: export const ${spec.from} = { ... } as const;`
+      );
+      process.exit(1);
+    }
+    const keyRe = new RegExp(`${spec.key}\\s*:\\s*['"]([^'"]+)['"]`);
+    m = objMatch[1].match(keyRe);
+    if (!m) {
+      console.error(
+        `ERROR: Could not extract key '${spec.key}' from ${spec.from} in ${extIdPath}.`
+      );
+      process.exit(1);
+    }
+  } else {
+    const re = new RegExp(`export const ${spec.from}\\s*=\\s*['"]([^'"]+)['"]`);
+    m = content.match(re);
+    if (!m) {
+      console.error(
+        `ERROR: Could not extract ${spec.from} from ${extIdPath}. ` +
+        `Expected a line matching: export const ${spec.from} = '<value>'.`
+      );
+      process.exit(1);
+    }
+  }
+  values[name] = m[1];
+}
+
+// Read template, replace all placeholders, and write to root
 let templateContent = fs.readFileSync(templatePath, 'utf8');
-const count = (templateContent.match(/\{\{extId\}\}/g) || []).length;
-templateContent = templateContent.replace(/\{\{extId\}\}/g, extId);
+let totalReplaced = 0;
+for (const [name, value] of Object.entries(values)) {
+  const re = new RegExp(`\\{\\{${name}\\}\\}`, 'g');
+  const count = (templateContent.match(re) || []).length;
+  templateContent = templateContent.replace(re, value);
+  totalReplaced += count;
+}
 fs.writeFileSync(outputPath, templateContent, 'utf8');
-console.log(`✓ Generated package.json from template (replaced ${count} {{extId}} → ${extId})`);
+console.log(
+  `✓ Generated package.json from template (replaced ${totalReplaced} placeholders: ${
+    Object.keys(values).join(', ')
+  })`
+);

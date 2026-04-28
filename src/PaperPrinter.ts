@@ -15,6 +15,7 @@
  * @module src/PaperPrinter
  */
 
+import { kCommandPrintId, kURL } from './types/_entrypoint_extId_t';
 import type { Registry } from './Registry';
 import type { UI_t } from './UI';
 import type { PersistValue_t } from './Persist';
@@ -56,6 +57,7 @@ import {
   kMd,
   kMd_languageId,
   kMd_Raw,
+  kAbout,
   kMenus,
 } from './types/PaperPrinter_t';
 
@@ -115,6 +117,9 @@ export class PaperPrinter {
       'vscodeapis.getActiveThemeId',
       'vscodeapis.getEditorTypography',
       'vscodeapis.renderMarkdownToHtml',
+      'vscodeapis.openExternalUrl',
+      'vscodeapis.openKeybindingsForCommand',
+      'vscodeapis.getShortcutForCommand',
       'tabinspector.detectActiveTabCategory',
       'tabinspector.getEditorSelectionOrAll',
       'stylize.getThemes',
@@ -299,17 +304,10 @@ export class PaperPrinter {
         this.docInfo().languageId === kMd_languageId &&
         !!this.fn.uimenumgr.getValueOfMenuItemIdSelected(kMd.id);
 
-      // Get active editor only if needed for markdown rendering
-      // For regeneration from menu changes, editor might not be active (user switched to webview)
-      const editor = useRenderedMd ? this.fn.vscodeapis.getActiveTextEditor() : undefined;
-      if (useRenderedMd && !editor) {
-        dx.out('No active editor for markdown rendering, falling back to raw mode');
-      }
-
       // Generate PDF - handles both tokenized and HTML rendering internally
       dx.out(`Generating complete PDF`);
       await this.fn.pdf.generatePdf({
-        useRenderedMd: useRenderedMd && !!editor,
+        useRenderedMd,
       });
 
       dx.out(`PDF generation complete: ${this.fn.pdf.getPageTotal()} pages`);
@@ -594,6 +592,31 @@ export class PaperPrinter {
       displayName: item.displayName,
       iconSlotTriad: { begin: '', main: '', end: '' },
     }));
+  }
+
+  private menuItems_About(): UIMenuItem_t[] {
+    // menuItems_About runs fresh on every getHTML, so the shortcut lookup
+    // here is always current — no separate resolver needed. External-link
+    // items show their target URL as a hover tooltip so the user can see
+    // where they're being sent before clicking.
+    const urlById: Record<string, string | undefined> = {
+      about: kURL.homePage,
+      logBug: kURL.support,
+    };
+    const printShortcut = this.fn.vscodeapis.getShortcutForCommand({
+      commandId: kCommandPrintId,
+    });
+    return kAbout.menuItems.map(item => {
+      const url = urlById[item.id];
+      return {
+        id: item.id as MenuItemId_t,
+        displayName: item.displayName,
+        iconSlotTriad: { begin: '', main: '', end: '' },
+        tooltip: url,
+        isExternalLink: !!url,
+        shortcut: item.id === 'shortcut' ? printShortcut : undefined,
+      };
+    });
   }
 
   // Selection handler methods for each menu type
@@ -1010,6 +1033,28 @@ export class PaperPrinter {
 
     dx.done();
     return { id, value };
+  }
+
+  private async handleSelection_About(args: {
+    menuId: MenuId_t;
+    menuItemId: MenuItemId_t;
+  }): Promise<HandleSelection_t> {
+    const dx = this.dx.sub({ name: 'handleSelection_About' });
+    dx.require(args, ['menuItemId']);
+    const { menuItemId } = args;
+
+    if (menuItemId !== UIMenu.defaultId()) {
+      if (menuItemId === 'about') {
+        await this.fn.vscodeapis.openExternalUrl({ url: kURL.homePage });
+      } else if (menuItemId === 'logBug') {
+        await this.fn.vscodeapis.openExternalUrl({ url: kURL.support });
+      } else if (menuItemId === 'shortcut') {
+        await this.fn.vscodeapis.openKeybindingsForCommand({ commandId: kCommandPrintId });
+      }
+    }
+
+    dx.done();
+    return { id: kEmptyNoPersist, value: kEmptyNoPersist };
   }
 
   /**

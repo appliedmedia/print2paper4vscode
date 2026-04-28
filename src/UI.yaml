@@ -41,7 +41,7 @@ toolbar_css: |
     border-top-right-radius: 10px;
     cursor: ew-resize;
     z-index: 10;
-    background: radial-gradient(circle at 2px 3px, rgba(120,120,120,.6) 1px, transparent 1px) 0 0 / 4px 6px, radial-gradient(circle at 0px 3px, rgba(120,120,120,.6) 1px, transparent 1px) 2px 0 / 4px 6px;
+    background: radial-gradient(circle at 2px 2px, rgba(120,120,120,.6) 1px, transparent 1px) 0 0 / 4px 4px, radial-gradient(circle at 0px 2px, rgba(120,120,120,.6) 1px, transparent 1px) 2px 0 / 4px 4px;
   }
   #{{ns_}}toolbar.dragging { user-select: none; }
   .{{ns_}}menuBtn {
@@ -73,6 +73,7 @@ toolbar_js: |
   let isDragging = false;
   let dragStartX = 0;
   let dragStartLeft = 0;
+  let dragPointerId = null;
 
   window.addEventListener('resize', ()=>{
     const rawLeft = getComputedStyle(toolbar).left;
@@ -84,6 +85,7 @@ toolbar_js: |
 
   function postDragEnd() {
     isDragging = false;
+    dragPointerId = null;
     document.body.style.cursor = '';
     const rawLeft = getComputedStyle(toolbar).left;
     const left = Number.isNaN(parseFloat(rawLeft)) ? toolbar_pos_min_px : parseFloat(rawLeft);
@@ -93,38 +95,38 @@ toolbar_js: |
     });
   }
 
-  function endIfDragging(/* e */) {
-    if (isDragging) {
-      postDragEnd();
-    }
-  }
-
-  drag.addEventListener('mousedown', (e)=>{
+  drag.addEventListener('pointerdown', (e)=>{
+    if (e.button !== 0) return;
     e.preventDefault();
     isDragging = true;
+    dragPointerId = e.pointerId;
     dragStartX = e.clientX;
     const rawLeft = getComputedStyle(toolbar).left;
     dragStartLeft = Number.isNaN(parseFloat(rawLeft)) ? toolbar_pos_min_px : parseFloat(rawLeft);
     document.body.style.cursor = 'grabbing';
+    /* Pointer capture: drag keeps receiving move/up even when cursor leaves the grip or the window. */
+    if (drag.setPointerCapture) drag.setPointerCapture(e.pointerId);
   });
 
-  document.addEventListener('mousemove', (e)=>{
-    if (isDragging) {
-      if (e.buttons > 0) {
-        e.preventDefault();
-        const dx = e.clientX - dragStartX;
-        const maxLeft = Math.max(toolbar_pos_min_px, document.documentElement.clientWidth - toolbar.offsetWidth - toolbar_pos_min_px);
-        const newLeft = Math.min(Math.max(toolbar_pos_min_px, dragStartLeft + dx), maxLeft);
-        toolbar.style.left = newLeft + 'px';
-      } else {
-        postDragEnd();
-      }
+  drag.addEventListener('pointermove', (e)=>{
+    if (!isDragging || e.pointerId !== dragPointerId) return;
+    e.preventDefault();
+    const dx = e.clientX - dragStartX;
+    const maxLeft = Math.max(toolbar_pos_min_px, document.documentElement.clientWidth - toolbar.offsetWidth - toolbar_pos_min_px);
+    const newLeft = Math.min(Math.max(toolbar_pos_min_px, dragStartLeft + dx), maxLeft);
+    toolbar.style.left = newLeft + 'px';
+  });
+
+  function endDrag(e) {
+    if (!isDragging || (e && e.pointerId !== dragPointerId)) return;
+    if (drag.releasePointerCapture && dragPointerId !== null && drag.hasPointerCapture && drag.hasPointerCapture(dragPointerId)) {
+      drag.releasePointerCapture(dragPointerId);
     }
-  });
+    postDragEnd();
+  }
 
-  ['mouseup', 'mouseleave'].forEach(eventType => {
-    document.addEventListener(eventType, endIfDragging);
-  });
+  drag.addEventListener('pointerup', endDrag);
+  drag.addEventListener('pointercancel', endDrag);
 
 toolbar_html: |
   <style>

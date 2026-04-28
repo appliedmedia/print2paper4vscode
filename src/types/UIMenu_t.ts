@@ -56,6 +56,8 @@ export interface UIMenuItem_t {
   iconSlotTriad: iconSlotTriad_t; // Button content: icon, text_edit widget (e.g., "text_edit: {...}"), or empty for non-button
   shortcutCode?: string; // Optional KeyboardEvent.code for keyboard shortcuts (e.g., "Digit0", "Minus", "Equal")
   shortcut?: string; // Optional display string for keyboard shortcut (e.g., "Ctrl/Cmd + 0")
+  tooltip?: string; // Optional native browser tooltip on hover (e.g., URL for external-link items)
+  isExternalLink?: boolean; // True if item opens an external URL — renders box-with-arrow SVG in gutter-after
   value?: UIMenuItemValue_t | UIMenuFxn_t;
 }
 

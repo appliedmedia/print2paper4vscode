@@ -3,7 +3,7 @@ import type { contextDict_t } from './types/UI_t';
 import { Diagnostics } from './Diagnostics';
 import { YamlInstance } from './Yaml';
 import type { FnImport_t } from './types/Registry_t';
-import { kMenus } from './types/PaperPrinter_t';
+import { kMenus, type UIMenuFxn_t } from './types/PaperPrinter_t';
 import type {
   iconSlotTriad_main_t,
   iconSlotTriad_t,
@@ -43,6 +43,7 @@ export class UIMenu {
     uimenu_css: '',
     uimenu_text_edit: '',
     uimenu_items_container: '',
+    icon_external_link_svg: '',
   } as const;
 
   private reg: Registry;
@@ -59,7 +60,8 @@ export class UIMenu {
   private _displayName: string;
   private _iconSlotTriad: iconSlotTriad_t;
   private _isFlyout: boolean;
-  private _isHidden: boolean;
+  // Stored unresolved so dynamic resolvers re-evaluate on every getHTML.
+  private _isHidden: boolean | UIMenuFxn_t | undefined;
   private _menuItems: () => UIMenuItem_t[];
   private _flyoutMenuItemIds: string[];
   private _selectionHandler: (
@@ -74,7 +76,7 @@ export class UIMenu {
     displayName: string;
     iconSlotTriad: iconSlotTriad_t;
     isFlyout?: boolean;
-    isHidden?: boolean;
+    isHidden?: boolean | UIMenuFxn_t;
     menuItems: () => UIMenuItem_t[];
     flyoutMenuItemIds?: string[];
     selectionHandler: (
@@ -92,7 +94,8 @@ export class UIMenu {
       'utils.templateDictReplace',
       'utils.htmlEscape',
       'uimenumgr.getValueOfMenuItemIdSelected',
-      'uimenumgr.getMenuById'
+      'uimenumgr.getMenuById',
+      'uimenumgr.getIsHiddenForMenuId'
     );
     this.dx = this.fn.dx.sub({ name: 'UIMenu' });
 
@@ -115,7 +118,7 @@ export class UIMenu {
       displayName,
       iconSlotTriad,
       isFlyout = false,
-      isHidden = false,
+      isHidden,
       menuItems,
       flyoutMenuItemIds = [],
       selectionHandler,
@@ -146,7 +149,9 @@ export class UIMenu {
   get isFlyout(): boolean {
     return this._isFlyout;
   }
-  get isHidden(): boolean {
+  // Returns the raw stored value (boolean | function | undefined). Callers that
+  // need a resolved boolean should go through UIMenuMgr.getIsHiddenForMenuId.
+  get isHidden(): boolean | UIMenuFxn_t | undefined {
     return this._isHidden;
   }
 
@@ -216,19 +221,10 @@ export class UIMenu {
     const flyoutMenuId = isFlyout ? ` data-{{ns_}}flyoutMenuId="${menuItemId}"` : ``;
     const isDefault = menuItemId === defaultItemId;
     const isSelected = menuItemId === selectedItemId;
+    const isExternalLink = !!item.isExternalLink;
 
     // Handle special widget types (e.g., text_edit)
     const iconSlotResult = this.handleIconSlotTypes(item.iconSlotTriad.main, menuItemId);
-
-    // Individual items only need these classes
-    const itemClasses = [
-      isFlyout ? 'isFlyout' : '',
-      isSelected ? 'isSelected' : '',
-      isDefault ? 'isDefault' : '',
-      iconSlotResult.cssClass || '',
-    ]
-      .filter(Boolean)
-      .join(' ');
 
     const itemId = isFlyout ? `flyout-${menuItemId}` : menuItemId;
 
@@ -247,15 +243,49 @@ export class UIMenu {
       iconSlotWithPrefixSuffix = prefix + iconSlotResult.html + suffix;
     }
 
+    const itemShortcut = item.shortcut
+      ? `<span class="menu-item-shortcut">${item.shortcut}</span>`
+      : ``;
+
+    // Icon-only detection: bump font 25% when the item shows a single-glyph
+    // displayName with no inline icon and no shortcut. Counts code points so
+    // graphemes like ⚙ register as length 1.
+    const trimmedName = processedDisplayName.trim();
+    const codePointCount = Array.from(trimmedName).length;
+    const isIconOnly =
+      !iconSlotWithPrefixSuffix && !itemShortcut && codePointCount > 0 && codePointCount <= 2;
+
+    // External-link items render the SVG into gutter-after; the CSS ::after
+    // pseudo-element for plain items is empty so the SVG is the only content.
+    const contentGutterAfter = isExternalLink ? this.yaml().icon_external_link_svg : '';
+
+    // Individual items only need these classes
+    const itemClasses = [
+      isFlyout ? 'isFlyout' : '',
+      isSelected ? 'isSelected' : '',
+      isDefault ? 'isDefault' : '',
+      isExternalLink ? 'isExternalLink' : '',
+      isIconOnly ? 'isIconOnly' : '',
+      iconSlotResult.cssClass || '',
+    ]
+      .filter(Boolean)
+      .join(' ');
+
+    const tooltipAttr = item.tooltip
+      ? ` title="${item.tooltip.replace(/"/g, '&quot;')}"`
+      : ``;
+
     const replacementDict = {
       itemId,
       itemDisplayName: processedDisplayName,
+      itemShortcut,
       itemClasses,
       contentGutterBefore: '', // Content handled by CSS
-      contentGutterAfter: '', // Content handled by CSS
+      contentGutterAfter,
       iconSlotWithPrefixSuffix,
       textEditConfigAttr: iconSlotResult.configAttr || ``,
       shortcutCodeAttr: item.shortcutCode ? ` data-{{ns_}}shortcutCode="${item.shortcutCode}"` : ``,
+      tooltipAttr,
       flyout,
       flyoutMenuId,
     };
@@ -273,10 +303,32 @@ export class UIMenu {
     const begin = this._iconSlotTriad.begin
       ? `<span class="icon-slot-prefix">${this._iconSlotTriad.begin}</span>`
       : ``;
-    const end = this._iconSlotTriad.end
-      ? `<span class="icon-slot-suffix">${this._iconSlotTriad.end}</span>`
-      : ``;
+    const end = this.buildButtonEnd();
     return begin + content + end;
+  }
+
+  /**
+   * Render the iconSlotTriad.end. For text_edit menus, split out a trailing ▼ into a
+   * focusable span so it is its own tab stop (after the input, before the next menu).
+   */
+  private buildButtonEnd(): string {
+    if (!this._iconSlotTriad.end) return ``;
+    const isTextEdit =
+      typeof this._iconSlotTriad.main === 'object' &&
+      this._iconSlotTriad.main?.type === 'text_edit';
+    const arrow = '▼';
+    if (isTextEdit && this._iconSlotTriad.end.includes(arrow)) {
+      const idx = this._iconSlotTriad.end.indexOf(arrow);
+      const before = this._iconSlotTriad.end.slice(0, idx);
+      const after = this._iconSlotTriad.end.slice(idx + arrow.length);
+      const beforeHtml = before
+        ? `<span class="icon-slot-suffix">${before}</span>`
+        : ``;
+      const afterHtml = after ? `<span class="icon-slot-suffix">${after}</span>` : ``;
+      const arrowHtml = `<span class="dropdown-arrow" tabindex="0" role="button" aria-label="Open ${this.displayName} menu">${arrow}</span>`;
+      return beforeHtml + arrowHtml + afterHtml;
+    }
+    return `<span class="icon-slot-suffix">${this._iconSlotTriad.end}</span>`;
   }
 
   /**
@@ -523,12 +575,22 @@ export class UIMenu {
       const menuItems = processedMenuItemsHtml.join('\n');
       const hasItems = menuItemsList.length > 0;
 
+      // Resolve isHidden fresh each render — mirrors how menuItems and item
+      // values are resolved at access time, not frozen at construction. Static
+      // values resolve locally; function values delegate to UIMenuMgr where the
+      // validated dict is built (mirrors getValueOfMenuItemIdForMenuId, which
+      // also only invokes the resolver helper for the function case).
+      const isHiddenResolved =
+        typeof this._isHidden === 'function'
+          ? this.fn.uimenumgr.getIsHiddenForMenuId(this._id)
+          : (this._isHidden ?? false);
+
       // Build CSS classes for menu container - only what we need
       const menuClasses = [
         isFlyout ? 'isFlyout' : '',
         hasGutterBefore ? 'has-gutter-before' : '',
         hasGutterAfter ? 'has-gutter-after' : '',
-        this._isHidden ? 'isHidden' : '',
+        isHiddenResolved ? 'isHidden' : '',
       ]
         .filter(Boolean)
         .join(' ');
@@ -543,6 +605,13 @@ export class UIMenu {
       // Build button content from iconSlotTriad
       const buttonContent = this.buildButtonContent();
 
+      // For text_edit menus, the wrapping button must not steal tab focus —
+      // the input and the ▼ inside are the real tab stops.
+      const isTextEdit =
+        typeof this._iconSlotTriad.main === 'object' &&
+        this._iconSlotTriad.main?.type === 'text_edit';
+      const menuBtnExtraAttrs = isTextEdit ? ` tabindex="-1"` : ``;
+
       const replacementDict = {
         menuId: this._id,
         displayName: this.displayName,
@@ -556,6 +625,7 @@ export class UIMenu {
           : '', // Only create container if there are items
         menuClasses,
         shortcutCodeAttr,
+        menuBtnExtraAttrs,
       };
 
       const result = this.fn.utils.templateDictReplace(template, replacementDict);
