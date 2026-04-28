@@ -152,7 +152,7 @@ export class UIMenuMgr {
     } = args;
 
     // Pass isHidden through unresolved (boolean | UIMenuFxn_t | undefined).
-    // UIMenu.getHTML resolves it fresh per render via getIsHiddenForMenuId, so a
+    // UIMenu.getHTML resolves it fresh per render via getIsHiddenOfMenuId, so a
     // dynamic resolver sees the latest docInfo (e.g. languageId set during PDF
     // generation) instead of being frozen at construction time.
     return new UIMenu({
@@ -392,9 +392,30 @@ export class UIMenuMgr {
    * Called from UIMenu.getHTML each render — keeps menus like kMd in sync with
    * the active document's languageId without rebuilding the menu.
    */
-  getIsHiddenForMenuId(menuId: MenuId_t): boolean {
+  getIsHiddenOfMenuId(menuId: MenuId_t): boolean {
     const menu = this.getMenuById(menuId);
     return this.getValueOfMenuFxnByCalcIsHidden(menu.isHidden, menuId);
+  }
+
+  /**
+   * Resolve a menu item's shortcut display string fresh on every call.
+   *
+   * Mirrors getValueOfMenuItemIdForMenuId / getIsHiddenOfMenuId: the menu item
+   * stores `shortcut: string | UIMenuFxn_t | undefined`. Static strings pass
+   * through; resolver functions run through the validated-dict helper so a
+   * resolver that calls e.g. `getShortcutForCommand(...)` always reads the
+   * current VS Code keybinding at HTML generation time.
+   */
+  getShortcutOfMenuItemIdForMenuId(args: { menuId: MenuId_t; menuItemId: string }): string {
+    const { menuId, menuItemId } = args;
+    const menu = this.getMenuById(menuId);
+    const menuItem = menu.getMenuItems().find(item => item.id === menuItemId);
+    const shortcut = menuItem?.shortcut;
+    if (typeof shortcut === 'function') {
+      const resolved = this.getValueOfMenuFxnByCalcValue(shortcut, menuId, menuItemId);
+      return typeof resolved === 'string' ? resolved : '';
+    }
+    return shortcut ?? '';
   }
 
   /**

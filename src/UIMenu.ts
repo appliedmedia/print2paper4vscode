@@ -95,7 +95,8 @@ export class UIMenu {
       'utils.htmlEscape',
       'uimenumgr.getValueOfMenuItemIdSelected',
       'uimenumgr.getMenuById',
-      'uimenumgr.getIsHiddenForMenuId'
+      'uimenumgr.getIsHiddenOfMenuId',
+      'uimenumgr.getShortcutOfMenuItemIdForMenuId'
     );
     this.dx = this.fn.dx.sub({ name: 'UIMenu' });
 
@@ -150,7 +151,7 @@ export class UIMenu {
     return this._isFlyout;
   }
   // Returns the raw stored value (boolean | function | undefined). Callers that
-  // need a resolved boolean should go through UIMenuMgr.getIsHiddenForMenuId.
+  // need a resolved boolean should go through UIMenuMgr.getIsHiddenOfMenuId.
   get isHidden(): boolean | UIMenuFxn_t | undefined {
     return this._isHidden;
   }
@@ -243,20 +244,28 @@ export class UIMenu {
       iconSlotWithPrefixSuffix = prefix + iconSlotResult.html + suffix;
     }
 
+    // Resolve shortcut fresh per render — static string passes through, resolver
+    // function runs via UIMenuMgr.getShortcutOfMenuItemIdForMenuId so e.g. VS Code key
+    // bindings reflect the user's current keybindings.json on every getHTML.
+    const resolvedShortcut =
+      typeof item.shortcut === 'function'
+        ? this.fn.uimenumgr.getShortcutOfMenuItemIdForMenuId({ menuId: this._id, menuItemId: item.id })
+        : (item.shortcut ?? '');
+
     // Icon-only detection: bump font 25% when the item shows a single-glyph
     // displayName with no inline icon and no shortcut. Counts code points so
     // graphemes like ⚙ register as length 1.
     const trimmedName = processedDisplayName.trim();
     const codePointCount = Array.from(trimmedName).length;
     const isIconOnly =
-      !iconSlotWithPrefixSuffix && !item.shortcut && codePointCount > 0 && codePointCount <= 2;
+      !iconSlotWithPrefixSuffix && !resolvedShortcut && codePointCount > 0 && codePointCount <= 2;
 
     // gutter-after: external-link SVG, shortcut, or empty (▶ for flyouts comes
     // from a CSS ::after rule). Mutually exclusive in current menus.
     const contentGutterAfter = isExternalLink
       ? this.yaml().icon_external_link_svg
-      : item.shortcut
-        ? `<span class="menu-item-shortcut">${item.shortcut}</span>`
+      : resolvedShortcut
+        ? `<span class="menu-item-shortcut">${resolvedShortcut}</span>`
         : '';
 
     // Individual items only need these classes
@@ -585,7 +594,7 @@ export class UIMenu {
       // also only invokes the resolver helper for the function case).
       const isHiddenResolved =
         typeof this._isHidden === 'function'
-          ? this.fn.uimenumgr.getIsHiddenForMenuId(this._id)
+          ? this.fn.uimenumgr.getIsHiddenOfMenuId(this._id)
           : (this._isHidden ?? false);
 
       // Build CSS classes for menu container - only what we need

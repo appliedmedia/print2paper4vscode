@@ -39,13 +39,13 @@ describe('Menu Hidden', () => {
 
     // Non-markdown — must render hidden
     app.pdf.docInfo().languageId = 'typescript';
-    assert.strictEqual(menuMgr.getIsHiddenForMenuId(kMd.id), true);
+    assert.strictEqual(menuMgr.getIsHiddenOfMenuId(kMd.id), true);
     const htmlHidden = await menu.getHTML();
     assert.ok(htmlHidden.includes('isHidden'), 'kMd hidden when languageId=typescript');
 
     // Flip to markdown on the SAME menu instance — must render visible
     app.pdf.docInfo().languageId = kMd_languageId;
-    assert.strictEqual(menuMgr.getIsHiddenForMenuId(kMd.id), false);
+    assert.strictEqual(menuMgr.getIsHiddenOfMenuId(kMd.id), false);
     const htmlVisible = await menu.getHTML();
     assert.ok(!htmlVisible.includes('isHidden'), 'kMd visible when languageId=markdown');
   });
@@ -80,7 +80,7 @@ describe('Menu Hidden', () => {
     assert.ok(!html2.includes('isHidden'), 'even call → visible');
   });
 
-  it('handles boolean isHidden via getIsHiddenForMenuId', async () => {
+  it('handles boolean isHidden via getIsHiddenOfMenuId', async () => {
     const menuMgr = app.uimenumgr;
 
     const visibleMenu = menuMgr.createMenu({
@@ -92,7 +92,7 @@ describe('Menu Hidden', () => {
       selectionHandler: async () => ({ id: '', value: '' }),
     });
     menuMgr.addMenu(visibleMenu);
-    assert.strictEqual(menuMgr.getIsHiddenForMenuId('test-visible' as MenuId_t), false);
+    assert.strictEqual(menuMgr.getIsHiddenOfMenuId('test-visible' as MenuId_t), false);
     assert.ok(!(await visibleMenu.getHTML()).includes('isHidden'));
 
     const hiddenMenu = menuMgr.createMenu({
@@ -104,7 +104,7 @@ describe('Menu Hidden', () => {
       selectionHandler: async () => ({ id: '', value: '' }),
     });
     menuMgr.addMenu(hiddenMenu);
-    assert.strictEqual(menuMgr.getIsHiddenForMenuId('test-hidden' as MenuId_t), true);
+    assert.strictEqual(menuMgr.getIsHiddenOfMenuId('test-hidden' as MenuId_t), true);
     assert.ok((await hiddenMenu.getHTML()).includes('isHidden'));
   });
 
@@ -121,7 +121,7 @@ describe('Menu Hidden', () => {
     menuMgr.addMenu(menu);
 
     assert.strictEqual(menu.isHidden, undefined, 'raw stored value is undefined');
-    assert.strictEqual(menuMgr.getIsHiddenForMenuId('test-default' as MenuId_t), false);
+    assert.strictEqual(menuMgr.getIsHiddenOfMenuId('test-default' as MenuId_t), false);
     assert.ok(!(await menu.getHTML()).includes('isHidden'));
   });
 });

@@ -596,17 +596,15 @@ export class PaperPrinter {
   }
 
   private menuItems_About(): UIMenuItem_t[] {
-    // menuItems_About runs fresh on every getHTML, so the shortcut lookup
-    // here is always current — no separate resolver needed. External-link
-    // items show their target URL as a hover tooltip so the user can see
-    // where they're being sent before clicking.
+    // shortcut is a UIMenuFxn_t resolver — UIMenu.getItemHTML re-evaluates it
+    // on every render, so the displayed key always reflects the user's
+    // current keybindings.json (no caching, no file watcher).
     const urlById: Record<string, string | undefined> = {
       about: kURL.homePage,
       logBug: kURL.support,
     };
-    const printShortcut = this.fn.vscodeapis.getShortcutForCommand({
-      commandId: kCommandPrintId,
-    });
+    const resolvePrintShortcut: UIMenuFxn_t = () =>
+      this.fn.vscodeapis.getShortcutForCommand({ commandId: kCommandPrintId });
     return kAbout.menuItems.map(item => {
       const url = urlById[item.id];
       return {
@@ -615,7 +613,7 @@ export class PaperPrinter {
         iconSlotTriad: { begin: '', main: '', end: '' },
         tooltip: url,
         isExternalLink: !!url,
-        shortcut: item.id === 'shortcut' ? printShortcut : undefined,
+        shortcut: item.id === 'shortcut' ? resolvePrintShortcut : undefined,
       };
     });
   }
