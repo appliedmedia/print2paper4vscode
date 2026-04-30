@@ -1000,6 +1000,11 @@ export class PDF {
     // Render text with wrapping (reuse existing logic)
     this.renderTextContent(element.text);
 
+    // Advance past the heading's vertical extent and reset to left margin so the
+    // next element doesn't overlap. Mirrors renderParagraph's post-content reset.
+    this.currentY += headingSize;
+    this.currentX = this.docInfo().marginPts.leftMarginPts;
+
     // Add spacing after
     this.currentY += spacingAfter;
 
