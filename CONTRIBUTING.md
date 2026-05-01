@@ -6,7 +6,7 @@ First off, thanks for taking the time to contribute!
 
 1. **Fork the repository** and clone it locally.
 2. **Create a branch** for your edits.
-3. **Make your changes** and adhere to the coding standards (see `docs/AGENTS.md`).
+3. **Make your changes** and adhere to the coding standards (see [docs/2026-04-12_info_DeveloperGuide.md](<docs/2026-04-12_info_DeveloperGuide.md>) for archived architecture notes; the root README.md is the current developer entry point).
 4. **Run tests** to ensure no regressions: `npm test`.
 5. **Submit a Pull Request** describing your changes.
 

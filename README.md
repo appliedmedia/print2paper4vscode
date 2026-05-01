@@ -4,7 +4,7 @@ A VS Code extension that captures content from the active editor, applies syntax
 
 ## Quick Links
 
-- **[Developer Guide](docs/AGENTS.md)** - Complete developer documentation
+- **[Developer Guide (point-in-time reference)](docs/2026-04-12_info_DeveloperGuide.md)** - Background-agent branch cleanup and three-library architecture notes
 - **[VSCode APIs](docs/VSCodeAPIs.md)** - API integration details
 - **[Marketplace README](docs/MARKETPLACE.md)** - End-user-facing README that ships to the VS Code marketplace listing (developers should not edit this file as a substitute for the repo README; the two have separate audiences and are shipped via `vsce publish --readme-path`)
 
@@ -359,7 +359,7 @@ Error Recovery:
 
 ## Documentation
 
-- **[Developer Guide](docs/AGENTS.md)** - Complete developer documentation and architecture
+- **[Developer Guide (point-in-time reference)](docs/2026-04-12_info_DeveloperGuide.md)** - Background-agent branch cleanup and three-library architecture notes
 - **[VSCode APIs](docs/VSCodeAPIs.md)** - VS Code API integration details
 - **[Marketplace README](docs/MARKETPLACE.md)** - End-user-facing README that ships to the marketplace listing
 - **[Marketplace Changelog](docs/MARKETPLACE_CHANGELOG.md)** - End-user-facing changelog that ships to the marketplace listing

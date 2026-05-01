@@ -50,7 +50,7 @@ See memory `feedback_marketplace_readme_split.md` for the convention this wave c
 * [Lane B: marketplace CHANGELOG (separate file) + repo CHANGELOG accuracy](<2026-04-26_plan_done_DocsRefresh_LaneB-Changelog.md>) — done (PR #115)
 * [Lane C: repo README accuracy fixes + dev docs audit](<2026-04-26_plan_done_DocsRefresh_LaneC-DevDocsSplit.md>) — done (PR #115)
 * [Lane D: walkthrough Get Started experience](<2026-04-26_plan_todo_DocsRefresh_LaneD-Walkthrough.md>) — todo
-* [Lane E: verification + cross-link audit](<2026-04-26_plan_todo_DocsRefresh_LaneE-Verify.md>) — todo
+* [Lane E: verification + cross-link audit](<2026-04-26_plan_done_DocsRefresh_LaneE-Verify.md>) — done (2026-05-01)
 
 ## Dependencies
 
@@ -125,5 +125,13 @@ PR `feature/docs-refresh` → `main` merged as commit `63940fe`. What landed:
 
 ## Remaining
 
-* [Lane D](<2026-04-26_plan_todo_DocsRefresh_LaneD-Walkthrough.md>) (walkthroughs) was not part of PR #115. It can land as its own PR off `main` whenever capacity exists.
-* [Lane E](<2026-04-26_plan_todo_DocsRefresh_LaneE-Verify.md>) (verification + cross-link audit + memory updates + plan renames) runs after Lane D ships, since the verification scope includes the walkthrough VSIX integrity. The wave Orch + lane plans for A/B/C have been renamed to `_done_` even though Lane E has not run; the renames reflect what shipped on `main`, not Lane E's bookkeeping pass.
+* [Lane D](<2026-04-26_plan_todo_DocsRefresh_LaneD-Walkthrough.md>) (walkthroughs) was not part of PR #115. It can land as its own PR off `main` whenever capacity exists. Lane D is the only remaining DocsRefresh work item.
+
+## Lane E completion (2026-05-01)
+
+[Lane E](<2026-04-26_plan_done_DocsRefresh_LaneE-Verify.md>) ran on a fresh `feature/docs-refresh-verify-lane-e` branch off `main`. It surfaced and fixed:
+
+* Three vsce packaging traps: `.vscodeignore` exceptions for the marketplace pair; removal of root README/CHANGELOG exceptions to avoid case-insensitive collision; conversion of `[Title](<url>)` to bare-URL form in marketplace docs since vsce mangles the angle-bracket form.
+* Three broken `docs/AGENTS.md` references in user-facing docs.
+
+EDH walkthrough smoke test was deferred until Lane D ships; `TODO(date)` / `TODO(release-tag)` placeholders were deferred to publish day.

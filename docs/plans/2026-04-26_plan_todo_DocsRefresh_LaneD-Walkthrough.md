@@ -84,6 +84,6 @@ Resume conditions:
 
 * When acoven or Claude has time for a 2-3 hour focused session (4 step files + media capture + EDH smoke test).
 * New branch off `main`, e.g., `feature/walkthrough-getstarted`. The original wave branch is merged and the wave is mostly closed.
-* When this lane lands, also run [Lane E](<2026-04-26_plan_todo_DocsRefresh_LaneE-Verify.md>) to do the cross-link audit, VSIX integrity check, and the `TODO(date)` / `TODO(release-tag)` resolution that Lane B left for verification.
+* When this lane lands, re-run only the walkthrough-specific portion of [Lane E](<2026-04-26_plan_done_DocsRefresh_LaneE-Verify.md>) (the EDH smoke test that confirms the walkthrough auto-opens after install). The Lane E cross-link audit and VSIX integrity check already ran on 2026-05-01; the `TODO(date)` / `TODO(release-tag)` resolution is owned by the publish-wave Lane C, not by this lane.
 
 This lane does not block marketplace publish — Lane C of the [marketplace publish wave](<2026-04-25_plan_todo_MarketplacePublishImpl_LaneC-PublishAndVerify.md>) is unblocked as of PR #115. The walkthrough is polish that can ship as v1.0.1 or later.
