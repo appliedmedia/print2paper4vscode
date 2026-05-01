@@ -189,8 +189,20 @@ export class VSCodeAPIs {
     return result;
   }
 
-  // Resolve user override from keybindings.json. Returns '' if explicitly unbound, undefined
-  // if no entry exists (caller falls back to the package.json default).
+  // Resolve the user's effective binding for `commandId` from keybindings.json.
+  //
+  // VS Code processes keybindings.json top-to-bottom with later entries overriding
+  // earlier ones (per VS Code docs: "rules are evaluated from bottom to top"), and
+  // the Keyboard Shortcuts UI appends new entries at the bottom of the array. So
+  // the bottom-most entry whose `command` exactly matches `commandId` is what's
+  // authoritative for display.
+  //
+  // We deliberately ignore "-commandId" unbind entries: matching only the positive
+  // command string means a swap pattern (bind new key + unbind default) shows the
+  // new key. The lone-unbind case (user removed the default with no rebind) falls
+  // through to the package.json default, which is acceptable display behavior.
+  //
+  // Returns undefined if no entry exists; caller falls back to the package.json default.
   private lookupUserKeybinding(commandId: string): string | undefined {
     const file = this.userKeybindingsFilePath();
     if (!file || !fs.existsSync(file)) return undefined;
@@ -206,20 +218,11 @@ export class VSCodeAPIs {
     }
     if (!Array.isArray(data)) return undefined;
 
-    let key: string | undefined;
-    let unbound = false;
-    for (const entry of data as Array<{ command?: string; key?: string }>) {
-      if (!entry || typeof entry.command !== 'string') continue;
-      if (entry.command === commandId && typeof entry.key === 'string') {
-        key = entry.key;
-        unbound = false;
-      } else if (entry.command === '-' + commandId) {
-        key = undefined;
-        unbound = true;
-      }
-    }
-    if (unbound && key === undefined) return '';
-    return key;
+    const entries = data as Array<{ command?: string; key?: string }>;
+    const latestCommandKeyAssignment = entries.findLast(
+      e => e?.command === commandId && typeof e.key === 'string'
+    );
+    return latestCommandKeyAssignment?.key;
   }
 
   private lookupDefaultKeybinding(commandId: string): string | undefined {

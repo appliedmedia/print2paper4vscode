@@ -38,7 +38,7 @@ uimenu_css: |
   }
   .{{ns_}}menuItem {
     --gutter-before-width: 2ch;
-    --gutter-after-width: 4ch;
+    --gutter-after-width: 8ch;
     --gutter-off-width: 1ch;
     --gutter-before: var(--gutter-off-width);
     --gutter-after: var(--gutter-off-width);
@@ -49,7 +49,7 @@ uimenu_css: |
     grid-template-columns: var(--gutter-before) 1fr var(--gutter-after);
     grid-template-areas: "gutter-before menu-text gutter-after";
     align-items: center;
-    gap: 0;
+    gap: 0 1ch;
     user-select: none;
     -webkit-user-select: none;
     position: relative;
