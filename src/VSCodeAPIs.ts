@@ -181,70 +181,48 @@ export class VSCodeAPIs {
     dx.require(args, ['commandId']);
     const { commandId } = args;
 
-    const finalKey = this.resolveEffectiveKey(commandId);
+    const userKey = this.lookupUserKeybinding(commandId);
+    const finalKey = userKey !== undefined ? userKey : this.lookupDefaultKeybinding(commandId);
     const result = finalKey ? this.formatKeybindingForDisplay(finalKey) : '';
     dx.out(`Shortcut for ${commandId}: "${result}"`);
     dx.done();
     return result;
   }
 
-  // Resolve the effective key bound to `commandId` by replaying both the
-  // package.json default and the user's keybindings.json as VS Code would.
+  // Resolve the user's effective binding for `commandId` from keybindings.json.
   //
-  // VS Code keybindings are an ordered list of bind/unbind operations:
-  //   { command: "X",  key: K }  → bind  K to X
-  //   { command: "-X", key: K }  → unbind K from X
+  // VS Code processes keybindings.json top-to-bottom with later entries overriding
+  // earlier ones (per VS Code docs: "rules are evaluated from bottom to top"), and
+  // the Keyboard Shortcuts UI appends new entries at the bottom of the array. So
+  // the bottom-most entry whose `command` exactly matches `commandId` is what's
+  // authoritative for display.
   //
-  // We start with the platform-appropriate default from package.json (treated as
-  // the bind that happens before any user entry), then walk user entries top-to-
-  // bottom applying each operation. The latest-bound key still in the bound set
-  // wins. If no key remains bound (e.g. user explicitly unbound the default with
-  // no replacement, or bind-then-unbind of the same key), returns ''.
+  // We deliberately ignore "-commandId" unbind entries: matching only the positive
+  // command string means a swap pattern (bind new key + unbind default) shows the
+  // new key. The lone-unbind case (user removed the default with no rebind) falls
+  // through to the package.json default, which is acceptable display behavior.
   //
-  // Reading the user file fresh on every call is intentional — the menu queries
-  // this on every render, so changes to keybindings.json show up without an
-  // extension reload.
-  private resolveEffectiveKey(commandId: string): string {
-    const negCmd = `-${commandId}`;
-    const boundKeys = new Map<string, number>();
-    const defaultKey = this.lookupDefaultKeybinding(commandId);
-    if (defaultKey) boundKeys.set(defaultKey, -1);
-
-    const entries = this.readUserKeybindingsArray();
-    if (entries) {
-      for (let i = 0; i < entries.length; i++) {
-        const entry = entries[i];
-        if (typeof entry?.key !== 'string') continue;
-        if (entry.command === commandId) {
-          boundKeys.set(entry.key, i);
-        } else if (entry.command === negCmd) {
-          boundKeys.delete(entry.key);
-        }
-      }
-    }
-
-    let latest: { key: string; order: number } | undefined;
-    for (const [key, order] of boundKeys) {
-      if (!latest || order > latest.order) latest = { key, order };
-    }
-    return latest?.key ?? '';
-  }
-
-  private readUserKeybindingsArray():
-    | Array<{ command?: string; key?: string }>
-    | undefined {
+  // Returns undefined if no entry exists; caller falls back to the package.json default.
+  private lookupUserKeybinding(commandId: string): string | undefined {
     const file = this.userKeybindingsFilePath();
     if (!file || !fs.existsSync(file)) return undefined;
+    let data: unknown;
     try {
       const raw = fs.readFileSync(file, 'utf8');
       // keybindings.json is JSONC; strip comments with a string-aware pass so
       // `//` or `/*` inside string literals (e.g. `"args": "// foo"`) survive.
       const stripped = this.stripJsonComments(raw);
-      const data = JSON.parse(stripped);
-      return Array.isArray(data) ? data : undefined;
+      data = JSON.parse(stripped);
     } catch {
       return undefined;
     }
+    if (!Array.isArray(data)) return undefined;
+
+    const entries = data as Array<{ command?: string; key?: string }>;
+    const latestCommandKeyAssignment = entries.findLast(
+      e => e?.command === commandId && typeof e.key === 'string'
+    );
+    return latestCommandKeyAssignment?.key;
   }
 
   private lookupDefaultKeybinding(commandId: string): string | undefined {
