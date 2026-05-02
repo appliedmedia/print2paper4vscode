@@ -20,7 +20,7 @@ Catch the cross-cutting failure modes that any individual lane could have introd
   * [x] Confirm the VSIX size is still small (target under 5 MB; the 10.35 MB extension.js dominates so growth here is mostly walkthrough media). Actual size: 2 MB
 * README + walkthrough rendering
   * [x] Unzip the VSIX and diff `extension/readme.md` and `extension/changelog.md` against the marketplace sources (`docs/MARKETPLACE.md`, `docs/MARKETPLACE_CHANGELOG.md`); both diffs empty
-  * [x] Visually confirm the README renders as intended: hero screenshot path is now an absolute github raw URL (vsce link-rewriter exception), Usage section reads cleanly, Contributing section's link is present
+  * [x] Visually confirm the README renders as intended: hero screenshot path is now an absolute GitHub raw URL (vsce link-rewriter exception), Usage section reads cleanly, Contributing section's link is present
   * [ ] Install the VSIX into a clean Extension Development Host: `code --install-extension print2paper4vscode-1.0.0.vsix` (deferred: Lane D EDH smoke test)
   * [ ] Confirm the Get Started walkthrough panel auto-opens (deferred: Lane D)
   * [ ] Walk all four steps; confirm media renders and completion events fire (deferred: Lane D)
@@ -77,8 +77,8 @@ Lane E ran on branch `feature/docs-refresh-verify-lane-e` off `main` (post-PR #1
 * VSIX integrity confirmed: `npx @vscode/vsce package --readme-path docs/MARKETPLACE.md --changelog-path docs/MARKETPLACE_CHANGELOG.md` produces 8 files, 2 MB. Unzipped `extension/readme.md` and `extension/changelog.md` diff exactly against the marketplace sources.
 * Three `.vscodeignore` and marketplace-doc traps surfaced and fixed:
   * Added `!docs/MARKETPLACE.md` and `!docs/MARKETPLACE_CHANGELOG.md` exceptions inside the `docs/**` block. Without them, the `--readme-path` / `--changelog-path` flags errored with "could not be found".
-  * Removed `!README.md` and `!CHANGELOG.md` exceptions. With them, vsce errored with "files have the same case insensitive path" because the lowercase `readme.md` / `changelog.md` from the flag content collided with the dev-facing root files.
-  * Converted `[Title](<url>)` angle-bracket form to bare-URL form `[Title](url)` in both `docs/MARKETPLACE.md` and `docs/MARKETPLACE_CHANGELOG.md`. vsce's link-rewriter treats the angle-bracket form as a relative path and prepends `https://github.com/<repo>/blob/HEAD/`, producing broken nested URLs. The hero-image relative path was rewritten to an absolute github raw URL for the same reason. Both files have an HTML comment noting this exception.
+  * Removed `!README.md` and `!CHANGELOG.md` exceptions. With them, vsce errored with "files have the same case-insensitive path" because the lowercase `readme.md` / `changelog.md` from the flag content collided with the dev-facing root files.
+  * Converted `[Title](<url>)` angle-bracket form to bare-URL form `[Title](url)` in both `docs/MARKETPLACE.md` and `docs/MARKETPLACE_CHANGELOG.md`. vsce's link-rewriter treats the angle-bracket form as a relative path and prepends `https://github.com/<repo>/blob/HEAD/`, producing broken nested URLs. The hero-image relative path was rewritten to an absolute GitHub raw URL for the same reason. Both files have an HTML comment noting this exception.
 * Internal link audit fixed broken `docs/AGENTS.md` references (file deleted by PR #104 long before this wave) in `README.md` (two locations), `CONTRIBUTING.md`, and `docs/2026-04-12_info_DeveloperGuide.md`.
 * Markdownlint passes on all user-facing docs (`README.md`, `CHANGELOG.md`, `CONTRIBUTING.md`, `docs/MARKETPLACE.md`, `docs/MARKETPLACE_CHANGELOG.md`, `docs/2026-04-12_info_DeveloperGuide.md`, `docs/VSCodeAPIs.md`). Working docs in `docs/plans/` and `scripts/README.md` carry pre-existing tech debt and are out of Lane E scope.
 * `npm test` passes: 345 pass / 0 fail / 4 skipped.
