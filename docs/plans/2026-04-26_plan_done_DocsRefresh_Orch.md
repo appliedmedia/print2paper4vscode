@@ -1,8 +1,8 @@
 # Orchestrator: Docs Refresh Wave
 
-**Status:** in-progress (Lanes A/B/C shipped; Lanes D/E remain)
+**Status:** in-progress (Lanes A/B/C/E shipped; Lane D remains)
 **Created:** 2026-04-26
-**Updated:** 2026-04-28
+**Updated:** 2026-05-02
 **Master orchestrator:** [2026-04-01_plan_todo_Orchestrator.md](<2026-04-01_plan_todo_Orchestrator.md>) (Phase 1 quality gate before publish)
 **Blocks:** [2026-04-25_plan_todo_MarketplacePublishImpl_LaneC-PublishAndVerify.md](<2026-04-25_plan_todo_MarketplacePublishImpl_LaneC-PublishAndVerify.md>) (publish should not happen against the current dev-facing README)
 **Shipped via:** PR #115 (`63940fe`, merged 2026-04-28) — Lanes A, B, C plus a ride-along UIMenu dynamic shortcut/isHidden resolver refactor
