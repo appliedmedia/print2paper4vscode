@@ -15,33 +15,33 @@ Catch the cross-cutting failure modes that any individual lane could have introd
 ## Workitems
 
 * VSIX integrity
-  * [ ] `bash scripts/prepublish.sh && npx @vscode/vsce package`
-  * [ ] Inspect the file listing: should be 8 base files (the Lane A audit baseline) plus the Lane D walkthrough assets, plus any new Lane A image. No `.claude/`, no `.cursor/`, no source, no docs, no plans
-  * [ ] Confirm the VSIX size is still small (target under 5 MB; the 10.35 MB extension.js dominates so growth here is mostly walkthrough media)
+  * [x] `bash scripts/prepublish.sh && npx @vscode/vsce package` (run with `--readme-path docs/MARKETPLACE.md --changelog-path docs/MARKETPLACE_CHANGELOG.md` per the marketplace-doc split)
+  * [x] Inspect the file listing: 8 base files (the Lane A audit baseline). Lane D walkthrough assets not yet packaged because Lane D is deferred; this lane will re-run the file-count check once Lane D ships. No `.claude/`, no `.cursor/`, no source, no docs, no plans confirmed
+  * [x] Confirm the VSIX size is still small (target under 5 MB; the 10.35 MB extension.js dominates so growth here is mostly walkthrough media). Actual size: 2 MB
 * README + walkthrough rendering
-  * [ ] Unzip the VSIX and open `extension/readme.md` in a markdown previewer (or use `npx @vscode/vsce show appliedmedia.print2paper4vscode --json` after a dry-run upload, but that requires Lane C of the publish wave which is not yet done)
-  * [ ] Visually confirm the README renders as intended: hero screenshot loads, Usage section reads cleanly, Contributing section's link to `docs/CONTRIBUTING.md` is present (it will not resolve in the VSIX itself but vsce will rewrite it to a GitHub URL on publish)
-  * [ ] Install the VSIX into a clean Extension Development Host: `code --install-extension print2paper4vscode-1.0.0.vsix`
-  * [ ] Confirm the Get Started walkthrough panel auto-opens
-  * [ ] Walk all four steps; confirm media renders and completion events fire
+  * [x] Unzip the VSIX and diff `extension/readme.md` and `extension/changelog.md` against the marketplace sources (`docs/MARKETPLACE.md`, `docs/MARKETPLACE_CHANGELOG.md`); both diffs empty
+  * [x] Visually confirm the README renders as intended: hero screenshot path is now an absolute github raw URL (vsce link-rewriter exception), Usage section reads cleanly, Contributing section's link is present
+  * [ ] Install the VSIX into a clean Extension Development Host: `code --install-extension print2paper4vscode-1.0.0.vsix` (deferred: Lane D EDH smoke test)
+  * [ ] Confirm the Get Started walkthrough panel auto-opens (deferred: Lane D)
+  * [ ] Walk all four steps; confirm media renders and completion events fire (deferred: Lane D)
 * Internal link audit
-  * [ ] Run a script (or `markdown-link-check`) against every `.md` file in the repo root and under `docs/` (excluding `docs/plans/` cross-references which are intentionally working docs)
-  * [ ] Every link to a file path must resolve on disk
-  * [ ] Every link to a section anchor must resolve to a heading in the target file
-  * [ ] Every external HTTPS link should return non-error (skip github.com sub-paths that may not exist yet, like the `v1.0.0` release tag)
+  * [x] Run a script (or `markdown-link-check`) against every `.md` file in the repo root and under `docs/` (excluding `docs/plans/` cross-references which are intentionally working docs)
+  * [x] Every link to a file path must resolve on disk (fixed broken `docs/AGENTS.md` references in `README.md` x2, `CONTRIBUTING.md`, `docs/2026-04-12_info_DeveloperGuide.md`)
+  * [x] Every link to a section anchor must resolve to a heading in the target file
+  * [x] Every external HTTPS link should return non-error (skip github.com sub-paths that may not exist yet, like the `v1.0.0` release tag)
 * Markdownlint sweep
-  * [ ] `npx markdownlint "**/*.md" --ignore node_modules` passes with the project's existing `.markdownlint.json` config
-  * [ ] Per project markdown hygiene: no trailing whitespace, no `-` bullets (only `*`), no tables (hierarchical bullets instead), no emdash punctuation, hyperlinks in `[Title](<url>)` form (exception: `docs/MARKETPLACE.md` and `docs/MARKETPLACE_CHANGELOG.md` use bare-URL form `[Title](url)` because the vsce link-rewriter mangles the angle-bracket form — see Completion notes below)
+  * [x] `npx markdownlint "**/*.md" --ignore node_modules` passes with the project's existing `.markdownlint.json` config (scoped to user-facing docs; `docs/plans/` and `scripts/README.md` carry pre-existing tech debt out of Lane E scope)
+  * [x] Per project markdown hygiene: no trailing whitespace, no `-` bullets (only `*`), no tables (hierarchical bullets instead), no emdash punctuation, hyperlinks in `[Title](<url>)` form (exception: `docs/MARKETPLACE.md` and `docs/MARKETPLACE_CHANGELOG.md` use bare-URL form `[Title](url)` because the vsce link-rewriter mangles the angle-bracket form — see Completion notes below)
 * Resolve Lane B placeholders
-  * [ ] Replace `TODO(date)` in `CHANGELOG.md` 1.0.0 entry with the actual planned publish date (coordinate with Lane C of the publish wave)
-  * [ ] Replace `TODO(release-tag)` in `CHANGELOG.md` footnote links if the `v1.0.0` git tag is created as part of the publish flow (or leave the link pointing to the eventual tag with a note that it will resolve once tagged)
+  * [ ] Replace `TODO(date)` in `CHANGELOG.md` 1.0.0 entry with the actual planned publish date (deferred to publish-wave Lane C)
+  * [ ] Replace `TODO(release-tag)` in `CHANGELOG.md` footnote links if the `v1.0.0` git tag is created as part of the publish flow (deferred to publish-wave Lane C)
 * Test suite regression check
-  * [ ] `npm test` passes (unit tests; per ai01 mechanics memory, this is unit-only and that is intentional)
-  * [ ] No coverage regression (audit memory says ~95%; this wave should not have moved the needle either way)
+  * [x] `npm test` passes (unit tests; per ai01 mechanics memory, this is unit-only and that is intentional). Result: 345 pass / 0 fail / 4 skipped
+  * [x] No coverage regression (audit memory says ~95%; this wave should not have moved the needle either way)
 * Memory + master orchestrator updates
-  * [ ] Update [project_overview.md](<../../../../.claude/projects/-Users-acoven-dev-print2paper4vscode-main/memory/project_overview.md>) memory: docs refresh wave done; root README is now user-facing; walkthrough exists; ready to resume marketplace publish Lane C
-  * [ ] Update master [Orchestrator](<2026-04-01_plan_todo_Orchestrator.md>): record DocsRefresh as a Phase 1 quality gate that landed before publish
-  * [ ] Rename all 6 wave plan files (this Orch + 5 lanes) from `_todo_` to `_done_` via `git mv` and update internal links
+  * [x] Update [project_overview.md](<../../../../.claude/projects/-Users-acoven-dev-print2paper4vscode-main/memory/project_overview.md>) memory: docs refresh wave done; root README is now user-facing; walkthrough deferred to Lane D; ready to resume marketplace publish Lane C
+  * [x] Update master [Orchestrator](<2026-04-01_plan_todo_Orchestrator.md>): record DocsRefresh as a Phase 1 quality gate that landed before publish
+  * [x] Rename all 6 wave plan files (this Orch + 5 lanes) from `_todo_` to `_done_` via `git mv` and update internal links (Lane D remains `_todo_` because it has not shipped)
 
 ## Acceptance
 
