@@ -491,6 +491,7 @@ export class VSCodeAPIs {
           panel.title = title;
           const htmlWithURIs = this.fn.os.htmlSrcPathToURI({ html, webviewPanelId: existingPanelId });
           panel.webview.html = htmlWithURIs;
+          panel.reveal(undefined, false);
           dx.done();
           return existingPanelId;
         } catch {
