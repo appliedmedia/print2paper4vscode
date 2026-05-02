@@ -321,6 +321,28 @@ export class UIMenuMgr {
     return value;
   }
 
+  // Look up the static menu-item id whose numeric `value` matches the menu's
+  // current resolved value. Used as a fallback in UIMenu.getSelectedItemId when
+  // the persisted id does not directly match any menu item — e.g., the zoom
+  // +/- button persists the menu-id sentinel ("zoomLevel"), or a text-edit
+  // transform persists "0.9" while the matching item id is "0.90". Items whose
+  // value is a function (e.g., fitWidth/fitPage resolvers) are skipped: those
+  // should highlight only when explicitly picked, not when the current numeric
+  // zoom incidentally matches the computed fit ratio.
+  getMenuItemIdMatchingCurrentValue(menuId: MenuId_t): string | undefined {
+    const currentValue = this.getValueOfMenuItemIdSelected(menuId);
+    if (typeof currentValue !== 'number') return undefined;
+    const menu = this.getMenuById(menuId);
+    const epsilon = 1e-6;
+    const match = menu.getMenuItems().find(item => {
+      if (!('value' in item)) return false;
+      const v = (item as UIMenuItem_t & { value: UIMenuItemValue_t | UIMenuFxn_t }).value;
+      if (typeof v !== 'number') return false;
+      return Math.abs(v - currentValue) < epsilon;
+    });
+    return match?.id;
+  }
+
   // Get the value for a menu item by its ID
   // Resolves menu item values via resolver functions (for dynamic values like fitWidth/fitPage),
   // numeric values, or legacy calc templates. Returns the resolved value or menuItemId as fallback.
