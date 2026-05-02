@@ -28,7 +28,7 @@ Catch the cross-cutting failure modes that any individual lane could have introd
   * [x] Run a script (or `markdown-link-check`) against every `.md` file in the repo root and under `docs/` (excluding `docs/plans/` cross-references which are intentionally working docs)
   * [x] Every link to a file path must resolve on disk (fixed broken `docs/AGENTS.md` references in `README.md` x2, `CONTRIBUTING.md`, `docs/2026-04-12_info_DeveloperGuide.md`)
   * [x] Every link to a section anchor must resolve to a heading in the target file
-  * [x] Every external HTTPS link should return non-error (skip github.com sub-paths that may not exist yet, like the `v1.0.0` release tag)
+  * [x] Every external HTTPS link should return non-error (skip GitHub.com sub-paths that may not exist yet, like the `v1.0.0` release tag)
 * Markdownlint sweep
   * [x] `npx markdownlint "**/*.md" --ignore node_modules` passes with the project's existing `.markdownlint.json` config (scoped to user-facing docs; `docs/plans/` and `scripts/README.md` carry pre-existing tech debt out of Lane E scope)
   * [x] Per project markdown hygiene: no trailing whitespace, no `-` bullets (only `*`), no tables (hierarchical bullets instead), no emdash punctuation, hyperlinks in `[Title](<url>)` form (exception: `docs/MARKETPLACE.md` and `docs/MARKETPLACE_CHANGELOG.md` use bare-URL form `[Title](url)` because the vsce link-rewriter mangles the angle-bracket form — see Completion notes below)
