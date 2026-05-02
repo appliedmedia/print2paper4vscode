@@ -29,15 +29,15 @@ Given('regenerateAndUpdateWebview is mocked', (t: TestCaseContext) => {
 
 Given('the current zoom is at maximum', (t: TestCaseContext) => {
   const world = t.world as P2PWorld;
-  // Set current zoom to max (2.5) via zoomLevel_setTextEdit AND persist
-  (world.app.paperprinter as any).zoomLevel_setTextEdit(2.5);
-  // Also mock getValueOfMenuItemIdSelected to return 2.5 so ZoomInOut reads it
+  // Set current zoom to max (3.0) via zoomLevel_setTextEdit AND persist
+  (world.app.paperprinter as any).zoomLevel_setTextEdit(3.0);
+  // Also mock getValueOfMenuItemIdSelected to return 3.0 so ZoomInOut reads it
   const origGet = world.app.uimenumgr.getValueOfMenuItemIdSelected.bind(world.app.uimenumgr);
   world.app.uimenumgr.getValueOfMenuItemIdSelected = (menuId: string) => {
-    if (menuId === 'zoomLevel') return 2.5;
+    if (menuId === 'zoomLevel') return 3.0;
     return origGet(menuId);
   };
-  state.initialZoom = 2.5;
+  state.initialZoom = 3.0;
 });
 
 // -- When steps ----------------------------------------------------------
@@ -157,7 +157,7 @@ Then('the zoom should decrease', (t: TestCaseContext) => {
 
 Then('the zoom should remain at maximum', (t: TestCaseContext) => {
   const newZoom = state.zoomResult.value as number;
-  assert.strictEqual(newZoom, 2.5, 'Zoom should be clamped at maximum 2.5');
+  assert.strictEqual(newZoom, 3.0, 'Zoom should be clamped at maximum 3.0');
 });
 
 Then('the selection result should have an id', (t: TestCaseContext) => {
