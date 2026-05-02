@@ -31,7 +31,7 @@ Catch the cross-cutting failure modes that any individual lane could have introd
   * [ ] Every external HTTPS link should return non-error (skip github.com sub-paths that may not exist yet, like the `v1.0.0` release tag)
 * Markdownlint sweep
   * [ ] `npx markdownlint "**/*.md" --ignore node_modules` passes with the project's existing `.markdownlint.json` config
-  * [ ] Per project markdown hygiene: no trailing whitespace, no `-` bullets (only `*`), no tables (hierarchical bullets instead), no emdash punctuation, hyperlinks in `[Title](<url>)` form
+  * [ ] Per project markdown hygiene: no trailing whitespace, no `-` bullets (only `*`), no tables (hierarchical bullets instead), no emdash punctuation, hyperlinks in `[Title](<url>)` form (exception: `docs/MARKETPLACE.md` and `docs/MARKETPLACE_CHANGELOG.md` use bare-URL form `[Title](url)` because the vsce link-rewriter mangles the angle-bracket form — see Completion notes below)
 * Resolve Lane B placeholders
   * [ ] Replace `TODO(date)` in `CHANGELOG.md` 1.0.0 entry with the actual planned publish date (coordinate with Lane C of the publish wave)
   * [ ] Replace `TODO(release-tag)` in `CHANGELOG.md` footnote links if the `v1.0.0` git tag is created as part of the publish flow (or leave the link pointing to the eventual tag with a note that it will resolve once tagged)
