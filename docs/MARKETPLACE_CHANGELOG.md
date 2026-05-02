@@ -2,8 +2,10 @@
 
 All notable changes to Print2Paper4VSCode are documented in this file.
 
-The format is based on [Keep a Changelog](<https://keepachangelog.com/en/1.0.0/>),
-and this project adheres to [Semantic Versioning](<https://semver.org/spec/v2.0.0.html>).
+<!-- NOTE: bare-URL form intentional. vsce link-rewriter mangles angle-bracket URL forms. -->
+
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [1.0.0] - YYYY-MM-DD
 
@@ -36,4 +38,4 @@ Initial public release.
 * Themes that rely on fonts other than Courier, Helvetica, or Times fall back to the closest jsPDF-supported family
 * Webview-style files (custom previews, notebooks, image editors) are not supported as print targets
 
-For full developer-facing release notes, see the [GitHub release](<https://github.com/appliedmedia/print2paper4vscode/releases>).
+For full developer-facing release notes, see the [GitHub release](https://github.com/appliedmedia/print2paper4vscode/releases).

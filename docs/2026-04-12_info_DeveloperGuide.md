@@ -8,7 +8,7 @@
 > * The Environment Setup section assumes Linux and predates the cross-platform Quick Start in the root README.
 > * The "macOS optimized" framing predates Windows (PR #112) and Linux (PRs #105, #110) shipping.
 >
-> For current developer setup and architecture, start with the root [README.md](<../README.md>) and [docs/AGENTS.md](<AGENTS.md>). This file is preserved as a point-in-time reference; do not edit in place to "update" it. Open a fresh doc if a section needs a current rewrite.
+> For current developer setup and architecture, start with the root [README.md](<../README.md>). This file is preserved as a point-in-time reference; do not edit in place to "update" it. Open a fresh doc if a section needs a current rewrite.
 
 ## Overview
 

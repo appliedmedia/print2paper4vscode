@@ -2,18 +2,18 @@
 
 **Status:** TODO
 **Created:** 2026-04-01
-**Updated:** 2026-04-28
+**Updated:** 2026-05-01
 **Scope:** All active and planned work for the extension
 
 ---
 
-## Current State (updated 2026-04-28)
+## Current State (updated 2026-05-01)
 
-* **Main branch:** ~95% statement coverage (per repo CHANGELOG); 386 unit + Gherkin scenarios from coverage replay (PR #109)
+* **Main branch:** ~95% statement coverage (per repo CHANGELOG); 349 unit tests passing (Gherkin scenarios from coverage replay PR #109; 4 skipped). TS target/lib bumped to ES2023 via PR #116 (2026-05-01)
 * **Build:** Compiles clean, esbuild bundles to `dist/extension.js`; `.vscodeignore` excludes `.claude/` + `.cursor/`; `*.vsix` no longer tracked in git
-* **Published:** No: not yet on VS Code Marketplace. MarketplacePublishImpl Lane C is unblocked as of PR #115 (docs refresh shipped)
+* **Published:** No: not yet on VS Code Marketplace. MarketplacePublishImpl Lane C is unblocked. DocsRefresh Lane E verify completed 2026-05-01: VSIX integrity confirmed, marketplace docs ship correctly via flags, broken `docs/AGENTS.md` references removed
 * **Platform:** macOS / Windows (PR #112) / Linux (PRs #105 + #110) all shipped
-* **Docs:** Marketplace-only README at `docs/MARKETPLACE.md` and changelog at `docs/MARKETPLACE_CHANGELOG.md`; repo `README.md` and `CHANGELOG.md` are dev-facing with factual fixes; `CONTRIBUTING.md` documents `--readme-path` / `--changelog-path` flags. Walkthrough Get Started panel (DocsRefresh Lane D) and verification pass (Lane E) still pending
+* **Docs:** Marketplace-only README at `docs/MARKETPLACE.md` and changelog at `docs/MARKETPLACE_CHANGELOG.md` (both use bare-URL form per vsce link-rewriter constraint); repo `README.md` and `CHANGELOG.md` are dev-facing; `CONTRIBUTING.md` documents `--readme-path` / `--changelog-path` flags. Walkthrough Get Started panel (DocsRefresh Lane D) still pending; Lane E verify completed 2026-05-01
 
 ---
 
@@ -160,7 +160,16 @@ Goal: Fix critical bugs and get the extension on the VS Code Marketplace.
 **What remains:**
 
 * [Lane D](<2026-04-26_plan_todo_DocsRefresh_LaneD-Walkthrough.md>): `contributes.walkthroughs` + `walkthroughs/*.md` step files for the first-install Get Started panel. Polish; can ship as v1.0.1 or later.
-* [Lane E](<2026-04-26_plan_todo_DocsRefresh_LaneE-Verify.md>): VSIX integrity, cross-link audit, markdownlint sweep, EDH smoke test, replace `TODO(date)` / `TODO(release-tag)` markers. Should run before Stream B Lane C executes.
+
+**Lane E verify (done 2026-05-01):**
+
+* VSIX integrity confirmed: 8 files, 2 MB; marketplace docs ship correctly via `--readme-path` / `--changelog-path`.
+* `.vscodeignore` corrected: added `!docs/MARKETPLACE.md` / `!docs/MARKETPLACE_CHANGELOG.md` exceptions, removed `!README.md` / `!CHANGELOG.md` exceptions to avoid case-insensitive collision with vsce's lowercase output.
+* Marketplace docs converted from `[Title](<url>)` to bare-URL form because vsce's link-rewriter mangles the angle-bracket form into broken nested URLs.
+* Broken `docs/AGENTS.md` references replaced in `README.md`, `CONTRIBUTING.md`, and `docs/2026-04-12_info_DeveloperGuide.md` (file deleted by PR #104; references were stale).
+* `npm test` passing (345/0/4); markdownlint clean on all user-facing docs.
+* EDH walkthrough smoke test deferred until Lane D ships. `TODO(date)` / `TODO(release-tag)` placeholders deferred until publish day.
+* See [Lane E plan](<2026-04-26_plan_done_DocsRefresh_LaneE-Verify.md>) for the full completion record.
 
 ---
 

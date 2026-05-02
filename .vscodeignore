@@ -12,6 +12,8 @@ scripts/**
 # Site / docs / dev assets that are not user-facing
 site/**
 docs/**
+!docs/MARKETPLACE.md
+!docs/MARKETPLACE_CHANGELOG.md
 archives/**
 pocs/**
 assets/**
@@ -28,10 +30,11 @@ coverage/
 *.bak
 *.template.bak
 
-# Documentation (dev-only) - keep README/CHANGELOG, drop everything else
+# Documentation: ship only the marketplace versions via vsce --readme-path
+# / --changelog-path flags. Root README.md and CHANGELOG.md are dev-facing
+# and would collide case-insensitively with the lowercase readme.md /
+# changelog.md that vsce writes from those flags.
 *.md
-!README.md
-!CHANGELOG.md
 
 # Planning documents
 edm-refactor-todos.md

@@ -3,7 +3,8 @@
 Print or save any code file as a syntax-highlighted PDF with one keystroke. Live preview, 100+ themes, every page size you would actually use.
 
 <!-- TODO(screenshot): replace with a 1600x1000 capture of the preview panel beside a code editor -->
-![Print2Paper preview panel beside a code editor](<../images/screenshot-preview.png>)
+<!-- NOTE: absolute URLs intentional. vsce link-rewriter mangles angle-bracket and relative forms. -->
+![Print2Paper preview panel beside a code editor](https://github.com/appliedmedia/print2paper4vscode/raw/main/images/screenshot-preview.png)
 
 ## Features
 
@@ -73,8 +74,8 @@ Toolbar position and your last-used menu choices persist across VS Code sessions
 
 ## Source code and contributing
 
-Print2Paper4VSCode is open source. Bug reports and pull requests are welcome at [github.com/appliedmedia/print2paper4vscode](<https://github.com/appliedmedia/print2paper4vscode>).
+Print2Paper4VSCode is open source. Bug reports and pull requests are welcome at [github.com/appliedmedia/print2paper4vscode](https://github.com/appliedmedia/print2paper4vscode).
 
 ## License
 
-Released under the [Apache License 2.0](<https://github.com/appliedmedia/print2paper4vscode/blob/main/LICENSE>).
+Released under the [Apache License 2.0](https://github.com/appliedmedia/print2paper4vscode/blob/main/LICENSE).
