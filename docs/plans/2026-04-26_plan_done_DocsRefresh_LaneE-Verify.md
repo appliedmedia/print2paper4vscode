@@ -41,7 +41,7 @@ Catch the cross-cutting failure modes that any individual lane could have introd
 * Memory + master orchestrator updates
   * [x] Update [project_overview.md](<../../../../.claude/projects/-Users-acoven-dev-print2paper4vscode-main/memory/project_overview.md>) memory: docs refresh wave done; root README is now user-facing; walkthrough deferred to Lane D; ready to resume marketplace publish Lane C
   * [x] Update master [Orchestrator](<2026-04-01_plan_todo_Orchestrator.md>): record DocsRefresh as a Phase 1 quality gate that landed before publish
-  * [x] Rename all 6 wave plan files (this Orch + 5 lanes) from `_todo_` to `_done_` via `git mv` and update internal links (Lane D remains `_todo_` because it has not shipped)
+  * [x] Rename the 5 shipped wave plan files (this Orch + Lanes A, B, C, E) from `_todo_` to `_done_` via `git mv` and update internal links. Lane D remains `_todo_` because it has not shipped
 
 ## Acceptance
 
@@ -51,7 +51,7 @@ Catch the cross-cutting failure modes that any individual lane could have introd
 * `markdownlint` passes on the full repo.
 * `npm test` passes.
 * Memory and master orchestrator reflect the new state.
-* All 6 wave plan files renamed to `_done_`.
+* The 5 shipped wave plan files (Orch + Lanes A, B, C, E) renamed to `_done_`; Lane D remains `_todo_` until it ships.
 
 ## Notes
 
