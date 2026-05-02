@@ -209,9 +209,12 @@ export class VSCodeAPIs {
     let data: unknown;
     try {
       const raw = fs.readFileSync(file, 'utf8');
-      // keybindings.json is JSONC; strip comments with a string-aware pass so
-      // `//` or `/*` inside string literals (e.g. `"args": "// foo"`) survive.
-      const stripped = this.stripJsonComments(raw);
+      // keybindings.json is JSONC: strip comments AND trailing commas before
+      // parsing. JSON.parse rejects trailing commas, but VS Code's keybinding
+      // editor (and Cursor's) writes them after every property, so without
+      // this we fail to parse and fall through to the package.json default —
+      // making the About menu shortcut appear to never update.
+      const stripped = this.stripJsoncToJson(raw);
       data = JSON.parse(stripped);
     } catch {
       return undefined;
@@ -244,10 +247,10 @@ export class VSCodeAPIs {
     return this._defaultKeybindings.get(commandId);
   }
 
-  // Strip // and /* */ comments from JSONC, leaving comments inside string
-  // literals intact. Replaces stripped comment characters with spaces so
-  // JSON.parse line/column numbers stay aligned with the source file.
-  private stripJsonComments(raw: string): string {
+  // Convert JSONC (the format keybindings.json uses) to strict JSON: drop //
+  // and /* */ comments and drop trailing commas before ] or }. String-aware
+  // pass so `//`, `/*`, or `,` inside string literals survive.
+  private stripJsoncToJson(raw: string): string {
     const out: string[] = [];
     let i = 0;
     let inString = false;
@@ -280,6 +283,31 @@ export class VSCodeAPIs {
         while (i < raw.length && !(raw[i] === '*' && raw[i + 1] === '/')) i++;
         if (i < raw.length) i += 2;
         continue;
+      }
+      if (c === ',') {
+        // Look ahead past whitespace + comments for `]` or `}` — if found,
+        // this comma is a trailing comma that JSON.parse would reject. Drop
+        // it; later iterations will re-process the whitespace and emit it.
+        let j = i + 1;
+        while (j < raw.length) {
+          const cj = raw[j];
+          if (cj === ' ' || cj === '\t' || cj === '\n' || cj === '\r') { j++; continue; }
+          if (cj === '/' && raw[j + 1] === '/') {
+            while (j < raw.length && raw[j] !== '\n') j++;
+            continue;
+          }
+          if (cj === '/' && raw[j + 1] === '*') {
+            j += 2;
+            while (j < raw.length && !(raw[j] === '*' && raw[j + 1] === '/')) j++;
+            if (j < raw.length) j += 2;
+            continue;
+          }
+          break;
+        }
+        if (j < raw.length && (raw[j] === ']' || raw[j] === '}')) {
+          i++; // drop the trailing comma
+          continue;
+        }
       }
       out.push(c);
       i++;
