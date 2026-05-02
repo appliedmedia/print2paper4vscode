@@ -405,7 +405,7 @@ export const kZoomLevel = {
         //       For max: 250 → width: 4ch, for max: 999 → width: 4ch, for max: 1000 → width: 5ch
         regex: '^\\d{0,4}$', // Only 2 backslashes! Becomes data-{{ns_}}constrain_regex
         min: 50,
-        max: 250,
+        max: 300,
       },
       transform: {
         // Transforms handle their own type conversion using forceNumber
@@ -431,7 +431,7 @@ export const kZoomLevel = {
   isHidden: false,
   flyoutMenuItemIds: [] as const,
   min: 0.5,
-  max: 2.5,
+  max: 3.0,
   stepAmount: 0.1,
   menuItems: [
     { id: '0.50', displayName: '50%', value: 0.5 },
@@ -448,6 +448,7 @@ export const kZoomLevel = {
     { id: '1.50', displayName: '150%', value: 1.5 },
     { id: '2.00', displayName: '200%', value: 2.0 },
     { id: '2.50', displayName: '250%', value: 2.5 },
+    { id: '3.00', displayName: '300%', value: 3.0 },
     // fitWidth: scale page to fill window width
     // Formula: windowWidth / pageWidth (e.g., 1200/595 = 2.016 = scale up to fit)
     // Dict guaranteed valid by forceNumber (all values finite, non-zero)
