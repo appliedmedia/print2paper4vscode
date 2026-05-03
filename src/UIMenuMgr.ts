@@ -330,8 +330,16 @@ export class UIMenuMgr {
   // should highlight only when explicitly picked, not when the current numeric
   // zoom incidentally matches the computed fit ratio.
   getMenuItemIdMatchingCurrentValue(menuId: MenuId_t): string | undefined {
-    const currentValue = this.getValueOfMenuItemIdSelected(menuId);
-    if (typeof currentValue !== 'number') return undefined;
+    // Coerce numeric strings (e.g., "0.9" from text-edit input) to numbers
+    // so the fallback resolver matches items whose stored value is numeric.
+    const raw = this.getValueOfMenuItemIdSelected(menuId);
+    const currentValue =
+      typeof raw === 'number'
+        ? raw
+        : typeof raw === 'string' && raw.trim() !== ''
+          ? Number(raw)
+          : NaN;
+    if (!Number.isFinite(currentValue)) return undefined;
     const menu = this.getMenuById(menuId);
     const epsilon = 1e-6;
     const match = menu.getMenuItems().find(item => {
