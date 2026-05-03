@@ -203,13 +203,20 @@ export class VSCodeAPIs {
       return undefined;
     }
 
-    const cmdOffset = raw.lastIndexOf(`"${commandId}"`);
+    const commandQuoted = `"${commandId}"`;
+    const keyQuoted = '"key"';
+
+    const cmdOffset = raw.lastIndexOf(commandQuoted);
     if (cmdOffset < 0) return undefined;
+
     const head = raw.slice(0, cmdOffset);
-    const keyOffset = head.lastIndexOf('"key"');
+    const keyOffset = head.lastIndexOf(keyQuoted);
     if (keyOffset < 0) return undefined;
-    const m = head.slice(keyOffset).match(/"key"\s*:\s*"([^"]+)"/);
-    return m ? m[1] : undefined;
+
+    const keyDecl = head.slice(keyOffset);
+    const match = keyDecl.match(/"key"\s*:\s*"([^"]+)"/);
+    if (!match) return undefined;
+    return match[1];
   }
 
   private lookupDefaultKeybinding(commandId: string): string | undefined {
