@@ -189,11 +189,10 @@ export class VSCodeAPIs {
     return result;
   }
 
-  // Find the last `"key": "...", "command": "<commandId>"` pair in keybindings.json,
-  // also matching the `-commandId` unbind form. Treated as plain text — no JSON.parse.
-  // Returns: '' when the latest entry is an unbind (so no shortcut is displayed),
-  // the key when the latest entry is a positive bind, or undefined when no entry
-  // mentions this command (so the caller falls through to the package.json default).
+  // Find the last positive bind for `commandId` in keybindings.json by text search.
+  // The quoted command (`"<commandId>"`) skips unbind entries automatically, since
+  // their command value is `"-<commandId>"`. Returns the `key` from the last bind,
+  // or undefined when no positive bind exists (caller falls through to default).
   private lookupUserKeybinding(commandId: string): string | undefined {
     const file = this.userKeybindingsFilePath();
     if (!file || !fs.existsSync(file)) return undefined;
@@ -204,12 +203,20 @@ export class VSCodeAPIs {
       return undefined;
     }
 
-    const escapedId = commandId.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-    const re = new RegExp(`"key"\\s*:\\s*"([^"]+)"\\s*,\\s*"command"\\s*:\\s*"(-?)${escapedId}"`, 'g');
-    let last: { key: string; isUnbind: boolean } | undefined;
-    for (const m of raw.matchAll(re)) last = { key: m[1], isUnbind: m[2] === '-' };
-    if (!last) return undefined;
-    return last.isUnbind ? '' : last.key;
+    const commandQuoted = `"${commandId}"`;
+    const keyQuoted = '"key"';
+
+    const cmdOffset = raw.lastIndexOf(commandQuoted);
+    if (cmdOffset < 0) return undefined;
+
+    const head = raw.slice(0, cmdOffset);
+    const keyOffset = head.lastIndexOf(keyQuoted);
+    if (keyOffset < 0) return undefined;
+
+    const keyDecl = head.slice(keyOffset);
+    const match = keyDecl.match(/"key"\s*:\s*"([^"]+)"/);
+    if (!match) return undefined;
+    return match[1];
   }
 
   private lookupDefaultKeybinding(commandId: string): string | undefined {
