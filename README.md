@@ -405,3 +405,7 @@ The extension uses Node.js built-in test runner (`node:test`) with comprehensive
 - Verify VS Code API access to editor content
 - Test menu message handling between webview and extension
 - Check global state persistence for user preferences
+
+## Provisioning
+
+If/when this product needs a GCP project (VS Code Marketplace publisher analytics, Cloud APIs, OAuth consent), provisioning is scripted in [`appliedmedia/internal:iaas/scripts/gcp/`](https://github.com/appliedmedia/internal/tree/main/iaas/scripts/gcp). Per-product state lands at `iaas/state/gcp/print2paper4vscode.yaml`; GUI residual checklist at `iaas/manual/gcp/print2paper4vscode.md`. One `iaas-bot` service account serves every Applied Media product.

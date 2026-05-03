@@ -2,9 +2,8 @@
 
 Print or save any code file as a syntax-highlighted PDF with one keystroke. Live preview, 100+ themes, every page size you would actually use.
 
-<!-- TODO(screenshot): replace with a 1600x1000 capture of the preview panel beside a code editor -->
 <!-- NOTE: absolute URLs intentional. vsce link-rewriter mangles angle-bracket and relative forms. -->
-![Print2Paper preview panel beside a code editor](https://github.com/appliedmedia/print2paper4vscode/raw/main/images/screenshot-preview.png)
+![Print2Paper preview panel showing the zoom dropdown with 50%-300%, Fit Width, and Fit Page options](https://github.com/appliedmedia/print2paper4vscode/raw/main/assets/p2p4vsc-screenshots/p2p4vsc_screenshot_toolbar_05_zoom.png)
 
 ## Features
 
@@ -33,6 +32,38 @@ A preview panel opens beside your editor with a styled PDF of the file (or your 
 * **Markdown mode menu**: only appears for `.md` files; toggles between syntax-highlighted source and rendered HTML
 
 There is a second command, **Print: Clear State**, available from the Command Palette. Use it if persisted preview settings (page size, font, toolbar position) ever get into a bad state and you want a clean slate.
+
+## Toolbar tour
+
+Each menu in the preview toolbar gives you live, in-place control over the rendered PDF.
+
+![Print menu: Save as PDF, Print, Print Sample](https://github.com/appliedmedia/print2paper4vscode/raw/main/assets/p2p4vsc-screenshots/p2p4vsc_screenshot_toolbar_01_print.png)
+
+**Print menu** — save the rendered PDF to disk, send it directly to your default printer, or open the system print dialog for full driver control.
+
+![Page menu: Letter, A4, Legal, Tabloid, Ledger, A3, Executive, with portrait and landscape orientation](https://github.com/appliedmedia/print2paper4vscode/raw/main/assets/p2p4vsc-screenshots/p2p4vsc_screenshot_toolbar_02_page.png)
+
+**Page menu** — pick a page size (Letter, A4, Legal, Tabloid, Ledger, A3, Executive) and orientation (portrait or landscape).
+
+![Theme menu: Shiki theme picker dropdown](https://github.com/appliedmedia/print2paper4vscode/raw/main/assets/p2p4vsc-screenshots/p2p4vsc_screenshot_toolbar_03_theme.png)
+
+**Theme menu** — choose any of the 100+ bundled Shiki themes. Defaults to your active VS Code theme.
+
+![Text menu: font size from 8 px to 24 px](https://github.com/appliedmedia/print2paper4vscode/raw/main/assets/p2p4vsc-screenshots/p2p4vsc_screenshot_toolbar_04_text.png)
+
+**Text menu** — set the font size, anywhere from 8 px to 24 px.
+
+![Zoom menu: 50% to 300%, Fit Width, Fit Page](https://github.com/appliedmedia/print2paper4vscode/raw/main/assets/p2p4vsc-screenshots/p2p4vsc_screenshot_toolbar_05_zoom.png)
+
+**Zoom menu** — zoom the preview from 50% to 300%, or auto-fit the PDF to the panel width or full page.
+
+![Markdown mode menu: raw vs render toggle](https://github.com/appliedmedia/print2paper4vscode/raw/main/assets/p2p4vsc-screenshots/p2p4vsc_screenshot_toolbar_06_md.png)
+
+**Markdown mode menu** — only appears for `.md` files. Toggle between syntax-highlighted markdown source and a fully rendered HTML preview.
+
+![About menu](https://github.com/appliedmedia/print2paper4vscode/raw/main/assets/p2p4vsc-screenshots/p2p4vsc_screenshot_toolbar_07_about.png)
+
+**About menu** — version info, links to the marketplace listing, and the keyboard shortcut for the Print2Paper command.
 
 ## Configuration
 

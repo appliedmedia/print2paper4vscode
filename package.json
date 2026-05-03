@@ -70,6 +70,99 @@
         "key": "alt+p",
         "mac": "alt+p"
       }
+    ],
+    "walkthroughs": [
+      {
+        "id": "p2p4vsc.gettingStarted",
+        "title": "Get started with Print2Paper",
+        "description": "Print or save any code file as a syntax-highlighted PDF. Live preview, 100+ themes, every page size you would actually use.",
+        "steps": [
+          {
+            "id": "tryItNow",
+            "title": "Try it now",
+            "description": "Open any text file and press **Alt+P**, or [run the Print2Paper command](command:p2p4vsc.print2paper). A live preview panel opens beside your editor; this hero image shows the zoom dropdown.",
+            "media": {
+              "image": "assets/p2p4vsc-screenshots/p2p4vsc_screenshot_toolbar_05_zoom.png",
+              "altText": "Print2Paper preview panel showing the zoom dropdown with 50%-300%, Fit Width, and Fit Page options"
+            },
+            "completionEvents": [
+              "onCommand:p2p4vsc.print2paper"
+            ]
+          },
+          {
+            "id": "printMenu",
+            "title": "Print menu",
+            "description": "Save the rendered PDF to disk, send it directly to your default printer, or open the system print dialog for full driver control.",
+            "media": {
+              "image": "assets/p2p4vsc-screenshots/p2p4vsc_screenshot_toolbar_01_print.png",
+              "altText": "Print menu: Save as PDF, Print, Print Sample"
+            },
+            "completionEvents": [
+              "onStepSelected"
+            ]
+          },
+          {
+            "id": "pageMenu",
+            "title": "Page menu",
+            "description": "Pick a page size (Letter, A4, Legal, Tabloid, Ledger, A3, Executive) and orientation (portrait or landscape).",
+            "media": {
+              "image": "assets/p2p4vsc-screenshots/p2p4vsc_screenshot_toolbar_02_page.png",
+              "altText": "Page menu: page sizes and orientation"
+            },
+            "completionEvents": [
+              "onStepSelected"
+            ]
+          },
+          {
+            "id": "themeMenu",
+            "title": "Theme menu",
+            "description": "Choose any of the 100+ bundled Shiki themes. Defaults to your active VS Code theme.",
+            "media": {
+              "image": "assets/p2p4vsc-screenshots/p2p4vsc_screenshot_toolbar_03_theme.png",
+              "altText": "Theme menu: Shiki theme picker dropdown"
+            },
+            "completionEvents": [
+              "onStepSelected"
+            ]
+          },
+          {
+            "id": "textMenu",
+            "title": "Text menu",
+            "description": "Set the font size, anywhere from 8 px to 24 px.",
+            "media": {
+              "image": "assets/p2p4vsc-screenshots/p2p4vsc_screenshot_toolbar_04_text.png",
+              "altText": "Text menu: font size from 8 px to 24 px"
+            },
+            "completionEvents": [
+              "onStepSelected"
+            ]
+          },
+          {
+            "id": "markdownMode",
+            "title": "Markdown mode",
+            "description": "Open a `.md` file to see this menu. Toggle between syntax-highlighted markdown source and a fully rendered HTML preview.",
+            "media": {
+              "image": "assets/p2p4vsc-screenshots/p2p4vsc_screenshot_toolbar_06_md.png",
+              "altText": "Markdown mode menu: raw vs render toggle"
+            },
+            "completionEvents": [
+              "onStepSelected"
+            ]
+          },
+          {
+            "id": "aboutMenu",
+            "title": "About",
+            "description": "Version info, links to the marketplace listing, and the keyboard shortcut for the Print2Paper command.",
+            "media": {
+              "image": "assets/p2p4vsc-screenshots/p2p4vsc_screenshot_toolbar_07_about.png",
+              "altText": "About menu"
+            },
+            "completionEvents": [
+              "onStepSelected"
+            ]
+          }
+        ]
+      }
     ]
   },
   "scripts": {

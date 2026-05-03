@@ -17,6 +17,9 @@ docs/**
 archives/**
 pocs/**
 assets/**
+# Walkthrough images must ship inside the VSIX (contributes.walkthroughs
+# references local paths relative to package.json).
+!assets/p2p4vsc-screenshots/**
 
 # Images: ship only the marketplace icon. Exclude badges and other dev SVGs.
 images/**
