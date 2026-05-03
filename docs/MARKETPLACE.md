@@ -41,7 +41,7 @@ Each menu in the preview toolbar gives you live, in-place control over the rende
 
 **Print menu** — save the rendered PDF to disk, send it directly to your default printer, or open the system print dialog for full driver control.
 
-![Page menu: Letter, A4, A5, JIS B5, with portrait and landscape orientation](https://github.com/appliedmedia/print2paper4vscode/raw/main/assets/p2p4vsc-screenshots/p2p4vsc_screenshot_toolbar_02_page.png)
+![Page menu: Letter, A4, Legal, Tabloid, Ledger, A3, Executive, with portrait and landscape orientation](https://github.com/appliedmedia/print2paper4vscode/raw/main/assets/p2p4vsc-screenshots/p2p4vsc_screenshot_toolbar_02_page.png)
 
 **Page menu** — pick a page size (Letter, A4, Legal, Tabloid, Ledger, A3, Executive) and orientation (portrait or landscape).
 
