@@ -65,6 +65,7 @@ uimenu_css: |
     display: flex;
     align-items: center;
     justify-content: flex-end;
+    gap: 0.5ch;
   }
 
   .{{ns_}}menuItem .gutter-before {

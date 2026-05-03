@@ -189,40 +189,27 @@ export class VSCodeAPIs {
     return result;
   }
 
-  // Resolve the user's effective binding for `commandId` from keybindings.json.
-  //
-  // VS Code processes keybindings.json top-to-bottom with later entries overriding
-  // earlier ones (per VS Code docs: "rules are evaluated from bottom to top"), and
-  // the Keyboard Shortcuts UI appends new entries at the bottom of the array. So
-  // the bottom-most entry whose `command` exactly matches `commandId` is what's
-  // authoritative for display.
-  //
-  // We deliberately ignore "-commandId" unbind entries: matching only the positive
-  // command string means a swap pattern (bind new key + unbind default) shows the
-  // new key. The lone-unbind case (user removed the default with no rebind) falls
-  // through to the package.json default, which is acceptable display behavior.
-  //
-  // Returns undefined if no entry exists; caller falls back to the package.json default.
+  // Find the last `"key": "...", "command": "<commandId>"` pair in keybindings.json,
+  // also matching the `-commandId` unbind form. Treated as plain text — no JSON.parse.
+  // Returns: '' when the latest entry is an unbind (so no shortcut is displayed),
+  // the key when the latest entry is a positive bind, or undefined when no entry
+  // mentions this command (so the caller falls through to the package.json default).
   private lookupUserKeybinding(commandId: string): string | undefined {
     const file = this.userKeybindingsFilePath();
     if (!file || !fs.existsSync(file)) return undefined;
-    let data: unknown;
+    let raw: string;
     try {
-      const raw = fs.readFileSync(file, 'utf8');
-      // keybindings.json is JSONC; strip comments with a string-aware pass so
-      // `//` or `/*` inside string literals (e.g. `"args": "// foo"`) survive.
-      const stripped = this.stripJsonComments(raw);
-      data = JSON.parse(stripped);
+      raw = fs.readFileSync(file, 'utf8');
     } catch {
       return undefined;
     }
-    if (!Array.isArray(data)) return undefined;
 
-    const entries = data as Array<{ command?: string; key?: string }>;
-    const latestCommandKeyAssignment = entries.findLast(
-      e => e?.command === commandId && typeof e.key === 'string'
-    );
-    return latestCommandKeyAssignment?.key;
+    const escapedId = commandId.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const re = new RegExp(`"key"\\s*:\\s*"([^"]+)"\\s*,\\s*"command"\\s*:\\s*"(-?)${escapedId}"`, 'g');
+    let last: { key: string; isUnbind: boolean } | undefined;
+    for (const m of raw.matchAll(re)) last = { key: m[1], isUnbind: m[2] === '-' };
+    if (!last) return undefined;
+    return last.isUnbind ? '' : last.key;
   }
 
   private lookupDefaultKeybinding(commandId: string): string | undefined {
@@ -242,49 +229,6 @@ export class VSCodeAPIs {
       }
     }
     return this._defaultKeybindings.get(commandId);
-  }
-
-  // Strip // and /* */ comments from JSONC, leaving comments inside string
-  // literals intact. Replaces stripped comment characters with spaces so
-  // JSON.parse line/column numbers stay aligned with the source file.
-  private stripJsonComments(raw: string): string {
-    const out: string[] = [];
-    let i = 0;
-    let inString = false;
-    while (i < raw.length) {
-      const c = raw[i];
-      const next = raw[i + 1];
-      if (inString) {
-        out.push(c);
-        if (c === '\\' && i + 1 < raw.length) {
-          out.push(raw[i + 1]);
-          i += 2;
-          continue;
-        }
-        if (c === '"') inString = false;
-        i++;
-        continue;
-      }
-      if (c === '"') {
-        inString = true;
-        out.push(c);
-        i++;
-        continue;
-      }
-      if (c === '/' && next === '/') {
-        while (i < raw.length && raw[i] !== '\n') i++;
-        continue;
-      }
-      if (c === '/' && next === '*') {
-        i += 2;
-        while (i < raw.length && !(raw[i] === '*' && raw[i + 1] === '/')) i++;
-        if (i < raw.length) i += 2;
-        continue;
-      }
-      out.push(c);
-      i++;
-    }
-    return out.join('');
   }
 
   private userKeybindingsFilePath(): string | undefined {
@@ -491,6 +435,7 @@ export class VSCodeAPIs {
           panel.title = title;
           const htmlWithURIs = this.fn.os.htmlSrcPathToURI({ html, webviewPanelId: existingPanelId });
           panel.webview.html = htmlWithURIs;
+          panel.reveal(undefined, false);
           dx.done();
           return existingPanelId;
         } catch {

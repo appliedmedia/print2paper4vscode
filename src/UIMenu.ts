@@ -94,6 +94,7 @@ export class UIMenu {
       'utils.templateDictReplace',
       'utils.htmlEscape',
       'uimenumgr.getValueOfMenuItemIdSelected',
+      'uimenumgr.getMenuItemIdMatchingCurrentValue',
       'uimenumgr.getMenuById',
       'uimenumgr.getIsHiddenOfMenuId',
       'uimenumgr.getShortcutOfMenuItemIdForMenuId'
@@ -199,6 +200,17 @@ export class UIMenu {
     let menuItemId = this.fn.persist.get(this._id) || '';
     if (!menuItemId) {
       menuItemId = await this.getDefaultItemId();
+    }
+    // If the persisted id does not directly correspond to a static menu item
+    // (e.g., the zoom +/- button persists the menu-id sentinel, or a text-edit
+    // transform persists "0.9" while the matching item id is "0.90"), fall
+    // back to a value-based lookup so the dropdown still highlights the
+    // matching item when the current numeric value lines up.
+    const items = this.getMenuItems();
+    const directMatch = items.some(item => item.id === menuItemId);
+    if (!directMatch) {
+      const resolved = this.fn.uimenumgr.getMenuItemIdMatchingCurrentValue(this._id);
+      if (resolved) return resolved;
     }
     return String(menuItemId);
   }
