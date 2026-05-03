@@ -189,9 +189,11 @@ export class VSCodeAPIs {
     return result;
   }
 
-  // Find the last `"key": "...", "command": "<commandId>"` pair in keybindings.json.
-  // Treated as plain text — no JSON.parse — so JSONC quirks don't matter. The
-  // leading `"` in the command pattern excludes `-commandId` unbind entries.
+  // Find the last `"key": "...", "command": "<commandId>"` pair in keybindings.json,
+  // also matching the `-commandId` unbind form. Treated as plain text — no JSON.parse.
+  // Returns: '' when the latest entry is an unbind (so no shortcut is displayed),
+  // the key when the latest entry is a positive bind, or undefined when no entry
+  // mentions this command (so the caller falls through to the package.json default).
   private lookupUserKeybinding(commandId: string): string | undefined {
     const file = this.userKeybindingsFilePath();
     if (!file || !fs.existsSync(file)) return undefined;
@@ -203,10 +205,11 @@ export class VSCodeAPIs {
     }
 
     const escapedId = commandId.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-    const re = new RegExp(`"key"\\s*:\\s*"([^"]+)"\\s*,\\s*"command"\\s*:\\s*"${escapedId}"`, 'g');
-    let lastKey: string | undefined;
-    for (const m of raw.matchAll(re)) lastKey = m[1];
-    return lastKey;
+    const re = new RegExp(`"key"\\s*:\\s*"([^"]+)"\\s*,\\s*"command"\\s*:\\s*"(-?)${escapedId}"`, 'g');
+    let last: { key: string; isUnbind: boolean } | undefined;
+    for (const m of raw.matchAll(re)) last = { key: m[1], isUnbind: m[2] === '-' };
+    if (!last) return undefined;
+    return last.isUnbind ? '' : last.key;
   }
 
   private lookupDefaultKeybinding(commandId: string): string | undefined {
