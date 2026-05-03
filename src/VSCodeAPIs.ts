@@ -189,13 +189,9 @@ export class VSCodeAPIs {
     return result;
   }
 
-  // Find the latest `"command": "<commandId>"` entry in keybindings.json and
-  // return the `"key"` field from the same `{...}` object.
-  //
-  // Treated as plain text — no JSON.parse — so JSONC quirks (trailing commas,
-  // comments) don't matter. Splits on `}` to separate entries, filters to ones
-  // matching the exact command (the regex's leading `"` won't match the `-`
-  // unbind form, so swap patterns naturally pick up the new key).
+  // Find the last `"key": "...", "command": "<commandId>"` pair in keybindings.json.
+  // Treated as plain text — no JSON.parse — so JSONC quirks don't matter. The
+  // leading `"` in the command pattern excludes `-commandId` unbind entries.
   private lookupUserKeybinding(commandId: string): string | undefined {
     const file = this.userKeybindingsFilePath();
     if (!file || !fs.existsSync(file)) return undefined;
@@ -207,14 +203,9 @@ export class VSCodeAPIs {
     }
 
     const escapedId = commandId.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-    const cmdRe = new RegExp(`"command"\\s*:\\s*"${escapedId}"`);
-    const keyRe = /"key"\s*:\s*"([^"]+)"/;
+    const re = new RegExp(`"key"\\s*:\\s*"([^"]+)"\\s*,\\s*"command"\\s*:\\s*"${escapedId}"`, 'g');
     let lastKey: string | undefined;
-    for (const block of raw.split('}')) {
-      if (!cmdRe.test(block)) continue;
-      const m = keyRe.exec(block);
-      if (m) lastKey = m[1];
-    }
+    for (const m of raw.matchAll(re)) lastKey = m[1];
     return lastKey;
   }
 
