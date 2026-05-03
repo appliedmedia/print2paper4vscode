@@ -189,43 +189,33 @@ export class VSCodeAPIs {
     return result;
   }
 
-  // Resolve the user's effective binding for `commandId` from keybindings.json.
+  // Find the latest `"command": "<commandId>"` entry in keybindings.json and
+  // return the `"key"` field from the same `{...}` object.
   //
-  // VS Code processes keybindings.json top-to-bottom with later entries overriding
-  // earlier ones (per VS Code docs: "rules are evaluated from bottom to top"), and
-  // the Keyboard Shortcuts UI appends new entries at the bottom of the array. So
-  // the bottom-most entry whose `command` exactly matches `commandId` is what's
-  // authoritative for display.
-  //
-  // We deliberately ignore "-commandId" unbind entries: matching only the positive
-  // command string means a swap pattern (bind new key + unbind default) shows the
-  // new key. The lone-unbind case (user removed the default with no rebind) falls
-  // through to the package.json default, which is acceptable display behavior.
-  //
-  // Returns undefined if no entry exists; caller falls back to the package.json default.
+  // Treated as plain text — no JSON.parse — so JSONC quirks (trailing commas,
+  // comments) don't matter. Splits on `}` to separate entries, filters to ones
+  // matching the exact command (the regex's leading `"` won't match the `-`
+  // unbind form, so swap patterns naturally pick up the new key).
   private lookupUserKeybinding(commandId: string): string | undefined {
     const file = this.userKeybindingsFilePath();
     if (!file || !fs.existsSync(file)) return undefined;
-    let data: unknown;
+    let raw: string;
     try {
-      const raw = fs.readFileSync(file, 'utf8');
-      // keybindings.json is JSONC: strip comments AND trailing commas before
-      // parsing. JSON.parse rejects trailing commas, but VS Code's keybinding
-      // editor (and Cursor's) writes them after every property, so without
-      // this we fail to parse and fall through to the package.json default —
-      // making the About menu shortcut appear to never update.
-      const stripped = this.stripJsoncToJson(raw);
-      data = JSON.parse(stripped);
+      raw = fs.readFileSync(file, 'utf8');
     } catch {
       return undefined;
     }
-    if (!Array.isArray(data)) return undefined;
 
-    const entries = data as Array<{ command?: string; key?: string }>;
-    const latestCommandKeyAssignment = entries.findLast(
-      e => e?.command === commandId && typeof e.key === 'string'
-    );
-    return latestCommandKeyAssignment?.key;
+    const escapedId = commandId.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const cmdRe = new RegExp(`"command"\\s*:\\s*"${escapedId}"`);
+    const keyRe = /"key"\s*:\s*"([^"]+)"/;
+    let lastKey: string | undefined;
+    for (const block of raw.split('}')) {
+      if (!cmdRe.test(block)) continue;
+      const m = keyRe.exec(block);
+      if (m) lastKey = m[1];
+    }
+    return lastKey;
   }
 
   private lookupDefaultKeybinding(commandId: string): string | undefined {
@@ -245,74 +235,6 @@ export class VSCodeAPIs {
       }
     }
     return this._defaultKeybindings.get(commandId);
-  }
-
-  // Convert JSONC (the format keybindings.json uses) to strict JSON: drop //
-  // and /* */ comments and drop trailing commas before ] or }. String-aware
-  // pass so `//`, `/*`, or `,` inside string literals survive.
-  private stripJsoncToJson(raw: string): string {
-    const out: string[] = [];
-    let i = 0;
-    let inString = false;
-    while (i < raw.length) {
-      const c = raw[i];
-      const next = raw[i + 1];
-      if (inString) {
-        out.push(c);
-        if (c === '\\' && i + 1 < raw.length) {
-          out.push(raw[i + 1]);
-          i += 2;
-          continue;
-        }
-        if (c === '"') inString = false;
-        i++;
-        continue;
-      }
-      if (c === '"') {
-        inString = true;
-        out.push(c);
-        i++;
-        continue;
-      }
-      if (c === '/' && next === '/') {
-        while (i < raw.length && raw[i] !== '\n') i++;
-        continue;
-      }
-      if (c === '/' && next === '*') {
-        i += 2;
-        while (i < raw.length && !(raw[i] === '*' && raw[i + 1] === '/')) i++;
-        if (i < raw.length) i += 2;
-        continue;
-      }
-      if (c === ',') {
-        // Look ahead past whitespace + comments for `]` or `}` — if found,
-        // this comma is a trailing comma that JSON.parse would reject. Drop
-        // it; later iterations will re-process the whitespace and emit it.
-        let j = i + 1;
-        while (j < raw.length) {
-          const cj = raw[j];
-          if (cj === ' ' || cj === '\t' || cj === '\n' || cj === '\r') { j++; continue; }
-          if (cj === '/' && raw[j + 1] === '/') {
-            while (j < raw.length && raw[j] !== '\n') j++;
-            continue;
-          }
-          if (cj === '/' && raw[j + 1] === '*') {
-            j += 2;
-            while (j < raw.length && !(raw[j] === '*' && raw[j + 1] === '/')) j++;
-            if (j < raw.length) j += 2;
-            continue;
-          }
-          break;
-        }
-        if (j < raw.length && (raw[j] === ']' || raw[j] === '}')) {
-          i++; // drop the trailing comma
-          continue;
-        }
-      }
-      out.push(c);
-      i++;
-    }
-    return out.join('');
   }
 
   private userKeybindingsFilePath(): string | undefined {
