@@ -2,18 +2,29 @@
 
 **Status:** TODO
 **Created:** 2026-04-01
-**Updated:** 2026-05-01
+**Updated:** 2026-05-04
 **Scope:** All active and planned work for the extension
 
 ---
 
-## Current State (updated 2026-05-01)
+## Current State (updated 2026-05-04)
 
-* **Main branch:** ~95% statement coverage (per repo CHANGELOG); 349 unit tests passing (Gherkin scenarios from coverage replay PR #109; 4 skipped). TS target/lib bumped to ES2023 via PR #116 (2026-05-01)
+* **Main branch:** ~95% statement coverage (per repo CHANGELOG); 349 unit tests, 345 passing, 4 skipped (Gherkin scenarios from coverage replay PR #109). TS target/lib bumped to ES2023 via PR #116 (2026-05-01). HEAD: `4c012ff`
 * **Build:** Compiles clean, esbuild bundles to `dist/extension.js`; `.vscodeignore` excludes `.claude/` + `.cursor/`; `*.vsix` no longer tracked in git
-* **Published:** No: not yet on VS Code Marketplace. MarketplacePublishImpl Lane C is unblocked. DocsRefresh Lane E verify completed 2026-05-01: VSIX integrity confirmed, marketplace docs ship correctly via flags, broken `docs/AGENTS.md` references removed
+* **Published:** No: not yet on VS Code Marketplace. MarketplacePublishImpl Lane C is the only remaining gate; all code and docs prerequisites are merged
 * **Platform:** macOS / Windows (PR #112) / Linux (PRs #105 + #110) all shipped
-* **Docs:** Marketplace-only README at `docs/MARKETPLACE.md` and changelog at `docs/MARKETPLACE_CHANGELOG.md` (both use bare-URL form per vsce link-rewriter constraint); repo `README.md` and `CHANGELOG.md` are dev-facing; `CONTRIBUTING.md` documents `--readme-path` / `--changelog-path` flags. Walkthrough Get Started panel (DocsRefresh Lane D) still pending; Lane E verify completed 2026-05-01
+* **Docs:** Marketplace-only README at `docs/MARKETPLACE.md` and changelog at `docs/MARKETPLACE_CHANGELOG.md` (both use bare-URL form per vsce link-rewriter constraint); repo `README.md` and `CHANGELOG.md` are dev-facing; `CONTRIBUTING.md` documents `--readme-path` / `--changelog-path` flags. Walkthrough Get Started panel shipped via PR #119 (7 steps, one per toolbar menu); Lane E verify completed 2026-05-01 via PR #117
+
+## Recent merges since 2026-05-01
+
+* **PR #117** (2026-05-01, `f97ce45`): DocsRefresh Lane E verify; corrected `.vscodeignore` exceptions, fixed broken `docs/AGENTS.md` references, confirmed VSIX integrity (8 files, 2 MB)
+* **PR #118** (zoom-and-print-fixes, `a90e32a`): added 300% zoom level + clamp to 3.0; refocus existing webview panel on Alt+P reuse; UIMenu gutter-after spacing; lookupUserKeybinding refactor (single-regex text-grep replacing JSON.parse, with trailing-comma tolerance)
+* **PR #119** (2026-05-03, `ce42f16`): marketplace screenshots + walkthrough; 7 toolbar PNGs in `assets/p2p4vsc-screenshots/`; `contributes.walkthroughs` block in `.config/template.package.json`; MARKETPLACE.md "Toolbar tour" section + real hero image. Closes DocsRefresh Lane D
+* **PR #120** (2026-05-03, `4c012ff`): About-menu shortcut detection when user rebinds + unbinds default; lookupUserKeybinding split into one-step-per-line form for readability
+
+## Queued out-of-band quality work (not on a roadmap stream)
+
+* [DynamicMenuItemValue](<2026-05-03_plan_todo_DynamicMenuItemValue.md>): lazy on-menu-open refresh of menu item values that drift between toolbar render and the user looking. Today the only producer is the About > Shortcut row (PR #120 made the resolver correct on every call but the toolbar still bakes the value at render time). Plan exists, no code yet, no branch yet. Not a publish blocker
 
 ---
 
@@ -146,7 +157,7 @@ Goal: Fix critical bugs and get the extension on the VS Code Marketplace.
 | --- | --- |
 | **Wave orchestrator** | `2026-04-26_plan_done_DocsRefresh_Orch.md` |
 | **Branch** | `feature/docs-refresh` (merged 2026-04-28) |
-| **Status** | Lanes A/B/C done; Lanes D/E remain |
+| **Status** | All lanes done. A/B/C via PR #115; E via PR #117 (2026-05-01); D via PR #119 (2026-05-03) with redesigned 7-step shape |
 
 **Why this exists:** Without it, `vsce publish` would have shipped the contributor-facing repo `README.md` as the marketplace listing (broken `docs/AGENTS.md` reference, `apt-get install nodejs` instructions, wrong keybinding claims). Lane C of Stream B was paused for one wave of docs work to avoid a permanent first-impression problem on the marketplace.
 
@@ -159,7 +170,7 @@ Goal: Fix critical bugs and get the extension on the VS Code Marketplace.
 
 **What remains:**
 
-* [Lane D](<2026-04-26_plan_todo_DocsRefresh_LaneD-Walkthrough.md>): `contributes.walkthroughs` + `walkthroughs/*.md` step files for the first-install Get Started panel. Polish; can ship as v1.0.1 or later.
+* Nothing. [Lane D](<2026-04-26_plan_done_DocsRefresh_LaneD-Walkthrough.md>) shipped via PR #119 (2026-05-03) with a redesigned 7-step shape (one step per toolbar menu, PNG screenshots inline in `.config/template.package.json` instead of the original 4-step `walkthroughs/*.md` design). EDH auto-open smoke test is owed by acoven on first marketplace install (deferred to MarketplacePublish Lane C).
 
 **Lane E verify (done 2026-05-01):**
 
