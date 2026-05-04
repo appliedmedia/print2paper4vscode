@@ -48,3 +48,15 @@ Feature: UIMenuMgr Coverage Gaps Extended
     And menus are created
     When I get value for zoomLevel fitWidth item
     Then the zoom value result should be numeric
+
+  Scenario: getDynamicValueForMenuItemIdOfMenuId routes function-typed shortcut to the shortcut resolver
+    Given a new Print2Paper application
+    And menus are created
+    When I get dynamic value for menuId "about" menuItemId "shortcut"
+    Then the dynamic value result should be a string
+
+  Scenario: getDynamicValueForMenuItemIdOfMenuId returns undefined for an item with no function-typed field
+    Given a new Print2Paper application
+    And menus are created
+    When I get dynamic value for menuId "about" menuItemId "about"
+    Then the resolved value should be undefined

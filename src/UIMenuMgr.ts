@@ -448,6 +448,38 @@ export class UIMenuMgr {
     return shortcut ?? '';
   }
 
+  /**
+   * Generic dispatcher for items marked dynamic at toolbar-render time.
+   *
+   * Looks up the menu item, finds the first function-typed dynamic field,
+   * and routes through the matching per-field public resolver so first-paint
+   * and on-open refresh share the same execution path. Today only `shortcut`
+   * qualifies. Returns undefined and logs if the item carries no function-typed
+   * field — the marker emission in UIMenu.getItemHTML should never produce
+   * such a request, so undefined here signals a render/dispatch divergence.
+   */
+  getDynamicValueForMenuItemIdOfMenuId(args: {
+    menuId: MenuId_t;
+    menuItemId: MenuItemId_t;
+  }): string | number | boolean | undefined {
+    const { menuId, menuItemId } = args;
+    const menu = this.getMenuById(menuId);
+    const menuItem = menu.getMenuItems().find(item => item.id === menuItemId);
+    if (!menuItem) {
+      this.dx.error(
+        `getDynamicValueForMenuItemIdOfMenuId: menu item not found ${menuId}.${menuItemId}`
+      );
+      return undefined;
+    }
+    if (typeof menuItem.shortcut === 'function') {
+      return this.getShortcutOfMenuItemIdForMenuId({ menuId, menuItemId });
+    }
+    this.dx.error(
+      `getDynamicValueForMenuItemIdOfMenuId: no function-typed dynamic field on ${menuId}.${menuItemId}`
+    );
+    return undefined;
+  }
+
   // Shared core for the three resolver wrappers (shortcut, isHidden, value):
   // build the validated dict, run fn inside try/catch, return result or fallback.
   private runMenuFxn<T>(args: {

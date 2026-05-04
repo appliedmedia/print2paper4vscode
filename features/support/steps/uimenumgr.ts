@@ -67,6 +67,17 @@ When('a value resolver throws an error', (t: TestCaseContext) => {
   );
 });
 
+When(
+  'I get dynamic value for menuId {string} menuItemId {string}',
+  (t: TestCaseContext, menuId: string, menuItemId: string) => {
+    const world = t.world as P2PWorld;
+    world.result = world.app.uimenumgr.getDynamicValueForMenuItemIdOfMenuId({
+      menuId: menuId as any,
+      menuItemId: menuItemId as any,
+    });
+  }
+);
+
 When('I get the menu JavaScript', (t: TestCaseContext) => {
   const world = t.world as P2PWorld;
   world.result = world.app.uimenumgr.getUIMenus_JS();
@@ -169,6 +180,15 @@ Then('the resolved value should be undefined', (t: TestCaseContext) => {
 Then('the result should be empty string', (t: TestCaseContext) => {
   const world = t.world as P2PWorld;
   assert.strictEqual(world.result, '', 'Should return empty string');
+});
+
+Then('the dynamic value result should be a string', (t: TestCaseContext) => {
+  const world = t.world as P2PWorld;
+  assert.strictEqual(
+    typeof world.result,
+    'string',
+    `Expected string, got ${typeof world.result}`
+  );
 });
 
 Then(
