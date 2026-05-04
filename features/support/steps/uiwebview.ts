@@ -9,12 +9,14 @@ const state = {
   menuItemSelectedCalled: false,
   menuItemSelectedArgs: null as any,
   persistedPosition: null as number | null,
+  dynamicValuePost: null as any,
 };
 
 Before(() => {
   state.menuItemSelectedCalled = false;
   state.menuItemSelectedArgs = null;
   state.persistedPosition = null;
+  state.dynamicValuePost = null;
 });
 
 // Helper: create a mock docInfo that passes initial pdfDoc check
@@ -72,6 +74,18 @@ Given('handleMenuItemSelected on UIMenuMgr is mocked', (t: TestCaseContext) => {
   };
 });
 
+Given('UIWebView has a stub panel and mocked dynamic-value dispatcher', (t: TestCaseContext) => {
+  const world = t.world as P2PWorld;
+  const uiwebview = world.app.uiwebview;
+  state.dynamicValuePost = null;
+  (uiwebview as any).panelId = 'stub-panel';
+  (uiwebview as any).fn.uimenumgr.getDynamicValueForMenuItemIdOfMenuId = (_args: any) => 'Alt+P';
+  (uiwebview as any).fn.vscodeapis.postMessageToWebviewPanel = async (args: any) => {
+    state.dynamicValuePost = args;
+    return true;
+  };
+});
+
 // -- When steps ----------------------------------------------------------
 
 When('I display the PDF panel', async (t: TestCaseContext) => {
@@ -119,6 +133,19 @@ When(
   }
 );
 
+When(
+  'I send a getDynamicValue message for menuId {string} menuItemId {string}',
+  async (t: TestCaseContext, menuId: string, menuItemId: string) => {
+    const world = t.world as P2PWorld;
+    const uiwebview = world.app.uiwebview;
+    await (uiwebview as any).handleGetDynamicValue({
+      type: 'getDynamicValue',
+      menuId,
+      menuItemId,
+    });
+  }
+);
+
 // -- Then steps ----------------------------------------------------------
 
 Then(
@@ -134,3 +161,15 @@ Then('the menu selection should be forwarded', (t: TestCaseContext) => {
   assert.strictEqual(state.menuItemSelectedArgs.menuId, 'testMenu');
   assert.strictEqual(state.menuItemSelectedArgs.menuItemId, 'testItem');
 });
+
+Then(
+  'the postMessageToWebviewPanel should have been called with the resolved value',
+  (t: TestCaseContext) => {
+    assert.ok(state.dynamicValuePost, 'postMessageToWebviewPanel should have been called');
+    assert.strictEqual(state.dynamicValuePost.panelId, 'stub-panel');
+    assert.strictEqual(state.dynamicValuePost.message.type, 'dynamicValue');
+    assert.strictEqual(state.dynamicValuePost.message.menuId, 'about');
+    assert.strictEqual(state.dynamicValuePost.message.menuItemId, 'shortcut');
+    assert.strictEqual(state.dynamicValuePost.message.value, 'Alt+P');
+  }
+);

@@ -34,3 +34,9 @@ Feature: UIWebView Validation and Message Handling
     Given a new Print2Paper application
     When I send a dx message with content "test diagnostic"
     Then no errors should occur
+
+  Scenario: handleGetDynamicValue routes resolved value back to the panel
+    Given a new Print2Paper application
+    And UIWebView has a stub panel and mocked dynamic-value dispatcher
+    When I send a getDynamicValue message for menuId "about" menuItemId "shortcut"
+    Then the postMessageToWebviewPanel should have been called with the resolved value
