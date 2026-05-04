@@ -292,7 +292,7 @@ uimenu_generic_handlers: |
     }
     
     const isOpen = menuItems.style.display === 'block';
-    
+
     if (isOpen) {
       menuItems.style.display = 'none';
       btn.setAttribute('aria-expanded', 'false');
@@ -300,7 +300,26 @@ uimenu_generic_handlers: |
       closeAllMenus();
       menuItems.style.display = 'block';
       btn.setAttribute('aria-expanded', 'true');
+      requestDynamicValuesIn(menuItems);
     }
+  }
+
+  /* Ask the extension for a fresh value on every menu-item that was marked
+     dynamic at toolbar render time. The dispatcher returns synchronously
+     (round-trip in postMessage); the response handler below patches DOM. */
+  function requestDynamicValuesIn(container) {
+    if (!container || !window.vscode) return;
+    const marked = container.querySelectorAll('[data-{{ns_}}dynamicMenuItemId]');
+    marked.forEach(el => {
+      const menuId = el.getAttribute('data-{{ns_}}dynamicMenuId');
+      const menuItemId = el.getAttribute('data-{{ns_}}dynamicMenuItemId');
+      if (!menuId || !menuItemId) return;
+      window.vscode.postMessage({
+        type: 'getDynamicValue',
+        menuId,
+        menuItemId,
+      });
+    });
   }
 
   function findFlyoutMenu(itemEl, flyoutMenuId) {
@@ -404,20 +423,39 @@ uimenu_generic_handlers: |
 
   document.addEventListener('click', (e) => {
     if (!e || !e.target || !e.target.closest) return;
-    
+
     const btn = e.target.closest('.{{ns_}}menuBtn');
     if (btn) {
       handleMenuButtonClick(e);
       return;
     }
-    
+
     const itemEl = e.target.closest('.{{ns_}}menuItem');
     if (itemEl) {
       handleMenuItemClick(e, itemEl);
       return;
     }
-    
+
     closeAllMenus();
+  });
+
+  /* Patch dynamic-marked items when the extension answers a getDynamicValue
+     request. The element is located by the dynamicMenuId/dynamicMenuItemId
+     pair on its data attrs. Empty-string / null / undefined collapse the
+     span to mirror the at-render unbound-key behavior. */
+  window.addEventListener('message', (event) => {
+    const msg = event && event.data;
+    if (!msg || msg.type !== 'dynamicValue') return;
+    const selector =
+      '[data-{{ns_}}dynamicMenuId="' + msg.menuId +
+      '"][data-{{ns_}}dynamicMenuItemId="' + msg.menuItemId + '"]';
+    const el = document.querySelector(selector);
+    if (!el) return;
+    if (msg.value === '' || msg.value === undefined || msg.value === null) {
+      el.remove();
+    } else {
+      el.textContent = String(msg.value);
+    }
   });
 
   function handleTextEditKeydown(e) {
