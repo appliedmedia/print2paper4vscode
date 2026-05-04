@@ -349,4 +349,73 @@ describe('UIMenu Icon Slot Triad', () => {
       assert.strictEqual(menu.displayName, 'Test Menu');
     });
   });
+
+  describe('Dynamic shortcut marker', () => {
+    it('emits dynamicMenuId/dynamicMenuItemId data attrs when shortcut is function-typed', async () => {
+      const items: UIMenuItem_t[] = [
+        {
+          id: 'shortcut',
+          displayName: 'Shortcut',
+          iconSlotTriad: { begin: '', main: '', end: '' },
+          shortcut: () => 'Alt+P',
+        },
+      ];
+      const menuIcon: iconSlotTriad_t = { begin: '', main: '', end: '' };
+      const menu = createTestMenu(menuIcon, items);
+      app.uimenumgr.addMenu(menu);
+      const html = await menu.getHTML();
+
+      assert.ok(
+        html.includes('data-' + app.ns_ + 'dynamicMenuId="theme"'),
+        'expected dynamicMenuId data attr on the menu-item-shortcut span'
+      );
+      assert.ok(
+        html.includes('data-' + app.ns_ + 'dynamicMenuItemId="shortcut"'),
+        'expected dynamicMenuItemId data attr on the menu-item-shortcut span'
+      );
+      assert.ok(html.includes('Alt+P'), 'expected resolved-at-render value to be present');
+    });
+
+    it('does not emit marker attrs when shortcut is a static string', async () => {
+      const items: UIMenuItem_t[] = [
+        {
+          id: 'shortcut',
+          displayName: 'Shortcut',
+          iconSlotTriad: { begin: '', main: '', end: '' },
+          shortcut: 'Alt+P',
+        },
+      ];
+      const menuIcon: iconSlotTriad_t = { begin: '', main: '', end: '' };
+      const menu = createTestMenu(menuIcon, items);
+      app.uimenumgr.addMenu(menu);
+      const html = await menu.getHTML();
+
+      assert.ok(html.includes('Alt+P'), 'expected static shortcut text to be present');
+      assert.ok(!html.includes('dynamicMenuId'), 'expected no dynamicMenuId attr on static shortcut');
+      assert.ok(
+        !html.includes('dynamicMenuItemId'),
+        'expected no dynamicMenuItemId attr on static shortcut'
+      );
+    });
+
+    it('does not emit marker attrs when shortcut is undefined', async () => {
+      const items: UIMenuItem_t[] = [
+        {
+          id: 'shortcut',
+          displayName: 'Shortcut',
+          iconSlotTriad: { begin: '', main: '', end: '' },
+        },
+      ];
+      const menuIcon: iconSlotTriad_t = { begin: '', main: '', end: '' };
+      const menu = createTestMenu(menuIcon, items);
+      app.uimenumgr.addMenu(menu);
+      const html = await menu.getHTML();
+
+      assert.ok(!html.includes('dynamicMenuId'), 'expected no dynamicMenuId attr when shortcut is undefined');
+      assert.ok(
+        !html.includes('dynamicMenuItemId'),
+        'expected no dynamicMenuItemId attr when shortcut is undefined'
+      );
+    });
+  });
 });

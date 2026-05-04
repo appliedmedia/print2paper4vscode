@@ -272,12 +272,20 @@ export class UIMenu {
     const isIconOnly =
       !iconSlotWithPrefixSuffix && !resolvedShortcut && codePointCount > 0 && codePointCount <= 2;
 
+    // When shortcut is function-typed, mark the span so the webview can request
+    // a fresh value on menu open (the resolver runs again at first paint, but
+    // the static HTML otherwise stays frozen until a full toolbar redraw).
+    const dynamicAttrs =
+      typeof item.shortcut === 'function'
+        ? ` data-{{ns_}}dynamicMenuId="${this._id}" data-{{ns_}}dynamicMenuItemId="${item.id}"`
+        : '';
+
     // gutter-after: external-link SVG, shortcut, or empty (▶ for flyouts comes
     // from a CSS ::after rule). Mutually exclusive in current menus.
     const contentGutterAfter = isExternalLink
       ? this.yaml().icon_external_link_svg
       : resolvedShortcut
-        ? `<span class="menu-item-shortcut">${resolvedShortcut}</span>`
+        ? `<span class="menu-item-shortcut"${dynamicAttrs}>${resolvedShortcut}</span>`
         : '';
 
     // Individual items only need these classes
