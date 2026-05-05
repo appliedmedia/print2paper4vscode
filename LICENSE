@@ -1,12 +1,12 @@
 # License: Code Transparency v1
 
-Copyright © 2025...2026-01-01.001:@acoven and Applied Media. All Rights Reserved.
+Copyright © 2025...2026-01-11.001:a@cov.in and Applied Media. All Rights Reserved.
 
 ## Scope
-1. Print2Paper4VSCode VSCode Marketplace Extension [https://p2p4vsc.info] ("Extension").
-2. Accompanying code and modifications in its open source GitHub Repo [https://p2p4vsc.dev] ("Code", "Repo").
-3. Requests/defects reported as Issues in GitHub [https://p2p4vsc.support] ("Feedback").
-4. Scope items 1-3 together are "Software".
+
+1. All files (e.g. code, scripts, configs, docs) in this repository ("Code", "Repo").
+2. Requests/defects reported as Issues in GitHub ("Feedback").
+3. Items 1-2 together ("Software").
 
 ## TL;DR
 
@@ -15,8 +15,7 @@ You can post requests/defects, view, audit, and submit pull requests. You cannot
 ## Permissions
 
 1. **View and Audit**: View, study, and audit the Code.
-2. **Use the Extension**: Install and use the Extension.
-3. **Contribute**: Requests/defects via Feedback, submit Pull Requests at Repo.
+2. **Contribute**: Requests/defects via Feedback, submit Pull Requests at Repo.
 
 ## Non-Maintainer Restrictions
 
@@ -34,11 +33,11 @@ By submitting a request/defect or pull request, you agree:
 
 ## Disclaimer
 
-SOFTWARE IS PROVIDED "AS IS" WITHOUT WARRANTY OF ANY KIND (EXPRESS, IMPLIED, MERCHANTABILITY, FITNESS, NONINFRINGEMENT), EXCEPT AS REQUIRED BY APPLICABLE LAW. MAINTAINERS SHALL NOT BE LIABLE FOR ANY CLAIM, DAMAGES, OR OTHER LIABILITY ARISING FROM USE OF OR DEALINGS WITH THE SOFTWARE OR MAINTAINERS, EXCEPT AS REQUIRED BY APPLICABLE LAW.
+Except as required by applicable law, Software is provided "as-is" without warranty of any kind (express, implied, merchantability, fitness, noninfringement) and maintainers shall not be liable for any claim, damages, or other liability arising from use of or dealings with Software or maintainers.
 
 ## Termination
 
-Rights terminate automatically upon violation. You must then cease use and destroy all copies of the Software.
+Rights terminate automatically upon violation. You must then cease use and destroy all copies of Software.
 
 ## Contact
 
