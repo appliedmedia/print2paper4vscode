@@ -65,9 +65,9 @@ export const kPrint = {
   isHidden: false,
   flyoutMenuItemIds: [] as const,
   menuItems: [
-    { id: 'preview', displayName: 'Print with Preview' },
+    { id: 'preview', displayName: 'Print with Preview…' },
     { id: 'direct', displayName: 'Print' },
-    { id: 'save', displayName: 'Save as PDF' },
+    { id: 'save', displayName: 'Save as PDF…' },
   ],
 } as const;
 export type PrintMenuItems_t = (typeof kPrint.menuItems)[number]['id'];
@@ -381,9 +381,9 @@ export const kAbout = {
   isHidden: false,
   flyoutMenuItemIds: [] as const,
   menuItems: [
-    { id: 'shortcut', displayName: 'Shortcut' },
-    { id: 'about', displayName: 'About...' },
-    { id: 'logBug', displayName: 'Report a problem...' },
+    { id: 'shortcut', displayName: 'Shortcut…' },
+    { id: 'about', displayName: 'About…' },
+    { id: 'logBug', displayName: 'Report a problem…' },
   ],
 } as const;
 export type AboutMenuItems_t = (typeof kAbout.menuItems)[number]['id'];
