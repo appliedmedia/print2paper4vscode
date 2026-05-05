@@ -418,4 +418,76 @@ describe('UIMenu Icon Slot Triad', () => {
       );
     });
   });
+
+  describe('Custom tooltip attribute', () => {
+    it('emits data-tooltip on the menu top button with the menu displayName', async () => {
+      const items: UIMenuItem_t[] = [
+        {
+          id: 'one',
+          displayName: 'One',
+          iconSlotTriad: { begin: '', main: '', end: '' },
+        },
+      ];
+      const menuIcon: iconSlotTriad_t = { begin: '', main: '🎨', end: '' };
+      const menu = createTestMenu(menuIcon, items);
+      app.uimenumgr.addMenu(menu);
+      const html = await menu.getHTML();
+
+      assert.ok(
+        html.includes('data-' + app.ns_ + 'tooltip="Test Menu"'),
+        'expected data-tooltip with menu displayName on the top button'
+      );
+      assert.ok(
+        html.includes('aria-label="Test Menu"'),
+        'expected aria-label="Test Menu" on the top button for screen readers'
+      );
+      assert.ok(
+        !/<button[^>]*\stitle=/.test(html),
+        'expected no native title= attribute on the menu top button'
+      );
+    });
+
+    it('emits data-tooltip on a menu item that has tooltip set, not native title', async () => {
+      const items: UIMenuItem_t[] = [
+        {
+          id: 'one',
+          displayName: 'One',
+          iconSlotTriad: { begin: '', main: '', end: '' },
+          tooltip: 'https://example.com/about',
+        },
+      ];
+      const menuIcon: iconSlotTriad_t = { begin: '', main: '', end: '' };
+      const menu = createTestMenu(menuIcon, items);
+      app.uimenumgr.addMenu(menu);
+      const html = await menu.getHTML();
+
+      assert.ok(
+        html.includes('data-' + app.ns_ + 'tooltip="https://example.com/about"'),
+        'expected data-tooltip on the menu item'
+      );
+      assert.ok(
+        !/<div[^>]*\sclass="[^"]*menuItem[^"]*"[^>]*\stitle=/.test(html),
+        'expected no native title= attribute on the menu item'
+      );
+    });
+
+    it('does not emit data-tooltip on a menu item without tooltip set', async () => {
+      const items: UIMenuItem_t[] = [
+        {
+          id: 'one',
+          displayName: 'One',
+          iconSlotTriad: { begin: '', main: '', end: '' },
+        },
+      ];
+      const menuIcon: iconSlotTriad_t = { begin: '', main: '', end: '' };
+      const menu = createTestMenu(menuIcon, items);
+      app.uimenumgr.addMenu(menu);
+      const html = await menu.getHTML();
+
+      assert.ok(
+        !/<div[^>]*\sclass="[^"]*menuItem[^"]*"[^>]*\sdata-[^=]*tooltip=/.test(html),
+        'expected no data-tooltip on a tooltip-less menu item'
+      );
+    });
+  });
 });

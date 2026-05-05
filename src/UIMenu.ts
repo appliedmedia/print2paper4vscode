@@ -301,7 +301,7 @@ export class UIMenu {
       .join(' ');
 
     const tooltipAttr = item.tooltip
-      ? ` title="${item.tooltip.replace(/"/g, '&quot;')}"`
+      ? ` data-{{ns_}}tooltip="${item.tooltip.replace(/"/g, '&quot;')}"`
       : ``;
 
     const replacementDict = {
