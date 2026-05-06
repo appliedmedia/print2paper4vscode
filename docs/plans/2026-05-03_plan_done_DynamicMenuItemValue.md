@@ -1,7 +1,8 @@
 # Dynamic Menu Item Value: lazy refresh on menu open
 
-**Status:** todo
+**Status:** done (shipping via PR #121)
 **Created:** 2026-05-03
+**Updated:** 2026-05-05
 **Master orchestrator:** [2026-04-01_plan_todo_Orchestrator.md](<2026-04-01_plan_todo_Orchestrator.md>) (out-of-band quality fix; not on a roadmap stream)
 **Motivating context:** [PR #120 fix/about-shortcut-rebind-detection](<https://github.com/appliedmedia/print2paper4vscode/pull/120>) (merged 2026-05-03) corrected the lookup logic so that `getShortcutForCommand` reports the right key whenever it is invoked, but the toolbar still bakes the result into static HTML at toolbar-creation time. If the user opens VS Code's keybindings editor from About > Shortcut and changes the key, the displayed value stays stale until something else triggers a full webview redraw.
 

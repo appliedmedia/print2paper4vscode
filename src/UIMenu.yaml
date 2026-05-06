@@ -412,6 +412,7 @@ uimenu_generic_handlers: |
       flyoutMenuItems.style.display = 'block';
       flyoutMenuItems.style.visibility = 'visible';
       flyoutMenuItems.style.opacity = '1';
+      requestDynamicValuesIn(flyoutMenuItems);
     }
   }
 
@@ -496,8 +497,12 @@ uimenu_generic_handlers: |
     const el = document.querySelector(selector);
     if (!el) return;
     if (msg.value === '' || msg.value === undefined || msg.value === null) {
-      el.remove();
+      // Hide instead of remove so subsequent menu opens can still find the
+      // marker and request a fresh value (e.g. user unbinds, then rebinds).
+      el.textContent = '';
+      el.style.display = 'none';
     } else {
+      el.style.display = '';
       el.textContent = String(msg.value);
     }
   });
