@@ -604,6 +604,9 @@ export class PaperPrinter {
       about: kURL.homePage,
       logBug: kURL.support,
     };
+    const tooltipById: Record<string, string | undefined> = {
+      shortcut: 'Change keyboard shortcut',
+    };
     const resolvePrintShortcut: UIMenuShortcutFxn_t = () =>
       this.fn.vscodeapis.getShortcutForCommand({ commandId: kCommandPrintId });
     return kAbout.menuItems.map(item => {
@@ -612,7 +615,7 @@ export class PaperPrinter {
         id: item.id as MenuItemId_t,
         displayName: item.displayName,
         iconSlotTriad: { begin: '', main: '', end: '' },
-        tooltip: url,
+        tooltip: url ?? tooltipById[item.id],
         isExternalLink: !!url,
         shortcut: item.id === 'shortcut' ? resolvePrintShortcut : undefined,
       };
