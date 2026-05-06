@@ -448,26 +448,70 @@ export class UIMenuMgr {
     return shortcut ?? '';
   }
 
-  // Like getValueOfMenuFxnByCalcValue, but typed for shortcut resolvers (always string).
-  // Returns '' if the resolver throws.
+  /**
+   * Generic dispatcher for items marked dynamic at toolbar-render time.
+   *
+   * Looks up the menu item, finds the first function-typed dynamic field,
+   * and routes through the matching per-field public resolver so first-paint
+   * and on-open refresh share the same execution path. Today only `shortcut`
+   * qualifies. Returns undefined and logs if the item carries no function-typed
+   * field — the marker emission in UIMenu.getItemHTML should never produce
+   * such a request, so undefined here signals a render/dispatch divergence.
+   */
+  getDynamicValueForMenuItemIdOfMenuId(args: {
+    menuId: MenuId_t;
+    menuItemId: MenuItemId_t;
+  }): string | number | boolean | undefined {
+    const { menuId, menuItemId } = args;
+    const menu = this.getMenuById(menuId);
+    const menuItem = menu.getMenuItems().find(item => item.id === menuItemId);
+    if (!menuItem) {
+      this.dx.error(
+        `getDynamicValueForMenuItemIdOfMenuId: menu item not found ${menuId}.${menuItemId}`
+      );
+      return undefined;
+    }
+    if (typeof menuItem.shortcut === 'function') {
+      return this.getShortcutOfMenuItemIdForMenuId({ menuId, menuItemId });
+    }
+    this.dx.error(
+      `getDynamicValueForMenuItemIdOfMenuId: no function-typed dynamic field on ${menuId}.${menuItemId}`
+    );
+    return undefined;
+  }
+
+  // Shared core for the three resolver wrappers (shortcut, isHidden, value):
+  // build the validated dict, run fn inside try/catch, return result or fallback.
+  private runMenuFxn<T>(args: {
+    fn: (dict: UIMenuItemDict_t) => T;
+    fallback: T;
+    spanName: string;
+    errorContext: string;
+  }): T {
+    const dx = this.dx.sub({ name: args.spanName });
+    const dict = this.buildUIMenuItemDict();
+    try {
+      const result = args.fn(dict);
+      dx.done();
+      return result;
+    } catch (error) {
+      this.dx.error(`${args.errorContext}: ${String(error)}`);
+      dx.done();
+      return args.fallback;
+    }
+  }
+
   private getValueOfMenuFxnByCalcShortcut(
     resolver: UIMenuShortcutFxn_t,
     menuId: string,
     menuItemId: string
   ): string {
-    const dx = this.dx.sub({ name: 'getValueOfMenuFxnByCalcShortcut' });
-    const dict = this.buildUIMenuItemDict();
-    try {
-      const result = resolver(dict);
-      dx.done();
-      return result;
-    } catch (error) {
-      this.dx.error(
-        `Menu item shortcut resolver failed for ${menuId}.${menuItemId}: ${String(error)}`
-      );
-      dx.done();
-      return '';
-    }
+    return this.runMenuFxn({
+      fn: resolver,
+      fallback: '',
+      spanName: 'getValueOfMenuFxnByCalcShortcut',
+      errorContext: `Menu item shortcut resolver failed for ${menuId}.${menuItemId}`,
+    });
   }
 
   /**
@@ -512,82 +556,45 @@ export class UIMenuMgr {
     return combined as UIMenuItemDict_t;
   }
 
-  /**
-   * Resolve menu hidden state using isHidden function or boolean
-   *
-   * Executes isHidden function with validated dict (numeric + textual context).
-   * Returns boolean indicating whether menu should be hidden.
-   *
-   * @param isHidden - Boolean or function that determines hidden state from context
-   * @param menuId - Menu ID for error logging context
-   * @returns true if menu should be hidden, false otherwise (default: false)
-   */
+  // Default to visible on undefined or resolver throw.
   private getValueOfMenuFxnByCalcIsHidden(
     isHidden: boolean | UIMenuFxn_t | undefined,
     menuId: string
   ): boolean {
-    const dx = this.dx.sub({ name: 'getValueOfMenuFxnByCalcIsHidden' });
-
-    // Handle undefined - default to visible (isHidden = false)
-    if (isHidden === undefined) {
-      dx.done();
-      return false;
-    }
-
-    // Handle boolean literal
-    if (typeof isHidden === 'boolean') {
-      dx.done();
-      return isHidden;
-    }
-
-    // Handle function - build dict and execute
-    const dict = this.buildUIMenuItemDict();
-    try {
-      const result = isHidden(dict);
-      dx.done();
-      return Boolean(result);
-    } catch (error) {
-      this.dx.error(`Menu isHidden resolver failed for ${menuId}: ${String(error)}`);
-      dx.done();
-      return false; // Default to visible (isHidden = false) on error
-    }
+    if (isHidden === undefined) return false;
+    if (typeof isHidden === 'boolean') return isHidden;
+    return this.runMenuFxn({
+      fn: (dict) => Boolean(isHidden(dict)),
+      fallback: false,
+      spanName: 'getValueOfMenuFxnByCalcIsHidden',
+      errorContext: `Menu isHidden resolver failed for ${menuId}`,
+    });
   }
 
-  /**
-   * Resolve a menu item value using resolver function
-   *
-   * Executes resolver function with validated dict (all required keys present as finite numbers).
-   * Returns number | string | undefined - does NOT force to number at this level.
-   * Type coercion happens at consumer level based on their specific needs.
-   *
-   * @param resolver - Function that computes value from menu item dict
-   * @param menuId - Menu ID for error logging context
-   * @param menuItemId - Menu item ID for error logging context
-   * @returns Resolved value (number | string | undefined) or undefined on error
-   */
+  // UIMenuItemValue_t is number | string | boolean. Object/function/symbol from
+  // a misbehaving resolver collapses to undefined.
   private getValueOfMenuFxnByCalcValue(
     resolver: UIMenuFxn_t,
     menuId: string,
     menuItemId: string
   ): UIMenuItemValue_t | undefined {
-    const dx = this.dx.sub({ name: 'getValueOfMenuFxnByCalcValue' });
-    const dict_nums = this.buildUIMenuItemDict();
-    try {
-      const result = resolver(dict_nums);
-      dx.done();
-      // UIMenuItemValue_t is number | string | boolean. Anything else (object,
-      // function, symbol from a misbehaving resolver) collapses to undefined.
-      if (typeof result === 'number' || typeof result === 'string' || typeof result === 'boolean' || result === undefined) {
-        return result;
-      }
-      return undefined;
-    } catch (error) {
-      this.dx.error(
-        `Menu item value resolver failed for ${menuId}.${menuItemId}: ${String(error)}`
-      );
-      dx.done();
-      return undefined;
-    }
+    return this.runMenuFxn<UIMenuItemValue_t | undefined>({
+      fn: (dict) => {
+        const result = resolver(dict);
+        if (
+          typeof result === 'number' ||
+          typeof result === 'string' ||
+          typeof result === 'boolean' ||
+          result === undefined
+        ) {
+          return result;
+        }
+        return undefined;
+      },
+      fallback: undefined,
+      spanName: 'getValueOfMenuFxnByCalcValue',
+      errorContext: `Menu item value resolver failed for ${menuId}.${menuItemId}`,
+    });
   }
 
   // REMOVED: evaluateCalcTemplate() method

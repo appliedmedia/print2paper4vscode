@@ -1,12 +1,25 @@
 # Lane D: Walkthrough Get Started experience
 
-**Status:** todo (did not ship in PR #115; can land as its own PR)
+**Status:** done (shipped via PR #119, merged 2026-05-03; final shape differs from this plan, see "Closeout note 2026-05-04" below)
 **Created:** 2026-04-26
-**Updated:** 2026-04-28
+**Updated:** 2026-05-04
 **Parent orchestrator:** [2026-04-26_plan_done_DocsRefresh_Orch.md](<2026-04-26_plan_done_DocsRefresh_Orch.md>)
-**Branch:** new branch off `main` when work resumes (the original `feature/docs-refresh` was merged on 2026-04-28 without this lane)
-**Owner:** Claude (drafts), acoven (GIF capture + Extension Development Host smoke test)
+**Branch:** `feature/marketplace-screenshots-walkthrough` (merged via PR #119)
+**Owner:** Claude (drafts), acoven (screenshot capture + Extension Development Host smoke test)
 **Blocked by:** none structurally
+
+## Closeout note 2026-05-04
+
+PR #119 satisfies the lane's goal (Get Started panel auto-opens after install and gives a guided tour) with a redesigned step list. The plan below is preserved as written so the design discussion is not lost; the "as-shipped" delta is:
+
+* Step count: 7 (one per toolbar menu) instead of 4 (Open, Print, Customize, Save). The 7-step shape matches the 7 toolbar menus the user will actually click after pressing Alt+P, so the walkthrough doubles as a toolbar legend.
+* Media: 7 PNG screenshots in `assets/p2p4vsc-screenshots/` (~2.5 MB total) instead of 4 GIFs in `walkthroughs/media/`. Static PNGs avoided the GIF-capture step that was the original blocker, and the toolbar-menu shapes are static enough that animation adds little.
+* Step bodies: inline `description` strings on each `steps[]` entry in `.config/template.package.json` instead of separate `walkthroughs/*.md` step files. Smaller VSIX, no `walkthroughs/` directory needed, no `.vscodeignore` rule.
+* Completion events: hero step uses `onCommand:{{extId}}.{{cmdPrint}}`; remaining steps use `onStepSelected` (auto-checks when the user clicks the step header). The "no reliable event for toolbar interaction" concern in the original plan is sidestepped by `onStepSelected`.
+* Hero image: the same step-1 zoom screenshot (`p2p4vsc_screenshot_toolbar_05_zoom.png`) doubles as the marketplace listing hero in `docs/MARKETPLACE.md`. This also closes Lane C's "(Optional) capture the real hero screenshot to replace the 1×1 placeholder" pre-publish item.
+* MARKETPLACE.md gained a "Toolbar tour" section linking each screenshot via absolute GitHub raw URLs.
+
+EDH smoke test still owed by acoven before marketplace publish (Lane C). The contribution-point schema is validated by `vsce package` not warning, but the auto-open behavior on fresh install needs a one-time human check.
 
 ## Goal
 

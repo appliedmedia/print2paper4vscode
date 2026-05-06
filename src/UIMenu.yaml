@@ -14,6 +14,50 @@ uimenu_css: |
   }
 
   .{{ns_}}menuBtn:hover { background: #e9e9e9; }
+
+  /* Custom CSS-driven tooltip: replaces native title= which has a Chromium
+     quirk where it won't re-show on the same element until the cursor leaves
+     and re-enters. Generic [data-{{ns_}}tooltip] selector so the same rule
+     covers menu top buttons, URL-bearing menu items, the toolbar grip, and
+     anything else that opts in.
+
+     Layout selector: menu items inside a dropdown render the bubble to the
+     right (the dropdown opens downward, so below would overlap the next
+     row). Everything else renders below — toolbar lives at the top of the
+     webview, so there is room to drop the bubble down. */
+  [data-{{ns_}}tooltip] {
+    position: relative;
+  }
+  [data-{{ns_}}tooltip]::after {
+    content: attr(data-{{ns_}}tooltip);
+    position: absolute;
+    background: #222;
+    color: #fff;
+    padding: 4px 8px;
+    border-radius: 3px;
+    font-size: 0.85em;
+    line-height: 1.3;
+    pointer-events: none;
+    opacity: 0;
+    z-index: 10000;
+    transition: opacity 0.12s 0.5s;
+    box-shadow: 0 2px 6px rgba(0,0,0,.25);
+    top: calc(100% + 4px);
+    left: 50%;
+    transform: translateX(-50%);
+    white-space: nowrap;
+    max-width: 320px;
+  }
+  .{{ns_}}menuItem[data-{{ns_}}tooltip]::after {
+    top: 50%;
+    left: calc(100% + 8px);
+    transform: translateY(-50%);
+    white-space: normal;
+    word-break: break-word;
+  }
+  [data-{{ns_}}tooltip]:hover::after {
+    opacity: 1;
+  }
   .{{ns_}}menu {
     position: relative;
     display: inline-block;
@@ -226,7 +270,7 @@ uimenu_css: |
 
 uimenu_html: |
   <div class="{{ns_}}menu {{menuClasses}}" id="{{menuId}}">
-    <button class="{{ns_}}menuBtn" title="{{displayName}}"{{shortcutCodeAttr}}{{menuBtnExtraAttrs}}>{{icon}}</button>
+    <button class="{{ns_}}menuBtn" aria-label="{{displayName}}" data-{{ns_}}tooltip="{{displayName}}"{{shortcutCodeAttr}}{{menuBtnExtraAttrs}}>{{icon}}</button>
     {{menuItemsContainer}}
   </div>
 
@@ -292,7 +336,7 @@ uimenu_generic_handlers: |
     }
     
     const isOpen = menuItems.style.display === 'block';
-    
+
     if (isOpen) {
       menuItems.style.display = 'none';
       btn.setAttribute('aria-expanded', 'false');
@@ -300,7 +344,26 @@ uimenu_generic_handlers: |
       closeAllMenus();
       menuItems.style.display = 'block';
       btn.setAttribute('aria-expanded', 'true');
+      requestDynamicValuesIn(menuItems);
     }
+  }
+
+  /* Ask the extension for a fresh value on every menu-item that was marked
+     dynamic at toolbar render time. The dispatcher returns synchronously
+     (round-trip in postMessage); the response handler below patches DOM. */
+  function requestDynamicValuesIn(container) {
+    if (!container || !window.vscode) return;
+    const marked = container.querySelectorAll('[data-{{ns_}}dynamicMenuItemId]');
+    marked.forEach(el => {
+      const menuId = el.getAttribute('data-{{ns_}}dynamicMenuId');
+      const menuItemId = el.getAttribute('data-{{ns_}}dynamicMenuItemId');
+      if (!menuId || !menuItemId) return;
+      window.vscode.postMessage({
+        type: 'getDynamicValue',
+        menuId,
+        menuItemId,
+      });
+    });
   }
 
   function findFlyoutMenu(itemEl, flyoutMenuId) {
@@ -349,6 +412,7 @@ uimenu_generic_handlers: |
       flyoutMenuItems.style.display = 'block';
       flyoutMenuItems.style.visibility = 'visible';
       flyoutMenuItems.style.opacity = '1';
+      requestDynamicValuesIn(flyoutMenuItems);
     }
   }
 
@@ -404,20 +468,43 @@ uimenu_generic_handlers: |
 
   document.addEventListener('click', (e) => {
     if (!e || !e.target || !e.target.closest) return;
-    
+
     const btn = e.target.closest('.{{ns_}}menuBtn');
     if (btn) {
       handleMenuButtonClick(e);
       return;
     }
-    
+
     const itemEl = e.target.closest('.{{ns_}}menuItem');
     if (itemEl) {
       handleMenuItemClick(e, itemEl);
       return;
     }
-    
+
     closeAllMenus();
+  });
+
+  /* Patch dynamic-marked items when the extension answers a getDynamicValue
+     request. The element is located by the dynamicMenuId/dynamicMenuItemId
+     pair on its data attrs. Empty-string / null / undefined collapse the
+     span to mirror the at-render unbound-key behavior. */
+  window.addEventListener('message', (event) => {
+    const msg = event && event.data;
+    if (!msg || msg.type !== 'dynamicValue') return;
+    const selector =
+      '[data-{{ns_}}dynamicMenuId="' + msg.menuId +
+      '"][data-{{ns_}}dynamicMenuItemId="' + msg.menuItemId + '"]';
+    const el = document.querySelector(selector);
+    if (!el) return;
+    if (msg.value === '' || msg.value === undefined || msg.value === null) {
+      // Hide instead of remove so subsequent menu opens can still find the
+      // marker and request a fresh value (e.g. user unbinds, then rebinds).
+      el.textContent = '';
+      el.style.display = 'none';
+    } else {
+      el.style.display = '';
+      el.textContent = String(msg.value);
+    }
   });
 
   function handleTextEditKeydown(e) {

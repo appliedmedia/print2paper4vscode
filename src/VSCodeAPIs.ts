@@ -13,7 +13,7 @@ import type {
   // WorkspaceEdit,
 } from 'vscode';
 import { Range } from 'vscode';
-import type { SendToExt_t } from './types/UI_t';
+import type { SendToExt_t, SendFromExt_t } from './types/UI_t';
 import type { FnImport_t } from './types/Registry_t';
 import { Diagnostics } from './Diagnostics';
 import { kExtId, kCommandPrintId, kCommandPersistClearId } from './types/_entrypoint_extId_t';
@@ -400,6 +400,33 @@ export class VSCodeAPIs {
     const panel = this.panels.get(id);
     if (panel) panel.webview.html = html;
     dx.done();
+  }
+
+  /**
+   * Post a typed extension→webview message via panel.webview.postMessage.
+   *
+   * Returns the postMessage promise (true once VS Code accepts the message).
+   * Logs and returns false if the panel is no longer in the map. VS Code itself
+   * rejects postMessage when the webview is hidden; callers await the promise
+   * and decide whether to ignore rejection (a hidden webview will pick up the
+   * fresh state the next time it is fully reattached).
+   */
+  async postMessageToWebviewPanel(args: {
+    panelId: WebviewPanelId_t;
+    message: SendFromExt_t;
+  }): Promise<boolean> {
+    const dx = this.dx.sub({ name: 'postMessageToWebviewPanel' });
+    dx.require(args, ['panelId', 'message']);
+    const { panelId, message } = args;
+    const panel = this.panels.get(panelId);
+    if (!panel) {
+      this.dx.error(`postMessageToWebviewPanel: panel not found ${panelId}`);
+      dx.done();
+      return false;
+    }
+    const result = await panel.webview.postMessage(message);
+    dx.done();
+    return result;
   }
 
   /**

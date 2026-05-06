@@ -132,7 +132,7 @@ toolbar_html: |
     {{baseCss}}
   </style>
   <div id="{{ns_}}toolbar" role="toolbar" aria-label="Print2Paper toolbar">
-    <div class="{{ns_}}toolbarGrip" id="{{ns_}}toolbarGrip" title="Click and hold to drag left and right" aria-label="Drag toolbar" tabindex="0"></div>
+    <div class="{{ns_}}toolbarGrip" id="{{ns_}}toolbarGrip" data-{{ns_}}tooltip="Click and hold to drag left and right" aria-label="Drag toolbar" tabindex="0"></div>
     <div class="{{ns_}}toolbarMenubar" role="menubar">
       {{menuHtml}}
     </div>

@@ -45,10 +45,33 @@ export type SendToExt_dx = {
   message: string;
 };
 
+// Asks the extension for a fresh value for a single dynamic-marked menu item.
+// Sent by the webview when the user opens a dropdown that contains marked items.
+export type SendToExt_getDynamicValue = {
+  type: 'getDynamicValue';
+  menuId: MenuId_t;
+  menuItemId: MenuItemId_t;
+};
+
 // Union of all webview→extension messages
-export type SendToExt_t = SendToExt_dragEnd | SendToExt_menuItemSelected | SendToExt_dx;
+export type SendToExt_t =
+  | SendToExt_dragEnd
+  | SendToExt_menuItemSelected
+  | SendToExt_dx
+  | SendToExt_getDynamicValue;
 
 // Message handler callback type
 export type MessageHandler_t = (msg: SendToExt_t) => Promise<void> | void;
+
+// Messages sent from extension to webview
+export type SendFromExt_dynamicValue = {
+  type: 'dynamicValue';
+  menuId: MenuId_t;
+  menuItemId: MenuItemId_t;
+  value: string | number | boolean | undefined;
+};
+
+// Union of all extension→webview messages
+export type SendFromExt_t = SendFromExt_dynamicValue;
 
 // end, UI_t.ts

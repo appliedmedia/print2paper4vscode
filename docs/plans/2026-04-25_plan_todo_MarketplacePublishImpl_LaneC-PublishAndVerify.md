@@ -1,19 +1,20 @@
 # Lane C: Publish + verify
 
-**Status:** todo (unblocked 2026-04-28: Lane A merged via PR #113, Lane B closed via `a74ffa3`, DocsRefresh quality gate shipped via PR #115)
+**Status:** todo (unblocked 2026-04-28; remaining prerequisites all shipped as of 2026-05-04: Lane A merged via PR #113, Lane B closed via `a74ffa3`, DocsRefresh quality gate via PR #115, DocsRefresh Lane E verify via PR #117, walkthrough + real hero via PR #119, About-shortcut rebind detection via PR #120)
 **Created:** 2026-04-25
-**Updated:** 2026-04-28
+**Updated:** 2026-05-04
 **Parent orchestrator:** [2026-04-25_plan_todo_MarketplacePublishImpl_Orch.md](<2026-04-25_plan_todo_MarketplacePublishImpl_Orch.md>)
-**Branch:** new branch off `main` (the original `feature/marketplace-publish` is stale; rebranch from the post-PR #115 `main` so the marketplace-only README + changelog flags are in scope)
+**Branch:** new branch off `main` (the original `feature/marketplace-publish` is stale; rebranch from current `main` at `4c012ff` or later so all marketplace prereqs are in scope)
 **Owner:** acoven, with Claude assisting on artifact prep, listing copy, and post-publish updates.
-**Blocked by:** none. Lane A merged, Lane B done, docs refresh shipped.
+**Blocked by:** none. All code/docs prerequisites merged.
 
 ## Pre-publish checklist (must run before `vsce publish`)
 
 * Replace `TODO(date)` placeholders in `CHANGELOG.md` 1.0.0 entry and `docs/MARKETPLACE_CHANGELOG.md` with the actual planned publish date.
 * Replace `TODO(release-tag)` placeholder in `CHANGELOG.md` footnote link with the real `v1.0.0` GitHub release tag URL (or commit to creating the tag as part of this lane).
-* (Optional but recommended) Capture the real hero screenshot at `images/screenshot-preview.png` to replace the 1×1 placeholder shipped in PR #115 (see DocsRefresh Lane A closeout for capture spec).
-* Confirm `feature/docs-refresh` Lane E (verification) has either run or been waived — the marketplace VSIX should be smoke-tested in an Extension Development Host before publish even if Lane D (walkthrough) has not landed.
+* Real hero screenshot: done via PR #119. `docs/MARKETPLACE.md` hero is `assets/p2p4vsc-screenshots/p2p4vsc_screenshot_toolbar_05_zoom.png` (no `images/screenshot-preview.png` 1×1 placeholder remains).
+* DocsRefresh Lane E verification: done via PR #117 (merged 2026-05-01). VSIX integrity, marketplace-doc shipping flags, and broken-link sweep all confirmed.
+* DocsRefresh Lane D walkthrough: done via PR #119 (merged 2026-05-03). 7-step `contributes.walkthroughs` block ships in the VSIX. EDH auto-open smoke test (acoven, one-time) is the only piece still owed; it can run as part of this lane's "Verify listing" step on a fresh install.
 
 ## Goal
 

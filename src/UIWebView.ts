@@ -4,6 +4,7 @@ import type {
   SendToExt_dragEnd,
   SendToExt_menuItemSelected,
   SendToExt_dx,
+  SendToExt_getDynamicValue,
   MessageHandler_t,
 } from './types/UI_t';
 import type { FnImport_t } from './types/Registry_t';
@@ -48,6 +49,7 @@ export class UIWebView {
   private readonly handleDragEndBound: MessageHandler_t;
   private readonly handleMenuItemSelectedBound: MessageHandler_t;
   private readonly handleDxMessageBound: MessageHandler_t;
+  private readonly handleGetDynamicValueBound: MessageHandler_t;
 
   constructor(args: { reg: Registry }) {
     this.reg = args.reg;
@@ -55,6 +57,7 @@ export class UIWebView {
     this.fn = this.reg.use(
       'vscodeapis.getOrCreateWebviewPanel',
       'vscodeapis.removePanel',
+      'vscodeapis.postMessageToWebviewPanel',
       'os.fileRead',
       'yaml.create',
       'persist.set',
@@ -62,6 +65,7 @@ export class UIWebView {
       'utils.templateDictReplace',
       'uimenumgr.getMenuItemIdSelected',
       'uimenumgr.getValueOfMenuItemIdForMenuId',
+      'uimenumgr.getDynamicValueForMenuItemIdOfMenuId',
       'uimenumgr.handleMenuItemSelected',
       'pdf.docInfo',
       'ui.addToolbar',
@@ -79,6 +83,7 @@ export class UIWebView {
     this.handleDragEndBound = this.handleDragEnd.bind(this) as MessageHandler_t;
     this.handleMenuItemSelectedBound = this.handleMenuItemSelected.bind(this) as MessageHandler_t;
     this.handleDxMessageBound = this.handleDxMessage.bind(this) as MessageHandler_t;
+    this.handleGetDynamicValueBound = this.handleGetDynamicValue.bind(this) as MessageHandler_t;
 
     // All initialization happens here - no separate init() needed
     this.registerMessageHandlers();
@@ -262,6 +267,7 @@ export class UIWebView {
           { type: 'dragEnd', handler: this.handleDragEndBound },
           { type: 'menuItemSelected', handler: this.handleMenuItemSelectedBound },
           { type: 'dx', handler: this.handleDxMessageBound },
+          { type: 'getDynamicValue', handler: this.handleGetDynamicValueBound },
         ];
 
         messageHandlers.forEach(({ type, handler }) => {
@@ -293,6 +299,7 @@ export class UIWebView {
       { type: 'dragEnd', handler: this.handleDragEndBound },
       { type: 'menuItemSelected', handler: this.handleMenuItemSelectedBound },
       { type: 'dx', handler: this.handleDxMessageBound },
+      { type: 'getDynamicValue', handler: this.handleGetDynamicValueBound },
     ];
 
     messageHandlers.forEach(({ type, handler }) => {
@@ -328,6 +335,35 @@ export class UIWebView {
     const { menuId, menuItemId, contextDict } = msg;
     // Forward to UIMenuMgr for handling
     await this.fn.uimenumgr.handleMenuItemSelected(menuId, menuItemId, contextDict);
+  }
+
+  /**
+   * Resolve a dynamic-marked menu item value and post it back to the webview.
+   *
+   * The webview emits this when the user opens a dropdown that contains items
+   * marked dynamic at toolbar render time. We dispatch through UIMenuMgr to
+   * the matching per-field resolver and post the result back via the typed
+   * extension→webview channel. Any postMessage rejection (panel transition,
+   * webview gone) is swallowed: the next menu open will refresh on its own.
+   */
+  private async handleGetDynamicValue(msg: SendToExt_getDynamicValue): Promise<void> {
+    const dx = this.dx.sub({ name: 'handleGetDynamicValue' });
+    const { menuId, menuItemId } = msg;
+    if (!this.panelId) {
+      this.dx.error(`handleGetDynamicValue: no active panel for ${menuId}.${menuItemId}`);
+      dx.done();
+      return;
+    }
+    const value = this.fn.uimenumgr.getDynamicValueForMenuItemIdOfMenuId({ menuId, menuItemId });
+    try {
+      await this.fn.vscodeapis.postMessageToWebviewPanel({
+        panelId: this.panelId,
+        message: { type: 'dynamicValue', menuId, menuItemId, value },
+      });
+    } catch (error) {
+      dx.out(`postMessageToWebviewPanel rejected: ${String(error)}`);
+    }
+    dx.done();
   }
 
   /**
