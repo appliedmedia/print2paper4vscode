@@ -1,8 +1,15 @@
 # Orchestrator: Marketplace Publish Wave
 
-**Status:** in-progress (Lane A merged via PR #113, Lane B closed via `a74ffa3`, DocsRefresh quality gate shipped via PR #115; Lane C unblocked)
+**Status:** in-progress (Lane A merged via PR #113, Lane B closed via `a74ffa3`, DocsRefresh quality gate shipped via PR #115; Lane C kicked off 2026-05-08)
 **Created:** 2026-04-25
-**Updated:** 2026-04-28
+**Updated:** 2026-05-08
+
+## Decision log (newest first)
+
+* 2026-05-08: Lane C kicked off. Publish date set to **2026-05-08**, version stays **1.0.0** (no bump; package.json already at 1.0.0). Plan: ship a placeholder-fix PR first (TODO date/release-tag markers in `CHANGELOG.md` and `docs/MARKETPLACE_CHANGELOG.md`), then publish.
+* 2026-05-08: Publish path chosen: **manual `workflow_dispatch` of `publish.yml` with version input `1.0.0`**, NOT the release-trigger path. Reason: line 69 of `publish.yml` runs `vsce publish ${VERSION}` and on a release event `VERSION` becomes the raw tag name `v1.0.0`, which vsce rejects (vsce wants bare semver `1.0.0`, no `v` prefix). The dispatch path takes the input verbatim, so passing `1.0.0` works. After successful publish, create the `v1.0.0` release tag separately so the `[1.0.0]` changelog footnote link resolves. Future versions (1.0.1+) can either continue on dispatch or have `publish.yml` patched to strip the `v` prefix.
+* 2026-05-08: Video deferred. Marketplace doesn't embed `<video>` tags; only inline GIFs render. Current 7 PNG screenshots + walkthrough are sufficient for v1.0.0. GIF can be added post-publish if conversion is low.
+
 **Spec:** [2026-04-01_plan_todo_MarketplacePublish.md](<2026-04-01_plan_todo_MarketplacePublish.md>)
 **Stale prereq:** [2025-12-11_plan_done_PackageJsonMetadata.md](<2025-12-11_plan_done_PackageJsonMetadata.md>)
 **Quality gate:** [2026-04-26_plan_done_DocsRefresh_Orch.md](<2026-04-26_plan_done_DocsRefresh_Orch.md>) (Lanes A/B/C done; Lanes D/E remain — D/E do not block publish)
