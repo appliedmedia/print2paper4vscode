@@ -66,5 +66,9 @@ jobs:
           if [ -z "$VERSION" ] && [ "${{ github.event_name }}" = "release" ]; then
             VERSION="${{ github.event.release.tag_name }}"
             VERSION="${VERSION#v}"
+            if [ -z "$VERSION" ]; then
+              echo "::error::Release tag resolved to an empty version after stripping leading v"
+              exit 1
+            fi
           fi
-          vsce publish ${VERSION:-patch} --readme-path docs/MARKETPLACE.md --changelog-path docs/MARKETPLACE_CHANGELOG.md
+          vsce publish "${VERSION:-patch}" --readme-path docs/MARKETPLACE.md --changelog-path docs/MARKETPLACE_CHANGELOG.md
