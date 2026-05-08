@@ -7,9 +7,7 @@ All notable changes to Print2Paper4VSCode are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.0.0] - YYYY-MM-DD
-
-<!-- TODO(date): finalize on actual marketplace publish day -->
+## [1.0.0] - 2026-05-08
 
 Initial public release.
 
