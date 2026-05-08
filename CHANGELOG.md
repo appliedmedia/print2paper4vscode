@@ -7,9 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [1.0.0] - YYYY-MM-DD
-
-<!-- TODO(date): finalize on actual marketplace publish day -->
+## [1.0.0] - 2026-05-08
 
 ### Added
 
@@ -122,5 +120,3 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 [Unreleased]: https://github.com/appliedmedia/print2paper4vscode/compare/v1.0.0...HEAD
 [1.0.0]: https://github.com/appliedmedia/print2paper4vscode/releases/tag/v1.0.0
-
-<!-- TODO(release-tag): the v1.0.0 tag is created at publish time; this link will resolve once the tag exists -->
