@@ -25,7 +25,7 @@
 
 * [Lane A: CSS fixes](<2026-05-08_plan_todo_MenuTooltipsAria_LaneA-CssFixes.md>): transition delay bump, font-size cascade fix, suppress-class CSS rule.
 * [Lane B: aria + tooltip plumbing](<2026-05-08_plan_todo_MenuTooltipsAria_LaneB-AriaPlumbing.md>): `ariaLabel?` field, template attribute placeholders, substitution dictionary, aria audit.
-* [Lane C: click-suppress JS hook](<2026-05-08_plan_todo_MenuTooltipsAria_LaneC-ClickSuppress.md>): `data-tooltip-suppressed` toggle in click handler, pointerleave clear, global cleanup on `closeAllMenus()`.
+* [Lane C: click-suppress JS hook](<2026-05-08_plan_todo_MenuTooltipsAria_LaneC-ClickSuppress.md>): `data-{{ns_}}tooltip-suppressed` toggle in click handler, pointerleave clear, global cleanup on `closeAllMenus()`.
 * [Lane D: tooltip data entry](<2026-05-08_plan_todo_MenuTooltipsAria_LaneD-TooltipDataEntry.md>): populate every menu-item `tooltip:` string; targeted `ariaLabel?` overrides.
 
 ## Coordination
@@ -39,7 +39,7 @@
 
 * Lane A: none.
 * Lane B: none. (Lane B's resolution order documents the fallback to `displayName`, so the aria-label path works even before Lane D fills in tooltips.)
-* Lane C: visual effect depends on Lane A's `[data-tooltip-suppressed]:hover::after` CSS rule landing. The JS itself does not depend on it.
+* Lane C: visual effect depends on Lane A's `[data-{{ns_}}tooltip-suppressed]:hover::after` CSS rule landing. The JS itself does not depend on it.
 * Lane D: rendering of tooltip strings depends on Lane B's substitution dictionary populating `{{tooltip}}`. Strings can land before B and sit dormant on the type instances.
 
 ## Done when

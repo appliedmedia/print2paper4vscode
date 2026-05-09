@@ -22,8 +22,8 @@ Bring the toolbar menu UI up to parity on three accessibility and polish axes in
 * In scope
   * Static `tooltip:` string on every menu item declaration in `src/types/PaperPrinter_t.ts` and any other const file that contributes to the toolbar.
   * Optional `ariaLabel?: string` field on `UIMenuItem_t` for cases where the tooltip is too verbose for screen readers.
-  * Substitution-dictionary plumbing in `src/UIMenu.ts` so the menu-item HTML template can render `data-tooltip` and `aria-label` attributes from item fields.
-  * CSS fixes in `src/UIMenu.yaml`: tooltip transition delay bump, font-size cascade fix, defensive `font-size: inherit` on `.menuItem`, and a `[data-tooltip-suppressed]:hover::after` rule.
+  * Substitution-dictionary plumbing in `src/UIMenu.ts` so the menu-item HTML template can render `data-{{ns_}}tooltip` and `aria-label` attributes from item fields.
+  * CSS fixes in `src/UIMenu.yaml`: tooltip transition delay bump, font-size cascade fix, defensive `font-size: inherit` on `.{{ns_}}menuItem`, and a `[data-{{ns_}}tooltip-suppressed]:hover::after` rule.
   * JS suppression hook in `handleMenuItemClick` (yaml-injected script) plus a `closeAllMenus()` cleanup pass.
 * Out of scope
   * Resolver unification. The `getValueOf...`, `getShortcutOf...`, `getIsHiddenOf...` per-field family stays as-is; tooltip stays a static string field, NOT a `getTooltipOf...` resolver. Documented as a separate future cleanup in [feedback_uimenu_resolver_generalization.md](<../../memory/feedback_uimenu_resolver_generalization.md>).
@@ -35,13 +35,13 @@ Bring the toolbar menu UI up to parity on three accessibility and polish axes in
 
 * [Lane A: CSS fixes](<2026-05-08_plan_todo_MenuTooltipsAria_LaneA-CssFixes.md>): transition-delay bump, font-size cascade fix, suppress-class CSS rule.
 * [Lane B: aria + tooltip plumbing](<2026-05-08_plan_todo_MenuTooltipsAria_LaneB-AriaPlumbing.md>): `ariaLabel?` field, template attribute placeholders, substitution dictionary, audit of pre-existing aria-labels.
-* [Lane C: click-suppress JS hook](<2026-05-08_plan_todo_MenuTooltipsAria_LaneC-ClickSuppress.md>): `data-tooltip-suppressed` toggle in `handleMenuItemClick`, pointerleave clear, `closeAllMenus()` global cleanup.
+* [Lane C: click-suppress JS hook](<2026-05-08_plan_todo_MenuTooltipsAria_LaneC-ClickSuppress.md>): `data-{{ns_}}tooltip-suppressed` toggle in `handleMenuItemClick`, pointerleave clear, `closeAllMenus()` global cleanup.
 * [Lane D: tooltip data entry](<2026-05-08_plan_todo_MenuTooltipsAria_LaneD-TooltipDataEntry.md>): populate `tooltip:` strings on every menu item; case-by-case `ariaLabel?` overrides.
 
 ## Coordination
 
 * Lanes A, B, and D are independent in flight and can land in any order.
-* Lane C's JS depends on Lane A's `[data-tooltip-suppressed]:hover::after` rule for the visual effect, but the JS itself can land first; the suppression simply has no visible effect until Lane A merges.
+* Lane C's JS depends on Lane A's `[data-{{ns_}}tooltip-suppressed]:hover::after` rule for the visual effect, but the JS itself can land first; the suppression simply has no visible effect until Lane A merges.
 * Lane B's `aria_label` substitution depends on the `ariaLabel?` field existing; that lane owns both edits.
 * Lane D's tooltip strings depend on Lane B's substitution dictionary populating the `{{tooltip}}` and `{{aria_label}}` placeholders. If Lane D lands first, the strings sit dormant on the type instances and render once Lane B ships.
 
@@ -52,7 +52,7 @@ Bring the toolbar menu UI up to parity on three accessibility and polish axes in
 * Clicking a menu item hides its tooltip immediately and does not re-show it until the pointer leaves and re-enters.
 * `closeAllMenus()` clears all suppression state.
 * Every interactive toolbar element has an `aria-label`, either pre-existing in yaml or derived via the new resolution order (item.ariaLabel > item.tooltip > item.displayName).
-* No empty `aria-label=""` or `data-tooltip=""` attributes are emitted.
+* No empty `aria-label=""` or `data-{{ns_}}tooltip=""` attributes are emitted.
 
 ## File ownership snapshot
 
