@@ -1,9 +1,9 @@
 # Lane B: aria + tooltip plumbing
 
-**Status:** todo
+**Status:** done (merged via PR #124, 2026-05-09)
 **Created:** 2026-05-08
-**Updated:** 2026-05-08
-**Parent orchestrator:** [2026-05-08_plan_todo_MenuTooltipsAria_Orch.md](<2026-05-08_plan_todo_MenuTooltipsAria_Orch.md>)
+**Updated:** 2026-05-09
+**Parent orchestrator:** [2026-05-08_plan_done_MenuTooltipsAria_Orch.md](<2026-05-08_plan_done_MenuTooltipsAria_Orch.md>)
 **Branch:** `feature/menu-tooltips-aria-lane-b` (off `main`)
 **Owner:** Claude
 **Blocked by:** none. Independent of Lanes A, C, D.

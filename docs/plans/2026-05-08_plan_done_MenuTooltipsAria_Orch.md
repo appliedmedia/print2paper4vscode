@@ -1,8 +1,8 @@
 # Orchestrator: Menu tooltips and aria wave
 
-**Status:** todo
+**Status:** done (merged via PR #124, 2026-05-09)
 **Created:** 2026-05-08
-**Updated:** 2026-05-08
+**Updated:** 2026-05-09
 
 ## Decision log (newest first)
 
@@ -18,15 +18,15 @@
   * The `⇤ ◇ ⇥` navigation triple at `src/types/PaperPrinter_t.ts:195-215` (header/footer position menus) and their submenu options (`title`, `page`, `total`, `pageTotal`) carry no tooltip text today and are the most visually opaque items in the toolbar. They are top priority for Lane D's data entry.
   * Click handler at `src/UIMenu.yaml:443+` (`handleMenuItemClick`) is the right hook for suppression; tooltip is currently 100% CSS `:hover`-driven, so JS has to set an attribute the CSS can read. `closeAllMenus()` is the existing cleanup function and the natural place for the global suppression-clear pass.
 
-**Spec:** [2026-05-08_plan_todo_MenuTooltipsAria.md](<2026-05-08_plan_todo_MenuTooltipsAria.md>)
+**Spec:** [2026-05-08_plan_done_MenuTooltipsAria.md](<2026-05-08_plan_done_MenuTooltipsAria.md>)
 **Master orchestrator:** [2026-04-01_plan_todo_Orchestrator.md](<2026-04-01_plan_todo_Orchestrator.md>) (Phase 2 polish track)
 
 ## Lanes
 
-* [Lane A: CSS fixes](<2026-05-08_plan_todo_MenuTooltipsAria_LaneA-CssFixes.md>): transition delay bump, font-size cascade fix, suppress-class CSS rule.
-* [Lane B: aria + tooltip plumbing](<2026-05-08_plan_todo_MenuTooltipsAria_LaneB-AriaPlumbing.md>): `ariaLabel?` field, template attribute placeholders, substitution dictionary, aria audit.
-* [Lane C: click-suppress JS hook](<2026-05-08_plan_todo_MenuTooltipsAria_LaneC-ClickSuppress.md>): `data-{{ns_}}tooltip-suppressed` toggle in click handler, pointerleave clear, global cleanup on `closeAllMenus()`.
-* [Lane D: tooltip data entry](<2026-05-08_plan_todo_MenuTooltipsAria_LaneD-TooltipDataEntry.md>): populate every menu-item `tooltip:` string; targeted `ariaLabel?` overrides.
+* [Lane A: CSS fixes](<2026-05-08_plan_done_MenuTooltipsAria_LaneA-CssFixes.md>): transition delay bump, font-size cascade fix, suppress-class CSS rule.
+* [Lane B: aria + tooltip plumbing](<2026-05-08_plan_done_MenuTooltipsAria_LaneB-AriaPlumbing.md>): `ariaLabel?` field, template attribute placeholders, substitution dictionary, aria audit.
+* [Lane C: click-suppress JS hook](<2026-05-08_plan_done_MenuTooltipsAria_LaneC-ClickSuppress.md>): `data-{{ns_}}tooltip-suppressed` toggle in click handler, pointerleave clear, global cleanup on `closeAllMenus()`.
+* [Lane D: tooltip data entry](<2026-05-08_plan_done_MenuTooltipsAria_LaneD-TooltipDataEntry.md>): populate every menu-item `tooltip:` string; targeted `ariaLabel?` overrides.
 
 ## Coordination
 
