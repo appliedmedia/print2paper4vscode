@@ -32,7 +32,7 @@
 
 * Lanes A, B, and D are independent in flight. Each lane opens its own PR off `main`.
 * Lane C's PR can land before Lane A; the suppression attribute is set but has no visual effect until Lane A's CSS rule lands. Lane C's PR description should call this out so the reviewer doesn't expect a visible change pre-Lane-A.
-* Lane B and Lane D both touch tooltip-adjacent strings, but in different files (Lane B in `src/UIMenu_t.ts` and `src/UIMenu.ts` and the yaml HTML template; Lane D in `src/types/PaperPrinter_t.ts`). They do not conflict at the file level.
+* Lane B and Lane D both touch tooltip-adjacent strings, but in different files (Lane B in `src/types/UIMenu_t.ts` and `src/UIMenu.ts` and the yaml HTML template; Lane D in `src/types/PaperPrinter_t.ts`). They do not conflict at the file level.
 * Sequencing recommendation: A first (smallest, riskless CSS), then B (enables D's strings to render), then D (data entry; possibly large diff), then C (JS hook; benefits from A and B already in tree for end-to-end smoke).
 
 ## Dependencies
@@ -44,6 +44,6 @@
 
 ## Done when
 
-* All four lane PRs merged into `main`.
+* All four lane PRs are merged into `main`.
 * Smoke test on a fresh extension install: hover delay feels right, tooltips render at correct size at all menu depths, click suppresses the active item's tooltip, navigation arrows have descriptive tooltips, every interactive element has an aria-label.
 * This orchestrator's status flips from `todo` to `done`, and each lane file is renamed to `_done_`.
