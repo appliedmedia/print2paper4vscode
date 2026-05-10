@@ -1,8 +1,8 @@
 # Menu tooltips, aria coverage, and CSS polish
 
-**Status:** done (merged via PR #124, 2026-05-09)
+**Status:** todo
 **Created:** 2026-05-08
-**Updated:** 2026-05-09
+**Updated:** 2026-05-08
 **Branch:** `feature/plans-menu-tooltips-aria` for the plan-doc PR. Each lane gets its own implementation branch (suggested names listed in each lane file). Lane PRs target `main` directly; there is no shared wave branch since the lanes are largely independent.
 
 ## Goal
@@ -33,10 +33,10 @@ Bring the toolbar menu UI up to parity on three accessibility and polish axes in
 
 ## Lanes
 
-* [Lane A: CSS fixes](<2026-05-08_plan_done_MenuTooltipsAria_LaneA-CssFixes.md>): transition-delay bump, font-size cascade fix, suppress-class CSS rule.
-* [Lane B: aria + tooltip plumbing](<2026-05-08_plan_done_MenuTooltipsAria_LaneB-AriaPlumbing.md>): `ariaLabel?` field, template attribute placeholders, substitution dictionary, audit of pre-existing aria-labels.
-* [Lane C: click-suppress JS hook](<2026-05-08_plan_done_MenuTooltipsAria_LaneC-ClickSuppress.md>): `data-{{ns_}}tooltip-suppressed` toggle in `handleMenuItemClick`, pointerleave clear, `closeAllMenus()` global cleanup.
-* [Lane D: tooltip data entry](<2026-05-08_plan_done_MenuTooltipsAria_LaneD-TooltipDataEntry.md>): populate `tooltip:` strings on every menu item; case-by-case `ariaLabel?` overrides.
+* [Lane A: CSS fixes](<2026-05-08_plan_todo_MenuTooltipsAria_LaneA-CssFixes.md>): transition-delay bump, font-size cascade fix, suppress-class CSS rule.
+* [Lane B: aria + tooltip plumbing](<2026-05-08_plan_todo_MenuTooltipsAria_LaneB-AriaPlumbing.md>): `ariaLabel?` field, template attribute placeholders, substitution dictionary, audit of pre-existing aria-labels.
+* [Lane C: click-suppress JS hook](<2026-05-08_plan_todo_MenuTooltipsAria_LaneC-ClickSuppress.md>): `data-{{ns_}}tooltip-suppressed` toggle in `handleMenuItemClick`, pointerleave clear, `closeAllMenus()` global cleanup.
+* [Lane D: tooltip data entry](<2026-05-08_plan_todo_MenuTooltipsAria_LaneD-TooltipDataEntry.md>): populate `tooltip:` strings on every menu item; case-by-case `ariaLabel?` overrides.
 
 ## Coordination
 

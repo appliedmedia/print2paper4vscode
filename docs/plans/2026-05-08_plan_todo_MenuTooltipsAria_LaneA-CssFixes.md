@@ -1,9 +1,9 @@
 # Lane A: CSS fixes
 
-**Status:** done (merged via PR #124, 2026-05-09)
+**Status:** todo
 **Created:** 2026-05-08
-**Updated:** 2026-05-09
-**Parent orchestrator:** [2026-05-08_plan_done_MenuTooltipsAria_Orch.md](<2026-05-08_plan_done_MenuTooltipsAria_Orch.md>)
+**Updated:** 2026-05-08
+**Parent orchestrator:** [2026-05-08_plan_todo_MenuTooltipsAria_Orch.md](<2026-05-08_plan_todo_MenuTooltipsAria_Orch.md>)
 **Branch:** `feature/menu-tooltips-aria-lane-a` (off `main`)
 **Owner:** Claude
 **Blocked by:** none. Fully independent.
