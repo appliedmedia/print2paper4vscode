@@ -58,6 +58,9 @@ uimenu_css: |
   [data-{{ns_}}tooltip]:hover::after {
     opacity: 1;
   }
+  [data-{{ns_}}tooltip][data-{{ns_}}tooltipSuppressed]:hover::after {
+    opacity: 0;
+  }
   .{{ns_}}menu {
     position: relative;
     display: inline-block;
@@ -285,6 +288,9 @@ uimenu_generic_handlers: |
     document.querySelectorAll('.{{ns_}}menu.isFlyout').forEach(flyout => {
       flyout.style.display = 'none';
     });
+    document.querySelectorAll('[data-{{ns_}}tooltipSuppressed]').forEach(el => {
+      el.removeAttribute('data-{{ns_}}tooltipSuppressed');
+    });
   }
 
   function closeAllFlyouts() {
@@ -346,6 +352,7 @@ uimenu_generic_handlers: |
       btn.setAttribute('aria-expanded', 'true');
       requestDynamicValuesIn(menuItems);
     }
+    btn.setAttribute('data-{{ns_}}tooltipSuppressed', '');
   }
 
   /* Ask the extension for a fresh value on every menu-item that was marked
@@ -460,8 +467,9 @@ uimenu_generic_handlers: |
         });
         itemEl.classList.add('isSelected');
       }
-      
+
       postMenuItemSelected(menuId, menuItemId, kContextDict_None);
+      itemEl.setAttribute('data-{{ns_}}tooltipSuppressed', '');
       closeAllMenus();
     }
   }
@@ -483,6 +491,18 @@ uimenu_generic_handlers: |
 
     closeAllMenus();
   });
+
+  /* Tooltip click-suppress: handleMenuButtonClick / handleMenuItemClick set
+     data-{{ns_}}tooltipSuppressed on click; this listener clears it when the
+     cursor leaves so a fresh re-hover shows the tooltip again. Capture phase
+     so it fires for any descendant; pointerleave does not bubble, so the
+     capture-phase target check picks up the original element. */
+  document.addEventListener('pointerleave', (e) => {
+    if (!e || !e.target || !e.target.removeAttribute) return;
+    if (e.target.hasAttribute && e.target.hasAttribute('data-{{ns_}}tooltipSuppressed')) {
+      e.target.removeAttribute('data-{{ns_}}tooltipSuppressed');
+    }
+  }, true);
 
   /* Patch dynamic-marked items when the extension answers a getDynamicValue
      request. The element is located by the dynamicMenuId/dynamicMenuItemId
