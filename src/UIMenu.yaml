@@ -155,7 +155,7 @@ uimenu_css: |
 
   /* Icon-only items (single-glyph displayName, no inline icon, no shortcut)
      get rendered ~37% larger so emoji like ⚙ are legible. */
-  .{{ns_}}menuItem.isIconOnly .menu-item-text {
+  .{{ns_}}menuItem.isIconOnly > .menu-item-text {
     font-size: 1.375em;
     line-height: 1;
   }
