@@ -22,17 +22,19 @@ uimenu_css: |
      anything else that opts in.
 
      Positioning: position: absolute, anchored above the host with
-     bottom: calc(100% + 4px) and horizontally centered via left: 50% +
+     bottom: calc(100% + 2px) and horizontally centered via left: 50% +
      transform: translateX(-50%). The pointerenter listener sets
      data-{{ns_}}tooltipBelow on the host when the host is near the top
      of the viewport, flipping the bubble below instead. */
-  [data-{{ns_}}tooltip] {
+  /* :where() zero-specificity so elements with explicit position
+     (e.g. toolbarGrip: absolute) aren't downgraded to relative. */
+  :where([data-{{ns_}}tooltip]) {
     position: relative;
   }
   [data-{{ns_}}tooltip]::after {
     content: attr(data-{{ns_}}tooltip);
     position: absolute;
-    bottom: calc(100% + 4px);
+    bottom: calc(100% + 2px);
     left: 50%;
     transform: translateX(-50%);
     background: #ffffe0;
@@ -40,25 +42,29 @@ uimenu_css: |
     border: 1px solid #b8b878;
     padding: 4px 8px;
     border-radius: 3px;
-    font-size: 10px;
+    font-size: 11px;
     line-height: 1.3;
     pointer-events: none;
     opacity: 0;
     z-index: 10000;
-    transition: opacity 0.12s 0.5s;
+    /* Default transition (used when leaving the host or on click-suppress):
+       instant hide. Hover overrides with a delayed fade-in below. */
+    transition: opacity 0s 0s;
     box-shadow: 0 2px 6px rgba(0,0,0,.25);
     white-space: nowrap;
     max-width: 320px;
   }
   [data-{{ns_}}tooltip][data-{{ns_}}tooltipBelow]::after {
     bottom: auto;
-    top: calc(100% + 4px);
+    top: calc(100% + 2px);
   }
   [data-{{ns_}}tooltip]:hover::after {
     opacity: 1;
+    transition: opacity 0.12s 0.5s;
   }
   [data-{{ns_}}tooltip][data-{{ns_}}tooltipSuppressed]:hover::after {
     opacity: 0;
+    transition: opacity 0s 0s;
   }
   .{{ns_}}menu {
     position: relative;
@@ -159,9 +165,10 @@ uimenu_css: |
     vertical-align: middle;
   }
 
-  /* Icon-only items (single-glyph displayName, no inline icon, no shortcut)
-     get rendered ~37% larger so emoji like ⚙ are legible. */
-  .{{ns_}}menuItem.isIconOnly > .menu-item-text {
+  /* Small-glyph items (short displayName, no inline icon, no shortcut) get
+     rendered ~37% larger so glyphs like ⇤ ◇ ⇥ read as icons rather than tiny
+     text. */
+  .{{ns_}}menuItem.isSmallGlyph > .menu-item-text {
     font-size: 1.375em;
     line-height: 1;
   }
@@ -346,6 +353,12 @@ uimenu_generic_handlers: |
     if (isOpen) {
       menuItems.style.display = 'none';
       btn.setAttribute('aria-expanded', 'false');
+      // Clear stale suppression from siblings that were marked while this
+      // dropdown was open; otherwise their tooltips stay dead until cursor
+      // leaves and re-enters each one. (The btn itself is re-suppressed below.)
+      document.querySelectorAll('[data-{{ns_}}tooltipSuppressed]').forEach(el => {
+        el.removeAttribute('data-{{ns_}}tooltipSuppressed');
+      });
     } else {
       closeAllMenus();
       menuItems.style.display = 'block';
@@ -492,12 +505,14 @@ uimenu_generic_handlers: |
     closeAllMenus();
   });
 
-  /* Tooltip above-host placement + flyout-scoped suppression. Capture phase
-     because pointerenter does not bubble. When any dropdown is open, only
-     elements inside that dropdown's containing menu get tooltips; everything
-     else is marked suppressed for the duration of the hover. Otherwise the
-     bubble is anchored above the host by CSS; this listener only flips it
-     below when the host is near the top of the viewport. */
+  /* Tooltip above-host placement + open-menu-chain suppression. Capture phase
+     because pointerenter does not bubble. When any dropdown is open, allow
+     tooltips on elements inside ANY open dropdown's menu — that covers the
+     parent menu's sibling items when a sub-flyout is open (they still
+     highlight on hover, so they should still tooltip). Only elements fully
+     outside the open-menu chain are suppressed for the duration of the hover.
+     Otherwise the bubble is anchored above the host by CSS; this listener
+     only flips it below when the host is near the top of the viewport. */
   document.addEventListener('pointerenter', (e) => {
     if (!e || !e.target || !e.target.hasAttribute) return;
     const el = e.target;
@@ -505,19 +520,23 @@ uimenu_generic_handlers: |
 
     const openDropdowns = document.querySelectorAll('.{{ns_}}menuItems[style*="display: block"]');
     if (openDropdowns.length > 0) {
-      const activeDropdown = openDropdowns[openDropdowns.length - 1];
-      const activeMenu = activeDropdown.closest('.{{ns_}}menu');
-      if (activeMenu && !activeMenu.contains(el)) {
+      const inOpenChain = Array.from(openDropdowns).some(dropdown => {
+        const menu = dropdown.closest('.{{ns_}}menu');
+        return menu && menu.contains(el);
+      });
+      if (!inOpenChain) {
         el.setAttribute('data-{{ns_}}tooltipSuppressed', '');
         return;
       }
     }
 
     // Default: tooltip above host. If above would clip the top of the viewport,
-    // flip to below.
+    // flip to below. EST_H matches the actual rendered tooltip
+    // (font 11 * line-height 1.3 + 8px vertical padding + 2px border ~= 24);
+    // GAP matches the CSS calc(100% + 2px) anchor offset.
     const rect = el.getBoundingClientRect();
-    const TOOLTIP_EST_H = 28;
-    const GAP = 4;
+    const TOOLTIP_EST_H = 24;
+    const GAP = 2;
     if (rect.top - GAP - TOOLTIP_EST_H < 0) {
       el.setAttribute('data-{{ns_}}tooltipBelow', '');
     } else {
