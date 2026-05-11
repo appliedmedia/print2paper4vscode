@@ -60,6 +60,7 @@ import {
   kMd_Raw,
   kAbout,
   kMenus,
+  validateZoomLevel,
 } from './types/PaperPrinter_t';
 
 // Type for theme menu items returned by stylize.getThemes()
@@ -952,7 +953,12 @@ export class PaperPrinter {
       const triadMain: iconSlotTriad_main_t = kZoomLevel.iconSlotTriad.main;
       const persistId = triadMain.persistId;
       if (persistId) {
-        const persistValue = this.fn.utils.forceNumber(zoomValue) as PersistValue_t;
+        // Validate before persisting: clamp to min/max, default non-finite/<=0
+        // to altValue (1.0 = 100%). Prevents persisting 0, NaN, Infinity, or
+        // out-of-range scales (e.g., Fit Width result before window dims known).
+        const persistValue = validateZoomLevel(
+          this.fn.utils.forceNumber(zoomValue)
+        ) as PersistValue_t;
         this.fn.uimenumgr.setValueOfPersistIdForMenuId({ menuId, persistId, value: persistValue });
         dx.out(`Saved ${persistValue} to menu[${menuId}].persist[${persistId}]`);
       }
@@ -1001,8 +1007,14 @@ export class PaperPrinter {
         value: menuItemId as PersistValue_t,
       });
 
+      // Validate the numeric scale at the source. The value may come from the
+      // fitWidth / fitPage resolver, which divides by viewport dims; if those
+      // are not yet known the quotient can collapse to 0 or Infinity, both of
+      // which must default to altValue (1.0 = 100%) before persisting.
+      const validatedValue = validateZoomLevel(this.fn.utils.forceNumber(value));
+      value = validatedValue;
       // Save actual zoom value to persistId (zoomLevel_setTextEdit handles this)
-      this.zoomLevel_setTextEdit(this.fn.utils.forceNumber(value));
+      this.zoomLevel_setTextEdit(validatedValue);
       void this.regenerateAndUpdateWebview();
     }
     dx.done();
@@ -1090,32 +1102,19 @@ export class PaperPrinter {
         return { id, value };
       }
 
-      // Get current zoom value with proper validation
+      // Get current zoom value with proper validation. validateZoomLevel pins
+      // out-of-range scales to min/max and defaults non-finite/<=0 to altValue.
       const rawZoom = this.fn.uimenumgr.getValueOfMenuItemIdSelected(kZoomLevel.id);
-      const currentZoom = this.fn.utils.forceNumber(rawZoom);
-
-      // Validate currentZoom is numeric; fall back to altValue if not
-      if (Number.isNaN(currentZoom) || currentZoom === 0) {
-        dx.out(`Invalid currentZoom (${rawZoom}), using altValue: ${kZoomLevel.altValue}`);
-        const fallbackZoom = Number(kZoomLevel.altValue);
-        if (Number.isNaN(fallbackZoom)) {
-          dx.error(`altValue is also invalid: ${kZoomLevel.altValue}`);
-          dx.done();
-          return { id, value };
-        }
-      }
-
-      const validCurrentZoom =
-        Number.isNaN(currentZoom) || currentZoom === 0 ? Number(kZoomLevel.altValue) : currentZoom;
+      const validCurrentZoom = validateZoomLevel(this.fn.utils.forceNumber(rawZoom));
 
       dx.out(`${menuId}: currentZoom=${validCurrentZoom}, direction=${direction}`);
 
-      // Apply stepAmount in the specified direction, clamp to min/max
-      // Note: * 100 / 100 rounds to 2 decimals to avoid floating-point precision errors (e.g., 0.1 + 0.2 = 0.30000000000004)
+      // Apply stepAmount in the specified direction, then re-validate so the
+      // result stays in [min, max]. Note: * 100 / 100 rounds to 2 decimals to
+      // avoid floating-point precision errors (e.g., 0.1 + 0.2 = 0.30000000000004).
       const adjustment = direction * kZoomLevel.stepAmount;
-      const newZoom = Math.max(
-        kZoomLevel.min,
-        Math.min(kZoomLevel.max, Math.round((validCurrentZoom + adjustment) * 100) / 100)
+      const newZoom = validateZoomLevel(
+        Math.round((validCurrentZoom + adjustment) * 100) / 100
       );
       dx.out(`${menuId}: newZoom=${newZoom}`);
 
