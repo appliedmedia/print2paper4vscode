@@ -10,7 +10,7 @@ import type {
 import type { FnImport_t } from './types/Registry_t';
 import { Diagnostics } from './Diagnostics';
 import { YamlInstance } from './Yaml';
-import { kZoomLevel, kZoomIn, kZoomOut } from './types/PaperPrinter_t';
+import { kZoomLevel, kZoomIn, kZoomOut, validateZoomLevel } from './types/PaperPrinter_t';
 import { kToolbar } from './types/UI_t';
 
 /**
@@ -193,11 +193,11 @@ export class UIWebView {
         menuId: kZoomLevel.id,
         menuItemId: zoomMenuItemId,
       });
-      // Coerce to number (forceNumber always returns valid number or 0)
-      const coercedZoom = this.fn.utils.forceNumber(rawZoom);
-      // Use coerced value if finite and positive, otherwise fall back to hardcoded default
-      const pdf_zoom_level =
-        Number.isFinite(coercedZoom) && coercedZoom > 0 ? coercedZoom : kZoomLevel.altValue;
+      // Coerce to number, then validate at the source: validateZoomLevel pins
+      // out-of-range to min/max and defaults NaN / Infinity / <=0 (e.g., the
+      // Fit Width resolver returning a tiny scale before window dims are known)
+      // to altValue (1.0 = 100%).
+      const pdf_zoom_level = validateZoomLevel(this.fn.utils.forceNumber(rawZoom));
 
       // Create template dictionary
       const templateDict = {

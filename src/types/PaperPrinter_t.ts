@@ -451,27 +451,55 @@ export const kZoomLevel = {
     { id: '3.00', displayName: '300%', value: 3.0 },
     // fitWidth: scale page to fill window width
     // Formula: windowWidth / pageWidth (e.g., 1200/595 = 2.016 = scale up to fit)
-    // Dict guaranteed valid by forceNumber (all values finite, non-zero)
+    // Dict guaranteed valid by forceNumber (all values finite, non-zero), but
+    // forceNumbers maps undefined / 0 to useForZero=1 so on first paint (before
+    // the webview posts its dims) windowWidth collapses to 1. The validator at
+    // the producer pins the resulting tiny scale to min, and defaults true
+    // garbage (NaN, Infinity, <=0) to altValue.
     {
       id: 'fitWidth',
       displayName: 'Fit Width',
-      value: (dict: UIMenuItemDict_t) => (dict.windowWidth as number) / (dict.pageWidth as number),
+      value: (dict: UIMenuItemDict_t) =>
+        validateZoomLevel((dict.windowWidth as number) / (dict.pageWidth as number)),
     },
     // fitPage: scale page to fit both width and height in viewport (use smaller ratio)
     // Formula: Math.min of width and height ratios (ensures entire page visible)
-    // Dict guaranteed valid by forceNumber (all values finite, non-zero)
+    // Dict guaranteed valid by forceNumber (all values finite, non-zero); see
+    // fitWidth note above on the first-paint case the validator guards.
     {
       id: 'fitPage',
       displayName: 'Fit Page',
       value: (dict: UIMenuItemDict_t) => {
         const widthScale = (dict.windowWidth as number) / (dict.pageWidth as number);
         const heightScale = (dict.windowHeight as number) / (dict.pageHeight as number);
-        return Math.min(widthScale, heightScale);
+        return validateZoomLevel(Math.min(widthScale, heightScale));
       },
     },
   ],
 } as const;
 export type ZoomLevelMenuItems_t = (typeof kZoomLevel.menuItems)[number]['id'];
+
+/**
+ * Validate a zoom scale value at the producer side.
+ *
+ * Zoom is stored as a scale (0.5-3.0, where 1.0 = 100%). This validator pins
+ * the value to kZoomLevel.min / kZoomLevel.max, and defaults any non-finite or
+ * non-positive input (NaN, Infinity, 0, negative) to kZoomLevel.altValue (1.0
+ * = 100%). Use at every zoom-value source: startup read, Fit Width / Fit Page
+ * resolver result, +/- arithmetic, user input, persisted-value restore. Sinks
+ * downstream can trust the value when this validator gates the source.
+ *
+ * The bug this prevents: at first paint the webview has not yet posted its
+ * window dimensions, so the dynamic Fit Width resolver computed
+ * windowWidth(=1) / pageWidth(=real px), yielding a near-zero scale that
+ * rounded to 0% on the toolbar display.
+ */
+export function validateZoomLevel(scale: number): number {
+  if (!Number.isFinite(scale) || scale <= 0) return kZoomLevel.altValue;
+  if (scale < kZoomLevel.min) return kZoomLevel.min;
+  if (scale > kZoomLevel.max) return kZoomLevel.max;
+  return scale;
+}
 
 // All menu constants - shared across PaperPrinter and UIMenu
 export const kMenus = [
