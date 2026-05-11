@@ -52,8 +52,15 @@ uimenu_css: |
     top: 50%;
     left: calc(100% + 8px);
     transform: translateY(-50%);
-    white-space: normal;
-    word-break: break-word;
+    white-space: nowrap;
+  }
+  .{{ns_}}menuItem[data-{{ns_}}tooltip][data-{{ns_}}tooltipSide="left"]::after {
+    left: auto;
+    right: calc(100% + 8px);
+  }
+  [data-{{ns_}}tooltip][data-{{ns_}}tooltipSide="top"]::after {
+    top: auto;
+    bottom: calc(100% + 4px);
   }
   [data-{{ns_}}tooltip]:hover::after {
     opacity: 1;
@@ -491,6 +498,37 @@ uimenu_generic_handlers: |
 
     closeAllMenus();
   });
+
+  /* Tooltip placement flip: when the default placement (right of menu items,
+     below toolbar buttons) would overflow the viewport, set a side attribute
+     that CSS reads to render the bubble on the opposite side. Capture phase
+     because pointerenter does not bubble. */
+  document.addEventListener('pointerenter', (e) => {
+    if (!e || !e.target || !e.target.hasAttribute) return;
+    const el = e.target;
+    if (!el.hasAttribute('data-{{ns_}}tooltip')) return;
+
+    el.removeAttribute('data-{{ns_}}tooltipSide');
+
+    const rect = el.getBoundingClientRect();
+    const vw = window.innerWidth || document.documentElement.clientWidth;
+    const vh = window.innerHeight || document.documentElement.clientHeight;
+
+    const TOOLTIP_MAX_W = 320;
+    const TOOLTIP_EST_H = 28;
+    const GAP = 8;
+
+    const isMenuItem = el.classList.contains('{{ns_}}menuItem');
+    if (isMenuItem) {
+      if (rect.right + GAP + TOOLTIP_MAX_W > vw) {
+        el.setAttribute('data-{{ns_}}tooltipSide', 'left');
+      }
+    } else {
+      if (rect.bottom + GAP + TOOLTIP_EST_H > vh) {
+        el.setAttribute('data-{{ns_}}tooltipSide', 'top');
+      }
+    }
+  }, true);
 
   /* Tooltip click-suppress: handleMenuButtonClick / handleMenuItemClick set
      data-{{ns_}}tooltipSuppressed on click; this listener clears it when the
