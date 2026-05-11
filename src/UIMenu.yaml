@@ -31,8 +31,9 @@ uimenu_css: |
   [data-{{ns_}}tooltip]::after {
     content: attr(data-{{ns_}}tooltip);
     position: absolute;
-    background: #222;
-    color: #fff;
+    background: var(--vscode-editorHoverWidget-background, #3a3a3a);
+    color: var(--vscode-editorHoverWidget-foreground, #fff);
+    border: 1px solid var(--vscode-editorHoverWidget-border, #555);
     padding: 4px 8px;
     border-radius: 3px;
     font-size: 10px;
@@ -40,7 +41,7 @@ uimenu_css: |
     pointer-events: none;
     opacity: 0;
     z-index: 10000;
-    transition: opacity 0.12s 1.5s;
+    transition: opacity 0.12s 0.5s;
     box-shadow: 0 2px 6px rgba(0,0,0,.25);
     top: calc(100% + 4px);
     left: 50%;
@@ -89,6 +90,7 @@ uimenu_css: |
     width: max-content;
     min-width: 100%;
     pointer-events: auto;
+    font-size: var(--vscode-font-size, 13px);
   }
   .{{ns_}}menuItem {
     --gutter-before-width: 2ch;
