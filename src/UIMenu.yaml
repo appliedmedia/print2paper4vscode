@@ -21,21 +21,23 @@ uimenu_css: |
      covers menu top buttons, URL-bearing menu items, the toolbar grip, and
      anything else that opts in.
 
-     Positioning: position: fixed with --{{ns_}}tooltipX / --{{ns_}}tooltipY
-     CSS variables that the pointerenter listener sets from the cursor
-     coordinates. Default placement is below-right of the cursor; the
-     listener flips above/left when the bubble would overflow the viewport. */
+     Positioning: position: absolute, anchored above the host with
+     bottom: calc(100% + 4px) and horizontally centered via left: 50% +
+     transform: translateX(-50%). The pointerenter listener sets
+     data-{{ns_}}tooltipBelow on the host when the host is near the top
+     of the viewport, flipping the bubble below instead. */
   [data-{{ns_}}tooltip] {
     position: relative;
   }
   [data-{{ns_}}tooltip]::after {
     content: attr(data-{{ns_}}tooltip);
-    position: fixed;
-    left: var(--{{ns_}}tooltipX, 0);
-    top: var(--{{ns_}}tooltipY, 0);
-    background: var(--vscode-editorHoverWidget-background, #3a3a3a);
-    color: var(--vscode-editorHoverWidget-foreground, #fff);
-    border: 1px solid var(--vscode-editorHoverWidget-border, #555);
+    position: absolute;
+    bottom: calc(100% + 4px);
+    left: 50%;
+    transform: translateX(-50%);
+    background: #ffffe0;
+    color: #000;
+    border: 1px solid #b8b878;
     padding: 4px 8px;
     border-radius: 3px;
     font-size: 10px;
@@ -47,6 +49,10 @@ uimenu_css: |
     box-shadow: 0 2px 6px rgba(0,0,0,.25);
     white-space: nowrap;
     max-width: 320px;
+  }
+  [data-{{ns_}}tooltip][data-{{ns_}}tooltipBelow]::after {
+    bottom: auto;
+    top: calc(100% + 4px);
   }
   [data-{{ns_}}tooltip]:hover::after {
     opacity: 1;
@@ -486,12 +492,12 @@ uimenu_generic_handlers: |
     closeAllMenus();
   });
 
-  /* Tooltip cursor-tracking + flyout-scoped suppression. Capture phase
+  /* Tooltip above-host placement + flyout-scoped suppression. Capture phase
      because pointerenter does not bubble. When any dropdown is open, only
      elements inside that dropdown's containing menu get tooltips; everything
      else is marked suppressed for the duration of the hover. Otherwise the
-     bubble is positioned below-right of the cursor, flipping above/left
-     when it would overflow the viewport. */
+     bubble is anchored above the host by CSS; this listener only flips it
+     below when the host is near the top of the viewport. */
   document.addEventListener('pointerenter', (e) => {
     if (!e || !e.target || !e.target.hasAttribute) return;
     const el = e.target;
@@ -507,27 +513,16 @@ uimenu_generic_handlers: |
       }
     }
 
-    const OFFSET_X = 12;
-    const OFFSET_Y = 18;
-    const TOOLTIP_MAX_W = 320;
+    // Default: tooltip above host. If above would clip the top of the viewport,
+    // flip to below.
+    const rect = el.getBoundingClientRect();
     const TOOLTIP_EST_H = 28;
-    const vw = window.innerWidth || document.documentElement.clientWidth;
-    const vh = window.innerHeight || document.documentElement.clientHeight;
-
-    let x = e.clientX + OFFSET_X;
-    let y = e.clientY + OFFSET_Y;
-
-    if (x + TOOLTIP_MAX_W > vw) {
-      x = e.clientX - TOOLTIP_MAX_W - OFFSET_X;
-      if (x < 0) x = 0;
+    const GAP = 4;
+    if (rect.top - GAP - TOOLTIP_EST_H < 0) {
+      el.setAttribute('data-{{ns_}}tooltipBelow', '');
+    } else {
+      el.removeAttribute('data-{{ns_}}tooltipBelow');
     }
-    if (y + TOOLTIP_EST_H > vh) {
-      y = e.clientY - TOOLTIP_EST_H - OFFSET_Y;
-      if (y < 0) y = 0;
-    }
-
-    el.style.setProperty('--{{ns_}}tooltipX', x + 'px');
-    el.style.setProperty('--{{ns_}}tooltipY', y + 'px');
   }, true);
 
   /* Tooltip click-suppress: handleMenuButtonClick / handleMenuItemClick set
