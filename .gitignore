@@ -17,5 +17,7 @@ coverage/
 # Misc
 *.local
 core
-# Claude Code runtime state
-.claude/scheduled_tasks.lock
+
+# Claude Code / Cursor (local)
+.claude/
+.cursor/
