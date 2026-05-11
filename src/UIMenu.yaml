@@ -21,16 +21,18 @@ uimenu_css: |
      covers menu top buttons, URL-bearing menu items, the toolbar grip, and
      anything else that opts in.
 
-     Layout selector: menu items inside a dropdown render the bubble to the
-     right (the dropdown opens downward, so below would overlap the next
-     row). Everything else renders below — toolbar lives at the top of the
-     webview, so there is room to drop the bubble down. */
+     Positioning: position: fixed with --{{ns_}}tooltipX / --{{ns_}}tooltipY
+     CSS variables that the pointerenter listener sets from the cursor
+     coordinates. Default placement is below-right of the cursor; the
+     listener flips above/left when the bubble would overflow the viewport. */
   [data-{{ns_}}tooltip] {
     position: relative;
   }
   [data-{{ns_}}tooltip]::after {
     content: attr(data-{{ns_}}tooltip);
-    position: absolute;
+    position: fixed;
+    left: var(--{{ns_}}tooltipX, 0);
+    top: var(--{{ns_}}tooltipY, 0);
     background: var(--vscode-editorHoverWidget-background, #3a3a3a);
     color: var(--vscode-editorHoverWidget-foreground, #fff);
     border: 1px solid var(--vscode-editorHoverWidget-border, #555);
@@ -43,25 +45,8 @@ uimenu_css: |
     z-index: 10000;
     transition: opacity 0.12s 0.5s;
     box-shadow: 0 2px 6px rgba(0,0,0,.25);
-    top: calc(100% + 4px);
-    left: 50%;
-    transform: translateX(-50%);
     white-space: nowrap;
     max-width: 320px;
-  }
-  .{{ns_}}menuItem[data-{{ns_}}tooltip]::after {
-    top: 50%;
-    left: calc(100% + 8px);
-    transform: translateY(-50%);
-    white-space: nowrap;
-  }
-  .{{ns_}}menuItem[data-{{ns_}}tooltip][data-{{ns_}}tooltipSide="left"]::after {
-    left: auto;
-    right: calc(100% + 8px);
-  }
-  [data-{{ns_}}tooltip][data-{{ns_}}tooltipSide="top"]::after {
-    top: auto;
-    bottom: calc(100% + 4px);
   }
   [data-{{ns_}}tooltip]:hover::after {
     opacity: 1;
@@ -501,35 +486,48 @@ uimenu_generic_handlers: |
     closeAllMenus();
   });
 
-  /* Tooltip placement flip: when the default placement (right of menu items,
-     below toolbar buttons) would overflow the viewport, set a side attribute
-     that CSS reads to render the bubble on the opposite side. Capture phase
-     because pointerenter does not bubble. */
+  /* Tooltip cursor-tracking + flyout-scoped suppression. Capture phase
+     because pointerenter does not bubble. When any dropdown is open, only
+     elements inside that dropdown's containing menu get tooltips; everything
+     else is marked suppressed for the duration of the hover. Otherwise the
+     bubble is positioned below-right of the cursor, flipping above/left
+     when it would overflow the viewport. */
   document.addEventListener('pointerenter', (e) => {
     if (!e || !e.target || !e.target.hasAttribute) return;
     const el = e.target;
     if (!el.hasAttribute('data-{{ns_}}tooltip')) return;
 
-    el.removeAttribute('data-{{ns_}}tooltipSide');
+    const openDropdowns = document.querySelectorAll('.{{ns_}}menuItems[style*="display: block"]');
+    if (openDropdowns.length > 0) {
+      const activeDropdown = openDropdowns[openDropdowns.length - 1];
+      const activeMenu = activeDropdown.closest('.{{ns_}}menu');
+      if (activeMenu && !activeMenu.contains(el)) {
+        el.setAttribute('data-{{ns_}}tooltipSuppressed', '');
+        return;
+      }
+    }
 
-    const rect = el.getBoundingClientRect();
+    const OFFSET_X = 12;
+    const OFFSET_Y = 18;
+    const TOOLTIP_MAX_W = 320;
+    const TOOLTIP_EST_H = 28;
     const vw = window.innerWidth || document.documentElement.clientWidth;
     const vh = window.innerHeight || document.documentElement.clientHeight;
 
-    const TOOLTIP_MAX_W = 320;
-    const TOOLTIP_EST_H = 28;
-    const GAP = 8;
+    let x = e.clientX + OFFSET_X;
+    let y = e.clientY + OFFSET_Y;
 
-    const isMenuItem = el.classList.contains('{{ns_}}menuItem');
-    if (isMenuItem) {
-      if (rect.right + GAP + TOOLTIP_MAX_W > vw) {
-        el.setAttribute('data-{{ns_}}tooltipSide', 'left');
-      }
-    } else {
-      if (rect.bottom + GAP + TOOLTIP_EST_H > vh) {
-        el.setAttribute('data-{{ns_}}tooltipSide', 'top');
-      }
+    if (x + TOOLTIP_MAX_W > vw) {
+      x = e.clientX - TOOLTIP_MAX_W - OFFSET_X;
+      if (x < 0) x = 0;
     }
+    if (y + TOOLTIP_EST_H > vh) {
+      y = e.clientY - TOOLTIP_EST_H - OFFSET_Y;
+      if (y < 0) y = 0;
+    }
+
+    el.style.setProperty('--{{ns_}}tooltipX', x + 'px');
+    el.style.setProperty('--{{ns_}}tooltipY', y + 'px');
   }, true);
 
   /* Tooltip click-suppress: handleMenuButtonClick / handleMenuItemClick set
