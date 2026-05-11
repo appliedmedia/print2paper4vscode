@@ -300,7 +300,11 @@ export class UIMenu {
       .filter(Boolean)
       .join(' ');
 
-    const tooltipAttr = item.tooltip
+    // Scope: only emit tooltip attr for URL-bearing items (external-link items
+    // like About-menu links). Regular menu items skip the attr to keep the UI
+    // uncluttered. Toolbar buttons still get their displayName tooltip via the
+    // static template in UIMenu.yaml.
+    const tooltipAttr = item.tooltip && isExternalLink
       ? ` data-{{ns_}}tooltip="${item.tooltip.replace(/"/g, '&quot;')}"`
       : ``;
 
