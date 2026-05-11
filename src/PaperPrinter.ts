@@ -512,19 +512,31 @@ export class PaperPrinter {
 
   private menuItems_Header(): UIMenuItem_t[] {
     // Return position flyouts: ←, ↔, →
+    const tooltipById: Record<string, string> = {
+      begin: 'Top header left side content',
+      middle: 'Top header middle content',
+      end: 'Top header right side content',
+    };
     return kHeaderFooter.menuItems.map(item => ({
       id: `header_${item.id}` as MenuItemId_t,
       displayName: item.displayName,
       iconSlotTriad: { begin: '', main: '', end: '' },
+      tooltip: tooltipById[item.id],
     })) as UIMenuItem_t[];
   }
 
   private menuItems_Footer(): UIMenuItem_t[] {
     // Return position flyouts: ←, ↔, →
+    const tooltipById: Record<string, string> = {
+      begin: 'Bottom footer left side content',
+      middle: 'Bottom footer middle content',
+      end: 'Bottom footer right side content',
+    };
     return kHeaderFooter.menuItems.map(item => ({
       id: `footer_${item.id}` as MenuItemId_t,
       displayName: item.displayName,
       iconSlotTriad: { begin: '', main: '', end: '' },
+      tooltip: tooltipById[item.id],
     })) as UIMenuItem_t[];
   }
 

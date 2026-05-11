@@ -264,13 +264,16 @@ export class UIMenu {
         ? this.fn.uimenumgr.getShortcutOfMenuItemIdForMenuId({ menuId: this._id, menuItemId: item.id })
         : (item.shortcut ?? '');
 
-    // Icon-only detection: bump font 25% when the item shows a single-glyph
-    // displayName with no inline icon and no shortcut. Counts code points so
-    // graphemes like ⚙ register as length 1.
+    // Small-glyph detection: bump font 37.5% when the item's displayName is a
+    // short non-ASCII glyph (no inline icon, no shortcut) so symbols like
+    // ⇤ ◇ ⇥ read as icons rather than tiny text. ASCII labels (#, +, digits,
+    // letters) are excluded — they're text, not icon glyphs. Counts code
+    // points so graphemes like ⚙ register as 1.
     const trimmedName = processedDisplayName.trim();
     const codePointCount = Array.from(trimmedName).length;
-    const isIconOnly =
-      !iconSlotWithPrefixSuffix && !resolvedShortcut && codePointCount > 0 && codePointCount <= 2;
+    const allNonAscii = Array.from(trimmedName).every(c => (c.codePointAt(0) ?? 0) > 127);
+    const isSmallGlyph =
+      !iconSlotWithPrefixSuffix && !resolvedShortcut && codePointCount > 0 && codePointCount <= 2 && allNonAscii;
 
     // When shortcut is function-typed, mark the span so the webview can request
     // a fresh value on menu open (the resolver runs again at first paint, but
@@ -294,17 +297,18 @@ export class UIMenu {
       isSelected ? 'isSelected' : '',
       isDefault ? 'isDefault' : '',
       isExternalLink ? 'isExternalLink' : '',
-      isIconOnly ? 'isIconOnly' : '',
+      isSmallGlyph ? 'isSmallGlyph' : '',
       iconSlotResult.cssClass || '',
     ]
       .filter(Boolean)
       .join(' ');
 
-    // Scope: only emit tooltip attr for URL-bearing items (external-link items
-    // like About-menu links). Regular menu items skip the attr to keep the UI
-    // uncluttered. Toolbar buttons still get their displayName tooltip via the
-    // static template in UIMenu.yaml.
-    const tooltipAttr = item.tooltip && isExternalLink
+    // Scope: emit tooltip attr only when item.tooltip is explicitly set.
+    // Menu items default to no tooltip (keeps the UI uncluttered); items opt in
+    // by setting tooltip (e.g., About-menu external links, header/footer arrow
+    // position items). Toolbar buttons still get their displayName tooltip via
+    // the static template in UIMenu.yaml.
+    const tooltipAttr = item.tooltip
       ? ` data-{{ns_}}tooltip="${item.tooltip.replace(/"/g, '&quot;')}"`
       : ``;
 
