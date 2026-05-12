@@ -1,0 +1,65 @@
+<svg xmlns="http://www.w3.org/2000/svg"
+     width="1024" height="1024"
+     viewBox="0 0 1024 1024"
+     role="img"
+     aria-label="p2p4vsc icon">
+
+  <!-- Background -->
+  <rect width="1024" height="1024" rx="200" fill="#0E639C"/>
+
+  <!-- Printer group - bigger and vertically centered -->
+  <g transform="translate(512 512) scale(1.5) translate(-512 -605)">
+  
+    <!-- Paper feeder tray (lighter grey, on top) - rounded top corners, squared bottom -->
+    <path d="M 352,380 H 672 A 32,32 0 0,1 704,412 V 524 H 320 V 412 A 32,32 0 0,1 352,380 Z" fill="#4A4A4A"/>
+
+    <!-- Input paper with 45-degree dog ear corner cut into shape - 10px gap at bottom -->
+    <polygon points="360,354 600,354 660,414 660,514 360,514" fill="#FFFFFF"/>
+    <!-- Dog ear fold - reflected on altitude -->
+    <polygon points="600,354 600,414 660,414" fill="#E0E0E0"/>
+
+    <!-- Printer body -->
+    <rect x="256" y="520" width="512" height="220" rx="48" fill="#1E1E1E"/>
+
+    <!-- Status light (bright green, upper right) -->
+    <circle cx="720" cy="560" r="16" fill="#44FF44"/>
+
+    <!-- Output slot/feeder -->
+    <rect x="320" y="600" width="384" height="48" rx="16" fill="#4A4A4A"/>
+
+    <!-- Output paper - starts inside the slot - 7px gap at top -->
+    <rect x="360" y="607" width="304" height="239" fill="#FFFFFF"/>
+    
+    <!-- Code lines on OUTPUT paper - structured with indentation blocks -->
+    <!-- Line 1: function keyword + name (block start) -->
+    <rect x="392" y="627" width="80" height="18" rx="9" fill="#C586C0"/>
+    <rect x="480" y="627" width="100" height="18" rx="9" fill="#4FC3F7"/>
+    <rect x="588" y="627" width="30" height="18" rx="9" fill="#888888"/>
+    
+    <!-- Line 2: indented - const keyword + variable + value -->
+    <rect x="416" y="655" width="60" height="18" rx="9" fill="#C586C0"/>
+    <rect x="484" y="655" width="50" height="18" rx="9" fill="#4FC3F7"/>
+    <rect x="542" y="655" width="70" height="18" rx="9" fill="#CE9178"/>
+    
+    <!-- Line 3: indented - if keyword + condition + brace -->
+    <rect x="416" y="683" width="30" height="18" rx="9" fill="#C586C0"/>
+    <rect x="454" y="683" width="80" height="18" rx="9" fill="#4FC3F7"/>
+    <rect x="542" y="683" width="30" height="18" rx="9" fill="#888888"/>
+    
+    <!-- Line 4: double-indented - function call -->
+    <rect x="440" y="711" width="90" height="18" rx="9" fill="#4FC3F7"/>
+    <rect x="538" y="711" width="40" height="18" rx="9" fill="#CE9178"/>
+    
+    <!-- Line 5: indented - closing brace (matches line 3 structure) -->
+    <rect x="416" y="739" width="30" height="18" rx="9" fill="#888888"/>
+    
+    <!-- Line 6: closing brace (matches line 1 structure) -->
+    <rect x="392" y="767" width="30" height="18" rx="9" fill="#888888"/>
+    
+    <!-- Line 7: another statement -->
+    <rect x="392" y="795" width="70" height="18" rx="9" fill="#C586C0"/>
+    <rect x="470" y="795" width="90" height="18" rx="9" fill="#4FC3F7"/>
+
+  </g>
+
+</svg>
