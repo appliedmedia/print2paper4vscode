@@ -314,7 +314,7 @@ export class UIMenu {
 
     // Aria-label: always emit; falls back to displayName (never to tooltip,
     // which may be a URL for external-link items and meaningless for screen readers).
-    const ariaLabelValue = (item.ariaLabel ?? item.displayName ?? '').replace(/"/g, '&quot;');
+    const ariaLabelValue = this.fn.utils.htmlEscape(item.ariaLabel ?? item.displayName ?? '');
     const ariaLabelAttr = ariaLabelValue ? ` aria-label="${ariaLabelValue}"` : ``;
 
     const replacementDict = {
