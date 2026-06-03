@@ -1,8 +1,8 @@
 # Orchestrator: Menu tooltips and aria wave
 
-**Status:** todo
+**Status:** done (all four lanes merged; PR #136 closes Lanes B+D)
 **Created:** 2026-05-08
-**Updated:** 2026-05-08
+**Updated:** 2026-06-02
 
 ## Decision log (newest first)
 

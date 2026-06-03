@@ -1,16 +1,20 @@
 # Lane D: tooltip data entry
 
-**Status:** todo
+**Status:** done (merged via PR #136)
 **Created:** 2026-05-08
-**Updated:** 2026-05-08
+**Updated:** 2026-06-02
 **Parent orchestrator:** [2026-05-08_plan_todo_MenuTooltipsAria_Orch.md](<2026-05-08_plan_todo_MenuTooltipsAria_Orch.md>)
 **Branch:** `feature/menu-tooltips-aria-lane-d` (off `main`)
 **Owner:** Claude
 **Blocked by:** none in flight. Strings render once Lane B's substitution dictionary is live; if Lane D lands before B, the strings sit dormant on the type instances and surface as soon as B merges.
 
+## Scope note (2026-06-02)
+
+Original goal (populate tooltip on all items) was superseded by PR #132 (scope restriction) and PR #135 (partial revert + polish). Final delivered scope: `ariaLabel?` overrides on items whose `displayName` is a glyph or ellipsis-truncated string. Tooltip strings for position items were added in PR #135. No general-item tooltip population was done or is needed.
+
 ## Goal
 
-Populate a `tooltip:` string on every menu-item declaration. Add `ariaLabel?` overrides only where the tooltip is too verbose for screen readers.
+Populate `ariaLabel?` overrides on menu items where `displayName` is insufficient for screen readers.
 
 ## Workitems
 

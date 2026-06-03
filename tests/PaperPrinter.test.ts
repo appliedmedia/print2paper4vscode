@@ -176,6 +176,16 @@ describe('PaperPrinter', () => {
     assert.ok(menuItems.length > 0);
   });
 
+  it('should set ariaLabel on header position items (displayName is a glyph)', () => {
+    const paperPrinterPrivate = paperPrinter as any;
+    const menuItems = paperPrinterPrivate.menuItems_Header();
+    for (const item of menuItems) {
+      assert.ok(item.ariaLabel, `header item ${item.id} missing ariaLabel`);
+      assert.ok(!item.ariaLabel.includes('⇤') && !item.ariaLabel.includes('◇') && !item.ariaLabel.includes('⇥'),
+        `header item ${item.id} ariaLabel should not be a glyph: ${item.ariaLabel}`);
+    }
+  });
+
   it('should generate menu items for Footer', () => {
     const paperPrinterPrivate = paperPrinter as any;
     const menuItems = paperPrinterPrivate.menuItems_Footer();
@@ -183,11 +193,45 @@ describe('PaperPrinter', () => {
     assert.ok(menuItems.length > 0);
   });
 
+  it('should set ariaLabel on footer position items (displayName is a glyph)', () => {
+    const paperPrinterPrivate = paperPrinter as any;
+    const menuItems = paperPrinterPrivate.menuItems_Footer();
+    for (const item of menuItems) {
+      assert.ok(item.ariaLabel, `footer item ${item.id} missing ariaLabel`);
+      assert.ok(!item.ariaLabel.includes('⇤') && !item.ariaLabel.includes('◇') && !item.ariaLabel.includes('⇥'),
+        `footer item ${item.id} ariaLabel should not be a glyph: ${item.ariaLabel}`);
+    }
+  });
+
   it('should generate menu items for HeaderFooterContent', () => {
     const paperPrinterPrivate = paperPrinter as any;
     const menuItems = paperPrinterPrivate.menuItems_HeaderFooter();
     assert.ok(Array.isArray(menuItems));
     assert.ok(menuItems.length > 0);
+  });
+
+  it('should set ariaLabel on opaque HeaderFooter content items', () => {
+    const paperPrinterPrivate = paperPrinter as any;
+    const menuItems = paperPrinterPrivate.menuItems_HeaderFooter();
+    const pageItem = menuItems.find((i: any) => i.id === 'page');
+    const pageTotalItem = menuItems.find((i: any) => i.id === 'pageTotal');
+    assert.ok(pageItem?.ariaLabel, 'page item (#) should have ariaLabel');
+    assert.ok(pageTotalItem?.ariaLabel, 'pageTotal item (#+Total) should have ariaLabel');
+    assert.notStrictEqual(pageItem?.ariaLabel, '#', 'page ariaLabel should not be the bare "#" glyph');
+  });
+
+  it('should set ariaLabel on About menu items', () => {
+    const paperPrinterPrivate = paperPrinter as any;
+    const menuItems = paperPrinterPrivate.menuItems_About();
+    const shortcutItem = menuItems.find((i: any) => i.id === 'shortcut');
+    const aboutItem = menuItems.find((i: any) => i.id === 'about');
+    const logBugItem = menuItems.find((i: any) => i.id === 'logBug');
+    assert.ok(shortcutItem?.ariaLabel, 'shortcut item missing ariaLabel');
+    assert.ok(aboutItem?.ariaLabel, 'about item missing ariaLabel');
+    assert.ok(logBugItem?.ariaLabel, 'logBug item missing ariaLabel');
+    // Verify aria-labels are not bare ellipsis-truncated display names
+    assert.ok(!shortcutItem?.ariaLabel.endsWith('…'), 'shortcut ariaLabel should not end with ellipsis');
+    assert.ok(!aboutItem?.ariaLabel.endsWith('…'), 'about ariaLabel should not end with ellipsis');
   });
 
   it('should handle selection for Header', async () => {

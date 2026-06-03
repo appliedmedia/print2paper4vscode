@@ -522,6 +522,7 @@ export class PaperPrinter {
       displayName: item.displayName,
       iconSlotTriad: { begin: '', main: '', end: '' },
       tooltip: tooltipById[item.id],
+      ariaLabel: tooltipById[item.id], // displayName is a glyph (⇤ ◇ ⇥); use tooltip text
     })) as UIMenuItem_t[];
   }
 
@@ -537,16 +538,22 @@ export class PaperPrinter {
       displayName: item.displayName,
       iconSlotTriad: { begin: '', main: '', end: '' },
       tooltip: tooltipById[item.id],
+      ariaLabel: tooltipById[item.id], // displayName is a glyph (⇤ ◇ ⇥); use tooltip text
     })) as UIMenuItem_t[];
   }
 
   private menuItems_HeaderFooter(): UIMenuItem_t[] {
     // Return content choices: title, #, total, #+total
     // Note: No "None" option - clicking the selected item again will deselect it
+    const ariaLabelById: Record<string, string> = {
+      page: 'Current page number', // displayName "#" is opaque to screen readers
+      pageTotal: 'Page number and total', // displayName "#+Total" is opaque
+    };
     return kHeaderFooter.subMenuItems.map(item => ({
       id: item.id as MenuItemId_t,
       displayName: item.displayName,
       iconSlotTriad: { begin: '', main: '', end: '' },
+      ariaLabel: ariaLabelById[item.id], // only set where displayName is insufficient
     }));
   }
 
@@ -620,6 +627,11 @@ export class PaperPrinter {
     const tooltipById: Record<string, string | undefined> = {
       shortcut: 'Change keyboard shortcut',
     };
+    const ariaLabelById: Record<string, string> = {
+      shortcut: 'Change keyboard shortcut', // displayName "Shortcut…" ellipsis is UI convention, not SR-friendly
+      about: 'About Print2Paper', // displayName "About…" is ambiguous; tooltip is a URL
+      logBug: 'Report a problem', // displayName "Report a problem…" without the ellipsis
+    };
     const resolvePrintShortcut: UIMenuShortcutFxn_t = () =>
       this.fn.vscodeapis.getShortcutForCommand({ commandId: kCommandPrintId });
     return kAbout.menuItems.map(item => {
@@ -629,6 +641,7 @@ export class PaperPrinter {
         displayName: item.displayName,
         iconSlotTriad: { begin: '', main: '', end: '' },
         tooltip: url ?? tooltipById[item.id],
+        ariaLabel: ariaLabelById[item.id],
         isExternalLink: !!url,
         shortcut: item.id === 'shortcut' ? resolvePrintShortcut : undefined,
       };

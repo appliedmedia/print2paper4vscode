@@ -312,6 +312,11 @@ export class UIMenu {
       ? ` data-{{ns_}}tooltip="${item.tooltip.replace(/"/g, '&quot;')}"`
       : ``;
 
+    // Aria-label: always emit; falls back to displayName (never to tooltip,
+    // which may be a URL for external-link items and meaningless for screen readers).
+    const ariaLabelValue = (item.ariaLabel ?? item.displayName ?? '').replace(/"/g, '&quot;');
+    const ariaLabelAttr = ariaLabelValue ? ` aria-label="${ariaLabelValue}"` : ``;
+
     const replacementDict = {
       itemId,
       itemDisplayName: processedDisplayName,
@@ -322,6 +327,7 @@ export class UIMenu {
       textEditConfigAttr: iconSlotResult.configAttr || ``,
       shortcutCodeAttr: item.shortcutCode ? ` data-{{ns_}}shortcutCode="${item.shortcutCode}"` : ``,
       tooltipAttr,
+      ariaLabelAttr,
       flyout,
       flyoutMenuId,
     };
