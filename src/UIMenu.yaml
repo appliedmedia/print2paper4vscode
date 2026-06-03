@@ -728,7 +728,7 @@ uimenu_generic_handlers: |
   initKeyboardShortcuts();
 
 uimenu_item: |
-  <div class="{{ns_}}menuItem {{itemClasses}}" id="{{itemId}}"{{flyoutMenuId}}{{textEditConfigAttr}}{{shortcutCodeAttr}}{{tooltipAttr}}>
+  <div class="{{ns_}}menuItem {{itemClasses}}" id="{{itemId}}"{{flyoutMenuId}}{{textEditConfigAttr}}{{shortcutCodeAttr}}{{tooltipAttr}}{{ariaLabelAttr}}>
     <div class="gutter-before">{{contentGutterBefore}}</div>
     <div class="menu-item-text">
       {{iconSlotWithPrefixSuffix}}{{itemDisplayName}}

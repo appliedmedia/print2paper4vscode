@@ -58,6 +58,7 @@ export interface UIMenuItem_t {
   shortcutCode?: string; // Optional KeyboardEvent.code for keyboard shortcuts (e.g., "Digit0", "Minus", "Equal")
   shortcut?: string | UIMenuShortcutFxn_t; // Display string for keyboard shortcut, or resolver fn that returns one (e.g., live-looked-up VS Code binding)
   tooltip?: string; // Optional native browser tooltip on hover (e.g., URL for external-link items)
+  ariaLabel?: string; // Optional screen-reader label override. Falls back to displayName. Use when displayName is a glyph or ellipsis-truncated.
   isExternalLink?: boolean; // True if item opens an external URL — renders box-with-arrow SVG in gutter-after
   value?: UIMenuItemValue_t | UIMenuFxn_t;
 }
