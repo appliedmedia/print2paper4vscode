@@ -7,13 +7,13 @@
 
 ---
 
-## Current State (updated 2026-05-04)
+## Current State (updated 2026-06-03)
 
-* **Main branch:** ~95% statement coverage (per repo CHANGELOG); 349 unit tests, 345 passing, 4 skipped (Gherkin scenarios from coverage replay PR #109). TS target/lib bumped to ES2023 via PR #116 (2026-05-01). HEAD: `4c012ff`
+* **Main branch:** ~95% statement coverage; 351 unit tests, 351 passing, 4 skipped. HEAD: `71d1928`
 * **Build:** Compiles clean, esbuild bundles to `dist/extension.js`; `.vscodeignore` excludes `.claude/` + `.cursor/`; `*.vsix` no longer tracked in git
-* **Published:** No: not yet on VS Code Marketplace. MarketplacePublishImpl Lane C is the only remaining gate; all code and docs prerequisites are merged
+* **Published:** YES — `appliedmedia.print2paper4vscode` v1.0.0 live on VS Code Marketplace as of 2026-06-03 (CI run 26930608019 via `workflow_dispatch`)
 * **Platform:** macOS / Windows (PR #112) / Linux (PRs #105 + #110) all shipped
-* **Docs:** Marketplace-only README at `docs/MARKETPLACE.md` and changelog at `docs/MARKETPLACE_CHANGELOG.md` (both use bare-URL form per vsce link-rewriter constraint); repo `README.md` and `CHANGELOG.md` are dev-facing; `CONTRIBUTING.md` documents `--readme-path` / `--changelog-path` flags. Walkthrough Get Started panel shipped via PR #119 (7 steps, one per toolbar menu); Lane E verify completed 2026-05-01 via PR #117
+* **Docs:** Marketplace-only README at `docs/MARKETPLACE.md` and changelog at `docs/MARKETPLACE_CHANGELOG.md` (both use bare-URL form per vsce link-rewriter constraint); repo `README.md` and `CHANGELOG.md` are dev-facing; `CONTRIBUTING.md` documents `--readme-path` / `--changelog-path` flags. Walkthrough Get Started panel shipped via PR #119. aria-label plumbing + glyph overrides shipped via PR #136
 
 ## Recent merges since 2026-05-01
 
