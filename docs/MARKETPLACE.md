@@ -107,6 +107,10 @@ Toolbar position and your last-used menu choices persist across VS Code sessions
 
 Print2Paper4VSCode is open source. Bug reports and pull requests are welcome at [github.com/appliedmedia/print2paper4vscode](https://github.com/appliedmedia/print2paper4vscode).
 
+## About Applied Media
+
+**Applied Media** — 🇺🇸 Made in the USA · 🌍 Global friendly · 100% Code Transparency
+
 ## License
 
 Released under the [Apache License 2.0](https://github.com/appliedmedia/print2paper4vscode/blob/main/LICENSE).
