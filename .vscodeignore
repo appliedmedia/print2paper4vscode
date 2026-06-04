@@ -14,7 +14,7 @@ site/**
 docs/**
 !docs/MARKETPLACE.md
 !docs/MARKETPLACE_CHANGELOG.md
-archives/**
+zzz_archives/**
 pocs/**
 assets/**
 # Walkthrough images must ship inside the VSIX (contributes.walkthroughs

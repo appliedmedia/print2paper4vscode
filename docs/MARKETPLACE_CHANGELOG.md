@@ -13,7 +13,7 @@ Initial public release.
 
 ### Added
 
-* One-keystroke print: hit **Alt+P** in any editor to open a live PDF preview
+* One-keystroke print: hit **Opt/Alt+P** in any editor to open a live PDF preview
 * 100+ Shiki themes, including every VS Code theme you already use
 * Vector PDF output via jsPDF: scalable, crisp, never rasterized
 * Live re-render: change theme, page size, font, or orientation from the preview toolbar and watch the PDF update
