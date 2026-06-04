@@ -16,7 +16,7 @@ Generic automation scripts (GitHub Pages, DNS, badges, etc.) have been moved to:
 **[appliedmedia/ops](https://github.com/appliedmedia/ops)**
 
 This includes:
-- Badge generation (centralized via `appliedmedia/internal` handler/proxy workflow)
+- Badge generation
 - GitHub Pages automation (`enable-github-pages.sh`, `enable-https.sh`)
 - DNS configuration (`configure-dynadot-dns.sh`, `configure-dynadot-dns-ipv6.sh`)
 - Cross-organizational planning documents

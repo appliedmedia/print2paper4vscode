@@ -120,7 +120,7 @@ This installs project dependencies and compiles the TypeScript to JavaScript. To
 
 There are three ways to invoke Print2Paper on the active editor:
 
-- **Keybinding**: Press **Alt+P** (same on macOS, Windows, and Linux). Bound to the `p2p4vsc.print2paper` command.
+- **Keybinding**: Press **Opt/Alt+P** (same on macOS, Windows, and Linux). Bound to the `p2p4vsc.print2paper` command.
 - **Context menu**: Right-click in the editor and choose **Print2Paper**.
 - **Command Palette**: Open the Command Palette (`Cmd+Shift+P` on macOS, `Ctrl+Shift+P` on Windows/Linux) and run **Print: Print2Paper**.
 
@@ -179,7 +179,7 @@ Component Initialization Order:
 ### 2. Print Command Execution Path
 
 ```text
-User Action (Alt+P or Right-click → Print)
+User Action (Opt/Alt+P or Right-click → Print)
     ↓
 VSCode Command System
     ↓
@@ -347,7 +347,7 @@ Error Recovery:
 - ✅ Interactive toolbar with dynamic menus
 - ✅ Theme switching without regeneration
 - ✅ Page size and orientation configuration
-- ✅ Font size adjustment (8px to 24px)
+- ✅ Font size adjustment (8 px to 48 px)
 - ✅ Native printing on macOS (AppleScript), Windows (PowerShell), and Linux (CUPS)
 - ✅ Multi-page PDF generation
 
