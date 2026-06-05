@@ -61,12 +61,6 @@ The only VS Code setting this extension uses is the keyboard shortcut, which you
 * **Windows**: PowerShell-driven `System.Windows.Forms.PrintDialog` with structured handling for missing printers, missing PDF readers, and other failure modes
 * **Linux**: CUPS detection plus viewer selection (Okular, Evince, and other common PDF viewers)
 
-## Known limitations
-
-* jsPDF ships with three font families: Courier, Helvetica, and Times. Themes that rely on other fonts fall back to the closest match
-* Very large files may render slowly; splitting into smaller files is the recommended workaround
-* Webview-style files (custom previews, notebooks, image editors) are not supported as print targets
-
 ## Source code and contributing
 
 This extension is open source. Bug reports and pull requests are welcome at [p2p4vsc.support](https://p2p4vsc.support).

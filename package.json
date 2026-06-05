@@ -2,7 +2,7 @@
   "name": "print2paper4vscode",
   "displayName": "Print2Paper4VSCode",
   "description": "Print selections or current tabs with syntax highlighting and interactive PDF preview",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "license": "SEE LICENSE IN LICENSE",
   "engines": {
     "vscode": "^1.90.0"
