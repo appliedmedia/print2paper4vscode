@@ -2,7 +2,7 @@
  * Extension ID - Single Source of Truth for Namespace
  *
  * Defines the extension's namespace, command IDs, and external URLs.
- * Used in code AND substituted into `.config/template.package.json` by
+ * Used in code AND substituted into `config/template.package.json` by
  * `scripts/generate-package-json.mjs` so package.json never drifts.
  *
  * Substituted placeholders (template → value):

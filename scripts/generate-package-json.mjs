@@ -13,7 +13,7 @@ import { fileURLToPath } from 'url';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const projectRoot = path.join(__dirname, '..');
 
-const templatePath = path.join(projectRoot, '.config', 'template.package.json');
+const templatePath = path.join(projectRoot, 'config', 'template.package.json');
 const outputPath = path.join(projectRoot, 'package.json');
 
 if (!fs.existsSync(templatePath)) {

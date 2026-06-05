@@ -6,7 +6,7 @@
 src/**
 tests/**
 features/**
-.config/**
+config/**
 scripts/**
 
 # Site / docs / dev assets that are not user-facing
