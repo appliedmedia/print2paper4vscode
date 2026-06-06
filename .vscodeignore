@@ -56,10 +56,6 @@ PR26.json
 .git/**
 .gitignore
 .gitattributes
-.prettierrc
-.stylelintrc.json
-.markdownlintignore
-.markdownlint.json
 .eslintrc*
 .editorconfig
 
@@ -85,5 +81,3 @@ VSCODE_MOCK_INVESTIGATION.md
 *.log
 .DS_Store
 core
-install-gh.sh
-setup.sh
