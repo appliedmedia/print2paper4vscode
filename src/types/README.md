@@ -1,46 +1,26 @@
-# Types Directory
+# src/types
 
-This directory contains TypeScript type definitions for our project.
+TypeScript type definitions and the extension ID source of truth.
 
-## Files
+## Extension ID source of truth
 
-### Custom Type Definitions
+* `_entrypoint_extId_t.ts` — defines `kExtId`, command suffix constants, and external URLs. This is the single source of truth for the extension namespace. `scripts/generate-package-json.mjs` reads it to populate `{{extId}}` and related placeholders in `config/template.package.json`. Change the extension ID here, not in `package.json`.
 
-- **`jspdf.d.ts`** - Type definitions for jsPDF library
-- **`PaperPrinter_t.ts`** - Paper printer configuration types
-- **`PDF_t.ts`** - PDF data structure types
-- **`theme_t.ts`** - Theme and syntax highlighting types
-- **`UI_t.ts`** - UI component types
+## Type definition files
 
-### Reference Type Definitions
+* `PDF_t.ts` — PDF generation data structures.
+* `PaperPrinter_t.ts` — paper printer configuration types.
+* `PageRender_t.ts` — page layout and rendering types.
+* `Registry_t.ts` — dependency injection registry types.
+* `UIMenu_t.ts` — toolbar menu system types.
+* `UI_t.ts` — webview UI component types.
+* `OS_t.ts` — platform abstraction types.
+* `theme_t.ts` — Shiki theme and syntax highlighting types.
 
-- **`vscode.d.ts`** - VS Code Extension API type definitions (for reference)
-  - Source: [https://github.com/microsoft/vscode/blob/main/src/vscode-dts/vscode.d.ts](https://github.com/microsoft/vscode/blob/main/src/vscode-dts/vscode.d.ts)
-  - Version: VS Code 1.103 API
-  - Purpose: Local reference copy for API research and documentation
-  - Note: The actual types used by our code come from `@types/vscode` npm package
+## VS Code API reference
 
-## Why Do We Have vscode.d.ts?
-
-While our code uses the `@types/vscode` package from npm (installed in `node_modules`), we maintain a local copy of `vscode.d.ts` for:
-
-1. **Documentation Reference** - Easy access to API definitions when researching features
-2. **API Research** - Grep/search through VS Code API without needing internet access
-3. **Version History** - Track what APIs are available in specific VS Code versions
-4. **Offline Development** - No need to visit online docs for API signatures
-
-The local copy is for **reference only** and does not affect compilation. TypeScript will use the npm package from `node_modules/@types/vscode/`.
-
-## Updating vscode.d.ts
-
-To update the reference copy to the latest version:
+* `vscode.d.ts` — local copy of the VS Code Extension API type definitions for offline reference and grep. The actual types used at compile time come from `@types/vscode` in `node_modules`. Update with:
 
 ```bash
 curl -o src/types/vscode.d.ts "https://raw.githubusercontent.com/microsoft/vscode/main/src/vscode-dts/vscode.d.ts"
-```
-
-Or update the npm package:
-
-```bash
-npm update @types/vscode
 ```
