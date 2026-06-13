@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.7] - 2026-06-13
+
+### Changed
+
+- Centralized runtime asset paths via `kPath` constant in OS_t.ts; `{{path_lib}}` and `{{path_yaml}}` auto-injected into all templates so path changes have a single source of truth
+
 ## [1.0.6] - 2026-06-13
 
 ### Fixed
