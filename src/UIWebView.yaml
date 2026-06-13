@@ -114,20 +114,22 @@ webview_js: |
       return;
     }
 
-    pdfjsLib.GlobalWorkerOptions.workerSrc = '{{as_uri:{{path_lib}}/pdf.worker.min.js}}';
-
-    const loadingTask = pdfjsLib.getDocument({
-      url: pdfDataUrl
-    });
-
-    loadingTask.promise.then(
-      function(pdf) {
-        onDocumentLoadSuccess(pdf);
-      },
-      function(error) {
-        onDocumentLoadError(error);
-      }
-    );
+    // Fetch worker as a same-origin blob URL so new Worker() is permitted under
+    // the webview sandbox (cross-origin worker construction is blocked).
+    fetch('{{as_uri:{{path_lib}}/pdf.worker.min.js}}')
+      .then(function(r) { return r.blob(); })
+      .then(function(b) {
+        pdfjsLib.GlobalWorkerOptions.workerSrc = URL.createObjectURL(b);
+        return pdfjsLib.getDocument({ url: pdfDataUrl }).promise;
+      })
+      .then(
+        function(pdf) {
+          onDocumentLoadSuccess(pdf);
+        },
+        function(error) {
+          onDocumentLoadError(error);
+        }
+      );
   }
 
   function onDocumentLoadSuccess(pdf) {
