@@ -1,4 +1,3 @@
-import { kPath } from './types/OS_t';
 import type { Registry } from './Registry';
 import type {
   PageSizeIdMenuItems_t,
@@ -10,7 +9,6 @@ import { kPageSizeIdById, kHeaderFooterSubmenuById, kHeaderFooter, kMd_languageI
 import type { MenuId_t } from './types/UIMenu_t';
 import type { FnImport_t } from './types/Registry_t';
 import { Diagnostics } from './Diagnostics';
-import { YamlInstance } from './Yaml';
 import jsPDF from 'jspdf';
 import type { jsPDF_t } from './types/PDF_t';
 import { DocInfo_PDF } from './DocInfo_PDF';
@@ -37,17 +35,11 @@ type HeaderFooterRenderablePos = HeaderFooterPos_t;
  */
 export class PDF {
   static readonly id = 'pdf';
-  private static readonly kYaml = {
-    pdf_html: '',
-    pdf_css: '',
-    pdf_js: '',
-  } as const;
 
   private reg: Registry;
   private fn: FnImport_t;
   private tempPdfs: string[] = [];
   private dx: Diagnostics;
-  private _yaml: YamlInstance<typeof PDF.kYaml>;
 
   // Line-by-line rendering state - jsPDF now managed through docInfo.pdfDoc
   private currentX: number = 0;
@@ -82,21 +74,15 @@ export class PDF {
       'vscodeapis.getEditorTypography',
       'vscodeapis.getConfiguration',
       'stylize.tokenize',
-      'yaml.create',
       'utils.templateDictReplace',
       'utils.hasContent',
       'uimenumgr.getMenuItemIdSelected'
     );
     this.dx = this.fn.dx.sub({ name: 'PDF' });
     this._docInfo = DocInfo_PDF.create({ reg: this.reg });
-    this._yaml = this.fn.yaml.create({ filePath: `${kPath.yaml}/PDF.yaml`, dataStruct: PDF.kYaml });
 
     // All initialization happens here - no separate init() needed
     this.tempPdfs = [];
-  }
-
-  yaml() {
-    return this._yaml.get();
   }
 
   /**
