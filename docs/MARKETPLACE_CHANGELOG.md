@@ -7,6 +7,12 @@ All notable changes to Print2Paper4VSCode are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.8] - 2026-06-13
+
+### Fixed
+
+* PDF preview now renders instantly instead of taking up to a minute (worker is loaded via a same-origin blob URL so the VS Code webview sandbox no longer blocks it)
+
 ## [1.0.7] - 2026-06-13
 
 ### Changed

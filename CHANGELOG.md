@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.8] - 2026-06-13
+
+### Fixed
+
+- PDF preview renders instantly instead of stalling up to a minute. Root cause: VS Code serves webview resources cross-origin, so `new Worker(<resource URI>)` was blocked and PDF.js fell back to a main-thread fake worker. Fix loads the worker via a same-origin `blob:` URL.
+
+### Removed
+
+- Unused `PDF.yaml` webview templates (`pdf_html`/`pdf_css`/`pdf_js`) and their plumbing in `PDF.ts`; the live PDF panel is rendered by `UIWebView.yaml`.
+
 ## [1.0.7] - 2026-06-13
 
 ### Changed
