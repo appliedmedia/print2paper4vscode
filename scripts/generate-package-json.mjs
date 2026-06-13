@@ -41,6 +41,7 @@ const placeholders = {
   cmdPersistClear: { from: 'kCommandPersistClear' },
   urlHomePage: { from: 'kURL', key: 'homePage' },
   urlSupport: { from: 'kURL', key: 'support' },
+  urlDev: { from: 'kURL', key: 'dev' },
 };
 
 // Extract the body of `export const <name> = { ... } as const` using brace

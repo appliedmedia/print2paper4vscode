@@ -11,6 +11,7 @@
  *   {{cmdPersistClear}}    → kCommandPersistClear
  *   {{urlHomePage}}        → kURL.homePage
  *   {{urlSupport}}         → kURL.support
+ *   {{urlDev}}             → kURL.dev
  *
  * To change any of these: edit the constant here and run `npm run precompile`.
  */
@@ -29,6 +30,7 @@ export const kCommandPersistClearId = `${kExtId}.${kCommandPersistClear}` as con
 export const kURL = {
   homePage: 'https://print2paper4vscode.com',
   support: 'https://p2p4vsc.support',
+  dev: 'https://p2p4vsc.dev',
 } as const;
 
 /**
