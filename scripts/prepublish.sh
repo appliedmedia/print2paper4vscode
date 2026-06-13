@@ -18,4 +18,7 @@ npm run compile:deploy
 # Bundle with esbuild (produces dist/extension.js)
 npm run esbuild
 
+# Copy vendored webview libs to dist/ (loaded at runtime via fileRead, not bundled)
+npm run copy-lib
+
 echo "=== Prepublish complete ==="

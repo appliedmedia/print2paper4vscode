@@ -176,7 +176,7 @@ export class UIWebView {
 
     try {
       // Load PDF.js library
-      const pdfjs_library = this.fn.os.fileRead({ path: 'src/lib/pdf.min.js' });
+      const pdfjs_library = this.fn.os.fileRead({ path: 'dist/lib/pdf.min.js' });
       if (!pdfjs_library) {
         dx.error('Failed to load PDF.js library');
         throw new Error('Failed to load PDF.js library');

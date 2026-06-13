@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.4] - 2026-06-13
+
+### Fixed
+
+- PDF preview panel now loads correctly when installed from the marketplace (vendored PDF.js library was excluded from the packaged `.vsix` by the `src/**` ignore rule; fix copies libs to `dist/lib/` during build)
+
 ## [1.0.0] - 2026-05-08
 
 ### Added

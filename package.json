@@ -2,7 +2,7 @@
   "name": "print2paper4vscode",
   "displayName": "Print2Paper4VSCode",
   "description": "Print selections or current tabs with syntax highlighting and interactive PDF preview",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "license": "SEE LICENSE IN LICENSE",
   "engines": {
     "vscode": "^1.90.0"
@@ -172,7 +172,8 @@
     "clean": "node -e \"require('fs').rmSync('out',{recursive:true,force:true})\"",
     "compile": "npm run clean && tsc -p ./config/",
     "compile:deploy": "npm run precompile && npm run clean && tsc -p ./config/",
-    "build": "npm run compile && npm run esbuild",
+    "copy-lib": "node -e \"const fs=require('fs');fs.mkdirSync('dist/lib',{recursive:true});fs.copyFileSync('src/lib/pdf.min.js','dist/lib/pdf.min.js');fs.copyFileSync('src/lib/pdf.worker.min.js','dist/lib/pdf.worker.min.js')\"",
+    "build": "npm run compile && npm run esbuild && npm run copy-lib",
     "package": "bash scripts/prepublish.sh",
     "publish:all": "bash scripts/publish.sh",
     "esbuild": "node config/esbuild.mjs --production",
