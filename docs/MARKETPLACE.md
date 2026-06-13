@@ -67,7 +67,7 @@ This extension is open source. Bug reports and pull requests are welcome at [p2p
 
 ## About Applied Media
 
-**Applied Media** — 🇺🇸 Made in the USA · 🌍 Global friendly · 100% Code Transparency
+🇺🇸 Made in the USA · 🌍 Global friendly · 100% Code Transparency
 
 ## License
 
