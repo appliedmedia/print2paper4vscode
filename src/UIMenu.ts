@@ -134,7 +134,7 @@ export class UIMenu {
     this._menuItems = menuItems;
     this._flyoutMenuItemIds = flyoutMenuItemIds;
     this._selectionHandler = selectionHandler;
-    this._yaml = this.fn.yaml.create({ filePath: 'src/UIMenu.yaml', dataStruct: UIMenu.kYaml });
+    this._yaml = this.fn.yaml.create({ filePath: 'dist/UIMenu.yaml', dataStruct: UIMenu.kYaml });
   }
 
   yaml() {

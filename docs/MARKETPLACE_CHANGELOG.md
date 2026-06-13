@@ -7,6 +7,12 @@ All notable changes to Print2Paper4VSCode are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.5] - 2026-06-13
+
+### Fixed
+
+* All runtime-loaded YAML config files and PDF.js webview libs now ship correctly in the packaged extension (were excluded from the .vsix by the `src/**` ignore rule)
+
 ## [1.0.4] - 2026-06-13
 
 ### Fixed

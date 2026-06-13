@@ -75,7 +75,7 @@ export class UIWebView {
     );
     this.dx = this.fn.dx.sub({ name: 'UIWebView' });
     this._yaml = this.fn.yaml.create({
-      filePath: 'src/UIWebView.yaml',
+      filePath: 'dist/UIWebView.yaml',
       dataStruct: UIWebView.kYaml,
     });
 

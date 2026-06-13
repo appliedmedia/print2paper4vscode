@@ -342,7 +342,7 @@ export class Stylize {
       stylize_token_pre: string;
       stylize_token_line: string;
       stylize_token_span: string;
-    }>({ path: 'src/Stylize.yaml' });
+    }>({ path: 'dist/Stylize.yaml' });
 
     if (!yaml) {
       this.dx.error('Failed to load Stylize template');

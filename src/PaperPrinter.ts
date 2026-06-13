@@ -156,7 +156,7 @@ export class PaperPrinter {
 
     // Initialize YAML loader via Registry factory
     this._yaml = this.fn.yaml.create({
-      filePath: 'src/PaperPrinter.yaml',
+      filePath: 'dist/PaperPrinter.yaml',
       dataStruct: PaperPrinter.kYaml,
     });
   }

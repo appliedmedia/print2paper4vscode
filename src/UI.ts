@@ -84,7 +84,7 @@ export class UI {
     this.dx = this.fn.dx.sub({ name: 'UI' });
     
     // Create per-instance Yaml via factory
-    this._yaml = this.fn.yaml.create({ filePath: 'src/UI.yaml', dataStruct: UI.kYaml });
+    this._yaml = this.fn.yaml.create({ filePath: 'dist/UI.yaml', dataStruct: UI.kYaml });
   }
 
   /**

@@ -56,7 +56,7 @@ export class OSMac extends OS {
     templateKey: string,
     variables: Record<string, string> = {}
   ): Promise<string> {
-    const yaml = this.fileRead<Record<string, string>>({ path: 'src/OSMac.yaml' });
+    const yaml = this.fileRead<Record<string, string>>({ path: 'dist/OSMac.yaml' });
     if (!yaml?.[templateKey]) {
       this.dx.error(`Failed to load AppleScript template for ${templateKey}`);
       throw new Error(`Failed to load AppleScript template for ${templateKey}`);

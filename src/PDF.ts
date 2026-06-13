@@ -88,7 +88,7 @@ export class PDF {
     );
     this.dx = this.fn.dx.sub({ name: 'PDF' });
     this._docInfo = DocInfo_PDF.create({ reg: this.reg });
-    this._yaml = this.fn.yaml.create({ filePath: 'src/PDF.yaml', dataStruct: PDF.kYaml });
+    this._yaml = this.fn.yaml.create({ filePath: 'dist/PDF.yaml', dataStruct: PDF.kYaml });
 
     // All initialization happens here - no separate init() needed
     this.tempPdfs = [];

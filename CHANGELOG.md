@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.5] - 2026-06-13
+
+### Fixed
+
+- All runtime-loaded YAML config files now ship in the packaged extension (same root cause as 1.0.4 PDF.js fix; complete audit applied)
+
 ## [1.0.4] - 2026-06-13
 
 ### Fixed
