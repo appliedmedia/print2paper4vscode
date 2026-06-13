@@ -12,11 +12,8 @@ for (const f of ['pdf.min.js', 'pdf.worker.min.js']) {
   fs.copyFileSync(path.join(root, 'src/lib', f), path.join(root, 'dist/lib', f));
 }
 
-// YAML config files loaded at runtime via fileRead.
-// Skip *_prev.yaml backups — they are dev-only and must not ship in the .vsix.
-for (const f of fs
-  .readdirSync(path.join(root, 'src'))
-  .filter(f => f.endsWith('.yaml') && !f.endsWith('_prev.yaml'))) {
+// YAML config files loaded at runtime via fileRead
+for (const f of fs.readdirSync(path.join(root, 'src')).filter(f => f.endsWith('.yaml'))) {
   fs.copyFileSync(path.join(root, 'src', f), path.join(root, 'dist', f));
 }
 
