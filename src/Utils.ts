@@ -43,23 +43,23 @@ export class Utils {
 
   /**
    * Generic template replacement function
-   * Replaces all {{key}} placeholders in source text with values from dictionary
+   * Replaces all {{key}} placeholders in source text with values from dict
    * Supports nested placeholders by performing multiple passes until no changes occur
-   * Automatically includes namespace values (ns, ns_) in every replacement dictionary
+   * Automatically includes namespace values (ns, ns_) in every replacement dict
    */
-  templateDictReplace(source: string, dictionary: Record<string, string>): string {
+  templateDictReplace(source: string, dict: Record<string, string>): string {
     let result = source;
     const maxIterations = 4;
     let iteration = 0;
     let changed = true;
 
-    // Auto-inject namespace values into dictionary
-    const enrichedDictionary: Record<string, string> = {
+    // Auto-inject namespace values into dict
+    const dictPlus: Record<string, string> = {
       ns: this.ns,
       ns_: this.ns_,
       path_lib: kPath.lib,
       path_yaml: kPath.yaml,
-      ...dictionary,
+      ...dict,
     };
 
     // Repeat replacement passes until no changes occur or max iterations reached
@@ -67,9 +67,9 @@ export class Utils {
       const previousResult = result;
       iteration++;
 
-      for (const key of Object.keys(enrichedDictionary)) {
+      for (const key of Object.keys(dictPlus)) {
         const placeholder = `{{${key}}}`;
-        const value = enrichedDictionary[key];
+        const value = dictPlus[key];
         result = result.replaceAll(placeholder, value);
       }
 
