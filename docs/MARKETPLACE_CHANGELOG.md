@@ -7,6 +7,13 @@ All notable changes to Print2Paper4VSCode are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.6] - 2026-06-13
+
+### Fixed
+
+* PDF preview now renders correctly: pdf.worker.min.js URI was still pointing to `src/lib/` in UIWebView.yaml and PDF.yaml after the dist/ migration
+* Added prepublish smoke test that auto-greps source for all runtime-loaded paths and fails the build if any are missing from dist/
+
 ## [1.0.5] - 2026-06-13
 
 ### Fixed

@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.6] - 2026-06-13
+
+### Fixed
+
+- PDF preview now renders correctly: pdf.worker.min.js URI was still pointing to `src/lib/` in the YAML files after the dist/ migration
+- Added prepublish smoke test that greps source for all runtime-loaded paths and fails build if any are missing from dist/
+
 ## [1.0.5] - 2026-06-13
 
 ### Fixed

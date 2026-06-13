@@ -21,4 +21,7 @@ npm run esbuild
 # Copy vendored webview libs to dist/ (loaded at runtime via fileRead, not bundled)
 npm run copy-lib
 
+# Verify all runtime-loaded assets are present in dist/ before packaging
+node scripts/smoke-dist-assets.js
+
 echo "=== Prepublish complete ==="
