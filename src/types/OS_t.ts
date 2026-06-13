@@ -10,6 +10,12 @@ import type { OS } from '../OS';
 // Directory function type - function that resolves to a path
 export type DirFxn_t = (os: OS) => string;
 
+// Extension-relative dist/ paths for runtime-loaded assets
+export const kPath = {
+  lib: 'dist/lib',
+  yaml: 'dist',
+} as const;
+
 // Special directory constants for file operations
 export const kDir = {
   temp: (os: OS) => os.getDir_Temp(),

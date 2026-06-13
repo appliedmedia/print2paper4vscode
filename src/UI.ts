@@ -1,3 +1,4 @@
+import { kPath } from './types/OS_t';
 /**
  * UI - User Interface Manager
  *
@@ -84,7 +85,7 @@ export class UI {
     this.dx = this.fn.dx.sub({ name: 'UI' });
     
     // Create per-instance Yaml via factory
-    this._yaml = this.fn.yaml.create({ filePath: 'dist/UI.yaml', dataStruct: UI.kYaml });
+    this._yaml = this.fn.yaml.create({ filePath: `${kPath.yaml}/UI.yaml`, dataStruct: UI.kYaml });
   }
 
   /**

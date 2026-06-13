@@ -1,3 +1,4 @@
+import { kPath } from './types/OS_t';
 import type { Registry } from './Registry';
 import type { contextDict_t } from './types/UI_t';
 import { Diagnostics } from './Diagnostics';
@@ -134,7 +135,7 @@ export class UIMenu {
     this._menuItems = menuItems;
     this._flyoutMenuItemIds = flyoutMenuItemIds;
     this._selectionHandler = selectionHandler;
-    this._yaml = this.fn.yaml.create({ filePath: 'dist/UIMenu.yaml', dataStruct: UIMenu.kYaml });
+    this._yaml = this.fn.yaml.create({ filePath: `${kPath.yaml}/UIMenu.yaml`, dataStruct: UIMenu.kYaml });
   }
 
   yaml() {

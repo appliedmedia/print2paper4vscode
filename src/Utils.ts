@@ -6,6 +6,7 @@
 
 import type { Registry } from './Registry';
 import type { FnImport_t } from './types/Registry_t';
+import { kPath } from './types/OS_t';
 
 // Type aliases
 export type Force_scalar_t = number | string | undefined;
@@ -56,6 +57,8 @@ export class Utils {
     const enrichedDictionary: Record<string, string> = {
       ns: this.ns,
       ns_: this.ns_,
+      path_lib: kPath.lib,
+      path_yaml: kPath.yaml,
       ...dictionary,
     };
 

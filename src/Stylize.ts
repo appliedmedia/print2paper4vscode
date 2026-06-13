@@ -1,3 +1,4 @@
+import { kPath } from './types/OS_t';
 import type { Registry } from './Registry';
 import type { FileRead_t } from './OS';
 import type { FnImport_t } from './types/Registry_t';
@@ -342,7 +343,7 @@ export class Stylize {
       stylize_token_pre: string;
       stylize_token_line: string;
       stylize_token_span: string;
-    }>({ path: 'dist/Stylize.yaml' });
+    }>({ path: `${kPath.yaml}/Stylize.yaml` });
 
     if (!yaml) {
       this.dx.error('Failed to load Stylize template');

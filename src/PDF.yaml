@@ -131,7 +131,7 @@ pdf_js: |
     }
     
     // Set worker source once
-    pdfjsLib.GlobalWorkerOptions.workerSrc = '{{as_uri:dist/lib/pdf.worker.min.js}}';
+    pdfjsLib.GlobalWorkerOptions.workerSrc = '{{as_uri:{{path_lib}}/pdf.worker.min.js}}';
     
     // If PDF data provided, load it
     if (pdfDataUrl) {

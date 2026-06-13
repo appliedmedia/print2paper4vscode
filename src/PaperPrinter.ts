@@ -1,3 +1,4 @@
+import { kPath } from './types/OS_t';
 /**
  * PaperPrinter - Main Extension Controller
  *
@@ -156,7 +157,7 @@ export class PaperPrinter {
 
     // Initialize YAML loader via Registry factory
     this._yaml = this.fn.yaml.create({
-      filePath: 'dist/PaperPrinter.yaml',
+      filePath: `${kPath.yaml}/PaperPrinter.yaml`,
       dataStruct: PaperPrinter.kYaml,
     });
   }

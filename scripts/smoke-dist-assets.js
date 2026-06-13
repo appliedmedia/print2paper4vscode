@@ -9,6 +9,9 @@ const path = require('path');
 const root = path.join(__dirname, '..');
 const srcDir = path.join(root, 'src');
 
+// kPath values from src/types/OS_t.ts — must stay in sync
+const kPath = { lib: 'dist/lib', yaml: 'dist' };
+
 // Collect all runtime-loaded paths by grepping src/**/*.{ts,yaml}
 const runtimePaths = new Set();
 
@@ -20,12 +23,22 @@ function grepDir(dir, extensions) {
     } else if (extensions.some(e => entry.name.endsWith(e))) {
       const content = fs.readFileSync(full, 'utf8');
 
-      // filePath: 'dist/...' and path: 'dist/...' in .ts files
+      // filePath: `${kPath.yaml}/...` and path: `${kPath.lib}/...` in .ts files
+      for (const m of content.matchAll(/(?:filePath|path):\s*`\$\{kPath\.\w+\}\/([^`]+)`/g)) {
+        const prefix = content.slice(m.index).match(/kPath\.(\w+)/)?.[1];
+        if (prefix && kPath[prefix]) runtimePaths.add(`${kPath[prefix]}/${m[1]}`);
+      }
+
+      // {{as_uri:{{path_lib}}/...}} and {{as_uri:{{path_yaml}}/...}} in .yaml files
+      for (const m of content.matchAll(/\{\{as_uri:\{\{(path_\w+)\}\}\/([^}]+)\}\}/gi)) {
+        const prefix = m[1] === 'path_lib' ? kPath.lib : kPath.yaml;
+        runtimePaths.add(`${prefix}/${m[2]}`);
+      }
+
+      // Legacy literal dist/ paths (fallback, should be empty after migration)
       for (const m of content.matchAll(/(?:filePath|path):\s*'(dist\/[^']+)'/g)) {
         runtimePaths.add(m[1]);
       }
-
-      // {{as_uri:dist/...}} in .yaml files
       for (const m of content.matchAll(/\{\{as_uri:(dist\/[^}]+)\}\}/gi)) {
         runtimePaths.add(m[1].trim());
       }

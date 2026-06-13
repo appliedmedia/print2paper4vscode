@@ -114,7 +114,7 @@ webview_js: |
       return;
     }
 
-    pdfjsLib.GlobalWorkerOptions.workerSrc = '{{as_uri:dist/lib/pdf.worker.min.js}}';
+    pdfjsLib.GlobalWorkerOptions.workerSrc = '{{as_uri:{{path_lib}}/pdf.worker.min.js}}';
 
     const loadingTask = pdfjsLib.getDocument({
       url: pdfDataUrl
