@@ -51,6 +51,15 @@ grepDir(srcDir, ['.ts', '.yaml']);
 // Always require the bundle itself
 runtimePaths.add('dist/extension.js');
 
+// Every bundled DejaVu font (loaded at runtime via a template-literal path the
+// grep above can't see) must reach dist/fonts/.
+const fontSrcDir = path.join(root, 'assets/fonts/dejavu');
+if (fs.existsSync(fontSrcDir)) {
+  for (const f of fs.readdirSync(fontSrcDir).filter(f => f.endsWith('.ttf'))) {
+    runtimePaths.add(`dist/fonts/${f}`);
+  }
+}
+
 let failed = false;
 const sorted = [...runtimePaths].sort();
 for (const rel of sorted) {

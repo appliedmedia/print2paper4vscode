@@ -280,6 +280,33 @@ export abstract class OS {
     }
   }
 
+  // Binary file reader returning base64. Used for embedding fonts into PDFs.
+  fileReadBase64(args: { path: string }): string | undefined {
+    const dx = this.dx.sub({ name: 'fileReadBase64' });
+    dx.require(args, ['path']);
+    const { path } = args;
+    try {
+      const isExtensionPath = !path.startsWith('/') && !path.includes(':\\');
+      const absPath = isExtensionPath
+        ? this.extensionRoot
+          ? this.pathJoin(this.extensionRoot, path)
+          : undefined
+        : path;
+
+      if (!absPath || !fs.existsSync(absPath)) {
+        dx.error(`Failed to load ${path}: file not found`);
+        return undefined;
+      }
+
+      const content = fs.readFileSync(absPath).toString('base64');
+      dx.done();
+      return content;
+    } catch (err) {
+      dx.error(`Failed to load ${path}: ${err}`);
+      return undefined;
+    }
+  }
+
   // Convert relative src attributes and as_uri patterns in HTML to webview URIs
   htmlSrcPathToURI(args: { html: string; webviewPanelId: WebviewPanelId_t }): string {
     const dx = this.dx.sub({ name: 'htmlSrcPathToURI' });

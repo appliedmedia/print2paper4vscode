@@ -1,3 +1,5 @@
+import { kPath } from './types/OS_t';
+import { emojiToAscii } from './EmojiToAscii';
 import type { Registry } from './Registry';
 import type {
   PageSizeIdMenuItems_t,
@@ -41,6 +43,31 @@ export class PDF {
   private tempPdfs: string[] = [];
   private dx: Diagnostics;
 
+  // Embedded font families: DejaVu Sans (proportional, for markdown prose) and
+  // DejaVu Sans Mono (for code). Both carry full Unicode coverage (box-drawing,
+  // extended Latin, symbols) that jsPDF's built-in WinAnsi fonts lack.
+  static readonly kFontSans = 'DejaVuSans';
+  static readonly kFontMono = 'DejaVuSansMono';
+  private static readonly kEmbeddedFonts: ReadonlyArray<{
+    file: string;
+    family: string;
+    style: string;
+  }> = [
+    { file: 'DejaVuSans.ttf', family: 'DejaVuSans', style: 'normal' },
+    { file: 'DejaVuSans-Bold.ttf', family: 'DejaVuSans', style: 'bold' },
+    { file: 'DejaVuSans-Oblique.ttf', family: 'DejaVuSans', style: 'italic' },
+    { file: 'DejaVuSans-BoldOblique.ttf', family: 'DejaVuSans', style: 'bolditalic' },
+    { file: 'DejaVuSansMono.ttf', family: 'DejaVuSansMono', style: 'normal' },
+    { file: 'DejaVuSansMono-Bold.ttf', family: 'DejaVuSansMono', style: 'bold' },
+    { file: 'DejaVuSansMono-Oblique.ttf', family: 'DejaVuSansMono', style: 'italic' },
+    { file: 'DejaVuSansMono-BoldOblique.ttf', family: 'DejaVuSansMono', style: 'bolditalic' },
+  ];
+  // base64 of each font file, read once and reused across PDF documents
+  private static fontBase64Cache: Map<string, string> = new Map();
+
+  // Active body font family for the current document (mono for code, sans for markdown)
+  private bodyFontFamily: string = PDF.kFontMono;
+
   // Line-by-line rendering state - jsPDF now managed through docInfo.pdfDoc
   private currentX: number = 0;
   private currentY: number = 0;
@@ -71,6 +98,7 @@ export class PDF {
       'os.pathDirname',
       'os.fileReveal',
       'os.getDir_Temp',
+      'os.fileReadBase64',
       'vscodeapis.getEditorTypography',
       'vscodeapis.getConfiguration',
       'stylize.tokenize',
@@ -248,55 +276,33 @@ export class PDF {
     this.tempPdfs.push(p);
   }
 
-  // Map font family to jsPDF built-in fonts
-  private mapFontFamilyToJsPDF(fontFamily: string, doc: jsPDF): string {
-    const dx = this.dx.sub({ name: 'mapFontFamilyToJsPDF' });
+  // Map a requested font family to one of the embedded DejaVu families.
+  // Monospace-looking requests resolve to DejaVu Sans Mono; everything else to
+  // DejaVu Sans. Both families carry full Unicode coverage.
+  private mapFontFamilyToJsPDF(fontFamily: string): string {
+    const f = (fontFamily || '').toLowerCase();
+    const monoHints = ['mono', 'courier', 'consol', 'menlo', 'meslo', 'code', 'fixed', 'typewriter'];
+    return monoHints.some(h => f.includes(h)) ? PDF.kFontMono : PDF.kFontSans;
+  }
 
-    // Get available fonts from jsPDF
-    const availableFonts = doc.getFontList();
-    const jsPdfFonts = Object.keys(availableFonts);
-    dx.out(`Available fonts: ${jsPdfFonts.join(', ')}`);
-
-    // Step 1: Lowercase our list
-    const ourFontsLower = fontFamily.toLowerCase();
-
-    // Step 2: Remove everythin`g` that isn't a-z, space, or comma
-    const ourFontsClean = ourFontsLower.replace(/[^a-z\s,]/g, '');
-
-    // Step 3: Split it at commas first, then spaces
-    const ourFontList = ourFontsClean
-      .split(/\s*,\s*/)
-      .flatMap(font => font.split(/\s+/).filter(f => f.length > 0));
-
-    // Step 4: Lowercase jsPDF font list
-    const jsPdfFontsLower = jsPdfFonts.map(font => font.toLowerCase());
-
-    // Step 5: Remove everything that isn't a-z or space from jsPDF fonts
-    const jsPdfFontsClean = jsPdfFontsLower.map(font => font.replace(/[^a-z\s]/g, ''));
-
-    // Step 6: Walk our list and see if any of jsPDFs font list items start with the entire item of our list
-    for (const ourFont of ourFontList) {
-      for (let i = 0; i < jsPdfFontsClean.length; i++) {
-        if (jsPdfFontsClean[i].startsWith(ourFont)) {
-          dx.out(`Found match: ${ourFont} -> ${jsPdfFonts[i]}`);
-          return jsPdfFonts[i];
+  // Embed all DejaVu faces into the document's virtual file system so jsPDF can
+  // render and measure their glyphs. base64 is read once per file and reused.
+  private registerEmbeddedFonts(doc: jsPDF): void {
+    const dx = this.dx.sub({ name: 'registerEmbeddedFonts' });
+    for (const face of PDF.kEmbeddedFonts) {
+      let b64 = PDF.fontBase64Cache.get(face.file);
+      if (!b64) {
+        b64 = this.fn.os.fileReadBase64({ path: `${kPath.fonts}/${face.file}` });
+        if (!b64) {
+          dx.error(`Embedded font missing: ${face.file}`);
+          continue;
         }
+        PDF.fontBase64Cache.set(face.file, b64);
       }
+      doc.addFileToVFS(face.file, b64);
+      doc.addFont(face.file, face.family, face.style);
     }
-
-    // Step 7: Walk jsPDFs font list and if any of our items start with the entire item of jsPDFs list
-    for (let i = 0; i < jsPdfFontsClean.length; i++) {
-      for (const ourFont of ourFontList) {
-        if (ourFont.startsWith(jsPdfFontsClean[i])) {
-          dx.out(`Found reverse match: ${ourFont} -> ${jsPdfFonts[i]}`);
-          return jsPdfFonts[i];
-        }
-      }
-    }
-
-    // Step 8: Use Courier
-    dx.out(`No match found, using Courier for: ${fontFamily}`);
-    return 'Courier';
+    dx.done();
   }
 
   /**
@@ -550,12 +556,17 @@ export class PDF {
         orientation: this.docInfo().orient,
         unit: 'pt',
         format: [pageWidthPts, pageHeightPts],
+        compress: true,
+        putOnlyUsedFonts: true,
       });
 
-      // Map font family to jsPDF supported fonts
+      // Embed DejaVu faces so Unicode glyphs render and width measurement is correct
       const docInfo = this.docInfo();
-      const jsPdfFont = this.mapFontFamilyToJsPDF(docInfo.fontFamily, docInfo.pdfDoc!);
-      docInfo.pdfDoc!.setFont(jsPdfFont, 'normal');
+      this.registerEmbeddedFonts(docInfo.pdfDoc!);
+
+      // Default body font; render() overrides per mode (mono for code, sans for markdown)
+      this.bodyFontFamily = this.mapFontFamilyToJsPDF(docInfo.fontFamily);
+      docInfo.pdfDoc!.setFont(this.bodyFontFamily, 'normal');
 
       // Convert fontSize from pixels to points for jsPDF, clamping to minimum of 8pt
       const px = docInfo.fontSizePx ?? 12;
@@ -656,6 +667,10 @@ export class PDF {
         throw new Error('PDF document not initialized. Call setupPdf() first.');
       }
 
+      // Code uses the monospace embedded font
+      this.bodyFontFamily = PDF.kFontMono;
+      this.docInfo().pdfDoc!.setFont(PDF.kFontMono, 'normal');
+
       // Get available width for line wrapping using docInfo
       const pageSize = this.getPageDimensions(this.docInfo().pageSizeId, this.docInfo().orient);
       const unit = this.getUnitForPageSize(this.docInfo().pageSizeId);
@@ -676,7 +691,7 @@ export class PDF {
         // Process each token in the line
         for (const token of lineTokens) {
           const color = token.color || '#000000';
-          let content = token.content;
+          let content = emojiToAscii(token.content);
 
           if (content) {
             // Set color for this token
@@ -867,6 +882,10 @@ export class PDF {
         return;
       }
 
+      // Rendered markdown prose uses the proportional embedded font
+      this.bodyFontFamily = PDF.kFontSans;
+      this.docInfo().pdfDoc!.setFont(PDF.kFontSans, 'normal');
+
       const root = parse(html);
 
       // Validate parse result
@@ -979,8 +998,8 @@ export class PDF {
     this.currentY += spacingBefore;
     if (this.shouldBreakPage(this.currentY)) this.addPageBreak();
 
-    // Set heading font
-    const jsPdfFont = this.mapFontFamilyToJsPDF(fontFamily, pdfDoc);
+    // Set heading font (follows the active mode font; bold)
+    const jsPdfFont = this.bodyFontFamily;
     pdfDoc.setFont(jsPdfFont, 'bold');
     pdfDoc.setFontSize(headingSize);
 
@@ -1041,7 +1060,7 @@ export class PDF {
     strong: (el, savedFont) => {
       const styleFont = this.getFontFromElementStyle(el);
       const fontName = styleFont?.fontFamily
-        ? this.mapFontFamilyToJsPDF(styleFont.fontFamily, this.docInfo().pdfDoc!)
+        ? this.mapFontFamilyToJsPDF(styleFont.fontFamily)
         : savedFont.fontName;
 
       this.docInfo().pdfDoc!.setFont(fontName, 'bold');
@@ -1051,7 +1070,7 @@ export class PDF {
     b: (el, savedFont) => {
       const styleFont = this.getFontFromElementStyle(el);
       const fontName = styleFont?.fontFamily
-        ? this.mapFontFamilyToJsPDF(styleFont.fontFamily, this.docInfo().pdfDoc!)
+        ? this.mapFontFamilyToJsPDF(styleFont.fontFamily)
         : savedFont.fontName;
 
       this.docInfo().pdfDoc!.setFont(fontName, 'bold');
@@ -1061,7 +1080,7 @@ export class PDF {
     em: (el, savedFont) => {
       const styleFont = this.getFontFromElementStyle(el);
       const fontName = styleFont?.fontFamily
-        ? this.mapFontFamilyToJsPDF(styleFont.fontFamily, this.docInfo().pdfDoc!)
+        ? this.mapFontFamilyToJsPDF(styleFont.fontFamily)
         : savedFont.fontName;
 
       this.docInfo().pdfDoc!.setFont(fontName, 'italic');
@@ -1071,7 +1090,7 @@ export class PDF {
     i: (el, savedFont) => {
       const styleFont = this.getFontFromElementStyle(el);
       const fontName = styleFont?.fontFamily
-        ? this.mapFontFamilyToJsPDF(styleFont.fontFamily, this.docInfo().pdfDoc!)
+        ? this.mapFontFamilyToJsPDF(styleFont.fontFamily)
         : savedFont.fontName;
 
       this.docInfo().pdfDoc!.setFont(fontName, 'italic');
@@ -1089,7 +1108,7 @@ export class PDF {
         monoFontFamily = editorTypo.fontFamily;
       }
 
-      const monoFont = this.mapFontFamilyToJsPDF(monoFontFamily, this.docInfo().pdfDoc!);
+      const monoFont = this.mapFontFamilyToJsPDF(monoFontFamily);
       this.docInfo().pdfDoc!.setFont(monoFont, 'normal');
       this.renderTextContent(el.text);
       this.docInfo().pdfDoc!.setFont(savedFont.fontName, savedFont.fontStyle);
@@ -1162,7 +1181,8 @@ export class PDF {
     const { widthPts: pageWidthPts } = this.pageSizeToPts(pageSize.width, pageSize.height, unit);
     const availableWidth = pageWidthPts - marginsPts.leftMarginPts - marginsPts.rightMarginPts;
 
-    let content = text;
+    // DejaVu can't render emoji; convert to ASCII so they don't tofu/desync width
+    let content = emojiToAscii(text);
 
     while (content.length > 0) {
       // REUSE existing findCharacterBreakPoint - same logic as tokens!
@@ -1305,7 +1325,7 @@ export class PDF {
 
     // Set monospace font
     const editorTypo = this.fn.vscodeapis.getEditorTypography();
-    const monoFont = this.mapFontFamilyToJsPDF(editorTypo.fontFamily, pdfDoc);
+    const monoFont = this.mapFontFamilyToJsPDF(editorTypo.fontFamily);
     const savedFont = pdfDoc.getFont();
     const savedSize = pdfDoc.getFontSize();
 

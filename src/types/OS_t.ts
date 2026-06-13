@@ -14,6 +14,7 @@ export type DirFxn_t = (os: OS) => string;
 export const kPath = {
   lib: 'dist/lib',
   yaml: 'dist',
+  fonts: 'dist/fonts',
 } as const;
 
 // Special directory constants for file operations

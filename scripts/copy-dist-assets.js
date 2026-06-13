@@ -17,4 +17,12 @@ for (const f of fs.readdirSync(path.join(root, 'src')).filter(f => f.endsWith('.
   fs.copyFileSync(path.join(root, 'src', f), path.join(root, 'dist', f));
 }
 
+// DejaVu fonts embedded into generated PDFs for Unicode coverage
+const fontSrc = path.join(root, 'assets/fonts/dejavu');
+const fontDest = path.join(root, 'dist/fonts');
+fs.mkdirSync(fontDest, { recursive: true });
+for (const f of fs.readdirSync(fontSrc).filter(f => f.endsWith('.ttf'))) {
+  fs.copyFileSync(path.join(fontSrc, f), path.join(fontDest, f));
+}
+
 console.log('copy-dist-assets: done');
