@@ -83,6 +83,49 @@ describe('PDF Markdown HTML Rendering', () => {
       assert.ok(pdf.docInfo().pdfDoc, 'PDF document should exist');
     });
 
+    it('resets text color to black for prose after a colored code block', async () => {
+      pdf.setupPdf();
+      const colors: string[] = [];
+      const p = pdf as unknown as {
+        setTextColorFromWebColor: (doc: unknown, color: string) => void;
+      };
+      const orig = p.setTextColorFromWebColor.bind(p);
+      p.setTextColorFromWebColor = (doc: unknown, color: string) => {
+        colors.push(color);
+        return orig(doc, color);
+      };
+
+      const html =
+        '<pre><code class="language-javascript">const x = 1;</code></pre>' +
+        '<p>plain prose after code</p>';
+      await pdf.renderFromHTML(html);
+
+      // The prose render must reset to black; the final color applied is black.
+      assert.strictEqual(
+        colors[colors.length - 1],
+        '#000000',
+        `expected black reset for prose, got sequence: ${colors.join(',')}`
+      );
+    });
+
+    it('wraps large headings with font-size-aware line height (no overlap)', async () => {
+      pdf.setupPdf();
+      const before = pdf.docInfo();
+      // A long H1 that must wrap across lines
+      const html =
+        '<h1>This Is A Very Long Top Level Heading That Will Certainly Wrap Across Multiple Lines In The PDF Output</h1>';
+      const startY = (pdf as unknown as { currentY: number }).currentY;
+      await pdf.renderFromHTML(html);
+      const endY = (pdf as unknown as { currentY: number }).currentY;
+      // Wrapped heading must advance Y by more than a single body line height,
+      // proving wrap used the larger heading line height rather than overlapping.
+      const bodyLineHeight = before.lineHeightPts;
+      assert.ok(
+        endY - startY > bodyLineHeight,
+        `heading wrap advanced ${endY - startY}, expected > body line height ${bodyLineHeight}`
+      );
+    });
+
     it('does not leak raw <code> tags from <pre> nested in list items', async () => {
       pdf.setupPdf();
       // node-html-parser treats <pre> as raw text, so the inner <code> arrives

@@ -1191,6 +1191,19 @@ export class PDF {
     const { widthPts: pageWidthPts } = this.pageSizeToPts(pageSize.width, pageSize.height, unit);
     const availableWidth = pageWidthPts - marginsPts.leftMarginPts - marginsPts.rightMarginPts;
 
+    const pdfDoc = this.docInfo().pdfDoc!;
+
+    // Hard-reset to black: Shiki token colors from a preceding code block must
+    // not bleed into headings/prose. Every text block starts fully black.
+    this.setTextColorFromWebColor(pdfDoc, '#000000');
+
+    // Line height must track the CURRENT font size (headings are larger than
+    // body), or wrapped heading lines overwrite each other. Derive from the
+    // body line-height:font-size ratio applied to the active font size.
+    const bodyFontPts = this.docInfo().fontSizePts || 1;
+    const lineHeightRatio = this.currentLineHeight / bodyFontPts || 1.2;
+    const wrapLineHeight = pdfDoc.getFontSize() * lineHeightRatio;
+
     // DejaVu can't render emoji; convert to ASCII so they don't tofu/desync width
     let content = emojiToAscii(text);
 
@@ -1204,8 +1217,8 @@ export class PDF {
       );
 
       if (charsToRender === 0) {
-        // Wrap to next line
-        this.currentY += this.currentLineHeight;
+        // Wrap to next line (font-size-aware so large headings don't overlap)
+        this.currentY += wrapLineHeight;
         this.currentX = marginsPts.leftMarginPts;
         if (this.shouldBreakPage(this.currentY)) this.addPageBreak();
         continue;
