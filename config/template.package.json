@@ -2,7 +2,7 @@
   "name": "print2paper4vscode",
   "displayName": "Print2Paper4VSCode",
   "description": "Print selections or current tabs with syntax highlighting and interactive PDF preview",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "license": "SEE LICENSE IN LICENSE",
   "engines": {
     "vscode": "^1.90.0"
@@ -41,7 +41,11 @@
       {
         "command": "{{extId}}.{{cmdPrint}}",
         "title": "Print2Paper",
-        "category": "Print"
+        "category": "Print",
+        "icon": {
+          "light": "dist/icon-p2p4vsc-dark.svg",
+          "dark": "dist/icon-p2p4vsc-bright.svg"
+        }
       },
       {
         "command": "{{extId}}.{{cmdPersistClear}}",
@@ -59,9 +63,13 @@
       "editor/title": [
         {
           "command": "{{extId}}.{{cmdPrint}}",
-          "group": "navigation",
-          "when": "editorTextFocus",
-          "title": "Print2Paper"
+          "group": "navigation"
+        }
+      ],
+      "editor/title/context": [
+        {
+          "command": "{{extId}}.{{cmdPrint}}",
+          "group": "z_print"
         }
       ]
     },
@@ -76,7 +84,7 @@
       {
         "id": "{{extId}}.gettingStarted",
         "title": "Get started with Print2Paper",
-        "description": "Print or save any code file as a syntax-highlighted PDF. Live preview, 100+ themes, every page size you would actually use.",
+        "description": "Print or save any code or markdown file as a syntax-highlighted PDF. Live preview, 100+ themes, every page size you would actually use.",
         "steps": [
           {
             "id": "tryItNow",

@@ -1,13 +1,13 @@
 # Print2Paper4VSCode
 
-Print or save any code file as a syntax-highlighted PDF with one keystroke. Live preview, light Shiki themes optimized for printing, every page size you would actually use.
+Print or save any code or markdown file as a syntax-highlighted PDF with one keystroke. Live preview, light Shiki themes optimized for printing, every page size you would actually use.
 
 <!-- NOTE: absolute URLs intentional. vsce link-rewriter mangles angle-bracket and relative forms. -->
 ![Print2Paper4VSCode preview panel showing the zoom dropdown with 50%-300%, Fit Width, and Fit Page options](https://github.com/appliedmedia/print2paper4vscode/raw/main/assets/p2p4vsc-screenshots/p2p4vsc_screenshot_toolbar_05_zoom.png)
 
 ## Features
 
-* One-keystroke print: hit **Opt/Alt+P** in any editor to open a live PDF preview
+* One-keystroke print, three ways: **Opt/Alt+P** in any editor, click the **printer icon** in the editor toolbar, or **right-click the editor tab → Print2Paper**
 * Light-colored Shiki themes curated for easy printing — defaults to your active VS Code theme
 * Vector PDF output via jsPDF: scalable, crisp, never rasterized
 * Markdown files render in raw mode (syntax-highlighted source) or render mode (HTML preview)
@@ -15,9 +15,11 @@ Print or save any code file as a syntax-highlighted PDF with one keystroke. Live
 
 ## Usage
 
-Three ways to invoke this extension on the active editor:
+Ways to invoke this extension on the active editor:
 
 * Press **Opt/Alt+P**
+* Click the **printer icon** in the editor toolbar
+* Right-click the editor tab and choose **Print2Paper**
 * Right-click in the editor and choose **Print2Paper**
 * Open the Command Palette (**Cmd+Shift+P** / **Ctrl+Shift+P**) and run **Print: Print2Paper**
 

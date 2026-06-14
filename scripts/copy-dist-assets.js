@@ -25,4 +25,14 @@ for (const f of fs.readdirSync(fontSrc).filter(f => f.endsWith('.ttf'))) {
   fs.copyFileSync(path.join(fontSrc, f), path.join(fontDest, f));
 }
 
+// Toolbar/menu command icon. VS Code does NOT theme file-path icons, so we ship
+// two color variants. The assets source is the bright (#c5c5c5) art used in dark
+// themes; the dark-stroke (#424242) variant for light themes is derived.
+const iconSrc = fs.readFileSync(path.join(root, 'assets/icon-p2p4vsc-bright.svg'), 'utf8');
+fs.writeFileSync(path.join(root, 'dist/icon-p2p4vsc-bright.svg'), iconSrc);
+fs.writeFileSync(
+  path.join(root, 'dist/icon-p2p4vsc-dark.svg'),
+  iconSrc.replace(/#c5c5c5/g, '#424242')
+);
+
 console.log('copy-dist-assets: done');

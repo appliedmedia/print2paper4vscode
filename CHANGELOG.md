@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.0] - 2026-06-14
+
+### Added
+
+- Printer icon in the editor title toolbar (`editor/title`) that runs Print2Paper. Custom themed SVG: bright source at `assets/icon-p2p4vsc-bright.svg`, with `dist/icon-p2p4vsc-bright.svg` (#c5c5c5, dark themes) and `dist/icon-p2p4vsc-dark.svg` (#424242, light themes) generated at build.
+- Print2Paper in the editor-tab right-click menu (`editor/title/context`).
+- jsPDF, PDF.js, Shiki, and node-html-parser license sections in `THIRD-PARTY-NOTICES.md`.
+
+### Changed
+
+- Marketplace copy: description now reads "Print or save any code or markdown file"; Features and Usage list every invocation path (Opt/Alt+P, toolbar icon, tab right-click, editor right-click, Command Palette).
+
 ## [1.1.0] - 2026-06-14
 
 ### Added
