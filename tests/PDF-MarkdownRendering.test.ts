@@ -83,6 +83,35 @@ describe('PDF Markdown HTML Rendering', () => {
       assert.ok(pdf.docInfo().pdfDoc, 'PDF document should exist');
     });
 
+    it('does not leak raw <code> tags from <pre> nested in list items', async () => {
+      pdf.setupPdf();
+      // node-html-parser treats <pre> as raw text, so the inner <code> arrives
+      // as a literal string. Verify the renderer recovers the code text and
+      // never draws the literal tag markup.
+      const drawn: string[] = [];
+      const doc = pdf.docInfo().pdfDoc as unknown as { text: (...a: unknown[]) => unknown };
+      const origText = doc.text.bind(doc);
+      doc.text = (...args: unknown[]) => {
+        if (typeof args[0] === 'string') drawn.push(args[0] as string);
+        return origText(...args);
+      };
+
+      const html =
+        '<ol><li><strong>Install:</strong>' +
+        '<pre><code data-line="94" class="code-line language-bash" dir="auto">npm install</code></pre>' +
+        '</li></ol>';
+      await pdf.renderFromHTML(html);
+
+      const joined = drawn.join('');
+      assert.ok(!joined.includes('<code'), `leaked opening code tag: ${joined}`);
+      assert.ok(!joined.includes('</code>'), `leaked closing code tag: ${joined}`);
+      assert.ok(!joined.includes('data-line'), `leaked attributes: ${joined}`);
+      assert.ok(
+        drawn.some(s => s.includes('npm install')),
+        `code text should be rendered: ${joined}`
+      );
+    });
+
     it('should render code blocks without language', async () => {
       pdf.setupPdf();
       const html = '<pre><code>Plain text code\nNo syntax highlighting</code></pre>';

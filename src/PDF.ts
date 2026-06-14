@@ -1113,6 +1113,16 @@ export class PDF {
       this.renderTextContent(el.text);
       this.docInfo().pdfDoc!.setFont(savedFont.fontName, savedFont.fontStyle);
     },
+    // Fenced code blocks nested inside list items arrive here. node-html-parser
+    // treats <pre> as raw text, so render the recovered code text in mono rather
+    // than leaking the literal <code …> tags.
+    pre: (el, savedFont) => {
+      const extracted = this.extractCodeAndLang(el);
+      const code = extracted ? extracted.code : el.text;
+      this.docInfo().pdfDoc!.setFont(PDF.kFontMono, 'normal');
+      this.renderTextContent(code);
+      this.docInfo().pdfDoc!.setFont(savedFont.fontName, savedFont.fontStyle);
+    },
   };
 
   /**
@@ -1289,17 +1299,29 @@ export class PDF {
    * // <pre><code class="language-javascript">const x = 42;</code></pre>
    * await this.renderCodeBlock(element); // Renders with JS syntax highlighting
    */
+  // Extract code text + language from a <pre> element. node-html-parser treats
+  // <pre> as a raw-text element, so the inner <code> is often NOT a parsed child
+  // but a literal text string; in that case we re-parse the raw text to recover it.
+  private extractCodeAndLang(element: HTMLElement): { code: string; lang: string } | null {
+    let codeElement = element.querySelector('code');
+    if (!codeElement) {
+      codeElement = parse(element.text).querySelector('code');
+    }
+    if (!codeElement) return null;
+    const classAttr = codeElement.getAttribute('class') || '';
+    const langClass = classAttr.split(' ').find((c: string) => c.startsWith('language-'));
+    const lang = langClass ? langClass.replace('language-', '') : 'plaintext';
+    return { code: codeElement.text, lang };
+  }
+
   private async renderCodeBlock(element: HTMLElement): Promise<void> {
     const pdfDoc = this.docInfo().pdfDoc;
     if (!pdfDoc) return;
 
-    const codeElement = element.querySelector('code');
-    if (!codeElement) return;
-
-    const code = codeElement.text;
-    const classAttr = codeElement.getAttribute('class') || '';
-    const langClass = classAttr.split(' ').find((c: string) => c.startsWith('language-'));
-    const lang = langClass ? langClass.replace('language-', '') : 'plaintext';
+    const extracted = this.extractCodeAndLang(element);
+    if (!extracted) return;
+    const { code, lang } = extracted;
+    const savedBodyFont = this.bodyFontFamily;
 
     // Add spacing before
     this.currentY += 6;
@@ -1335,7 +1357,8 @@ export class PDF {
     // REUSE existing renderFromTokens - pass all tokens at once!
     this.renderFromTokens(tokens);
 
-    // Restore font
+    // Restore font (renderFromTokens switched the body font to mono)
+    this.bodyFontFamily = savedBodyFont;
     pdfDoc.setFont(savedFont.fontName, savedFont.fontStyle);
     pdfDoc.setFontSize(savedSize);
 
