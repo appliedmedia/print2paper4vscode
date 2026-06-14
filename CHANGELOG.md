@@ -7,6 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.1.0] - 2026-06-14
+
+### Added
+
+- Embedded DejaVu Sans + Sans Mono (8 faces) in generated PDFs for full Unicode coverage: box-drawing/tree characters, extended Latin, and symbols now render correctly (jsPDF's built-in fonts are WinAnsi-only). Fonts ship in `dist/fonts/`; `OS.fileReadBase64` + `kPath.fonts` added.
+- `EmojiToAscii` converter (curated map + emoji-range stripping) applied before drawing, since jsPDF cannot render color emoji.
+- `THIRD-PARTY-NOTICES.md` and `LICENSES_OTHER.md` with the verbatim DejaVu license.
+
+### Changed
+
+- Font selection by mode: DejaVuSansMono for code and raw markdown (tokenized), DejaVuSans for rendered markdown prose.
+- `smoke-dist-assets` now verifies all bundled fonts reached `dist/fonts/`.
+
+### Fixed
+
+- Rendered markdown no longer leaks raw `<code …>` tags from fenced code blocks nested in lists (node-html-parser treats `<pre>` as raw text; code is now recovered via re-parse).
+- Wrapped large headings (H1/H2) no longer overlap themselves — wrap line height tracks the active font size.
+- Text color hard-resets to black before each text block, so Shiki code colors no longer bleed into following headings/prose.
+
 ## [1.0.8] - 2026-06-13
 
 ### Fixed
