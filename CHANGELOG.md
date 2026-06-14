@@ -13,7 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Embedded DejaVu Sans + Sans Mono (8 faces) in generated PDFs for full Unicode coverage: box-drawing/tree characters, extended Latin, and symbols now render correctly (jsPDF's built-in fonts are WinAnsi-only). Fonts ship in `dist/fonts/`; `OS.fileReadBase64` + `kPath.fonts` added.
 - `EmojiToAscii` converter (curated map + emoji-range stripping) applied before drawing, since jsPDF cannot render color emoji.
-- `THIRD-PARTY-NOTICES.md` and `LICENSES_OTHER.md` with the verbatim DejaVu license.
+- `THIRD-PARTY-NOTICES.md` with the verbatim DejaVu license.
 
 ### Changed
 

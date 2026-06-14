@@ -1,9 +1,8 @@
 # Third-Party Notices
 
 Print2Paper4VSCode redistributes the third-party assets listed below. Each
-entry includes the upstream license verbatim. This file and
-[LICENSES_OTHER.md](LICENSES_OTHER.md) are kept in sync; both feed the
-attributions shown on the project legal page.
+entry includes the upstream license verbatim. This file is the canonical
+source for the attributions shown on the project legal page.
 
 ## DejaVu Fonts
 
