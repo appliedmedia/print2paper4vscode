@@ -113,7 +113,7 @@
           {
             "id": "pageMenu",
             "title": "Page menu",
-            "description": "Pick a page size (Letter, A4, Legal, Tabloid, Ledger, A3, Executive) and orientation (portrait or landscape).",
+            "description": "Pick a page size (Letter, Legal, Tabloid, A3, A4, A5) and orientation (portrait or landscape).",
             "media": {
               "image": "assets/p2p4vsc-screenshots/p2p4vsc_screenshot_toolbar_02_page.png",
               "altText": "Page menu: page sizes and orientation"
