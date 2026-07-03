@@ -1,6 +1,6 @@
 # License: Code Transparency v1
 
-Copyright © 2025...2026-06-03.001:a@cov.in and Applied Media. All Rights Reserved.
+Copyright (c) 2025...2026-07-02.001:a@cov.in and Applied Media. All Rights Reserved.
 
 ## Scope
 
@@ -14,14 +14,14 @@ You can post requests/defects, view, audit, and submit pull requests. You cannot
 
 ## Permissions
 
-* P1. **View and Audit**: View, study, and audit the Code.
-* P2. **Contribute**: Requests/defects via Feedback, submit Pull Requests at Repo.
+* P1. View and Audit: View, study, and audit the Code.
+* P2. Contribute: Requests/defects via Feedback, submit Pull Requests at Repo.
 
 ## Non-Maintainer Restrictions
 
-* R1. **No Derivative Works**: No derivative works, modified versions, or competing products providing similar functionality.
-* R2. **No Redistribution**: No distribution, publication, or sale of the Software under the same or different names or channels.
-* R3. **No Commercial Use**: Commercial use requires a separate license.
+* R1. No Derivative Works: No derivative works, modified versions, or competing products providing similar functionality.
+* R2. No Redistribution: No distribution, publication, or sale of the Software under the same or different names or channels.
+* R3. No Commercial Use: Commercial use requires a separate license.
 
 ## Contributions
 
@@ -42,3 +42,5 @@ Rights terminate automatically upon violation. You must then cease use and destr
 ## Contact
 
 Post requests/defects as GitHub Issues in Repo. Other questions, such as commercial licensing, contact maintainers.
+
+\#\#\#
