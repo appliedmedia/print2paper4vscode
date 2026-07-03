@@ -2,5 +2,8 @@
   "default": true,
   "MD013": {
     "line_length": 512
+  },
+  "MD024": {
+    "siblings_only": true
   }
 }

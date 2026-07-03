@@ -183,6 +183,3 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [ ] VS Code test environment for integration tests
 
 ---
-
-[Unreleased]: https://github.com/appliedmedia/print2paper4vscode/compare/v1.0.0...HEAD
-[1.0.0]: https://github.com/appliedmedia/print2paper4vscode/releases/tag/v1.0.0
