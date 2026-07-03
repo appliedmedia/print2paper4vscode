@@ -14,11 +14,11 @@ A printing extension necessarily reads every document you print. That is a lot o
 
 The authored code, roughly thirty TypeScript files plus the yaml templates in `src/`, contains zero network calls. The one authored `fetch()` lives in `src/UIWebView.yaml` and loads the bundled PDF.js worker from local disk.
 
-Everything under `src/lib/` is Mozilla's PDF.js. Like any PDF renderer it contains network-capable code paths, but this extension only ever gives it PDF bytes generated in memory and a worker script loaded from local disk, so those paths never reach the network. If you want to go deeper, diff `src/lib/` against the matching upstream PDF.js release.
+The two minified files under `src/lib/` are Mozilla's PDF.js. Like any PDF renderer it contains network-capable code paths, but this extension only ever gives it PDF bytes generated in memory and a worker script loaded from local disk, so those paths never reach the network. If you want to go deeper, diff `src/lib/` against the matching upstream PDF.js release.
 
 Temporary PDFs are written to your operating system's temp directory, tracked, and deleted when the extension shuts down. Your preferences live in VS Code's on-machine global state and are uploaded nowhere.
 
-**Global friendly**: full Unicode rendering comes from eight embedded DejaVu faces, and syntax highlighting covers the 300+ language grammars bundled with Shiki, so your code looks right whatever alphabet or box-drawing characters it contains.
+**Global friendly**: full Unicode rendering comes from eight embedded DejaVu faces, and syntax highlighting covers the 200+ languages bundled with Shiki, so your code looks right whatever alphabet or box-drawing characters it contains.
 
 **Read it in an afternoon**: the extension's own code is small enough to audit in one sitting. Grep it yourself:
 
