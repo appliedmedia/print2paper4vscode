@@ -65,7 +65,7 @@ The only VS Code setting this extension uses is the keyboard shortcut, which you
 
 ## Source code and contributing
 
-This extension is open source. Report bugs: [p2p4vsc.support](https://p2p4vsc.support). Submit pull requests: [p2p4vsc.dev](https://p2p4vsc.dev).
+Every line of the source is public to view and audit. Report bugs: [p2p4vsc.support](https://p2p4vsc.support). Submit pull requests: [p2p4vsc.dev](https://p2p4vsc.dev).
 
 ## About Applied Media
 

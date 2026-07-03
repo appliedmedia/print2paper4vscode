@@ -84,7 +84,7 @@
       {
         "id": "p2p4vsc.gettingStarted",
         "title": "Get started with Print2Paper",
-        "description": "Print or save any code or markdown file as a syntax-highlighted PDF. Live preview, 100+ themes, every page size you would actually use.",
+        "description": "Print or save any code or markdown file as a syntax-highlighted PDF. Live preview, light Shiki themes optimized for printing, every page size you would actually use.",
         "steps": [
           {
             "id": "tryItNow",
@@ -113,7 +113,7 @@
           {
             "id": "pageMenu",
             "title": "Page menu",
-            "description": "Pick a page size (Letter, A4, Legal, Tabloid, Ledger, A3, Executive) and orientation (portrait or landscape).",
+            "description": "Pick a page size (Letter, Legal, Tabloid, A3, A4, A5) and orientation (portrait or landscape).",
             "media": {
               "image": "assets/p2p4vsc-screenshots/p2p4vsc_screenshot_toolbar_02_page.png",
               "altText": "Page menu: page sizes and orientation"
@@ -125,7 +125,7 @@
           {
             "id": "themeMenu",
             "title": "Theme menu",
-            "description": "Choose any of the 100+ bundled Shiki themes. Defaults to your active VS Code theme.",
+            "description": "Choose from light Shiki themes curated for print legibility. Defaults to your active VS Code theme.",
             "media": {
               "image": "assets/p2p4vsc-screenshots/p2p4vsc_screenshot_toolbar_03_theme.png",
               "altText": "Theme menu: Shiki theme picker dropdown"
@@ -137,10 +137,10 @@
           {
             "id": "textMenu",
             "title": "Text menu",
-            "description": "Set the font size, anywhere from 8 px to 24 px.",
+            "description": "Set the font size, anywhere from 8 px to 48 px.",
             "media": {
               "image": "assets/p2p4vsc-screenshots/p2p4vsc_screenshot_toolbar_04_text.png",
-              "altText": "Text menu: font size from 8 px to 24 px"
+              "altText": "Text menu: font size from 8 px to 48 px"
             },
             "completionEvents": [
               "onStepSelected"
